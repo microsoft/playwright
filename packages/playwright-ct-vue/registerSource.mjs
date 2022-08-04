@@ -168,21 +168,22 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
     await hook({ app, hooksConfig });
   const instance = app.mount(rootElement);
-  instance.$el[appKey] = app;
-  instance.$el[componentKey] = wrapper;
+  rootElement[appKey] = app;
+  rootElement[componentKey] = wrapper;
+
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
     await hook({ app, hooksConfig, instance });
 };
 
-window.playwrightUnmount = async element => {
-  const app = /** @type {import('vue').App} */ (element[appKey]);
+window.playwrightUnmount = async rootElement => {
+  const app = /** @type {import('vue').App} */ (rootElement[appKey]);
   if (!app)
     throw new Error('Component was not mounted');
   app.unmount();
 };
 
-window.playwrightRerender = async (element, options) => {
-  const component = element[componentKey].component;
+window.playwrightRerender = async (rootElement, options) => {
+  const component = rootElement[componentKey].component;
   if (!component)
     throw new Error('Component was not mounted');
 

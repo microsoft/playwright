@@ -68,7 +68,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
     svelteComponent.$on(key, event => listener(event.detail));
 };
 
-window.playwrightUnmount = async (element, rootElement) => {
+window.playwrightUnmount = async rootElement => {
   const svelteComponent = /** @type {SvelteComponent} */ (rootElement[svelteComponentKey]);
   if (!svelteComponent)
     throw new Error('Component was not mounted');
