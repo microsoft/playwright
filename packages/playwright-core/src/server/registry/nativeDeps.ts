@@ -558,6 +558,7 @@ export const deps: any = {
       'libxml2',
       'libxslt1.1',
       'libx264-163',
+      'libatomic1',
     ],
     lib2package: {
       'libasound.so.2': 'libasound2',
@@ -645,7 +646,8 @@ export const deps: any = {
       'libwebp.so.6': 'libwebp6',
       'libenchant-2.so.2': 'libenchant-2-2',
       'libx264.so': 'libx264-163',
-      'libvpx.so.7': 'libvpx7'
+      'libvpx.so.7': 'libvpx7',
+      'libatomic.so.1': 'libatomic1',
     },
   },
   'debian11': {
