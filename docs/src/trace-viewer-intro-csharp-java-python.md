@@ -5,13 +5,11 @@ title: "Trace Viewer"
 
 Playwright Trace Viewer is a GUI tool that lets you explore recorded Playwright traces of your tests meaning you can go back and forward though each action of your test and visually see what was happening during each action.
 
-:::info You will learn
-<ul>
-<li>How to record a trace on CI</li>
-<li>How to open the HTML report</li>
-<li>How to open the trace viewer</li>
-</ul>
-:::
+**You will learn**
+
+- How to record a trace
+- How to open the HTML report
+- How to open the trace viewer
 
 ## Recording a trace
 

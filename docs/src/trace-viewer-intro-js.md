@@ -5,13 +5,12 @@ title: "Trace Viewer"
 
 Playwright Trace Viewer is a GUI tool that lets you explore recorded Playwright traces of your tests meaning you can go back and forward though each action of your test and visually see what was happening during each action.
 
-:::info You will learn
-<ul>
-<li>How to record a trace on CI</li>
-<li>How to open the HTML report</li>
-<li>How to open the trace viewer</li>
-</ul>
-:::
+**You will learn**
+
+- How to record a trace
+- How to open the HTML report
+- How to open the trace viewer
+
 
 ## Recording a trace
 
@@ -46,10 +45,10 @@ export default config;
 
 To learn more about available options to record a trace check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 
-Traces are normally run in a Continuous Integration(CI) environment as locally you can use [debugging](/debug.md) methods to debug tests. To mock a CI environment set `CI=true` before the test command. Adding `--workers=5` will increase the workers available so tests will run in parallel and therefore run faster.
+Traces are normally run in a Continuous Integration(CI) environment as locally you can use [debugging](/debug.md) methods to debug tests. However should you want to run traces locally you can use `--retries=1`.
 
 ```bash
-CI=true npx playwright test --workers=5
+npx playwright test --retries=1
 ```
 
 ## Opening the HTML report
