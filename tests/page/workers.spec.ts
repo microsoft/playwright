@@ -174,7 +174,7 @@ it('should report network activity on worker creation', async function({ page, s
   expect(response.ok()).toBe(true);
 });
 
-it('should dispatch console messages when page has workers', async function({ page, browserName, server }) {
+it('should dispatch console messages when page has workers', async function({ page, server }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15550' });
   await page.goto(server.EMPTY_PAGE);
   await Promise.all([
