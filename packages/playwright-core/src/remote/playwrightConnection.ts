@@ -48,7 +48,7 @@ export class PlaywrightConnection {
   private _options: Options;
   private _root: Root;
 
-  constructor(mode: Mode, ws: WebSocket, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
+  constructor(lock: Promise<void>, mode: Mode, ws: WebSocket, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
     this._ws = ws;
     this._preLaunched = preLaunched;
     this._options = options;
@@ -60,11 +60,13 @@ export class PlaywrightConnection {
     this._debugLog = log;
 
     this._dispatcherConnection = new DispatcherConnection();
-    this._dispatcherConnection.onmessage = message => {
+    this._dispatcherConnection.onmessage = async message => {
+      await lock;
       if (ws.readyState !== ws.CLOSING)
         ws.send(JSON.stringify(message));
     };
-    ws.on('message', (message: string) => {
+    ws.on('message', async (message: string) => {
+      await lock;
       this._dispatcherConnection.dispatch(JSON.parse(Buffer.from(message).toString()));
     });
 
