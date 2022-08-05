@@ -416,8 +416,6 @@ test('should have correct types for the config', async ({ runTSC }) => {
         projects: [
           {
             name: 'project name',
-            projectSetup: './projectSetup',
-            projectTeardown: './projectTeardown',
           }
         ],
       };

@@ -25,8 +25,8 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
         globalSetup: './globalSetup',
         globalTeardown: path.join(__dirname, 'globalTeardown.ts'),
         projects: [
-          { name: 'p1', projectSetup: './projectSetup1', projectTeardown: './projectTeardown1' },
-          { name: 'p2', projectSetup: './projectSetup2', projectTeardown: './projectTeardown2' },
+          { name: 'p1' },
+          { name: 'p2' },
         ]
       };
     `,
@@ -40,26 +40,6 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
         console.log('\\n%%from-global-teardown');
       };
     `,
-    'dir/projectSetup1.ts': `
-      module.exports = async () => {
-        console.log('\\n%%from-project-setup-1');
-      };
-    `,
-    'dir/projectTeardown1.ts': `
-      module.exports = async () => {
-        console.log('\\n%%from-project-teardown-1');
-      };
-    `,
-    'dir/projectSetup2.ts': `
-      module.exports = async () => {
-        console.log('\\n%%from-project-setup-2');
-      };
-    `,
-    'dir/projectTeardown2.ts': `
-      module.exports = async () => {
-        console.log('\\n%%from-project-teardown-2');
-      };
-    `,
     'a.test.js': `
       const { test } = pwt;
       test('should work', async ({}, testInfo) => {
@@ -71,9 +51,7 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
   expect(result.failed).toBe(0);
   expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
     '%%from-global-setup',
-    '%%from-project-setup-2',
     '%%from-test',
-    '%%from-project-teardown-2',
     '%%from-global-teardown',
   ]);
 });
