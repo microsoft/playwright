@@ -394,7 +394,7 @@ export class Runner {
 
     // 13. Run Global setup.
     const result: FullResult = { status: 'passed' };
-    const globalTearDown = await this._performGlobalAndProjectSetup(config, rootSuite, [...filesByProject.keys()], result);
+    const globalTearDown = await this._performGlobalSetup(config, rootSuite, [...filesByProject.keys()], result);
     if (result.status !== 'passed')
       return result;
 
@@ -443,7 +443,7 @@ export class Runner {
 
     // 4. Run Global setup.
     const result: FullResult = { status: 'passed' };
-    const globalTearDown = await this._performGlobalAndProjectSetup(config, rootSuite, config.projects.filter(p => !options.projectFilter || options.projectFilter.includes(p.name)), result);
+    const globalTearDown = await this._performGlobalSetup(config, rootSuite, config.projects.filter(p => !options.projectFilter || options.projectFilter.includes(p.name)), result);
     if (result.status !== 'passed')
       return result;
 
@@ -576,43 +576,22 @@ export class Runner {
     return true;
   }
 
-  private async _performGlobalAndProjectSetup(config: FullConfigInternal, rootSuite: Suite, projects: FullProjectInternal[], result: FullResult): Promise<(() => Promise<void>) | undefined> {
-    type SetupData = {
-      setupFile?: string | null;
-      teardownFile?: string | null;
-      setupResult?: any;
-    };
-
-    const setups: SetupData[] = [];
-    setups.push({
-      setupFile: config.globalSetup,
-      teardownFile: config.globalTeardown,
-      setupResult: undefined,
-    });
-    for (const project of projects) {
-      setups.push({
-        setupFile: project._projectSetup,
-        teardownFile: project._projectTeardown,
-        setupResult: undefined,
-      });
-    }
+  private async _performGlobalSetup(config: FullConfigInternal, rootSuite: Suite, projects: FullProjectInternal[], result: FullResult): Promise<(() => Promise<void>) | undefined> {
+    let globalSetupResult: any = undefined;
 
     const pluginsThatWereSetUp: TestRunnerPlugin[] = [];
     const sigintWatcher = new SigIntWatcher();
 
     const tearDown = async () => {
-      setups.reverse();
-      for (const setup of setups) {
-        await this._runAndReportError(async () => {
-          if (setup.setupResult && typeof setup.setupResult === 'function')
-            await setup.setupResult(this._loader.fullConfig());
-        }, result);
+      await this._runAndReportError(async () => {
+        if (globalSetupResult && typeof globalSetupResult === 'function')
+          await globalSetupResult(this._loader.fullConfig());
+      }, result);
 
-        await this._runAndReportError(async () => {
-          if (setup.setupResult && setup.teardownFile)
-            await (await this._loader.loadGlobalHook(setup.teardownFile))(this._loader.fullConfig());
-        }, result);
-      }
+      await this._runAndReportError(async () => {
+        if (globalSetupResult && config.globalTeardown)
+          await (await this._loader.loadGlobalHook(config.globalTeardown))(this._loader.fullConfig());
+      }, result);
 
       for (const plugin of pluginsThatWereSetUp.reverse()) {
         await this._runAndReportError(async () => {
@@ -637,19 +616,17 @@ export class Runner {
         pluginsThatWereSetUp.push(plugin);
       }
 
-      // Then do global setup and project setups.
-      for (const setup of setups) {
-        if (!sigintWatcher.hadSignal()) {
-          if (setup.setupFile) {
-            const hook = await this._loader.loadGlobalHook(setup.setupFile);
-            await Promise.race([
-              Promise.resolve().then(() => hook(this._loader.fullConfig())).then((r: any) => setup.setupResult = r || '<noop>'),
-              sigintWatcher.promise(),
-            ]);
-          } else {
-            // Make sure we run the teardown.
-            setup.setupResult = '<noop>';
-          }
+      // Then do global setup.
+      if (!sigintWatcher.hadSignal()) {
+        if (config.globalSetup) {
+          const hook = await this._loader.loadGlobalHook(config.globalSetup);
+          await Promise.race([
+            Promise.resolve().then(() => hook(this._loader.fullConfig())).then((r: any) => globalSetupResult = r || '<noop>'),
+            sigintWatcher.promise(),
+          ]);
+        } else {
+          // Make sure we run the teardown.
+          globalSetupResult = '<noop>';
         }
       }
     }, result);
