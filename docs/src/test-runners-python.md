@@ -63,6 +63,21 @@ def test_my_app_is_working(fixture_name):
 - `browser_type_launch_args`: Override launch arguments for [`method: BrowserType.launch`]. It should return a Dict.
 - `browser_context_args`: Override the options for [`method: Browser.newContext`]. It should return a Dict.
 
+## Parallelism: Running Multiple Tests at Once
+
+If your tests are running on a machine with a lot of CPUs, you can speed up the overall execution time of your test suite by using [`pytest-xdist`](https://pypi.org/project/pytest-xdist/) to run multiple tests at once:
+
+```bash
+# install dependency
+pip install pytest-xdist
+# use the --numprocesses flag
+pytest --numprocesses auto
+```
+
+Depending on the hardware and nature of your tests, you can set `numprocesses` to be anywhere from `2` to the number of CPUs on the machine. If set too high, you may notice unexpected behavior.
+
+See [Running Tests](./running-tests.md) for general information on `pytest` options.
+
 ## Examples
 
 ### Configure Mypy typings for auto-completion
