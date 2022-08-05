@@ -55,7 +55,7 @@ class HeadlessWindowCapturer : public webrtc::VideoCaptureModuleEx {
  private:
   void NotifyFrameCaptured(const webrtc::VideoFrame& frame);
 
-  mozilla::widget::HeadlessWidget* mWindow = nullptr;
+  RefPtr<mozilla::widget::HeadlessWidget> mWindow;
   rtc::RecursiveCriticalSection _callBackCs;
   std::set<rtc::VideoSinkInterface<webrtc::VideoFrame>*> _dataCallBacks;
   std::set<webrtc::RawFrameCallback*> _rawFrameCallbacks;

@@ -299,7 +299,7 @@ ScreencastEncoder::~ScreencastEncoder()
 {
 }
 
-RefPtr<ScreencastEncoder> ScreencastEncoder::create(nsCString& errorString, const nsCString& filePath, int width, int height, const gfx::IntMargin& margin)
+std::unique_ptr<ScreencastEncoder> ScreencastEncoder::create(nsCString& errorString, const nsCString& filePath, int width, int height, const gfx::IntMargin& margin)
 {
     vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
     if (!codec_interface) {
@@ -340,7 +340,7 @@ RefPtr<ScreencastEncoder> ScreencastEncoder::create(nsCString& errorString, cons
 
     std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(std::move(codec), cfg, file));
     // fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
-    return new ScreencastEncoder(std::move(vpxCodec), margin);
+    return std::make_unique<ScreencastEncoder>(std::move(vpxCodec), margin);
 }
 
 void ScreencastEncoder::flushLastFrame()
