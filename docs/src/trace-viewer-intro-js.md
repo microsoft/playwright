@@ -7,9 +7,9 @@ Playwright Trace Viewer is a GUI tool that lets you explore recorded Playwright 
 
 **You will learn**
 
-- How to record a trace
-- How to open the HTML report
-- How to open the trace viewer
+- [How to record a trace](/trace-viewer-intro.md#recording-a-trace)
+- [How to open the HTML report](/trace-viewer-intro.md#opening-the-html-report)
+- [How to open and view the trace](/trace-viewer-intro.md#viewing-the-trace)
 
 
 ## Recording a trace
