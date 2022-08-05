@@ -3,9 +3,19 @@ id: intro
 title: "Installation"
 ---
 
-Playwright Test was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation of Google Chrome for Android and Mobile Safari. 
+Playwright Test was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation of Google Chrome for Android and Mobile Safari.
 
-Get started by installing Playwright and running the example test to see it in action. Alternatively you can also get started and run your tests using the [VS Code Extension](./getting-started-vscode.md).
+**You will learn**
+
+- [How to install Playwright](/intro.md#installing-playwright)
+- [What's Installed](/intro.md#whats-installed)
+- [How to run the example test](/intro.md#running-the-example-test)
+- [How to open the HTML test report](/intro.md#html-test-reports)
+
+
+## Installing Playwright
+
+Get started by installing Playwright using npm or yarn. Alternatively you can also get started and run your tests using the [VS Code Extension](./getting-started-vscode.md).
 
 <Tabs
   defaultValue="npm"
@@ -33,7 +43,7 @@ yarn create playwright
 
 
 Run the install command and select the following to get started:
- - Choose between TypeScript or JavaScript(default is TypeScript)
+ - Choose between TypeScript or JavaScript (default is TypeScript)
  - Name of your Tests folder (default is tests or e2e if you already have a tests folder in your project)
  - Add a GitHub Actions workflow to easily run tests on CI
 
@@ -52,11 +62,13 @@ tests-examples/
   demo-todo-app.spec.ts
 ```
 
- The playwright [playwright.config file](./test-configuration.md) is where you can add configuration for Playwright including modifying which browsers you would like to run Playwright on.
+The playwright [playwright.config](./test-configuration.md) is where you can add configuration for Playwright including modifying which browsers you would like to run Playwright on.
  
- If you are running tests inside an already existing project then a package.json and package-lock.json file will not be created. Instead the dependencies will be added to your already existing package.json file.
+If you are running tests inside an already existing project then dependencies will be added directly to your `package.json`.
  
- The tests folder contains a basic example test to help you get started with testing as well as a more detailed example with tests written to test a todo app.
+The `tests` folder contains a basic example test to help you get started with testing.
+ 
+For a more detailed example check out the `tests-examples` folder which contains tests written to test a todo app.
 
 ## Running the Example Test
 
