@@ -69,6 +69,10 @@ export class Playwright extends SdkObject {
   allBrowsers(): Browser[] {
     return [...this._allBrowsers];
   }
+
+  allPages(): Page[] {
+    return [...this._allPages];
+  }
 }
 
 export function createPlaywright(sdkLanguage: string, isInternalPlaywright: boolean = false) {

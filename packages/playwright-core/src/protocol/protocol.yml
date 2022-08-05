@@ -937,7 +937,11 @@ BrowserContext:
       experimental: True
       parameters:
         language: string?
-        startRecording: boolean?
+        mode:
+          type: enum?
+          literals:
+          - inspecting
+          - recording
         pauseOnNextStatement: boolean?
         launchOptions: json?
         contextOptions: json?

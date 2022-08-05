@@ -85,7 +85,7 @@ class Recorder {
   }
 
   private async _pollRecorderMode() {
-    const pollPeriod = 1000;
+    const pollPeriod = 500;
     if (this._pollRecorderModeTimer)
       clearTimeout(this._pollRecorderModeTimer);
     const state = await globalThis.__pw_recorderState().catch(e => null);

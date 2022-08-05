@@ -25,6 +25,8 @@ import { isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
 import { installAppIcon } from '../chromium/crApp';
 import { findChromiumChannel } from '../registry';
+import type { Recorder } from '../recorder';
+import type { BrowserContext } from '../browserContext';
 
 declare global {
   interface Window {
@@ -45,17 +47,28 @@ export interface IRecorderApp extends EventEmitter {
   setFileIfNeeded(file: string): Promise<void>;
   setSelector(selector: string, focus?: boolean): Promise<void>;
   updateCallLogs(callLogs: CallLog[]): Promise<void>;
-  bringToFront(): void;
   setSources(sources: Source[]): Promise<void>;
+}
+
+export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
+  async close(): Promise<void> {}
+  async setPaused(paused: boolean): Promise<void> {}
+  async setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void> {}
+  async setFileIfNeeded(file: string): Promise<void> {}
+  async setSelector(selector: string, focus?: boolean): Promise<void> {}
+  async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
+  async setSources(sources: Source[]): Promise<void> {}
 }
 
 export class RecorderApp extends EventEmitter implements IRecorderApp {
   private _page: Page;
   readonly wsEndpoint: string | undefined;
+  private _recorder: Recorder;
 
-  constructor(page: Page, wsEndpoint: string | undefined) {
+  constructor(recorder: Recorder, page: Page, wsEndpoint: string | undefined) {
     super();
     this.setMaxListeners(0);
+    this._recorder = recorder;
     this._page = page;
     this.wsEndpoint = wsEndpoint;
   }
@@ -96,9 +109,9 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     await mainFrame.goto(serverSideCallMetadata(), 'https://playwright/index.html');
   }
 
-  static async open(sdkLanguage: string, headed: boolean): Promise<IRecorderApp> {
-    if (process.env.PW_CODEGEN_NO_INSPECTOR)
-      return new HeadlessRecorderApp();
+  static async open(recorder: Recorder, inspectedContext: BrowserContext): Promise<IRecorderApp> {
+    const sdkLanguage = inspectedContext._browser.options.sdkLanguage;
+    const headed = !!inspectedContext._browser.options.headful;
     const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)('javascript', true);
     const args = [
       '--app=data:text/html,',
@@ -122,7 +135,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     });
 
     const [page] = context.pages();
-    const result = new RecorderApp(page, context._browser.options.wsEndpoint);
+    const result = new RecorderApp(recorder, page, context._browser.options.wsEndpoint);
     await result._init();
     return result;
   }
@@ -161,6 +174,10 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   }
 
   async setSelector(selector: string, focus?: boolean): Promise<void> {
+    if (focus) {
+      this._recorder.setMode('none');
+      this._page.bringToFront();
+    }
     await this._page.mainFrame().evaluateExpression(((arg: any) => {
       window.playwrightSetSelector(arg.selector, arg.focus);
     }).toString(), true, { selector, focus }, 'main').catch(() => {});
@@ -171,19 +188,4 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       window.playwrightUpdateLogs(callLogs);
     }).toString(), true, callLogs, 'main').catch(() => {});
   }
-
-  async bringToFront() {
-    await this._page.bringToFront();
-  }
-}
-
-class HeadlessRecorderApp extends EventEmitter implements IRecorderApp {
-  async close(): Promise<void> {}
-  async setPaused(paused: boolean): Promise<void> {}
-  async setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void> {}
-  async setFileIfNeeded(file: string): Promise<void> {}
-  async setSelector(selector: string, focus?: boolean): Promise<void> {}
-  async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
-  bringToFront(): void {}
-  async setSources(sources: Source[]): Promise<void> {}
 }
