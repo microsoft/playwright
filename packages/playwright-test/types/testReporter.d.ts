@@ -386,13 +386,6 @@ export interface Reporter {
   onError?(error: TestError): void;
 
   /**
-   * Called before the test runner will terminate. Useful to perform work after all reporters have finished, for example open
-   * some UI. Fore regular reporting, you should use
-   * [reporter.onEnd(result)](https://playwright.dev/docs/api/class-reporter#reporter-on-end) instead.
-   */
-  onExit?(): Promise<void>;
-
-  /**
    * Called when something has been written to the standard error in the worker process.
    * @param chunk Output chunk.
    * @param test Test that was running. Note that output may happen when no test is running, in which case this will be [void].
