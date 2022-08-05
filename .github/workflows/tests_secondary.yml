@@ -44,6 +44,7 @@ jobs:
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: always()
       with:
@@ -73,6 +74,7 @@ jobs:
     - run: npm run test -- --project=${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -202,6 +204,7 @@ jobs:
         PWTEST_MODE: ${{ matrix.mode }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -238,6 +241,7 @@ jobs:
         PWTEST_CHANNEL: ${{ matrix.channel }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
 
   chrome_stable_linux:
     name: "Chrome Stable (Linux)"
@@ -258,6 +262,7 @@ jobs:
         PWTEST_CHANNEL: chrome
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -310,6 +315,7 @@ jobs:
         PWTEST_CHANNEL: chrome
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -405,6 +411,7 @@ jobs:
         PWTEST_CHANNEL: firefox-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -457,6 +464,7 @@ jobs:
         PWTEST_CHANNEL: firefox-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -482,6 +490,7 @@ jobs:
         PWTEST_CHANNEL: msedge
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -509,6 +518,7 @@ jobs:
         PWTEST_CHANNEL: msedge
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -534,6 +544,7 @@ jobs:
         PWTEST_CHANNEL: msedge
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -559,6 +570,7 @@ jobs:
         PWTEST_CHANNEL: msedge-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -585,6 +597,7 @@ jobs:
         PWTEST_CHANNEL: msedge-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -610,6 +623,7 @@ jobs:
         PWTEST_CHANNEL: msedge-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -635,6 +649,7 @@ jobs:
         PWTEST_CHANNEL: msedge-dev
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -661,6 +676,7 @@ jobs:
         PWTEST_CHANNEL: msedge-dev
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -686,6 +702,7 @@ jobs:
         PWTEST_CHANNEL: msedge-dev
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -711,6 +728,7 @@ jobs:
         PWTEST_CHANNEL: chrome-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -763,6 +781,7 @@ jobs:
         PWTEST_CHANNEL: chrome-beta
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
