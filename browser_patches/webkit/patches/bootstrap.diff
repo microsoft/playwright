@@ -21043,20 +21043,6 @@ index e9f03c5136ad79870b8bdfa63f496e0b334238e1..bc82c7bd0b0778c2a16c4db2570bc3e2
  
  // For backwards compatibility with the WebBackForwardList API, we honor both
  // a per-WebView and a per-preferences setting for whether to use the back/forward cache.
-diff --git a/Source/bmalloc/libpas/src/libpas/pas_utils_prefix.h b/Source/bmalloc/libpas/src/libpas/pas_utils_prefix.h
-index 3ed076da2777bda665bb9df0ca9ac4e31166834e..57dafeef1db6164092d737ebd5d48902aefe2cc2 100644
---- a/Source/bmalloc/libpas/src/libpas/pas_utils_prefix.h
-+++ b/Source/bmalloc/libpas/src/libpas/pas_utils_prefix.h
-@@ -58,7 +58,8 @@ __PAS_BEGIN_EXTERN_C;
- #if defined(PAS_LIBMALLOC) && PAS_LIBMALLOC
- #define __PAS_API __attribute__((visibility("hidden")))
- #else
--#define __PAS_API __attribute__((visibility("default")))
-+// Playwright: Avoid linking error: 'pas_deallocate.c.o: requires dynamic R_X86_64_PC32 reloc against 'pas_segregated_page_deallocation_did_fail' which may overflow at runtime; recompile with -fPIC'.
-+#define __PAS_API
- #endif
- 
- #if defined(PAS_BMALLOC) && PAS_BMALLOC
 diff --git a/Source/cmake/FindLibVPX.cmake b/Source/cmake/FindLibVPX.cmake
 new file mode 100644
 index 0000000000000000000000000000000000000000..dd6a53e2d57318489b7e49dd7373706d5d9dc387
