@@ -26,6 +26,7 @@ import { stopProfiling, startProfiling } from './profiler';
 import type { TestFileFilter } from './util';
 import { showHTMLReport } from './reporters/html';
 import { baseFullConfig, defaultTimeout, fileIsModule } from './loader';
+import type { TraceMode } from './types';
 
 export function addTestCommands(program: Command) {
   addTestCommand(program);
@@ -56,6 +57,7 @@ function addTestCommand(program: Command) {
   command.option('--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`);
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
   command.option('--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`);
+  command.option('--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
   command.option('-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`);
   command.option('-x', `Stop after the first failure`);
   command.action(async (args, opts) => {
@@ -129,6 +131,12 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     overrides.timeout = 0;
     overrides.workers = 1;
     process.env.PWDEBUG = '1';
+  }
+  if (opts.trace) {
+    if (!kTraceModes.includes(opts.trace))
+      throw new Error(`Unsupported trace mode "${opts.trace}", must be one of ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
+    overrides.use = overrides.use || {};
+    overrides.use.trace = opts.trace;
   }
 
   // When no --config option is passed, let's look for the config file in the current directory.
@@ -250,3 +258,5 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
   });
   return true;
 }
+
+const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'retain-on-failure'];
