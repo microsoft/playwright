@@ -20,7 +20,7 @@ import { open } from '../utilsBundle';
 import path from 'path';
 import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
-import type { FullConfig, Suite, Reporter } from '../../types/testReporter';
+import type { FullConfig, Suite } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/lib/utils/httpServer';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
@@ -28,7 +28,7 @@ import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResul
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
 import { getPackageJsonPath, sanitizeForFilePath } from '../util';
-import type { FullConfigInternal, Metadata } from '../types';
+import type { FullConfigInternal, Metadata, ReporterInternal } from '../types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
@@ -131,7 +131,7 @@ type HtmlReporterOptions = {
   open?: HtmlReportOpenOption,
 };
 
-class HtmlReporter implements Reporter {
+class HtmlReporter implements ReporterInternal {
   private config!: FullConfigInternal;
   private suite!: Suite;
   private _options: HtmlReporterOptions;
@@ -193,7 +193,7 @@ class HtmlReporter implements Reporter {
     this._buildResult = await builder.build(this.config.metadata, reports);
   }
 
-  async onExit() {
+  async _onExit() {
     if (process.env.CI)
       return;
 

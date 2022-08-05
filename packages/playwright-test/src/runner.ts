@@ -37,7 +37,7 @@ import JSONReporter from './reporters/json';
 import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
 import HtmlReporter from './reporters/html';
-import type { Config, FullProjectInternal } from './types';
+import type { Config, FullProjectInternal, ReporterInternal } from './types';
 import type { FullConfigInternal } from './types';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { SigIntWatcher } from './sigIntWatcher';
@@ -85,7 +85,7 @@ type WatchProgress = {
 
 export class Runner {
   private _loader: Loader;
-  private _reporter!: Reporter;
+  private _reporter!: ReporterInternal;
   private _plugins: TestRunnerPlugin[] = [];
   private _watchRepeatEachIndex = 0;
   private _watchJobsQueue = Promise.resolve();
@@ -203,7 +203,7 @@ export class Runner {
     await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
     await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
 
-    await this._reporter.onExit?.();
+    await this._reporter._onExit?.();
     return fullResult;
   }
 

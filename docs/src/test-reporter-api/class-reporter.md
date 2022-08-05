@@ -140,12 +140,6 @@ Called on some global error, for example unhandled exception in the worker proce
 The error.
 
 
-## optional async method: Reporter.onExit
-* since: v1.25
-
-Called before the test runner will terminate. Useful to perform work after all reporters have finished, for example open some UI. Fore regular reporting, you should use [`method: Reporter.onEnd`] instead.
-
-
 ## optional method: Reporter.onStdErr
 * since: v1.10
 
