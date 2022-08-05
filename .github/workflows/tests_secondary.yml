@@ -507,6 +507,8 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: msedge
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -581,6 +583,8 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: msedge-beta
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -655,6 +659,8 @@ jobs:
       shell: bash
       env:
         PWTEST_CHANNEL: msedge-dev
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
