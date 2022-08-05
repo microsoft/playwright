@@ -1422,7 +1422,7 @@ index c16b813f29d8a519673129bb7debaaec0430145a..6f82922ac7e889e55beda7d43da3ebe6
    /** Synthesize a touch event. The event types supported are:
     *    touchstart, touchend, touchmove, and touchcancel
 diff --git a/dom/media/systemservices/video_engine/desktop_capture_impl.cc b/dom/media/systemservices/video_engine/desktop_capture_impl.cc
-index 9d4e8fbbfe8d45cc6245c7659423004ad1ceedeb..70150e9271720a562fd646a50d30369965d8521a 100644
+index 9d4e8fbbfe8d45cc6245c7659423004ad1ceedeb..f955c7bace3cedfe0469e59a5e8c5824158c4d50 100644
 --- a/dom/media/systemservices/video_engine/desktop_capture_impl.cc
 +++ b/dom/media/systemservices/video_engine/desktop_capture_impl.cc
 @@ -123,10 +123,11 @@ int32_t ScreenDeviceInfoImpl::GetOrientation(const char* deviceUniqueIdUTF8,
@@ -1494,14 +1494,17 @@ index 9d4e8fbbfe8d45cc6245c7659423004ad1ceedeb..70150e9271720a562fd646a50d303699
  int32_t DesktopCaptureImpl::StopCaptureIfAllClientsClose() {
    if (_dataCallBacks.empty()) {
      return StopCapture();
-@@ -636,6 +656,12 @@ void DesktopCaptureImpl::OnCaptureResult(DesktopCapturer::Result result,
+@@ -636,6 +656,15 @@ void DesktopCaptureImpl::OnCaptureResult(DesktopCapturer::Result result,
    frameInfo.height = frame->size().height();
    frameInfo.videoType = VideoType::kARGB;
  
 +  size_t videoFrameStride =
 +      frameInfo.width * DesktopFrame::kBytesPerPixel;
-+  for (auto rawFrameCallback : _rawFrameCallbacks) {
-+    rawFrameCallback->OnRawFrame(videoFrame, videoFrameStride, frameInfo);
++  {
++    rtc::CritScope cs(&_apiCs);
++    for (auto rawFrameCallback : _rawFrameCallbacks) {
++      rawFrameCallback->OnRawFrame(videoFrame, videoFrameStride, frameInfo);
++    }
 +  }
 +
    size_t videoFrameLength =
