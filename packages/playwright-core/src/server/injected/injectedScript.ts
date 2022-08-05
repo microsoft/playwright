@@ -865,9 +865,19 @@ export class InjectedScript {
     let container: Document | ShadowRoot | null = document;
     let element: Element | undefined;
     while (container) {
-      // elementFromPoint works incorrectly in Chromium (http://crbug.com/1188919),
-      // so we use elementsFromPoint instead.
+      // All browsers have different behavior around elementFromPoint and elementsFromPoint.
+      // https://github.com/w3c/csswg-drafts/issues/556
+      // http://crbug.com/1188919
       const elements: Element[] = container.elementsFromPoint(x, y);
+      const singleElement = container.elementFromPoint(x, y);
+      if (singleElement && elements[0] && parentElementOrShadowHost(singleElement) === elements[0]) {
+        const style = document.defaultView?.getComputedStyle(singleElement);
+        if (style?.display === 'contents') {
+          // Workaround a case where elementsFromPoint misses the inner-most element with display:contents.
+          // https://bugs.chromium.org/p/chromium/issues/detail?id=1342092
+          elements.unshift(singleElement);
+        }
+      }
       const innerElement = elements[0] as Element | undefined;
       if (!innerElement || element === innerElement)
         break;
