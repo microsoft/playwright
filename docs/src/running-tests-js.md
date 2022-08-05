@@ -5,6 +5,12 @@ title: "Running Tests"
 
 You can run a single test, a set of tests or all tests. Tests can be run on one browser or multiple browsers. By default tests are run in a headless manner meaning no browser window will be opened while running the tests and results will be seen in the terminal.
 
+**You will learn**
+
+- [How to run tests from the command line](/running-tests.md#command-line)
+- [How to debug tests](/running-tests.md#debugging-tests)
+- [How to open the HTML test reporter](/running-tests.md#test-reports)
+
 :::note
 For a better debugging experience check out the [VS Code Extension](./getting-started-vscode.md) for Playwright where you can run tests, add breakpoints and debug your tests right from the VS Code editor.
 :::
