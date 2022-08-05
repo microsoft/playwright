@@ -19,21 +19,11 @@
 
 // Changes from https://github.com/tabatkins/parse-css
 //   - Tabs are replaced with two spaces.
+//   - Universal Module Definition wrapper is removed.
 //   - Everything not related to tokenizing - below the first exports block - is removed.
 
 // @ts-nocheck
 
-(function (root, factory) {
-    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js,
-    // Rhino, and plain browser loading.
-    if (typeof define === 'function' && define.amd) {
-        define(['exports'], factory);
-    } else if (typeof exports !== 'undefined') {
-        factory(exports);
-    } else {
-        factory(root);
-    }
-}(this, function (exports) {
 
 var between = function (num, first, last) { return num >= first && num <= last; }
 function digit(code) { return between(code, 0x30,0x39); }
@@ -947,4 +937,3 @@ exports.EOFToken = EOFToken;
 exports.CSSParserToken = CSSParserToken;
 exports.GroupingToken = GroupingToken;
 
-}));
