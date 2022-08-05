@@ -65,7 +65,7 @@ In the HTML report click on the trace icon to directly open the trace file.
 
 You can also click on the test file and then click the 'Retry #1' tab which will show you a traces section in your html report. Here you can open the trace by clicking on the screenshot.
 
-<img width="747" alt="image" src="https://user-images.githubusercontent.com/13063165/182853567-d7267b7d-4627-4f18-9384-b6ad2da5db80.png" />
+<img width="749" alt="image" src="https://user-images.githubusercontent.com/13063165/183130559-16a83a39-2f1d-4560-850c-d025fad789b3.png" />
 
 
 ## Viewing the trace
