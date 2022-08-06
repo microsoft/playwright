@@ -45,6 +45,50 @@ function renderChild(child) {
 
 /**
  * @param {Component} component
+ */
+function getChildren(component) {
+  /**
+   * @type {(import('vue').VNode | string)[]}
+   */
+  const children = [];
+  /** @type {{[key: string]: any}} */
+  const slots = {};
+
+  if (component.kind === 'jsx') {
+    for (const child of component.children || []) {
+      if (typeof child !== 'string' && child.type === 'template' && child.kind === 'jsx') {
+        const slotProperty = Object.keys(child.props).find(k => k.startsWith('v-slot:'));
+        const slot = slotProperty ? slotProperty.substring('v-slot:'.length) : 'default';
+        slots[slot] = child.children.map(renderChild);
+      } else {
+        children.push(renderChild(child));
+      }
+    }
+  }
+
+  if (component.kind === 'object') {
+    // Vue test util syntax.
+    for (const [key, value] of Object.entries(component.options?.slots || {})) {
+      if (key === 'default')
+        children.push(value);
+      else
+        slots[key] = value;
+    }
+  }
+
+  let lastArg;
+  if (Object.entries(slots).length) {
+    lastArg = slots;
+    if (children.length)
+      slots.default = children;
+  } else if (children.length) {
+    lastArg = children;
+  }
+  return lastArg;
+}
+
+/**
+ * @param {Component} component
  * @returns {import('vue').VNode}
  */
 function render(component) {
@@ -135,6 +179,97 @@ function render(component) {
 }
 
 /**
+ * @param {Component} component
+ */
+function render2(component) {
+
+  if (typeof component === 'string')
+    return component;
+
+  /**
+   * @type {import('vue').Component | string | undefined}
+   */
+  let componentFunc = registry.get(component.type);
+  if (!componentFunc) {
+    // Lookup by shorthand.
+    for (const [name, value] of registry) {
+      if (component.type.endsWith(`_${name}_vue`)) {
+        componentFunc = value;
+        break;
+      }
+    }
+  }
+
+  if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...registry.keys()]}`);
+
+  componentFunc = componentFunc || component.type;
+
+  const isVueComponent = componentFunc !== component.type;
+
+  /**
+   * @type {(import('vue').VNode | string)[]}
+   */
+  const children = [];
+  /** @type {{[key: string]: any}} */
+  const slots = {};
+  const listeners = {};
+  /** @type {{[key: string]: any}} */
+  let props = {};
+
+  if (component.kind === 'jsx') {
+    for (const child of component.children || []) {
+      if (typeof child !== 'string' && child.type === 'template' && child.kind === 'jsx') {
+        const slotProperty = Object.keys(child.props).find(k => k.startsWith('v-slot:'));
+        const slot = slotProperty ? slotProperty.substring('v-slot:'.length) : 'default';
+        slots[slot] = child.children.map(renderChild);
+      } else {
+        children.push(renderChild(child));
+      }
+    }
+
+    for (const [key, value] of Object.entries(component.props)) {
+      if (key.startsWith('v-on:')) {
+        const event = key.substring('v-on:'.length);
+        if (isVueComponent)
+          listeners[event] = value;
+        else
+          props[`on${event[0].toUpperCase()}${event.substring(1)}`] = value;
+      } else {
+        props[key] = value;
+      }
+    }
+  }
+
+  if (component.kind === 'object') {
+    // Vue test util syntax.
+    for (const [key, value] of Object.entries(component.options?.slots || {})) {
+      if (key === 'default')
+        children.push(value);
+      else
+        slots[key] = value;
+    }
+    props = component.options?.props || {};
+    for (const [key, value] of Object.entries(component.options?.on || {}))
+      listeners[key] = value;
+  }
+
+  let lastArg;
+  if (Object.entries(slots).length) {
+    lastArg = slots;
+    if (children.length)
+      slots.default = children;
+  } else if (children.length) {
+    lastArg = children;
+  }
+
+  // @ts-ignore
+  const wrapper = h(componentFunc, props, lastArg);
+  allListeners.push([wrapper, listeners]);
+  return { props, lastArg, listeners };
+}
+
+/**
  * @returns {any}
  */
 function createDevTools() {
@@ -183,10 +318,26 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightRerender = async (rootElement, options) => {
+  console.log(options);
   const component = rootElement[componentKey].component;
   if (!component)
     throw new Error('Component was not mounted');
 
+  const { lastArg, listeners } = render2(options);
+
+  const slots = {};
+  if (!Array.isArray(lastArg)) {
+    for (const [key, value] of Object.entries(lastArg || {}))
+      slots[key] = () => [value];
+  } else if (lastArg?.length) {
+    slots['default'] = () => lastArg;
+  }
+
+  component.slots = slots;
+
   for (const [key, value] of Object.entries(options.props || {}))
     component.props[key] = value;
+
+  if (!options.props || Object.keys(options.props).length === 0)
+    component.update();
 };
