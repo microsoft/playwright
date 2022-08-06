@@ -1182,7 +1182,7 @@ Locator parentLocator = elementLocator.locator("..");
 ```
 
 ```python async
-parentLocator = elementLocator.locator('..')
+parent_locator = element_locator.locator('..')
 ```
 
 ```python sync
