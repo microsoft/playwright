@@ -42,7 +42,7 @@ namespace PlaywrightTests;
 public class MyTest : PageTest
 {
     [Test]
-    async public Task ShouldHaveTheCorrectSlogan()
+    public async Task ShouldHaveTheCorrectSlogan()
     {
         await Page.GotoAsync("https://playwright.dev");
         await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
@@ -99,7 +99,7 @@ dotnet test
 You can also choose specifically which tests to run, using the [filtering capabilities](https://docs.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=nunit):
 
 ```bash
-dotnet test --filter "Name~ShouldAdd"
+dotnet test --filter "Name~Slogan"
 ```
 
 ### Running NUnit tests in Parallel
@@ -145,7 +145,7 @@ public class MyTest : PageTest
 
 ### Customizing [Browser]/launch options
 
-[Browser]/launch options can be override either using a run settings file or by setting the run settings options directly via the
+[Browser]/launch options can be overridden either using a run settings file or by setting the run settings options directly via the
 CLI. See the following example:
 
 ```xml
@@ -205,7 +205,7 @@ If you want to enable debugging, you can set the `DEBUG` variable to `pw:api` as
 
 ### Base NUnit classes for Playwright
 
-There are few base classes available to you in `Microsoft.Playwright.NUnit` namespace:
+There are a few base classes available to you in `Microsoft.Playwright.NUnit` namespace:
 
 |Test          |Description|
 |--------------|-----------|
@@ -242,14 +242,14 @@ namespace PlaywrightTests;
 public class UnitTest1: PageTest
 {
     [TestMethod]
-    async public Task ShouldHaveTheCorrectSlogan()
+    public async Task ShouldHaveTheCorrectSlogan()
     {
         await Page.GotoAsync("https://playwright.dev");
         await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
     }
 
     [TestMethod]
-    async public Task ShouldHaveTheCorrectTitle()
+    public async Task ShouldHaveTheCorrectTitle()
     {
         await Page.GotoAsync("https://playwright.dev");
         var title = Page.Locator(".navbar__inner .navbar__title");
@@ -299,7 +299,7 @@ dotnet test
 You can also choose specifically which tests to run, using the [filtering capabilities](https://docs.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=mstest):
 
 ```bash
-dotnet test --filter "Name~ShouldAdd"
+dotnet test --filter "Name~Slogan"
 ```
 
 ### Running MSTest tests in Parallel
@@ -351,7 +351,7 @@ public class UnitTest1 : PageTest
 
 ### Customizing [Browser]/launch options
 
-[Browser]/launch options can be override either using a run settings file or by setting the run settings options directly via the
+[Browser]/launch options can be overridden either using a run settings file or by setting the run settings options directly via the
 CLI. See the following example:
 
 ```xml
@@ -414,7 +414,7 @@ If you want to enable debugging, you can set the `DEBUG` variable to `pw:api` as
 
 ### Base MSTest classes for Playwright
 
-There are few base classes available to you in `Microsoft.Playwright.MSTest` namespace:
+There are a few base classes available to you in `Microsoft.Playwright.MSTest` namespace:
 
 |Test          |Description|
 |--------------|-----------|
