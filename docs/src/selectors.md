@@ -1169,7 +1169,7 @@ If a selector needs to include `>>` in the body, it should be escaped inside a s
 
 ## Parent selector
 
-The parent could be selected with `..`.
+The parent could be selected with `..`, which is a short form for `xpath=..`.
 
 For example:
 
