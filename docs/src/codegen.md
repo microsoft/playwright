@@ -5,6 +5,18 @@ title: "Test Generator"
 
 Playwright comes with the ability to generate tests out of the box and is a great way to quickly get started with testing. It will open two windows, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests, copy the tests, clear your tests as well as change the language of your tests.
 
+**You will learn**
+
+- [How to generate tests with Codegen](/codegen.md#running-codegen)
+- [How to emulate viewport size](/codegen.md#emulate-viewport-size)
+- [How to emulate devices](/codegen.md#emulate-devices)
+- [How to emulate color scheme](/codegen.md#emulate-color-scheme)
+- [How to emulate geolocation, language and timezone](/codegen.md#emulate-geolocation-language-and-timezone)
+- [How to preserve authenticated state](/codegen.md#preserve-authenticated-state)
+- [How to record using a custom setup](/codegen.md#record-using-custom-setup)
+
+## Running Codegen
+
 ```bash js
 npx playwright codegen playwright.dev
 ```
@@ -21,7 +33,7 @@ playwright codegen playwright.dev
 pwsh bin\Debug\netX\playwright.ps1 codegen playwright.dev
 ```
 
-Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `codegen` will attempt to generate resilient text-based selectors.
+Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `Codegen` will attempt to generate resilient text-based selectors.
 
 <img width="1183" alt="Codegen generating code for tests for playwright.dev website" src="https://user-images.githubusercontent.com/13063165/181852815-971c10da-0b55-4e54-8a73-77e1e825193c.png" />
 
