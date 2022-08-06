@@ -1186,7 +1186,7 @@ parent_locator = element_locator.locator('..')
 ```
 
 ```python sync
-parentLocator = elementLocator.locator('..')
+parent_lcator = element_locator.locator('..')
 ```
 
 ```csharp
