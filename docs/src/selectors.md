@@ -1148,25 +1148,6 @@ It is usually possible to distinguish elements by some attribute or text content
 prefer using [text] or [css] selectors over the `:nth-match()`.
 :::
 
-## Chaining selectors
-
-Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, the next one is queried relative to the previous one's result.
-
-For example,
-```
-css=article >> css=.bar > .baz >> css=span[attr=value]
-```
-is equivalent to
-
-```js browser
-document
-  .querySelector('article')
-  .querySelector('.bar > .baz')
-  .querySelector('span[attr=value]')
-```
-
-If a selector needs to include `>>` in the body, it should be escaped inside a string to not be confused with chaining separator, e.g. `text="some >> text"`.
-
 ## Parent selector
 
 The parent could be selected with `..`, which is a short form for `xpath=..`.
@@ -1192,6 +1173,25 @@ parent_locator = element_locator.locator('..')
 ```csharp
 var parentLocator = elementLocator.Locator("..");
 ```
+
+## Chaining selectors
+
+Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, the next one is queried relative to the previous one's result.
+
+For example,
+```
+css=article >> css=.bar > .baz >> css=span[attr=value]
+```
+is equivalent to
+
+```js browser
+document
+  .querySelector('article')
+  .querySelector('.bar > .baz')
+  .querySelector('span[attr=value]')
+```
+
+If a selector needs to include `>>` in the body, it should be escaped inside a string to not be confused with chaining separator, e.g. `text="some >> text"`.
 
 ### Intermediate matches
 
