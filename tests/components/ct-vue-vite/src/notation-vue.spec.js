@@ -49,8 +49,8 @@ test('renderer updates event listiners without remounting', async ({ mount }) =>
 })
 
 test('renderer updates slots without remounting', async ({ mount }) => {
-  const component = await mount({
-    slots: { main: 'Default Slot' }
+  const component = await mount(Counter, {
+    slots: { default: 'Default Slot' }
   })
   await expect(component).toContainText('Default Slot')
 
