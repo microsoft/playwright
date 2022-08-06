@@ -971,7 +971,7 @@ function createNoTestsError(): TestError {
 }
 
 function createStacklessError(message: string): TestError {
-  return { message };
+  return { message, __isNotAFatalError: true } as any;
 }
 
 export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html'] as const;

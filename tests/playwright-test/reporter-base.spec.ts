@@ -316,5 +316,5 @@ test('should report fatal errors at the end', async ({ runInlineTest }) => {
   }, { reporter: 'list' });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
-  expect(stripAnsi(result.output)).toContain('2 fatal errors');
+  expect(stripAnsi(result.output)).toContain('2 errors were not a part of any test, see above for details');
 });
