@@ -97,12 +97,10 @@ export class Recorder implements InstrumentationListener {
     recorderApp.on('event', (data: EventData) => {
       if (data.event === 'setMode') {
         this.setMode(data.params.mode);
-        this._refreshOverlay();
         return;
       }
       if (data.event === 'selectorUpdated') {
-        this._highlightedSelector = data.params.selector;
-        this._refreshOverlay();
+        this.setHighlightedSelector(data.params.selector);
         return;
       }
       if (data.event === 'step') {
@@ -189,12 +187,14 @@ export class Recorder implements InstrumentationListener {
   setMode(mode: Mode) {
     if (this._mode === mode)
       return;
+    this._highlightedSelector = '';
     this._mode = mode;
     this._recorderApp?.setMode(this._mode);
     this._contextRecorder.setEnabled(this._mode === 'recording');
     this._debugger.setMuted(this._mode === 'recording');
     if (this._mode !== 'none' && this._context.pages().length === 1)
       this._context.pages()[0].bringToFront().catch(() => {});
+    this._refreshOverlay();
   }
 
   setHighlightedSelector(selector: string) {
