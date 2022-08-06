@@ -570,7 +570,7 @@ async function codegen(options: Options, url: string | undefined, language: stri
     contextOptions,
     device: options.device,
     saveStorage: options.saveStorage,
-    startRecording: true,
+    mode: 'recording',
     outputFile: outputFile ? path.resolve(outputFile) : undefined
   });
   await openPage(context, url);

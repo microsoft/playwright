@@ -62,6 +62,10 @@ export class PlaywrightServer {
       this._preLaunchedPlaywright = createPlaywright('javascript');
   }
 
+  preLaunchedPlaywright(): Playwright | null {
+    return this._preLaunchedPlaywright;
+  }
+
   async listen(port: number = 0): Promise<string> {
     const server = http.createServer((request, response) => {
       response.end('Running');

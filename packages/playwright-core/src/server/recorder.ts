@@ -29,6 +29,7 @@ import { CSharpLanguageGenerator } from './recorder/csharp';
 import { PythonLanguageGenerator } from './recorder/python';
 import * as recorderSource from '../generated/recorderSource';
 import * as consoleApiSource from '../generated/consoleApiSource';
+import { EmptyRecorderApp } from './recorder/recorderApp';
 import type { IRecorderApp } from './recorder/recorderApp';
 import { RecorderApp } from './recorder/recorderApp';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
@@ -42,7 +43,7 @@ import { raceAgainstTimeout } from '../utils/timeoutRunner';
 
 type BindingSource = { frame: Frame, page: Page };
 
-const symbol = Symbol('RecorderSupplement');
+const recorderSymbol = Symbol('recorderSymbol');
 
 export class Recorder implements InstrumentationListener {
   private _context: BrowserContext;
@@ -55,31 +56,39 @@ export class Recorder implements InstrumentationListener {
   private _allMetadatas = new Map<string, CallMetadata>();
   private _debugger: Debugger;
   private _contextRecorder: ContextRecorder;
+  private _recorderAppFactory: (recorder: Recorder) => Promise<IRecorderApp>;
 
   static showInspector(context: BrowserContext) {
     Recorder.show(context, {}).catch(() => {});
   }
 
-  static show(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<Recorder> {
-    let recorderPromise = (context as any)[symbol] as Promise<Recorder>;
+  static show(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}, recorderAppFactory = Recorder.defaultRecorderAppFactory): Promise<Recorder> {
+    let recorderPromise = (context as any)[recorderSymbol] as Promise<Recorder>;
     if (!recorderPromise) {
-      const recorder = new Recorder(context, params);
+      const recorder = new Recorder(context, params, recorderAppFactory);
       recorderPromise = recorder.install().then(() => recorder);
-      (context as any)[symbol] = recorderPromise;
+      (context as any)[recorderSymbol] = recorderPromise;
     }
     return recorderPromise;
   }
 
-  constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
-    this._mode = params.startRecording ? 'recording' : 'none';
+  constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams, recorderAppFactory: (recorder: Recorder) => Promise<IRecorderApp>) {
+    this._mode = params.mode || 'none';
+    this._recorderAppFactory = recorderAppFactory;
     this._contextRecorder = new ContextRecorder(context, params);
     this._context = context;
     this._debugger = Debugger.lookup(context)!;
     context.instrumentation.addListener(this, context);
   }
 
+  private static async defaultRecorderAppFactory(recorder: Recorder) {
+    if (process.env.PW_CODEGEN_NO_INSPECTOR)
+      return new EmptyRecorderApp();
+    return await RecorderApp.open(recorder, recorder._context);
+  }
+
   async install() {
-    const recorderApp = await RecorderApp.open(this._context._browser.options.sdkLanguage, !!this._context._browser.options.headful);
+    const recorderApp = await this._recorderAppFactory(this);
     this._recorderApp = recorderApp;
     recorderApp.once('close', () => {
       this._debugger.resume(false);
@@ -87,7 +96,7 @@ export class Recorder implements InstrumentationListener {
     });
     recorderApp.on('event', (data: EventData) => {
       if (data.event === 'setMode') {
-        this._setMode(data.params.mode);
+        this.setMode(data.params.mode);
         this._refreshOverlay();
         return;
       }
@@ -149,9 +158,7 @@ export class Recorder implements InstrumentationListener {
     });
 
     await this._context.exposeBinding('__pw_recorderSetSelector', false, async (_, selector: string) => {
-      this._setMode('none');
       await this._recorderApp?.setSelector(selector, true);
-      await this._recorderApp?.bringToFront();
     });
 
     await this._context.exposeBinding('__pw_resume', false, () => {
@@ -179,13 +186,20 @@ export class Recorder implements InstrumentationListener {
     this.updateCallLog([...this._currentCallsMetadata.keys()]);
   }
 
-  private _setMode(mode: Mode) {
+  setMode(mode: Mode) {
+    if (this._mode === mode)
+      return;
     this._mode = mode;
     this._recorderApp?.setMode(this._mode);
     this._contextRecorder.setEnabled(this._mode === 'recording');
     this._debugger.setMuted(this._mode === 'recording');
-    if (this._mode !== 'none')
+    if (this._mode !== 'none' && this._context.pages().length === 1)
       this._context.pages()[0].bringToFront().catch(() => {});
+  }
+
+  setHighlightedSelector(selector: string) {
+    this._highlightedSelector = selector;
+    this._refreshOverlay();
   }
 
   private _refreshOverlay() {
@@ -320,7 +334,7 @@ class ContextRecorder extends EventEmitter {
     const orderedLanguages = [primaryLanguage, ...languages];
 
     this._recorderSources = [];
-    const generator = new CodeGenerator(context._browser.options.name, !!params.startRecording, params.launchOptions || {}, params.contextOptions || {}, params.device, params.saveStorage);
+    const generator = new CodeGenerator(context._browser.options.name, params.mode === 'recording', params.launchOptions || {}, params.contextOptions || {}, params.device, params.saveStorage);
     const throttledOutputFile = params.outputFile ? new ThrottledFile(params.outputFile) : null;
     generator.on('change', () => {
       this._recorderSources = [];
@@ -421,7 +435,7 @@ class ContextRecorder extends EventEmitter {
 
   clearScript(): void {
     this._generator.restart();
-    if (!!this._params.startRecording) {
+    if (this._params.mode === 'recording') {
       for (const page of this._context.pages())
         this._onFrameNavigated(page.mainFrame(), page);
     }

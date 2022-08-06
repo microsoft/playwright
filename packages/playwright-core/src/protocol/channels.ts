@@ -1416,7 +1416,7 @@ export type BrowserContextPauseOptions = {};
 export type BrowserContextPauseResult = void;
 export type BrowserContextRecorderSupplementEnableParams = {
   language?: string,
-  startRecording?: boolean,
+  mode?: 'inspecting' | 'recording',
   pauseOnNextStatement?: boolean,
   launchOptions?: any,
   contextOptions?: any,
@@ -1426,7 +1426,7 @@ export type BrowserContextRecorderSupplementEnableParams = {
 };
 export type BrowserContextRecorderSupplementEnableOptions = {
   language?: string,
-  startRecording?: boolean,
+  mode?: 'inspecting' | 'recording',
   pauseOnNextStatement?: boolean,
   launchOptions?: any,
   contextOptions?: any,

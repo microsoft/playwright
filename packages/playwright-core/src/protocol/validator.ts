@@ -765,7 +765,7 @@ scheme.BrowserContextPauseParams = tOptional(tObject({}));
 scheme.BrowserContextPauseResult = tOptional(tObject({}));
 scheme.BrowserContextRecorderSupplementEnableParams = tObject({
   language: tOptional(tString),
-  startRecording: tOptional(tBoolean),
+  mode: tOptional(tEnum(['inspecting', 'recording'])),
   pauseOnNextStatement: tOptional(tBoolean),
   launchOptions: tOptional(tAny),
   contextOptions: tOptional(tAny),

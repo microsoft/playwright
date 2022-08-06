@@ -65,7 +65,7 @@ export const test = contextTest.extend<CLITestArgs>({
 
   openRecorder: async ({ page, recorderPageGetter }, run) => {
     await run(async () => {
-      await (page.context() as any)._enableRecorder({ language: 'javascript', startRecording: true });
+      await (page.context() as any)._enableRecorder({ language: 'javascript', mode: 'recording' });
       return new Recorder(page, await recorderPageGetter());
     });
   },
