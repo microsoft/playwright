@@ -886,6 +886,8 @@ class FrameSession {
   }
 
   async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
+    if (!event.backendNodeId)
+      return;
     const frame = this._page._frameManager.frame(event.frameId);
     if (!frame)
       return;
