@@ -525,6 +525,7 @@ async function launchContext(options: Options, headless: boolean, executablePath
   });
   process.on('SIGINT', async () => {
     await closeBrowser();
+    process.exit(130);
   });
 
   const timeout = options.timeout ? parseInt(options.timeout, 10) : 0;
@@ -578,7 +579,7 @@ async function codegen(options: Options, url: string | undefined, language: stri
     saveStorage: options.saveStorage,
     mode: 'recording',
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
-    doNotHandleSIGINT: true,
+    handleSIGINT: false,
   });
   await openPage(context, url);
   if (process.env.PWTEST_CLI_EXIT)

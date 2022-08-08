@@ -109,7 +109,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     await mainFrame.goto(serverSideCallMetadata(), 'https://playwright/index.html');
   }
 
-  static async open(recorder: Recorder, inspectedContext: BrowserContext, doNotHandleSIGINT: boolean): Promise<IRecorderApp> {
+  static async open(recorder: Recorder, inspectedContext: BrowserContext, handleSIGINT: boolean | undefined): Promise<IRecorderApp> {
     const sdkLanguage = inspectedContext._browser.options.sdkLanguage;
     const headed = !!inspectedContext._browser.options.headful;
     const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)('javascript', true);
@@ -128,9 +128,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       ignoreDefaultArgs: ['--enable-automation'],
       headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
       useWebSocket: !!process.env.PWTEST_RECORDER_PORT,
-      ...(doNotHandleSIGINT ? {
-        handleSIGINT: false,
-      } : {}),
+      handleSIGINT,
     });
     const controller = new ProgressController(serverSideCallMetadata(), context._browser);
     await controller.run(async progress => {
@@ -168,7 +166,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
 
     // Testing harness for runCLI mode.
     {
-      if ((process.env.PWTEST || process.env.PWTEST_CLI_EXIT) && sources.length) {
+      if ((process.env.PWTEST_CLI_IS_UNDER_TEST || process.env.PWTEST_CLI_EXIT) && sources.length) {
         process.stdout.write('\n-------------8<-------------\n');
         process.stdout.write(sources[0].text);
         process.stdout.write('\n-------------8<-------------\n');

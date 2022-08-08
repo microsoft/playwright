@@ -196,7 +196,7 @@ class CLIMock {
     this.process = childProcess({
       command: nodeArgs,
       env: {
-        PWTEST: '1',
+        PWTEST_CLI_IS_UNDER_TEST: '1',
         PWTEST_CLI_EXIT: !noAutoExit ? '1' : undefined,
         PWTEST_CLI_HEADLESS: headless ? '1' : undefined,
         PWTEST_CLI_EXECUTABLE_PATH: executablePath,

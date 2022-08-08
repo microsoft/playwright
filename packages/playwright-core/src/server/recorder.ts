@@ -56,7 +56,7 @@ export class Recorder implements InstrumentationListener {
   private _allMetadatas = new Map<string, CallMetadata>();
   private _debugger: Debugger;
   private _contextRecorder: ContextRecorder;
-  private _doNotHandleSignals: boolean;
+  private _handleSIGINT: boolean | undefined;
   private _recorderAppFactory: (recorder: Recorder) => Promise<IRecorderApp>;
 
   static showInspector(context: BrowserContext) {
@@ -79,14 +79,14 @@ export class Recorder implements InstrumentationListener {
     this._contextRecorder = new ContextRecorder(context, params);
     this._context = context;
     this._debugger = Debugger.lookup(context)!;
-    this._doNotHandleSignals = !!params.doNotHandleSIGINT;
+    this._handleSIGINT = params.handleSIGINT;
     context.instrumentation.addListener(this, context);
   }
 
   private static async defaultRecorderAppFactory(recorder: Recorder) {
     if (process.env.PW_CODEGEN_NO_INSPECTOR)
       return new EmptyRecorderApp();
-    return await RecorderApp.open(recorder, recorder._context, recorder._doNotHandleSignals);
+    return await RecorderApp.open(recorder, recorder._context, recorder._handleSIGINT);
   }
 
   async install() {
