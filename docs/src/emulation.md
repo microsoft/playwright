@@ -14,7 +14,12 @@ can be changed for individual pages.
 
 <!-- TOC -->
 
-<br/>
+## Playwright Test vs. Library
+* langs: js
+
+:::caution
+This guide is for [Playwright Library](./library.md), if you are using Playwright Test (`@playwright/test`) see [here](./test-configuration.md).
+:::
 
 ## Devices
 * langs: js, python, csharp

@@ -8,6 +8,13 @@ approach to structure your test suite.
 
 <!-- TOC -->
 
+## Playwright Test vs. Library
+* langs: js
+
+:::caution
+This guide is for [Playwright Library](./library.md), if you are using Playwright Test (`@playwright/test`) see [here](./test-pom.md).
+:::
+
 ## Introduction
 
 A page object represents a part of your web application. An e-commerce web application might have a home page, a

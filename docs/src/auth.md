@@ -16,6 +16,13 @@ app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/
 
 <!-- TOC -->
 
+## Playwright Test vs. Library
+* langs: js
+
+:::caution
+This guide is for [Playwright Library](./library.md), if you are using Playwright Test (`@playwright/test`) see [here](./test-auth.md).
+:::
+
 ## Automate logging in
 
 The Playwright API can automate interaction with a login form. See
