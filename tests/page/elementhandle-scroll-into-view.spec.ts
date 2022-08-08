@@ -60,10 +60,16 @@ it('should wait for display:none to become visible', async ({ page, server }) =>
   await testWaiting(page, div => div.style.display = 'block');
 });
 
-it.fixme('should scroll display:contents into view', async ({ page, server }) => {
+it('should scroll display:contents into view', async ({ page, browserName, browserMajorVersion }) => {
+  it.skip(browserName === 'chromium' && browserMajorVersion < 105, 'Needs https://chromium-review.googlesource.com/c/chromium/src/+/3758670');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15034' });
 
   await page.setContent(`
+    <style>
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+      ::-webkit-scrollbar { display: none; }
+      * { scrollbar-width: none; }
+    </style>
     <div id=container style="width:200px;height:200px;overflow:scroll;border:1px solid black;">
       <div style="margin-top:500px;background:red;">
         <div style="height:50px;width:100px;background:cyan;">
