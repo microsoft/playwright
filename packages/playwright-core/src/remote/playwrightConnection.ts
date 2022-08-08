@@ -100,9 +100,10 @@ export class PlaywrightConnection {
     const socksProxy = this._options.enableSocksProxy ? await this._enableSocksProxy(playwright) : undefined;
     const browser = await playwright[this._options.browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
 
-    // Close the browser on disconnect.
-    // TODO: it is technically possible to launch more browsers over protocol.
-    this._cleanups.push(() => browser.close());
+    this._cleanups.push(async () => {
+      for (const browser of playwright.allBrowsers())
+        await browser.close();
+    });
     browser.on(Browser.Events.Disconnected, () => {
       // Underlying browser did close for some reason - force disconnect the client.
       this.close({ code: 1001, reason: 'Browser closed' });
@@ -120,8 +121,11 @@ export class PlaywrightConnection {
       this.close({ code: 1001, reason: 'Browser closed' });
     });
     const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, undefined, browser);
-    // In pre-launched mode, keep the browser and just cleanup new contexts.
-    // TODO: it is technically possible to launch more browsers over protocol.
+    // In pre-launched mode, keep only the pre-launched browser.
+    for (const b of playwright.allBrowsers()) {
+      if (b !== browser)
+        await b.close();
+    }
     this._cleanups.push(() => playwrightDispatcher.cleanup());
     return playwrightDispatcher;
   }
@@ -155,6 +159,19 @@ export class PlaywrightConnection {
         this.close({ code: 1001, reason: 'Browser closed' });
       });
     }
+
+    this._cleanups.push(async () => {
+      // Don't close the pages so that user could debug them,
+      // but close all the empty browsers and contexts to clean up.
+      for (const browser of playwright.allBrowsers()) {
+        for (const context of browser.contexts()) {
+          if (!context.pages().length)
+            await context.close(serverSideCallMetadata());
+        }
+        if (!browser.contexts())
+          await browser.close();
+      }
+    });
 
     const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, undefined, browser);
     return playwrightDispatcher;
