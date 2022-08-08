@@ -1029,7 +1029,8 @@ export class InjectedScript {
       } else if (expression === 'to.be.enabled') {
         elementState = progress.injectedScript.elementState(element, 'enabled');
       } else if (expression === 'to.be.focused') {
-        elementState = document.activeElement === element;
+        const activeElement = (element.getRootNode() as (Document | ShadowRoot)).activeElement;
+        elementState = activeElement === element && element.ownerDocument && element.ownerDocument.hasFocus();
       } else if (expression === 'to.be.hidden') {
         elementState = progress.injectedScript.elementState(element, 'hidden');
       } else if (expression === 'to.be.visible') {
