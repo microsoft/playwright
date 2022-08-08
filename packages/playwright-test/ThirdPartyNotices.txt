@@ -137,6 +137,7 @@ This project incorporates components from the projects listed below. The origina
 -	source-map-support@0.5.21 (https://github.com/evanw/node-source-map-support)
 -	source-map@0.6.1 (https://github.com/mozilla/source-map)
 -	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
+-	stoppable@1.1.0 (https://github.com/hunterloftis/stoppable)
 -	supports-color@5.5.0 (https://github.com/chalk/supports-color)
 -	supports-color@7.2.0 (https://github.com/chalk/supports-color)
 -	to-fast-properties@2.0.0 (https://github.com/sindresorhus/to-fast-properties)
@@ -3931,6 +3932,32 @@ THE SOFTWARE.
 =========================================
 END OF stack-utils@2.0.5 AND INFORMATION
 
+%% stoppable@1.1.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2017 Hunter Loftis <hunter@hunterloftis.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF stoppable@1.1.0 AND INFORMATION
+
 %% supports-color@5.5.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
@@ -4002,6 +4029,6 @@ END OF to-regex-range@5.0.1 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 137
+Total Packages: 138
 =========================================
 END OF SUMMARY

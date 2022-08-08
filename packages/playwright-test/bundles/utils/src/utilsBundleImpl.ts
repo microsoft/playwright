@@ -25,3 +25,6 @@ export const pirates = piratesLibrary;
 
 import sourceMapSupportLibrary from 'source-map-support';
 export const sourceMapSupport = sourceMapSupportLibrary;
+
+import stoppableLibrary from 'stoppable';
+export const stoppable = stoppableLibrary;

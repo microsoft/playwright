@@ -12,9 +12,11 @@
     "json5": "2.2.1",
     "open": "8.4.0",
     "pirates": "4.0.4",
-    "source-map-support": "0.5.21"
+    "source-map-support": "0.5.21",
+    "stoppable": "^1.1.0"
   },
   "devDependencies": {
-    "@types/source-map-support": "^0.5.4"
+    "@types/source-map-support": "^0.5.4",
+    "@types/stoppable": "^1.1.1"
   }
 }
