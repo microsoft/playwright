@@ -130,7 +130,7 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
       return true;
     if (f.frame.file.startsWith(TEST_DIR_SRC) || f.frame.file.startsWith(TEST_DIR_LIB))
       return false;
-    if (i && f.frame.file.startsWith(CORE_DIR))
+    if (f.frame.file.startsWith(CORE_DIR))
       return false;
     return true;
   });
