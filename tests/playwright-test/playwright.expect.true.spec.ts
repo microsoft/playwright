@@ -352,6 +352,35 @@ test('should support toBeFocused', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should support toBeFocused with shadow elements', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('focused', async ({ page }) => {
+        await page.setContent(\`
+          <div id="app">
+          </div>
+          <script>
+            const root = document.querySelector('div');
+            const shadowRoot = root.attachShadow({ mode: 'open' });
+            const input = document.createElement('input');
+            input.id = "my-input"
+            shadowRoot.appendChild(input);
+          </script>
+        \`);
+
+        await page.locator("input").focus();
+        expect(await page.evaluate(() => document.activeElement.shadowRoot.activeElement.id)).toBe("my-input");
+        await expect(page.locator("#app")).toBeFocused();
+        await expect(page.locator("input")).toBeFocused();
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
 test('should print unknown engine error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
