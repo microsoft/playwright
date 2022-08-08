@@ -2303,7 +2303,7 @@ diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm b/So
 index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d768ace22 100644
 --- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
 +++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
-@@ -198,6 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -198,6 +198,7 @@ - (void)sendEndIfNeeded
  
  - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidChange:(BOOL)available
  {
@@ -2311,7 +2311,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      if (available || !_task)
-@@ -211,6 +212,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -211,6 +212,7 @@ - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidC
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTranscription:(SFTranscription *)transcription
  {
@@ -2319,7 +2319,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      [self sendSpeechStartIfNeeded];
-@@ -219,6 +221,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -219,6 +221,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTran
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecognition:(SFSpeechRecognitionResult *)recognitionResult
  {
@@ -2327,7 +2327,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
      [self callbackWithTranscriptions:recognitionResult.transcriptions isFinal:YES];
  
-@@ -230,6 +233,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -230,6 +233,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecogniti
  
  - (void)speechRecognitionTaskWasCancelled:(SFSpeechRecognitionTask *)task
  {
@@ -9066,7 +9066,7 @@ diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/
 index d8eeb6c27a92134728ffada573a1f140e303c727..9ddddb0796cc00d7eea060b11919711446a39586 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
-@@ -720,7 +720,7 @@ void NetworkSessionCocoa::setClientAuditToken(const WebCore::AuthenticationChall
+@@ -720,7 +720,7 @@ - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didRece
  
      if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
          sessionCocoa->setClientAuditToken(challenge);
@@ -10483,7 +10483,7 @@ index 67c2480832991ff512fd49b0195cc195e85794e2..619c8a85bd1bdb14a593f15fa02ae90b
  #import <WebCore/Credential.h>
  #import <WebCore/RegistrationDatabase.h>
  #import <WebCore/ServiceWorkerClientData.h>
-@@ -234,6 +235,11 @@ static WallTime toSystemClockTime(NSDate *date)
+@@ -234,6 +235,11 @@ - (void)removeDataOfTypes:(NSSet *)dataTypes modifiedSince:(NSDate *)date comple
      });
  }
  
@@ -10662,7 +10662,7 @@ diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm b/
 index 2e235bb880c638a0e74256b6d66cb0244ea0a3f1..3471eebb47e860f7c2071d0e7f2691c9f0a6355d 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
-@@ -257,6 +257,16 @@
+@@ -257,6 +257,16 @@ - (BOOL)processSwapsOnNavigation
      return _processPoolConfiguration->processSwapsOnNavigation();
  }
  
@@ -21012,7 +21012,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegac
 index 81093dca5a3f4cf8fa7a71551b9d7b11d7513d9e..0e62bc13f72397239c80bfbc3a272286d1fcb39f 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
-@@ -4205,7 +4205,7 @@ static BOOL currentScrollIsBlit(NSView *clipView)
+@@ -4205,7 +4205,7 @@ - (void)mouseDown:(WebEvent *)event
      _private->handlingMouseDownEvent = NO;
  }
  
@@ -21025,7 +21025,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebView.mm b/Source/WebKitLegacy/ma
 index e9f03c5136ad79870b8bdfa63f496e0b334238e1..bc82c7bd0b0778c2a16c4db2570bc3e27245f101 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebView.mm
-@@ -4038,7 +4038,7 @@ IGNORE_WARNINGS_END
+@@ -4038,7 +4038,7 @@ + (void)_doNotStartObservingNetworkReachability
  }
  #endif // PLATFORM(IOS_FAMILY)
  
@@ -21034,7 +21034,7 @@ index e9f03c5136ad79870b8bdfa63f496e0b334238e1..bc82c7bd0b0778c2a16c4db2570bc3e2
  
  - (NSArray *)_touchEventRegions
  {
-@@ -4080,7 +4080,7 @@ IGNORE_WARNINGS_END
+@@ -4080,7 +4080,7 @@ - (NSArray *)_touchEventRegions
      }).autorelease();
  }
  
@@ -21043,6 +21043,24 @@ index e9f03c5136ad79870b8bdfa63f496e0b334238e1..bc82c7bd0b0778c2a16c4db2570bc3e2
  
  // For backwards compatibility with the WebBackForwardList API, we honor both
  // a per-WebView and a per-preferences setting for whether to use the back/forward cache.
+diff --git a/Source/bmalloc/libpas/src/libpas/pas_utils_prefix.h b/Source/bmalloc/libpas/src/libpas/pas_utils_prefix.h
+index 3ed076da2777bda665bb9df0ca9ac4e31166834e..c7f55f9f7fb06e03128f251e41674938f6c351c3 100644
+--- a/Source/bmalloc/libpas/src/libpas/pas_utils_prefix.h
++++ b/Source/bmalloc/libpas/src/libpas/pas_utils_prefix.h
+@@ -58,8 +58,13 @@ __PAS_BEGIN_EXTERN_C;
+ #if defined(PAS_LIBMALLOC) && PAS_LIBMALLOC
+ #define __PAS_API __attribute__((visibility("hidden")))
+ #else
++// Playwright: Linkage fails in Ubuntu 18.04.
++#if defined(__GNUC__) && __GNUC__ == 8
++#define __PAS_API
++#else
+ #define __PAS_API __attribute__((visibility("default")))
+ #endif
++#endif
+ 
+ #if defined(PAS_BMALLOC) && PAS_BMALLOC
+ #define __PAS_BAPI __attribute__((visibility("default")))
 diff --git a/Source/cmake/FindLibVPX.cmake b/Source/cmake/FindLibVPX.cmake
 new file mode 100644
 index 0000000000000000000000000000000000000000..dd6a53e2d57318489b7e49dd7373706d5d9dc387
@@ -21929,6 +21947,20 @@ index ed6c15ce06c25ef12b165552bd665c5108d209dc..267612eb7239cfa91f0c675ec18d0975
  
              # WebInspectorUI must come after JavaScriptCore and WebCore but before WebKit and WebKit2
              my $webKitIndex = first { $projects[$_] eq "Source/WebKitLegacy" } 0..$#projects;
+diff --git a/Tools/WebKitTestRunner/CMakeLists.txt b/Tools/WebKitTestRunner/CMakeLists.txt
+index 9ee1f886d0148827da93466dece71d1eec5307cc..ee7d59af6b1ea62f6d4a61a19bf60a8f8c2444c5 100644
+--- a/Tools/WebKitTestRunner/CMakeLists.txt
++++ b/Tools/WebKitTestRunner/CMakeLists.txt
+@@ -100,6 +100,9 @@ set(WebKitTestRunnerInjectedBundle_LIBRARIES
+     WebKit::WebCoreTestSupport
+     WebKit::WebKit
+ )
++if (NOT USE_SYSTEM_MALLOC)
++    list(APPEND WebKitTestRunnerInjectedBundle_LIBRARIES bmalloc)
++endif ()
+ 
+ set(WebKitTestRunnerInjectedBundle_IDL_FILES
+     "${WebKitTestRunner_DIR}/InjectedBundle/Bindings/AccessibilityController.idl"
 diff --git a/Tools/WebKitTestRunner/TestController.cpp b/Tools/WebKitTestRunner/TestController.cpp
 index f7fd40ab596fe75ecbf773d94d1e3a09ba313903..19dc94ff4d78afc32766d2ec5d5878aa7bbb8033 100644
 --- a/Tools/WebKitTestRunner/TestController.cpp
