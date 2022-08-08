@@ -1148,6 +1148,32 @@ It is usually possible to distinguish elements by some attribute or text content
 prefer using [text] or [css] selectors over the `:nth-match()`.
 :::
 
+## Parent selector
+
+The parent could be selected with `..`, which is a short form for `xpath=..`.
+
+For example:
+
+```js
+const parentLocator = elementLocator.locator('..');
+```
+
+```java
+Locator parentLocator = elementLocator.locator("..");
+```
+
+```python async
+parent_locator = element_locator.locator('..')
+```
+
+```python sync
+parent_locator = element_locator.locator('..')
+```
+
+```csharp
+var parentLocator = elementLocator.Locator("..");
+```
+
 ## Chaining selectors
 
 Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, the next one is queried relative to the previous one's result.
