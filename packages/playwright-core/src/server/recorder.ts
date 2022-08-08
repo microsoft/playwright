@@ -40,6 +40,7 @@ import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
 import { EventEmitter } from 'events';
 import { raceAgainstTimeout } from '../utils/timeoutRunner';
+import type { LanguageGenerator } from './recorder/language';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -202,6 +203,10 @@ export class Recorder implements InstrumentationListener {
     this._refreshOverlay();
   }
 
+  setOutput(language: string, outputFile: string | undefined) {
+    this._contextRecorder.setOutput(language, outputFile);
+  }
+
   private _refreshOverlay() {
     for (const page of this._context.pages())
       page.mainFrame().evaluateExpression('window.__pw_refreshOverlay()', false, undefined, 'main').catch(() => {});
@@ -310,35 +315,20 @@ class ContextRecorder extends EventEmitter {
   private _context: BrowserContext;
   private _params: channels.BrowserContextRecorderSupplementEnableParams;
   private _recorderSources: Source[];
+  private _throttledOutputFile: ThrottledFile | null = null;
+  private _orderedLanguages: LanguageGenerator[] = [];
 
   constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
     super();
     this._context = context;
     this._params = params;
-    const language = params.language || context._browser.options.sdkLanguage;
-
-    const languages = new Set([
-      new JavaLanguageGenerator(),
-      new JavaScriptLanguageGenerator(false),
-      new JavaScriptLanguageGenerator(true),
-      new PythonLanguageGenerator(false, false),
-      new PythonLanguageGenerator(true, false),
-      new PythonLanguageGenerator(false, true),
-      new CSharpLanguageGenerator(),
-    ]);
-    const primaryLanguage = [...languages].find(l => l.id === language)!;
-    if (!primaryLanguage)
-      throw new Error(`\n===============================\nUnsupported language: '${language}'\n===============================\n`);
-
-    languages.delete(primaryLanguage);
-    const orderedLanguages = [primaryLanguage, ...languages];
-
     this._recorderSources = [];
+    const language = params.language || context._browser.options.sdkLanguage;
+    this.setOutput(language, params.outputFile);
     const generator = new CodeGenerator(context._browser.options.name, params.mode === 'recording', params.launchOptions || {}, params.contextOptions || {}, params.device, params.saveStorage);
-    const throttledOutputFile = params.outputFile ? new ThrottledFile(params.outputFile) : null;
     generator.on('change', () => {
       this._recorderSources = [];
-      for (const languageGenerator of orderedLanguages) {
+      for (const languageGenerator of this._orderedLanguages) {
         const source: Source = {
           isRecorded: true,
           file: languageGenerator.fileName,
@@ -348,23 +338,41 @@ class ContextRecorder extends EventEmitter {
         };
         source.revealLine = source.text.split('\n').length - 1;
         this._recorderSources.push(source);
-        if (languageGenerator === orderedLanguages[0])
-          throttledOutputFile?.setContent(source.text);
+        if (languageGenerator === this._orderedLanguages[0])
+          this._throttledOutputFile?.setContent(source.text);
       }
       this.emit(ContextRecorder.Events.Change, {
         sources: this._recorderSources,
-        primaryFileName: primaryLanguage.fileName
+        primaryFileName: this._orderedLanguages[0].fileName
       });
     });
-    if (throttledOutputFile) {
-      context.on(BrowserContext.Events.BeforeClose, () => {
-        throttledOutputFile.flush();
-      });
-      process.on('exit', () => {
-        throttledOutputFile.flush();
-      });
-    }
+    context.on(BrowserContext.Events.BeforeClose, () => {
+      this._throttledOutputFile?.flush();
+    });
+    process.on('exit', () => {
+      this._throttledOutputFile?.flush();
+    });
     this._generator = generator;
+  }
+
+  setOutput(language: string, outputFile: string | undefined) {
+    const languages = new Set([
+      new JavaLanguageGenerator(),
+      new JavaScriptLanguageGenerator(false),
+      new JavaScriptLanguageGenerator(true),
+      new PythonLanguageGenerator(false, false),
+      new PythonLanguageGenerator(true, false),
+      new PythonLanguageGenerator(false, true),
+      new CSharpLanguageGenerator(),
+    ]);
+    const primaryLanguage = [...languages].find(l => l.id === language);
+    if (!primaryLanguage)
+      throw new Error(`\n===============================\nUnsupported language: '${language}'\n===============================\n`);
+
+    languages.delete(primaryLanguage);
+    this._orderedLanguages = [primaryLanguage, ...languages];
+    this._throttledOutputFile = outputFile ? new ThrottledFile(outputFile) : null;
+    this._generator?.restart();
   }
 
   async install() {
@@ -623,7 +631,7 @@ class ThrottledFile {
   setContent(text: string) {
     this._text = text;
     if (!this._timer)
-      this._timer = setTimeout(() => this.flush(), 1000);
+      this._timer = setTimeout(() => this.flush(), 250);
   }
 
   flush(): void {
