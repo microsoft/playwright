@@ -25,7 +25,7 @@ type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
   closeRecorder: () => Promise<void>;
   openRecorder: () => Promise<Recorder>;
-  runCLI: (args: string[]) => CLIMock;
+  runCLI: (args: string[], options?: { noAutoExit?: boolean }) => CLIMock;
 };
 
 const playwrightToAutomateInspector = require('../../../packages/playwright-core/lib/inProcessFactory').createInProcessPlaywright();
@@ -55,8 +55,8 @@ export const test = contextTest.extend<CLITestArgs>({
     testInfo.skip(mode === 'service');
 
     let cli: CLIMock | undefined;
-    await run(cliArgs => {
-      cli = new CLIMock(childProcess, browserName, channel, headless, cliArgs, launchOptions.executablePath);
+    await run((cliArgs, { noAutoExit } = {}) => {
+      cli = new CLIMock(childProcess, browserName, channel, headless, cliArgs, launchOptions.executablePath, noAutoExit);
       return cli;
     });
     if (cli)
@@ -178,12 +178,12 @@ class Recorder {
 }
 
 class CLIMock {
-  private process: TestChildProcess;
+  process: TestChildProcess;
   private waitForText: string;
   private waitForCallback: () => void;
   exited: Promise<void>;
 
-  constructor(childProcess: CommonFixtures['childProcess'], browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined) {
+  constructor(childProcess: CommonFixtures['childProcess'], browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined, noAutoExit: boolean | undefined) {
     const nodeArgs = [
       'node',
       path.join(__dirname, '..', '..', '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'),
@@ -196,7 +196,8 @@ class CLIMock {
     this.process = childProcess({
       command: nodeArgs,
       env: {
-        PWTEST_CLI_EXIT: '1',
+        PWTEST_CLI_IS_UNDER_TEST: '1',
+        PWTEST_CLI_EXIT: !noAutoExit ? '1' : undefined,
         PWTEST_CLI_HEADLESS: headless ? '1' : undefined,
         PWTEST_CLI_EXECUTABLE_PATH: executablePath,
         DEBUG: (process.env.DEBUG ?? '') + ',pw:browser*',
@@ -225,6 +226,10 @@ class CLIMock {
 
   text() {
     return removeAnsiColors(this.process.output);
+  }
+
+  exit(signal: NodeJS.Signals | number) {
+    this.process.process.kill(signal);
   }
 }
 

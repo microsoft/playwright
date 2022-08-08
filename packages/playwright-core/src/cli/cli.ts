@@ -376,6 +376,7 @@ async function launchContext(options: Options, headless: boolean, executablePath
   const launchOptions: LaunchOptions = { headless, executablePath };
   if (options.channel)
     launchOptions.channel = options.channel as any;
+  launchOptions.handleSIGINT = false;
 
   const contextOptions: BrowserContextOptions =
     // Copy the device descriptor since we have to compare and modify the options.
@@ -522,6 +523,11 @@ async function launchContext(options: Options, headless: boolean, executablePath
       closeBrowser().catch(e => null);
     });
   });
+  process.on('SIGINT', async () => {
+    await closeBrowser();
+    process.exit(130);
+  });
+
   const timeout = options.timeout ? parseInt(options.timeout, 10) : 0;
   context.setDefaultTimeout(timeout);
   context.setDefaultNavigationTimeout(timeout);
@@ -532,6 +538,7 @@ async function launchContext(options: Options, headless: boolean, executablePath
   // Omit options that we add automatically for presentation purpose.
   delete launchOptions.headless;
   delete launchOptions.executablePath;
+  delete launchOptions.handleSIGINT;
   delete contextOptions.deviceScaleFactor;
   return { browser, browserName: browserType.name(), context, contextOptions, launchOptions };
 }
@@ -571,7 +578,8 @@ async function codegen(options: Options, url: string | undefined, language: stri
     device: options.device,
     saveStorage: options.saveStorage,
     mode: 'recording',
-    outputFile: outputFile ? path.resolve(outputFile) : undefined
+    outputFile: outputFile ? path.resolve(outputFile) : undefined,
+    handleSIGINT: false,
   });
   await openPage(context, url);
   if (process.env.PWTEST_CLI_EXIT)
