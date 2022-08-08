@@ -1,11 +1,14 @@
 ---
 id: release-notes
 title: "Release notes"
+toc_max_heading_level: 2
 ---
 
-<!-- TOC -->
-
 ## Version 1.24
+
+<div className="embed-youtube">
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/9F05o1shxcY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ### 🌍 Multiple Web Servers in `playwright.config.ts`
 
