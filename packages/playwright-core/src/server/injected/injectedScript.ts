@@ -668,14 +668,19 @@ export class InjectedScript {
     return 'done';
   }
 
+  private _activelyFocused(node: Node): { activeElement: Element | null, isFocused: boolean } {
+    const activeElement = (node.getRootNode() as (Document | ShadowRoot)).activeElement;
+    const isFocused = activeElement === node && !!node.ownerDocument && node.ownerDocument.hasFocus();
+    return { activeElement, isFocused };
+  }
+
   focusNode(node: Node, resetSelectionIfNotFocused?: boolean): 'error:notconnected' | 'done' {
     if (!node.isConnected)
       return 'error:notconnected';
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Node is not an element');
 
-    const activeElement = (node.getRootNode() as (Document | ShadowRoot)).activeElement;
-    const wasFocused = activeElement === node && node.ownerDocument && node.ownerDocument.hasFocus();
+    const { activeElement, isFocused: wasFocused } = this._activelyFocused(node);
     if ((node as HTMLElement).isContentEditable && !wasFocused && activeElement && (activeElement as HTMLElement | SVGElement).blur) {
       // Workaround the Firefox bug where focusing the element does not switch current
       // contenteditable to the new element. However, blurring the previous one helps.
@@ -1029,8 +1034,7 @@ export class InjectedScript {
       } else if (expression === 'to.be.enabled') {
         elementState = progress.injectedScript.elementState(element, 'enabled');
       } else if (expression === 'to.be.focused') {
-        const activeElement = (element.getRootNode() as (Document | ShadowRoot)).activeElement;
-        elementState = activeElement === element && element.ownerDocument && element.ownerDocument.hasFocus();
+        elementState = this._activelyFocused(element).isFocused;
       } else if (expression === 'to.be.hidden') {
         elementState = progress.injectedScript.elementState(element, 'hidden');
       } else if (expression === 'to.be.visible') {
