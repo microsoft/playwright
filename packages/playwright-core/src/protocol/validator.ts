@@ -772,6 +772,7 @@ scheme.BrowserContextRecorderSupplementEnableParams = tObject({
   device: tOptional(tString),
   saveStorage: tOptional(tString),
   outputFile: tOptional(tString),
+  doNotHandleSIGINT: tOptional(tBoolean),
 });
 scheme.BrowserContextRecorderSupplementEnableResult = tOptional(tObject({}));
 scheme.BrowserContextNewCDPSessionParams = tObject({

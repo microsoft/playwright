@@ -948,6 +948,7 @@ BrowserContext:
         device: string?
         saveStorage: string?
         outputFile: string?
+        doNotHandleSIGINT: boolean?
 
     newCDPSession:
       parameters:

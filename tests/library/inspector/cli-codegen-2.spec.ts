@@ -544,6 +544,20 @@ test.describe('cli codegen', () => {
     expect(fs.existsSync(traceFileName)).toBeTruthy();
   });
 
+  test('should save assets via SIGINT', async ({ runCLI }, testInfo) => {
+    const [traceFileName, storageFileName, harFileName] = [testInfo.outputPath('trace.zip'), testInfo.outputPath('auth.json'), testInfo.outputPath('har.zip')];
+    const cli = runCLI([`--save-trace=${traceFileName}`, `--save-storage=${storageFileName}`, `--save-har=${harFileName}`], {
+      noAutoExit: true,
+    });
+    await cli.waitFor(`import { test, expect } from '@playwright/test'`);
+    cli.exit('SIGINT');
+    const { exitCode } = await cli.process.exited;
+    expect(exitCode).toBe(0);
+    expect(fs.existsSync(traceFileName)).toBeTruthy();
+    expect(fs.existsSync(storageFileName)).toBeTruthy();
+    expect(fs.existsSync(harFileName)).toBeTruthy();
+  });
+
   test('should fill tricky characters', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 
