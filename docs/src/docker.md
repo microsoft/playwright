@@ -145,3 +145,45 @@ The image will be tagged as `playwright:localbuild-focal` and could be run as:
 ```
 docker run --rm -it playwright:localbuild /bin/bash
 ```
+
+## (Experimental) Playwright Test Docker Integration
+* langs: js
+
+Playwright Test now ships an **experimental** docker integration.
+With this integration, **only** browser binaries are running inside a docker container,
+while all the code is still running on the host operating system.
+
+Docker container provides a consistent environment, eliminating browser rendering
+differences across platforms. Playwright Test will automatically proxy host network
+into the container, so browsers can access servers running on the host.
+
+:::note
+Docker integration requires Docker installed & running on your computer.
+See https://docs.docker.com/get-docker/
+:::
+
+Docker integration usage:
+
+1. Build a local docker image that will be used to run containers. This step
+   should be done only once.
+   ```bash js
+   npx playwright docker build
+   ```
+
+2. Run docker container in the background.
+   ```bash js
+   npx playwright docker start
+   ```
+
+3. Run tests inside docker container. Note that this command accepts all the same arguments
+   as a regular `npx playwright test` command.
+   ```bash js
+   npx playwright docker test
+   ```
+
+   Note that this command will detect running docker container, and auto-launch it if needed.
+
+4. Finally, stop docker container when it is no longer needed.
+   ```bash js
+   npx playwright docker stop
+   ```

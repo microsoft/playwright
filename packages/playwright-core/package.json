@@ -20,6 +20,7 @@
     },
     "./cli": "./cli.js",
     "./package.json": "./package.json",
+    "./lib/cli/docker": "./lib/cli/docker.js",
     "./lib/grid/gridServer": "./lib/grid/gridServer.js",
     "./lib/outofprocess": "./lib/outofprocess.js",
     "./lib/utils": "./lib/utils/index.js",

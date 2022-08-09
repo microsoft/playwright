@@ -51,6 +51,7 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserOptions: LaunchOptions;
   _artifactsDir: () => string;
   _snapshotSuffix: string;
+  _isDocker: boolean;
 };
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
@@ -72,7 +73,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
   channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
   launchOptions: [{}, { scope: 'worker', option: true }],
-  connectOptions: [process.env.PW_TEST_CONNECT_WS_ENDPOINT ? { wsEndpoint: process.env.PW_TEST_CONNECT_WS_ENDPOINT } : undefined, { scope: 'worker', option: true }],
+  connectOptions: [process.env.PW_TEST_CONNECT_WS_ENDPOINT ? {
+    wsEndpoint: process.env.PW_TEST_CONNECT_WS_ENDPOINT,
+    headers: process.env.PW_TEST_CONNECT_HEADERS ? JSON.parse(process.env.PW_TEST_CONNECT_HEADERS) : undefined,
+  } : undefined, { scope: 'worker', option: true }],
   screenshot: ['off', { scope: 'worker', option: true }],
   video: ['off', { scope: 'worker', option: true }],
   trace: ['off', { scope: 'worker', option: true }],
@@ -220,7 +224,11 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     });
   },
 
-  _snapshotSuffix: [process.platform, { scope: 'worker' }],
+  _isDocker: [!!process.env.PW_TEST_IS_DOCKER, { scope: 'worker' }],
+
+  _snapshotSuffix: [async ({ _isDocker }, use, testInfo) => {
+    await use(_isDocker ? 'docker' : process.platform);
+  }, { scope: 'worker' }],
 
   _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _browserOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
     testInfo.snapshotSuffix = _snapshotSuffix;
