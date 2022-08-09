@@ -143,6 +143,10 @@ class ProtocolHandler {
       recorder.setHighlightedSelector(params.selector);
   }
 
+  async hideHighlight() {
+    await this._playwright.hideHighlight();
+  }
+
   async kill() {
     selfDestruct();
   }
@@ -176,7 +180,7 @@ async function allRecorders(playwright: Playwright): Promise<Recorder[]> {
   const contexts = new Set<BrowserContext>();
   for (const page of playwright.allPages())
     contexts.add(page.context());
-  const result = await Promise.all([...contexts].map(c => Recorder.show(c, {}, () => Promise.resolve(new InspectingRecorderApp()))));
+  const result = await Promise.all([...contexts].map(c => Recorder.show(c, { omitCallTracking: true }, () => Promise.resolve(new InspectingRecorderApp()))));
   return result.filter(Boolean) as Recorder[];
 }
 

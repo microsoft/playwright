@@ -54,11 +54,11 @@ export class Recorder implements InstrumentationListener {
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _recorderSources: Source[] = [];
   private _userSources = new Map<string, Source>();
-  private _allMetadatas = new Map<string, CallMetadata>();
   private _debugger: Debugger;
   private _contextRecorder: ContextRecorder;
   private _handleSIGINT: boolean | undefined;
   private _recorderAppFactory: (recorder: Recorder) => Promise<IRecorderApp>;
+  private _omitCallTracking = false;
 
   static showInspector(context: BrowserContext) {
     Recorder.show(context, {}).catch(() => {});
@@ -79,6 +79,7 @@ export class Recorder implements InstrumentationListener {
     this._recorderAppFactory = recorderAppFactory;
     this._contextRecorder = new ContextRecorder(context, params);
     this._context = context;
+    this._omitCallTracking = !!params.omitCallTracking;
     this._debugger = Debugger.lookup(context)!;
     this._handleSIGINT = params.handleSIGINT;
     context.instrumentation.addListener(this, context);
@@ -215,10 +216,9 @@ export class Recorder implements InstrumentationListener {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._mode === 'recording')
+    if (this._omitCallTracking || this._mode === 'recording')
       return;
     this._currentCallsMetadata.set(metadata, sdkObject);
-    this._allMetadatas.set(metadata.id, metadata);
     this._updateUserSources();
     this.updateCallLog([metadata]);
     if (metadata.params && metadata.params.selector) {
@@ -228,7 +228,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._mode === 'recording')
+    if (this._omitCallTracking || this._mode === 'recording')
       return;
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
