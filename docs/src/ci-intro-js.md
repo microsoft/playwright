@@ -3,7 +3,7 @@ id: ci-intro
 title: "CI Github Actions"
 ---
 
-When installing Playwright you are given the option to add a GitHub actions. This creates a `playwright.yaml` file inside a `.github/workflows` containing everything you need so that your tests run on each push or pull request.
+When installing Playwright you are given the option to add a GitHub Actions. This creates a `playwright.yml` file inside a `.github/workflows` containing everything you need so that your tests run on each push into the main/master branch and pull request.
 
 **What you will learn:**
 
