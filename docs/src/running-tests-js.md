@@ -82,7 +82,7 @@ Since Playwright runs in Node.js, you can debug it with your debugger of choice 
   npx playwright test example.spec.ts:42 --debug
   ```
 
-<img width="1188" alt="Screenshot 2022-07-29 at 23 50 13" src="https://user-images.githubusercontent.com/13063165/181847661-7ec5fb6c-7c21-4db0-9931-a593b21bafc2.png" />
+<img width="1188" alt="Debugging Tests" src="https://user-images.githubusercontent.com/13063165/181847661-7ec5fb6c-7c21-4db0-9931-a593b21bafc2.png" />
 
 
 Check out our [debugging guide](./debug.md) to learn more about the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
@@ -96,11 +96,11 @@ The [HTML Reporter](./html-reporter.md) shows you a full report of your tests al
 npx playwright show-report
 ```
 
-<img width="739" alt="image" src="https://user-images.githubusercontent.com/13063165/181803518-1f554349-f72a-4ad3-a7aa-4d3d1b4cad13.png" />
+<img width="739" alt="HTML Report > Test Reports view" src="https://user-images.githubusercontent.com/13063165/181803518-1f554349-f72a-4ad3-a7aa-4d3d1b4cad13.png" />
 
 You can click on each test and explore the tests errors as well as each step of the test. 
 
-<img width="739" alt="image" src="https://user-images.githubusercontent.com/13063165/181814327-a597109f-6f24-44a1-b47c-0de9dc7f5912.png" />
+<img width="739" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/181814327-a597109f-6f24-44a1-b47c-0de9dc7f5912.png" />
 
 ## What's Next
 

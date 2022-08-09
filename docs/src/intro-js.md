@@ -88,7 +88,7 @@ Once your test has finished running a [HTML Reporter](./html-reporter.md) will h
 npx playwright show-report
 ```
 
-<img width="739" alt="image" src="https://user-images.githubusercontent.com/13063165/181803518-1f554349-f72a-4ad3-a7aa-4d3d1b4cad13.png" />
+<img width="739" alt="HTML Reporter" src="https://user-images.githubusercontent.com/13063165/181803518-1f554349-f72a-4ad3-a7aa-4d3d1b4cad13.png" />
 
 
 ## What's next
