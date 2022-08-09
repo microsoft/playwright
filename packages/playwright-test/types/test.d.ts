@@ -1901,7 +1901,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
     /**
    * Declares a test group similarly to
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Tests in this group are
-   * maked as "fixme" and will not be executed.
+   * marked as "fixme" and will not be executed.
    *
    * ```js
    * test.describe.fixme('broken tests', () => {
@@ -3563,7 +3563,7 @@ interface LocatorAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
     mask?: Array<Locator>;
@@ -3637,7 +3637,7 @@ interface LocatorAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
     mask?: Array<Locator>;
@@ -3881,7 +3881,7 @@ interface PageAssertions {
     fullPage?: boolean;
 
     /**
-     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
     mask?: Array<Locator>;
@@ -3985,7 +3985,7 @@ interface PageAssertions {
     fullPage?: boolean;
 
     /**
-     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
     mask?: Array<Locator>;

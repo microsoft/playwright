@@ -8532,7 +8532,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     caret?: "hide"|"initial";
 
     /**
-     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
     mask?: Array<Locator>;
@@ -12593,7 +12593,7 @@ export interface APIRequest {
  *
  * **Cookie management**
  *
- * [APIRequestContext] retuned by
+ * [APIRequestContext] returned by
  * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) and
  * [page.request](https://playwright.dev/docs/api/class-page#page-request) shares cookie storage with the corresponding
  * [BrowserContext]. Each API request will have `Cookie` header populated with the values from the browser context. If the
@@ -12601,9 +12601,9 @@ export interface APIRequest {
  * the page will pick them up. This means that if you log in using this API, your e2e test will be logged in and vice
  * versa.
  *
- * If you want API requests to not interfere with the browser cookies you shoud create a new [APIRequestContext] by calling
- * [apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context). Such
- * `APIRequestContext` object will have its own isolated cookie storage.
+ * If you want API requests to not interfere with the browser cookies you should create a new [APIRequestContext] by
+ * calling [apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context).
+ * Such `APIRequestContext` object will have its own isolated cookie storage.
  *
  */
 export interface APIRequestContext {
@@ -13269,7 +13269,7 @@ export interface Browser extends EventEmitter {
   /**
    * Creates a new browser context. It won't share cookies/cache with other browser contexts.
    *
-   * > NOTE: If directly using this method to create [BrowserContext]s, it is best practice to explicilty close the returned
+   * > NOTE: If directly using this method to create [BrowserContext]s, it is best practice to explicitly close the returned
    * context via [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) when
    * your code is done with the [BrowserContext], and before calling
    * [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close). This will ensure the `context` is closed
@@ -15137,7 +15137,7 @@ export interface Response {
   frame(): Frame;
 
   /**
-   * Indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via
+   * Indicates whether this Response was fulfilled by a Service Worker's Fetch Handler (i.e. via
    * [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
    */
   fromServiceWorker(): boolean;
@@ -16531,7 +16531,7 @@ export interface LocatorScreenshotOptions {
   caret?: "hide"|"initial";
 
   /**
-   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
    * `#FF00FF` that completely covers its bounding box.
    */
   mask?: Array<Locator>;
@@ -16716,7 +16716,7 @@ export interface PageScreenshotOptions {
   fullPage?: boolean;
 
   /**
-   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
    * `#FF00FF` that completely covers its bounding box.
    */
   mask?: Array<Locator>;
