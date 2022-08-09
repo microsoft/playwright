@@ -67,9 +67,9 @@ Clicking on the workflow run will show you the all the actions that GitHub perfo
 
 <img width="839" alt="Viewing Test Logs" src="https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png"/>
 
-## HTML Report
+## Playwright Report
 
-The HTML Reporter shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests.
+The Playwright Report shows you a full report of your tests. You can filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests.
 
 ### Downloading the Playwright Report
 
