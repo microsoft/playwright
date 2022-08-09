@@ -100,7 +100,7 @@ npx playwright show-report
 
 You can click on each test and explore the tests errors as well as each step of the test. 
 
-<img width="739" alt="Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/181814327-a597109f-6f24-44a1-b47c-0de9dc7f5912.png" />
+<img width="739" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/181814327-a597109f-6f24-44a1-b47c-0de9dc7f5912.png" />
 
 ## What's Next
 
