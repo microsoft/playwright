@@ -1,8 +1,8 @@
 const { app, protocol } = require('electron');
 const path = require('path');
 
-// PaintHolding - https://crbug.com/1322971
-app.commandLine.appendSwitch('disable-features', 'PaintHolding,AutoExpandDetailsElement');
+app.commandLine.appendSwitch('disable-features', 'AutoExpandDetailsElement');
+app.commandLine.appendSwitch('allow-pre-commit-input')
 
 app.on('window-all-closed', e => e.preventDefault());
 
