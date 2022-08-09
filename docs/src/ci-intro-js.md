@@ -57,15 +57,21 @@ jobs:
 
 ### Opening the Workflows
 
-Click on the **Actions** tab to see the workflows. Here you will see if your tests have passed or failed. You can also click on the [PR status check](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks) or when opening a commit.
+Click on the **Actions** tab to see the workflows. Here you will see if your tests have passed or failed.
 
 <img width="847" alt="Opening the Workflows" src="https://user-images.githubusercontent.com/13063165/183423584-2ea18038-cd49-4daa-a20c-2205352f0933.png"/>
+
+On Pull Requests you also click on the **Details** link in the [PR status check](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks).
+
+<img width="645" alt="pr status checked" src="https://user-images.githubusercontent.com/13063165/183722462-17a985db-0e10-4205-b16c-8aaac36117b9.png" />
 
 ### Viewing Test Logs
 
 Clicking on the workflow run will show you the all the actions that GitHub performed and clicking on **Run Playwright tests** will show the error messages, what was expected and what was received as well as the call log.
 
 <img width="839" alt="Viewing Test Logs" src="https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png"/>
+
+
 
 ## Playwright Report
 
