@@ -330,7 +330,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       (page as any)[screenshottedSymbol] = true;
       const screenshotPath = path.join(_artifactsDir(), createGuid() + '.png');
       temporaryScreenshots.push(screenshotPath);
-      await page.screenshot({ timeout: 5000, path: screenshotPath }).catch(() => {});
+      // Pass caret=initial to avoid any evaluations that might slow down the screenshot
+      // and let the page modify itself from the problematic state it had at the moment of failure.
+      await page.screenshot({ timeout: 5000, path: screenshotPath, caret: 'initial' }).catch(() => {});
     };
 
     const screenshotOnTestFailure = async () => {
@@ -432,7 +434,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
         await Promise.all(context.pages().map(async page => {
           if ((page as any)[screenshottedSymbol])
             return;
-          await page.screenshot({ timeout: 5000, path: addScreenshotAttachment() }).catch(() => {});
+          // Pass caret=initial to avoid any evaluations that might slow down the screenshot
+          // and let the page modify itself from the problematic state it had at the moment of failure.
+          await page.screenshot({ timeout: 5000, path: addScreenshotAttachment(), caret: 'initial' }).catch(() => {});
         }));
       }
     }).concat(leftoverApiRequests.map(async context => {
