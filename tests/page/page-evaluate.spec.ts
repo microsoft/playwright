@@ -136,13 +136,16 @@ it('should work with unicode chars', async ({ page }) => {
 });
 
 it('should work with large strings', async ({ page }) => {
-  expect(await page.evaluate(() => 'x'.repeat(40000))).toBe('x'.repeat(40000));
+  const expected = 'x'.repeat(40000);
+  expect(await page.evaluate(data => data, expected)).toBe(expected);
 });
 
 it('should work with large unicode strings', async ({ page, browserName, platform }) => {
   it.fail(browserName === 'firefox' && platform !== 'linux');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16367' });
-  expect(await page.evaluate(() => '🎭'.repeat(10000))).toBe('🎭'.repeat(10000));
+
+  const expected = '🎭'.repeat(10000);
+  expect(await page.evaluate(data => data, expected)).toBe(expected);
 });
 
 it('should throw when evaluation triggers reload', async ({ page }) => {
