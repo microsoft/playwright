@@ -324,7 +324,7 @@ export class Chromium extends BrowserType {
   }
 }
 
-const DEFAULT_ARGS = [
+export const DEFAULT_ARGS = [
   '--disable-field-trial-config', // https://source.chromium.org/chromium/chromium/src/+/main:testing/variations/README.md
   '--disable-background-networking',
   '--enable-features=NetworkService,NetworkServiceInProcess',
