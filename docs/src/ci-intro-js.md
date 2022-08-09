@@ -10,14 +10,14 @@ When installing Playwright you are given the option to add a [GitHub Actions](ht
 - [How to use GitHub Actions to run your tests](#github-actions)
 - [How to create a repo and push to GitHub](#create-a-repo-and-push-to-github)
 - [How to open the workflows](#opening-the-workflows)
-- [How to view the test Logs](#viewing-test-logs)
-- [How to download the Playwright Report from GitHub](#downloading-the-playwright-report)
-- [How to view the Playwright Report](#viewing-the-playwright-report)
+- [How to view the test logs](#viewing-test-logs)
+- [How to download the report from GitHub](#downloading-the-playwright-report)
+- [How to view the report](#viewing-the-playwright-report)
 - [How to view the trace](#viewing-the-trace)
 
 ## GitHub Actions
 
-Tests will run on push or pull request on branches main or master. The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install Playwright and then run the tests. It will also create the Playwright report.
+Tests will run on push or pull request on branches main or master. The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install Playwright and then run the tests. It will also create the HTML report.
 
 ```yaml
 name: Playwright Tests
@@ -61,7 +61,7 @@ Click on the **Actions** tab to see the workflows. Here you will see if your tes
 
 <img width="847" alt="Opening the Workflows" src="https://user-images.githubusercontent.com/13063165/183423584-2ea18038-cd49-4daa-a20c-2205352f0933.png"/>
 
-On Pull Requests you also click on the **Details** link in the [PR status check](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks).
+On Pull Requests you can also click on the **Details** link in the [PR status check](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks).
 
 <img width="645" alt="pr status checked" src="https://user-images.githubusercontent.com/13063165/183722462-17a985db-0e10-4205-b16c-8aaac36117b9.png" />
 
@@ -73,31 +73,31 @@ Clicking on the workflow run will show you the all the actions that GitHub perfo
 
 
 
-## Playwright Report
+## HTML Report
 
-The Playwright Report shows you a full report of your tests. You can filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests.
+The HTML Report shows you a full report of your tests. You can filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests.
 
-### Downloading the Playwright Report
+### Downloading the HTML Report
 
 In the Artifacts section click on the **playwright-report** to download your report in the format of a zip file.
 
-<img width="972" alt="Downloading the Playwright Report" src="https://user-images.githubusercontent.com/13063165/183437023-524f1803-84e4-4862-9ce3-1d55af0e023e.png" />
+<img width="972" alt="Downloading the HTML Report" src="https://user-images.githubusercontent.com/13063165/183437023-524f1803-84e4-4862-9ce3-1d55af0e023e.png" />
 
-### Viewing the Playwright Report
+### Viewing the HTML Report
 
-To view the Playwright Report you will need to extract the zip, preferably in a folder that already has Playwright installed otherwise you will have to install Playwright in the folder where you extracted the zip. Then use `npx playwright show-report` followed by the name of the extracted folder which by default is called `playwright-report`.
+To view the HTML Report you will need to extract the zip, preferably in a folder that already has Playwright installed otherwise you will have to install Playwright in the folder where you extracted the zip. Then use `npx playwright show-report` followed by the name of the extracted folder.
 
 ```bash	
-npx playwright show-report my-extracted-playwright-report
+npx playwright show-report name-of-my-extracted-playwright-report
 ```
 
-<img width="752" alt="Viewing the Playwright Report" src="https://user-images.githubusercontent.com/13063165/183437645-b47dd175-2e07-4ecc-a469-27d5b150b7ed.png" />
+<img width="752" alt="Viewing the HTML Report" src="https://user-images.githubusercontent.com/13063165/183437645-b47dd175-2e07-4ecc-a469-27d5b150b7ed.png" />
 
 ### Viewing the Trace
 
 Click on the trace icon next to the test's file name to view the trace.
 
-<img width="1909" alt="Deploying the Playwright Report to view the Trace" src="https://user-images.githubusercontent.com/13063165/183438037-01935200-f784-4c80-bbea-bcff8adae078.png" />
+<img width="1909" alt="Deploying the HTML Report to view the Trace" src="https://user-images.githubusercontent.com/13063165/183438037-01935200-f784-4c80-bbea-bcff8adae078.png" />
 
 To learn more about running tests on CI check out our detailed guide on [Continuous Integration](/ci.md)
 
