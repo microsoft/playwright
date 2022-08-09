@@ -8,15 +8,15 @@ toc_max_heading_level: 2
 
 ### VSCode Extension
 
-* Watch your tests running live & keep devtools open
-* Pick selector
-* Record new test from current page state
+* Watch your tests running live & keep devtools open.
+* Pick selector.
+* Record new test from current page state.
 
 ![vscode extension screenshot](https://user-images.githubusercontent.com/746130/183779384-f463bc99-f0d1-494c-be24-994f9fefb8c1.jpg)
 
-### Misc
+### Test Runner
 
-* [`Method: Test.step`] now returns value
+* [`Method: Test.step`] now returns the value of the step function:
 
     ```ts
     test('should work', async ({ page }) => {
@@ -28,15 +28,15 @@ toc_max_heading_level: 2
     });
     ```
 
-* Added [`Method: Test.describe.fixme`]
-* Docker Ubuntu 22.04 Official Image (Jammy Jellyfish)
-* New `'interrupted'` test status
-* Enable tracing via CLI flag: `npx playwright test --trace=on`
+* Added [`Method: Test.describe.fixme`].
+* New `'interrupted'` test status.
+* Enable tracing via CLI flag: `npx playwright test --trace=on`.
 
-### Deprecations
+### Announcements
 
-* Last release with macOS 10.15 support (deprecated as of 1.21)
-* Ubuntu 18 will not be supported as of Dec 2022.
+* 🎁 We now ship Ubuntu 22.04 Jammy Jellyfish docker image: `mcr.microsoft.com/playwright:v1.25.0-jammy`.
+* 🪦 This is the last release with macOS 10.15 support (deprecated as of 1.21).
+* ⚠️ Ubuntu 18 is now deprecated and will not be supported as of Dec 2022.
 
 ### Browser Versions
 
