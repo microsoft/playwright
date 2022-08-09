@@ -96,7 +96,7 @@ The [HTML Reporter](./html-reporter.md) shows you a full report of your tests al
 npx playwright show-report
 ```
 
-<img width="739" alt="Test Reports view" src="https://user-images.githubusercontent.com/13063165/181803518-1f554349-f72a-4ad3-a7aa-4d3d1b4cad13.png" />
+<img width="739" alt="HTML Report > Test Reports view" src="https://user-images.githubusercontent.com/13063165/181803518-1f554349-f72a-4ad3-a7aa-4d3d1b4cad13.png" />
 
 You can click on each test and explore the tests errors as well as each step of the test. 
 
