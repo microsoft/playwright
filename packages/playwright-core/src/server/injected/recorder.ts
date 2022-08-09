@@ -326,7 +326,7 @@ class Recorder {
       if (event.key === 'Insert' && event.shiftKey)
         return false;
     }
-    if (['Shift', 'Control', 'Meta', 'Alt', 'Process'].includes(event.key))
+    if (['Shift', 'Control', 'Meta', 'Alt'].includes(event.key))
       return false;
     const hasModifier = event.ctrlKey || event.altKey || event.metaKey;
     if (event.key.length === 1 && !hasModifier)
