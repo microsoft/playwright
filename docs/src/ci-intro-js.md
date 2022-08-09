@@ -1,6 +1,6 @@
 ---
 id: ci-intro
-title: "Continuous Integration"
+title: "CI Github Actions"
 ---
 
 When installing Playwright you are given the option to add a GitHub actions. This creates a `playwright.yaml` file inside a `.github/workflows` containing everything you need so that your tests run on each push or pull request.
@@ -13,7 +13,7 @@ When installing Playwright you are given the option to add a GitHub actions. Thi
 - [How to view the test Logs](#viewing-test-logs)
 - [How to download the Playwright Report from GitHub](#downloading-the-playwright-report)
 - [How to view the Playwright Report](#viewing-the-playwright-report)
-- [How to view the trace](#deploying-the-playwright-report-to-view-the-trace)
+- [How to view the trace](#viewing-the-trace)
 
 ## GitHub Actions
 
@@ -79,17 +79,21 @@ In the Artifacts section click on the **playwright-report** to download your rep
 
 ### Viewing the Playwright Report
 
-Once you extract the zip double click on the `index.html` file to locally view the Playwright report.
+To view the Playwright Report you will need to extract the zip, preferably in a folder that already has Playwright installed otherwise you will have to install Playwright in the folder where you extracted the zip. Then use `npx playwright show-report` followed by the name of the extracted folder which by default is called `playwright-report`.
+
+```bash	
+npx playwright show-report playwright-report
+```
 
 <img width="752" alt="Viewing the Playwright Report" src="https://user-images.githubusercontent.com/13063165/183437645-b47dd175-2e07-4ecc-a469-27d5b150b7ed.png" />
 
-### Deploying the Playwright Report to view the Trace
+### Viewing the Trace
 
-In order to view Playwright traces you will need a web server as locally the traces will not open. Deploy the extracted zip folder to one of your favorite hosting services to see the deployed Playwright report. Then click on the trace icon to view the trace.
+Click on the trace icon next to the test's file name to view the trace.
 
 <img width="1909" alt="Deploying the Playwright Report to view the Trace" src="https://user-images.githubusercontent.com/13063165/183438037-01935200-f784-4c80-bbea-bcff8adae078.png" />
 
-To learn more check out our detailed guide on [Continuous Integration](/ci.md)
+To learn more about running tests on CI check out our detailed guide on [Continuous Integration](/ci.md)
 
 
 ## What's Next
