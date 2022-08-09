@@ -54,7 +54,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   }, { scope: 'worker' } ],
 
   allowsThirdParty: [async ({ browserName, browserMajorVersion, channel }, run) => {
-    if (browserName === 'firefox' && channel === '')
+    if (browserName === 'firefox' && !channel)
       await run(browserMajorVersion >= 103);
     else if (browserName === 'firefox' && channel === 'firefox-beta')
       await run(browserMajorVersion >= 97 && browserMajorVersion < 103);
