@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+import { stringifySelector } from '../isomorphic/selectorParser';
+import type { ParsedSelector } from '../isomorphic/selectorParser';
+import type { InjectedScript } from './injectedScript';
+
 type HighlightEntry = {
   targetElement: Element,
   highlightElement: HTMLElement,
@@ -29,9 +33,12 @@ export class Highlight {
   private _highlightEntries: HighlightEntry[] = [];
   private _actionPointElement: HTMLElement;
   private _isUnderTest: boolean;
+  private _injectedScript: InjectedScript;
+  private _rafRequest: number | undefined;
 
-  constructor(isUnderTest: boolean) {
-    this._isUnderTest = isUnderTest;
+  constructor(injectedScript: InjectedScript) {
+    this._injectedScript = injectedScript;
+    this._isUnderTest = injectedScript.isUnderTest;
     this._glassPaneElement = document.createElement('x-pw-glass');
     this._glassPaneElement.style.position = 'fixed';
     this._glassPaneElement.style.top = '0';
@@ -95,7 +102,16 @@ export class Highlight {
     document.documentElement.appendChild(this._glassPaneElement);
   }
 
+  runHighlightOnRaf(selector: ParsedSelector) {
+    if (this._rafRequest)
+      cancelAnimationFrame(this._rafRequest);
+    this.updateHighlight(this._injectedScript.querySelectorAll(selector, document.documentElement), stringifySelector(selector), false);
+    this._rafRequest = requestAnimationFrame(() => this.runHighlightOnRaf(selector));
+  }
+
   uninstall() {
+    if (this._rafRequest)
+      cancelAnimationFrame(this._rafRequest);
     this._glassPaneElement.remove();
   }
 

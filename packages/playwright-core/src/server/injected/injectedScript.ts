@@ -956,7 +956,7 @@ export class InjectedScript {
   maskSelectors(selectors: ParsedSelector[]) {
     if (this._highlight)
       this.hideHighlight();
-    this._highlight = new Highlight(this.isUnderTest);
+    this._highlight = new Highlight(this);
     this._highlight.install();
     const elements = [];
     for (const selector of selectors)
@@ -966,17 +966,10 @@ export class InjectedScript {
 
   highlight(selector: ParsedSelector) {
     if (!this._highlight) {
-      this._highlight = new Highlight(this.isUnderTest);
+      this._highlight = new Highlight(this);
       this._highlight.install();
     }
-    this._runHighlightOnRaf(selector);
-  }
-
-  _runHighlightOnRaf(selector: ParsedSelector) {
-    if (!this._highlight)
-      return;
-    this._highlight.updateHighlight(this.querySelectorAll(selector, document.documentElement), stringifySelector(selector), false);
-    requestAnimationFrame(() => this._runHighlightOnRaf(selector));
+    this._highlight.runHighlightOnRaf(selector);
   }
 
   hideHighlight() {

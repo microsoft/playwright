@@ -46,7 +46,7 @@ class Recorder {
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
-    this._highlight = new Highlight(injectedScript.isUnderTest);
+    this._highlight = new Highlight(injectedScript);
 
     this._refreshListenersIfNeeded();
     injectedScript.onGlobalListenersRemoved.add(() => this._refreshListenersIfNeeded());
