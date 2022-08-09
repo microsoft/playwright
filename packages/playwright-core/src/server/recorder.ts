@@ -484,7 +484,6 @@ class ContextRecorder extends EventEmitter {
   }
 
   private async _performAction(frame: Frame, action: actions.Action) {
-
     // Commit last action so that no further signals are added to it.
     this._generator.commitLastAction();
 
