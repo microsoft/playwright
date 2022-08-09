@@ -202,10 +202,8 @@ it('allInnerTexts should work', async ({ page }) => {
   expect(await page.locator('div').allInnerTexts()).toEqual(['A', 'B', 'C']);
 });
 
-it('isVisible and isHidden should work with details', async ({ page, isAndroid, isElectron }) => {
+it('isVisible and isHidden should work with details', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10674' });
-  it.skip(isElectron, 'We don\'t disable the AutoExpandDetailsElement feature on Electron');
-  it.skip(isAndroid, 'We can\'t disable the AutoExpandDetailsElement feature on Android');
   await page.setContent(`<details>
     <summary>click to open</summary>
       <ul>
