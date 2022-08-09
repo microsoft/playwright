@@ -379,6 +379,13 @@ it('should press the meta key', async ({ page, browserName, isMac }) => {
 
 });
 
+it('should work with keyboard events with empty.html', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/empty.html');
+  const lastEvent = await captureLastKeydown(page);
+  await page.keyboard.press('a');
+  expect(await lastEvent.evaluate(l => l.key)).toBe('a');
+});
+
 it('should work after a cross origin navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/empty.html');
   await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
