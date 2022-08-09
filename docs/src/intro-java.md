@@ -59,7 +59,7 @@ public class Example {
     <dependency>
       <groupId>com.microsoft.playwright</groupId>
       <artifactId>playwright</artifactId>
-      <version>1.25.0</version>
+      <version>1.26.0</version>
     </dependency>
   </dependencies>
   <build>
