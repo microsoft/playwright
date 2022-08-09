@@ -269,9 +269,9 @@ test.describe('cli codegen', () => {
     expect(selector).toBe('input[name="name"]');
 
     async function inputText(text: string) {
-      await recorder.page.dispatchEvent(selector, 'keydown', {  key: 'Process' });
+      await recorder.page.dispatchEvent(selector, 'keydown', { key: 'Process' });
       await recorder.page.keyboard.insertText(text);
-      await recorder.page.dispatchEvent(selector, 'keyup',  { key: 'Process' });
+      await recorder.page.dispatchEvent(selector, 'keyup', { key: 'Process' });
     }
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -283,26 +283,25 @@ test.describe('cli codegen', () => {
       })()
     ]);
     expect(sources.get('JavaScript').text).toContain(`
-  // Fill input[name="name"]
-  await page.locator('input[name="name"]').fill('てすと');`);
+   // Fill input[name="name"]
+   await page.locator('input[name="name"]').fill('てすと');`);
     expect(sources.get('Java').text).toContain(`
-      // Fill input[name="name"]
-      page.locator("input[name=\\\"name\\\"]").fill("てすと");`);
+       // Fill input[name="name"]
+       page.locator("input[name=\\\"name\\\"]").fill("てすと");`);
 
     expect(sources.get('Python').text).toContain(`
-    # Fill input[name="name"]
-    page.locator(\"input[name=\\\"name\\\"]\").fill(\"てすと\")`);
+     # Fill input[name="name"]
+     page.locator(\"input[name=\\\"name\\\"]\").fill(\"てすと\")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Fill input[name="name"]
-    await page.locator(\"input[name=\\\"name\\\"]\").fill(\"てすと\")`);
+     # Fill input[name="name"]
+     await page.locator(\"input[name=\\\"name\\\"]\").fill(\"てすと\")`);
 
     expect(sources.get('C#').text).toContain(`
-        // Fill input[name="name"]
-        await page.Locator(\"input[name=\\\"name\\\"]\").FillAsync(\"てすと\");`);
+         // Fill input[name="name"]
+         await page.Locator(\"input[name=\\\"name\\\"]\").FillAsync(\"てすと\");`);
 
     expect(message.text()).toBe('てすと');
-
   });
 
   test('should fill textarea', async ({ page, openRecorder }) => {
