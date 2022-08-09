@@ -3,7 +3,7 @@ id: ci-intro
 title: "CI Github Actions"
 ---
 
-When installing Playwright you are given the option to add a GitHub Actions. This creates a `playwright.yml` file inside a `.github/workflows` containing everything you need so that your tests run on each push into the main/master branch and pull request.
+When installing Playwright you are given the option to add a [GitHub Actions](https://docs.github.com/en/actions). This creates a `playwright.yml` file inside a `.github/workflows` folder containing everything you need so that your tests run on each push and pull request into the main ormaster branch.
 
 **What you will learn:**
 
@@ -17,7 +17,7 @@ When installing Playwright you are given the option to add a GitHub Actions. Thi
 
 ## GitHub Actions
 
-Tests will run on push or pull request on branches main or master. The workflow will install all dependencies, install playwright and then run the tests. It will also create the playwright report.
+Tests will run on push or pull request on branches main or master. The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install playwright and then run the tests. It will also create the playwright report.
 
 ```yaml
 name: Playwright Tests
@@ -51,13 +51,13 @@ jobs:
 
 ### Create a Repo and Push to GitHub
 
-[Create a repo on GitHub](https://docs.github.com/en/get-started/quickstart/create-a-repo) and create a new repository or push an existing repository. Follow the instructions on GitHub and don't forget to initialize a git repository using the `git init` command so you can push your code.
+[Create a repo on GitHub](https://docs.github.com/en/get-started/quickstart/create-a-repo) and create a new repository or push an existing repository. Follow the instructions on GitHub and don't forget to [initialize a git repository](https://github.com/git-guides/git-init) using the `git init` command so you can [add](https://github.com/git-guides/git-add), [commit](https://github.com/git-guides/git-commit) and [push](https://github.com/git-guides/git-push) your code.
 
 <img width="861" alt="Create a Repo and Push to GitHub" src="https://user-images.githubusercontent.com/13063165/183423254-d2735278-a2ab-4d63-bb99-48d8e5e447bc.png"/>
 
 ### Opening the Workflows
 
-Click on the **Actions** tab to see the workflows. Here you will see if your tests have passed or failed.
+Click on the **Actions** tab to see the workflows. Here you will see if your tests have passed or failed. You can also click on the [PR status check](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks) or when opening a commit.
 
 <img width="847" alt="Opening the Workflows" src="https://user-images.githubusercontent.com/13063165/183423584-2ea18038-cd49-4daa-a20c-2205352f0933.png"/>
 
@@ -82,7 +82,7 @@ In the Artifacts section click on the **playwright-report** to download your rep
 To view the Playwright Report you will need to extract the zip, preferably in a folder that already has Playwright installed otherwise you will have to install Playwright in the folder where you extracted the zip. Then use `npx playwright show-report` followed by the name of the extracted folder which by default is called `playwright-report`.
 
 ```bash	
-npx playwright show-report playwright-report
+npx playwright show-report my-extracted-playwright-report
 ```
 
 <img width="752" alt="Viewing the Playwright Report" src="https://user-images.githubusercontent.com/13063165/183437645-b47dd175-2e07-4ecc-a469-27d5b150b7ed.png" />
@@ -98,6 +98,6 @@ To learn more about running tests on CI check out our detailed guide on [Continu
 
 ## What's Next
 
-- [Learn how to write Web First Assertions](/test-assertions.md)
+- [Learn how to use Web First Assertions](/test-assertions.md)
 - [Learn how to use Selectors](/selectors.md)
 - [Learn how to use Locators](/locators.md)
