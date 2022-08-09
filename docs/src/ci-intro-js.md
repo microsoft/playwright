@@ -7,7 +7,7 @@ When installing Playwright you are given the option to add a GitHub Actions. Thi
 
 **What you will learn:**
 
-- [How to use GitHub actions to run your tests](#github-actions)
+- [How to use GitHub Actions to run your tests](#github-actions)
 - [How to create a repo and push to GitHub](#create-a-repo-and-push-to-github)
 - [How to open the workflows](#opening-the-workflows)
 - [How to view the test Logs](#viewing-test-logs)
