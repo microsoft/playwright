@@ -353,7 +353,7 @@ test('runs second', async ({ page }) => {});
 ## method: Test.describe.fixme
 * since: v1.25
 
-Declares a test group similarly to [`method: Test.describe#1`]. Tests in this group are maked as "fixme" and will not be executed.
+Declares a test group similarly to [`method: Test.describe#1`]. Tests in this group are marked as "fixme" and will not be executed.
 
 ```js tab=js-js
 test.describe.fixme('broken tests', () => {

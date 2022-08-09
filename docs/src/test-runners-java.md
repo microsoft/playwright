@@ -94,7 +94,7 @@ instance per thread and use it on that thread exclusively. Here is an example ho
 
 Use [`@TestInstance(TestInstance.Lifecycle.PER_CLASS)`](https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/TestInstance.html)
 annotation to make JUnit create one instance of a class for all test methods within that class (by default each JUnit will create a new instance of the class
-for each test method). Store [Playwright] and [Browser] objects in instance fields. They will be shared between tests. Each instace of the class will use its
+for each test method). Store [Playwright] and [Browser] objects in instance fields. They will be shared between tests. Each instance of the class will use its
 own copy of Playwright.
 
 

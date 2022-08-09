@@ -10,13 +10,13 @@ It is also possible to create a new APIRequestContext instance manually by calli
 
 **Cookie management**
 
-[APIRequestContext] retuned by [`property: BrowserContext.request`] and [`property: Page.request`] shares cookie
+[APIRequestContext] returned by [`property: BrowserContext.request`] and [`property: Page.request`] shares cookie
 storage with the corresponding [BrowserContext]. Each API request will have `Cookie` header populated with the
 values from the browser context. If the API response contains `Set-Cookie` header it will automatically update
 [BrowserContext] cookies and requests made from the page will pick them up. This means that if you log in using
 this API, your e2e test will be logged in and vice versa.
 
-If you want API requests to not interfere with the browser cookies you shoud create a new [APIRequestContext] by
+If you want API requests to not interfere with the browser cookies you should create a new [APIRequestContext] by
 calling [`method: APIRequest.newContext`]. Such `APIRequestContext` object will have its own isolated cookie
 storage.
 
@@ -32,7 +32,7 @@ API_TOKEN = os.getenv("GITHUB_API_TOKEN")
 async def run(playwright: Playwright):
     # This will launch a new browser, create a context and page. When making HTTP
     # requests with the internal APIRequestContext (e.g. `context.request` or `page.request`)
-    # it will automatically set the cookies to the browser page and vise versa.
+    # it will automatically set the cookies to the browser page and vice versa.
     browser = await playwright.chromium.launch()
     context = await browser.new_context(base_url="https://api.github.com")
     api_request_context = context.request
@@ -84,7 +84,7 @@ API_TOKEN = os.getenv("GITHUB_API_TOKEN")
 with sync_playwright() as p:
     # This will launch a new browser, create a context and page. When making HTTP
     # requests with the internal APIRequestContext (e.g. `context.request` or `page.request`)
-    # it will automatically set the cookies to the browser page and vise versa.
+    # it will automatically set the cookies to the browser page and vice versa.
     browser = p.chromium.launch()
     context = browser.new_context(base_url="https://api.github.com")
     api_request_context = context.request
