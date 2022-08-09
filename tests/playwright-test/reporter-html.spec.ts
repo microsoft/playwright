@@ -493,7 +493,7 @@ test('should warn user when viewing via file:// protocol', async ({ runInlineTes
     await showReport();
     await page.locator('[title="View trace"]').click();
     await expect(page.locator('body')).toContainText('Action does not have snapshots', { useInnerText: true });
-    await expect(page.locator('dialog')).not.toBeVisible();
+    await expect(page.locator('dialog')).toBeHidden();
   });
 
   await test.step('view via local file://', async () => {
