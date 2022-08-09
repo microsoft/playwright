@@ -252,8 +252,8 @@ export interface PlaywrightTestArgs {
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 
-import type * as expectType from '@playwright/test/types/expect-types';
-import type { Suite } from '@playwright/test/types/testReporter';
+import type * as expectType from './expect-types';
+import type { Suite } from './testReporter';
 
 type AsymmetricMatcher = Record<string, any>;
 
