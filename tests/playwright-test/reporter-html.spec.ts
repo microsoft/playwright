@@ -16,6 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import url from 'url';
 import { test as baseTest, expect, createImage, stripAnsi } from './playwright-test-fixtures';
 import type { HttpServer } from '../../packages/playwright-core/lib/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
@@ -471,6 +472,37 @@ test('should show multi trace source', async ({ runInlineTest, page, server, sho
   await page.click('.action-title >> text=apiRequestContext.get');
   await page.click('text=Source');
   await expect(page.locator('.source-line-running')).toContainText('request.get');
+});
+
+test('should warn user when viewing via file:// protocol', async ({ runInlineTest, page, showReport }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('passes', async ({ page }) => {
+        await page.evaluate('2 + 2');
+      });
+    `,
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+
+  await test.step('view via server', async () => {
+    await showReport();
+    await page.locator('[title="View trace"]').click();
+    await expect(page.locator('body')).toContainText('Action does not have snapshots', { useInnerText: true });
+    await expect(page.locator('dialog')).toBeHidden();
+  });
+
+  await test.step('view via local file://', async () => {
+    const reportFolder = testInfo.outputPath('playwright-report');
+    await page.goto(url.pathToFileURL(path.join(reportFolder, 'index.html')).toString());
+    await page.locator('[title="View trace"]').click();
+    await expect(page.locator('dialog')).toBeVisible();
+    await expect(page.locator('dialog')).toContainText('must be loaded over');
+  });
 });
 
 test('should show timed out steps and hooks', async ({ runInlineTest, page, showReport }) => {
