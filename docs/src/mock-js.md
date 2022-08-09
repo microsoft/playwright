@@ -111,7 +111,7 @@ would. The following test demonstrates how to achieve that:
 ```js
 test('update battery status (no golden)', async ({ page }) => {
   await page.addInitScript(() => {
-    // Mock class that will notify corresponding listners when battery status changes.
+    // Mock class that will notify corresponding listeners when battery status changes.
     class BatteryMock {
       level = 0.10;
       charging = false;

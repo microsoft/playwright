@@ -74,7 +74,7 @@ Query Playwright element using the actual Playwright query engine, for example:
 Highlight the first occurrence of the locator:
 
 ```txt
-> playwright.hightlight('.auth-form');
+> playwright.highlight('.auth-form');
 ```
 
 ### playwright.clear()

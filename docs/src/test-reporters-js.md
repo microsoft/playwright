@@ -391,7 +391,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-The JUnit reporter provides support for embedding additional information on the `testcase` elements using inner `properties`. This is based on an [evolved JUnit XML format](https://docs.getxray.app/display/XRAYCLOUD/Taking+advantage+of+JUnit+XML+reports) from Xray Test Management, but can also be used by other tools if they support this way of embedding additonal information for test results; please check it first.
+The JUnit reporter provides support for embedding additional information on the `testcase` elements using inner `properties`. This is based on an [evolved JUnit XML format](https://docs.getxray.app/display/XRAYCLOUD/Taking+advantage+of+JUnit+XML+reports) from Xray Test Management, but can also be used by other tools if they support this way of embedding additional information for test results; please check it first.
 
 In configuration file, a set of options can be used to configure this behavior. A full example, in this case for Xray, follows ahead.
 
@@ -483,7 +483,7 @@ test('using specific annotations for passing test metadata to Xray', async ({}, 
 
 Please note that the semantics of these properties will depend on the tool that will process this evoled report format; there are no standard property names/annotations.
 
-If the configuration option `embedAttachmentsAsProperty` is defined, then a `property` with its name is created. Attachments, including their contents, will be embeded on the JUnit XML report inside `<item>` elements under this `property`. Attachments are obtained from the `TestInfo` object, using either a path or a body, and are added as base64 encoded content.
+If the configuration option `embedAttachmentsAsProperty` is defined, then a `property` with its name is created. Attachments, including their contents, will be embedded on the JUnit XML report inside `<item>` elements under this `property`. Attachments are obtained from the `TestInfo` object, using either a path or a body, and are added as base64 encoded content.
 Embedding attachments can be used to attach screenshots or any other relevant evidence; nevertheless, use it wisely as it affects the report size.
 
 The following configuration sample enables embedding attachments by using the `testrun_evidence` element on the JUnit XML report:
