@@ -560,6 +560,8 @@ page.
 * langs: csharp, js, python
 - type: <[Accessibility]>
 
+**DEPRECATED** This property is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
+
 ## async method: Page.addInitScript
 * since: v1.8
 
