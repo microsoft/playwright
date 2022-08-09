@@ -17,7 +17,7 @@ When installing Playwright you are given the option to add a [GitHub Actions](ht
 
 ## GitHub Actions
 
-Tests will run on push or pull request on branches main or master. The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install playwright and then run the tests. It will also create the playwright report.
+Tests will run on push or pull request on branches main or master. The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install Playwright and then run the tests. It will also create the Playwright report.
 
 ```yaml
 name: Playwright Tests
