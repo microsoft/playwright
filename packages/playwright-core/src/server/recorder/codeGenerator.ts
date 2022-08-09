@@ -33,14 +33,14 @@ export class CodeGenerator extends EventEmitter {
   private _enabled: boolean;
   private _options: LanguageGeneratorOptions;
 
-  constructor(browserName: string, generateHeaders: boolean, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, deviceName: string | undefined, saveStorage: string | undefined) {
+  constructor(browserName: string, enabled: boolean, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, deviceName: string | undefined, saveStorage: string | undefined) {
     super();
 
     // Make a copy of options to modify them later.
     launchOptions = { headless: false, ...launchOptions };
     contextOptions = { ...contextOptions };
-    this._enabled = generateHeaders;
-    this._options = { browserName, generateHeaders, launchOptions, contextOptions, deviceName, saveStorage };
+    this._enabled = enabled;
+    this._options = { browserName, launchOptions, contextOptions, deviceName, saveStorage };
     this.restart();
   }
 
@@ -160,15 +160,13 @@ export class CodeGenerator extends EventEmitter {
 
   generateText(languageGenerator: LanguageGenerator) {
     const text = [];
-    if (this._options.generateHeaders)
-      text.push(languageGenerator.generateHeader(this._options));
+    text.push(languageGenerator.generateHeader(this._options));
     for (const action of this._actions) {
       const actionText = languageGenerator.generateAction(action);
       if (actionText)
         text.push(actionText);
     }
-    if (this._options.generateHeaders)
-      text.push(languageGenerator.generateFooter(this._options.saveStorage));
+    text.push(languageGenerator.generateFooter(this._options.saveStorage));
     return text.join('\n');
   }
 }
