@@ -92,6 +92,19 @@ class ProtocolHandler {
     this._playwright = playwright;
   }
 
+  async resetForReuse() {
+    const contexts = new Set<BrowserContext>();
+    for (const page of this._playwright.allPages())
+      contexts.add(page.context());
+    for (const context of contexts)
+      await context.resetForReuse(internalMetadata, null);
+  }
+
+  async navigate(params: { url: string }) {
+    for (const p of this._playwright.allPages())
+      await p.mainFrame().goto(internalMetadata, params.url);
+  }
+
   async setMode(params: { mode: Mode, language?: string, file?: string }) {
     await gc(this._playwright);
 

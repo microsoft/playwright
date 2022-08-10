@@ -157,12 +157,14 @@ export abstract class BrowserContext extends SdkObject {
     return JSON.stringify(paramsCopy);
   }
 
-  async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams) {
+  async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams | null) {
     this.setDefaultNavigationTimeout(undefined);
     this.setDefaultTimeout(undefined);
 
-    for (const key of paramsThatAllowContextReuse)
-      (this._options as any)[key] = params[key];
+    if (params) {
+      for (const key of paramsThatAllowContextReuse)
+        (this._options as any)[key] = params[key];
+    }
 
     await this._cancelAllRoutesInFlight();
 
