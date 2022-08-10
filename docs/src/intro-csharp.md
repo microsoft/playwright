@@ -194,5 +194,5 @@ See our doc on [Test Runners](./test-runners.md) to learn more about running tes
 - [Run single tests, multiple tests, headed mode](./running-tests.md)
 - [Learn more about the NUnit and MSTest base classes](./test-runners.md)
 - [Generate tests with Codegen](./codegen.md)
-- [See a trace of your tests](./trace-viewer.md)
+- [See a trace of your tests](./trace-viewer-intro.md)
 - [Using Playwright as library](./library.md)

@@ -93,4 +93,4 @@ As you interact with the page Codegen will generate the test for you in the newl
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [See test reports](./running-tests.md#test-reports)
-- [See a trace of your tests](./trace-viewer.md)
+- [See a trace of your tests](./trace-viewer-intro.md)
