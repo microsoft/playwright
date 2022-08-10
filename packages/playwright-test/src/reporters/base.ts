@@ -143,9 +143,9 @@ export class BaseReporter implements ReporterInternal  {
         tokens.push(colors.red(formatTestHeader(this.config, test, '    ')));
     }
     if (interrupted.length) {
-      tokens.push(colors.red(`  ${interrupted.length} interrupted`));
+      tokens.push(colors.yellow(`  ${interrupted.length} interrupted`));
       for (const test of interrupted)
-        tokens.push(colors.red(formatTestHeader(this.config, test, '    ')));
+        tokens.push(colors.yellow(formatTestHeader(this.config, test, '    ')));
     }
     if (flaky.length) {
       tokens.push(colors.yellow(`  ${flaky.length} flaky`));
