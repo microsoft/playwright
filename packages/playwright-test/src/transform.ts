@@ -100,7 +100,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
   if (!isTypeScript)
     return;
   const tsconfig = loadAndValidateTsconfigForFile(filename);
-  if (tsconfig) {
+  if (tsconfig && !isRelativeSpecifier(specifier)) {
     let longestPrefixLength = -1;
     let pathMatchedByLongestPrefix: string | undefined;
 
@@ -257,4 +257,8 @@ export function belongsToNodeModules(file: string) {
   if (file.startsWith(kPlaywrightCoveragePrefix))
     return true;
   return false;
+}
+
+function isRelativeSpecifier(specifier: string) {
+  return specifier === '.' || specifier === '..' || specifier.startsWith('./') || specifier.startsWith('../');
 }
