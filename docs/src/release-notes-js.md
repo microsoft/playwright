@@ -16,7 +16,7 @@ toc_max_heading_level: 2
 
 ### Test Runner
 
-* [`Method: Test.step`] now returns the value of the step function:
+* [`method: Test.step`] now returns the value of the step function:
 
     ```ts
     test('should work', async ({ page }) => {
@@ -28,7 +28,7 @@ toc_max_heading_level: 2
     });
     ```
 
-* Added [`Method: Test.describe.fixme`].
+* Added [`method: Test.describe.fixme`].
 * New `'interrupted'` test status.
 * Enable tracing via CLI flag: `npx playwright test --trace=on`.
 
