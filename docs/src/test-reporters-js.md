@@ -651,3 +651,4 @@ export default config;
 
 * [Allure](https://www.npmjs.com/package/allure-playwright)
 * [Tesults](https://www.tesults.com/docs/playwright)
+* [Monocart Reporter](https://github.com/cenfun/monocart-reporter)
