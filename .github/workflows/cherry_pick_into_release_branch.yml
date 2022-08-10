@@ -56,16 +56,18 @@ jobs:
         git checkout -b "$BRANCH_NAME"
         git push origin $BRANCH_NAME
     - name: Create Pull Request
-      uses: actions/github-script@v4
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}
         script: |
+          const readableCommitHashesList = '${{ github.event.inputs.commit_hashes }}'.split(',').map(hash => `- ${hash}`).join('\n');
           const response = await github.pulls.create({
             owner: 'microsoft',
             repo: 'playwright',
             head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
             base: 'main',
             title: '${{ steps.prepare-branch.outputs.PR_TITLE }}',
+            body: `This PR cherry-picks the following commits:\n\n${readableCommitHashesList}`,
           });
           await github.issues.addLabels({
             owner: 'microsoft',
