@@ -94,7 +94,7 @@ npx playwright show-report name-of-my-extracted-playwright-report
 
 <img width="752" alt="Viewing the HTML Report" src="https://user-images.githubusercontent.com/13063165/183437645-b47dd175-2e07-4ecc-a469-27d5b150b7ed.png" />
 
-To learn more about reports check out our detailed guide on [HTML Reporter](/test-reporter.md#html-reporter)
+To learn more about reports check out our detailed guide on [HTML Reporter](/test-reporters.md#html-reporter)
 
 ### Viewing the Trace
 
