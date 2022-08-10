@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
@@ -374,4 +375,144 @@ test('should reasonably work in global setup', async ({ runInlineTest }) => {
 
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toContain('> 11 |         expect(1).toBe(2);');
+});
+
+test('should support toHaveURL with baseURL from webServer', async ({ runInlineTest }, testInfo) => {
+  const port = testInfo.workerIndex + 10500;
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.goto('/foobar');
+        await expect(page).toHaveURL('/foobar');
+        await expect(page).toHaveURL('http://localhost:${port}/foobar');
+      });
+
+      test('fail', async ({ page }) => {
+        await page.goto('/foobar');
+        await expect(page).toHaveURL('/kek', { timeout: 1000 });
+      });
+      `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port}',
+          port: ${port},
+        },
+      };
+  `,
+  }, { workers: 1 });
+  const output = stripAnsi(result.output);
+  expect(output).toContain('expect(page).toHaveURL');
+  expect(output).toContain(`Expected string: \"http://localhost:${port}/kek\"`);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+});
+
+test('should respect expect.timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `module.exports = { expect: { timeout: 1000 } }`,
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('timeout', async ({ page }) => {
+        await page.goto('data:text/html,<div>A</div>');
+        await Promise.all([
+          expect(page).toHaveURL('data:text/html,<div>B</div>'),
+          new Promise(f => setTimeout(f, 2000)).then(() => expect(true).toBe(false))
+        ]);
+      });
+      `,
+  }, { workers: 1 });
+  const output = stripAnsi(result.output);
+  expect(output).toContain('expect(received).toHaveURL(expected)');
+  expect(output).toContain('expect.toHaveURL with timeout 1000ms');
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+});
+
+test('should log scale the time', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent('<div id=div>Wrong</div>');
+        await expect(page.locator('div')).toHaveText('Text', { timeout: 2000 });
+      });
+      `,
+  }, { workers: 1 });
+  const output = stripAnsi(result.output);
+  const tokens = output.split('unexpected value');
+  // Log scale: 0, 100, 250, 500, 1000, 1000, should be less than 8.
+  expect(tokens.length).toBeGreaterThan(1);
+  expect(tokens.length).toBeLessThan(8);
+  expect(result.passed).toBe(0);
+  expect(result.exitCode).toBe(1);
+});
+
+
+test('should print expected/received before timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('times out waiting for text', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        await expect(page.locator('#node')).toHaveText('Text 2');
+      });
+      `,
+  }, { workers: 1, timeout: 2000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Test timeout of 2000ms exceeded.');
+  expect(stripAnsi(result.output)).toContain('Expected string: "Text 2"');
+  expect(stripAnsi(result.output)).toContain('Received string: "Text content"');
+});
+
+test('should print pending operations for toHaveText', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('fail', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        await expect(page.locator('no-such-thing')).toHaveText('Text');
+      });
+      `,
+  }, { workers: 1, timeout: 2000 });
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+  const output = stripAnsi(result.output);
+  expect(output).toContain('Pending operations:');
+  expect(output).toContain('Error: expect(received).toHaveText(expected)');
+  expect(output).toContain('Expected string: "Text"');
+  expect(output).toContain('Received string: ""');
+  expect(output).toContain('waiting for selector "no-such-thing"');
+});
+
+test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('times out waiting for text', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        const promise = expect(page.locator('#node')).toHaveText('Text 2');
+        await new Promise(f => setTimeout(f, 500));
+        console.log('\\n%%SEND-SIGINT%%');
+        await promise;
+      });
+      `,
+  }, { workers: 1 }, {}, { sendSIGINTAfter: 1 });
+  expect(result.exitCode).toBe(130);
+  expect(result.passed).toBe(0);
+  expect(result.interrupted).toBe(1);
+  expect(stripAnsi(result.output)).toContain('Expected string: "Text 2"');
+  expect(stripAnsi(result.output)).toContain('Received string: "Text content"');
 });
