@@ -58,7 +58,7 @@ export class HttpServer {
       this._activeSockets.add(socket);
       socket.once('close', () => this._activeSockets.delete(socket));
     });
-    this._server.listen(port, '127.0.0.1');
+    this._server.listen(port, 'localhost');
     await new Promise(cb => this._server!.once('listening', cb));
     const address = this._server.address();
     assert(address, 'Could not bind server socket');
@@ -67,7 +67,7 @@ export class HttpServer {
         this._urlPrefix = address;
       } else {
         this._port = address.port;
-        this._urlPrefix = `http://127.0.0.1:${address.port}`;
+        this._urlPrefix = `http://localhost:${address.port}`;
       }
     }
     return this._urlPrefix;
