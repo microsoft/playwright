@@ -12,7 +12,7 @@ Playwright Trace Viewer is a GUI tool that lets you explore recorded Playwright 
 - [How to open and view the trace](/trace-viewer-intro.md#viewing-the-trace)
 
 
-## Recording a trace
+## Recording a Trace
 
 By default the [playwright.config](/test-configuration.md#record-test-trace) file will contain the configuration needed to create a `trace.zip` file for each test. Traces are setup to run `on-first-retry` meaning they will be run on the first retry of a failed test. Also `retires` are set to 2 when running on CI and 0 locally. This means the traces will be recorded on the first retry of a failed test but not on the first run and not on the second retry.
 
@@ -51,7 +51,11 @@ Traces are normally run in a Continuous Integration(CI) environment as locally y
 npx playwright test --trace on
 ```
 
-## Opening the HTML report
+:::note 
+The `trace-on` flag was introduced in Playwright v1.25. Check your `package.json` to sure you have at least this version of Playwright installed.
+:::
+
+## Opening the HTML Report
 
 If you have a failed test then tests will run a total of 3 times. On the first retry the trace will be recorded. After the second retry the tests will stop running and a HTML report is available to view.
 
@@ -68,7 +72,9 @@ You can also click on the test file and then click the 'Retry #1' tab which will
 <img width="749" alt="image" src="https://user-images.githubusercontent.com/13063165/183130559-16a83a39-2f1d-4560-850c-d025fad789b3.png" />
 
 
-## Viewing the trace
+To learn more about reporters check out our detailed guide on reporters including the [HTML Reporter](/test-reporters.md#html-reporter).
+
+## Viewing the Trace
 
 View traces of your test by clicking through each action or hovering using the timeline and see the state of the page before and after the action. Inspect the log, source and network during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it, open devtools etc.
 
@@ -78,6 +84,6 @@ View traces of your test by clicking through each action or hovering using the t
 
 
 
-To learn more check out our detailed guide on [Trace Viewer](/trace-viewer.md).
+To learn more about traces check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 
 
