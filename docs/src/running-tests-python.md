@@ -83,4 +83,4 @@ Check out our [debugging guide](./debug.md) to learn more about the [Playwright 
 ## What's Next
 
 - [Generate tests with Codegen](./codegen.md)
-- [See a trace of your tests](./trace-viewer.md)
+- [See a trace of your tests](./trace-viewer-intro.md)

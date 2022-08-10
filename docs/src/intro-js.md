@@ -82,7 +82,7 @@ See our doc on [Running Tests](./running-tests.md) to learn more about running t
 
 ## HTML Test Reports
 
-Once your test has finished running a [HTML Reporter](./html-reporter.md) will have been created which shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. You can click on each test and explore the test's errors as well as each step of the test. By default, the HTML report is opened automatically if some of the tests failed.
+Once your test has finished running a [HTML Reporter](./test-reporters.md#html-reporter) will have been created which shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. You can click on each test and explore the test's errors as well as each step of the test. By default, the HTML report is opened automatically if some of the tests failed.
 
 ```bash
 npx playwright show-report
@@ -96,4 +96,4 @@ npx playwright show-report
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [Run single tests, multiple tests, headed mode](./running-tests.md)
 - [Generate tests with Codegen](./codegen.md)
-- [See a trace of your tests](./trace-viewer.md)
+- [See a trace of your tests](./trace-viewer-intro.md)

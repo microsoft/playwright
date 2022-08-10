@@ -90,7 +90,7 @@ Check out our [debugging guide](./debug.md) to learn more about the [Playwright 
 
 ## Test Reports
 
-The [HTML Reporter](./html-reporter.md) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. By default, the HTML report is opened automatically if some of the tests failed.
+The [HTML Reporter](././test-reporters.md#html-reporter) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. By default, the HTML report is opened automatically if some of the tests failed.
 
 ```bash
 npx playwright show-report
@@ -105,4 +105,4 @@ You can click on each test and explore the tests errors as well as each step of 
 ## What's Next
 
 - [Generate tests with Codegen](./codegen.md)
-- [See a trace of your tests](./trace-viewer.md)
+- [See a trace of your tests](./trace-viewer-intro.md)

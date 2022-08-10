@@ -52,13 +52,14 @@ await page.goto('https://playwright.dev');
 await context.tracing.stop({ path: 'trace.zip' });
 ```
 
-You can also use `trace: 'retain-on-failure'` if you do not enable retries but still want traces for failed tests.
-
 Available options to record a trace:
-- `'off'` - Do not record a trace.
-- `'on'` - Record a trace for each test.
-- `'retain-on-failure'` - Record a trace for each test, but remove it from successful test runs.
 - `'on-first-retry'` - Record a trace only when retrying a test for the first time.
+- `'off'` - Do not record a trace.
+- `'on'` - Record a trace for each test. (not recommended as it's performance heavy)
+- `'retain-on-failure'` - Record a trace for each test, but remove it from successful test runs.
+
+
+You can also use `trace: 'retain-on-failure'` if you do not enable retries but still want traces for failed tests.
 
 If you are not using Playwright Test, use the [`property: BrowserContext.tracing`] API instead.
 
