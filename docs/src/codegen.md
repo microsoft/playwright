@@ -5,16 +5,6 @@ title: "Test Generator"
 
 Playwright comes with the ability to generate tests out of the box and is a great way to quickly get started with testing. It will open two windows, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests, copy the tests, clear your tests as well as change the language of your tests.
 
-**You will learn**
-
-- [How to generate tests with Codegen](/codegen.md#running-codegen)
-- [How to emulate viewport size](/codegen.md#emulate-viewport-size)
-- [How to emulate devices](/codegen.md#emulate-devices)
-- [How to emulate color scheme](/codegen.md#emulate-color-scheme)
-- [How to emulate geolocation, language and timezone](/codegen.md#emulate-geolocation-language-and-timezone)
-- [How to preserve authenticated state](/codegen.md#preserve-authenticated-state)
-- [How to record using a custom setup](/codegen.md#record-using-custom-setup)
-
 ## Running Codegen
 
 ```bash js
@@ -285,7 +275,3 @@ await context.RouteAsync('**/*', route => route.ContinueAsync());
 var page = await context.NewPageAsync();
 await page.PauseAsync();
 ```
-
-## What's Next
-
-- [See a trace of your tests](./trace-viewer.md)
