@@ -4,6 +4,52 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.25
+
+### VSCode Extension
+
+* Watch your tests running live & keep devtools open.
+* Pick selector.
+* Record new test from current page state.
+
+![vscode extension screenshot](https://user-images.githubusercontent.com/746130/183781999-1b9fdbc5-cfae-47d6-b4f7-5d4ae89716a8.jpg)
+
+### Test Runner
+
+* [`method: Test.step`] now returns the value of the step function:
+
+    ```ts
+    test('should work', async ({ page }) => {
+        const pageTitle = await test.step('get title', async () => {
+            await page.goto('https://playwright.dev');
+            return await page.title();
+        });
+        console.log(pageTitle);
+    });
+    ```
+
+* Added [`method: Test.describe.fixme`].
+* New `'interrupted'` test status.
+* Enable tracing via CLI flag: `npx playwright test --trace=on`.
+
+### Announcements
+
+* 🎁 We now ship Ubuntu 22.04 Jammy Jellyfish docker image: `mcr.microsoft.com/playwright:v1.25.0-jammy`.
+* 🪦 This is the last release with macOS 10.15 support (deprecated as of 1.21).
+* ⚠️ Ubuntu 18 is now deprecated and will not be supported as of Dec 2022.
+
+### Browser Versions
+
+* Chromium 105.0.5195.19
+* Mozilla Firefox 103.0
+* WebKit 16.0
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 104
+* Microsoft Edge 104
+
+
 ## Version 1.24
 
 <div className="embed-youtube">
