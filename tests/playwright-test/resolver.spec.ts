@@ -298,8 +298,8 @@ test('should not use baseurl for relative imports', async ({ runInlineTest }) =>
 });
 
 test('should not use baseurl for relative imports when dir with same name exists', async ({ runInlineTest }) => {
-  test.fail();
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15891' });
+
   const result = await runInlineTest({
     'frontend/tsconfig.json': `{
       "compilerOptions": {
@@ -309,15 +309,31 @@ test('should not use baseurl for relative imports when dir with same name exists
     'frontend/src/utils/foo.js': `
       export const foo = -1;
     `,
+    'frontend/src/index.js': `
+      export const index = -1;
+    `,
+    'frontend/src/.bar.js': `
+      export const bar = 42;
+    `,
     'frontend/playwright/tests/utils.ts': `
       export const foo = 42;
     `,
+    'frontend/playwright/tests/index.js': `
+      export const index = 42;
+    `,
     'frontend/playwright/tests/forms_cms_standard.spec.ts': `
-      // This relative import should not use baseUrl
+      // These relative imports should not use baseUrl
       import { foo } from './utils';
+      import { index } from '.';
+
+      // This absolute import should use baseUrl
+      import { bar } from '.bar';
+
       const { test } = pwt;
       test('test', ({}, testInfo) => {
         expect(foo).toBe(42);
+        expect(index).toBe(42);
+        expect(bar).toBe(42);
       });
     `,
   });
@@ -325,4 +341,5 @@ test('should not use baseurl for relative imports when dir with same name exists
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output).not.toContain(`Could not`);
+  expect(result.output).not.toContain(`Cannot`);
 });
