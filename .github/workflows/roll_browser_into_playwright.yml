@@ -36,7 +36,7 @@ jobs:
     - name: Create Pull Request
       uses: actions/github-script@v4
       with:
-        github-token: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}
+        github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
         script: |
           const response = await github.pulls.create({
             owner: 'microsoft',

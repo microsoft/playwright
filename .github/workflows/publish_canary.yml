@@ -78,9 +78,9 @@ jobs:
       run: bash utils/build/deploy-trace-viewer.sh --canary
       if: contains(github.ref, 'main')
       env:
-        GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
     - name: Deploy BETA
       run: bash utils/build/deploy-trace-viewer.sh --beta
       if: contains(github.ref, 'release')
       env:
-        GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
