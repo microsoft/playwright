@@ -2509,6 +2509,20 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * The method returns value retuned by the step callback.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('test', async ({ page }) => {
+   *   const user = await test.step('Log in', async () => {
+   *     // ...
+   *     return 'john';
+   *   });
+   *   expect(user).toBe('john');
+   * });
+   * ```
+   *
    * @param title Step name.
    * @param body Step body.
    */
