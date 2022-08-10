@@ -54,12 +54,12 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   }, { scope: 'worker' } ],
 
   allowsThirdParty: [async ({ browserName, browserMajorVersion, channel }, run) => {
-    if (browserName !== 'firefox')
+    if (browserName === 'firefox' && !channel)
+      await run(browserMajorVersion >= 103);
+    else if (browserName === 'firefox' && channel === 'firefox-beta')
+      await run(browserMajorVersion >= 97 && browserMajorVersion < 103);
+    else
       await run(false);
-    else if (channel === 'firefox-beta' && (browserMajorVersion >= 97 && browserMajorVersion < 103))
-      await run(true);
-    else if (browserMajorVersion >= 103)
-      await run(true);
   }, { scope: 'worker' } ],
 
   defaultSameSiteCookieValue: [async ({ browserName, browserMajorVersion, channel }, run) => {
