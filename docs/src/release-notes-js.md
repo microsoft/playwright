@@ -12,7 +12,7 @@ toc_max_heading_level: 2
 * Pick selector.
 * Record new test from current page state.
 
-![vscode extension screenshot](https://user-images.githubusercontent.com/746130/183779384-f463bc99-f0d1-494c-be24-994f9fefb8c1.jpg)
+![vscode extension screenshot](https://user-images.githubusercontent.com/746130/183781999-1b9fdbc5-cfae-47d6-b4f7-5d4ae89716a8.jpg)
 
 ### Test Runner
 
