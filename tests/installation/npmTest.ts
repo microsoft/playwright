@@ -73,6 +73,7 @@ export const test = _test.extend<{
     writeFiles: (nameToContents: Record<string, string>) => Promise<void>,
     exec: (cmd: string, ...argsAndOrOptions: ArgsOrOptions) => Promise<string>
     tsc: (...argsAndOrOptions: ArgsOrOptions) => Promise<string>,
+    npmConfigPrefix: string,
     registry: Registry,
         }>({
           _auto: [async ({ tmpWorkspace, exec }, use) => {
@@ -111,7 +112,10 @@ export const test = _test.extend<{
           installedSoftwareOnDisk: async ({ tmpWorkspace }, use) => {
             await use(async (registryPath?: string) => fs.promises.readdir(registryPath || path.join(tmpWorkspace, 'browsers')).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => !f.startsWith('.'))));
           },
-          exec: async ({ registry, tmpWorkspace }, use, testInfo) => {
+          npmConfigPrefix: async ({}, use, testInfo) => {
+            await use(testInfo.outputPath('npm_global'));
+          },
+          exec: async ({ registry, tmpWorkspace, npmConfigPrefix }, use, testInfo) => {
             await use(async (cmd: string, ...argsAndOrOptions: [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions]) => {
               let args: string[] = [];
               let options: ExecOptions = {};
@@ -133,7 +137,7 @@ export const test = _test.extend<{
                     'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, 'browsers'),
                     'npm_config_cache': testInfo.outputPath('npm_cache'),
                     'npm_config_registry': registry.url(),
-                    'npm_config_prefix': testInfo.outputPath('npm_global'),
+                    'npm_config_prefix': npmConfigPrefix,
                     ...options.env,
                   }
                 });

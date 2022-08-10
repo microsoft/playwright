@@ -15,8 +15,9 @@
  */
 import { test, expect } from './npmTest';
 
-test('npx playwright codegen', async ({ exec, installedSoftwareOnDisk }) => {
-  const stdio = await exec('npx playwright codegen', { expectToExitWithError: true });
+test.only('npx playwright codegen', async ({ exec, installedSoftwareOnDisk, npmConfigPrefix }) => {
+  // --prefix is a workaround related to https://github.com/npm/cli/issues/5268
+  const stdio = await exec(`npx --prefix=${npmConfigPrefix} playwright codegen`, { expectToExitWithError: true });
   expect(stdio).toHaveLoggedSoftwareDownload([]);
   expect(await installedSoftwareOnDisk()).toEqual([]);
   expect(stdio).toContain(`Please run the following command to download new browsers`);
