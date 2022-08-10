@@ -32,7 +32,12 @@ Run `codegen` and perform actions in the browser. Playwright will generate the c
 
 <img width="1183" alt="Codegen generating code for tests for playwright.dev website" src="https://user-images.githubusercontent.com/13063165/181852815-971c10da-0b55-4e54-8a73-77e1e825193c.png" />
 
-When you have finished interacting with the page, press the **record** button to stop the recording and use the **copy** button to copy the generated code to your editor. Use the **clear** button to clear the code to start recording again. Once finished close the Playwright inspector window or stop the terminal command.
+When you have finished interacting with the page, press the **record** button to stop the recording and use the **copy** button to copy the generated code to your editor. 
+
+<img width="1266" alt="Codegen generating code for tests for playwright.dev" src="https://user-images.githubusercontent.com/13063165/183905981-003c4173-0d5e-4960-8190-50e6ca71b2c3.png" />
+
+
+Use the **clear** button to clear the code to start recording again. Once finished close the Playwright inspector window or stop the terminal command.
 
 
 
