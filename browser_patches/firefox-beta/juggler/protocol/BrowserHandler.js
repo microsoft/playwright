@@ -14,7 +14,7 @@ const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.j
 const helper = new Helper();
 
 class BrowserHandler {
-  constructor(session, dispatcher, targetRegistry, onclose) {
+  constructor(session, dispatcher, targetRegistry, onclose, onstart) {
     this._session = session;
     this._dispatcher = dispatcher;
     this._targetRegistry = targetRegistry;
@@ -24,11 +24,13 @@ class BrowserHandler {
     this._createdBrowserContextIds = new Set();
     this._attachedSessions = new Map();
     this._onclose = onclose;
+    this._onstart = onstart;
   }
 
   async ['Browser.enable']({attachToDefaultContext}) {
     if (this._enabled)
       return;
+    await this._onstart();
     this._enabled = true;
     this._attachToDefaultContext = attachToDefaultContext;
 

@@ -4,6 +4,9 @@
 
 juggler.jar:
 % content juggler %content/
+
+  content/components/Juggler.js (components/Juggler.js)
+
   content/Helper.js (Helper.js)
   content/NetworkObserver.js (NetworkObserver.js)
   content/TargetRegistry.js (TargetRegistry.js)
