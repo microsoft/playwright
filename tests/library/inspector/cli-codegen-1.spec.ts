@@ -268,18 +268,13 @@ test.describe('cli codegen', () => {
     const selector = await recorder.focusElement('input');
     expect(selector).toBe('input[name="name"]');
 
-    async function inputText(text: string) {
-      await recorder.page.dispatchEvent(selector, 'keydown', { key: 'Process' });
-      await recorder.page.keyboard.insertText(text);
-      await recorder.page.dispatchEvent(selector, 'keyup', { key: 'Process' });
-    }
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('JavaScript', 'fill'),
       (async () => {
-        await inputText('て');
-        await inputText('す');
-        await inputText('と');
+        await recorder.page.dispatchEvent(selector, 'keydown', { key: 'Process' });
+        await recorder.page.keyboard.insertText('てすと');
+        await recorder.page.dispatchEvent(selector, 'keyup', { key: 'Process' });
       })()
     ]);
     expect(sources.get('JavaScript').text).toContain(`
