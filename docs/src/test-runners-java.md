@@ -189,7 +189,7 @@ junit.jupiter.execution.parallel.config.dynamic.factor=0.5
 
 ## TestNg
 
-In TestNg you can initialize [Playwright] and [Browser] in [@BeforeSuite](https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/BeforeAll.html) method and destroy them in [@AfterSuite](https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/AfterAll.html). In the example below all three test methods use the same [Browser]. Each test uses its own [BrowserContext] and [Page].
+In TestNg you can initialize [Playwright] and [Browser] in [@BeforeSuite](https://www.javadoc.io/doc/org.testng/testng/latest/org/testng/annotations/BeforeSuite.html) method and destroy them in [@AfterSuite](https://www.javadoc.io/doc/org.testng/testng/latest/org/testng/annotations/AfterSuite.html). In the example below all three test methods use the same [Browser]. Each test uses its own [BrowserContext] and [Page].
 
 ```java
 package org.example;
