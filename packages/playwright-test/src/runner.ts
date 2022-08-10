@@ -950,7 +950,7 @@ function createDuplicateTitlesError(config: FullConfigInternal, rootSuite: Suite
     for (const fullTitle of testsByFullTitle.keys()) {
       const tests = testsByFullTitle.get(fullTitle);
       if (tests.length > 1) {
-        lines.push(` - title: ${fullTitle}`);
+        lines.push(` - title: ${fullTitle.replace(/\u001e/g, ' › ')}`);
         for (const test of tests)
           lines.push(`   - ${buildItemLocation(config.rootDir, test)}`);
       }
