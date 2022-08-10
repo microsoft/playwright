@@ -94,14 +94,14 @@ npx playwright show-report name-of-my-extracted-playwright-report
 
 <img width="752" alt="Viewing the HTML Report" src="https://user-images.githubusercontent.com/13063165/183437645-b47dd175-2e07-4ecc-a469-27d5b150b7ed.png" />
 
-To learn more about reports check out our detailed guide on [HTML Reporter](/test-reporters#html-reporter)
+To learn more about reports check out our detailed guide on [HTML Reporter](/test-reporter.mds#html-reporter)
 
 ### Viewing the Trace
 
 Once you have served the report using `npx playwright show-report`, click on the trace icon next to the test's file name as seen in the image above. You can then view the trace of your tests and inspect each action to try to find out why the tests are failing.
 
 
-<img width="1907" alt="image" src="https://user-images.githubusercontent.com/13063165/183879653-d442e6b4-14f5-4d0e-99f3-9ba19f82c7cf.png"/>
+<img width="1907" alt="Viewing the Trace" src="https://user-images.githubusercontent.com/13063165/183879653-d442e6b4-14f5-4d0e-99f3-9ba19f82c7cf.png"/>
 
 To learn more about traces check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 
