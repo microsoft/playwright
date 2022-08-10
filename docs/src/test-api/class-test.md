@@ -1457,6 +1457,7 @@ Optional description that will be reflected in a test report.
 
 ## async method: Test.step
 * since: v1.10
+- returns: <[any]>
 
 Declares a test step.
 
@@ -1477,6 +1478,32 @@ test('test', async ({ page }) => {
   await test.step('Log in', async () => {
     // ...
   });
+});
+```
+
+The method returns value retuned by the step callback.
+
+```js tab=js-js
+const { test, expect } = require('@playwright/test');
+
+test('test', async ({ page }) => {
+  const user = await test.step('Log in', async () => {
+    // ...
+    return 'john';
+  });
+  expect(user).toBe('john');
+});
+```
+
+```js tab=js-ts
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  const user = await test.step('Log in', async () => {
+    // ...
+    return 'john';
+  });
+  expect(user).toBe('john');
 });
 ```
 
