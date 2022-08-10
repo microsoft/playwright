@@ -3,7 +3,7 @@ id: ci-intro
 title: "CI Github Actions"
 ---
 
-When installing Playwright you are given the option to add a [GitHub Actions](https://docs.github.com/en/actions). This creates a `playwright.yml` file inside a `.github/workflows` folder containing everything you need so that your tests run on each push and pull request into the main ormaster branch.
+When installing Playwright you are given the option to add a [GitHub Actions](https://docs.github.com/en/actions). This creates a `playwright.yml` file inside a `.github/workflows` folder containing everything you need so that your tests run on each push and pull request into the main/master branch.
 
 **What you will learn:**
 
@@ -17,7 +17,7 @@ When installing Playwright you are given the option to add a [GitHub Actions](ht
 
 ## GitHub Actions
 
-Tests will run on push or pull request on branches main or master. The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install Playwright and then run the tests. It will also create the HTML report.
+Tests will run on push or pull request on branches main/master. The [workflow](https://docs.github.com/en/actions/using-workflows/about-workflows) will install all dependencies, install Playwright and then run the tests. It will also create the HTML report.
 
 ```yaml
 name: Playwright Tests
@@ -85,21 +85,27 @@ In the Artifacts section click on the **playwright-report** to download your rep
 
 ### Viewing the HTML Report
 
-To view the HTML Report you will need to extract the zip, preferably in a folder that already has Playwright installed otherwise you will have to install Playwright in the folder where you extracted the zip. Then use `npx playwright show-report` followed by the name of the extracted folder.
+Locally opening the report will not work as expected as you need a web server in order for everything to work correctly. First, extract the zip, preferably in a folder that already has Playwright installed. Using the command line change into the directory where the report is and use `npx playwright show-report` followed by the name of the extracted folder. This will serve up the report and enable you to view it in your browser.
 
-```bash	
+
+```bash
 npx playwright show-report name-of-my-extracted-playwright-report
 ```
 
 <img width="752" alt="Viewing the HTML Report" src="https://user-images.githubusercontent.com/13063165/183437645-b47dd175-2e07-4ecc-a469-27d5b150b7ed.png" />
 
+To learn more about reports check out our detailed guide on [HTML Reporter](/test-reporters#html-reporter)
+
 ### Viewing the Trace
 
-Click on the trace icon next to the test's file name to view the trace.
+Once you have served the report using `npx playwright show-report`, click on the trace icon next to the test's file name as seen in the image above. You can then view the trace of your tests and inspect each action to try to find out why the tests are failing.
 
-<img width="1909" alt="Deploying the HTML Report to view the Trace" src="https://user-images.githubusercontent.com/13063165/183438037-01935200-f784-4c80-bbea-bcff8adae078.png" />
 
-To learn more about running tests on CI check out our detailed guide on [Continuous Integration](/ci.md)
+<img width="1907" alt="image" src="https://user-images.githubusercontent.com/13063165/183879653-d442e6b4-14f5-4d0e-99f3-9ba19f82c7cf.png"/>
+
+To learn more about traces check out our detailed guide on [Trace Viewer](/trace-viewer.md).
+
+To learn more about running tests on CI check out our detailed guide on [Continuous Integration](/ci.md).
 
 
 ## What's Next
