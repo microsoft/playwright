@@ -15,8 +15,8 @@
  */
 import { test, expect } from './npmTest';
 
-test.only('npx playwright --help should not download browsers', async ({ exec, installedSoftwareOnDisk, npmConfigPrefix }) => {
-  const result = await exec(`npx --prefix=${npmConfigPrefix} playwright --help`);
+test('npx playwright --help should not download browsers', async ({ exec, installedSoftwareOnDisk, npmConfigPrefix }) => {
+  const result = await exec('npx playwright --help', { env: { npm_config_prefix: '' } }); // global npx and npm_config_prefix do not work together nicely (https://github.com/npm/cli/issues/5268)
   expect(result).toHaveLoggedSoftwareDownload([]);
   expect(await installedSoftwareOnDisk()).toEqual([]);
   expect(result).not.toContain(`To avoid unexpected behavior, please install your dependencies first`);
