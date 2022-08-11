@@ -274,3 +274,4 @@ await context.RouteAsync('**/*', route => route.ContinueAsync());
 // Pause the page, and start recording manually.
 var page = await context.NewPageAsync();
 await page.PauseAsync();
+```
