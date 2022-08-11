@@ -56,7 +56,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-10.15, macos-11, macos-12]
+        os: [macos-11, macos-12]
         browser: [chromium, firefox, webkit]
     runs-on: ${{ matrix.os }}
     steps:
