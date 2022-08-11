@@ -21,7 +21,7 @@ import { VueEngine } from './vueSelectorEngine';
 import { RoleEngine } from './roleSelectorEngine';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../isomorphic/selectorParser';
 import { allEngineNames, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
-import { type TextMatcher, elementMatchesText, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorUtils';
+import { type TextMatcher, elementMatchesText, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher, elementText } from './selectorUtils';
 import { SelectorEvaluatorImpl } from './selectorEvaluator';
 import { isElementVisible, parentElementOrShadowHost } from './domUtils';
 import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
@@ -1091,7 +1091,7 @@ export class InjectedScript {
       } else if (expression === 'to.have.id') {
         received = element.id;
       } else if (expression === 'to.have.text') {
-        received = options.useInnerText ? (element as HTMLElement).innerText : element.textContent || '';
+        received = options.useInnerText ? (element as HTMLElement).innerText : elementText(new Map(), element).full;
       } else if (expression === 'to.have.title') {
         received = document.title;
       } else if (expression === 'to.have.url') {
@@ -1124,7 +1124,7 @@ export class InjectedScript {
     // List of values.
     let received: string[] | undefined;
     if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
-      received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
+      received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e).full);
     else if (expression === 'to.have.class.array')
       received = elements.map(e => e.classList.toString());
 
