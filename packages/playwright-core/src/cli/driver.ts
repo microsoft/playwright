@@ -90,6 +90,38 @@ class ProtocolHandler {
 
   constructor(playwright: Playwright) {
     this._playwright = playwright;
+    playwright.instrumentation.addListener({
+      onPageOpen: () => this._sendSnapshot(),
+      onPageNavigated: () => this._sendSnapshot(),
+      onPageClose: () => this._sendSnapshot(),
+    }, null);
+  }
+
+  private _sendSnapshot() {
+    const browsers = [];
+    for (const browser of this._playwright.allBrowsers()) {
+      const b = {
+        name: browser.options.name,
+        guid: browser.guid,
+        contexts: [] as any[]
+      };
+      browsers.push(b);
+      for (const context of browser.contexts()) {
+        const c = {
+          guid: context.guid,
+          pages: [] as any[]
+        };
+        b.contexts.push(c);
+        for (const page of context.pages()) {
+          const p = {
+            guid: page.guid,
+            url: page.mainFrame().url()
+          };
+          c.pages.push(p);
+        }
+      }
+    }
+    process.send!({ method: 'browsersChanged', params: { browsers } });
   }
 
   async resetForReuse() {
