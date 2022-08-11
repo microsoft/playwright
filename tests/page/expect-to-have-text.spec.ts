@@ -124,7 +124,7 @@ test.describe('toHaveText with text', () => {
     await expect(page.locator('div')).toContainText('text');
     await expect(page.locator('span')).toHaveText('some text', { useInnerText: true });
     await expect(page.locator('span')).toContainText('text', { useInnerText: true });
-    // We do not support innerText piercing shadow dom.
+    // Playwright intentionally does not perform innerText piercing on shadow dom.
     await expect(page.locator('div')).not.toHaveText('some text', { useInnerText: true });
     await expect(page.locator('div')).not.toContainText('text', { useInnerText: true });
   });
