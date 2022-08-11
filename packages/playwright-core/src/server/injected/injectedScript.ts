@@ -437,14 +437,18 @@ export class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  retarget(node: Node, behavior: 'none' | 'follow-label' | 'no-follow-label'): Element | null {
+  retarget(node: Node, behavior: 'none' | 'follow-label' | 'no-follow-label' | 'button-link'): Element | null {
     let element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
     if (!element)
       return null;
     if (behavior === 'none')
       return element;
-    if (!element.matches('input, textarea, select'))
-      element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
+    if (!element.matches('input, textarea, select')) {
+      if (behavior === 'button-link')
+        element = element.closest('button, [role=button], a, [role=link]') || element;
+      else
+        element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
+    }
     if (behavior === 'follow-label') {
       if (!element.matches('input, textarea, button, select, [role=button], [role=checkbox], [role=radio]') &&
         !(element as any).isContentEditable) {
@@ -723,7 +727,6 @@ export class InjectedScript {
   }
 
   expectHitTargetParent(hitElement: Element | undefined, targetElement: Element) {
-    targetElement = targetElement.closest('button, [role=button], a, [role=link]') || targetElement;
     const hitParents: Element[] = [];
     while (hitElement && hitElement !== targetElement) {
       hitParents.push(hitElement);
@@ -782,7 +785,7 @@ export class InjectedScript {
   //     2l. All navigations triggered between 2g-2k are awaited to be either committed or canceled.
   //     2m. If failed, wait for increasing amount of time before the next retry.
   setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse' | 'drag', hitPoint: { x: number, y: number }, blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' | string /* hitTargetDescription */ {
-    const element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    const element = this.retarget(node, 'button-link');
     if (!element || !element.isConnected)
       return 'error:notconnected';
 
