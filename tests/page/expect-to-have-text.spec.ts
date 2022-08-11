@@ -107,6 +107,27 @@ test.describe('toHaveText with text', () => {
     const locator = page.locator('#node');
     await expect(locator).toHaveText('Text content', { useInnerText: true });
   });
+
+  test('in shadow dom', async ({ page }) => {
+    await page.setContent(`
+      <div></div>
+      <script>
+        const div = document.querySelector('div');
+        const span = document.createElement('span');
+        span.textContent = 'some text';
+        div.attachShadow({ mode: 'open' }).appendChild(span);
+      </script>
+    `);
+    await expect(page.locator('span')).toHaveText('some text');
+    await expect(page.locator('span')).toContainText('text');
+    await expect(page.locator('div')).toHaveText('some text');
+    await expect(page.locator('div')).toContainText('text');
+    await expect(page.locator('span')).toHaveText('some text', { useInnerText: true });
+    await expect(page.locator('span')).toContainText('text', { useInnerText: true });
+    // We do not support innerText piercing shadow dom.
+    await expect(page.locator('div')).not.toHaveText('some text', { useInnerText: true });
+    await expect(page.locator('div')).not.toContainText('text', { useInnerText: true });
+  });
 });
 
 test.describe('not.toHaveText', () => {
