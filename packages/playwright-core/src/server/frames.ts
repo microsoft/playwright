@@ -239,7 +239,7 @@ export class FrameManager {
 
     frame._onClearLifecycle();
     const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument, isPublic: true };
-    frame.emit(Frame.Events.InternalNavigation, navigationEvent);
+    this._fireInternalFrameNavigation(frame, navigationEvent);
     if (!initial) {
       debugLogger.log('api', `  navigated to "${url}"`);
       this._page.frameNavigatedToNewDocument(frame);
@@ -254,7 +254,7 @@ export class FrameManager {
       return;
     frame._url = url;
     const navigationEvent: NavigationEvent = { url, name: frame._name, isPublic: true };
-    frame.emit(Frame.Events.InternalNavigation, navigationEvent);
+    this._fireInternalFrameNavigation(frame, navigationEvent);
     debugLogger.log('api', `  navigated to "${url}"`);
   }
 
@@ -272,7 +272,7 @@ export class FrameManager {
       isPublic: !(documentId && frame._redirectedNavigations.has(documentId)),
     };
     frame.setPendingDocument(undefined);
-    frame.emit(Frame.Events.InternalNavigation, navigationEvent);
+    this._fireInternalFrameNavigation(frame, navigationEvent);
   }
 
   frameDetached(frameId: string) {
@@ -461,6 +461,12 @@ export class FrameManager {
     const ws = this._webSockets.get(requestId);
     if (ws)
       ws.error(errorMessage);
+  }
+
+  private _fireInternalFrameNavigation(frame: Frame, event: NavigationEvent) {
+    frame.emit(Frame.Events.InternalNavigation, event);
+    if (event.isPublic && !frame.parentFrame())
+      frame.instrumentation.onPageNavigated(frame._page, event.url);
   }
 }
 
