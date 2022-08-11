@@ -650,4 +650,5 @@ export default config;
 ## Third party reporter showcase
 
 * [Allure](https://www.npmjs.com/package/allure-playwright)
+* [Monocart](https://github.com/cenfun/monocart-reporter)
 * [Tesults](https://www.tesults.com/docs/playwright)
