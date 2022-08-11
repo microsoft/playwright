@@ -24,9 +24,11 @@ Playwright provides base classes to write tests with NUnit via the [`Microsoft.P
 # Create a new project
 dotnet new nunit -n PlaywrightTests
 cd PlaywrightTests
+
 # Add the required reference
 dotnet add package Microsoft.Playwright.NUnit
 dotnet build
+
 # Install the required browsers and operating system dependencies
 pwsh bin\Debug\netX\playwright.ps1 install --with-deps
 ```
@@ -57,6 +59,10 @@ public class MyTest : PageTest
     }
 }
 ```
+
+:::note
+You can only set Parallelizable to ParallelScope.Self. ParallelScope.All and ParallelScope.Fixtures are not supported.
+:::
 
 Run your tests against Chromium
 
@@ -389,7 +395,7 @@ For example, to specify the amount of workers (`MSTest.Parallelize.Workers`), yo
 
 ```xml
 <RunSettings>
-<!-- MSTest adapter -->  
+<!-- MSTest adapter -->
   <MSTest>
     <Parallelize>
       <Workers>4</Workers>
