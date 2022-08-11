@@ -47,6 +47,12 @@ export type LogEntry = {
   intermediateResult?: string;
 };
 
+export type RetargetBehavior =
+  'none' |                // No retargeting.
+  'label' |               // Retarget to the control associated with this label.
+  'button-input-label' |  // Same as above, and also retarget to the enclosing button/checkbox/radio.
+  'button-link';          // Retarget to the enclosing button/link only.
+
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
 export type InjectedScriptPoll<T> = {
@@ -437,7 +443,7 @@ export class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  retarget(node: Node, behavior: 'none' | 'follow-label' | 'no-follow-label' | 'button-link'): Element | null {
+  retarget(node: Node, behavior: RetargetBehavior): Element | null {
     let element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
     if (!element)
       return null;
@@ -446,10 +452,10 @@ export class InjectedScript {
     if (!element.matches('input, textarea, select')) {
       if (behavior === 'button-link')
         element = element.closest('button, [role=button], a, [role=link]') || element;
-      else
+      else if (behavior === 'button-input-label')
         element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
     }
-    if (behavior === 'follow-label') {
+    if (behavior === 'label' || behavior === 'button-input-label') {
       if (!element.matches('input, textarea, button, select, [role=button], [role=checkbox], [role=radio]') &&
         !(element as any).isContentEditable) {
         // Go up to the label that might be connected to the input/textarea.
@@ -461,8 +467,9 @@ export class InjectedScript {
     return element;
   }
 
-  waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[], force: boolean | undefined,
-    callback: (node: Node, progress: InjectedScriptProgress) => T | symbol): InjectedScriptPoll<T | 'error:notconnected'> {
+  // Performs element state checks and calls `action` on the retargeted element.
+  waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[], retarget: RetargetBehavior, force: boolean | undefined,
+    action: (element: Element | null, progress: InjectedScriptProgress) => T | symbol): InjectedScriptPoll<T | 'error:notconnected'> {
     let lastRect: { x: number, y: number, width: number, height: number } | undefined;
     let counter = 0;
     let samePositionCounter = 0;
@@ -471,12 +478,13 @@ export class InjectedScript {
     return this.pollRaf(progress => {
       if (force) {
         progress.log(`    forcing action`);
-        return callback(node, progress);
+        return action(this.retarget(node, retarget), progress);
       }
 
+      const element = this.retarget(node, retarget);
       for (const state of states) {
         if (state !== 'stable') {
-          const result = this.elementState(node, state);
+          const result = this.elementState(node, state, retarget);
           if (typeof result !== 'boolean')
             return result;
           if (!result) {
@@ -486,7 +494,6 @@ export class InjectedScript {
           continue;
         }
 
-        const element = this.retarget(node, 'no-follow-label');
         if (!element)
           return 'error:notconnected';
 
@@ -518,12 +525,12 @@ export class InjectedScript {
           return progress.continuePolling;
       }
 
-      return callback(node, progress);
+      return action(element, progress);
     });
   }
 
-  elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' {
-    const element = this.retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'none' : 'follow-label');
+  elementState(node: Node, state: ElementStateWithoutStable, retarget: RetargetBehavior): boolean | 'error:notconnected' {
+    const element = this.retarget(node, retarget);
     if (!element || !element.isConnected) {
       if (state === 'hidden')
         return true;
@@ -561,8 +568,7 @@ export class InjectedScript {
   }
 
   selectOptions(optionsToSelect: (Node | { value?: string, label?: string, index?: number })[],
-    node: Node, progress: InjectedScriptProgress): string[] | 'error:notconnected' | symbol {
-    const element = this.retarget(node, 'follow-label');
+    element: Element | null, progress: InjectedScriptProgress): string[] | 'error:notconnected' | symbol {
     if (!element)
       return 'error:notconnected';
     if (element.nodeName.toLowerCase() !== 'select')
@@ -607,8 +613,7 @@ export class InjectedScript {
     return selectedOptions.map(option => option.value);
   }
 
-  fill(value: string, node: Node, progress: InjectedScriptProgress): 'error:notconnected' | 'needsinput' | 'done' {
-    const element = this.retarget(node, 'follow-label');
+  fill(value: string, element: Element | null, progress: InjectedScriptProgress): 'error:notconnected' | 'needsinput' | 'done' {
     if (!element)
       return 'error:notconnected';
     if (element.nodeName.toLowerCase() === 'input') {
@@ -644,8 +649,7 @@ export class InjectedScript {
     return 'needsinput';  // Still need to input the value.
   }
 
-  selectText(node: Node): 'error:notconnected' | 'done' {
-    const element = this.retarget(node, 'follow-label');
+  selectText(element: Element | null): 'error:notconnected' | 'done' {
     if (!element)
       return 'error:notconnected';
     if (element.nodeName.toLowerCase() === 'input') {
@@ -784,8 +788,8 @@ export class InjectedScript {
   //     2k. (injected) Event interceptor is removed.
   //     2l. All navigations triggered between 2g-2k are awaited to be either committed or canceled.
   //     2m. If failed, wait for increasing amount of time before the next retry.
-  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse' | 'drag', hitPoint: { x: number, y: number }, blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' | string /* hitTargetDescription */ {
-    const element = this.retarget(node, 'button-link');
+  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse' | 'drag', hitPoint: { x: number, y: number }, retarget: RetargetBehavior, blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' | string /* hitTargetDescription */ {
+    const element = this.retarget(node, retarget);
     if (!element || !element.isConnected)
       return 'error:notconnected';
 
@@ -1025,26 +1029,26 @@ export class InjectedScript {
       // Element state / boolean values.
       let elementState: boolean | 'error:notconnected' | 'error:notcheckbox' | undefined;
       if (expression === 'to.be.checked') {
-        elementState = progress.injectedScript.elementState(element, 'checked');
+        elementState = progress.injectedScript.elementState(element, 'checked', 'button-input-label');
       } else if (expression === 'to.be.unchecked') {
-        elementState = progress.injectedScript.elementState(element, 'unchecked');
+        elementState = progress.injectedScript.elementState(element, 'unchecked', 'button-input-label');
       } else if (expression === 'to.be.disabled') {
-        elementState = progress.injectedScript.elementState(element, 'disabled');
+        elementState = progress.injectedScript.elementState(element, 'disabled', 'button-input-label');
       } else if (expression === 'to.be.editable') {
-        elementState = progress.injectedScript.elementState(element, 'editable');
+        elementState = progress.injectedScript.elementState(element, 'editable', 'label');
       } else if (expression === 'to.be.empty') {
         if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
           elementState = !(element as HTMLInputElement).value;
         else
           elementState = !element.textContent?.trim();
       } else if (expression === 'to.be.enabled') {
-        elementState = progress.injectedScript.elementState(element, 'enabled');
+        elementState = progress.injectedScript.elementState(element, 'enabled', 'button-input-label');
       } else if (expression === 'to.be.focused') {
         elementState = this._activelyFocused(element).isFocused;
       } else if (expression === 'to.be.hidden') {
-        elementState = progress.injectedScript.elementState(element, 'hidden');
+        elementState = progress.injectedScript.elementState(element, 'hidden', 'none');
       } else if (expression === 'to.be.visible') {
-        elementState = progress.injectedScript.elementState(element, 'visible');
+        elementState = progress.injectedScript.elementState(element, 'visible', 'none');
       }
 
       if (elementState !== undefined) {
@@ -1068,11 +1072,11 @@ export class InjectedScript {
     // Multi-Select/Combobox
     {
       if (expression === 'to.have.values') {
-        element = this.retarget(element, 'follow-label')!;
-        if (element.nodeName !== 'SELECT' || !(element as HTMLSelectElement).multiple)
+        const maybeElement = this.retarget(element, 'label');
+        if (!maybeElement || maybeElement.nodeName !== 'SELECT' || !(maybeElement as HTMLSelectElement).multiple)
           throw this.createStacklessError('Not a select element with a multiple attribute');
 
-        const received = [...(element as HTMLSelectElement).selectedOptions].map(o => o.value);
+        const received = [...(maybeElement as HTMLSelectElement).selectedOptions].map(o => o.value);
         if (received.length !== options.expectedText!.length)
           return { received, matches: false };
         return { received, matches: received.map((r, i) => new ExpectedTextMatcher(options.expectedText![i]).matches(r)).every(Boolean) };
@@ -1097,10 +1101,10 @@ export class InjectedScript {
       } else if (expression === 'to.have.url') {
         received = document.location.href;
       } else if (expression === 'to.have.value') {
-        element = this.retarget(element, 'follow-label')!;
-        if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
+        const maybeElement = this.retarget(element, 'label');
+        if (!maybeElement || maybeElement.nodeName !== 'INPUT' && maybeElement.nodeName !== 'TEXTAREA' && maybeElement.nodeName !== 'SELECT')
           throw this.createStacklessError('Not an input element');
-        received = (element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
+        received = (maybeElement as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
       }
 
       if (received !== undefined && options.expectedText) {

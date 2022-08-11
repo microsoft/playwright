@@ -180,6 +180,11 @@ it('isEditable should work', async ({ page }) => {
   expect(await page.isEditable('textarea')).toBe(false);
 });
 
+it('isEditable should work inside button', async ({ page }) => {
+  await page.setContent(`<button>Button<input></button>`);
+  expect(await page.locator('input').isEditable()).toBe(true);
+});
+
 it('isChecked should work', async ({ page }) => {
   await page.setContent(`<input type='checkbox' checked><div>Not a checkbox</div>`);
   const element = page.locator('input');

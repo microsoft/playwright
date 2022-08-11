@@ -88,6 +88,23 @@ it('should select textarea', async ({ page, server, browserName }) => {
   }
 });
 
+it('should select inside button', async ({ page, server, browserName }) => {
+  await page.setContent(`
+    <button>
+      I am a <span>styled</span> button
+    </button>
+  `);
+  await page.locator('span').selectText();
+  if (browserName === 'firefox') {
+    expect(await page.$eval('span', span => {
+      const selection = window.getSelection();
+      return selection.anchorNode === span && selection.focusNode === span;
+    })).toBe(true);
+  } else {
+    expect(await page.evaluate(() => window.getSelection().toString())).toBe('styled');
+  }
+});
+
 it('should type', async ({ page }) => {
   await page.setContent(`<input type='text' />`);
   await page.locator('input').type('hello');

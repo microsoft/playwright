@@ -34,8 +34,7 @@ import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../common/debugLogger';
 import type { CallMetadata } from './instrumentation';
 import { serverSideCallMetadata, SdkObject } from './instrumentation';
-import { type InjectedScript } from './injected/injectedScript';
-import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
+import type { RetargetBehavior, InjectedScript, ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
 import { isSessionClosedError } from './protocolError';
 import type { ParsedSelector } from './isomorphic/selectorParser';
 import { isInvalidSelectorError, splitSelectorByFrame, stringifySelector } from './isomorphic/selectorParser';
@@ -1138,7 +1137,7 @@ export class Frame extends SdkObject {
   async click(metadata: CallMetadata, selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, handle => handle._click(progress, options)));
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, handle => handle._click(progress, 'button-link', options)));
     }, this._page._timeoutSettings.timeout(options));
   }
 
@@ -1153,7 +1152,7 @@ export class Frame extends SdkObject {
     const controller = new ProgressController(metadata, this);
     await controller.run(async progress => {
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, options.strict, async handle => {
-        return handle._retryPointerAction(progress, 'move and down', false, async point => {
+        return handle._retryPointerAction(progress, 'move and down', false, 'button-link', async point => {
           await this._page.mouse.move(point.x, point.y);
           await this._page.mouse.down();
         }, {
@@ -1163,7 +1162,7 @@ export class Frame extends SdkObject {
         });
       }));
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, options.strict, async handle => {
-        return handle._retryPointerAction(progress, 'move and up', false, async point => {
+        return handle._retryPointerAction(progress, 'move and up', false, 'button-link', async point => {
           await this._page.mouse.move(point.x, point.y);
           await this._page.mouse.up();
         }, {
@@ -1219,7 +1218,7 @@ export class Frame extends SdkObject {
 
   async inputValue(metadata: CallMetadata, selector: string, options: types.TimeoutOptions & types.StrictOptions = {}): Promise<string> {
     return this._scheduleRerunnableTask(metadata, selector, (progress, node) => {
-      const element = progress.injectedScript.retarget(node, 'follow-label');
+      const element = progress.injectedScript.retarget(node, 'label');
       if (!element || (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT'))
         throw progress.injectedScript.createStacklessError('Node is not an <input>, <textarea> or <select> element');
       return (element as any).value;
@@ -1247,11 +1246,11 @@ export class Frame extends SdkObject {
     });
   }
 
-  private async _elementState(metadata: CallMetadata, selector: string, state: ElementStateWithoutStable, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
-    const result = await this._scheduleRerunnableTask(metadata, selector, (progress, element, data) => {
+  private async _elementState(metadata: CallMetadata, selector: string, state: ElementStateWithoutStable, retarget: RetargetBehavior, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
+    const result = await this._scheduleRerunnableTask(metadata, selector, (progress, element, { state, retarget }) => {
       const injected = progress.injectedScript;
-      return injected.elementState(element, data.state);
-    }, { state }, options);
+      return injected.elementState(element, state, retarget);
+    }, { state, retarget }, options);
     return dom.throwRetargetableDOMError(result);
   }
 
@@ -1266,7 +1265,7 @@ export class Frame extends SdkObject {
       const injectedScript = await context.injectedScript();
       return await injectedScript.evaluate((injected, { parsed, strict }) => {
         const element = injected.querySelector(parsed, document, strict);
-        const state = element ? injected.elementState(element, 'visible') : false;
+        const state = element ? injected.elementState(element, 'visible', 'none') : false;
         return state === 'error:notconnected' ? false : state;
       }, { parsed: pair.info.parsed, strict: pair.info.strict });
     }, this._page._timeoutSettings.timeout({}));
@@ -1277,19 +1276,19 @@ export class Frame extends SdkObject {
   }
 
   async isDisabled(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
-    return this._elementState(metadata, selector, 'disabled', options);
+    return this._elementState(metadata, selector, 'disabled', 'button-input-label', options);
   }
 
   async isEnabled(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
-    return this._elementState(metadata, selector, 'enabled', options);
+    return this._elementState(metadata, selector, 'enabled', 'button-input-label', options);
   }
 
   async isEditable(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
-    return this._elementState(metadata, selector, 'editable', options);
+    return this._elementState(metadata, selector, 'editable', 'label', options);
   }
 
   async isChecked(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
-    return this._elementState(metadata, selector, 'checked', options);
+    return this._elementState(metadata, selector, 'checked', 'button-input-label', options);
   }
 
   async hover(metadata: CallMetadata, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {

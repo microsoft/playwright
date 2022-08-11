@@ -65,6 +65,11 @@ it('inputValue should work on label', async ({ page, server }) => {
   expect(await handle.inputValue()).toBe('foo');
 });
 
+it('inputValue should work inside button', async ({ page, server }) => {
+  await page.setContent(`<button><input type=text value=bar></input></button>`);
+  expect(await page.locator('input').inputValue()).toBe('bar');
+});
+
 it('innerHTML should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#outer');
@@ -154,6 +159,7 @@ it('isEnabled and isDisabled should work', async ({ page }) => {
     <button disabled>button1</button>
     <button>button2</button>
     <div>div</div>
+    <button disabled><span>inside</span></button>
   `);
   const div = await page.$('div');
   expect(await div.isEnabled()).toBe(true);
@@ -170,6 +176,8 @@ it('isEnabled and isDisabled should work', async ({ page }) => {
   expect(await button2.isDisabled()).toBe(false);
   expect(await page.isEnabled(':text("button2")')).toBe(true);
   expect(await page.isDisabled(':text("button2")')).toBe(false);
+  expect(await page.locator('span').isEnabled()).toBe(false);
+  expect(await page.locator('span').isDisabled()).toBe(true);
 });
 
 it('isEnabled and isDisabled should work with <select/> option/optgroup correctly', async ({ page }) => {
