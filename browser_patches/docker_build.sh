@@ -86,9 +86,6 @@ elif [[ "${BUILD_FLAVOR}" == "webkit-ubuntu-22.04-arm64" ]]; then
 elif [[ "${BUILD_FLAVOR}" == "webkit-debian-11" ]]; then
   DOCKER_PLATFORM="linux/amd64"
   DOCKER_IMAGE_NAME="debian:11"
-elif [[ "${BUILD_FLAVOR}" == "webkit-universal" ]]; then
-  DOCKER_PLATFORM="linux/amd64"
-  DOCKER_IMAGE_NAME="ubuntu:20.04"
 else
   echo "ERROR: unknown build flavor - '${BUILD_FLAVOR}'"
   exit 1
@@ -112,10 +109,6 @@ DOCKER_ARGS=$(echo \
 function ensure_docker_container {
   if docker ps | grep "${DOCKER_CONTAINER_NAME}" 2>&1 1>/dev/null; then
     return;
-  fi
-  if [[ "${BUILD_FLAVOR}" == "webkit-universal" ]]; then
-    # NOTE: WebKit Linux Universal build is run in PRIVILEGED container due to Flatpak!
-    DOCKER_ARGS="${DOCKER_ARGS} --privileged"
   fi
   docker pull --platform "${DOCKER_PLATFORM}" "${DOCKER_IMAGE_NAME}"
   docker run --rm ${DOCKER_ARGS} --name "${DOCKER_CONTAINER_NAME}" --platform "${DOCKER_PLATFORM}" -d -t "${DOCKER_IMAGE_NAME}" /bin/bash

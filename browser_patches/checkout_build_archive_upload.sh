@@ -331,13 +331,6 @@ elif [[ "$BUILD_FLAVOR" == "webkit-debian-11" ]]; then
   EXPECTED_HOST_OS="Debian"
   EXPECTED_HOST_OS_VERSION="11"
   BUILD_BLOB_NAME="webkit-debian-11.zip"
-elif [[ "$BUILD_FLAVOR" == "webkit-universal" ]]; then
-  BROWSER_NAME="webkit"
-  EXTRA_BUILD_ARGS="--full --universal"
-  EXTRA_ARCHIVE_ARGS="--universal"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="20.04"
-  BUILD_BLOB_NAME="webkit-linux-universal.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-18.04" ]]; then
   BROWSER_NAME="webkit"
   EXTRA_BUILD_ARGS="--full"
