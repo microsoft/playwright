@@ -28,19 +28,22 @@ jobs:
         ref: release-${{ github.event.inputs.version }}
         fetch-depth: 0
     - name: Cherry-pick commits
+      id: cherry-pick
       run: |
+        git config --global user.name github-actions
+        git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
         for COMMIT_HASH in $(echo "${{ github.event.inputs.commit_hashes }}" | tr "," "\n"); do
           git cherry-pick --no-commit "$COMMIT_HASH"
 
+          COMMIT_MESSAGE="$(git show -s --format=%B $COMMIT_HASH | head -n 1)"
           COMMIT_MESSAGE=$(node -e '
-          console.log(process.argv[1])
-          const match = /^(.*) (\(#\d+\))$/.exec(process.argv[1]);
-          if (!match) {
-            console.log(process.argv[1]);
-            process.exit(0);
-          }
-          console.log(`chery-pick${match[2]}: ${match[1]}`);
-          ' $(git show -s --format=%B $COMMIT_HASH))
+            const match = /^(.*) (\(#\d+\))$/.exec(process.argv[1]);
+            if (!match) {
+              console.log(process.argv[1]);
+              process.exit(0);
+            }
+            console.log(`chery-pick${match[2]}: ${match[1]}`);
+          ' "$COMMIT_MESSAGE")
 
           git commit -m "$COMMIT_MESSAGE"
         done
@@ -51,22 +54,20 @@ jobs:
       run: |
         BRANCH_NAME="cherry-pick-${{ github.event.inputs.version }}-$(date +%Y-%m-%d-%H-%M-%S)"
         echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
-        git config --global user.name github-actions
-        git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
         git checkout -b "$BRANCH_NAME"
         git push origin $BRANCH_NAME
     - name: Create Pull Request
-      uses: actions/github-script@v6
+      uses: actions/github-script@v4
       with:
-        github-token: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}
+        github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
         script: |
           const readableCommitHashesList = '${{ github.event.inputs.commit_hashes }}'.split(',').map(hash => `- ${hash}`).join('\n');
           const response = await github.pulls.create({
             owner: 'microsoft',
             repo: 'playwright',
             head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
-            base: 'main',
-            title: '${{ steps.prepare-branch.outputs.PR_TITLE }}',
+            base: 'release-${{ github.event.inputs.version }}',
+            title: '${{ steps.cherry-pick.outputs.PR_TITLE }}',
             body: `This PR cherry-picks the following commits:\n\n${readableCommitHashesList}`,
           });
           await github.issues.addLabels({
