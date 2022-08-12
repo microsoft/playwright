@@ -108,26 +108,6 @@ it('should select multiple options with attributes', async ({ page, server }) =>
   expect(await page.evaluate(() => window['result'].onChange)).toEqual(['blue', 'gray', 'green']);
 });
 
-it('should select options with sibling label', async ({ page, server }) => {
-  await page.setContent(`<label for=pet-select>Choose a pet</label>
-    <select id='pet-select'>
-      <option value='dog'>Dog</option>
-      <option value='cat'>Cat</option>
-    </select>`);
-  await page.selectOption('text=Choose a pet', 'cat');
-  expect(await page.$eval('select', select => select.options[select.selectedIndex].text)).toEqual('Cat');
-});
-
-it('should select options with outer label', async ({ page, server }) => {
-  await page.setContent(`<label for=pet-select>Choose a pet
-    <select id='pet-select'>
-      <option value='dog'>Dog</option>
-      <option value='cat'>Cat</option>
-    </select></label>`);
-  await page.selectOption('text=Choose a pet', 'cat');
-  expect(await page.$eval('select', select => select.options[select.selectedIndex].text)).toEqual('Cat');
-});
-
 it('should respect event bubbling', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/select.html');
   await page.selectOption('select', 'blue');
