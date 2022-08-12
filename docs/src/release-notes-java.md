@@ -4,6 +4,28 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.25
+
+### New APIs & changes
+
+- Default assertions timeout now can be changed with [`'setDefaultAssertionTimeout'`](./test-assertions#playwright-assertions-set-default-assertion-timeout).
+
+### Announcements
+
+* 🪦 This is the last release with macOS 10.15 support (deprecated as of 1.21).
+* ⚠️ Ubuntu 18 is now deprecated and will not be supported as of Dec 2022.
+
+### Browser Versions
+
+* Chromium 105.0.5195.19
+* Mozilla Firefox 103.0
+* WebKit 16.0
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 104
+* Microsoft Edge 104
+
 ## Version 1.24
 
 <div className="embed-youtube">
