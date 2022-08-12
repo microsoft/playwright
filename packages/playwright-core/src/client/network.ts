@@ -342,7 +342,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
     const headers: Headers = {};
     for (const header of Object.keys(headersOption || {}))
-      headers[header.toLowerCase()] = String(headersOption![header]);
+      headers[header.toLowerCase()] = Array.isArray(headersOption![header]) ? headersOption![header] : String(headersOption![header]);
     if (options.contentType)
       headers['content-type'] = String(options.contentType);
     else if (options.path)

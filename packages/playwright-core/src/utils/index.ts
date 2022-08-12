@@ -130,7 +130,12 @@ export function headersObjectToArray(headers: HeadersObject, separator?: string,
     const values = headers[name];
     if (values === undefined)
       continue;
-    if (separator) {
+
+    if(Array.isArray(values)){
+      values.forEach(value => {
+        result.push({ name, value });
+      })
+    }else if (separator) {
       const sep = name.toLowerCase() === 'set-cookie' ? setCookieSeparator : separator;
       for (const value of values.split(sep!))
         result.push({ name, value: value.trim() });
