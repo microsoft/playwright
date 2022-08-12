@@ -58,13 +58,6 @@ it('inputValue should work', async ({ page, server }) => {
   expect(await handle2.inputValue().catch(e => e.message)).toContain('Node is not an <input>, <textarea> or <select> element');
 });
 
-it('inputValue should work on label', async ({ page, server }) => {
-  await page.setContent(`<label><input type=text></input></label>`);
-  await page.fill('input', 'foo');
-  const handle = await page.$('label');
-  expect(await handle.inputValue()).toBe('foo');
-});
-
 it('innerHTML should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#outer');
@@ -112,22 +105,6 @@ it('isVisible and isHidden should work', async ({ page }) => {
 
   expect(await page.isVisible('no-such-element')).toBe(false);
   expect(await page.isHidden('no-such-element')).toBe(true);
-});
-
-it('element state checks should work for label with zero-sized input', async ({ page, server }) => {
-  await page.setContent(`
-    <label>
-      Click me
-      <input disabled style="width:0;height:0;padding:0;margin:0;border:0;">
-    </label>
-  `);
-  // Visible checks the label.
-  expect(await page.isVisible('text=Click me')).toBe(true);
-  expect(await page.isHidden('text=Click me')).toBe(false);
-
-  // Enabled checks the input.
-  expect(await page.isEnabled('text=Click me')).toBe(false);
-  expect(await page.isDisabled('text=Click me')).toBe(true);
 });
 
 it('isVisible should not throw when the DOM element is not connected', async ({ page }) => {
