@@ -61,7 +61,7 @@ public class MyTest : PageTest
 ```
 
 :::note
-You can only set Parallelizable to ParallelScope.Self. ParallelScope.All and ParallelScope.Fixtures are not supported.
+You can only set Parallelizable to `ParallelScope.Self`. `ParallelScope.All` and `ParallelScope.Fixtures` are not supported.
 :::
 
 Run your tests against Chromium
