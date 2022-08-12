@@ -7,19 +7,6 @@ cd "$(dirname "$0")"
 SCRIPT_FOLDER="$(pwd -P)"
 source "${SCRIPT_FOLDER}/../utils.sh"
 
-is_ubuntu_18_04() {
-  local id version_id
-
-  if [[ -f "/etc/os-release" ]]; then
-      id=$(cat /etc/os-release | sed -n -r "s|^ID=(.*)$|\1|p")
-      version_id=$(cat /etc/os-release | sed -n -r "s|^VERSION_ID=\"(.*)\"$|\1|p")
-
-      [[ "$id" == "ubuntu" && "$version_id" == "18.04" ]]
-  else
-    return 1
-  fi
-}
-
 build_gtk() {
   if [[ ! -d "./WebKitBuild/GTK/DependenciesGTK" ]]; then
     yes | WEBKIT_JHBUILD=1 \
@@ -32,7 +19,7 @@ build_gtk() {
     --cmakeargs=-DENABLE_INTROSPECTION=OFF
     --cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE
   )
-  if is_ubuntu_18_04; then
+  if is_linux ubuntu 18.04; then
     CMAKE_ARGS+=("--cmakeargs=-DUSE_SYSTEM_MALLOC=ON")
   fi
   if [[ -n "${EXPORT_COMPILE_COMMANDS}" ]]; then
@@ -58,7 +45,7 @@ build_wpe() {
     --cmakeargs=-DENABLE_WEBXR=OFF
     --cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE
   )
-  if is_ubuntu_18_04; then
+  if is_linux ubuntu 18.04; then
     CMAKE_ARGS+=("--cmakeargs=-DUSE_SYSTEM_MALLOC=ON")
   fi
   if [[ -n "${EXPORT_COMPILE_COMMANDS}" ]]; then
