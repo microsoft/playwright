@@ -184,7 +184,7 @@ class JSONReporter implements Reporter {
       })),
     };
     if (result.error?.stack)
-      jsonResult.errorLocation = prepareErrorStack(result.error.stack, test.location.file).location;
+      jsonResult.errorLocation = prepareErrorStack(result.error.stack).location;
     return jsonResult;
   }
 
