@@ -110,32 +110,37 @@ export function createPlugin(
         };
       }
       const { build, preview } = require('vite');
-      if (sourcesDirty) {
-        viteConfig.plugins = viteConfig.plugins || [
-          frameworkPluginFactory()
-        ];
+      // Build config unconditionally, either build or build & preview will use it.
+      viteConfig.plugins = viteConfig.plugins || [
+        frameworkPluginFactory()
+      ];
+      // But only add out own plugin when we actually build / transform.
+      if (sourcesDirty)
         viteConfig.plugins.push(vitePlugin(registerSource, relativeTemplateDir, buildInfo, componentRegistry));
-        viteConfig.configFile = viteConfig.configFile || false;
-        viteConfig.define = viteConfig.define || {};
-        viteConfig.define.__VUE_PROD_DEVTOOLS__ = true;
-        viteConfig.css = viteConfig.css || {};
-        viteConfig.css.devSourcemap = true;
-        viteConfig.build = {
-          ...viteConfig.build,
-          target: 'esnext',
-          minify: false,
-          rollupOptions: {
-            treeshake: false,
-            input: {
-              index: path.join(templateDir, 'index.html')
-            },
+      viteConfig.configFile = viteConfig.configFile || false;
+      viteConfig.define = viteConfig.define || {};
+      viteConfig.define.__VUE_PROD_DEVTOOLS__ = true;
+      viteConfig.css = viteConfig.css || {};
+      viteConfig.css.devSourcemap = true;
+      viteConfig.build = {
+        ...viteConfig.build,
+        target: 'esnext',
+        minify: false,
+        rollupOptions: {
+          treeshake: false,
+          input: {
+            index: path.join(templateDir, 'index.html')
           },
-          sourcemap: true,
-        };
+        },
+        sourcemap: true,
+      };
+
+      if (sourcesDirty)
         await build(viteConfig);
-      }
+
       if (hasNewTests || hasNewComponents || sourcesDirty)
         await fs.promises.writeFile(buildInfoFile, JSON.stringify(buildInfo, undefined, 2));
+
       const previewServer = await preview(viteConfig);
       stoppableServer = stoppable(previewServer.httpServer, 0);
       const isAddressInfo = (x: any): x is AddressInfo => x?.address;
