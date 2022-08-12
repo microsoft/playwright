@@ -230,9 +230,11 @@ Playwright provides base classes to write tests with MSTest via the [`Microsoft.
 # Create a new project
 dotnet new mstest -n PlaywrightTests
 cd PlaywrightTests
+
 # Add the required reference
 dotnet add package Microsoft.Playwright.MSTest
 dotnet build
+
 # Install the required browsers and operating system dependencies
 pwsh bin\Debug\netX\playwright.ps1 install --with-deps
 ```
@@ -310,7 +312,8 @@ dotnet test --filter "Name~Slogan"
 
 ### Running MSTest tests in Parallel
 
-By default MSTest will run all classes in parallel, while running tests inside each class sequentially. It will create as many processes as there are cores on the host system. You can adjust this behavior by using the following CLI parameter or using a `.runsettings` file, see below.
+By default MSTest will run all classes in parallel, while running tests inside each class sequentially (`ExecutionScope.ClassLevel`). It will create as many processes as there are cores on the host system. You can adjust this behavior by using the following CLI parameter or using a `.runsettings` file, see below.
+Running tests in parallel at the method level (`ExecutionScope.MethodLevel`) is not supported.
 
 ```bash
 dotnet test --settings:.runsettings -- MSTest.Parallelize.Workers=4
