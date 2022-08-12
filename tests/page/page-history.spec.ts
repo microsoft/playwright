@@ -114,6 +114,38 @@ it('page.reload during renderer-initiated navigation', async ({ page, server }) 
   await page.waitForSelector('text=hello');
 });
 
+it('page.reload should not resolve with same-document navigation', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  // 1. Make sure execution contexts are ready for fast evaluate.
+  await page.evaluate('1');
+
+  // 2. Stall the reload request.
+  let response;
+  server.setRoute('/empty.html', (req, res) => { response = res; });
+  const requestPromise = server.waitForRequest('/empty.html');
+
+  // 3. Trigger push state that could resolve the reload.
+  page.evaluate(() => {
+    window.history.pushState({}, '');
+  }).catch(() => {});
+
+  // 4. Trigger the reload, it should not resolve.
+  const reloadPromise = page.reload();
+
+  // 5. Trigger push state again, for the good measure :)
+  page.evaluate(() => {
+    window.history.pushState({}, '');
+  }).catch(() => {});
+
+  // 5. Serve the request, it should resolve the reload.
+  await requestPromise;
+  response.end('hello');
+
+  // 6. Check the reload response.
+  const gotResponse = await reloadPromise;
+  expect(await gotResponse.text()).toBe('hello');
+});
+
 it('page.goBack during renderer-initiated navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   await page.goto(server.EMPTY_PAGE);

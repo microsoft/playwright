@@ -715,7 +715,7 @@ export class Frame extends SdkObject {
     return response;
   }
 
-  async _waitForNavigation(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
+  async _waitForNavigation(progress: Progress, requiresNewDocument: boolean, options: types.NavigateOptions): Promise<network.Response | null> {
     const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
     progress.log(`waiting for navigation until "${waitUntil}"`);
 
@@ -723,6 +723,8 @@ export class Frame extends SdkObject {
       // Any failed navigation results in a rejection.
       if (event.error)
         return true;
+      if (requiresNewDocument && !event.newDocument)
+        return false;
       progress.log(`  navigated to "${this._url}"`);
       return true;
     }).promise;

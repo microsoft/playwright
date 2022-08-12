@@ -372,7 +372,8 @@ export class Page extends SdkObject {
       // Note: waitForNavigation may fail before we get response to reload(),
       // so we should await it immediately.
       const [response] = await Promise.all([
-        this.mainFrame()._waitForNavigation(progress, options),
+        // Reload must be a new document, and should not be confused with a stray pushState.
+        this.mainFrame()._waitForNavigation(progress, true /* requiresNewDocument */, options),
         this._delegate.reload(),
       ]);
       await this._doSlowMo();
@@ -386,7 +387,7 @@ export class Page extends SdkObject {
       // Note: waitForNavigation may fail before we get response to goBack,
       // so we should catch it immediately.
       let error: Error | undefined;
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, options).catch(e => {
+      const waitPromise = this.mainFrame()._waitForNavigation(progress, false /* requiresNewDocument */, options).catch(e => {
         error = e;
         return null;
       });
@@ -407,7 +408,7 @@ export class Page extends SdkObject {
       // Note: waitForNavigation may fail before we get response to goForward,
       // so we should catch it immediately.
       let error: Error | undefined;
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, options).catch(e => {
+      const waitPromise = this.mainFrame()._waitForNavigation(progress, false /* requiresNewDocument */, options).catch(e => {
         error = e;
         return null;
       });
