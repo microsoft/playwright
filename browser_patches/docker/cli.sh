@@ -80,7 +80,7 @@ elif [[ "$2" == "test" ]]; then
     ./browser_patches/${BROWSER_NAME}/archive.sh $PWD/archive.zip
   '
 elif [[ "$2" == "compile" ]]; then
-  docker run --rm ${DOCKER_ARGS} --init --name "${DOCKER_CONTAINER_NAME}" --platform "${DOCKER_PLATFORM}" -it "${DOCKER_IMAGE_NAME}" /bin/bash -c '
+  docker run --rm ${DOCKER_ARGS} --init --name "${DOCKER_CONTAINER_NAME}" --platform "${DOCKER_PLATFORM}" -t "${DOCKER_IMAGE_NAME}" /bin/bash -c '
     ./browser_patches/checkout_build_archive_upload.sh "${BUILD_FLAVOR}"
   '
 elif [[ "$2" == "enter" ]]; then
