@@ -1,7 +1,5 @@
 //@ts-check
-
 import '../src/assets/index.css';
-
 import { beforeMount, afterMount } from '@playwright/experimental-ct-react/hooks';
 
 beforeMount(async ({ hooksConfig }) => {
