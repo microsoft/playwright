@@ -853,7 +853,7 @@ export function buildPlaywrightCLICommand(sdkLanguage: string, parameters: strin
     case 'java':
       return `mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="${parameters}"`;
     case 'csharp':
-      return `pwsh bin\\Debug\\netX\\playwright.ps1 ${parameters}`;
+      return `pwsh bin/Debug/netX/playwright.ps1 ${parameters}`;
     default:
       return `npx playwright ${parameters}`;
   }

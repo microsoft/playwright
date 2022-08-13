@@ -134,27 +134,27 @@ you can still opt into stable channels on the bots that are typically free of su
 To invoke Playwright CLI commands, you need to invoke a PowerShell script:
 
 ```bash
-pwsh bin\Debug\netX\playwright.ps1 --help
+pwsh bin/Debug/netX/playwright.ps1 --help
 ```
 
 Playwright can install supported browsers by means of the CLI tool.
 
 ```bash csharp
 # Running without arguments will install all browsers
-pwsh bin\Debug\netX\playwright.ps1 install
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 You can also install specific browsers by providing an argument:
 
 ```bash csharp
 # Install WebKit
-pwsh bin\Debug\netX\playwright.ps1 install webkit
+pwsh bin/Debug/netX/playwright.ps1 install webkit
 ```
 
 See all supported browsers:
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 install --help
+pwsh bin/Debug/netX/playwright.ps1 install --help
 ```
 
 ## Install browsers via API
@@ -236,17 +236,17 @@ mvn test
 
 ```bash tab=bash-bash lang=csharp
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers
-pwsh bin\Debug\netX\playwright.ps1 install
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```batch tab=bash-batch lang=csharp
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
-pwsh bin\Debug\netX\playwright.ps1 install
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```powershell tab=bash-powershell lang=csharp
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
-pwsh bin\Debug\netX\playwright.ps1 install
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 When running Playwright scripts, ask it to search for browsers in a shared location.
@@ -405,17 +405,17 @@ mvn test
 ```
 
 ```bash tab=bash-bash lang=csharp
-HTTPS_PROXY=https://192.0.2.1 pwsh bin\Debug\netX\playwright.ps1 install
+HTTPS_PROXY=https://192.0.2.1 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```batch tab=bash-batch lang=csharp
 set HTTPS_PROXY=https://192.0.2.1
-pwsh bin\Debug\netX\playwright.ps1 install
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```powershell tab=bash-powershell lang=csharp
 $env:HTTPS_PROXY="https://192.0.2.1"
-pwsh bin\Debug\netX\playwright.ps1 install
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 If the requests of the proxy get intercepted with a custom untrusted certificate authority (CA) and it yields to `Error: self signed certificate in certificate chain` while downloading the browsers, you must set your custom root certificates via the [`NODE_EXTRA_CA_CERTS`](https://nodejs.org/api/cli.html#node_extra_ca_certsfile) environment variable before installing the browsers:
@@ -500,17 +500,17 @@ mvn test
 ```
 
 ```bash tab=bash-bash lang=csharp
-PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 pwsh bin\Debug\netX\playwright.ps1 install
+PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```batch tab=bash-batch lang=csharp
 set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
-pwsh bin\Debug\netX\playwright.ps1 install
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```powershell tab=bash-powershell lang=csharp
 $env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
-pwsh bin\Debug\netX\playwright.ps1 install
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that
@@ -584,19 +584,19 @@ mvn test
 ```
 
 ```bash tab=bash-bash lang=csharp
-PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 pwsh bin\Debug\netX\playwright.ps1 install
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```batch tab=bash-batch lang=csharp
 set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3
 set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
-pwsh bin\Debug\netX\playwright.ps1 install
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```powershell tab=bash-powershell lang=csharp
 $env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
 $env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
-pwsh bin\Debug\netX\playwright.ps1 install
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ## Skip browser downloads
@@ -638,17 +638,17 @@ mvn test
 ```
 
 ```bash tab=bash-bash lang=csharp
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pwsh bin\Debug\netX\playwright.ps1 install
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```batch tab=bash-batch lang=csharp
 set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-pwsh bin\Debug\netX\playwright.ps1 install
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ```powershell tab=bash-powershell lang=csharp
 $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-pwsh bin\Debug\netX\playwright.ps1 install
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ## Download single browser binary

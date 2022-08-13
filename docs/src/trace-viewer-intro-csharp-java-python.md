@@ -101,7 +101,7 @@ playwright show-trace trace.zip
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 show-trace trace.zip
+pwsh bin/Debug/netX/playwright.ps1 show-trace trace.zip
 ```
 
 

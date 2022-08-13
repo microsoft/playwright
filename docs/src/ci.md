@@ -32,7 +32,7 @@ configurations for common CI providers.
    mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
    ```
    ```bash csharp
-   pwsh bin\Debug\netX\playwright.ps1 install --with-deps
+   pwsh bin/Debug/netX/playwright.ps1 install --with-deps
    ```
 
 1. **Run your tests**:
