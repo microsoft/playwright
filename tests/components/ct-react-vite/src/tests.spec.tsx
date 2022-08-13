@@ -47,7 +47,7 @@ test('named children should work', async ({ mount }) => {
   await expect(component).toContainText('Footer')
 })
 
-test('children should emit events', async ({ mount }) => {
+test('children should callback', async ({ mount }) => {
   let clickFired = false;
   const component = await mount(<DefaultChildren>
     <span onClick={() => clickFired = true}>Main Content</span>
