@@ -24,9 +24,11 @@ Playwright provides base classes to write tests with NUnit via the [`Microsoft.P
 # Create a new project
 dotnet new nunit -n PlaywrightTests
 cd PlaywrightTests
+
 # Add the required reference
 dotnet add package Microsoft.Playwright.NUnit
 dotnet build
+
 # Install the required browsers and operating system dependencies
 pwsh bin\Debug\netX\playwright.ps1 install --with-deps
 ```
@@ -104,7 +106,8 @@ dotnet test --filter "Name~Slogan"
 
 ### Running NUnit tests in Parallel
 
-By default NUnit will run all test files in parallel, while running tests inside each file sequentially. It will create as many processes as there are cores on the host system. You can adjust this behavior using the NUnit.NumberOfTestWorkers parameter.
+By default NUnit will run all test files in parallel, while running tests inside each file sequentially (`ParallelScope.Self`). It will create as many processes as there are cores on the host system. You can adjust this behavior using the NUnit.NumberOfTestWorkers parameter.
+Running test in parallel using `ParallelScope.All` or `ParallelScope.Fixtures` is not supported.
 
 For CPU-bound tests, we recommend using as many workers as there are cores on your system, divided by 2. For IO-bound tests you can use as many workers as you have cores.
 
@@ -151,24 +154,18 @@ CLI. See the following example:
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
-  <TestRunParameters>
-    <Parameter name="browser" value="chromium" />
-    <Parameter name="headless" value="false" />
-    <Parameter name="channel" value="msedge" />
-  </TestRunParameters>
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <LaunchOptions>
+      <Headless>false</Headless>
+      <Channel>msedge</Channel>
+    </LaunchOptions>
+  </Playwright>
 </RunSettings>
 ```
 
-```bash tab=bash-bash
-dotnet test -- TestRunParameters.Parameter\(name=\"browser\", value=\"chromium\"\) TestRunParameters.Parameter\(name=\"headless\", value=\"false\"\) TestRunParameters.Parameter\(name=\"channel\", value=\"msedge\"\)
-```
-
-```batch tab=bash-batch
-dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"chromium\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
-```
-
-```powershell tab=bash-powershell
-dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"chromium\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
+```bash
+dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Headless=false Playwright.LaunchOptions.Channel=msedge
 ```
 
 ### Using Verbose API Logs
@@ -177,29 +174,33 @@ When you have enabled the [verbose API log](./debug.md#verbose-api-logs), via th
 
 ### Using the .runsettings file
 
-When running tests from Visual Studio, you can take advantage of the `.runsettings` file.
+When running tests from Visual Studio, you can take advantage of the `.runsettings` file. The following shows a reference of the supported values.
 
-For example, to specify the amount of workers (`NUnit.NumberOfTestWorkers`), you can use the following snippet:
+For example, to specify the amount of workers you can use `NUnit.NumberOfTestWorkers` or to enable `DEBUG` logs `RunConfiguration.EnvironmentVariables`.
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
+  <!-- NUnit adapter -->  
   <NUnit>
     <NumberOfTestWorkers>24</NumberOfTestWorkers>
   </NUnit>
-</RunSettings>
-```
-
-If you want to enable debugging, you can set the `DEBUG` variable to `pw:api` as documented, by doing:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<RunSettings>
+  <!-- General run configuration -->
   <RunConfiguration>
     <EnvironmentVariables>
+      <!-- For debugging selectors, it's recommend to set the following environment variable -->
       <DEBUG>pw:api</DEBUG>
     </EnvironmentVariables>
   </RunConfiguration>
+  <!-- Playwright -->  
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <ExpectTimeout>5000</ExpectTimeout>
+    <LaunchOptions>
+      <Headless>true</Headless>
+      <Channel>msedge</Channel>
+    </LaunchOptions>
+  </Playwright>
 </RunSettings>
 ```
 
@@ -224,9 +225,11 @@ Playwright provides base classes to write tests with MSTest via the [`Microsoft.
 # Create a new project
 dotnet new mstest -n PlaywrightTests
 cd PlaywrightTests
+
 # Add the required reference
 dotnet add package Microsoft.Playwright.MSTest
 dotnet build
+
 # Install the required browsers and operating system dependencies
 pwsh bin\Debug\netX\playwright.ps1 install --with-deps
 ```
@@ -304,7 +307,8 @@ dotnet test --filter "Name~Slogan"
 
 ### Running MSTest tests in Parallel
 
-By default MSTest will run all classes in parallel, while running tests inside each class sequentially. It will create as many processes as there are cores on the host system. You can adjust this behavior by using the following CLI parameter or using a `.runsettings` file, see below.
+By default MSTest will run all classes in parallel, while running tests inside each class sequentially (`ExecutionScope.ClassLevel`). It will create as many processes as there are cores on the host system. You can adjust this behavior by using the following CLI parameter or using a `.runsettings` file, see below.
+Running tests in parallel at the method level (`ExecutionScope.MethodLevel`) is not supported.
 
 ```bash
 dotnet test --settings:.runsettings -- MSTest.Parallelize.Workers=4
@@ -357,24 +361,18 @@ CLI. See the following example:
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
-  <TestRunParameters>
-    <Parameter name="browser" value="chromium" />
-    <Parameter name="headless" value="false" />
-    <Parameter name="channel" value="msedge" />
-  </TestRunParameters>
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <LaunchOptions>
+      <Headless>false</Headless>
+      <Channel>msedge</Channel>
+    </LaunchOptions>
+  </Playwright>
 </RunSettings>
 ```
 
-```bash tab=bash-bash
-dotnet test -- TestRunParameters.Parameter\(name=\"browser\", value=\"chromium\"\) TestRunParameters.Parameter\(name=\"headless\", value=\"false\"\) TestRunParameters.Parameter\(name=\"channel\", value=\"msedge\"\)
-```
-
-```batch tab=bash-batch
-dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"chromium\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
-```
-
-```powershell tab=bash-powershell
-dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"chromium\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
+```bash
+dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Headless=false Playwright.LaunchOptions.Channel=msedge
 ```
 
 ### Using Verbose API Logs
@@ -383,32 +381,35 @@ When you have enabled the [verbose API log](./debug.md#verbose-api-logs), via th
 
 ### Using the .runsettings file
 
-When running tests from Visual Studio, you can take advantage of the `.runsettings` file.
+When running tests from Visual Studio, you can take advantage of the `.runsettings` file. The following shows a reference of the supported values.
 
-For example, to specify the amount of workers (`MSTest.Parallelize.Workers`), you can use the following snippet:
+For example, to specify the number of workers, you can use `MSTest.Parallelize.Workers`. You can also enable `DEBUG` logs using `RunConfiguration.EnvironmentVariables`.
 
 ```xml
 <RunSettings>
-<!-- MSTest adapter -->  
+  <!-- MSTest adapter -->  
   <MSTest>
     <Parallelize>
       <Workers>4</Workers>
       <Scope>ClassLevel</Scope>
     </Parallelize>
   </MSTest>
-</RunSettings>
-```
-
-If you want to enable debugging, you can set the `DEBUG` variable to `pw:api` as documented, by doing:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<RunSettings>
+  <!-- General run configuration -->
   <RunConfiguration>
     <EnvironmentVariables>
+      <!-- For debugging selectors, it's recommend to set the following environment variable -->
       <DEBUG>pw:api</DEBUG>
     </EnvironmentVariables>
   </RunConfiguration>
+  <!-- Playwright -->  
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <ExpectTimeout>5000</ExpectTimeout>
+    <LaunchOptions>
+      <Headless>false</Headless>
+      <Channel>msedge</Channel>
+    </LaunchOptions>
+  </Playwright>
 </RunSettings>
 ```
 

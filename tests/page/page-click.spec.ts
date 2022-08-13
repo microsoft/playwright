@@ -605,32 +605,6 @@ it('should click disabled div', async ({ page }) => {
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
-it('should climb dom for inner label with pointer-events:none', async ({ page }) => {
-  await page.setContent('<button onclick="javascript:window.__CLICKED=true;"><label style="pointer-events:none">Click target</label></button>');
-  await page.click('text=Click target');
-  expect(await page.evaluate('__CLICKED')).toBe(true);
-});
-
-it('should climb up to [role=button]', async ({ page }) => {
-  await page.setContent('<div role=button onclick="javascript:window.__CLICKED=true;"><div style="pointer-events:none"><span><div>Click target</div></span></div>');
-  await page.click('text=Click target');
-  expect(await page.evaluate('__CLICKED')).toBe(true);
-});
-
-it('should climb up to a anchor', async ({ page }) => {
-  // For Firefox its not allowed to return anything: https://bugzilla.mozilla.org/show_bug.cgi?id=1392046
-  // Note the intermediate div - it is necessary, otherwise <a><non-clickable/></a> is not recognized as a clickable link.
-  await page.setContent(`<a href="javascript:(function(){window.__CLICKED=true})()" id="outer"><div id="intermediate"><div id="inner" style="pointer-events: none">Inner</div></div></a>`);
-  await page.click('#inner');
-  expect(await page.evaluate('__CLICKED')).toBe(true);
-});
-
-it('should climb up to a [role=link]', async ({ page }) => {
-  await page.setContent(`<div role=link onclick="javascript:window.__CLICKED=true;" id="outer"><div id="inner" style="pointer-events: none">Inner</div></div>`);
-  await page.click('#inner');
-  expect(await page.evaluate('__CLICKED')).toBe(true);
-});
-
 it('should wait for BUTTON to be clickable when it has pointer-events:none', async ({ page }) => {
   await page.setContent('<button onclick="javascript:window.__CLICKED=true;" style="pointer-events:none"><span>Click target</span></button>');
   let done = false;
@@ -883,4 +857,30 @@ it('should not hang when frame is detached', async ({ page, server, mode }) => {
   const error = await promise;
   expect(error).toBeTruthy();
   expect(error.message).toMatch(/frame got detached|Frame was detached/);
+});
+
+it('should climb dom for inner label with pointer-events:none', async ({ page }) => {
+  await page.setContent('<button onclick="javascript:window.__CLICKED=true;"><label style="pointer-events:none">Click target</label></button>');
+  await page.click('text=Click target');
+  expect(await page.evaluate('__CLICKED')).toBe(true);
+});
+
+it('should climb up to [role=button]', async ({ page }) => {
+  await page.setContent('<div role=button onclick="javascript:window.__CLICKED=true;"><div style="pointer-events:none"><span><div>Click target</div></span></div>');
+  await page.click('text=Click target');
+  expect(await page.evaluate('__CLICKED')).toBe(true);
+});
+
+it('should climb up to a anchor', async ({ page }) => {
+  // For Firefox its not allowed to return anything: https://bugzilla.mozilla.org/show_bug.cgi?id=1392046
+  // Note the intermediate div - it is necessary, otherwise <a><non-clickable/></a> is not recognized as a clickable link.
+  await page.setContent(`<a href="javascript:(function(){window.__CLICKED=true})()" id="outer"><div id="intermediate"><div id="inner" style="pointer-events: none">Inner</div></div></a>`);
+  await page.click('#inner');
+  expect(await page.evaluate('__CLICKED')).toBe(true);
+});
+
+it('should climb up to a [role=link]', async ({ page }) => {
+  await page.setContent(`<div role=link onclick="javascript:window.__CLICKED=true;" id="outer"><div id="inner" style="pointer-events: none">Inner</div></div>`);
+  await page.click('#inner');
+  expect(await page.evaluate('__CLICKED')).toBe(true);
 });

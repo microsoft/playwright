@@ -267,3 +267,30 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
     expect(output, 'should rebuild bundle').toContain('modules transformed');
   });
 });
+
+test('should not use global config for preview', async ({ runInlineTest }) => {
+  const result1 = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.js': ``,
+    'vite.config.js': `
+      export default {
+        plugins: [{
+          configurePreviewServer: () => {
+            throw new Error('Original preview throws');
+          }
+        }]
+      };
+    `,
+    'a.test.ts': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      test('pass', async ({ mount }) => {});
+    `,
+  }, { workers: 1 });
+  expect(result1.exitCode).toBe(0);
+  expect(result1.passed).toBe(1);
+
+  const result2 = await runInlineTest({}, { workers: 1 });
+  expect(result2.exitCode).toBe(0);
+  expect(result2.passed).toBe(1);
+});

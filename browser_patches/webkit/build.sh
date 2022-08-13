@@ -19,6 +19,9 @@ build_gtk() {
     --cmakeargs=-DENABLE_INTROSPECTION=OFF
     --cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE
   )
+  if is_linux ubuntu 18.04; then
+    CMAKE_ARGS+=("--cmakeargs=-DUSE_SYSTEM_MALLOC=ON")
+  fi
   if [[ -n "${EXPORT_COMPILE_COMMANDS}" ]]; then
     CMAKE_ARGS+=("--cmakeargs=-DCMAKE_EXPORT_COMPILE_COMMANDS=1")
   fi
@@ -42,6 +45,9 @@ build_wpe() {
     --cmakeargs=-DENABLE_WEBXR=OFF
     --cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE
   )
+  if is_linux ubuntu 18.04; then
+    CMAKE_ARGS+=("--cmakeargs=-DUSE_SYSTEM_MALLOC=ON")
+  fi
   if [[ -n "${EXPORT_COMPILE_COMMANDS}" ]]; then
     CMAKE_ARGS+=("--cmakeargs=-DCMAKE_EXPORT_COMPILE_COMMANDS=1")
   fi
