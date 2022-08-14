@@ -11,7 +11,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ=America/Los_Angeles
 
 # Debian 11 specific: add contrib & non-free repositories.
-echo "deb http://ftp.us.debian.org/debian bullseye main contrib non-free" >> /etc/apt/sources.list.d/pwbuild.list
+RUN echo "deb http://ftp.us.debian.org/debian bullseye main contrib non-free" >> /etc/apt/sources.list.d/pwbuild.list
 
 RUN apt-get update && apt-get install -y curl \
                                          build-essential \
