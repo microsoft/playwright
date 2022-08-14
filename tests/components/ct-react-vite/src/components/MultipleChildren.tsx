@@ -6,13 +6,13 @@ type MultipleChildrenProps = {
 export default function MultipleChildren(props: MultipleChildrenProps) {
   return <div>
   <header>
-    {props.children?.[0]}
+    {props.children?.at(0)}
   </header>
   <main>
-    {props.children?.[1]}
+    {props.children?.at(1)}
   </main>
   <footer>
-    {props.children?.[2]}
+    {props.children?.at(2)}
   </footer>
 </div>
 }
