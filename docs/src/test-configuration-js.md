@@ -1,6 +1,8 @@
 ---
 id: test-configuration
 title: "Configuration"
+tags:
+  - Test Runner
 ---
 
 Playwright Test provides options to configure the default `browser`, `context` and `page` fixtures. For example there are options for `headless`, `viewport` and `ignoreHTTPSErrors`. You can also record a video or a trace for the test or capture a screenshot at the end.

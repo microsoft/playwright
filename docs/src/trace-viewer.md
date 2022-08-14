@@ -1,6 +1,8 @@
 ---
 id: trace-viewer
 title: "Trace Viewer"
+tags:
+  - Tools
 ---
 
 Playwright Trace Viewer is a GUI tool that helps exploring recorded Playwright traces after the script ran. Open traces [locally](#viewing-the-trace) or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).

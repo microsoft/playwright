@@ -1,6 +1,9 @@
 ---
 id: auth
 title: "Authentication"
+tags:
+  - Writing Tests
+  - Basic Concepts
 ---
 
 Playwright can be used to automate scenarios that require authentication.

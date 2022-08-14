@@ -1,6 +1,9 @@
 ---
 id: input
 title: "Input"
+tags:
+  - Writing Tests
+  - Basic Concepts
 ---
 
 <!-- TOC -->

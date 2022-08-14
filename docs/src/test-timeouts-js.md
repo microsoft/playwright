@@ -1,6 +1,9 @@
 ---
 id: test-timeouts
 title: "Timeouts"
+tags:
+  - Test Runner
+  - Basic Concepts
 ---
 
 <!-- TOC -->

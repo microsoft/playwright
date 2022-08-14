@@ -1,6 +1,9 @@
 ---
 id: accessibility-testing
 title: "Accessibility testing"
+tags:
+  - Writing Tests
+  - Specialized Testing
 ---
 
 Playwright can be used to test your application for many types of accessibility issues.

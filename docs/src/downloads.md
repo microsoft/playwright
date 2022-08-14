@@ -1,6 +1,9 @@
 ---
 id: downloads
 title: "Downloads"
+tags:
+  - Writing Tests
+  - Basic Concepts
 ---
 
 :::note

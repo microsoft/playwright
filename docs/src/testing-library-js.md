@@ -1,6 +1,9 @@
 ---
 id: testing-library
 title: "Migrating from Testing Library"
+tags:
+  - Writing Tests
+  - Migration
 ---
 
 <!-- TOC -->

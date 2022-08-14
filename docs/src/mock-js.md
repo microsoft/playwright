@@ -1,6 +1,9 @@
 ---
 id: mock
 title: "Mock APIs"
+tags:
+  - Writing Tests
+  - Specialized Concepts
 ---
 
 Playwright provides native support for most of the browser features. However, there are some experimental APIs

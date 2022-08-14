@@ -1,6 +1,9 @@
 ---
 id: protractor
 title: "Migrating from Protractor"
+tags:
+  - Writing Tests
+  - Migration
 ---
 
 <!-- TOC -->

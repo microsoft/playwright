@@ -1,6 +1,9 @@
 ---
 id: locators
 title: "Locators"
+tags:
+  - Writing Tests
+  - Basic Concepts
 ---
 
 [Locator]s are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent

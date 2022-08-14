@@ -1,6 +1,9 @@
 ---
 id: browser-contexts
 title: "Browser Contexts"
+tags:
+  - Writing Tests
+  - Basic Concepts
 ---
 
 <!-- TOC -->

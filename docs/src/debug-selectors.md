@@ -1,6 +1,9 @@
 ---
 id: debug-selectors
 title: "Debugging Selectors"
+tags:
+  - Writing Tests
+  - Basic Concepts
 ---
 
 Playwright will throw a timeout exception like `locator.click: Timeout 30000ms exceeded` when an element does not exist on the page. There are multiple ways of debugging selectors:

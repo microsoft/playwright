@@ -1,6 +1,9 @@
 ---
 id: test-advanced
 title: "Advanced: configuration"
+tags:
+  - Test Runner
+  - Advanced Test
 ---
 
 <!-- TOC -->

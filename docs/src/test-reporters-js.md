@@ -1,6 +1,9 @@
 ---
 id: test-reporters
 title: "Reporters"
+tags:
+  - Test Runner
+  - Basic Concepts
 ---
 
 <!-- TOC -->

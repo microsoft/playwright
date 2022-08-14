@@ -1,6 +1,9 @@
 ---
 id: actionability
 title: "Auto-waiting"
+tags:
+  - Writing Tests
+  - Basic Concepts
 ---
 
 Playwright performs a range of actionability checks on the elements before making actions to ensure these actions

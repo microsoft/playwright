@@ -1,6 +1,9 @@
 ---
 id: events
 title: "Events"
+tags:
+  - Writing Tests
+  - Basic Concepts
 ---
 
 Playwright allows listening to various types of events happening in the web page, such

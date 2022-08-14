@@ -1,6 +1,8 @@
 ---
 id: library
 title: "Library"
+tags:
+  - Library
 ---
 
 Playwright Library provides unified APIs for launching and interacting with browsers, while Playwright Test provides all this plus a fully managed end-to-end Test Runner and experience.

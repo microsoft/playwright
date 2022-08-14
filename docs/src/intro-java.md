@@ -1,6 +1,9 @@
 ---
 id: intro
 title: "Getting started"
+tags:
+  - Getting started
+  - Writing Tests
 ---
 
 <!-- TOC -->

@@ -1,6 +1,9 @@
 ---
 id: network
 title: "Network"
+tags:
+  - Writing Tests
+  - Specialized Testing
 ---
 
 Playwright provides APIs to **monitor** and **modify** network traffic, both HTTP and HTTPS. Any requests that page

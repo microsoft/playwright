@@ -1,6 +1,9 @@
 ---
 id: test-snapshots
 title: "Visual comparisons"
+tags:
+  - Writing Tests
+  - Advanced
 ---
 
 Playwright Test includes the ability to produce and visually compare screenshots using `await expect(page).toHaveScreenshot()`. On first execution, Playwright test will generate reference screenshots. Subsequent runs will compare against the reference.

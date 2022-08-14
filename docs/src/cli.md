@@ -1,6 +1,8 @@
 ---
 id: cli
 title: "Command line tools"
+tags:
+  - Tools
 ---
 
 Playwright comes with the command line tools.

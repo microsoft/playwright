@@ -1,6 +1,9 @@
 ---
 id: chrome-extensions
 title: "Chrome Extensions"
+tags:
+  - Writing Tests
+  - Specialized Testing
 ---
 
 :::note

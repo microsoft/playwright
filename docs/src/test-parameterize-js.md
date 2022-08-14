@@ -1,6 +1,9 @@
 ---
 id: test-parameterize
 title: "Parametrize tests"
+tags:
+  - Writing Tests
+  - Basic Concepts
 ---
 
 You can either parametrize tests on a test level or on a project level.

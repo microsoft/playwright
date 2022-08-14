@@ -1,6 +1,8 @@
 ---
 id: ci
 title: "Continuous Integration"
+tags:
+  - Devops
 ---
 
 Playwright tests can be executed in CI environments. We have created sample

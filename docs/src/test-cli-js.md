@@ -1,6 +1,8 @@
 ---
 id: test-cli
 title: "Command line"
+tags:
+  - Test Runner
 ---
 
 <!-- TOC -->

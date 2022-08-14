@@ -1,6 +1,9 @@
 ---
 id: test-retries
 title: "Test retry"
+tags:
+  - Test Runner
+  - Basic Concepts
 ---
 
 <!-- TOC -->

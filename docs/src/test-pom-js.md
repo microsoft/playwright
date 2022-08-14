@@ -1,6 +1,9 @@
 ---
 id: test-pom
 title: "Page Object Model"
+tags:
+  - Writing Tests
+  - Advanced
 ---
 
 Page Object Model is a common pattern that introduces abstractions over web app pages to simplify interactions with them in multiple tests. It is best explained by an example.

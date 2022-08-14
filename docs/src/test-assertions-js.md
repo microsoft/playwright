@@ -1,6 +1,9 @@
 ---
 id: test-assertions
 title: "Assertions"
+tags:
+  - Writing Tests
+  - Basic Concepts
 ---
 
 Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. This library provides

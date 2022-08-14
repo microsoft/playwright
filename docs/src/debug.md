@@ -1,6 +1,8 @@
 ---
 id: debug
 title: "Debugging Tests"
+tags:
+  - Tools
 ---
 
 The Playwright inspector is a great tool to help with debugging. It opens up a browser window highlighting the selectors as you step through each line of the test. You can also use the explore button to find other available [selectors](./selectors.md) which you can then copy into your test file and rerun your tests to see if it passes. For debugging selectors, see [here](./debug-selectors.md).

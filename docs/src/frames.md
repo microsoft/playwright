@@ -1,6 +1,9 @@
 ---
 id: frames
 title: "Frames"
+tags:
+  - Writing Tests
+  - Basic Concepts
 ---
 
 <!-- TOC -->

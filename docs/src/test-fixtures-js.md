@@ -1,6 +1,9 @@
 ---
 id: test-fixtures
 title: "Advanced: fixtures"
+tags:
+  - Test Runner
+  - Advanced
 ---
 
 <!-- TOC -->

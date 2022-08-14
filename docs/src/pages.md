@@ -1,6 +1,9 @@
 ---
 id: pages
 title: "Pages"
+tags:
+  - Writing Tests
+  - Basic Concepts
 ---
 
 <!-- TOC -->

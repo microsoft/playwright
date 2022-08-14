@@ -1,6 +1,9 @@
 ---
 id: writing-tests
 title: "Writing Tests"
+tags:
+  - Getting started
+  - Writing Tests
 ---
 
 Playwright assertions are created specifically for the dynamic web. Checks are automatically retried until the necessary conditions are met. Playwright comes with [auto-wait](./actionability.md) built in meaning it waits for elements to be actionable prior to performing actions. Playwright provides the [Expect](./test-assertions) function to write assertions.

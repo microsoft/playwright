@@ -1,6 +1,9 @@
 ---
 id: test-typescript
 title: "TypeScript"
+tags:
+  - Writing Tests
+  - Advanced
 ---
 
 Playwright Test supports TypeScript out of the box. You just write tests in TypeScript and Playwright Test will read them, transform to JavaScript and run. This works both with [CommonJS modules](https://nodejs.org/api/modules.html) and [ECMAScript modules](https://nodejs.org/api/esm.html).

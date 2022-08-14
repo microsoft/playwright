@@ -1,6 +1,9 @@
 ---
 id: test-auth
 title: "Authentication"
+tags:
+  - Test Runner
+  - Basic Concepts
 ---
 
 Tests written with Playwright execute in isolated clean-slate environments called

@@ -1,6 +1,9 @@
 ---
 id: test-annotations
 title: "Annotations"
+tags:
+  - Test Runner
+  - Basic Concepts
 ---
 
 <!-- TOC -->

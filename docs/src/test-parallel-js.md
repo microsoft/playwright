@@ -1,6 +1,9 @@
 ---
 id: test-parallel
 title: "Parallelism and sharding"
+tags:
+  - Test Runner
+  - Basic Concepts
 ---
 
 Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time.
