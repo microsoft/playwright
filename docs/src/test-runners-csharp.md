@@ -30,7 +30,7 @@ dotnet add package Microsoft.Playwright.NUnit
 dotnet build
 
 # Install the required browsers and operating system dependencies
-pwsh bin\Debug\netX\playwright.ps1 install --with-deps
+pwsh bin/Debug/netX/playwright.ps1 install --with-deps
 ```
 
 Modify the UnitTest1.cs:
@@ -197,7 +197,7 @@ For example, to specify the amount of workers you can use `NUnit.NumberOfTestWor
     <BrowserName>chromium</BrowserName>
     <ExpectTimeout>5000</ExpectTimeout>
     <LaunchOptions>
-      <Headless>true</Headless>
+      <Headless>false</Headless>
       <Channel>msedge</Channel>
     </LaunchOptions>
   </Playwright>
@@ -231,7 +231,7 @@ dotnet add package Microsoft.Playwright.MSTest
 dotnet build
 
 # Install the required browsers and operating system dependencies
-pwsh bin\Debug\netX\playwright.ps1 install --with-deps
+pwsh bin/Debug/netX/playwright.ps1 install --with-deps
 ```
 
 Modify the UnitTest1.cs:

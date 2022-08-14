@@ -20,7 +20,7 @@ playwright codegen playwright.dev
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 codegen playwright.dev
+pwsh bin/Debug/netX/playwright.ps1 codegen playwright.dev
 ```
 
 Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `Codegen` will attempt to generate resilient text-based selectors.
@@ -45,7 +45,7 @@ playwright codegen --viewport-size=800,600 playwright.dev
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 codegen --viewport-size=800,600 playwright.dev
+pwsh bin/Debug/netX/playwright.ps1 codegen --viewport-size=800,600 playwright.dev
 ```
 
 
@@ -69,7 +69,7 @@ playwright codegen --device="iPhone 11" playwright.dev
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 codegen --device="iPhone 11" playwright.dev
+pwsh bin/Debug/netX/playwright.ps1 codegen --device="iPhone 11" playwright.dev
 ```
 
 <img width="1239" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 11" src="https://user-images.githubusercontent.com/13063165/182360089-9dc6d33d-480e-4bb2-86a3-fec51c1c228e.png" />
@@ -92,7 +92,7 @@ playwright codegen --color-scheme=dark playwright.dev
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 codegen --color-scheme=dark playwright.dev
+pwsh bin/Debug/netX/playwright.ps1 codegen --color-scheme=dark playwright.dev
 ```
 
 <img width="1258" alt="Codegen generating code for tests for playwright.dev website in dark mode" src="https://user-images.githubusercontent.com/13063165/182359371-0bb4a7a2-abbb-4f73-8550-d67e0101f0ad.png" />
@@ -114,7 +114,7 @@ playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" 
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
+pwsh bin/Debug/netX/playwright.ps1 codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
 ```
 
 <img width="1276" alt="Codegen generating code for tests for google maps showing timezone, geoloation as Rome, Italy and in Italian language" src="https://user-images.githubusercontent.com/13063165/182394434-73e1c2a8-767e-411a-94e4-0912c1c50ecc.png" />
@@ -138,7 +138,7 @@ playwright codegen --save-storage=auth.json
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 codegen --save-storage=auth.json
+pwsh bin/Debug/netX/playwright.ps1 codegen --save-storage=auth.json
 ```
 
 <img width="1264" alt="Screenshot 2022-08-03 at 13 28 02" src="https://user-images.githubusercontent.com/13063165/182599605-df2fbd05-622b-4cd7-8a32-0abdfea7d38d.png" />
@@ -158,7 +158,7 @@ playwright codegen --load-storage=auth.json github.com/microsoft/playwright
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 codegen --load-storage=auth.json github.com/microsoft/playwright
+pwsh bin/Debug/netX/playwright.ps1 codegen --load-storage=auth.json github.com/microsoft/playwright
 ```
 
 <img width="1261" alt="Screenshot 2022-08-03 at 13 33 40" src="https://user-images.githubusercontent.com/13063165/182599680-05297b4e-c258-4416-8daa-b8637c1db120.png" />
@@ -178,7 +178,7 @@ playwright open --load-storage=auth.json github.com/microsoft/playwright
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 open --load-storage=auth.json github.com/microsoft/playwright
+pwsh bin/Debug/netX/playwright.ps1 open --load-storage=auth.json github.com/microsoft/playwright
 ```
 
 

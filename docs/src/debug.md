@@ -193,7 +193,7 @@ playwright codegen wikipedia.org
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 codegen wikipedia.org
+pwsh bin/Debug/netX/playwright.ps1 codegen wikipedia.org
 ```
 
 ### Stepping through the Playwright script
