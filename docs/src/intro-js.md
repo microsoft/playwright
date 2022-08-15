@@ -17,18 +17,21 @@ Playwright Test was created specifically to accommodate the needs of end-to-end 
 - [How to open the HTML test report](/intro.md#html-test-reports)
 
 
-## Installing Playwright with
+## Installing Playwright
 
 Get started by installing Playwright using npm or yarn. Alternatively you can also get started and run your tests using the [VS Code Extension](./getting-started-vscode.md).
 
-<Tabs defaultValue="npm" values={[ {label: 'npm', value: 'npm'}, {label: 'yarn', value: 'yarn'} ] }>
+<Tabs defaultValue="npm" 
+  values={[ 
+    {label: 'npm', value: 'npm'}, 
+    {label: 'yarn', value: 'yarn'} ] 
+}>
 
 <TabItem value="npm">
 
 ```bash
 npm init playwright@latest
 ```
-
 </TabItem>
 
 <TabItem value="yarn">
@@ -36,7 +39,6 @@ npm init playwright@latest
 ```bash
 yarn create playwright
 ```
-
 </TabItem>
 
 </Tabs>
