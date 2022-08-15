@@ -25,7 +25,7 @@ playwright codegen playwright.dev
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 codegen playwright.dev
+pwsh bin/Debug/netX/playwright.ps1 codegen playwright.dev
 ```
 
 Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `Codegen` will attempt to generate resilient text-based selectors.
