@@ -27,7 +27,7 @@ RUN apt purge --auto-remove cmake && \
 # Ubuntu 18.04 specific: default to gcc-9.
 RUN add-apt-repository ppa:ubuntu-toolchain-r/test && \
     apt-get update && \
-    apt-get install gcc-9 g++-9
+    apt-get install -y gcc-9 g++-9
 ENV CC=/usr/bin/gcc-9
 ENV CXX=/usr/bin/g++-9
 
