@@ -54,6 +54,7 @@ USER pwuser
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="${PATH}:/home/pwuser/.cargo/bin"
 
+RUN mkdir -p /home/pwuser/.mozbuild
 RUN cd /home/pwuser && git clone --depth=1 https://github.com/microsoft/playwright
 
 WORKDIR /home/pwuser/playwright
