@@ -35,9 +35,6 @@ jobs:
         node-version: [14]
         include:
           - os: ubuntu-22.04
-            node-version: 12
-            browser: chromium
-          - os: ubuntu-22.04
             node-version: 16
             browser: chromium
           - os: ubuntu-22.04
@@ -106,8 +103,6 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [14]
         include:
-          - os: ubuntu-latest
-            node-version: 12
           - os: ubuntu-latest
             node-version: 16
           - os: ubuntu-latest
