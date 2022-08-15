@@ -1,0 +1,27 @@
+{
+  "id": 150,
+  "name": " Playwright Test Run",
+  "url": "http://localhost:3000/SampleSample/_apis/test/Runs/150",
+  "isAutomated": true,
+  "owner": {
+    "displayName": "Alex Neo",
+    "id": "230e55b4-9e71-6a10-a0fa-780a87894418"
+  },
+  "project": {
+    "id": "40067afb-7d94-4832-8565-a31e3427ecd3",
+    "name": "SampleSample"
+  },
+  "startedDate": "2022-07-02T14:59:47.523Z",
+  "completedDate": "2022-07-02T15:10:07.313Z",
+  "state": "Completed",
+  "plan": {
+    "id": "4"
+  },
+  "totalTests": 0,
+  "incompleteTests": 0,
+  "notApplicableTests": 0,
+  "passedTests": 0,
+  "unanalyzedTests": 0,
+  "revision": 4,
+  "webAccessUrl": "http://localhost:3000/SampleSample/_TestManagement/Runs?runId=150&_a=runCharts"
+}

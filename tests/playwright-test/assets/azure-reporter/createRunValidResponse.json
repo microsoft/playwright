@@ -1,0 +1,25 @@
+{
+  "id": 150,
+  "name": " Playwright Test Run",
+  "url": "http://localhost:3000/SampleSample/_apis/test/Runs/150",
+  "isAutomated": true,
+  "owner": {
+    "displayName": null,
+    "id": "00000000-0000-0000-0000-000000000000"
+  },
+  "project": {
+    "id": "40067afb-7d94-4832-8565-a31e3427ecd3",
+    "name": "SampleSample"
+  },
+  "state": "Unspecified",
+  "plan": {
+    "id": "4"
+  },
+  "totalTests": 0,
+  "incompleteTests": 0,
+  "notApplicableTests": 0,
+  "passedTests": 0,
+  "unanalyzedTests": 0,
+  "revision": 2,
+  "webAccessUrl": "http://localhost:3000/SampleSample/_TestManagement/Runs?runId=150&_a=runCharts"
+}

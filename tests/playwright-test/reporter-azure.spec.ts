@@ -14,10 +14,30 @@
  * limitations under the License.
  */
 
+import path from 'path';
+import azureAreas from './assets/azure-reporter/azureAreas';
+import headers from './assets/azure-reporter/azureHeaders';
+import location from './assets/azure-reporter/azureLocationOptionsResponse.json';
 import { expect, stripAnsi, test } from './playwright-test-fixtures';
 
-import path from 'path';
+const TEST_OPTIONS_RESPONSE_PATH = path.join(__dirname, '.', 'assets', 'azure-reporter', 'azureTestOptionsResponse.json');
+const CORE_OPTIONS_RESPONSE_PATH = path.join(__dirname, '.', 'assets', 'azure-reporter', 'azureCoreOptionsResponse.json');
+const PROJECT_VALID_RESPONSE_PATH = path.join(__dirname, '.', 'assets', 'azure-reporter', 'projectValidResponse.json');
+const CREATE_RUN_VALID_RESPONSE_PATH = path.join(__dirname, '.', 'assets', 'azure-reporter', 'createRunValidResponse.json');
+const POINTS_3_VALID_RESPONSE_PATH = path.join(__dirname, '.', 'assets', 'azure-reporter', 'points3Response.json');
+const COMPLETE_RUN_VALID_RESPONSE_PATH = path.join(__dirname, '.', 'assets', 'azure-reporter', 'completeRunValidResponse.json');
 
+function setHeaders(response, headers) {
+  const head = {};
+  for (const [i, _] of headers.entries()) {
+    if (i % 2 === 0)
+      head[headers[i]] = headers[i + 1];
+
+  }
+  for (const [key, value] of Object.entries(head))
+    response.setHeader(key, value);
+
+}
 /**
  * @param {string} number - The number of reporter to test. Format is: 01, 02, etc.
  */
@@ -25,7 +45,7 @@ const reporterPath = (number: string) => {
   return path.join(__dirname, '.', 'assets', 'azure-reporter', `reporter-azure.intercept.${number}.ts`).replace(/\\/g, '/');
 };
 
-test("'orgUrl' in config expected @azure", async ({ runInlineTest }) => {
+test.only("'orgUrl' in config expected", async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
@@ -42,11 +62,13 @@ test("'orgUrl' in config expected @azure", async ({ runInlineTest }) => {
       });
       `
   }, { reporter: '' });
-  expect(stripAnsi(result.output)).toContain("azure: 'orgUrl' is not set. Reporting is disabled.");
+  console.log('🚀 ~ file: reporter-azure.spec.ts ~ line 66 ~ test.only ~ result', result);
+  expect(stripAnsi(result.output)).toContain("pw:test:azure 'orgUrl' is not set. Reporting is disabled.");
   expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
 });
 
-test("'projectName' in config expected @azure", async ({ runInlineTest }) => {
+test("'projectName' in config expected", async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
@@ -64,12 +86,14 @@ test("'projectName' in config expected @azure", async ({ runInlineTest }) => {
         expect(1).toBe(0);
       });
       `
-  }, { reporter: '' });
-  expect(stripAnsi(result.output)).toContain("azure: 'projectName' is not set. Reporting is disabled.");
+  }, { reporter: '' }, { DEBUG: 'pw:test:azure' });
+  console.log('🚀 ~ file: reporter-azure.spec.ts ~ line 91 ~ test.only ~ stripAnsi(result.output)', stripAnsi(result.output));
+  expect(stripAnsi(result.output)).toContain("pw:test:azure 'projectName' is not set. Reporting is disabled.");
+  expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
 
-test("'planId' in config expected @azure", async ({ runInlineTest }) => {
+test("'planId' in config expected", async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
@@ -89,11 +113,11 @@ test("'planId' in config expected @azure", async ({ runInlineTest }) => {
       });
       `
   }, { reporter: '' });
-  expect(stripAnsi(result.output)).toContain("azure: 'planId' is not set. Reporting is disabled.");
+  expect(stripAnsi(result.output)).toContain("pw:test:azure 'planId' is not set. Reporting is disabled.");
   expect(result.exitCode).toBe(1);
 });
 
-test("'token' in config expected @azure", async ({ runInlineTest }) => {
+test("'token' in config expected", async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
@@ -114,11 +138,11 @@ test("'token' in config expected @azure", async ({ runInlineTest }) => {
       });
       `
   }, { reporter: '' });
-  expect(stripAnsi(result.output)).toContain("azure: 'token' is not set. Reporting is disabled.");
+  expect(stripAnsi(result.output)).toContain("pw:test:azure 'token' is not set. Reporting is disabled.");
   expect(result.exitCode).toBe(1);
 });
 
-test('correct orgUrl config expected @azure', async ({ runInlineTest }) => {
+test('correct orgUrl config expected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
@@ -129,7 +153,6 @@ test('correct orgUrl config expected @azure', async ({ runInlineTest }) => {
             projectName: 'test',
             planId: 231,
             token: 'token',
-            logging: true,
           }]
         ]
       };
@@ -145,7 +168,7 @@ test('correct orgUrl config expected @azure', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
-test('06 correct orgUrl config, incorrect token @azure', async ({ runInlineTest }) => {
+test('06 correct orgUrl config, incorrect token', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
@@ -153,11 +176,10 @@ test('06 correct orgUrl config, incorrect token @azure', async ({ runInlineTest 
           ['list'],
           ['${reporterPath('06')}'],
           ['azure', {
-            orgUrl: 'https://dev.azure.com/alex-alex',
+            orgUrl: 'http://localhost:${server.PORT}',
             projectName: 'test',
             planId: 231,
             token: 'token',
-            logging: true,
           }]
         ]
       };
@@ -170,22 +192,21 @@ test('06 correct orgUrl config, incorrect token @azure', async ({ runInlineTest 
       `
   }, { reporter: '' });
   expect(stripAnsi(result.output)).toContain('Failed request: (401)');
-  expect(stripAnsi(result.output)).toContain('azure: Failed to create test run: Failed request: (401). Check your token and orgUrl. Reporting is disabled.');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Failed to create test run: Failed request: (401). Check your token and orgUrl. Reporting is disabled.');
   expect(result.exitCode).toBe(1);
 });
 
-test('01 correct orgUrl config, correct token, incorrect testCaseId @azure', async ({ runInlineTest }) => {
+test('01 correct orgUrl config, correct token, incorrect testCaseId', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
         reporter: [
           ['${reporterPath('01')}'],
           ['azure', { 
-            orgUrl: 'https://dev.azure.com/alex-alex',
+            orgUrl: 'http://localhost:${server.PORT}',
             projectName: 'SampleSample',
             planId: 4,
             token: 'token',
-            logging: true,
           }]
         ]
       };
@@ -198,27 +219,65 @@ test('01 correct orgUrl config, correct token, incorrect testCaseId @azure', asy
       `
   }, { reporter: '' });
   expect(stripAnsi(result.output)).not.toContain('Failed request: (401)');
-  expect(stripAnsi(result.output)).toContain('azure: Using run 150 to publish test results');
-  expect(stripAnsi(result.output)).toContain('azure: Test [33] foobar - passed');
-  expect(stripAnsi(result.output)).toContain('azure: Start publishing: [33] foobar');
-  expect(stripAnsi(result.output)).toContain('azure: No test points found for test case');
-  expect(stripAnsi(result.output)).toContain('azure: Run 150 - Completed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Using run 150 to publish test results');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Test [33] foobar - passed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Start publishing: [33] foobar');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure No test points found for test case');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Run 150 - Completed');
   expect(result.exitCode).toBe(0);
 });
 
-test('02 correct orgUrl config, correct token, correct testCaseId @azure', async ({ runInlineTest }) => {
+test('02 correct orgUrl config, correct token, correct testCaseId', async ({ runInlineTest, server }) => {
+  server.setRoute('/_apis/Location', (_, res) => {
+    setHeaders(res, headers);
+    res.end(JSON.stringify(location));
+  });
+
+  server.setRoute('/_apis/ResourceAreas', (_, res) => {
+    setHeaders(res, headers);
+    res.end(JSON.stringify(azureAreas(server.PORT)));
+  });
+
+  server.setRoute('/_apis/Test', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, TEST_OPTIONS_RESPONSE_PATH);
+  });
+
+  server.setRoute('/_apis/core', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, CORE_OPTIONS_RESPONSE_PATH);
+  });
+
+  server.setRoute('/_apis/projects/SampleSample', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, PROJECT_VALID_RESPONSE_PATH);
+  });
+
+  server.setRoute('/SampleSample/_apis/test/Runs', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, CREATE_RUN_VALID_RESPONSE_PATH);
+  });
+
+  server.setRoute('/SampleSample/_apis/test/Points', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, POINTS_3_VALID_RESPONSE_PATH);
+  });
+
+  server.setRoute('/SampleSample/_apis/test/Runs/150', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, COMPLETE_RUN_VALID_RESPONSE_PATH);
+  });
+
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
         reporter: [
           ['list'],
-          ['${reporterPath('02')}'],
-          ['azure', { 
-            orgUrl: 'https://dev.azure.com/alex-alex',
+          ['azure', {
+            orgUrl: 'http://localhost:${server.PORT}',
             projectName: 'SampleSample',
             planId: 4,
             token: 'token',
-            logging: true,
           }]
         ]
       };
@@ -229,25 +288,64 @@ test('02 correct orgUrl config, correct token, correct testCaseId @azure', async
         expect(1).toBe(1);
       });
       `
-  }, { reporter: '' });
+  }, { reporter: '' }, { DEBUG: 'pw:test:azure' });
   expect(stripAnsi(result.output)).not.toContain('Failed request: (401)');
-  expect(stripAnsi(result.output)).toContain('azure: Using run 150 to publish test results');
-  expect(stripAnsi(result.output)).toContain('azure: Test [3] foobar - passed');
-  expect(stripAnsi(result.output)).toContain('azure: Start publishing: [3] foobar');
-  expect(stripAnsi(result.output)).toContain('azure: Result published: [3] foobar');
-  expect(stripAnsi(result.output)).toContain('azure: Run 150 - Completed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Using run 150 to publish test results');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Test [3] foobar - passed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Start publishing: [3] foobar');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Result published: [3] foobar');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Run 150 - Completed');
   expect(result.exitCode).toBe(0);
 });
 
-test('02 logging default is disabled @azure', async ({ runInlineTest }) => {
+test('02 logging default is disabled', async ({ runInlineTest, server }) => {
+  server.setRoute('/_apis/Location', (_, res) => {
+    setHeaders(res, headers);
+    res.end(JSON.stringify(location));
+  });
+
+  server.setRoute('/_apis/ResourceAreas', (_, res) => {
+    setHeaders(res, headers);
+    res.end(JSON.stringify(azureAreas(server.PORT)));
+  });
+
+  server.setRoute('/_apis/Test', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, TEST_OPTIONS_RESPONSE_PATH);
+  });
+
+  server.setRoute('/_apis/core', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, CORE_OPTIONS_RESPONSE_PATH);
+  });
+
+  server.setRoute('/_apis/projects/SampleSample', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, PROJECT_VALID_RESPONSE_PATH);
+  });
+
+  server.setRoute('/SampleSample/_apis/test/Runs', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, CREATE_RUN_VALID_RESPONSE_PATH);
+  });
+
+  server.setRoute('/SampleSample/_apis/test/Points', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, POINTS_3_VALID_RESPONSE_PATH);
+  });
+
+  server.setRoute('/SampleSample/_apis/test/Runs/150', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, COMPLETE_RUN_VALID_RESPONSE_PATH);
+  });
+
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
         reporter: [
           ['list'],
-          ['${reporterPath('02')}'],
-          ['azure', { 
-            orgUrl: 'https://dev.azure.com/alex-alex',
+          ['azure', {
+            orgUrl: 'http://localhost:${server.PORT}',
             projectName: 'SampleSample',
             planId: 4,
             token: 'token'
@@ -263,11 +361,11 @@ test('02 logging default is disabled @azure', async ({ runInlineTest }) => {
       `
   }, { reporter: '' });
   expect(stripAnsi(result.output)).not.toContain('Failed request: (401)');
-  expect(stripAnsi(result.output)).not.toMatch(/azure: (.*)/);
+  expect(stripAnsi(result.output)).not.toMatch(/pw:test:azure (.*)/);
   expect(result.exitCode).toBe(0);
 });
 
-test('03 testCaseId not specified @azure', async ({ runInlineTest }) => {
+test('03 testCaseId not specified', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
@@ -275,11 +373,10 @@ test('03 testCaseId not specified @azure', async ({ runInlineTest }) => {
           ['list'],
           ['${reporterPath('03')}'],
           ['azure', { 
-            orgUrl: 'https://dev.azure.com/alex-alex',
+            orgUrl: 'http://localhost:${server.PORT}',
             projectName: 'SampleSample',
             planId: 4,
             token: 'token',
-            logging: true,
           }]
         ]
       };
@@ -292,15 +389,15 @@ test('03 testCaseId not specified @azure', async ({ runInlineTest }) => {
       `
   }, { reporter: '' });
   expect(stripAnsi(result.output)).not.toContain('Failed request: (401)');
-  expect(stripAnsi(result.output)).toContain('azure: Using run 150 to publish test results');
-  expect(stripAnsi(result.output)).toContain('azure: Test foobar - passed');
-  expect(stripAnsi(result.output)).not.toContain('azure: Start publishing: foobar');
-  expect(stripAnsi(result.output)).not.toContain('azure: Result published: foobar');
-  expect(stripAnsi(result.output)).toContain('azure: Run 150 - Completed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Using run 150 to publish test results');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Test foobar - passed');
+  expect(stripAnsi(result.output)).not.toContain('pw:test:azure Start publishing: foobar');
+  expect(stripAnsi(result.output)).not.toContain('pw:test:azure Result published: foobar');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Run 150 - Completed');
   expect(result.exitCode).toBe(0);
 });
 
-test('04 incorrect planId @azure', async ({ runInlineTest }) => {
+test('04 incorrect planId', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
@@ -308,11 +405,10 @@ test('04 incorrect planId @azure', async ({ runInlineTest }) => {
           ['list'],
           ['${reporterPath('04')}'],
           ['azure', { 
-            orgUrl: 'https://dev.azure.com/alex-alex',
+            orgUrl: 'http://localhost:${server.PORT}',
             projectName: 'SampleSample',
             planId: 44,
             token: 'token',
-            logging: true,
           }]
         ]
       };
@@ -325,16 +421,16 @@ test('04 incorrect planId @azure', async ({ runInlineTest }) => {
       `
   }, { reporter: '' });
   expect(stripAnsi(result.output)).not.toContain('Failed request: (401)');
-  expect(stripAnsi(result.output)).toContain('azure: Using run 150 to publish test results');
-  expect(stripAnsi(result.output)).toContain('azure: Test [3] foobar - passed');
-  expect(stripAnsi(result.output)).toContain('azure: Start publishing: [3] foobar');
-  expect(stripAnsi(result.output)).toContain('Could not find test point for test case [3] associated with test plan 44. Check, maybe testPlanId, what you specifiyed, is incorrect');
-  expect(stripAnsi(result.output)).not.toContain('azure: Result published: [3] foobar');
-  expect(stripAnsi(result.output)).toContain('azure: Run 150 - Completed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Using run 150 to publish test results');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Test [3] foobar - passed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Start publishing: [3] foobar');
+  expect(stripAnsi(result.output)).toContain('Could not find test point for test case [3] associated with test plan 44. Check, maybe testPlanId, what you specified, is incorrect');
+  expect(stripAnsi(result.output)).not.toContain('pw:test:azure Result published: [3] foobar');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Run 150 - Completed');
   expect(result.exitCode).toBe(0);
 });
 
-test('05 upload attachments, attachmentsType in not defined - default "screenshot" @azure', async ({ runInlineTest }) => {
+test('05 upload attachments, attachmentsType in not defined - default "screenshot"', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
@@ -347,12 +443,11 @@ test('05 upload attachments, attachmentsType in not defined - default "screensho
           ['list'],
           ['${reporterPath('05')}'],
           ['azure', { 
-            orgUrl: 'https://dev.azure.com/alex-alex',
+            orgUrl: 'http://localhost:${server.PORT}',
             projectName: 'SampleSample',
             planId: 4,
             token: 'token',
             uploadAttachments: true,
-            logging: true,
           }]
         ]
       };
@@ -371,22 +466,22 @@ test('05 upload attachments, attachmentsType in not defined - default "screensho
   }, { reporter: '' });
 
   expect(stripAnsi(result.output)).not.toContain('Failed request: (401)');
-  expect(stripAnsi(result.output)).toContain("azure: 'attachmentsType' is not set. Attachments Type will be set to 'screenshot' by default.");
-  expect(stripAnsi(result.output)).toContain('azure: Using run 150 to publish test results');
-  expect(stripAnsi(result.output)).toContain('azure: Test [3] foobar - passed');
-  expect(stripAnsi(result.output)).toContain('azure: Test [7] with screenshot - failed');
-  expect(stripAnsi(result.output)).toContain('azure: Start publishing: [3] foobar');
-  expect(stripAnsi(result.output)).toContain('azure: Start publishing: [7] with screenshot');
-  expect(stripAnsi(result.output)).toContain('azure: Start upload attachments for test case [7]');
-  expect(stripAnsi(result.output)).toContain('azure: Result published: [3] foobar');
-  expect(stripAnsi(result.output)).toContain('azure: Result published: [7] with screenshot');
-  expect(stripAnsi(result.output)).toContain('azure: Run 150 - Completed');
+  expect(stripAnsi(result.output)).toContain("pw:test:azure 'attachmentsType' is not set. Attachments Type will be set to 'screenshot' by default.");
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Using run 150 to publish test results');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Test [3] foobar - passed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Test [7] with screenshot - failed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Start publishing: [3] foobar');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Start publishing: [7] with screenshot');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Start upload attachments for test case [7]');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Result published: [3] foobar');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Result published: [7] with screenshot');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Run 150 - Completed');
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
 });
 
-test('05 upload attachments with attachments type @azure', async ({ runInlineTest }) => {
+test('05 upload attachments with attachments type', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
@@ -399,13 +494,12 @@ test('05 upload attachments with attachments type @azure', async ({ runInlineTes
           ['list'],
           ['${reporterPath('05')}'],
           ['azure', { 
-            orgUrl: 'https://dev.azure.com/alex-alex',
+            orgUrl: 'http://localhost:${server.PORT}',
             projectName: 'SampleSample',
             planId: 4,
             token: 'token',
             uploadAttachments: true,
             attachmentsType: ['screenshot', 'trace', 'video'],
-            logging: true,
           }]
         ]
       };
@@ -424,21 +518,21 @@ test('05 upload attachments with attachments type @azure', async ({ runInlineTes
   }, { reporter: '' });
 
   expect(stripAnsi(result.output)).not.toContain('Failed request: (401)');
-  expect(stripAnsi(result.output)).toContain('azure: Using run 150 to publish test results');
-  expect(stripAnsi(result.output)).toContain('azure: Test [3] foobar - passed');
-  expect(stripAnsi(result.output)).toContain('azure: Test [7] with screenshot - failed');
-  expect(stripAnsi(result.output)).toContain('azure: Start publishing: [3] foobar');
-  expect(stripAnsi(result.output)).toContain('azure: Start publishing: [7] with screenshot');
-  expect(stripAnsi(result.output)).toContain('azure: Start upload attachments for test case [7]');
-  expect(stripAnsi(result.output)).toContain('azure: Result published: [3] foobar');
-  expect(stripAnsi(result.output)).toContain('azure: Result published: [7] with screenshot');
-  expect(stripAnsi(result.output)).toContain('azure: Run 150 - Completed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Using run 150 to publish test results');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Test [3] foobar - passed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Test [7] with screenshot - failed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Start publishing: [3] foobar');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Start publishing: [7] with screenshot');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Start upload attachments for test case [7]');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Result published: [3] foobar');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Result published: [7] with screenshot');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Run 150 - Completed');
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
 });
 
-test('07 incorrect project name @azure', async ({ runInlineTest }) => {
+test('07 incorrect project name', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
@@ -446,11 +540,10 @@ test('07 incorrect project name @azure', async ({ runInlineTest }) => {
           ['list'],
           ['${reporterPath('07')}'],
           ['azure', { 
-            orgUrl: 'https://dev.azure.com/alex-alex',
+            orgUrl: 'http://localhost:${server.PORT}',
             projectName: 'SampleSample',
             planId: 4,
             token: 'token',
-            logging: true,
           }]
         ]
       };
@@ -464,26 +557,44 @@ test('07 incorrect project name @azure', async ({ runInlineTest }) => {
   }, { reporter: '' });
 
   expect(stripAnsi(result.output)).not.toContain('Failed request: (401)');
-  expect(stripAnsi(result.output)).toContain('azure: Project SampleSample does not exist. Reporting is disabled.');
-  expect(stripAnsi(result.output)).not.toContain('azure: Using run');
-  expect(stripAnsi(result.output)).not.toContain('azure: Start publishing:');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Project SampleSample does not exist. Reporting is disabled.');
+  expect(stripAnsi(result.output)).not.toContain('pw:test:azure Using run');
+  expect(stripAnsi(result.output)).not.toContain('pw:test:azure Start publishing:');
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
 
-test('disabled reporter @azure', async ({ runInlineTest }) => {
+test('disabled reporter', async ({ runInlineTest, server }) => {
+  server.setRoute('/_apis/Location', (_, res) => {
+    setHeaders(res, headers);
+    res.end(JSON.stringify(location));
+  });
+
+  server.setRoute('/_apis/ResourceAreas', (_, res) => {
+    setHeaders(res, headers);
+    res.end(JSON.stringify(azureAreas(server.PORT)));
+  });
+
+  server.setRoute('/_apis/Test', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, TEST_OPTIONS_RESPONSE_PATH);
+  });
+
+  server.setRoute('/_apis/core', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, CORE_OPTIONS_RESPONSE_PATH);
+  });
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
         reporter: [
           ['list'],
-          ['azure', { 
-            orgUrl: 'https://dev.azure.com/alex-alex',
+          ['azure', {
+            orgUrl: 'http://localhost:${server.PORT}',
             projectName: 'SampleSample',
             planId: 4,
             token: 'token',
             isDisabled: true,
-            logging: true,
           }]
         ]
       };
@@ -494,10 +605,83 @@ test('disabled reporter @azure', async ({ runInlineTest }) => {
         expect(1).toBe(1);
       });
       `
-  }, { reporter: '' });
+  }, { reporter: '' }, { DEBUG: 'pw:test:azure' });
 
   expect(stripAnsi(result.output)).not.toContain('Failed request: (401)');
-  expect(stripAnsi(result.output)).not.toContain('azure:');
+  expect(stripAnsi(result.output)).not.toContain('pw:test:azure');
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+});
+
+test.skip('077 correct orgUrl config, correct token, correct testCaseId', async ({ runInlineTest, server }) => {
+  server.setRoute('/_apis/Location', (_, res) => {
+    setHeaders(res, headers);
+    res.end(JSON.stringify(location));
+  });
+
+  server.setRoute('/_apis/ResourceAreas', (_, res) => {
+    setHeaders(res, headers);
+    res.end(JSON.stringify(azureAreas(server.PORT)));
+  });
+
+  server.setRoute('/_apis/Test', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, TEST_OPTIONS_RESPONSE_PATH);
+  });
+
+  server.setRoute('/_apis/core', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, CORE_OPTIONS_RESPONSE_PATH);
+  });
+
+  server.setRoute('/_apis/projects/SampleSample', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, PROJECT_VALID_RESPONSE_PATH);
+  });
+
+  server.setRoute('/SampleSample/_apis/test/Runs', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, CREATE_RUN_VALID_RESPONSE_PATH);
+  });
+
+  server.setRoute('/SampleSample/_apis/test/Points', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, POINTS_3_VALID_RESPONSE_PATH);
+  });
+
+  server.setRoute('/SampleSample/_apis/test/Runs/150', (req, res) => {
+    setHeaders(res, headers);
+    server.serveFile(req, res, COMPLETE_RUN_VALID_RESPONSE_PATH);
+  });
+
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [
+          ['list'],
+          ['azure', {
+            orgUrl: 'http://localhost:${server.PORT}',
+            projectName: 'SampleSample',
+            planId: 4,
+            token: 'token',
+          }]
+        ]
+      };
+    `,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('[3] foobar', async () => {
+        expect(1).toBe(1);
+      });
+      `
+  }, { reporter: '' }, { DEBUG: 'pw:webserver,pw:test:azure' });
+
+  expect(stripAnsi(result.output)).not.toContain('Failed request: (401)');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Using run 150 to publish test results');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Test [3] foobar - passed');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Start publishing: [3] foobar');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Result published: [3] foobar');
+  expect(stripAnsi(result.output)).toContain('pw:test:azure Run 150 - Completed');
+  expect(result.exitCode).toBe(0);
+
 });

@@ -3,8 +3,6 @@ module.exports = [
   'no-cache',
   'Pragma',
   'no-cache',
-  'Content-Length',
-  '699',
   'Content-Type',
   'application/json; charset=utf-8; api-version=6.1-preview.3',
   'Expires',

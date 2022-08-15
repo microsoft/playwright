@@ -1,0 +1,25 @@
+{
+  "id": "40067afb-7d94-4832-8565-a31e3427ecd3",
+  "name": "SampleSample",
+  "url": "http://localhost:3000/_apis/projects/40067afb-7d94-4832-8565-a31e3427ecd3",
+  "state": "wellFormed",
+  "revision": 11,
+  "_links": {
+    "self": {
+      "href": "http://localhost:3000/_apis/projects/40067afb-7d94-4832-8565-a31e3427ecd3"
+    },
+    "collection": {
+      "href": "http://localhost:3000/_apis/projectCollections/71c15d06-b625-4e94-b256-84099a3c58d1"
+    },
+    "web": {
+      "href": "http://localhost:3000/SampleSample"
+    }
+  },
+  "visibility": "private",
+  "defaultTeam": {
+    "id": "24a24c07-d755-4b33-bfaf-4b16ecf0fd85",
+    "name": "SampleSample Team",
+    "url": "http://localhost:3000/_apis/projects/40067afb-7d94-4832-8565-a31e3427ecd3/teams/24a24c07-d755-4b33-bfaf-4b16ecf0fd85"
+  },
+  "lastUpdateTime": "2022-02-08T22:21:09.643Z"
+}
