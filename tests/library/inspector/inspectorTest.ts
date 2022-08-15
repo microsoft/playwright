@@ -28,6 +28,17 @@ type CLITestArgs = {
   runCLI: (args: string[], options?: { noAutoExit?: boolean }) => CLIMock;
 };
 
+const codegenLang2Id: Map<string, string> = new Map([
+  ['JavaScript', 'javascript'],
+  ['Java', 'java'],
+  ['Python', 'python'],
+  ['Python Async', 'python-async'],
+  ['Pytest', 'pytest'],
+  ['C#', 'csharp'],
+  ['Playwright Test', 'test'],
+]);
+const codegenLangId2lang = new Map([...codegenLang2Id.entries()].map(([lang, langId]) => [langId, lang]));
+
 const playwrightToAutomateInspector = require('../../../packages/playwright-core/lib/inProcessFactory').createInProcessPlaywright();
 
 export const test = contextTest.extend<CLITestArgs>({
@@ -115,14 +126,19 @@ class Recorder {
   }
 
   async waitForOutput(file: string, text: string): Promise<Map<string, Source>> {
-    const handle = await this.recorderPage.waitForFunction((params: { text: string, file: string }) => {
+    if (!codegenLang2Id.has(file))
+      throw new Error(`Unknown language: ${file}`);
+    const handle = await this.recorderPage.waitForFunction((params: { text: string, languageId: string }) => {
       const w = window as any;
-      const source = (w.playwrightSourcesEchoForTest || []).find((s: Source) => s.file === params.file);
+      const source = (w.playwrightSourcesEchoForTest || []).find((s: Source) => s.id === params.languageId);
       return source && source.text.includes(params.text) ? w.playwrightSourcesEchoForTest : null;
-    }, { text, file }, { timeout: 8000, polling: 300 });
+    }, { text, languageId: codegenLang2Id.get(file) }, { timeout: 8000, polling: 300 });
     const sources: Source[] = await handle.jsonValue();
-    for (const source of sources)
-      this._sources.set(source.file, source);
+    for (const source of sources) {
+      if (!codegenLangId2lang.has(source.id))
+        throw new Error(`Unknown language: ${source.id}`);
+      this._sources.set(codegenLangId2lang.get(source.id), source);
+    }
     return this._sources;
   }
 
