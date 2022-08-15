@@ -4,6 +4,9 @@ title: "Installation"
 displayed_sidebar: gettingStarted
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 Playwright Test was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation of Google Chrome for Android and Mobile Safari.
 
 **You will learn**
@@ -18,13 +21,8 @@ Playwright Test was created specifically to accommodate the needs of end-to-end 
 
 Get started by installing Playwright using npm or yarn. Alternatively you can also get started and run your tests using the [VS Code Extension](./getting-started-vscode.md).
 
-<Tabs
-  defaultValue="npm"
-  values={[
-    {label: 'npm', value: 'npm'},
-    {label: 'yarn', value: 'yarn'}
-  ]
-}>
+<Tabs defaultValue="npm" values={[ {label: 'npm', value: 'npm'}, {label: 'yarn', value: 'yarn'} ] }>
+
 <TabItem value="npm">
 
 ```bash
@@ -40,6 +38,7 @@ yarn create playwright
 ```
 
 </TabItem>
+
 </Tabs>
 
 
