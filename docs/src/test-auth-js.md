@@ -2,7 +2,7 @@
 id: test-auth
 title: "Authentication"
 tags:
-  - Test Runner
+  - Writing Tests
   - Basic Concepts
 ---
 
