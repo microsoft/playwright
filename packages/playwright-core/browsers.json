@@ -21,7 +21,7 @@
     },
     {
       "name": "firefox",
-      "revision": "1344",
+      "revision": "1345",
       "installByDefault": true,
       "browserVersion": "103.0"
     },
