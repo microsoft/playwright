@@ -2,7 +2,7 @@
 id: docker
 title: "Docker"
 tags:
-  - Devops
+  - DevOps
 ---
 
 [Dockerfile.focal] can be used to run Playwright scripts in Docker environment. These image includes all the dependencies needed to run browsers in a Docker container, and also include the browsers themselves.
