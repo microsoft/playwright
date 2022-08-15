@@ -251,14 +251,14 @@ export class Recorder implements InstrumentationListener {
       const { file, line } = metadata.stack[0];
       let source = this._userSources.get(file);
       if (!source) {
-        source = { isRecorded: false, file, text: this._readSource(file), highlight: [], language: languageForFile(file) };
+        source = { isRecorded: false, label: file, id: file, text: this._readSource(file), highlight: [], language: languageForFile(file) };
         this._userSources.set(file, source);
       }
       if (line) {
         const paused = this._debugger.isPaused(metadata);
         source.highlight.push({ line, type: metadata.error ? 'error' : (paused ? 'paused' : 'running') });
         source.revealLine = line;
-        fileToSelect = source.file;
+        fileToSelect = source.id;
       }
     }
     this._pushAllSources();
@@ -333,7 +333,9 @@ class ContextRecorder extends EventEmitter {
       for (const languageGenerator of this._orderedLanguages) {
         const source: Source = {
           isRecorded: true,
-          file: languageGenerator.fileName,
+          label: languageGenerator.name,
+          group: languageGenerator.groupName,
+          id: languageGenerator.id,
           text: generator.generateText(languageGenerator),
           language: languageGenerator.highlighter,
           highlight: []
@@ -345,7 +347,7 @@ class ContextRecorder extends EventEmitter {
       }
       this.emit(ContextRecorder.Events.Change, {
         sources: this._recorderSources,
-        primaryFileName: this._orderedLanguages[0].fileName
+        primaryFileName: this._orderedLanguages[0].id
       });
     });
     context.on(BrowserContext.Events.BeforeClose, () => {
@@ -362,9 +364,9 @@ class ContextRecorder extends EventEmitter {
       new JavaLanguageGenerator(),
       new JavaScriptLanguageGenerator(false),
       new JavaScriptLanguageGenerator(true),
+      new PythonLanguageGenerator(false, true),
       new PythonLanguageGenerator(false, false),
       new PythonLanguageGenerator(true, false),
-      new PythonLanguageGenerator(false, true),
       new CSharpLanguageGenerator(),
     ]);
     const primaryLanguage = [...languages].find(l => l.id === language);

@@ -27,7 +27,8 @@ import deviceDescriptors from '../deviceDescriptors';
 
 export class CSharpLanguageGenerator implements LanguageGenerator {
   id = 'csharp';
-  fileName = 'C#';
+  groupName = '.NET';
+  name = 'Library C#';
   highlighter = 'csharp';
 
   generateAction(actionInContext: ActionInContext): string {

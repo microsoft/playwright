@@ -28,7 +28,8 @@ import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 
 export class JavaLanguageGenerator implements LanguageGenerator {
   id = 'java';
-  fileName = 'Java';
+  groupName = 'Java';
+  name = 'Library';
   highlighter = 'java';
 
   generateAction(actionInContext: ActionInContext): string {

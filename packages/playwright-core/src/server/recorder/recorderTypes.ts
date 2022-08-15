@@ -53,9 +53,12 @@ export type SourceHighlight = {
 
 export type Source = {
   isRecorded: boolean;
-  file: string;
+  id: string;
+  label: string;
   text: string;
   language: string;
   highlight: SourceHighlight[];
   revealLine?: number;
+  // used to group the language generators
+  group?: string;
 };
