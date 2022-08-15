@@ -8,7 +8,7 @@ toc_max_heading_level: 2
 
 ### New APIs & changes
 
-- Default assertions timeout now can be changed with [`'setDefaultAssertionTimeout'`](./test-assertions#playwright-assertions-set-default-assertion-timeout).
+- Default assertions timeout now can be changed with [`setDefaultAssertionTimeout`](./test-assertions#playwright-assertions-set-default-assertion-timeout).
 
 ### Announcements
 
