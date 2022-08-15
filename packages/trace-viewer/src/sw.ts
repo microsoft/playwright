@@ -32,11 +32,15 @@ const scopePath = new URL(self.registration.scope).pathname;
 
 const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer }>();
 
-const clientIdToTraceUrl = new Map<string, string>();
+const clientIdToTraceUrls = new Map<string, string[]>();
 
 async function loadTrace(trace: string, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
   const entry = loadedTraces.get(trace);
-  clientIdToTraceUrl.set(clientId, trace);
+  const traceUrls = clientIdToTraceUrls.get(clientId);
+  if (traceUrls)
+    traceUrls.push(trace);
+  else
+    clientIdToTraceUrls.set(clientId, [trace]);
   if (entry)
     return entry.traceModel;
   const traceModel = new TraceModel();
@@ -123,12 +127,12 @@ async function gc() {
   const clients = await self.clients.matchAll();
   const usedTraces = new Set<string>();
 
-  for (const [clientId, traceUrl] of clientIdToTraceUrl) {
+  for (const [clientId, traceUrls] of clientIdToTraceUrls) {
     // @ts-ignore
     if (!clients.find(c => c.id === clientId))
-      clientIdToTraceUrl.delete(clientId);
+      clientIdToTraceUrls.delete(clientId);
     else
-      usedTraces.add(traceUrl);
+      traceUrls.forEach(url => usedTraces.add(url));
   }
 
   for (const traceUrl of loadedTraces.keys()) {
