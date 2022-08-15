@@ -203,7 +203,7 @@ export class FixturePool {
           };
           value = value[0];
         }
-        const fn = value as (Function | any);
+        let fn = value as (Function | any);
 
         const previous = this.registrations.get(name);
         if (previous && options) {
@@ -221,6 +221,15 @@ export class FixturePool {
           throw errorWithLocations(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, { location, name });
         if (options.scope === 'worker' && disallowWorkerFixtures)
           throw errorWithLocations(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, { location, name });
+
+        // Overriding option with "undefined" value means setting it to the default value
+        // from the original declaration of the option.
+        if (fn === undefined && options.option && previous) {
+          let original = previous;
+          while (original.super)
+            original = original.super;
+          fn = original.fn;
+        }
 
         const deps = fixtureParameterNames(fn, location);
         const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, deps, super: previous };
@@ -300,8 +309,14 @@ export class FixtureRunner {
   setPool(pool: FixturePool) {
     if (!this.testScopeClean)
       throw new Error('Did not teardown test scope');
-    if (this.pool && pool.digest !== this.pool.digest)
-      throw new Error('Digests do not match');
+    if (this.pool && pool.digest !== this.pool.digest) {
+      throw new Error([
+        `Playwright detected inconsistent test.use() options.`,
+        `Most common mistakes that lead to this issue:`,
+        `  - Calling test.use() outside of the test file, for example in a common helper.`,
+        `  - One test file imports from another test file.`,
+      ].join('\n'));
+    }
     this.pool = pool;
   }
 

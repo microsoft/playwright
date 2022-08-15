@@ -3,9 +3,19 @@ id: intro
 title: "Installation"
 ---
 
-Playwright Test was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation of Google Chrome for Android and Mobile Safari. 
+Playwright Test was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation of Google Chrome for Android and Mobile Safari.
 
-Get started by installing Playwright and running the example test to see it in action.
+**You will learn**
+
+- [How to install Playwright](/intro.md#installing-playwright)
+- [What's Installed](/intro.md#whats-installed)
+- [How to run the example test](/intro.md#running-the-example-test)
+- [How to open the HTML test report](/intro.md#html-test-reports)
+
+
+## Installing Playwright
+
+Get started by installing Playwright using npm or yarn. Alternatively you can also get started and run your tests using the [VS Code Extension](./getting-started-vscode.md).
 
 <Tabs
   defaultValue="npm"
@@ -33,7 +43,7 @@ yarn create playwright
 
 
 Run the install command and select the following to get started:
- - Choose between TypeScript or JavaScript(default is TypeScript)
+ - Choose between TypeScript or JavaScript (default is TypeScript)
  - Name of your Tests folder (default is tests or e2e if you already have a tests folder in your project)
  - Add a GitHub Actions workflow to easily run tests on CI
 
@@ -52,11 +62,9 @@ tests-examples/
   demo-todo-app.spec.ts
 ```
 
- The playwright [playwright.config file](./test-configuration.md) is where you can add configuration for Playwright including modifying which browsers you would like to run Playwright on.
+The [playwright.config](./test-configuration.md) is where you can add configuration for Playwright including modifying which browsers you would like to run Playwright on. If you are running tests inside an already existing project then dependencies will be added directly to your `package.json`.
  
- If you are running tests inside an already existing project then a package.json and package-lock.json file will not be created. Instead the dependencies will be added to your already existing package.json file.
- 
- The tests folder contains a basic example test to help you get started with testing as well as a more detailed example with tests written to test a todo app.
+The `tests` folder contains a basic example test to help you get started with testing. For a more detailed example check out the `tests-examples` folder which contains tests written to test a todo app.
 
 ## Running the Example Test
 
@@ -70,19 +78,18 @@ See our doc on [Running Tests](./running-tests.md) to learn more about running t
 
 ## HTML Test Reports
 
-Once your test has finished running a [HTML Reporter](./html-reporter.md) will have been created which shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. You can click on each test and explore the test's errors as well as each step of the test. By default, the HTML report is opened automatically if some of the tests failed.
+Once your test has finished running a [HTML Reporter](./test-reporters.md#html-reporter) will have been created which shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. You can click on each test and explore the test's errors as well as each step of the test. By default, the HTML report is opened automatically if some of the tests failed.
 
 ```bash
 npx playwright show-report
 ```
 
-<img width="739" alt="image" src="https://user-images.githubusercontent.com/13063165/178003817-3bd2f088-4173-406c-a9e9-74c89181f381.png" />
+<img width="739" alt="HTML Reporter" src="https://user-images.githubusercontent.com/13063165/181803518-1f554349-f72a-4ad3-a7aa-4d3d1b4cad13.png" />
 
 
 ## What's next
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [Run single tests, multiple tests, headed mode](./running-tests.md)
-- [Debug tests with the Playwright Debugger](./debug.md)
 - [Generate tests with Codegen](./codegen.md)
-- [See a trace of your tests](./trace-viewer.md)
+- [See a trace of your tests](./trace-viewer-intro.md)

@@ -18,4 +18,4 @@ jobs:
     - name: Deploy Stable
       run: bash utils/build/deploy-trace-viewer.sh --stable
       env:
-        GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}
+        GH_SERVICE_ACCOUNT_TOKEN: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}

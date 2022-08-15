@@ -161,8 +161,6 @@ it('should amend method on main request', async ({ page, server }) => {
 });
 
 it.describe('post data', () => {
-  it.fixme(({ isAndroid }) => isAndroid, 'Post data does not work');
-
   it('should amend post data', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {
@@ -173,6 +171,24 @@ it.describe('post data', () => {
       page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
     ]);
     expect((await serverRequest.postBody).toString('utf8')).toBe('doggo');
+  });
+
+  it('should compute content-length from post data', async ({ page, server }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16027' });
+    await page.goto(server.EMPTY_PAGE);
+    const data = 'a'.repeat(7500);
+    await page.route('**/*', route => {
+      const headers = route.request().headers();
+      headers['content-type'] =  'application/json';
+      route.continue({ postData: data, headers });
+    });
+    const [serverRequest] = await Promise.all([
+      server.waitForRequest('/sleep.zzz'),
+      page.evaluate(() => fetch('/sleep.zzz', { method: 'PATCH', body: 'birdy' }))
+    ]);
+    expect((await serverRequest.postBody).toString('utf8')).toBe(data);
+    expect(serverRequest.headers['content-length']).toBe(String(data.length));
+    expect(serverRequest.headers['content-type']).toBe('application/json');
   });
 
   it('should amend method and post data', async ({ page, server }) => {

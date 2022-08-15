@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import type { FullConfig, FullProject, TestStatus, TestError, Metadata } from '@playwright/test';
-export type { FullConfig, TestStatus, TestError } from '@playwright/test';
+import type { FullConfig, FullProject, TestStatus, TestError, Metadata } from './test';
+export type { FullConfig, TestStatus, TestError } from './test';
 
 /**
  * `Suite` is a group of tests. All tests in Playwright Test form the following hierarchy:
@@ -125,6 +125,12 @@ export interface TestCase {
      */
     description?: string;
   }>;
+
+  /**
+   * Unique test ID that is computed based on the test file name, test title and project name. Test ID can be used as a
+   * history ID.
+   */
+  id: string;
 
   /**
    * Location in the source where the test is defined.

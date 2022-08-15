@@ -47,3 +47,14 @@ test('should configure app', async ({ page, mount }) => {
   });
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount']);
 });
+
+test('should unmount', async ({ page, mount }) => {
+  const component = await mount(Counter, {
+    props: {
+      suffix: 'my suffix',
+    },
+  });
+  await expect(page.locator('#root')).toContainText('my suffix')
+  await component.unmount();
+  await expect(page.locator('#root')).not.toContainText('my suffix');
+});

@@ -48,7 +48,7 @@ test('should navigate page internally', async function({ androidDevice }) {
 });
 
 test('should navigate page externally', async function({ androidDevice }) {
-  test.fixme(!!process.env.CI, 'Hangs on the bots');
+  test.fixme(true, 'Hangs on the bots');
 
   expect(androidDevice.webViews().length).toBe(0);
   await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');

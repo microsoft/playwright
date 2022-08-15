@@ -16,7 +16,7 @@
 
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
-import type { PlaywrightOptions } from './browser';
+import type { Browser, PlaywrightOptions } from './browser';
 import { Chromium } from './chromium/chromium';
 import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
@@ -36,10 +36,13 @@ export class Playwright extends SdkObject {
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
   private _allPages = new Set<Page>();
+  private _allBrowsers = new Set<Browser>();
 
   constructor(sdkLanguage: string, isInternalPlaywright: boolean) {
     super({ attribution: { isInternalPlaywright }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
     this.instrumentation.addListener({
+      onBrowserOpen: browser => this._allBrowsers.add(browser),
+      onBrowserClose: browser => this._allBrowsers.delete(browser),
       onPageOpen: page => this._allPages.add(page),
       onPageClose: page => this._allPages.delete(page),
       onCallLog: (sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) => {
@@ -61,6 +64,14 @@ export class Playwright extends SdkObject {
 
   async hideHighlight() {
     await Promise.all([...this._allPages].map(p => p.hideHighlight().catch(() => {})));
+  }
+
+  allBrowsers(): Browser[] {
+    return [...this._allBrowsers];
+  }
+
+  allPages(): Page[] {
+    return [...this._allPages];
   }
 }
 

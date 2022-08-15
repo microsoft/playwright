@@ -142,13 +142,6 @@ it('should work @smoke', async ({ page, asset }) => {
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
 
-it('should work with label', async ({ page, asset }) => {
-  await page.setContent(`<label for=target>Choose a file</label><input id=target type=file>`);
-  await page.setInputFiles('text=Choose a file', asset('file-to-upload.txt'));
-  expect(await page.$eval('input', input => input.files.length)).toBe(1);
-  expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
-});
-
 it('should set from memory', async ({ page }) => {
   await page.setContent(`<input type=file>`);
   await page.setInputFiles('input', {
@@ -351,8 +344,7 @@ it('should accept single file', async ({ page, asset }) => {
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
 
-it('should detect mime type', async ({ page, server, asset, isAndroid }) => {
-  it.fixme(isAndroid);
+it('should detect mime type', async ({ page, server, asset }) => {
 
   let files: Record<string, formidable.File>;
   server.setRoute('/upload', async (req, res) => {
@@ -387,8 +379,7 @@ it('should detect mime type', async ({ page, server, asset, isAndroid }) => {
 });
 
 // @see https://github.com/microsoft/playwright/issues/4704
-it('should not trim big uploaded files', async ({ page, server, asset, isAndroid }) => {
-  it.fixme(isAndroid);
+it('should not trim big uploaded files', async ({ page, server }) => {
 
   let files: Record<string, formidable.File>;
   server.setRoute('/upload', async (req, res) => {
@@ -527,8 +518,8 @@ it('should emit event after navigation', async ({ page, server, browserName, bro
   expect(logs).toEqual(['filechooser', 'filechooser']);
 });
 
-it('should trigger listener added before navigation', async ({ page, server , browserMajorVersion, isElectron }) => {
-  it.skip(isElectron && browserMajorVersion <= 17);
+it('should trigger listener added before navigation', async ({ page, server, browserMajorVersion, isElectron }) => {
+  it.skip(isElectron && browserMajorVersion <= 98);
   // Add listener before cross process navigation.
   const chooserPromise = new Promise(f => page.once('filechooser', f));
   await page.goto(server.PREFIX + '/empty.html');

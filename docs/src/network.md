@@ -719,7 +719,7 @@ playwright open --save-har=example.har --save-har-glob="**/api/**" https://examp
 
 ```bash csharp
 # Save API requests from example.com as "example.har" archive.
-pwsh bin\Debug\netX\playwright.ps1 open --save-har=example.har --save-har-glob="**/api/**" https://example.com
+pwsh bin/Debug/netX/playwright.ps1 open --save-har=example.har --save-har-glob="**/api/**" https://example.com
 ```
 
 ### Recording HAR with a script

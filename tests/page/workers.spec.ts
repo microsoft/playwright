@@ -173,3 +173,17 @@ it('should report network activity on worker creation', async function({ page, s
   expect(response.request()).toBe(request);
   expect(response.ok()).toBe(true);
 });
+
+it('should dispatch console messages when page has workers', async function({ page, server }) {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15550' });
+  await page.goto(server.EMPTY_PAGE);
+  await Promise.all([
+    page.waitForEvent('worker'),
+    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['const x = 1;'], { type: 'application/javascript' }))))
+  ]);
+  const [message] = await Promise.all([
+    page.waitForEvent('console'),
+    page.evaluate(() => console.log('foo'))
+  ]);
+  expect(message.text()).toBe('foo');
+});

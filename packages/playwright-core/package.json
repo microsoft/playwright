@@ -1,6 +1,6 @@
 {
   "name": "playwright-core",
-  "version": "1.25.0-next",
+  "version": "1.26.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -15,7 +15,8 @@
     ".": {
       "types": "./index.d.ts",
       "import": "./index.mjs",
-      "require": "./index.js"
+      "require": "./index.js",
+      "default": "./index.js"
     },
     "./cli": "./cli.js",
     "./package.json": "./package.json",
@@ -28,6 +29,7 @@
     "./lib/utils/httpServer": "./lib/utils/httpServer.js",
     "./lib/utils/hostPlatform": "./lib/utils/hostPlatform.js",
     "./lib/utils/manualPromise": "./lib/utils/manualPromise.js",
+    "./lib/utils/mimeType": "./lib/utils/mimeType.js",
     "./lib/utils/multimap": "./lib/utils/multimap.js",
     "./lib/utils/processLauncher": "./lib/utils/processLauncher.js",
     "./lib/utils/processLauncherCleanupEntrypoint": "./lib/utils/processLauncherCleanupEntrypoint.js",

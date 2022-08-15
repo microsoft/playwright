@@ -231,7 +231,7 @@ it('should tween mouse movement', async ({ page, browserName, isAndroid }) => {
   ]);
 });
 
-it('should always round down', async ({ page, browserName, isAndroid }) => {
+it('should always round down', async ({ page }) => {
   await page.evaluate(() => {
     document.addEventListener('mousedown', event => {
       window['result'] = [event.clientX, event.clientY];

@@ -192,7 +192,7 @@ export class WKPage implements PageDelegate {
 
     const contextOptions = this._browserContext._options;
     if (contextOptions.userAgent)
-      promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
+      promises.push(this.updateUserAgent());
     const emulatedMedia = this._page.emulatedMedia();
     if (emulatedMedia.media || emulatedMedia.colorScheme || emulatedMedia.reducedMotion)
       promises.push(WKPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion));
@@ -550,7 +550,7 @@ export class WKPage implements PageDelegate {
 
       let stack: string;
       if (event.message.stackTrace) {
-        stack = text + '\n' + event.message.stackTrace.map(callFrame => {
+        stack = text + '\n' + event.message.stackTrace.callFrames.map(callFrame => {
           return `    at ${callFrame.functionName || 'unknown'} (${callFrame.url}:${callFrame.lineNumber}:${callFrame.columnNumber})`;
         }).join('\n');
       } else {
@@ -677,6 +677,11 @@ export class WKPage implements PageDelegate {
 
   async updateEmulatedViewportSize(): Promise<void> {
     await this._updateViewport();
+  }
+
+  async updateUserAgent(): Promise<void> {
+    const contextOptions = this._browserContext._options;
+    this._updateState('Page.overrideUserAgent', { value: contextOptions.userAgent });
   }
 
   async bringToFront(): Promise<void> {

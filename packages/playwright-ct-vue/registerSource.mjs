@@ -108,14 +108,14 @@ function render(component) {
 
   if (component.kind === 'object') {
     // Vue test util syntax.
-    for (const [key, value] of Object.entries(component.options.slots || {})) {
+    for (const [key, value] of Object.entries(component.options?.slots || {})) {
       if (key === 'default')
         children.push(value);
       else
         slots[key] = value;
     }
-    props = component.options.props || {};
-    for (const [key, value] of Object.entries(component.options.on || {}))
+    props = component.options?.props || {};
+    for (const [key, value] of Object.entries(component.options?.on || {}))
       listeners[key] = value;
   }
 
@@ -155,15 +155,38 @@ function createDevTools() {
   };
 }
 
+const appKey = Symbol('appKey');
+const componentKey = Symbol('componentKey');
+
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
+  const wrapper = render(component);
   const app = createApp({
-    render: () => render(component)
+    render: () => wrapper
   });
   setDevtoolsHook(createDevTools(), {});
 
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
     await hook({ app, hooksConfig });
   const instance = app.mount(rootElement);
+  rootElement[appKey] = app;
+  rootElement[componentKey] = wrapper;
+
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
     await hook({ app, hooksConfig, instance });
+};
+
+window.playwrightUnmount = async rootElement => {
+  const app = /** @type {import('vue').App} */ (rootElement[appKey]);
+  if (!app)
+    throw new Error('Component was not mounted');
+  app.unmount();
+};
+
+window.playwrightRerender = async (rootElement, options) => {
+  const component = rootElement[componentKey].component;
+  if (!component)
+    throw new Error('Component was not mounted');
+
+  for (const [key, value] of Object.entries(options.props || {}))
+    component.props[key] = value;
 };

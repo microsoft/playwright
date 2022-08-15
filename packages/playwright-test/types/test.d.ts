@@ -487,7 +487,7 @@ interface TestConfig {
    * ```
    *
    */
-  webServer?: TestConfigWebServer;
+  webServer?: TestConfigWebServer | TestConfigWebServer[];
   /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
@@ -1294,7 +1294,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   webServer: TestConfigWebServer | null;
 }
 
-export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
+export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 
 /**
  * `WorkerInfo` contains information about the worker that is running tests. It is available to
@@ -1506,7 +1506,7 @@ export interface TestInfo {
    * ```
    *
    */
-  expectedStatus: "passed"|"failed"|"timedOut"|"skipped";
+  expectedStatus: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
 
   /**
    * Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually
@@ -1714,7 +1714,7 @@ export interface TestInfo {
    * ```
    *
    */
-  status?: "passed"|"failed"|"timedOut"|"skipped";
+  status?: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
 
   /**
    * Output written to `process.stderr` or `console.error` during the test execution.
@@ -1898,6 +1898,24 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * this callback will belong to the group, and will not be run.
    */
   skip: SuiteFunction;
+    /**
+   * Declares a test group similarly to
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Tests in this group are
+   * marked as "fixme" and will not be executed.
+   *
+   * ```js
+   * test.describe.fixme('broken tests', () => {
+   *   test('example', async ({ page }) => {
+   *     // This test will not run
+   *   });
+   * });
+   * ```
+   *
+   * @param title Group title.
+   * @param callback A callback that is run immediately when calling [test.describe.fixme(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-fixme). Any tests added
+   * in this callback will belong to the group, and will not be run.
+   */
+  fixme: SuiteFunction;
     /**
    * Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are
    * skipped. All tests in a group are retried together.
@@ -2491,10 +2509,24 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * The method returns value retuned by the step callback.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('test', async ({ page }) => {
+   *   const user = await test.step('Log in', async () => {
+   *     // ...
+   *     return 'john';
+   *   });
+   *   expect(user).toBe('john');
+   * });
+   * ```
+   *
    * @param title Step name.
    * @param body Step body.
    */
-  step(title: string, body: () => Promise<any>): Promise<any>;
+  step<T>(title: string, body: () => Promise<T>): Promise<T>;
   /**
    * `expect` function can be used to create test assertions. Read
    * [expect library documentation](https://jestjs.io/docs/expect) for more details.
@@ -3024,8 +3056,8 @@ export interface PlaywrightTestArgs {
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 
-import type * as expectType from '@playwright/test/types/expect-types';
-import type { Suite } from '@playwright/test/types/testReporter';
+import type * as expectType from './expect-types';
+import type { Suite } from './testReporter';
 
 type AsymmetricMatcher = Record<string, any>;
 
@@ -3337,11 +3369,36 @@ interface LocatorAssertions {
    * await expect(locator).toContainText(/\d messages/);
    * ```
    *
-   * Note that if array is passed as an expected value, entire lists of elements can be asserted:
+   * If you pass an array as an expected value, the expectations are:
+   * 1. Locator resolves to a list of elements.
+   * 1. Elements from a **subset** of this list contain text from the expected array, respectively.
+   * 1. The matching subset of elements has the same order as the expected array.
+   * 1. Each text value from the expected array is matched by some element from the list.
+   *
+   * For example, consider the following list:
+   *
+   * ```html
+   * <ul>
+   *   <li>Item Text 1</li>
+   *   <li>Item Text 2</li>
+   *   <li>Item Text 3</li>
+   * </ul>
+   * ```
+   *
+   * Let's see how we can use the assertion:
    *
    * ```js
-   * const locator = page.locator('list > .list-item');
-   * await expect(locator).toContainText(['Text 1', 'Text 4', 'Text 5']);
+   * // ✓ Contains the right items in the right order
+   * await expect(page.locator('ul > li')).toContainText(['Text 1', 'Text 3']);
+   *
+   * // ✖ Wrong order
+   * await expect(page.locator('ul > li')).toContainText(['Text 3', 'Text 2']);
+   *
+   * // ✖ No item contains this text
+   * await expect(page.locator('ul > li')).toContainText(['Some 33']);
+   *
+   * // ✖ Locator points to the outer list element, not to the list items
+   * await expect(page.locator('ul')).toContainText(['Text 3']);
    * ```
    *
    * @param expected Expected substring or RegExp or a list of those.
@@ -3520,7 +3577,7 @@ interface LocatorAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
     mask?: Array<Locator>;
@@ -3594,7 +3651,7 @@ interface LocatorAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
     mask?: Array<Locator>;
@@ -3648,11 +3705,35 @@ interface LocatorAssertions {
    * await expect(locator).toHaveText(/Welcome, .*\/);
    * ```
    *
-   * Note that if array is passed as an expected value, entire lists of elements can be asserted:
+   * If you pass an array as an expected value, the expectations are:
+   * 1. Locator resolves to a list of elements.
+   * 1. The number of elements equals the number of expected values in the array.
+   * 1. Elements from the list have text matching expected array values, one by one, in order.
+   *
+   * For example, consider the following list:
+   *
+   * ```html
+   * <ul>
+   *   <li>Text 1</li>
+   *   <li>Text 2</li>
+   *   <li>Text 3</li>
+   * </ul>
+   * ```
+   *
+   * Let's see how we can use the assertion:
    *
    * ```js
-   * const locator = page.locator('list > .component');
-   * await expect(locator).toHaveText(['Text 1', 'Text 2', 'Text 3']);
+   * // ✓ Has the right items in the right order
+   * await expect(page.locator('ul > li')).toHaveText(['Text 1', 'Text 2', 'Text 3']);
+   *
+   * // ✖ Wrong order
+   * await expect(page.locator('ul > li')).toHaveText(['Text 3', 'Text 2', 'Text 1']);
+   *
+   * // ✖ Last item does not match
+   * await expect(page.locator('ul > li')).toHaveText(['Text 1', 'Text 2', 'Text']);
+   *
+   * // ✖ Locator points to the outer list element, not to the list items
+   * await expect(page.locator('ul')).toHaveText(['Text 1', 'Text 2', 'Text 3']);
    * ```
    *
    * @param expected Expected substring or RegExp or a list of those.
@@ -3814,7 +3895,7 @@ interface PageAssertions {
     fullPage?: boolean;
 
     /**
-     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
     mask?: Array<Locator>;
@@ -3918,7 +3999,7 @@ interface PageAssertions {
     fullPage?: boolean;
 
     /**
-     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
     mask?: Array<Locator>;

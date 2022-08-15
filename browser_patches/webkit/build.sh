@@ -7,13 +7,8 @@ cd "$(dirname "$0")"
 SCRIPT_FOLDER="$(pwd -P)"
 source "${SCRIPT_FOLDER}/../utils.sh"
 
-# On Linux, Universal build uses Flatpak rather then JHBuild
-# and packs into a universal binary that can run on any linux
-# distribution.
-IS_UNIVERSAL_BUILD=""
-
 build_gtk() {
-  if [[ -z "${IS_UNIVERSAL_BUILD}" && ! -d "./WebKitBuild/GTK/DependenciesGTK" ]]; then
+  if [[ ! -d "./WebKitBuild/GTK/DependenciesGTK" ]]; then
     yes | WEBKIT_JHBUILD=1 \
           WEBKIT_JHBUILD_MODULESET=minimal \
           WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK \
@@ -24,21 +19,20 @@ build_gtk() {
     --cmakeargs=-DENABLE_INTROSPECTION=OFF
     --cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE
   )
+  if is_linux ubuntu 18.04; then
+    CMAKE_ARGS+=("--cmakeargs=-DUSE_SYSTEM_MALLOC=ON")
+  fi
   if [[ -n "${EXPORT_COMPILE_COMMANDS}" ]]; then
     CMAKE_ARGS+=("--cmakeargs=-DCMAKE_EXPORT_COMPILE_COMMANDS=1")
   fi
-  if [[ -n "${IS_UNIVERSAL_BUILD}" ]]; then
-    ./Tools/Scripts/build-webkit --gtk --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox "${CMAKE_ARGS[@]}" MiniBrowser
-  else
-    WEBKIT_JHBUILD=1 \
-    WEBKIT_JHBUILD_MODULESET=minimal \
-    WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK \
-    ./Tools/Scripts/build-webkit --gtk --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox "${CMAKE_ARGS[@]}" MiniBrowser
-  fi
+  WEBKIT_JHBUILD=1 \
+  WEBKIT_JHBUILD_MODULESET=minimal \
+  WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK \
+  ./Tools/Scripts/build-webkit --gtk --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox "${CMAKE_ARGS[@]}" MiniBrowser
 }
 
 build_wpe() {
-  if [[ -z "${IS_UNIVERSAL_BUILD}" && ! -d "./WebKitBuild/WPE/DependenciesWPE" ]]; then
+  if [[ ! -d "./WebKitBuild/WPE/DependenciesWPE" ]]; then
     yes | WEBKIT_JHBUILD=1 \
           WEBKIT_JHBUILD_MODULESET=minimal \
           WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE \
@@ -51,39 +45,26 @@ build_wpe() {
     --cmakeargs=-DENABLE_WEBXR=OFF
     --cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE
   )
+  if is_linux ubuntu 18.04; then
+    CMAKE_ARGS+=("--cmakeargs=-DUSE_SYSTEM_MALLOC=ON")
+  fi
   if [[ -n "${EXPORT_COMPILE_COMMANDS}" ]]; then
     CMAKE_ARGS+=("--cmakeargs=-DCMAKE_EXPORT_COMPILE_COMMANDS=1")
   fi
 
-  if [[ -n "${IS_UNIVERSAL_BUILD}" ]]; then
-    ./Tools/Scripts/build-webkit --wpe --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox "${CMAKE_ARGS[@]}" MiniBrowser
-  else
-    WEBKIT_JHBUILD=1 \
-    WEBKIT_JHBUILD_MODULESET=minimal \
-    WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE \
-    ./Tools/Scripts/build-webkit --wpe --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox "${CMAKE_ARGS[@]}" MiniBrowser
-  fi
+  WEBKIT_JHBUILD=1 \
+  WEBKIT_JHBUILD_MODULESET=minimal \
+  WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE \
+  ./Tools/Scripts/build-webkit --wpe --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox "${CMAKE_ARGS[@]}" MiniBrowser
 }
 
 ensure_linux_deps() {
 
-  if [[ -n "${IS_UNIVERSAL_BUILD}" ]]; then
-    SUDO="" ; [ $UID -ne 0 ] && SUDO="sudo"
-    # - flatpak drives the build
-    # - symlinks and rdfind are needed to de-duplicate files on the GTK+WPE bundle to reduce its size.
-    DEBIAN_FRONTEND=noninteractive ${SUDO} apt-get install -y flatpak symlinks rdfind
-  fi
-
   yes | DEBIAN_FRONTEND=noninteractive ./Tools/gtk/install-dependencies
   yes | DEBIAN_FRONTEND=noninteractive ./Tools/wpe/install-dependencies
-  if [[ -z "${IS_UNIVERSAL_BUILD}" ]]; then
-    # In non-universal build install JHBuild deps.
-    yes | DEBIAN_FRONTEND=noninteractive WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE ./Tools/Scripts/update-webkitwpe-libs
-    yes | DEBIAN_FRONTEND=noninteractive WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/update-webkitgtk-libs
-  else
-    yes | ./Tools/Scripts/update-webkitwpe-libs
-    yes | ./Tools/Scripts/update-webkitgtk-libs
-  fi
+  # Install JHBuild deps.
+  yes | DEBIAN_FRONTEND=noninteractive WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE ./Tools/Scripts/update-webkitwpe-libs
+  yes | DEBIAN_FRONTEND=noninteractive WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/update-webkitgtk-libs
 }
 
 if [[ ! -z "${WK_CHECKOUT_PATH}" ]]; then
@@ -106,7 +87,6 @@ elif is_linux; then
           --full) IS_FULL="1"; unset args[i]; ;;
           --gtk) BUILD_GTK="1"; unset args[i]; ;;
           --wpe) BUILD_WPE="1"; unset args[i]; ;;
-          --universal) IS_UNIVERSAL_BUILD="1"; unset args[i]; ;;
       esac
   done
 
@@ -117,11 +97,6 @@ elif is_linux; then
   fi
 
   echo "== BUILD CONFIGURATION =="
-  if [[ -n "${IS_UNIVERSAL_BUILD}" ]]; then
-    echo "- universal build: YES"
-  else
-    echo "- universal build: NO"
-  fi
   if [[ -n "${IS_FULL}" ]]; then
     echo "- install dependencies: YES"
   else

@@ -762,36 +762,95 @@ await Expect(locator).ToContainTextAsync("substring");
 await Expect(locator).ToContainTextAsync(new Regex("\\d messages"));
 ```
 
-Note that if array is passed as an expected value, entire lists of elements can be asserted:
+If you pass an array as an expected value, the expectations are:
+1. Locator resolves to a list of elements.
+1. Elements from a **subset** of this list contain text from the expected array, respectively.
+1. The matching subset of elements has the same order as the expected array.
+1. Each text value from the expected array is matched by some element from the list.
+
+For example, consider the following list:
+```html
+<ul>
+  <li>Item Text 1</li>
+  <li>Item Text 2</li>
+  <li>Item Text 3</li>
+</ul>
+```
+
+Let's see how we can use the assertion:
 
 ```js
-const locator = page.locator('list > .list-item');
-await expect(locator).toContainText(['Text 1', 'Text 4', 'Text 5']);
+// ✓ Contains the right items in the right order
+await expect(page.locator('ul > li')).toContainText(['Text 1', 'Text 3']);
+
+// ✖ Wrong order
+await expect(page.locator('ul > li')).toContainText(['Text 3', 'Text 2']);
+
+// ✖ No item contains this text
+await expect(page.locator('ul > li')).toContainText(['Some 33']);
+
+// ✖ Locator points to the outer list element, not to the list items
+await expect(page.locator('ul')).toContainText(['Text 3']);
 ```
 
 ```java
-assertThat(page.locator("list > .list-item")).containsText(new String[] {"Text 1", "Text 4", "Text 5"});
+// ✓ Contains the right items in the right order
+assertThat(page.locator("ul > li")).containsText(new String[] {"Text 1", "Text 3", "Text 4"});
+
+// ✖ Wrong order
+assertThat(page.locator("ul > li")).containsText(new String[] {"Text 3", "Text 2"});
+
+// ✖ No item contains this text
+assertThat(page.locator("ul > li")).containsText(new String[] {"Some 33"});
+
+// ✖ Locator points to the outer list element, not to the list items
+assertThat(page.locator("ul")).containsText(new String[] {"Text 3"});
 ```
 
 ```python async
-import re
 from playwright.async_api import expect
 
-locator = page.locator("list > .list-item")
-await expect(locator).to_contain_text(["Text 1", "Text 4", "Text 5"])
+# ✓ Contains the right items in the right order
+await expect(page.locator("ul > li")).to_contain_text(["Text 1", "Text 3", "Text 4"])
+
+# ✖ Wrong order
+await expect(page.locator("ul > li")).to_contain_text(["Text 3", "Text 2"])
+
+# ✖ No item contains this text
+await expect(page.locator("ul > li")).to_contain_text(["Some 33"])
+
+# ✖ Locator points to the outer list element, not to the list items
+await expect(page.locator("ul")).to_contain_text(["Text 3"])
 ```
 
 ```python sync
-import re
 from playwright.sync_api import expect
 
-locator = page.locator("list > .list-item")
-expect(locator).to_contain_text(["Text 1", "Text 4", "Text 5"])
+# ✓ Contains the right items in the right order
+expect(page.locator("ul > li")).to_contain_text(["Text 1", "Text 3", "Text 4"])
+
+# ✖ Wrong order
+expect(page.locator("ul > li")).to_contain_text(["Text 3", "Text 2"])
+
+# ✖ No item contains this text
+expect(page.locator("ul > li")).to_contain_text(["Some 33"])
+
+# ✖ Locator points to the outer list element, not to the list items
+expect(page.locator("ul")).to_contain_text(["Text 3"])
 ```
 
 ```csharp
-var locator = Page.Locator("list > .list-item");
-await Expect(locator).ToContainTextAsync(new string[] { "Text 1", "Text 4", "Text 5" });
+// ✓ Contains the right items in the right order
+await Expect(Page.Locator("ul > li")).ToContainTextAsync(new string[] {"Text 1", "Text 3", "Text 4"});
+
+// ✖ Wrong order
+await Expect(Page.Locator("ul > li")).ToContainTextAsync(new string[] {"Text 3", "Text 2"});
+
+// ✖ No item contains this text
+await Expect(Page.Locator("ul > li")).ToContainTextAsync(new string[] {"Some 33"});
+
+// ✖ Locator points to the outer list element, not to the list items
+await Expect(Page.Locator("ul")).ToContainTextAsync(new string[] {"Text 3"});
 ```
 
 ### param: LocatorAssertions.toContainText.expected
@@ -1286,34 +1345,94 @@ await Expect(locator).ToHaveTextAsync(new Regex("Welcome, .*"));
 ```
 
 
-Note that if array is passed as an expected value, entire lists of elements can be asserted:
+If you pass an array as an expected value, the expectations are:
+1. Locator resolves to a list of elements.
+1. The number of elements equals the number of expected values in the array.
+1. Elements from the list have text matching expected array values, one by one, in order.
+
+For example, consider the following list:
+```html
+<ul>
+  <li>Text 1</li>
+  <li>Text 2</li>
+  <li>Text 3</li>
+</ul>
+```
+
+Let's see how we can use the assertion:
 
 ```js
-const locator = page.locator('list > .component');
-await expect(locator).toHaveText(['Text 1', 'Text 2', 'Text 3']);
+// ✓ Has the right items in the right order
+await expect(page.locator('ul > li')).toHaveText(['Text 1', 'Text 2', 'Text 3']);
+
+// ✖ Wrong order
+await expect(page.locator('ul > li')).toHaveText(['Text 3', 'Text 2', 'Text 1']);
+
+// ✖ Last item does not match
+await expect(page.locator('ul > li')).toHaveText(['Text 1', 'Text 2', 'Text']);
+
+// ✖ Locator points to the outer list element, not to the list items
+await expect(page.locator('ul')).toHaveText(['Text 1', 'Text 2', 'Text 3']);
 ```
 
 ```java
-assertThat(page.locator("list > .component")).hasText(new String[] {"Text 1", "Text 2", "Text 3"});
+// ✓ Has the right items in the right order
+assertThat(page.locator("ul > li")).hasText(new String[] {"Text 1", "Text 2", "Text 3"});
+
+// ✖ Wrong order
+assertThat(page.locator("ul > li")).hasText(new String[] {"Text 3", "Text 2", "Text 1"});
+
+// ✖ Last item does not match
+assertThat(page.locator("ul > li")).hasText(new String[] {"Text 1", "Text 2", "Text"});
+
+// ✖ Locator points to the outer list element, not to the list items
+assertThat(page.locator("ul")).hasText(new String[] {"Text 1", "Text 2", "Text 3"});
 ```
 
 ```python async
 from playwright.async_api import expect
 
-locator = page.locator("list > .component")
-await expect(locator).to_have_text(["Text 1", "Text 2", "Text 3"])
+# ✓ Has the right items in the right order
+await expect(page.locator("ul > li")).to_have_text(["Text 1", "Text 2", "Text 3"])
+
+# ✖ Wrong order
+await expect(page.locator("ul > li")).to_have_text(["Text 3", "Text 2", "Text 1"])
+
+# ✖ Last item does not match
+await expect(page.locator("ul > li")).to_have_text(["Text 1", "Text 2", "Text"])
+
+# ✖ Locator points to the outer list element, not to the list items
+await expect(page.locator("ul")).to_have_text(["Text 1", "Text 2", "Text 3"])
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
-locator = page.locator("list > .component")
-expect(locator).to_have_text(["Text 1", "Text 2", "Text 3"])
+# ✓ Has the right items in the right order
+await expect(page.locator("ul > li")).to_have_text(["Text 1", "Text 2", "Text 3"])
+
+# ✖ Wrong order
+await expect(page.locator("ul > li")).to_have_text(["Text 3", "Text 2", "Text 1"])
+
+# ✖ Last item does not match
+await expect(page.locator("ul > li")).to_have_text(["Text 1", "Text 2", "Text"])
+
+# ✖ Locator points to the outer list element, not to the list items
+await expect(page.locator("ul")).to_have_text(["Text 1", "Text 2", "Text 3"])
 ```
 
 ```csharp
-var locator = Page.Locator("list > .component");
-await Expect(locator).toHaveTextAsync(new string[]{ "Text 1", "Text 2", "Text 3" });
+// ✓ Has the right items in the right order
+await Expect(Page.Locator("ul > li")).ToHaveTextAsync(new string[] {"Text 1", "Text 2", "Text 3"});
+
+// ✖ Wrong order
+await Expect(Page.Locator("ul > li")).ToHaveTextAsync(new string[] {"Text 3", "Text 2", "Text 1"});
+
+// ✖ Last item does not match
+await Expect(Page.Locator("ul > li")).ToHaveTextAsync(new string[] {"Text 1", "Text 2", "Text"});
+
+// ✖ Locator points to the outer list element, not to the list items
+await Expect(Page.Locator("ul")).ToHaveTextAsync(new string[] {"Text 1", "Text 2", "Text 3"});
 ```
 
 ### param: LocatorAssertions.toHaveText.expected

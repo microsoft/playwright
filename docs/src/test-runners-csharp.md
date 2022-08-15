@@ -24,11 +24,13 @@ Playwright provides base classes to write tests with NUnit via the [`Microsoft.P
 # Create a new project
 dotnet new nunit -n PlaywrightTests
 cd PlaywrightTests
+
 # Add the required reference
 dotnet add package Microsoft.Playwright.NUnit
 dotnet build
+
 # Install the required browsers and operating system dependencies
-pwsh bin\Debug\netX\playwright.ps1 install --with-deps
+pwsh bin/Debug/netX/playwright.ps1 install --with-deps
 ```
 
 Modify the UnitTest1.cs:
@@ -42,7 +44,7 @@ namespace PlaywrightTests;
 public class MyTest : PageTest
 {
     [Test]
-    async public Task ShouldHaveTheCorrectSlogan()
+    public async Task ShouldHaveTheCorrectSlogan()
     {
         await Page.GotoAsync("https://playwright.dev");
         await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
@@ -99,14 +101,72 @@ dotnet test
 You can also choose specifically which tests to run, using the [filtering capabilities](https://docs.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=nunit):
 
 ```bash
-dotnet test --filter "Name~ShouldAdd"
+dotnet test --filter "Name~Slogan"
 ```
 
 ### Running NUnit tests in Parallel
 
-By default NUnit will run all test files in parallel, while running tests inside each file sequentially. It will create as many processes as there are cores on the host system. You can adjust this behavior using the NUnit.NumberOfTestWorkers parameter.
+By default NUnit will run all test files in parallel, while running tests inside each file sequentially (`ParallelScope.Self`). It will create as many processes as there are cores on the host system. You can adjust this behavior using the NUnit.NumberOfTestWorkers parameter.
+Running test in parallel using `ParallelScope.All` or `ParallelScope.Fixtures` is not supported.
 
 For CPU-bound tests, we recommend using as many workers as there are cores on your system, divided by 2. For IO-bound tests you can use as many workers as you have cores.
+
+### Customizing [BrowserContext] options
+
+To customize context options, you can override the `ContextOptions` method of your test class derived from `Microsoft.Playwright.MSTest.PageTest` or `Microsoft.Playwright.MSTest.ContextTest`. See the following example:
+
+```csharp
+using Microsoft.Playwright.NUnit;
+
+namespace PlaywrightTests;
+
+[Parallelizable(ParallelScope.Self)]
+public class MyTest : PageTest
+{
+    [Test]
+    public async Task TestWithCustomContextOptions()
+    {
+        // The following Page (and BrowserContext) instance has the custom colorScheme, viewport and baseURL set:
+        await Page.GotoAsync("/login");
+    }
+
+    public override BrowserNewContextOptions ContextOptions()
+    {
+        return new BrowserNewContextOptions()
+        {
+            ColorScheme = ColorScheme.Light,
+            ViewportSize = new()
+            {
+                Width = 1920,
+                Height = 1080
+            },
+            BaseURL = "https://github.com",
+        };
+    }
+}
+```
+
+### Customizing [Browser]/launch options
+
+[Browser]/launch options can be overridden either using a run settings file or by setting the run settings options directly via the
+CLI. See the following example:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <LaunchOptions>
+      <Headless>false</Headless>
+      <Channel>msedge</Channel>
+    </LaunchOptions>
+  </Playwright>
+</RunSettings>
+```
+
+```bash
+dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Headless=false Playwright.LaunchOptions.Channel=msedge
+```
 
 ### Using Verbose API Logs
 
@@ -114,35 +174,39 @@ When you have enabled the [verbose API log](./debug.md#verbose-api-logs), via th
 
 ### Using the .runsettings file
 
-When running tests from Visual Studio, you can take advantage of the `.runsettings` file.
+When running tests from Visual Studio, you can take advantage of the `.runsettings` file. The following shows a reference of the supported values.
 
-For example, to specify the amount of workers (`NUnit.NumberOfTestWorkers`), you can use the following snippet:
+For example, to specify the amount of workers you can use `NUnit.NumberOfTestWorkers` or to enable `DEBUG` logs `RunConfiguration.EnvironmentVariables`.
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
+  <!-- NUnit adapter -->  
   <NUnit>
     <NumberOfTestWorkers>24</NumberOfTestWorkers>
   </NUnit>
-</RunSettings>
-```
-
-If you want to enable debugging, you can set the `DEBUG` variable to `pw:api` as documented, by doing:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<RunSettings>
+  <!-- General run configuration -->
   <RunConfiguration>
     <EnvironmentVariables>
+      <!-- For debugging selectors, it's recommend to set the following environment variable -->
       <DEBUG>pw:api</DEBUG>
     </EnvironmentVariables>
   </RunConfiguration>
+  <!-- Playwright -->  
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <ExpectTimeout>5000</ExpectTimeout>
+    <LaunchOptions>
+      <Headless>false</Headless>
+      <Channel>msedge</Channel>
+    </LaunchOptions>
+  </Playwright>
 </RunSettings>
 ```
 
 ### Base NUnit classes for Playwright
 
-There are few base classes available to you in `Microsoft.Playwright.NUnit` namespace:
+There are a few base classes available to you in `Microsoft.Playwright.NUnit` namespace:
 
 |Test          |Description|
 |--------------|-----------|
@@ -161,11 +225,13 @@ Playwright provides base classes to write tests with MSTest via the [`Microsoft.
 # Create a new project
 dotnet new mstest -n PlaywrightTests
 cd PlaywrightTests
+
 # Add the required reference
 dotnet add package Microsoft.Playwright.MSTest
 dotnet build
+
 # Install the required browsers and operating system dependencies
-pwsh bin\Debug\netX\playwright.ps1 install --with-deps
+pwsh bin/Debug/netX/playwright.ps1 install --with-deps
 ```
 
 Modify the UnitTest1.cs:
@@ -179,14 +245,14 @@ namespace PlaywrightTests;
 public class UnitTest1: PageTest
 {
     [TestMethod]
-    async public Task ShouldHaveTheCorrectSlogan()
+    public async Task ShouldHaveTheCorrectSlogan()
     {
         await Page.GotoAsync("https://playwright.dev");
         await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
     }
 
     [TestMethod]
-    async public Task ShouldHaveTheCorrectTitle()
+    public async Task ShouldHaveTheCorrectTitle()
     {
         await Page.GotoAsync("https://playwright.dev");
         var title = Page.Locator(".navbar__inner .navbar__title");
@@ -236,15 +302,77 @@ dotnet test
 You can also choose specifically which tests to run, using the [filtering capabilities](https://docs.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=mstest):
 
 ```bash
-dotnet test --filter "Name~ShouldAdd"
+dotnet test --filter "Name~Slogan"
 ```
 
 ### Running MSTest tests in Parallel
 
-By default MSTest will run all classes in parallel, while running tests inside each class sequentially. It will create as many processes as there are cores on the host system. You can adjust this behavior by using the following CLI parameter or using a `.runsettings` file, see below.
+By default MSTest will run all classes in parallel, while running tests inside each class sequentially (`ExecutionScope.ClassLevel`). It will create as many processes as there are cores on the host system. You can adjust this behavior by using the following CLI parameter or using a `.runsettings` file, see below.
+Running tests in parallel at the method level (`ExecutionScope.MethodLevel`) is not supported.
 
 ```bash
 dotnet test --settings:.runsettings -- MSTest.Parallelize.Workers=4
+```
+
+### Customizing [BrowserContext] options
+
+To customize context options, you can override the `ContextOptions` method of your test class derived from `Microsoft.Playwright.MSTest.PageTest` or `Microsoft.Playwright.MSTest.ContextTest`. See the following example:
+
+```csharp
+using System.Threading.Tasks;
+using Microsoft.Playwright;
+using Microsoft.Playwright.MSTest;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace PlaywrightTests;
+
+[TestClass]
+public class UnitTest1 : PageTest
+{
+    [TestMethod]
+    public async Task TestWithCustomContextOptions()
+    {
+        // The following Page (and BrowserContext) instance has the custom colorScheme, viewport and baseURL set:
+        await Page.GotoAsync("/login");
+    }
+
+    public override BrowserNewContextOptions ContextOptions()
+    {
+        return new BrowserNewContextOptions()
+        {
+            ColorScheme = ColorScheme.Light,
+            ViewportSize = new()
+            {
+                Width = 1920,
+                Height = 1080
+            },
+            BaseURL = "https://github.com",
+        };
+    }
+}
+
+```
+
+### Customizing [Browser]/launch options
+
+[Browser]/launch options can be overridden either using a run settings file or by setting the run settings options directly via the
+CLI. See the following example:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <LaunchOptions>
+      <Headless>false</Headless>
+      <Channel>msedge</Channel>
+    </LaunchOptions>
+  </Playwright>
+</RunSettings>
+```
+
+```bash
+dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Headless=false Playwright.LaunchOptions.Channel=msedge
 ```
 
 ### Using Verbose API Logs
@@ -253,38 +381,41 @@ When you have enabled the [verbose API log](./debug.md#verbose-api-logs), via th
 
 ### Using the .runsettings file
 
-When running tests from Visual Studio, you can take advantage of the `.runsettings` file.
+When running tests from Visual Studio, you can take advantage of the `.runsettings` file. The following shows a reference of the supported values.
 
-For example, to specify the amount of workers (`MSTest.Parallelize.Workers`), you can use the following snippet:
+For example, to specify the number of workers, you can use `MSTest.Parallelize.Workers`. You can also enable `DEBUG` logs using `RunConfiguration.EnvironmentVariables`.
 
 ```xml
 <RunSettings>
-<!-- MSTest adapter -->  
+  <!-- MSTest adapter -->  
   <MSTest>
     <Parallelize>
       <Workers>4</Workers>
       <Scope>ClassLevel</Scope>
     </Parallelize>
   </MSTest>
-</RunSettings>
-```
-
-If you want to enable debugging, you can set the `DEBUG` variable to `pw:api` as documented, by doing:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<RunSettings>
+  <!-- General run configuration -->
   <RunConfiguration>
     <EnvironmentVariables>
+      <!-- For debugging selectors, it's recommend to set the following environment variable -->
       <DEBUG>pw:api</DEBUG>
     </EnvironmentVariables>
   </RunConfiguration>
+  <!-- Playwright -->  
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <ExpectTimeout>5000</ExpectTimeout>
+    <LaunchOptions>
+      <Headless>false</Headless>
+      <Channel>msedge</Channel>
+    </LaunchOptions>
+  </Playwright>
 </RunSettings>
 ```
 
 ### Base MSTest classes for Playwright
 
-There are few base classes available to you in `Microsoft.Playwright.MSTest` namespace:
+There are a few base classes available to you in `Microsoft.Playwright.MSTest` namespace:
 
 |Test          |Description|
 |--------------|-----------|

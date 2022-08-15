@@ -145,7 +145,7 @@ test('should not override use:browserName without projects', async ({ runInlineT
     `,
     'a.test.ts': `
       const { test } = pwt;
-      test('pass', async ({ page, browserName }) => {
+      test('pass', async ({ browserName }) => {
         console.log('\\n%%browser=' + browserName);
       });
     `,
@@ -165,7 +165,7 @@ test('should override use:browserName with --browser', async ({ runInlineTest })
     `,
     'a.test.ts': `
       const { test } = pwt;
-      test('pass', async ({ page, browserName }) => {
+      test('pass', async ({ browserName }) => {
         console.log('\\n%%browser=' + browserName);
       });
     `,
@@ -428,7 +428,7 @@ test('should throw when using page in beforeAll', async ({ runInlineTest }, test
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain(`Error: "context" and "page" fixtures are not supported in beforeAll. Use browser.newContext() instead.`);
+  expect(result.output).toContain(`Error: "context" and "page" fixtures are not supported in "beforeAll"`);
 });
 
 test('should report click error on sigint', async ({ runInlineTest }) => {
@@ -450,7 +450,7 @@ test('should report click error on sigint', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.skipped).toBe(1);
+  expect(result.interrupted).toBe(1);
   expect(stripAnsi(result.output)).toContain(`8 |         const promise = page.click('text=Missing');`);
 });
 

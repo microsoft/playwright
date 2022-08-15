@@ -23,7 +23,7 @@ class nsScreencastService final : public nsIScreencastService {
   ~nsScreencastService();
 
   class Session;
-  std::map<nsString, std::unique_ptr<Session>> mIdToSession;
+  std::map<nsString, RefPtr<Session>> mIdToSession;
 };
 
 }  // namespace mozilla

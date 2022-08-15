@@ -19,22 +19,20 @@ class VideoFrame;
 namespace mozilla {
 
 class ScreencastEncoder {
-    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ScreencastEncoder)
 public:
     static constexpr int fps = 25;
 
-    static RefPtr<ScreencastEncoder> create(nsCString& errorString, const nsCString& filePath, int width, int height, const gfx::IntMargin& margin);
+    static std::unique_ptr<ScreencastEncoder> create(nsCString& errorString, const nsCString& filePath, int width, int height, const gfx::IntMargin& margin);
 
     class VPXCodec;
-    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, const gfx::IntMargin& margin);
+    ScreencastEncoder(std::unique_ptr<VPXCodec>, const gfx::IntMargin& margin);
+    ~ScreencastEncoder();
 
     void encodeFrame(const webrtc::VideoFrame& videoFrame);
 
     void finish(std::function<void()>&& callback);
 
 private:
-    ~ScreencastEncoder();
-
     void flushLastFrame();
 
     std::unique_ptr<VPXCodec> m_vpxCodec;

@@ -16,8 +16,6 @@
 
 import { test as it, expect } from './pageTest';
 
-it.fixme(({ isAndroid }) => isAndroid, 'Post data  does not work');
-
 it('should return correct postData buffer for utf-8 body', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const value = 'baẞ';

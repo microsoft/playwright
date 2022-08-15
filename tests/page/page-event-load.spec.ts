@@ -30,7 +30,7 @@ it('should fire once', async ({ page, server, browserName }) => {
 
 it('should fire once with iframe navigation', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15086' });
-  it.fail();
+  it.fixme(browserName === 'firefox', 'Firefox sometimes double fires.');
 
   let requestCount = 0;
   server.setRoute('/tracker', (_, res) => {

@@ -260,6 +260,45 @@ test.describe('cli codegen', () => {
     expect(message.text()).toBe('John');
   });
 
+  test('should fill japanese text', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    // In Japanese, "てすと" or "テスト" means "test".
+    await recorder.setContentAndWait(`<input id="input" name="name" oninput="input.value === 'てすと' && console.log(input.value)"></input>`);
+    const selector = await recorder.focusElement('input');
+    expect(selector).toBe('input[name="name"]');
+
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', 'fill'),
+      (async () => {
+        await recorder.page.dispatchEvent(selector, 'keydown', { key: 'Process' });
+        await recorder.page.keyboard.insertText('てすと');
+        await recorder.page.dispatchEvent(selector, 'keyup', { key: 'Process' });
+      })()
+    ]);
+    expect(sources.get('JavaScript').text).toContain(`
+  // Fill input[name="name"]
+  await page.locator('input[name="name"]').fill('てすと');`);
+    expect(sources.get('Java').text).toContain(`
+      // Fill input[name="name"]
+      page.locator("input[name=\\\"name\\\"]").fill("てすと");`);
+
+    expect(sources.get('Python').text).toContain(`
+    # Fill input[name="name"]
+    page.locator(\"input[name=\\\"name\\\"]\").fill(\"てすと\")`);
+
+    expect(sources.get('Python Async').text).toContain(`
+    # Fill input[name="name"]
+    await page.locator(\"input[name=\\\"name\\\"]\").fill(\"てすと\")`);
+
+    expect(sources.get('C#').text).toContain(`
+        // Fill input[name="name"]
+        await page.Locator(\"input[name=\\\"name\\\"]\").FillAsync(\"てすと\");`);
+
+    expect(message.text()).toBe('てすと');
+  });
+
   test('should fill textarea', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 

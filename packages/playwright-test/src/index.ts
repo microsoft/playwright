@@ -70,7 +70,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   headless: [ ({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true } ],
   channel: [ ({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true } ],
   launchOptions: [ {}, { scope: 'worker', option: true } ],
-  connectOptions: [ undefined, { scope: 'worker', option: true } ],
+  connectOptions: [ process.env.PW_TEST_CONNECT_WS_ENDPOINT ? { wsEndpoint: process.env.PW_TEST_CONNECT_WS_ENDPOINT } : undefined, { scope: 'worker', option: true } ],
   screenshot: [ 'off', { scope: 'worker', option: true } ],
   video: [ 'off', { scope: 'worker', option: true } ],
   trace: [ 'off', { scope: 'worker', option: true } ],
@@ -106,7 +106,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       (browserType as any)._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true }],
 
-  _connectedBrowser: [async ({ playwright, browserName, channel, headless, connectOptions }, use) => {
+  _connectedBrowser: [async ({ playwright, browserName, channel, headless, connectOptions, launchOptions }, use) => {
     if (!connectOptions) {
       await use(undefined);
       return;
@@ -115,8 +115,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     const browser = await playwright[browserName].connect(connectOptions.wsEndpoint, {
       headers: {
-        'x-playwright-browser': channel || browserName,
-        'x-playwright-headless': headless ? '1' : '0',
+        'x-playwright-browser': browserName,
+        'x-playwright-launch-options': JSON.stringify(launchOptions),
         ...connectOptions.headers,
       },
       timeout: connectOptions.timeout ?? 3 * 60 * 1000, // 3 minutes
@@ -330,7 +330,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       (page as any)[screenshottedSymbol] = true;
       const screenshotPath = path.join(_artifactsDir(), createGuid() + '.png');
       temporaryScreenshots.push(screenshotPath);
-      await page.screenshot({ timeout: 5000, path: screenshotPath }).catch(() => {});
+      // Pass caret=initial to avoid any evaluations that might slow down the screenshot
+      // and let the page modify itself from the problematic state it had at the moment of failure.
+      await page.screenshot({ timeout: 5000, path: screenshotPath, caret: 'initial' }).catch(() => {});
     };
 
     const screenshotOnTestFailure = async () => {
@@ -432,7 +434,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
         await Promise.all(context.pages().map(async page => {
           if ((page as any)[screenshottedSymbol])
             return;
-          await page.screenshot({ timeout: 5000, path: addScreenshotAttachment() }).catch(() => {});
+          // Pass caret=initial to avoid any evaluations that might slow down the screenshot
+          // and let the page modify itself from the problematic state it had at the moment of failure.
+          await page.screenshot({ timeout: 5000, path: addScreenshotAttachment(), caret: 'initial' }).catch(() => {});
         }));
       }
     }).concat(leftoverApiRequests.map(async context => {
@@ -463,8 +467,13 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
     await use(async options => {
       const hook = hookType(testInfo);
-      if (hook)
-        throw new Error(`"context" and "page" fixtures are not supported in ${hook}. Use browser.newContext() instead.`);
+      if (hook) {
+        throw new Error([
+          `"context" and "page" fixtures are not supported in "${hook}" since they are created on a per-test basis.`,
+          `If you would like to reuse a single page between tests, create context manually with browser.newContext(). See https://aka.ms/playwright/reuse-page for details.`,
+          `If you would like to configure your page before each test, do that in beforeEach hook instead.`,
+        ].join('\n'));
+      }
       const videoOptions: BrowserContextOptions = captureVideo ? {
         recordVideo: {
           dir: _artifactsDir(),
@@ -507,7 +516,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       testInfo.errors.push({ message: prependToError });
   }, { scope: 'test',  _title: 'context' } as any],
 
-  _contextReuseEnabled: !!process.env.PW_REUSE_CONTEXT,
+  _contextReuseEnabled: !!process.env.PW_TEST_REUSE_CONTEXT,
 
   _reuseContext: async ({ video, trace, _contextReuseEnabled }, use, testInfo) => {
     const reuse = _contextReuseEnabled && !shouldCaptureVideo(normalizeVideoMode(video), testInfo) && !shouldCaptureTrace(normalizeTraceMode(trace), testInfo);

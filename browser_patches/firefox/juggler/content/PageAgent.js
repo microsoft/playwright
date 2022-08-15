@@ -451,7 +451,7 @@ class PageAgent {
     const unsafeObject = frame.unsafeObject(objectId);
     if (!unsafeObject.getBoxQuads)
       throw new Error('RemoteObject is not a node');
-    const quads = unsafeObject.getBoxQuads({relativeTo: this._frameTree.mainFrame().domWindow().document}).map(quad => {
+    const quads = unsafeObject.getBoxQuads({relativeTo: this._frameTree.mainFrame().domWindow().document, recurseWhenNoFrame: true}).map(quad => {
       return {
         p1: {x: quad.p1.x, y: quad.p1.y},
         p2: {x: quad.p2.x, y: quad.p2.y},

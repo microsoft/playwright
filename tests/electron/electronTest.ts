@@ -21,6 +21,8 @@ import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
 export { expect } from '@playwright/test';
+import e2c from 'electron-to-chromium';
+import { assert } from 'playwright-core/lib/utils';
 
 type ElectronTestFixtures = PageTestFixtures & {
   electronApp: ElectronApplication;
@@ -28,10 +30,12 @@ type ElectronTestFixtures = PageTestFixtures & {
 };
 
 const electronVersion = require('electron/package.json').version;
+const chromiumVersion = e2c.fullVersions[electronVersion];
+assert(chromiumVersion, `Chromium version for Electron version ${electronVersion} is not found.`);
 
 export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixtures).extend<ElectronTestFixtures, PageWorkerFixtures>({
-  browserVersion: [electronVersion, { scope: 'worker' }],
-  browserMajorVersion: [Number(electronVersion.split('.')[0]), { scope: 'worker' }],
+  browserVersion: [chromiumVersion, { scope: 'worker' }],
+  browserMajorVersion: [Number(chromiumVersion.split('.')[0]), { scope: 'worker' }],
   isAndroid: [false, { scope: 'worker' }],
   isElectron: [true, { scope: 'worker' }],
 

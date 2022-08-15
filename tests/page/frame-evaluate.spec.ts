@@ -42,8 +42,7 @@ function expectContexts(pageImpl, count, browserName) {
     expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
 }
 
-it('should dispose context on navigation', async ({ page, server, toImpl, browserName, mode, isElectron }) => {
-  it.skip(mode !== 'default');
+it('should dispose context on navigation', async ({ page, server, toImpl, browserName, isElectron }) => {
   it.skip(isElectron);
 
   await page.goto(server.PREFIX + '/frames/one-frame.html');
@@ -53,8 +52,7 @@ it('should dispose context on navigation', async ({ page, server, toImpl, browse
   expectContexts(toImpl(page), 2, browserName);
 });
 
-it('should dispose context on cross-origin navigation', async ({ page, server, toImpl, browserName, mode, isElectron }) => {
-  it.skip(mode !== 'default');
+it('should dispose context on cross-origin navigation', async ({ page, server, toImpl, browserName, isElectron }) => {
   it.skip(isElectron);
 
   await page.goto(server.PREFIX + '/frames/one-frame.html');
@@ -97,9 +95,8 @@ it('should allow cross-frame element handles', async ({ page, server }) => {
   expect(result.trim()).toBe('<div>Hi, I\'m frame</div>');
 });
 
-it('should not allow cross-frame element handles when frames do not script each other', async ({ page, server, isElectron, isAndroid }) => {
+it('should not allow cross-frame element handles when frames do not script each other', async ({ page, server, isAndroid }) => {
   it.skip(isAndroid, 'No cross-process on Android');
-  it.fixme(isElectron);
 
   await page.goto(server.EMPTY_PAGE);
   const frame = await attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');

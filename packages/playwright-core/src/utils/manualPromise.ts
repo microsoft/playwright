@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export class ManualPromise<T> extends Promise<T> {
+export class ManualPromise<T = void> extends Promise<T> {
   private _resolve!: (t: T) => void;
   private _reject!: (e: Error) => void;
   private _isDone: boolean;

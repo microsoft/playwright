@@ -1416,23 +1416,27 @@ export type BrowserContextPauseOptions = {};
 export type BrowserContextPauseResult = void;
 export type BrowserContextRecorderSupplementEnableParams = {
   language?: string,
-  startRecording?: boolean,
+  mode?: 'inspecting' | 'recording',
   pauseOnNextStatement?: boolean,
   launchOptions?: any,
   contextOptions?: any,
   device?: string,
   saveStorage?: string,
   outputFile?: string,
+  handleSIGINT?: boolean,
+  omitCallTracking?: boolean,
 };
 export type BrowserContextRecorderSupplementEnableOptions = {
   language?: string,
-  startRecording?: boolean,
+  mode?: 'inspecting' | 'recording',
   pauseOnNextStatement?: boolean,
   launchOptions?: any,
   contextOptions?: any,
   device?: string,
   saveStorage?: string,
   outputFile?: string,
+  handleSIGINT?: boolean,
+  omitCallTracking?: boolean,
 };
 export type BrowserContextRecorderSupplementEnableResult = void;
 export type BrowserContextNewCDPSessionParams = {

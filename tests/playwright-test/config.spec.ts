@@ -391,3 +391,37 @@ test('should work with undefined values and base', async ({ runInlineTest }) => 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should have correct types for the config', async ({ runTSC }) => {
+  const result = await runTSC({
+    'playwright.config.ts': `
+      import type { PlaywrightTestConfig } from '@playwright/test';
+
+      const config: PlaywrightTestConfig = {
+        webServer: [
+          {
+            command: 'echo 123',
+            env: { PORT: '123' },
+            port: 123,
+          },
+          {
+            command: 'echo 123',
+            env: { NODE_ENV: 'test' },
+            port: 8082,
+          },
+        ],
+        globalSetup: './globalSetup',
+        // @ts-expect-error
+        globalTeardown: null,
+        projects: [
+          {
+            name: 'project name',
+          }
+        ],
+      };
+
+      export default config;
+  `
+  });
+  expect(result.exitCode).toBe(0);
+});

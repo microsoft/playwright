@@ -16,10 +16,10 @@
 
 import { installTransform } from './transform';
 import type { Config, Project, ReporterDescription, FullProjectInternal, FullConfigInternal, Fixtures, FixturesWithLocation } from './types';
-import { getPackageJsonPath, filterUndefinedFixtures, errorWithFile } from './util';
+import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite, type TestCase } from './test';
-import type { SerializedLoaderData } from './ipc';
+import type { SerializedLoaderData, WorkerIsolation } from './ipc';
 import * as path from 'path';
 import * as url from 'url';
 import * as fs from 'fs';
@@ -98,7 +98,7 @@ export class Loader {
       throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
     config.projects = takeFirst(this._configCLIOverrides.projects, config.projects as any);
     config.workers = takeFirst(this._configCLIOverrides.workers, config.workers);
-    config.use = { ...filterUndefinedFixtures(config.use), ...filterUndefinedFixtures(this._configCLIOverrides.use) };
+    config.use = mergeObjects(config.use, this._configCLIOverrides.use);
     for (const project of config.projects || [])
       this._applyCLIOverridesToProject(project);
 
@@ -152,12 +152,28 @@ export class Loader {
     }
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
+    this._assignUniqueProjectIds(this._fullConfig.projects);
+  }
+
+  private _assignUniqueProjectIds(projects: FullProjectInternal[]) {
+    const usedNames = new Set();
+    for (const p of projects) {
+      const name = p.name || '';
+      for (let i = 0; i < projects.length; ++i) {
+        const candidate = name + (i ? i : '');
+        if (usedNames.has(candidate))
+          continue;
+        p._id = candidate;
+        usedNames.add(candidate);
+        break;
+      }
+    }
   }
 
   async loadTestFile(file: string, environment: 'runner' | 'worker') {
     if (cachedFileSuites.has(file))
       return cachedFileSuites.get(file)!;
-    const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file));
+    const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file), 'file');
     suite._requireFile = file;
     suite.location = { file, line: 0, column: 0 };
 
@@ -196,7 +212,7 @@ export class Loader {
     return suite;
   }
 
-  async loadGlobalHook(file: string, name: string): Promise<(config: FullConfigInternal) => any> {
+  async loadGlobalHook(file: string): Promise<(config: FullConfigInternal) => any> {
     return this._requireOrImportDefaultFunction(path.resolve(this._fullConfig.rootDir, file), false);
   }
 
@@ -210,9 +226,9 @@ export class Loader {
 
   buildFileSuiteForProject(project: FullProjectInternal, suite: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): Suite | undefined {
     if (!this._projectSuiteBuilders.has(project))
-      this._projectSuiteBuilders.set(project, new ProjectSuiteBuilder(project, this._fullConfig.projects.indexOf(project)));
+      this._projectSuiteBuilders.set(project, new ProjectSuiteBuilder(project));
     const builder = this._projectSuiteBuilders.get(project)!;
-    return builder.cloneFileSuite(suite, repeatEachIndex, filter);
+    return builder.cloneFileSuite(suite, 'isolate-pools', repeatEachIndex, filter);
   }
 
   serialize(): SerializedLoaderData {
@@ -232,7 +248,7 @@ export class Loader {
     projectConfig.repeatEach = takeFirst(this._configCLIOverrides.repeatEach, projectConfig.repeatEach);
     projectConfig.retries = takeFirst(this._configCLIOverrides.retries, projectConfig.retries);
     projectConfig.timeout = takeFirst(this._configCLIOverrides.timeout, projectConfig.timeout);
-    projectConfig.use = { ...filterUndefinedFixtures(projectConfig.use), ...filterUndefinedFixtures(this._configCLIOverrides.use) };
+    projectConfig.use = mergeObjects(projectConfig.use, this._configCLIOverrides.use);
   }
 
   private _resolveProject(config: Config, fullConfig: FullConfigInternal, projectConfig: Project, throwawayArtifactsPath: string): FullProjectInternal {
@@ -254,6 +270,7 @@ export class Loader {
     const name = takeFirst(projectConfig.name, config.name, '');
     const screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
     return {
+      _id: '',
       _fullConfig: fullConfig,
       _fullyParallel: takeFirst(projectConfig.fullyParallel, config.fullyParallel, undefined),
       _expect: takeFirst(projectConfig.expect, config.expect, {}),
@@ -271,7 +288,7 @@ export class Loader {
       testIgnore: takeFirst(projectConfig.testIgnore, config.testIgnore, []),
       testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/?(*.)@(spec|test).*'),
       timeout: takeFirst(projectConfig.timeout, config.timeout, defaultTimeout),
-      use: { ...filterUndefinedFixtures(config.use), ...filterUndefinedFixtures(projectConfig.use) },
+      use: mergeObjects(config.use, projectConfig.use),
     };
   }
 
@@ -307,13 +324,11 @@ export class Loader {
 
 class ProjectSuiteBuilder {
   private _project: FullProjectInternal;
-  private _index: number;
   private _testTypePools = new Map<TestTypeImpl, FixturePool>();
   private _testPools = new Map<TestCase, FixturePool>();
 
-  constructor(project: FullProjectInternal, index: number) {
+  constructor(project: FullProjectInternal) {
     this._project = project;
-    this._index = index;
   }
 
   private _buildTestTypePool(testType: TestTypeImpl): FixturePool {
@@ -337,7 +352,7 @@ class ProjectSuiteBuilder {
 
       for (const parent of parents) {
         if (parent._use.length)
-          pool = new FixturePool(parent._use, pool, parent._isDescribe);
+          pool = new FixturePool(parent._use, pool, parent._type === 'describe');
         for (const hook of parent._hooks)
           pool.validateFunction(hook.fn, hook.type + ' hook', hook.location);
         for (const modifier of parent._modifiers)
@@ -350,32 +365,37 @@ class ProjectSuiteBuilder {
     return this._testPools.get(test)!;
   }
 
-  private _cloneEntries(from: Suite, to: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean, relativeTitlePath: string): boolean {
+  private _cloneEntries(from: Suite, to: Suite, workerIsolation: WorkerIsolation, repeatEachIndex: number, filter: (test: TestCase) => boolean): boolean {
     for (const entry of from._entries) {
       if (entry instanceof Suite) {
         const suite = entry._clone();
+        suite._fileId = to._fileId;
         to._addSuite(suite);
         // Ignore empty titles, similar to Suite.titlePath().
-        const childTitlePath = relativeTitlePath + (suite.title ? ' ' + suite.title : '');
-        if (!this._cloneEntries(entry, suite, repeatEachIndex, filter, childTitlePath)) {
+        if (!this._cloneEntries(entry, suite, workerIsolation, repeatEachIndex, filter)) {
           to._entries.pop();
           to.suites.pop();
         }
       } else {
         const test = entry._clone();
-        test.retries = this._project.retries;
-        // We rely upon relative paths being unique.
-        // See `getClashingTestsPerSuite()` in `runner.ts`.
-        test._id = `${calculateSha1(relativeTitlePath + ' ' + entry.title)}@${entry._requireFile}#run${this._index}-repeat${repeatEachIndex}`;
-        test.repeatEachIndex = repeatEachIndex;
-        test._projectIndex = this._index;
         to._addTest(test);
+        test.retries = this._project.retries;
+        const repeatEachIndexSuffix = repeatEachIndex ? ` (repeat:${repeatEachIndex})` : '';
+        // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
+        const testIdExpression = `[project=${this._project._id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
+        const testId = to._fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
+        test.id = testId;
+        test.repeatEachIndex = repeatEachIndex;
+        test._projectId = this._project._id;
         if (!filter(test)) {
           to._entries.pop();
           to.tests.pop();
         } else {
           const pool = this._buildPool(entry);
-          test._workerHash = `run${this._index}-${pool.digest}-repeat${repeatEachIndex}`;
+          if (this._project._fullConfig._workerIsolation === 'isolate-pools')
+            test._workerHash = `run${this._project._id}-${pool.digest}-repeat${repeatEachIndex}`;
+          else
+            test._workerHash = `run${this._project._id}-repeat${repeatEachIndex}`;
           test._pool = pool;
         }
       }
@@ -385,9 +405,11 @@ class ProjectSuiteBuilder {
     return true;
   }
 
-  cloneFileSuite(suite: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): Suite | undefined {
+  cloneFileSuite(suite: Suite, workerIsolation: WorkerIsolation, repeatEachIndex: number, filter: (test: TestCase) => boolean): Suite | undefined {
     const result = suite._clone();
-    return this._cloneEntries(suite, result, repeatEachIndex, filter, '') ? result : undefined;
+    const relativeFile = path.relative(this._project.testDir, suite.location!.file).split(path.sep).join('/');
+    result._fileId = calculateSha1(relativeFile).slice(0, 20);
+    return this._cloneEntries(suite, result, workerIsolation, repeatEachIndex, filter) ? result : undefined;
   }
 
   private _applyConfigUseOptions(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
@@ -405,7 +427,7 @@ class ProjectSuiteBuilder {
           (originalFixtures as any)[key] = value;
       }
       if (Object.entries(optionsFromConfig).length)
-        result.push({ fixtures: optionsFromConfig, location: { file: `project#${this._index}`, line: 1, column: 1 } });
+        result.push({ fixtures: optionsFromConfig, location: { file: `project#${this._project._id}`, line: 1, column: 1 } });
       if (Object.entries(originalFixtures).length)
         result.push({ fixtures: originalFixtures, location: f.location });
     }
@@ -618,10 +640,12 @@ export const baseFullConfig: FullConfigInternal = {
   version: require('../package.json').version,
   workers,
   webServer: null,
+  _watchMode: false,
   _webServers: [],
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
   _testGroupsCount: 0,
+  _workerIsolation: 'isolate-pools',
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {

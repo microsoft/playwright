@@ -1,9 +1,77 @@
 ---
 id: release-notes
 title: "Release notes"
+toc_max_heading_level: 2
 ---
 
-<!-- TOC -->
+## Version 1.25
+
+### New .runsettings file support
+
+`Microsoft.Playwright.NUnit` and `Microsoft.Playwright.MSTest` will now consider the `.runsettings` file and passed settings via the CLI when running end-to-end tests. See in the [documentation](https://playwright.dev/dotnet/docs/test-runners) for a full list of supported settings.
+
+The following does now work:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <!-- Playwright -->  
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <ExpectTimeout>5000</ExpectTimeout>
+    <LaunchOptions>
+      <Headless>true</Headless>
+      <Channel>msedge</Channel>
+    </LaunchOptions>
+  </Playwright>
+  <!-- General run configuration -->
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <!-- For debugging selectors, it's recommend to set the following environment variable -->
+      <DEBUG>pw:api</DEBUG>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>
+```
+
+### Announcements
+
+* 🪦 This is the last release with macOS 10.15 support (deprecated as of 1.21).
+* ⚠️ Ubuntu 18 is now deprecated and will not be supported as of Dec 2022.
+
+### Browser Versions
+
+* Chromium 105.0.5195.19
+* Mozilla Firefox 103.0
+* WebKit 16.0
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 104
+* Microsoft Edge 104
+
+## Version 1.24
+
+<div className="embed-youtube">
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/9F05o1shxcY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+### 🐂 Debian 11 Bullseye Support
+
+Playwright now supports Debian 11 Bullseye on x86_64 for Chromium, Firefox and WebKit. Let us know
+if you encounter any issues!
+
+Linux support looks like this:
+
+|          | Ubuntu 18.04 | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11
+| :--- | :---: | :---: | :---: | :---: | 
+| Chromium | ✅ | ✅ | ✅ | ✅ |
+| WebKit | ✅ | ✅ | ✅ | ✅ |
+| Firefox | ✅ | ✅ | ✅ | ✅ |
+
+### New introduction docs
+
+We rewrote our Getting Started docs to be more end-to-end testing focused. Check them out on [playwright.dev](https://playwright.dev/dotnet/docs/intro).
 
 ## Version 1.23
 
@@ -38,7 +106,7 @@ Now you can record network traffic into a HAR file and re-use this traffic in yo
 To record network into HAR file:
 
 ```bash
-pwsh bin\Debug\netX\playwright.ps1 open --save-har=example.har --save-har-glob="**/api/**" https://example.com
+pwsh bin/Debug/netX/playwright.ps1 open --save-har=example.har --save-har-glob="**/api/**" https://example.com
 ```
 
 Alternatively, you can record HAR programmatically:
@@ -190,7 +258,7 @@ using System.Threading.Tasks;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 
-namespace Playwright.TestingHarnessTest.NUnit;
+namespace PlaywrightTests;
 
 public class ExampleTests : PageTest
 {
@@ -332,7 +400,7 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 - Playwright now supports **Ubuntu 20.04 ARM64**. You can now run Playwright tests inside Docker on Apple M1 and on Raspberry Pi.
 - You can now use Playwright to install stable version of Edge on Linux:
     ```bash
-    pwsh bin\Debug\netX\playwright.ps1 install msedge
+    pwsh bin/Debug/netX/playwright.ps1 install msedge
     ```
 
 
@@ -359,7 +427,7 @@ Read more about [`method: Locator.waitFor`].
 
 ### 🎭 Playwright Trace Viewer
 
-- run trace viewer with `pwsh bin\Debug\netX\playwright.ps1 show-trace` and drop trace files to the trace viewer PWA
+- run trace viewer with `pwsh bin/Debug/netX/playwright.ps1 show-trace` and drop trace files to the trace viewer PWA
 - better visual attribution of action targets
 
 Read more about [Trace Viewer](./trace-viewer).

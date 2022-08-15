@@ -58,35 +58,6 @@ it('inputValue should work', async ({ page, server }) => {
   expect(await locator2.inputValue().catch(e => e.message)).toContain('Node is not an <input>, <textarea> or <select> element');
 });
 
-it('inputValue should work on label', async ({ page, server }) => {
-  await page.setContent(`<label><input type=text></input></label>`);
-  await page.fill('input', 'foo');
-  expect(await page.locator('label').inputValue()).toBe('foo');
-});
-
-it('should get value of input with label', async ({ page }) => {
-  await page.setContent(`<label for=target>Fill me</label><input id=target value="some value">`);
-  expect(await page.inputValue('text=Fill me')).toBe('some value');
-  await expect(page.locator('text=Fill me')).toHaveValue('some value');
-});
-
-it('should get value of input with span inside the label', async ({ page }) => {
-  await page.setContent(`<label for=target><span>Fill me</span></label><input id=target value="some value">`);
-  expect(await page.inputValue('text=Fill me')).toBe('some value');
-  await expect(page.locator('text=Fill me')).toHaveValue('some value');
-});
-
-it('should get value of textarea with label', async ({ page }) => {
-  await page.setContent(`<label for=target>Fill me</label><textarea id=target>hey</textarea>`);
-  expect(await page.inputValue('text=Fill me')).toBe('hey');
-  await expect(page.locator('text=Fill me')).toHaveValue('hey');
-
-  await page.fill('textarea', 'Look at this');
-  expect(await page.inputValue('text=Fill me')).toBe('Look at this');
-  await expect(page.locator('text=Fill me')).toHaveValue('Look at this');
-});
-
-
 it('innerHTML should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const locator = page.locator('#outer');
@@ -203,6 +174,7 @@ it('allInnerTexts should work', async ({ page }) => {
 });
 
 it('isVisible and isHidden should work with details', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10674' });
   await page.setContent(`<details>
     <summary>click to open</summary>
       <ul>
@@ -225,4 +197,30 @@ it('should return page', async ({ page, server }) => {
 
   const inFrame = page.frames()[1].locator('div');
   expect(inFrame.page()).toBe(page);
+});
+
+it('isVisible inside a button', async ({ page }) => {
+  await page.setContent(`<button><span></span>a button</button>`);
+  const span = page.locator('span');
+  expect(await span.isVisible()).toBe(false);
+  expect(await span.isHidden()).toBe(true);
+  expect(await page.isVisible('span')).toBe(false);
+  expect(await page.isHidden('span')).toBe(true);
+  await expect(span).not.toBeVisible();
+  await expect(span).toBeHidden();
+  await span.waitFor({ state: 'hidden' });
+  await page.locator('button').waitFor({ state: 'visible' });
+});
+
+it('isVisible inside a role=button', async ({ page }) => {
+  await page.setContent(`<div role=button><span></span>a button</div>`);
+  const span = page.locator('span');
+  expect(await span.isVisible()).toBe(false);
+  expect(await span.isHidden()).toBe(true);
+  expect(await page.isVisible('span')).toBe(false);
+  expect(await page.isHidden('span')).toBe(true);
+  await expect(span).not.toBeVisible();
+  await expect(span).toBeHidden();
+  await span.waitFor({ state: 'hidden' });
+  await page.locator('[role=button]').waitFor({ state: 'visible' });
 });

@@ -31,7 +31,7 @@ Returns the [Frame] that initiated this response.
 * since: v1.23
 - returns: <[boolean]>
 
-Indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
+Indicates whether this Response was fulfilled by a Service Worker's Fetch Handler (i.e. via [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
 
 ## method: Response.headers
 * since: v1.8

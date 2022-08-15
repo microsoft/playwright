@@ -21,7 +21,7 @@ import { VueEngine } from './vueSelectorEngine';
 import { RoleEngine } from './roleSelectorEngine';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../isomorphic/selectorParser';
 import { allEngineNames, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
-import { type TextMatcher, elementMatchesText, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorUtils';
+import { type TextMatcher, elementMatchesText, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher, elementText } from './selectorUtils';
 import { SelectorEvaluatorImpl } from './selectorEvaluator';
 import { isElementVisible, parentElementOrShadowHost } from './domUtils';
 import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
@@ -437,12 +437,18 @@ export class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  retarget(node: Node, behavior: 'follow-label' | 'no-follow-label'): Element | null {
+  retarget(node: Node, behavior: 'none' | 'follow-label' | 'no-follow-label' | 'button-link'): Element | null {
     let element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
     if (!element)
       return null;
-    if (!element.matches('input, textarea, select'))
-      element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
+    if (behavior === 'none')
+      return element;
+    if (!element.matches('input, textarea, select')) {
+      if (behavior === 'button-link')
+        element = element.closest('button, [role=button], a, [role=link]') || element;
+      else
+        element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
+    }
     if (behavior === 'follow-label') {
       if (!element.matches('input, textarea, button, select, [role=button], [role=checkbox], [role=radio]') &&
         !(element as any).isContentEditable) {
@@ -517,7 +523,7 @@ export class InjectedScript {
   }
 
   elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' {
-    const element = this.retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'no-follow-label' : 'follow-label');
+    const element = this.retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'none' : 'follow-label');
     if (!element || !element.isConnected) {
       if (state === 'hidden')
         return true;
@@ -666,14 +672,19 @@ export class InjectedScript {
     return 'done';
   }
 
+  private _activelyFocused(node: Node): { activeElement: Element | null, isFocused: boolean } {
+    const activeElement = (node.getRootNode() as (Document | ShadowRoot)).activeElement;
+    const isFocused = activeElement === node && !!node.ownerDocument && node.ownerDocument.hasFocus();
+    return { activeElement, isFocused };
+  }
+
   focusNode(node: Node, resetSelectionIfNotFocused?: boolean): 'error:notconnected' | 'done' {
     if (!node.isConnected)
       return 'error:notconnected';
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Node is not an element');
 
-    const activeElement = (node.getRootNode() as (Document | ShadowRoot)).activeElement;
-    const wasFocused = activeElement === node && node.ownerDocument && node.ownerDocument.hasFocus();
+    const { activeElement, isFocused: wasFocused } = this._activelyFocused(node);
     if ((node as HTMLElement).isContentEditable && !wasFocused && activeElement && (activeElement as HTMLElement | SVGElement).blur) {
       // Workaround the Firefox bug where focusing the element does not switch current
       // contenteditable to the new element. However, blurring the previous one helps.
@@ -716,7 +727,6 @@ export class InjectedScript {
   }
 
   expectHitTargetParent(hitElement: Element | undefined, targetElement: Element) {
-    targetElement = targetElement.closest('button, [role=button], a, [role=link]') || targetElement;
     const hitParents: Element[] = [];
     while (hitElement && hitElement !== targetElement) {
       hitParents.push(hitElement);
@@ -775,7 +785,7 @@ export class InjectedScript {
   //     2l. All navigations triggered between 2g-2k are awaited to be either committed or canceled.
   //     2m. If failed, wait for increasing amount of time before the next retry.
   setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse' | 'drag', hitPoint: { x: number, y: number }, blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' | string /* hitTargetDescription */ {
-    const element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    const element = this.retarget(node, 'button-link');
     if (!element || !element.isConnected)
       return 'error:notconnected';
 
@@ -863,9 +873,19 @@ export class InjectedScript {
     let container: Document | ShadowRoot | null = document;
     let element: Element | undefined;
     while (container) {
-      // elementFromPoint works incorrectly in Chromium (http://crbug.com/1188919),
-      // so we use elementsFromPoint instead.
+      // All browsers have different behavior around elementFromPoint and elementsFromPoint.
+      // https://github.com/w3c/csswg-drafts/issues/556
+      // http://crbug.com/1188919
       const elements: Element[] = container.elementsFromPoint(x, y);
+      const singleElement = container.elementFromPoint(x, y);
+      if (singleElement && elements[0] && parentElementOrShadowHost(singleElement) === elements[0]) {
+        const style = document.defaultView?.getComputedStyle(singleElement);
+        if (style?.display === 'contents') {
+          // Workaround a case where elementsFromPoint misses the inner-most element with display:contents.
+          // https://bugs.chromium.org/p/chromium/issues/detail?id=1342092
+          elements.unshift(singleElement);
+        }
+      }
       const innerElement = elements[0] as Element | undefined;
       if (!innerElement || element === innerElement)
         break;
@@ -939,7 +959,7 @@ export class InjectedScript {
   maskSelectors(selectors: ParsedSelector[]) {
     if (this._highlight)
       this.hideHighlight();
-    this._highlight = new Highlight(this.isUnderTest);
+    this._highlight = new Highlight(this);
     this._highlight.install();
     const elements = [];
     for (const selector of selectors)
@@ -949,17 +969,10 @@ export class InjectedScript {
 
   highlight(selector: ParsedSelector) {
     if (!this._highlight) {
-      this._highlight = new Highlight(this.isUnderTest);
+      this._highlight = new Highlight(this);
       this._highlight.install();
     }
-    this._runHighlightOnRaf(selector);
-  }
-
-  _runHighlightOnRaf(selector: ParsedSelector) {
-    if (!this._highlight)
-      return;
-    this._highlight.updateHighlight(this.querySelectorAll(selector, document.documentElement), stringifySelector(selector), false);
-    requestAnimationFrame(() => this._runHighlightOnRaf(selector));
+    this._highlight.runHighlightOnRaf(selector);
   }
 
   hideHighlight() {
@@ -1027,7 +1040,7 @@ export class InjectedScript {
       } else if (expression === 'to.be.enabled') {
         elementState = progress.injectedScript.elementState(element, 'enabled');
       } else if (expression === 'to.be.focused') {
-        elementState = document.activeElement === element;
+        elementState = this._activelyFocused(element).isFocused;
       } else if (expression === 'to.be.hidden') {
         elementState = progress.injectedScript.elementState(element, 'hidden');
       } else if (expression === 'to.be.visible') {
@@ -1078,7 +1091,7 @@ export class InjectedScript {
       } else if (expression === 'to.have.id') {
         received = element.id;
       } else if (expression === 'to.have.text') {
-        received = options.useInnerText ? (element as HTMLElement).innerText : element.textContent || '';
+        received = options.useInnerText ? (element as HTMLElement).innerText : elementText(new Map(), element).full;
       } else if (expression === 'to.have.title') {
         received = document.title;
       } else if (expression === 'to.have.url') {
@@ -1111,7 +1124,7 @@ export class InjectedScript {
     // List of values.
     let received: string[] | undefined;
     if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
-      received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
+      received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e).full);
     else if (expression === 'to.have.class.array')
       received = elements.map(e => e.classList.toString());
 

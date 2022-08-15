@@ -233,7 +233,6 @@ test.describe('Editing', () => {
     await todoItems.nth(1).locator('.edit').fill('');
     await todoItems.nth(1).locator('.edit').press('Enter');
 
-    await page.pause();
     await expect(todoItems).toHaveText([
       TODO_ITEMS[0],
       TODO_ITEMS[2],
@@ -384,20 +383,20 @@ async function createDefaultTodos(page: Page) {
   }
 }
 
-async function checkNumberOfTodosInLocalStorage(page: Page, expected: number) {
-  return await page.waitForFunction(e => {
-    return JSON.parse(localStorage['react-todos']).length === e;
-  }, expected);
+async function checkNumberOfCompletedTodosInLocalStorage(page: Page, expected: number) {
+  await expect.poll(() => {
+    return page.evaluate(() => JSON.parse(localStorage['react-todos']).filter(i => i.completed).length);
+  }).toBe(expected);
 }
 
-async function checkNumberOfCompletedTodosInLocalStorage(page: Page, expected: number) {
-  return await page.waitForFunction(e => {
-    return JSON.parse(localStorage['react-todos']).filter(i => i.completed).length === e;
-  }, expected);
+async function checkNumberOfTodosInLocalStorage(page: Page, expected: number) {
+  await expect.poll(() => {
+    return page.evaluate(() => JSON.parse(localStorage['react-todos']).length);
+  }).toBe(expected);
 }
 
 async function checkTodosInLocalStorage(page: Page, title: string) {
-  return await page.waitForFunction(t => {
-    return JSON.parse(localStorage['react-todos']).map(i => i.title).includes(t);
-  }, title);
+  await expect.poll(() => {
+    return page.evaluate(() => JSON.parse(localStorage['react-todos']).map(i => i.title));
+  }).toContain(title);
 }

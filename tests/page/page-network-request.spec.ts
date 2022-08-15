@@ -82,7 +82,7 @@ it('should return headers', async ({ page, server, browserName }) => {
 });
 
 it('should get the same headers as the server', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
-  it.skip(isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
   it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
   let serverRequest;
   server.setRoute('/empty.html', (request, response) => {
@@ -95,7 +95,7 @@ it('should get the same headers as the server', async ({ page, server, browserNa
 });
 
 it('should not return allHeaders() until they are available', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
-  it.skip(isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
   it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
 
   let requestHeadersPromise;
@@ -120,7 +120,7 @@ it('should not return allHeaders() until they are available', async ({ page, ser
 });
 
 it('should get the same headers as the server CORS', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
-  it.skip(isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
   it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
 
   await page.goto(server.PREFIX + '/empty.html');
@@ -200,9 +200,7 @@ it('should not get preflight CORS requests when intercepting', async ({ page, se
   }
 });
 
-it('should return postData', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should return postData', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -212,9 +210,7 @@ it('should return postData', async ({ page, server, isAndroid }) => {
   expect(request.postData()).toBe('{"foo":"bar"}');
 });
 
-it('should work with binary post data', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should work with binary post data', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -229,9 +225,7 @@ it('should work with binary post data', async ({ page, server, isAndroid }) => {
     expect(buffer[i]).toBe(i);
 });
 
-it('should work with binary post data and interception', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should work with binary post data and interception', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -247,9 +241,7 @@ it('should work with binary post data and interception', async ({ page, server, 
     expect(buffer[i]).toBe(i);
 });
 
-it('should override post data content type', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should override post data content type', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let request = null;
   server.setRoute('/post', (req, res) => {
@@ -271,16 +263,12 @@ it('should override post data content type', async ({ page, server, isAndroid })
   expect(request.headers['content-type']).toBe('application/x-www-form-urlencoded; charset=UTF-8');
 });
 
-it('should get |undefined| with postData() when there is no post data', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should get |undefined| with postData() when there is no post data', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.request().postData()).toBe(null);
 });
 
-it('should parse the json post data', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should parse the json post data', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -290,9 +278,7 @@ it('should parse the json post data', async ({ page, server, isAndroid }) => {
   expect(request.postDataJSON()).toEqual({ 'foo': 'bar' });
 });
 
-it('should parse the data if content-type is application/x-www-form-urlencoded', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should parse the data if content-type is application/x-www-form-urlencoded', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -353,7 +339,7 @@ it('should return navigation bit when navigating to image', async ({ page, serve
 });
 
 it('should report raw headers', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
-  it.skip(isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
 
   let expectedHeaders: { name: string, value: string }[];
   server.setRoute('/headers', (req, res) => {
@@ -421,7 +407,7 @@ it('should report raw response headers in redirects', async ({ page, server, bro
 });
 
 it('should report all cookies in one header', async ({ page, server, isElectron, browserMajorVersion }) => {
-  it.skip(isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
 
   const expectedHeaders = {};
   server.setRoute('/headers', (req, res) => {

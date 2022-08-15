@@ -58,7 +58,7 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 interface TestConfig {
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
-  webServer?: TestConfigWebServer;
+  webServer?: TestConfigWebServer | TestConfigWebServer[];
 }
 
 export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
@@ -95,7 +95,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 
-export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
+export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 
 export interface WorkerInfo {
   config: FullConfig;
@@ -121,6 +121,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   describe: SuiteFunction & {
     only: SuiteFunction;
     skip: SuiteFunction;
+    fixme: SuiteFunction;
     serial: SuiteFunction & {
       only: SuiteFunction;
     };
@@ -149,7 +150,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   beforeAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
-  step(title: string, body: () => Promise<any>): Promise<any>;
+  step<T>(title: string, body: () => Promise<T>): Promise<T>;
   expect: Expect;
   extend<T extends KeyValue, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
   info(): TestInfo;
@@ -251,8 +252,8 @@ export interface PlaywrightTestArgs {
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 
-import type * as expectType from '@playwright/test/types/expect-types';
-import type { Suite } from '@playwright/test/types/testReporter';
+import type * as expectType from './expect-types';
+import type { Suite } from './testReporter';
 
 type AsymmetricMatcher = Record<string, any>;
 

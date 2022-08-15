@@ -69,7 +69,7 @@ int32_t HeadlessWindowCapturer::StopCaptureIfAllClientsClose() {
   }
 }
 
-int32_t HeadlessWindowCapturer::StartCapture(const VideoCaptureCapability& capability) {
+int32_t HeadlessWindowCapturer::StartCapture(const webrtc::VideoCaptureCapability& capability) {
   mWindow->SetSnapshotListener([this] (RefPtr<gfx::DataSourceSurface>&& dataSurface){
     if (!NS_IsInCompositorThread()) {
       fprintf(stderr, "SnapshotListener is called not on the Compositor thread!\n");

@@ -16,15 +16,14 @@
 import type { Page } from 'playwright-core';
 import { test as it, expect } from './pageTest';
 
-it.skip(({ isElectron, browserMajorVersion, isAndroid }) => {
-  // Old Electron has flaky wheel events.
-  return (isElectron && browserMajorVersion <= 11) || isAndroid;
+it.skip(({ isAndroid }) => {
+  return isAndroid;
 });
 
 let ignoreDelta = false;
 
-it.beforeAll(async ({ browserMajorVersion, browserName, platform }) => {
-  if (browserName === 'chromium' && browserMajorVersion >= 102 && platform === 'darwin') {
+it.beforeAll(async ({ browserMajorVersion, browserName, isElectron, platform }) => {
+  if (((browserName === 'chromium' && browserMajorVersion >= 102) || isElectron) && platform === 'darwin') {
     // Chromium reports deltaX/deltaY scaled by host device scale factor.
     // https://bugs.chromium.org/p/chromium/issues/detail?id=1324819
     // https://github.com/microsoft/playwright/issues/7362
@@ -56,6 +55,39 @@ it('should dispatch wheel events @smoke', async ({ page, server }) => {
     deltaY: 100,
     clientX: 50,
     clientY: 60,
+    deltaMode: 0,
+    ctrlKey: false,
+    shiftKey: false,
+    altKey: false,
+    metaKey: false,
+  });
+});
+
+it('should dispatch wheel event on svg element', async ({ page, browserName, headless, isLinux }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15566' });
+  await page.setContent(`
+    <body>
+      <svg class="scroll-box"></svg>
+    </body>
+    <style>
+      .scroll-box {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        background-color: brown;
+        width: 200px;
+        height: 200px;
+      }
+    </style>`);
+  await listenForWheelEvents(page, 'svg');
+  await page.mouse.move(100, 100);
+  await page.mouse.wheel(0, 100);
+  await page.waitForFunction('!!window.lastEvent');
+  await expectEvent(page, {
+    deltaX: 0,
+    deltaY: 100,
+    clientX: 100,
+    clientY: 100,
     deltaMode: 0,
     ctrlKey: false,
     shiftKey: false,
@@ -116,6 +148,9 @@ it('should work when the event is canceled', async ({ page }) => {
   await page.evaluate(() => {
     document.querySelector('div').addEventListener('wheel', e => e.preventDefault());
   });
+  // Give wheel listener a chance to propagate through all the layers in Firefox.
+  for (let i = 0; i < 10; i++)
+    await page.evaluate(() => new Promise(x => requestAnimationFrame(() => requestAnimationFrame(x))));
   await page.mouse.wheel(0, 100);
   await expectEvent(page, {
     deltaX: 0,
@@ -129,7 +164,7 @@ it('should work when the event is canceled', async ({ page }) => {
     metaKey: false,
   });
   // Give the page a chance to scroll.
-  await page.waitForTimeout(100);
+  await page.waitForFunction(`!!window['lastEvent']`);
   // Ensure that it did not.
   expect(await page.evaluate('window.scrollY')).toBe(0);
 });

@@ -58,13 +58,6 @@ it('inputValue should work', async ({ page, server }) => {
   expect(await handle2.inputValue().catch(e => e.message)).toContain('Node is not an <input>, <textarea> or <select> element');
 });
 
-it('inputValue should work on label', async ({ page, server }) => {
-  await page.setContent(`<label><input type=text></input></label>`);
-  await page.fill('input', 'foo');
-  const handle = await page.$('label');
-  expect(await handle.inputValue()).toBe('foo');
-});
-
 it('innerHTML should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#outer');
@@ -95,94 +88,6 @@ it('textContent should work', async ({ page, server }) => {
   expect(await page.textContent('#inner')).toBe('Text,\nmore text');
 });
 
-it('textContent should be atomic', async ({ playwright, page }) => {
-  const createDummySelector = () => ({
-    query(root, selector) {
-      const result = root.querySelector(selector);
-      if (result)
-        Promise.resolve().then(() => result.textContent = 'modified');
-      return result;
-    },
-    queryAll(root: HTMLElement, selector: string) {
-      const result = Array.from(root.querySelectorAll(selector));
-      for (const e of result)
-        Promise.resolve().then(() => e.textContent = 'modified');
-      return result;
-    }
-  });
-  await playwright.selectors.register('textContent', createDummySelector);
-  await page.setContent(`<div>Hello</div>`);
-  const tc = await page.textContent('textContent=div');
-  expect(tc).toBe('Hello');
-  expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('modified');
-});
-
-it('innerText should be atomic', async ({ playwright, page }) => {
-  const createDummySelector = () => ({
-    query(root: HTMLElement, selector: string) {
-      const result = root.querySelector(selector);
-      if (result)
-        Promise.resolve().then(() => result.textContent = 'modified');
-      return result;
-    },
-    queryAll(root: HTMLElement, selector: string) {
-      const result = Array.from(root.querySelectorAll(selector));
-      for (const e of result)
-        Promise.resolve().then(() => e.textContent = 'modified');
-      return result;
-    }
-  });
-  await playwright.selectors.register('innerText', createDummySelector);
-  await page.setContent(`<div>Hello</div>`);
-  const tc = await page.innerText('innerText=div');
-  expect(tc).toBe('Hello');
-  expect(await page.evaluate(() => document.querySelector('div').innerText)).toBe('modified');
-});
-
-it('innerHTML should be atomic', async ({ playwright, page }) => {
-  const createDummySelector = () => ({
-    query(root, selector) {
-      const result = root.querySelector(selector);
-      if (result)
-        Promise.resolve().then(() => result.textContent = 'modified');
-      return result;
-    },
-    queryAll(root: HTMLElement, selector: string) {
-      const result = Array.from(root.querySelectorAll(selector));
-      for (const e of result)
-        Promise.resolve().then(() => e.textContent = 'modified');
-      return result;
-    }
-  });
-  await playwright.selectors.register('innerHTML', createDummySelector);
-  await page.setContent(`<div>Hello<span>world</span></div>`);
-  const tc = await page.innerHTML('innerHTML=div');
-  expect(tc).toBe('Hello<span>world</span>');
-  expect(await page.evaluate(() => document.querySelector('div').innerHTML)).toBe('modified');
-});
-
-it('getAttribute should be atomic', async ({ playwright, page }) => {
-  const createDummySelector = () => ({
-    query(root: HTMLElement, selector: string) {
-      const result = root.querySelector(selector);
-      if (result)
-        Promise.resolve().then(() => result.setAttribute('foo', 'modified'));
-      return result;
-    },
-    queryAll(root: HTMLElement, selector: string) {
-      const result = Array.from(root.querySelectorAll(selector));
-      for (const e of result)
-        Promise.resolve().then(() => (e as HTMLElement).setAttribute('foo', 'modified'));
-      return result;
-    }
-  });
-  await playwright.selectors.register('getAttribute', createDummySelector);
-  await page.setContent(`<div foo=hello></div>`);
-  const tc = await page.getAttribute('getAttribute=div', 'foo');
-  expect(tc).toBe('hello');
-  expect(await page.evaluate(() => document.querySelector('div').getAttribute('foo'))).toBe('modified');
-});
-
 it('isVisible and isHidden should work', async ({ page }) => {
   await page.setContent(`<div>Hi</div><span></span>`);
 
@@ -200,22 +105,6 @@ it('isVisible and isHidden should work', async ({ page }) => {
 
   expect(await page.isVisible('no-such-element')).toBe(false);
   expect(await page.isHidden('no-such-element')).toBe(true);
-});
-
-it('element state checks should work for label with zero-sized input', async ({ page, server }) => {
-  await page.setContent(`
-    <label>
-      Click me
-      <input disabled style="width:0;height:0;padding:0;margin:0;border:0;">
-    </label>
-  `);
-  // Visible checks the label.
-  expect(await page.isVisible('text=Click me')).toBe(true);
-  expect(await page.isHidden('text=Click me')).toBe(false);
-
-  // Enabled checks the input.
-  expect(await page.isEnabled('text=Click me')).toBe(false);
-  expect(await page.isDisabled('text=Click me')).toBe(true);
 });
 
 it('isVisible should not throw when the DOM element is not connected', async ({ page }) => {

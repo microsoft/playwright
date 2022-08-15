@@ -629,15 +629,14 @@ it('should properly wait for load', async ({ page, server, browserName }) => {
   ]);
 });
 
-it('should properly report window.stop()', async ({ page, server, browserName }) => {
+it('should properly report window.stop()', async ({ page, server }) => {
   server.setRoute('/module.js', async (req, res) => void 0);
   await page.goto(server.PREFIX + '/window-stop.html');
 });
 
-it('should return from goto if new navigation is started', async ({ page, server, browserName, isElectron, isAndroid }) => {
+it('should return from goto if new navigation is started', async ({ page, server, browserName, isAndroid }) => {
   it.fixme(browserName === 'webkit', 'WebKit has a bug where Page.frameStoppedLoading is sent too early.');
-  it.fixme(isElectron, 'Fails on Electron');
-  it.fail(isAndroid, 'Navigation gets aborted on Android');
+  it.fixme(isAndroid);
   server.setRoute('/slow.js', async (req, res) => void 0);
   let finished = false;
   const navigation = page.goto(server.PREFIX + '/load-event/load-event.html').then(r => {
@@ -662,4 +661,36 @@ it('should return when navigation is committed if commit is specified', async ({
   });
   const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'commit' });
   expect(response.status()).toBe(200);
+});
+
+it('should wait for load when iframe attaches and detaches', async ({ page, server }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(`
+      <body>
+        <script>
+          const iframe = document.createElement('iframe');
+          iframe.src = './iframe.html';
+          document.body.appendChild(iframe);
+          setTimeout(() => iframe.remove(), 1000);
+        </script>
+      </body>
+    `);
+  });
+
+  server.setRoute('/iframe.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(`
+      <link rel="stylesheet" href="./style2.css">
+    `);
+  });
+
+  // Stall the css so that 'load' does not fire.
+  server.setRoute('/style2.css', () => {});
+
+  const frameDetached = page.waitForEvent('framedetached');
+  const done = page.goto(server.EMPTY_PAGE, { waitUntil: 'load' });
+  await frameDetached; // Make sure that iframe is gone.
+  await done;
+  expect(await page.$('iframe')).toBe(null);
 });

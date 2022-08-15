@@ -35,6 +35,9 @@ const EXPECT_PATH_IMPL = require.resolve('./expectBundleImpl');
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 
 function filterStackTrace(e: Error) {
+  if (process.env.PWDEBUGIMPL)
+    return;
+
   // This method filters internal stack frames using Error.prepareStackTrace
   // hook. Read more about the hook: https://v8.dev/docs/stack-trace-api
   //
@@ -98,8 +101,9 @@ export function serializeError(error: Error | any): TestError {
 
 export type Matcher = (value: string) => boolean;
 
-export type FilePatternFilter = {
-  re: RegExp;
+export type TestFileFilter = {
+  re?: RegExp;
+  exact?: string;
   line: number | null;
   column: number | null;
 };
@@ -153,11 +157,15 @@ export function createTitleMatcher(patterns: RegExp | RegExp[]): Matcher {
   };
 }
 
-export function filterUndefinedFixtures<T extends object>(o: T | undefined): T {
-  // We don't want "undefined" values to actually mean "undefined",
-  // but rather "no opinion about this option", like in all other
-  // places in the config.
-  return Object.fromEntries(Object.entries(o || {}).filter(entry => !Object.is(entry[1], undefined))) as any as T;
+export function mergeObjects<A extends object, B extends object>(a: A | undefined | void, b: B | undefined | void): A & B {
+  const result = { ...a } as any;
+  if (!Object.is(b, undefined)) {
+    for (const [name, value] of Object.entries(b as B)) {
+      if (!Object.is(value, undefined))
+        result[name] = value;
+    }
+  }
+  return result as any;
 }
 
 export function forceRegExp(pattern: string): RegExp {

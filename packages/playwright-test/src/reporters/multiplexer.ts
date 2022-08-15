@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import type { FullConfig, Suite, TestCase, TestError, TestResult, Reporter, FullResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, Suite, TestCase, TestError, TestResult, FullResult, TestStep } from '../../types/testReporter';
+import type { ReporterInternal } from '../types';
 
-export class Multiplexer implements Reporter {
-  private _reporters: Reporter[];
+export class Multiplexer implements ReporterInternal {
+  private _reporters: ReporterInternal[];
 
-  constructor(reporters: Reporter[]) {
+  constructor(reporters: ReporterInternal[]) {
     this._reporters = reporters;
   }
 
@@ -55,6 +56,11 @@ export class Multiplexer implements Reporter {
   async onEnd(result: FullResult) {
     for (const reporter of this._reporters)
       await Promise.resolve().then(() => reporter.onEnd?.(result)).catch(e => console.error('Error in reporter', e));
+  }
+
+  async _onExit() {
+    for (const reporter of this._reporters)
+      await Promise.resolve().then(() => reporter._onExit?.()).catch(e => console.error('Error in reporter', e));
   }
 
   onError(error: TestError) {

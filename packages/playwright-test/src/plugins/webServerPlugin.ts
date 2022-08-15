@@ -158,10 +158,12 @@ async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Re
 }
 
 async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Reporter['onStdErr']): Promise<number> {
+  const commonRequestOptions = { headers: { Accept: '*/*' } };
   const isHttps = url.protocol === 'https:';
   const requestOptions = isHttps ? {
+    ...commonRequestOptions,
     rejectUnauthorized: !ignoreHTTPSErrors,
-  } : {};
+  } : commonRequestOptions;
   return new Promise(resolve => {
     debugWebServer(`HTTP GET: ${url}`);
     (isHttps ? https : http).get(url, requestOptions, res => {

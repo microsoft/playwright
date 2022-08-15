@@ -46,4 +46,7 @@ esbuild.build({
   watch: process.argv.includes('--watch'),
   sourcemap: process.argv.includes('--sourcemap'),
   minify: process.argv.includes('--minify'),
-}).catch(() => process.exit(1));
+}).catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

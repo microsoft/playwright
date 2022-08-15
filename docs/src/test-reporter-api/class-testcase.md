@@ -18,7 +18,7 @@ Learn more about [test annotations](../test-annotations.md).
 
 ## property: TestCase.expectedStatus
 * since: v1.10
-- type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>
+- type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">>
 
 Expected test status.
 * Tests marked as [`method: Test.skip#1`] or [`method: Test.fixme#1`] are expected to be `'skipped'`.
@@ -26,6 +26,12 @@ Expected test status.
 * Other tests are expected to be `'passed'`.
 
 See also [`property: TestResult.status`] for the actual status.
+
+## property: TestCase.id
+* since: v1.25
+- type: <[string]>
+
+Unique test ID that is computed based on the test file name, test title and project name. Test ID can be used as a history ID.
 
 ## property: TestCase.location
 * since: v1.10

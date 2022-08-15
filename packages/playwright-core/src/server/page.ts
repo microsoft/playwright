@@ -65,7 +65,7 @@ export interface PageDelegate {
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
 
   updateExtraHTTPHeaders(): Promise<void>;
-  updateEmulatedViewportSize(): Promise<void>;
+  updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void>;
   updateEmulateMedia(): Promise<void>;
   updateRequestInterception(): Promise<void>;
   updateFileChooserInterception(): Promise<void>;
@@ -231,26 +231,23 @@ export class Page extends SdkObject {
     this.setDefaultNavigationTimeout(undefined);
     this.setDefaultTimeout(undefined);
 
-    // Do this first in order to unfreeze evaluates.
-    await this._frameManager.closeOpenDialogs();
-
     await this._removeExposedBindings();
     await this._removeInitScripts();
-
-    // TODO: handle pending routes.
     await this.setClientRequestInterceptor(undefined);
     await this._setServerRequestInterceptor(undefined);
     await this.setFileChooserIntercepted(false);
+    // Re-navigate once init scripts are gone.
     await this.mainFrame().goto(metadata, 'about:blank');
     this._emulatedSize = undefined;
     this._emulatedMedia = {};
     this._extraHTTPHeaders = undefined;
     this._interceptFileChooser = false;
 
-    await this._delegate.updateEmulatedViewportSize();
-    await this._delegate.updateEmulateMedia();
-    await this._delegate.updateExtraHTTPHeaders();
-    await this._delegate.updateFileChooserInterception();
+    await Promise.all([
+      this._delegate.updateEmulatedViewportSize(true),
+      this._delegate.updateEmulateMedia(),
+      this._delegate.updateFileChooserInterception(),
+    ]);
   }
 
   async _doSlowMo() {
@@ -375,7 +372,8 @@ export class Page extends SdkObject {
       // Note: waitForNavigation may fail before we get response to reload(),
       // so we should await it immediately.
       const [response] = await Promise.all([
-        this.mainFrame()._waitForNavigation(progress, options),
+        // Reload must be a new document, and should not be confused with a stray pushState.
+        this.mainFrame()._waitForNavigation(progress, true /* requiresNewDocument */, options),
         this._delegate.reload(),
       ]);
       await this._doSlowMo();
@@ -389,7 +387,7 @@ export class Page extends SdkObject {
       // Note: waitForNavigation may fail before we get response to goBack,
       // so we should catch it immediately.
       let error: Error | undefined;
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, options).catch(e => {
+      const waitPromise = this.mainFrame()._waitForNavigation(progress, false /* requiresNewDocument */, options).catch(e => {
         error = e;
         return null;
       });
@@ -410,7 +408,7 @@ export class Page extends SdkObject {
       // Note: waitForNavigation may fail before we get response to goForward,
       // so we should catch it immediately.
       let error: Error | undefined;
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, options).catch(e => {
+      const waitPromise = this.mainFrame()._waitForNavigation(progress, false /* requiresNewDocument */, options).catch(e => {
         error = e;
         return null;
       });

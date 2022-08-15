@@ -56,7 +56,7 @@ The snapshot name `example-test-1-chromium-darwin.png` consists of a few parts:
 If you are not on the same operating system as your CI system, you can use Docker to generate/update the screenshots:
 
 ```bash
-docker run --rm --network host -v $(pwd):/work/ -w /work/ -it mcr.microsoft.com/playwright:v1.25.0-focal /bin/bash
+docker run --rm --network host -v $(pwd):/work/ -w /work/ -it mcr.microsoft.com/playwright:v1.26.0-focal /bin/bash
 npm install
 npx playwright test --update-snapshots
 ```
@@ -70,7 +70,7 @@ npx playwright test --update-snapshots
 > Note that `snapshotName` also accepts an array of path segments to the snapshot file such as `expect().toHaveScreenshot(['relative', 'path', 'to', 'snapshot.png'])`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
-Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can [pass various options](./test-assertions#expectpageorlocatortomatchsnapshot-options) to modify its behavior:
+Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can [pass various options](./test-assertions#page-assertions-to-have-screenshot-2) to modify its behavior:
 
 ```js tab=js-js
 // example.spec.js

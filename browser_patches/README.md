@@ -137,7 +137,7 @@ If the stack trace is still mangled `cat` it to `tools/rb/fix_linux_stack.py`
 
 #### Logging
 
-Upstream documentation: https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Gecko_Logging
+Upstream documentation: https://firefox-source-docs.mozilla.org/xpcom/logging.html
 
 ```bash
 MOZ_LOG=nsHttp:5

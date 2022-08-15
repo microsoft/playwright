@@ -379,3 +379,25 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
     },
   ]);
 });
+
+test('should return value from step', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test('steps with return values', async ({ page }) => {
+        const v1 = await test.step('my step', () => {
+          return 10;
+        });
+        console.log('v1 = ' + v1);
+        const v2 = await test.step('my step', async () => {
+          return new Promise(f => setTimeout(() => f(v1 + 10), 100));
+        });
+        console.log('v2 = ' + v2);
+      });
+    `
+  }, { reporter: '', workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('v1 = 10');
+  expect(result.output).toContain('v2 = 20');
+});

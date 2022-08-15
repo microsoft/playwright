@@ -14,5 +14,7 @@
  * limitations under the License.
  */
 
+import type { SvelteComponent } from "svelte";
+
 export declare function beforeMount(callback: (params: { hooksConfig: any }) => Promise<void>): void;
-export declare function afterMount(callback: (params: { hooksConfig: any }) => Promise<void>): void;
+export declare function afterMount(callback: (params: { hooksConfig: any, svelteComponent: SvelteComponent }) => Promise<void>): void;

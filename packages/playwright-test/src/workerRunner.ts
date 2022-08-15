@@ -17,8 +17,8 @@
 import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import { EventEmitter } from 'events';
-import { relativeFilePath, serializeError } from './util';
-import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload } from './ipc';
+import { debugTest, formatLocation, relativeFilePath, serializeError } from './util';
+import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, WatchTestResolvedPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import type { Suite, TestCase } from './test';
@@ -74,9 +74,8 @@ export class WorkerRunner extends EventEmitter {
       // Interrupt current action.
       this._currentTest?._timeoutManager.interrupt();
 
-      // TODO: mark test as 'interrupted' instead.
       if (this._currentTest && this._currentTest.status === 'passed')
-        this._currentTest.status = 'skipped';
+        this._currentTest.status = 'interrupted';
     }
     return this._runFinished;
   }
@@ -86,15 +85,13 @@ export class WorkerRunner extends EventEmitter {
     await this._loadIfNeeded();
     await this._teardownScopes();
     if (this._fatalErrors.length) {
-      const diagnostics = this._createWorkerTeardownDiagnostics();
-      if (diagnostics)
-        this._fatalErrors.unshift(diagnostics);
+      this.appendWorkerTeardownDiagnostics(this._fatalErrors[this._fatalErrors.length - 1]);
       const payload: TeardownErrorsPayload = { fatalErrors: this._fatalErrors };
       this.emit('teardownErrors', payload);
     }
   }
 
-  private _createWorkerTeardownDiagnostics(): TestError | undefined {
+  appendWorkerTeardownDiagnostics(error: TestError) {
     if (!this._lastRunningTests.length)
       return;
     const count = this._totalRunningTests === 1 ? '1 test' : `${this._totalRunningTests} tests`;
@@ -102,10 +99,23 @@ export class WorkerRunner extends EventEmitter {
     if (this._lastRunningTests.length < this._totalRunningTests)
       lastMessage = `, last ${this._lastRunningTests.length} tests were`;
     const message = [
-      colors.red(`Worker teardown error. This worker ran ${count}${lastMessage}:`),
+      '',
+      '',
+      colors.red(`Failed worker ran ${count}${lastMessage}:`),
       ...this._lastRunningTests.map(testInfo => formatTestTitle(testInfo._test, testInfo.project.name)),
     ].join('\n');
-    return { message };
+    if (error.message) {
+      if (error.stack) {
+        let index = error.stack.indexOf(error.message);
+        if (index !== -1) {
+          index += error.message.length;
+          error.stack = error.stack.substring(0, index) + message + error.stack.substring(index);
+        }
+      }
+      error.message += message;
+    } else if (error.value) {
+      error.value += message;
+    }
   }
 
   private async _teardownScopes() {
@@ -150,7 +160,7 @@ export class WorkerRunner extends EventEmitter {
       return;
 
     this._loader = await Loader.deserialize(this._params.loader);
-    this._project = this._loader.fullConfig().projects[this._params.projectIndex];
+    this._project = this._loader.fullConfig().projects.find(p => p._id === this._params.projectId)!;
   }
 
   async runTestGroup(runPayload: RunPayload) {
@@ -161,7 +171,16 @@ export class WorkerRunner extends EventEmitter {
       await this._loadIfNeeded();
       const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker');
       const suite = this._loader.buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex, test => {
-        if (!entries.has(test._id))
+        if (runPayload.watchMode) {
+          const testResolvedPayload: WatchTestResolvedPayload = {
+            testId: test.id,
+            title: test.title,
+            location: test.location
+          };
+          this.emit('watchTestResolved', testResolvedPayload);
+          entries.set(test.id, { testId: test.id, retry: 0 });
+        }
+        if (!entries.has(test.id))
           return false;
         return true;
       });
@@ -169,14 +188,16 @@ export class WorkerRunner extends EventEmitter {
         this._extraSuiteAnnotations = new Map();
         this._activeSuites = new Set();
         this._didRunFullCleanup = false;
-        const tests = suite.allTests().filter(test => entries.has(test._id));
+        const tests = suite.allTests();
         for (let i = 0; i < tests.length; i++) {
           // Do not run tests after full cleanup, because we are entirely done.
           if (this._isStopped && this._didRunFullCleanup)
             break;
-          const entry = entries.get(tests[i]._id)!;
-          entries.delete(tests[i]._id);
+          const entry = entries.get(tests[i].id)!;
+          entries.delete(tests[i].id);
+          debugTest(`test started "${tests[i].title}"`);
           await this._runTest(tests[i], entry.retry, tests[i + 1]);
+          debugTest(`test finished "${tests[i].title}"`);
         }
       } else {
         fatalUnknownTestIds = runPayload.entries.map(e => e.testId);
@@ -194,8 +215,8 @@ export class WorkerRunner extends EventEmitter {
         fatalUnknownTestIds
       };
       for (const test of this._skipRemainingTestsInSuite?.allTests() || []) {
-        if (entries.has(test._id))
-          donePayload.skipTestsDueToSetupFailure.push(test._id);
+        if (entries.has(test.id))
+          donePayload.skipTestsDueToSetupFailure.push(test.id);
       }
       this.emit('done', donePayload);
       this._fatalErrors = [];
@@ -217,7 +238,7 @@ export class WorkerRunner extends EventEmitter {
           callbackHandled = true;
           const error = result.error instanceof Error ? serializeError(result.error) : result.error;
           const payload: StepEndPayload = {
-            testId: test._id,
+            testId: test.id,
             refinedTitle: step.refinedTitle,
             stepId,
             wallTime: Date.now(),
@@ -230,7 +251,7 @@ export class WorkerRunner extends EventEmitter {
       // Sanitize location that comes from user land, it might have extra properties.
       const location = data.location && hasLocation ? { file: data.location.file, line: data.location.line, column: data.location.column } : undefined;
       const payload: StepBeginPayload = {
-        testId: test._id,
+        testId: test.id,
         stepId,
         ...data,
         location,
@@ -258,7 +279,11 @@ export class WorkerRunner extends EventEmitter {
     };
 
     if (!this._isStopped) {
-      // Update the fixture pool - it may differ between tests, but only in test-scoped fixtures.
+      // Update the fixture pool - it may differ between tests.
+      // - In case of isolate-pools worker isolation, only test-scoped fixtures may differ.
+      // - In case of isolate-projects, worker fixtures can differ too, tear down worker fixture scope if they differ.
+      if (this._params.workerIsolation === 'isolate-projects' && this._fixtureRunner.pool && this._fixtureRunner.pool.digest !== test._pool!.digest)
+        await this._teardownScopes();
       this._fixtureRunner.setPool(test._pool!);
     }
 
@@ -361,8 +386,10 @@ export class WorkerRunner extends EventEmitter {
         }
 
         // Now run the test itself.
+        debugTest(`test function started`);
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
         await fn(params, testInfo);
+        debugTest(`test function finished`);
       }, 'allowSkips');
 
       beforeHooksStep.complete({ error: maybeError }); // Second complete is a no-op.
@@ -475,6 +502,7 @@ export class WorkerRunner extends EventEmitter {
       const actualScope = this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location) ? 'worker' : 'test';
       if (actualScope !== scope)
         continue;
+      debugTest(`modifier at "${formatLocation(modifier.location)}" started`);
       testInfo._timeoutManager.setCurrentRunnable({ type: modifier.type, location: modifier.location, slot: timeSlot });
       const result = await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(modifier.fn, testInfo, scope), {
         category: 'hook',
@@ -483,6 +511,7 @@ export class WorkerRunner extends EventEmitter {
         forceNoParent: false,
         location: modifier.location,
       });
+      debugTest(`modifier at "${formatLocation(modifier.location)}" finished`);
       if (result && extraAnnotations)
         extraAnnotations.push({ type: modifier.type, description: modifier.description });
       testInfo[modifier.type](!!result, modifier.description);
@@ -497,6 +526,7 @@ export class WorkerRunner extends EventEmitter {
     for (const hook of suite._hooks) {
       if (hook.type !== 'beforeAll')
         continue;
+      debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" started`);
       try {
         // Separate time slot for each "beforeAll" hook.
         const timeSlot = { timeout: this._project.timeout, elapsed: 0 };
@@ -512,6 +542,7 @@ export class WorkerRunner extends EventEmitter {
         // Always run all the hooks, and capture the first error.
         beforeAllError = beforeAllError || e;
       }
+      debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" finished`);
     }
     if (beforeAllError)
       throw beforeAllError;
@@ -525,6 +556,7 @@ export class WorkerRunner extends EventEmitter {
     for (const hook of suite._hooks) {
       if (hook.type !== 'afterAll')
         continue;
+      debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" started`);
       const afterAllError = await testInfo._runFn(async () => {
         // Separate time slot for each "afterAll" hook.
         const timeSlot = { timeout: this._project.timeout, elapsed: 0 };
@@ -538,6 +570,7 @@ export class WorkerRunner extends EventEmitter {
         });
       });
       firstError = firstError || afterAllError;
+      debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" finished`);
     }
     return firstError;
   }
@@ -567,14 +600,14 @@ export class WorkerRunner extends EventEmitter {
 
 function buildTestBeginPayload(testInfo: TestInfoImpl): TestBeginPayload {
   return {
-    testId: testInfo._test._id,
+    testId: testInfo._test.id,
     startWallTime: testInfo._startWallTime,
   };
 }
 
 function buildTestEndPayload(testInfo: TestInfoImpl): TestEndPayload {
   return {
-    testId: testInfo._test._id,
+    testId: testInfo._test.id,
     duration: testInfo.duration,
     status: testInfo.status!,
     errors: testInfo.errors,

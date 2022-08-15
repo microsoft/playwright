@@ -86,7 +86,7 @@ it('should close browser after context menu was triggered', async ({ browserType
   await browser.close();
 });
 
-it('should(not) block third party cookies', async ({ browserType, server, browserName, browserMajorVersion }) => {
+it('should(not) block third party cookies', async ({ browserType, server, browserName, allowsThirdParty }) => {
   const browser = await browserType.launch({ headless: false });
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -104,7 +104,6 @@ it('should(not) block third party cookies', async ({ browserType, server, browse
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = browserName === 'firefox' && (browserMajorVersion >= 97 && browserMajorVersion < 103);
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await page.context().cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
@@ -261,7 +260,6 @@ it.skip('should click bottom row w/ infobar in OOPIF', async ({ browserType, cre
 it('headless and headful should use same default fonts', async ({ page, headless, browserName, browserType, platform }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11177' });
   it.fixme(browserName === 'firefox', 'Text is misaligned in headed vs headless');
-  it.fixme(browserName === 'chromium' && process.platform === 'darwin', 'https://crbug.com/1342540');
   const genericFontFamilies = [
     'standard',
     'serif',

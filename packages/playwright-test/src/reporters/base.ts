@@ -17,8 +17,8 @@
 import { colors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
-import type { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep, Location } from '../../types/testReporter';
-import type { FullConfigInternal } from '../types';
+import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
+import type { FullConfigInternal, ReporterInternal } from '../types';
 import { codeFrameColumns } from '../babelBundle';
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
@@ -38,13 +38,14 @@ type ErrorDetails = {
 type TestSummary = {
   skipped: number;
   expected: number;
-  skippedWithError: TestCase[];
+  interrupted: TestCase[];
   unexpected: TestCase[];
   flaky: TestCase[];
   failuresToPrint: TestCase[];
+  fatalErrors: TestError[];
 };
 
-export class BaseReporter implements Reporter  {
+export class BaseReporter implements ReporterInternal  {
   duration = 0;
   config!: FullConfigInternal;
   suite!: Suite;
@@ -54,6 +55,7 @@ export class BaseReporter implements Reporter  {
   private monotonicStartTime: number = 0;
   private _omitFailures: boolean;
   private readonly _ttyWidthForTest: number;
+  private _fatalErrors: TestError[] = [];
 
   constructor(options: { omitFailures?: boolean } = {}) {
     this._omitFailures = options.omitFailures || false;
@@ -96,7 +98,8 @@ export class BaseReporter implements Reporter  {
   }
 
   onError(error: TestError) {
-    console.log('\n' + formatError(this.config, error, colors.enabled).message);
+    if (!(error as any).__isNotAFatalError)
+      this._fatalErrors.push(error);
   }
 
   async onEnd(result: FullResult) {
@@ -116,7 +119,10 @@ export class BaseReporter implements Reporter  {
   protected generateStartingMessage() {
     const jobs = Math.min(this.config.workers, this.config._testGroupsCount);
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
-    return `\nRunning ${this.totalTestCount} test${this.totalTestCount > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`;
+    if (this.config._watchMode)
+      return `\nRunning tests in the --watch mode`;
+    else
+      return `\nRunning ${this.totalTestCount} test${this.totalTestCount !== 1 ? 's' : ''} using ${jobs} worker${jobs !== 1 ? 's' : ''}${shardDetails}`;
   }
 
   protected getSlowTests(): [string, number][] {
@@ -129,12 +135,17 @@ export class BaseReporter implements Reporter  {
     return fileDurations.filter(([,duration]) => duration > threshold).slice(0, count);
   }
 
-  protected generateSummaryMessage({ skipped, expected, unexpected, flaky }: TestSummary) {
+  protected generateSummaryMessage({ skipped, expected, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {
     const tokens: string[] = [];
     if (unexpected.length) {
       tokens.push(colors.red(`  ${unexpected.length} failed`));
       for (const test of unexpected)
         tokens.push(colors.red(formatTestHeader(this.config, test, '    ')));
+    }
+    if (interrupted.length) {
+      tokens.push(colors.yellow(`  ${interrupted.length} interrupted`));
+      for (const test of interrupted)
+        tokens.push(colors.yellow(formatTestHeader(this.config, test, '    ')));
     }
     if (flaky.length) {
       tokens.push(colors.yellow(`  ${flaky.length} flaky`));
@@ -147,6 +158,8 @@ export class BaseReporter implements Reporter  {
       tokens.push(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
     if (this.result.status === 'timedout')
       tokens.push(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
+    if (fatalErrors.length)
+      tokens.push(colors.red(`  ${fatalErrors.length === 1 ? '1 error was not a part of any test' : fatalErrors.length + ' errors were not a part of any test'}, see above for details`));
 
     return tokens.join('\n');
   }
@@ -154,16 +167,21 @@ export class BaseReporter implements Reporter  {
   protected generateSummary(): TestSummary {
     let skipped = 0;
     let expected = 0;
-    const skippedWithError: TestCase[] = [];
+    const interrupted: TestCase[] = [];
+    const interruptedToPrint: TestCase[] = [];
     const unexpected: TestCase[] = [];
     const flaky: TestCase[] = [];
 
     this.suite.allTests().forEach(test => {
       switch (test.outcome()) {
         case 'skipped': {
-          ++skipped;
-          if (test.results.some(result => !!result.error))
-            skippedWithError.push(test);
+          if (test.results.some(result => result.status === 'interrupted')) {
+            if (test.results.some(result => !!result.error))
+              interruptedToPrint.push(test);
+            interrupted.push(test);
+          } else {
+            ++skipped;
+          }
           break;
         }
         case 'expected': ++expected; break;
@@ -172,14 +190,15 @@ export class BaseReporter implements Reporter  {
       }
     });
 
-    const failuresToPrint = [...unexpected, ...flaky, ...skippedWithError];
+    const failuresToPrint = [...unexpected, ...flaky, ...interruptedToPrint];
     return {
       skipped,
       expected,
-      skippedWithError,
+      interrupted,
       unexpected,
       flaky,
-      failuresToPrint
+      failuresToPrint,
+      fatalErrors: this._fatalErrors,
     };
   }
 
@@ -306,6 +325,11 @@ export function formatResultFailure(config: FullConfig, test: TestCase, result: 
   if (result.status === 'passed' && test.expectedStatus === 'failed') {
     errorDetails.push({
       message: indent(colors.red(`Expected to fail, but passed.`), initialIndent),
+    });
+  }
+  if (result.status === 'interrupted') {
+    errorDetails.push({
+      message: indent(colors.red(`Test was interrupted.`), initialIndent),
     });
   }
 

@@ -517,7 +517,9 @@ test('should report worker fixture teardown with debug info', async ({ runInline
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(20);
   expect(stripAnsi(result.output)).toContain([
-    'Worker teardown error. This worker ran 20 tests, last 10 tests were:',
+    'Worker teardown timeout of 1000ms exceeded while tearing down "fixture".',
+    '',
+    'Failed worker ran 20 tests, last 10 tests were:',
     'a.spec.ts:12:9 › good10',
     'a.spec.ts:12:9 › good11',
     'a.spec.ts:12:9 › good12',
@@ -528,8 +530,6 @@ test('should report worker fixture teardown with debug info', async ({ runInline
     'a.spec.ts:12:9 › good17',
     'a.spec.ts:12:9 › good18',
     'a.spec.ts:12:9 › good19',
-    '',
-    'Worker teardown timeout of 1000ms exceeded while tearing down "fixture".',
   ].join('\n'));
 });
 
@@ -583,4 +583,40 @@ test('should not run user fn when require fixture has failed', async ({ runInlin
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
     '%%foo',
   ]);
+});
+
+test('should provide helpful error message when digests do not match', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      export const test = pwt.test.extend({
+        foo: [ async ({}, use) => use(), { scope: 'worker' } ],
+      });
+
+      test.use({ foo: 'foo' });
+    `,
+    'a.spec.ts': `
+      import { test } from './helper';
+
+      test('test-a', ({ foo }) => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'b.spec.ts': `
+      import { test } from './helper';
+
+      test('test-b', ({ foo }) => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'c.spec.ts': `
+      import { test } from './helper';
+
+      test('test-c', ({ foo }) => {
+        expect(foo).toBe('foo');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(stripAnsi(result.output)).toContain('Playwright detected inconsistent test.use() options.');
 });

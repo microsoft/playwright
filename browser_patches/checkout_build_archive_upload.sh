@@ -212,8 +212,8 @@ elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-20.04" ]]; then
   BUILD_BLOB_NAME="firefox-ubuntu-20.04.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-20.04-arm64" ]]; then
   BROWSER_NAME="firefox"
-  EXTRA_BUILD_ARGS="--full --linux-arm64"
-  EXTRA_ARCHIVE_ARGS="--linux-arm64"
+  EXTRA_BUILD_ARGS="--full"
+  EXPECTED_ARCH="aarch64"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="firefox-ubuntu-20.04-arm64.zip"
@@ -225,8 +225,8 @@ elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-22.04" ]]; then
   BUILD_BLOB_NAME="firefox-ubuntu-22.04.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-22.04-arm64" ]]; then
   BROWSER_NAME="firefox"
-  EXTRA_BUILD_ARGS="--full --linux-arm64"
-  EXTRA_ARCHIVE_ARGS="--linux-arm64"
+  EXTRA_BUILD_ARGS="--full"
+  EXPECTED_ARCH="aarch64"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="22.04"
   BUILD_BLOB_NAME="firefox-ubuntu-22.04-arm64.zip"
@@ -274,6 +274,13 @@ elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-20.04" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="firefox-beta-ubuntu-20.04.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-20.04-arm64" ]]; then
+  BROWSER_NAME="firefox-beta"
+  EXTRA_BUILD_ARGS="--full"
+  EXPECTED_ARCH="aarch64"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="20.04"
+  BUILD_BLOB_NAME="firefox-beta-ubuntu-20.04-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-22.04" ]]; then
   BROWSER_NAME="firefox-beta"
   EXTRA_BUILD_ARGS="--full"
@@ -282,8 +289,8 @@ elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-22.04" ]]; then
   BUILD_BLOB_NAME="firefox-beta-ubuntu-22.04.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-22.04-arm64" ]]; then
   BROWSER_NAME="firefox-beta"
-  EXTRA_BUILD_ARGS="--full --linux-arm64"
-  EXTRA_ARCHIVE_ARGS="--linux-arm64"
+  EXTRA_BUILD_ARGS="--full"
+  EXPECTED_ARCH="aarch64"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="22.04"
   BUILD_BLOB_NAME="firefox-beta-ubuntu-22.04-arm64.zip"
@@ -324,13 +331,6 @@ elif [[ "$BUILD_FLAVOR" == "webkit-debian-11" ]]; then
   EXPECTED_HOST_OS="Debian"
   EXPECTED_HOST_OS_VERSION="11"
   BUILD_BLOB_NAME="webkit-debian-11.zip"
-elif [[ "$BUILD_FLAVOR" == "webkit-universal" ]]; then
-  BROWSER_NAME="webkit"
-  EXTRA_BUILD_ARGS="--full --universal"
-  EXTRA_ARCHIVE_ARGS="--universal"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="20.04"
-  BUILD_BLOB_NAME="webkit-linux-universal.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-18.04" ]]; then
   BROWSER_NAME="webkit"
   EXTRA_BUILD_ARGS="--full"
@@ -494,9 +494,8 @@ function create_roll_into_playwright_pr {
   https://api.github.com/repos/microsoft/playwright/dispatches
 }
 
-source ./send_telegram_message.sh
 BUILD_ALIAS="$BUILD_FLAVOR r$BUILD_NUMBER"
-send_telegram_message "$BUILD_ALIAS -- started"
+node send_telegram_message.js "$BUILD_ALIAS -- started"
 
 if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_PATH; then
   # Report successful build. Note: MINGW might not have `du` command.
@@ -504,7 +503,7 @@ if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_
   if command -v du >/dev/null && command -v awk >/dev/null; then
     UPLOAD_SIZE="$(du -h "$ZIP_PATH" | awk '{print $1}') "
   fi
-  send_telegram_message "$BUILD_ALIAS -- ${UPLOAD_SIZE}uploaded"
+  node send_telegram_message.js "$BUILD_ALIAS -- ${UPLOAD_SIZE}uploaded"
 
   # Check if we uploaded the last build.
   (
@@ -517,8 +516,7 @@ if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_
       fi
     done;
     LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- "./${BROWSER_NAME}/BUILD_NUMBER")
-    CHECKMARK_CHAR=$(printf '\xe2\x9c\x85')
-    send_telegram_message "<b>${BROWSER_DISPLAY_NAME} r${BUILD_NUMBER} COMPLETE! ${CHECKMARK_CHAR}</b> ${LAST_COMMIT_MESSAGE}"
+    node send_telegram_message.js "<b>${BROWSER_DISPLAY_NAME} r${BUILD_NUMBER} COMPLETE! ✅</b> ${LAST_COMMIT_MESSAGE}"
     if [[ "${BROWSER_DISPLAY_NAME}" != "chromium-with-symbols" ]]; then
       create_roll_into_playwright_pr $BROWSER_NAME $BUILD_NUMBER
     fi
@@ -544,8 +542,7 @@ else
   fi
   # Upload logs only in case of failure and report failure.
   ./upload.sh "${LOG_BLOB_PATH}" ${LOG_PATH} || true
-  CROSS_CHAR=$(printf '\xe2\x9d\x8c')
-  send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ${CROSS_CHAR} <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>${LOG_BLOB_NAME}</a> -- <a href='$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID'>GitHub Action Logs</a>"
+  node send_telegram_message.js "$BUILD_ALIAS -- ${FAILED_STEP} failed! ❌ <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>${LOG_BLOB_NAME}</a> -- <a href='$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID'>GitHub Action Logs</a>"
   exit 1
 fi
 

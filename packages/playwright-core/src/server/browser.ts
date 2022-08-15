@@ -57,6 +57,7 @@ export type BrowserOptions = PlaywrightOptions & {
   browserLogsCollector: RecentLogsCollector,
   slowMo?: number;
   wsEndpoint?: string;  // Only there when connected over web socket.
+  originalLaunchOptions: types.LaunchOptions;
 };
 
 export abstract class Browser extends SdkObject {
@@ -75,6 +76,7 @@ export abstract class Browser extends SdkObject {
     super(options.rootSdkObject, 'browser');
     this.attribution.browser = this;
     this.options = options;
+    this.instrumentation.onBrowserOpen(this);
   }
 
   abstract doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext>;
@@ -93,6 +95,10 @@ export abstract class Browser extends SdkObject {
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<{ context: BrowserContext, needsReset: boolean }> {
     const hash = BrowserContext.reusableContextHash(params);
+    for (const context of this.contexts()) {
+      if (context !== this._contextForReuse?.context)
+        await context.close(metadata);
+    }
     if (!this._contextForReuse || hash !== this._contextForReuse.hash || !this._contextForReuse.context.canResetForReuse()) {
       if (this._contextForReuse)
         await this._contextForReuse.context.close(metadata);
@@ -146,6 +152,7 @@ export abstract class Browser extends SdkObject {
     if (this._defaultContext)
       this._defaultContext._browserClosed();
     this.emit(Browser.Events.Disconnected);
+    this.instrumentation.onBrowserClose(this);
   }
 
   async close() {

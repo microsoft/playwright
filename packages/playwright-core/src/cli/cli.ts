@@ -63,12 +63,14 @@ commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --b
     .addHelpText('afterAll', `
 Examples:
 
-  $ open  $ open -b webkit https://example.com`);
+  $ open
+  $ open -b webkit https://example.com`);
 
 commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, test, python, python-async, pytest, csharp, java`, language()],
+      ['--save-trace <filename>', 'record a trace for the session and save it to a file'],
     ]).action(function(url, options) {
   codegen(options, url, options.target, options.output).catch(logErrorAndExit);
 }).addHelpText('afterAll', `
@@ -265,12 +267,13 @@ program
 
 program
     .command('run-server', { hidden: true })
+    .option('--reuse-browser', 'Whether to reuse the browser instance')
     .option('--port <port>', 'Server port')
     .option('--path <path>', 'Endpoint Path', '/')
     .option('--max-clients <maxClients>', 'Maximum clients')
     .option('--no-socks-proxy', 'Disable Socks Proxy')
     .action(function(options) {
-      runServer(options.port ? +options.port : undefined,  options.path, options.maxClients ? +options.maxClients : Infinity, options.socksProxy).catch(logErrorAndExit);
+      runServer(options.port ? +options.port : undefined,  options.path, options.maxClients ? +options.maxClients : Infinity, options.socksProxy, options.reuseBrowser).catch(logErrorAndExit);
     });
 
 program
@@ -313,9 +316,7 @@ if (!process.env.PW_LANG_NAME) {
   } catch {}
 
   if (playwrightTestPackagePath) {
-    require(playwrightTestPackagePath).addTestCommand(program);
-    require(playwrightTestPackagePath).addShowReportCommand(program);
-    require(playwrightTestPackagePath).addListFilesCommand(program);
+    require(playwrightTestPackagePath).addTestCommands(program);
   } else {
     {
       const command = program.command('test').allowUnknownOption(true);
@@ -375,6 +376,7 @@ async function launchContext(options: Options, headless: boolean, executablePath
   const launchOptions: LaunchOptions = { headless, executablePath };
   if (options.channel)
     launchOptions.channel = options.channel as any;
+  launchOptions.handleSIGINT = false;
 
   const contextOptions: BrowserContextOptions =
     // Copy the device descriptor since we have to compare and modify the options.
@@ -409,6 +411,23 @@ async function launchContext(options: Options, headless: boolean, executablePath
   }
 
   const browser = await browserType.launch(launchOptions);
+
+  if (process.env.PWTEST_CLI_EXIT) {
+    const logs: string[] = [];
+    require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
+      const line = require('util').format(...args) + '\n';
+      logs.push(line);
+      process.stderr.write(line);
+    };
+    browser.on('disconnected', () => {
+      const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
+      if (hasCrashLine) {
+        process.stderr.write('Detected browser crash.\n');
+        // Make sure we exit abnormally when browser crashes.
+        process.exit(1);
+      }
+    });
+  }
 
   // Viewport size
   if (options.viewportSize) {
@@ -504,6 +523,11 @@ async function launchContext(options: Options, headless: boolean, executablePath
       closeBrowser().catch(e => null);
     });
   });
+  process.on('SIGINT', async () => {
+    await closeBrowser();
+    process.exit(130);
+  });
+
   const timeout = options.timeout ? parseInt(options.timeout, 10) : 0;
   context.setDefaultTimeout(timeout);
   context.setDefaultNavigationTimeout(timeout);
@@ -514,6 +538,7 @@ async function launchContext(options: Options, headless: boolean, executablePath
   // Omit options that we add automatically for presentation purpose.
   delete launchOptions.headless;
   delete launchOptions.executablePath;
+  delete launchOptions.handleSIGINT;
   delete contextOptions.deviceScaleFactor;
   return { browser, browserName: browserType.name(), context, contextOptions, launchOptions };
 }
@@ -552,8 +577,9 @@ async function codegen(options: Options, url: string | undefined, language: stri
     contextOptions,
     device: options.device,
     saveStorage: options.saveStorage,
-    startRecording: true,
-    outputFile: outputFile ? path.resolve(outputFile) : undefined
+    mode: 'recording',
+    outputFile: outputFile ? path.resolve(outputFile) : undefined,
+    handleSIGINT: false,
   });
   await openPage(context, url);
   if (process.env.PWTEST_CLI_EXIT)
@@ -657,7 +683,6 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--save-har <filename>', 'save HAR file with all network activity at the end')
       .option('--save-har-glob <glob pattern>', 'filter entries in the HAR by matching url against this glob pattern')
       .option('--save-storage <filename>', 'save context storage state at the end, for later use with --load-storage')
-      .option('--save-trace <filename>', 'record a trace for the session and save it to a file')
       .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
       .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds, no timeout by default')
       .option('--user-agent <ua string>', 'specify user agent string')
@@ -690,7 +715,7 @@ function buildBasePlaywrightCLICommand(cliTargetLang: string | undefined): strin
     case 'java':
       return `mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="...options.."`;
     case 'csharp':
-      return `pwsh bin\\Debug\\netX\\playwright.ps1`;
+      return `pwsh bin/Debug/netX/playwright.ps1`;
     default:
       return `npx playwright`;
   }

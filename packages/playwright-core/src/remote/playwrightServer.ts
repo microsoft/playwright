@@ -16,9 +16,14 @@
 
 import { debug, wsServer } from '../utilsBundle';
 import type { WebSocketServer } from '../utilsBundle';
-import * as http from 'http';
+import http from 'http';
 import type { Browser } from '../server/browser';
+import type { Playwright } from '../server/playwright';
+import { createPlaywright } from '../server/playwright';
 import { PlaywrightConnection } from './playwrightConnection';
+import { assert } from '../utils';
+import type  { LaunchOptions } from '../server/types';
+import { ManualPromise } from '../utils/manualPromise';
 
 const debugLog = debug('pw:server');
 
@@ -30,24 +35,35 @@ function newLogger() {
   return (message: string) => debugLog(`[id=${id}] ${message}`);
 }
 
-export class PlaywrightServer {
-  private _path: string;
-  private _maxClients: number;
-  private _enableSocksProxy: boolean;
-  private _browser: Browser | undefined;
-  private _wsServer: WebSocketServer | undefined;
-  private _clientsCount = 0;
+export type Mode = 'use-pre-launched-browser' | 'reuse-browser' | 'auto';
 
-  static async startDefault(options: { path?: string, maxClients?: number, enableSocksProxy?: boolean } = {}): Promise<PlaywrightServer> {
-    const { path = '/ws', maxClients = 1, enableSocksProxy = true } = options;
-    return new PlaywrightServer(path, maxClients, enableSocksProxy);
+type ServerOptions = {
+  path: string;
+  maxIncomingConnections: number;
+  maxConcurrentConnections: number;
+  enableSocksProxy: boolean;
+  preLaunchedBrowser?: Browser
+};
+
+export class PlaywrightServer {
+  private _preLaunchedPlaywright: Playwright | null = null;
+  private _wsServer: WebSocketServer | undefined;
+  private _mode: Mode;
+  private _options: ServerOptions;
+
+  constructor(mode: Mode, options: ServerOptions) {
+    this._mode = mode;
+    this._options = options;
+    if (mode === 'use-pre-launched-browser') {
+      assert(options.preLaunchedBrowser);
+      this._preLaunchedPlaywright = options.preLaunchedBrowser.options.rootSdkObject as Playwright;
+    }
+    if (mode === 'reuse-browser')
+      this._preLaunchedPlaywright = createPlaywright('javascript');
   }
 
-  constructor(path: string, maxClients: number, enableSocksProxy: boolean, browser?: Browser) {
-    this._path = path;
-    this._maxClients = maxClients;
-    this._enableSocksProxy = enableSocksProxy;
-    this._browser = browser;
+  preLaunchedPlaywright(): Playwright | null {
+    return this._preLaunchedPlaywright;
   }
 
   async listen(port: number = 0): Promise<string> {
@@ -63,33 +79,42 @@ export class PlaywrightServer {
           reject(new Error('Could not bind server socket'));
           return;
         }
-        const wsEndpoint = typeof address === 'string' ? `${address}${this._path}` : `ws://127.0.0.1:${address.port}${this._path}`;
+        const wsEndpoint = typeof address === 'string' ? `${address}${this._options.path}` : `ws://127.0.0.1:${address.port}${this._options.path}`;
         resolve(wsEndpoint);
       }).on('error', reject);
     });
 
     debugLog('Listening at ' + wsEndpoint);
 
-    this._wsServer = new wsServer({ server, path: this._path });
-    const originalShouldHandle = this._wsServer.shouldHandle.bind(this._wsServer);
-    this._wsServer.shouldHandle = request => originalShouldHandle(request) && this._clientsCount < this._maxClients;
-    this._wsServer.on('connection', async (ws, request) => {
-      if (this._clientsCount >= this._maxClients) {
+    this._wsServer = new wsServer({ server, path: this._options.path });
+    const semaphore = new Semaphore(this._options.maxConcurrentConnections);
+    this._wsServer.on('connection', (ws, request) => {
+      if (semaphore.requested() >= this._options.maxIncomingConnections) {
         ws.close(1013, 'Playwright Server is busy');
         return;
       }
       const url = new URL('http://localhost' + (request.url || ''));
       const browserHeader = request.headers['x-playwright-browser'];
-      const browserAlias = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader);
-      const headlessHeader = request.headers['x-playwright-headless'];
-      const headlessValue = url.searchParams.get('headless') || (Array.isArray(headlessHeader) ? headlessHeader[0] : headlessHeader);
+      const browserName = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
       const proxyHeader = request.headers['x-playwright-proxy'];
       const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
-      const enableSocksProxy = this._enableSocksProxy && proxyValue === '*';
-      this._clientsCount++;
+      const enableSocksProxy = this._options.enableSocksProxy && proxyValue === '*';
+
+      const launchOptionsHeader = request.headers['x-playwright-launch-options'] || '';
+      let launchOptions: LaunchOptions = {};
+      try {
+        launchOptions = JSON.parse(Array.isArray(launchOptionsHeader) ? launchOptionsHeader[0] : launchOptionsHeader);
+      } catch (e) {
+      }
+
       const log = newLogger();
       log(`serving connection: ${request.url}`);
-      const connection = new PlaywrightConnection(ws, enableSocksProxy, browserAlias, headlessValue !== '0', this._browser, log, () => this._clientsCount--);
+      const connection = new PlaywrightConnection(
+          semaphore.aquire(),
+          this._mode, ws,
+          { enableSocksProxy, browserName, launchOptions },
+          { playwright: this._preLaunchedPlaywright, browser: this._options.preLaunchedBrowser || null },
+          log, () => semaphore.release());
       (ws as any)[kConnectionSymbol] = connection;
     });
 
@@ -117,5 +142,37 @@ export class PlaywrightServer {
     await new Promise(f => server.options.server!.close(f));
     this._wsServer = undefined;
     debugLog('closed server');
+  }
+}
+
+export class Semaphore {
+  private _max: number;
+  private _aquired = 0;
+  private _queue: ManualPromise[] = [];
+  constructor(max: number) {
+    this._max = max;
+  }
+
+  aquire(): Promise<void> {
+    const lock = new ManualPromise();
+    this._queue.push(lock);
+    this._flush();
+    return lock;
+  }
+
+  requested() {
+    return this._aquired + this._queue.length;
+  }
+
+  release() {
+    --this._aquired;
+    this._flush();
+  }
+
+  private _flush() {
+    while (this._aquired < this._max && this._queue.length) {
+      ++this._aquired;
+      this._queue.shift()!.resolve();
+    }
   }
 }

@@ -40,6 +40,7 @@ test('basics should work', async ({ runTSC }) => {
       test.describe.serial('suite', () => {});
       test.describe.serial.only('suite', () => {});
       test.describe.skip('suite', () => {});
+      test.describe.fixme('suite', () => {});
       // @ts-expect-error
       test.foo();
     `
@@ -131,6 +132,29 @@ test('test.extend options should check types', async ({ runTSC }) => {
       test2('my test', async ({ foo, baz }) => {});
       // TODO: enable when _extendTest is out of experiment.
       // test4('my test', async ({ foo, bar }) => {});
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('step should inherit return type from its callback ', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('my test', async ({ }) => {
+        // @ts-expect-error
+        const bad1: string = await test.step('my step', () => {
+          return 10;
+        });
+        // @ts-expect-error
+        const bad2: string = await test.step('my step', async () => {
+          return 10;
+        });
+        const good: string = await test.step('my step', async () => {
+          return 'foo';
+        });
+        await test.step('my step', async () => { });
+      });
     `
   });
   expect(result.exitCode).toBe(0);

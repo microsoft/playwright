@@ -123,7 +123,7 @@ class PageHandler {
         pageWorkerDestroyed: this._onWorkerDestroyed.bind(this),
         runtimeConsole: params => {
           const consoleMessageHash = hashConsoleMessage(params);
-          for (const worker of this._workers) {
+          for (const worker of this._workers.values()) {
             if (worker._workerConsoleMessages.has(consoleMessageHash)) {
               worker._workerConsoleMessages.delete(consoleMessageHash);
               return;

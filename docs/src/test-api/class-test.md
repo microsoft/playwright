@@ -350,6 +350,41 @@ test('runs second', async ({ page }) => {});
 
 
 
+## method: Test.describe.fixme
+* since: v1.25
+
+Declares a test group similarly to [`method: Test.describe#1`]. Tests in this group are marked as "fixme" and will not be executed.
+
+```js tab=js-js
+test.describe.fixme('broken tests', () => {
+  test('example', async ({ page }) => {
+    // This test will not run
+  });
+});
+```
+
+```js tab=js-ts
+test.describe.fixme('broken tests', () => {
+  test('example', async ({ page }) => {
+    // This test will not run
+  });
+});
+```
+
+### param: Test.describe.fixme.title
+* since: v1.25
+- `title` <[string]>
+
+Group title.
+
+### param: Test.describe.fixme.callback
+* since: v1.25
+- `callback` <[function]>
+
+A callback that is run immediately when calling [`method: Test.describe.fixme`]. Any tests added in this callback will belong to the group, and will not be run.
+
+
+
 ## method: Test.describe.only
 * since: v1.10
 
@@ -1422,6 +1457,7 @@ Optional description that will be reflected in a test report.
 
 ## async method: Test.step
 * since: v1.10
+- returns: <[any]>
 
 Declares a test step.
 
@@ -1442,6 +1478,32 @@ test('test', async ({ page }) => {
   await test.step('Log in', async () => {
     // ...
   });
+});
+```
+
+The method returns value retuned by the step callback.
+
+```js tab=js-js
+const { test, expect } = require('@playwright/test');
+
+test('test', async ({ page }) => {
+  const user = await test.step('Log in', async () => {
+    // ...
+    return 'john';
+  });
+  expect(user).toBe('john');
+});
+```
+
+```js tab=js-ts
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  const user = await test.step('Log in', async () => {
+    // ...
+    return 'john';
+  });
+  expect(user).toBe('john');
 });
 ```
 

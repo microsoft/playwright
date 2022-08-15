@@ -113,20 +113,13 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager = new TimeoutManager(this.project.timeout);
 
     this.outputDir = (() => {
-      const sameName = loader.fullConfig().projects.filter(project => project.name === this.project.name);
-      let uniqueProjectNamePathSegment: string;
-      if (sameName.length > 1)
-        uniqueProjectNamePathSegment = this.project.name + (sameName.indexOf(this.project) + 1);
-      else
-        uniqueProjectNamePathSegment = this.project.name;
-
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
       const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ');
 
       let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
-      if (uniqueProjectNamePathSegment)
-        testOutputDir += '-' + sanitizeForFilePath(uniqueProjectNamePathSegment);
+      if (project._id)
+        testOutputDir += '-' + sanitizeForFilePath(project._id);
       if (this.retry)
         testOutputDir += '-retry' + this.retry;
       if (this.repeatEachIndex)
@@ -174,7 +167,7 @@ export class TestInfoImpl implements TestInfo {
   async _runWithTimeout(cb: () => Promise<any>): Promise<void> {
     const timeoutError = await this._timeoutManager.runWithTimeout(cb);
     // Do not overwrite existing failure upon hook/teardown timeout.
-    if (timeoutError && this.status === 'passed') {
+    if (timeoutError && (this.status === 'passed' || this.status === 'skipped')) {
       this.status = 'timedOut';
       this.errors.push(timeoutError);
     }
@@ -209,7 +202,7 @@ export class TestInfoImpl implements TestInfo {
       return;
     if (isHardError)
       this._hasHardError = true;
-    if (this.status === 'passed')
+    if (this.status === 'passed' || this.status === 'skipped')
       this.status = 'failed';
     this.errors.push(error);
   }

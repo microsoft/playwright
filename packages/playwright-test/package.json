@@ -1,6 +1,6 @@
 {
   "name": "@playwright/test",
-  "version": "1.25.0-next",
+  "version": "1.26.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -12,7 +12,8 @@
     ".": {
       "types": "./index.d.ts",
       "import": "./index.mjs",
-      "require": "./index.js"
+      "require": "./index.js",
+      "default": "./index.js"
     },
     "./cli": "./cli.js",
     "./package.json": "./package.json",
@@ -34,6 +35,6 @@
   "dependencies": {
     "@types/node": "*",
     "azure-devops-node-api": "^11.2.0",
-    "playwright-core": "1.25.0-next"
+    "playwright-core": "1.26.0-next"
   }
 }

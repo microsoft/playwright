@@ -52,7 +52,7 @@ test('androidDevice.push', async function({ androidDevice }) {
 });
 
 test('androidDevice.fill', async function({ androidDevice }) {
-  test.fixme(!!process.env.CI, 'Hangs on the bots');
+  test.fixme(true, 'Hangs on the bots');
 
   await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
   await androidDevice.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'Hello');
@@ -67,7 +67,7 @@ test('androidDevice.options.omitDriverInstall', async function({ playwright }) {
   await androidDevice.shell(`cmd package uninstall com.microsoft.playwright.androiddriver`);
   await androidDevice.shell(`cmd package uninstall com.microsoft.playwright.androiddriver.test`);
 
-  await androidDevice.shell('am start -n com.android.chrome/com.google.android.apps.chrome.Main about:blank');
+  await androidDevice.shell('am start -a android.intent.action.VIEW -d about:blank com.android.chrome');
 
   let fillStatus = '';
   androidDevice.fill({ res: 'com.android.chrome:id/url_bar' }, 'Hello').then(() => {
@@ -81,7 +81,7 @@ test('androidDevice.options.omitDriverInstall', async function({ playwright }) {
     const filePath =  join(require.resolve('playwright-core'), '..', 'bin', file);
     await androidDevice.installApk(await fs.promises.readFile(filePath));
   }
-  androidDevice.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => console.error);
+  androidDevice.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => console.error(e));
 
   // wait for finishing fill operation
   while (!fillStatus)

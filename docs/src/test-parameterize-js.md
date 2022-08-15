@@ -224,7 +224,7 @@ $env:PASSWORD=secret
 npx playwright test
 ```
 
-Similarly, configuration file can also read environment variables passed throught the command line.
+Similarly, configuration file can also read environment variables passed through the command line.
 
 
 ```js tab=js-js

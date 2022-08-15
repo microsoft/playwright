@@ -19,7 +19,7 @@ import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuit
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
-import { errorWithLocation, filterUndefinedFixtures, serializeError } from './util';
+import { errorWithLocation, serializeError } from './util';
 
 const testTypeSymbol = Symbol('testType');
 
@@ -37,6 +37,7 @@ export class TestTypeImpl {
     test.describe = wrapFunctionWithLocation(this._describe.bind(this, 'default'));
     test.describe.only = wrapFunctionWithLocation(this._describe.bind(this, 'only'));
     test.describe.configure = wrapFunctionWithLocation(this._configure.bind(this));
+    test.describe.fixme = wrapFunctionWithLocation(this._describe.bind(this, 'fixme'));
     test.describe.parallel = wrapFunctionWithLocation(this._describe.bind(this, 'parallel'));
     test.describe.parallel.only = wrapFunctionWithLocation(this._describe.bind(this, 'parallel.only'));
     test.describe.serial = wrapFunctionWithLocation(this._describe.bind(this, 'serial'));
@@ -98,7 +99,7 @@ export class TestTypeImpl {
     }
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip', location: Location, title: string | Function, fn?: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, title: string | Function, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, 'test.describe()');
 
@@ -107,9 +108,8 @@ export class TestTypeImpl {
       title = '';
     }
 
-    const child = new Suite(title);
+    const child = new Suite(title, 'describe');
     child._requireFile = suite._requireFile;
-    child._isDescribe = true;
     child.location = location;
     suite._addSuite(child);
 
@@ -119,9 +119,9 @@ export class TestTypeImpl {
       child._parallelMode = 'serial';
     if (type === 'parallel' || type === 'parallel.only')
       child._parallelMode = 'parallel';
-    if (type === 'skip') {
+    if (type === 'skip' || type === 'fixme') {
       child._skipped = true;
-      child._annotations.push({ type: 'skip' });
+      child._annotations.push({ type });
     }
 
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
@@ -197,10 +197,10 @@ export class TestTypeImpl {
 
   private _use(location: Location, fixtures: Fixtures) {
     const suite = this._ensureCurrentSuite(location, `test.use()`);
-    suite._use.push({ fixtures: filterUndefinedFixtures(fixtures) , location });
+    suite._use.push({ fixtures, location });
   }
 
-  private async _step(location: Location, title: string, body: () => Promise<void>): Promise<void> {
+  private async _step<T>(location: Location, title: string, body: () => Promise<T>): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw errorWithLocation(location, `test.step() can only be called from a test`);
@@ -212,8 +212,9 @@ export class TestTypeImpl {
       forceNoParent: false
     });
     try {
-      await body();
+      const result = await body();
       step.complete({});
+      return result;
     } catch (e) {
       step.complete({ error: serializeError(e) });
       throw e;
@@ -223,7 +224,7 @@ export class TestTypeImpl {
   private _extend(location: Location, fixtures: Fixtures) {
     if ((fixtures as any)[testTypeSymbol])
       throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call test._extendTest()?`);
-    const fixturesWithLocation: FixturesWithLocation = { fixtures: filterUndefinedFixtures(fixtures), location };
+    const fixturesWithLocation: FixturesWithLocation = { fixtures, location };
     return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
   }
 

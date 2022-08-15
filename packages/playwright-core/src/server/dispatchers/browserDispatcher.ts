@@ -145,7 +145,8 @@ async function newContextForReuse(browser: Browser, scope: DispatcherScope, para
   const { context, needsReset } = await browser.newContextForReuse(params, metadata);
   if (needsReset) {
     const oldContextDispatcher = existingDispatcher<BrowserContextDispatcher>(context);
-    oldContextDispatcher._dispose();
+    if (oldContextDispatcher)
+      oldContextDispatcher._dispose();
     await context.resetForReuse(metadata, params);
   }
   const contextDispatcher = new BrowserContextDispatcher(scope, context);

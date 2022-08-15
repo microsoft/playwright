@@ -14,12 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Protocol } from 'playwright-core/types/protocol';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { Readable } from 'stream';
 import { ReadStream } from 'fs';
-import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from 'playwright-core/types/structs';
+import { Protocol } from './protocol';
+import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
@@ -1723,6 +1723,12 @@ export interface Page {
    */
   prependListener(event: 'worker', listener: (worker: Worker) => void): this;
 
+  /**
+   * **DEPRECATED** This property is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you
+   * need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for
+   * integration with Axe.
+   * @deprecated
+   */
   accessibility: Accessibility;
 
   /**
@@ -8532,7 +8538,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     caret?: "hide"|"initial";
 
     /**
-     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
     mask?: Array<Locator>;
@@ -10379,7 +10385,9 @@ export interface BrowserType<Unused = {}> {
    */
   connectOverCDP(options: ConnectOverCDPOptions & { wsEndpoint?: string }): Promise<Browser>;
   /**
-   * This method attaches Playwright to an existing browser instance.
+   * This method attaches Playwright to an existing browser instance. When connecting to another browser launched via
+   * `BrowserType.launchServer` in Node.js, the major and minor version needs to match the client version (1.2.3 → is
+   * compatible with 1.2.x).
    * @param wsEndpoint A browser websocket endpoint to connect to.
    * @param options
    */
@@ -10391,7 +10399,9 @@ export interface BrowserType<Unused = {}> {
    * @deprecated
    */
   /**
-   * This method attaches Playwright to an existing browser instance.
+   * This method attaches Playwright to an existing browser instance. When connecting to another browser launched via
+   * `BrowserType.launchServer` in Node.js, the major and minor version needs to match the client version (1.2.3 → is
+   * compatible with 1.2.x).
    * @param wsEndpoint A browser websocket endpoint to connect to.
    * @param options
    */
@@ -10835,7 +10845,9 @@ export interface BrowserType<Unused = {}> {
   }): Promise<BrowserContext>;
 
   /**
-   * Returns the browser app instance.
+   * Returns the browser app instance. You can connect to it via
+   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect),
+   * which requires the major/minor client/server version to match (1.2.3 → is compatible with 1.2.x).
    *
    * Launches browser server that client can connect to. An example of launching a browser executable and connecting to it
    * later:
@@ -11083,6 +11095,10 @@ class TimeoutError extends Error {}
 }
 
 /**
+ * **DEPRECATED** This class is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you
+ * need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for
+ * integration with Axe.
+ *
  * The Accessibility class provides methods for inspecting Chromium's accessibility tree. The accessibility tree is used by
  * assistive technology such as [screen readers](https://en.wikipedia.org/wiki/Screen_reader) or
  * [switches](https://en.wikipedia.org/wiki/Switch_access).
@@ -11099,6 +11115,10 @@ class TimeoutError extends Error {}
  */
 export interface Accessibility {
   /**
+   * **DEPRECATED** This method is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you
+   * need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for
+   * integration with Axe.
+   *
    * Captures the current state of the accessibility tree. The returned object represents the root accessible node of the
    * page.
    *
@@ -11131,6 +11151,7 @@ export interface Accessibility {
    * }
    * ```
    *
+   * @deprecated
    * @param options
    */
   snapshot(options?: AccessibilitySnapshotOptions): Promise<null|AccessibilityNode>;
@@ -12587,7 +12608,7 @@ export interface APIRequest {
  *
  * **Cookie management**
  *
- * [APIRequestContext] retuned by
+ * [APIRequestContext] returned by
  * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) and
  * [page.request](https://playwright.dev/docs/api/class-page#page-request) shares cookie storage with the corresponding
  * [BrowserContext]. Each API request will have `Cookie` header populated with the values from the browser context. If the
@@ -12595,9 +12616,9 @@ export interface APIRequest {
  * the page will pick them up. This means that if you log in using this API, your e2e test will be logged in and vice
  * versa.
  *
- * If you want API requests to not interfere with the browser cookies you shoud create a new [APIRequestContext] by calling
- * [apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context). Such
- * `APIRequestContext` object will have its own isolated cookie storage.
+ * If you want API requests to not interfere with the browser cookies you should create a new [APIRequestContext] by
+ * calling [apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context).
+ * Such `APIRequestContext` object will have its own isolated cookie storage.
  *
  */
 export interface APIRequestContext {
@@ -13263,7 +13284,7 @@ export interface Browser extends EventEmitter {
   /**
    * Creates a new browser context. It won't share cookies/cache with other browser contexts.
    *
-   * > NOTE: If directly using this method to create [BrowserContext]s, it is best practice to explicilty close the returned
+   * > NOTE: If directly using this method to create [BrowserContext]s, it is best practice to explicitly close the returned
    * context via [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) when
    * your code is done with the [BrowserContext], and before calling
    * [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close). This will ensure the `context` is closed
@@ -15131,7 +15152,7 @@ export interface Response {
   frame(): Frame;
 
   /**
-   * Indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via
+   * Indicates whether this Response was fulfilled by a Service Worker's Fetch Handler (i.e. via
    * [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
    */
   fromServiceWorker(): boolean;
@@ -16525,7 +16546,7 @@ export interface LocatorScreenshotOptions {
   caret?: "hide"|"initial";
 
   /**
-   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
    * `#FF00FF` that completely covers its bounding box.
    */
   mask?: Array<Locator>;
@@ -16710,7 +16731,7 @@ export interface PageScreenshotOptions {
   fullPage?: boolean;
 
   /**
-   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink box
    * `#FF00FF` that completely covers its bounding box.
    */
   mask?: Array<Locator>;

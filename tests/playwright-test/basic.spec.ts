@@ -424,7 +424,7 @@ test('should not reuse worker after unhandled rejection in test.fail', async ({ 
   }, { workers: 1 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.interrupted).toBe(1);
   expect(result.output).toContain(`Error: Oh my!`);
   expect(result.output).not.toContain(`Did not teardown test scope`);
 });
@@ -457,6 +457,32 @@ test('should support describe.skip', async ({ runInlineTest }) => {
       });
       test.describe('not skipped', () => {
         test.describe.skip('skipped', () => {
+          test('test4', () => {});
+        });
+        test('test4', () => {
+          console.log('heytest4');
+        });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.skipped).toBe(3);
+  expect(result.output).toContain('heytest4');
+});
+
+test('should support describe.fixme', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'nested-skip.spec.js': `
+      const { test } = pwt;
+      test.describe.fixme('skipped', () => {
+        test.describe('nested', () => {
+          test('test1', () => {});
+        });
+        test('test2', () => {});
+      });
+      test.describe('not skipped', () => {
+        test.describe.fixme('skipped', () => {
           test('test4', () => {});
         });
         test('test4', () => {

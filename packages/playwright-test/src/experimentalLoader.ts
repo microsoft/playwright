@@ -42,9 +42,6 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
   if (!moduleUrl.startsWith('file://'))
     return defaultLoad(moduleUrl, context, defaultLoad);
 
-  if (!moduleUrl.startsWith('file://'))
-    return defaultLoad(moduleUrl, context, defaultLoad);
-
   const filename = url.fileURLToPath(moduleUrl);
   // Bail for node_modules.
   if (belongsToNodeModules(filename))

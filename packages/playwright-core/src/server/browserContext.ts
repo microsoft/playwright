@@ -145,26 +145,44 @@ export abstract class BrowserContext extends SdkObject {
 
   static reusableContextHash(params: channels.BrowserNewContextForReuseParams): string {
     const paramsCopy = { ...params };
+
+    for (const k of Object.keys(paramsCopy)) {
+      const key = k as keyof channels.BrowserNewContextForReuseParams;
+      if (paramsCopy[key] === defaultNewContextParamValues[key])
+        delete paramsCopy[key];
+    }
+
     for (const key of paramsThatAllowContextReuse)
       delete paramsCopy[key];
     return JSON.stringify(paramsCopy);
   }
 
-  async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams) {
+  async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams | null) {
     this.setDefaultNavigationTimeout(undefined);
     this.setDefaultTimeout(undefined);
 
-    for (const key of paramsThatAllowContextReuse)
-      (this._options as any)[key] = params[key];
+    if (params) {
+      for (const key of paramsThatAllowContextReuse)
+        (this._options as any)[key] = params[key];
+    }
 
     await this._cancelAllRoutesInFlight();
 
-    const [page, ...otherPages] = this.pages();
-    for (const page of otherPages)
+    // Close extra pages early.
+    let page: Page | undefined = this.pages()[0];
+    const [, ...otherPages] = this.pages();
+    for (const p of otherPages)
+      await p.close(metadata);
+    if (page && page._crashedPromise.isDone()) {
       await page.close(metadata);
+      page = undefined;
+    }
+
     // Unless I do this early, setting extra http headers below does not respond.
     await page?._frameManager.closeOpenDialogs();
+    // Navigate to about:blank first to ensure no page scripts are running after this point.
     await page?.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
+    await this._clearStorage();
     await this._removeExposedBindings();
     await this._removeInitScripts();
     // TODO: following can be optimized to not perform noops.
@@ -175,6 +193,8 @@ export abstract class BrowserContext extends SdkObject {
     await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []);
     await this.setGeolocation(this._options.geolocation);
     await this.setOffline(!!this._options.offline);
+    await this.setUserAgent(this._options.userAgent);
+    await this.clearCookies();
 
     await page?.resetForReuse(metadata);
   }
@@ -208,6 +228,7 @@ export abstract class BrowserContext extends SdkObject {
   abstract clearCookies(): Promise<void>;
   abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
   abstract setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void>;
+  abstract setUserAgent(userAgent: string | undefined): Promise<void>;
   abstract setOffline(offline: boolean): Promise<void>;
   abstract cancelDownload(uuid: string): Promise<void>;
   protected abstract doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]>;
@@ -295,7 +316,8 @@ export abstract class BrowserContext extends SdkObject {
 
   async _loadDefaultContext(progress: Progress) {
     const pages = await this._loadDefaultContextAsIs(progress);
-    if (this._options.isMobile || this._options.locale) {
+    const browserName = this._browser.options.name;
+    if ((this._options.isMobile && browserName === 'chromium') || (this._options.locale && browserName === 'webkit')) {
       // Workaround for:
       // - chromium fails to change isMobile for existing page;
       // - webkit fails to change locale for existing page.
@@ -450,6 +472,25 @@ export abstract class BrowserContext extends SdkObject {
     return result;
   }
 
+  async _clearStorage() {
+    if (!this._origins.size)
+      return;
+    let page = this.pages()[0];
+
+    const internalMetadata = serverSideCallMetadata();
+    page = page || await this.newPage(internalMetadata);
+    await page._setServerRequestInterceptor(handler => {
+      handler.fulfill({ body: '<html></html>' }).catch(() => {});
+    });
+    for (const origin of this._origins) {
+      const frame = page.mainFrame();
+      await frame.goto(internalMetadata, origin);
+      await frame.clearStorageForCurrentOriginBestEffort();
+    }
+    await page._setServerRequestInterceptor(undefined);
+    // It is safe to not restore the URL to about:blank since we are doing it in Page::resetForReuse.
+  }
+
   isSettingStorageState(): boolean {
     return this._settingStorageState;
   }
@@ -600,5 +641,19 @@ const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReusePara
   'forcedColors',
   'reducedMotion',
   'screen',
-  'viewport'
+  'userAgent',
+  'viewport',
 ];
+
+const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
+  noDefaultViewport: false,
+  ignoreHTTPSErrors: false,
+  javaScriptEnabled: true,
+  bypassCSP: false,
+  offline: false,
+  isMobile: false,
+  hasTouch: false,
+  acceptDownloads: true,
+  strictSelectors: false,
+  serviceWorkers: 'allow',
+};

@@ -557,8 +557,8 @@ test('should report correct tests/suites when using grep', async ({ runInlineTes
   expect(result.output).toContain('%%test2');
   expect(result.output).not.toContain('%%test3');
   const fileSuite = result.report.suites[0];
-  expect(fileSuite.suites.length).toBe(1);
-  expect(fileSuite.suites[0].specs.length).toBe(2);
+  expect(fileSuite.suites!.length).toBe(1);
+  expect(fileSuite.suites![0].specs.length).toBe(2);
   expect(fileSuite.specs.length).toBe(0);
 });
 

@@ -237,68 +237,76 @@ There is no guarantee about the order of test execution across the files, becaus
 
 ### Sort test files alphabetically
 
-When you **disable parallel test execution**, Playwright Test runs test files in alphabetical order. You can use some naming convention to control the test order, for example `test001.spec.ts`, `test002.spec.ts` and so on.
+When you **disable parallel test execution**, Playwright Test runs test files in alphabetical order. You can use some naming convention to control the test order, for example `001-user-signin-flow.spec.ts`, `002-create-new-document.spec.ts` and so on.
 
 ### Use a "test list" file
 
-Suppose we have two test files.
+You can put your tests in helper functions in multiple files. Consider the following example where tests are not defined directly in the file, but rather in a wrapper function.
 
 ```js tab=js-js
 // feature-a.spec.js
 const { test, expect } = require('@playwright/test');
 
-test.describe('feature-a', () => {
-  test('example test', async ({ page }) => {
+module.exports = function createTests() {
+  test('feature-a example test', async ({ page }) => {
     // ... test goes here
   });
-});
+};
 
 
 // feature-b.spec.js
 const { test, expect } = require('@playwright/test');
 
-test.describe('feature-b', () => {
+module.exports = function createTests() {
   test.use({ viewport: { width: 500, height: 500 } });
-  test('example test', async ({ page }) => {
+
+  test('feature-b example test', async ({ page }) => {
     // ... test goes here
   });
-});
+};
 ```
 
 ```js tab=js-ts
 // feature-a.spec.ts
 import { test, expect } from '@playwright/test';
 
-test.describe('feature-a', () => {
-  test('example test', async ({ page }) => {
+export default function createTests() {
+  test('feature-a example test', async ({ page }) => {
     // ... test goes here
   });
-});
-
+}
 
 // feature-b.spec.ts
 import { test, expect } from '@playwright/test';
 
-test.describe('feature-b', () => {
+export default function createTests() {
   test.use({ viewport: { width: 500, height: 500 } });
-  test('example test', async ({ page }) => {
+
+  test('feature-b example test', async ({ page }) => {
     // ... test goes here
   });
-});
+}
 ```
 
-We can create a test list file that will control the order of tests - first run `feature-b` tests, then `feature-a` tests.
+You can create a test list file that will control the order of tests - first run `feature-b` tests, then `feature-a` tests. Note how each test file is wrapped in a `test.describe()` block that calls the function where tests are defined. This way `test.use()` calls only affect tests from a single file.
+
 
 ```js tab=js-js
 // test.list.js
-require('./feature-b.spec.js');
-require('./feature-a.spec.js');
+const { test } = require('@playwright/test');
+
+test.describe(require('./feature-b.spec.js'));
+test.describe(require('./feature-a.spec.js'));
 ```
 
 ```js tab=js-ts
 // test.list.ts
-import './feature-b.spec.ts';
-import './feature-a.spec.ts';
+import { test } from '@playwright/test';
+import featureBTests from './feature-b.spec.ts';
+import featureATests from './feature-a.spec.ts';
+
+test.describe(featureBTests);
+test.describe(featureATests);
 ```
 
 Now **disable parallel execution** by setting workers to one, and specify your test list file.
@@ -328,5 +336,6 @@ export default config;
 ```
 
 :::note
-Make sure to wrap tests with `test.describe()` blocks so that any `test.use()` calls only affect tests from a single file.
+Do not define your tests directly in a helper file. This could lead to unexpected results because your
+tests are now dependent on the order of `import`/`require` statements. Instead, wrap tests in a function that will be explicitly called by a test list file, as in the example above.
 :::

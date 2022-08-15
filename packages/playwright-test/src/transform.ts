@@ -100,7 +100,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
   if (!isTypeScript)
     return;
   const tsconfig = loadAndValidateTsconfigForFile(filename);
-  if (tsconfig) {
+  if (tsconfig && !isRelativeSpecifier(specifier)) {
     let longestPrefixLength = -1;
     let pathMatchedByLongestPrefix: string | undefined;
 
@@ -245,12 +245,20 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
   };
 }
 
+// This will catch the playwright-test package as well
+const kPlaywrightInternalPrefix = path.resolve(__dirname, '../../playwright');
+const kPlaywrightCoveragePrefix = path.resolve(__dirname, '../../../tests/config/coverage.js');
+
 export function belongsToNodeModules(file: string) {
   if (file.includes(`${path.sep}node_modules${path.sep}`))
     return true;
-  if (file.includes(`${path.sep}playwright${path.sep}packages${path.sep}playwright`))
+  if (file.startsWith(kPlaywrightInternalPrefix))
     return true;
-  if (file.includes(`${path.sep}playwright${path.sep}tests${path.sep}config${path.sep}coverage.js`))
+  if (file.startsWith(kPlaywrightCoveragePrefix))
     return true;
   return false;
+}
+
+function isRelativeSpecifier(specifier: string) {
+  return specifier === '.' || specifier === '..' || specifier.startsWith('./') || specifier.startsWith('../');
 }

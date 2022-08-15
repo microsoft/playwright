@@ -353,7 +353,7 @@ it('should set cookies for a frame', async ({ context, page, server }) => {
   expect(await page.frames()[1].evaluate('document.cookie')).toBe('frame-cookie=value');
 });
 
-it('should(not) block third party cookies', async ({ context, page, server, browserName, browserMajorVersion }) => {
+it('should(not) block third party cookies', async ({ context, page, server, browserName, allowsThirdParty }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(src => {
     let fulfill;
@@ -366,7 +366,6 @@ it('should(not) block third party cookies', async ({ context, page, server, brow
   }, server.CROSS_PROCESS_PREFIX + '/grid.html');
   await page.frames()[1].evaluate(`document.cookie = 'username=John Doe'`);
   await page.waitForTimeout(2000);
-  const allowsThirdParty = browserName === 'firefox' && (browserMajorVersion >= 97 && browserMajorVersion < 103);
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
     expect(cookies).toEqual([

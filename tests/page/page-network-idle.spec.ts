@@ -138,9 +138,7 @@ it('should wait for networkidle from the child frame', async ({ page, server }) 
   });
 });
 
-it('should wait for networkidle from the popup', async ({ page, server, isAndroid }) => {
-  it.skip(isAndroid, 'Too slow');
-
+it('should wait for networkidle from the popup', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <button id=box1 onclick="window.open('./popup/popup.html')">Button1</button>
@@ -156,4 +154,19 @@ it('should wait for networkidle from the popup', async ({ page, server, isAndroi
     ]);
     await popup.waitForLoadState('networkidle');
   }
+});
+
+it('should wait for networkidle when iframe attaches and detaches', async ({ page }) => {
+  await page.setContent(`
+    <body>
+      <script>
+        setTimeout(() => {
+          const iframe = document.createElement('iframe');
+          document.body.appendChild(iframe);
+          setTimeout(() => iframe.remove(), 400);
+        }, 400);
+      </script>
+    </body>
+  `, { waitUntil: 'networkidle' });
+  expect(await page.$('iframe')).toBe(null);
 });

@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
-  echo "usage: $(basename "$0") [output-absolute-path] [--universal]"
+  echo "usage: $(basename "$0") [output-absolute-path]"
   echo
   echo "Generate distributable .zip archive from ./checkout folder that was previously built."
   echo
@@ -26,11 +26,6 @@ fi
 if ! [[ -d $(dirname "$ZIP_PATH") ]]; then
   echo "ERROR: folder for path $($ZIP_PATH) does not exist."
   exit 1
-fi
-
-IS_UNIVERSAL_BUILD=""
-if [[ $2 == "--universal" ]]; then
-  IS_UNIVERSAL_BUILD=1
 fi
 
 main() {
@@ -67,31 +62,16 @@ createZipForLinux() {
 
   # Generate and unpack MiniBrowser bundles for each port
   for port in gtk wpe; do
-    if [[ -n "${IS_UNIVERSAL_BUILD}" ]]; then
-      Tools/Scripts/generate-bundle \
-          --syslibs=bundle-all \
-          --bundle=MiniBrowser --release \
-          --platform=${port} --destination="${tmpdir}"
-    else
-      WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/${port^^} \
-      Tools/Scripts/generate-bundle \
-          --bundle=MiniBrowser --release \
-          --platform=${port} --destination="${tmpdir}"
-    fi
+    WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/${port^^} \
+    Tools/Scripts/generate-bundle \
+        --bundle=MiniBrowser --release \
+        --platform=${port} --destination="${tmpdir}"
 
     unzip "${tmpdir}"/MiniBrowser_${port}_release.zip -d "${tmpdir}"/minibrowser-${port}
     rm -f "${tmpdir}"/MiniBrowser_${port}_release.zip
   done
 
   cd "$tmpdir"
-
-  if [[ -n "${IS_UNIVERSAL_BUILD}" ]]; then
-    # De-duplicate common files: convert to relative symlinks identical files (same hash).
-    # We apply this algorithm only to unified build since in JHBuild WPE/Minibrowser
-    # and GTK/Minibrowser executables are identical and should not be symlinked.
-    rdfind -deterministic true -makesymlinks true -makehardlinks false -makeresultsfile false .
-    symlinks -rc .
-  fi
 
   # zip resulting directory and cleanup TMP.
   zip --symlinks -r "$ZIP_PATH" ./

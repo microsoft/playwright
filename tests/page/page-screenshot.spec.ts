@@ -20,7 +20,6 @@ import { verifyViewport, attachFrame } from '../config/utils';
 import type { Route } from 'playwright-core';
 import path from 'path';
 import fs from 'fs';
-import os from 'os';
 
 it.describe('page screenshot', () => {
   it.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
@@ -34,7 +33,6 @@ it.describe('page screenshot', () => {
   });
 
   it('should not capture blinking caret by default', async ({ page, server, browserName }) => {
-    it.fixme(browserName === 'chromium' && process.platform === 'darwin', 'https://crbug.com/1342540');
     await page.setContent(`
       <!-- Refer to stylesheet from other origin. Accessing this
            stylesheet rules will throw.
@@ -232,7 +230,7 @@ it.describe('page screenshot', () => {
   });
 
   it('should capture canvas changes', async ({ page, isElectron, browserName, isMac }) => {
-    it.fixme(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'https://github.com/microsoft/playwright/issues/8796');
+    it.fixme(browserName === 'webkit' && isMac, 'https://github.com/microsoft/playwright/issues/8796,https://github.com/microsoft/playwright/issues/16180');
     it.skip(isElectron);
     await page.goto('data:text/html,<canvas></canvas>');
     await page.evaluate(() => {

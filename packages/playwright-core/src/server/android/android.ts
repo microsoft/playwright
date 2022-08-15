@@ -35,6 +35,7 @@ import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../common/timeoutSettings';
 import type * as channels from '../../protocol/channels';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
+import { DEFAULT_ARGS } from '../chromium/chromium';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -247,10 +248,16 @@ export class AndroidDevice extends SdkObject {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
     const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright-' + createGuid());
-    const commandLine = `_ --disable-fre --no-default-browser-check --no-first-run --remote-debugging-socket-name=${socketName}`;
+    const commandLine = [
+      '_',
+      '--disable-fre',
+      '--no-default-browser-check',
+      `--remote-debugging-socket-name=${socketName}`,
+      ...DEFAULT_ARGS,
+    ].join(' ');
     debug('pw:android')('Starting', pkg, commandLine);
     await this._backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);
-    await this._backend.runCommand(`shell:am start -n ${pkg}/com.google.android.apps.chrome.Main about:blank`);
+    await this._backend.runCommand(`shell:am start -a android.intent.action.VIEW -d about:blank ${pkg}`);
     return await this._connectToBrowser(socketName, options);
   }
 
@@ -290,7 +297,8 @@ export class AndroidDevice extends SdkObject {
       browserProcess: new ClankBrowserProcess(androidBrowser),
       proxy: options.proxy,
       protocolLogger: helper.debugProtocolLogger(),
-      browserLogsCollector: new RecentLogsCollector()
+      browserLogsCollector: new RecentLogsCollector(),
+      originalLaunchOptions: {},
     };
     validateBrowserContextOptions(options, browserOptions);
 

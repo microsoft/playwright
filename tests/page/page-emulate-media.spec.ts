@@ -17,8 +17,6 @@
 
 import { test as it, expect } from './pageTest';
 
-it.skip(({ isAndroid }) => isAndroid);
-
 it('should emulate type @smoke', async ({ page }) => {
   expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
@@ -126,9 +124,8 @@ it('should emulate reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: null });
 });
 
-it('should emulate forcedColors ', async ({ page, browserName, isElectron }) => {
+it('should emulate forcedColors ', async ({ page, browserName }) => {
   it.skip(browserName === 'webkit', 'https://bugs.webkit.org/show_bug.cgi?id=225281');
-  it.fixme(isElectron);
   expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(true);
   await page.emulateMedia({ forcedColors: 'none' });
   expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(true);

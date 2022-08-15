@@ -53,7 +53,7 @@ using System.Threading.Tasks;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 
-namespace Playwright.TestingHarnessTest.NUnit;
+namespace PlaywrightTests;
 
 public class ExampleTests : PageTest
 {
@@ -142,3 +142,19 @@ await Expect(page).ToHaveTitleAsync("News");
 - `page` <[Page]>
 
 [Page] object to use for assertions.
+
+## method: PlaywrightAssertions.setDefaultAssertionTimeout
+* since: v1.25
+* langs: java
+
+Changes default timeout for Playwright assertions from 5 seconds to the specified value.
+
+```java
+PlaywrightAssertions.setDefaultAssertionTimeout(30_000);
+```
+
+### param: PlaywrightAssertions.setDefaultAssertionTimeout.timeout
+* since: v1.25
+- `timeout` <[float]>
+
+Timeout in milliseconds.

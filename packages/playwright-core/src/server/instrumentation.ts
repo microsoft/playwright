@@ -63,7 +63,10 @@ export interface Instrumentation {
   onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onEvent(sdkObject: SdkObject, metadata: CallMetadata): void;
   onPageOpen(page: Page): void;
+  onPageNavigated(page: Page, url: string): void;
   onPageClose(page: Page): void;
+  onBrowserOpen(browser: Browser): void;
+  onBrowserClose(browser: Browser): void;
 }
 
 export interface InstrumentationListener {
@@ -73,7 +76,10 @@ export interface InstrumentationListener {
   onAfterCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onEvent?(sdkObject: SdkObject, metadata: CallMetadata): void;
   onPageOpen?(page: Page): void;
+  onPageNavigated?(page: Page, url: string): void;
   onPageClose?(page: Page): void;
+  onBrowserOpen?(browser: Browser): void;
+  onBrowserClose?(browser: Browser): void;
 }
 
 export function createInstrumentation(): Instrumentation {

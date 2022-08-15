@@ -16,8 +16,8 @@
 
 /* eslint-disable no-console */
 import { colors, ms as milliseconds } from 'playwright-core/lib/utilsBundle';
-import { BaseReporter, formatTestTitle } from './base';
-import type { FullConfig, FullResult, Suite, TestCase, TestResult, TestStep } from '../../types/testReporter';
+import { BaseReporter, formatError, formatTestTitle, stripAnsiEscapes } from './base';
+import type { FullConfig, FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -27,6 +27,7 @@ const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x' : '✘';
 class ListReporter extends BaseReporter {
   private _lastRow = 0;
   private _testRows = new Map<TestCase, number>();
+  private _resultIndex = new Map<TestResult, number>();
   private _needNewLine = false;
   private readonly _liveTerminal: string | boolean | undefined;
 
@@ -46,17 +47,15 @@ class ListReporter extends BaseReporter {
   }
 
   onTestBegin(test: TestCase, result: TestResult) {
+    if (this._liveTerminal)
+      this._maybeWriteNewLine();
+    this._resultIndex.set(result, this._resultIndex.size + 1);
+    this._testRows.set(test, this._lastRow++);
     if (this._liveTerminal) {
-      if (this._needNewLine) {
-        this._needNewLine = false;
-        process.stdout.write('\n');
-        this._lastRow++;
-      }
-      const prefix = '     ';
-      const line = colors.gray(formatTestTitle(this.config, test)) + this._retrySuffix(result);
+      const prefix = this._testPrefix(result, '');
+      const line = colors.dim(formatTestTitle(this.config, test)) + this._retrySuffix(result);
       process.stdout.write(prefix + this.fitToScreen(line, prefix) + '\n');
     }
-    this._testRows.set(test, this._lastRow++);
   }
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
@@ -74,7 +73,7 @@ class ListReporter extends BaseReporter {
       return;
     if (step.category !== 'test.step')
       return;
-    this._updateTestLine(test, colors.gray(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), '     ');
+    this._updateTestLine(test, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(result, ''));
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
@@ -82,18 +81,29 @@ class ListReporter extends BaseReporter {
       return;
     if (step.category !== 'test.step')
       return;
-    this._updateTestLine(test, colors.gray(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), '     ');
+    this._updateTestLine(test, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(result, ''));
+  }
+
+  private _maybeWriteNewLine() {
+    if (this._needNewLine) {
+      this._needNewLine = false;
+      process.stdout.write('\n');
+    }
+  }
+
+  private _updateLineCountAndNewLineFlagForOutput(text: string) {
+    this._needNewLine = text[text.length - 1] !== '\n';
+    if (this._liveTerminal) {
+      const newLineCount = text.split('\n').length - 1;
+      this._lastRow += newLineCount;
+    }
   }
 
   private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
     if (this.config.quiet)
       return;
     const text = chunk.toString('utf-8');
-    this._needNewLine = text[text.length - 1] !== '\n';
-    if (this._liveTerminal) {
-      const newLineCount = text.split('\n').length - 1;
-      this._lastRow += newLineCount;
-    }
+    this._updateLineCountAndNewLineFlagForOutput(text);
     stream.write(chunk);
   }
 
@@ -104,16 +114,16 @@ class ListReporter extends BaseReporter {
     let prefix = '';
     let text = '';
     if (result.status === 'skipped') {
-      prefix = colors.green('  -  ');
+      prefix = this._testPrefix(result, colors.green('-'));
       // Do not show duration for skipped.
       text = colors.cyan(title) + this._retrySuffix(result);
     } else {
-      const statusMark = ('  ' + (result.status === 'passed' ? POSITIVE_STATUS_MARK : NEGATIVE_STATUS_MARK)).padEnd(5);
+      const statusMark = result.status === 'passed' ? POSITIVE_STATUS_MARK : NEGATIVE_STATUS_MARK;
       if (result.status === test.expectedStatus) {
-        prefix = colors.green(statusMark);
-        text = colors.gray(title);
+        prefix = this._testPrefix(result, colors.green(statusMark));
+        text = colors.dim(title);
       } else {
-        prefix = colors.red(statusMark);
+        prefix = this._testPrefix(result, colors.red(statusMark));
         text = colors.red(title);
       }
       text += this._retrySuffix(result) + colors.dim(` (${milliseconds(result.duration)})`);
@@ -122,10 +132,7 @@ class ListReporter extends BaseReporter {
     if (this._liveTerminal) {
       this._updateTestLine(test, text, prefix);
     } else {
-      if (this._needNewLine) {
-        this._needNewLine = false;
-        process.stdout.write('\n');
-      }
+      this._maybeWriteNewLine();
       process.stdout.write(prefix + text);
       process.stdout.write('\n');
     }
@@ -153,6 +160,12 @@ class ListReporter extends BaseReporter {
       process.stdout.write('\n');  // For testing.
   }
 
+  private _testPrefix(result: TestResult, statusMark: string) {
+    const index = this._resultIndex.get(result)!;
+    const statusMarkLength = stripAnsiEscapes(statusMark).length;
+    return '  ' + statusMark + ' '.repeat(3 - statusMarkLength) + colors.dim(String(index) + ' ');
+  }
+
   private _retrySuffix(result: TestResult) {
     return (result.retry ? colors.yellow(` (retry #${result.retry})`) : '');
   }
@@ -160,6 +173,14 @@ class ListReporter extends BaseReporter {
   private _updateTestLineForTest(test: TestCase, line: string, prefix: string) {
     const testRow = this._testRows.get(test)!;
     process.stdout.write(testRow + ' : ' + prefix + line + '\n');
+  }
+
+  override onError(error: TestError): void {
+    super.onError(error);
+    this._maybeWriteNewLine();
+    const message = formatError(this.config, error, colors.enabled).message + '\n';
+    this._updateLineCountAndNewLineFlagForOutput(message);
+    process.stdout.write(message);
   }
 
   override async onEnd(result: FullResult) {

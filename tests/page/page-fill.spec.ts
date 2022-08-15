@@ -17,8 +17,6 @@
 
 import { test as it, expect } from './pageTest';
 
-it.skip(({ isAndroid }) => isAndroid);
-
 async function giveItAChanceToFill(page) {
   for (let i = 0; i < 5; i++)
     await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
@@ -34,36 +32,6 @@ it('should fill input', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.fill('input', 'some value');
   expect(await page.evaluate(() => window['result'])).toBe('some value');
-});
-
-it('should fill input with label', async ({ page }) => {
-  await page.setContent(`<label for=target>Fill me</label><input id=target>`);
-  await page.fill('text=Fill me', 'some value');
-  expect(await page.$eval('input', input => input.value)).toBe('some value');
-});
-
-it('should fill input with label 2', async ({ page }) => {
-  await page.setContent(`<label>Fill me<input id=target></label>`);
-  await page.fill('text=Fill me', 'some value');
-  expect(await page.$eval('input', input => input.value)).toBe('some value');
-});
-
-it('should fill input with span inside the label', async ({ page }) => {
-  await page.setContent(`<label for=target><span>Fill me</span></label><input id=target>`);
-  await page.fill('text=Fill me', 'some value');
-  expect(await page.$eval('input', input => input.value)).toBe('some value');
-});
-
-it('should fill input inside the label', async ({ page }) => {
-  await page.setContent(`<label><input id=target></label>`);
-  await page.fill('input', 'some value');
-  expect(await page.$eval('input', input => input.value)).toBe('some value');
-});
-
-it('should fill textarea with label', async ({ page }) => {
-  await page.setContent(`<label for=target>Fill me</label><textarea id=target>hey</textarea>`);
-  await page.fill('text=Fill me', 'some value');
-  expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some value');
 });
 
 it('should throw on unsupported inputs', async ({ page, server }) => {
@@ -341,4 +309,13 @@ it('should not throw when fill causes navigation', async ({ page, server }) => {
     page.waitForNavigation(),
   ]);
   expect(page.url()).toContain('empty.html');
+});
+
+it('fill back to back', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15925' });
+  await page.setContent(`<input id="one"></input><input id="two"></input>`);
+  await page.fill('id=one', 'first value');
+  await page.fill('id=two', 'second value');
+  await expect(page.locator('id=one')).toHaveValue('first value');
+  await expect(page.locator('id=two')).toHaveValue('second value');
 });

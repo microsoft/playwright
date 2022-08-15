@@ -30,14 +30,26 @@ export type TtyParams = {
   colorDepth: number;
 };
 
+export type WorkerIsolation =
+  'isolate-projects' |  // create new worker for new project type
+  'isolate-pools';      // create new worker for new worker fixture pool digest
+
+
 export type WorkerInitParams = {
+  workerIsolation: WorkerIsolation;
   workerIndex: number;
   parallelIndex: number;
   repeatEachIndex: number;
-  projectIndex: number;
+  projectId: string;
   loader: SerializedLoaderData;
   stdoutParams: TtyParams;
   stderrParams: TtyParams;
+};
+
+export type WatchTestResolvedPayload = {
+  testId: string;
+  title: string;
+  location: { file: string, line: number, column: number };
 };
 
 export type TestBeginPayload = {
@@ -83,6 +95,7 @@ export type TestEntry = {
 export type RunPayload = {
   file: string;
   entries: TestEntry[];
+  watchMode: boolean;
 };
 
 export type DonePayload = {

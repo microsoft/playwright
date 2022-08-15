@@ -20,7 +20,6 @@ import type { Action, DialogSignal, DownloadSignal, NavigationSignal, PopupSigna
 
 export type LanguageGeneratorOptions = {
   browserName: string;
-  generateHeaders: boolean;
   launchOptions: LaunchOptions;
   contextOptions: BrowserContextOptions;
   deviceName?: string;

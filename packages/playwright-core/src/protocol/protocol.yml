@@ -937,13 +937,19 @@ BrowserContext:
       experimental: True
       parameters:
         language: string?
-        startRecording: boolean?
+        mode:
+          type: enum?
+          literals:
+          - inspecting
+          - recording
         pauseOnNextStatement: boolean?
         launchOptions: json?
         contextOptions: json?
         device: string?
         saveStorage: string?
         outputFile: string?
+        handleSIGINT: boolean?
+        omitCallTracking: boolean?
 
     newCDPSession:
       parameters:

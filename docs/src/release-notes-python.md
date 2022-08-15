@@ -1,9 +1,50 @@
 ---
 id: release-notes
 title: "Release notes"
+toc_max_heading_level: 2
 ---
 
-<!-- TOC -->
+## Version 1.25
+
+### Announcements
+
+* 🎁 We now ship Ubuntu 22.04 Jammy Jellyfish docker image: `mcr.microsoft.com/playwright/python:v1.26.0-jammy`.
+* 🪦 This is the last release with macOS 10.15 support (deprecated as of 1.21).
+* ⚠️ Ubuntu 18 is now deprecated and will not be supported as of Dec 2022.
+
+### Browser Versions
+
+* Chromium 105.0.5195.19
+* Mozilla Firefox 103.0
+* WebKit 16.0
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 104
+* Microsoft Edge 104
+
+## Version 1.24
+
+<div className="embed-youtube">
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/9F05o1shxcY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+### 🐂 Debian 11 Bullseye Support
+
+Playwright now supports Debian 11 Bullseye on x86_64 for Chromium, Firefox and WebKit. Let us know
+if you encounter any issues!
+
+Linux support looks like this:
+
+|          | Ubuntu 18.04 | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11
+| :--- | :---: | :---: | :---: | :---: | 
+| Chromium | ✅ | ✅ | ✅ | ✅ |
+| WebKit | ✅ | ✅ | ✅ | ✅ |
+| Firefox | ✅ | ✅ | ✅ | ✅ |
+
+### New introduction docs
+
+We rewrote our Getting Started docs to be more end-to-end testing focused. Check them out on [playwright.dev](https://playwright.dev/python/docs/intro).
 
 ## Version 1.23
 
@@ -685,13 +726,13 @@ This version of Playwright was also tested against the following stable channels
 
 ## Version 1.9
 
-- [Playwright Inspector](./inspector.md) is a **new GUI tool** to author and debug your tests.
+- [Playwright Inspector](./debug.md) is a **new GUI tool** to author and debug your tests.
   - **Line-by-line debugging** of your Playwright scripts, with play, pause and step-through.
   - Author new scripts by **recording user actions**.
   - **Generate element selectors** for your script by hovering over elements.
   - Set the `PWDEBUG=1` environment variable to launch the Inspector
 
-- **Pause script execution** with [`method: Page.pause`] in headed mode. Pausing the page launches [Playwright Inspector](./inspector.md) for debugging.
+- **Pause script execution** with [`method: Page.pause`] in headed mode. Pausing the page launches [Playwright Inspector](./debug.md) for debugging.
 
 - **New has-text pseudo-class** for CSS selectors. `:has-text("example")` matches any element containing `"example"` somewhere inside, possibly in a child or a descendant element. See [more examples](./selectors.md#text-selector).
 

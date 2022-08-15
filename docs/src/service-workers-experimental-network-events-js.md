@@ -129,15 +129,15 @@ page.evaluate(
 
 Any network request made by the **Service Worker** will have:
 
-* [`event: BrowserContext.request`] and its correponding events ([`event: BrowserContext.requestFinished`] and [`event: BrowserContext.response`], or [`event: BrowserContext.requestFailed`])
+* [`event: BrowserContext.request`] and its corresponding events ([`event: BrowserContext.requestFinished`] and [`event: BrowserContext.response`], or [`event: BrowserContext.requestFailed`])
 * [`method: BrowserContext.route`] will see the request
 * [`method: Request.serviceWorker`] will be set to the Service [Worker] instance, and [`method: Request.frame`] will **throw**
 * [`method: Response.fromServiceWorker`] will return `false`
 
 Additionally, any network request made by the **Page** (including its sub-[Frame]s) will have:
 
-* [`event: BrowserContext.request`] and its correponding events ([`event: BrowserContext.requestFinished`] and [`event: BrowserContext.response`], or [`event: BrowserContext.requestFailed`])
-* [`event: Page.request`] and its correponding events ([`event: Page.requestFinished`] and [`event: Page.response`], or [`event: Page.requestFailed`])
+* [`event: BrowserContext.request`] and its corresponding events ([`event: BrowserContext.requestFinished`] and [`event: BrowserContext.response`], or [`event: BrowserContext.requestFailed`])
+* [`event: Page.request`] and its corresponding events ([`event: Page.requestFinished`] and [`event: Page.response`], or [`event: Page.requestFailed`])
 * [`method: Page.route`] and [`method: Page.route`] will **not** see the request (if a Service Worker's fetch handler was registered)
 * [`method: Request.serviceWorker`] will be set to `null`, and [`method: Request.frame`] will return the [Frame]
 * [`method: Response.fromServiceWorker`] will return `true` (if a Service Worker's fetch handler was registered)
@@ -192,7 +192,7 @@ It's important to note: calling [`method: Request.frame`] or [`method: Response.
 
 #### Advanced Example
 
-When a Service Worker handles a page's request, the Service Worker can make 0 to n requests to the external network. The Service Worker might respond directly from a cache, generate a reponse in memory, rewrite the request, make two requests and then combine into 1, etc.
+When a Service Worker handles a page's request, the Service Worker can make 0 to n requests to the external network. The Service Worker might respond directly from a cache, generate a response in memory, rewrite the request, make two requests and then combine into 1, etc.
 
 Consider the code snippets below to understand Playwright's view into the Request/Responses and how it impacts routing in some of these cases.
 
@@ -319,7 +319,7 @@ The following Request/Response events would be emitted:
 It's important to note:
 
 * The page requested `/foo`, but the Service Worker requested `/bar`, so there are only [Frame]-owned events for `/foo`, but not `/bar`.
-* Likewise, the Service Worker never hit the network for `tracker.js`, so ony [Frame]-owned events were emitted for that request.
+* Likewise, the Service Worker never hit the network for `tracker.js`, so only [Frame]-owned events were emitted for that request.
 
 ## Routing Service Worker Requests Only
 

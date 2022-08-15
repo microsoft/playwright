@@ -3,7 +3,7 @@ set -e
 set +x
 
 RUST_VERSION="1.59.0"
-CBINDGEN_VERSION="0.23.0"
+CBINDGEN_VERSION="0.24.3"
 
 trap "cd $(pwd -P)" EXIT
 
@@ -17,6 +17,40 @@ if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
 else
   cd "$HOME/firefox"
 fi
+
+args=("$@")
+IS_FULL=""
+IS_JUGGLER=""
+IS_DEBUG=""
+for ((i="${#args[@]}"-1; i >= 0; --i)); do
+    case ${args[i]} in
+        --full) IS_FULL="1"; unset args[i]; ;;
+        --juggler) IS_JUGGLER="1"; unset args[i]; ;;
+        --debug) IS_DEBUG="1"; unset args[i]; ;;
+    esac
+done
+
+if [[ -n "${IS_JUGGLER}" && -n "${IS_FULL}" ]]; then
+  echo "ERROR: either --full or --juggler is allowed"
+  exit 1
+fi
+
+echo "== BUILD CONFIGURATION =="
+if [[ -n "${IS_FULL}" ]]; then
+  echo "- build type: FULL"
+elif [[ -n "${IS_JUGGLER}" ]]; then
+  echo "- build type: JUGGLER"
+else
+  echo "- build type: INCREMENTAL"
+fi
+
+if [[ -n "${IS_DEBUG}" ]]; then
+  echo "- debug: YES"
+else
+  echo "- debug: NO"
+fi
+
+echo "========================="
 
 rm -rf .mozconfig
 
@@ -34,7 +68,7 @@ elif is_win; then
   echo "ac_add_options --target=x86_64-pc-mingw32" >> .mozconfig
   echo "ac_add_options --host=x86_64-pc-mingw32" >> .mozconfig
   DLL_FILE=$("C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x64\**\vcruntime140.dll')
-  WIN32_REDIST_DIR=$(dirname "$DLL_FILE")
+  WIN32_REDIST_DIR=$(dirname "$DLL_FILE" | tail -n 1)
   if ! [[ -d $WIN32_REDIST_DIR ]]; then
     echo "ERROR: cannot find MS VS C++ redistributable $WIN32_REDIST_DIR"
     exit 1;
@@ -44,21 +78,15 @@ else
   exit 1;
 fi
 
-if [[ $1 == "--linux-arm64" || $2 == "--linux-arm64" ]]; then
-  echo "ac_add_options --target=aarch64-linux-gnu" >> .mozconfig
-fi
-
-if is_linux "debian" 11; then
-  # There's no pre-built wasi sysroot for Debian 11.
-  echo "ac_add_options --without-wasm-sandboxed-libraries" >> .mozconfig
-fi
+# There's no pre-built wasi sysroot on certain platforms.
+echo "ac_add_options --without-wasm-sandboxed-libraries" >> .mozconfig
 
 OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 echo "ac_add_options --disable-crashreporter" >> .mozconfig
 echo "ac_add_options --disable-backgroundtasks" >> .mozconfig
 
-if [[ -n $FF_DEBUG_BUILD ]]; then
+if [[ -n "${IS_DEBUG}" ]]; then
   echo "ac_add_options --enable-debug" >> .mozconfig
   echo "ac_add_options --enable-debug-symbols" >> .mozconfig
 else
@@ -70,7 +98,7 @@ if is_mac || is_win; then
   echo "ac_add_options --disable-update-agent" >> .mozconfig
 fi
 
-if [[ $1 != "--juggler" ]]; then
+if [[ -z "${IS_JUGGLER}" ]]; then
   # TODO: rustup is not in the PATH on Windows
   if command -v rustup >/dev/null; then
     # We manage Rust version ourselves.
@@ -78,15 +106,15 @@ if [[ $1 != "--juggler" ]]; then
     rustup install "${RUST_VERSION}"
     rustup default "${RUST_VERSION}"
   fi
-
-  # TODO: cargo is not in the PATH on Windows
+  # Firefox on Linux arm64 host does not ship
+  # cbindgen in their default toolchains - install manually.
   if command -v cargo >/dev/null; then
     echo "-- Using cbindgen v${CBINDGEN_VERSION}"
     cargo install cbindgen --version "${CBINDGEN_VERSION}"
   fi
 fi
 
-if [[ $1 == "--full" || $2 == "--full" || $1 == "--bootstrap" ]]; then
+if [[ -n "${IS_FULL}" ]]; then
   # This is a slow but sure way to get all the necessary toolchains.
   # However, it will not work if tree is dirty.
   # Bail out if git repo is dirty.
@@ -97,45 +125,28 @@ if [[ $1 == "--full" || $2 == "--full" || $1 == "--bootstrap" ]]; then
 
   # 1. We have a --single-branch checkout, so we have to add a "master" branch and fetch it
   git remote set-branches --add browser_upstream master
-  git fetch browser_upstream master
+  git fetch --depth 1 browser_upstream master
   # 2. Checkout the master branch and run bootstrap from it.
   git checkout browser_upstream/master
+  echo "ac_add_options --enable-bootstrap" >> .mozconfig
   SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
   git checkout -
+  rm -rf "${OBJ_FOLDER}"
 
-  if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
+  if [[ -n "${WIN32_REDIST_DIR}" ]]; then
     # Having this option in .mozconfig kills incremental compilation.
     echo "export WIN32_REDIST_DIR=\"$WIN32_REDIST_DIR\"" >> .mozconfig
   fi
 fi
 
-# Remove the cbindgen from mozbuild to rely on the one we install manually.
-# See https://github.com/microsoft/playwright/issues/15174
-if is_win; then
-  rm -rf "${USERPROFILE}\\.mozbuild\\cbindgen"
-else
-  rm -rf "${HOME}/.mozbuild/cbindgen"
-fi
-
-
-if [[ $1 == "--juggler" ]]; then
+if [[ -n "${IS_JUGGLER}" ]]; then
   ./mach build faster
-elif [[ $1 == "--bootstrap" ]]; then
-  ./mach configure
 else
-  export MOZ_AUTOMATION=1
-  # Use winpaths instead of unix paths on Windows.
-  # note: 'cygpath' is not available in MozBuild shell.
-  if is_win; then
-    export MOZ_FETCHES_DIR="${USERPROFILE}\\.mozbuild"
-  else
-    export MOZ_FETCHES_DIR="${HOME}/.mozbuild"
-  fi
   ./mach build
   if is_mac; then
-    node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist
+    FF_DEBUG_BUILD="${IS_DEBUG}" node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist
   else
-    node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist/bin
+    FF_DEBUG_BUILD="${IS_DEBUG}" node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist/bin
   fi
 fi
 

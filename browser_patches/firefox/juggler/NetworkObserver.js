@@ -874,7 +874,7 @@ function setPostData(httpChannel, postData, headers) {
     return defaultValue;
   }
   // Clear content-length, so that upload stream resets it.
-  httpChannel.setRequestHeader('content-length', overriddenHeader('content-length', ''), false /* merge */);
+  httpChannel.setRequestHeader('content-length', '', false /* merge */);
   httpChannel.explicitSetUploadStream(synthesized, overriddenHeader('content-type', 'application/octet-stream'), -1, httpChannel.requestMethod, false);
 }
 

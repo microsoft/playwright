@@ -26,5 +26,13 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
+    <dialog id="fallback-error">
+      <p>The Playwright Trace Viewer must be loaded over the <code>http://</code> or <code>https://</code> protocols.</p>
+      <p>For more information, please see the <a href="https://aka.ms/playwright/trace-viewer-file-protocol">docs</a>.</p>
+    </dialog>
+    <script>
+      if (!/^https?:/.test(window.location.protocol))
+        document.getElementById("fallback-error").show();
+    </script>
   </body>
 </html>

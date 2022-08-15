@@ -17,18 +17,21 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import type { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload } from './ipc';
+import type { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload, WatchTestResolvedPayload, WorkerIsolation } from './ipc';
 import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
-import type { Suite, TestCase } from './test';
+import type { Suite } from './test';
 import type { Loader } from './loader';
+import { TestCase } from './test';
 import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
+import { TestTypeImpl } from './testType';
 
 export type TestGroup = {
   workerHash: string;
   requireFile: string;
   repeatEachIndex: number;
-  projectIndex: number;
+  projectId: string;
   tests: TestCase[];
+  watchMode: boolean;
 };
 
 type TestResultData = {
@@ -67,7 +70,7 @@ export class Dispatcher {
     for (const group of testGroups) {
       this._queuedOrRunningHashCount.set(group.workerHash, 1 + (this._queuedOrRunningHashCount.get(group.workerHash) || 0));
       for (const test of group.tests)
-        this._testById.set(test._id, { test, resultByWorkerIndex: new Map() });
+        this._testById.set(test.id, { test, resultByWorkerIndex: new Map() });
     }
   }
 
@@ -172,6 +175,7 @@ export class Dispatcher {
     let doneCallback = () => {};
     const result = new Promise<void>(f => doneCallback = f);
     const doneWithJob = () => {
+      worker.removeListener('watchTestResolved', onWatchTestResolved);
       worker.removeListener('testBegin', onTestBegin);
       worker.removeListener('testEnd', onTestEnd);
       worker.removeListener('stepBegin', onStepBegin);
@@ -181,13 +185,17 @@ export class Dispatcher {
       doneCallback();
     };
 
-    const remainingByTestId = new Map(testGroup.tests.map(e => [ e._id, e ]));
+    const remainingByTestId = new Map(testGroup.tests.map(e => [ e.id, e ]));
     const failedTestIds = new Set<string>();
+
+    const onWatchTestResolved = (params: WatchTestResolvedPayload) => {
+      const test = new TestCase(params.title, () => {}, new TestTypeImpl([]), params.location);
+      this._testById.set(params.testId, { test, resultByWorkerIndex: new Map() });
+    };
+    worker.addListener('watchTestResolved', onWatchTestResolved);
 
     const onTestBegin = (params: TestBeginPayload) => {
       const data = this._testById.get(params.testId)!;
-      if (this._hasReachedMaxFailures())
-        return;
       const result = data.test._appendTestResult();
       data.resultByWorkerIndex.set(worker.workerIndex, { result, stepStack: new Set(), steps: new Map() });
       result.workerIndex = worker.workerIndex;
@@ -198,8 +206,12 @@ export class Dispatcher {
 
     const onTestEnd = (params: TestEndPayload) => {
       remainingByTestId.delete(params.testId);
-      if (this._hasReachedMaxFailures())
-        return;
+      if (this._hasReachedMaxFailures()) {
+        // Do not show more than one error to avoid confusion, but report
+        // as interrupted to indicate that we did actually start the test.
+        params.status = 'interrupted';
+        params.errors = [];
+      }
       const data = this._testById.get(params.testId)!;
       const test = data.test;
       const { result } = data.resultByWorkerIndex.get(worker.workerIndex)!;
@@ -298,10 +310,10 @@ export class Dispatcher {
 
       const massSkipTestsFromRemaining = (testIds: Set<string>, errors: TestError[], onlyStartedTests?: boolean) => {
         remaining = remaining.filter(test => {
-          if (!testIds.has(test._id))
+          if (!testIds.has(test.id))
             return true;
           if (!this._hasReachedMaxFailures()) {
-            const data = this._testById.get(test._id)!;
+            const data = this._testById.get(test.id)!;
             const runData = data.resultByWorkerIndex.get(worker.workerIndex);
             // There might be a single test that has started but has not finished yet.
             let result: TestResult;
@@ -317,7 +329,7 @@ export class Dispatcher {
             result.error = result.errors[0];
             result.status = errors.length ? 'failed' : 'skipped';
             this._reportTestEnd(test, result);
-            failedTestIds.add(test._id);
+            failedTestIds.add(test.id);
             errors = []; // Only report errors for the first test.
           }
           return false;
@@ -341,13 +353,13 @@ export class Dispatcher {
       if (params.fatalErrors.length) {
         // In case of fatal errors, report first remaining test as failing with these errors,
         // and all others as skipped.
-        massSkipTestsFromRemaining(new Set(remaining.map(test => test._id)), params.fatalErrors);
+        massSkipTestsFromRemaining(new Set(remaining.map(test => test.id)), params.fatalErrors);
       }
       // Handle tests that should be skipped because of the setup failure.
       massSkipTestsFromRemaining(new Set(params.skipTestsDueToSetupFailure), []);
       // Handle unexpected worker exit.
       if (params.unexpectedExitError)
-        massSkipTestsFromRemaining(new Set(remaining.map(test => test._id)), [params.unexpectedExitError], true /* onlyStartedTests */);
+        massSkipTestsFromRemaining(new Set(remaining.map(test => test.id)), [params.unexpectedExitError], true /* onlyStartedTests */);
 
       const retryCandidates = new Set<string>();
       const serialSuitesWithFailures = new Set<Suite>();
@@ -387,7 +399,7 @@ export class Dispatcher {
         // Add all tests from faiiled serial suites for possible retry.
         // These will only be retried together, because they have the same
         // "retries" setting and the same number of previous runs.
-        serialSuite.allTests().forEach(test => retryCandidates.add(test._id));
+        serialSuite.allTests().forEach(test => retryCandidates.add(test.id));
       }
 
       for (const testId of retryCandidates) {
@@ -418,7 +430,7 @@ export class Dispatcher {
   }
 
   _createWorker(hash: string, parallelIndex: number) {
-    const worker = new Worker(hash, parallelIndex);
+    const worker = new Worker(hash, parallelIndex, this._loader.fullConfig()._workerIsolation);
     const handleOutput = (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail()) {
@@ -451,6 +463,8 @@ export class Dispatcher {
   }
 
   async stop() {
+    if (this._isStopped)
+      return;
     this._isStopped = true;
     await Promise.all(this._workerSlots.map(({ worker }) => worker?.stop()));
     this._checkFinished();
@@ -486,12 +500,14 @@ class Worker extends EventEmitter {
   private _didFail = false;
   private didExit = false;
   private _ready: Promise<void>;
+  workerIsolation: WorkerIsolation;
 
-  constructor(hash: string, parallelIndex: number) {
+  constructor(hash: string, parallelIndex: number, workerIsolation: WorkerIsolation) {
     super();
     this.workerIndex = lastWorkerIndex++;
     this._hash = hash;
     this.parallelIndex = parallelIndex;
+    this.workerIsolation = workerIsolation;
 
     this.process = child_process.fork(path.join(__dirname, 'worker.js'), {
       detached: false,
@@ -524,10 +540,11 @@ class Worker extends EventEmitter {
   async init(testGroup: TestGroup, loaderData: SerializedLoaderData) {
     await this._ready;
     const params: WorkerInitParams = {
+      workerIsolation: this.workerIsolation,
       workerIndex: this.workerIndex,
       parallelIndex: this.parallelIndex,
       repeatEachIndex: testGroup.repeatEachIndex,
-      projectIndex: testGroup.projectIndex,
+      projectId: testGroup.projectId,
       loader: loaderData,
       stdoutParams: {
         rows: process.stdout.rows,
@@ -547,8 +564,9 @@ class Worker extends EventEmitter {
     const runPayload: RunPayload = {
       file: testGroup.requireFile,
       entries: testGroup.tests.map(test => {
-        return { testId: test._id, retry: test.results.length };
+        return { testId: test.id, retry: test.results.length };
       }),
+      watchMode: testGroup.watchMode,
     };
     this.send({ method: 'run', params: runPayload });
   }

@@ -719,10 +719,10 @@ test('test.setTimeout should work separately in beforeAll', async ({ runInlineTe
       });
       test('passed', async () => {
         console.log('\\n%%test');
-        await new Promise(f => setTimeout(f, 800));
+        await new Promise(f => setTimeout(f, 500));
       });
     `,
-  }, { timeout: '1000' });
+  }, { timeout: 2000 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
@@ -812,4 +812,34 @@ test('afterAll should run if last test was skipped 2', async ({ runInlineTest })
   expect(result.skipped).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('after-all');
+});
+
+test('afterEach timeout after skipped test should be reported', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.afterEach(async () => {
+        await new Promise(() => {});
+      });
+      test('skipped', () => { test.skip(); });
+    `,
+  }, { timeout: 2000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Test timeout of 2000ms exceeded while running "afterEach" hook.');
+});
+
+test('afterEach exception after skipped test should be reported', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.afterEach(async () => {
+        throw new Error('oh my!');
+      });
+      test('skipped', () => { test.skip(); });
+    `,
+  }, { timeout: 2000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Error: oh my!');
 });

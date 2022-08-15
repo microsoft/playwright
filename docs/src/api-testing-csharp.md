@@ -39,7 +39,7 @@ using Microsoft.Playwright.NUnit;
 using Microsoft.Playwright;
 using NUnit.Framework;
 
-namespace Playwright.TestingHarnessTest.NUnit
+namespace PlaywrightTests
 {
 
     public class TestGitHubAPI : PlaywrightTest
@@ -91,7 +91,7 @@ using Microsoft.Playwright.NUnit;
 using Microsoft.Playwright;
 using NUnit.Framework;
 
-namespace Playwright.TestingHarnessTest.NUnit
+namespace PlaywrightTests
 {
 
     public class TestGitHubAPI : PlaywrightTest
@@ -216,7 +216,7 @@ using Microsoft.Playwright.NUnit;
 using Microsoft.Playwright;
 using NUnit.Framework;
 
-namespace Playwright.TestingHarnessTest.NUnit
+namespace PlaywrightTests
 {
 
     public class TestGitHubAPI : PlaywrightTest

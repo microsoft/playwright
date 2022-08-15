@@ -1,42 +1,16 @@
 ---
 id: test-runners
-title: "Pytest plugin"
+title: "Pytest Plugin Reference"
 ---
 
-Write end-to-end tests for your web apps with [Pytest](https://docs.pytest.org/en/stable/).
-
-<!-- TOC -->
+Playwright provides a [Pytest](https://docs.pytest.org/en/stable/) plugin to write end-to-end tests. To get started with it, refer to the [getting started guide](./intro.md).
 
 ## Usage
 
-```bash
-pip install pytest-playwright
-```
-
-Use the `page` fixture to write a basic test. See [more examples](#examples).
-
-```py
-# test_my_application.py
-def test_example_is_working(page):
-    page.goto("https://example.com")
-    assert page.inner_text('h1') == 'Example Domain'
-    page.locator("text=More information").click()
-```
-
-To run your tests, use pytest CLI.
+To run your tests, use [Pytest](https://docs.pytest.org/en/stable/) CLI.
 
 ```bash
-# Run tests (Chromium and headless by default)
-pytest
-
-# Run tests in headed mode
-pytest --headed
-
-# Run tests in a different browser (chromium, firefox, webkit)
-pytest --browser firefox
-
-# Run tests in multiple browsers
-pytest --browser chromium --browser webkit
+pytest --browser webkit --headed
 ```
 
 If you want to add the CLI arguments automatically without specifying them, you can use the [pytest.ini](https://docs.pytest.org/en/stable/reference.html#ini-options-ref) file:
@@ -88,6 +62,21 @@ def test_my_app_is_working(fixture_name):
 
 - `browser_type_launch_args`: Override launch arguments for [`method: BrowserType.launch`]. It should return a Dict.
 - `browser_context_args`: Override the options for [`method: Browser.newContext`]. It should return a Dict.
+
+## Parallelism: Running Multiple Tests at Once
+
+If your tests are running on a machine with a lot of CPUs, you can speed up the overall execution time of your test suite by using [`pytest-xdist`](https://pypi.org/project/pytest-xdist/) to run multiple tests at once:
+
+```bash
+# install dependency
+pip install pytest-xdist
+# use the --numprocesses flag
+pytest --numprocesses auto
+```
+
+Depending on the hardware and nature of your tests, you can set `numprocesses` to be anywhere from `2` to the number of CPUs on the machine. If set too high, you may notice unexpected behavior.
+
+See [Running Tests](./running-tests.md) for general information on `pytest` options.
 
 ## Examples
 
