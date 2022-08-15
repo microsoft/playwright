@@ -2,7 +2,7 @@
 id: troubleshooting
 title: "Troubleshooting"
 tags:
-  - Devops
+  - DevOps
 ---
 
 ## Browser dependencies
