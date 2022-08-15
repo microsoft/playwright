@@ -80,6 +80,7 @@ export interface JSONReportSpec {
   title: string;
   ok: boolean;
   tests: JSONReportTest[];
+  id: string;
   file: string;
   line: number;
   column: number;
