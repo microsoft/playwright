@@ -375,7 +375,9 @@ export function formatError(config: FullConfig, error: TestError, highlightCode:
   const tokens = [];
   let location: Location | undefined;
   if (stack) {
-    const parsed = prepareErrorStack(stack, file);
+    // Now that we filter out internals from our stack traces, we can safely render
+    // the helper / original exception locations.
+    const parsed = prepareErrorStack(stack);
     tokens.push(parsed.message);
     location = parsed.location;
     if (location) {
@@ -416,15 +418,11 @@ function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-export function prepareErrorStack(stack: string, file?: string): {
+export function prepareErrorStack(stack: string): {
   message: string;
   stackLines: string[];
   location?: Location;
 } {
-  if (file) {
-    // Stack will have /private/var/folders instead of /var/folders on Mac.
-    file = fs.realpathSync(file);
-  }
   const lines = stack.split('\n');
   let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
   if (firstStackLine === -1)
@@ -436,10 +434,8 @@ export function prepareErrorStack(stack: string, file?: string): {
     const { frame: parsed, fileName: resolvedFile } = parseStackTraceLine(line);
     if (!parsed || !resolvedFile)
       continue;
-    if (!file || resolvedFile === file) {
-      location = { file: resolvedFile, column: parsed.column || 0, line: parsed.line || 0 };
-      break;
-    }
+    location = { file: resolvedFile, column: parsed.column || 0, line: parsed.line || 0 };
+    break;
   }
   return { message, stackLines, location };
 }
