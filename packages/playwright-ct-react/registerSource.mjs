@@ -82,7 +82,3 @@ window.playwrightUnmount = async rootElement => {
   if (!ReactDOM.unmountComponentAtNode(rootElement))
     throw new Error('Component was not mounted');
 };
-
-window.playwrightRerender = async (rootElement, component) => {
-  ReactDOM.render(render(/** @type {Component} */(component)), rootElement);
-};
