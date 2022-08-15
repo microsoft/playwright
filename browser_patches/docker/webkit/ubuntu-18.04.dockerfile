@@ -24,10 +24,12 @@ RUN apt purge --auto-remove cmake && \
     apt-add-repository "deb https://apt.kitware.com/ubuntu/ bionic main" && \
     apt-get update && apt-get install -y cmake
 
-# Ubuntu 18.04 specific: default to gcc-8. Wbkit requires gcc 8.3+.
-RUN apt-get install -y gcc-8 g++-8
-ENV CC=/usr/bin/gcc-8
-ENV CXX=/usr/bin/g++-8
+# Ubuntu 18.04 specific: default to gcc-9.
+RUN add-apt-repository ppa:ubuntu-toolchain-r/test && \
+    apt-get update && \
+    apt-get install gcc-9 g++-9
+ENV CC=/usr/bin/gcc-9
+ENV CXX=/usr/bin/g++-9
 
 # Install Azure CLI
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
