@@ -2,7 +2,7 @@
 id: browsers
 title: "Browsers"
 tags:
-  - Devops
+  - DevOps
 ---
 
 Each version of Playwright needs specific versions of browser binaries to operate. Depending on the language you use, Playwright will either download these browsers at package install time for you, or you will need to use [Playwright CLI](./cli.md) to install these browsers.
