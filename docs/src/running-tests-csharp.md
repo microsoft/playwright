@@ -31,23 +31,13 @@ You can run a single test, a set of tests or all tests. Tests can be run on diff
 
 - Running Tests on specific browsers
 
-  ```bash tab=bash-bash
-  BROWSER=webkit dotnet test
-  ```
-
-  ```batch tab=bash-batch
-  set BROWSER=webkit
-  dotnet test
-  ```
-
-  ```powershell tab=bash-powershell
-  $env:BROWSER="webkit"
-  dotnet test
+  ```bash
+  dotnet test -- Playwright.BrowserName=webkit
   ```
 
 - Running Tests on multiple browsers
   
-  To run your test on multiple browsers or configurations you need to invoke the `dotnet test` command multiple times. There you can then either specify the `BROWSER` environment variable (like the previous) or pass the `browser` via the runsettings file:
+  To run your test on multiple browsers or configurations you need to invoke the `dotnet test` command multiple times. There you can then either specify the `BROWSER` environment variable or set the `Playwright.BrowserName` via the runsettings file:
 
   ```bash
   dotnet test --settings:chromium.runsettings
@@ -58,10 +48,9 @@ You can run a single test, a set of tests or all tests. Tests can be run on diff
   ```xml
   <?xml version="1.0" encoding="utf-8"?>
   <RunSettings>
-    <TestRunParameters>
-      <Parameter name="browser" value="chromium" />
-      <Parameter name="headless" value="false" />
-    </TestRunParameters>
+    <Playwright>
+      <BrowserName>chromium</BrowserName>
+    </Playwright>
   </RunSettings>
   ```
 
