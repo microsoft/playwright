@@ -1,6 +1,7 @@
 ---
 id: intro
 title: "Installation"
+displayed_sidebar: gettingStarted
 ---
 
 Playwright Test was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation of Google Chrome for Android and Mobile Safari.
@@ -12,17 +13,16 @@ Playwright Test was created specifically to accommodate the needs of end-to-end 
 - [How to run the example test](/intro.md#running-the-example-test)
 - [How to open the HTML test report](/intro.md#html-test-reports)
 
-
 ## Installing Playwright
 
 Get started by installing Playwright using npm or yarn. Alternatively you can also get started and run your tests using the [VS Code Extension](./getting-started-vscode.md).
 
 <Tabs
-  defaultValue="npm"
-  values={[
-    {label: 'npm', value: 'npm'},
-    {label: 'yarn', value: 'yarn'}
-  ]
+defaultValue="npm"
+values={[
+{label: 'npm', value: 'npm'},
+{label: 'yarn', value: 'yarn'}
+]
 }>
 <TabItem value="npm">
 
@@ -41,12 +41,11 @@ yarn create playwright
 </TabItem>
 </Tabs>
 
-
 Run the install command and select the following to get started:
- - Choose between TypeScript or JavaScript (default is TypeScript)
- - Name of your Tests folder (default is tests or e2e if you already have a tests folder in your project)
- - Add a GitHub Actions workflow to easily run tests on CI
 
+- Choose between TypeScript or JavaScript (default is TypeScript)
+- Name of your Tests folder (default is tests or e2e if you already have a tests folder in your project)
+- Add a GitHub Actions workflow to easily run tests on CI
 
 ## What's Installed
 
@@ -63,7 +62,7 @@ tests-examples/
 ```
 
 The [playwright.config](./test-configuration.md) is where you can add configuration for Playwright including modifying which browsers you would like to run Playwright on. If you are running tests inside an already existing project then dependencies will be added directly to your `package.json`.
- 
+
 The `tests` folder contains a basic example test to help you get started with testing. For a more detailed example check out the `tests-examples` folder which contains tests written to test a todo app.
 
 ## Running the Example Test
@@ -85,7 +84,6 @@ npx playwright show-report
 ```
 
 <img width="739" alt="HTML Reporter" src="https://user-images.githubusercontent.com/13063165/181803518-1f554349-f72a-4ad3-a7aa-4d3d1b4cad13.png" />
-
 
 ## What's next
 

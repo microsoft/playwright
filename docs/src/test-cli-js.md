@@ -1,6 +1,7 @@
 ---
 id: test-cli
 title: "Command line"
+displayed_sidebar: runningTests
 ---
 
 <!-- TOC -->
@@ -10,56 +11,67 @@ title: "Command line"
 Here are the most common options available in the command line.
 
 - Run all the tests
+
   ```bash
   npx playwright test
   ```
 
 - Run a single test file
+
   ```bash
   npx playwright test tests/todo-page.spec.ts
   ```
 
 - Run a set of test files
+
   ```bash
   npx playwright test tests/todo-page/ tests/landing-page/
   ```
 
 - Run files that have `my-spec` or `my-spec-2` in the file name
+
   ```bash
   npx playwright test my-spec my-spec-2
   ```
 
 - Run files that are in line 42 in my-spec.ts
+
   ```bash
   npx playwright test my-spec.ts:42
   ```
 
 - Run the test with the title
+
   ```bash
   npx playwright test -g "add a todo item"
   ```
 
 - Run tests in headed browsers
+
   ```bash
   npx playwright test --headed
   ```
 
 - Run all the tests against a specific project
+
   ```bash
   npx playwright test --project=chromium
   ```
 
 - Disable [parallelization](./test-parallel.md)
+
   ```bash
   npx playwright test --workers=1
   ```
 
 - Choose a [reporter](./test-reporters.md)
+
   ```bash
   npx playwright test --reporter=dot
   ```
 
 - Run in debug mode with [Playwright Inspector](./debug.md)
+
   ```bash
   npx playwright test --debug
   ```
@@ -75,7 +87,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 
 - `--headed`: Run tests in headed browsers. Useful for debugging.
 
-- `--browser`: Run test in a specific browser. Available options are  `"chromium"`, `"firefox"`, `"webkit"` or `"all"` to run tests in all three browsers at the same time.
+- `--browser`: Run test in a specific browser. Available options are `"chromium"`, `"firefox"`, `"webkit"` or `"all"` to run tests in all three browsers at the same time.
 
 - `--debug`: Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --maxFailures=1 --headed --workers=1` options.
 

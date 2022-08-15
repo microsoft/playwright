@@ -1,6 +1,7 @@
 ---
 id: intro
 title: "Installation"
+displayed_sidebar: gettingStarted
 ---
 
 Playwright was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation.
@@ -10,12 +11,12 @@ You can choose to use [NUnit base classes](./test-runners.md#nunit) or [MSTest b
 1. Start by creating a new project with `dotnet new`. This will create the `PlaywrightTests` directory which includes a `UnitTest1.cs` file:
 
 <Tabs
-  groupId="test-runners"
-  defaultValue="nunit"
-  values={[
-    {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
-  ]
+groupId="test-runners"
+defaultValue="nunit"
+values={[
+{label: 'NUnit', value: 'nunit'},
+{label: 'MSTest', value: 'mstest'}
+]
 }>
 <TabItem value="nunit">
 
@@ -38,12 +39,12 @@ cd PlaywrightTests
 2. Install the necessary Playwright dependencies:
 
 <Tabs
-  groupId="test-runners"
-  defaultValue="nunit"
-  values={[
-    {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
-  ]
+groupId="test-runners"
+defaultValue="nunit"
+values={[
+{label: 'NUnit', value: 'nunit'},
+{label: 'MSTest', value: 'mstest'}
+]
 }>
 <TabItem value="nunit">
 
@@ -73,19 +74,19 @@ dotnet build
 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
-If `pwsh` is not available, you have to [install PowerShell](https://docs.microsoft.com/powershell/scripting/install/installing-powershell). 
+If `pwsh` is not available, you have to [install PowerShell](https://docs.microsoft.com/powershell/scripting/install/installing-powershell).
 
 ## Add Example Tests
 
 Edit the `UnitTest1.cs` file with the code below to create an example end-to-end test:
 
 <Tabs
-  groupId="test-runners"
-  defaultValue="nunit"
-  values={[
-    {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
-  ]
+groupId="test-runners"
+defaultValue="nunit"
+values={[
+{label: 'NUnit', value: 'nunit'},
+{label: 'MSTest', value: 'mstest'}
+]
 }>
 <TabItem value="nunit">
 
@@ -165,12 +166,12 @@ public class UnitTest1 : PageTest
 By default tests will be run on Chromium. This can be configured via the `BROWSER` environment variable, or by adjusting the [launch configuration options](./test-runners.md). Tests are run in headless mode meaning no browser will open up when running the tests. Results of the tests and test logs will be shown in the terminal.
 
 <Tabs
-  groupId="test-runners"
-  defaultValue="nunit"
-  values={[
-    {label: 'NUnit', value: 'nunit'},
-    {label: 'MSTest', value: 'mstest'}
-  ]
+groupId="test-runners"
+defaultValue="nunit"
+values={[
+{label: 'NUnit', value: 'nunit'},
+{label: 'MSTest', value: 'mstest'}
+]
 }>
 <TabItem value="nunit">
 

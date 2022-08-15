@@ -1,6 +1,7 @@
 ---
 id: library
 title: "Getting started - Library"
+displayed_sidebar: library
 ---
 
 ## Installation
@@ -166,7 +167,6 @@ It is recommended to only bundle the browsers you use.
 ### `time.sleep()` leads to outdated state
 
 Most likely you don't need to wait manually, since Playwright has [auto-waiting](./actionability.md). If you still rely on it, you should use `page.wait_for_timeout(5000)` instead of `time.sleep(5)` and it is better to not wait for a timeout at all, but sometimes it is useful for debugging. In these cases, use our wait (`wait_for_timeout`) method instead of the `time` module. This is because we internally rely on asynchronous operations and when using `time.sleep(5)` they can't get processed correctly.
-
 
 ### incompatible with `SelectorEventLoop` of `asyncio` on Windows
 

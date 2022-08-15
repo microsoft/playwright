@@ -1,6 +1,7 @@
 ---
 id: cli
 title: "Command line tools"
+displayed_sidebar: writingTests
 ---
 
 Playwright comes with the command line tools.
@@ -241,15 +242,17 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --load-storage=auth.json my.web.app
 If you would like to use codegen in some non-standard setup (for example, use [`method: BrowserContext.route`]), it is possible to call [`method: Page.pause`] that will open a separate window with codegen controls.
 
 ```js
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
 (async () => {
   // Make sure to run headed.
   const browser = await chromium.launch({ headless: false });
 
   // Setup context however you like.
-  const context = await browser.newContext({ /* pass any options */ });
-  await context.route('**/*', route => route.continue());
+  const context = await browser.newContext({
+    /* pass any options */
+  });
+  await context.route("**/*", (route) => route.continue());
 
   // Pause the page, and start recording manually.
   const page = await context.newPage();
@@ -375,6 +378,7 @@ pwsh bin/Debug/netX/playwright.ps1 wk example.com
 ```
 
 ### Emulate devices
+
 `open` can emulate mobile and tablet devices from the [`playwright.devices`](https://playwright.dev/docs/api/class-playwright#playwrightdevices) list.
 
 ```bash js
@@ -446,6 +450,7 @@ pwsh bin/Debug/netX/playwright.ps1 open --timezone="Europe/Rome" --geolocation="
 ```
 
 ## Inspect selectors
+
 During `open` or `codegen`, you can use following API inside the developer tools console of any browser.
 
 <img src="https://user-images.githubusercontent.com/284612/92536317-37dd9380-f1ee-11ea-875d-daf1b206dd56.png"></img>
