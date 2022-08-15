@@ -2,7 +2,8 @@
 id: test-components
 title: "Experimental: components"
 tags:
-  - Component Testing
+  - Writing Tests
+  - Specialized Testing
 ---
 
 Playwright Test can now test your components.
