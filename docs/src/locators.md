@@ -8,7 +8,7 @@ displayed_sidebar: writingTests
 a way to find element(s) on the page at any moment. Locator can be created with the [`method: Page.locator`] method.
 
 ```js
-const locator = page.locator("text=Submit");
+const locator = page.locator('text=Submit');
 await locator.click();
 ```
 
@@ -38,7 +38,7 @@ DOM changes in between the calls due to re-render, the new element corresponding
 locator will be used.
 
 ```js
-const locator = page.locator("text=Submit");
+const locator = page.locator('text=Submit');
 // ...
 await locator.hover();
 await locator.click();
@@ -74,13 +74,13 @@ Use [`method: Page.locator`] method to create a locator. This method takes a sel
 
 ```js
 // Find by text.
-await page.locator("text=Sign up").click();
+await page.locator('text=Sign up').click();
 
 // Find by CSS.
-await page.locator("button.sign-up").click();
+await page.locator('button.sign-up').click();
 
 // Find by test id.
-await page.locator("data-testid=sign-up").click();
+await page.locator('data-testid=sign-up').click();
 ```
 
 ```python async
@@ -135,13 +135,13 @@ given selector.
 
 ```js
 // Throws if there are several buttons in DOM:
-await page.locator("button").click();
+await page.locator('button').click();
 
 // Works because we explicitly tell locator to pick the first element:
-await page.locator("button").first().click(); // ⚠️ using first disables strictness
+await page.locator('button').first().click(); // ⚠️ using first disables strictness
 
 // Works because count knows what to do with multiple matches:
-await page.locator("button").count();
+await page.locator('button').count();
 ```
 
 ```python async
@@ -198,20 +198,19 @@ You can also use locators to work with the element lists.
 
 ```js
 // Locate elements, this locator points to a list.
-const rows = page.locator("table tr");
+const rows = page.locator('table tr');
 
 // Pattern 1: use locator methods to calculate text on the whole list.
 const texts = await rows.allTextContents();
 
 // Pattern 2: do something with each element in the list.
-const count = await rows.count();
-for (let i = 0; i < count; ++i) console.log(await rows.nth(i).textContent());
+const count = await rows.count()
+for (let i = 0; i < count; ++i)
+  console.log(await rows.nth(i).textContent());
 
 // Pattern 3: resolve locator to elements on page and map them to their text content.
 // Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
-const texts = await rows.evaluateAll((list) =>
-  list.map((element) => element.textContent)
-);
+const texts = await rows.evaluateAll(list => list.map(element => element.textContent));
 ```
 
 ```python async
@@ -289,21 +288,17 @@ When creating a locator, you can pass additional options to filter it.
 Filtering by text will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
 
 ```js
-await page.locator("button", { hasText: "Sign up" }).click();
+await page.locator('button', { hasText: 'Sign up' }).click();
 ```
-
 ```java
 page.locator("button", new Page.LocatorOptions().setHasText("Sign up")).click();
 ```
-
 ```python async
 await page.locator("button", has_text="Sign up").click()
 ```
-
 ```python sync
 page.locator("button", has_text="Sign up").click()
 ```
-
 ```csharp
 await page.Locator("button", new PageLocatorOptions { HasText = "Sign up" }).ClickAsync();
 ```
@@ -311,21 +306,17 @@ await page.Locator("button", new PageLocatorOptions { HasText = "Sign up" }).Cli
 Locators also support an option to only select elements that have a descendant matching another locator. Note that inner locator is matched starting from the outer one, not from the document root.
 
 ```js
-page.locator("article", { has: page.locator("button.subscribe") });
+page.locator('article', { has: page.locator('button.subscribe') })
 ```
-
 ```java
 page.locator("article", new Page.LocatorOptions().setHas(page.locator("button.subscribe")))
 ```
-
 ```python async
 page.locator("article", has=page.locator("button.subscribe"))
 ```
-
 ```python sync
 page.locator("article", has=page.locator("button.subscribe"))
 ```
-
 ```csharp
 page.Locator("article", new PageLocatorOptions { Has = page.Locator("button.subscribe") })
 ```
@@ -333,14 +324,13 @@ page.Locator("article", new PageLocatorOptions { Has = page.Locator("button.subs
 You can also filter an existing locator with [`method: Locator.filter`] method, possibly chaining it multiple times.
 
 ```js
-const rowLocator = page.locator("tr");
+const rowLocator = page.locator('tr');
 // ...
 await rowLocator
-  .filter({ hasText: "text in column 1" })
-  .filter({ has: page.locator("button", { hasText: "column 2 button" }) })
-  .screenshot();
+    .filter({ hasText: 'text in column 1' })
+    .filter({ has: page.locator('button', { hasText: 'column 2 button' }) })
+    .screenshot();
 ```
-
 ```java
 Locator rowLocator = page.locator("tr");
 // ...
@@ -351,7 +341,6 @@ rowLocator
     ))
     .screenshot();
 ```
-
 ```python async
 row_locator = page.lsocator("tr")
 # ...
@@ -360,7 +349,6 @@ await row_locator
     .filter(has=page.locator("tr", has_text="column 2 button"))
     .screenshot()
 ```
-
 ```python sync
 row_locator = page.lsocator("tr")
 # ...
@@ -369,7 +357,6 @@ row_locator
     .filter(has=page.locator("tr", has_text="column 2 button"))
     .screenshot()
 ```
-
 ```csharp
 var rowLocator = page.Locator("tr");
 // ...
@@ -393,7 +380,7 @@ The difference between the [Locator] and [ElementHandle] is that the latter poin
 In the example below, handle points to a particular DOM element on page. If that element changes text or is used by React to render an entirely different component, handle is still pointing to that very stale DOM element. This can lead to unexpected behaviors.
 
 ```js
-const handle = await page.$("text=Submit");
+const handle = await page.$('text=Submit');
 // ...
 await handle.hover();
 await handle.click();
@@ -426,7 +413,7 @@ await handle.ClickAsync();
 With the locator, every time the locator is used, up-to-date DOM element is located in the page using the selector. So in the snippet below, underlying DOM element is going to be located twice.
 
 ```js
-const locator = page.locator("text=Submit");
+const locator = page.locator('text=Submit');
 // ...
 await locator.hover();
 await locator.click();

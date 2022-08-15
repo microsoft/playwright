@@ -16,7 +16,6 @@ configurations for common CI providers.
 1. **Ensure CI agent can run browsers**: Use [our Docker image](./docker.md)
    in Linux agents or install your dependencies using the [CLI](./cli.md#install-system-dependencies).
 1. **Install Playwright**:
-
    ```bash js
    # Install NPM packages
    npm ci
@@ -26,16 +25,13 @@ configurations for common CI providers.
    # Install Playwright browsers and dependencies
    npx playwright install --with-deps
    ```
-
    ```bash python
    pip install playwright
    playwright install --with-deps
    ```
-
    ```bash java
    mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
    ```
-
    ```bash csharp
    pwsh bin/Debug/netX/playwright.ps1 install --with-deps
    ```
@@ -65,7 +61,7 @@ steps:
   - uses: actions/checkout@v3
   - uses: actions/setup-node@v2
     with:
-      node-version: "14"
+      node-version: '14'
   - name: Install dependencies
     run: npm ci
   - name: Install Playwright
@@ -86,7 +82,7 @@ steps:
   - name: Set up Python
     uses: actions/setup-python@v4
     with:
-      python-version: "3.10"
+      python-version: '3.10'
   - name: Install dependencies
     run: |
       python -m pip install --upgrade pip
@@ -103,8 +99,8 @@ steps:
   - uses: actions/checkout@v3
   - uses: actions/setup-java@v3
     with:
-      distribution: "temurin"
-      java-version: "17"
+      distribution: 'temurin'
+      java-version: '17'
   - name: Build & Install
     run: mvn -B install -D skipTests --no-transfer-progress
   - name: Install Playwright
@@ -144,19 +140,19 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "14.x"
-      - name: Install dependencies
-        run: npm ci
-      - name: Install Playwright
-        run: npx playwright install --with-deps
-      - name: Run Playwright tests
-        run: npm run test:e2e
-        env:
-          # This might depend on your test-runner/language binding
-          PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '14.x'
+    - name: Install dependencies
+      run: npm ci
+    - name: Install Playwright
+      run: npx playwright install --with-deps
+    - name: Run Playwright tests
+      run: npm run test:e2e
+      env:
+        # This might depend on your test-runner/language binding
+        PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
 ```
 
 ### Docker
@@ -164,7 +160,6 @@ jobs:
 We have a [pre-built Docker image](./docker.md) which can either be used directly, or as a reference to update your existing Docker definitions.
 
 Suggested configuration
-
 1. Using `--ipc=host` is also recommended when using Chromium—without it Chromium can run out of memory
    and crash. Learn more about this option in [Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc).
 1. Seeing other weird errors when launching Chromium? Try running your container
@@ -179,7 +174,7 @@ GitHub Actions support [running jobs in a container](https://docs.github.com/en/
 ```yml js
 steps:
   playwright:
-    name: "Playwright Tests"
+    name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.26.0-focal
@@ -187,7 +182,7 @@ steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v2
         with:
-          node-version: "14"
+          node-version: '14'
       - name: Install dependencies
         run: npm ci
       - name: Run your tests
@@ -197,7 +192,7 @@ steps:
 ```yml python
 steps:
   playwright:
-    name: "Playwright Tests"
+    name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.26.0-focal
@@ -206,7 +201,7 @@ steps:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.10'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -221,7 +216,7 @@ steps:
 ```yml java
 steps:
   playwright:
-    name: "Playwright Tests"
+    name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.26.0-focal
@@ -229,8 +224,8 @@ steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
         with:
-          distribution: "temurin"
-          java-version: "17"
+          distribution: 'temurin'
+          java-version: '17'
       - name: Build & Install
         run: mvn -B install -D skipTests --no-transfer-progress
       - name: Install Playwright
@@ -242,7 +237,7 @@ steps:
 ```yml csharp
 steps:
   playwright:
-    name: "Playwright Tests"
+    name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.26.0-focal
@@ -260,15 +255,14 @@ steps:
 ```
 
 #### Sharding
-
-- langs: js
+* langs: js
 
 GitHub Actions supports [sharding tests between multiple jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs) using the [`jobs.<job_id>.strategy.matrix`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategymatrix) option. The `matrix` option will run a separate job for every possible combination of the provided options. In the example below, we have 2 `project` values, 10 `shardIndex` values and 1 `shardTotal` value, resulting in a total of 20 jobs to be run.
 
 ```yml js
 steps:
   playwright:
-    name: "Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shardIndex }} of ${{ matrix.shardTotal }}"
+    name: 'Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shardIndex }} of ${{ matrix.shardTotal }}'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.26.0-focal
@@ -282,7 +276,7 @@ steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v2
         with:
-          node-version: "14"
+          node-version: '14'
       - name: Install dependencies
         run: npm ci
       - name: Run your tests
@@ -302,11 +296,12 @@ Alternatively, you can use [Command line tools](./cli.md#install-system-dependen
 
 ```yml
 pool:
-  vmImage: "ubuntu-20.04"
+  vmImage: 'ubuntu-20.04'
 
 container: mcr.microsoft.com/playwright:v1.26.0-focal
 
 steps:
+...
 ```
 
 ### CircleCI
@@ -393,10 +388,9 @@ directory and you run `npm install` (instead of `npm ci`), the default configura
 package on disk and not execute the `postinstall` step.
 
 > Travis CI automatically caches `node_modules` if your repo does not have a
-> `package-lock.json` file.
+  `package-lock.json` file.
 
 This behavior can be fixed with one of the following approaches:
-
 1. Move to caching `$HOME/.npm` or the npm-cache directory. (This is the default
    behavior in most CI providers.)
 1. Set `PLAYWRIGHT_BROWSERS_PATH=0` as the environment variable before running
@@ -425,7 +419,6 @@ Playwright supports the `DEBUG` environment variable to output debug logs during
 ```bash js
 DEBUG=pw:browser* npm run test
 ```
-
 ```bash python
 DEBUG=pw:browser* pytest
 ```
@@ -436,7 +429,7 @@ By default, Playwright launches browsers in headless mode. This can be changed b
 
 ```js
 // Works across chromium, firefox and webkit
-const { chromium } = require("playwright");
+const { chromium } = require('playwright');
 const browser = await chromium.launch({ headless: false });
 ```
 
@@ -489,7 +482,6 @@ On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/
 ```bash js
 xvfb-run node index.js
 ```
-
 ```bash python
 xvfb-run python test.py
 ```

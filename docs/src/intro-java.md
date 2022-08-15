@@ -5,7 +5,6 @@ displayed_sidebar: gettingStarted
 ---
 
 <!-- TOC -->
-
 - [Release notes](./release-notes.md)
 
 ## Installation
@@ -15,11 +14,11 @@ Playwright is distributed as a set of [Maven](https://maven.apache.org/what-is-m
 ## Usage
 
 <Tabs
-defaultValue="java"
-values={[
-{label: 'Example.java', value: 'java'},
-{label: 'pom.xml', value: 'pom'}
-]
+  defaultValue="java"
+  values={[
+    {label: 'Example.java', value: 'java'},
+    {label: 'pom.xml', value: 'pom'}
+  ]
 }>
 <TabItem value="java">
 
