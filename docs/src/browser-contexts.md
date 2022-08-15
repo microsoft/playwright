@@ -1,6 +1,6 @@
 ---
-id: browser-contexts
-title: "Browser Contexts"
+id: isolation
+title: "Isolation"
 ---
 
 <!-- TOC -->
