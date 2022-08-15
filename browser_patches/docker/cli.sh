@@ -6,7 +6,7 @@ set +x
 set -o pipefail
 
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename "$0") [webkit-ubuntu-20.04|firefox-debian-11|...] [build|test|compile|enter|stop]"
+  echo "usage: $(basename "$0") [webkit-ubuntu-20.04|firefox-debian-11|...] [build|test|compile|enter|cleanup]"
   echo
   echo "Builds Webkit or Firefox browser inside given Linux distribution"
   exit 0
@@ -85,10 +85,12 @@ elif [[ "$2" == "compile" ]]; then
   '
 elif [[ "$2" == "enter" ]]; then
   docker run --rm ${DOCKER_ARGS} --init --name "${DOCKER_CONTAINER_NAME}" --platform "${DOCKER_PLATFORM}" -it "${DOCKER_IMAGE_NAME}" /bin/bash
-elif [[ "$2" == "kill" || "$2" == "stop" ]]; then
+elif [[ "$2" == "cleanup" ]]; then
   docker kill "${DOCKER_CONTAINER_NAME}" || true
   # Wait for container to stop
   docker wait "${DOCKER_CONTAINER_NAME}" || true
+  docker rmi "${DOCKER_IMAGE_NAME}"
+  docker system prune -f
 else
   echo "ERROR: unknown command - $2"
   exit 1
