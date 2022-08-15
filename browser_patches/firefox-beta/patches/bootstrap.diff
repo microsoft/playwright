@@ -1130,13 +1130,29 @@ index a82771c6d0bf1b5d5547e42fa3dad61537381d4a..0a4e153a11972b305a425ecb4fdb4277
    // Outer windows only.
    virtual void EnsureSizeAndPositionUpToDate() override;
 diff --git a/dom/base/nsINode.cpp b/dom/base/nsINode.cpp
-index 1088bfc489a067f95bfb84a822a787bdf9463e54..a4af3a6327bdee18f2f345cb078139299a018908 100644
+index 1088bfc489a067f95bfb84a822a787bdf9463e54..54c4687ff71ec1b82912d9139f061ef5c7d4a426 100644
 --- a/dom/base/nsINode.cpp
 +++ b/dom/base/nsINode.cpp
-@@ -1324,6 +1324,49 @@ void nsINode::GetBoxQuadsFromWindowOrigin(const BoxQuadOptions& aOptions,
+@@ -1324,6 +1324,62 @@ void nsINode::GetBoxQuadsFromWindowOrigin(const BoxQuadOptions& aOptions,
    mozilla::GetBoxQuadsFromWindowOrigin(this, aOptions, aResult, aRv);
  }
  
++static nsIFrame* GetFirstFrame(nsINode* aNode) {
++  if (!aNode->IsContent())
++    return nullptr;
++  nsIFrame* frame = aNode->AsContent()->GetPrimaryFrame(FlushType::Frames);
++  if (!frame) {
++    FlattenedChildIterator iter(aNode->AsContent());
++    for (nsIContent* child = iter.GetNextChild(); child; child = iter.GetNextChild()) {
++      frame = child->GetPrimaryFrame(FlushType::Frames);
++      if (frame) {
++        break;
++      }
++    }
++  }
++  return frame;
++}
++
 +void nsINode::ScrollRectIntoViewIfNeeded(int32_t x, int32_t y,
 +                                         int32_t w, int32_t h,
 +                                         ErrorResult& aRv) {
@@ -1149,14 +1165,11 @@ index 1088bfc489a067f95bfb84a822a787bdf9463e54..a4af3a6327bdee18f2f345cb07813929
 +  if (!presShell) {
 +    return aRv.ThrowNotFoundError("Node is detached from document");
 +  }
-+  if (!IsContent()) {
-+    return aRv.ThrowNotFoundError("Node does not have a layout object");
-+  }
-+  aRv = NS_OK;
-+  nsIFrame* primaryFrame = AsContent()->GetPrimaryFrame(FlushType::Frames);
++  nsIFrame* primaryFrame = GetFirstFrame(this);
 +  if (!primaryFrame) {
 +    return aRv.ThrowNotFoundError("Node does not have a layout object");
 +  }
++  aRv = NS_OK;
 +  nsRect rect;
 +  if (x == -1 && y == -1 && w == -1 && h == -1) {
 +    rect = primaryFrame->GetRectRelativeToSelf();
@@ -1633,10 +1646,19 @@ index b31ca1000cb1d7b8ca1af74b9ac0313aba053875..54abd38a35fc2b4906760c370d9f96d7
        nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(
            aPolicyStr));
 diff --git a/dom/webidl/GeometryUtils.webidl b/dom/webidl/GeometryUtils.webidl
-index 2f71b284ee5f7e11f117c447834b48355784448c..d996e0a3cbbb19c1dc320c305c6d74037bffa0d3 100644
+index 2f71b284ee5f7e11f117c447834b48355784448c..ddcc545da1efec5784273b032efa00ad8b89fec0 100644
 --- a/dom/webidl/GeometryUtils.webidl
 +++ b/dom/webidl/GeometryUtils.webidl
-@@ -27,6 +27,9 @@ interface mixin GeometryUtils {
+@@ -16,6 +16,8 @@ dictionary BoxQuadOptions {
+   GeometryNode relativeTo;
+   [ChromeOnly]
+   boolean createFramesForSuppressedWhitespace = true;
++  [ChromeOnly]
++  boolean recurseWhenNoFrame = false;
+ };
+ 
+ dictionary ConvertCoordinateOptions {
+@@ -27,6 +29,9 @@ interface mixin GeometryUtils {
    [Throws, Func="nsINode::HasBoxQuadsSupport", NeedsCallerType]
    sequence<DOMQuad> getBoxQuads(optional BoxQuadOptions options = {});
  
@@ -1969,6 +1991,56 @@ index 3ce936fe3a4a83f9161eddc9e5289322d6a363e3..6b1c34244d8b2f2102ec423e2d96812f
    void updateTimeZone();
  
    void internalResyncICUDefaultTimeZone();
+diff --git a/layout/base/GeometryUtils.cpp b/layout/base/GeometryUtils.cpp
+index dac899f7558b26d6848da8b98ed8a93555c8751a..2a07d67fa1c2840b25085566e84dc3b2d9b789cf 100644
+--- a/layout/base/GeometryUtils.cpp
++++ b/layout/base/GeometryUtils.cpp
+@@ -23,6 +23,7 @@
+ #include "nsContentUtils.h"
+ #include "nsCSSFrameConstructor.h"
+ #include "nsLayoutUtils.h"
++#include "ChildIterator.h"
+ 
+ using namespace mozilla;
+ using namespace mozilla::dom;
+@@ -261,11 +262,27 @@ static bool CheckFramesInSameTopLevelBrowsingContext(nsIFrame* aFrame1,
+   return false;
+ }
+ 
++static nsIFrame* GetFrameForNode(nsINode* aNode,
++                                 bool aCreateFramesForSuppressedWhitespace,
++                                 bool aRecurseWhenNoFrame) {
++  nsIFrame* frame = GetFrameForNode(aNode, aCreateFramesForSuppressedWhitespace);
++  if (!frame && aRecurseWhenNoFrame && aNode->IsContent()) {
++    dom::FlattenedChildIterator iter(aNode->AsContent());
++    for (nsIContent* child = iter.GetNextChild(); child; child = iter.GetNextChild()) {
++      frame = GetFrameForNode(child, aCreateFramesForSuppressedWhitespace, aRecurseWhenNoFrame);
++      if (frame) {
++        break;
++      }
++    }
++  }
++  return frame;
++}
++
+ void GetBoxQuads(nsINode* aNode, const dom::BoxQuadOptions& aOptions,
+                  nsTArray<RefPtr<DOMQuad> >& aResult, CallerType aCallerType,
+                  ErrorResult& aRv) {
+   nsIFrame* frame =
+-      GetFrameForNode(aNode, aOptions.mCreateFramesForSuppressedWhitespace);
++      GetFrameForNode(aNode, aOptions.mCreateFramesForSuppressedWhitespace, aOptions.mRecurseWhenNoFrame);
+   if (!frame) {
+     // No boxes to return
+     return;
+@@ -280,7 +297,7 @@ void GetBoxQuads(nsINode* aNode, const dom::BoxQuadOptions& aOptions,
+   // when that happens and re-check it.
+   if (!weakFrame.IsAlive()) {
+     frame =
+-        GetFrameForNode(aNode, aOptions.mCreateFramesForSuppressedWhitespace);
++        GetFrameForNode(aNode, aOptions.mCreateFramesForSuppressedWhitespace, aOptions.mRecurseWhenNoFrame);
+     if (!frame) {
+       // No boxes to return
+       return;
 diff --git a/layout/base/PresShell.cpp b/layout/base/PresShell.cpp
 index 014b655e374af3bf6f346febb76df4f7484e2e8d..cf62af15fd34fbcbb3d2bc3b00065eb5aee21d62 100644
 --- a/layout/base/PresShell.cpp
