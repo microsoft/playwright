@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { MultiMap } from '@playwright-core/utils/multimap';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
 
@@ -32,15 +33,11 @@ const scopePath = new URL(self.registration.scope).pathname;
 
 const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer }>();
 
-const clientIdToTraceUrls = new Map<string, string[]>();
+const clientIdToTraceUrls = new MultiMap<string, string>();
 
 async function loadTrace(trace: string, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
   const entry = loadedTraces.get(trace);
-  const traceUrls = clientIdToTraceUrls.get(clientId);
-  if (traceUrls)
-    traceUrls.push(trace);
-  else
-    clientIdToTraceUrls.set(clientId, [trace]);
+  clientIdToTraceUrls.set(clientId, trace);
   if (entry)
     return entry.traceModel;
   const traceModel = new TraceModel();
@@ -130,7 +127,7 @@ async function gc() {
   for (const [clientId, traceUrls] of clientIdToTraceUrls) {
     // @ts-ignore
     if (!clients.find(c => c.id === clientId))
-      clientIdToTraceUrls.delete(clientId);
+      clientIdToTraceUrls.deleteAll(clientId);
     else
       traceUrls.forEach(url => usedTraces.add(url));
   }
