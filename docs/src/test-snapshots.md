@@ -141,9 +141,6 @@ test('example test', async ({ page }) => {
 
 Snapshots are stored next to the test file, in a separate directory. For example, `my.spec.ts` file will produce and store snapshots in the `my.spec.ts-snapshots` directory. You should commit this directory to your version control (e.g. `git`), and review any changes to it.
 
-
-
-
 ## Screenshots
 
 Here is a quick way to capture a screenshot and save it into a file:
