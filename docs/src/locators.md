@@ -70,7 +70,7 @@ await locator.ClickAsync();
 
 ### Creating Locators
 
-Use [`method: Page.locator`] method to create a locator. This method takes a selector that describes how to find an element in the page. Playwright supports many different selectors like [Text](./text-selector), [CSS](./#css-selector), [XPath](./#xpath-selectors) and many more. Learn more about available selectors and how to pick one in this [in-depth guide](./#selectors).
+Use [`method: Page.locator`] method to create a locator. This method takes a selector that describes how to find an element in the page. Playwright supports many different selectors like [Text](#text-selector), [CSS](#css-selector), [XPath](#xpath-selectors) and many more. Learn more about available selectors and how to pick one in this [in-depth guide](#selectors).
 
 ```js
 // Find by text.
@@ -189,7 +189,7 @@ await page.Locator("button").CountAsync();
 ```
 
 :::caution
-Using [`method: Locator.first`], [`method: Locator.last`], and [`method: Locator.nth`] is discouraged since it disables the concept of strictness, and as your page changes, Playwright may click on an element you did not intend. It's better to make your locator more specific. Learn more below in [Filtering Locators](#filtering-locators) and the [selectors guide](./#selectors).
+Using [`method: Locator.first`], [`method: Locator.last`], and [`method: Locator.nth`] is discouraged since it disables the concept of strictness, and as your page changes, Playwright may click on an element you did not intend. It's better to make your locator more specific. Learn more below in [Filtering Locators](#filtering-locators) and the [selectors guide](#selectors).
 :::
 
 ### Lists
