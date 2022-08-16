@@ -34,6 +34,6 @@ Playwright enables fast, reliable and capable testing and automation across all 
 
 - **Powerful network control**. Playwright introduces context-wide [network interception](./network.md) to stub and mock network requests.
 
-* **Modern web features**. Playwright supports web components through [shadow-piercing selectors](./locators.md#selectors), [geolocation, permissions](./emulation.md), web workers and other modern web APIs.
+* **Modern web features**. Playwright supports web components through [shadow-piercing selectors](./locators.md#selectors), geolocation, permissions, web workers and other modern web APIs.
 
 - **Capabilities to cover all scenarios**. Support for [file downloads](./downloads.md) and [uploads](./input.md), out-of-process iframes, native [input events](./input.md), and even dark mode.
