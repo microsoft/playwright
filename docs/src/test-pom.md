@@ -13,7 +13,7 @@ Page objects **simplify authoring**. They create a higher-level API which suits 
 
 Page objects **simplify maintenance**. They capture element selectors in one place and create reusable code to avoid repetition.
 
-## POM Example
+## Implementation
 * langs: js
 
 We will create a `PlaywrightDevPage` helper class to encapsulate common operations on the `playwright.dev` page. Internally, it will use the `page` object.
@@ -153,35 +153,9 @@ test('should show Page Object Model article', async ({ page }) => {
 
 
 ## Implementation
-###### Playwright Test vs. Library
-* langs: js
-
-:::caution
-This guide is for [Playwright Library](./library.md), if you are using Playwright Test (`@playwright/test`) see [here](./test-pom.md).
-:::
+* langs: csharp, python, java
 
 Page object models wrap over a Playwright [Page].
-
-```js
-// models/Search.js
-class SearchPage {
-  /**
-   * @param {import('playwright').Page} page 
-   */
-  constructor(page) {
-    this.page = page;
-    this.searchTermInput = page.locator('[aria-label="Enter your search term"]');
-  }
-  async navigate() {
-    await this.page.goto('https://bing.com');
-  }
-  async search(text) {
-    await this.searchTermInput.fill(text);
-    await this.searchTermInput.press('Enter');
-  }
-}
-module.exports = { SearchPage };
-```
 
 ```java
 // models/SearchPage.java
@@ -270,17 +244,6 @@ public class SearchPage
 ```
 
 Page objects can then be used inside a test.
-
-```js
-// search.spec.js
-const { SearchPage } = require('./models/Search');
-
-// In the test
-const page = await browser.newPage();
-const searchPage = new SearchPage(page);
-await searchPage.navigate();
-await searchPage.search('search query');
-```
 
 ```java
 import models.SearchPage;
