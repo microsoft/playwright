@@ -149,9 +149,6 @@ test('should show Page Object Model article', async ({ page }) => {
   await expect(page.locator('article')).toContainText('Page Object Model is a common pattern');
 });
 ```
-
-
-
 ## Implementation
 * langs: csharp, python, java
 
