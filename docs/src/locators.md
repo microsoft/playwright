@@ -70,7 +70,7 @@ await locator.ClickAsync();
 
 ### Creating Locators
 
-Use [`method: Page.locator`] method to create a locator. This method takes a selector that describes how to find an element in the page. Playwright supports many different selectors like [Text](./text-selector), [CSS](./#css-selector), [XPath](./#xpath-selectors) and many more. Learn more about available selectors and how to pick one in this [in-depth guide](./#selectors).
+Use [`method: Page.locator`] method to create a locator. This method takes a selector that describes how to find an element in the page. Playwright supports many different selectors like [Text](./#text-selector), [CSS](./#css-selector), [XPath](./#xpath-selectors) and many more. Learn more about available selectors and how to pick one in this [in-depth guide](./#selectors).
 
 ```js
 // Find by text.
