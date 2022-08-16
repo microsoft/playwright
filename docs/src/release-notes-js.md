@@ -1121,7 +1121,7 @@ Learn more in the [documentation](./test-advanced#launching-a-development-web-se
 #### New and Overhauled Guides
 
 - [Intro](./intro.md)
-- [Authentication](./auth.md)
+- [Authentication](./test-auth.md)
 - [Chrome Extensions](./chrome-extensions.md)
 - [Playwright Test Annotations](./test-annotations.md)
 - [Playwright Test Configuration](./test-configuration.md)

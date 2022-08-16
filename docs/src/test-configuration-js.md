@@ -127,7 +127,7 @@ These are commonly used options for various scenarios. You usually set them glob
 - `channel` - Browser channel to use. [Learn more](./browsers.md) about different browsers and channels.
 - `headless` - Whether to run the browser in headless mode.
 - `viewport` - Viewport used for all pages in the context.
-- `storageState` - Populates context with given storage state. Useful for easy authentication, [learn more](./auth.md).
+- `storageState` - Populates context with given storage state. Useful for easy authentication, [learn more](./test-auth.md).
 
 ```js tab=js-js
 // @ts-check
