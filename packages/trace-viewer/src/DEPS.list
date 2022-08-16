@@ -1,3 +1,4 @@
 [*]
+@playwright-core/utils/multimap.ts
 @web/**
 ui/
