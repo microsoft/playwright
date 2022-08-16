@@ -72,6 +72,14 @@ export function isElementVisible(element: Element): boolean {
     }
     return false;
   }
+  // Element.checkVisibility checks for content-visibility and also looks at
+  // styles up the flat tree including user-agent ShadowRoots, such as the
+  // details element for example.
+  if (Element.prototype.checkVisibility) {
+    if (!element.checkVisibility()) {
+      return false;
+    }
+  }
   const rect = element.getBoundingClientRect();
   return rect.width > 0 && rect.height > 0;
 }
