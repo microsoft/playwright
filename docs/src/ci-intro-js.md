@@ -112,4 +112,4 @@ To learn more about running tests on CI check out our detailed guide on [Continu
 
 - [Learn how to use Web First Assertions](/test-assertions.md)
 - [Learn how to use Locators](/locators.md)
-- - [Learn how to use Selectors](/locators.md#selectors)
+- [Learn how to use Selectors](/locators.md#selectors)
