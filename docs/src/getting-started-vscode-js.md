@@ -83,7 +83,7 @@ To record a test click on the record icon. This will create a `test-1.spec.ts` f
 
 ### Selector Highlighting
 
-As you interact with the page Codegen will generate the test for you in the newly created file in VS Code. When you hover over an element Playwright will highlight the element and show the [selector](./selectors.md) underneath it.
+As you interact with the page Codegen will generate the test for you in the newly created file in VS Code. When you hover over an element Playwright will highlight the element and show the [selector](./locators.md#selectors) underneath it.
 
 <img width="860" alt="image" src="https://user-images.githubusercontent.com/13063165/182151374-03273172-38cd-4f27-add5-cb3d3cdc7bcd.png" />
 

@@ -153,7 +153,7 @@ Once you're on Playwright Test, you get a lot!
 
 Also you get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
 - [Playwright Inspector](./debug.md)
-- [Playwright Test Code generation](./auth#code-generation)
+- [Playwright Test Code generation](./test-auth#code-generation)
 - [Playwright Tracing](./trace-viewer) for post-mortem debugging
 
 ## Further Reading
@@ -163,7 +163,7 @@ Learn more about Playwright Test runner:
 - [Getting Started](./intro)
 - [Fixtures](./test-fixtures)
 - [Locators](./api/class-locator)
-- [Selectors](./selectors)
+- [Selectors](./locators.md#selectors)
 - [Assertions](./test-assertions)
 - [Auto-waiting](./actionability)
 

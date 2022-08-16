@@ -52,19 +52,19 @@ Whether to bypass the [actionability](../actionability.md) checks. Defaults to `
 - `selector` <[string]>
 
 A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See
-[working with selectors](../selectors.md) for more details.
+[working with selectors](../locators.md#selectors) for more details.
 
 ## input-source
 - `source` <[string]>
 
 A selector to search for an element to drag. If there are multiple elements satisfying the selector, the first will be used. See
-[working with selectors](../selectors.md) for more details.
+[working with selectors](../locators.md#selectors) for more details.
 
 ## input-target
 - `target` <[string]>
 
 A selector to search for an element to drop onto. If there are multiple elements satisfying the selector, the first will be used. See
-[working with selectors](../selectors.md) for more details.
+[working with selectors](../locators.md#selectors) for more details.
 
 ## input-position
 - `position` <[Object]>
@@ -130,12 +130,12 @@ Whether to check or uncheck the checkbox.
 ## query-selector
 - `selector` <[string]>
 
-A selector to query for. See [working with selectors](../selectors.md) for more details.
+A selector to query for. See [working with selectors](../locators.md#selectors) for more details.
 
 ## find-selector
 - `selector` <[string]>
 
-A selector to use when resolving DOM element. See [working with selectors](../selectors.md) for more details.
+A selector to use when resolving DOM element. See [working with selectors](../locators.md#selectors) for more details.
 
 ## wait-for-selector-state
 - `state` <[WaitForSelectorState]<"attached"|"detached"|"visible"|"hidden">>

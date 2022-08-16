@@ -15,7 +15,7 @@ Playwright assertions are created specifically for the dynamic web. Checks are a
 
 ## The Example Test
 
-Take a look at the example test included when installing Playwright to see how to write a test using [web first assertions](/test-assertions.md), [locators](/locators.md) and [selectors](/selectors.md).
+Take a look at the example test included when installing Playwright to see how to write a test using [web first assertions](/test-assertions.md), [locators](/locators.md) and [selectors](/locators.md#selectors).
 
 ```js tab=js-js
 // @ts-check
@@ -88,7 +88,7 @@ await expect(getStarted).toHaveAttribute('href', '/docs/installation');
 await getStarted.click();
 ```
 
-[Selectors](./selectors.md) are strings that are used to create Locators. Playwright supports many different selectors like [Text](./selectors.md#text-selector), [CSS](./selectors.md#css-selector), [XPath](./selectors.md#xpath-selectors) and many more. Learn more about available selectors and how to pick one in this [in-depth guide](./selectors.md).
+[Selectors](./locators.md#selectors) are strings that are used to create Locators. Playwright supports many different selectors like [Text](./locators.md#text-selector), [CSS](./locators.md#css-selector), [XPath](./locators.md#xpath-selectors) and many more. Learn more about available selectors and how to pick one in this [in-depth guide](./locators.md#selectors).
 
 
 ```js

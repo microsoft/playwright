@@ -7,13 +7,13 @@ When installing Playwright you are given the option to add a [GitHub Actions](ht
 
 **What you will learn:**
 
-- [How to use GitHub Actions to run your tests](#github-actions)
-- [How to create a repo and push to GitHub](#create-a-repo-and-push-to-github)
-- [How to open the workflows](#opening-the-workflows)
-- [How to view the test logs](#viewing-test-logs)
-- [How to download the report from GitHub](#downloading-the-html-report)
-- [How to view the report](#viewing-the-html-report)
-- [How to view the trace](#viewing-the-trace)
+- [How to use GitHub Actions to run your tests](./ci-intro.md#github-actions)
+- [How to create a repo and push to GitHub](./ci-intro.md#create-a-repo-and-push-to-github)
+- [How to open the workflows](./ci-intro.md#opening-the-workflows)
+- [How to view the test logs](./ci-intro.md#viewing-test-logs)
+- [How to download the report from GitHub](./ci-intro.md#downloading-the-html-report)
+- [How to view the report](./ci-intro.md#viewing-the-html-report)
+- [How to view the trace](./ci-intro.md#viewing-the-trace)
 
 ## GitHub Actions
 
@@ -111,5 +111,5 @@ To learn more about running tests on CI check out our detailed guide on [Continu
 ## What's Next
 
 - [Learn how to use Web First Assertions](/test-assertions.md)
-- [Learn how to use Selectors](/selectors.md)
 - [Learn how to use Locators](/locators.md)
+- [Learn how to use Selectors](/locators.md#selectors)

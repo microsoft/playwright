@@ -85,11 +85,11 @@ Migration highlights (see inline comments in the Playwright Test code snippet):
 
 All queries like `getBy...`, `findBy...`, `queryBy...` and their multi-element counterparts are replaced with `page.locator('...')`. Locators always auto-wait and retry when needed, so you don't have to worry about choosing the right method. When you want to do a [list operation](./locators#lists), e.g. assert a list of texts, Playwright automatically performs multi-element opertations.
 
-1. `getByRole`: use [role selector](./selectors#role-selector) `component.locator('role=button[name="Sign up"]')`.
-1. `getByText`: use `component.locator('text=some value')` and other variations of the [text selector](./selectors#text-selector).
-1. `getByTestId`: use [test id selectors](./selectors#id-data-testid-data-test-id-data-test-selectors), for example `component.locator('data-testid=some value')`.
+1. `getByRole`: use [role selector](./locators#role-selector) `component.locator('role=button[name="Sign up"]')`.
+1. `getByText`: use `component.locator('text=some value')` and other variations of the [text selector](./locators#text-selector).
+1. `getByTestId`: use [test id selectors](./locators#id-data-testid-data-test-id-data-test-selectors), for example `component.locator('data-testid=some value')`.
 1. `getByPlaceholderText`: use css alternative `component.locator('[placeholder="some value"]')`.
-1. `getByAltText`: use css alternative `component.locator('[alt="some value"]')` or [role selector](./selectors#role-selector) `component.locator('role=img[name="some value"]')`.
+1. `getByAltText`: use css alternative `component.locator('[alt="some value"]')` or [role selector](./locators#role-selector) `component.locator('role=img[name="some value"]')`.
 1. `getByTitle`: use css alternative `component.locator('[title="some value"]')`
 
 ## Replacing `waitFor`
@@ -143,7 +143,7 @@ Once you're on Playwright Test, you get a lot!
 
 Also you get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
 - [Playwright Inspector](./debug.md)
-- [Playwright Test Code generation](./auth#code-generation)
+- [Playwright Test Code generation](./test-auth#code-generation)
 - [Playwright Tracing](./trace-viewer) for post-mortem debugging
 
 ## Further Reading
@@ -153,6 +153,6 @@ Learn more about Playwright Test runner:
 - [Getting Started](./intro)
 - [Experimental Component Testing](./test-components)
 - [Locators](./api/class-locator)
-- [Selectors](./selectors)
+- [Selectors](./locators#selectors)
 - [Assertions](./test-assertions)
 - [Auto-waiting](./actionability)
