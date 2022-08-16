@@ -21,7 +21,7 @@ let boundCallbacksForMount: Function[] = [];
 
 interface MountResult extends Locator {
   unmount(locator: Locator): Promise<void>;
-  rerender(options: Omit<MountOptions, 'hooksConfig'>): Promise<void>;
+  rerender(options: Omit<MountOptions, 'hooksConfig'> | string | JsxComponent): Promise<void>;
 }
 
 export const fixtures: Fixtures<
@@ -60,11 +60,8 @@ export const fixtures: Fixtures<
               await window.playwrightUnmount(rootElement);
             });
           },
-          rerender: async (options: Omit<MountOptions, 'hooksConfig'>) => {
-            await locator.evaluate(async (element, options) => {
-              const rootElement = document.getElementById('root')!;
-              return await window.playwrightRerender(rootElement, options);
-            }, options);
+          rerender: async (component: JsxComponent | string, options?: Omit<MountOptions, 'hooksConfig'>) => {
+            await innerRerender(page, component, options);
           }
         });
       });
@@ -72,13 +69,32 @@ export const fixtures: Fixtures<
     },
   };
 
-async function innerMount(page: Page, jsxOrType: JsxComponent | string, options: MountOptions = {}): Promise<string> {
-  let component: Component;
-  if (typeof jsxOrType === 'string')
-    component = { kind: 'object', type: jsxOrType, options };
-  else
-    component = jsxOrType;
+async function innerRerender(page: Page, jsxOrType: JsxComponent | string, options: Omit<MountOptions, 'hooksConfig'> = {}): Promise<void> {
+  const component = createComponent(jsxOrType, options);
+  wrapFunctions(component, page, boundCallbacksForMount);
 
+  await page.evaluate(async ({ component }) => {
+    const unwrapFunctions = (object: any) => {
+      for (const [key, value] of Object.entries(object)) {
+        if (typeof value === 'string' && (value as string).startsWith('__pw_func_')) {
+          const ordinal = +value.substring('__pw_func_'.length);
+          object[key] = (...args: any[]) => {
+            (window as any)['__ct_dispatch'](ordinal, args);
+          };
+        } else if (typeof value === 'object' && value) {
+          unwrapFunctions(value);
+        }
+      }
+    };
+
+    unwrapFunctions(component);
+    const rootElement = document.getElementById('root')!;
+    return await window.playwrightRerender(rootElement, component);
+  }, { component });
+}
+
+async function innerMount(page: Page, jsxOrType: JsxComponent | string, options: MountOptions = {}): Promise<string> {
+  const component = createComponent(jsxOrType, options);
   wrapFunctions(component, page, boundCallbacksForMount);
 
   // WebKit does not wait for deferred scripts.
@@ -112,6 +128,11 @@ async function innerMount(page: Page, jsxOrType: JsxComponent | string, options:
     return rootElement.childNodes.length > 1 ? '#root' : '#root > *';
   }, { component, hooksConfig: options.hooksConfig });
   return selector;
+}
+
+function createComponent(jsxOrType: JsxComponent | string, options: Omit<MountOptions, 'hooksConfig'> = {}): Component {
+  if (typeof jsxOrType !== 'string') return jsxOrType;
+  return { kind: 'object', type: jsxOrType, options };
 }
 
 function wrapFunctions(object: any, page: Page, callbacks: Function[]) {
