@@ -11,8 +11,8 @@ When installing Playwright you are given the option to add a [GitHub Actions](ht
 - [How to create a repo and push to GitHub](#create-a-repo-and-push-to-github)
 - [How to open the workflows](#opening-the-workflows)
 - [How to view the test logs](#viewing-test-logs)
-- [How to download the report from GitHub](#downloading-the-playwright-report)
-- [How to view the report](#viewing-the-playwright-report)
+- [How to download the report from GitHub](#downloading-the-html-report)
+- [How to view the report](#viewing-the-html-report)
 - [How to view the trace](#viewing-the-trace)
 
 ## GitHub Actions
