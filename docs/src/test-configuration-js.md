@@ -235,7 +235,7 @@ Running 1 test using 1 worker
 
 ## Emulation
 
-Playwright can [emulate different environments](./emulation.md) like mobile device, locale or timezone.
+Playwright can emulate different environments like mobile device, locale or timezone.
 
 Here is an example configuration that runs tests in "Pixel 4" and "iPhone 11" emulation modes. Note that it uses the [projects](./test-advanced.md#projects) feature to run the same set of tests in multiple configurations.
 
