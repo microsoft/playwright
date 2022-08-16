@@ -559,7 +559,7 @@ await button.ClickAsync("button >> visible=true");
 #### New and Overhauled Guides
 
 - [Intro](./intro.md)
-- [Authentication](./auth.md)
+- [Authentication](./test-auth.md)
 
 #### Browser Versions
 
