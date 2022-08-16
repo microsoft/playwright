@@ -3,10 +3,14 @@ id: test-auth
 title: "Authentication"
 ---
 
-Tests written with Playwright execute in isolated clean-slate environments called
-[browser contexts](./browser-contexts.md). Each test gets a brand
-new page created in a brand new context. This isolation model improves reproducibility
-and prevents cascading test failures.
+Playwright can be used to automate scenarios that require authentication. Tests written with Playwright execute in isolated clean-slate environments called
+[browser contexts](./browser-contexts.md). This isolation model
+improves reproducibility and prevents cascading test failures. New browser
+contexts can load existing authentication state. This eliminates the need to
+login in every context and speeds up test execution.
+
+> Note: This guide covers cookie/token-based authentication (logging in via the
+app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) use [`method: Browser.newContext`].
 
 ## Sign in with beforeEach
 * langs: js
@@ -616,27 +620,7 @@ You can also use `storageState` property when you are creating the [`method: Bro
 pass it an existing logged in state.
 :::
 
-
-
-
-# auth
-Playwright can be used to automate scenarios that require authentication.
-
-Tests written with Playwright execute in isolated clean-slate environments called
-[browser contexts](./browser-contexts.md). This isolation model
-improves reproducibility and prevents cascading test failures. New browser
-contexts can load existing authentication state. This eliminates the need to
-login in every context and speeds up test execution.
-
-> Note: This guide covers cookie/token-based authentication (logging in via the
-app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) use [`method: Browser.newContext`].
-
-<!-- TOC -->
-
-
-
 ## Automate logging in
-* langs: csharp, python, java
 
 The Playwright API can automate interaction with a login form. See
 [Input guide](./input.md) for more details.
@@ -644,7 +628,7 @@ The Playwright API can automate interaction with a login form. See
 The following example automates login on GitHub. Once these steps are executed,
 the browser context will be authenticated.
 
-<!-- ```js
+```js
 const page = await context.newPage();
 await page.goto('https://github.com/login');
 
@@ -654,7 +638,7 @@ await page.locator('input[name="login"]').fill(USERNAME);
 await page.locator('input[name="password"]').fill(PASSWORD);
 await page.locator('text=Submit').click();
 // Verify app is logged in
-``` -->
+```
 
 ```java
 Page page = context.newPage();
@@ -705,10 +689,7 @@ await page.Locator("text=Submit").ClickAsync();
 These steps can be executed for every browser context. However, redoing login
 for every test can slow down test execution. To prevent that, we will reuse
 existing authentication state in new browser contexts.
-
-
 ## Reuse authentication state
-* langs: csharp, python, java
 
 Web apps use cookie-based or token-based authentication, where authenticated
 state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
@@ -722,13 +703,13 @@ and local storage.
 The following code snippet retrieves state from an authenticated context and
 creates a new context with that state.
 
-<!-- ```js
+```js
 // Save storage state into the file.
 await context.storageState({ path: 'state.json' });
 
 // Create a new context with the saved storage state.
 const context = await browser.newContext({ storageState: 'state.json' });
-``` -->
+```
 
 ```java
 // Save storage state into the file.
@@ -769,7 +750,7 @@ var context = await browser.NewContextAsync(new()
 });
 ```
 
-<!-- ### Code generation
+### Code generation
 * langs: js
 
 Logging in via the UI and then reusing authentication state can be combined to
@@ -780,7 +761,7 @@ implement **login once and run multiple scenarios**. The lifecycle looks like:
     * In Jest, this can be executed in [`globalSetup`](https://jestjs.io/docs/en/configuration#globalsetup-string).
 3. In each test, load authentication state in `beforeEach` or `beforeAll` step.
 
-This approach will also **work in CI environments**, since it does not rely on any external state. -->
+This approach will also **work in CI environments**, since it does not rely on any external state.
 
 ### Code generation
 * langs: python
@@ -816,19 +797,17 @@ Logging in via the UI and then reusing authentication state can be combined to i
 This approach will also **work in CI environments**, since it does not rely on any external state.
 
 ### API reference
-* langs: csharp, python, java
 - [`method: BrowserContext.storageState`]
 - [`method: Browser.newContext`]
 
 ## Session storage
-* langs: csharp, python, java
 
 Rarely, [session storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) is used for storing information
 associated with the logged-in state. Session storage is specific to a particular domain and is not persisted across page loads.
 Playwright does not provide API to persist session storage, but the following snippet can be used to
 save/load session storage.
 
-<!-- ```js
+```js
 // Get session storage and store as env variable
 const sessionStorage = await page.evaluate(() => JSON.stringify(sessionStorage));
 process.env.SESSION_STORAGE = sessionStorage;
@@ -843,7 +822,7 @@ await context.addInitScript(storage => {
     }
   }
 }, sessionStorage);
-``` -->
+```
 
 ```java
 // Get session storage and store as env variable
@@ -916,21 +895,18 @@ await context.AddInitScriptAsync(@"(storage => {
 ```
 
 ### API reference
-* langs: csharp, python, java
 - [`method: BrowserContext.storageState`]
 - [`method: Browser.newContext`]
 - [`method: Page.evaluate`]
 - [`method: BrowserContext.addInitScript`]
 
 ## Multi-factor authentication
-* langs: csharp, python, java
 
 Accounts with multi-factor authentication (MFA) cannot be fully automated, and need
 manual intervention. Persistent authentication can be used to partially automate
 MFA scenarios.
 
 ### Persistent authentication
-* langs: csharp, python, java
 
 Note that persistent authentication is not suited for CI environments since it
 relies on a disk location. User data directories are specific to browser types
@@ -938,13 +914,13 @@ and cannot be shared across browser types.
 
 User data directories can be used with the [`method: BrowserType.launchPersistentContext`] API.
 
-<!-- ```js
+```js
 const { chromium } = require('playwright');
 
 const userDataDir = '/path/to/directory';
 const context = await chromium.launchPersistentContext(userDataDir, { headless: false });
 // Execute login steps manually in the browser window
-``` -->
+```
 
 ```java
 import com.microsoft.playwright.*;
@@ -1002,13 +978,11 @@ class Program
 ```
 
 ### Lifecycle
-* langs: csharp, python, java
 
 1. Create a user data directory on disk.
-1. Launch a persistent context with the user data directory and login the MFA account.
-1. Reuse user data directory to run automation scenarios.
+2. Launch a persistent context with the user data directory and login the MFA account.
+3. Reuse user data directory to run automation scenarios.
 
 ### API reference
-* langs: csharp, python, java
 - [BrowserContext]
 - [`method: BrowserType.launchPersistentContext`]
