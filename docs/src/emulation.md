@@ -539,3 +539,4 @@ await page.EmulateMediaAsync(new()
 ### API reference
 - [`method: Browser.newContext`]
 - [`method: Page.emulateMedia`]
+  
