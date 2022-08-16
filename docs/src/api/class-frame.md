@@ -449,7 +449,7 @@ the flaky tests. Use [`method: Locator.evaluate`], other [Locator] helper method
 :::
 
 The method finds an element matching the specified selector within the frame and passes it as a first argument to
-[`param: expression`]. See [Working with selectors](../locators.md#selectors) for more details. If no
+[`param: expression`]. See [Working with selectors](../selectors.md) for more details. If no
 elements match the selector, the method throws an error.
 
 If [`param: expression`] returns a [Promise], then [`method: Frame.evalOnSelector`] would wait for the promise to resolve and return its
@@ -514,7 +514,7 @@ In most cases, [`method: Locator.evaluateAll`], other [Locator] helper methods a
 :::
 
 The method finds all elements matching the specified selector within the frame and passes an array of matched elements
-as a first argument to [`param: expression`]. See [Working with selectors](../locators.md#selectors) for
+as a first argument to [`param: expression`]. See [Working with selectors](../selectors.md) for
 more details.
 
 If [`param: expression`] returns a [Promise], then [`method: Frame.evalOnSelectorAll`] would wait for the promise to resolve and return its
@@ -1222,7 +1222,7 @@ The use of [ElementHandle] is discouraged, use [Locator] objects and web-first a
 :::
 
 The method finds an element matching the specified selector within the frame. See
-[Working with selectors](../locators.md#selectors) for more details. If no elements match the selector,
+[Working with selectors](../selectors.md) for more details. If no elements match the selector,
 returns `null`.
 
 ### param: Frame.querySelector.selector = %%-query-selector-%%
@@ -1245,7 +1245,7 @@ The use of [ElementHandle] is discouraged, use [Locator] objects instead.
 :::
 
 The method finds all elements matching the specified selector within the frame. See
-[Working with selectors](../locators.md#selectors) for more details. If no elements match the selector,
+[Working with selectors](../selectors.md) for more details. If no elements match the selector,
 returns empty array.
 
 ### param: Frame.querySelectorAll.selector = %%-query-selector-%%
