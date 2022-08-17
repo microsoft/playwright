@@ -240,3 +240,13 @@ it('should always round down', async ({ page }) => {
   await page.mouse.click(50.1, 50.9);
   expect(await page.evaluate('result')).toEqual([50, 50]);
 });
+
+it('should not crash on mouse drag with any button', async ({ page, browserName, isMac }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16609' });
+  it.fixme(isMac && browserName === 'webkit');
+  for (const button of ['left', 'middle', 'right'] as ('left'|'right'|'middle')[]) {
+    await page.mouse.move(50, 50);
+    await page.mouse.down({ button });
+    await page.mouse.move(100, 100);
+  }
+});
