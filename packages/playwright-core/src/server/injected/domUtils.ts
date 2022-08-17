@@ -75,6 +75,7 @@ export function isElementVisible(element: Element): boolean {
   // Element.checkVisibility checks for content-visibility and also looks at
   // styles up the flat tree including user-agent ShadowRoots, such as the
   // details element for example.
+  // @ts-ignore Typescript doesn't know that checkVisibility exists yet.
   if (Element.prototype.checkVisibility && !element.checkVisibility())
     return false;
   const rect = element.getBoundingClientRect();
