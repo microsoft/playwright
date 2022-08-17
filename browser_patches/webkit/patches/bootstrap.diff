@@ -2315,7 +2315,7 @@ diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm b/So
 index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d768ace22 100644
 --- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
 +++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
-@@ -198,6 +198,7 @@ - (void)sendEndIfNeeded
+@@ -198,6 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidChange:(BOOL)available
  {
@@ -2323,7 +2323,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      if (available || !_task)
-@@ -211,6 +212,7 @@ - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidC
+@@ -211,6 +212,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTranscription:(SFTranscription *)transcription
  {
@@ -2331,7 +2331,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      [self sendSpeechStartIfNeeded];
-@@ -219,6 +221,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTran
+@@ -219,6 +221,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecognition:(SFSpeechRecognitionResult *)recognitionResult
  {
@@ -2339,7 +2339,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
      [self callbackWithTranscriptions:recognitionResult.transcriptions isFinal:YES];
  
-@@ -230,6 +233,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecogniti
+@@ -230,6 +233,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  - (void)speechRecognitionTaskWasCancelled:(SFSpeechRecognitionTask *)task
  {
@@ -9078,7 +9078,7 @@ diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/
 index d8eeb6c27a92134728ffada573a1f140e303c727..9ddddb0796cc00d7eea060b11919711446a39586 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
-@@ -720,7 +720,7 @@ - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didRece
+@@ -720,7 +720,7 @@ void NetworkSessionCocoa::setClientAuditToken(const WebCore::AuthenticationChall
  
      if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
          sessionCocoa->setClientAuditToken(challenge);
@@ -10495,7 +10495,7 @@ index 67c2480832991ff512fd49b0195cc195e85794e2..619c8a85bd1bdb14a593f15fa02ae90b
  #import <WebCore/Credential.h>
  #import <WebCore/RegistrationDatabase.h>
  #import <WebCore/ServiceWorkerClientData.h>
-@@ -234,6 +235,11 @@ - (void)removeDataOfTypes:(NSSet *)dataTypes modifiedSince:(NSDate *)date comple
+@@ -234,6 +235,11 @@ static WallTime toSystemClockTime(NSDate *date)
      });
  }
  
@@ -10674,7 +10674,7 @@ diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm b/
 index 2e235bb880c638a0e74256b6d66cb0244ea0a3f1..3471eebb47e860f7c2071d0e7f2691c9f0a6355d 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
-@@ -257,6 +257,16 @@ - (BOOL)processSwapsOnNavigation
+@@ -257,6 +257,16 @@
      return _processPoolConfiguration->processSwapsOnNavigation();
  }
  
@@ -18670,10 +18670,10 @@ index 0000000000000000000000000000000000000000..6113f4cd60a5d72b8ead61176cb43200
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..cf8417ab83cdd06b24420838119d68cd4073dd76
+index 0000000000000000000000000000000000000000..b91811b37f892e10ec3ad50693e514682c75e91d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/mac/WebPageInspectorInputAgentMac.mm
-@@ -0,0 +1,127 @@
+@@ -0,0 +1,130 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -18732,9 +18732,9 @@ index 0000000000000000000000000000000000000000..cf8417ab83cdd06b24420838119d68cd
 +    NSWindow *window = m_page.platformWindow();
 +    NSInteger windowNumber = window.windowNumber;
 +
-+    NSEventType downEventType = (NSEventType)0;
-+    NSEventType dragEventType = (NSEventType)0;
-+    NSEventType upEventType = (NSEventType)0;
++    NSEventType downEventType;
++    NSEventType dragEventType;
++    NSEventType upEventType;
 +
 +    if (!button || button == "none"_s) {
 +        downEventType = NSEventTypeMouseMoved;
@@ -18750,25 +18750,28 @@ index 0000000000000000000000000000000000000000..cf8417ab83cdd06b24420838119d68cd
 +        upEventType = NSEventTypeOtherMouseUp;
 +    } else if (button == "right"_s) {
 +        downEventType = NSEventTypeRightMouseDown;
++        dragEventType = NSEventTypeRightMouseDragged;
 +        upEventType = NSEventTypeRightMouseUp;
++    } else {
++        return;
 +    }
 +
 +    NSInteger eventNumber = 0;
 +
-+    NSEvent* event = nil;
++    NSEvent* event;
 +    if (type == "move"_s) {
 +        event = [NSEvent mouseEventWithType:dragEventType location:locationInWindow modifierFlags:modifiers timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:eventNumber clickCount:clickCount pressure:0.0f];
 +    } else if (type == "down"_s) {
 +        event = [NSEvent mouseEventWithType:downEventType location:locationInWindow modifierFlags:modifiers timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:eventNumber clickCount:clickCount pressure:WebCore::ForceAtClick];
 +    } else if (type == "up"_s) {
 +        event = [NSEvent mouseEventWithType:upEventType location:locationInWindow modifierFlags:modifiers timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:eventNumber clickCount:clickCount pressure:0.0f];
++    } else {
++        return;
 +    }
 +
-+    if (event) {
-+        NativeWebMouseEvent nativeEvent(event, nil, [window contentView]);
-+        nativeEvent.playwrightSetButtons(buttons);
-+        m_page.handleMouseEvent(nativeEvent);
-+    }
++    NativeWebMouseEvent nativeEvent(event, nil, [window contentView]);
++    nativeEvent.playwrightSetButtons(buttons);
++    m_page.handleMouseEvent(nativeEvent);
 +}
 +
 +void WebPageInspectorInputAgent::platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& commands, WallTime timestamp)
@@ -21024,7 +21027,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegac
 index 78a6e84a1dc04f81b5c266f08ce25f13311d78f2..3136508a043a1b1fd9f7415c551d865710850aa0 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
-@@ -4208,7 +4208,7 @@ - (void)mouseDown:(WebEvent *)event
+@@ -4208,7 +4208,7 @@ static BOOL currentScrollIsBlit(NSView *clipView)
      _private->handlingMouseDownEvent = NO;
  }
  
@@ -21037,7 +21040,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebView.mm b/Source/WebKitLegacy/ma
 index 48cc5be9887a698f2bae9261598c08b55705cff8..55904a59760c3a1f987e07db8f5d40d5efa66368 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebView.mm
-@@ -4035,7 +4035,7 @@ + (void)_doNotStartObservingNetworkReachability
+@@ -4035,7 +4035,7 @@ IGNORE_WARNINGS_END
  }
  #endif // PLATFORM(IOS_FAMILY)
  
@@ -21046,7 +21049,7 @@ index 48cc5be9887a698f2bae9261598c08b55705cff8..55904a59760c3a1f987e07db8f5d40d5
  
  - (NSArray *)_touchEventRegions
  {
-@@ -4077,7 +4077,7 @@ - (NSArray *)_touchEventRegions
+@@ -4077,7 +4077,7 @@ IGNORE_WARNINGS_END
      }).autorelease();
  }
  
