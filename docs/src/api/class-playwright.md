@@ -233,7 +233,7 @@ Exposes API that can be used for the Web API testing.
 - type: <[Selectors]>
 
 Selectors can be used to install custom selector engines. See
-[Working with selectors](../locators.md#selectors) for more information.
+[Working with selectors](../selectors.md) for more information.
 
 ## property: Playwright.webkit
 * since: v1.8

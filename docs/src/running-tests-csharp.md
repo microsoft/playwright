@@ -58,7 +58,7 @@ For more information see [selective unit tests](https://docs.microsoft.com/en-us
 
 ## Debugging Tests
 
-Since Playwright runs in .NET, you can debug it with your debugger of choice in e.g. Visual Studio Code or Visual Studio. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./locators.md#selectors).
+Since Playwright runs in .NET, you can debug it with your debugger of choice in e.g. Visual Studio Code or Visual Studio. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./selectors.md).
 
 ```bash tab=bash-bash lang=csharp
 PWDEBUG=1 dotnet test
