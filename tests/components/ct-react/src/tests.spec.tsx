@@ -6,12 +6,48 @@ import Button from './components/Button';
 import DefaultChildren from './components/DefaultChildren';
 import MultipleChildren from './components/MultipleChildren';
 import MultiRoot from './components/MultiRoot';
+import Counter from './components/Counter';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('props should work', async ({ mount }) => {
   const component = await mount(<Button title="Submit" />);
   await expect(component).toContainText('Submit');
+});
+
+test('renderer updates props without remounting', async ({ mount }) => {
+  const component = await mount(<Counter count={9001} />)
+  await expect(component.locator('#props')).toContainText('9001')
+
+  await component.rerender(<Counter count={1337} />)
+  await expect(component).not.toContainText('9001')
+  await expect(component.locator('#props')).toContainText('1337')
+
+  await expect(component.locator('#remount-count')).toContainText('1')
+});
+
+test('renderer updates callbacks without remounting', async ({ mount }) => {
+  const component = await mount(<Counter />)
+
+  const messages: string[] = []
+  await component.rerender(<Counter onClick={message => { 
+    messages.push(message) 
+  }} />)
+  await component.click();
+  expect(messages).toEqual(['hello'])
+
+  await expect(component.locator('#remount-count')).toContainText('1')
+});
+
+test('renderer updates slots without remounting', async ({ mount }) => {
+  const component = await mount(<Counter>Default Slot</Counter>)
+  await expect(component).toContainText('Default Slot')
+
+  await component.rerender(<Counter>Test Slot</Counter>)
+  await expect(component).not.toContainText('Default Slot')
+  await expect(component).toContainText('Test Slot')
+
+  await expect(component.locator('#remount-count')).toContainText('1')
 });
 
 test('callback should work', async ({ mount }) => {
