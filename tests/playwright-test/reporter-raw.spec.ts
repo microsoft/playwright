@@ -104,7 +104,7 @@ test('should save attachments', async ({ runInlineTest }, testInfo) => {
   const json = JSON.parse(fs.readFileSync(testInfo.outputPath('test-results', 'report', 'project.report'), 'utf-8'));
   const result = json.suites[0].tests[0].results[0];
   expect(result.attachments[0].name).toBe('binary');
-  expect(Buffer.from(result.attachments[0].body, 'base64')).toEqual(Buffer.from([1,2,3]));
+  expect(Buffer.from(result.attachments[0].body, 'base64')).toEqual(Buffer.from([1, 2, 3]));
   expect(result.attachments[1].name).toBe('text');
   const path2 = result.attachments[1].path;
   expect(path2).toBe('dummy-path');

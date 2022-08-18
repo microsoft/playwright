@@ -432,7 +432,7 @@ async function launchContext(options: Options, headless: boolean, executablePath
   // Viewport size
   if (options.viewportSize) {
     try {
-      const [ width, height ] = options.viewportSize.split(',').map(n => parseInt(n, 10));
+      const [width, height] = options.viewportSize.split(',').map(n => parseInt(n, 10));
       contextOptions.viewport = { width, height };
     } catch (e) {
       console.log('Invalid window size format: use "width, height", for example --window-size=800,600');

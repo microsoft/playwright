@@ -447,7 +447,7 @@ function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefi
   if (!reporters)
     return;
   if (typeof reporters === 'string')
-    return [ [reporters] ];
+    return [[reporters]];
   return reporters;
 }
 
@@ -631,7 +631,7 @@ export const baseFullConfig: FullConfigInternal = {
   metadata: {},
   preserveOutput: 'always',
   projects: [],
-  reporter: [ [process.env.CI ? 'dot' : 'list'] ],
+  reporter: [[process.env.CI ? 'dot' : 'list']],
   reportSlowTests: { max: 5, threshold: 15000 },
   rootDir: path.resolve(process.cwd()),
   quiet: false,
@@ -652,7 +652,7 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
   return toReporters(reporters as any)?.map(([id, arg]) => {
     if (builtInReporters.includes(id as any))
       return [id, arg];
-    return [require.resolve(id, { paths: [ rootDir ] }), arg];
+    return [require.resolve(id, { paths: [rootDir] }), arg];
   });
 }
 

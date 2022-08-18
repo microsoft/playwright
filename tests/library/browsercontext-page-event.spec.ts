@@ -179,7 +179,7 @@ it('should work with Ctrl-clicking', async ({ browser, server, isMac, browserNam
   await page.setContent('<a href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
     context.waitForEvent('page'),
-    page.click('a', { modifiers: [ isMac ? 'Meta' : 'Control'] }),
+    page.click('a', { modifiers: [isMac ? 'Meta' : 'Control'] }),
   ]);
   expect(await popup.opener()).toBe(null);
   await context.close();
@@ -194,7 +194,7 @@ it('should not hang on ctrl-click during provisional load', async ({ context, pa
   server.setRoute('/slow.html', () => {});
   const [popup] = await Promise.all([
     context.waitForEvent('page'),
-    server.waitForRequest('/slow.html').then(() => page.click('a', { modifiers: [ isMac ? 'Meta' : 'Control'] })),
+    server.waitForRequest('/slow.html').then(() => page.click('a', { modifiers: [isMac ? 'Meta' : 'Control'] })),
     page.evaluate(url => setTimeout(() => location.href = url, 0), server.CROSS_PROCESS_PREFIX + '/slow.html'),
   ]);
   expect(popup).toBeTruthy();

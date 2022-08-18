@@ -185,7 +185,7 @@ export class Dispatcher {
       doneCallback();
     };
 
-    const remainingByTestId = new Map(testGroup.tests.map(e => [ e.id, e ]));
+    const remainingByTestId = new Map(testGroup.tests.map(e => [e.id, e]));
     const failedTestIds = new Set<string>();
 
     const onWatchTestResolved = (params: WatchTestResolvedPayload) => {

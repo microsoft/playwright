@@ -163,7 +163,7 @@ export class FFBrowserContext extends BrowserContext {
   override async _initialize() {
     assert(!this._ffPages().length);
     const browserContextId = this._browserContextId;
-    const promises: Promise<any>[] = [ super._initialize() ];
+    const promises: Promise<any>[] = [super._initialize()];
     promises.push(this._browser._connection.send('Browser.setDownloadOptions', {
       browserContextId,
       downloadOptions: {

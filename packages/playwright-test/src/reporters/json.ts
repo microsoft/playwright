@@ -149,7 +149,7 @@ class JSONReporter implements Reporter {
       title: test.title,
       ok: test.ok(),
       tags: (test.title.match(/@[\S]+/g) || []).map(t => t.substring(1)),
-      tests: [ this._serializeTest(test) ],
+      tests: [this._serializeTest(test)],
       id: test.id,
       ...this._relativeLocation(test.location),
     };

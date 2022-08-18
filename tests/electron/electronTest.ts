@@ -52,7 +52,7 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
   newWindow: async ({ electronApp }, run) => {
     const windows: Page[] = [];
     await run(async () => {
-      const [ window ] = await Promise.all([
+      const [window] = await Promise.all([
         electronApp.waitForEvent('window'),
         electronApp.evaluate(async electron => {
           // Avoid "Error: Cannot create BrowserWindow before app is ready".

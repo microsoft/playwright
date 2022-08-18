@@ -132,7 +132,7 @@ export class BaseReporter implements ReporterInternal  {
     fileDurations.sort((a, b) => b[1] - a[1]);
     const count = Math.min(fileDurations.length, this.config.reportSlowTests.max || Number.POSITIVE_INFINITY);
     const threshold =  this.config.reportSlowTests.threshold;
-    return fileDurations.filter(([,duration]) => duration > threshold).slice(0, count);
+    return fileDurations.filter(([, duration]) => duration > threshold).slice(0, count);
   }
 
   protected generateSummaryMessage({ skipped, expected, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {

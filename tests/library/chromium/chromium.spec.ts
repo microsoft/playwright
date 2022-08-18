@@ -72,14 +72,14 @@ test('should emit new service worker on update', async ({ context, page, server 
     res.end();
   });
 
-  const [ sw ] = await Promise.all([
+  const [sw] = await Promise.all([
     context.waitForEvent('serviceworker'),
     page.goto(server.PREFIX + '/home'),
   ]);
 
   await expect.poll(() => sw.evaluate(() => self['PW_VERSION'])).toBe(0);
 
-  const [ updatedSW ] = await Promise.all([
+  const [updatedSW] = await Promise.all([
     context.waitForEvent('serviceworker'),
     page.click('#update'),
   ]);
@@ -223,7 +223,7 @@ playwrightTest('should connectOverCDP and manage downloads in default context', 
     const page = await browser.contexts()[0].newPage();
     await page.setContent(`<a href="${server.PREFIX}/downloadWithFilename">download</a>`);
 
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -692,7 +692,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
       })
     );
 
-    const [ sw ] = await Promise.all([
+    const [sw] = await Promise.all([
       context.waitForEvent('serviceworker'),
       context.waitForEvent('response', r => r.url().endsWith('/request-from-within-worker')),
       context.waitForEvent('request', r => r.url().endsWith('sw.js') && !!r.serviceWorker()),
@@ -752,7 +752,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
       })
     );
 
-    const [ sw ] = await Promise.all([
+    const [sw] = await Promise.all([
       context.waitForEvent('serviceworker'),
       context.waitForEvent('response', r => r.url().endsWith('/import.js')),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
@@ -787,7 +787,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
       })
     );
 
-    const [ sw ] = await Promise.all([
+    const [sw] = await Promise.all([
       context.waitForEvent('serviceworker'),
       context.waitForEvent('response', r => r.url().endsWith('/request-from-within-worker')),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
@@ -822,13 +822,13 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
       }
     });
 
-    const [ sw ] = await Promise.all([
+    const [sw] = await Promise.all([
       context.waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html'),
     ]);
     await page.evaluate(() => window['activationPromise']);
     const response = await page.evaluate(() => fetch('/data.json').then(r => r.text()));
-    const [ url ] = await sw.evaluate(() => self['intercepted']);
+    const [url] = await sw.evaluate(() => self['intercepted']);
     expect(url).toMatch(/\/data\.json$/);
     expect(response).toBe('from sw');
   });
@@ -873,7 +873,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
     page.on('request', r => requests.push(['page', r]));
     context.on('request', r => requests.push(['context', r]));
 
-    const [ sw ] = await Promise.all([
+    const [sw] = await Promise.all([
       context.waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/index.html'),
     ]);
@@ -966,7 +966,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
     page.on('request', r => requests.push(['page', r]));
     context.on('request', r => requests.push(['context', r]));
 
-    const [ sw ] = await Promise.all([
+    const [sw] = await Promise.all([
       context.waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/index.html'),
     ]);
@@ -996,7 +996,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
           '| [`event: Page.request`]           | [Frame]          | tracker.js                     |        | Yes                                    |',
           '| [`event: BrowserContext.request`] | Service [Worker] | fallthrough.txt                | Yes    |                                        |',
           '| [`event: BrowserContext.request`] | [Frame]          | fallthrough.txt                |        | Yes                                    |',
-          '| [`event: Page.request`]           | [Frame]          | fallthrough.txt                |        | Yes                                    |'  ]);
+          '| [`event: Page.request`]           | [Frame]          | fallthrough.txt                |        | Yes                                    |']);
   });
 
   test('should intercept service worker update requests', async ({ context, page, server }) => {
@@ -1035,7 +1035,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
       res.end();
     });
 
-    const [ sw ] = await Promise.all([
+    const [sw] = await Promise.all([
       context.waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/home'),
     ]);
@@ -1051,7 +1051,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
       });
     });
 
-    const [ updatedSW ] = await Promise.all([
+    const [updatedSW] = await Promise.all([
       context.waitForEvent('serviceworker'),
       // currently times out here
       context.waitForEvent('request', r => r.url().endsWith('worker.js')),
@@ -1069,7 +1069,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
 
     await page.evaluate(() => window['activationPromise']);
     await context.setOffline(true);
-    const [,error] = await Promise.all([
+    const [, error] = await Promise.all([
       context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !!r.serviceWorker()),
       worker.evaluate(() => fetch('/inner.txt').catch(e => `REJECTED: ${e}`)),
     ]);

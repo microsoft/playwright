@@ -123,7 +123,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     cleanup().then(fulfillCleanup);
   });
 
-  const listeners = [ eventsHelper.addEventListener(process, 'exit', killProcessAndCleanup) ];
+  const listeners = [eventsHelper.addEventListener(process, 'exit', killProcessAndCleanup)];
   if (options.handleSIGINT) {
     listeners.push(eventsHelper.addEventListener(process, 'SIGINT', () => {
       gracefullyClose().then(() => {

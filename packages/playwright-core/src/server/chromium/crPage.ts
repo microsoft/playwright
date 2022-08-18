@@ -496,7 +496,7 @@ class FrameSession {
           this._handleFrameTree(frameTree);
           this._addRendererListeners();
         }
-        const localFrames = this._isMainFrame() ? this._page.frames() : [ this._page._frameManager.frame(this._targetId)! ];
+        const localFrames = this._isMainFrame() ? this._page.frames() : [this._page._frameManager.frame(this._targetId)!];
         for (const frame of localFrames) {
           // Note: frames might be removed before we send these.
           this._client._sendMayFail('Page.createIsolatedWorld', {
@@ -822,7 +822,7 @@ class FrameSession {
   }
 
   async _initBinding(binding: PageBinding) {
-    const [ , response ] = await Promise.all([
+    const [, response] = await Promise.all([
       this._client.send('Runtime.addBinding', { name: binding.name }),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: binding.source })
     ]);

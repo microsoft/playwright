@@ -222,7 +222,7 @@ it('should work when file input is attached to DOM', async ({ page, server }) =>
 });
 
 it('should work when file input is not attached to DOM', async ({ page, asset }) => {
-  const [,content] = await Promise.all([
+  const [, content] = await Promise.all([
     page.waitForEvent('filechooser').then(chooser => chooser.setFiles(asset('file-to-upload.txt'))),
     page.evaluate(async () => {
       const el = document.createElement('input');

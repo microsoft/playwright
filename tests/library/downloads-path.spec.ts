@@ -33,7 +33,7 @@ it.describe('downloads path', () => {
     const downloadsBrowser = await browserType.launch({ downloadsPath: testInfo.outputPath('') });
     const page = await downloadsBrowser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -49,7 +49,7 @@ it.describe('downloads path', () => {
     const downloadsBrowser = await browserType.launch({ downloadsPath: testInfo.outputPath('') });
     const page = await downloadsBrowser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -64,7 +64,7 @@ it.describe('downloads path', () => {
     const downloadsBrowser = await browserType.launch({ downloadsPath: testInfo.outputPath('') });
     const page = await downloadsBrowser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -78,7 +78,7 @@ it.describe('downloads path', () => {
     const downloadsBrowser = await browserType.launch({ downloadsPath: path.relative(process.cwd(), testInfo.outputPath('')) });
     const page = await downloadsBrowser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -91,7 +91,7 @@ it.describe('downloads path', () => {
   it('should accept downloads in persistent context', async ({ launchPersistent, server }, testInfo)  => {
     const { context, page } = await launchPersistent({ downloadsPath: testInfo.outputPath('') });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a'),
     ]);
@@ -105,7 +105,7 @@ it.describe('downloads path', () => {
   it('should delete downloads when persistent context closes', async ({ launchPersistent, server }, testInfo) => {
     const { context, page } = await launchPersistent({ downloadsPath: testInfo.outputPath('') });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a'),
     ]);

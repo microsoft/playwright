@@ -81,7 +81,7 @@ it('should not affect mouse event target page', async ({ page, server }) => {
     page.evaluate('window.clickCount'),
     page2.evaluate('window.clickCount'),
   ]);
-  expect(counters).toEqual([1,1]);
+  expect(counters).toEqual([1, 1]);
 });
 
 it('should change document.activeElement', async ({ page, server }) => {

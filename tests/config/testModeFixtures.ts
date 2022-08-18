@@ -32,8 +32,8 @@ export type TestModeWorkerFixtures = {
 };
 
 export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOptions & TestModeWorkerFixtures>({
-  mode: [ 'default', { scope: 'worker', option: true } ],
-  playwright: [ async ({ mode }, run) => {
+  mode: ['default', { scope: 'worker', option: true }],
+  playwright: [async ({ mode }, run) => {
     const testMode = {
       default: new DefaultTestMode(),
       service: new DefaultTestMode(),
@@ -44,7 +44,7 @@ export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOpti
     const playwright = await testMode.setup();
     await run(playwright);
     await testMode.teardown();
-  }, { scope: 'worker' } ],
+  }, { scope: 'worker' }],
 
   toImplInWorkerScope: [async ({ playwright }, use) => {
     await use((playwright as any)._toImpl);

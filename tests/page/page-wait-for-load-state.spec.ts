@@ -169,7 +169,7 @@ it('should work for frame', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.frames()[1];
 
-  const requestPromise = new Promise<Route>(resolve => page.route(server.PREFIX + '/one-style.css',resolve));
+  const requestPromise = new Promise<Route>(resolve => page.route(server.PREFIX + '/one-style.css', resolve));
   await frame.goto(server.PREFIX + '/one-style.html', { waitUntil: 'domcontentloaded' });
   const request = await requestPromise;
   let resolved = false;

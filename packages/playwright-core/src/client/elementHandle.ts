@@ -244,7 +244,7 @@ export function convertSelectOptionValues(values: string | api.ElementHandle | S
   if (values === null)
     return {};
   if (!Array.isArray(values))
-    values = [ values as any ];
+    values = [values as any];
   if (!values.length)
     return {};
   for (let i = 0; i < values.length; i++)
@@ -263,7 +263,7 @@ type InputFilesList = {
   streams?: channels.WritableStreamChannel[];
 };
 export async function convertInputFiles(files: string | FilePayload | string[] | FilePayload[], context: BrowserContext): Promise<InputFilesList> {
-  const items: (string | FilePayload)[] = Array.isArray(files) ? files.slice() : [ files ];
+  const items: (string | FilePayload)[] = Array.isArray(files) ? files.slice() : [files];
 
   const sizeLimit = 50 * 1024 * 1024;
   const hasLargeBuffer = items.find(item => typeof item === 'object' && item.buffer && item.buffer.byteLength > sizeLimit);

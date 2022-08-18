@@ -171,7 +171,7 @@ export class Electron extends SdkObject {
         },
         stdio: 'pipe',
         cwd: options.cwd,
-        tempDirectories: [ artifactsDir ],
+        tempDirectories: [artifactsDir],
         attemptToGracefullyClose: () => app!.close(),
         handleSIGINT: true,
         handleSIGTERM: true,

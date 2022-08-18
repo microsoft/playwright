@@ -79,6 +79,9 @@ module.exports = {
         // spacing details
         "space-infix-ops": 2,
         "space-in-parens": [2, "never"],
+        "array-bracket-spacing": [2, "never"],
+        "comma-spacing": [2, { "before": false, "after": true }],
+        "keyword-spacing": [2, "always"],
         "space-before-function-paren": [2, {
             "anonymous": "never",
             "named": "never",

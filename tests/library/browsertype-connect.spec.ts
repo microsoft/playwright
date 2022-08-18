@@ -26,7 +26,7 @@ import formidable from 'formidable';
 
 test.slow(true, 'All connect tests are slow');
 
-test('should connect over wss', async ({ browserType , startRemoteServer, httpsServer, mode }) => {
+test('should connect over wss', async ({ browserType, startRemoteServer, httpsServer, mode }) => {
   test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.
   const remoteServer = await startRemoteServer();
 
@@ -422,7 +422,7 @@ test('should save download', async ({ server, browserType, startRemoteServer }, 
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage();
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-  const [ download ] = await Promise.all([
+  const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
@@ -446,7 +446,7 @@ test('should error when saving download after deletion', async ({ server, browse
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage();
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-  const [ download ] = await Promise.all([
+  const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);

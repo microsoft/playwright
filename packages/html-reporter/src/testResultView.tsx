@@ -76,7 +76,7 @@ export const TestResultView: React.FC<{
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
     const diffs = groupImageDiffs(screenshots);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs };
-  }, [ result ]);
+  }, [result]);
 
   const videoRef = React.useRef<HTMLDivElement>(null);
   const imageDiffRef = React.useRef<HTMLDivElement>(null);
