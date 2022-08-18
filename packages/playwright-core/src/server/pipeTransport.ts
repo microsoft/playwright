@@ -88,6 +88,6 @@ export class PipeTransport implements ConnectionTransport {
       start = end + 1;
       end = buffer.indexOf('\0', start);
     }
-    this._pendingBuffers = [ buffer.slice(start) ];
+    this._pendingBuffers = [buffer.slice(start)];
   }
 }
