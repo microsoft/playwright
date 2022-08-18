@@ -125,7 +125,6 @@ it('should emulate reduced motion', async ({ page }) => {
 });
 
 it('should emulate forcedColors ', async ({ page, browserName }) => {
-  it.skip(browserName === 'webkit', 'https://bugs.webkit.org/show_bug.cgi?id=225281');
   expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(true);
   await page.emulateMedia({ forcedColors: 'none' });
   expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(true);

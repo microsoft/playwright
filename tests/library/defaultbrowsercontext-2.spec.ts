@@ -46,7 +46,6 @@ it('should support reducedMotion option', async ({ launchPersistent }) => {
 });
 
 it('should support forcedColors option', async ({ launchPersistent, browserName }) => {
-  it.skip(browserName === 'webkit', 'https://bugs.webkit.org/show_bug.cgi?id=225281');
   const { page } = await launchPersistent({ forcedColors: 'active' });
   expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(false);

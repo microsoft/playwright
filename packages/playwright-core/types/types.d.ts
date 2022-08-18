@@ -2249,8 +2249,6 @@ export interface Page {
     /**
      * Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables forced
      * colors emulation.
-     *
-     * > NOTE: It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
      */
     forcedColors?: null|"active"|"none";
 
@@ -10541,8 +10539,6 @@ export interface BrowserType<Unused = {}> {
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
      * to `'none'`.
-     *
-     * > NOTE: It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
      */
     forcedColors?: "active"|"none";
 
@@ -11802,8 +11798,6 @@ export interface AndroidDevice {
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
      * to `'none'`.
-     *
-     * > NOTE: It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
      */
     forcedColors?: "active"|"none";
 
@@ -13366,8 +13360,6 @@ export interface Browser extends EventEmitter {
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
      * to `'none'`.
-     *
-     * > NOTE: It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
      */
     forcedColors?: "active"|"none";
 
@@ -16015,8 +16007,6 @@ export interface BrowserContextOptions {
    * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
    * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
    * to `'none'`.
-   *
-   * > NOTE: It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
    */
   forcedColors?: "active"|"none";
 
