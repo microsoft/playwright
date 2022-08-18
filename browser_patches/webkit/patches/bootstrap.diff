@@ -983,7 +983,7 @@ index 96af27ece2ac200e11c4311b3ca0d9d3b5a048da..3168f7806fcbdabec07acc5e304bae1e
      ],
      "events": [
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61ed836918 100644
+index 1c97ad011c5ec183a5866bb98319badd5ec9442f..ee9972dbf3628aa5dd3fc4948fbda0f443136f80 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -21,7 +21,14 @@
@@ -1002,7 +1002,7 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
              ]
          },
          {
-@@ -49,6 +56,12 @@
+@@ -49,6 +56,18 @@
              "enum": ["Light", "Dark"],
              "description": "Page appearance name."
          },
@@ -1012,10 +1012,16 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
 +            "enum": ["Reduce", "NoPreference"],
 +            "description": "Page reduced-motion media query override."
 +        },
++        {
++            "id": "ForcedColors",
++            "type": "string",
++            "enum": ["Active", "None"],
++            "description": "Page forced-colors media query override."
++        },
          {
              "id": "Frame",
              "type": "object",
-@@ -112,6 +125,51 @@
+@@ -112,6 +131,51 @@
                  { "name": "secure", "type": "boolean", "description": "True if cookie is secure." },
                  { "name": "sameSite", "$ref": "CookieSameSitePolicy", "description": "Cookie Same-Site policy." }
              ]
@@ -1067,7 +1073,7 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
          }
      ],
      "commands": [
-@@ -131,6 +189,14 @@
+@@ -131,6 +195,14 @@
                  { "name": "revalidateAllResources", "type": "boolean", "optional": true, "description": "If true, all cached subresources will be revalidated when the main resource loads. Otherwise, only expired cached subresources will be revalidated (the default behavior for most WebKit clients)." }
              ]
          },
@@ -1082,7 +1088,7 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
          {
              "name": "navigate",
              "description": "Navigates current page to the given URL.",
-@@ -147,6 +213,14 @@
+@@ -147,6 +219,14 @@
                  { "name": "value", "type": "string", "optional": true, "description": "Value to override the user agent with. If this value is not provided, the override is removed. Overrides are removed when Web Inspector closes/disconnects." }
              ]
          },
@@ -1097,7 +1103,7 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
          {
              "name": "overrideSetting",
              "description": "Allows the frontend to override the inspected page's settings.",
-@@ -204,7 +278,8 @@
+@@ -204,7 +284,8 @@
              "name": "setBootstrapScript",
              "targetTypes": ["page"],
              "parameters": [
@@ -1107,7 +1113,7 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
              ]
          },
          {
-@@ -270,6 +345,28 @@
+@@ -270,6 +351,36 @@
                  { "name": "appearance", "$ref": "Appearance", "optional": true }
              ]
          },
@@ -1117,6 +1123,14 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
 +            "targetTypes": ["page"],
 +            "parameters": [
 +                { "name": "reducedMotion", "$ref": "ReducedMotion", "optional": true }
++            ]
++        },
++        {
++            "name": "setForcedForcedColors",
++            "description": "Forces the forced-colors media query for the page.",
++            "targetTypes": ["page"],
++            "parameters": [
++                { "name": "forcedColors", "$ref": "ForcedColors", "optional": true }
 +            ]
 +        },
 +        {
@@ -1136,7 +1150,7 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
          {
              "name": "snapshotNode",
              "description": "Capture a snapshot of the specified node that does not include unrelated layers.",
-@@ -290,7 +387,8 @@
+@@ -290,7 +401,8 @@
                  { "name": "y", "type": "integer", "description": "Y coordinate" },
                  { "name": "width", "type": "integer", "description": "Rectangle width" },
                  { "name": "height", "type": "integer", "description": "Rectangle height" },
@@ -1146,7 +1160,7 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
              ],
              "returns": [
                  { "name": "dataURL", "type": "string", "description": "Base64-encoded image data (PNG)." }
-@@ -308,12 +406,92 @@
+@@ -308,12 +420,92 @@
          {
              "name": "setScreenSizeOverride",
              "description": "Overrides screen size exposed to DOM and used in media queries for testing with provided values.",
@@ -1240,7 +1254,7 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
          }
      ],
      "events": [
-@@ -321,14 +499,16 @@
+@@ -321,14 +513,16 @@
              "name": "domContentEventFired",
              "targetTypes": ["page"],
              "parameters": [
@@ -1259,7 +1273,7 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
              ]
          },
          {
-@@ -338,6 +518,14 @@
+@@ -338,6 +532,14 @@
                  { "name": "frame", "$ref": "Frame", "description": "Frame object." }
              ]
          },
@@ -1274,7 +1288,7 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
          {
              "name": "frameDetached",
              "description": "Fired when frame has been detached from its parent.",
-@@ -377,6 +565,22 @@
+@@ -377,6 +579,22 @@
                  { "name": "frameId", "$ref": "Network.FrameId", "description": "Id of the frame that has cleared its scheduled navigation." }
              ]
          },
@@ -1297,7 +1311,7 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..658937fdc58425b9a164d9bc368a9e61
          {
              "name": "defaultAppearanceDidChange",
              "description": "Fired when page's default appearance changes, even if there is a forced appearance.",
-@@ -385,6 +589,42 @@
+@@ -385,6 +603,42 @@
              "parameters": [
                  { "name": "appearance", "$ref": "Appearance", "description": "Name of the appearance that is active (not considering any forced appearance.)" }
              ]
@@ -2595,10 +2609,24 @@ index 66d16a6e4075540d291204fc6e10fdd41aba0d42..e11edda46dca31abbd9498b0eaeca48a
      macro(DynamicsCompressorNode) \
      macro(ExtendableEvent) \
 diff --git a/Source/WebCore/css/MediaQueryEvaluator.cpp b/Source/WebCore/css/MediaQueryEvaluator.cpp
-index 871eb7cc9333921c4848b909786de27d4b2827b5..6b51751a07b547d13aa4f0c75423e48168bb6a66 100644
+index 871eb7cc9333921c4848b909786de27d4b2827b5..937637c8eed766ceedb0a698376c8c92ebf93d13 100644
 --- a/Source/WebCore/css/MediaQueryEvaluator.cpp
 +++ b/Source/WebCore/css/MediaQueryEvaluator.cpp
-@@ -874,7 +874,11 @@ static bool prefersContrastEvaluate(CSSValue* value, const CSSToLengthConversion
+@@ -489,8 +489,12 @@ static bool scanEvaluate(CSSValue* value, const CSSToLengthConversionData&, Fram
+     return primitiveValue->valueID() == CSSValueProgressive;
+ }
+ 
+-static bool forcedColorsEvaluate(CSSValue* value, const CSSToLengthConversionData&, Frame&, MediaFeaturePrefix)
++static bool forcedColorsEvaluate(CSSValue* value, const CSSToLengthConversionData&, Frame& frame, MediaFeaturePrefix)
+ {
++    std::optional<bool> forcedColorsOverride = frame.page()->useForcedColorsOverride();
++    if (forcedColorsOverride)
++        return downcast<CSSPrimitiveValue>(*value).valueID() == (forcedColorsOverride.value() ? CSSValueActive : CSSValueNone);
++
+     auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value);
+     if (!primitiveValue)
+         return false;
+@@ -874,7 +878,11 @@ static bool prefersContrastEvaluate(CSSValue* value, const CSSToLengthConversion
  static bool prefersReducedMotionEvaluate(CSSValue* value, const CSSToLengthConversionData&, Frame& frame, MediaFeaturePrefix)
  {
      bool userPrefersReducedMotion = false;
@@ -2611,7 +2639,7 @@ index 871eb7cc9333921c4848b909786de27d4b2827b5..6b51751a07b547d13aa4f0c75423e481
      switch (frame.settings().forcedPrefersReducedMotionAccessibilityValue()) {
      case ForcedAccessibilityValue::On:
          userPrefersReducedMotion = true;
-@@ -887,6 +891,7 @@ static bool prefersReducedMotionEvaluate(CSSValue* value, const CSSToLengthConve
+@@ -887,6 +895,7 @@ static bool prefersReducedMotionEvaluate(CSSValue* value, const CSSToLengthConve
  #endif
          break;
      }
@@ -3888,7 +3916,7 @@ index c6ebcc9d7e399a35f71350c9374df0f2107c518b..3bfa03ae7f27d9128fe207c1de1bfea9
      // InspectorInstrumentation
      void willRecalculateStyle();
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index a6e415a9bf47e0f4c98b9f375b3195df287fe67b..2dbdbdee399a1f31b1d71024c916834be24f1729 100644
+index a6e415a9bf47e0f4c98b9f375b3195df287fe67b..1098fce30487bff8df9df4cacd953b445c93272d 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,20 +32,28 @@
@@ -4320,7 +4348,7 @@ index a6e415a9bf47e0f4c98b9f375b3195df287fe67b..2dbdbdee399a1f31b1d71024c916834b
  
      IntRect rectangle(x, y, width, height);
      auto snapshot = snapshotFrameRect(m_inspectedPage.mainFrame(), rectangle, WTFMove(options));
-@@ -1100,6 +1273,47 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
+@@ -1100,6 +1273,67 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::snapshotRect(int x, int y, i
      return snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
  }
  
@@ -4337,6 +4365,26 @@ index a6e415a9bf47e0f4c98b9f375b3195df287fe67b..2dbdbdee399a1f31b1d71024c916834b
 +            return { };
 +        case Protocol::Page::ReducedMotion::NoPreference:
 +            m_inspectedPage.setUseReducedMotionOverride(false);
++            return { };
++    }
++
++    ASSERT_NOT_REACHED();
++    return { };
++}
++
++Protocol::ErrorStringOr<void> InspectorPageAgent::setForcedForcedColors(std::optional<Protocol::Page::ForcedColors>&& forcedColors)
++{
++    if (!forcedColors) {
++        m_inspectedPage.setUseForcedColorsOverride(std::nullopt);
++        return { };
++    }
++
++    switch (*forcedColors) {
++        case Protocol::Page::ForcedColors::Active:
++            m_inspectedPage.setUseForcedColorsOverride(true);
++            return { };
++        case Protocol::Page::ForcedColors::None:
++            m_inspectedPage.setUseForcedColorsOverride(false);
 +            return { };
 +    }
 +
@@ -4368,7 +4416,7 @@ index a6e415a9bf47e0f4c98b9f375b3195df287fe67b..2dbdbdee399a1f31b1d71024c916834b
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
  Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  {
-@@ -1112,7 +1326,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
+@@ -1112,7 +1346,6 @@ Protocol::ErrorStringOr<String> InspectorPageAgent::archive()
  }
  #endif
  
@@ -4376,7 +4424,7 @@ index a6e415a9bf47e0f4c98b9f375b3195df287fe67b..2dbdbdee399a1f31b1d71024c916834b
  Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::optional<int>&& width, std::optional<int>&& height)
  {
      if (width.has_value() != height.has_value())
-@@ -1127,6 +1340,632 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::opt
+@@ -1127,6 +1360,632 @@ Protocol::ErrorStringOr<void> InspectorPageAgent::setScreenSizeOverride(std::opt
      m_inspectedPage.mainFrame().setOverrideScreenSize(FloatSize(width.value_or(0), height.value_or(0)));
      return { };
  }
@@ -5010,7 +5058,7 @@ index a6e415a9bf47e0f4c98b9f375b3195df287fe67b..2dbdbdee399a1f31b1d71024c916834b
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 6d94ad131257d8d7cdb05898fd3f42e0c72766bf..6a85dba5cac19bf0adc93e0015ad223a2c60b5ad 100644
+index 6d94ad131257d8d7cdb05898fd3f42e0c72766bf..e1fa4c6de74630a03c89a5bc34ac53f373f481c9 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -32,19 +32,26 @@
@@ -5068,11 +5116,12 @@ index 6d94ad131257d8d7cdb05898fd3f42e0c72766bf..6a85dba5cac19bf0adc93e0015ad223a
      Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::GenericTypes::SearchMatch>>> searchInResource(const Inspector::Protocol::Network::FrameId&, const String& url, const String& query, std::optional<bool>&& caseSensitive, std::optional<bool>&& isRegex, const Inspector::Protocol::Network::RequestId&);
      Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::Page::SearchResult>>> searchInResources(const String&, std::optional<bool>&& caseSensitive, std::optional<bool>&& isRegex);
  #if !PLATFORM(IOS_FAMILY)
-@@ -115,35 +126,55 @@ public:
+@@ -115,35 +126,56 @@ public:
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      Inspector::Protocol::ErrorStringOr<void> setForcedAppearance(std::optional<Inspector::Protocol::Page::Appearance>&&);
  #endif
 +    Inspector::Protocol::ErrorStringOr<void> setForcedReducedMotion(std::optional<Inspector::Protocol::Page::ReducedMotion>&&);
++    Inspector::Protocol::ErrorStringOr<void> setForcedForcedColors(std::optional<Inspector::Protocol::Page::ForcedColors>&&);
 +    Inspector::Protocol::ErrorStringOr<void> setTimeZone(const String&);
 +    Inspector::Protocol::ErrorStringOr<void> setTouchEmulationEnabled(bool);
      Inspector::Protocol::ErrorStringOr<String> snapshotNode(Inspector::Protocol::DOM::NodeId);
@@ -5130,7 +5179,7 @@ index 6d94ad131257d8d7cdb05898fd3f42e0c72766bf..6a85dba5cac19bf0adc93e0015ad223a
  
      Frame* frameForId(const Inspector::Protocol::Network::FrameId&);
      WEBCORE_EXPORT String frameId(Frame*);
-@@ -152,6 +183,7 @@ public:
+@@ -152,6 +184,7 @@ public:
  
  private:
      double timestamp();
@@ -5138,7 +5187,7 @@ index 6d94ad131257d8d7cdb05898fd3f42e0c72766bf..6a85dba5cac19bf0adc93e0015ad223a
  
      static bool mainResourceContent(Frame*, bool withBase64Encode, String* result);
      static bool dataContent(const uint8_t* data, unsigned size, const String& textEncodingName, bool withBase64Encode, String* result);
-@@ -163,18 +195,20 @@ private:
+@@ -163,18 +196,20 @@ private:
      RefPtr<Inspector::PageBackendDispatcher> m_backendDispatcher;
  
      Page& m_inspectedPage;
@@ -6363,7 +6412,7 @@ index a782c3be51ca113a52482c5a10583c8fa64724ef..1d82dff81be5c5492efb3bfe77d2f259
      if (stateObjectType == StateObjectType::Push) {
          frame->loader().history().pushState(WTFMove(data), title, fullURL.string());
 diff --git a/Source/WebCore/page/Page.cpp b/Source/WebCore/page/Page.cpp
-index d633760e91b4074533a1a33109cb470ae654f66a..d4a00fbfd76c0301ceb3b02ac3378d90e7e2d1ae 100644
+index d633760e91b4074533a1a33109cb470ae654f66a..9cb7150d8a9af8105da6fb7360044ad9658d44e7 100644
 --- a/Source/WebCore/page/Page.cpp
 +++ b/Source/WebCore/page/Page.cpp
 @@ -484,6 +484,37 @@ void Page::setOverrideViewportArguments(const std::optional<ViewportArguments>&
@@ -6415,7 +6464,7 @@ index d633760e91b4074533a1a33109cb470ae654f66a..d4a00fbfd76c0301ceb3b02ac3378d90
      resetSeenPlugins();
      resetSeenMediaEngines();
  
-@@ -3430,6 +3457,16 @@ void Page::setUseDarkAppearanceOverride(std::optional<bool> valueOverride)
+@@ -3430,6 +3457,26 @@ void Page::setUseDarkAppearanceOverride(std::optional<bool> valueOverride)
  #endif
  }
  
@@ -6429,11 +6478,21 @@ index d633760e91b4074533a1a33109cb470ae654f66a..d4a00fbfd76c0301ceb3b02ac3378d90
 +    appearanceDidChange();
 +}
 +
++void Page::setUseForcedColorsOverride(std::optional<bool> valueOverride)
++{
++    if (valueOverride == m_useForcedColorsOverride)
++        return;
++
++    m_useForcedColorsOverride = valueOverride;
++
++    appearanceDidChange();
++}
++
  void Page::setFullscreenInsets(const FloatBoxExtent& insets)
  {
      if (insets == m_fullscreenInsets)
 diff --git a/Source/WebCore/page/Page.h b/Source/WebCore/page/Page.h
-index fcb1b65103388ab6ed15b38e1bb4a91472f37d57..67232845466df8d819f4dea296ae5dd712083fb1 100644
+index fcb1b65103388ab6ed15b38e1bb4a91472f37d57..8dd537ef148e7aa0adb94ad8811c0ae5406dfe68 100644
 --- a/Source/WebCore/page/Page.h
 +++ b/Source/WebCore/page/Page.h
 @@ -285,6 +285,9 @@ public:
@@ -6457,16 +6516,18 @@ index fcb1b65103388ab6ed15b38e1bb4a91472f37d57..67232845466df8d819f4dea296ae5dd7
  #endif
      FocusController& focusController() const { return *m_focusController; }
  #if ENABLE(CONTEXT_MENUS)
-@@ -506,6 +513,8 @@ public:
+@@ -506,6 +513,10 @@ public:
      WEBCORE_EXPORT void effectiveAppearanceDidChange(bool useDarkAppearance, bool useElevatedUserInterfaceLevel);
      bool defaultUseDarkAppearance() const { return m_useDarkAppearance; }
      void setUseDarkAppearanceOverride(std::optional<bool>);
 +    std::optional<bool> useReducedMotionOverride() const { return m_useReducedMotionOverride; }
 +    void setUseReducedMotionOverride(std::optional<bool>);
++    std::optional<bool> useForcedColorsOverride() const { return m_useForcedColorsOverride; }
++    void setUseForcedColorsOverride(std::optional<bool>);
  
  #if ENABLE(TEXT_AUTOSIZING)
      float textAutosizingWidth() const { return m_textAutosizingWidth; }
-@@ -916,6 +925,11 @@ public:
+@@ -916,6 +927,11 @@ public:
      WEBCORE_EXPORT void setInteractionRegionsEnabled(bool);
  #endif
  
@@ -6478,7 +6539,7 @@ index fcb1b65103388ab6ed15b38e1bb4a91472f37d57..67232845466df8d819f4dea296ae5dd7
  #if ENABLE(DEVICE_ORIENTATION) && PLATFORM(IOS_FAMILY)
      DeviceOrientationUpdateProvider* deviceOrientationUpdateProvider() const { return m_deviceOrientationUpdateProvider.get(); }
  #endif
-@@ -1037,6 +1051,9 @@ private:
+@@ -1037,6 +1053,9 @@ private:
  
  #if ENABLE(DRAG_SUPPORT)
      const std::unique_ptr<DragController> m_dragController;
@@ -6488,15 +6549,16 @@ index fcb1b65103388ab6ed15b38e1bb4a91472f37d57..67232845466df8d819f4dea296ae5dd7
  #endif
      const std::unique_ptr<FocusController> m_focusController;
  #if ENABLE(CONTEXT_MENUS)
-@@ -1116,6 +1133,7 @@ private:
+@@ -1116,6 +1135,8 @@ private:
      bool m_useElevatedUserInterfaceLevel { false };
      bool m_useDarkAppearance { false };
      std::optional<bool> m_useDarkAppearanceOverride;
 +    std::optional<bool> m_useReducedMotionOverride;
++    std::optional<bool> m_useForcedColorsOverride;
  
  #if ENABLE(TEXT_AUTOSIZING)
      float m_textAutosizingWidth { 0 };
-@@ -1293,6 +1311,11 @@ private:
+@@ -1293,6 +1314,11 @@ private:
  #endif
  
      std::optional<ViewportArguments> m_overrideViewportArguments;
