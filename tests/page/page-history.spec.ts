@@ -146,7 +146,7 @@ it('page.reload should not resolve with same-document navigation', async ({ page
   expect(await gotResponse.text()).toBe('hello');
 });
 
-it('page.reload should work with same origin redirect', async ({ page, server, browserName }) => {
+it('page.reload should work with same origin redirect', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16147' });
   await page.goto(server.EMPTY_PAGE);
   server.setRedirect('/empty.html', server.PREFIX + '/title.html');
