@@ -60,6 +60,12 @@ createZipForLinux() {
   # copy protocol
   node "$SCRIPTS_DIR"/concat_protocol.js > "$tmpdir"/protocol.json
 
+  # Bundle libstdc++ version that comes from gcc-9. gcc-9 is not default on Ubuntu 18.04
+  if is_linux ubuntu 18.04; then
+    cp /usr/lib/x86_64-linux-gnu/libstdc++.so.6 "${tmpdir}/minibrowser-wpe/lib/libstdc++.so.6"
+    cp /usr/lib/x86_64-linux-gnu/libstdc++.so.6 "${tmpdir}/minibrowser-gtk/lib/libstdc++.so.6"
+  fi
+
   # Generate and unpack MiniBrowser bundles for each port
   for port in gtk wpe; do
     WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/${port^^} \
