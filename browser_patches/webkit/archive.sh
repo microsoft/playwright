@@ -71,6 +71,12 @@ createZipForLinux() {
     rm -f "${tmpdir}"/MiniBrowser_${port}_release.zip
   done
 
+  # Bundle libstdc++ version that comes from gcc-9. gcc-9 is not default on Ubuntu 18.04
+  if is_linux ubuntu 18.04; then
+    cp /usr/lib/x86_64-linux-gnu/libstdc++.so.6 "${tmpdir}/minibrowser-wpe/lib/libstdc++.so.6"
+    cp /usr/lib/x86_64-linux-gnu/libstdc++.so.6 "${tmpdir}/minibrowser-gtk/lib/libstdc++.so.6"
+  fi
+
   cd "$tmpdir"
 
   # zip resulting directory and cleanup TMP.
