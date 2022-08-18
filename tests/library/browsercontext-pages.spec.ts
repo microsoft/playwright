@@ -94,8 +94,8 @@ it('should click the button with offset with page scale', async ({ browser, serv
   const round = x => Math.round(x + 0.01);
   let expected = { x: 28, y: 18 };  // 20;10 + 8px of border in each direction
   if (browserName === 'webkit') {
-    // WebKit rounds up during css -> dip -> css conversion.
-    expected = { x: 29, y: 19 };
+    // WebKit rounds down during css -> dip -> css conversion.
+    expected = { x: 26, y: 17 };
   } else if (browserName === 'chromium' && headless) {
     // Headless Chromium rounds down during css -> dip -> css conversion.
     expected = { x: 27, y: 18 };
