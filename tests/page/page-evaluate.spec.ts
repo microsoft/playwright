@@ -141,7 +141,6 @@ it('should work with large strings', async ({ page }) => {
 });
 
 it('should work with large unicode strings', async ({ page, browserName, platform }) => {
-  it.fixme(browserName === 'firefox' && platform === 'darwin');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16367' });
 
   const expected = '🎭'.repeat(10000);

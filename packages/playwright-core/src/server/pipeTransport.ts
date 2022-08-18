@@ -22,7 +22,7 @@ import { debugLogger } from '../common/debugLogger';
 export class PipeTransport implements ConnectionTransport {
   private _pipeRead: NodeJS.ReadableStream;
   private _pipeWrite: NodeJS.WritableStream;
-  private _pendingMessage = '';
+  private _pendingBuffers: Buffer[] = [];
   private _waitForNextTask = makeWaitForNextTask();
   private _closed = false;
   private _onclose?: () => void;
@@ -67,10 +67,11 @@ export class PipeTransport implements ConnectionTransport {
   _dispatch(buffer: Buffer) {
     let end = buffer.indexOf('\0');
     if (end === -1) {
-      this._pendingMessage += buffer.toString();
+      this._pendingBuffers.push(buffer);
       return;
     }
-    const message = this._pendingMessage + buffer.toString(undefined, 0, end);
+    this._pendingBuffers.push(buffer.slice(0, end));
+    const message = Buffer.concat(this._pendingBuffers).toString();
     this._waitForNextTask(() => {
       if (this.onmessage)
         this.onmessage.call(null, JSON.parse(message));
@@ -87,6 +88,6 @@ export class PipeTransport implements ConnectionTransport {
       start = end + 1;
       end = buffer.indexOf('\0', start);
     }
-    this._pendingMessage = buffer.toString(undefined, start);
+    this._pendingBuffers = [buffer.slice(start)];
   }
 }
