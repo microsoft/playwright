@@ -983,7 +983,7 @@ index 96af27ece2ac200e11c4311b3ca0d9d3b5a048da..3168f7806fcbdabec07acc5e304bae1e
      ],
      "events": [
 diff --git a/Source/JavaScriptCore/inspector/protocol/Page.json b/Source/JavaScriptCore/inspector/protocol/Page.json
-index 1c97ad011c5ec183a5866bb98319badd5ec9442f..ee9972dbf3628aa5dd3fc4948fbda0f443136f80 100644
+index 1c97ad011c5ec183a5866bb98319badd5ec9442f..7a40d1c730b870a58f810cf3118b5004c8021017 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Page.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Page.json
 @@ -21,7 +21,14 @@
@@ -1126,7 +1126,7 @@ index 1c97ad011c5ec183a5866bb98319badd5ec9442f..ee9972dbf3628aa5dd3fc4948fbda0f4
 +            ]
 +        },
 +        {
-+            "name": "setForcedForcedColors",
++            "name": "setForcedColors",
 +            "description": "Forces the forced-colors media query for the page.",
 +            "targetTypes": ["page"],
 +            "parameters": [
@@ -3916,7 +3916,7 @@ index c6ebcc9d7e399a35f71350c9374df0f2107c518b..3bfa03ae7f27d9128fe207c1de1bfea9
      // InspectorInstrumentation
      void willRecalculateStyle();
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
-index a6e415a9bf47e0f4c98b9f375b3195df287fe67b..1098fce30487bff8df9df4cacd953b445c93272d 100644
+index a6e415a9bf47e0f4c98b9f375b3195df287fe67b..47811cd1eeaa9f2ef224abfd3962cf1b5b8f107c 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.cpp
 @@ -32,20 +32,28 @@
@@ -4372,7 +4372,7 @@ index a6e415a9bf47e0f4c98b9f375b3195df287fe67b..1098fce30487bff8df9df4cacd953b44
 +    return { };
 +}
 +
-+Protocol::ErrorStringOr<void> InspectorPageAgent::setForcedForcedColors(std::optional<Protocol::Page::ForcedColors>&& forcedColors)
++Protocol::ErrorStringOr<void> InspectorPageAgent::setForcedColors(std::optional<Protocol::Page::ForcedColors>&& forcedColors)
 +{
 +    if (!forcedColors) {
 +        m_inspectedPage.setUseForcedColorsOverride(std::nullopt);
@@ -5058,7 +5058,7 @@ index a6e415a9bf47e0f4c98b9f375b3195df287fe67b..1098fce30487bff8df9df4cacd953b44
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index 6d94ad131257d8d7cdb05898fd3f42e0c72766bf..e1fa4c6de74630a03c89a5bc34ac53f373f481c9 100644
+index 6d94ad131257d8d7cdb05898fd3f42e0c72766bf..06d6cc40ad9bd914fa77197b1910aa60e61c19f0 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -32,19 +32,26 @@
@@ -5121,7 +5121,7 @@ index 6d94ad131257d8d7cdb05898fd3f42e0c72766bf..e1fa4c6de74630a03c89a5bc34ac53f3
      Inspector::Protocol::ErrorStringOr<void> setForcedAppearance(std::optional<Inspector::Protocol::Page::Appearance>&&);
  #endif
 +    Inspector::Protocol::ErrorStringOr<void> setForcedReducedMotion(std::optional<Inspector::Protocol::Page::ReducedMotion>&&);
-+    Inspector::Protocol::ErrorStringOr<void> setForcedForcedColors(std::optional<Inspector::Protocol::Page::ForcedColors>&&);
++    Inspector::Protocol::ErrorStringOr<void> setForcedColors(std::optional<Inspector::Protocol::Page::ForcedColors>&&);
 +    Inspector::Protocol::ErrorStringOr<void> setTimeZone(const String&);
 +    Inspector::Protocol::ErrorStringOr<void> setTouchEmulationEnabled(bool);
      Inspector::Protocol::ErrorStringOr<String> snapshotNode(Inspector::Protocol::DOM::NodeId);
