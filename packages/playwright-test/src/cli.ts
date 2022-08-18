@@ -225,7 +225,7 @@ function resolveReporter(id: string) {
   const localPath = path.resolve(process.cwd(), id);
   if (fs.existsSync(localPath))
     return localPath;
-  return require.resolve(id, { paths: [ process.cwd() ] });
+  return require.resolve(id, { paths: [process.cwd()] });
 }
 
 function restartWithExperimentalTsEsm(configFile: string | null): boolean {

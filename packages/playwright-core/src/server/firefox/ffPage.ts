@@ -529,7 +529,7 @@ export class FFPage implements PageDelegate {
     });
     if (!result)
       return null;
-    return result.quads.map(quad => [ quad.p1, quad.p2, quad.p3, quad.p4 ]);
+    return result.quads.map(quad => [quad.p1, quad.p2, quad.p3, quad.p4]);
   }
 
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {

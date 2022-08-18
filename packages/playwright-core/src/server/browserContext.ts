@@ -245,7 +245,7 @@ export abstract class BrowserContext extends SdkObject {
 
   async cookies(urls: string | string[] | undefined = []): Promise<channels.NetworkCookie[]> {
     if (urls && !Array.isArray(urls))
-      urls = [ urls ];
+      urls = [urls];
     return await this.doGetCookies(urls as string[]);
   }
 

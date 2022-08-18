@@ -286,7 +286,7 @@ function snapshotScript() {
  * Best-effort Electron support: rewrite custom protocol in DOM.
  * vscode-file://vscode-app/ -> https://pw-vscode-file--vscode-app/
  */
-const schemas = ['about:', 'blob:', 'data:', 'file:', 'ftp:', 'http:', 'https:', 'mailto:', 'sftp:', 'ws:', 'wss:' ];
+const schemas = ['about:', 'blob:', 'data:', 'file:', 'ftp:', 'http:', 'https:', 'mailto:', 'sftp:', 'ws:', 'wss:'];
 const kLegacyBlobPrefix = 'http://playwright.bloburl/#';
 
 export function rewriteURLForCustomProtocol(href: string): string {

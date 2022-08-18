@@ -186,7 +186,7 @@ test.describe('test modifier annotations', () => {
     expectTest('no marker', 'skipped', 'skipped', ['fixme']);
     expectTest('skip wrap', 'skipped', 'skipped', ['skip', 'fixme']);
     expectTest('skip inner', 'skipped', 'skipped', ['fixme']);
-    expectTest('fixme wrap', 'skipped', 'skipped', ['fixme','fixme']);
+    expectTest('fixme wrap', 'skipped', 'skipped', ['fixme', 'fixme']);
     expectTest('fixme inner', 'skipped', 'skipped', ['fixme']);
     expectTest('example', 'skipped', 'skipped', ['fixme']);
   });

@@ -27,7 +27,7 @@ const config: PlaywrightTestConfig = {
     ctPort: 3101,
     trace: 'on-first-retry',
   },
-  projects: [ ],
+  projects: [],
 };
 
 if (process.env.REBASE) {

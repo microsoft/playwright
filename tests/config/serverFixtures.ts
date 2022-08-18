@@ -34,8 +34,8 @@ export type ServerFixtures = {
 };
 
 export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
-  loopback: [ undefined, { scope: 'worker', option: true } ],
-  __servers: [ async ({ loopback }, run, workerInfo) => {
+  loopback: [undefined, { scope: 'worker', option: true }],
+  __servers: [async ({ loopback }, run, workerInfo) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
 
@@ -85,7 +85,7 @@ export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
       socksServer.close(),
       proxyServer.stop(),
     ]);
-  }, { scope: 'worker' } ],
+  }, { scope: 'worker' }],
 
   server: async ({ __servers }, run) => {
     __servers.server.reset();

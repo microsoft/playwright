@@ -86,7 +86,7 @@ export class Chromium extends BrowserType {
     const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, headersMap);
     const cleanedUp = new ManualPromise<void>();
     const doCleanup = async () => {
-      await removeFolders([ artifactsDir ]);
+      await removeFolders([artifactsDir]);
       await onClose?.();
       cleanedUp.resolve();
     };

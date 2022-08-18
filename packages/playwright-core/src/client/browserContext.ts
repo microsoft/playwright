@@ -202,7 +202,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (!urls)
       urls = [];
     if (urls && typeof urls === 'string')
-      urls = [ urls ];
+      urls = [urls];
     return (await this._channel.cookies({ urls: urls as string[] })).cookies;
   }
 

@@ -21,7 +21,7 @@ it('should fetch lodpi assets @smoke', async ({ contextFactory, server }) => {
     deviceScaleFactor: 1
   });
   const page = await context.newPage();
-  const [ request ] = await Promise.all([
+  const [request] = await Promise.all([
     page.waitForRequest('**/image*'),
     page.goto(server.PREFIX + '/highdpi.html'),
   ]);
@@ -33,7 +33,7 @@ it('should fetch hidpi assets', async ({ contextFactory, server }) => {
     deviceScaleFactor: 2
   });
   const page = await context.newPage();
-  const [ request ] = await Promise.all([
+  const [request] = await Promise.all([
     page.waitForRequest('**/image*'),
     page.goto(server.PREFIX + '/highdpi.html'),
   ]);

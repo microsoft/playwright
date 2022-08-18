@@ -334,7 +334,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         const checkAndReturn = (n: NodeSnapshot): { equals: boolean, n: NodeSnapshot } => {
           data.attributesCached = true;
           if (equals)
-            return { equals: true, n: [[ snapshotNumber - data.ref![0], data.ref![1] ]] };
+            return { equals: true, n: [[snapshotNumber - data.ref![0], data.ref![1]]] };
           nodeCounter += extraNodes;
           data.ref = [snapshotNumber, nodeCounter++];
           data.cached = values;
@@ -498,7 +498,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         const oldCSSText = data.cssText;
         const cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet, true /* forceText */)!;
         if (cssText === oldCSSText)
-          return { equals: true, n: [[ snapshotNumber - data.ref![0], data.ref![1] ]] };
+          return { equals: true, n: [[snapshotNumber - data.ref![0], data.ref![1]]] };
         data.ref = [snapshotNumber, nodeCounter++];
         return {
           equals: false,

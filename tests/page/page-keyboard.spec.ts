@@ -129,12 +129,12 @@ it('should send proper codes while typing', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.type('!');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: ! Digit1 49 []',
+      ['Keydown: ! Digit1 49 []',
         'Keypress: ! Digit1 33 33 []',
         'Keyup: ! Digit1 49 []'].join('\n'));
   await page.keyboard.type('^');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: ^ Digit6 54 []',
+      ['Keydown: ^ Digit6 54 []',
         'Keypress: ^ Digit6 94 94 []',
         'Keyup: ^ Digit6 54 []'].join('\n'));
 });
@@ -145,7 +145,7 @@ it('should send proper codes while typing with shift', async ({ page, server }) 
   await keyboard.down('Shift');
   await page.keyboard.type('~');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: Shift ShiftLeft 16 [Shift]',
+      ['Keydown: Shift ShiftLeft 16 [Shift]',
         'Keydown: ~ Backquote 192 [Shift]', // 192 is ` keyCode
         'Keypress: ~ Backquote 126 126 [Shift]', // 126 is ~ charCode
         'Keyup: ~ Backquote 192 [Shift]'].join('\n'));
@@ -173,7 +173,7 @@ it('should press plus', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('+');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: + Equal 187 []', // 192 is ` keyCode
+      ['Keydown: + Equal 187 []', // 192 is ` keyCode
         'Keypress: + Equal 43 43 []', // 126 is ~ charCode
         'Keyup: + Equal 187 []'].join('\n'));
 });
@@ -182,7 +182,7 @@ it('should press shift plus', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Shift++');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: Shift ShiftLeft 16 [Shift]',
+      ['Keydown: Shift ShiftLeft 16 [Shift]',
         'Keydown: + Equal 187 [Shift]', // 192 is ` keyCode
         'Keypress: + Equal 43 43 [Shift]', // 126 is ~ charCode
         'Keyup: + Equal 187 [Shift]',
@@ -193,7 +193,7 @@ it('should support plus-separated modifiers', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Shift+~');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: Shift ShiftLeft 16 [Shift]',
+      ['Keydown: Shift ShiftLeft 16 [Shift]',
         'Keydown: ~ Backquote 192 [Shift]', // 192 is ` keyCode
         'Keypress: ~ Backquote 126 126 [Shift]', // 126 is ~ charCode
         'Keyup: ~ Backquote 192 [Shift]',
@@ -204,7 +204,7 @@ it('should support multiple plus-separated modifiers', async ({ page, server }) 
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Control+Shift+~');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: Control ControlLeft 17 [Control]',
+      ['Keydown: Control ControlLeft 17 [Control]',
         'Keydown: Shift ShiftLeft 16 [Control Shift]',
         'Keydown: ~ Backquote 192 [Control Shift]', // 192 is ` keyCode
         'Keyup: ~ Backquote 192 [Control Shift]',
@@ -216,7 +216,7 @@ it('should shift raw codes', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Shift+Digit3');
   expect(await page.evaluate('getResult()')).toBe(
-      [ 'Keydown: Shift ShiftLeft 16 [Shift]',
+      ['Keydown: Shift ShiftLeft 16 [Shift]',
         'Keydown: # Digit3 51 [Shift]', // 51 is # keyCode
         'Keypress: # Digit3 35 35 [Shift]', // 35 is # charCode
         'Keyup: # Digit3 51 [Shift]',

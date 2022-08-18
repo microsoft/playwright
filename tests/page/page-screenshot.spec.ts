@@ -386,7 +386,7 @@ it.describe('page screenshot', () => {
       await page.setViewportSize({ width: 500, height: 500 });
       await page.goto(server.PREFIX + '/grid.html');
       expect(await page.screenshot({
-        mask: [ page.locator('div').nth(5) ],
+        mask: [page.locator('div').nth(5)],
       })).toMatchSnapshot('mask-should-work.png');
     });
 
@@ -395,7 +395,7 @@ it.describe('page screenshot', () => {
       await page.goto(server.PREFIX + '/grid.html');
       const bodyLocator = page.locator('body');
       expect(await bodyLocator.screenshot({
-        mask: [ page.locator('div').nth(5) ],
+        mask: [page.locator('div').nth(5)],
       })).toMatchSnapshot('mask-should-work-with-locator.png');
     });
 
@@ -404,7 +404,7 @@ it.describe('page screenshot', () => {
       await page.goto(server.PREFIX + '/grid.html');
       const bodyHandle = await page.$('body');
       expect(await bodyHandle.screenshot({
-        mask: [ page.locator('div').nth(5) ],
+        mask: [page.locator('div').nth(5)],
       })).toMatchSnapshot('mask-should-work-with-elementhandle.png');
     });
 
@@ -439,10 +439,10 @@ it.describe('page screenshot', () => {
       await page.addStyleTag({ content: 'iframe { border: none; }' });
       const screenshots = await Promise.all([
         page.screenshot({
-          mask: [ page.frameLocator('#frame1').locator('div').nth(1) ],
+          mask: [page.frameLocator('#frame1').locator('div').nth(1)],
         }),
         page.screenshot({
-          mask: [ page.frameLocator('#frame2').locator('div').nth(3) ],
+          mask: [page.frameLocator('#frame2').locator('div').nth(3)],
         }),
       ]);
       expect(screenshots[0]).toMatchSnapshot('should-mask-in-parallel-1.png');
@@ -454,7 +454,7 @@ it.describe('page screenshot', () => {
       await page.goto(server.PREFIX + '/grid.html');
       const screenshot1 = await page.screenshot();
       await page.screenshot({
-        mask: [ page.locator('div').nth(1) ],
+        mask: [page.locator('div').nth(1)],
       });
       const screenshot2 = await page.screenshot();
       expect(screenshot1.equals(screenshot2)).toBe(true);
@@ -469,7 +469,7 @@ it.describe('page screenshot', () => {
       const done = page.setContent(`<iframe src='/subframe.html'></iframe>`);
       const route = await routeReady;
 
-      await page.screenshot({ mask: [ page.locator('non-existent') ] });
+      await page.screenshot({ mask: [page.locator('non-existent')] });
       await route.fulfill({ body: '' });
       await done;
     });
@@ -484,7 +484,7 @@ it.describe('page screenshot', () => {
         iframe.contentDocument.write('Hello');
         iframe.contentDocument.close();
       });
-      await page.screenshot({ mask: [ page.locator('non-existent') ] });
+      await page.screenshot({ mask: [page.locator('non-existent')] });
     });
   });
 });

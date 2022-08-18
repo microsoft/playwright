@@ -946,7 +946,7 @@ it('should abort requests when browser context closes', async ({ contextFactory,
     });
   });
   const context = await contextFactory();
-  const [ error ] = await Promise.all([
+  const [error] = await Promise.all([
     context.request.get(server.EMPTY_PAGE).catch(e => e),
     context.request.post(server.EMPTY_PAGE).catch(e => e),
     server.waitForRequest('/empty.html').then(() => context.close())

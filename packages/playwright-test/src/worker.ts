@@ -46,8 +46,8 @@ if (!process.env.PW_RUNNER_DEBUG) {
 }
 
 process.on('disconnect', gracefullyCloseAndExit);
-process.on('SIGINT',() => {});
-process.on('SIGTERM',() => {});
+process.on('SIGINT', () => {});
+process.on('SIGTERM', () => {});
 
 let workerRunner: WorkerRunner;
 let workerIndex: number | undefined;

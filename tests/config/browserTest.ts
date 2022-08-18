@@ -47,11 +47,11 @@ type BrowserTestTestFixtures = PageTestFixtures & {
 const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>({
   browserVersion: [async ({ browser }, run) => {
     await run(browser.version());
-  }, { scope: 'worker' } ],
+  }, { scope: 'worker' }],
 
   browserType: [async ({ playwright, browserName }, run) => {
     await run(playwright[browserName]);
-  }, { scope: 'worker' } ],
+  }, { scope: 'worker' }],
 
   allowsThirdParty: [async ({ browserName, browserMajorVersion, channel }, run) => {
     if (browserName === 'firefox' && !channel)
@@ -60,7 +60,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await run(browserMajorVersion >= 97 && browserMajorVersion < 103);
     else
       await run(false);
-  }, { scope: 'worker' } ],
+  }, { scope: 'worker' }],
 
   defaultSameSiteCookieValue: [async ({ browserName, browserMajorVersion, channel }, run) => {
     if (browserName === 'chromium')
@@ -73,14 +73,14 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await run(browserMajorVersion >= 103 ? 'None' : 'Lax');
     else
       throw new Error('unknown browser - ' + browserName);
-  }, { scope: 'worker' } ],
+  }, { scope: 'worker' }],
 
   browserMajorVersion: [async ({ browserVersion }, run) => {
     await run(Number(browserVersion.split('.')[0]));
-  }, { scope: 'worker' } ],
+  }, { scope: 'worker' }],
 
-  isAndroid: [false, { scope: 'worker' } ],
-  isElectron: [false, { scope: 'worker' } ],
+  isAndroid: [false, { scope: 'worker' }],
+  isElectron: [false, { scope: 'worker' }],
 
   contextFactory: async ({ _contextFactory }: any, run) => {
     await run(_contextFactory);

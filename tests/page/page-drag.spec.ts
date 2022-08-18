@@ -75,7 +75,7 @@ it.describe('Drag and drop', () => {
 
     it('should drag into an iframe', async ({ server, page, browserName }) => {
       await page.goto(server.PREFIX + '/drag-n-drop.html');
-      const frame = await attachFrame(page, 'oopif',server.PREFIX + '/drag-n-drop.html');
+      const frame = await attachFrame(page, 'oopif', server.PREFIX + '/drag-n-drop.html');
       const pageEvents = await trackEvents(await page.$('body'));
       const frameEvents = await trackEvents(await frame.$('body'));
       await page.pause();
@@ -99,7 +99,7 @@ it.describe('Drag and drop', () => {
 
     it('should drag out of an iframe', async ({ server, page }) => {
       await page.goto(server.PREFIX + '/drag-n-drop.html');
-      const frame = await attachFrame(page, 'oopif',server.PREFIX + '/drag-n-drop.html');
+      const frame = await attachFrame(page, 'oopif', server.PREFIX + '/drag-n-drop.html');
       const pageEvents = await trackEvents(await page.$('body'));
       const frameEvents = await trackEvents(await frame.$('body'));
       await frame.hover('#source');

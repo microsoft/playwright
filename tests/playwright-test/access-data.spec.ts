@@ -58,7 +58,7 @@ test('should access annotations in fixture', async ({ runInlineTest }) => {
   });
   expect(exitCode).toBe(0);
   const test = report.suites[0].specs[0].tests[0];
-  expect(test.annotations).toEqual([ { type: 'slow', description: 'just slow' }, { type: 'myname', description: 'hello' } ]);
+  expect(test.annotations).toEqual([{ type: 'slow', description: 'just slow' }, { type: 'myname', description: 'hello' }]);
   expect(test.results[0].stdout).toEqual([{ text: 'console.log\n' }]);
   expect(test.results[0].stderr).toEqual([{ text: 'console.error\n' }]);
 });

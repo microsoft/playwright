@@ -635,7 +635,7 @@ it('should not use Array.prototype.toJSON when evaluating', async ({ page }) => 
     (Array.prototype as any).toJSON = () => 'busted';
     return [1, 2, 3];
   });
-  expect(result).toEqual([1,2,3]);
+  expect(result).toEqual([1, 2, 3]);
 });
 
 it('should not add a toJSON property to newly created Arrays after evaluation', async ({ page, browserName }) => {

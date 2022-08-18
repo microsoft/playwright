@@ -74,7 +74,7 @@ it('should work @smoke', async ({ page, browserName }) => {
       { role: 'textbox', name: 'Input with whitespace', value: '  ' },
       { role: 'textbox', name: '', value: 'value only' },
       { role: 'textbox', name: 'placeholder', value: 'and a value' },
-      { role: 'textbox', name: 'This is a description!',value: 'and a value' }, // webkit uses the description over placeholder for the name
+      { role: 'textbox', name: 'This is a description!', value: 'and a value' }, // webkit uses the description over placeholder for the name
     ]
   };
   expect(await page.accessibility.snapshot()).toEqual(golden);
@@ -301,9 +301,9 @@ it('should work on a menu', async ({ page, browserName, browserVersion }) => {
     role: 'menu',
     name: 'My Menu',
     children:
-    [ { role: 'menuitem', name: 'First Item' },
+    [{ role: 'menuitem', name: 'First Item' },
       { role: 'menuitem', name: 'Second Item' },
-      { role: 'menuitem', name: 'Third Item' } ],
+      { role: 'menuitem', name: 'Third Item' }],
     orientation: (browserName === 'webkit' || (browserName === 'chromium' && !chromiumVersionLessThan(browserVersion, '98.0.1089'))) ? 'vertical' : undefined
   });
 });

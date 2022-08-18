@@ -229,7 +229,7 @@ export class Route extends SdkObject {
   private _handled = false;
 
   constructor(request: Request, delegate: RouteDelegate) {
-    super(request._frame || request._context , 'route');
+    super(request._frame || request._context, 'route');
     this._request = request;
     this._delegate = delegate;
     this._request._context.addRouteInFlight(this);
