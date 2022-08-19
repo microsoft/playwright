@@ -656,7 +656,7 @@ export class WKPage implements PageDelegate {
       case 'active': forcedColorsWk = 'Active'; break;
       case 'none': forcedColorsWk = 'None'; break;
     }
-    promises.push(session.send('Page.setForcedForcedColors', { forcedColors: forcedColorsWk }));
+    promises.push(session.send('Page.setForcedColors', { forcedColors: forcedColorsWk }));
     await Promise.all(promises);
   }
 
