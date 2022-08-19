@@ -46,13 +46,6 @@ export class Firefox extends BrowserType {
   _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
     if (!path.isAbsolute(os.homedir()))
       throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
-    if (os.platform() === 'linux') {
-      return {
-        ...env,
-        // On linux Juggler ships the libstdc++ it was linked against.
-        LD_LIBRARY_PATH: `${path.dirname(executable)}:${process.env.LD_LIBRARY_PATH}`,
-      };
-    }
     return env;
   }
 
