@@ -4162,7 +4162,7 @@ Returns when element specified by selector satisfies [`option: state`] option. R
 
 :::note
 Playwright automatically waits for element to be ready before performing an action. Using
-[Locator] objects and web-first assertions make the code wait-for-selector-free.
+[Locator] objects and web-first assertions makes the code wait-for-selector-free.
 :::
 
 Wait for the [`param: selector`] to satisfy [`option: state`] option (either appear/disappear from dom, or become
