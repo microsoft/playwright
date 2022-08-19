@@ -2329,7 +2329,7 @@ diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm b/So
 index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d768ace22 100644
 --- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
 +++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
-@@ -198,6 +198,7 @@ - (void)sendEndIfNeeded
+@@ -198,6 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidChange:(BOOL)available
  {
@@ -2337,7 +2337,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      if (available || !_task)
-@@ -211,6 +212,7 @@ - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidC
+@@ -211,6 +212,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTranscription:(SFTranscription *)transcription
  {
@@ -2345,7 +2345,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      [self sendSpeechStartIfNeeded];
-@@ -219,6 +221,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTran
+@@ -219,6 +221,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecognition:(SFSpeechRecognitionResult *)recognitionResult
  {
@@ -2353,7 +2353,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
      [self callbackWithTranscriptions:recognitionResult.transcriptions isFinal:YES];
  
-@@ -230,6 +233,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecogniti
+@@ -230,6 +233,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  - (void)speechRecognitionTaskWasCancelled:(SFSpeechRecognitionTask *)task
  {
@@ -9151,7 +9151,7 @@ diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/
 index d8eeb6c27a92134728ffada573a1f140e303c727..9ddddb0796cc00d7eea060b11919711446a39586 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
-@@ -720,7 +720,7 @@ - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didRece
+@@ -720,7 +720,7 @@ void NetworkSessionCocoa::setClientAuditToken(const WebCore::AuthenticationChall
  
      if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
          sessionCocoa->setClientAuditToken(challenge);
@@ -10568,7 +10568,7 @@ index 67c2480832991ff512fd49b0195cc195e85794e2..619c8a85bd1bdb14a593f15fa02ae90b
  #import <WebCore/Credential.h>
  #import <WebCore/RegistrationDatabase.h>
  #import <WebCore/ServiceWorkerClientData.h>
-@@ -234,6 +235,11 @@ - (void)removeDataOfTypes:(NSSet *)dataTypes modifiedSince:(NSDate *)date comple
+@@ -234,6 +235,11 @@ static WallTime toSystemClockTime(NSDate *date)
      });
  }
  
@@ -10747,7 +10747,7 @@ diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm b/
 index 2e235bb880c638a0e74256b6d66cb0244ea0a3f1..3471eebb47e860f7c2071d0e7f2691c9f0a6355d 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
-@@ -257,6 +257,16 @@ - (BOOL)processSwapsOnNavigation
+@@ -257,6 +257,16 @@
      return _processPoolConfiguration->processSwapsOnNavigation();
  }
  
@@ -16742,7 +16742,7 @@ index 0000000000000000000000000000000000000000..48c9ccc420c1b4ae3259e1d5ba17fd8f
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.cpp b/Source/WebKit/UIProcess/WebPageProxy.cpp
-index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da4dd3e231 100644
+index 5126e406c4ada8c0d21bf8e101470d4485823751..e5f542a4abf15625221c6c91ec90e43981777a7d 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.cpp
 +++ b/Source/WebKit/UIProcess/WebPageProxy.cpp
 @@ -246,6 +246,9 @@
@@ -17087,7 +17087,18 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
  }
  
  void WebPageProxy::decidePolicyForNavigationActionAsyncShared(Ref<WebProcessProxy>&& process, PageIdentifier webPageID, FrameIdentifier frameID, FrameInfoData&& frameInfo,
-@@ -6145,6 +6307,7 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, WebPa
+@@ -5953,6 +6115,10 @@ void WebPageProxy::decidePolicyForResponseShared(Ref<WebProcessProxy>&& process,
+ #endif
+         ), webPageID);
+         });
++        // Start Playwright
++        if (MIMETypeRegistry::isPDFMIMEType(navigationResponse->response().mimeType()))
++            policyAction = PolicyAction::Download;
++        // End Playwright
+ #if USE(QUICK_LOOK)
+         if (policyAction == PolicyAction::Use && process->captivePortalMode() == WebProcessProxy::CaptivePortalMode::Enabled && (MIMETypeRegistry::isPDFOrPostScriptMIMEType(navigationResponse->response().mimeType()) || MIMETypeRegistry::isSupportedModelMIMEType(navigationResponse->response().mimeType()) || PreviewConverter::supportsMIMEType(navigationResponse->response().mimeType())))
+             policyAction = PolicyAction::Download;
+@@ -6145,6 +6311,7 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, WebPa
      if (originatingPage)
          openerAppInitiatedState = originatingPage->lastNavigationWasAppInitiated();
  
@@ -17095,7 +17106,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
      auto completionHandler = [this, protectedThis = Ref { *this }, mainFrameURL, request, reply = WTFMove(reply), privateClickMeasurement = navigationActionData.privateClickMeasurement, openerAppInitiatedState = WTFMove(openerAppInitiatedState)] (RefPtr<WebPageProxy> newPage) mutable {
          if (!newPage) {
              reply(std::nullopt, std::nullopt);
-@@ -6191,6 +6354,7 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, WebPa
+@@ -6191,6 +6358,7 @@ void WebPageProxy::createNewPage(FrameInfoData&& originatingFrameInfoData, WebPa
  void WebPageProxy::showPage()
  {
      m_uiClient->showPage(this);
@@ -17103,7 +17114,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
  }
  
  void WebPageProxy::exitFullscreenImmediately()
-@@ -6250,6 +6414,10 @@ void WebPageProxy::closePage()
+@@ -6250,6 +6418,10 @@ void WebPageProxy::closePage()
      if (isClosed())
          return;
  
@@ -17114,7 +17125,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
      WEBPAGEPROXY_RELEASE_LOG(Process, "closePage:");
      pageClient().clearAllEditCommands();
      m_uiClient->close(this);
-@@ -6286,6 +6454,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, FrameInfoData&& f
+@@ -6286,6 +6458,8 @@ void WebPageProxy::runJavaScriptAlert(FrameIdentifier frameID, FrameInfoData&& f
      }
  
      runModalJavaScriptDialog(WTFMove(frame), WTFMove(frameInfo), message, [reply = WTFMove(reply)](WebPageProxy& page, WebFrameProxy* frame, FrameInfoData&& frameInfo, const String& message, CompletionHandler<void()>&& completion) mutable {
@@ -17123,7 +17134,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
          page.m_uiClient->runJavaScriptAlert(page, message, frame, WTFMove(frameInfo), [reply = WTFMove(reply), completion = WTFMove(completion)]() mutable {
              reply();
              completion();
-@@ -6307,6 +6477,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, FrameInfoData&&
+@@ -6307,6 +6481,8 @@ void WebPageProxy::runJavaScriptConfirm(FrameIdentifier frameID, FrameInfoData&&
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -17132,7 +17143,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
  
      runModalJavaScriptDialog(WTFMove(frame), WTFMove(frameInfo), message, [reply = WTFMove(reply)](WebPageProxy& page, WebFrameProxy* frame, FrameInfoData&& frameInfo, const String& message, CompletionHandler<void()>&& completion) mutable {
          page.m_uiClient->runJavaScriptConfirm(page, message, frame, WTFMove(frameInfo), [reply = WTFMove(reply), completion = WTFMove(completion)](bool result) mutable {
-@@ -6330,6 +6502,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, FrameInfoData&&
+@@ -6330,6 +6506,8 @@ void WebPageProxy::runJavaScriptPrompt(FrameIdentifier frameID, FrameInfoData&&
          if (auto* automationSession = process().processPool().automationSession())
              automationSession->willShowJavaScriptDialog(*this);
      }
@@ -17141,7 +17152,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
  
      runModalJavaScriptDialog(WTFMove(frame), WTFMove(frameInfo), message, [reply = WTFMove(reply), defaultValue](WebPageProxy& page, WebFrameProxy* frame, FrameInfoData&& frameInfo, const String& message, CompletionHandler<void()>&& completion) mutable {
          page.m_uiClient->runJavaScriptPrompt(page, message, defaultValue, frame, WTFMove(frameInfo), [reply = WTFMove(reply), completion = WTFMove(completion)](auto& result) mutable {
-@@ -6457,6 +6631,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, FrameInf
+@@ -6457,6 +6635,8 @@ void WebPageProxy::runBeforeUnloadConfirmPanel(FrameIdentifier frameID, FrameInf
              return;
          }
      }
@@ -17150,7 +17161,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
  
      // Since runBeforeUnloadConfirmPanel() can spin a nested run loop we need to turn off the responsiveness timer and the tryClose timer.
      m_process->stopResponsivenessTimer();
-@@ -7743,6 +7919,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -7743,6 +7923,8 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->mouseEventsFlushedForPage(*this);
              didFinishProcessingAllPendingMouseEvents();
@@ -17159,7 +17170,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
          }
          break;
      }
-@@ -7757,10 +7935,13 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -7757,10 +7939,13 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
              pageClient().wheelEventWasNotHandledByWebCore(oldestProcessedEvent);
          }
  
@@ -17176,7 +17187,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
          break;
      }
  
-@@ -7769,7 +7950,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -7769,7 +7954,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
      case WebEvent::RawKeyDown:
      case WebEvent::Char: {
          LOG(KeyHandling, "WebPageProxy::didReceiveEvent: %s (queue empty %d)", webKeyboardEventTypeString(type), m_keyEventQueue.isEmpty());
@@ -17184,7 +17195,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
          MESSAGE_CHECK(m_process, !m_keyEventQueue.isEmpty());
          auto event = m_keyEventQueue.takeFirst();
          MESSAGE_CHECK(m_process, type == event.type());
-@@ -7788,7 +7968,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -7788,7 +7972,6 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          // The call to doneWithKeyEvent may close this WebPage.
          // Protect against this being destroyed.
          Ref<WebPageProxy> protect(*this);
@@ -17192,7 +17203,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
          pageClient().doneWithKeyEvent(event, handled);
          if (!handled)
              m_uiClient->didNotHandleKeyEvent(this, event);
-@@ -7797,6 +7976,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
+@@ -7797,6 +7980,7 @@ void WebPageProxy::didReceiveEvent(uint32_t opaqueType, bool handled)
          if (!canProcessMoreKeyEvents) {
              if (auto* automationSession = process().processPool().automationSession())
                  automationSession->keyboardEventsFlushedForPage(*this);
@@ -17200,7 +17211,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
          }
          break;
      }
-@@ -8130,7 +8310,10 @@ void WebPageProxy::dispatchProcessDidTerminate(ProcessTerminationReason reason)
+@@ -8130,7 +8314,10 @@ void WebPageProxy::dispatchProcessDidTerminate(ProcessTerminationReason reason)
  {
      WEBPAGEPROXY_RELEASE_LOG_ERROR(Loading, "dispatchProcessDidTerminate: reason=%{public}s", processTerminationReasonToString(reason));
  
@@ -17212,7 +17223,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
      if (m_loaderClient)
          handledByClient = reason != ProcessTerminationReason::RequestedByClient && m_loaderClient->processDidCrash(*this);
      else
-@@ -8464,6 +8647,7 @@ static Span<const ASCIILiteral> gpuMachServices()
+@@ -8464,6 +8651,7 @@ static Span<const ASCIILiteral> gpuMachServices()
  
  WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& process, DrawingAreaProxy& drawingArea, RefPtr<API::WebsitePolicies>&& websitePolicies)
  {
@@ -17220,7 +17231,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
      WebPageCreationParameters parameters;
  
      parameters.processDisplayName = configuration().processDisplayName();
-@@ -8657,6 +8841,8 @@ WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& proc
+@@ -8657,6 +8845,8 @@ WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& proc
  
      parameters.httpsUpgradeEnabled = preferences().upgradeKnownHostsToHTTPSEnabled() ? m_configuration->httpsUpgradeEnabled() : false;
  
@@ -17229,7 +17240,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
  #if PLATFORM(IOS)
      // FIXME: This is also being passed over the to WebProcess via the PreferencesStore.
      parameters.allowsDeprecatedSynchronousXMLHttpRequestDuringUnload = allowsDeprecatedSynchronousXMLHttpRequestDuringUnload();
-@@ -8729,6 +8915,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, Even
+@@ -8729,6 +8919,14 @@ void WebPageProxy::gamepadActivity(const Vector<GamepadData>& gamepadDatas, Even
  
  void WebPageProxy::didReceiveAuthenticationChallengeProxy(Ref<AuthenticationChallengeProxy>&& authenticationChallenge, NegotiatedLegacyTLS negotiatedLegacyTLS)
  {
@@ -17244,7 +17255,7 @@ index 5126e406c4ada8c0d21bf8e101470d4485823751..d856b6670c907afb9a589d642395c3da
      if (negotiatedLegacyTLS == NegotiatedLegacyTLS::Yes) {
          m_navigationClient->shouldAllowLegacyTLS(*this, authenticationChallenge.get(), [this, protectedThis = Ref { *this }, authenticationChallenge] (bool shouldAllowLegacyTLS) {
              if (shouldAllowLegacyTLS)
-@@ -8822,6 +9016,15 @@ void WebPageProxy::requestGeolocationPermissionForFrame(GeolocationIdentifier ge
+@@ -8822,6 +9020,15 @@ void WebPageProxy::requestGeolocationPermissionForFrame(GeolocationIdentifier ge
              request->deny();
      };
  
@@ -21100,7 +21111,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegac
 index 78a6e84a1dc04f81b5c266f08ce25f13311d78f2..3136508a043a1b1fd9f7415c551d865710850aa0 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
-@@ -4208,7 +4208,7 @@ - (void)mouseDown:(WebEvent *)event
+@@ -4208,7 +4208,7 @@ static BOOL currentScrollIsBlit(NSView *clipView)
      _private->handlingMouseDownEvent = NO;
  }
  
@@ -21113,7 +21124,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebView.mm b/Source/WebKitLegacy/ma
 index 48cc5be9887a698f2bae9261598c08b55705cff8..55904a59760c3a1f987e07db8f5d40d5efa66368 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebView.mm
-@@ -4035,7 +4035,7 @@ + (void)_doNotStartObservingNetworkReachability
+@@ -4035,7 +4035,7 @@ IGNORE_WARNINGS_END
  }
  #endif // PLATFORM(IOS_FAMILY)
  
@@ -21122,7 +21133,7 @@ index 48cc5be9887a698f2bae9261598c08b55705cff8..55904a59760c3a1f987e07db8f5d40d5
  
  - (NSArray *)_touchEventRegions
  {
-@@ -4077,7 +4077,7 @@ - (NSArray *)_touchEventRegions
+@@ -4077,7 +4077,7 @@ IGNORE_WARNINGS_END
      }).autorelease();
  }
  
