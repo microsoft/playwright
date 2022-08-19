@@ -156,7 +156,6 @@ it('page.reload should work with same origin redirect', async ({ page, server })
 
 it('page.reload should work with cross-origin redirect', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16147' });
-  it.fixme(browserName === 'webkit');
   await page.goto(server.EMPTY_PAGE);
   server.setRedirect('/empty.html', server.CROSS_PROCESS_PREFIX + '/title.html');
   await page.reload();
