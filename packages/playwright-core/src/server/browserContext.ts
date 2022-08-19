@@ -100,6 +100,8 @@ export abstract class BrowserContext extends SdkObject {
 
   setSelectors(selectors: Selectors) {
     this._selectors = selectors;
+    for (const page of this.pages())
+      page.selectors = selectors;
   }
 
   selectors(): Selectors {

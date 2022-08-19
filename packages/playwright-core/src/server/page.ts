@@ -166,7 +166,7 @@ export class Page extends SdkObject {
   _clientRequestInterceptor: network.RouteHandler | undefined;
   _serverRequestInterceptor: network.RouteHandler | undefined;
   _ownedContext: BrowserContext | undefined;
-  readonly selectors: Selectors;
+  selectors: Selectors;
   _pageIsError: Error | undefined;
   _video: Artifact | null = null;
   _opener: Page | undefined;
