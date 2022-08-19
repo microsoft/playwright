@@ -212,6 +212,31 @@ test('should report skipped due to sharding', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should not render projects if they dont exist', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}) => {
+        expect(1).toBe(1);
+      });
+    `,
+  }, { reporter: 'junit' });
+  const xml = parseXML(result.output);
+  expect(xml['testsuites']['$']['tests']).toBe('1');
+  expect(xml['testsuites']['$']['failures']).toBe('0');
+  expect(xml['testsuites']['testsuite'].length).toBe(1);
+
+  expect(xml['testsuites']['testsuite'][0]['$']['name']).toBe('a.test.js');
+  expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('1');
+  expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
+  expect(xml['testsuites']['testsuite'][0]['$']['skipped']).toBe('0');
+  expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['name']).toBe('one');
+  expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['classname']).toContain('a.test.js › one');
+  expect(result.exitCode).toBe(0);
+});
 
 test('should render projects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -235,14 +260,14 @@ test('should render projects', async ({ runInlineTest }) => {
   expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
   expect(xml['testsuites']['testsuite'][0]['$']['skipped']).toBe('0');
   expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['name']).toBe('one');
-  expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['classname']).toContain('[project1] › a.test.js:6:7 › one');
+  expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['classname']).toContain('[project1] › a.test.js › one');
 
   expect(xml['testsuites']['testsuite'][1]['$']['name']).toBe('a.test.js');
   expect(xml['testsuites']['testsuite'][1]['$']['tests']).toBe('1');
   expect(xml['testsuites']['testsuite'][1]['$']['failures']).toBe('0');
   expect(xml['testsuites']['testsuite'][1]['$']['skipped']).toBe('0');
   expect(xml['testsuites']['testsuite'][1]['testcase'][0]['$']['name']).toBe('one');
-  expect(xml['testsuites']['testsuite'][1]['testcase'][0]['$']['classname']).toContain('[project2] › a.test.js:6:7 › one');
+  expect(xml['testsuites']['testsuite'][1]['testcase'][0]['$']['classname']).toContain('[project2] › a.test.js › one');
   expect(result.exitCode).toBe(0);
 });
 

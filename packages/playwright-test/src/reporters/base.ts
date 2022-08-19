@@ -356,10 +356,14 @@ function stepSuffix(step: TestStep | undefined) {
   return stepTitles.map(t => ' › ' + t).join('');
 }
 
-export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep): string {
+export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep, omitLocation: boolean = false): string {
   // root, project, file, ...describes, test
   const [, projectName, , ...titles] = test.titlePath();
-  const location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
+  let location;
+  if (omitLocation)
+    location = `${relativeTestPath(config, test)}`;
+  else
+    location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}`;
 }
