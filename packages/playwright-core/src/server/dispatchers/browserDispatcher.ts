@@ -47,7 +47,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
-    return newContextForReuse(this._object, this._scope, params, metadata);
+    return newContextForReuse(this._object, this._scope, params, null, metadata);
   }
 
   async close(): Promise<void> {
@@ -104,7 +104,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
-    return newContextForReuse(this._object, this._scope, params, metadata);
+    return newContextForReuse(this._object, this._scope, params, this.selectors, metadata);
   }
 
   async close(): Promise<void> {
@@ -141,7 +141,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
   }
 }
 
-async function newContextForReuse(browser: Browser, scope: DispatcherScope, params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
+async function newContextForReuse(browser: Browser, scope: DispatcherScope, params: channels.BrowserNewContextForReuseParams, selectors: Selectors | null, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
   const { context, needsReset } = await browser.newContextForReuse(params, metadata);
   if (needsReset) {
     const oldContextDispatcher = existingDispatcher<BrowserContextDispatcher>(context);
@@ -149,6 +149,8 @@ async function newContextForReuse(browser: Browser, scope: DispatcherScope, para
       oldContextDispatcher._dispose();
     await context.resetForReuse(metadata, params);
   }
+  if (selectors)
+    context.setSelectors(selectors);
   const contextDispatcher = new BrowserContextDispatcher(scope, context);
   return { context: contextDispatcher };
 }
