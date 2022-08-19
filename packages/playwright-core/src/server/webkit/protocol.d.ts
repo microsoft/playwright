@@ -6157,6 +6157,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type ReducedMotion = "Reduce"|"NoPreference";
     /**
+     * Page forced-colors media query override.
+     */
+    export type ForcedColors = "Active"|"None";
+    /**
      * Information about the Frame on the page.
      */
     export interface Frame {
@@ -6839,6 +6843,14 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       reducedMotion?: ReducedMotion;
     }
     export type setForcedReducedMotionReturnValue = {
+    }
+    /**
+     * Forces the forced-colors media query for the page.
+     */
+    export type setForcedColorsParameters = {
+      forcedColors?: ForcedColors;
+    }
+    export type setForcedColorsReturnValue = {
     }
     /**
      * Enables time zone emulation.
@@ -9196,6 +9208,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setEmulatedMedia": Page.setEmulatedMediaParameters;
     "Page.setForcedAppearance": Page.setForcedAppearanceParameters;
     "Page.setForcedReducedMotion": Page.setForcedReducedMotionParameters;
+    "Page.setForcedColors": Page.setForcedColorsParameters;
     "Page.setTimeZone": Page.setTimeZoneParameters;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledParameters;
     "Page.snapshotNode": Page.snapshotNodeParameters;
@@ -9502,6 +9515,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setEmulatedMedia": Page.setEmulatedMediaReturnValue;
     "Page.setForcedAppearance": Page.setForcedAppearanceReturnValue;
     "Page.setForcedReducedMotion": Page.setForcedReducedMotionReturnValue;
+    "Page.setForcedColors": Page.setForcedColorsReturnValue;
     "Page.setTimeZone": Page.setTimeZoneReturnValue;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledReturnValue;
     "Page.snapshotNode": Page.snapshotNodeReturnValue;
