@@ -55,6 +55,7 @@ export interface FullConfigInternal extends FullConfigPublic {
 
   // Overrides the public field.
   projects: FullProjectInternal[];
+  _projectSchedule?: string[][];
 }
 
 /**

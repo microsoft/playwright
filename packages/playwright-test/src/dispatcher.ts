@@ -26,6 +26,7 @@ import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
 import { TestTypeImpl } from './testType';
 
 export type TestGroup = {
+  priority: number;
   workerHash: string;
   requireFile: string;
   repeatEachIndex: number;
@@ -53,6 +54,7 @@ type WorkerExitData = {
 export class Dispatcher {
   private _workerSlots: { busy: boolean, worker?: Worker }[] = [];
   private _queue: TestGroup[] = [];
+  private _runningJobs: Set<TestGroup> = new Set();
   private _queuedOrRunningHashCount = new Map<string, number>();
   private _finished = new ManualPromise<void>();
   private _isStopped = false;
@@ -88,9 +90,17 @@ export class Dispatcher {
     if (index === -1)
       return;
 
-    // 3. Claim both the job and the worker, run the job and release the worker.
+    // 3. Attempt to claim both the job and the worker
     this._queue.shift();
     this._workerSlots[index].busy = true;
+    // 3.1. If the dispatcher is not ready to run this priority, release the worker and job for the future.
+    const inProgressPriority = () => this._runningJobs.size ? this._runningJobs.values().next().value.priority : undefined;
+    if (inProgressPriority() !== undefined && job.priority !== inProgressPriority()) {
+      this._workerSlots[index].busy = false;
+      this._queue.unshift(job);
+      setTimeout(() => this._scheduleJob(), 0);
+      return;
+    }
     await this._startJobInWorker(index, job);
     this._workerSlots[index].busy = false;
 
@@ -102,28 +112,35 @@ export class Dispatcher {
   }
 
   private async _startJobInWorker(index: number, job: TestGroup) {
-    let worker = this._workerSlots[index].worker;
+    this._runningJobs.add(job);
+    try {
+      await (async () => {
+        let worker = this._workerSlots[index].worker;
 
-    // 1. Restart the worker if it has the wrong hash or is being stopped already.
-    if (worker && (worker.hash() !== job.workerHash || worker.didSendStop())) {
-      await worker.stop();
-      worker = undefined;
-      if (this._isStopped) // Check stopped signal after async hop.
-        return;
+        // 1. Restart the worker if it has the wrong hash or is being stopped already.
+        if (worker && (worker.hash() !== job.workerHash || worker.didSendStop())) {
+          await worker.stop();
+          worker = undefined;
+          if (this._isStopped) // Check stopped signal after async hop.
+            return;
+        }
+
+        // 2. Start the worker if it is down.
+        if (!worker) {
+          worker = this._createWorker(job.workerHash, index);
+          this._workerSlots[index].worker = worker;
+          worker.on('exit', () => this._workerSlots[index].worker = undefined);
+          await worker.init(job, this._loader.serialize());
+          if (this._isStopped) // Check stopped signal after async hop.
+            return;
+        }
+
+        // 3. Run the job.
+        await this._runJob(worker, job);
+      })();
+    } finally {
+      this._runningJobs.delete(job);
     }
-
-    // 2. Start the worker if it is down.
-    if (!worker) {
-      worker = this._createWorker(job.workerHash, index);
-      this._workerSlots[index].worker = worker;
-      worker.on('exit', () => this._workerSlots[index].worker = undefined);
-      await worker.init(job, this._loader.serialize());
-      if (this._isStopped) // Check stopped signal after async hop.
-        return;
-    }
-
-    // 3. Run the job.
-    await this._runJob(worker, job);
   }
 
   private _checkFinished() {

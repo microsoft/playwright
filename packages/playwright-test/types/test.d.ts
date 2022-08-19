@@ -773,6 +773,11 @@ interface TestConfig {
   projects?: Array<TestProject>;
 
   /**
+   * TODO
+   */
+  projectSchedule?: Array<Array<string>>;
+
+  /**
    * Whether to suppress stdio and stderr output from the tests.
    */
   quiet?: boolean;

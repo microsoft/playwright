@@ -341,7 +341,7 @@ export class Runner {
       fatalErrors.push(createNoTestsError());
 
     // 8. Compute shards.
-    let testGroups = createTestGroups(rootSuite, config.workers);
+    let testGroups = createTestGroups(rootSuite, config.workers, config._projectSchedule);
 
     const shard = config.shard;
     if (shard) {
@@ -499,6 +499,7 @@ export class Runner {
     for (const [project, files] of filesByProject) {
       for (const file of files) {
         const group: TestGroup = {
+          priority: -1,
           workerHash: `run${project._id}-repeat${repeatEachIndex}`,
           requireFile: file,
           repeatEachIndex,
@@ -788,7 +789,7 @@ function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
   return `${path.relative(rootDir, testOrSuite.location.file)}:${testOrSuite.location.line}`;
 }
 
-function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
+function createTestGroups(rootSuite: Suite, workers: number, projectSchedule?: string[][]): TestGroup[] {
   // This function groups tests that can be run together.
   // Tests cannot be run together when:
   // - They belong to different projects - requires different workers.
@@ -817,6 +818,7 @@ function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
 
   const createGroup = (test: TestCase): TestGroup => {
     return {
+      priority: -1,
       workerHash: test._workerHash,
       requireFile: test._requireFile,
       repeatEachIndex: test.repeatEachIndex,
@@ -894,6 +896,17 @@ function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
       }
     }
   }
+
+  const projectPriority = new Map<string, number>();
+  if (projectSchedule) {
+    for (let priority = 0; priority < projectSchedule.length; priority++) {
+      for (const project of projectSchedule[priority])
+        projectPriority.set(project, priority);
+    }
+  }
+  for (const group of result)
+    group.priority = projectPriority.get(group.projectId) ?? -1;
+  result.sort((a, b) => a.priority - b.priority);
   return result;
 }
 

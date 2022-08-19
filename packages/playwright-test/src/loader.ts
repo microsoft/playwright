@@ -141,6 +141,7 @@ export class Loader {
     this._fullConfig.shard = takeFirst(config.shard, baseFullConfig.shard);
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(config.workers, baseFullConfig.workers);
+    this._fullConfig._projectSchedule = config.projectSchedule;
     const webServers = takeFirst(config.webServer, baseFullConfig.webServer);
     if (Array.isArray(webServers)) { // multiple web server mode
       // Due to previous choices, this value shows up to the user in globalSetup as part of FullConfig. Arrays are not supported by the old type.
@@ -516,6 +517,13 @@ function validateConfig(file: string, config: Config) {
       validateProject(file, project, `config.projects[${index}]`);
     });
   }
+
+  // Validate projectSchedule if present
+  // 1. no cycles
+  // 2. only refers to valid projects
+  // 3. is not combined with shard option
+  // 3. ???
+  // If present, also validate no dupe project names
 
   if ('quiet' in config && config.quiet !== undefined) {
     if (typeof config.quiet !== 'boolean')

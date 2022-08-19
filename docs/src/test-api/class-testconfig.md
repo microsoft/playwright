@@ -349,6 +349,12 @@ Whether to preserve test output in the [`property: TestConfig.outputDir`]. Defau
 Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
 
 
+## property: TestConfig.projectSchedule
+* since: v1.26
+- type: ?<[Array]<[[Array]<[string]>]>>
+
+TODO
+
 ## property: TestConfig.quiet
 * since: v1.10
 - type: ?<[boolean]>
