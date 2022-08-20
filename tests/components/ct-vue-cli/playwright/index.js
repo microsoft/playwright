@@ -1,3 +1,5 @@
+//@ts-check
+
 import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
 
 beforeMount(async ({ app, hooksConfig }) => {
