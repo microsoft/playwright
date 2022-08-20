@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/experimental-ct-vue2'
 import Button from './components/Button.vue'
-import Counter from './components/Counter.vue'
 import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
 import Component from './components/Component.vue'
@@ -14,23 +13,6 @@ test('props should work', async ({ mount }) => {
     }
   })
   await expect(component).toContainText('Submit')
-})
-
-test('renderer and keep the component instance intact', async ({ mount }) => {
-  const component = await mount<{ count: number }>(Counter, {
-    props: { 
-      count: 9001
-    }
-  });
-  await expect(component.locator('#rerender-count')).toContainText('9001')
-  
-  await component.rerender({ props: { count: 1337 } })
-  await expect(component.locator('#rerender-count')).toContainText('1337')
-  
-  await component.rerender({ props: { count: 42 } })
-  await expect(component.locator('#rerender-count')).toContainText('42')
-
-  await expect(component.locator('#remount-count')).toContainText('1')
 })
 
 test('event should work', async ({ mount }) => {
