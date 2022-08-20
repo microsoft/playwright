@@ -3,7 +3,6 @@ import Button from './components/Button.vue'
 import Counter from './components/Counter.vue'
 import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
-import MultiRoot from './components/MultiRoot.vue'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -83,13 +82,4 @@ test('should run hooks', async ({ page, mount }) => {
     hooksConfig: { route: 'A' }
   })
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount el: HTMLButtonElement'])
-})
-
-test('unmount a multi root component should work', async ({ mount, page }) => {
-  const component = await mount(<MultiRoot />)
-  await expect(page.locator('#root')).toContainText('root 1')
-  await expect(page.locator('#root')).toContainText('root 2')
-  await component.unmount()
-  await expect(page.locator('#root')).not.toContainText('root 1')
-  await expect(page.locator('#root')).not.toContainText('root 2')
 })
