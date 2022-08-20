@@ -1,0 +1,24 @@
+{
+  "name": "ct-solid",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.7.4",
+    "vite": "^3.0.0",
+    "vite-plugin-solid": "^2.3.0"
+  },
+  "dependencies": {
+    "solid-js": "^1.4.7"
+  },
+  "@standaloneDevDependencies": {
+    "@playwright/experimental-ct-solid": "^1.22.2",
+    "@playwright/test": "^1.22.2"
+  }
+}
