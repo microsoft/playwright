@@ -26,7 +26,6 @@
     }
   },
   "dependencies": {
-    "babel-preset-solid": "^1.4.8",
     "vite": "^3.0.0",
     "vite-plugin-solid": "^2.3.0",
     "@playwright/test": "1.26.0-next"
