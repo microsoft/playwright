@@ -322,12 +322,17 @@ if (!process.env.PW_LANG_NAME) {
     })).version;
     const pwCoreVersion = require(path.join(__dirname, '../../package.json')).version;
     if (pwTestVersion !== pwCoreVersion) {
+      let hasPlaywrightPackage = false;
+      try {
+        require('playwright');
+        hasPlaywrightPackage = true;
+      } catch {}
       console.error(wrapInASCIIBox([
         `Playwright Test compatibility check failed:`,
-        `@playwright/test version '${pwTestVersion}' does not match playwright-core version '${pwCoreVersion}'!`,
-        `To fix this either align the Playwright versions or only keep @playwright/test since it depends on playwright-core.`,
+        `@playwright/test version '${pwTestVersion}' does not match ${hasPlaywrightPackage ? 'playwright' : 'playwright-core'} version '${pwCoreVersion}'!`,
+        `To fix this either align the versions or only keep @playwright/test since it depends on playwright-core.`,
         `If you still receive this error, execute 'npm ci' or delete 'node_modules' and do 'npm install' again.`,
-      ].join('\n')));
+      ].join('\n'), 1));
       process.exit(1);
     }
 
