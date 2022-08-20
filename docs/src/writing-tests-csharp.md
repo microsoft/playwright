@@ -58,6 +58,7 @@ using Microsoft.Playwright.MSTest;
 
 namespace PlaywrightTests;
 
+[TestClass]
 public class UnitTest1 : PageTest
 {
     [TestMethod]
@@ -153,6 +154,7 @@ using Microsoft.Playwright.MSTest;
 
 namespace PlaywrightTests;
 
+[TestClass]
 public class UnitTest1 : PageTest
 {
     [TestMethod]
@@ -213,6 +215,7 @@ using Microsoft.Playwright.MSTest;
 
 namespace PlaywrightTests;
 
+[TestClass]
 public class UnitTest1 : PageTest
 {
     [TestMethod]
