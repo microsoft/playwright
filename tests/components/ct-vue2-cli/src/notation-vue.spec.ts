@@ -95,7 +95,7 @@ test('should run hooks', async ({ page, mount }) => {
     },
     hooksConfig: { route: 'A' }
   })
-  expect(messages).toEqual(['Before mount: {\"route\":\"A\"}, app: true', 'After mount el: HTMLButtonElement'])
+  expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount el: HTMLButtonElement'])
 })
 
 test('should unmount', async ({ page, mount }) => {
@@ -111,12 +111,9 @@ test('should unmount', async ({ page, mount }) => {
 
 test('unmount a multi root component should work', async ({ mount, page }) => {
   const component = await mount(MultiRoot)
-
   await expect(page.locator('#root')).toContainText('root 1')
   await expect(page.locator('#root')).toContainText('root 2')
-
   await component.unmount()
-
   await expect(page.locator('#root')).not.toContainText('root 1')
   await expect(page.locator('#root')).not.toContainText('root 2')
 })
