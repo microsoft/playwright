@@ -102,6 +102,57 @@ npm run test-ct
 
 Refer to [Playwright config](./test-configuration.md) for configuring your project.
 
+## Hooks
+
+You can use `beforeMount` and `afterMount` hooks to configure your app. This lets you setup things like your app router, fake server etc. giving you the flexibility you need. You can also pass custom configuration from the `mount` call from a test, which is accessible from the `hooksConfig` fixture.
+
+#### `playwright/index.ts`
+
+This includes any config that needs to be run before/after mounting the component. Here's an example of how to setup `miragejs` mocking library:
+
+```js
+import { beforeMount } from '@playwright/experimental-ct-react/hooks';
+import { createServer } from "miragejs"
+
+beforeMount(async ({ hooksConfig }) => {
+  // Setting default values if custom config is not provided
+  const users = hooksConfig.users ?? [
+    { id: "1", name: "Luke" },
+    { id: "2", name: "Leia" },
+    { id: "3", name: "Han" },
+  ];
+  createServer({
+    routes() {
+      this.get("/api/users", () => users)
+    },
+  });
+});
+```
+
+#### In your test file:
+
+```js
+// src/Users.spec.tsx
+import { test, expect } from "@playwright/experimental-ct-react";
+import React from "react";
+import { Users } from "./Users";
+
+test("should work", async ({ mount }) => {
+  const component = await mount(<Users />, {
+    hooksConfig: {
+      users: [
+        { id: "4", name: "Anakin" },
+        { id: "5", name: "Padme" },
+      ]
+    }
+  });
+  await expect(component.locator("li")).toContainText([
+    "Anakin",
+    "Padme",
+  ]);
+});
+```
+
 ## Under the hood
 
 When Playwright Test is used to test web components, tests run in Node.js, while components run in the real browser. This brings together the best of both worlds: components run in the real browser environment, real clicks are triggered, real layout is executed, visual regression is possible. At the same time, test can use all the powers of Node.js as well as all the Playwright Test features. As a result, the same parallel, parametrized tests with the same post-mortem Tracing story are available during component testing.
