@@ -293,6 +293,8 @@ export class Loader {
   }
 
   private async _requireOrImport(file: string) {
+    if (process.platform === 'win32')
+      file = await fixWin32FilepathCapitalization(file);
     const revertBabelRequire = installTransform();
     const isModule = fileIsModule(file);
     try {
@@ -677,4 +679,24 @@ export function folderIsModule(folder: string): boolean {
     return false;
   // Rely on `require` internal caching logic.
   return require(packageJsonPath).type === 'module';
+}
+
+async function fixWin32FilepathCapitalization(file: string): Promise<string> {
+  /**
+   * On Windows with PowerShell <= 6 it is possible to have a CWD with different
+   * casing than what the actual directory on the filesystem is. This can cause
+   * that we require the file multiple times with different casing. To mitigate
+   * this we get the actual underlying filesystem path and use that.
+   * https://github.com/microsoft/playwright/issues/9193#issuecomment-1219362150
+   */
+  const realFile = await new Promise<string>((resolve, reject) => fs.realpath.native(file, (error, realFile) => {
+    if (error)
+      return reject(error);
+    resolve(realFile);
+  }));
+  // We do not want to resolve them (e.g. 8.3 filenames), so we do a best effort
+  // approach by only using it if the actual lowercase characters are the same:
+  if (realFile.toLowerCase() === file.toLowerCase())
+    return realFile;
+  return file;
 }
