@@ -300,66 +300,72 @@ test('should print selector syntax error', async ({ page }) => {
   expect(error.message).toContain(`Unexpected token "]" while parsing selector "row]"`);
 });
 
-test('toBeOK', async ({ page, server }) => {
-  const res = await page.request.get(server.EMPTY_PAGE);
-  await expect(res).toBeOK();
-});
+test.describe(() => {
+  test.skip(({ isAndroid }) => isAndroid, 'server.EMPTY_PAGE is the emulator address 10.0.2.2');
+  test.skip(({ isElectron }) => isElectron, 'Protocol error (Storage.getCookies): Browser context management is not supported.');
 
-test('not.toBeOK', async ({ page, server }) => {
-  const res = await page.request.get(`${server.PREFIX}/unknown`);
-  await expect(res).not.toBeOK();
-});
-
-test('toBeOK fail with invalid argument', async ({ page }) => {
-  const error = await (expect(page) as any).toBeOK().catch(e => e);
-  expect(error.message).toContain('toBeOK can be only used with APIResponse object');
-});
-
-test('toBeOK fail with promise', async ({ page, server }) => {
-  const res = page.request.get(server.EMPTY_PAGE).catch(e => {});
-  const error = await (expect(res) as any).toBeOK().catch(e => e);
-  expect(error.message).toContain('toBeOK can be only used with APIResponse object');
-});
-
-test.describe('toBeOK should print response with text content type when fails', () => {
-  test.beforeEach(async ({ server }) => {
-    server.setRoute('/text-content-type', (req, res) => {
-      res.statusCode = 404;
-      res.setHeader('Content-type', 'text/plain');
-      res.end('Text error');
-    });
-    server.setRoute('/no-content-type', (req, res) => {
-      res.statusCode = 404;
-      res.end('No content type error');
-    });
-    server.setRoute('/binary-content-type', (req, res) => {
-      res.statusCode = 404;
-      res.setHeader('Content-type', 'image/bmp');
-      res.end('Image content type error');
-    });
+  test('toBeOK', async ({ page, server }) => {
+    const res = await page.request.get(server.EMPTY_PAGE);
+    await expect(res).toBeOK();
   });
 
-  test('text content type', async ({ page, server }) => {
-    const res = await page.request.get(`${server.PREFIX}/text-content-type`);
-    const error = await expect(res).toBeOK().catch(e => e);
-    expect(error.message).toContain(`→ GET ${server.PREFIX}/text-content-type`);
-    expect(error.message).toContain(`← 404 Not Found`);
-    expect(error.message).toContain(`Text error`);
+  test('not.toBeOK', async ({ page, server }) => {
+    const res = await page.request.get(`${server.PREFIX}/unknown`);
+    await expect(res).not.toBeOK();
   });
 
-  test('no content type', async ({ page, server }) => {
-    const res = await page.request.get(`${server.PREFIX}/no-content-type`);
-    const error = await expect(res).toBeOK().catch(e => e);
-    expect(error.message).toContain(`→ GET ${server.PREFIX}/no-content-type`);
-    expect(error.message).toContain(`← 404 Not Found`);
-    expect(error.message).not.toContain(`No content type error`);
+
+  test('toBeOK fail with invalid argument', async ({ page }) => {
+    const error = await (expect(page) as any).toBeOK().catch(e => e);
+    expect(error.message).toContain('toBeOK can be only used with APIResponse object');
   });
 
-  test('image content type', async ({ page, server }) => {
-    const res = await page.request.get(`${server.PREFIX}/image-content-type`);
-    const error = await expect(res).toBeOK().catch(e => e);
-    expect(error.message).toContain(`→ GET ${server.PREFIX}/image-content-type`);
-    expect(error.message).toContain(`← 404 Not Found`);
-    expect(error.message).not.toContain(`Image content type error`);
+  test('toBeOK fail with promise', async ({ page, server }) => {
+    const res = page.request.get(server.EMPTY_PAGE).catch(e => {});
+    const error = await (expect(res) as any).toBeOK().catch(e => e);
+    expect(error.message).toContain('toBeOK can be only used with APIResponse object');
+  });
+
+  test.describe('toBeOK should print response with text content type when fails', () => {
+    test.beforeEach(async ({ server }) => {
+      server.setRoute('/text-content-type', (req, res) => {
+        res.statusCode = 404;
+        res.setHeader('Content-type', 'text/plain');
+        res.end('Text error');
+      });
+      server.setRoute('/no-content-type', (req, res) => {
+        res.statusCode = 404;
+        res.end('No content type error');
+      });
+      server.setRoute('/binary-content-type', (req, res) => {
+        res.statusCode = 404;
+        res.setHeader('Content-type', 'image/bmp');
+        res.end('Image content type error');
+      });
+    });
+
+    test('text content type', async ({ page, server }) => {
+      const res = await page.request.get(`${server.PREFIX}/text-content-type`);
+      const error = await expect(res).toBeOK().catch(e => e);
+      expect(error.message).toContain(`→ GET ${server.PREFIX}/text-content-type`);
+      expect(error.message).toContain(`← 404 Not Found`);
+      expect(error.message).toContain(`Text error`);
+    });
+
+    test('no content type', async ({ page, server }) => {
+      const res = await page.request.get(`${server.PREFIX}/no-content-type`);
+      const error = await expect(res).toBeOK().catch(e => e);
+      expect(error.message).toContain(`→ GET ${server.PREFIX}/no-content-type`);
+      expect(error.message).toContain(`← 404 Not Found`);
+      expect(error.message).not.toContain(`No content type error`);
+    });
+
+    test('image content type', async ({ page, server }) => {
+      const res = await page.request.get(`${server.PREFIX}/image-content-type`);
+      const error = await expect(res).toBeOK().catch(e => e);
+      expect(error.message).toContain(`→ GET ${server.PREFIX}/image-content-type`);
+      expect(error.message).toContain(`← 404 Not Found`);
+      expect(error.message).not.toContain(`Image content type error`);
+    });
   });
 });
