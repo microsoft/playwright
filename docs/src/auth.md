@@ -161,9 +161,9 @@ Logging in via the UI and then reusing authentication state can be combined to
 implement **login once and run multiple scenarios**. The lifecycle looks like:
 
 1. Run tests (for example, with `npm run test`).
-2. Login via UI and retrieve authentication state.
+1. Login via UI and retrieve authentication state.
     * In Jest, this can be executed in [`globalSetup`](https://jestjs.io/docs/en/configuration#globalsetup-string).
-3. In each test, load authentication state in `beforeEach` or `beforeAll` step.
+1. In each test, load authentication state in `beforeEach` or `beforeAll` step.
 
 This approach will also **work in CI environments**, since it does not rely on any external state.
 
@@ -173,8 +173,8 @@ This approach will also **work in CI environments**, since it does not rely on a
 Logging in via the UI and then reusing authentication state can be combined to implement **login once and run multiple scenarios**. The lifecycle looks like:
 
 1. Run tests (for example, with `pytest`).
-2. Login via UI and retrieve authentication state.
-3. In each test, load authentication state using `autouse=True` fixture with `scope=function`.
+1. Login via UI and retrieve authentication state.
+1. In each test, load authentication state using `autouse=True` fixture with `scope=function`.
 
 This approach will also **work in CI environments**, since it does not rely on any external state.
 
@@ -184,8 +184,8 @@ This approach will also **work in CI environments**, since it does not rely on a
 Logging in via the UI and then reusing authentication state can be combined to implement **login once and run multiple scenarios**. The lifecycle looks like:
 
 1. Run tests (for example, with `dotnet test`).
-2. Login via UI and retrieve authentication state.
-3. In each test, load authentication state in `SetUp`.
+1. Login via UI and retrieve authentication state.
+1. In each test, load authentication state in `SetUp`.
 
 This approach will also **work in CI environments**, since it does not rely on any external state.
 
@@ -195,8 +195,8 @@ This approach will also **work in CI environments**, since it does not rely on a
 Logging in via the UI and then reusing authentication state can be combined to implement **login once and run multiple scenarios**. The lifecycle looks like:
 
 1. Run tests (for example, with `mvn test`).
-2. Login via UI and retrieve authentication state.
-3. In each test, load authentication state in `@beforeEach` or `@beforeAll` step.
+1. Login via UI and retrieve authentication state.
+1. In each test, load authentication state in `@beforeEach` or `@beforeAll` step.
 
 This approach will also **work in CI environments**, since it does not rely on any external state.
 
