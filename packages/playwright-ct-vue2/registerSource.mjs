@@ -157,3 +157,12 @@ window.playwrightUnmount = async rootElement => {
   component.$destroy();
   component.$el.remove();
 };
+
+window.playwrightRerender = async (element, options) => {
+  const component = /** @type {any} */(element)[instanceKey];
+  if (!component)
+    throw new Error('Component was not mounted');
+
+  for (const [key, value] of Object.entries(/** @type {any} */(options).props))
+    component.$children[0][key] = value;
+};
