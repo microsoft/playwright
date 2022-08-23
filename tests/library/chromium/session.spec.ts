@@ -141,7 +141,9 @@ browserTest('should work with newBrowserCDPSession', async function({ browser })
   let gotEvent = false;
   session.on('Target.targetCreated', () => gotEvent = true);
   await session.send('Target.setDiscoverTargets', { discover: true });
+  const page = await browser.newPage();
   expect(gotEvent).toBe(true);
+  await page.close();
 
   await session.detach();
 });
