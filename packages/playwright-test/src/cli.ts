@@ -239,8 +239,6 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
     return false;
   if (process.env.PW_TS_ESM_ON)
     return false;
-  if (!configFile.endsWith('.ts'))
-    return false;
   if (!fileIsModule(configFile))
     return false;
   const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ` --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;

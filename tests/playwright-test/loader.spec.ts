@@ -216,7 +216,9 @@ test('should load esm config files', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('should fail to load ts from esm when package.json has type module', async ({ runInlineTest }) => {
+test('should load ts from esm when package.json has type module', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
     'playwright.config.js': `
       //@no-header
@@ -225,19 +227,24 @@ test('should fail to load ts from esm when package.json has type module', async 
     `,
     'package.json': JSON.stringify({ type: 'module' }),
     'a.test.js': `
-      import { foo } from './b.ts';
-      const { test } = pwt;
+      //@no-header
+      import { test, expect } from '@playwright/test';
+      import { bar } from './bar.js';
       test('check project name', ({}, testInfo) => {
         expect(testInfo.project.name).toBe('foo');
       });
     `,
-    'b.ts': `
+    'bar.ts': `
+      import { foo } from './foo.js';
+      export const bar = foo;
+    `,
+    'foo.ts': `
       export const foo: string = 'foo';
     `
   });
 
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Unknown file extension ".ts"');
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });
 
 test('should filter stack trace for simple expect', async ({ runInlineTest }) => {
