@@ -141,6 +141,9 @@ async function run() {
           break;
       }
     }
+    const invalidConfigurations = Object.entries(devicesDescriptors).filter(([_, deviceDescriptor]) => deviceDescriptor.isMobile && deviceDescriptor.defaultBrowserType === 'firefox').map(([deviceName, deviceDescriptor]) => deviceName);
+    if (invalidConfigurations.length > 0)
+      throw new Error(`Invalid Device Configurations. isMobile with Firefox not supported: ${invalidConfigurations.join(', ')}`);
     writeAssumeNoop(devicesDescriptorsSourceFile, JSON.stringify(devicesDescriptors, null, 2), dirtyFiles);
   }
 
