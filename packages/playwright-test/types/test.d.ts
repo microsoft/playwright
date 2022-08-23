@@ -3431,10 +3431,10 @@ interface LocatorAssertions {
    * ```
    *
    * @param name Attribute name.
-   * @param value Expected attribute value.
+   * @param value Optional expected attribute value. If missing, method will assert attribute presence.
    * @param options
    */
-  toHaveAttribute(name: string, value: string|RegExp, options?: {
+  toHaveAttribute(name: string, value?: string|RegExp, options?: {
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */

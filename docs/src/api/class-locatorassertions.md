@@ -928,9 +928,9 @@ Attribute name.
 
 ### param: LocatorAssertions.toHaveAttribute.value
 * since: v1.18
-- `value` <[string]|[RegExp]>
+- `value` ?<[string]|[RegExp]>
 
-Expected attribute value.
+Optional expected attribute value. If missing, method will assert attribute presence.
 
 ### option: LocatorAssertions.toHaveAttribute.timeout = %%-js-assertions-timeout-%%
 * since: v1.18

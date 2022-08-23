@@ -138,9 +138,14 @@ export function toHaveAttribute(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
   name: string,
-  expected: string | RegExp,
+  expected: string | RegExp | undefined,
   options?: { timeout?: number },
 ) {
+  if (expected === undefined) {
+    return toBeTruthy.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+      return await locator._expect(customStackTrace, 'to.have.attribute', { expressionArg: name, expectedExistance: true, isNot, timeout });
+    }, options);
+  }
   return toMatchText.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
     const expectedText = toExpectedTextValues([expected]);
     return await locator._expect(customStackTrace, 'to.have.attribute', { expressionArg: name, expectedText, isNot, timeout });
