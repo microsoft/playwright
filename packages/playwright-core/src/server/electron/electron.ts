@@ -125,7 +125,7 @@ export class Electron extends SdkObject {
     controller.setLogName('browser');
     return controller.run(async progress => {
       let app: ElectronApplication | undefined = undefined;
-      const electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...args];
+      const electronArguments = [...args, '--inspect=0', '--remote-debugging-port=0'];
 
       if (os.platform() === 'linux') {
         const runningAsRoot = process.geteuid && process.geteuid() === 0;
