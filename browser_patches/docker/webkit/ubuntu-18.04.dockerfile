@@ -31,6 +31,14 @@ RUN add-apt-repository ppa:ubuntu-toolchain-r/test && \
 ENV CC=/usr/bin/gcc-9
 ENV CXX=/usr/bin/g++-9
 
+# Install Python3 with distutils
+RUN apt-get install -y python3.8 python3.8-dev python3.8-distutils && \
+    # Point python3 to python3.8
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 2 && \
+    curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+    python3 get-pip.py && \
+    rm get-pip.py
+
 # Install Azure CLI
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
