@@ -412,7 +412,9 @@ test('should work with cross-imports - 2', async ({ runInlineTest }) => {
   expect(result.output).toContain('TEST-2');
 });
 
-test('should load web server w/o esm loader in ems module', async ({ runInlineTest }) => {
+test('should load web server w/o esm loader in ems module', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
     'playwright.config.ts': `
       //@no-header
