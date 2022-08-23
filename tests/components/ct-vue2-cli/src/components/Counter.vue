@@ -5,17 +5,17 @@
    </div>
  </template>
 
- <script>
- let remountCount = 0
- export default {
-  name: 'Button',
-  props: ['count'],
-  data() {
-    return { remountCount }
-  },
-  beforeCreate() {
-    remountCount++;
-  },
- }
- </script>
- 
+<script>
+  let remountCount = 0;
+  
+  export default {
+    name: 'Button',
+    props: ['count'],
+    data() {
+      return { remountCount }
+    },
+    beforeCreate() {
+      remountCount++;
+    },
+  }
+</script>
