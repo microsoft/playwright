@@ -813,28 +813,6 @@
     "hasTouch": true,
     "defaultBrowserType": "webkit"
   },
-  "JioPhone 2": {
-    "userAgent": "Mozilla/5.0 (Mobile; LYF/F300B/LYF-F300B-001-01-15-130718-i;Android; rv:103.0) Gecko/48.0 Firefox/103.0 KAIOS/2.5",
-    "viewport": {
-      "width": 240,
-      "height": 320
-    },
-    "deviceScaleFactor": 1,
-    "isMobile": true,
-    "hasTouch": true,
-    "defaultBrowserType": "firefox"
-  },
-  "JioPhone 2 landscape": {
-    "userAgent": "Mozilla/5.0 (Mobile; LYF/F300B/LYF-F300B-001-01-15-130718-i;Android; rv:103.0) Gecko/48.0 Firefox/103.0 KAIOS/2.5",
-    "viewport": {
-      "width": 320,
-      "height": 240
-    },
-    "deviceScaleFactor": 1,
-    "isMobile": true,
-    "hasTouch": true,
-    "defaultBrowserType": "firefox"
-  },
   "Kindle Fire HDX": {
     "userAgent": "Mozilla/5.0 (Linux; U; en-us; KFAPWI Build/JDQ39) AppleWebKit/535.19 (KHTML, like Gecko) Silk/3.13 Safari/535.19 Silk-Accelerated=true",
     "viewport": {
