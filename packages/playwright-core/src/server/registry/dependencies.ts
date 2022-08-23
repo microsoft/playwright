@@ -31,18 +31,28 @@ const packageJSON = require('../../../package.json');
 const dockerVersionFilePath = '/ms-playwright/.docker-info';
 export async function writeDockerVersion(dockerImageNameTemplate: string) {
   await fs.promises.mkdir(path.dirname(dockerVersionFilePath), { recursive: true });
-  await fs.promises.writeFile(dockerVersionFilePath, JSON.stringify({
-    driverVersion: packageJSON.version,
-    dockerImageName: dockerImageNameTemplate.replace('%version%', packageJSON.version),
-  }, null, 2), 'utf8');
+  await fs.promises.writeFile(dockerVersionFilePath, JSON.stringify(dockerVersion(dockerImageNameTemplate), null, 2), 'utf8');
   // Make sure version file is globally accessible.
   await fs.promises.chmod(dockerVersionFilePath, 0o777);
 }
 
-async function readDockerVersion(): Promise<null | { driverVersion: string, dockerImageName: string }> {
-  return await fs.promises.readFile(dockerVersionFilePath, 'utf8')
-      .then(text => JSON.parse(text))
-      .catch(e => null);
+export function dockerVersion(dockerImageNameTemplate: string): { driverVersion: string, dockerImageName: string } {
+  return {
+    driverVersion: packageJSON.version,
+    dockerImageName: dockerImageNameTemplate.replace('%version%', packageJSON.version),
+  };
+}
+
+export function readDockerVersionSync(): null | { driverVersion: string, dockerImageName: string, dockerImageNameTemplate: string } {
+  try {
+    const data = JSON.parse(fs.readFileSync(dockerVersionFilePath, 'utf8'));
+    return {
+      ...data,
+      dockerImageNameTemplate: data.dockerImageName.replace(data.driverVersion, '%version%'),
+    };
+  } catch (e) {
+    return null;
+  }
 }
 
 const checkExecutable = (filePath: string) => fs.promises.access(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
@@ -206,7 +216,7 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   }
 
   const maybeSudo = (process.getuid() !== 0) && os.platform() !== 'win32' ? 'sudo ' : '';
-  const dockerInfo = await readDockerVersion();
+  const dockerInfo = readDockerVersionSync();
   const errorLines = [
     `Host system is missing dependencies to run browsers.`,
   ];
