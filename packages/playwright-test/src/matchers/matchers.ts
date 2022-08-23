@@ -143,12 +143,12 @@ export function toHaveAttribute(
 ) {
   if (expected === undefined) {
     return toBeTruthy.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-      return await locator._expect(customStackTrace, 'to.have.attribute', { expressionArg: name, expectedExistance: true, isNot, timeout });
+      return await locator._expect(customStackTrace, 'to.have.attribute', { expressionArg: name, isNot, timeout });
     }, options);
   }
   return toMatchText.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
     const expectedText = toExpectedTextValues([expected]);
-    return await locator._expect(customStackTrace, 'to.have.attribute', { expressionArg: name, expectedText, isNot, timeout });
+    return await locator._expect(customStackTrace, 'to.have.attribute.value', { expressionArg: name, expectedText, isNot, timeout });
   }, expected, options);
 }
 

@@ -1984,7 +1984,6 @@ Frame:
           items: ExpectedTextValue
         expectedNumber: number?
         expectedValue: SerializedArgument?
-        expectedExistance: boolean?
         useInnerText: boolean?
         isNot: boolean
         timeout: number?
