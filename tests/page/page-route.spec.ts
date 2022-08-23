@@ -140,6 +140,28 @@ it('should properly return navigation response when URL has cookies', async ({ p
   expect(response.status()).toBe(200);
 });
 
+it('should override cookie header', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16773' });
+  it.fail(browserName !== 'firefox');
+
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => document.cookie = 'original=value');
+  let cookieValueInRoute;
+  await page.route('**', async route => {
+    const headers = await route.request().allHeaders();
+    cookieValueInRoute = headers['cookie'];
+    headers['cookie'] = 'overridden=value';
+    route.continue({ headers });
+  });
+  const [serverReq] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.EMPTY_PAGE),
+  ]);
+
+  expect(cookieValueInRoute).toBe('original=value');
+  expect(serverReq.headers['cookie']).toBe('overridden=value');
+});
+
 it('should show custom HTTP headers', async ({ page, server }) => {
   await page.setExtraHTTPHeaders({
     foo: 'bar'
