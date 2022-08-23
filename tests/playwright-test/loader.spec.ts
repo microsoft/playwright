@@ -216,7 +216,9 @@ test('should load esm config files', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('should load ts from esm when package.json has type module', async ({ runInlineTest }) => {
+test('should load ts from esm when package.json has type module', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
     'playwright.config.js': `
       //@no-header
