@@ -8,12 +8,13 @@
  <script>
  let remountCount = 0
  export default {
-   name: 'Button',
-   props: ['count'],
-   data() {
-     return {
-       remountCount: remountCount = remountCount + 1
-     }
-   },
+  name: 'Button',
+  props: ['count'],
+  data() {
+    return { remountCount }
+  },
+  beforeCreate() {
+    remountCount++;
+  },
  }
  </script>
