@@ -453,6 +453,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
     dir: tString,
+    fps: tOptional(tNumber),
     size: tOptional(tObject({
       width: tNumber,
       height: tNumber,
@@ -524,6 +525,7 @@ scheme.BrowserNewContextParams = tObject({
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
     dir: tString,
+    fps: tOptional(tNumber),
     size: tOptional(tObject({
       width: tNumber,
       height: tNumber,
@@ -584,6 +586,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
     dir: tString,
+    fps: tOptional(tNumber),
     size: tOptional(tObject({
       width: tNumber,
       height: tNumber,
@@ -2287,6 +2290,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
     dir: tString,
+    fps: tOptional(tNumber),
     size: tOptional(tObject({
       width: tNumber,
       height: tNumber,

@@ -588,6 +588,10 @@ export function validateBrowserContextOptions(options: channels.BrowserNewContex
         };
       }
     }
+
+    if(!options.recordVideo.fps) {
+      options.recordVideo.fps = 25;
+    }
     // Make sure both dimensions are odd, this is required for vp8
     options.recordVideo.size!.width &= ~1;
     options.recordVideo.size!.height &= ~1;

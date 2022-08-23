@@ -460,6 +460,7 @@ ContextOptions:
       type: object?
       properties:
         dir: string
+        fps: number? 
         size:
           type: object?
           properties:

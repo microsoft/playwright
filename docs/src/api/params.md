@@ -607,6 +607,7 @@ When set to `minimal`, only record information necessary for routing from HAR. T
 * langs: js
 - `recordVideo` <[Object]>
   - `dir` <[path]> Path to the directory to put videos into.
+  - `fps` ?<[int]> Frame rate of video.
   - `size` ?<[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`
     scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450.
     Actual picture of each page will be scaled down if necessary to fit the specified size.

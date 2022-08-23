@@ -10720,6 +10720,11 @@ export interface BrowserType<Unused = {}> {
       dir: string;
 
       /**
+       * Frame rate of video.
+       */
+      fps?: number;
+
+      /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to fit
        * into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page
        * will be scaled down if necessary to fit the specified size.
@@ -11922,6 +11927,11 @@ export interface AndroidDevice {
        * Path to the directory to put videos into.
        */
       dir: string;
+
+      /**
+       * Frame rate of video.
+       */
+      fps?: number;
 
       /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to fit
@@ -13516,6 +13526,11 @@ export interface Browser extends EventEmitter {
       dir: string;
 
       /**
+       * Frame rate of video.
+       */
+      fps?: number;
+
+      /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to fit
        * into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page
        * will be scaled down if necessary to fit the specified size.
@@ -14308,6 +14323,11 @@ export interface Electron {
        * Path to the directory to put videos into.
        */
       dir: string;
+
+      /**
+       * Frame rate of video.
+       */
+      fps?: number;
 
       /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to fit
@@ -16142,6 +16162,11 @@ export interface BrowserContextOptions {
      * Path to the directory to put videos into.
      */
     dir: string;
+
+    /**
+     * Frame rate of video.
+     */
+    fps?: number;
 
     /**
      * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to fit

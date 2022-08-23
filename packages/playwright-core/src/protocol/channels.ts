@@ -790,6 +790,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   baseURL?: string,
   recordVideo?: {
     dir: string,
+    fps?: number,
     size?: {
       width: number,
       height: number,
@@ -860,6 +861,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   baseURL?: string,
   recordVideo?: {
     dir: string,
+    fps?: number,
     size?: {
       width: number,
       height: number,
@@ -955,6 +957,7 @@ export type BrowserNewContextParams = {
   baseURL?: string,
   recordVideo?: {
     dir: string,
+    fps?: number,
     size?: {
       width: number,
       height: number,
@@ -1012,6 +1015,7 @@ export type BrowserNewContextOptions = {
   baseURL?: string,
   recordVideo?: {
     dir: string,
+    fps?: number,
     size?: {
       width: number,
       height: number,
@@ -1072,6 +1076,7 @@ export type BrowserNewContextForReuseParams = {
   baseURL?: string,
   recordVideo?: {
     dir: string,
+    fps?: number,
     size?: {
       width: number,
       height: number,
@@ -1129,6 +1134,7 @@ export type BrowserNewContextForReuseOptions = {
   baseURL?: string,
   recordVideo?: {
     dir: string,
+    fps?: number,
     size?: {
       width: number,
       height: number,
@@ -4155,6 +4161,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   baseURL?: string,
   recordVideo?: {
     dir: string,
+    fps?: number,
     size?: {
       width: number,
       height: number,
@@ -4209,6 +4216,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   baseURL?: string,
   recordVideo?: {
     dir: string,
+    fps?: number,
     size?: {
       width: number,
       height: number,
