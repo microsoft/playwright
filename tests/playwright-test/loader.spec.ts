@@ -411,3 +411,34 @@ test('should work with cross-imports - 2', async ({ runInlineTest }) => {
   expect(result.output).toContain('TEST-1');
   expect(result.output).toContain('TEST-2');
 });
+
+test('should load web server w/o esm loader in ems module', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      //@no-header
+      export default {
+        webServer: {
+          command: 'node ws.js',
+          port: 9876,
+          timeout: 100,
+        },
+        projects: [{name: 'foo'}]
+      }`,
+    'package.json': `{ "type": "module" }`,
+    'ws.js': `
+      //@no-header
+      console.log('NODE_OPTIONS ' + process.env.NODE_OPTIONS);
+      setTimeout(() => {}, 100000);
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('passes', () => {});
+    `
+  }, {}, { ...process.env, DEBUG: 'pw:webserver' });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('NODE_OPTIONS undefined');
+});

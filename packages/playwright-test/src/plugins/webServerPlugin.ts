@@ -25,6 +25,7 @@ import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
 import type { FullConfig, Reporter } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';
 import type { FullConfigInternal } from '../types';
+import { envWithoutExperimentalLoaderOptions } from '../cli';
 
 
 export type WebServerPluginOptions = {
@@ -91,7 +92,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
       command: this._options.command,
       env: {
         ...DEFAULT_ENVIRONMENT_VARIABLES,
-        ...process.env,
+        ...envWithoutExperimentalLoaderOptions(),
         ...this._options.env,
       },
       cwd: this._options.cwd,
@@ -99,7 +100,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
       shell: true,
       attemptToGracefullyClose: async () => {},
       log: () => {},
-      onExit: code => processExitedReject(new Error(`Process from config.webServer was not able to start. Exit code: ${code}`)),
+      onExit: code => processExitedReject(new Error(code ? `Process from config.webServer was not able to start. Exit code: ${code}` : 'Process from config.webServer exited early.')),
       tempDirectories: [],
     });
     this._killProcess = kill;
