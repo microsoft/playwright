@@ -878,7 +878,7 @@ function setPostData(httpChannel, postData, headers) {
   let contentType = overriddenHeader('content-type');
   if (contentType === undefined) {
     try {
-      contentType = httpChannel.getRequestHeader('content-encoding');
+      contentType = httpChannel.getRequestHeader('content-type');
     } catch (e) {
       if (e.result == Cr.NS_ERROR_NOT_AVAILABLE)
         contentType =  'application/octet-stream';
