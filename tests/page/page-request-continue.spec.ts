@@ -246,6 +246,25 @@ it.describe('post data', () => {
     for (let i = 0; i < arr.length; ++i)
       expect(arr[i]).toBe(buffer[i]);
   });
+
+  it('should use content-type from original request', async ({ page, server, browserName }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16736' });
+    it.fixme(browserName === 'firefox');
+    await page.goto(server.EMPTY_PAGE);
+    await page.route(`${server.PREFIX}/title.html`, route => route.continue({ postData: '{"b":2}' }));
+    const [request] = await Promise.all([
+      server.waitForRequest('/title.html'),
+      page.evaluate(async url => {
+        await fetch(url, {
+          method: 'POST',
+          body: '{"a":1}',
+          headers: { 'content-type': 'application/json' },
+        });
+      }, `${server.PREFIX}/title.html`)
+    ]);
+    expect(request.headers['content-type']).toBe('application/json');
+    expect((await request.postBody).toString('utf-8')).toBe('{"b":2}');
+  });
 });
 
 it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browserName }) => {
