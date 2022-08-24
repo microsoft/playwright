@@ -639,7 +639,7 @@ it('should be able to download a inline PDF file via response interception', asy
 });
 
 it('should be able to download a inline PDF file via navigation', async ({ browser, server, asset, browserName }) => {
-  it.fixme(browserName === 'chromium');
+  it.fixme(browserName === 'chromium' || browserName === 'webkit');
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
