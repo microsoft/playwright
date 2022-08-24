@@ -53,20 +53,29 @@ it('page.goBack should work with HistoryAPI', async ({ page, server }) => {
 });
 
 it('page.goBack should work for file urls', async ({ page, server, asset, browserName, platform, isAndroid }) => {
-  it.fail(browserName === 'webkit' && platform === 'darwin');
+  it.fixme(browserName === 'firefox', 'Firefox pretends, but does not complete goBack to the file url');
+  it.fail(browserName === 'webkit' && platform === 'darwin', 'WebKit embedder fails to go back/forward to the file url.');
   it.skip(isAndroid, 'No files on Android');
 
-  // WebKit embedder fails to go back/forward to the file url.
-  const url1 = url.pathToFileURL(asset('empty.html')).href;
-  const url2 = server.EMPTY_PAGE;
-  await page.goto(url1);
+  const url1 = url.pathToFileURL(asset('consolelog.html')).href;
+  const url2 = server.PREFIX + '/consolelog.html';
+  await Promise.all([
+    page.waitForEvent('console', message => message.text() === 'here:' + url1),
+    page.goto(url1),
+  ]);
   await page.setContent(`<a href='${url2}'>url2</a>`);
   expect(page.url().toLowerCase()).toBe(url1.toLowerCase());
 
-  await page.click('a');
+  await Promise.all([
+    page.waitForEvent('console', message => message.text() === 'here:' + url2),
+    page.click('a'),
+  ]);
   expect(page.url()).toBe(url2);
 
-  await page.goBack();
+  await Promise.all([
+    page.waitForEvent('console', message => message.text() === 'here:' + url1),
+    page.goBack(),
+  ]);
   expect(page.url().toLowerCase()).toBe(url1.toLowerCase());
   // Should be able to evaluate in the new context, and
   // not reach for the old cross-process one.
@@ -74,7 +83,10 @@ it('page.goBack should work for file urls', async ({ page, server, asset, browse
   // Should be able to screenshot.
   await page.screenshot();
 
-  await page.goForward();
+  await Promise.all([
+    page.waitForEvent('console', message => message.text() === 'here:' + url2),
+    page.goForward(),
+  ]);
   expect(page.url()).toBe(url2);
   expect(await page.evaluate(() => window.scrollX)).toBe(0);
   await page.screenshot();
