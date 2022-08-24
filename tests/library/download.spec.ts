@@ -613,7 +613,7 @@ it('should be able to download a PDF file', async ({ browser, server, asset }) =
   await page.close();
 });
 
-it('should be able to download a inline PDF file', async ({ browser, server, asset, browserName }) => {
+it('should be able to download a inline PDF file via response interception', async ({ browser, server, asset, browserName }) => {
   it.fixme(browserName === 'webkit');
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -627,6 +627,21 @@ it('should be able to download a inline PDF file', async ({ browser, server, ass
       }
     });
   });
+  await page.setContent(`
+    <a href="/empty.pdf">open</a>
+  `);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a'),
+  ]);
+  await assertDownloadToPDF(download, asset('empty.pdf'));
+  await page.close();
+});
+
+it('should be able to download a inline PDF file via navigation', async ({ browser, server, asset, browserName }) => {
+  it.fixme(browserName === 'chromium' || browserName === 'webkit');
+  const page = await browser.newPage();
+  await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <a href="/empty.pdf">open</a>
   `);
