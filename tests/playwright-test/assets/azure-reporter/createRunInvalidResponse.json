@@ -1,0 +1,9 @@
+{
+  "$id": "1",
+  "innerException": null,
+  "message": "TF200016: The following project does not exist: SampleSample. Verify that the name of the project is correct and that the project exists on the specified Azure DevOps Server.",
+  "typeName": "Microsoft.TeamFoundation.Core.WebApi.ProjectDoesNotExistWithNameException, Microsoft.TeamFoundation.Core.WebApi",
+  "typeKey": "ProjectDoesNotExistWithNameException",
+  "errorCode": 0,
+  "eventId": 3000
+}

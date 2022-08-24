@@ -1,0 +1,48 @@
+{
+  "points": [
+    {
+      "id": 2,
+      "url": "http://localhost:3000/SampleSample/_apis/test/Plans/4/Suites/6/Points/2",
+      "assignedTo": {
+        "displayName": "Alex",
+        "id": "230e55b4-9e71-6a10-a0fa-777777777"
+      },
+      "automated": false,
+      "configuration": {
+        "id": "1",
+        "name": "Windows 10"
+      },
+      "lastTestRun": {
+        "id": "238"
+      },
+      "lastResult": {
+        "id": "100000"
+      },
+      "outcome": "Passed",
+      "state": "Completed",
+      "lastResultState": "Completed",
+      "suite": {
+        "id": "6"
+      },
+      "testCase": {
+        "id": "7"
+      },
+      "testPlan": {
+        "id": "4"
+      },
+      "workItemProperties": [
+        {
+          "workItem": {
+            "key": "Microsoft.VSTS.TCM.AutomationStatus",
+            "value": "Not Automated"
+          }
+        }
+      ]
+    }
+  ],
+  "pointsFilter": {
+    "testcaseIds": [
+      7
+    ]
+  }
+}

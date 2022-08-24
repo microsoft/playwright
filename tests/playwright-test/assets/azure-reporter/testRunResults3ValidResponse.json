@@ -1,0 +1,19 @@
+{
+  "count": 1,
+  "value": [
+    {
+      "id": 100000,
+      "project": {},
+      "outcome": "Passed",
+      "testRun": {
+        "id": "150"
+      },
+      "priority": 0,
+      "url": "",
+      "lastUpdatedBy": {
+        "displayName": null,
+        "id": null
+      }
+    }
+  ]
+}
