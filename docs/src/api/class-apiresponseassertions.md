@@ -1,6 +1,5 @@
 # class: APIResponseAssertions
 * since: v1.18
-* langs: js, java, python
 
 The [APIResponseAssertions] class provides assertion methods that can be used to make assertions about the [APIResponse] in the tests. A new instance of [APIResponseAssertions] is created by calling [`method: PlaywrightAssertions.expectAPIResponse`]:
 
@@ -50,7 +49,7 @@ def test_navigates_to_login_page(page: Page) -> None:
 
 ## property: APIResponseAssertions.not
 * since: v1.20
-* langs: java, js
+* langs: java, js, csharp
 - returns: <[APIResponseAssertions]>
 
 Makes the assertion check for the opposite condition. For example, this code tests that the response status is not successful:
@@ -74,7 +73,7 @@ The opposite of [`method: APIResponseAssertions.toBeOK`].
 * langs:
   - alias-java: isOK
 
-Ensures the response status code is within [200..299] range.
+Ensures the response status code is within `200..299` range.
 
 ```js
 await expect(response).toBeOK();
