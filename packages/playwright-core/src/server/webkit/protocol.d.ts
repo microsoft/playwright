@@ -910,7 +910,7 @@ export module Protocol {
     /**
      * Relevant layout information about the node. Things not in this list are not important to Web Inspector.
      */
-    export type LayoutFlag = "rendered"|"flex"|"grid";
+    export type LayoutFlag = "rendered"|"flex"|"grid"|"event";
     /**
      * The mode for how layout context type changes are handled (default: <code>Observed</code>). <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and all nodes with a known layout context are sent to the frontend.
      */
@@ -2557,6 +2557,10 @@ export module Protocol {
        * Id of the node to get listeners for.
        */
       nodeId: NodeId;
+      /**
+       * Controls whether ancestor event listeners are included. Defaults to true.
+       */
+      includeAncestors?: boolean;
     }
     export type getEventListenersForNodeReturnValue = {
       /**
