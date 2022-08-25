@@ -17,10 +17,10 @@
 // @ts-check
 // This file is injected into the registry as text, no dependencies are allowed.
 
-import { render as solidRender } from 'solid-js/web';
+import { render as solidRender, createComponent } from 'solid-js/web';
 
 /** @typedef {import('../playwright-test/types/component').Component} Component */
-/** @typedef {import('solid-js').JSX.Element} FrameworkComponent */
+/** @typedef {() => import('solid-js').JSX.Element} FrameworkComponent */
 
 /** @type {Map<string, FrameworkComponent>} */
 const registry = new Map();
@@ -48,15 +48,16 @@ function render(component) {
     }
   }
 
-  if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
+  if (!componentFunc)
     throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...registry.keys()]}`);
-
-  const componentFuncOrString = componentFunc || component.type;
 
   if (component.kind !== 'jsx')
     throw new Error('Object mount notation is not supported');
 
-  return componentFuncOrString;
+  return createComponent(componentFunc, {
+    children: component.children,
+    ...component.props
+  });
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
