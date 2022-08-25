@@ -200,6 +200,7 @@ for (const testFramework of ['nunit', 'mstest'] as const) {
     await cli.waitFor(`Page.GotoAsync("${emptyHTML}")`);
     expect(cli.text()).not.toContain('public override BrowserNewContextOptions ContextOptions()');
   });
+
   test(`should print context options method override in ${testFramework} if options were passed`, async ({ runCLI }) => {
     const cli = runCLI([`--target=csharp-${testFramework}`, '--color-scheme=dark', emptyHTML]);
     await cli.waitFor(`Page.GotoAsync("${emptyHTML}")`);
@@ -212,15 +213,40 @@ for (const testFramework of ['nunit', 'mstest'] as const) {
     }
 `);
   });
-  test(`should print a valid basic program in ${testFramework}`, async ({ runCLI }) => {
-    const cli = runCLI([`--target=csharp-${testFramework}`, '--color-scheme=dark', emptyHTML]);
-    await cli.waitFor(`Page.GotoAsync("${emptyHTML}")`);
-    let expected: string;
-    if (testFramework === 'nunit') {
-      expected = `using Microsoft.Playwright.NUnit;
+}
+
+test(`should print a valid basic program in mstest`, async ({ runCLI }) => {
+  const cli = runCLI([`--target=csharp-mstest`, '--color-scheme=dark', emptyHTML]);
+  await cli.waitFor(`Page.GotoAsync("${emptyHTML}")`);
+  const expected = `using Microsoft.Playwright.MSTest;
 using Microsoft.Playwright;
 
-namespace PlaywrightTests;
+[TestClass]
+public class Tests : PageTest
+{
+    public override BrowserNewContextOptions ContextOptions()
+    {
+        return new BrowserNewContextOptions
+        {
+            ColorScheme = ColorScheme.Dark,
+        };
+    }
+
+    [TestMethod]
+    public async Task MyTest()
+    {
+        // Go to ${emptyHTML}
+        await Page.GotoAsync("${emptyHTML}");
+    }
+}`;
+  expect(cli.text()).toContain(expected);
+});
+
+test(`should print a valid basic program in nunit`, async ({ runCLI }) => {
+  const cli = runCLI([`--target=csharp-nunit`, '--color-scheme=dark', emptyHTML]);
+  await cli.waitFor(`Page.GotoAsync("${emptyHTML}")`);
+  const expected = `using Microsoft.Playwright.NUnit;
+using Microsoft.Playwright;
 
 [Parallelizable(ParallelScope.Self)]
 public class Tests : PageTest
@@ -240,31 +266,5 @@ public class Tests : PageTest
         await Page.GotoAsync("${emptyHTML}");
     }
 }`;
-    } else if (testFramework === 'mstest') {
-      expected = `using Microsoft.Playwright.MSTest;
-using Microsoft.Playwright;
-
-namespace PlaywrightTests;
-
-[TestClass]
-public class UnitTest1 : PageTest
-{
-    public override BrowserNewContextOptions ContextOptions()
-    {
-        return new BrowserNewContextOptions
-        {
-            ColorScheme = ColorScheme.Dark,
-        };
-    }
-
-    [TestMethod]
-    public async Task MyTest()
-    {
-        // Go to ${emptyHTML}
-        await Page.GotoAsync("${emptyHTML}");
-    }
-}`;
-    }
-    expect(cli.text()).toContain(expected);
-  });
-}
+  expect(cli.text()).toContain(expected);
+});

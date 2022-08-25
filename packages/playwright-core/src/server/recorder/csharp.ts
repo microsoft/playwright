@@ -191,10 +191,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       using Microsoft.Playwright.${this._mode === 'nunit' ? 'NUnit' : 'MSTest'};
       using Microsoft.Playwright;
 
-      namespace PlaywrightTests;
-
       ${this._mode === 'nunit' ? '[Parallelizable(ParallelScope.Self)]' : '[TestClass]'}
-      public class ${this._mode === 'nunit' ? 'Tests' : 'UnitTest1'} : PageTest
+      public class Tests : PageTest
       {`);
     const formattedContextOptions = formatContextOptions(options.contextOptions, options.deviceName);
     if (formattedContextOptions) {
