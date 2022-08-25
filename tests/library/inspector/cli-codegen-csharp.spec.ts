@@ -237,6 +237,7 @@ public class Tests : PageTest
     {
         // Go to ${emptyHTML}
         await Page.GotoAsync("${emptyHTML}");
+
     }
 }`;
   expect(cli.text()).toContain(expected);
@@ -264,6 +265,7 @@ public class Tests : PageTest
     {
         // Go to ${emptyHTML}
         await Page.GotoAsync("${emptyHTML}");
+
     }
 }`;
   expect(cli.text()).toContain(expected);

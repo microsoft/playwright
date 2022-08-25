@@ -33,7 +33,6 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   name: string;
   highlighter = 'csharp';
   _mode: CSharpLanguageMode;
-  private _actionsCount = 0;
 
   constructor(mode: CSharpLanguageMode) {
     if (mode === 'library') {
@@ -52,16 +51,20 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   }
 
   generateAction(actionInContext: ActionInContext): string {
+    const action = this._generateActionInner(actionInContext);
+    if (action)
+      return action + '\n';
+    return '';
+  }
+
+  _generateActionInner(actionInContext: ActionInContext): string {
     const action = actionInContext.action;
     if (this._mode !== 'library' && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
-    this._actionsCount++;
     let pageAlias = actionInContext.frame.pageAlias;
     if (this._mode !== 'library')
       pageAlias = pageAlias.replace('page', 'Page');
     const formatter = new CSharpFormatter(8);
-    if (this._actionsCount > 1)
-      formatter.newLine();
     formatter.add('// ' + actionTitle(action));
 
     if (action.name === 'openPage') {
@@ -182,6 +185,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
               using var playwright = await Playwright.CreateAsync();
               await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatObject(options.launchOptions, '    ', 'BrowserTypeLaunchOptions')});
               var context = await browser.NewContextAsync(${formatContextOptions(options.contextOptions, options.deviceName)});`);
+    formatter.newLine();
     return formatter.format();
   }
 
