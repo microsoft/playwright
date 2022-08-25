@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-import type { DispatcherScope } from './dispatcher';
+import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import type * as channels from '../../protocol/channels';
 import type { Selectors } from '../selectors';
 
-export class SelectorsDispatcher extends Dispatcher<Selectors, channels.SelectorsChannel> implements channels.SelectorsChannel {
+export class SelectorsDispatcher extends Dispatcher<Selectors, channels.SelectorsChannel, RootDispatcher> implements channels.SelectorsChannel {
   _type_Selectors = true;
-  constructor(scope: DispatcherScope, selectors: Selectors) {
+
+  constructor(scope: RootDispatcher, selectors: Selectors) {
     super(scope, selectors, 'Selectors', {});
   }
 

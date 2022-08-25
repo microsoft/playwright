@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { DispatcherScope } from './dispatcher';
+import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import type { Electron } from '../electron/electron';
 import { ElectronApplication } from '../electron/electron';
@@ -24,9 +24,10 @@ import type { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
-export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronChannel> implements channels.ElectronChannel {
+export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronChannel, RootDispatcher, ElectronDispatcher> implements channels.ElectronChannel {
   _type_Electron = true;
-  constructor(scope: DispatcherScope, electron: Electron) {
+
+  constructor(scope: RootDispatcher, electron: Electron) {
     super(scope, electron, 'Electron', {}, true);
   }
 
@@ -36,11 +37,11 @@ export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronCh
   }
 }
 
-export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplication, channels.ElectronApplicationChannel> implements channels.ElectronApplicationChannel {
+export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplication, channels.ElectronApplicationChannel, ElectronDispatcher, ElectronApplicationDispatcher> implements channels.ElectronApplicationChannel {
   _type_EventTarget = true;
   _type_ElectronApplication = true;
 
-  constructor(scope: DispatcherScope, electronApplication: ElectronApplication) {
+  constructor(scope: ElectronDispatcher, electronApplication: ElectronApplication) {
     super(scope, electronApplication, 'ElectronApplication', {
       context: new BrowserContextDispatcher(scope, electronApplication.context())
     }, true);

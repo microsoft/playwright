@@ -19,7 +19,7 @@ import type * as channels from '../../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { existingDispatcher } from './dispatcher';
-import type { DispatcherScope } from './dispatcher';
+import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import type { CRBrowser } from '../chromium/crBrowser';
 import type { PageDispatcher } from './pageDispatcher';
@@ -27,11 +27,12 @@ import type { CallMetadata } from '../instrumentation';
 import { serverSideCallMetadata } from '../instrumentation';
 import { BrowserContext } from '../browserContext';
 import { Selectors } from '../selectors';
+import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
 
-export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel> implements channels.BrowserChannel {
+export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel, BrowserTypeDispatcher, BrowserDispatcher> implements channels.BrowserChannel {
   _type_Browser = true;
 
-  constructor(scope: DispatcherScope, browser: Browser) {
+  constructor(scope: BrowserTypeDispatcher, browser: Browser) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name }, true);
     this.addObjectListener(Browser.Events.Disconnected, () => this._didClose());
   }
@@ -81,12 +82,12 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 }
 
 // This class implements multiplexing browser dispatchers over a single Browser instance.
-export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel> implements channels.BrowserChannel {
+export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel, RootDispatcher, BrowserDispatcher> implements channels.BrowserChannel {
   _type_Browser = true;
   private _contexts = new Set<BrowserContext>();
   readonly selectors: Selectors;
 
-  constructor(scope: DispatcherScope, browser: Browser) {
+  constructor(scope: RootDispatcher, browser: Browser) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name }, true);
     // When we have a remotely-connected browser, each client gets a fresh Selector instance,
     // so that two clients do not interfere between each other.
@@ -141,7 +142,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
   }
 }
 
-async function newContextForReuse(browser: Browser, scope: DispatcherScope, params: channels.BrowserNewContextForReuseParams, selectors: Selectors | null, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
+async function newContextForReuse(browser: Browser, scope: BrowserDispatcher, params: channels.BrowserNewContextForReuseParams, selectors: Selectors | null, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
   const { context, needsReset } = await browser.newContextForReuse(params, metadata);
   if (needsReset) {
     const oldContextDispatcher = existingDispatcher<BrowserContextDispatcher>(context);

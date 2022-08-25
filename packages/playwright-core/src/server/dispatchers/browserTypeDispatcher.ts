@@ -17,7 +17,7 @@
 import type { BrowserType } from '../browserType';
 import { BrowserDispatcher } from './browserDispatcher';
 import type * as channels from '../../protocol/channels';
-import type { DispatcherScope } from './dispatcher';
+import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { CallMetadata } from '../instrumentation';
@@ -29,9 +29,9 @@ import { ProgressController } from '../progress';
 import { WebSocketTransport } from '../transport';
 import { findValidator, ValidationError, type ValidatorContext } from '../../protocol/validator';
 
-export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel> implements channels.BrowserTypeChannel {
+export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel, RootDispatcher, BrowserTypeDispatcher> implements channels.BrowserTypeChannel {
   _type_BrowserType = true;
-  constructor(scope: DispatcherScope, browserType: BrowserType) {
+  constructor(scope: RootDispatcher, browserType: BrowserType) {
     super(scope, browserType, 'BrowserType', {
       executablePath: browserType.executablePath(),
       name: browserType.name()
@@ -53,7 +53,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     const browserDispatcher = new BrowserDispatcher(this._scope, browser);
     return {
       browser: browserDispatcher,
-      defaultContext: browser._defaultContext ? new BrowserContextDispatcher(browserDispatcher._scope, browser._defaultContext) : undefined,
+      defaultContext: browser._defaultContext ? new BrowserContextDispatcher(browserDispatcher, browser._defaultContext) : undefined,
     };
   }
 

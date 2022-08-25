@@ -17,18 +17,19 @@
 import type * as channels from '../../protocol/channels';
 import type { Tracing } from '../trace/recorder/tracing';
 import { ArtifactDispatcher } from './artifactDispatcher';
-import type { DispatcherScope } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
+import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import type { APIRequestContextDispatcher } from './networkDispatchers';
 
-export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChannel> implements channels.TracingChannel {
+export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChannel, BrowserContextDispatcher | APIRequestContextDispatcher> implements channels.TracingChannel {
   _type_Tracing = true;
 
-  static from(scope: DispatcherScope, tracing: Tracing): TracingDispatcher {
+  static from(scope: BrowserContextDispatcher | APIRequestContextDispatcher, tracing: Tracing): TracingDispatcher {
     const result = existingDispatcher<TracingDispatcher>(tracing);
     return result || new TracingDispatcher(scope, tracing);
   }
 
-  constructor(scope: DispatcherScope, tracing: Tracing) {
+  constructor(scope: BrowserContextDispatcher | APIRequestContextDispatcher, tracing: Tracing) {
     super(scope, tracing, 'Tracing', {}, true);
   }
 

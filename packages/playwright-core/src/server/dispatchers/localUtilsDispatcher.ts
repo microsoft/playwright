@@ -20,18 +20,18 @@ import path from 'path';
 import type * as channels from '../../protocol/channels';
 import { ManualPromise } from '../../utils/manualPromise';
 import { assert, createGuid } from '../../utils';
-import type { DispatcherScope } from './dispatcher';
+import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { yazl, yauzl } from '../../zipBundle';
 import { ZipFile } from '../../utils/zipFile';
 import type * as har from '../har/har';
 import type { HeadersArray } from '../types';
 
-export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel> implements channels.LocalUtilsChannel {
+export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
   private _harBakends = new Map<string, HarBackend>();
 
-  constructor(scope: DispatcherScope) {
+  constructor(scope: RootDispatcher) {
     super(scope, { guid: 'localUtils@' + createGuid() }, 'LocalUtils', {});
     this._type_LocalUtils = true;
   }

@@ -15,8 +15,8 @@
  */
 
 import type { WebSocket } from '../utilsBundle';
-import type { Playwright, DispatcherScope } from '../server';
-import { createPlaywright, DispatcherConnection, Root, PlaywrightDispatcher } from '../server';
+import type { Playwright } from '../server';
+import { createPlaywright, DispatcherConnection, RootDispatcher, PlaywrightDispatcher } from '../server';
 import { Browser } from '../server/browser';
 import { serverSideCallMetadata } from '../server/instrumentation';
 import { gracefullyCloseAll } from '../utils/processLauncher';
@@ -45,7 +45,7 @@ export class PlaywrightConnection {
   private _disconnected = false;
   private _preLaunched: PreLaunched;
   private _options: Options;
-  private _root: Root;
+  private _root: RootDispatcher;
 
   constructor(lock: Promise<void>, mode: Mode, ws: WebSocket, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
     this._ws = ws;
@@ -72,7 +72,7 @@ export class PlaywrightConnection {
     ws.on('close', () => this._onDisconnect());
     ws.on('error', error => this._onDisconnect(error));
 
-    this._root = new Root(this._dispatcherConnection, async scope => {
+    this._root = new RootDispatcher(this._dispatcherConnection, async scope => {
       if (mode === 'reuse-browser')
         return await this._initReuseBrowsersMode(scope);
       if (mode === 'use-pre-launched-browser')
@@ -83,7 +83,7 @@ export class PlaywrightConnection {
     });
   }
 
-  private async _initPlaywrightConnectMode(scope: DispatcherScope) {
+  private async _initPlaywrightConnectMode(scope: RootDispatcher) {
     this._debugLog(`engaged playwright.connect mode`);
     const playwright = createPlaywright('javascript');
     // Close all launched browsers on disconnect.
@@ -93,7 +93,7 @@ export class PlaywrightConnection {
     return new PlaywrightDispatcher(scope, playwright, socksProxy);
   }
 
-  private async _initLaunchBrowserMode(scope: DispatcherScope) {
+  private async _initLaunchBrowserMode(scope: RootDispatcher) {
     this._debugLog(`engaged launch mode for "${this._options.browserName}"`);
 
     const playwright = createPlaywright('javascript');
@@ -112,7 +112,7 @@ export class PlaywrightConnection {
     return new PlaywrightDispatcher(scope, playwright, socksProxy, browser);
   }
 
-  private async _initPreLaunchedBrowserMode(scope: DispatcherScope) {
+  private async _initPreLaunchedBrowserMode(scope: RootDispatcher) {
     this._debugLog(`engaged pre-launched mode`);
     const playwright = this._preLaunched.playwright!;
     const browser = this._preLaunched.browser!;
@@ -130,7 +130,7 @@ export class PlaywrightConnection {
     return playwrightDispatcher;
   }
 
-  private async _initReuseBrowsersMode(scope: DispatcherScope) {
+  private async _initReuseBrowsersMode(scope: RootDispatcher) {
     this._debugLog(`engaged reuse browsers mode for ${this._options.browserName}`);
     const playwright = this._preLaunched.playwright!;
     const requestedOptions = launchOptionsHash(this._options.launchOptions);
