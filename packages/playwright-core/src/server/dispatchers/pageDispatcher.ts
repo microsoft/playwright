@@ -18,14 +18,14 @@ import type { BrowserContext } from '../browserContext';
 import type { Frame } from '../frames';
 import { Page, Worker } from '../page';
 import type * as channels from '../../protocol/channels';
-import type { DispatcherScope } from './dispatcher';
 import { Dispatcher, existingDispatcher, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError } from '../../protocol/serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
+import { RequestDispatcher } from './networkDispatchers';
 import type { ResponseDispatcher } from './networkDispatchers';
-import { RequestDispatcher, RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
+import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { serializeResult, parseArgument } from './jsHandleDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import type { FileChooser } from '../fileChooser';
@@ -36,25 +36,30 @@ import type { Artifact } from '../artifact';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import type { Download } from '../download';
 import { createGuid } from '../../utils';
+import type { BrowserContextDispatcher } from './browserContextDispatcher';
 
-export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> implements channels.PageChannel {
+export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher, PageDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
   _type_Page = true;
   private _page: Page;
 
-  static fromNullable(parentScope: DispatcherScope, page: Page | undefined): PageDispatcher | undefined {
+  static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
+    return PageDispatcher.fromNullable(parentScope, page)!;
+  }
+
+  static fromNullable(parentScope: BrowserContextDispatcher, page: Page | undefined): PageDispatcher | undefined {
     if (!page)
       return undefined;
     const result = existingDispatcher<PageDispatcher>(page);
     return result || new PageDispatcher(parentScope, page);
   }
 
-  constructor(parentScope: DispatcherScope, page: Page) {
+  private constructor(parentScope: BrowserContextDispatcher, page: Page) {
     // TODO: theoretically, there could be more than one frame already.
     // If we split pageCreated and pageReady, there should be no main frame during pageCreated.
 
     // We will reparent it to the page below using adopt.
-    const mainFrame = FrameDispatcher.from(parentScope, page.mainFrame());
+    const mainFrame = FrameDispatcher.from(parentScope as any as PageDispatcher, page.mainFrame());
 
     super(parentScope, page, 'Page', {
       mainFrame,
@@ -154,7 +159,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
       return;
     }
     await this._page.setClientRequestInterceptor((route, request) => {
-      this._dispatchEvent('route', { route: RouteDispatcher.from(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
+      this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this.parentScope()!, request), route) });
     });
   }
 
@@ -291,19 +296,20 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
 }
 
 
-export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel> implements channels.WorkerChannel {
-  static fromNullable(scope: DispatcherScope, worker: Worker | null): WorkerDispatcher | undefined {
+export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel, PageDispatcher | BrowserContextDispatcher, WorkerDispatcher> implements channels.WorkerChannel {
+  _type_Worker = true;
+
+  static fromNullable(scope: PageDispatcher | BrowserContextDispatcher, worker: Worker | null): WorkerDispatcher | undefined {
     if (!worker)
       return undefined;
     const result = existingDispatcher<WorkerDispatcher>(worker);
     return result || new WorkerDispatcher(scope, worker);
   }
 
-  _type_Worker = true;
-  constructor(scope: DispatcherScope, worker: Worker) {
+  constructor(scope: PageDispatcher | BrowserContextDispatcher, worker: Worker) {
     super(scope, worker, 'Worker', {
       url: worker.url()
-    });
+    }, true);
     this.addObjectListener(Worker.Events.Close, () => this._dispatchEvent('close'));
   }
 
@@ -316,13 +322,13 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel>
   }
 }
 
-export class BindingCallDispatcher extends Dispatcher<{ guid: string }, channels.BindingCallChannel> implements channels.BindingCallChannel {
+export class BindingCallDispatcher extends Dispatcher<{ guid: string }, channels.BindingCallChannel, PageDispatcher | BrowserContextDispatcher> implements channels.BindingCallChannel {
   _type_BindingCall = true;
   private _resolve: ((arg: any) => void) | undefined;
   private _reject: ((error: any) => void) | undefined;
   private _promise: Promise<any>;
 
-  constructor(scope: DispatcherScope, name: string, needsHandle: boolean, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
+  constructor(scope: PageDispatcher, name: string, needsHandle: boolean, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
     super(scope, { guid: 'bindingCall@' + createGuid() }, 'BindingCall', {
       frame: lookupDispatcher<FrameDispatcher>(source.frame),
       name,

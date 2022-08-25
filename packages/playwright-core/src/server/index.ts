@@ -23,7 +23,7 @@ export {
   installBrowsersForNpmInstall,
   writeDockerVersion } from './registry';
 
-export { DispatcherConnection, Root } from './dispatchers/dispatcher';
+export { DispatcherConnection, RootDispatcher } from './dispatchers/dispatcher';
 export { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 export { createPlaywright } from './playwright';
 

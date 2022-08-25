@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { DispatcherScope } from './dispatcher';
+import type { RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type { Android, SocketBackend } from '../android/android';
 import { AndroidDevice } from '../android/android';
@@ -22,9 +22,9 @@ import type * as channels from '../../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { CallMetadata } from '../instrumentation';
 
-export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChannel> implements channels.AndroidChannel {
+export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChannel, RootDispatcher, AndroidDispatcher> implements channels.AndroidChannel {
   _type_Android = true;
-  constructor(scope: DispatcherScope, android: Android) {
+  constructor(scope: RootDispatcher, android: Android) {
     super(scope, android, 'Android', {}, true);
   }
 
@@ -40,16 +40,16 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChann
   }
 }
 
-export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceChannel> implements channels.AndroidDeviceChannel {
+export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceChannel, AndroidDispatcher, AndroidDeviceDispatcher> implements channels.AndroidDeviceChannel {
   _type_EventTarget = true;
   _type_AndroidDevice = true;
 
-  static from(scope: DispatcherScope, device: AndroidDevice): AndroidDeviceDispatcher {
+  static from(scope: AndroidDispatcher, device: AndroidDevice): AndroidDeviceDispatcher {
     const result = existingDispatcher<AndroidDeviceDispatcher>(device);
     return result || new AndroidDeviceDispatcher(scope, device);
   }
 
-  constructor(scope: DispatcherScope, device: AndroidDevice) {
+  constructor(scope: AndroidDispatcher, device: AndroidDevice) {
     super(scope, device, 'AndroidDevice', {
       model: device.model,
       serial: device.serial,
@@ -174,10 +174,10 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 }
 
-export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.AndroidSocketChannel> implements channels.AndroidSocketChannel {
+export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.AndroidSocketChannel, AndroidDeviceDispatcher, AndroidSocketDispatcher> implements channels.AndroidSocketChannel {
   _type_AndroidSocket = true;
 
-  constructor(scope: DispatcherScope, socket: SocketBackend) {
+  constructor(scope: AndroidDeviceDispatcher, socket: SocketBackend) {
     super(scope, socket, 'AndroidSocket', {}, true);
     this.addObjectListener('data', (data: Buffer) => this._dispatchEvent('data', { data }));
     this.addObjectListener('close', () => {
