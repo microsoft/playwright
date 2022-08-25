@@ -20,9 +20,10 @@ import { Dispatcher } from './dispatcher';
 import type * as stream from 'stream';
 import { createGuid } from '../../utils';
 
-export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamChannel> implements channels.StreamChannel {
+export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamChannel, DispatcherScope> implements channels.StreamChannel {
   _type_Stream = true;
   private _ended: boolean = false;
+
   constructor(scope: DispatcherScope, stream: stream.Readable) {
     super(scope, { guid: 'stream@' + createGuid(), stream }, 'Stream', {});
     // In Node v12.9.0+ we can use readableEnded.

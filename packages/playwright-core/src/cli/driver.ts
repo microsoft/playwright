@@ -20,7 +20,7 @@ import fs from 'fs';
 import * as playwright from '../..';
 import type { BrowserType } from '../client/browserType';
 import type { LaunchServerOptions } from '../client/types';
-import { createPlaywright, DispatcherConnection, Root, PlaywrightDispatcher } from '../server';
+import { createPlaywright, DispatcherConnection, RootDispatcher, PlaywrightDispatcher } from '../server';
 import type { Playwright } from '../server';
 import { IpcTransport, PipeTransport } from '../protocol/transport';
 import { PlaywrightServer } from '../remote/playwrightServer';
@@ -38,7 +38,7 @@ export function printApiJson() {
 
 export function runDriver() {
   const dispatcherConnection = new DispatcherConnection();
-  new Root(dispatcherConnection, async (rootScope, { sdkLanguage }) => {
+  new RootDispatcher(dispatcherConnection, async (rootScope, { sdkLanguage }) => {
     const playwright = createPlaywright(sdkLanguage);
     return new PlaywrightDispatcher(rootScope, playwright);
   });

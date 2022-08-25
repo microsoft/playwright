@@ -15,8 +15,8 @@
  */
 
 import { BrowserContext } from '../browserContext';
-import type { DispatcherScope } from './dispatcher';
 import { Dispatcher, lookupDispatcher } from './dispatcher';
+import type { DispatcherScope } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import type { FrameDispatcher } from './frameDispatcher';
 import type * as channels from '../../protocol/channels';
@@ -34,15 +34,15 @@ import * as path from 'path';
 import { createGuid } from '../../utils';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
 
-export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel> implements channels.BrowserContextChannel {
+export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope, BrowserContextDispatcher> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
   _type_BrowserContext = true;
   private _context: BrowserContext;
 
   constructor(parentScope: DispatcherScope, context: BrowserContext) {
     // We will reparent these to the context below.
-    const requestContext = APIRequestContextDispatcher.from(parentScope, context.fetchRequest);
-    const tracing = TracingDispatcher.from(parentScope, context.tracing);
+    const requestContext = APIRequestContextDispatcher.from(parentScope as BrowserContextDispatcher, context.fetchRequest);
+    const tracing = TracingDispatcher.from(parentScope as BrowserContextDispatcher, context.tracing);
 
     super(parentScope, context, 'BrowserContext', {
       isChromium: context._browser.options.isChromium,
@@ -70,8 +70,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     }
 
     for (const page of context.pages())
-      this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page) });
-    this.addObjectListener(BrowserContext.Events.Page, page => this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page) }));
+      this._dispatchEvent('page', { page: PageDispatcher.from(this._scope, page) });
+    this.addObjectListener(BrowserContext.Events.Page, page => {
+      this._dispatchEvent('page', { page: PageDispatcher.from(this._scope, page) });
+    });
     this.addObjectListener(BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
@@ -79,8 +81,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
     if (context._browser.options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())
-        this._dispatchEvent('backgroundPage', { page: new PageDispatcher(this._scope, page) });
-      this.addObjectListener(CRBrowserContext.CREvents.BackgroundPage, page => this._dispatchEvent('backgroundPage', { page: new PageDispatcher(this._scope, page) }));
+        this._dispatchEvent('backgroundPage', { page: PageDispatcher.from(this._scope, page) });
+      this.addObjectListener(CRBrowserContext.CREvents.BackgroundPage, page => this._dispatchEvent('backgroundPage', { page: PageDispatcher.from(this._scope, page) }));
       for (const serviceWorker of (context as CRBrowserContext).serviceWorkers())
         this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) });
       this.addObjectListener(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));
@@ -128,7 +130,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async exposeBinding(params: channels.BrowserContextExposeBindingParams): Promise<void> {
     await this._context.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
-      const binding = new BindingCallDispatcher(this._scope, params.name, !!params.needsHandle, source, args);
+      const pageDispatcher = PageDispatcher.from(this._scope, source.page);
+      const binding = new BindingCallDispatcher(pageDispatcher, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
     });
@@ -184,7 +187,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       return;
     }
     await this._context.setRequestInterceptor((route, request) => {
-      this._dispatchEvent('route', { route: RouteDispatcher.from(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
+      this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this._scope, request), route) });
     });
   }
 

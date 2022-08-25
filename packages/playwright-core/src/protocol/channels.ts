@@ -1258,7 +1258,6 @@ export type BrowserContextPageEvent = {
 };
 export type BrowserContextRouteEvent = {
   route: RouteChannel,
-  request: RequestChannel,
 };
 export type BrowserContextVideoEvent = {
   artifact: ArtifactChannel,
@@ -1586,7 +1585,6 @@ export type PagePageErrorEvent = {
 };
 export type PageRouteEvent = {
   route: RouteChannel,
-  request: RequestChannel,
 };
 export type PageVideoEvent = {
   artifact: ArtifactChannel,

@@ -15,14 +15,14 @@
  */
 
 import type * as channels from '../../protocol/channels';
-import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
+import type { DispatcherScope } from './dispatcher';
 import { StreamDispatcher } from './streamDispatcher';
 import fs from 'fs';
 import { mkdirIfNeeded } from '../../utils/fileUtils';
 import type { Artifact } from '../artifact';
 
-export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactChannel> implements channels.ArtifactChannel {
+export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactChannel, DispatcherScope> implements channels.ArtifactChannel {
   _type_Artifact = true;
   constructor(scope: DispatcherScope, artifact: Artifact) {
     super(scope, artifact, 'Artifact', {

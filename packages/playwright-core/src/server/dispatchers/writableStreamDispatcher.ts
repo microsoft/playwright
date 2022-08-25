@@ -15,14 +15,14 @@
  */
 
 import type * as channels from '../../protocol/channels';
-import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import type * as fs from 'fs';
 import { createGuid } from '../../utils';
+import type { BrowserContextDispatcher } from './browserContextDispatcher';
 
-export class WritableStreamDispatcher extends Dispatcher<{ guid: string, stream: fs.WriteStream }, channels.WritableStreamChannel> implements channels.WritableStreamChannel {
+export class WritableStreamDispatcher extends Dispatcher<{ guid: string, stream: fs.WriteStream }, channels.WritableStreamChannel, BrowserContextDispatcher> implements channels.WritableStreamChannel {
   _type_WritableStream = true;
-  constructor(scope: DispatcherScope, stream: fs.WriteStream) {
+  constructor(scope: BrowserContextDispatcher, stream: fs.WriteStream) {
     super(scope, { guid: 'writableStream@' + createGuid(), stream }, 'WritableStream', {});
   }
 

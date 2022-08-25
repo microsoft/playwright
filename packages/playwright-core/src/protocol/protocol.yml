@@ -992,7 +992,6 @@ BrowserContext:
     route:
       parameters:
         route: Route
-        request: Request
 
     video:
       parameters:
@@ -1422,7 +1421,6 @@ Page:
     route:
       parameters:
         route: Route
-        request: Request
 
     video:
       parameters:

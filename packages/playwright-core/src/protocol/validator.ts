@@ -656,7 +656,6 @@ scheme.BrowserContextPageEvent = tObject({
 });
 scheme.BrowserContextRouteEvent = tObject({
   route: tChannel(['Route']),
-  request: tChannel(['Request']),
 });
 scheme.BrowserContextVideoEvent = tObject({
   artifact: tChannel(['Artifact']),
@@ -842,7 +841,6 @@ scheme.PagePageErrorEvent = tObject({
 });
 scheme.PageRouteEvent = tObject({
   route: tChannel(['Route']),
-  request: tChannel(['Request']),
 });
 scheme.PageVideoEvent = tObject({
   artifact: tChannel(['Artifact']),

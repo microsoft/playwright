@@ -17,13 +17,14 @@
 import type { CRSession } from '../chromium/crConnection';
 import { CRSessionEvents } from '../chromium/crConnection';
 import type * as channels from '../../protocol/channels';
-import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
+import type { BrowserDispatcher } from './browserDispatcher';
+import type { BrowserContextDispatcher } from './browserContextDispatcher';
 
-export class CDPSessionDispatcher extends Dispatcher<CRSession, channels.CDPSessionChannel> implements channels.CDPSessionChannel {
+export class CDPSessionDispatcher extends Dispatcher<CRSession, channels.CDPSessionChannel, BrowserDispatcher | BrowserContextDispatcher, CDPSessionDispatcher> implements channels.CDPSessionChannel {
   _type_CDPSession = true;
 
-  constructor(scope: DispatcherScope, crSession: CRSession) {
+  constructor(scope: BrowserDispatcher | BrowserContextDispatcher, crSession: CRSession) {
     super(scope, crSession, 'CDPSession', {}, true);
     crSession._eventListener = (method, params) => {
       this._dispatchEvent('event', { method, params });
