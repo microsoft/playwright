@@ -4,8 +4,8 @@ import DefaultChildren from './components/DefaultChildren';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
-test('should work', async ({ mount }) => {
-  const component = await mount(<Button />);
+test('props should work', async ({ mount }) => {
+  const component = await mount(<Button title="Submit" />);
   await expect(component).toContainText('Submit');
 });
 
