@@ -227,6 +227,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   override _dispose() {
     super._dispose();
-    this._context.setRequestInterceptor(undefined).catch(() => {});
+    // Avoid protocol calls for the closed context.
+    if (!this._context.isClosingOrClosed())
+      this._context.setRequestInterceptor(undefined).catch(() => {});
   }
 }
