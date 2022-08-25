@@ -890,11 +890,16 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 * langs:
   - alias-java: hasAttribute
 
-Ensures the [Locator] points to an element with given attribute.
+Ensures the [Locator] points to an element with given attribute. If the method
+is used without `'value'` argument, then the method will assert attribute existance.
 
 ```js
 const locator = page.locator('input');
+// Assert attribute with given value.
 await expect(locator).toHaveAttribute('type', 'text');
+// Assert attribute existance.
+await expect(locator).toHaveAttribute('disabled');
+await expect(locator).not.toHaveAttribute('open');
 ```
 
 ```java
@@ -928,9 +933,9 @@ Attribute name.
 
 ### param: LocatorAssertions.toHaveAttribute.value
 * since: v1.18
-- `value` <[string]|[RegExp]>
+- `value` ?<[string]|[RegExp]>
 
-Expected attribute value.
+Optional expected attribute value. If missing, method will assert attribute presence.
 
 ### option: LocatorAssertions.toHaveAttribute.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
