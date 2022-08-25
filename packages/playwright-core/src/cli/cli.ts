@@ -69,7 +69,7 @@ Examples:
 commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
-      ['--target <language>', `language to generate, one of javascript, test, python, python-async, pytest, csharp, java`, language()],
+      ['--target <language>', `language to generate, one of javascript, test, python, python-async, pytest, csharp, csharp-mstest, csharp-nunit, java`, language()],
       ['--save-trace <filename>', 'record a trace for the session and save it to a file'],
     ]).action(function(url, options) {
   codegen(options, url, options.target, options.output).catch(logErrorAndExit);
