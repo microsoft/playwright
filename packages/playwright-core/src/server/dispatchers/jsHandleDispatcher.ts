@@ -16,15 +16,18 @@
 
 import type * as js from '../javascript';
 import type * as channels from '../../protocol/channels';
-import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseSerializedValue, serializeValue } from '../../protocol/serializers';
+import type { PageDispatcher, WorkerDispatcher } from './pageDispatcher';
+import type { ElectronApplicationDispatcher } from './electronDispatcher';
 
-export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandleChannel> implements channels.JSHandleChannel {
+export type JSHandleDispatcherParentScope = PageDispatcher | WorkerDispatcher | ElectronApplicationDispatcher;
+
+export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandleChannel, JSHandleDispatcherParentScope> implements channels.JSHandleChannel {
   _type_JSHandle = true;
 
-  protected constructor(scope: DispatcherScope, jsHandle: js.JSHandle) {
+  protected constructor(scope: JSHandleDispatcherParentScope, jsHandle: js.JSHandle) {
     // Do not call this directly, use createHandle() instead.
     super(scope, jsHandle, jsHandle.asElement() ? 'ElementHandle' : 'JSHandle', {
       preview: jsHandle.toString(),

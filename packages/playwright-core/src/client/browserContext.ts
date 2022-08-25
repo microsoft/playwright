@@ -79,7 +79,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', ({ page }) => this._onPage(Page.from(page)));
-    this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
+    this._channel.on('route', ({ route }) => this._onRoute(network.Route.from(route)));
     this._channel.on('backgroundPage', ({ page }) => {
       const backgroundPage = Page.from(page);
       this._backgroundPages.add(backgroundPage);
@@ -147,14 +147,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       response._finishedPromise.resolve();
   }
 
-  async _onRoute(route: network.Route, request: network.Request) {
+  async _onRoute(route: network.Route) {
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
-      if (!routeHandler.matches(request.url()))
+      if (!routeHandler.matches(route.request().url()))
         continue;
       if (routeHandler.willExpire())
         this._routes.splice(this._routes.indexOf(routeHandler), 1);
-      const handled = await routeHandler.handle(route, request);
+      const handled = await routeHandler.handle(route);
       if (!this._routes.length)
         this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
       if (handled)

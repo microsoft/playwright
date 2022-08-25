@@ -16,13 +16,14 @@
 
 import type { ConsoleMessage } from '../console';
 import type * as channels from '../../protocol/channels';
-import type { DispatcherScope } from './dispatcher';
+import type { PageDispatcher } from './pageDispatcher';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
-export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageChannel> implements channels.ConsoleMessageChannel {
+export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageChannel, PageDispatcher> implements channels.ConsoleMessageChannel {
   _type_ConsoleMessage = true;
-  constructor(scope: DispatcherScope, message: ConsoleMessage) {
+
+  constructor(scope: PageDispatcher, message: ConsoleMessage) {
     super(scope, message, 'ConsoleMessage', {
       type: message.type(),
       text: message.text(),

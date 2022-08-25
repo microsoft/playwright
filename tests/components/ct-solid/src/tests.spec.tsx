@@ -9,6 +9,15 @@ test('props should work', async ({ mount }) => {
   await expect(component).toContainText('Submit');
 });
 
+test('callback should work', async ({ mount }) => {
+  const messages: string[] = []
+  const component = await mount(<Button title="Submit" onClick={data => {
+    messages.push(data)
+  }}></Button>)
+  await component.click()
+  expect(messages).toEqual(['hello'])
+});
+
 test('should unmount', async ({ page, mount }) => {
   const component = await mount(<Button title="Submit" />)
   await expect(page.locator('#root')).toContainText('Submit')
@@ -23,4 +32,4 @@ test('unmount a multi root component should work', async ({ mount, page }) => {
   await component.unmount()
   await expect(page.locator('#root')).not.toContainText('root 1')
   await expect(page.locator('#root')).not.toContainText('root 2')
-})
+});

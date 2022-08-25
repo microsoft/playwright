@@ -1,6 +1,7 @@
 type ButtonProps = {
   title: string;
+  onClick?(props: string): void;
 }
 export default function Button(props: ButtonProps) {
-  return <button>{props.title}</button>
+  return <button onClick={() => props.onClick?.('hello')}>{props.title}</button>
 }

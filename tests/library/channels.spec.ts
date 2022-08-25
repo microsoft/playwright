@@ -53,14 +53,14 @@ it('should scope context handles', async ({ browserType, server, expectScopeStat
       { _guid: 'selectors', objects: [] },
     ]
   };
-  await expectScopeState(browser, GOLDEN_PRECONDITION);
+  expectScopeState(browser, GOLDEN_PRECONDITION);
 
   const context = await browser.newContext();
   const page = await context.newPage();
   // Firefox Beta 96 yields a console warning for the pages that
   // don't use `<!DOCTYPE HTML> tag.
   await page.goto(server.PREFIX + '/empty-standard-mode.html');
-  await expectScopeState(browser, {
+  expectScopeState(browser, {
     _guid: '',
     objects: [
       { _guid: 'android', objects: [] },
@@ -70,11 +70,12 @@ it('should scope context handles', async ({ browserType, server, expectScopeStat
         { _guid: 'browser', objects: [
           { _guid: 'browser-context', objects: [
             { _guid: 'page', objects: [
-              { _guid: 'frame', objects: [] },
+              { _guid: 'frame', objects: [
+                { _guid: 'request', objects: [] },
+                { _guid: 'response', objects: [] },
+              ] },
             ] },
-            { _guid: 'request', objects: [] },
             { _guid: 'request-context', objects: [] },
-            { _guid: 'response', objects: [] },
             { _guid: 'tracing', objects: [] }
           ] },
         ] },
@@ -87,7 +88,7 @@ it('should scope context handles', async ({ browserType, server, expectScopeStat
   });
 
   await context.close();
-  await expectScopeState(browser, GOLDEN_PRECONDITION);
+  expectScopeState(browser, GOLDEN_PRECONDITION);
   await browser.close();
 });
 
@@ -110,10 +111,10 @@ it('should scope CDPSession handles', async ({ browserType, browserName, expectS
       { _guid: 'selectors', objects: [] },
     ]
   };
-  await expectScopeState(browserType, GOLDEN_PRECONDITION);
+  expectScopeState(browserType, GOLDEN_PRECONDITION);
 
   const session = await browser.newBrowserCDPSession();
-  await expectScopeState(browserType, {
+  expectScopeState(browserType, {
     _guid: '',
     objects: [
       { _guid: 'android', objects: [] },
@@ -132,7 +133,7 @@ it('should scope CDPSession handles', async ({ browserType, browserName, expectS
   });
 
   await session.detach();
-  await expectScopeState(browserType, GOLDEN_PRECONDITION);
+  expectScopeState(browserType, GOLDEN_PRECONDITION);
 
   await browser.close();
 });
@@ -151,11 +152,11 @@ it('should scope browser handles', async ({ browserType, expectScopeState }) => 
       { _guid: 'selectors', objects: [] },
     ]
   };
-  await expectScopeState(browserType, GOLDEN_PRECONDITION);
+  expectScopeState(browserType, GOLDEN_PRECONDITION);
 
   const browser = await browserType.launch();
   await browser.newContext();
-  await expectScopeState(browserType, {
+  expectScopeState(browserType, {
     _guid: '',
     objects: [
       { _guid: 'android', objects: [] },
@@ -180,7 +181,7 @@ it('should scope browser handles', async ({ browserType, expectScopeState }) => 
   });
 
   await browser.close();
-  await expectScopeState(browserType, GOLDEN_PRECONDITION);
+  expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
 it('should work with the domain module', async ({ browserType, server, browserName }) => {
