@@ -164,7 +164,7 @@ export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocke
   }
 }
 
-export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, channels.APIRequestContextChannel, RootDispatcher | BrowserContextDispatcher, APIRequestContextDispatcher> implements channels.APIRequestContextChannel {
+export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, channels.APIRequestContextChannel, RootDispatcher | BrowserContextDispatcher> implements channels.APIRequestContextChannel {
   _type_APIRequestContext = true;
 
   static from(scope: RootDispatcher | BrowserContextDispatcher, request: APIRequestContext): APIRequestContextDispatcher {
@@ -182,7 +182,7 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
 
     super(parentScope, request, 'APIRequestContext', {
       tracing,
-    }, true);
+    });
 
     this.adopt(tracing);
   }

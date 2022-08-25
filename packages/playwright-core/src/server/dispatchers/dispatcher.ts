@@ -44,9 +44,8 @@ export function lookupNullableDispatcher<DispatcherType>(object: any | null): Di
   return object ? lookupDispatcher(object) : undefined;
 }
 
-export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeType extends DispatcherScope, ScopeType extends DispatcherScope = ParentScopeType> extends EventEmitter implements channels.Channel {
+export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeType extends DispatcherScope> extends EventEmitter implements channels.Channel {
   private _connection: DispatcherConnection;
-  private _isScope: boolean;
   // Parent is always "isScope".
   private _parent: ParentScopeType | undefined;
   // Only "isScope" channel owners have registered dispatchers inside.
@@ -56,16 +55,13 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
 
   readonly _guid: string;
   readonly _type: string;
-  readonly _scope: ScopeType;
   _object: Type;
 
-  constructor(parent: ParentScopeType | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<Type>, isScope?: boolean) {
+  constructor(parent: ParentScopeType | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<Type>) {
     super();
 
     this._connection = parent instanceof DispatcherConnection ? parent : parent._connection;
-    this._isScope = !!isScope;
     this._parent = parent instanceof DispatcherConnection ? undefined : parent;
-    this._scope = (isScope ? this : this._parent!) as any as ScopeType;
 
     const guid = object.guid;
     assert(!this._connection._dispatchers.has(guid));
@@ -84,8 +80,8 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
       this._connection.sendCreate(this._parent, type, guid, initializer, this._parent._object);
   }
 
-  parentScope(): ParentScopeType | undefined {
-    return this._parent;
+  parentScope(): ParentScopeType {
+    return this._parent!;
   }
 
   addObjectListener(eventName: (string | symbol), handler: (...args: any[]) => void) {
@@ -93,7 +89,6 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
   }
 
   adopt(child: DispatcherScope) {
-    assert(this._isScope);
     const oldParent = child._parent!;
     oldParent._dispatchers.delete(child._guid);
     this._dispatchers.set(child._guid, child);
@@ -113,6 +108,11 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
   }
 
   _dispose() {
+    this._disposeRecursively();
+    this._connection.sendDispose(this);
+  }
+
+  private _disposeRecursively() {
     assert(!this._disposed, `${this._guid} is disposed more than once`);
     this._disposed = true;
     eventsHelper.removeEventListeners(this._eventListeners);
@@ -124,11 +124,8 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
 
     // Dispose all children.
     for (const dispatcher of [...this._dispatchers.values()])
-      dispatcher._dispose();
+      dispatcher._disposeRecursively();
     this._dispatchers.clear();
-
-    if (this._isScope)
-      this._connection.sendDispose(this);
     delete (this._object as any)[dispatcherSymbol];
   }
 
@@ -150,7 +147,7 @@ export class RootDispatcher extends Dispatcher<{ guid: '' }, any, any> {
   private _initialized = false;
 
   constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: RootDispatcher, options: channels.RootInitializeParams) => Promise<PlaywrightDispatcher>) {
-    super(connection, { guid: '' }, 'Root', {}, true);
+    super(connection, { guid: '' }, 'Root', {});
   }
 
   async initialize(params: channels.RootInitializeParams): Promise<channels.RootInitializeResult> {

@@ -197,12 +197,12 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
 
   async querySelector(params: channels.ElementHandleQuerySelectorParams, metadata: CallMetadata): Promise<channels.ElementHandleQuerySelectorResult> {
     const handle = await this._elementHandle.querySelector(params.selector, params);
-    return { element: ElementHandleDispatcher.fromNullable(this._scope, handle) };
+    return { element: ElementHandleDispatcher.fromNullable(this.parentScope(), handle) };
   }
 
   async querySelectorAll(params: channels.ElementHandleQuerySelectorAllParams, metadata: CallMetadata): Promise<channels.ElementHandleQuerySelectorAllResult> {
     const elements = await this._elementHandle.querySelectorAll(params.selector);
-    return { elements: elements.map(e => ElementHandleDispatcher.from(this._scope, e)) };
+    return { elements: elements.map(e => ElementHandleDispatcher.from(this.parentScope(), e)) };
   }
 
   async evalOnSelector(params: channels.ElementHandleEvalOnSelectorParams, metadata: CallMetadata): Promise<channels.ElementHandleEvalOnSelectorResult> {
@@ -218,6 +218,6 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   }
 
   async waitForSelector(params: channels.ElementHandleWaitForSelectorParams, metadata: CallMetadata): Promise<channels.ElementHandleWaitForSelectorResult> {
-    return { element: ElementHandleDispatcher.fromNullable(this._scope, await this._elementHandle.waitForSelector(metadata, params.selector, params)) };
+    return { element: ElementHandleDispatcher.fromNullable(this.parentScope(), await this._elementHandle.waitForSelector(metadata, params.selector, params)) };
   }
 }
