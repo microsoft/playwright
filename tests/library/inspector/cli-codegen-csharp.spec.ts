@@ -193,3 +193,80 @@ test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
   expect(json.log.creator.name).toBe('Playwright');
 });
+
+for (const testFramework of ['nunit', 'mstest'] as const) {
+  test(`should not print context options method override in ${testFramework} if no options were passed`, async ({ runCLI }) => {
+    const cli = runCLI([`--target=csharp-${testFramework}`, emptyHTML]);
+    await cli.waitFor(`Page.GotoAsync("${emptyHTML}")`);
+    expect(cli.text()).not.toContain('public override BrowserNewContextOptions ContextOptions()');
+  });
+
+  test(`should print context options method override in ${testFramework} if options were passed`, async ({ runCLI }) => {
+    const cli = runCLI([`--target=csharp-${testFramework}`, '--color-scheme=dark', emptyHTML]);
+    await cli.waitFor(`Page.GotoAsync("${emptyHTML}")`);
+    expect(cli.text()).toContain(`    public override BrowserNewContextOptions ContextOptions()
+    {
+        return new BrowserNewContextOptions
+        {
+            ColorScheme = ColorScheme.Dark,
+        };
+    }
+`);
+  });
+}
+
+test(`should print a valid basic program in mstest`, async ({ runCLI }) => {
+  const cli = runCLI([`--target=csharp-mstest`, '--color-scheme=dark', emptyHTML]);
+  await cli.waitFor(`Page.GotoAsync("${emptyHTML}")`);
+  const expected = `using Microsoft.Playwright.MSTest;
+using Microsoft.Playwright;
+
+[TestClass]
+public class Tests : PageTest
+{
+    public override BrowserNewContextOptions ContextOptions()
+    {
+        return new BrowserNewContextOptions
+        {
+            ColorScheme = ColorScheme.Dark,
+        };
+    }
+
+    [TestMethod]
+    public async Task MyTest()
+    {
+        // Go to ${emptyHTML}
+        await Page.GotoAsync("${emptyHTML}");
+
+    }
+}`;
+  expect(cli.text()).toContain(expected);
+});
+
+test(`should print a valid basic program in nunit`, async ({ runCLI }) => {
+  const cli = runCLI([`--target=csharp-nunit`, '--color-scheme=dark', emptyHTML]);
+  await cli.waitFor(`Page.GotoAsync("${emptyHTML}")`);
+  const expected = `using Microsoft.Playwright.NUnit;
+using Microsoft.Playwright;
+
+[Parallelizable(ParallelScope.Self)]
+public class Tests : PageTest
+{
+    public override BrowserNewContextOptions ContextOptions()
+    {
+        return new BrowserNewContextOptions
+        {
+            ColorScheme = ColorScheme.Dark,
+        };
+    }
+
+    [Test]
+    public async Task MyTest()
+    {
+        // Go to ${emptyHTML}
+        await Page.GotoAsync("${emptyHTML}");
+
+    }
+}`;
+  expect(cli.text()).toContain(expected);
+});

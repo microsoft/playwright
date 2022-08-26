@@ -27,7 +27,7 @@ value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 - `strict` <[boolean]>
 
 When true, the call requires selector to resolve to a single element. If given selector resolves to more
-then one element, the call throws an exception.
+than one element, the call throws an exception.
 
 ## input-timeout
 - `timeout` <[float]>

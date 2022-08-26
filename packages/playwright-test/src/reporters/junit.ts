@@ -133,7 +133,7 @@ class JUnitReporter implements Reporter {
       attributes: {
         // Skip root, project, file
         name: test.titlePath().slice(3).join(' '),
-        classname: formatTestTitle(this.config, test),
+        classname: formatTestTitle(this.config, test, undefined, true),
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
       },
       children: [] as XMLEntry[]

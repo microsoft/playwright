@@ -28,6 +28,7 @@
     "packages/*/lib",
     "packages/html-reporter",
     "packages/playwright-ct-react",
+    "packages/playwright-ct-solid",
     "packages/playwright-ct-svelte",
     "packages/playwright-ct-vue",
     "packages/recorder",

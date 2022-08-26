@@ -362,12 +362,14 @@ class ContextRecorder extends EventEmitter {
   setOutput(language: string, outputFile: string | undefined) {
     const languages = new Set([
       new JavaLanguageGenerator(),
-      new JavaScriptLanguageGenerator(false),
-      new JavaScriptLanguageGenerator(true),
-      new PythonLanguageGenerator(false, true),
-      new PythonLanguageGenerator(false, false),
-      new PythonLanguageGenerator(true, false),
-      new CSharpLanguageGenerator(),
+      new JavaScriptLanguageGenerator(/* isPlaywrightTest */false),
+      new JavaScriptLanguageGenerator(/* isPlaywrightTest */true),
+      new PythonLanguageGenerator(/* isAsync */false, /* isPytest */true),
+      new PythonLanguageGenerator(/* isAsync */false, /* isPytest */false),
+      new PythonLanguageGenerator(/* isAsync */true,  /* isPytest */false),
+      new CSharpLanguageGenerator('mstest'),
+      new CSharpLanguageGenerator('nunit'),
+      new CSharpLanguageGenerator('library'),
     ]);
     const primaryLanguage = [...languages].find(l => l.id === language);
     if (!primaryLanguage)

@@ -216,7 +216,9 @@ test('should load esm config files', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('should fail to load ts from esm when package.json has type module', async ({ runInlineTest }) => {
+test('should load ts from esm when package.json has type module', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
     'playwright.config.js': `
       //@no-header
@@ -225,19 +227,24 @@ test('should fail to load ts from esm when package.json has type module', async 
     `,
     'package.json': JSON.stringify({ type: 'module' }),
     'a.test.js': `
-      import { foo } from './b.ts';
-      const { test } = pwt;
+      //@no-header
+      import { test, expect } from '@playwright/test';
+      import { bar } from './bar.js';
       test('check project name', ({}, testInfo) => {
         expect(testInfo.project.name).toBe('foo');
       });
     `,
-    'b.ts': `
+    'bar.ts': `
+      import { foo } from './foo.js';
+      export const bar = foo;
+    `,
+    'foo.ts': `
       export const foo: string = 'foo';
     `
   });
 
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Unknown file extension ".ts"');
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });
 
 test('should filter stack trace for simple expect', async ({ runInlineTest }) => {
@@ -410,4 +417,35 @@ test('should work with cross-imports - 2', async ({ runInlineTest }) => {
   expect(result.failed).toBe(0);
   expect(result.output).toContain('TEST-1');
   expect(result.output).toContain('TEST-2');
+});
+
+test('should load web server w/o esm loader in ems module', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      //@no-header
+      export default {
+        webServer: {
+          command: 'node ws.js',
+          port: 9876,
+          timeout: 100,
+        },
+        projects: [{name: 'foo'}]
+      }`,
+    'package.json': `{ "type": "module" }`,
+    'ws.js': `
+      //@no-header
+      console.log('NODE_OPTIONS ' + process.env.NODE_OPTIONS);
+      setTimeout(() => {}, 100000);
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('passes', () => {});
+    `
+  }, {}, { ...process.env, DEBUG: 'pw:webserver' });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('NODE_OPTIONS undefined');
 });

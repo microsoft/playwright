@@ -19,36 +19,39 @@ import type { APIRequestContext } from '../fetch';
 import type { CallMetadata } from '../instrumentation';
 import type { Request, Response, Route } from '../network';
 import { WebSocket } from '../network';
-import type { DispatcherScope } from './dispatcher';
+import type { RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
-import { FrameDispatcher } from './frameDispatcher';
 import { WorkerDispatcher } from './pageDispatcher';
 import { TracingDispatcher } from './tracingDispatcher';
+import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import type { PageDispatcher } from './pageDispatcher';
+import { FrameDispatcher } from './frameDispatcher';
 
-export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel> implements channels.RequestChannel {
+export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel, FrameDispatcher | WorkerDispatcher> implements channels.RequestChannel {
   _type_Request: boolean;
 
-  static from(scope: DispatcherScope, request: Request): RequestDispatcher {
+  static from(scope: BrowserContextDispatcher, request: Request): RequestDispatcher {
     const result = existingDispatcher<RequestDispatcher>(request);
     return result || new RequestDispatcher(scope, request);
   }
 
-  static fromNullable(scope: DispatcherScope, request: Request | null): RequestDispatcher | undefined {
+  static fromNullable(scope: BrowserContextDispatcher, request: Request | null): RequestDispatcher | undefined {
     return request ? RequestDispatcher.from(scope, request) : undefined;
   }
 
-  private constructor(scope: DispatcherScope, request: Request) {
+  private constructor(contextScope: BrowserContextDispatcher, request: Request) {
     const postData = request.postDataBuffer();
+    const scope = parentScopeForRequest(contextScope, request);
     super(scope, request, 'Request', {
-      frame: FrameDispatcher.fromNullable(scope, request.frame()),
-      serviceWorker: WorkerDispatcher.fromNullable(scope, request.serviceWorker()),
+      frame: request.frame() ? scope : undefined,
+      serviceWorker: request.serviceWorker() ? scope : undefined,
       url: request.url(),
       resourceType: request.resourceType(),
       method: request.method(),
       postData: postData === null ? undefined : postData,
       headers: request.headers(),
       isNavigationRequest: request.isNavigationRequest(),
-      redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
+      redirectedFrom: RequestDispatcher.fromNullable(contextScope, request.redirectedFrom()),
     });
     this._type_Request = true;
   }
@@ -62,22 +65,23 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
   }
 }
 
-export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseChannel> implements channels.ResponseChannel {
+export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseChannel, FrameDispatcher | WorkerDispatcher> implements channels.ResponseChannel {
   _type_Response = true;
 
-  static from(scope: DispatcherScope, response: Response): ResponseDispatcher {
+  static from(scope: BrowserContextDispatcher, response: Response): ResponseDispatcher {
     const result = existingDispatcher<ResponseDispatcher>(response);
     return result || new ResponseDispatcher(scope, response);
   }
 
-  static fromNullable(scope: DispatcherScope, response: Response | null): ResponseDispatcher | undefined {
+  static fromNullable(scope: BrowserContextDispatcher, response: Response | null): ResponseDispatcher | undefined {
     return response ? ResponseDispatcher.from(scope, response) : undefined;
   }
 
-  private constructor(scope: DispatcherScope, response: Response) {
+  private constructor(contextScope: BrowserContextDispatcher, response: Response) {
+    const scope = parentScopeForRequest(contextScope, response.request());
     super(scope, response, 'Response', {
       // TODO: responses in popups can point to non-reported requests.
-      request: RequestDispatcher.from(scope, response.request()),
+      request: RequestDispatcher.from(contextScope, response.request()),
       url: response.url(),
       status: response.status(),
       statusText: response.statusText(),
@@ -108,18 +112,18 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
   }
 }
 
-export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel> implements channels.RouteChannel {
+export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, RequestDispatcher> implements channels.RouteChannel {
   _type_Route = true;
 
-  static from(scope: DispatcherScope, route: Route): RouteDispatcher {
+  static from(scope: RequestDispatcher, route: Route): RouteDispatcher {
     const result = existingDispatcher<RouteDispatcher>(route);
     return result || new RouteDispatcher(scope, route);
   }
 
-  private constructor(scope: DispatcherScope, route: Route) {
+  private constructor(scope: RequestDispatcher, route: Route) {
     super(scope, route, 'Route', {
       // Context route can point to a non-reported request.
-      request: RequestDispatcher.from(scope, route.request())
+      request: scope
     });
   }
 
@@ -145,11 +149,11 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel> im
   }
 }
 
-export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocketChannel> implements channels.WebSocketChannel {
+export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocketChannel, PageDispatcher> implements channels.WebSocketChannel {
   _type_EventTarget = true;
   _type_WebSocket = true;
 
-  constructor(scope: DispatcherScope, webSocket: WebSocket) {
+  constructor(scope: PageDispatcher, webSocket: WebSocket) {
     super(scope, webSocket, 'WebSocket', {
       url: webSocket.url(),
     });
@@ -160,25 +164,25 @@ export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocke
   }
 }
 
-export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, channels.APIRequestContextChannel> implements channels.APIRequestContextChannel {
+export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, channels.APIRequestContextChannel, RootDispatcher | BrowserContextDispatcher> implements channels.APIRequestContextChannel {
   _type_APIRequestContext = true;
 
-  static from(scope: DispatcherScope, request: APIRequestContext): APIRequestContextDispatcher {
+  static from(scope: RootDispatcher | BrowserContextDispatcher, request: APIRequestContext): APIRequestContextDispatcher {
     const result = existingDispatcher<APIRequestContextDispatcher>(request);
     return result || new APIRequestContextDispatcher(scope, request);
   }
 
-  static fromNullable(scope: DispatcherScope, request: APIRequestContext | null): APIRequestContextDispatcher | undefined {
+  static fromNullable(scope: RootDispatcher | BrowserContextDispatcher, request: APIRequestContext | null): APIRequestContextDispatcher | undefined {
     return request ? APIRequestContextDispatcher.from(scope, request) : undefined;
   }
 
-  private constructor(parentScope: DispatcherScope, request: APIRequestContext) {
+  private constructor(parentScope: RootDispatcher | BrowserContextDispatcher, request: APIRequestContext) {
     // We will reparent these to the context below.
-    const tracing = TracingDispatcher.from(parentScope, request.tracing());
+    const tracing = TracingDispatcher.from(parentScope as any as APIRequestContextDispatcher, request.tracing());
 
     super(parentScope, request, 'APIRequestContext', {
       tracing,
-    }, true);
+    });
 
     this.adopt(tracing);
   }
@@ -216,4 +220,12 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   async disposeAPIResponse(params: channels.APIRequestContextDisposeAPIResponseParams, metadata?: channels.Metadata): Promise<void> {
     this._object.disposeResponse(params.fetchUid);
   }
+}
+
+function parentScopeForRequest(scope: BrowserContextDispatcher, request: Request): FrameDispatcher | WorkerDispatcher {
+  if (request.frame())
+    return FrameDispatcher.from(scope as any as PageDispatcher, request.frame()!); // Context will swap for Page after reparent.
+  if (request.serviceWorker())
+    return WorkerDispatcher.fromNullable(scope, request.serviceWorker())!;
+  throw new Error('Internal error: requests does not belong to a page or a worker');
 }

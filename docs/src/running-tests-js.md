@@ -53,7 +53,7 @@ For a better debugging experience check out the [VS Code Extension](./getting-st
   npx playwright test landing-page.spec.ts --headed
   ```
 
-- Running Tests on specific browsers
+- Running tests on a specific project
 
   ```bash
   npx playwright test landing-page.ts --project=chromium

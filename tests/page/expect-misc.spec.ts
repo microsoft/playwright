@@ -228,8 +228,11 @@ test.describe('toHaveURL', () => {
 
 test.describe('toHaveAttribute', () => {
   test('pass', async ({ page }) => {
-    await page.setContent('<div id=node>Text content</div>');
+    await page.setContent('<div checked id=node>Text content</div>');
     const locator = page.locator('#node');
+    await expect(locator).toHaveAttribute('id');
+    await expect(locator).toHaveAttribute('checked');
+    await expect(locator).not.toHaveAttribute('open');
     await expect(locator).toHaveAttribute('id', 'node');
   });
 });

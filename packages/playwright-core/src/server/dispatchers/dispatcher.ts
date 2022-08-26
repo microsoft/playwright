@@ -44,28 +44,24 @@ export function lookupNullableDispatcher<DispatcherType>(object: any | null): Di
   return object ? lookupDispatcher(object) : undefined;
 }
 
-export class Dispatcher<Type extends { guid: string }, ChannelType> extends EventEmitter implements channels.Channel {
+export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeType extends DispatcherScope> extends EventEmitter implements channels.Channel {
   private _connection: DispatcherConnection;
-  private _isScope: boolean;
   // Parent is always "isScope".
-  private _parent: Dispatcher<any, any> | undefined;
+  private _parent: ParentScopeType | undefined;
   // Only "isScope" channel owners have registered dispatchers inside.
-  private _dispatchers = new Map<string, Dispatcher<any, any>>();
+  private _dispatchers = new Map<string, DispatcherScope>();
   protected _disposed = false;
   protected _eventListeners: RegisteredListener[] = [];
 
   readonly _guid: string;
   readonly _type: string;
-  readonly _scope: Dispatcher<any, any>;
   _object: Type;
 
-  constructor(parent: Dispatcher<any, any> | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<Type>, isScope?: boolean) {
+  constructor(parent: ParentScopeType | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<Type>) {
     super();
 
     this._connection = parent instanceof DispatcherConnection ? parent : parent._connection;
-    this._isScope = !!isScope;
     this._parent = parent instanceof DispatcherConnection ? undefined : parent;
-    this._scope = isScope ? this : this._parent!;
 
     const guid = object.guid;
     assert(!this._connection._dispatchers.has(guid));
@@ -84,12 +80,15 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
       this._connection.sendCreate(this._parent, type, guid, initializer, this._parent._object);
   }
 
+  parentScope(): ParentScopeType {
+    return this._parent!;
+  }
+
   addObjectListener(eventName: (string | symbol), handler: (...args: any[]) => void) {
     this._eventListeners.push(eventsHelper.addEventListener(this._object as unknown as EventEmitter, eventName, handler));
   }
 
-  adopt(child: Dispatcher<any, any>) {
-    assert(this._isScope);
+  adopt(child: DispatcherScope) {
     const oldParent = child._parent!;
     oldParent._dispatchers.delete(child._guid);
     this._dispatchers.set(child._guid, child);
@@ -109,6 +108,11 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
   }
 
   _dispose() {
+    this._disposeRecursively();
+    this._connection.sendDispose(this);
+  }
+
+  private _disposeRecursively() {
     assert(!this._disposed, `${this._guid} is disposed more than once`);
     this._disposed = true;
     eventsHelper.removeEventListeners(this._eventListeners);
@@ -120,11 +124,8 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
 
     // Dispose all children.
     for (const dispatcher of [...this._dispatchers.values()])
-      dispatcher._dispose();
+      dispatcher._disposeRecursively();
     this._dispatchers.clear();
-
-    if (this._isScope)
-      this._connection.sendDispose(this);
     delete (this._object as any)[dispatcherSymbol];
   }
 
@@ -140,12 +141,13 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
   }
 }
 
-export type DispatcherScope = Dispatcher<any, any>;
-export class Root extends Dispatcher<{ guid: '' }, any> {
+export type DispatcherScope = Dispatcher<any, any, any>;
+
+export class RootDispatcher extends Dispatcher<{ guid: '' }, any, any> {
   private _initialized = false;
 
-  constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: DispatcherScope, options: channels.RootInitializeParams) => Promise<PlaywrightDispatcher>) {
-    super(connection, { guid: '' }, 'Root', {}, true);
+  constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: RootDispatcher, options: channels.RootInitializeParams) => Promise<PlaywrightDispatcher>) {
+    super(connection, { guid: '' }, 'Root', {});
   }
 
   async initialize(params: channels.RootInitializeParams): Promise<channels.RootInitializeResult> {
@@ -159,7 +161,7 @@ export class Root extends Dispatcher<{ guid: '' }, any> {
 }
 
 export class DispatcherConnection {
-  readonly _dispatchers = new Map<string, Dispatcher<any, any>>();
+  readonly _dispatchers = new Map<string, DispatcherScope>();
   onmessage = (message: object) => {};
   private _waitOperations = new Map<string, CallMetadata>();
   private _isLocal: boolean;
@@ -168,23 +170,23 @@ export class DispatcherConnection {
     this._isLocal = !!isLocal;
   }
 
-  sendEvent(dispatcher: Dispatcher<any, any>, event: string, params: any, sdkObject?: SdkObject) {
+  sendEvent(dispatcher: DispatcherScope, event: string, params: any, sdkObject?: SdkObject) {
     const validator = findValidator(dispatcher._type, event, 'Event');
     params = validator(params, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
     this._sendMessageToClient(dispatcher._guid, dispatcher._type, event, params, sdkObject);
   }
 
-  sendCreate(parent: Dispatcher<any, any>, type: string, guid: string, initializer: any, sdkObject?: SdkObject) {
+  sendCreate(parent: DispatcherScope, type: string, guid: string, initializer: any, sdkObject?: SdkObject) {
     const validator = findValidator(type, '', 'Initializer');
     initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
     this._sendMessageToClient(parent._guid, type, '__create__', { type, initializer, guid }, sdkObject);
   }
 
-  sendAdopt(parent: Dispatcher<any, any>, dispatcher: Dispatcher<any, any>) {
+  sendAdopt(parent: DispatcherScope, dispatcher: DispatcherScope) {
     this._sendMessageToClient(parent._guid, dispatcher._type, '__adopt__', { guid: dispatcher._guid });
   }
 
-  sendDispose(dispatcher: Dispatcher<any, any>) {
+  sendDispose(dispatcher: DispatcherScope) {
     this._sendMessageToClient(dispatcher._guid, dispatcher._type, '__dispose__', {});
   }
 

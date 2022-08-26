@@ -28,7 +28,7 @@ import { removeFolders, existsAsync, canAccessFile } from '../../utils/fileUtils
 import { hostPlatform } from '../../utils/hostPlatform';
 import { spawnAsync } from '../../utils/spawnAsync';
 import type { DependencyGroup } from './dependencies';
-import { transformCommandsForRoot } from './dependencies';
+import { transformCommandsForRoot, dockerVersion, readDockerVersionSync } from './dependencies';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 export { writeDockerVersion } from './dependencies';
@@ -341,7 +341,17 @@ export class Registry {
         throw new Error(`${name} is not supported on ${hostPlatform}`);
       const installCommand = buildPlaywrightCLICommand(sdkLanguage, `install${installByDefault ? '' : ' ' + name}`);
       if (!canAccessFile(e)) {
-        const prettyMessage = [
+        const currentDockerVersion = readDockerVersionSync();
+        const preferredDockerVersion = currentDockerVersion ? dockerVersion(currentDockerVersion.dockerImageNameTemplate) : null;
+        const isOutdatedDockerImage = currentDockerVersion && preferredDockerVersion && currentDockerVersion.dockerImageName !== preferredDockerVersion.dockerImageName;
+        const prettyMessage = isOutdatedDockerImage ? [
+          `Looks like ${sdkLanguage === 'javascript' ? 'Playwright Test or ' : ''}Playwright was just updated to ${preferredDockerVersion.driverVersion}.`,
+          `Please update docker image as well.`,
+          `-  current: ${currentDockerVersion.dockerImageName}`,
+          `- required: ${preferredDockerVersion.dockerImageName}`,
+          ``,
+          `<3 Playwright Team`,
+        ].join('\n') : [
           `Looks like ${sdkLanguage === 'javascript' ? 'Playwright Test or ' : ''}Playwright was just installed or updated.`,
           `Please run the following command to download new browser${installByDefault ? 's' : ''}:`,
           ``,

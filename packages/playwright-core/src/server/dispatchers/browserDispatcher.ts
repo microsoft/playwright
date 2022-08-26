@@ -19,7 +19,7 @@ import type * as channels from '../../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { existingDispatcher } from './dispatcher';
-import type { DispatcherScope } from './dispatcher';
+import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import type { CRBrowser } from '../chromium/crBrowser';
 import type { PageDispatcher } from './pageDispatcher';
@@ -27,12 +27,13 @@ import type { CallMetadata } from '../instrumentation';
 import { serverSideCallMetadata } from '../instrumentation';
 import { BrowserContext } from '../browserContext';
 import { Selectors } from '../selectors';
+import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
 
-export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel> implements channels.BrowserChannel {
+export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel, BrowserTypeDispatcher> implements channels.BrowserChannel {
   _type_Browser = true;
 
-  constructor(scope: DispatcherScope, browser: Browser) {
-    super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name }, true);
+  constructor(scope: BrowserTypeDispatcher, browser: Browser) {
+    super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name });
     this.addObjectListener(Browser.Events.Disconnected, () => this._didClose());
   }
 
@@ -43,11 +44,11 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 
   async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
     const context = await this._object.newContext(metadata, params);
-    return { context: new BrowserContextDispatcher(this._scope, context) };
+    return { context: new BrowserContextDispatcher(this, context) };
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
-    return newContextForReuse(this._object, this._scope, params, null, metadata);
+    return newContextForReuse(this._object, this, params, null, metadata);
   }
 
   async close(): Promise<void> {
@@ -62,7 +63,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     if (!this._object.options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
-    return { session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()) };
+    return { session: new CDPSessionDispatcher(this, await crBrowser.newBrowserCDPSession()) };
   }
 
   async startTracing(params: channels.BrowserStartTracingParams): Promise<void> {
@@ -81,13 +82,13 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 }
 
 // This class implements multiplexing browser dispatchers over a single Browser instance.
-export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel> implements channels.BrowserChannel {
+export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel, RootDispatcher> implements channels.BrowserChannel {
   _type_Browser = true;
   private _contexts = new Set<BrowserContext>();
   readonly selectors: Selectors;
 
-  constructor(scope: DispatcherScope, browser: Browser) {
-    super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name }, true);
+  constructor(scope: RootDispatcher, browser: Browser) {
+    super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name });
     // When we have a remotely-connected browser, each client gets a fresh Selector instance,
     // so that two clients do not interfere between each other.
     this.selectors = new Selectors();
@@ -100,11 +101,11 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
     this._contexts.add(context);
     context.setSelectors(this.selectors);
     context.on(BrowserContext.Events.Close, () => this._contexts.delete(context));
-    return { context: new BrowserContextDispatcher(this._scope, context) };
+    return { context: new BrowserContextDispatcher(this, context) };
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
-    return newContextForReuse(this._object, this._scope, params, this.selectors, metadata);
+    return newContextForReuse(this._object, this as any as BrowserDispatcher, params, this.selectors, metadata);
   }
 
   async close(): Promise<void> {
@@ -119,7 +120,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
     if (!this._object.options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
-    return { session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()) };
+    return { session: new CDPSessionDispatcher(this as any as BrowserDispatcher, await crBrowser.newBrowserCDPSession()) };
   }
 
   async startTracing(params: channels.BrowserStartTracingParams): Promise<void> {
@@ -141,7 +142,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
   }
 }
 
-async function newContextForReuse(browser: Browser, scope: DispatcherScope, params: channels.BrowserNewContextForReuseParams, selectors: Selectors | null, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
+async function newContextForReuse(browser: Browser, scope: BrowserDispatcher, params: channels.BrowserNewContextForReuseParams, selectors: Selectors | null, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
   const { context, needsReset } = await browser.newContextForReuse(params, metadata);
   if (needsReset) {
     const oldContextDispatcher = existingDispatcher<BrowserContextDispatcher>(context);

@@ -1877,7 +1877,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -1959,7 +1959,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2075,7 +2075,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2131,7 +2131,7 @@ export interface Page {
    */
   dispatchEvent(selector: string, type: string, eventInit?: EvaluationArgument, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2174,7 +2174,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2340,7 +2340,7 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2364,7 +2364,7 @@ export interface Page {
    */
   focus(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2430,7 +2430,7 @@ export interface Page {
    */
   getAttribute(selector: string, name: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2592,7 +2592,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2619,7 +2619,7 @@ export interface Page {
    */
   innerHTML(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2640,7 +2640,7 @@ export interface Page {
    */
   innerText(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2664,7 +2664,7 @@ export interface Page {
    */
   inputValue(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2685,7 +2685,7 @@ export interface Page {
    */
   isChecked(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2711,7 +2711,7 @@ export interface Page {
    */
   isDisabled(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2732,7 +2732,7 @@ export interface Page {
    */
   isEditable(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2753,7 +2753,7 @@ export interface Page {
    */
   isEnabled(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2775,7 +2775,7 @@ export interface Page {
    */
   isHidden(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2797,7 +2797,7 @@ export interface Page {
    */
   isVisible(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3061,7 +3061,7 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3282,7 +3282,7 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3341,7 +3341,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3478,7 +3478,7 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3577,7 +3577,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3604,7 +3604,7 @@ export interface Page {
    */
   textContent(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3659,7 +3659,7 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3717,7 +3717,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -4953,7 +4953,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5035,7 +5035,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5118,7 +5118,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5174,7 +5174,7 @@ export interface Frame {
    */
   dispatchEvent(selector: string, type: string, eventInit?: EvaluationArgument, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5217,7 +5217,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5277,7 +5277,7 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5299,7 +5299,7 @@ export interface Frame {
    */
   focus(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5353,7 +5353,7 @@ export interface Frame {
    */
   getAttribute(selector: string, name: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5454,7 +5454,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5481,7 +5481,7 @@ export interface Frame {
    */
   innerHTML(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5502,7 +5502,7 @@ export interface Frame {
    */
   innerText(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5526,7 +5526,7 @@ export interface Frame {
    */
   inputValue(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5547,7 +5547,7 @@ export interface Frame {
    */
   isChecked(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5573,7 +5573,7 @@ export interface Frame {
    */
   isDisabled(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5594,7 +5594,7 @@ export interface Frame {
    */
   isEditable(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5615,7 +5615,7 @@ export interface Frame {
    */
   isEnabled(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5637,7 +5637,7 @@ export interface Frame {
    */
   isHidden(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5659,7 +5659,7 @@ export interface Frame {
    */
   isVisible(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5753,7 +5753,7 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5839,7 +5839,7 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5895,7 +5895,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5991,7 +5991,7 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -6052,7 +6052,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -6079,7 +6079,7 @@ export interface Frame {
    */
   textContent(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -6129,7 +6129,7 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -6184,7 +6184,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -11182,7 +11182,7 @@ type AccessibilityNode = {
   children?: AccessibilityNode[];
 }
 
-export const devices: Devices & DeviceDescriptor[];
+export const devices: Devices;
 
 //@ts-ignore this will be any if electron is not installed
 type ElectronType = typeof import('electron');
@@ -16595,7 +16595,7 @@ interface ElementHandleWaitForSelectorOptions {
   state?: "attached"|"detached"|"visible"|"hidden";
 
   /**
-   * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+   * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
    * element, the call throws an exception.
    */
   strict?: boolean;
@@ -16643,7 +16643,7 @@ interface PageWaitForSelectorOptions {
   state?: "attached"|"detached"|"visible"|"hidden";
 
   /**
-   * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+   * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
    * element, the call throws an exception.
    */
   strict?: boolean;
@@ -16834,8 +16834,6 @@ type Devices = {
   "iPhone 13 Pro Max landscape": DeviceDescriptor;
   "iPhone 13 Mini": DeviceDescriptor;
   "iPhone 13 Mini landscape": DeviceDescriptor;
-  "JioPhone 2": DeviceDescriptor;
-  "JioPhone 2 landscape": DeviceDescriptor;
   "Kindle Fire HDX": DeviceDescriptor;
   "Kindle Fire HDX landscape": DeviceDescriptor;
   "LG Optimus L70": DeviceDescriptor;

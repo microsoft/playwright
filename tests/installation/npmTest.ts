@@ -25,8 +25,8 @@ import debugLogger from 'debug';
 import { Registry }  from './registry';
 import { spawnAsync } from './spawnAsync';
 
-
-export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os.tmpdir(), 'pwt', 'workspaces');
+// os.tmpdir() on Windows returns a 8.3 filename, so we resolve it.
+export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : fs.realpathSync.native(os.tmpdir()), 'pwt', 'workspaces');
 
 const debug = debugLogger('itest');
 

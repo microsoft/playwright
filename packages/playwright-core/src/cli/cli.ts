@@ -69,7 +69,7 @@ Examples:
 commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
-      ['--target <language>', `language to generate, one of javascript, test, python, python-async, pytest, csharp, java`, language()],
+      ['--target <language>', `language to generate, one of javascript, test, python, python-async, pytest, csharp, csharp-mstest, csharp-nunit, java`, language()],
       ['--save-trace <filename>', 'record a trace for the session and save it to a file'],
     ]).action(function(url, options) {
   codegen(options, url, options.target, options.output).catch(logErrorAndExit);
@@ -309,13 +309,33 @@ Examples:
 
 if (!process.env.PW_LANG_NAME) {
   let playwrightTestPackagePath = null;
+  const resolvePwTestPaths = [__dirname, process.cwd()];
   try {
     playwrightTestPackagePath = require.resolve('@playwright/test/lib/cli', {
-      paths: [__dirname, process.cwd()]
+      paths: resolvePwTestPaths,
     });
   } catch {}
 
   if (playwrightTestPackagePath) {
+    const pwTestVersion = require(require.resolve('@playwright/test/package.json', {
+      paths: resolvePwTestPaths,
+    })).version;
+    const pwCoreVersion = require(path.join(__dirname, '../../package.json')).version;
+    if (pwTestVersion !== pwCoreVersion) {
+      let hasPlaywrightPackage = false;
+      try {
+        require('playwright');
+        hasPlaywrightPackage = true;
+      } catch {}
+      console.error(wrapInASCIIBox([
+        `Playwright Test compatibility check failed:`,
+        `@playwright/test version '${pwTestVersion}' does not match ${hasPlaywrightPackage ? 'playwright' : 'playwright-core'} version '${pwCoreVersion}'!`,
+        `To fix this either align the versions or only keep @playwright/test since it depends on playwright-core.`,
+        `If you still receive this error, execute 'npm ci' or delete 'node_modules' and do 'npm install' again.`,
+      ].join('\n'), 1));
+      process.exit(1);
+    }
+
     require(playwrightTestPackagePath).addTestCommands(program);
   } else {
     {

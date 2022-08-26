@@ -604,14 +604,14 @@ export class RouteHandler {
     return urlMatches(this._baseURL, requestURL, this.url);
   }
 
-  public async handle(route: Route, request: Request): Promise<boolean> {
+  public async handle(route: Route): Promise<boolean> {
     ++this.handledCount;
     const handledPromise = route._startHandling();
     // Extract handler into a variable to avoid [RouteHandler.handler] in the stack.
     const handler = this.handler;
     const [handled] = await Promise.all([
       handledPromise,
-      handler(route, request),
+      handler(route, route.request()),
     ]);
     return handled;
   }

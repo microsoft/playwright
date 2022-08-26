@@ -25,17 +25,46 @@ import { toModifiers } from './utils';
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 import deviceDescriptors from '../deviceDescriptors';
 
+type CSharpLanguageMode = 'library' | 'mstest' | 'nunit';
+
 export class CSharpLanguageGenerator implements LanguageGenerator {
-  id = 'csharp';
-  groupName = '.NET';
-  name = 'Library C#';
+  id: string;
+  groupName = '.NET C#';
+  name: string;
   highlighter = 'csharp';
+  _mode: CSharpLanguageMode;
+
+  constructor(mode: CSharpLanguageMode) {
+    if (mode === 'library') {
+      this.name = 'Library';
+      this.id = 'csharp';
+    } else if (mode === 'mstest') {
+      this.name = 'MSTest';
+      this.id = 'csharp-mstest';
+    } else if (mode === 'nunit') {
+      this.name = 'NUnit';
+      this.id = 'csharp-nunit';
+    } else {
+      throw new Error(`Unknown C# language mode: ${mode}`);
+    }
+    this._mode = mode;
+  }
 
   generateAction(actionInContext: ActionInContext): string {
+    const action = this._generateActionInner(actionInContext);
+    if (action)
+      return action + '\n';
+    return '';
+  }
+
+  _generateActionInner(actionInContext: ActionInContext): string {
     const action = actionInContext.action;
-    const pageAlias = actionInContext.frame.pageAlias;
+    if (this._mode !== 'library' && (action.name === 'openPage' || action.name === 'closePage'))
+      return '';
+    let pageAlias = actionInContext.frame.pageAlias;
+    if (this._mode !== 'library')
+      pageAlias = pageAlias.replace('page', 'Page');
     const formatter = new CSharpFormatter(8);
-    formatter.newLine();
     formatter.add('// ' + actionTitle(action));
 
     if (action.name === 'openPage') {
@@ -137,6 +166,12 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
+    if (this._mode === 'library')
+      return this.generateStandaloneHeader(options);
+    return this.generateTestRunnerHeader(options);
+  }
+
+  generateStandaloneHeader(options: LanguageGeneratorOptions): string {
     const formatter = new CSharpFormatter(0);
     formatter.add(`
       using Microsoft.Playwright;
@@ -150,6 +185,30 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
               using var playwright = await Playwright.CreateAsync();
               await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatObject(options.launchOptions, '    ', 'BrowserTypeLaunchOptions')});
               var context = await browser.NewContextAsync(${formatContextOptions(options.contextOptions, options.deviceName)});`);
+    formatter.newLine();
+    return formatter.format();
+  }
+
+  generateTestRunnerHeader(options: LanguageGeneratorOptions): string {
+    const formatter = new CSharpFormatter(0);
+    formatter.add(`
+      using Microsoft.Playwright.${this._mode === 'nunit' ? 'NUnit' : 'MSTest'};
+      using Microsoft.Playwright;
+
+      ${this._mode === 'nunit' ? '[Parallelizable(ParallelScope.Self)]' : '[TestClass]'}
+      public class Tests : PageTest
+      {`);
+    const formattedContextOptions = formatContextOptions(options.contextOptions, options.deviceName);
+    if (formattedContextOptions) {
+      formatter.add(`public override BrowserNewContextOptions ContextOptions()
+      {
+          return ${formattedContextOptions};
+      }`);
+      formatter.newLine();
+    }
+    formatter.add(`    [${this._mode === 'nunit' ? 'Test' : 'TestMethod'}]
+    public async Task MyTest()
+    {`);
     return formatter.format();
   }
 

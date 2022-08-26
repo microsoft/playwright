@@ -35,6 +35,8 @@ const codegenLang2Id: Map<string, string> = new Map([
   ['Python Async', 'python-async'],
   ['Pytest', 'pytest'],
   ['C#', 'csharp'],
+  ['C# NUnit', 'csharp-nunit'],
+  ['C# MSTest', 'csharp-mstest'],
   ['Playwright Test', 'test'],
 ]);
 const codegenLangId2lang = new Map([...codegenLang2Id.entries()].map(([lang, langId]) => [langId, lang]));

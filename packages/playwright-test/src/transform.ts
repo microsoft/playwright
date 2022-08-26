@@ -97,9 +97,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
   if (builtins.has(specifier))
     return;
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
-  if (!isTypeScript)
-    return;
-  const tsconfig = loadAndValidateTsconfigForFile(filename);
+  const tsconfig = isTypeScript ? loadAndValidateTsconfigForFile(filename) : undefined;
   if (tsconfig && !isRelativeSpecifier(specifier)) {
     let longestPrefixLength = -1;
     let pathMatchedByLongestPrefix: string | undefined;

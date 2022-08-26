@@ -17,7 +17,7 @@
 import type { BrowserType } from '../browserType';
 import { BrowserDispatcher } from './browserDispatcher';
 import type * as channels from '../../protocol/channels';
-import type { DispatcherScope } from './dispatcher';
+import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { CallMetadata } from '../instrumentation';
@@ -29,31 +29,31 @@ import { ProgressController } from '../progress';
 import { WebSocketTransport } from '../transport';
 import { findValidator, ValidationError, type ValidatorContext } from '../../protocol/validator';
 
-export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel> implements channels.BrowserTypeChannel {
+export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel, RootDispatcher> implements channels.BrowserTypeChannel {
   _type_BrowserType = true;
-  constructor(scope: DispatcherScope, browserType: BrowserType) {
+  constructor(scope: RootDispatcher, browserType: BrowserType) {
     super(scope, browserType, 'BrowserType', {
       executablePath: browserType.executablePath(),
       name: browserType.name()
-    }, true);
+    });
   }
 
   async launch(params: channels.BrowserTypeLaunchParams, metadata: CallMetadata): Promise<channels.BrowserTypeLaunchResult> {
     const browser = await this._object.launch(metadata, params);
-    return { browser: new BrowserDispatcher(this._scope, browser) };
+    return { browser: new BrowserDispatcher(this, browser) };
   }
 
   async launchPersistentContext(params: channels.BrowserTypeLaunchPersistentContextParams, metadata: CallMetadata): Promise<channels.BrowserTypeLaunchPersistentContextResult> {
     const browserContext = await this._object.launchPersistentContext(metadata, params.userDataDir, params);
-    return { context: new BrowserContextDispatcher(this._scope, browserContext) };
+    return { context: new BrowserContextDispatcher(this, browserContext) };
   }
 
   async connectOverCDP(params: channels.BrowserTypeConnectOverCDPParams, metadata: CallMetadata): Promise<channels.BrowserTypeConnectOverCDPResult> {
     const browser = await this._object.connectOverCDP(metadata, params.endpointURL, params, params.timeout);
-    const browserDispatcher = new BrowserDispatcher(this._scope, browser);
+    const browserDispatcher = new BrowserDispatcher(this, browser);
     return {
       browser: browserDispatcher,
-      defaultContext: browser._defaultContext ? new BrowserContextDispatcher(browserDispatcher._scope, browser._defaultContext) : undefined,
+      defaultContext: browser._defaultContext ? new BrowserContextDispatcher(browserDispatcher, browser._defaultContext) : undefined,
     };
   }
 
@@ -64,7 +64,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
       const paramsHeaders = Object.assign({ 'User-Agent': getUserAgent() }, params.headers || {});
       const transport = await WebSocketTransport.connect(progress, params.wsEndpoint, paramsHeaders, true);
       let socksInterceptor: SocksInterceptor | undefined;
-      const pipe = new JsonPipeDispatcher(this._scope);
+      const pipe = new JsonPipeDispatcher(this);
       transport.onmessage = json => {
         if (json.method === '__create__' && json.params.type === 'SocksSupport')
           socksInterceptor = new SocksInterceptor(transport, params.socksProxyRedirectPortForTest, json.params.guid);

@@ -15,14 +15,14 @@
  */
 
 import type * as channels from '../../protocol/channels';
-import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { createGuid } from '../../utils';
 import { serializeError } from '../../protocol/serializers';
+import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
 
-export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeChannel> implements channels.JsonPipeChannel {
+export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeChannel, BrowserTypeDispatcher> implements channels.JsonPipeChannel {
   _type_JsonPipe = true;
-  constructor(scope: DispatcherScope) {
+  constructor(scope: BrowserTypeDispatcher) {
     super(scope, { guid: 'jsonPipe@' + createGuid() }, 'JsonPipe', {});
   }
 

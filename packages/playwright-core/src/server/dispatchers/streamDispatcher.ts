@@ -15,15 +15,16 @@
  */
 
 import type * as channels from '../../protocol/channels';
-import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import type * as stream from 'stream';
 import { createGuid } from '../../utils';
+import type { ArtifactDispatcher } from './artifactDispatcher';
 
-export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamChannel> implements channels.StreamChannel {
+export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamChannel, ArtifactDispatcher> implements channels.StreamChannel {
   _type_Stream = true;
   private _ended: boolean = false;
-  constructor(scope: DispatcherScope, stream: stream.Readable) {
+
+  constructor(scope: ArtifactDispatcher, stream: stream.Readable) {
     super(scope, { guid: 'stream@' + createGuid(), stream }, 'Stream', {});
     // In Node v12.9.0+ we can use readableEnded.
     stream.once('end', () => this._ended =  true);

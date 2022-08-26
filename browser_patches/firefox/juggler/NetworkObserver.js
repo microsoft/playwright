@@ -863,7 +863,7 @@ function setPostData(httpChannel, postData, headers) {
   const body = atob(postData);
   synthesized.setData(body, body.length);
 
-  const overriddenHeader = (lowerCaseName, defaultValue) => {
+  const overriddenHeader = (lowerCaseName) => {
     if (headers) {
       for (const header of headers) {
         if (header.name.toLowerCase() === lowerCaseName) {
@@ -871,11 +871,22 @@ function setPostData(httpChannel, postData, headers) {
         }
       }
     }
-    return defaultValue;
+    return undefined;
   }
   // Clear content-length, so that upload stream resets it.
   httpChannel.setRequestHeader('content-length', '', false /* merge */);
-  httpChannel.explicitSetUploadStream(synthesized, overriddenHeader('content-type', 'application/octet-stream'), -1, httpChannel.requestMethod, false);
+  let contentType = overriddenHeader('content-type');
+  if (contentType === undefined) {
+    try {
+      contentType = httpChannel.getRequestHeader('content-type');
+    } catch (e) {
+      if (e.result == Cr.NS_ERROR_NOT_AVAILABLE)
+        contentType =  'application/octet-stream';
+      else
+        throw e;
+    }
+  }
+  httpChannel.explicitSetUploadStream(synthesized, contentType, -1, httpChannel.requestMethod, false);
 }
 
 function convertString(s, source, dest) {
