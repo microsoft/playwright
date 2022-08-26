@@ -10482,6 +10482,18 @@ export interface BrowserType<Unused = {}> {
     bypassCSP?: boolean;
 
     /**
+     * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge",
+     * "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
+     * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+     */
+    channel?: string;
+
+    /**
+     * Enable Chromium sandboxing. Defaults to `false`.
+     */
+    chromiumSandbox?: boolean;
+
+    /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
      * to `'light'`.
@@ -10583,18 +10595,6 @@ export interface BrowserType<Unused = {}> {
 
       password: string;
     };
-
-    /**
-     * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge",
-     * "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
-     * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
-     */
-    channel?: string;
-
-    /**
-     * Enable Chromium sandboxing. Defaults to `false`.
-     */
-    chromiumSandbox?: boolean;
 
     /**
      * If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is
@@ -10871,6 +10871,18 @@ export interface BrowserType<Unused = {}> {
     args?: Array<string>;
 
     /**
+     * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge",
+     * "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
+     * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+     */
+    channel?: string;
+
+    /**
+     * Enable Chromium sandboxing. Defaults to `false`.
+     */
+    chromiumSandbox?: boolean;
+
+    /**
      * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`
      * option will be set `false`.
      */
@@ -10923,18 +10935,6 @@ export interface BrowserType<Unused = {}> {
      * `devtools` option is `true`.
      */
     headless?: boolean;
-
-    /**
-     * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge",
-     * "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
-     * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
-     */
-    channel?: string;
-
-    /**
-     * Enable Chromium sandboxing. Defaults to `false`.
-     */
-    chromiumSandbox?: boolean;
 
     /**
      * If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is
@@ -16347,6 +16347,18 @@ export interface LaunchOptions {
   args?: Array<string>;
 
   /**
+   * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge",
+   * "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
+   * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+   */
+  channel?: string;
+
+  /**
+   * Enable Chromium sandboxing. Defaults to `false`.
+   */
+  chromiumSandbox?: boolean;
+
+  /**
    * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`
    * option will be set `false`.
    */
@@ -16399,18 +16411,6 @@ export interface LaunchOptions {
    * `devtools` option is `true`.
    */
   headless?: boolean;
-
-  /**
-   * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge",
-   * "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
-   * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
-   */
-  channel?: string;
-
-  /**
-   * Enable Chromium sandboxing. Defaults to `false`.
-   */
-  chromiumSandbox?: boolean;
 
   /**
    * If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is
