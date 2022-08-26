@@ -62,6 +62,8 @@ export type GotoResult = {
 
 type ConsoleTagHandler = () => void;
 
+type RegularLifecycleEvent = Exclude<types.LifecycleEvent, 'networkidle'>;
+
 export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame}, ...args: any) => any;
 
 export type NavigationEvent = {
@@ -279,17 +281,11 @@ export class FrameManager {
     const frame = this._frames.get(frameId);
     if (frame) {
       this._removeFramesRecursively(frame);
-      // Recalculate subtree lifecycle for the whole tree - it should not be that big.
-      this._page.mainFrame()._recalculateLifecycle();
+      this._page.mainFrame()._recalculateNetworkIdle();
     }
   }
 
-  frameStoppedLoading(frameId: string) {
-    this.frameLifecycleEvent(frameId, 'domcontentloaded');
-    this.frameLifecycleEvent(frameId, 'load');
-  }
-
-  frameLifecycleEvent(frameId: string, event: types.LifecycleEvent) {
+  frameLifecycleEvent(frameId: string, event: RegularLifecycleEvent) {
     const frame = this._frames.get(frameId);
     if (frame)
       frame._onLifecycleEvent(event);
@@ -478,8 +474,8 @@ export class Frame extends SdkObject {
   };
 
   _id: string;
-  private _firedLifecycleEvents = new Set<types.LifecycleEvent>();
-  _subtreeLifecycleEvents = new Set<types.LifecycleEvent>();
+  _firedLifecycleEvents = new Set<types.LifecycleEvent>();
+  private _firedNetworkIdleSelf = false;
   _currentDocument: DocumentInfo;
   private _pendingDocument: DocumentInfo | undefined;
   readonly _page: Page;
@@ -516,7 +512,6 @@ export class Frame extends SdkObject {
       this._parentFrame._childFrames.add(this);
 
     this._firedLifecycleEvents.add('commit');
-    this._subtreeLifecycleEvents.add('commit');
     if (id !== kDummyFrameId)
       this._startNetworkIdleTimer();
   }
@@ -525,23 +520,26 @@ export class Frame extends SdkObject {
     return this._detached;
   }
 
-  _onLifecycleEvent(event: types.LifecycleEvent) {
+  _onLifecycleEvent(event: RegularLifecycleEvent) {
     if (this._firedLifecycleEvents.has(event))
       return;
     this._firedLifecycleEvents.add(event);
-    // Recalculate subtree lifecycle for the whole tree - it should not be that big.
-    this._page.mainFrame()._recalculateLifecycle();
+    this.emit(Frame.Events.AddLifecycle, event);
+    if (this === this._page.mainFrame() && this._url !== 'about:blank')
+      debugLogger.log('api', `  "${event}" event fired`);
+    this._page.mainFrame()._recalculateNetworkIdle();
   }
 
   _onClearLifecycle() {
+    for (const event of this._firedLifecycleEvents)
+      this.emit(Frame.Events.RemoveLifecycle, event);
     this._firedLifecycleEvents.clear();
-    // Recalculate subtree lifecycle for the whole tree - it should not be that big.
-    this._page.mainFrame()._recalculateLifecycle(this);
     // Keep the current navigation request if any.
     this._inflightRequests = new Set(Array.from(this._inflightRequests).filter(request => request === this._currentDocument.request));
     this._stopNetworkIdleTimer();
     if (this._inflightRequests.size === 0)
       this._startNetworkIdleTimer();
+    this._page.mainFrame()._recalculateNetworkIdle(this);
     this._onLifecycleEvent('commit');
   }
 
@@ -599,37 +597,26 @@ export class Frame extends SdkObject {
     });
   }
 
-  _recalculateLifecycle(frameThatAllowsRemovingLifecycleEvents?: Frame) {
-    const events = new Set<types.LifecycleEvent>(this._firedLifecycleEvents);
+  _recalculateNetworkIdle(frameThatAllowsRemovingNetworkIdle?: Frame) {
+    let isNetworkIdle = this._firedNetworkIdleSelf;
     for (const child of this._childFrames) {
-      child._recalculateLifecycle(frameThatAllowsRemovingLifecycleEvents);
-      // We require a particular lifecycle event to be fired in the whole
-      // frame subtree, and then consider it done.
-      for (const event of events) {
-        if (!child._subtreeLifecycleEvents.has(event))
-          events.delete(event);
-      }
+      child._recalculateNetworkIdle(frameThatAllowsRemovingNetworkIdle);
+      // We require networkidle event to be fired in the whole frame subtree, and then consider it done.
+      if (!child._firedLifecycleEvents.has('networkidle'))
+        isNetworkIdle = false;
     }
-    if (frameThatAllowsRemovingLifecycleEvents !== this) {
-      // Usually, lifecycle events are fired once and not removed after that, so we keep existing ones.
+    if (isNetworkIdle && !this._firedLifecycleEvents.has('networkidle')) {
+      this._firedLifecycleEvents.add('networkidle');
+      this.emit(Frame.Events.AddLifecycle, 'networkidle');
+      if (this === this._page.mainFrame() && this._url !== 'about:blank')
+        debugLogger.log('api', `  "networkidle" event fired`);
+    }
+    if (frameThatAllowsRemovingNetworkIdle !== this && this._firedLifecycleEvents.has('networkidle') && !isNetworkIdle) {
+      // Usually, networkidle is fired once and not removed after that.
       // However, when we clear them right before a new commit, this is allowed for a particular frame.
-      for (const event of this._subtreeLifecycleEvents)
-        events.add(event);
+      this._firedLifecycleEvents.delete('networkidle');
+      this.emit(Frame.Events.RemoveLifecycle, 'networkidle');
     }
-    const mainFrame = this._page.mainFrame();
-    for (const event of events) {
-      // Checking whether we have already notified about this event.
-      if (!this._subtreeLifecycleEvents.has(event)) {
-        this.emit(Frame.Events.AddLifecycle, event);
-        if (this === mainFrame && this._url !== 'about:blank')
-          debugLogger.log('api', `  "${event}" event fired`);
-      }
-    }
-    for (const event of this._subtreeLifecycleEvents) {
-      if (!events.has(event))
-        this.emit(Frame.Events.RemoveLifecycle, event);
-    }
-    this._subtreeLifecycleEvents = events;
   }
 
   async raceNavigationAction(progress: Progress, options: types.GotoOptions, action: () => Promise<network.Response | null>): Promise<network.Response | null> {
@@ -706,7 +693,7 @@ export class Frame extends SdkObject {
       event = await sameDocument.promise;
     }
 
-    if (!this._subtreeLifecycleEvents.has(waitUntil))
+    if (!this._firedLifecycleEvents.has(waitUntil))
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = event.newDocument ? event.newDocument.request : undefined;
@@ -731,7 +718,7 @@ export class Frame extends SdkObject {
     if (navigationEvent.error)
       throw navigationEvent.error;
 
-    if (!this._subtreeLifecycleEvents.has(waitUntil))
+    if (!this._firedLifecycleEvents.has(waitUntil))
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
@@ -740,7 +727,7 @@ export class Frame extends SdkObject {
 
   async _waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
     const waitUntil = verifyLifecycle('state', state);
-    if (!this._subtreeLifecycleEvents.has(waitUntil))
+    if (!this._firedLifecycleEvents.has(waitUntil))
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
   }
 
@@ -1629,7 +1616,10 @@ export class Frame extends SdkObject {
     // after the frame was detached - probably a race in the Firefox itself.
     if (this._firedLifecycleEvents.has('networkidle') || this._detached)
       return;
-    this._networkIdleTimer = setTimeout(() => this._onLifecycleEvent('networkidle'), 500);
+    this._networkIdleTimer = setTimeout(() => {
+      this._firedNetworkIdleSelf = true;
+      this._page.mainFrame()._recalculateNetworkIdle();
+    }, 500);
   }
 
   _stopNetworkIdleTimer() {

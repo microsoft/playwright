@@ -155,18 +155,18 @@ it('should work with DOM history.back()/history.forward()', async ({ page, serve
   expect(page.url()).toBe(server.PREFIX + '/second.html');
 });
 
-it('should work when subframe issues window.stop()', async ({ page, server }) => {
+it('should work when subframe issues window.stop()', async ({ browserName, page, server }) => {
   server.setRoute('/frames/style.css', (req, res) => {});
-  const navigationPromise = page.goto(server.PREFIX + '/frames/one-frame.html');
+  let done = false;
+  page.goto(server.PREFIX + '/frames/one-frame.html').then(() => done = true).catch(() => {});
   const frame = await new Promise<Frame>(f => page.once('frameattached', f));
   await new Promise<void>(fulfill => page.on('framenavigated', f => {
     if (f === frame)
       fulfill();
   }));
-  await Promise.all([
-    frame.evaluate(() => window.stop()),
-    navigationPromise
-  ]);
+  await frame.evaluate(() => window.stop());
+  await page.waitForTimeout(2000);  // give it some time to erroneously resolve
+  expect(done).toBe(browserName !== 'webkit');  // Chromium and Firefox issue load event in this case.
 });
 
 it('should work with url match', async ({ page, server }) => {

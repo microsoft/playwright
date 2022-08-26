@@ -41,19 +41,19 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandl
 
   async evaluateExpressionHandle(params: channels.JSHandleEvaluateExpressionHandleParams): Promise<channels.JSHandleEvaluateExpressionHandleResult> {
     const jsHandle = await this._object.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
-    return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, jsHandle) };
+    return { handle: ElementHandleDispatcher.fromJSHandle(this.parentScope(), jsHandle) };
   }
 
   async getProperty(params: channels.JSHandleGetPropertyParams): Promise<channels.JSHandleGetPropertyResult> {
     const jsHandle = await this._object.getProperty(params.name);
-    return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, jsHandle) };
+    return { handle: ElementHandleDispatcher.fromJSHandle(this.parentScope(), jsHandle) };
   }
 
   async getPropertyList(): Promise<channels.JSHandleGetPropertyListResult> {
     const map = await this._object.getProperties();
     const properties = [];
     for (const [name, value] of map)
-      properties.push({ name, value: ElementHandleDispatcher.fromJSHandle(this._scope, value) });
+      properties.push({ name, value: ElementHandleDispatcher.fromJSHandle(this.parentScope(), value) });
     return { properties };
   }
 

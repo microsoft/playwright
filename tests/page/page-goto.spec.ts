@@ -629,9 +629,20 @@ it('should properly wait for load', async ({ page, server, browserName }) => {
   ]);
 });
 
-it('should properly report window.stop()', async ({ page, server }) => {
-  server.setRoute('/module.js', async (req, res) => void 0);
-  await page.goto(server.PREFIX + '/window-stop.html');
+it('should not resolve goto upon window.stop()', async ({ browserName, page, server }) => {
+  let response;
+  server.setRoute('/module.js', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/javascript' });
+    response = res;
+  });
+  let done = false;
+  page.goto(server.PREFIX + '/window-stop.html').then(() => done = true).catch(() => {});
+  await server.waitForRequest('/module.js');
+  expect(done).toBe(false);
+  await page.waitForTimeout(1000);  // give it some time to erroneously resolve
+  response.end('');
+  await page.waitForTimeout(1000);  // give it more time to erroneously resolve
+  expect(done).toBe(browserName === 'firefox'); // Firefox fires DOMContentLoaded and load events in this case.
 });
 
 it('should return from goto if new navigation is started', async ({ page, server, browserName, isAndroid }) => {

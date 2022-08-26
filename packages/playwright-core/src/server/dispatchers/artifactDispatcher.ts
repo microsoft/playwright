@@ -62,7 +62,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
         }
         try {
           const readable = fs.createReadStream(localPath);
-          const stream = new StreamDispatcher(this._scope, readable);
+          const stream = new StreamDispatcher(this, readable);
           // Resolve with a stream, so that client starts saving the data.
           resolve({ stream });
           // Block the Artifact until the stream is consumed.
@@ -83,7 +83,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
     if (!fileName)
       return {};
     const readable = fs.createReadStream(fileName);
-    return { stream: new StreamDispatcher(this._scope, readable) };
+    return { stream: new StreamDispatcher(this, readable) };
   }
 
   async failure(): Promise<channels.ArtifactFailureResult> {

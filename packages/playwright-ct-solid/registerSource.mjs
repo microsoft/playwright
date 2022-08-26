@@ -60,13 +60,23 @@ function render(component) {
   });
 }
 
+const unmountKey = Symbol('disposeKey');
+
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
     await hook({ hooksConfig });
 
-  solidRender(() => render(component), rootElement);
+  const unmount = solidRender(() => render(component), rootElement);
+  rootElement[unmountKey] = unmount;
 
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
     await hook({ hooksConfig });
 };
 
+window.playwrightUnmount = async rootElement => {
+  const unmount = rootElement[unmountKey];
+  if (!unmount)
+    throw new Error('Component was not mounted');
+
+  unmount();
+};

@@ -38,7 +38,7 @@ import type { Download } from '../download';
 import { createGuid } from '../../utils';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 
-export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher, PageDispatcher> implements channels.PageChannel {
+export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
   _type_Page = true;
   private _page: Page;
@@ -66,7 +66,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       viewportSize: page.viewportSize() || undefined,
       isClosed: page.isClosed(),
       opener: PageDispatcher.fromNullable(parentScope, page.opener())
-    }, true);
+    });
 
     this.adopt(mainFrame);
 
@@ -75,22 +75,22 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       this._dispatchEvent('close');
       this._dispose();
     });
-    this.addObjectListener(Page.Events.Console, message => this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(this._scope, message) }));
+    this.addObjectListener(Page.Events.Console, message => this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(this, message) }));
     this.addObjectListener(Page.Events.Crash, () => this._dispatchEvent('crash'));
-    this.addObjectListener(Page.Events.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this._scope, dialog) }));
+    this.addObjectListener(Page.Events.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this, dialog) }));
     this.addObjectListener(Page.Events.Download, (download: Download) => {
       // Artifact can outlive the page, so bind to the context scope.
       this._dispatchEvent('download', { url: download.url, suggestedFilename: download.suggestedFilename(), artifact: new ArtifactDispatcher(parentScope, download.artifact) });
     });
     this.addObjectListener(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
-      element: ElementHandleDispatcher.from(this._scope, fileChooser.element()),
+      element: ElementHandleDispatcher.from(this, fileChooser.element()),
       isMultiple: fileChooser.isMultiple()
     }));
     this.addObjectListener(Page.Events.FrameAttached, frame => this._onFrameAttached(frame));
     this.addObjectListener(Page.Events.FrameDetached, frame => this._onFrameDetached(frame));
     this.addObjectListener(Page.Events.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
-    this.addObjectListener(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this._scope, webSocket) }));
-    this.addObjectListener(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
+    this.addObjectListener(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this, webSocket) }));
+    this.addObjectListener(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this, worker) }));
     this.addObjectListener(Page.Events.Video, (artifact: Artifact) => this._dispatchEvent('video', { artifact: existingDispatcher<ArtifactDispatcher>(artifact) }));
     if (page._video)
       this._dispatchEvent('video', { artifact: existingDispatcher<ArtifactDispatcher>(page._video) });
@@ -114,7 +114,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async exposeBinding(params: channels.PageExposeBindingParams, metadata: CallMetadata): Promise<void> {
     await this._page.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
-      const binding = new BindingCallDispatcher(this._scope, params.name, !!params.needsHandle, source, args);
+      const binding = new BindingCallDispatcher(this, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
     });
@@ -159,7 +159,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       return;
     }
     await this._page.setClientRequestInterceptor((route, request) => {
-      this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this.parentScope()!, request), route) });
+      this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this.parentScope(), request), route) });
     });
   }
 
@@ -282,7 +282,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   _onFrameAttached(frame: Frame) {
-    this._dispatchEvent('frameAttached', { frame: FrameDispatcher.from(this._scope, frame) });
+    this._dispatchEvent('frameAttached', { frame: FrameDispatcher.from(this, frame) });
   }
 
   _onFrameDetached(frame: Frame) {
@@ -296,7 +296,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 }
 
 
-export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel, PageDispatcher | BrowserContextDispatcher, WorkerDispatcher> implements channels.WorkerChannel {
+export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel, PageDispatcher | BrowserContextDispatcher> implements channels.WorkerChannel {
   _type_Worker = true;
 
   static fromNullable(scope: PageDispatcher | BrowserContextDispatcher, worker: Worker | null): WorkerDispatcher | undefined {
@@ -309,7 +309,7 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
   constructor(scope: PageDispatcher | BrowserContextDispatcher, worker: Worker) {
     super(scope, worker, 'Worker', {
       url: worker.url()
-    }, true);
+    });
     this.addObjectListener(Worker.Events.Close, () => this._dispatchEvent('close'));
   }
 
@@ -318,7 +318,7 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
   }
 
   async evaluateExpressionHandle(params: channels.WorkerEvaluateExpressionHandleParams, metadata: CallMetadata): Promise<channels.WorkerEvaluateExpressionHandleResult> {
-    return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, await this._object.evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { handle: ElementHandleDispatcher.fromJSHandle(this, await this._object.evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 }
 

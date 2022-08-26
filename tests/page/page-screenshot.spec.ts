@@ -89,6 +89,51 @@ it.describe('page screenshot', () => {
     expect(hasDifferentScreenshots).toBe(true);
   });
 
+  it('should capture blinking caret in shadow dom', async ({ page, browserName }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16732' });
+    it.fixme(browserName !== 'firefox');
+    await page.addScriptTag({
+      content: `
+      class CustomElementContainer extends HTMLElement {
+        #shadowRoot;
+        constructor() {
+          super();
+          this.#shadowRoot = this.attachShadow({ mode: 'open' });
+          this.#shadowRoot.innerHTML = '<custom-element-input-wrapper><input type="text"/></custom-element-input-wrapper>';
+        }
+      }
+      class CustomElementInputWrapper extends HTMLElement {
+        #shadowRoot;
+        constructor() {
+          super();
+          this.#shadowRoot = this.attachShadow({ mode: 'open' });
+          this.#shadowRoot.innerHTML = '<style>:host { all: initial; }</style><slot/>';
+        }
+      }
+      customElements.define('custom-element-input-wrapper', CustomElementInputWrapper);
+      customElements.define('custom-element-container', CustomElementContainer);
+
+      const container = document.createElement('custom-element-container');
+      document.body.appendChild(container);`,
+    });
+
+    const input = await page.locator('input');
+    // TODO: click fails in webkit
+    await input.focus();
+
+    const screenshot = await input.screenshot();
+    let hasDifferentScreenshots = false;
+    for (let i = 0; !hasDifferentScreenshots && i < 10; ++i) {
+      // Caret blinking time is set to 500ms.
+      // Try to capture variety of screenshots to make
+      // sure we capture blinking caret.
+      await new Promise(x => setTimeout(x, 150));
+      const newScreenshot = await input.screenshot({ caret: 'hide' });
+      hasDifferentScreenshots = !newScreenshot.equals(screenshot);
+    }
+    expect(hasDifferentScreenshots).toBe(false);
+  });
+
   it('should clip rect', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');

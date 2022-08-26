@@ -138,7 +138,7 @@ it('should trigger correct Log', async ({ page, server, browserName, isWindows }
 it('should have location for console API calls', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [message] = await Promise.all([
-    page.waitForEvent('console', m => m.text() === 'yellow'),
+    page.waitForEvent('console', m => m.text().startsWith('here:')),
     page.goto(server.PREFIX + '/consolelog.html'),
   ]);
   expect(message.type()).toBe('log');
