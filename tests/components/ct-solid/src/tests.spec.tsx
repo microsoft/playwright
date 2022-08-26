@@ -26,6 +26,17 @@ test('default child should work', async ({ mount }) => {
   await expect(component).toContainText('Main Content')
 })
 
+test('should run hooks', async ({ page, mount }) => {
+  const messages: string[] = [];
+  page.on('console', m => messages.push(m.text()));
+  await mount(<Button title="Submit" />, {
+    hooksConfig: {
+      route: 'A'
+    }
+  });
+  expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount']);
+});
+
 test('should unmount', async ({ page, mount }) => {
   const component = await mount(<Button title="Submit" />)
   await expect(page.locator('#root')).toContainText('Submit')
