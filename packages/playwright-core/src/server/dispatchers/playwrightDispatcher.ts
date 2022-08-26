@@ -52,14 +52,14 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       selectors: new SelectorsDispatcher(scope, browserDispatcher?.selectors || playwright.selectors),
       preLaunchedBrowser: browserDispatcher,
       socksSupport: socksProxy ? new SocksSupportDispatcher(scope, socksProxy) : undefined,
-    }, false);
+    });
     this._type_Playwright = true;
     this._browserDispatcher = browserDispatcher;
   }
 
   async newRequest(params: channels.PlaywrightNewRequestParams, metadata?: channels.Metadata): Promise<channels.PlaywrightNewRequestResult> {
     const request = new GlobalAPIRequestContext(this._object, params);
-    return { request: APIRequestContextDispatcher.from(this._scope, request) };
+    return { request: APIRequestContextDispatcher.from(this.parentScope(), request) };
   }
 
   async hideHighlight(params: channels.PlaywrightHideHighlightParams, metadata?: channels.Metadata): Promise<channels.PlaywrightHideHighlightResult> {

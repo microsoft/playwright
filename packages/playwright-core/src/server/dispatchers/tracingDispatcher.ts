@@ -30,7 +30,7 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
   }
 
   constructor(scope: BrowserContextDispatcher | APIRequestContextDispatcher, tracing: Tracing) {
-    super(scope, tracing, 'Tracing', {}, true);
+    super(scope, tracing, 'Tracing', {});
   }
 
   async tracingStart(params: channels.TracingTracingStartParams): Promise<channels.TracingTracingStartResult> {
@@ -43,7 +43,7 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
 
   async tracingStopChunk(params: channels.TracingTracingStopChunkParams): Promise<channels.TracingTracingStopChunkResult> {
     const { artifact, sourceEntries } = await this._object.stopChunk(params);
-    return { artifact: artifact ? new ArtifactDispatcher(this._scope, artifact) : undefined, sourceEntries };
+    return { artifact: artifact ? new ArtifactDispatcher(this, artifact) : undefined, sourceEntries };
   }
 
   async tracingStop(params: channels.TracingTracingStopParams): Promise<channels.TracingTracingStopResult> {
