@@ -48,7 +48,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Pa
       url: frame.url(),
       name: frame.name(),
       parentFrame: FrameDispatcher.fromNullable(scope, frame.parentFrame()),
-      loadStates: Array.from(frame._subtreeLifecycleEvents),
+      loadStates: Array.from(frame._firedLifecycleEvents),
     });
     this._frame = frame;
     this.addObjectListener(Frame.Events.AddLifecycle, lifecycleEvent => {
