@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/experimental-ct-solid'
 import Button from './components/Button';
+import DefaultChildren from './components/DefaultChildren';
 import MultiRoot from './components/MultiRoot';
 
 test.use({ viewport: { width: 500, height: 500 } });
@@ -16,7 +17,14 @@ test('callback should work', async ({ mount }) => {
   }}></Button>)
   await component.click()
   expect(messages).toEqual(['hello'])
-});
+})
+
+test('default child should work', async ({ mount }) => {
+  const component = await mount(<DefaultChildren>
+    Main Content
+  </DefaultChildren>)
+  await expect(component).toContainText('Main Content')
+})
 
 test('should unmount', async ({ page, mount }) => {
   const component = await mount(<Button title="Submit" />)

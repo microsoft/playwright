@@ -54,7 +54,10 @@ function render(component) {
   if (component.kind !== 'jsx')
     throw new Error('Object mount notation is not supported');
 
-  return createComponent(componentFunc, component.props);
+  return createComponent(componentFunc, {
+    children: component.children,
+    ...component.props
+  });
 }
 
 const unmountKey = Symbol('disposeKey');
