@@ -53,7 +53,7 @@ it('should work with mixed content', async ({ browser, server, httpsServer }) =>
   });
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
-  await page.goto(httpsServer.PREFIX + '/mixedcontent.html', { waitUntil: 'domcontentloaded' });
+  await page.goto(httpsServer.PREFIX + '/mixedcontent.html', { waitUntil: 'load' });
   expect(page.frames().length).toBe(2);
   // Make sure blocked iframe has functional execution context
   // @see https://github.com/GoogleChrome/puppeteer/issues/2709

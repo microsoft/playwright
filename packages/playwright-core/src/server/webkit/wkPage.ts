@@ -380,9 +380,8 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.willCheckNavigationPolicy', event => this._onWillCheckNavigationPolicy(event.frameId)),
       eventsHelper.addEventListener(this._session, 'Page.didCheckNavigationPolicy', event => this._onDidCheckNavigationPolicy(event.frameId, event.cancel)),
       eventsHelper.addEventListener(this._session, 'Page.frameScheduledNavigation', event => this._onFrameScheduledNavigation(event.frameId)),
-      eventsHelper.addEventListener(this._session, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
-      eventsHelper.addEventListener(this._session, 'Page.loadEventFired', event => this._onLifecycleEvent(event.frameId, 'load')),
-      eventsHelper.addEventListener(this._session, 'Page.domContentEventFired', event => this._onLifecycleEvent(event.frameId, 'domcontentloaded')),
+      eventsHelper.addEventListener(this._session, 'Page.loadEventFired', event => this._page._frameManager.frameLifecycleEvent(event.frameId, 'load')),
+      eventsHelper.addEventListener(this._session, 'Page.domContentEventFired', event => this._page._frameManager.frameLifecycleEvent(event.frameId, 'domcontentloaded')),
       eventsHelper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
       eventsHelper.addEventListener(this._session, 'Runtime.bindingCalled', event => this._onBindingCalled(event.contextId, event.argument)),
       eventsHelper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
@@ -448,14 +447,6 @@ export class WKPage implements PageDelegate {
 
   private _onFrameScheduledNavigation(frameId: string) {
     this._page._frameManager.frameRequestedNavigation(frameId);
-  }
-
-  private _onFrameStoppedLoading(frameId: string) {
-    this._page._frameManager.frameStoppedLoading(frameId);
-  }
-
-  private _onLifecycleEvent(frameId: string, event: types.LifecycleEvent) {
-    this._page._frameManager.frameLifecycleEvent(frameId, event);
   }
 
   private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
