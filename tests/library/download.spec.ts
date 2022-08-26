@@ -70,8 +70,8 @@ it.describe('download event', () => {
       expect(responseOrError.message).toContain('Download is starting');
       expect(page.url()).toBe('about:blank');
     } else {
-      expect(responseOrError.status()).toBe(200);
-      expect(page.url()).toBe(server.PREFIX + '/download');
+      expect(responseOrError instanceof Error).toBeTruthy();
+      expect(responseOrError.message).toContain('Download is starting');
     }
     await page.close();
   });
@@ -96,8 +96,8 @@ it.describe('download event', () => {
       expect(responseOrError.message).toContain('Download is starting');
       expect(page.url()).toBe('about:blank');
     } else {
-      expect(responseOrError.status()).toBe(200);
-      expect(page.url()).toBe(server.PREFIX + '/downloadWithCOOP');
+      expect(responseOrError instanceof Error).toBeTruthy();
+      expect(responseOrError.message).toContain('Download is starting');
     }
     await page.close();
   });

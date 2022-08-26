@@ -122,6 +122,10 @@ export class FFBrowser extends Browser {
     assert(ffPage);
     if (!ffPage)
       return;
+
+    // Abort the navigation that turned into download.
+    ffPage._page._frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
+
     let originPage = ffPage._initializedPage;
     // If it's a new window download, report it on the opener page.
     if (!originPage) {
