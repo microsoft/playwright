@@ -7,7 +7,7 @@ import NamedSlots from './components/NamedSlots.vue'
 test.use({ viewport: { width: 500, height: 500 } })
 
 test('props should work', async ({ mount }) => {
-  const component = await mount(<Button title='Submit'></Button>)
+  const component = await mount(<Button title="Submit" />)
   await expect(component).toContainText('Submit')
 })
 
@@ -78,7 +78,7 @@ test('slot should emit events', async ({ mount }) => {
 test('should run hooks', async ({ page, mount }) => {
   const messages = []
   page.on('console', m => messages.push(m.text()))
-  await mount(<Button title='Submit'></Button>, {
+  await mount(<Button title="Submit" />, {
     hooksConfig: { route: 'A' }
   })
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount el: HTMLButtonElement'])

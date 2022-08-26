@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/experimental-ct-vue2'
-
 import Button from './components/Button.vue'
 import Counter from './components/Counter.vue'
 import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
+import Component from './components/Component.vue'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -77,6 +77,11 @@ test('named slots should work', async ({ mount }) => {
   await expect(component).toContainText('Header')
   await expect(component).toContainText('Main Content')
   await expect(component).toContainText('Footer')
+})
+
+test('optionless should work', async ({ mount }) => {
+  const component = await mount(Component)
+  await expect(component).toContainText('test')
 })
 
 test('should run hooks', async ({ page, mount }) => {
