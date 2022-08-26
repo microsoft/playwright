@@ -38,7 +38,9 @@ export interface MountOptions {
   hooksConfig?: any;
 }
 
-interface MountResult extends Locator {}
+interface MountResult extends Locator {
+  unmount(): Promise<void>;
+}
 
 export interface ComponentFixtures {
   mount(component: JSX.Element, options?: MountOptions): Promise<MountResult>;
