@@ -442,12 +442,13 @@ it('should work with unpaired quotes when not at the start', async ({ page }) =>
 
 it('should work with paired quotes in the middle of selector', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16858' });
-  it.fail();
   await page.setContent(`<div>pattern "^-?\\d+$"</div>`);
   expect(await page.locator(`div >> text=pattern "^-?\\d+$`).isVisible());
   expect(await page.locator(`div >> text=pattern "^-?\\d+$"`).isVisible());
-  expect(await page.locator(`div >> text='pattern "^-?\\d+$"'`).isVisible());
+  // Should double escape inside quoted text.
+  expect(await page.locator(`div >> text='pattern "^-?\\\\d+$"'`).isVisible());
   await expect(page.locator(`div >> text=pattern "^-?\\d+$`)).toBeVisible();
   await expect(page.locator(`div >> text=pattern "^-?\\d+$"`)).toBeVisible();
-  await expect(page.locator(`div >> text='pattern "^-?\\d+$"'`)).toBeVisible();
+  // Should double escape inside quoted text.
+  await expect(page.locator(`div >> text='pattern "^-?\\\\d+$"'`)).toBeVisible();
 });
