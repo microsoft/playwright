@@ -177,6 +177,7 @@ class JSONReporter implements Reporter {
       stderr: result.stderr.map(s => stdioEntry(s)),
       retry: result.retry,
       steps: steps.length ? steps.map(s => this._serializeTestStep(s)) : undefined,
+      startTime: result.startTime,
       attachments: result.attachments.map(a => ({
         name: a.name,
         contentType: a.contentType,
