@@ -56,6 +56,7 @@ type RunOptions = {
   testFileFilters?: TestFileFilter[];
   projectFilter?: string[];
   watchMode?: boolean;
+  passWithNoTests?: boolean;
 };
 
 export type ConfigCLIOverrides = {
@@ -337,6 +338,7 @@ export class Runner {
 
     // 7. Fail when no tests.
     let total = rootSuite.allTests().length;
+    const noTests = !total;
     if (!total)
       fatalErrors.push(createNoTestsError());
 
@@ -381,6 +383,8 @@ export class Runner {
     if (fatalErrors.length) {
       for (const error of fatalErrors)
         this._reporter.onError?.(error);
+      if (options.passWithNoTests && noTests && fatalErrors.length === 1)
+        return { status: 'passed' };
       return { status: 'failed' };
     }
 
