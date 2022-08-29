@@ -1484,7 +1484,7 @@ frame.type("#mytextarea", "world", delay=100) # types slower, like a user
 
 ```csharp
 await frame.TypeAsync("#mytextarea", "hello"); // types instantly
-await frame.TypeAsync("#mytextarea", "world", delay: 100); // types slower, like a user
+await frame.TypeAsync("#mytextarea", "world", new() { Delay = 100 }); // types slower, like a user
 ```
 
 ### param: Frame.type.selector = %%-input-selector-%%

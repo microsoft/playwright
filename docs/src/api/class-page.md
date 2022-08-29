@@ -3380,7 +3380,7 @@ page.type("#mytextarea", "world", delay=100) # types slower, like a user
 
 ```csharp
 await page.TypeAsync("#mytextarea", "hello"); // types instantly
-await page.TypeAsync("#mytextarea", "world"); // types slower, like a user
+await page.TypeAsync("#mytextarea", "world", new() { Delay = 100 }); // types slower, like a user
 ```
 
 Shortcut for main frame's [`method: Frame.type`].
