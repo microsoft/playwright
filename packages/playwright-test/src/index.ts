@@ -116,7 +116,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     const browser = await playwright[browserName].connect(connectOptions.wsEndpoint, {
       headers: {
         'x-playwright-browser': browserName,
-        'x-playwright-launch-options': JSON.stringify({...launchOptions, headless, channel }),
+        'x-playwright-launch-options': JSON.stringify({ ...launchOptions, headless, channel }),
         ...connectOptions.headers,
       },
       timeout: connectOptions.timeout ?? 3 * 60 * 1000, // 3 minutes
