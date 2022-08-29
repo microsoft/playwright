@@ -338,8 +338,7 @@ export class Runner {
 
     // 7. Fail when no tests.
     let total = rootSuite.allTests().length;
-    const noTests = !total;
-    if (!total)
+    if (!total && !options.passWithNoTests)
       fatalErrors.push(createNoTestsError());
 
     // 8. Compute shards.
@@ -383,8 +382,6 @@ export class Runner {
     if (fatalErrors.length) {
       for (const error of fatalErrors)
         this._reporter.onError?.(error);
-      if (options.passWithNoTests && noTests && fatalErrors.length === 1)
-        return { status: 'passed' };
       return { status: 'failed' };
     }
 
