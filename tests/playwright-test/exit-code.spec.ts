@@ -156,7 +156,7 @@ test('should exit with code 1 if passed a file name', async ({ runInlineTest }) 
   expect(result.output).toContain(`no tests found.`);
 });
 
-test.only('should exit with code 0 with --pass-with-no-tests', async ({ runInlineTest }) => {
+test('should exit with code 0 with --pass-with-no-tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { testDir: 'unknown' };
