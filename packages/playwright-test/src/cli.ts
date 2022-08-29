@@ -50,6 +50,7 @@ function addTestCommand(program: Command) {
   command.option('--list', `Collect all the tests and report them, but do not run`);
   command.option('--max-failures <N>', `Stop after the first N failures`);
   command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
+  command.option('--pass-with-no-tests', `Makes test run succeed even if no tests were found`);
   command.option('--quiet', `Suppress stdio`);
   command.option('--repeat-each <N>', `Run each test N times (default: 1)`);
   command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${baseFullConfig.reporter[0]}")`);
@@ -165,6 +166,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     testFileFilters,
     projectFilter: opts.project || undefined,
     watchMode: !!process.env.PW_TEST_WATCH,
+    passWithNoTests: opts.passWithNoTests,
   });
   await stopProfiling(undefined);
 

@@ -56,6 +56,7 @@ type RunOptions = {
   testFileFilters?: TestFileFilter[];
   projectFilter?: string[];
   watchMode?: boolean;
+  passWithNoTests?: boolean;
 };
 
 export type ConfigCLIOverrides = {
@@ -337,7 +338,7 @@ export class Runner {
 
     // 7. Fail when no tests.
     let total = rootSuite.allTests().length;
-    if (!total)
+    if (!total && !options.passWithNoTests)
       fatalErrors.push(createNoTestsError());
 
     // 8. Compute shards.

@@ -156,6 +156,16 @@ test('should exit with code 1 if passed a file name', async ({ runInlineTest }) 
   expect(result.output).toContain(`no tests found.`);
 });
 
+test('should exit with code 0 with --pass-with-no-tests', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { testDir: 'unknown' };
+    `,
+  }, undefined, undefined, { additionalArgs: ['--pass-with-no-tests'] });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain(`Running 0 tests using 0 workers`);
+});
+
 test('should exit with code 1 when config is not found', async ({ runInlineTest }) => {
   const result = await runInlineTest({ 'my.config.js': '' }, { 'config': 'foo.config.js' });
   expect(result.exitCode).toBe(1);
