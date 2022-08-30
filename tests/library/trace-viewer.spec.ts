@@ -638,7 +638,7 @@ test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, b
     route.fulfill({
       status: 200,
       headers: {
-          'content-type': 'text/html'
+        'content-type': 'text/html'
       },
       body: 'Hello there!'
     });
