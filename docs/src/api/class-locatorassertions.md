@@ -207,7 +207,7 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 * since: v1.18
 * langs: python
 
-The opposite of [`method: LocatorAssertions.toHaveAttribute`].
+The opposite of [`method: LocatorAssertions.toHaveAttribute#1`].
 
 ### param: LocatorAssertions.NotToHaveAttribute.name
 * since: v1.18
