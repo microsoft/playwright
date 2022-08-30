@@ -652,6 +652,37 @@ test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, b
   await traceViewer.page.locator('.tab-label', { hasText: 'Call' }).click();
   const callLine = traceViewer.page.locator('.call-line');
   await expect(callLine.locator('text=status')).toContainText('200');
-  await expect(callLine.locator('text=Url')).toContainText('http://test.com');
+  await expect(callLine.locator('text=requestUrl')).toContainText('http://test.com');
+});
+
+test('should include requestUrl in route.continue', async ({ page, runAndTrace, server }) => {
+  await page.route('**/*', route => {
+    route.continue({ url: server.EMPTY_PAGE });
+  });
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto('http://test.com');
+  });
+
+  // Render snapshot, check expectations.
+  await traceViewer.selectAction('route.continue');
+  await traceViewer.page.locator('.tab-label', { hasText: 'Call' }).click();
+  const callLine = traceViewer.page.locator('.call-line');
+  await expect(callLine.locator('text=requestUrl')).toContainText('http://test.com');
+  await expect(callLine.locator('text=/^url: .*/')).toContainText(server.EMPTY_PAGE);
+});
+
+test('should include requestUrl in route.abort', async ({ page, runAndTrace, server }) => {
+  await page.route('**/*', route => {
+    route.abort();
+  });
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto('http://test.com').catch(() => {});
+  });
+
+  // Render snapshot, check expectations.
+  await traceViewer.selectAction('route.abort');
+  await traceViewer.page.locator('.tab-label', { hasText: 'Call' }).click();
+  const callLine = traceViewer.page.locator('.call-line');
+  await expect(callLine.locator('text=requestUrl')).toContainText('http://test.com');
 });
 

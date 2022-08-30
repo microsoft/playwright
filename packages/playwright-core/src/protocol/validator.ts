@@ -1856,7 +1856,6 @@ scheme.RouteContinueParams = tObject({
 });
 scheme.RouteContinueResult = tOptional(tObject({}));
 scheme.RouteFulfillParams = tObject({
-  url: tString,
   status: tOptional(tNumber),
   headers: tOptional(tArray(tType('NameValue'))),
   body: tOptional(tString),
