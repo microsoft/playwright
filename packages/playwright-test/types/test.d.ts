@@ -3429,9 +3429,6 @@ interface LocatorAssertions {
    * const locator = page.locator('input');
    * // Assert attribute with given value.
    * await expect(locator).toHaveAttribute('type', 'text');
-   * // Assert attribute existance.
-   * await expect(locator).toHaveAttribute('disabled');
-   * await expect(locator).not.toHaveAttribute('open');
    * ```
    *
    * @param name Attribute name.

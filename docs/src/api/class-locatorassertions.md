@@ -896,9 +896,6 @@ Ensures the [Locator] points to an element with given attribute value.
 const locator = page.locator('input');
 // Assert attribute with given value.
 await expect(locator).toHaveAttribute('type', 'text');
-// Assert attribute existance.
-await expect(locator).toHaveAttribute('disabled');
-await expect(locator).not.toHaveAttribute('open');
 ```
 
 ```java
@@ -966,6 +963,7 @@ from playwright.async_api import expect
 
 locator = page.locator("input")
 await expect(locator).to_have_attribute("disabled")
+await expect(locator).not_to_have_attribute("open")
 ```
 
 ```python sync
@@ -973,11 +971,13 @@ from playwright.sync_api import expect
 
 locator = page.locator("input")
 expect(locator).to_have_attribute("disabled")
+expect(locator).not_to_have_attribute("open")
 ```
 
 ```csharp
 var locator = Page.Locator("input");
 await Expect(locator).ToHaveAttributeAsync("disabled");
+await Expect(locator).Not.ToHaveAttributeAsync("open");
 ```
 
 ### param: LocatorAssertions.toHaveAttribute#2.name
