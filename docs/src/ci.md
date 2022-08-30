@@ -369,6 +369,43 @@ tests:
   ...
 ```
 
+#### Sharding
+* langs: js
+
+GitLab CI supports [sharding tests between multiple jobs](https://docs.gitlab.com/ee/ci/jobs/job_control.html#parallelize-large-jobs) using the [parallel](https://docs.gitlab.com/ee/ci/yaml/index.html#parallel) keyword. The test job will be split into multiple smaller jobs that run in parallel. Parallel jobs are named sequentially from `job_name 1/N` to `job_name N/N`.
+
+```yml
+stages:
+  - test
+
+tests:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.26.0-focal
+  parallel: 7
+  script:
+    - npm ci
+    - npx playwright test --shard=$CI_NODE_INDEX/$CI_NODE_TOTAL
+```
+
+GitLab CI also supports sharding tests between multiple jobs using the [parallel:matrix](https://docs.gitlab.com/ee/ci/yaml/index.html#parallelmatrix) option. The test job will run multiple times in parallel in a single pipeline, but with different variable values for each instance of the job. In the example below, we have 2 `PROJECT` values, 10 `SHARD_INDEX` values and 1 `SHARD_TOTAL` value, resulting in a total of 20 jobs to be run.
+
+```yml
+stages:
+  - test
+
+tests:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.26.0-focal
+  parallel:
+    matrix:
+      - PROJECT: ['chromium', 'webkit']
+        SHARD_INDEX: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        SHARD_TOTAL: 10
+  script:
+    - npm ci
+    - npx playwright test --project=$PROJECT --shard=$SHARD_INDEX/$SHARD_TOTAL
+```
+
 ## Caching browsers
 
 By default, Playwright downloads browser binaries when the Playwright NPM package
