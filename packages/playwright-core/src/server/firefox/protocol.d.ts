@@ -57,6 +57,7 @@ export module Protocol {
       uuid: string;
       browserContextId?: string;
       pageTargetId: string;
+      frameId: string;
       url: string;
       suggestedFileName: string;
     }
