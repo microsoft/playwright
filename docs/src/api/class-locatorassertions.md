@@ -943,7 +943,7 @@ Expected attribute value.
 * since: v1.18
 
 ## async method: LocatorAssertions.toHaveAttribute#2
-* since: v1.20
+* since: v1.26
 * langs:
   - alias-java: hasAttribute
 
