@@ -8,6 +8,7 @@ jobs:
   trigger-chromium-build:
     name: Trigger Build
     runs-on: ubuntu-20.04
+    if: github.repository == 'microsoft/playwright'
     steps:
       - uses: actions/checkout@v2
       - run: ./browser_patches/chromium/roll_to_current_beta.sh
