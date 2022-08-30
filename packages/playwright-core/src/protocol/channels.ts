@@ -3322,6 +3322,7 @@ export type RouteContinueOptions = {
 };
 export type RouteContinueResult = void;
 export type RouteFulfillParams = {
+  url: string,
   status?: number,
   headers?: NameValue[],
   body?: string,

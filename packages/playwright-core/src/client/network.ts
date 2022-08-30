@@ -351,6 +351,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       headers['content-length'] = String(length);
 
     await this._raceWithTargetClose(this._channel.fulfill({
+      url: this.request().url(),
       status: statusOption || 200,
       headers: headersObjectToArray(headers),
       body,

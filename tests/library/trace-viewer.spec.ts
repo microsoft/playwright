@@ -633,3 +633,25 @@ test('should open two trace files', async ({ context, page, request, server, sho
   await expect(callLine.locator('text=events')).toHaveText(/events: [\d]+/);
 });
 
+test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, browserName }) => {
+  await page.route('**/*', route => {
+    route.fulfill({
+      status: 200,
+      headers: {
+          'content-type': 'text/html'
+      },
+      body: 'Hello there!'
+    });
+  });
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto('http://test.com');
+  });
+
+  // Render snapshot, check expectations.
+  await traceViewer.selectAction('route.fulfill');
+  await traceViewer.page.locator('.tab-label', { hasText: 'Call' }).click();
+  const callLine = traceViewer.page.locator('.call-line');
+  await expect(callLine.locator('text=status')).toContainText('200');
+  await expect(callLine.locator('text=Url')).toContainText('http://test.com');
+});
+

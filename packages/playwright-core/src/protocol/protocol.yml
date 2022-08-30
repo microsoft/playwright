@@ -2551,6 +2551,8 @@ Route:
 
     fulfill:
       parameters:
+        # Used to discriminate between fulfills in tracing
+        url: string
         # default is 200
         status: number?
         headers:
