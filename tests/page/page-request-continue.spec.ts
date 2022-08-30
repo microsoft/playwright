@@ -349,3 +349,19 @@ it('should delete the origin header', async ({ page, server, isAndroid, browserN
   expect(interceptedRequest.headers()['origin']).toEqual(undefined);
   expect(serverRequest.headers.origin).toBeFalsy();
 });
+
+it('should intercept preload link requests', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16745' });
+  it.fixme(browserName === 'webkit', 'Preload requests are aborted in WebKit when interception is enabled');
+  let intercepted = false;
+  await page.route('**/one-style.css', route => {
+    intercepted = true;
+    route.continue();
+  });
+  await Promise.all([
+    server.waitForRequest('/one-style.css'),
+    page.goto(server.PREFIX + '/preload.html')
+  ]);
+  await page.waitForFunction(() => (window as any).preloadedStyles);
+  expect(intercepted).toBe(true);
+});
