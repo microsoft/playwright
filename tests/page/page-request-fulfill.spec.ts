@@ -356,7 +356,6 @@ function findResponse(har: har.HARFile, url: string): har.Response {
 
 it('should fulfill preload link requests', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16745' });
-  it.fixme(browserName === 'webkit', 'Preload requests are aborted in WebKit when interception is enabled');
   let intercepted = false;
   await page.route('**/one-style.css', route => {
     intercepted = true;
