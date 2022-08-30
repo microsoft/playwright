@@ -503,7 +503,6 @@ class HtmlBuilder {
           name: a.name,
           contentType: a.contentType,
           path: 'data/' + sha1,
-          body: a.body,
         };
       }
 
