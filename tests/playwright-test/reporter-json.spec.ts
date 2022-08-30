@@ -245,8 +245,6 @@ test('should have starting time in results', async ({ runInlineTest }, testInfo)
     `
   },   { reporter: 'json' });
   expect(result.exitCode).toBe(0);
-  if (result.report.suites[0].specs[0].tests[0].results[0].startTime)
-    expect(new Date(result.report.suites[0].specs[0].tests[0].results[0].startTime).getTime).toBeTruthy();
-  else
-    expect(0).toBe(1);
+  const startTime = result.report.suites[0].specs[0].tests[0].results[0].startTime;
+  expect(new Date(startTime!).getTime()).toBeGreaterThan(new Date('1/1/2000').getTime());
 });
