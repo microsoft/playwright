@@ -147,30 +147,38 @@ export class Screenshotter {
       progress.log('  disabled all CSS animations');
     await Promise.all(this._page.frames().map(async frame => {
       await frame.nonStallingEvaluateInExistingContext('(' + (async function(hideCaret: boolean, disableAnimations: boolean) {
-        const styleTag = document.createElement('style');
+        const collectRoots = (root: Document | ShadowRoot, roots: (Document|ShadowRoot)[] = []): (Document|ShadowRoot)[] => {
+          roots.push(root);
+          const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+          do {
+            const node = walker.currentNode;
+            const shadowRoot = node instanceof Element ? node.shadowRoot : null;
+            if (shadowRoot)
+              collectRoots(shadowRoot, roots);
+          } while (walker.nextNode());
+          return roots;
+        };
+
+        const styleTags: Element[] = [];
         if (hideCaret) {
-          styleTag.textContent = `
-            *:not(#playwright-aaaaaaaaaa.playwright-bbbbbbbbbbb.playwright-cccccccccc.playwright-dddddddddd.playwright-eeeeeeeee) {
-              caret-color: transparent !important;
-            }
-          `;
-          document.documentElement.append(styleTag);
+          for (const root of collectRoots(document)) {
+            const styleTag = document.createElement('style');
+            styleTag.textContent = `
+              *:not(#playwright-aaaaaaaaaa.playwright-bbbbbbbbbbb.playwright-cccccccccc.playwright-dddddddddd.playwright-eeeeeeeee) {
+                caret-color: transparent !important;
+              }
+            `;
+            if (root === document)
+              document.documentElement.append(styleTag);
+            else
+              root.append(styleTag);
+            styleTags.push(styleTag);
+          }
         }
         const infiniteAnimationsToResume: Set<Animation> = new Set();
         const cleanupCallbacks: (() => void)[] = [];
 
         if (disableAnimations) {
-          const collectRoots = (root: Document | ShadowRoot, roots: (Document|ShadowRoot)[] = []): (Document|ShadowRoot)[] => {
-            roots.push(root);
-            const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
-            do {
-              const node = walker.currentNode;
-              const shadowRoot = node instanceof Element ? node.shadowRoot : null;
-              if (shadowRoot)
-                collectRoots(shadowRoot, roots);
-            } while (walker.nextNode());
-            return roots;
-          };
           const handleAnimations = (root: Document|ShadowRoot): void => {
             for (const animation of root.getAnimations()) {
               if (!animation.effect || animation.playbackRate === 0 || infiniteAnimationsToResume.has(animation))
@@ -209,7 +217,9 @@ export class Screenshotter {
         }
 
         window.__cleanupScreenshot = () => {
-          styleTag.remove();
+          for (const styleTag of styleTags)
+            styleTag.remove();
+
           for (const animation of infiniteAnimationsToResume) {
             try {
               animation.play();
