@@ -15532,7 +15532,7 @@ export interface Selectors {
    * ```
    *
    * @param name Name that is used in selectors as a prefix, e.g. `{name: 'foo'}` enables `foo=myselectorbody` selectors. May only contain `[a-zA-Z0-9_]` characters.
-   * @param script Script that evaluates to a selector engine instance.
+   * @param script Script that evaluates to a selector engine instance. The script is evaluated in the page context.
    * @param options
    */
   register(name: string, script: Function|string|{
