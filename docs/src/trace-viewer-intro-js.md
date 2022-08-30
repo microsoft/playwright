@@ -52,7 +52,7 @@ npx playwright test --trace on
 ```
 
 :::note 
-The `trace-on` flag was introduced in Playwright v1.25. Check your `package.json` to sure you have at least this version of Playwright installed.
+The `trace-on` flag was introduced in Playwright v1.25. Check your `package.json` to make sure you have at least this version of Playwright installed.
 :::
 
 ## Opening the HTML Report
