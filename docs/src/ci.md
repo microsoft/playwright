@@ -268,7 +268,7 @@ steps:
     strategy:
       fail-fast: false
       matrix:
-        project: [Chrome, Safari]
+        project: [chromium, webkit]
         shardIndex: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         shardTotal: [10]
     steps:
