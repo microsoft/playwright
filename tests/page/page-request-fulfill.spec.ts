@@ -353,3 +353,31 @@ function findResponse(har: har.HARFile, url: string): har.Response {
   expect(entry, originalUrl).toBeTruthy();
   return entry?.response;
 }
+
+it('should continue preload link requests', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16745' });
+  it.fixme(browserName === 'webkit', 'Preload requests are aborted in WebKit when interception is enabled');
+  let intercepted = false;
+  await page.route('**/one-style.css', route => {
+    intercepted = true;
+    route.fulfill({
+      status: 200,
+      headers: {
+        'content-type': 'text/css; charset=utf-8',
+        'cache-control': 'no-cache, no-store',
+        'custom': 'value'
+      },
+      body: 'body { background-color: green; }'
+    });
+  });
+  const [response] = await Promise.all([
+    page.waitForResponse('**/one-style.css'),
+    page.goto(server.PREFIX + '/preload.html')
+  ]);
+  expect(await response.headerValue('custom')).toBe('value');
+  await page.waitForFunction(() => (window as any).preloadedStyles);
+  expect(intercepted).toBe(true);
+  const color = await page.evaluate(() => window.getComputedStyle(document.body).backgroundColor);
+  expect(color).toBe('rgb(0, 128, 0)');
+});
+
