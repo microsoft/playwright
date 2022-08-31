@@ -6,6 +6,10 @@ toc_max_heading_level: 2
 
 ## Version 1.25
 
+<div className="embed-youtube">
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/NFLHA57a-so" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### VSCode Extension
 
 * Watch your tests running live & keep devtools open.
