@@ -49,7 +49,7 @@ await page.route('**/*', (route, request) => {
     foo: 'foo-value', // set "foo" header
     bar: undefined, // remove "bar" header
   };
-  route.continue({headers});
+  route.continue({headers:{...headers});
 });
 ```
 
