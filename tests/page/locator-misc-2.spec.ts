@@ -43,8 +43,8 @@ it('should scroll into view', async ({ page, server, isAndroid }) => {
   }
 });
 
-it('should scroll zero-sized element into view', async ({ page, isAndroid, isElectron, browserName, isMac }) => {
-  it.fixme(isAndroid || isElectron);
+it('should scroll zero-sized element into view', async ({ page, isAndroid, isElectron, isWebView2, browserName, isMac }) => {
+  it.fixme(isAndroid || isElectron || isWebView2);
   it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen.');
 
   await page.setContent(`

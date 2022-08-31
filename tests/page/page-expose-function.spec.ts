@@ -221,8 +221,9 @@ it('exposeBindingHandle should throw for multiple arguments', async ({ page }) =
   expect(error.message).toContain('exposeBindingHandle supports a single argument, 2 received');
 });
 
-it('should not result in unhandled rejection', async ({ page, isAndroid }) => {
+it('should not result in unhandled rejection', async ({ page, isAndroid, isWebView2 }) => {
   it.fixme(isAndroid);
+  it.skip(isWebView2, 'Page.close() is not supported in WebView2');
 
   const closedPromise = page.waitForEvent('close');
   await page.exposeFunction('foo', async () => {

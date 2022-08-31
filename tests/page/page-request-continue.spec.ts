@@ -117,7 +117,9 @@ it('should not allow changing protocol when overriding url', async ({ page, serv
   expect(error.message).toContain('New URL must have same protocol as overridden URL');
 });
 
-it('should not throw when continuing while page is closing', async ({ page, server }) => {
+it('should not throw when continuing while page is closing', async ({ page, server, isWebView2 }) => {
+  it.skip(isWebView2, 'Page.close() is not supported in WebView2');
+
   let done;
   await page.route('**/*', async route => {
     done = Promise.all([
@@ -130,7 +132,9 @@ it('should not throw when continuing while page is closing', async ({ page, serv
   expect(error).toBeInstanceOf(Error);
 });
 
-it('should not throw when continuing after page is closed', async ({ page, server }) => {
+it('should not throw when continuing after page is closed', async ({ page, server, isWebView2 }) => {
+  it.skip(isWebView2, 'Page.close() is not supported in WebView2');
+
   let done;
   await page.route('**/*', async route => {
     await page.close();

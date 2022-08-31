@@ -33,4 +33,5 @@ export type PageWorkerFixtures = {
   browserMajorVersion: number;
   isAndroid: boolean;
   isElectron: boolean;
+  isWebView2: boolean;
 };
