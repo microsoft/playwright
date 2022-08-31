@@ -298,6 +298,7 @@ export const deps: any = {
       'libxtst6'
     ],
     webkit: [
+      'libenchant-2-2',
       'gstreamer1.0-libav',
       'gstreamer1.0-plugins-bad',
       'gstreamer1.0-plugins-base',
@@ -433,6 +434,7 @@ export const deps: any = {
       'libXtst.so.6': 'libxtst6',
       'libxshmfence.so.1': 'libxshmfence1',
       'libatomic.so.1': 'libatomic1',
+      'libenchant-2.so.2': 'libenchant-2-2',
     },
   },
 
