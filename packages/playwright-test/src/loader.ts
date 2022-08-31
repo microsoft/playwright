@@ -94,6 +94,7 @@ export class Loader {
     config.shard = takeFirst(this._configCLIOverrides.shard, config.shard);
     config.timeout = takeFirst(this._configCLIOverrides.timeout, config.timeout);
     config.updateSnapshots = takeFirst(this._configCLIOverrides.updateSnapshots, config.updateSnapshots);
+    config.ignoreSnapshots = takeFirst(this._configCLIOverrides.ignoreSnapshots, config.ignoreSnapshots);
     if (this._configCLIOverrides.projects && config.projects)
       throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
     config.projects = takeFirst(this._configCLIOverrides.projects, config.projects as any);
@@ -139,7 +140,7 @@ export class Loader {
     this._fullConfig.reportSlowTests = takeFirst(config.reportSlowTests, baseFullConfig.reportSlowTests);
     this._fullConfig.quiet = takeFirst(config.quiet, baseFullConfig.quiet);
     this._fullConfig.shard = takeFirst(config.shard, baseFullConfig.shard);
-    this._fullConfig._ignoreSnapshots = takeFirst(this._configCLIOverrides.ignoreSnapshots, baseFullConfig._ignoreSnapshots);
+    this._fullConfig._ignoreSnapshots = takeFirst(config.ignoreSnapshots, baseFullConfig._ignoreSnapshots);
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(config.workers, baseFullConfig.workers);
     const webServers = takeFirst(config.webServer, baseFullConfig.webServer);
