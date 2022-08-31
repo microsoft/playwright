@@ -373,6 +373,25 @@ test('should inerhit use options in projects', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
+test('should support ignoreSnapshots config option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        ignoreSnapshots: true,
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({}, testInfo) => {
+        expect('foo').toMatchSnapshot();
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should work with undefined values and base', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
