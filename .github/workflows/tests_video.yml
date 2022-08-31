@@ -21,8 +21,8 @@ jobs:
         os: [ubuntu-20.04, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -38,7 +38,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: video-${{ matrix.browser }}-linux-test-results
