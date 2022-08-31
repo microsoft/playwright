@@ -8,8 +8,8 @@ jobs:
   roll:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -33,18 +33,18 @@ jobs:
         git commit -m "feat(${{ github.event.client_payload.browser }}): roll to r${{ github.event.client_payload.revision }}"
         git push origin $BRANCH_NAME
     - name: Create Pull Request
-      uses: actions/github-script@v4
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
         script: |
-          const response = await github.pulls.create({
+          const response = await github.rest.pulls.create({
             owner: 'microsoft',
             repo: 'playwright',
             head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
             base: 'main',
             title: 'feat(${{ github.event.client_payload.browser }}): roll to r${{ github.event.client_payload.revision }}',
           });
-          await github.issues.addLabels({
+          await github.rest.issues.addLabels({
             owner: 'microsoft',
             repo: 'playwright',
             issue_number: response.data.number,

@@ -42,8 +42,8 @@ jobs:
             browser: chromium
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm i -g npm@8
@@ -58,7 +58,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: always()
       with:
         name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
@@ -72,8 +72,8 @@ jobs:
         os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -89,7 +89,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: always()
       with:
         name: ${{ matrix.browser }}-chromium-tip-of-tree-test-results
@@ -111,8 +111,8 @@ jobs:
             node-version: 16
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: ${{matrix.node-version}}
     - run: npm i -g npm@8
@@ -133,8 +133,8 @@ jobs:
     name: Web Components
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         # Component tests require Node.js 16+ (they require ESM via TS)
         node-version: 16
@@ -167,8 +167,8 @@ jobs:
         - "^14.1.0"  # pre 14.1, zip extraction was broken (https://github.com/microsoft/playwright/issues/1988)
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node_version }}
     - run: npm i -g npm@8

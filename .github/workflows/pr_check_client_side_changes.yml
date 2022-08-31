@@ -13,11 +13,11 @@ jobs:
     if: github.repository == 'microsoft/playwright'
     steps:
       - name: Create GitHub issue
-        uses: actions/github-script@v4
+        uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
           script: |
-            const { data } = await github.git.getCommit({
+            const { data } = await github.rest.git.getCommit({
               owner: context.repo.owner,
               repo: context.repo.repo,
               commit_sha: context.sha,
@@ -26,7 +26,7 @@ jobs:
 
             const title = '[Ports]: Backport client side changes';
             for (const repo of ['playwright-python', 'playwright-java', 'playwright-dotnet']) {
-              const { data: issuesData } = await github.search.issuesAndPullRequests({
+              const { data: issuesData } = await github.rest.search.issuesAndPullRequests({
                 q: `is:issue is:open repo:microsoft/${repo} in:title "${title}"`
               })
               let issueNumber = null;
@@ -35,7 +35,7 @@ jobs:
                 issueNumber = issuesData.items[0].number
                 issueBody = issuesData.items[0].body
               } else {
-                const { data: issueCreateData } = await github.issues.create({
+                const { data: issueCreateData } = await github.rest.issues.create({
                   owner: context.repo.owner,
                   repo: repo,
                   title,
@@ -46,7 +46,7 @@ jobs:
               }
               const newBody = issueBody.trimEnd() + `
               - [ ] https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.sha} (${commitHeader})`;
-              const data = await github.issues.update({
+              const data = await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: repo,
                 issue_number: issueNumber,
