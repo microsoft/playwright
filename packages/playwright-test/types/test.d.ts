@@ -3423,23 +3423,39 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element with given attribute. If the method is used without `'value'` argument, then
-   * the method will assert attribute existance.
+   * Ensures the [Locator] points to an element with given attribute value.
    *
    * ```js
    * const locator = page.locator('input');
    * // Assert attribute with given value.
    * await expect(locator).toHaveAttribute('type', 'text');
+   * ```
+   *
+   * @param name Attribute name.
+   * @param value Expected attribute value.
+   * @param options
+   */
+  toHaveAttribute(name: string, value: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with given attribute. The method will assert attribute presence.
+   *
+   * ```js
+   * const locator = page.locator('input');
    * // Assert attribute existance.
    * await expect(locator).toHaveAttribute('disabled');
    * await expect(locator).not.toHaveAttribute('open');
    * ```
    *
    * @param name Attribute name.
-   * @param value Optional expected attribute value. If missing, method will assert attribute presence.
    * @param options
    */
-  toHaveAttribute(name: string, value?: string|RegExp, options?: {
+  toHaveAttribute(name: string, options?: {
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
