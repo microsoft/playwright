@@ -235,3 +235,16 @@ test('should add line in addition to file json without CI', async ({ runInlineTe
   expect(stripAnsi(result.output)).toContain('[1/1] a.test.js:6:7 › one');
   expect(fs.existsSync(testInfo.outputPath('a.json'))).toBeTruthy();
 });
+test('should have starting time in results', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('math works!', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  },   { reporter: 'json' });
+  expect(result.exitCode).toBe(0);
+  const startTime = result.report.suites[0].specs[0].tests[0].results[0].startTime;
+  expect(new Date(startTime).getTime()).toBeGreaterThan(new Date('1/1/2000').getTime());
+});

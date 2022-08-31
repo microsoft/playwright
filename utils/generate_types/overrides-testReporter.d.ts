@@ -104,6 +104,7 @@ export interface JSONReportTestResult {
   stderr: JSONReportSTDIOEntry[];
   retry: number;
   steps?: JSONReportTestStep[];
+  startTime: Date;
   attachments: {
     name: string;
     path?: string;
