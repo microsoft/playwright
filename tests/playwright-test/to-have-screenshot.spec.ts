@@ -561,7 +561,7 @@ test('should not fail if --ignore-snapshots is passed', async ({ runInlineTest }
     '__screenshots__/a.spec.js/snapshot.png': redImage,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).not.toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   }, { 'ignore-snapshots': true });

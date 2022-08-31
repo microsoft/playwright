@@ -230,7 +230,7 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 * since: v1.26
 - type: ?<[boolean]>
 
-Whether to skip snapshot expectations, such as `expect(foo).toMatchSnapshot()` and `await expect(page).toHaveScreenshot()`.
+Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await expect(page).toHaveScreenshot()`.
 
 ## property: TestConfig.maxFailures
 * since: v1.10

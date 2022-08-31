@@ -679,7 +679,7 @@ interface TestConfig {
   grepInvert?: RegExp|Array<RegExp>;
 
   /**
-   * Whether to skip snapshot expectations, such as `expect(foo).toMatchSnapshot()` and `await
+   * Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await
    * expect(page).toHaveScreenshot()`.
    */
   ignoreSnapshots?: boolean;
