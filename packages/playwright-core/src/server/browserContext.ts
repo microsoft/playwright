@@ -389,7 +389,7 @@ export abstract class BrowserContext extends SdkObject {
 
       for (const harRecorder of this._harRecorders.values())
         await harRecorder.flush();
-      await this.tracing.flush();
+      await this.tracing.dispose();
 
       // Cleanup.
       const promises: Promise<void>[] = [];
