@@ -128,6 +128,8 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
   }
 
   async continue(params: channels.RouteContinueParams, metadata: CallMetadata): Promise<channels.RouteContinueResult> {
+    // Used to discriminate between continue in tracing.
+    metadata.params.requestUrl = this._object.request().url();
     await this._object.continue({
       url: params.url,
       method: params.method,
@@ -136,11 +138,15 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
     });
   }
 
-  async fulfill(params: channels.RouteFulfillParams): Promise<void> {
+  async fulfill(params: channels.RouteFulfillParams, metadata: CallMetadata): Promise<void> {
+    // Used to discriminate between fulfills in tracing.
+    metadata.params.requestUrl = this._object.request().url();
     await this._object.fulfill(params);
   }
 
-  async abort(params: channels.RouteAbortParams): Promise<void> {
+  async abort(params: channels.RouteAbortParams, metadata: CallMetadata): Promise<void> {
+    // Used to discriminate between abort in tracing.
+    metadata.params.requestUrl = this._object.request().url();
     await this._object.abort(params.errorCode || 'failed');
   }
 
