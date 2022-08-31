@@ -28,7 +28,7 @@
   "dependencies": {
     "@playwright/test": "1.26.0-next",
     "@sveltejs/vite-plugin-svelte": "^1.0.1",
-    "vite": "^3.0.0"
+    "vite": "^2.9.13"
   },
   "devDependencies": {
     "svelte": "^3.49.0"

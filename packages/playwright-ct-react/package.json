@@ -28,6 +28,6 @@
   "dependencies": {
     "@vitejs/plugin-react": "^2.0.1",
     "@playwright/test": "1.26.0-next",
-    "vite": "^3.0.9"
+    "vite": "^2.9.13"
   }
 }
