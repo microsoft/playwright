@@ -303,8 +303,6 @@ test('should suppport toHaveAttribute withou optional value', async ({ runTSC })
   expect(result.exitCode).toBe(0);
 });
 
-
-
 test.describe('helpful expect errors', () => {
   test('top-level', async ({ runInlineTest }) => {
     const result = await runInlineTest({
