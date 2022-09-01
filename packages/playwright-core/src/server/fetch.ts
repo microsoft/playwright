@@ -509,9 +509,8 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   }
 
   override async dispose() {
-    await this._tracing.flush();
+    await this._tracing.dispose();
     await this._tracing.deleteTmpTracesDir();
-    this._tracing.dispose();
     this._disposeImpl();
   }
 

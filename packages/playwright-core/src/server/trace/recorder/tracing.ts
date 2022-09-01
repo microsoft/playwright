@@ -200,13 +200,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return this._tracesTmpDir;
   }
 
-  async flush() {
-    this._snapshotter?.dispose();
-    await this._writeChain;
-  }
-
   async dispose() {
     this._snapshotter?.dispose();
+    this._harTracer.stop();
+    await this._writeChain;
   }
 
   async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] | undefined }> {
