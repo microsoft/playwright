@@ -679,6 +679,12 @@ interface TestConfig {
   grepInvert?: RegExp|Array<RegExp>;
 
   /**
+   * Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await
+   * expect(page).toHaveScreenshot()`.
+   */
+  ignoreSnapshots?: boolean;
+
+  /**
    * The maximum number of test failures for the whole test suite run. After reaching this number, testing will stop and exit
    * with an error. Setting to zero (default) disables this behavior.
    *

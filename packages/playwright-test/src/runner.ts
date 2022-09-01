@@ -73,6 +73,7 @@ export type ConfigCLIOverrides = {
   reporter?: string;
   shard?: { current: number, total: number };
   timeout?: number;
+  ignoreSnapshots?: boolean;
   updateSnapshots?: 'all'|'none'|'missing';
   workers?: number;
   projects?: { name: string, use?: any }[],

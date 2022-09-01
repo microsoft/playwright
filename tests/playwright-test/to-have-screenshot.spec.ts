@@ -555,6 +555,20 @@ test('should fail on same snapshots with negate matcher', async ({ runInlineTest
   expect(result.output).toContain('Expected result should be different from the actual one.');
 });
 
+test('should not fail if --ignore-snapshots is passed', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    '__screenshots__/a.spec.js/snapshot.png': redImage,
+    'a.spec.js': `
+      pwt.test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+      });
+    `
+  }, { 'ignore-snapshots': true });
+
+  expect(result.exitCode).toBe(0);
+});
+
 test('should write missing expectations locally twice and continue', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({ screenshotsDir: '__screenshots__' }),

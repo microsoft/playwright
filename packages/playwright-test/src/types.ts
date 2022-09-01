@@ -46,6 +46,7 @@ export interface FullConfigInternal extends FullConfigPublic {
   _configDir: string;
   _testGroupsCount: number;
   _watchMode: boolean;
+  _ignoreSnapshots: boolean;
   _workerIsolation: WorkerIsolation;
   /**
    * If populated, this should also be the first/only entry in _webServers. Legacy singleton `webServer` as well as those provided via an array in the user-facing playwright.config.{ts,js} will be in `_webServers`. The legacy field (`webServer`) field additionally stores the backwards-compatible singleton `webServer` since it had been showing up in globalSetup to the user.
