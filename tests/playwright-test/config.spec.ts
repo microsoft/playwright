@@ -384,6 +384,7 @@ test('should support ignoreSnapshots config option', async ({ runInlineTest }) =
       const { test } = pwt;
       test('pass', async ({}, testInfo) => {
         expect('foo').toMatchSnapshot();
+        expect('foo').not.toMatchSnapshot();
       });
     `
   });
