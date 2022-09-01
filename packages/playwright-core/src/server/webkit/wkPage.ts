@@ -834,9 +834,8 @@ export class WKPage implements PageDelegate {
     // (see https://github.com/microsoft/playwright/issues/16727).
     if (process.platform === 'darwin')
       return;
-    if (!omitDeviceScaleFactor && this._page._browserContext._options.deviceScaleFactor) {
+    if (!omitDeviceScaleFactor && this._page._browserContext._options.deviceScaleFactor)
       side = Math.ceil(side * this._page._browserContext._options.deviceScaleFactor);
-    }
     if (side > 32767)
       throw new Error('Cannot take screenshot larger than 32767 pixels on any dimension');
   }
