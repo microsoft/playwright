@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { OutgoingMessage } from 'http';
 import { test, expect } from './playwright-test-fixtures';
 
 test('should expose request fixture', async ({ runInlineTest, server }) => {
