@@ -176,11 +176,7 @@ export abstract class APIRequestContext extends SdkObject {
         requestUrl.searchParams.set(name, value);
     }
 
-    let postData: Buffer | undefined;
-    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method))
-      postData = serializePostData(params, headers);
-    else if (params.postData || params.jsonData || params.formData || params.multipartData)
-      throw new Error(`Method ${method} does not accept post data`);
+    const postData = serializePostData(params, headers);
     if (postData)
       headers['content-length'] = String(postData.byteLength);
     const controller = new ProgressController(metadata, this);

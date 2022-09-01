@@ -233,6 +233,16 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.get.headers = %%-js-python-fetch-option-headers-%%
 * since: v1.16
+### option: APIRequestContext.get.data = %%-js-python-fetch-option-data-%%
+* since: v1.26
+### option: APIRequestContext.get.form = %%-js-python-fetch-option-form-%%
+* since: v1.26
+### option: APIRequestContext.get.form = %%-csharp-fetch-option-form-%%
+* since: v1.26
+### option: APIRequestContext.get.multipart = %%-js-python-fetch-option-multipart-%%
+* since: v1.26
+### option: APIRequestContext.get.multipart = %%-csharp-fetch-option-multipart-%%
+* since: v1.26
 ### option: APIRequestContext.get.timeout = %%-js-python-fetch-option-timeout-%%
 * since: v1.16
 ### option: APIRequestContext.get.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
@@ -258,6 +268,16 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.head.headers = %%-js-python-fetch-option-headers-%%
 * since: v1.16
+### option: APIRequestContext.head.data = %%-js-python-fetch-option-data-%%
+* since: v1.26
+### option: APIRequestContext.head.form = %%-js-python-fetch-option-form-%%
+* since: v1.26
+### option: APIRequestContext.head.form = %%-csharp-fetch-option-form-%%
+* since: v1.26
+### option: APIRequestContext.head.multipart = %%-js-python-fetch-option-multipart-%%
+* since: v1.26
+### option: APIRequestContext.head.multipart = %%-csharp-fetch-option-multipart-%%
+* since: v1.26
 ### option: APIRequestContext.head.timeout = %%-js-python-fetch-option-timeout-%%
 * since: v1.16
 ### option: APIRequestContext.head.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%

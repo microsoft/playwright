@@ -409,7 +409,7 @@ it('should return error with wrong credentials', async ({ context, server }) => 
   expect(response2.status()).toBe(401);
 });
 
-for (const method of ['delete', 'patch', 'post', 'put']) {
+for (const method of ['delete', 'get', 'head', 'patch', 'post', 'put']) {
   it(`${method} should support post data`, async ({ context, server }) => {
     const [request, response] = await Promise.all([
       server.waitForRequest('/simple.json'),
@@ -874,16 +874,6 @@ it('should throw nice error on unsupported data type', async function({ context,
     data: () => true
   }).catch(e => e);
   expect(error.message).toContain(`Unexpected 'data' type`);
-});
-
-it('should throw when data passed for unsupported request', async function({ context, server }) {
-  const error = await context.request.fetch(server.EMPTY_PAGE, {
-    method: 'GET',
-    data: {
-      foo: 'bar'
-    }
-  }).catch(e => e);
-  expect(error.message).toContain(`Method GET does not accept post data`);
 });
 
 it('context request should export same storage state as context', async ({ context, page, server }) => {
