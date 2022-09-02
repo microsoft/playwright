@@ -3332,7 +3332,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to a hidden DOM node, which is the opposite of [visible](https://playwright.dev/docs/api/actionability#visible).
+   * Ensures that [Locator] either does not resolve to any DOM node, or resolves to a
+   * [non-visible](https://playwright.dev/docs/api/actionability#visible) one.
    *
    * ```js
    * const locator = page.locator('.my-element');
@@ -3349,7 +3350,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to a [visible](https://playwright.dev/docs/api/actionability#visible) DOM node.
+   * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/api/actionability#visible) and [visible](https://playwright.dev/docs/api/actionability#visible) DOM
+   * node.
    *
    * ```js
    * const locator = page.locator('.my-element');
