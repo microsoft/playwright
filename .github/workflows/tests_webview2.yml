@@ -24,7 +24,7 @@ jobs:
     runs-on: windows-2022
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-node@v2
+    - uses: actions/setup-node@v3
       with:
         node-version: 18
     - uses: actions/setup-dotnet@v2
@@ -37,7 +37,7 @@ jobs:
     - run: npm run build
     - run: dotnet build
       working-directory: tests/webview2/webview2-app/
-    - run: npm run wv2test
+    - run: npm run webview2test
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash

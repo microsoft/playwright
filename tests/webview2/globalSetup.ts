@@ -18,9 +18,8 @@ import childProcess from 'child_process';
 import playwright from 'playwright';
 
 export default async () => {
-  const executable = path.join(__dirname, 'webview2-app\\bin\\Debug\\net6.0-windows\\webview2.exe');
   const cdpPort = 9876;
-  const spawnedProcess = childProcess.spawn(executable, {
+  const spawnedProcess = childProcess.spawn(path.join(__dirname, 'webview2-app/bin/Debug/net6.0-windows/webview2.exe'), {
     shell: true,
     env: {
       ...process.env,
@@ -32,7 +31,6 @@ export default async () => {
       resolve();
   }));
   const browser = await playwright.chromium.connectOverCDP(`http://127.0.0.1:${cdpPort}`);
-  await new Promise(resolve => setTimeout(resolve, 1000));
   const chromeVersion = await browser.contexts()[0].pages()[0].evaluate(() => navigator.userAgent.match(/Chrome\/(.*?) /)[1]);
   process.env.PWTEST_WEBVIEW2_CHROMIUM_VERSION = chromeVersion;
   await browser.close();
