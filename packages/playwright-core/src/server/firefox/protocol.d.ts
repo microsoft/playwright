@@ -57,6 +57,7 @@ export module Protocol {
       uuid: string;
       browserContextId?: string;
       pageTargetId: string;
+      frameId: string;
       url: string;
       suggestedFileName: string;
     }
@@ -569,7 +570,7 @@ export module Protocol {
     export type reloadReturnValue = void;
     export type adoptNodeParameters = {
       frameId: string;
-      objectId: string;
+      objectId?: string;
       executionContextId: string;
     };
     export type adoptNodeReturnValue = {
