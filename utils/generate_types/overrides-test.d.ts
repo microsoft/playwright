@@ -28,6 +28,8 @@ export type ReporterDescription =
   ['null'] |
   [string] | [string, any];
 
+export type TestFilterDescription = [string] | [string, any];
+
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
@@ -59,6 +61,7 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 interface TestConfig {
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
   webServer?: TestConfigWebServer | TestConfigWebServer[];
+  filters?: TestFilterDescription[];
 }
 
 export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
@@ -92,6 +95,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   updateSnapshots: 'all' | 'none' | 'missing';
   workers: number;
   webServer: TestConfigWebServer | null;
+  filters: TestFilterDescription[];
   // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 

@@ -29,6 +29,8 @@ export type ReporterDescription =
   ['null'] |
   [string] | [string, any];
 
+export type TestFilterDescription = [string] | [string, any];
+
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 /**
@@ -488,6 +490,7 @@ interface TestConfig {
    *
    */
   webServer?: TestConfigWebServer | TestConfigWebServer[];
+  filters?: TestFilterDescription[];
   /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
@@ -1298,6 +1301,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   webServer: TestConfigWebServer | null;
+  filters: TestFilterDescription[];
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';

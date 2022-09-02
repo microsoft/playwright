@@ -26,7 +26,7 @@ import { createFileMatcher, createTitleMatcher, serializeError } from './util';
 import type { TestCase } from './test';
 import { Suite } from './test';
 import { Loader } from './loader';
-import type { FullResult, Reporter, TestError } from '../types/testReporter';
+import type { FullResult, Reporter, TestError, TestFilter } from '../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
 import { formatError } from './reporters/base';
 import DotReporter from './reporters/dot';
@@ -180,6 +180,19 @@ export class Runner {
     return new Multiplexer(reporters);
   }
 
+  private async _createTestFilter() {
+    const testFilters: TestFilter[] = [];
+    for (const f of this._loader.fullConfig().filters) {
+      const [name, arg] = f;
+      const tfConstructor = await this._loader.loadTestFilter(name);
+      testFilters.push(new tfConstructor(arg));
+    }
+
+    return (test: TestCase) => testFilters
+        .map(tf => (tf.include ? tf.include(test) : true) && (tf.exclude ? !tf.exclude(test) : true))
+        .reduce((a, b) => a && b, true);
+  }
+
   async runAllTests(options: RunOptions = {}): Promise<FullResult> {
     this._reporter = await this._createReporter(!!options.listOnly);
     const config = this._loader.fullConfig();
@@ -311,6 +324,8 @@ export class Runner {
     for (const fileSuite of preprocessRoot.suites)
       fileSuites.set(fileSuite._requireFile, fileSuite);
 
+    const filter = await this._createTestFilter();
+
     const rootSuite = new Suite('', 'root');
     for (const [project, files] of filesByProject) {
       const grepMatcher = createTitleMatcher(project.grep);
@@ -329,7 +344,7 @@ export class Runner {
             const grepTitle = test.titlePath().join(' ');
             if (grepInvertMatcher?.(grepTitle))
               return false;
-            return grepMatcher(grepTitle);
+            return grepMatcher(grepTitle) && filter(test);
           });
           if (builtSuite)
             projectSuite._addSuite(builtSuite);

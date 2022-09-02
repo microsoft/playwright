@@ -25,7 +25,7 @@ import * as url from 'url';
 import * as fs from 'fs';
 import * as os from 'os';
 import type { BuiltInReporter, ConfigCLIOverrides } from './runner';
-import type { Reporter } from '../types/testReporter';
+import type { Reporter, TestFilter } from '../types/testReporter';
 import { builtInReporters } from './runner';
 import { isRegExp, calculateSha1 } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
@@ -143,6 +143,7 @@ export class Loader {
     this._fullConfig._ignoreSnapshots = takeFirst(config.ignoreSnapshots, baseFullConfig._ignoreSnapshots);
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(config.workers, baseFullConfig.workers);
+    this._fullConfig.filters = takeFirst(config.filters, baseFullConfig.filters);
     const webServers = takeFirst(config.webServer, baseFullConfig.webServer);
     if (Array.isArray(webServers)) { // multiple web server mode
       // Due to previous choices, this value shows up to the user in globalSetup as part of FullConfig. Arrays are not supported by the old type.
@@ -219,6 +220,10 @@ export class Loader {
   }
 
   async loadReporter(file: string): Promise<new (arg?: any) => Reporter> {
+    return this._requireOrImportDefaultFunction(path.resolve(this._fullConfig.rootDir, file), true);
+  }
+
+  async loadTestFilter(file: string): Promise<new (arg?: any) => TestFilter> {
     return this._requireOrImportDefaultFunction(path.resolve(this._fullConfig.rootDir, file), true);
   }
 

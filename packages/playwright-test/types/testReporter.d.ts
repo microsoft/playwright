@@ -537,6 +537,21 @@ export interface Location {
 }
 
 /**
+ * `TestFilter` is used to filter [TestCase] before test run.
+ */
+export interface TestFilter {
+  /**
+   * @param config
+   */
+  include?(config: TestCase): boolean;
+
+  /**
+   * @param config
+   */
+  exclude?(config: TestCase): boolean;
+}
+
+/**
  * Represents a step in the [TestRun].
  */
 export interface TestStep {

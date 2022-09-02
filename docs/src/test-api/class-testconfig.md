@@ -814,3 +814,10 @@ const config: PlaywrightTestConfig = {
 };
 export default config;
 ```
+
+## optional property: TestConfig.filters
+* since: v1.10
+- type: ?<[string]|[Array]<[Object]>>
+  - `0` <[string]> TestFilter name or module or file path
+  - `1` <[Object]> An object with test filter options if any
+
