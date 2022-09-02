@@ -423,6 +423,11 @@ export class HarTracer {
           harEntry._securityDetails = details;
       }));
     }
+    if (request._hasOverrides()) {
+      harEntry.request.method = request.method();
+      harEntry.request.url = request.url();
+      harEntry.request.postData = this._postDataForRequest(request, this._options.content);
+    }
     this._addBarrier(page || request.serviceWorker(), request.rawRequestHeaders().then(headers => {
       if (!this._options.omitCookies) {
         for (const header of headers.filter(header => header.name.toLowerCase() === 'cookie'))

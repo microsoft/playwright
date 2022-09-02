@@ -256,6 +256,32 @@ it('should include secure set-cookies', async ({ contextFactory, httpsServer }, 
   expect(cookies[0]).toEqual({ name: 'name1', value: 'value1', secure: true });
 });
 
+it('should record request overrides', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  page.route('**/foo', route => {
+    route.fallback({
+      url: server.EMPTY_PAGE,
+      method: 'POST',
+      headers: {
+        ...route.request().headers(),
+        'content-type': 'text/plain',
+        'cookie': 'foo=bar',
+        'custom': 'value'
+      },
+      postData: 'Hi!'
+    });
+  });
+
+  await page.goto(server.PREFIX + '/foo');
+  const log = await getLog();
+  const request = log.entries[0].request;
+  expect(request.url).toBe(server.EMPTY_PAGE);
+  expect(request.method).toBe('POST');
+  expect(request.headers).toContainEqual({ name: 'custom', value: 'value' });
+  expect(request.cookies).toContainEqual({ name: 'foo', value: 'bar' });
+  expect(request.postData).toEqual({'mimeType': 'text/plain', 'params': [], 'text': 'Hi!'});
+});
+
 it('should include content @smoke', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
