@@ -398,6 +398,18 @@ set to `application/octet-stream` if not explicitly set.
 
 Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
 
+## js-python-fetch-option-follow
+* langs: js
+- `follow` <[int]>
+
+Maximum number of request allowed redirects. Defaults to `20`.
+
+## js-python-fetch-option-redirect
+* langs: js
+- `redirect` ?<[RedirectMode]<"manual"|"follow"|"error">>
+
+A string indicating whether request follows redirects, results in an error upon encountering a redirect, or returns the redirect.
+
 ## evaluate-expression
 - `expression` <[string]>
 

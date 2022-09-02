@@ -310,6 +310,8 @@ export type APIRequestContextFetchParams = {
   timeout?: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
+  follow?: number,
+  redirect?: 'error' | 'manual' | 'follow',
 };
 export type APIRequestContextFetchOptions = {
   params?: NameValue[],
@@ -322,6 +324,8 @@ export type APIRequestContextFetchOptions = {
   timeout?: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
+  follow?: number,
+  redirect?: 'error' | 'manual' | 'follow',
 };
 export type APIRequestContextFetchResult = {
   response: APIResponse,

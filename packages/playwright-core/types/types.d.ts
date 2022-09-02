@@ -12637,6 +12637,11 @@ export interface APIRequestContext {
     failOnStatusCode?: boolean;
 
     /**
+     * Maximum number of request allowed redirects. Defaults to `20`.
+     */
+    follow?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
      * this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
@@ -12682,6 +12687,12 @@ export interface APIRequestContext {
     params?: { [key: string]: string|number|boolean; };
 
     /**
+     * A string indicating whether request follows redirects, results in an error upon encountering a redirect, or returns the
+     * redirect.
+     */
+    redirect?: "manual"|"follow"|"error";
+
+    /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
@@ -12715,6 +12726,11 @@ export interface APIRequestContext {
      * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
      */
     failOnStatusCode?: boolean;
+
+    /**
+     * Maximum number of request allowed redirects. Defaults to `20`.
+     */
+    follow?: number;
 
     /**
      * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
@@ -12768,6 +12784,12 @@ export interface APIRequestContext {
     params?: { [key: string]: string|number|boolean; };
 
     /**
+     * A string indicating whether request follows redirects, results in an error upon encountering a redirect, or returns the
+     * redirect.
+     */
+    redirect?: "manual"|"follow"|"error";
+
+    /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
@@ -12787,6 +12809,11 @@ export interface APIRequestContext {
     failOnStatusCode?: boolean;
 
     /**
+     * Maximum number of request allowed redirects. Defaults to `20`.
+     */
+    follow?: number;
+
+    /**
      * Allows to set HTTP headers.
      */
     headers?: { [key: string]: string; };
@@ -12800,6 +12827,12 @@ export interface APIRequestContext {
      * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
+
+    /**
+     * A string indicating whether request follows redirects, results in an error upon encountering a redirect, or returns the
+     * redirect.
+     */
+    redirect?: "manual"|"follow"|"error";
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -12821,6 +12854,11 @@ export interface APIRequestContext {
     failOnStatusCode?: boolean;
 
     /**
+     * Maximum number of request allowed redirects. Defaults to `20`.
+     */
+    follow?: number;
+
+    /**
      * Allows to set HTTP headers.
      */
     headers?: { [key: string]: string; };
@@ -12834,6 +12872,12 @@ export interface APIRequestContext {
      * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
+
+    /**
+     * A string indicating whether request follows redirects, results in an error upon encountering a redirect, or returns the
+     * redirect.
+     */
+    redirect?: "manual"|"follow"|"error";
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -12862,6 +12906,11 @@ export interface APIRequestContext {
     failOnStatusCode?: boolean;
 
     /**
+     * Maximum number of request allowed redirects. Defaults to `20`.
+     */
+    follow?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
      * this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
@@ -12905,6 +12954,12 @@ export interface APIRequestContext {
      * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
+
+    /**
+     * A string indicating whether request follows redirects, results in an error upon encountering a redirect, or returns the
+     * redirect.
+     */
+    redirect?: "manual"|"follow"|"error";
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -12933,6 +12988,11 @@ export interface APIRequestContext {
     failOnStatusCode?: boolean;
 
     /**
+     * Maximum number of request allowed redirects. Defaults to `20`.
+     */
+    follow?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
      * this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
@@ -12976,6 +13036,12 @@ export interface APIRequestContext {
      * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
+
+    /**
+     * A string indicating whether request follows redirects, results in an error upon encountering a redirect, or returns the
+     * redirect.
+     */
+    redirect?: "manual"|"follow"|"error";
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
@@ -13004,6 +13070,11 @@ export interface APIRequestContext {
     failOnStatusCode?: boolean;
 
     /**
+     * Maximum number of request allowed redirects. Defaults to `20`.
+     */
+    follow?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
      * this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
@@ -13047,6 +13118,12 @@ export interface APIRequestContext {
      * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
+
+    /**
+     * A string indicating whether request follows redirects, results in an error upon encountering a redirect, or returns the
+     * redirect.
+     */
+    redirect?: "manual"|"follow"|"error";
 
     /**
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.

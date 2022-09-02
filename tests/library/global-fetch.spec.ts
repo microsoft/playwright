@@ -96,6 +96,47 @@ it('should propagate extra http headers with redirects', async ({ playwright, se
   expect(req3.headers['my-secret']).toBe('Value');
 });
 
+it('should throw an error when max redirects are exceeded', async ({ playwright, server }) => {
+  server.setRedirect('/a/redirect1', '/b/c/redirect2');
+  server.setRedirect('/b/c/redirect2', '/b/c/redirect3');
+  server.setRedirect('/b/c/redirect3', '/b/c/redirect4');
+  server.setRedirect('/b/c/redirect4', '/simple.json');
+
+  const request = await playwright.request.newContext();
+  for (const follow of [1, 2]) await expect.soft(async () => request.get(`${server.PREFIX}/a/redirect1`, { follow: follow })).rejects.toThrow('Max redirect count exceeded');
+  await request.dispose();
+});
+
+it('should throw an error when max redirect os set to error', async ({ playwright, server }) => {
+  server.setRedirect('/a/redirect1', '/b/c/redirect2');
+
+  const request = await playwright.request.newContext();
+  await expect.soft(async () => request.get(`${server.PREFIX}/a/redirect1`, { redirect: 'error' })).rejects.toThrow('uri requested responds with a redirect, redirect mode is set to error');
+  await request.dispose();
+});
+
+it('should return response value when redirect is set to manual', async ({ playwright, server }) => {
+  server.setRedirect('/a/redirect1', '/b/c/redirect2');
+
+  const request = await playwright.request.newContext();
+  const res1 = await request.get(`${server.PREFIX}/a/redirect1`, { redirect: 'manual' });
+  expect.soft(res1.status()).toBe(302);
+  expect.soft(res1.headers()).toHaveProperty('location', '/b/c/redirect2');
+  await request.dispose();
+});
+
+it('should return redirected value when redirect is set to follow', async ({ playwright, server }) => {
+  server.setRedirect('/a/redirect1', '/b/c/redirect2');
+  server.setRedirect('/b/c/redirect2', '/simple.json');
+
+  const request = await playwright.request.newContext();
+  const res1 = await request.get(`${server.PREFIX}/a/redirect1`, { redirect: 'follow' });
+  expect.soft(res1.status()).toBe(200);
+  expect.soft(res1.url()).toBe(`${server.PREFIX}/simple.json`);
+  expect(await res1.json()).toEqual({ foo: 'bar' });
+  await request.dispose();
+});
+
 it('should support global httpCredentials option', async ({ playwright, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const request1 = await playwright.request.newContext();

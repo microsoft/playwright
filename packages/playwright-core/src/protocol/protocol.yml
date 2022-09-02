@@ -284,6 +284,13 @@ APIRequestContext:
         timeout: number?
         failOnStatusCode: boolean?
         ignoreHTTPSErrors: boolean?
+        follow: number?
+        redirect: 
+          type: enum?
+          literals:
+          - error
+          - manual
+          - follow
       returns:
         response: APIResponse
 

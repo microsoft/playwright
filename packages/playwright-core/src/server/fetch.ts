@@ -158,11 +158,12 @@ export abstract class APIRequestContext extends SdkObject {
     const timeout = defaults.timeoutSettings.timeout(params);
     const deadline = timeout && (monotonicTime() + timeout);
 
-    const options: https.RequestOptions & { maxRedirects: number, deadline: number } = {
+    const options: https.RequestOptions & { follow: number, redirect: 'error' | 'manual' | 'follow', deadline: number } = {
       method,
       headers,
       agent,
-      maxRedirects: 20,
+      follow: params.follow === undefined ? 20 : params.follow,
+      redirect: params.redirect === undefined ? 'follow' : params.redirect,
       timeout,
       deadline
     };
@@ -231,7 +232,7 @@ export abstract class APIRequestContext extends SdkObject {
     }
   }
 
-  private async _sendRequest(progress: Progress, url: URL, options: https.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
+  private async _sendRequest(progress: Progress, url: URL, options: https.RequestOptions & { follow: number, redirect: 'error' | 'manual' | 'follow', deadline: number }, postData?: Buffer): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
     await this._updateRequestCookieHeader(url, options);
 
     const requestCookies = (options.headers!['cookie'] as (string | undefined))?.split(';').map(p => {
@@ -271,51 +272,65 @@ export abstract class APIRequestContext extends SdkObject {
         const cookies = this._parseSetCookieHeader(response.url || url.toString(), response.headers['set-cookie']) ;
         if (cookies.length)
           await this._addCookies(cookies);
-
         if (redirectStatus.includes(response.statusCode!)) {
-          if (!options.maxRedirects) {
-            reject(new Error('Max redirect count exceeded'));
-            request.destroy();
-            return;
-          }
-          const headers = { ...options.headers };
-          delete headers[`cookie`];
+          switch (options.redirect){
+            case 'error':
+              reject(new Error(`uri requested responds with a redirect, redirect mode is set to error: ${url}`));
+              request.destroy();
+              return;
+            case 'manual':
+              break;
+            case 'follow':
+              if (!options.follow) {
+                reject(new Error('Max redirect count exceeded'));
+                request.destroy();
+                return;
+              }
 
-          // HTTP-redirect fetch step 13 (https://fetch.spec.whatwg.org/#http-redirect-fetch)
-          const status = response.statusCode!;
-          let method = options.method!;
-          if ((status === 301 || status === 302) && method === 'POST' ||
-              status === 303 && !['GET', 'HEAD'].includes(method)) {
-            method = 'GET';
-            postData = undefined;
-            delete headers[`content-encoding`];
-            delete headers[`content-language`];
-            delete headers[`content-length`];
-            delete headers[`content-location`];
-            delete headers[`content-type`];
-          }
+              const headers = { ...options.headers };
+              delete headers[`cookie`];
 
-          const redirectOptions: https.RequestOptions & { maxRedirects: number, deadline: number } = {
-            method,
-            headers,
-            agent: options.agent,
-            maxRedirects: options.maxRedirects - 1,
-            timeout: options.timeout,
-            deadline: options.deadline
-          };
-          // rejectUnauthorized = undefined is treated as true in node 12.
-          if (options.rejectUnauthorized === false)
-            redirectOptions.rejectUnauthorized = false;
+              // HTTP-redirect fetch step 13 (https://fetch.spec.whatwg.org/#http-redirect-fetch)
+              const status = response.statusCode!;
+              let method = options.method!;
+              if ((status === 301 || status === 302) && method === 'POST' ||
+                  status === 303 && !['GET', 'HEAD'].includes(method)) {
+                method = 'GET';
+                postData = undefined;
+                delete headers[`content-encoding`];
+                delete headers[`content-language`];
+                delete headers[`content-length`];
+                delete headers[`content-location`];
+                delete headers[`content-type`];
+              }
+              const redirectOptions: https.RequestOptions & { follow: number, redirect: 'error' | 'manual' | 'follow', deadline: number } = {
+                method,
+                headers,
+                agent: options.agent,
+                follow: options.follow - 1,
+                redirect: options.redirect,
+                timeout: options.timeout,
+                deadline: options.deadline
+              };
 
-          // HTTP-redirect fetch step 4: If locationURL is null, then return response.
-          if (response.headers.location) {
-            const locationURL = new URL(response.headers.location, url);
-            notifyRequestFinished();
-            fulfill(this._sendRequest(progress, locationURL, redirectOptions, postData));
-            request.destroy();
-            return;
+              // rejectUnauthorized = undefined is treated as true in node 12.
+              if (options.rejectUnauthorized === false)
+                redirectOptions.rejectUnauthorized = false;
+
+              // HTTP-redirect fetch step 4: If locationURL is null, then return response.
+              if (response.headers.location) {
+                const locationURL = new URL(response.headers.location, url);
+                notifyRequestFinished();
+                fulfill(this._sendRequest(progress, locationURL, redirectOptions, postData));
+                request.destroy();
+                return;
+              }
+            default:
+              return reject(new Error(`Redirect option '${options.redirect}' is not a valid value of 'error' | 'follow' | 'manual'`));
+
           }
         }
+        // Not a redirect
         if (response.statusCode === 401 && !options.headers!['authorization']) {
           const auth = response.headers['www-authenticate'];
           const credentials = this._defaultOptions().httpCredentials;
