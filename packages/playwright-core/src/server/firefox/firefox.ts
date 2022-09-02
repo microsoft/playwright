@@ -61,7 +61,7 @@ export class Firefox extends BrowserType {
       throw new Error('Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
-    const firefoxUserPrefs = isPersistent ? undefined : options.firefoxUserPrefs;
+    const firefoxUserPrefs = isPersistent ? undefined : { ...kBandaidFirefoxUserPrefs, ...options.firefoxUserPrefs };
     if (firefoxUserPrefs) {
       const lines: string[] = [];
       for (const [name, value] of Object.entries(firefoxUserPrefs))
@@ -85,3 +85,9 @@ export class Firefox extends BrowserType {
     return firefoxArguments;
   }
 }
+
+// Prefs for quick fixes that didn't make it to the build.
+// Should all be moved to `playwright.cfg`.
+const kBandaidFirefoxUserPrefs = {
+  'network.cookie.cookieBehavior': 4,
+};

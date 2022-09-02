@@ -322,7 +322,7 @@ it('should add cookies with an expiration', async ({ context }) => {
 });
 
 it('should be able to send third party cookies via an iframe', async ({ browser, httpsServer, browserName, isMac }) => {
-  it.fixme(browserName === 'firefox' || (browserName === 'webkit' && isMac));
+  it.fixme(browserName === 'webkit' && isMac);
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16937' });
 
   const context = await browser.newContext({
