@@ -24,7 +24,7 @@ import { ManualPromise } from '../utils/manualPromise';
 import { SdkObject } from './instrumentation';
 import type { HeadersArray, NameValue } from '../common/types';
 import { APIRequestContext } from './fetch';
-import { NormalizedContinueOverrides } from './types';
+import type { NormalizedContinueOverrides } from './types';
 
 export function filterCookies(cookies: channels.NetworkCookie[], urls: string[]): channels.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));

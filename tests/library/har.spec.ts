@@ -279,7 +279,7 @@ it('should record request overrides', async ({ contextFactory, server }, testInf
   expect(request.method).toBe('POST');
   expect(request.headers).toContainEqual({ name: 'custom', value: 'value' });
   expect(request.cookies).toContainEqual({ name: 'foo', value: 'bar' });
-  expect(request.postData).toEqual({'mimeType': 'text/plain', 'params': [], 'text': 'Hi!'});
+  expect(request.postData).toEqual({ 'mimeType': 'text/plain', 'params': [], 'text': 'Hi!' });
 });
 
 it('should include content @smoke', async ({ contextFactory, server }, testInfo) => {

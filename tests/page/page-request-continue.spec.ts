@@ -87,17 +87,18 @@ it('should amend method', async ({ page, server }) => {
 });
 
 it('should override request url', async ({ page, server }) => {
-  const request = server.waitForRequest('/global-var.html');
+  const serverRequest = server.waitForRequest('/global-var.html');
   await page.route('**/foo', route => {
     route.continue({ url: server.PREFIX + '/global-var.html' });
   });
-  const [response] = await Promise.all([
+  const [response, request] = await Promise.all([
     page.waitForEvent('response'),
     page.goto(server.PREFIX + '/foo'),
   ]);
-  expect(response.url()).toBe(server.PREFIX + '/foo');
+  expect(request.url()).toBe(server.PREFIX + '/global-var.html');
+  expect(response.url()).toBe(server.PREFIX + '/global-var.html');
   expect(await page.evaluate(() => window['globalVar'])).toBe(123);
-  expect((await request).method).toBe('GET');
+  expect((await serverRequest).method).toBe('GET');
 });
 
 it('should not allow changing protocol when overriding url', async ({ page, server }) => {
