@@ -209,12 +209,9 @@ it('should override request url', async ({ page, server }) => {
 
   await page.route('**/foo', route => route.fallback({ url: server.PREFIX + '/global-var.html' }));
 
-  const [response, request] = await Promise.all([
-    page.waitForEvent('response'),
-    page.goto(server.PREFIX + '/foo'),
-  ]);
+  const response = await page.goto(server.PREFIX + '/foo');
   expect(url).toBe(server.PREFIX + '/global-var.html');
-  expect(request.url()).toBe(server.PREFIX + '/global-var.html');
+  expect(response.request().url()).toBe(server.PREFIX + '/global-var.html');
   expect(response.url()).toBe(server.PREFIX + '/global-var.html');
   expect(await page.evaluate(() => window['globalVar'])).toBe(123);
   expect((await serverRequest).method).toBe('GET');
