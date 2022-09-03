@@ -692,10 +692,8 @@ test.only('should serve overridden request', async ({ page, runAndTrace, server 
       'Content-Type': 'text/css',
     });
     res.end(`body { background: red }`);
-    console.log('serve custom ')
   });
   await page.route('**/one-style.css', route => {
-    console.log('route.continue!');
     route.continue({
       url: server.PREFIX + '/custom.css'
     });

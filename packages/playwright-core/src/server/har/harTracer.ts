@@ -45,6 +45,7 @@ type HarTracerOptions = {
   content: 'omit' | 'attach' | 'embed';
   skipScripts: boolean;
   includeTraceInfo: boolean;
+  recordRequestOverrides: boolean;
   waitForContentOnStop: boolean;
   urlFilter?: string | RegExp;
   slimMode?: boolean;
@@ -272,7 +273,7 @@ export class HarTracer {
   }
 
   private _recordRequestOverrides(harEntry: har.Entry, request: network.Request) {
-    if (!request._hasOverrides())
+    if (!request._hasOverrides() || !this._options.recordRequestOverrides)
       return;
     harEntry.request.method = request.method();
     harEntry.request.url = request.url();
