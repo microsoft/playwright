@@ -646,8 +646,8 @@ animation/transition.
     export interface AffectedFrame {
       frameId: Page.FrameId;
     }
-    export type CookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict"|"ExcludeInvalidSameParty"|"ExcludeSamePartyCrossPartyContext";
-    export type CookieWarningReason = "WarnSameSiteUnspecifiedCrossSiteContext"|"WarnSameSiteNoneInsecure"|"WarnSameSiteUnspecifiedLaxAllowUnsafe"|"WarnSameSiteStrictLaxDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeLax"|"WarnSameSiteLaxCrossDowngradeStrict"|"WarnSameSiteLaxCrossDowngradeLax"|"WarnAttributeValueExceedsMaxSize";
+    export type CookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict"|"ExcludeInvalidSameParty"|"ExcludeSamePartyCrossPartyContext"|"ExcludeDomainNonASCII";
+    export type CookieWarningReason = "WarnSameSiteUnspecifiedCrossSiteContext"|"WarnSameSiteNoneInsecure"|"WarnSameSiteUnspecifiedLaxAllowUnsafe"|"WarnSameSiteStrictLaxDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeLax"|"WarnSameSiteLaxCrossDowngradeStrict"|"WarnSameSiteLaxCrossDowngradeLax"|"WarnAttributeValueExceedsMaxSize"|"WarnDomainNonASCII";
     export type CookieOperation = "SetCookie"|"ReadCookie";
     /**
      * This information is currently necessary, as the front-end has a difficult
@@ -811,14 +811,13 @@ CORS RFC1918 enforcement.
       resourceIPAddressSpace?: Network.IPAddressSpace;
       clientSecurityState?: Network.ClientSecurityState;
     }
-    export type AttributionReportingIssueType = "PermissionPolicyDisabled"|"AttributionSourceUntrustworthyOrigin"|"AttributionUntrustworthyOrigin"|"InvalidHeader";
+    export type AttributionReportingIssueType = "PermissionPolicyDisabled"|"UntrustworthyReportingOrigin"|"InsecureContext"|"InvalidHeader"|"InvalidRegisterTriggerHeader"|"InvalidEligibleHeader"|"TooManyConcurrentRequests"|"SourceAndTriggerHeaders"|"SourceIgnored"|"TriggerIgnored";
     /**
      * Details for issues around "Attribution Reporting API" usage.
 Explainer: https://github.com/WICG/attribution-reporting-api
      */
     export interface AttributionReportingIssueDetails {
       violationType: AttributionReportingIssueType;
-      frame?: AffectedFrame;
       request?: AffectedRequest;
       violatingNodeId?: DOM.BackendNodeId;
       invalidParameter?: string;
@@ -853,7 +852,7 @@ instead of "limited-quirks".
       errorType: GenericIssueErrorType;
       frameId?: Page.FrameId;
     }
-    export type DeprecationIssueType = "AuthorizationCoveredByWildcard"|"CanRequestURLHTTPContainingNewline"|"ChromeLoadTimesConnectionInfo"|"ChromeLoadTimesFirstPaintAfterLoadTime"|"ChromeLoadTimesWasAlternateProtocolAvailable"|"CookieWithTruncatingChar"|"CrossOriginAccessBasedOnDocumentDomain"|"CrossOriginWindowAlert"|"CrossOriginWindowConfirm"|"CSSSelectorInternalMediaControlsOverlayCastButton"|"DeprecationExample"|"DocumentDomainSettingWithoutOriginAgentClusterHeader"|"EventPath"|"ExpectCTHeader"|"GeolocationInsecureOrigin"|"GeolocationInsecureOriginDeprecatedNotRemoved"|"GetUserMediaInsecureOrigin"|"HostCandidateAttributeGetter"|"IdentityInCanMakePaymentEvent"|"InsecurePrivateNetworkSubresourceRequest"|"LegacyConstraintGoogIPv6"|"LocalCSSFileExtensionRejected"|"MediaSourceAbortRemove"|"MediaSourceDurationTruncatingBuffered"|"NavigateEventRestoreScroll"|"NavigateEventTransitionWhile"|"NoSysexWebMIDIWithoutPermission"|"NotificationInsecureOrigin"|"NotificationPermissionRequestedIframe"|"ObsoleteWebRtcCipherSuite"|"OpenWebDatabaseInsecureContext"|"OverflowVisibleOnReplacedElement"|"PictureSourceSrc"|"PrefixedCancelAnimationFrame"|"PrefixedRequestAnimationFrame"|"PrefixedStorageInfo"|"PrefixedVideoDisplayingFullscreen"|"PrefixedVideoEnterFullscreen"|"PrefixedVideoEnterFullScreen"|"PrefixedVideoExitFullscreen"|"PrefixedVideoExitFullScreen"|"PrefixedVideoSupportsFullscreen"|"RangeExpand"|"RequestedSubresourceWithEmbeddedCredentials"|"RTCConstraintEnableDtlsSrtpFalse"|"RTCConstraintEnableDtlsSrtpTrue"|"RTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics"|"RTCPeerConnectionSdpSemanticsPlanB"|"RtcpMuxPolicyNegotiate"|"SharedArrayBufferConstructedWithoutIsolation"|"TextToSpeech_DisallowedByAutoplay"|"V8SharedArrayBufferConstructedInExtensionWithoutIsolation"|"XHRJSONEncodingDetection"|"XMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload"|"XRSupportsSession";
+    export type DeprecationIssueType = "AuthorizationCoveredByWildcard"|"CanRequestURLHTTPContainingNewline"|"ChromeLoadTimesConnectionInfo"|"ChromeLoadTimesFirstPaintAfterLoadTime"|"ChromeLoadTimesWasAlternateProtocolAvailable"|"CookieWithTruncatingChar"|"CrossOriginAccessBasedOnDocumentDomain"|"CrossOriginWindowAlert"|"CrossOriginWindowConfirm"|"CSSSelectorInternalMediaControlsOverlayCastButton"|"DeprecationExample"|"DocumentDomainSettingWithoutOriginAgentClusterHeader"|"EventPath"|"ExpectCTHeader"|"GeolocationInsecureOrigin"|"GeolocationInsecureOriginDeprecatedNotRemoved"|"GetUserMediaInsecureOrigin"|"HostCandidateAttributeGetter"|"IdentityInCanMakePaymentEvent"|"InsecurePrivateNetworkSubresourceRequest"|"LegacyConstraintGoogIPv6"|"LocalCSSFileExtensionRejected"|"MediaSourceAbortRemove"|"MediaSourceDurationTruncatingBuffered"|"NavigateEventRestoreScroll"|"NavigateEventTransitionWhile"|"NoSysexWebMIDIWithoutPermission"|"NotificationInsecureOrigin"|"NotificationPermissionRequestedIframe"|"ObsoleteWebRtcCipherSuite"|"OpenWebDatabaseInsecureContext"|"OverflowVisibleOnReplacedElement"|"PersistentQuotaType"|"PictureSourceSrc"|"PrefixedCancelAnimationFrame"|"PrefixedRequestAnimationFrame"|"PrefixedStorageInfo"|"PrefixedVideoDisplayingFullscreen"|"PrefixedVideoEnterFullscreen"|"PrefixedVideoEnterFullScreen"|"PrefixedVideoExitFullscreen"|"PrefixedVideoExitFullScreen"|"PrefixedVideoSupportsFullscreen"|"RangeExpand"|"RequestedSubresourceWithEmbeddedCredentials"|"RTCConstraintEnableDtlsSrtpFalse"|"RTCConstraintEnableDtlsSrtpTrue"|"RTCPeerConnectionComplexPlanBSdpUsingDefaultSdpSemantics"|"RTCPeerConnectionSdpSemanticsPlanB"|"RtcpMuxPolicyNegotiate"|"SharedArrayBufferConstructedWithoutIsolation"|"TextToSpeech_DisallowedByAutoplay"|"V8SharedArrayBufferConstructedInExtensionWithoutIsolation"|"XHRJSONEncodingDetection"|"XMLHttpRequestSynchronousInNonWorkerOutsideBeforeUnload"|"XRSupportsSession";
     /**
      * This issue tracks information needed to print a deprecation message.
 https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/third_party/blink/renderer/core/frame/deprecation/README.md
@@ -873,7 +872,7 @@ Should be updated alongside RequestIdTokenStatus in
 third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
 all cases except for success.
      */
-    export type FederatedAuthRequestIssueReason = "ApprovalDeclined"|"TooManyRequests"|"ManifestListHttpNotFound"|"ManifestListNoResponse"|"ManifestListInvalidResponse"|"ManifestNotInManifestList"|"ManifestListTooBig"|"ManifestHttpNotFound"|"ManifestNoResponse"|"ManifestInvalidResponse"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"ClientMetadataMissingPrivacyPolicyUrl"|"DisabledInSettings"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenInvalidRequest"|"ErrorIdToken"|"Canceled";
+    export type FederatedAuthRequestIssueReason = "ApprovalDeclined"|"TooManyRequests"|"ManifestListHttpNotFound"|"ManifestListNoResponse"|"ManifestListInvalidResponse"|"ManifestNotInManifestList"|"ManifestListTooBig"|"ManifestHttpNotFound"|"ManifestNoResponse"|"ManifestInvalidResponse"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"DisabledInSettings"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenInvalidRequest"|"ErrorIdToken"|"Canceled";
     /**
      * This issue tracks client hints related issues. It's used to deprecate old
 features, encourage the use of new ones, and provide general guidance.
@@ -1862,6 +1861,11 @@ stylesheet rules) this rule came from.
        * The entire property range in the enclosing style declaration (if available).
        */
       range?: SourceRange;
+      /**
+       * Parsed longhand components of this property if it is a shorthand.
+This field will be empty if the given property is not a shorthand.
+       */
+      longhandProperties?: CSSProperty[];
     }
     /**
      * CSS media rule descriptor.
@@ -5958,9 +5962,14 @@ requires the version number to be 'unsigned long long')
      */
     export type clearObjectStoreParameters = {
       /**
-       * Security origin.
+       * At least and at most one of securityOrigin, storageKey must be specified.
+Security origin.
        */
-      securityOrigin: string;
+      securityOrigin?: string;
+      /**
+       * Storage key.
+       */
+      storageKey?: string;
       /**
        * Database name.
        */
@@ -5977,9 +5986,14 @@ requires the version number to be 'unsigned long long')
      */
     export type deleteDatabaseParameters = {
       /**
-       * Security origin.
+       * At least and at most one of securityOrigin, storageKey must be specified.
+Security origin.
        */
-      securityOrigin: string;
+      securityOrigin?: string;
+      /**
+       * Storage key.
+       */
+      storageKey?: string;
       /**
        * Database name.
        */
@@ -5991,7 +6005,15 @@ requires the version number to be 'unsigned long long')
      * Delete a range of entries from an object store
      */
     export type deleteObjectStoreEntriesParameters = {
-      securityOrigin: string;
+      /**
+       * At least and at most one of securityOrigin, storageKey must be specified.
+Security origin.
+       */
+      securityOrigin?: string;
+      /**
+       * Storage key.
+       */
+      storageKey?: string;
       databaseName: string;
       objectStoreName: string;
       /**
@@ -6020,9 +6042,14 @@ requires the version number to be 'unsigned long long')
      */
     export type requestDataParameters = {
       /**
-       * Security origin.
+       * At least and at most one of securityOrigin, storageKey must be specified.
+Security origin.
        */
-      securityOrigin: string;
+      securityOrigin?: string;
+      /**
+       * Storage key.
+       */
+      storageKey?: string;
       /**
        * Database name.
        */
@@ -6063,9 +6090,14 @@ requires the version number to be 'unsigned long long')
      */
     export type getMetadataParameters = {
       /**
-       * Security origin.
+       * At least and at most one of securityOrigin, storageKey must be specified.
+Security origin.
        */
-      securityOrigin: string;
+      securityOrigin?: string;
+      /**
+       * Storage key.
+       */
+      storageKey?: string;
       /**
        * Database name.
        */
@@ -6092,9 +6124,14 @@ is true.
      */
     export type requestDatabaseParameters = {
       /**
-       * Security origin.
+       * At least and at most one of securityOrigin, storageKey must be specified.
+Security origin.
        */
-      securityOrigin: string;
+      securityOrigin?: string;
+      /**
+       * Storage key.
+       */
+      storageKey?: string;
       /**
        * Database name.
        */
@@ -6111,9 +6148,14 @@ is true.
      */
     export type requestDatabaseNamesParameters = {
       /**
-       * Security origin.
+       * At least and at most one of securityOrigin, storageKey must be specified.
+Security origin.
        */
-      securityOrigin: string;
+      securityOrigin?: string;
+      /**
+       * Storage key.
+       */
+      storageKey?: string;
     }
     export type requestDatabaseNamesReturnValue = {
       /**
@@ -10287,7 +10329,7 @@ as an ad.
      * All Permissions Policy features. This enum should match the one defined
 in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-reduced"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"federated-credentials"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"local-fonts"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"shared-storage"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"window-placement"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-reduced"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"federated-credentials"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"local-fonts"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"shared-storage"|"storage-access"|"sync-xhr"|"trust-token-redemption"|"unload"|"usb"|"vertical-scroll"|"web-share"|"window-placement"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -10790,7 +10832,7 @@ dependent on the reason:
     /**
      * List of FinalStatus reasons for Prerender2.
      */
-    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"CrossOriginRedirect"|"CrossOriginNavigation"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"InProgressNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"MaxNumOfRunningPrerendersExceeded"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"EmbedderTriggeredAndSameOriginRedirected"|"EmbedderTriggeredAndCrossOriginRedirected"|"EmbedderTriggeredAndDestroyed";
+    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"CrossOriginRedirect"|"CrossOriginNavigation"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"InProgressNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"MaxNumOfRunningPrerendersExceeded"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"EmbedderTriggeredAndSameOriginRedirected"|"EmbedderTriggeredAndCrossOriginRedirected"|"MemoryLimitExceeded"|"FailToGetMemoryUsage"|"DataSaverEnabled";
     
     export type domContentEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -11078,6 +11120,11 @@ when bfcache navigation fails.
       initiatingFrameId: FrameId;
       prerenderingUrl: string;
       finalStatus: PrerenderFinalStatus;
+      /**
+       * This is used to give users more information about the cancellation details,
+and this will be formatted for display.
+       */
+      reasonDetails?: string;
     }
     export type loadEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -12754,6 +12801,10 @@ Tokens from that issuer.
        */
       origin: string;
       /**
+       * Storage key to update.
+       */
+      storageKey: string;
+      /**
        * Database to update.
        */
       databaseName: string;
@@ -12770,6 +12821,10 @@ Tokens from that issuer.
        * Origin to update.
        */
       origin: string;
+      /**
+       * Storage key to update.
+       */
+      storageKey: string;
     }
     /**
      * One of the interest groups was accessed by the associated page.
@@ -12932,6 +12987,17 @@ disabled (called without a quotaSize).
     export type trackIndexedDBForOriginReturnValue = {
     }
     /**
+     * Registers storage key to be notified when an update occurs to its IndexedDB.
+     */
+    export type trackIndexedDBForStorageKeyParameters = {
+      /**
+       * Storage key.
+       */
+      storageKey: string;
+    }
+    export type trackIndexedDBForStorageKeyReturnValue = {
+    }
+    /**
      * Unregisters origin from receiving notifications for cache storage.
      */
     export type untrackCacheStorageForOriginParameters = {
@@ -12952,6 +13018,17 @@ disabled (called without a quotaSize).
       origin: string;
     }
     export type untrackIndexedDBForOriginReturnValue = {
+    }
+    /**
+     * Unregisters storage key from receiving notifications for IndexedDB.
+     */
+    export type untrackIndexedDBForStorageKeyParameters = {
+      /**
+       * Storage key.
+       */
+      storageKey: string;
+    }
+    export type untrackIndexedDBForStorageKeyReturnValue = {
     }
     /**
      * Returns the number of stored Trust Tokens per issuer for the
@@ -13242,6 +13319,28 @@ supported.
       openerFrameId?: Page.FrameId;
       browserContextId?: Browser.BrowserContextID;
     }
+    /**
+     * A filter used by target query/discovery/auto-attach operations.
+     */
+    export interface FilterEntry {
+      /**
+       * If set, causes exclusion of mathcing targets from the list.
+       */
+      exclude?: boolean;
+      /**
+       * If not present, matches any type.
+       */
+      type?: string;
+    }
+    /**
+     * The entries in TargetFilter are matched sequentially against targets and
+the first entry that matches determines if the target is included or not,
+depending on the value of `exclude` field in the entry.
+If filter is not specified, the one assumed is
+[{type: "browser", exclude: true}, {type: "tab", exclude: true}, {}]
+(i.e. include everything but `browser` and `tab`).
+     */
+    export type TargetFilter = FilterEntry[];
     export interface RemoteLocation {
       host: string;
       port: number;
@@ -13507,6 +13606,12 @@ beforeunload hooks.
      * Retrieves a list of available targets.
      */
     export type getTargetsParameters = {
+      /**
+       * Only targets matching filter will be reported. If filter is not specified
+and target discovery is currently enabled, a filter used for target discovery
+is used for consistency.
+       */
+      filter?: TargetFilter;
     }
     export type getTargetsReturnValue = {
       /**
@@ -13555,6 +13660,10 @@ We plan to make this the default, deprecate non-flattened mode,
 and eventually retire it. See crbug.com/991325.
        */
       flatten?: boolean;
+      /**
+       * Only targets matching filter will be attached.
+       */
+      filter?: TargetFilter;
     }
     export type setAutoAttachReturnValue = {
     }
@@ -13572,6 +13681,10 @@ This cancels the effect of any previous `setAutoAttach` and is also cancelled by
 to run paused targets.
        */
       waitForDebuggerOnStart: boolean;
+      /**
+       * Only targets matching filter will be attached.
+       */
+      filter?: TargetFilter;
     }
     export type autoAttachRelatedReturnValue = {
     }
@@ -13584,6 +13697,11 @@ to run paused targets.
        * Whether to discover available targets.
        */
       discover: boolean;
+      /**
+       * Only targets matching filter will be attached. If `discover` is false,
+`filter` must be omitted or empty.
+       */
+      filter?: TargetFilter;
     }
     export type setDiscoverTargetsReturnValue = {
     }
@@ -15369,8 +15487,8 @@ disassembly can be read successively.
        */
       totalNumberOfLines: number;
       /**
-       * The offsets of all function bodies plus one additional entry pointing
-one by past the end of the last function.
+       * The offsets of all function bodies, in the format [start1, end1,
+start2, end2, ...] where all ends are exclusive.
        */
       functionBodyOffsets: number[];
       /**
@@ -17984,8 +18102,10 @@ Error was thrown.
     "Storage.overrideQuotaForOrigin": Storage.overrideQuotaForOriginParameters;
     "Storage.trackCacheStorageForOrigin": Storage.trackCacheStorageForOriginParameters;
     "Storage.trackIndexedDBForOrigin": Storage.trackIndexedDBForOriginParameters;
+    "Storage.trackIndexedDBForStorageKey": Storage.trackIndexedDBForStorageKeyParameters;
     "Storage.untrackCacheStorageForOrigin": Storage.untrackCacheStorageForOriginParameters;
     "Storage.untrackIndexedDBForOrigin": Storage.untrackIndexedDBForOriginParameters;
+    "Storage.untrackIndexedDBForStorageKey": Storage.untrackIndexedDBForStorageKeyParameters;
     "Storage.getTrustTokens": Storage.getTrustTokensParameters;
     "Storage.clearTrustTokens": Storage.clearTrustTokensParameters;
     "Storage.getInterestGroupDetails": Storage.getInterestGroupDetailsParameters;
@@ -18520,8 +18640,10 @@ Error was thrown.
     "Storage.overrideQuotaForOrigin": Storage.overrideQuotaForOriginReturnValue;
     "Storage.trackCacheStorageForOrigin": Storage.trackCacheStorageForOriginReturnValue;
     "Storage.trackIndexedDBForOrigin": Storage.trackIndexedDBForOriginReturnValue;
+    "Storage.trackIndexedDBForStorageKey": Storage.trackIndexedDBForStorageKeyReturnValue;
     "Storage.untrackCacheStorageForOrigin": Storage.untrackCacheStorageForOriginReturnValue;
     "Storage.untrackIndexedDBForOrigin": Storage.untrackIndexedDBForOriginReturnValue;
+    "Storage.untrackIndexedDBForStorageKey": Storage.untrackIndexedDBForStorageKeyReturnValue;
     "Storage.getTrustTokens": Storage.getTrustTokensReturnValue;
     "Storage.clearTrustTokens": Storage.clearTrustTokensReturnValue;
     "Storage.getInterestGroupDetails": Storage.getInterestGroupDetailsReturnValue;
