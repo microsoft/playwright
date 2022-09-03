@@ -686,7 +686,7 @@ test('should include requestUrl in route.abort', async ({ page, runAndTrace, ser
   await expect(callLine.locator('text=requestUrl')).toContainText('http://test.com');
 });
 
-test.only('should serve overridden request', async ({ page, runAndTrace, server }) => {
+test('should serve overridden request', async ({ page, runAndTrace, server }) => {
   server.setRoute('/custom.css', (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/css',
