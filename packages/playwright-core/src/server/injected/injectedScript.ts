@@ -1034,6 +1034,8 @@ export class InjectedScript {
         elementState = progress.injectedScript.elementState(element, 'disabled');
       } else if (expression === 'to.be.editable') {
         elementState = progress.injectedScript.elementState(element, 'editable');
+      } else if (expression === 'to.be.readonly') {
+        elementState = !progress.injectedScript.elementState(element, 'editable');
       } else if (expression === 'to.be.empty') {
         if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
           elementState = !(element as HTMLInputElement).value;

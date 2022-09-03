@@ -235,6 +235,12 @@ test('should propose only the relevant matchers when custom expect matcher class
       await test.expect(res as any).toHaveURL('https://example.com');
       // @ts-expect-error
       await test.expect(123).toHaveURL('https://example.com');
+
+      await test.expect(page.locator('foo')).toBeChecked();
+      await test.expect(page.locator('foo')).not.toBeChecked({ checked: true });
+
+      await test.expect(page.locator('foo')).not.toBeEditable();
+      await test.expect(page.locator('foo')).toBeEditable({ editable: false });
     });
     `
   });
