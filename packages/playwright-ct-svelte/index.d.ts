@@ -47,7 +47,7 @@ interface MountResult extends Locator {
 
 interface ComponentFixtures {
   mount(component: any, options?: MountOptions): Promise<MountResult>;
-  mount<Props>(component: any, options: MountOptions<Required<Props>>): Promise<MountResult>;
+  mount<Props>(component: any, options: MountOptions & { props: Props }): Promise<MountResult>;
 }
 
 export const test: TestType<
