@@ -168,3 +168,4 @@ test('Intercept network requests', async ({ page }) => {
 * [Community showcase](https://playwright.dev/docs/showcase/)
 * [Contribution guide](CONTRIBUTING.md)
 * [Changelog](https://github.com/microsoft/playwright/releases)
+* [License](LICENSE)
