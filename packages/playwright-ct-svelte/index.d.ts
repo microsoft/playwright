@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
- import type {
+import type {
   TestType,
   PlaywrightTestArgs,
   PlaywrightTestConfig as BasePlaywrightTestConfig,
