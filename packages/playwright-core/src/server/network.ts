@@ -22,8 +22,9 @@ import type * as channels from '../protocol/channels';
 import { assert } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { SdkObject } from './instrumentation';
-import type { NameValue } from '../common/types';
+import type { HeadersArray, NameValue } from '../common/types';
 import { APIRequestContext } from './fetch';
+import type { NormalizedContinueOverrides } from './types';
 
 export function filterCookies(cookies: channels.NetworkCookie[], urls: string[]): channels.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
@@ -97,17 +98,18 @@ export class Request extends SdkObject {
   private _resourceType: string;
   private _method: string;
   private _postData: Buffer | null;
-  readonly _headers: types.HeadersArray;
+  readonly _headers: HeadersArray;
   private _headersMap = new Map<string, string>();
   readonly _frame: frames.Frame | null = null;
   readonly _serviceWorker: pages.Worker | null = null;
   readonly _context: contexts.BrowserContext;
-  private _rawRequestHeadersPromise = new ManualPromise<types.HeadersArray>();
+  private _rawRequestHeadersPromise = new ManualPromise<HeadersArray>();
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
+  private _overrides: NormalizedContinueOverrides | undefined;
 
   constructor(context: contexts.BrowserContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
-    url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
+    url: string, resourceType: string, method: string, postData: Buffer | null, headers: HeadersArray) {
     super(frame || context, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._context = context;
@@ -122,8 +124,7 @@ export class Request extends SdkObject {
     this._method = method;
     this._postData = postData;
     this._headers = headers;
-    for (const { name, value } of this._headers)
-      this._headersMap.set(name.toLowerCase(), value);
+    this._updateHeadersMap();
     this._isFavicon = url.endsWith('/favicon.ico') || !!redirectedFrom?._isFavicon;
   }
 
@@ -132,8 +133,22 @@ export class Request extends SdkObject {
     this._waitForResponsePromise.resolve(null);
   }
 
+  _setOverrides(overrides: types.NormalizedContinueOverrides) {
+    this._overrides = overrides;
+    this._updateHeadersMap();
+  }
+
+  private _updateHeadersMap() {
+    for (const { name, value } of this.headers())
+      this._headersMap.set(name.toLowerCase(), value);
+  }
+
+  _hasOverrides() {
+    return !!this._overrides;
+  }
+
   url(): string {
-    return this._url;
+    return this._overrides?.url || this._url;
   }
 
   resourceType(): string {
@@ -141,15 +156,15 @@ export class Request extends SdkObject {
   }
 
   method(): string {
-    return this._method;
+    return this._overrides?.method || this._method;
   }
 
   postDataBuffer(): Buffer | null {
-    return this._postData;
+    return this._overrides?.postData || this._postData;
   }
 
-  headers(): types.HeadersArray {
-    return this._headers;
+  headers(): HeadersArray {
+    return this._overrides?.headers || this._headers;
   }
 
   headerValue(name: string): string | undefined {
@@ -157,13 +172,13 @@ export class Request extends SdkObject {
   }
 
   // "null" means no raw headers available - we'll use provisional headers as raw headers.
-  setRawRequestHeaders(headers: types.HeadersArray | null) {
+  setRawRequestHeaders(headers: HeadersArray | null) {
     if (!this._rawRequestHeadersPromise.isDone())
       this._rawRequestHeadersPromise.resolve(headers || this._headers);
   }
 
-  async rawRequestHeaders(): Promise<NameValue[]> {
-    return this._rawRequestHeadersPromise;
+  async rawRequestHeaders(): Promise<HeadersArray> {
+    return this._overrides?.headers || this._rawRequestHeadersPromise;
   }
 
   response(): PromiseLike<Response | null> {
@@ -303,6 +318,7 @@ export class Route extends SdkObject {
       if (oldUrl.protocol !== newUrl.protocol)
         throw new Error('New URL must have same protocol as overridden URL');
     }
+    this._request._setOverrides(overrides);
     await this._delegate.continue(this._request, overrides);
     this._endHandling();
   }
@@ -360,20 +376,20 @@ export class Response extends SdkObject {
   private _status: number;
   private _statusText: string;
   private _url: string;
-  private _headers: types.HeadersArray;
+  private _headers: HeadersArray;
   private _headersMap = new Map<string, string>();
   private _getResponseBodyCallback: GetResponseBodyCallback;
   private _timing: ResourceTiming;
   private _serverAddrPromise = new ManualPromise<RemoteAddr | undefined>();
   private _securityDetailsPromise = new ManualPromise<SecurityDetails | undefined>();
-  private _rawResponseHeadersPromise = new ManualPromise<types.HeadersArray>();
+  private _rawResponseHeadersPromise = new ManualPromise<HeadersArray>();
   private _httpVersion: string | undefined;
   private _fromServiceWorker: boolean;
   private _encodedBodySizePromise = new ManualPromise<number | null>();
   private _transferSizePromise = new ManualPromise<number | null>();
   private _responseHeadersSizePromise = new ManualPromise<number | null>();
 
-  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, fromServiceWorker: boolean, httpVersion?: string) {
+  constructor(request: Request, status: number, statusText: string, headers: HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, fromServiceWorker: boolean, httpVersion?: string) {
     super(request.frame() || request._context, 'response');
     this._request = request;
     this._timing = timing;
@@ -418,7 +434,7 @@ export class Response extends SdkObject {
     return this._statusText;
   }
 
-  headers(): types.HeadersArray {
+  headers(): HeadersArray {
     return this._headers;
   }
 
@@ -431,7 +447,7 @@ export class Response extends SdkObject {
   }
 
   // "null" means no raw headers available - we'll use provisional headers as raw headers.
-  setRawResponseHeaders(headers: types.HeadersArray | null) {
+  setRawResponseHeaders(headers: HeadersArray | null) {
     if (!this._rawResponseHeadersPromise.isDone())
       this._rawResponseHeadersPromise.resolve(headers || this._headers);
   }
@@ -658,11 +674,11 @@ export const STATUS_TEXTS: { [status: string]: string } = {
   '511': 'Network Authentication Required',
 };
 
-export function singleHeader(name: string, value: string): types.HeadersArray {
+export function singleHeader(name: string, value: string): HeadersArray {
   return [{ name, value }];
 }
 
-export function mergeHeaders(headers: (types.HeadersArray | undefined | null)[]): types.HeadersArray {
+export function mergeHeaders(headers: (HeadersArray | undefined | null)[]): HeadersArray {
   const lowerCaseToValue = new Map<string, string>();
   const lowerCaseToOriginalCase = new Map<string, string>();
   for (const h of headers) {
@@ -674,7 +690,7 @@ export function mergeHeaders(headers: (types.HeadersArray | undefined | null)[])
       lowerCaseToValue.set(lower, value);
     }
   }
-  const result: types.HeadersArray = [];
+  const result: HeadersArray = [];
   for (const [lower, value] of lowerCaseToValue)
     result.push({ name: lowerCaseToOriginalCase.get(lower)!, value });
   return result;

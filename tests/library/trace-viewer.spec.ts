@@ -686,3 +686,24 @@ test('should include requestUrl in route.abort', async ({ page, runAndTrace, ser
   await expect(callLine.locator('text=requestUrl')).toContainText('http://test.com');
 });
 
+test('should serve overridden request', async ({ page, runAndTrace, server }) => {
+  server.setRoute('/custom.css', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/css',
+    });
+    res.end(`body { background: red }`);
+  });
+  await page.route('**/one-style.css', route => {
+    route.continue({
+      url: server.PREFIX + '/custom.css'
+    });
+  });
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/one-style.html');
+  });
+  // Render snapshot, check expectations.
+  const snapshotFrame = await traceViewer.snapshotFrame('page.goto');
+  const color = await snapshotFrame.locator('body').evaluate(body => getComputedStyle(body).backgroundColor);
+  expect(color).toBe('rgb(255, 0, 0)');
+});
+

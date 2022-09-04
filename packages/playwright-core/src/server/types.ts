@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import type { Size, Point, TimeoutOptions } from '../common/types';
-export type { Size, Point, Rect, Quad, URLMatch, TimeoutOptions } from '../common/types';
+import type { Size, Point, TimeoutOptions, HeadersArray } from '../common/types';
+export type { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray } from '../common/types';
 import type * as channels from '../protocol/channels';
 
 export type StrictOptions = {
@@ -128,8 +128,6 @@ export type MouseMultiClickOptions = PointerActionOptions & {
 };
 
 export type World = 'main' | 'utility';
-
-export type HeadersArray = { name: string, value: string }[];
 
 export type GotoOptions = NavigateOptions & {
   referer?: string,

@@ -87,6 +87,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._harTracer = new HarTracer(context, null, this, {
       content: 'attach',
       includeTraceInfo: true,
+      recordRequestOverrides: false,
       waitForContentOnStop: false,
       skipScripts: true,
     });
