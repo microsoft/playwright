@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type {
+ import type {
   TestType,
   PlaywrightTestArgs,
   PlaywrightTestConfig as BasePlaywrightTestConfig,
@@ -34,11 +34,13 @@ export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   }
 };
 
+type Slot = string | string[];
+
 export interface MountOptions<Props = Record<string, unknown>> {
-  props?: Props,
-  slots?: Record<string, unknown>,
-  on?: Record<string, Function>,
-  hooksConfig?: any,
+  props?: Props;
+  slots?: Record<string, Slot> & { default?: Slot };
+  on?: Record<string, Function>;
+  hooksConfig?: any;
 }
 
 interface MountResult extends Locator {
