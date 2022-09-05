@@ -3,12 +3,7 @@ id: frames
 title: "Frames"
 ---
 
-<!-- TOC -->
-
-## Frames
-
-A [Page] can have one or more [Frame] objects attached to it. Each page has a main frame and page-level interactions
-(like `click`) are assumed to operate in the main frame.
+A [Page] can have one or more [Frame] objects attached to it. Each page has a main frame and page-level interactions (like `click`) are assumed to operate in the main frame.
 
 A page can have additional frames attached with the `iframe` HTML tag. These frames can be accessed for interactions
 inside the frame.
