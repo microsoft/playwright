@@ -3,8 +3,7 @@ id: input
 title: "Input"
 ---
 
-<!-- TOC -->
-
+Run tests on HTML Input elements such as text inputs, checkboxes, radio buttons, select options, mouse clicks, type characters, keys and shortcuts as well as upload files and focus elements.
 ## Text input
 
 This is the easiest way to fill out the form fields. It focuses the element and triggers an `input` event with the entered text. It works for `<input>`, `<textarea>`, `[contenteditable]` and `<label>` associated with an input or textarea.
@@ -94,13 +93,12 @@ await page.Locator("#local").FillAsync("2020-03-02T05:15");
 await page.Locator("text=First Name").FillAsync("Peter");
 ```
 
-### API reference
+#### API reference
 
 - [`method: Locator.fill`]
 - [`method: Page.fill`]
 - [`method: Frame.fill`]
 
-<br/>
 
 ## Checkboxes and radio buttons
 
@@ -176,7 +174,7 @@ await page.Locator("#subscribe-label").UncheckAsync();
 await page.Locator("text=XL").CheckAsync();
 ```
 
-### API reference
+#### API reference
 
 - [`method: Locator.check`]
 - [`method: Locator.isChecked`]
@@ -184,8 +182,6 @@ await page.Locator("text=XL").CheckAsync();
 - [`method: Page.check`]
 - [`method: Page.isChecked`]
 - [`method: Page.uncheck`]
-
-<br/>
 
 ## Select options
 
@@ -247,13 +243,11 @@ await page.Locator("select#colors").SelectOptionAsync(new SelectOptionValue { La
 await page.Locator("select#colors").SelectOptionAsync(new[] { "blue", "green", "red" });
 ```
 
-### API reference
+#### API reference
 
 - [`method: Locator.selectOption`]
 - [`method: Page.selectOption`]
 - [`method: Frame.selectOption`]
-
-<br/>
 
 ## Mouse click
 
@@ -415,8 +409,7 @@ page.locator('button#submit').dispatch_event('click')
 ```csharp
 await page.Locator("button#submit").DispatchEventAsync("click");
 ```
-
-### API reference
+#### API reference
 
 - [`method: Locator.click`]
 - [`method: Page.click`]
@@ -431,7 +424,6 @@ await page.Locator("button#submit").DispatchEventAsync("click");
 - [`method: Page.dispatchEvent`]
 - [`method: Frame.dispatchEvent`]
 
-<br/>
 
 ## Type characters
 
@@ -468,14 +460,12 @@ This method will emit all the necessary keyboard events, with all the `keydown`,
 Most of the time, [`method: Page.fill`] will just work. You only need to type characters if there is special keyboard handling on the page.
 :::
 
-### API reference
+#### API reference
 
 - [`method: Locator.type`]
 - [`method: Page.type`]
 - [`method: Frame.type`]
 - [`method: Keyboard.type`]
-
-<br/>
 
 ## Keys and shortcuts
 
@@ -594,14 +584,12 @@ Shortcuts such as `"Control+o"` or `"Control+Shift+T"` are supported as well. Wh
 Note that you still need to specify the capital `A` in `Shift-A` to produce the capital character. `Shift-a` produces a lower-case one as if you had the `CapsLock` toggled.
 
 
-### API reference
+#### API reference
 
 - [`method: Locator.press`]
 - [`method: Page.press`]
 - [`method: Frame.press`]
 - [`method: Keyboard.press`]
-
-<br/>
 
 ## Upload files
 
@@ -738,13 +726,12 @@ var fileChooser = page.RunAndWaitForFileChooserAsync(async () =>
 await fileChooser.SetFilesAsync("myfile.pdf");
 ```
 
-### API reference
+#### API reference
+
 - [FileChooser]
 - [`method: Locator.setInputFiles`]
 - [`method: Page.setInputFiles`]
 - [`method: Frame.setInputFiles`]
-
-<br/>
 
 ## Focus element
 
@@ -770,9 +757,8 @@ page.locator('input#name').focus()
 await page.Locator("input#name").FocusAsync();
 ```
 
-### API reference
+#### API reference
 
 - [`method: Locator.focus`]
 - [`method: Page.focus`]
 - [`method: Frame.focus`]
-<br/>
