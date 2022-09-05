@@ -60,61 +60,7 @@ npx playwright test --config=tests/my.config.js
 
 ## Local configuration
 
-With [`method: Test.use`] you can override some options for a file or a [`method: Test.describe#1`] block.
-
-```js tab=js-js
-// example.spec.js
-const { test, expect } = require('@playwright/test');
-
-// Run tests in this file with portrait-like viewport.
-test.use({ viewport: { width: 600, height: 900 } });
-
-test('my portrait test', async ({ page }) => {
-  // ...
-});
-```
-
-```js tab=js-ts
-// example.spec.ts
-import { test, expect } from '@playwright/test';
-
-// Run tests in this file with portrait-like viewport.
-test.use({ viewport: { width: 600, height: 900 } });
-
-test('my portrait test', async ({ page }) => {
-  // ...
-});
-```
-
-The same works inside describe.
-
-```js tab=js-js
-// example.spec.js
-const { test, expect } = require('@playwright/test');
-
-test.describe('locale block', () => {
-  // Run tests in this describe block with portrait-like viewport.
-  test.use({ viewport: { width: 600, height: 900 } });
-
-  test('my portrait test', async ({ page }) => {
-    // ...
-  });
-});
-```
-
-```js tab=js-ts
-// example.spec.ts
-import { test, expect } from '@playwright/test';
-
-test.describe('locale block', () => {
-  // Run tests in this describe block with portrait-like viewport.
-  test.use({ viewport: { width: 600, height: 900 } });
-
-  test('my portrait test', async ({ page }) => {
-    // ...
-  });
-});
-```
+You can override some options for a file or describe block. See the [Emulation](./emulation.md) guide for more details.
 
 ## Basic options
 
