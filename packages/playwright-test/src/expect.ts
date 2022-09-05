@@ -204,7 +204,6 @@ class ExpectMetaInfoProxyHandler {
         canHaveChildren: true,
         forceNoParent: false
       });
-      testInfo.currentStep = step;
 
       const reportStepError = (jestError: Error) => {
         const message = jestError.message;
