@@ -1,11 +1,7 @@
 ---
 id: browser-contexts
-title: "Browser Contexts"
+title: "Isolation"
 ---
-
-<!-- TOC -->
-
-## Browser context
 
 A [BrowserContext] is an isolated incognito-alike session within a browser instance. Browser contexts are fast and
 cheap to create. We recommend running each test scenario in its own new Browser context, so that
@@ -237,7 +233,7 @@ class Program
 }
 ```
 
-### API reference
+#### API reference
 - [BrowserContext]
 - [`method: Browser.newContext`]
 - [`method: BrowserContext.addCookies`]
