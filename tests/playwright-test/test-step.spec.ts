@@ -403,9 +403,10 @@ test('should return value from step', async ({ runInlineTest }) => {
 });
 
 
-test('should set correct currentStep', async ({ runInlineTest }) => {
+test.only('should set correct currentStep', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
+      const { test } = pwt;
       test('pass', async ({ page }) => {
         await test.step('outer step 1', async () => {
           expect(test.info().currentStep.title).toBe('outer step 1')
