@@ -10,19 +10,8 @@ Playwright allows overriding various parameters such as `viewportSize`, `deviceS
 
 Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a specific mobile device:
 
-<Tabs
-  groupId="emulation"
-  defaultValue="typescript"
-  values={[
-    {label: 'TypeScript', value: 'typescript'},
-    {label: 'JavaScript', value: 'javascript'},
-    {label: 'Library', value: 'library'}
-  ]
-}>
 
-<TabItem value="typescript">
-
-```js
+```js tab=js-ts
 // playwright.config.ts
 import { type PlaywrightTestConfig, devices } from '@playwright/test';
 
@@ -41,10 +30,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-</TabItem>
-<TabItem value="javascript">
-
-```js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 const { devices } = require('@playwright/test');
@@ -66,10 +52,7 @@ const config = {
 module.exports = config;
 ```
 
-</TabItem>
-<TabItem value="library">
-
-```js
+```js tab=js-library
 const { chromium, devices } = require('playwright');
 const browser = await chromium.launch();
 
@@ -78,9 +61,6 @@ const context = await browser.newContext({
   ...pixel2,
 });
 ```
-
-</TabItem>
-</Tabs>
 
 For a more complete guide on configuration for devices check out our [configuration guide](./test-configuration.md#global-configuration).
 
@@ -143,19 +123,7 @@ class Program
 
 All pages will share the user agent specified.
 
-<Tabs
-  groupId="emulation"
-  defaultValue="typescript"
-  values={[
-    {label: 'TypeScript', value: 'typescript'},
-    {label: 'JavaScript', value: 'javascript'},
-    {label: 'Library', value: 'library'}
-  ]
-}>
-
-<TabItem value="typescript">
-
-```ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test.use({ userAgent: 'My user agent'});
@@ -165,10 +133,7 @@ test('my user agent test', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="javascript">
-
-```js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test.use({ userAgent: 'My user agent' });
@@ -178,17 +143,11 @@ test('my user agent test', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="library">
-
-```js
+```js tab=js-library
 const context = await browser.newContext({
   userAgent: 'My user agent'
 });
 ```
-
-</TabItem>
-</Tabs>
 
 For global configuration so all tests run with the specified user agent check out the [configuration guide](./test-configuration.md#global-configuration).
 
@@ -223,19 +182,7 @@ var context = await browser.NewContextAsync(new BrowserNewContextOptions { UserA
 
 Run your tests with a specified viewport size.
 
-<Tabs
-  groupId="emulation"
-  defaultValue="typescript"
-  values={[
-    {label: 'TypeScript', value: 'typescript'},
-    {label: 'JavaScript', value: 'javascript'},
-    {label: 'Library', value: 'library'}
-  ]
-}>
-
-<TabItem value="typescript">
-
-```ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 // Run tests in this file with portrait-like viewport.
@@ -249,10 +196,7 @@ test('my portrait test', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="javascript">
-
-```js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 // Run tests in this file with portrait-like viewport.
@@ -266,10 +210,7 @@ test('my portrait test', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="library">
-
-```js
+```js tab=js-library
 // Create context with given viewport
 const context = await browser.newContext({
   viewport: { width: 1280, height: 1024 }
@@ -284,25 +225,9 @@ const context = await browser.newContext({
   deviceScaleFactor: 2,
 });
 ```
-
-</TabItem>
-</Tabs>
-
 The same works inside a describe block.
 
-<Tabs
-  groupId="emulation"
-  defaultValue="typescript"
-  values={[
-    {label: 'TypeScript', value: 'typescript'},
-    {label: 'JavaScript', value: 'javascript'},
-  ]
-}>
-
-<TabItem value="typescript">
-
-```ts
-// example.spec.ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test.describe('locale block', () => {
@@ -314,11 +239,8 @@ test.describe('locale block', () => {
   });
 });
 ```
-</TabItem>
-<TabItem value="javascript">
 
-```js
-// example.spec.js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test.describe('locale block', () => {
@@ -330,9 +252,6 @@ test.describe('locale block', () => {
   });
 });
 ```
-
-</TabItem>
-</Tabs>
 
 For global configuration so all tests run with the specified viewport check out the [configuration guide](./test-configuration.md#global-configuration).
 
@@ -409,19 +328,7 @@ await using var context = await browser.NewContextAsync(new()
 
 All pages will share the user agent specified:
 
-<Tabs
-  groupId="emulation"
-  defaultValue="typescript"
-  values={[
-    {label: 'TypeScript', value: 'typescript'},
-    {label: 'JavaScript', value: 'javascript'},
-    {label: 'Library', value: 'library'}
-  ]
-}>
-
-<TabItem value="typescript">
-
-```ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test.use({ 
@@ -434,10 +341,7 @@ test('my test for de lang in Berlin timezone', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="javascript">
-
-```js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test.use({ 
@@ -450,19 +354,13 @@ test('my test for de lang in Berlin timezone', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="library">
-
-```js
+```js tab=js-library
 // Emulate locale and time
 const context = await browser.newContext({
   locale: 'de-DE',
   timezoneId: 'Europe/Berlin',
 });
 ```
-
-</TabItem>
-</Tabs>
 
 For global configuration so all tests run with the specified locale and timezone check out the [configuration guide](./test-configuration.md#global-configuration).
 
@@ -508,19 +406,7 @@ await using var context = await browser.NewContextAsync(new()
 
 Allow test to show system notifications.
 
-<Tabs
-  groupId="emulation"
-  defaultValue="typescript"
-  values={[
-    {label: 'TypeScript', value: 'typescript'},
-    {label: 'JavaScript', value: 'javascript'},
-    {label: 'Library', value: 'library'}
-  ]
-}>
-
-<TabItem value="typescript">
-
-```ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test.use({ permissions: ['notifications']});
@@ -530,10 +416,7 @@ test('my test with notifications', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="javascript">
-
-```js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test.use({ permissions: ['notifications']});
@@ -543,33 +426,15 @@ test('my test with notifications', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="library">
-
-```js
+```js tab=js-library
 const context = await browser.newContext({
   permissions: ['notifications'],
 });
 ```
 
-</TabItem>
-</Tabs>
-
 Allow test to access current location.
 
-<Tabs
-  groupId="emulation"
-  defaultValue="typescript"
-  values={[
-    {label: 'TypeScript', value: 'typescript'},
-    {label: 'JavaScript', value: 'javascript'},
-    {label: 'Library', value: 'library'}
-  ]
-}>
-
-<TabItem value="typescript">
-
-```ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test.use({ permissions: ['geolocation']});
@@ -579,10 +444,7 @@ test('my test with geolocation', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="javascript">
-
-```js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test.use({ permissions: ['geolocation']});
@@ -592,31 +454,13 @@ test('my test with geolocation', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="library">
-
-```js
+```js tab=js-library
 await context.grantPermissions(['geolocation']);
 ```
 
-</TabItem>
-</Tabs>
-
 Grant notifications access from a specific domain:
 
-<Tabs
-  groupId="emulation"
-  defaultValue="typescript"
-  values={[
-    {label: 'TypeScript', value: 'typescript'},
-    {label: 'JavaScript', value: 'javascript'},
-    {label: 'Library', value: 'library'}
-  ]
-}>
-
-<TabItem value="typescript">
-
-```ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test.use({ permissions: ['geolocation'], {origin: 'https://skype.com'}});
@@ -626,10 +470,7 @@ test('my test with notifications from skype', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="javascript">
-
-```js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test.use({ permissions: ['notifications'], {origin: 'https://skype.com'}});
@@ -639,18 +480,12 @@ test('my test with notifications from skype', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="library">
-
-```js
+```js tab=js-library
 await context.grantPermissions(['notifications'], {origin: 'https://skype.com'} );
 
 //Revoke all permissions:
 await context.clearPermissions();
 ```
-
-</TabItem>
-</Tabs>
 
 For global configuration so all tests run with the specified permissions check out the [configuration guide](./test-configuration.md#global-configuration).
 
@@ -737,19 +572,7 @@ await context.ClearPermissionsAsync();
 
 Create a test with `"geolocation"` permissions granted and geolocation set to a specific area.
 
-<Tabs
-  groupId="emulation"
-  defaultValue="typescript"
-  values={[
-    {label: 'TypeScript', value: 'typescript'},
-    {label: 'JavaScript', value: 'javascript'},
-    {label: 'Library', value: 'library'}
-  ]
-}>
-
-<TabItem value="typescript">
-
-```ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test.use({ 
@@ -762,10 +585,7 @@ test('my test with geolocation', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="javascript">
-
-```js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test.use({ 
@@ -778,10 +598,7 @@ test('my test with geolocation', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="library">
-
-```js
+```js tab=js-library
 const context = await browser.newContext({
   geolocation: { longitude: 48.858455, latitude: 2.294474 },
   permissions: ['geolocation']
@@ -791,9 +608,6 @@ const context = await browser.newContext({
 await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 
 ```
-
-</TabItem>
-</Tabs>
 
 For global configuration so all tests run with the specified geolocation check out the [configuration guide](./test-configuration.md#global-configuration).
 
@@ -855,19 +669,7 @@ await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455f, La
 
 Create a test that emulates `"colorSheme"`.
 
-<Tabs
-  groupId="emulation"
-  defaultValue="typescript"
-  values={[
-    {label: 'TypeScript', value: 'typescript'},
-    {label: 'JavaScript', value: 'javascript'},
-    {label: 'Library', value: 'library'}
-  ]
-}>
-
-<TabItem value="typescript">
-
-```ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test.use({ 
@@ -879,10 +681,7 @@ test('my test with dark mode', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="javascript">
-
-```js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test.use({ 
@@ -894,10 +693,7 @@ test('my test with dark mode', async ({ page }) => {
 });
 ```
 
-</TabItem>
-<TabItem value="library">
-
-```js
+```js tab=js-library
 // Create context with dark mode
 const context = await browser.newContext({
   colorScheme: 'dark' // or 'light'
@@ -914,9 +710,6 @@ await page.emulateMedia({ colorScheme: 'dark' });
 // Change media for page
 await page.emulateMedia({ media: 'print' });
 ```
-
-</TabItem>
-</Tabs>
 
 For global configuration so all tests run with the specified colorScheme check out the [configuration guide](./test-configuration.md#global-configuration).
 
