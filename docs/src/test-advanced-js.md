@@ -1,9 +1,11 @@
 ---
 id: test-advanced
-title: "Advanced: configuration"
+title: "Configuration"
 ---
 
-<!-- TOC -->
+Advanced configuration including the configuration object, testInfo object, how to launch a development web server during tests as well as global setup and teardown and more.
+
+For less advanced configuration see our [General Configuration](./test-configuration.md) guide.
 
 ## Configuration object
 
