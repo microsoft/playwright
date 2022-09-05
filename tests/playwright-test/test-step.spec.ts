@@ -401,3 +401,35 @@ test('should return value from step', async ({ runInlineTest }) => {
   expect(result.output).toContain('v1 = 10');
   expect(result.output).toContain('v2 = 20');
 });
+
+
+test('should return value from step', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      test('pass', async ({ page }) => {
+        await test.step('outer step 1', async () => {
+          expect(test.info().currentStep.title).toBe('outer step 1')
+          await test.step('inner step 1.1', async () => {
+            expect(test.info().currentStep.title).toBe('inner step 1.1')
+          });
+          await test.step('inner step 1.2', async () => {
+            expect(test.info().currentStep.title).toBe('inner step 1.2')
+          });
+        });
+        expect(test.info().currentStep).toBeUndefined()
+        await test.step('outer step 2', async () => {
+          expect(test.info().currentStep.title).toBe('outer step 2')
+          await test.step('inner step 2.1', async () => {
+          expect(test.info().currentStep.title).toBe('inner step 2.1')
+          });
+          await test.step('inner step 2.2', async () => {
+          expect(test.info().currentStep.title).toBe('inner step 2.2')
+          });
+        });
+      });
+    
+    `
+  }, { reporter: '', workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
