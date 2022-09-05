@@ -7,8 +7,6 @@ Selectors are strings that are used to create [Locator]s. Locators are used to p
 
 Writing good selectors is part art, part science so be sure to checkout the [Best Practices](#best-practices) section.
 
-<!-- TOC -->
-
 ## Quick guide
 
 - Text selector
