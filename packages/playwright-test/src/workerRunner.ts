@@ -227,7 +227,7 @@ export class WorkerRunner extends EventEmitter {
 
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
     let lastStepId = 0;
-    const testInfo = new TestInfoImpl(this._loader, this._project, this._params, test, retry, (data, setCurrentStep) => {
+    const testInfo = new TestInfoImpl(this._loader, this._project, this._params, test, retry, data => {
       const stepId = `${data.category}@${data.title}@${++lastStepId}`;
       let callbackHandled = false;
       const step: TestStepInternal = {
@@ -244,7 +244,7 @@ export class WorkerRunner extends EventEmitter {
             wallTime: Date.now(),
             error,
           };
-          setCurrentStep(undefined);
+          testInfo.currentStep = undefined;
           this.emit('stepEnd', payload);
         }
       };
@@ -258,7 +258,7 @@ export class WorkerRunner extends EventEmitter {
         location,
         wallTime: Date.now(),
       };
-      setCurrentStep(step);
+      testInfo.currentStep = step;
       this.emit('stepBegin', payload);
       return step;
     });
