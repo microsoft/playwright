@@ -5,7 +5,6 @@ title: "Emulation"
 
 Playwright allows overriding various parameters such as `viewportSize`, `deviceScaleFactor`, `locale`, `timezone`, `colorScheme`, `geolocation` and more.
 
-<!-- Most of these parameters are configured during the browser context construction, but some of them such as viewport size can be changed for individual pages. -->
 ## Devices
 * langs: js, python, csharp
 
