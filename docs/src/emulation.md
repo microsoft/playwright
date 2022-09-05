@@ -11,7 +11,7 @@ Playwright allows overriding various parameters such as `viewportSize`, `deviceS
 Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a specific mobile device:
 
 <Tabs
-  groupId="devices"
+  groupId="emulation"
   defaultValue="typescript"
   values={[
     {label: 'TypeScript', value: 'typescript'},
@@ -144,7 +144,7 @@ class Program
 All pages will share the user agent specified.
 
 <Tabs
-  groupId="devices"
+  groupId="emulation"
   defaultValue="typescript"
   values={[
     {label: 'TypeScript', value: 'typescript'},
@@ -224,7 +224,7 @@ var context = await browser.NewContextAsync(new BrowserNewContextOptions { UserA
 Run your tests with a specified viewport size.
 
 <Tabs
-  groupId="devices"
+  groupId="emulation"
   defaultValue="typescript"
   values={[
     {label: 'TypeScript', value: 'typescript'},
@@ -290,7 +290,34 @@ const context = await browser.newContext({
 
 The same works inside a describe block.
 
-```js tab=js-js
+<Tabs
+  groupId="emulation"
+  defaultValue="typescript"
+  values={[
+    {label: 'TypeScript', value: 'typescript'},
+    {label: 'JavaScript', value: 'javascript'},
+  ]
+}>
+
+<TabItem value="typescript">
+
+```ts
+// example.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('locale block', () => {
+  // Run tests in this describe block with portrait-like viewport.
+  test.use({ viewport: { width: 600, height: 900 } });
+
+  test('my portrait test', async ({ page }) => {
+    // ...
+  });
+});
+```
+</TabItem>
+<TabItem value="javascript">
+
+```js
 // example.spec.js
 const { test, expect } = require('@playwright/test');
 
@@ -304,19 +331,8 @@ test.describe('locale block', () => {
 });
 ```
 
-```js tab=js-ts
-// example.spec.ts
-import { test, expect } from '@playwright/test';
-
-test.describe('locale block', () => {
-  // Run tests in this describe block with portrait-like viewport.
-  test.use({ viewport: { width: 600, height: 900 } });
-
-  test('my portrait test', async ({ page }) => {
-    // ...
-  });
-});
-```
+</TabItem>
+</Tabs>
 
 For global configuration so all tests run with the specified viewport check out the [configuration guide](./test-configuration.md#global-configuration).
 
@@ -394,7 +410,7 @@ await using var context = await browser.NewContextAsync(new()
 All pages will share the user agent specified:
 
 <Tabs
-  groupId="devices"
+  groupId="emulation"
   defaultValue="typescript"
   values={[
     {label: 'TypeScript', value: 'typescript'},
@@ -493,7 +509,7 @@ await using var context = await browser.NewContextAsync(new()
 Allow test to show system notifications.
 
 <Tabs
-  groupId="devices"
+  groupId="emulation"
   defaultValue="typescript"
   values={[
     {label: 'TypeScript', value: 'typescript'},
@@ -542,7 +558,7 @@ const context = await browser.newContext({
 Allow test to access current location.
 
 <Tabs
-  groupId="devices"
+  groupId="emulation"
   defaultValue="typescript"
   values={[
     {label: 'TypeScript', value: 'typescript'},
@@ -589,7 +605,7 @@ await context.grantPermissions(['geolocation']);
 Grant notifications access from a specific domain:
 
 <Tabs
-  groupId="devices"
+  groupId="emulation"
   defaultValue="typescript"
   values={[
     {label: 'TypeScript', value: 'typescript'},
@@ -722,7 +738,7 @@ await context.ClearPermissionsAsync();
 Create a test with `"geolocation"` permissions granted and geolocation set to a specific area.
 
 <Tabs
-  groupId="devices"
+  groupId="emulation"
   defaultValue="typescript"
   values={[
     {label: 'TypeScript', value: 'typescript'},
@@ -841,7 +857,7 @@ await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455f, La
 Create a test that emulates `"colorSheme"`.
 
 <Tabs
-  groupId="devices"
+  groupId="emulation"
   defaultValue="typescript"
   values={[
     {label: 'TypeScript', value: 'typescript'},
