@@ -9,10 +9,6 @@ Finally, there are plenty of testing options like `timeout` or `testDir` that co
 
 You can specify any options globally in the configuration file, and most of them locally in a test file.
 
-See the full list of [test options][TestOptions] and all [configuration properties][TestConfig].
-
-<!-- TOC -->
-
 ## Global configuration
 
 Create `playwright.config.js` (or `playwright.config.ts`) and specify options in the [`property: TestConfig.use`] section.
