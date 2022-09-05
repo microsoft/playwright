@@ -415,6 +415,7 @@ test('should set correct currentStep', async ({ runInlineTest }) => {
           await test.step('inner step 1.2', async () => {
             expect(test.info().currentStep.title).toBe('inner step 1.2')
           });
+          expect(test.info().currentStep.title).toBe('outer step 1');
         });
         expect(test.info().currentStep).toBeUndefined()
         await test.step('outer step 2', async () => {
@@ -425,6 +426,7 @@ test('should set correct currentStep', async ({ runInlineTest }) => {
           await test.step('inner step 2.2', async () => {
           expect(test.info().currentStep.title).toBe('inner step 2.2')
           });
+          expect(test.info().currentStep.title).toBe('outer step 2');
         });
       });
     

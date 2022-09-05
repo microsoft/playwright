@@ -56,11 +56,13 @@ export class WorkerRunner extends EventEmitter {
   // Suites that had their beforeAll hooks, but not afterAll hooks executed.
   // These suites still need afterAll hooks to be executed for the proper cleanup.
   private _activeSuites = new Set<Suite>();
+  private _stepStack: Set<TestStepInternal>;
 
   constructor(params: WorkerInitParams) {
     super();
     this._params = params;
     this._fixtureRunner = new FixtureRunner();
+    this._stepStack = new Set();
 
     // Resolve this promise, so worker does not stall waiting for the non-existent run to finish,
     // when it was sopped before running any test group.
@@ -244,7 +246,15 @@ export class WorkerRunner extends EventEmitter {
             wallTime: Date.now(),
             error,
           };
-          testInfo.currentStep = undefined;
+          this._stepStack.delete(step);
+
+          const previousCurrentStep =  [...this._stepStack].pop();
+          if (previousCurrentStep){
+            testInfo.currentStep = previousCurrentStep;
+            this._stepStack.delete(previousCurrentStep);
+          } else {
+            testInfo.currentStep = undefined;
+          }
           this.emit('stepEnd', payload);
         }
       };
@@ -258,6 +268,9 @@ export class WorkerRunner extends EventEmitter {
         location,
         wallTime: Date.now(),
       };
+      if (testInfo.currentStep)
+        this._stepStack.add(testInfo.currentStep);
+
       testInfo.currentStep = step;
       this.emit('stepBegin', payload);
       return step;
