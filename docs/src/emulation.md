@@ -6,7 +6,7 @@ title: "Emulation"
 Playwright allows overriding various parameters such as `viewportSize`, `deviceScaleFactor`, `locale`, `timezone`, `colorScheme`, `geolocation` and more.
 
 ## Devices
-* langs: js, python, csharp
+* langs: js
 
 Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a specific mobile device:
 
@@ -799,7 +799,6 @@ For global configuration so all tests run with the specified geolocation check o
 
 ## Geolocation
 * langs: java, python, csharp
-
 
 Create a context with `"geolocation"` permissions granted:
 
