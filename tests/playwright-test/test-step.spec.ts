@@ -403,7 +403,7 @@ test('should return value from step', async ({ runInlineTest }) => {
 });
 
 
-test.only('should set correct currentStep', async ({ runInlineTest }) => {
+test('should set correct currentStep', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
