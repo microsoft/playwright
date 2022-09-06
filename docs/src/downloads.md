@@ -5,7 +5,7 @@ title: "Downloads"
 
 
 
-For every attachment downloaded by the page, [`event: Page.download`] event is emitted. All these attachments are downloaded into a temporary folder. You can obtain the download url, file system path and payload stream usingthe [Download] object from the event.
+For every attachment downloaded by the page, [`event: Page.download`] event is emitted. All these attachments are downloaded into a temporary folder. You can obtain the download url, file system path and payload stream using the [Download] object from the event.
 
 You can specify where to persist downloaded files using the [`option: downloadsPath`] option in [`method: BrowserType.launch`].
 
