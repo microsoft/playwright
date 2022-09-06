@@ -5,10 +5,7 @@ title: "Browser Contexts"
 
 ## Browser context
 
-A [BrowserContext] is an isolated incognito-alike session within a browser instance. Browser contexts are fast and
-cheap to create. We recommend running each test scenario in its own new Browser context, so that
-the browser state is isolated between the tests. If you are using [Playwright Test](./intro.md), this happens out of the
-box for each test. Otherwise, you can create browser contexts manually:
+A [BrowserContext] is an isolated incognito-alike session within a browser instance. Browser contexts are fast and cheap to create. We recommend running each test scenario in its own new Browser context, so that the browser state is isolated between the tests. If you are using [Playwright Test](./intro.md), this happens out of the box for each test. Otherwise, you can create browser contexts manually:
 
 ```js
 const browser = await chromium.launch();
