@@ -341,7 +341,7 @@ jobs:
                   export CI=true
                   npm install
                   npx playwright test
-                  echo 0
+                  exit 0
             - task: PublishTestResults@2
               displayName: 'Publish test results'
               inputs:
