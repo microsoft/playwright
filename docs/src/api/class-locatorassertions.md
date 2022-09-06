@@ -593,6 +593,9 @@ var locator = Page.Locator("button.submit");
 await Expect(locator).toBeEnabledAsync();
 ```
 
+### option: LocatorAssertions.toBeEnabled.enabled
+* since: v1.26
+- `enabled` <[boolean]>
 ### option: LocatorAssertions.toBeEnabled.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.toBeEnabled.timeout = %%-csharp-java-python-assertions-timeout-%%

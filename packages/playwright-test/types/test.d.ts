@@ -3308,6 +3308,8 @@ interface LocatorAssertions {
    * @param options
    */
   toBeEnabled(options?: {
+    enabled?: boolean;
+
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
