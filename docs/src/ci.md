@@ -352,7 +352,7 @@ jobs:
                 failTaskOnFailedTests: true
                 testRunTitle: 'My End-To-End Tests'
 ```
-Note: The [JUnit reporter](./test-reporters-js.md#junit-reporter) needs to be configured accordingly via
+Note: The [JUnit reporter](./test-reporters.md#junit-reporter) needs to be configured accordingly via
 ```ts
 ["junit", { outputFile: "test-results/e2e-junit-results.xml" }]
 ```
