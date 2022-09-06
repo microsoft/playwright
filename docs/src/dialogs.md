@@ -73,6 +73,12 @@ await page.Locator("button").ClickAsync(); // Will hang here
 If there is no listener for [`event: Page.dialog`], all dialogs are automatically dismissed.
 :::
 
+#### API reference
+
+- [Dialog]
+- [`method: Dialog.accept`]
+- [`method: Dialog.dismiss`]
+
 ## beforeunload dialog
 
 When [`method: Page.close`] is invoked with the truthy [`option: runBeforeUnload`] value, the page runs its unload handlers. This is the only case when [`method: Page.close`] does not wait for the page to actually close, because it might be that the page stays open in the end of the operation.
