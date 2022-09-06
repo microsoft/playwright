@@ -1,6 +1,6 @@
 ---
 id: overview-test-runner
-title: "Test Runner Overview"
+title: "Running Tests"
 ---
 
 ## Annotations
