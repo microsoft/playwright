@@ -6,9 +6,8 @@ title: "Emulation"
 Playwright allows overriding various parameters such as `viewportSize`, `deviceScaleFactor`, `locale`, `timezone`, `colorScheme`, `geolocation` and more.
 
 ## Devices
-* langs: js
 
-Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a specific mobile device:
+Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a specific mobile device. All pages created in the context will share the same device parameters.
 
 
 ```js tab=js-ts
@@ -62,13 +61,6 @@ const context = await browser.newContext({
 });
 ```
 
-For a more complete guide on configuration for devices check out our [configuration guide](./test-configuration.md#global-configuration).
-
-## Devices
-* langs: python, csharp
-
-Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a specific mobile device. All pages created in the context will share the same device parameters.
-
 ```python async
 import asyncio
 from playwright.async_api import async_playwright
@@ -118,8 +110,16 @@ class Program
     }
 }
 ```
-## User Agent
+#### Global configuration
 * langs: js
+  
+For a more complete guide on configuration for devices check out our [configuration guide](./test-configuration.md#global-configuration).
+
+#### API reference
+- [`property: Playwright.devices`]
+- [`method: Browser.newContext`]
+  
+## User Agent
 
 All pages will share the user agent specified.
 
@@ -149,13 +149,6 @@ const context = await browser.newContext({
 });
 ```
 
-For global configuration so all tests run with the specified user agent check out the [configuration guide](./test-configuration.md#global-configuration).
-
-## User Agent
-* langs: python, csharp, java
-
-All pages created in the context below will share the user agent specified:
-
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
   .setUserAgent("My user agent"));
@@ -177,8 +170,15 @@ context = browser.new_context(
 var context = await browser.NewContextAsync(new BrowserNewContextOptions { UserAgent = "My User Agent" });
 ```
 
-## Viewport
+#### Global configuration
 * langs: js
+
+For global configuration so all tests run with the specified user agent check out the [configuration guide](./test-configuration.md#global-configuration).
+
+#### API reference
+- [`method: Browser.newContext`]
+
+## Viewport
 
 Run your tests with a specified viewport size.
 
@@ -253,13 +253,6 @@ test.describe('locale block', () => {
 });
 ```
 
-For global configuration so all tests run with the specified viewport check out the [configuration guide](./test-configuration.md#global-configuration).
-
-## Viewport
-* langs: python, csharp, java
-  
-Create a context with custom viewport size:
-
 ```java
 // Create context with given viewport
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
@@ -323,8 +316,16 @@ await using var context = await browser.NewContextAsync(new()
 });
 ```
 
-## Locale & timezone
+#### Global configuration
 * langs: js
+
+For global configuration so all tests run with the specified viewport check out the [configuration guide](./test-configuration.md#global-configuration).
+
+#### API reference
+- [`method: Browser.newContext`]
+- [`method: Page.setViewportSize`]
+
+## Locale & timezone
 
 All pages will share the user agent specified:
 
@@ -362,12 +363,6 @@ const context = await browser.newContext({
 });
 ```
 
-For global configuration so all tests run with the specified locale and timezone check out the [configuration guide](./test-configuration.md#global-configuration).
-
-## Locale & timezone
-* langs: java, python, csharp
-
-
 ```java
 // Emulate locale and time
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
@@ -398,11 +393,14 @@ await using var context = await browser.NewContextAsync(new()
     TimezoneId = "Europe/Berlin"
 });
 ```
-
-<br/>
+#### Global configuration
+* langs: js
+  
+For global configuration so all tests run with the specified locale and timezone check out the [configuration guide](./test-configuration.md#global-configuration).
+#### API reference
+- [`method: Browser.newContext`]
 
 ## Permissions
-* langs: js
 
 Allow test to show system notifications.
 
@@ -432,7 +430,24 @@ const context = await browser.newContext({
 });
 ```
 
-Allow test to access current location.
+```java
+BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+  .setPermissions(Arrays.asList("notifications"));
+```
+
+```python async
+context = await browser.new_context(
+  permissions=['notifications'],
+)
+```
+
+```python sync
+context = browser.new_context(
+  permissions=['notifications'],
+)
+```
+
+Grant all pages in the existing context access to current location:
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
@@ -456,6 +471,22 @@ test('my test with geolocation', async ({ page }) => {
 
 ```js tab=js-library
 await context.grantPermissions(['geolocation']);
+```
+
+```java
+context.grantPermissions(Arrays.asList("geolocation"));
+```
+
+```python async
+await context.grant_permissions(['geolocation'])
+```
+
+```python sync
+context.grant_permissions(['geolocation'])
+```
+
+```csharp
+await context.GrantPermissionsAsync(new[] { "geolocation" });
 ```
 
 Grant notifications access from a specific domain:
@@ -482,54 +513,7 @@ test('my test with notifications from skype', async ({ page }) => {
 
 ```js tab=js-library
 await context.grantPermissions(['notifications'], {origin: 'https://skype.com'} );
-
-//Revoke all permissions:
-await context.clearPermissions();
 ```
-
-For global configuration so all tests run with the specified permissions check out the [configuration guide](./test-configuration.md#global-configuration).
-
-## Permissions
-* langs: java, python, csharp
-
-Allow all pages in the context to show system notifications:
-
-```java
-BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-  .setPermissions(Arrays.asList("notifications"));
-```
-
-```python async
-context = await browser.new_context(
-  permissions=['notifications'],
-)
-```
-
-```python sync
-context = browser.new_context(
-  permissions=['notifications'],
-)
-```
-
-Grant all pages in the existing context access to current location:
-
-```java
-context.grantPermissions(Arrays.asList("geolocation"));
-```
-
-```python async
-await context.grant_permissions(['geolocation'])
-```
-
-```python sync
-context.grant_permissions(['geolocation'])
-```
-
-```csharp
-await context.GrantPermissionsAsync(new[] { "geolocation" });
-```
-
-Grant notifications access from a specific domain:
 
 ```java
 context.grantPermissions(Arrays.asList("notifications"),
@@ -550,6 +534,9 @@ await context.GrantPermissionsAsync(new[] { "notifications" }, origin: "https://
 
 Revoke all permissions:
 
+```js tab=js-library
+await context.clearPermissions();
+```
 
 ```java
 context.clearPermissions();
@@ -567,8 +554,17 @@ context.clear_permissions()
 await context.ClearPermissionsAsync();
 ```
 
+#### Global configuration
+* langs: js
+
+For global configuration so all tests run with the specified permissions check out the [configuration guide](./test-configuration.md#global-configuration).
+
+#### API reference
+- [`method: Browser.newContext`]
+- [`method: BrowserContext.grantPermissions`]
+- [`method: BrowserContext.clearPermissions`]
+
 ## Geolocation
-* langs: js 
 
 Create a test with `"geolocation"` permissions granted and geolocation set to a specific area.
 
@@ -608,13 +604,6 @@ const context = await browser.newContext({
 await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 
 ```
-
-For global configuration so all tests run with the specified geolocation check out the [configuration guide](./test-configuration.md#global-configuration).
-
-## Geolocation
-* langs: java, python, csharp
-
-Create a context with `"geolocation"` permissions granted:
 
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
@@ -664,8 +653,17 @@ await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455f, La
 
 **Note** you can only change geolocation for all pages in the context.
 
+#### Global configuration
+* langs: js
+
+For global configuration so all tests run with the specified geolocation check out the [configuration guide](./test-configuration.md#global-configuration).
+
+
+#### API reference
+- [`method: Browser.newContext`]
+- [`method: BrowserContext.setGeolocation`]
+
 ## Color Scheme
-* langs: js 
 
 Create a test that emulates `"colorSheme"`.
 
@@ -710,13 +708,6 @@ await page.emulateMedia({ colorScheme: 'dark' });
 // Change media for page
 await page.emulateMedia({ media: 'print' });
 ```
-
-For global configuration so all tests run with the specified colorScheme check out the [configuration guide](./test-configuration.md#global-configuration).
-
-## Color Scheme and Media
-* langs: java, python, csharp
-
-Create a context with dark or light mode. Pages created in this context will follow this color scheme preference.
 
 ```java
 // Create context with dark mode
@@ -795,3 +786,12 @@ await page.EmulateMediaAsync(new()
     Media = Media.Print
 });
 ```
+
+#### Global configuration
+* langs: js
+
+For global configuration so all tests run with the specified colorScheme check out the [configuration guide](./test-configuration.md#global-configuration).
+
+#### API reference
+- [`method: Browser.newContext`]
+- [`method: Page.emulateMedia`]
