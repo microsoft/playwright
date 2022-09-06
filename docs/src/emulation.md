@@ -538,6 +538,7 @@ await context.GrantPermissionsAsync(new[] { "notifications" }, origin: "https://
 Revoke all permissions:
 
 ```js
+// Library
 await context.clearPermissions();
 ```
 
