@@ -110,18 +110,18 @@ class Program
     }
 }
 ```
-#### Global configuration
+#### Global Configuration
 * langs: js
   
 For a more complete guide on configuration for devices check out our [configuration guide](./test-configuration.md#global-configuration).
 
-#### API reference
+#### API Reference
 - [`property: Playwright.devices`]
 - [`method: Browser.newContext`]
   
 ## User Agent
 
-All pages will share the user agent specified.
+All pages created in the context above will share the user agent specified.
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
@@ -170,17 +170,17 @@ context = browser.new_context(
 var context = await browser.NewContextAsync(new BrowserNewContextOptions { UserAgent = "My User Agent" });
 ```
 
-#### Global configuration
+#### Global Configuration
 * langs: js
 
 For global configuration so all tests run with the specified user agent check out the [configuration guide](./test-configuration.md#global-configuration).
 
-#### API reference
+#### API Reference
 - [`method: Browser.newContext`]
 
 ## Viewport
 
-Run your tests with a specified viewport size.
+Create a context with custom viewport size.
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
@@ -316,18 +316,18 @@ await using var context = await browser.NewContextAsync(new()
 });
 ```
 
-#### Global configuration
+#### Global Configuration
 * langs: js
 
 For global configuration so all tests run with the specified viewport check out the [configuration guide](./test-configuration.md#global-configuration).
 
-#### API reference
+#### API Reference
 - [`method: Browser.newContext`]
 - [`method: Page.setViewportSize`]
 
-## Locale & timezone
+## Locale & Timezone
 
-All pages will share the user agent specified:
+All pages will share the locale and timezone specified.
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
@@ -393,11 +393,11 @@ await using var context = await browser.NewContextAsync(new()
     TimezoneId = "Europe/Berlin"
 });
 ```
-#### Global configuration
+#### Global Configuration
 * langs: js
   
 For global configuration so all tests run with the specified locale and timezone check out the [configuration guide](./test-configuration.md#global-configuration).
-#### API reference
+#### API Reference
 - [`method: Browser.newContext`]
 
 ## Permissions
@@ -447,7 +447,7 @@ context = browser.new_context(
 )
 ```
 
-Grant all pages in the existing context access to current location:
+Grant all pages in the existing context access to current location.
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
@@ -489,7 +489,7 @@ context.grant_permissions(['geolocation'])
 await context.GrantPermissionsAsync(new[] { "geolocation" });
 ```
 
-Grant notifications access from a specific domain:
+Grant notifications access from a specific domain.
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
@@ -554,12 +554,12 @@ context.clear_permissions()
 await context.ClearPermissionsAsync();
 ```
 
-#### Global configuration
+#### Global Configuration
 * langs: js
 
 For global configuration so all tests run with the specified permissions check out the [configuration guide](./test-configuration.md#global-configuration).
 
-#### API reference
+#### API Reference
 - [`method: Browser.newContext`]
 - [`method: BrowserContext.grantPermissions`]
 - [`method: BrowserContext.clearPermissions`]
@@ -653,13 +653,13 @@ await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455f, La
 
 **Note** you can only change geolocation for all pages in the context.
 
-#### Global configuration
+#### Global Configuration
 * langs: js
 
 For global configuration so all tests run with the specified geolocation check out the [configuration guide](./test-configuration.md#global-configuration).
 
 
-#### API reference
+#### API Reference
 - [`method: Browser.newContext`]
 - [`method: BrowserContext.setGeolocation`]
 
@@ -787,11 +787,11 @@ await page.EmulateMediaAsync(new()
 });
 ```
 
-#### Global configuration
+#### Global Configuration
 * langs: js
 
 For global configuration so all tests run with the specified colorScheme check out the [configuration guide](./test-configuration.md#global-configuration).
 
-#### API reference
+#### API Reference
 - [`method: Browser.newContext`]
 - [`method: Page.emulateMedia`]
