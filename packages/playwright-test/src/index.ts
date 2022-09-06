@@ -25,6 +25,7 @@ export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 import * as outOfProcess from 'playwright-core/lib/outofprocess';
+import * as playwrightLibrary from 'playwright-core';
 import type { TestInfoImpl } from './testInfo';
 
 if ((process as any)['__pw_initiator__']) {
@@ -61,7 +62,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       const impl = await outOfProcess.start({
         NODE_OPTIONS: undefined  // Hide driver process while debugging.
       });
-      await use(impl.playwright as any);
+      const pw = impl.playwright as any;
+      pw._setSelectors(playwrightLibrary.selectors);
+      await use(pw);
       await impl.stop();
     } else {
       await use(require('playwright-core'));
