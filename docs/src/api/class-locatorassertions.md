@@ -511,6 +511,9 @@ var locator = Page.Locator("input");
 await Expect(locator).ToBeEditableAsync();
 ```
 
+### option: LocatorAssertions.toBeEditable.editable
+* since: v1.26
+- `editable` <[boolean]>
 ### option: LocatorAssertions.toBeEditable.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.toBeEditable.timeout = %%-csharp-java-python-assertions-timeout-%%

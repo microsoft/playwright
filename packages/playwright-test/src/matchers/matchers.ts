@@ -58,10 +58,11 @@ export function toBeDisabled(
 export function toBeEditable(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
-  options?: { timeout?: number },
+  options?: { editable?: boolean, timeout?: number },
 ) {
   return toBeTruthy.call(this, 'toBeEditable', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-    return await locator._expect(customStackTrace, 'to.be.editable', { isNot, timeout });
+    const editable = !options || options.editable === undefined || options.editable === true;
+    return await locator._expect(customStackTrace, editable ? 'to.be.editable' : 'to.be.readonly', { isNot, timeout });
   }, options);
 }
 
