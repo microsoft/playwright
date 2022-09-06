@@ -6,6 +6,7 @@ title: "Emulation"
 Playwright allows overriding various parameters such as `viewportSize`, `deviceScaleFactor`, `locale`, `timezone`, `colorScheme`, `geolocation` and more.
 
 ## Devices
+* langs: js, csharp, python
 
 Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a specific mobile device. All pages created in the context will share the same device parameters.
 
@@ -116,6 +117,7 @@ class Program
 For a more complete guide on configuration for devices check out our [configuration guide](./test-configuration.md#global-configuration).
 
 #### API Reference
+
 - [`property: Playwright.devices`]
 - [`method: Browser.newContext`]
   
@@ -397,6 +399,7 @@ await using var context = await browser.NewContextAsync(new()
 * langs: js
   
 For global configuration so all tests run with the specified locale and timezone check out the [configuration guide](./test-configuration.md#global-configuration).
+
 #### API Reference
 - [`method: Browser.newContext`]
 
@@ -534,7 +537,7 @@ await context.GrantPermissionsAsync(new[] { "notifications" }, origin: "https://
 
 Revoke all permissions:
 
-```js tab=js-library
+```js
 await context.clearPermissions();
 ```
 
