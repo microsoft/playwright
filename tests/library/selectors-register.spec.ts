@@ -17,15 +17,16 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
+const createTagSelector = () => ({
+  query(root, selector) {
+    return root.querySelector(selector);
+  },
+  queryAll(root, selector) {
+    return Array.from(root.querySelectorAll(selector));
+  }
+});
+
 it('should work', async ({ playwright, browser }) => {
-  const createTagSelector = () => ({
-    query(root, selector) {
-      return root.querySelector(selector);
-    },
-    queryAll(root, selector) {
-      return Array.from(root.querySelectorAll(selector));
-    }
-  });
   // Register one engine before creating context.
   await playwright.selectors.register('tag', `(${createTagSelector.toString()})()`);
 
@@ -47,6 +48,27 @@ it('should work', async ({ playwright, browser }) => {
   // Selector names are case-sensitive.
   const error = await page.$('tAG=DIV').catch(e => e);
   expect(error.message).toContain('Unknown engine "tAG" while parsing selector tAG=DIV');
+
+  await context.close();
+});
+
+it('should work when registered on global', async ({ browser }) => {
+  await require('@playwright/test').selectors.register('oop-tag', `(${createTagSelector.toString()})()`);
+
+  const context = await browser.newContext();
+  // Register another engine after creating context.
+  await require('@playwright/test').selectors.register('oop-tag2', `(${createTagSelector.toString()})()`);
+
+  const page = await context.newPage();
+  await page.setContent('<div><span></span></div><div></div>');
+
+  expect(await page.$eval('oop-tag=DIV', e => e.nodeName)).toBe('DIV');
+  expect(await page.$eval('oop-tag=SPAN', e => e.nodeName)).toBe('SPAN');
+  expect(await page.$$eval('oop-tag=DIV', es => es.length)).toBe(2);
+
+  expect(await page.$eval('oop-tag2=DIV', e => e.nodeName)).toBe('DIV');
+  expect(await page.$eval('oop-tag2=SPAN', e => e.nodeName)).toBe('SPAN');
+  expect(await page.$$eval('oop-tag2=DIV', es => es.length)).toBe(2);
 
   await context.close();
 });
