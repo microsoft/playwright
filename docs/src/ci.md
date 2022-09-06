@@ -312,9 +312,10 @@ jobs:
                 workingDirectory: 'my-e2e-tests'
                 targetType: 'inline'
                 failOnStderr: true
+                env:
+                  CI: true
                 script: |
-                  export CI=true
-                  npm install
+                  npm ci
                   npx playwright test
 ```
 This will make the pipeline run fail if any of the playwright tests fails.
@@ -337,9 +338,10 @@ jobs:
                 workingDirectory: 'my-e2e-tests'
                 targetType: 'inline'
                 failOnStderr: false
+                env:
+                  CI: true
                 script: |
-                  export CI=true
-                  npm install
+                  npm ci
                   npx playwright test
                   exit 0
             - task: PublishTestResults@2
