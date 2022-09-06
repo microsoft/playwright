@@ -183,3 +183,9 @@ var path = await page.Video.PathAsync();
 :::note
 Note that the video is only available after the page or browser context is closed.
 :::
+
+### API reference
+- [BrowserContext]
+- [`method: Browser.newContext`]
+- [`method: Browser.newPage`]
+- [`method: BrowserContext.close`]
