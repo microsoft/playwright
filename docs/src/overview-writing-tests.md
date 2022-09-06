@@ -1,6 +1,6 @@
 ---
 id: overview-writing-tests
-title: "Writing Tests Overview"
+title: "Writing Tests"
 ---
 
 ## Actionability
