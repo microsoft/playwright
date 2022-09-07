@@ -58,11 +58,59 @@ npx playwright test --config=tests/my.config.js
 
 ## Local configuration
 
-You can override some options for a file or describe block. See the [Emulation](./emulation.md) guide for more details.
+You can override some options for a file or describe block.
+
+```js tab=js-js
+// example.spec.js
+const { test, expect } = require('@playwright/test');
+// Run tests in this file with portrait-like viewport.
+test.use({ viewport: { width: 600, height: 900 } });
+test('my portrait test', async ({ page }) => {
+  // ...
+});
+```
+
+```js tab=js-ts
+// example.spec.ts
+import { test, expect } from '@playwright/test';
+// Run tests in this file with portrait-like viewport.
+test.use({ viewport: { width: 600, height: 900 } });
+test('my portrait test', async ({ page }) => {
+  // ...
+});
+```
+
+The same works inside describe.
+
+```js tab=js-js
+// example.spec.js
+const { test, expect } = require('@playwright/test');
+test.describe('locale block', () => {
+  // Run tests in this describe block with portrait-like viewport.
+  test.use({ viewport: { width: 600, height: 900 } });
+  test('my portrait test', async ({ page }) => {
+    // ...
+  });
+});
+```
+
+```js tab=js-ts
+// example.spec.ts
+import { test, expect } from '@playwright/test';
+test.describe('locale block', () => {
+  // Run tests in this describe block with portrait-like viewport.
+  test.use({ viewport: { width: 600, height: 900 } });
+  test('my portrait test', async ({ page }) => {
+    // ...
+  });
+});
+```
 
 ## Basic options
 
-These are commonly used options for various scenarios. You usually set them globally in the [configuration file](#global-configuration).
+Normally you would start with emulating a device, for example Desktop Chromium. See our [Emulation](./emulation.md) guide to learn more.
+
+Here are some of the commonly used options for various scenarios. You usually set them globally in the [configuration file](#global-configuration).
 
 - `actionTimeout` - Timeout for each Playwright action in milliseconds. Defaults to `0` (no timeout). Learn more about [various timeouts](./test-timeouts.md).
 - `baseURL` - Base URL used for all pages in the context. Allows navigating by using just the path, for example `page.goto('/settings')`.
