@@ -9,7 +9,7 @@ Playwright allows listening to various types of events happening on the web page
 
 Most of the time, scripts will need to wait for a particular event to happen. Below are some of the typical event awaiting patterns.
 
-Wait for a request with the specified url:
+Wait for a request with the specified url using [`method: Page.waitForRequest`]:
 
 ```js
 // Note that Promise.all prevents a race condition
