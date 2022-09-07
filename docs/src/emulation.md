@@ -420,7 +420,7 @@ context.grant_permissions(['geolocation'])
 await context.GrantPermissionsAsync(new[] { "geolocation" });
 ```
 
-Grant notifications access from a specific domain.
+Allow notifications for a specific domain.
 
 ```js tab=js-js
 // @ts-check
