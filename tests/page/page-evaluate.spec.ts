@@ -662,3 +662,21 @@ it('should throw when frame is detached', async ({ page, server }) => {
   expect(error).toBeTruthy();
   expect(error.message).toMatch(/frame.evaluate: (Frame was detached|Execution context was destroyed)/);
 });
+
+it('should work with overridden Object.defineProperty', async ({ page, server }) => {
+  server.setRoute('/test', (req, res) => {
+    res.writeHead(200, {
+      'content-type': 'text/html',
+    });
+    res.end(`<script>
+    Object.create = null;
+    Object.defineProperty = null;
+    Object.getOwnPropertyDescriptor = null;
+    Object.getOwnPropertyNames = null;
+    Object.getPrototypeOf = null;
+    Object.prototype.hasOwnProperty = null;
+    </script>`);
+  });
+  await page.goto(server.PREFIX + '/test');
+  expect(await page.evaluate('1+2')).toBe(3);
+});
