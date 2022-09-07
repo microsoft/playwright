@@ -57,7 +57,7 @@ const browser = await chromium.launch();
 
 const pixel4 = devices['Pixel 4'];
 const context = await browser.newContext({
-  ...pixel2,
+  ...pixel4,
 });
 ```
 
