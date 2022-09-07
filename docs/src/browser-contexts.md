@@ -3,11 +3,35 @@ id: browser-contexts
 title: "Isolation"
 ---
 
-Playwright is based on the concept of [test fixtures](./test-fixtures.md) such as the [built in page fixture](./test-fixtures#built-in-fixtures), which is passed into your test. Pages are isolated between tests due to the [BrowserContext], which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser. 
+Tests written with Playwright execute in isolated clean-slate environments called browser contexts. This isolation model improves reproducibility and prevents cascading test failures. Browser contexts are fast and cheap to create. 
 
-Browser contexts are fast and cheap to create. When using Playwright as a Test Runner, this happens out of the box for each test. Otherwise, you can create browser contexts manually.
+If you are not using Playwright as a Test Runner, we recommend you manually create a browser context for each test.
 
-```js
+```js tab=js-ts
+const { test } = require('@playwright/test');
+
+test('example', async ({ page, context }) => {
+  // Use the page and context objects.
+});
+
+test('example 2', async ({ page, context }) => {
+  // Different page and context object from the test above.
+});
+```
+
+```js tab=js-js
+import { test } from '@playwright/test';
+
+test('example', async ({ page, context }) => {
+  // Use the page and context objects.
+});
+
+test('example 2', async ({ page, context }) => {
+  // Different page and context object from the test above.
+});
+```
+
+```js tab=js-library
 const browser = await chromium.launch();
 const context = await browser.newContext();
 const page = await context.newPage();
@@ -41,7 +65,7 @@ Browser contexts can also be used to emulate multi-page scenarios involving mobi
 
 ## Multiple contexts
 
-[BrowserContexts] are isolated environments on a single browser instance. Playwright can create multiple browser contexts within a single scenario. This is useful when you want to test for multi-user functionality, like chat.
+Playwright can create multiple browser contexts within a single scenario. This is useful when you want to test for multi-user functionality, like a chat.
 
 ```js tab=js-js
 import { test } from '@playwright/test';
@@ -61,7 +85,7 @@ test('admin and user', async ({ browser }) => {
 const { test } = require('@playwright/test');
 
 test('admin and user', async ({ browser }) => {
-   // Create two isolated browser contexts
+  // Create two isolated browser contexts
   const adminContext = await browser.newContext();
   const userContext = await browser.newContext();
   
