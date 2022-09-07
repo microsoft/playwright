@@ -720,7 +720,7 @@ await fileChooser.SetFilesAsync("myfile.pdf");
 
 ## Focus element
 
-For the dynamic pages that handle focus events, you can focus the given element.
+For the dynamic pages that handle focus events, you can focus the given element with [`method: Locator.focus`].
 
 ```js
 await page.locator('input#name').focus();
