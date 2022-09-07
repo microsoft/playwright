@@ -68,9 +68,10 @@ it.describe('', () => {
     expect(error.message).toContain('Navigation failed because page crashed');
   });
 
-  it('should be able to close context when page crashes', async ({ isAndroid, isElectron, page, toImpl, browserName, platform, mode }) => {
+  it('should be able to close context when page crashes', async ({ isAndroid, isElectron, isWebView2, page, toImpl, browserName, platform, mode }) => {
     it.skip(isAndroid);
     it.skip(isElectron);
+    it.skip(isWebView2, 'Page.close() is not supported in WebView2');
 
     await page.setContent(`<div>This page should crash</div>`);
     crash({ page, toImpl, browserName, platform, mode });

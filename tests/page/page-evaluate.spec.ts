@@ -360,7 +360,7 @@ it('shuld properly serialize window.performance object', async ({ page }) => {
   expect(await page.evaluate(() => performance)).toEqual({
     'navigation': {
       'redirectCount': 0,
-      'type': 0
+      'type': expect.any(Number),
     },
     'timeOrigin': expect.any(Number),
     'timing': {
