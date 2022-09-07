@@ -78,47 +78,93 @@ test.describe('toBeChecked', () => {
   });
 });
 
-test('toBeEditable', async ({ page }) => {
-  await page.setContent('<input></input>');
-  const locator = page.locator('input');
-  await expect(locator).toBeEditable();
+test.describe('toBeEditable', () => {
+  test('default', async ({ page }) => {
+    await page.setContent('<input></input>');
+    const locator = page.locator('input');
+    await expect(locator).toBeEditable();
+  });
+
+  test('with not', async ({ page }) => {
+    await page.setContent('<input readonly></input>');
+    const locator = page.locator('input');
+    await expect(locator).not.toBeEditable();
+  });
+
+  test('with editable:true', async ({ page }) => {
+    await page.setContent('<input></input>');
+    const locator = page.locator('input');
+    await expect(locator).toBeEditable({ editable: true });
+  });
+
+  test('with editable:false', async ({ page }) => {
+    await page.setContent('<input readonly></input>');
+    const locator = page.locator('input');
+    await expect(locator).toBeEditable({ editable: false });
+  });
+
+  test('with not and editable:false', async ({ page }) => {
+    await page.setContent('<input></input>');
+    const locator = page.locator('input');
+    await expect(locator).not.toBeEditable({ editable: false });
+  });
 });
 
-test('toBeEnabled', async ({ page }) => {
-  await page.setContent('<button>Text</button>');
-  const locator = page.locator('button');
-  await expect(locator).toBeEnabled();
-});
+test.describe('toBeEnabled', () => {
+  test('default', async ({ page }) => {
+    await page.setContent('<button>Text</button>');
+    const locator = page.locator('button');
+    await expect(locator).toBeEnabled();
+  });
 
-test('toBeEnabled failed', async ({ page }) => {
-  await page.setContent('<button disabled>Text</button>');
-  const locator = page.locator('button');
-  const error = await expect(locator).toBeEnabled({ timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain(`selector resolved to <button disabled>Text</button>`);
-});
+  test('with enabled:true', async ({ page }) => {
+    await page.setContent('<button>Text</button>');
+    const locator = page.locator('button');
+    await expect(locator).toBeEnabled({ enabled: true });
+  });
 
-test('toBeEnabled eventually', async ({ page }) => {
-  await page.setContent('<button disabled>Text</button>');
-  const locator = page.locator('button');
-  setTimeout(() => {
-    locator.evaluate(e => e.removeAttribute('disabled')).catch(() => {});
-  }, 500);
-  await expect(locator).toBeEnabled();
-});
+  test('with enabled:false', async ({ page }) => {
+    await page.setContent('<button disabled>Text</button>');
+    const locator = page.locator('button');
+    await expect(locator).toBeEnabled({ enabled: false });
+  });
 
-test('not.toBeEnabled eventually', async ({ page }) => {
-  await page.setContent('<button>Text</button>');
-  const locator = page.locator('button');
-  setTimeout(() => {
-    locator.evaluate(e => e.setAttribute('disabled', '')).catch(() => {});
-  }, 500);
-  await expect(locator).not.toBeEnabled();
-});
+  test('failed', async ({ page }) => {
+    await page.setContent('<button disabled>Text</button>');
+    const locator = page.locator('button');
+    const error = await expect(locator).toBeEnabled({ timeout: 1000 }).catch(e => e);
+    expect(error.message).toContain(`selector resolved to <button disabled>Text</button>`);
+  });
 
-test('toBeDisabled', async ({ page }) => {
-  await page.setContent('<button disabled>Text</button>');
-  const locator = page.locator('button');
-  await expect(locator).toBeDisabled();
+  test('eventually', async ({ page }) => {
+    await page.setContent('<button disabled>Text</button>');
+    const locator = page.locator('button');
+    setTimeout(() => {
+      locator.evaluate(e => e.removeAttribute('disabled')).catch(() => {});
+    }, 500);
+    await expect(locator).toBeEnabled();
+  });
+
+  test('eventually with not', async ({ page }) => {
+    await page.setContent('<button>Text</button>');
+    const locator = page.locator('button');
+    setTimeout(() => {
+      locator.evaluate(e => e.setAttribute('disabled', '')).catch(() => {});
+    }, 500);
+    await expect(locator).not.toBeEnabled();
+  });
+
+  test('with not and enabled:false', async ({ page }) => {
+    await page.setContent('<button>Text</button>');
+    const locator = page.locator('button');
+    await expect(locator).not.toBeEnabled({ enabled: false });
+  });
+
+  test('toBeDisabled', async ({ page }) => {
+    await page.setContent('<button disabled>Text</button>');
+    const locator = page.locator('button');
+    await expect(locator).toBeDisabled();
+  });
 });
 
 test('toBeEmpty input', async ({ page }) => {
