@@ -3,15 +3,13 @@ id: events
 title: "Events"
 ---
 
-Playwright allows listening to various types of events happening in the web page, such
-as network requests, creation of child pages, dedicated workers etc. There are several
-ways to subscribe to such events:
+Playwright allows listening to various types of events happening on the web page, such as network requests, creation of child pages, dedicated workers etc. There are several ways to subscribe to such events such as waiting for events or adding or removing event listeners.
 
 ## Waiting for event
 
 Most of the time, scripts will need to wait for a particular event to happen. Below are some of the typical event awaiting patterns.
 
-Wait for a request with the specified url:
+Wait for a request with the specified url using [`method: Page.waitForRequest`]:
 
 ```js
 // Note that Promise.all prevents a race condition
@@ -53,7 +51,7 @@ var request = await waitForRequestTask;
 Console.WriteLine(request.Url);
 ```
 
-Wait for popup window:
+Wait for popup window using [method: Page.waitForEvent]:
 
 ```js
 // Note that Promise.all prevents a race condition
@@ -99,8 +97,7 @@ await popup.GotoAsync("https://wikipedia.org");
 
 ## Adding/removing event listener
 
-Sometimes, events happen in random time and instead of waiting for them, they need to be handled.
-Playwright supports traditional language mechanisms for subscribing and unsubscribing from the events:
+Sometimes, events happen in random time and instead of waiting for them, they need to be handled. Playwright supports traditional language mechanisms for subscribing and unsubscribing from the events:
 
 ```js
 page.on('request', request => console.log(`Request sent: ${request.url()}`));
@@ -191,10 +188,3 @@ await page.evaluate("prompt('Enter a number:')")
 page.once("dialog", lambda dialog: dialog.accept("2021"))
 page.evaluate("prompt('Enter a number:')")
 ```
-
-### API reference
-
-- [Browser]
-- [BrowserContext]
-- [Page]
-- [Worker]
