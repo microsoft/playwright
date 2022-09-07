@@ -10,9 +10,6 @@ With Playwright you can test your app on any browser as well as emulate a real d
 
 Playwright comes with a [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) using [`property: Playwright.devices`] for selected desktop, tablet and mobile devices. It can be used to simulate browser behavior for a specific device such as user agent, screen size, viewport and if it has touch enabled. All tests will run with the specified device parameters. 
 
-If you need to manually create a context you can do so with [`method: Browser.newContext`].
-
-
 ```js tab=js-ts
 // playwright.config.ts
 import { type PlaywrightTestConfig, devices } from '@playwright/test'; // import devices
