@@ -627,4 +627,16 @@ test('should upload large file', async ({ browserType, startRemoteServer, server
   await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
 });
 
+test('should connect when launching', async ({ browserType, startRemoteServer, httpsServer, mode }) => {
+  const remoteServer = await startRemoteServer();
+  (browserType as any)._defaultConnectOptions = {
+    wsEndpoint: remoteServer.wsEndpoint()
+  };
 
+  const browser = await browserType.launch();
+
+  await Promise.all([
+    new Promise(f => browser.on('disconnected', f)),
+    remoteServer.close(),
+  ]);
+});
