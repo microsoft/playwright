@@ -593,7 +593,7 @@ Note that you still need to specify the capital `A` in `Shift-A` to produce the 
 
 ## Upload files
 
-You can select input files for upload using the [`method: Page.setInputFiles`] method. It expects first argument to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input) with the type `"file"`. Multiple files can be passed in the array. If some of the file paths are relative, they are resolved relative to the current working directory. Empty array clears the selected files.
+You can select input files for upload using the [`method: Locator.setInputFiles`] method. It expects first argument to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input) with the type `"file"`. Multiple files can be passed in the array. If some of the file paths are relative, they are resolved relative to the current working directory. Empty array clears the selected files.
 
 ```js
 // Select one file
