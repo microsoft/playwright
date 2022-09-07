@@ -327,7 +327,7 @@ await using var context = await browser.NewContextAsync(new()
 ```
 ## Permissions
 
-Emulate the permissions to show system notifications or geolocation with [`method: BrowserContext.grantPermissions`].
+Allow app to show system notifications.
 
 ```js tab=js-js
 // @ts-check
