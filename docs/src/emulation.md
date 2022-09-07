@@ -490,7 +490,7 @@ await context.ClearPermissionsAsync();
 ```
 ## Geolocation
 
-Create a test with `"geolocation"` permissions granted and geolocation set to a specific area with [`method: BrowserContext.setGeolocation`].
+Create a test with `"geolocation"` permissions granted and geolocation set to a specific area.
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
