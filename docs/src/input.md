@@ -185,7 +185,7 @@ await page.Locator("text=XL").CheckAsync();
 
 ## Select options
 
-Selects one or multiple options in the `<select>` element.
+Selects one or multiple options in the `<select>` element with [`method: Locator.selectOption`].
 You can specify option `value`, or `label` to select. Multiple options can be selected.
 
 ```js
