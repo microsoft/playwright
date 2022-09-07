@@ -23,7 +23,7 @@ import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../
 import { allEngineNames, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
 import { type TextMatcher, elementMatchesText, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher, elementText } from './selectorUtils';
 import { SelectorEvaluatorImpl } from './selectorEvaluator';
-import { isElementVisible, parentElementOrShadowHost } from './domUtils';
+import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost } from './domUtils';
 import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '../../protocol/channels';
@@ -726,7 +726,49 @@ export class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  expectHitTargetParent(hitElement: Element | undefined, targetElement: Element) {
+  expectHitTarget(hitPoint: { x: number, y: number }, targetElement: Element) {
+    const roots: (Document | ShadowRoot)[] = [];
+
+    // Get all component roots leading to the target element.
+    // Go from the bottom to the top to make it work with closed shadow roots.
+    let parentElement = targetElement;
+    while (parentElement) {
+      const root = enclosingShadowRootOrDocument(parentElement);
+      if (!root)
+        break;
+      roots.push(root);
+      if (root.nodeType === 9 /* Node.DOCUMENT_NODE */)
+        break;
+      parentElement = (root as ShadowRoot).host;
+    }
+
+    // Hit target in each component root should point to the next component root.
+    // Hit target in the last component root should point to the target or its descendant.
+    let hitElement: Element | undefined;
+    for (let index = roots.length - 1; index >= 0; index--) {
+      const root = roots[index];
+      // All browsers have different behavior around elementFromPoint and elementsFromPoint.
+      // https://github.com/w3c/csswg-drafts/issues/556
+      // http://crbug.com/1188919
+      const elements: Element[] = root.elementsFromPoint(hitPoint.x, hitPoint.y);
+      const singleElement = root.elementFromPoint(hitPoint.x, hitPoint.y);
+      if (singleElement && elements[0] && parentElementOrShadowHost(singleElement) === elements[0]) {
+        const style = document.defaultView?.getComputedStyle(singleElement);
+        if (style?.display === 'contents') {
+          // Workaround a case where elementsFromPoint misses the inner-most element with display:contents.
+          // https://bugs.chromium.org/p/chromium/issues/detail?id=1342092
+          elements.unshift(singleElement);
+        }
+      }
+      const innerElement = elements[0] as Element | undefined;
+      if (!innerElement)
+        break;
+      hitElement = innerElement;
+      if (index && innerElement !== (roots[index - 1] as ShadowRoot).host)
+        break;
+    }
+
+    // Check whether hit target is the target or its descendant.
     const hitParents: Element[] = [];
     while (hitElement && hitElement !== targetElement) {
       hitParents.push(hitElement);
@@ -734,6 +776,7 @@ export class InjectedScript {
     }
     if (hitElement === targetElement)
       return 'done';
+
     const hitTargetDescription = this.previewNode(hitParents[0] || document.documentElement);
     // Root is the topmost element in the hitTarget's chain that is not in the
     // element's chain. For example, it might be a dialog element that overlays
@@ -791,8 +834,7 @@ export class InjectedScript {
 
     // First do a preliminary check, to reduce the possibility of some iframe
     // intercepting the action.
-    const preliminaryHitElement = this.deepElementFromPoint(document, hitPoint.x, hitPoint.y);
-    const preliminaryResult = this.expectHitTargetParent(preliminaryHitElement, element);
+    const preliminaryResult = this.expectHitTarget(hitPoint, element);
     if (preliminaryResult !== 'done')
       return preliminaryResult.hitTargetDescription;
 
@@ -825,10 +867,8 @@ export class InjectedScript {
 
       // Check that we hit the right element at the first event, and assume all
       // subsequent events will be fine.
-      if (result === undefined && point) {
-        const hitElement = this.deepElementFromPoint(document, point.clientX, point.clientY);
-        result = this.expectHitTargetParent(hitElement, element);
-      }
+      if (result === undefined && point)
+        result = this.expectHitTarget({ x: point.clientX, y: point.clientY }, element);
 
       if (blockAllEvents || (result !== 'done' && result !== undefined)) {
         event.preventDefault();
@@ -867,32 +907,6 @@ export class InjectedScript {
       default: event = new Event(type, eventInit); break;
     }
     node.dispatchEvent(event);
-  }
-
-  deepElementFromPoint(document: Document, x: number, y: number): Element | undefined {
-    let container: Document | ShadowRoot | null = document;
-    let element: Element | undefined;
-    while (container) {
-      // All browsers have different behavior around elementFromPoint and elementsFromPoint.
-      // https://github.com/w3c/csswg-drafts/issues/556
-      // http://crbug.com/1188919
-      const elements: Element[] = container.elementsFromPoint(x, y);
-      const singleElement = container.elementFromPoint(x, y);
-      if (singleElement && elements[0] && parentElementOrShadowHost(singleElement) === elements[0]) {
-        const style = document.defaultView?.getComputedStyle(singleElement);
-        if (style?.display === 'contents') {
-          // Workaround a case where elementsFromPoint misses the inner-most element with display:contents.
-          // https://bugs.chromium.org/p/chromium/issues/detail?id=1342092
-          elements.unshift(singleElement);
-        }
-      }
-      const innerElement = elements[0] as Element | undefined;
-      if (!innerElement || element === innerElement)
-        break;
-      element = innerElement;
-      container = element.shadowRoot;
-    }
-    return element;
   }
 
   previewNode(node: Node): string {
@@ -1034,6 +1048,8 @@ export class InjectedScript {
         elementState = progress.injectedScript.elementState(element, 'disabled');
       } else if (expression === 'to.be.editable') {
         elementState = progress.injectedScript.elementState(element, 'editable');
+      } else if (expression === 'to.be.readonly') {
+        elementState = !progress.injectedScript.elementState(element, 'editable');
       } else if (expression === 'to.be.empty') {
         if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
           elementState = !(element as HTMLInputElement).value;

@@ -305,18 +305,20 @@ steps:
 
 ### CircleCI
 
-Running Playwright on CircleCI requires the following steps:
-
-1. Use the pre-built [Docker image](./docker.md) in your config like so:
+Running Playwright on Circle CI is very similar to running on Github Actions. In order to specify the pre-built Playwright [Docker image](./docker.md) , simply modify the agent definition with `docker:` in your config like so:
 
    ```yml
-   docker:
-     - image: mcr.microsoft.com/playwright:v1.26.0-focal
-   environment:
-     NODE_ENV: development # Needed if playwright is in `devDependencies`
+   executors:
+      pw-focal-development:
+        docker:
+          - image: mcr.microsoft.com/playwright:v1.26.0-focal
+      environment:
+        NODE_ENV: development # Needed if playwright is in `devDependencies`
    ```
 
-1. If you’re using Playwright through Jest, then you may encounter an error spawning child processes:
+Note: When using the docker agent definition, you are specifying the resource class of where playwright runs to the 'medium' tier [here](https://circleci.com/docs/configuration-reference?#docker-execution-environment). The default behavior of Playwright is to set the number of workers to the detected core count (2 in the case of the medium tier). Overriding the number of workers to greater than this number will cause unnecessary timeouts and failures.
+
+Similarly, If you’re using Playwright through Jest, then you may encounter an error spawning child processes:
 
    ```
    [00:00.0]  jest args: --e2e --spec --max-workers=36
@@ -325,6 +327,18 @@ Running Playwright on CircleCI requires the following steps:
    ```
 
    This is likely caused by Jest autodetecting the number of processes on the entire machine (`36`) rather than the number allowed to your container (`2`). To fix this, set `jest --maxWorkers=2` in your test command.
+
+#### Sharding in Circle CI
+
+Sharding in Circle CI is indexed with 0 which means that you will need to override the default parallelism ENV VARS. The following example demonstrates how to run Playwright with a Circle CI Parallelism of 4 by adding 1 to the `CIRCLE_NODE_INDEX` to pass into the `--shard` cli arg.
+
+  ```yml
+    playwright-job-name:
+      executor: pw-focal-development
+      parallelism: 4
+      steps:
+        - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; npm run test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}      
+  ```
 
 ### Jenkins
 
