@@ -260,9 +260,10 @@ using NUnit.Framework;
 
 namespace PlaywrightTests;
 
+[TestFixture]
 public class ExampleTests : PageTest
 {
-    [Test]
+    [PlaywrightTest]
     public async Task StatusBecomesSubmitted()
     {
         await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");

@@ -195,7 +195,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       using Microsoft.Playwright.${this._mode === 'nunit' ? 'NUnit' : 'MSTest'};
       using Microsoft.Playwright;
 
-      ${this._mode === 'nunit' ? '[Parallelizable(ParallelScope.Self)]' : '[TestClass]'}
+      ${this._mode === 'nunit' ? `[Parallelizable(ParallelScope.Self)]
+      [TestFixture]` : '[TestClass]'}
       public class Tests : PageTest
       {`);
     const formattedContextOptions = formatContextOptions(options.contextOptions, options.deviceName);
@@ -206,7 +207,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       }`);
       formatter.newLine();
     }
-    formatter.add(`    [${this._mode === 'nunit' ? 'Test' : 'TestMethod'}]
+    formatter.add(`    [${this._mode === 'nunit' ? 'PlaywrightTest' : 'PlaywrightTestMethod'}]
     public async Task MyTest()
     {`);
     return formatter.format();
