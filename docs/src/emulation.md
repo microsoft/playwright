@@ -259,7 +259,7 @@ await using var context = await browser.NewContextAsync(new()
 ```
 ## Locale & Timezone
 
-Emulate the user Locale and Timezone which can be set globally for all tests and then overridden for particular tests.
+Emulate the user Locale and Timezone which can be set globally for all tests in the config and then overridden for particular tests.
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
