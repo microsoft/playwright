@@ -124,7 +124,7 @@ class Program
 
 ## Viewport
 
-The viewport is included in the device but you can override it for some tests with [`method: Page.setViewportSize`].
+The viewport is included in the device but you can override it for some tests with [`method: Test.use`] or [`method: Page.setViewportSize`].
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
