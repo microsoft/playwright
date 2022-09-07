@@ -7,12 +7,9 @@ Playwright allows listening to various types of events happening in the web page
 as network requests, creation of child pages, dedicated workers etc. There are several
 ways to subscribe to such events:
 
-<!-- TOC -->
-
 ## Waiting for event
 
-Most of the time, scripts will need to wait for a particular event to happen. Below are some of the typical event
-awaiting patterns.
+Most of the time, scripts will need to wait for a particular event to happen. Below are some of the typical event awaiting patterns.
 
 Wait for a request with the specified url:
 
@@ -173,7 +170,7 @@ await page.GotoAsync("https://www.openstreetmap.org/");
 ## Adding one-off listeners
 * langs: js, python, java
 
-If certain event needs to be handled once, there is a convenience API for that:
+If a certain event needs to be handled once, there is a convenience API for that:
 
 ```js
 page.once('dialog', dialog => dialog.accept("2021"));

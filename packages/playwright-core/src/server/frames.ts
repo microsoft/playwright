@@ -1706,8 +1706,8 @@ export class Frame extends SdkObject {
       localStorage.clear();
 
       // Clean Service Workers
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map(r => r.unregister()));
+      const registrations = navigator.serviceWorker ? await navigator.serviceWorker.getRegistrations() : [];
+      await Promise.all(registrations.map(r => r.unregister())).catch(() => {});
 
       // Clean IndexedDB
       for (const db of await indexedDB.databases?.() || []) {
@@ -1715,7 +1715,7 @@ export class Frame extends SdkObject {
         if (db.name)
           indexedDB.deleteDatabase(db.name!);
       }
-    });
+    }).catch(() => {});
   }
 }
 
