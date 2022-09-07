@@ -8,7 +8,7 @@ Playwright allows overriding various parameters such as `viewportSize`, `deviceS
 ## Devices
 * langs: js, csharp, python
 
-Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a specific mobile device. All pages created in the context will share the same device parameters.
+Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a specific mobile device. All tests will run with the specified device parameters.
 
 
 ```js tab=js-ts
