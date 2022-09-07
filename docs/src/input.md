@@ -1,6 +1,6 @@
 ---
 id: input
-title: "Performing actions"
+title: "Performing Actions"
 ---
 
 Playwright can interact with HTML Input elements such as text inputs, checkboxes, radio buttons, select options, mouse clicks, type characters, keys and shortcuts as well as upload files and focus elements.
@@ -228,12 +228,6 @@ await page.Locator("select#colors").SelectOptionAsync(new SelectOptionValue { La
 await page.Locator("select#colors").SelectOptionAsync(new[] { "blue", "green", "red" });
 ```
 
-#### API reference
-
-- [`method: Locator.selectOption`]
-- [`method: Page.selectOption`]
-- [`method: Frame.selectOption`]
-
 ## Mouse click
 
 Performs a simple human click.
@@ -394,21 +388,6 @@ page.locator('button#submit').dispatch_event('click')
 ```csharp
 await page.Locator("button#submit").DispatchEventAsync("click");
 ```
-#### API reference
-
-- [`method: Locator.click`]
-- [`method: Page.click`]
-- [`method: Frame.click`]
-- [`method: Locator.dblclick`]
-- [`method: Page.dblclick`]
-- [`method: Frame.dblclick`]
-- [`method: Locator.hover`]
-- [`method: Page.hover`]
-- [`method: Frame.hover`]
-- [`method: Locator.dispatchEvent`]
-- [`method: Page.dispatchEvent`]
-- [`method: Frame.dispatchEvent`]
-
 
 ## Type characters
 
@@ -444,13 +423,6 @@ This method will emit all the necessary keyboard events, with all the `keydown`,
 :::note
 Most of the time, [`method: Page.fill`] will just work. You only need to type characters if there is special keyboard handling on the page.
 :::
-
-#### API reference
-
-- [`method: Locator.type`]
-- [`method: Page.type`]
-- [`method: Frame.type`]
-- [`method: Keyboard.type`]
 
 ## Keys and shortcuts
 
@@ -567,14 +539,6 @@ await page.Locator("#name").PressAsync("Shift+ArrowLeft");
 Shortcuts such as `"Control+o"` or `"Control+Shift+T"` are supported as well. When specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
 
 Note that you still need to specify the capital `A` in `Shift-A` to produce the capital character. `Shift-a` produces a lower-case one as if you had the `CapsLock` toggled.
-
-
-#### API reference
-
-- [`method: Locator.press`]
-- [`method: Page.press`]
-- [`method: Frame.press`]
-- [`method: Keyboard.press`]
 
 ## Upload files
 
@@ -711,13 +675,6 @@ var fileChooser = page.RunAndWaitForFileChooserAsync(async () =>
 await fileChooser.SetFilesAsync("myfile.pdf");
 ```
 
-#### API reference
-
-- [FileChooser]
-- [`method: Locator.setInputFiles`]
-- [`method: Page.setInputFiles`]
-- [`method: Frame.setInputFiles`]
-
 ## Focus element
 
 For the dynamic pages that handle focus events, you can focus the given element with [`method: Locator.focus`].
@@ -741,9 +698,3 @@ page.locator('input#name').focus()
 ```csharp
 await page.Locator("input#name").FocusAsync();
 ```
-
-#### API reference
-
-- [`method: Locator.focus`]
-- [`method: Page.focus`]
-- [`method: Frame.focus`]
