@@ -3,8 +3,6 @@ id: test-advanced
 title: "Advanced: configuration"
 ---
 
-<!-- TOC -->
-
 ## Configuration object
 
 Configuration file exports a single [TestConfig] object. See [TestConfig] properties for available configuration options.

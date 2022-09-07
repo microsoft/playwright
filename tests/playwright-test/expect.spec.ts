@@ -222,6 +222,13 @@ test('should propose only the relevant matchers when custom expect matcher class
       await test.expect(page).not.toBeEnabled();
 
       await test.expect(page.locator('foo')).toBeEnabled();
+      await test.expect(page.locator('foo')).toBeEnabled({ enabled: false });
+      await test.expect(page.locator('foo')).not.toBeEnabled({ enabled: true });
+      // @ts-expect-error
+      await test.expect(page.locator('foo')).toBeEnabled({ unknown: false });
+      // @ts-expect-error
+      await test.expect(page.locator('foo')).toBeEnabled({ enabled: 'foo' });
+
       await test.expect(page.locator('foo')).toBe(true);
       // @ts-expect-error
       await test.expect(page.locator('foo')).toHaveURL('https://example.com');
@@ -235,6 +242,12 @@ test('should propose only the relevant matchers when custom expect matcher class
       await test.expect(res as any).toHaveURL('https://example.com');
       // @ts-expect-error
       await test.expect(123).toHaveURL('https://example.com');
+
+      await test.expect(page.locator('foo')).toBeChecked();
+      await test.expect(page.locator('foo')).not.toBeChecked({ checked: true });
+
+      await test.expect(page.locator('foo')).not.toBeEditable();
+      await test.expect(page.locator('foo')).toBeEditable({ editable: false });
     });
     `
   });

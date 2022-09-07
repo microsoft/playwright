@@ -3,10 +3,6 @@ id: test-timeouts
 title: "Timeouts"
 ---
 
-<!-- TOC -->
-
-## Overview
-
 Playwright Test has multiple configurable timeouts for various tasks.
 
 |Timeout    |Default             |Description                      |
