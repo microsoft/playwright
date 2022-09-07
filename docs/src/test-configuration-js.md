@@ -74,7 +74,7 @@ These are commonly used options for various scenarios. You usually set them glob
 - `storageState` - Populates context with given storage state. Useful for easy authentication, [learn more](./auth.md).
 - `colorScheme` - Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
 - `geolocation` - Context geolocation.
-- `locale` - Emulates the user locale, for example `en-GB`, `de-DE`, etc.
+- `locale` - [Emulates](./emulation.md) the user locale, for example `en-GB`, `de-DE`, etc.
 - `permissions` - A list of permissions to grant to all pages in the context.
 - `timezoneId` - Changes the timezone of the context.
 
