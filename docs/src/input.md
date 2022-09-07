@@ -1,6 +1,6 @@
 ---
 id: input
-title: "Input"
+title: "Performing actions"
 ---
 
 Playwright can interact with HTML Input elements such as text inputs, checkboxes, radio buttons, select options, mouse clicks, type characters, keys and shortcuts as well as upload files and focus elements.
@@ -93,16 +93,9 @@ await page.Locator("#local").FillAsync("2020-03-02T05:15");
 await page.Locator("text=First Name").FillAsync("Peter");
 ```
 
-#### API reference
-
-- [`method: Locator.fill`]
-- [`method: Page.fill`]
-- [`method: Frame.fill`]
-
-
 ## Checkboxes and radio buttons
 
-This is the easiest way to check and uncheck a checkbox or a radio button. This method can be used with `input[type=checkbox]`, `input[type=radio]`, `[role=checkbox]` or `label` associated with checkbox or radio button.
+Using [method: Locator.setChecked] is the easiest way to check and uncheck a checkbox or a radio button. This method can be used with `input[type=checkbox]`, `input[type=radio]`, `[role=checkbox]` or `label` associated with checkbox or radio button.
 
 ```js
 // Check the checkbox
@@ -173,15 +166,6 @@ await page.Locator("#subscribe-label").UncheckAsync();
 // Select the radio button
 await page.Locator("text=XL").CheckAsync();
 ```
-
-#### API reference
-
-- [`method: Locator.check`]
-- [`method: Locator.isChecked`]
-- [`method: Locator.uncheck`]
-- [`method: Page.check`]
-- [`method: Page.isChecked`]
-- [`method: Page.uncheck`]
 
 ## Select options
 
@@ -388,7 +372,7 @@ await page.Locator("button#submit").ClickAsync(new() { Force = true });
 
 #### Programmatic click
 
-If you are not interested in testing your app under the real conditions and want to simulate the click by any means possible, you can trigger the [`HTMLElement.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click) behavior via simply dispatching a click event on the element:
+If you are not interested in testing your app under the real conditions and want to simulate the click by any means possible, you can trigger the [`HTMLElement.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click) behavior via simply dispatching a click event on the element with [method: Locator.dispatchEvent]:
 
 ```js
 await page.locator('button#submit').dispatchEvent('click');
@@ -427,7 +411,7 @@ await page.Locator("button#submit").DispatchEventAsync("click");
 
 ## Type characters
 
-Type into the field character by character, as if it was a user with a real keyboard.
+Type into the field character by character, as if it was a user with a real keyboard with [method: Locator.type].
 
 ```js
 // Type character by character
@@ -524,7 +508,7 @@ await page.Locator("#name").PressAsync("Control+ArrowRight");
 await page.Locator("#value").PressAsync("$");
 ```
 
-This method focuses the selected element and produces a single keystroke. It accepts the logical key names that are emitted in the [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) property of the keyboard events:
+The [method: Locator.press] method focuses the selected element and produces a single keystroke. It accepts the logical key names that are emitted in the [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) property of the keyboard events:
 
 ```
 Backquote, Minus, Equal, Backslash, Backspace, Tab, Delete, Escape,
