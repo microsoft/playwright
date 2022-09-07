@@ -9,11 +9,12 @@ Tests written with Playwright execute in isolated clean-slate environments calle
 
 > Note: This guide covers cookie/token-based authentication (logging in via the app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) use [`method: Browser.newContext`].
 
-## Sign in with beforeEach
-* langs: js
+## Automate logging in
 
-This is the simplest way where each test signs in inside the `beforeEach` hook. It also is the
-least efficient one in case the log in process has high latencies.
+The Playwright API can [automate interaction](./input.md) from a login form.
+
+The following example automates logging into GitHub. Once these steps are executed,
+the browser context will be authenticated.
 
 ```js tab=js-ts
 import { test } from '@playwright/test';
@@ -57,14 +58,126 @@ test('second', async ({ page }) => {
 });
 ```
 
+```js tab=js-library
+const page = await context.newPage();
+await page.goto('https://github.com/login');
+
+// Interact with login form
+await page.locator('text=Login').click();
+await page.locator('input[name="login"]').fill(USERNAME);
+await page.locator('input[name="password"]').fill(PASSWORD);
+await page.locator('text=Submit').click();
+// Continue with the test
+```
+
+```java
+Page page = context.newPage();
+page.navigate("https://github.com/login");
+// Interact with login form
+page.locator("text=Login").click();
+page.locator("input[name='login']").fill(USERNAME);
+page.locator("input[name='password']").fill(PASSWORD);
+page.locator("text=Submit").click();
+// Continue with the test
+```
+
+```python async
+page = await context.new_page()
+await page.goto('https://github.com/login')
+
+# Interact with login form
+await page.locator('text=Login').click()
+await page.locator('input[name="login"]').fill(USERNAME)
+await page.locator('input[name="password"]').fill(PASSWORD)
+await page.locator('text=Submit').click()
+# Continue with the test
+```
+
+```python sync
+page = context.new_page()
+page.goto('https://github.com/login')
+
+# Interact with login form
+page.locator('text=Login').click()
+page.locator('input[name="login"]').fill(USERNAME)
+page.locator('input[name="password"]').fill(PASSWORD)
+page.locator('text=Submit').click()
+# Continue with the test
+```
+
+```csharp
+var page = await context.NewPageAsync();
+await page.GotoAsync("https://github.com/login");
+// Interact with login form
+await page.Locator("text=Login").ClickAsync();
+await page.Locator("input[name='login']").FillAsync(USERNAME);
+await page.Locator("input[name='password']").FillAsync(PASSWORD);
+await page.Locator("text=Submit").ClickAsync();
+// Continue with the test
+```
+
 Redoing login for every test can slow down test execution. To mitigate that, reuse
 existing authentication state instead.
 
+## Reuse signed in state
+* langs: java, csharp, python
+
+Playwright provides a way to reuse the signed-in state in the tests. That way you can log
+in only once and then skip the log in step for all of the tests.
+
+Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). Playwright provides [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state) method that can be used to retrieve storage state from authenticated contexts and then create new contexts with prepopulated state.
+
+Cookies and local storage state can be used across different browsers. They depend on your application's authentication model: some apps might require both cookies and local storage.
+
+The following code snippet retrieves state from an authenticated context and creates a new context with that state.
+
+```java
+// Save storage state into the file.
+context.storageState(new BrowserContext.StorageStateOptions().setPath(Paths.get("state.json")));
+
+// Create a new context with the saved storage state.
+BrowserContext context = browser.newContext(
+  new Browser.NewContextOptions().setStorageStatePath(Paths.get("state.json")));
+```
+
+```python async
+# Save storage state into the file.
+storage = await context.storage_state(path="state.json")
+
+# Create a new context with the saved storage state.
+context = await browser.new_context(storage_state="state.json")
+```
+
+```python sync
+# Save storage state into the file.
+storage = context.storage_state(path="state.json")
+
+# Create a new context with the saved storage state.
+context = browser.new_context(storage_state="state.json")
+```
+
+```csharp
+// Save storage state into the file.
+await context.StorageStateAsync(new()
+{
+    Path = "state.json"
+});
+
+// Create a new context with the saved storage state.
+var context = await browser.NewContextAsync(new()
+{
+    StorageStatePath = "state.json"
+});
+```
 ## Reuse signed in state
 * langs: js
 
 Playwright provides a way to reuse the signed-in state in the tests. That way you can log
 in only once and then skip the log in step for all of the tests.
+
+Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). Playwright provides [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state) method that can be used to retrieve storage state from authenticated contexts and then create new contexts with prepopulated state.
+
+Cookies and local storage state can be used across different browsers. They depend on your application's authentication model: some apps might require both cookies and local storage.
 
 Create a new global setup script:
 
@@ -153,8 +266,7 @@ test('test', async ({ page }) => {
 ```
 
 :::note
-If you can log in once and commit the `storageState.json` into the repository, you won't need the global
-setup at all, just specify the `storageState.json` in Playwright Config as above and it'll be picked up.
+If you can log in once and commit the `storageState.json` into the repository, you won't need the global setup at all, just specify the `storageState.json` in Playwright Config as above and it'll be picked up.
 
 However, periodically, you may need to update the `storageState.json` file if your app requires you to re-authenticate after some amount of time. For example, if your app prompts you to sign in every week even if you're on the same computer/browser, you'll need to update `storageState.json` at least this often.
 :::
@@ -618,200 +730,9 @@ pass it an existing logged in state.
 :::
 
 
-## Playwright Test vs. Library
-* langs: js
-
-:::caution
-This guide is for [Playwright Library](./library.md), if you are using Playwright Test (`@playwright/test`) see [here](./test-auth.md).
-:::
-
-## Automate logging in
-
-The Playwright API can automate interaction with a login form. See
-[Input guide](./input.md) for more details.
-
-The following example automates login on GitHub. Once these steps are executed,
-the browser context will be authenticated.
-
-```js
-const page = await context.newPage();
-await page.goto('https://github.com/login');
-
-// Interact with login form
-await page.locator('text=Login').click();
-await page.locator('input[name="login"]').fill(USERNAME);
-await page.locator('input[name="password"]').fill(PASSWORD);
-await page.locator('text=Submit').click();
-// Verify app is logged in
-```
-
-```java
-Page page = context.newPage();
-page.navigate("https://github.com/login");
-// Interact with login form
-page.locator("text=Login").click();
-page.locator("input[name='login']").fill(USERNAME);
-page.locator("input[name='password']").fill(PASSWORD);
-page.locator("text=Submit").click();
-// Verify app is logged in
-```
-
-```python async
-page = await context.new_page()
-await page.goto('https://github.com/login')
-
-# Interact with login form
-await page.locator('text=Login').click()
-await page.locator('input[name="login"]').fill(USERNAME)
-await page.locator('input[name="password"]').fill(PASSWORD)
-await page.locator('text=Submit').click()
-# Verify app is logged in
-```
-
-```python sync
-page = context.new_page()
-page.goto('https://github.com/login')
-
-# Interact with login form
-page.locator('text=Login').click()
-page.locator('input[name="login"]').fill(USERNAME)
-page.locator('input[name="password"]').fill(PASSWORD)
-page.locator('text=Submit').click()
-# Verify app is logged in
-```
-
-```csharp
-var page = await context.NewPageAsync();
-await page.GotoAsync("https://github.com/login");
-// Interact with login form
-await page.Locator("text=Login").ClickAsync();
-await page.Locator("input[name='login']").FillAsync(USERNAME);
-await page.Locator("input[name='password']").FillAsync(PASSWORD);
-await page.Locator("text=Submit").ClickAsync();
-// Verify app is logged in
-```
-
-These steps can be executed for every browser context. However, redoing login
-for every test can slow down test execution. To prevent that, we will reuse
-existing authentication state in new browser contexts.
-
-## Reuse authentication state
-
-Web apps use cookie-based or token-based authentication, where authenticated
-state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
-or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage).
-Playwright provides [`method: BrowserContext.storageState`] method that can be used to retrieve storage state from authenticated contexts and then create new contexts with prepopulated state.
-
-Cookies and local storage state can be used across different browsers. They depend
-on your application's authentication model: some apps might require both cookies
-and local storage.
-
-The following code snippet retrieves state from an authenticated context and
-creates a new context with that state.
-
-```js
-// Save storage state into the file.
-await context.storageState({ path: 'state.json' });
-
-// Create a new context with the saved storage state.
-const context = await browser.newContext({ storageState: 'state.json' });
-```
-
-```java
-// Save storage state into the file.
-context.storageState(new BrowserContext.StorageStateOptions().setPath(Paths.get("state.json")));
-
-// Create a new context with the saved storage state.
-BrowserContext context = browser.newContext(
-  new Browser.NewContextOptions().setStorageStatePath(Paths.get("state.json")));
-```
-
-```python async
-# Save storage state into the file.
-storage = await context.storage_state(path="state.json")
-
-# Create a new context with the saved storage state.
-context = await browser.new_context(storage_state="state.json")
-```
-
-```python sync
-# Save storage state into the file.
-storage = context.storage_state(path="state.json")
-
-# Create a new context with the saved storage state.
-context = browser.new_context(storage_state="state.json")
-```
-
-```csharp
-// Save storage state into the file.
-await context.StorageStateAsync(new()
-{
-    Path = "state.json"
-});
-
-// Create a new context with the saved storage state.
-var context = await browser.NewContextAsync(new()
-{
-    StorageStatePath = "state.json"
-});
-```
-
-### Code generation
-* langs: js
-
-Logging in via the UI and then reusing authentication state can be combined to
-implement **login once and run multiple scenarios**. The lifecycle looks like:
-
-1. Run tests (for example, with `npm run test`).
-1. Login via UI and retrieve authentication state.
-    * In Jest, this can be executed in [`globalSetup`](https://jestjs.io/docs/en/configuration#globalsetup-string).
-1. In each test, load authentication state in `beforeEach` or `beforeAll` step.
-
-This approach will also **work in CI environments**, since it does not rely on any external state.
-
-### Code generation
-* langs: python
-
-Logging in via the UI and then reusing authentication state can be combined to implement **login once and run multiple scenarios**. The lifecycle looks like:
-
-1. Run tests (for example, with `pytest`).
-1. Login via UI and retrieve authentication state.
-1. In each test, load authentication state using `autouse=True` fixture with `scope=function`.
-
-This approach will also **work in CI environments**, since it does not rely on any external state.
-
-### Code generation
-* langs: csharp
-
-Logging in via the UI and then reusing authentication state can be combined to implement **login once and run multiple scenarios**. The lifecycle looks like:
-
-1. Run tests (for example, with `dotnet test`).
-1. Login via UI and retrieve authentication state.
-1. In each test, load authentication state in `SetUp`.
-
-This approach will also **work in CI environments**, since it does not rely on any external state.
-
-### Code generation
-* langs: java
-
-Logging in via the UI and then reusing authentication state can be combined to implement **login once and run multiple scenarios**. The lifecycle looks like:
-
-1. Run tests (for example, with `mvn test`).
-1. Login via UI and retrieve authentication state.
-1. In each test, load authentication state in `@beforeEach` or `@beforeAll` step.
-
-This approach will also **work in CI environments**, since it does not rely on any external state.
-
-### API reference
-- [`method: BrowserContext.storageState`]
-- [`method: Browser.newContext`]
-
 ## Session storage
 
-Rarely, [session storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) is used for storing information
-associated with the logged-in state. Session storage is specific to a particular domain and is not persisted across page loads.
-Playwright does not provide API to persist session storage, but the following snippet can be used to
-save/load session storage.
+Rarely, [session storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) is used for storing information associated with the logged-in state. Session storage is specific to a particular domain and is not persisted across page loads. Playwright does not provide API to persist session storage, but the following snippet can be used to save/load session storage.
 
 ```js
 // Get session storage and store as env variable
@@ -900,12 +821,6 @@ await context.AddInitScriptAsync(@"(storage => {
   })('" + loadedSessionStorage + "')");
 ```
 
-### API reference
-- [`method: BrowserContext.storageState`]
-- [`method: Browser.newContext`]
-- [`method: Page.evaluate`]
-- [`method: BrowserContext.addInitScript`]
-
 ## Multi-factor authentication
 
 Accounts with multi-factor authentication (MFA) cannot be fully automated, and need
@@ -983,12 +898,21 @@ class Program
 }
 ```
 
-### Lifecycle
+#### Lifecycle
 
 1. Create a user data directory on disk.
 1. Launch a persistent context with the user data directory and login the MFA account.
 1. Reuse user data directory to run automation scenarios.
 
-### API reference
-- [BrowserContext]
-- [`method: BrowserType.launchPersistentContext`]
+## Manually Reuse Signed in State
+* langs: js
+
+The following code snippet retrieves state from an authenticated context and creates a new context with that state.
+
+```js 
+// Save storage state into the file.
+await context.storageState({ path: 'state.json' });
+
+// Create a new context with the saved storage state.
+const context = await browser.newContext({ storageState: 'state.json' });
+```
