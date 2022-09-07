@@ -41,7 +41,6 @@ const config = {
     {
       name: 'Pixel 4',
       use: {
-        browserName: 'chromium',
         ...devices['Pixel 4'],
       },
     },
