@@ -375,7 +375,7 @@ context = browser.new_context(
 )
 ```
 
-Allow test to show current location.
+Allow test to request current location.
 
 ```js tab=js-js
 // @ts-check
