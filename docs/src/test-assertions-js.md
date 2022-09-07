@@ -3,8 +3,7 @@ id: test-assertions
 title: "Assertions"
 ---
 
-Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. This library provides
-a lot of matchers like `toEqual`, `toContain`, `toMatch`, `toMatchSnapshot` and many more:
+Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. This library provides a lot of matchers like `toEqual`, `toContain`, `toMatch`, `toMatchSnapshot` and many more:
 
 ```js
 expect(success).toBeTruthy();
@@ -17,14 +16,9 @@ the expected condition is met. Consider the following example:
 await expect(page.locator('.status')).toHaveText('Submitted');
 ```
 
-Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"`
-text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is
-reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value
-in test config.
+Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"` text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value in test config.
 
 By default, the timeout for assertions is set to 5 seconds. Learn more about [various timeouts](./test-timeouts.md).
-
-<!-- TOC -->
 
 ## Negating Matchers
 

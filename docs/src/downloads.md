@@ -3,13 +3,9 @@ id: downloads
 title: "Downloads"
 ---
 
-:::note
-For uploading files, see the [uploading files](./input.md#upload-files) section.
-:::
 
-For every attachment downloaded by the page, [`event: Page.download`] event is emitted. All these attachments are going
-to be downloaded into a temporary folder. You can obtain the download url, file system path and payload stream using
-the [Download] object from the event.
+
+For every attachment downloaded by the page, [`event: Page.download`] event is emitted. All these attachments are downloaded into a temporary folder. You can obtain the download url, file system path and payload stream using the [Download] object from the event.
 
 You can specify where to persist downloaded files using the [`option: downloadsPath`] option in [`method: BrowserType.launch`].
 
@@ -107,9 +103,8 @@ page.on("download", lambda download: print(download.path()))
 page.Download += (sender, download) => Console.WriteLine(download.Url);
 ```
 
-Note that handling the event forks the control flow and makes script harder to follow. Your scenario might end while you
-are downloading a file since your main control flow is not awaiting for this operation to resolve.
+Note that handling the event forks the control flow and makes the script harder to follow. Your scenario might end while you are downloading a file since your main control flow is not awaiting for this operation to resolve.
 
-### API reference
-- [Download]
-- [`event: Page.download`]
+:::note
+For uploading files, see the [uploading files](./input.md#upload-files) section.
+:::
