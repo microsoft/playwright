@@ -87,7 +87,6 @@ const context = await browser.newContext({
 });
 ```
 
-Saved video files will appear in the specified folder. They all have generated unique names.
 For the multi-page scenarios, you can access the video file associated with the page via the
 [`method: Page.video`].
 
@@ -103,7 +102,7 @@ Note that the video is only available after the page or browser context is close
 ## Record video
 * langs: python, java, csharp
 
-Playwright can record videos for all pages in a [browser context](./browser-contexts.md). Videos are saved upon context closure, so make sure to await [`method: BrowserContext.close`].
+Playwright can record videos for all pages in a [browser context](./browser-contexts.md). You must set up video recording in [`method: Browser.newContext`]. Videos are saved upon context closure, so make sure to await [`method: BrowserContext.close`].
 
 ```js
 const context = await browser.newContext({ recordVideo: { dir: 'videos/' } });
