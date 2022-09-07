@@ -63,7 +63,6 @@ const context = await browser.newContext({
 });
 ```
 
-Saved video files will appear in the specified folder. They all have generated unique names.
 For the multi-page scenarios, you can access the video file associated with the page via the
 [`method: Page.video`].
 
