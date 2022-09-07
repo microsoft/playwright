@@ -87,11 +87,19 @@ const context = await browser.newContext({
 });
 ```
 
-For the multi-page scenarios, you can access the video file associated with the page via the
+For multi-page scenarios, you can access the video file associated with the page via the
 [`method: Page.video`].
 
 
-```js
+```js tab=js-js
+const path = await page.video().path();
+```
+
+```js tab=js-ts
+const path = await page.video().path();
+```
+
+```js tab=js-library
 const path = await page.video().path();
 ```
 
@@ -102,7 +110,7 @@ Note that the video is only available after the page or browser context is close
 ## Record video
 * langs: python, java, csharp
 
-Playwright can record videos for all pages in a [browser context](./browser-contexts.md). You must set up video recording in [`method: Browser.newContext`]. Videos are saved upon context closure, so make sure to await [`method: BrowserContext.close`].
+Videos are saved upon [browser context](./browser-contexts.md) closure at the end of a test. If you create a browser context manually, make sure to await [`method: BrowserContext.close`].
 
 ```js
 const context = await browser.newContext({ recordVideo: { dir: 'videos/' } });
