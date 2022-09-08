@@ -685,6 +685,8 @@ You don't need it for JavaScript.
 
 ```js
 // global.d.ts
+export {};
+
 declare global {
  namespace PlaywrightTest {
     interface Matchers<R, T> {
