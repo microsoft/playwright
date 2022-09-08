@@ -50,9 +50,11 @@ test.describe('installed image', () => {
     });
   });
 
-  test('make sure it tells to run `npx playwright docker start`', async ({ exec }) => {
+  test('make sure it auto-starts container', async ({ exec }) => {
     await exec('npm i --foreground-scripts @playwright/test');
-    await exec('npx playwright docker test docker.spec.js --grep userAgent');
+    await exec('npx playwright docker stop');
+    const result = await exec('npx playwright docker test docker.spec.js --grep platform');
+    expect(result).toContain('@chromium Linux');
   });
 
   test.describe('running container', () => {
