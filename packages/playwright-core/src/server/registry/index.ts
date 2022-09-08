@@ -748,7 +748,7 @@ export class Registry {
 
     const downloadFileName = `playwright-download-${descriptor.name}-${hostPlatform}-${descriptor.revision}.zip`;
     await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURLs, downloadFileName).catch(e => {
-      throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
+      throw new Error(`Failed to download ${title}, caused by\n${e.stack}\nIf this persists, please check here for a possible outage: https://azure.status.microsoft/en-us/status`);
     });
     await fs.promises.writeFile(markerFilePath(descriptor.dir), '');
   }
