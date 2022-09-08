@@ -38,6 +38,7 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
   browserMajorVersion: [Number(chromiumVersion.split('.')[0]), { scope: 'worker' }],
   isAndroid: [false, { scope: 'worker' }],
   isElectron: [true, { scope: 'worker' }],
+  isWebView2: [false, { scope: 'worker' }],
 
   electronApp: async ({ playwright }, run) => {
     // This env prevents 'Electron Security Policy' console message.
