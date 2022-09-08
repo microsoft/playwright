@@ -321,7 +321,7 @@ var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless
 
 // Setup context however you like.
 var context = await browser.NewContextAsync(); // Pass any options
-await context.RouteAsync('**/*', route => route.ContinueAsync());
+await context.RouteAsync("**/*", route => route.ContinueAsync());
 
 // Pause the page, and start recording manually.
 var page = await context.NewPageAsync();
