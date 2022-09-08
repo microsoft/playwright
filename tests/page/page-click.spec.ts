@@ -70,7 +70,9 @@ it('should click on a span with an inline element inside', async ({ page }) => {
   expect(await page.evaluate('CLICKED')).toBe(42);
 });
 
-it('should not throw UnhandledPromiseRejection when page closes', async ({ page }) => {
+it('should not throw UnhandledPromiseRejection when page closes', async ({ page, isWebView2 }) => {
+  it.skip(isWebView2, 'Page.close() is not supported in WebView2');
+
   await Promise.all([
     page.close(),
     page.mouse.click(1, 2),

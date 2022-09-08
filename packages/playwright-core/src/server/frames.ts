@@ -1698,16 +1698,20 @@ export class Frame extends SdkObject {
     }
   }
 
-  async clearStorageForCurrentOriginBestEffort() {
+  async resetStorageForCurrentOriginBestEffort(newStorage: channels.OriginStorage | undefined) {
     const context = await this._utilityContext();
-    await context.evaluate(async () => {
-      // Clean DOMStorage
+    await context.evaluate(async ({ ls }) => {
+      // Clean DOMStorage.
       sessionStorage.clear();
       localStorage.clear();
 
+      // Add new DOM Storage values.
+      for (const entry of ls || [])
+        localStorage[entry.name] = entry.value;
+
       // Clean Service Workers
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map(r => r.unregister()));
+      const registrations = navigator.serviceWorker ? await navigator.serviceWorker.getRegistrations() : [];
+      await Promise.all(registrations.map(r => r.unregister())).catch(() => {});
 
       // Clean IndexedDB
       for (const db of await indexedDB.databases?.() || []) {
@@ -1715,7 +1719,7 @@ export class Frame extends SdkObject {
         if (db.name)
           indexedDB.deleteDatabase(db.name!);
       }
-    });
+    }, { ls: newStorage?.localStorage }).catch(() => {});
   }
 }
 

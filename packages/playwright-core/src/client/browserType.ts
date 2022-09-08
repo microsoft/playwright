@@ -49,6 +49,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   // Instrumentation.
   _defaultContextOptions?: BrowserContextOptions;
   _defaultLaunchOptions?: LaunchOptions;
+  _defaultConnectOptions?: ConnectOptions;
   _onDidCreateContext?: (context: BrowserContext) => Promise<void>;
   _onWillCloseContext?: (context: BrowserContext) => Promise<void>;
 
@@ -67,6 +68,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   }
 
   async launch(options: LaunchOptions = {}): Promise<Browser> {
+    if (this._defaultConnectOptions)
+      return await this._connectInsteadOfLaunching();
+
     const logger = options.logger || this._defaultLaunchOptions?.logger;
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
@@ -81,6 +85,18 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     browser._logger = logger;
     browser._setBrowserType(this);
     return browser;
+  }
+
+  private async _connectInsteadOfLaunching(): Promise<Browser> {
+    const connectOptions = this._defaultConnectOptions!;
+    return this._connect(connectOptions.wsEndpoint, {
+      headers: {
+        'x-playwright-browser': this.name(),
+        'x-playwright-launch-options': JSON.stringify(this._defaultLaunchOptions || {}),
+        ...connectOptions.headers,
+      },
+      timeout: connectOptions.timeout ?? 3 * 60 * 1000, // 3 minutes
+    });
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<api.BrowserServer> {

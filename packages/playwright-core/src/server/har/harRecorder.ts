@@ -45,6 +45,7 @@ export class HarRecorder {
       content,
       slimMode: options.mode === 'minimal',
       includeTraceInfo: false,
+      recordRequestOverrides: true,
       waitForContentOnStop: true,
       skipScripts: false,
       urlFilter: urlFilterRe ?? options.urlGlob,

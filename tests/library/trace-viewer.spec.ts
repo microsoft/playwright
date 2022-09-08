@@ -57,6 +57,7 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
 
   await Promise.all([
     page.waitForNavigation(),
+    page.waitForResponse(server.PREFIX + '/frames/frame.html'),
     page.waitForTimeout(200).then(() => page.goto(server.PREFIX + '/frames/frame.html'))
   ]);
   await page.setViewportSize({ width: 500, height: 600 });
@@ -88,6 +89,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.evaluate/,
     /page.click"Click"/,
     /page.waitForNavigation/,
+    /page.waitForResponse/,
     /page.waitForTimeout/,
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
     /page.setViewportSize/,
@@ -684,5 +686,26 @@ test('should include requestUrl in route.abort', async ({ page, runAndTrace, ser
   await traceViewer.page.locator('.tab-label', { hasText: 'Call' }).click();
   const callLine = traceViewer.page.locator('.call-line');
   await expect(callLine.locator('text=requestUrl')).toContainText('http://test.com');
+});
+
+test('should serve overridden request', async ({ page, runAndTrace, server }) => {
+  server.setRoute('/custom.css', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/css',
+    });
+    res.end(`body { background: red }`);
+  });
+  await page.route('**/one-style.css', route => {
+    route.continue({
+      url: server.PREFIX + '/custom.css'
+    });
+  });
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/one-style.html');
+  });
+  // Render snapshot, check expectations.
+  const snapshotFrame = await traceViewer.snapshotFrame('page.goto');
+  const color = await snapshotFrame.locator('body').evaluate(body => getComputedStyle(body).backgroundColor);
+  expect(color).toBe('rgb(255, 0, 0)');
 });
 

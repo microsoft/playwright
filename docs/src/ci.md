@@ -293,30 +293,89 @@ Pipelines support [running containerized
 jobs](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops).
 Alternatively, you can use [Command line tools](./cli.md#install-system-dependencies) to install all necessary dependencies.
 
+For running the Playwright tests use this pipeline task:
 ```yml
-pool:
-  vmImage: 'ubuntu-20.04'
-
-container: mcr.microsoft.com/playwright:v1.26.0-focal
-
-steps:
-...
+jobs:
+    - deployment: Run_E2E_Tests
+      pool:
+        vmImage: ubuntu-20.04
+      container: mcr.microsoft.com/playwright:v1.26.0-focal
+      environment: testing
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: Bash@3
+              displayName: 'Run Playwright tests'
+              inputs:
+                workingDirectory: 'my-e2e-tests'
+                targetType: 'inline'
+                failOnStderr: true
+                env:
+                  CI: true
+                script: |
+                  npm ci
+                  npx playwright test
 ```
+This will make the pipeline run fail if any of the playwright tests fails.
+If you also want to integrate the test results with Azure DevOps, use `failOnStderr:false` and the built-in `PublishTestResults` task like so:
+```yml
+jobs:
+    - deployment: Run_E2E_Tests
+      pool:
+        vmImage: ubuntu-20.04
+      container: mcr.microsoft.com/playwright:v1.26.0-focal
+      environment: testing
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: Bash@3
+              displayName: 'Run Playwright tests'
+              inputs:
+                workingDirectory: 'my-e2e-tests'
+                targetType: 'inline'
+                failOnStderr: false
+                env:
+                  CI: true
+                script: |
+                  npm ci
+                  npx playwright test
+                  exit 0
+            - task: PublishTestResults@2
+              displayName: 'Publish test results'
+              inputs:
+                searchFolder: 'my-e2e-tests/test-results'
+                testResultsFormat: 'JUnit'
+                testResultsFiles: 'e2e-junit-results.xml' 
+                mergeTestResults: true
+                failTaskOnFailedTests: true
+                testRunTitle: 'My End-To-End Tests'
+```
+Note: The JUnit reporter needs to be configured accordingly via
+```ts
+["junit", { outputFile: "test-results/e2e-junit-results.xml" }]
+```
+in `playwright.config.ts`.
 
 ### CircleCI
 
-Running Playwright on CircleCI requires the following steps:
-
-1. Use the pre-built [Docker image](./docker.md) in your config like so:
+Running Playwright on Circle CI is very similar to running on Github Actions. In order to specify the pre-built Playwright [Docker image](./docker.md) , simply modify the agent definition with `docker:` in your config like so:
 
    ```yml
-   docker:
-     - image: mcr.microsoft.com/playwright:v1.26.0-focal
-   environment:
-     NODE_ENV: development # Needed if playwright is in `devDependencies`
+   executors:
+      pw-focal-development:
+        docker:
+          - image: mcr.microsoft.com/playwright:v1.26.0-focal
+      environment:
+        NODE_ENV: development # Needed if playwright is in `devDependencies`
    ```
 
-1. If you’re using Playwright through Jest, then you may encounter an error spawning child processes:
+Note: When using the docker agent definition, you are specifying the resource class of where playwright runs to the 'medium' tier [here](https://circleci.com/docs/configuration-reference?#docker-execution-environment). The default behavior of Playwright is to set the number of workers to the detected core count (2 in the case of the medium tier). Overriding the number of workers to greater than this number will cause unnecessary timeouts and failures.
+
+Similarly, If you’re using Playwright through Jest, then you may encounter an error spawning child processes:
 
    ```
    [00:00.0]  jest args: --e2e --spec --max-workers=36
@@ -325,6 +384,18 @@ Running Playwright on CircleCI requires the following steps:
    ```
 
    This is likely caused by Jest autodetecting the number of processes on the entire machine (`36`) rather than the number allowed to your container (`2`). To fix this, set `jest --maxWorkers=2` in your test command.
+
+#### Sharding in Circle CI
+
+Sharding in Circle CI is indexed with 0 which means that you will need to override the default parallelism ENV VARS. The following example demonstrates how to run Playwright with a Circle CI Parallelism of 4 by adding 1 to the `CIRCLE_NODE_INDEX` to pass into the `--shard` cli arg.
+
+  ```yml
+    playwright-job-name:
+      executor: pw-focal-development
+      parallelism: 4
+      steps:
+        - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; npm run test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}      
+  ```
 
 ### Jenkins
 

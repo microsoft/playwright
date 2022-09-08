@@ -121,9 +121,9 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --timezone="Europe/Rome" --geolocatio
 
 ## Preserve authenticated state
 
-Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end of the session. This is useful to separately record an authentication step and reuse it later in the tests. 
+Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end of the session. This is useful to separately record an authentication step and reuse it later in the tests.
 
-After performing authentication and closing the browser, `auth.json` will contain the storage state. 
+After performing authentication and closing the browser, `auth.json` will contain the storage state.
 
 ```bash js
 npx playwright codegen --save-storage=auth.json
@@ -269,7 +269,7 @@ var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless
 
 // Setup context however you like.
 var context = await browser.NewContextAsync(); // Pass any options
-await context.RouteAsync('**/*', route => route.ContinueAsync());
+await context.RouteAsync("**/*", route => route.ContinueAsync());
 
 // Pause the page, and start recording manually.
 var page = await context.NewPageAsync();
