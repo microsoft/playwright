@@ -184,7 +184,7 @@ export abstract class BrowserContext extends SdkObject {
     await page?._frameManager.closeOpenDialogs();
     // Navigate to about:blank first to ensure no page scripts are running after this point.
     await page?.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
-    await this._clearStorage();
+    await this._resetStorage();
     await this._removeExposedBindings();
     await this._removeInitScripts();
     // TODO: following can be optimized to not perform noops.
@@ -196,7 +196,7 @@ export abstract class BrowserContext extends SdkObject {
     await this.setGeolocation(this._options.geolocation);
     await this.setOffline(!!this._options.offline);
     await this.setUserAgent(this._options.userAgent);
-    await this.clearCookies();
+    await this._resetCookies();
 
     await page?.resetForReuse(metadata);
   }
@@ -474,8 +474,10 @@ export abstract class BrowserContext extends SdkObject {
     return result;
   }
 
-  async _clearStorage() {
-    if (!this._origins.size)
+  async _resetStorage() {
+    const oldOrigins = this._origins;
+    const newOrigins = new Map(this._options.storageState?.origins?.map(p => [p.origin, p]) || []);
+    if (!oldOrigins.size && !newOrigins.size)
       return;
     let page = this.pages()[0];
 
@@ -484,13 +486,23 @@ export abstract class BrowserContext extends SdkObject {
     await page._setServerRequestInterceptor(handler => {
       handler.fulfill({ body: '<html></html>' }).catch(() => {});
     });
-    for (const origin of this._origins) {
+
+    for (const origin of new Set([...oldOrigins, ...newOrigins.keys()])) {
       const frame = page.mainFrame();
       await frame.goto(internalMetadata, origin);
-      await frame.clearStorageForCurrentOriginBestEffort();
+      await frame.resetStorageForCurrentOriginBestEffort(newOrigins.get(origin));
     }
+
     await page._setServerRequestInterceptor(undefined);
+
+    this._origins = new Set([...newOrigins.keys()]);
     // It is safe to not restore the URL to about:blank since we are doing it in Page::resetForReuse.
+  }
+
+  async _resetCookies() {
+    await this.clearCookies();
+    if (this._options.storageState?.cookies)
+      await this.addCookies(this._options.storageState?.cookies);
   }
 
   isSettingStorageState(): boolean {
