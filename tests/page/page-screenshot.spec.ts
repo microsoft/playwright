@@ -91,7 +91,6 @@ it.describe('page screenshot', () => {
 
   it('should capture blinking caret in shadow dom', async ({ page, browserName }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16732' });
-    it.fixme(browserName !== 'firefox');
     await page.addScriptTag({
       content: `
       class CustomElementContainer extends HTMLElement {

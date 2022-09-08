@@ -44,6 +44,97 @@ export type ScreenshotOptions = {
   caret?: 'hide' | 'initial',
 };
 
+function inPagePrepareForScreenshots(hideCaret: boolean, disableAnimations: boolean) {
+  const collectRoots = (root: Document | ShadowRoot, roots: (Document|ShadowRoot)[] = []): (Document|ShadowRoot)[] => {
+    roots.push(root);
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+    do {
+      const node = walker.currentNode;
+      const shadowRoot = node instanceof Element ? node.shadowRoot : null;
+      if (shadowRoot)
+        collectRoots(shadowRoot, roots);
+    } while (walker.nextNode());
+    return roots;
+  };
+
+  let documentRoots: (Document|ShadowRoot)[] | undefined;
+  const memoizedRoots = () => documentRoots ??= collectRoots(document);
+
+  const styleTags: Element[] = [];
+  if (hideCaret) {
+    for (const root of memoizedRoots()) {
+      const styleTag = document.createElement('style');
+      styleTag.textContent = `
+        *:not(#playwright-aaaaaaaaaa.playwright-bbbbbbbbbbb.playwright-cccccccccc.playwright-dddddddddd.playwright-eeeeeeeee) {
+          caret-color: transparent !important;
+        }
+      `;
+      if (root === document)
+        document.documentElement.append(styleTag);
+      else
+        root.append(styleTag);
+      styleTags.push(styleTag);
+    }
+  }
+  const infiniteAnimationsToResume: Set<Animation> = new Set();
+  const cleanupCallbacks: (() => void)[] = [];
+
+  if (disableAnimations) {
+    const handleAnimations = (root: Document|ShadowRoot): void => {
+      for (const animation of root.getAnimations()) {
+        if (!animation.effect || animation.playbackRate === 0 || infiniteAnimationsToResume.has(animation))
+          continue;
+        const endTime = animation.effect.getComputedTiming().endTime;
+        if (Number.isFinite(endTime)) {
+          try {
+            animation.finish();
+          } catch (e) {
+            // animation.finish() should not throw for
+            // finite animations, but we'd like to be on the
+            // safe side.
+          }
+        } else {
+          try {
+            animation.cancel();
+            infiniteAnimationsToResume.add(animation);
+          } catch (e) {
+            // animation.cancel() should not throw for
+            // infinite animations, but we'd like to be on the
+            // safe side.
+          }
+        }
+      }
+    };
+    for (const root of memoizedRoots()) {
+      const handleRootAnimations: (() => void) = handleAnimations.bind(null, root);
+      handleRootAnimations();
+      root.addEventListener('transitionrun', handleRootAnimations);
+      root.addEventListener('animationstart', handleRootAnimations);
+      cleanupCallbacks.push(() => {
+        root.removeEventListener('transitionrun', handleRootAnimations);
+        root.removeEventListener('animationstart', handleRootAnimations);
+      });
+    }
+  }
+
+  window.__cleanupScreenshot = () => {
+    for (const styleTag of styleTags)
+      styleTag.remove();
+
+    for (const animation of infiniteAnimationsToResume) {
+      try {
+        animation.play();
+      } catch (e) {
+        // animation.play() should never throw, but
+        // we'd like to be on the safe side.
+      }
+    }
+    for (const cleanupCallback of cleanupCallbacks)
+      cleanupCallback();
+    delete window.__cleanupScreenshot;
+  };
+}
+
 export class Screenshotter {
   private _queue = new TaskQueue();
   private _page: Page;
@@ -146,84 +237,7 @@ export class Screenshotter {
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
     await Promise.all(this._page.frames().map(async frame => {
-      await frame.nonStallingEvaluateInExistingContext('(' + (async function(hideCaret: boolean, disableAnimations: boolean) {
-        const styleTag = document.createElement('style');
-        if (hideCaret) {
-          styleTag.textContent = `
-            *:not(#playwright-aaaaaaaaaa.playwright-bbbbbbbbbbb.playwright-cccccccccc.playwright-dddddddddd.playwright-eeeeeeeee) {
-              caret-color: transparent !important;
-            }
-          `;
-          document.documentElement.append(styleTag);
-        }
-        const infiniteAnimationsToResume: Set<Animation> = new Set();
-        const cleanupCallbacks: (() => void)[] = [];
-
-        if (disableAnimations) {
-          const collectRoots = (root: Document | ShadowRoot, roots: (Document|ShadowRoot)[] = []): (Document|ShadowRoot)[] => {
-            roots.push(root);
-            const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
-            do {
-              const node = walker.currentNode;
-              const shadowRoot = node instanceof Element ? node.shadowRoot : null;
-              if (shadowRoot)
-                collectRoots(shadowRoot, roots);
-            } while (walker.nextNode());
-            return roots;
-          };
-          const handleAnimations = (root: Document|ShadowRoot): void => {
-            for (const animation of root.getAnimations()) {
-              if (!animation.effect || animation.playbackRate === 0 || infiniteAnimationsToResume.has(animation))
-                continue;
-              const endTime = animation.effect.getComputedTiming().endTime;
-              if (Number.isFinite(endTime)) {
-                try {
-                  animation.finish();
-                } catch (e) {
-                  // animation.finish() should not throw for
-                  // finite animations, but we'd like to be on the
-                  // safe side.
-                }
-              } else {
-                try {
-                  animation.cancel();
-                  infiniteAnimationsToResume.add(animation);
-                } catch (e) {
-                  // animation.cancel() should not throw for
-                  // infinite animations, but we'd like to be on the
-                  // safe side.
-                }
-              }
-            }
-          };
-          for (const root of collectRoots(document)) {
-            const handleRootAnimations: (() => void) = handleAnimations.bind(null, root);
-            handleRootAnimations();
-            root.addEventListener('transitionrun', handleRootAnimations);
-            root.addEventListener('animationstart', handleRootAnimations);
-            cleanupCallbacks.push(() => {
-              root.removeEventListener('transitionrun', handleRootAnimations);
-              root.removeEventListener('animationstart', handleRootAnimations);
-            });
-          }
-        }
-
-        window.__cleanupScreenshot = () => {
-          styleTag.remove();
-          for (const animation of infiniteAnimationsToResume) {
-            try {
-              animation.play();
-            } catch (e) {
-              // animation.play() should never throw, but
-              // we'd like to be on the safe side.
-            }
-          }
-          for (const cleanupCallback of cleanupCallbacks)
-            cleanupCallback();
-          delete window.__cleanupScreenshot;
-        };
-
-      }).toString() + `)(${hideCaret}, ${disableAnimations})`, false, 'utility').catch(() => {});
+      await frame.nonStallingEvaluateInExistingContext('(' + inPagePrepareForScreenshots.toString() + `)(${hideCaret}, ${disableAnimations})`, false, 'utility').catch(() => {});
     }));
     progress.cleanupWhenAborted(() => this._restorePageAfterScreenshot());
   }
