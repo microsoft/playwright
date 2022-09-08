@@ -51,7 +51,7 @@ interface MountResult<Props = Record<string, unknown>> extends Locator {
 export interface ComponentFixtures {
   mount(component: JSX.Element): Promise<MountResult>;
   mount(component: any, options?: MountOptions): Promise<MountResult>;
-  mount<Props>(component: any, options: MountOptions<Required<Props>>): Promise<MountResult<Props>>;
+  mount<Props>(component: any, options: MountOptions & { props: Props }): Promise<MountResult<Props>>;
 }
 
 export const test: TestType<
