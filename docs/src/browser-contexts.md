@@ -65,7 +65,7 @@ var page = await context.NewPageAsync();
 
 Browser contexts can also be used to emulate multi-page scenarios involving mobile devices, permissions, locale and color scheme. Check out our [Emulation](./emulation.md) guide for more details.
 
-## Multiple contexts
+## Multiple contexts in a single test
 
 Playwright can create multiple browser contexts within a single scenario. This is useful when you want to test for multi-user functionality, like a chat.
 
