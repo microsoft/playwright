@@ -148,10 +148,16 @@ program
           await registry.installDeps(executables, !!options.dryRun);
         if (options.dryRun) {
           for (const executable of executables) {
-            console.log(executable.name);
-            (executable.downloadURLs ?? []).forEach((downloadURL, index) => {
-              console.log(`- URL ${index + 1}: ${downloadURL}`);
-            });
+            const version = executable.browserVersion ? `version ` + executable.browserVersion : '';
+            console.log(`browser: ${executable.name}${version ? ' ' + version : ''}`);
+            console.log(`  Install location:    ${executable.directory ?? '<system>'}`);
+            if (executable.downloadURLs?.length) {
+              const [url, ...fallbacks] = executable.downloadURLs;
+              console.log(`  Download url:        ${url}`);
+              for (let i = 0; i < fallbacks.length; ++i)
+                console.log(`  Download fallback ${i + 1}: ${fallbacks[i]}`);
+            }
+            console.log(``);
           }
         } else {
           const forceReinstall = hasNoArguments ? false : !!options.force;

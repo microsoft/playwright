@@ -311,6 +311,7 @@ export interface Executable {
   installType: 'download-by-default' | 'download-on-demand' | 'install-script' | 'none';
   directory: string | undefined;
   downloadURLs?: string[],
+  browserVersion?: string,
   executablePathOrDie(sdkLanguage: string): string;
   executablePath(sdkLanguage: string): string | undefined;
   validateHostRequirements(sdkLanguage: string): Promise<void>;
@@ -378,6 +379,7 @@ export class Registry {
       installType: chromium.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromium.dir, ['chrome-linux'], [], ['chrome-win']),
       downloadURLs: this._downloadURLs(chromium),
+      browserVersion: chromium.browserVersion,
       _install: () => this._downloadExecutable(chromium, chromiumExecutable),
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
@@ -395,6 +397,7 @@ export class Registry {
       installType: chromiumWithSymbols.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromiumWithSymbols.dir, ['chrome-linux'], [], ['chrome-win']),
       downloadURLs: this._downloadURLs(chromiumWithSymbols),
+      browserVersion: chromiumWithSymbols.browserVersion,
       _install: () => this._downloadExecutable(chromiumWithSymbols, chromiumWithSymbolsExecutable),
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
@@ -412,6 +415,7 @@ export class Registry {
       installType: chromiumTipOfTree.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromiumTipOfTree.dir, ['chrome-linux'], [], ['chrome-win']),
       downloadURLs: this._downloadURLs(chromiumTipOfTree),
+      browserVersion: chromiumTipOfTree.browserVersion,
       _install: () => this._downloadExecutable(chromiumTipOfTree, chromiumTipOfTreeExecutable),
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
@@ -497,6 +501,7 @@ export class Registry {
       installType: firefox.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefox.dir, ['firefox'], [], ['firefox']),
       downloadURLs: this._downloadURLs(firefox),
+      browserVersion: firefox.browserVersion,
       _install: () => this._downloadExecutable(firefox, firefoxExecutable),
       _dependencyGroup: 'firefox',
       _isHermeticInstallation: true,
@@ -514,6 +519,7 @@ export class Registry {
       installType: firefoxBeta.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefoxBeta.dir, ['firefox'], [], ['firefox']),
       downloadURLs: this._downloadURLs(firefoxBeta),
+      browserVersion: firefoxBeta.browserVersion,
       _install: () => this._downloadExecutable(firefoxBeta, firefoxBetaExecutable),
       _dependencyGroup: 'firefox',
       _isHermeticInstallation: true,
@@ -541,6 +547,7 @@ export class Registry {
       installType: webkit.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'webkit', webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
       downloadURLs: this._downloadURLs(webkit),
+      browserVersion: webkit.browserVersion,
       _install: () => this._downloadExecutable(webkit, webkitExecutable),
       _dependencyGroup: 'webkit',
       _isHermeticInstallation: true,
