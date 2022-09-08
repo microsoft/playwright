@@ -521,9 +521,6 @@ const context = await browser.newContext({
   permissions: ['geolocation']
 });
 
-// change location later
-await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
-
 ```
 
 ```java
@@ -555,6 +552,10 @@ await using var context = await browser.NewContextAsync(new()
 ```
 
 Change the location later:
+
+```js
+await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
+```
 
 ```java
 context.setGeolocation(new Geolocation(29.979097, 31.134256));
