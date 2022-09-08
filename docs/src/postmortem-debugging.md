@@ -1,17 +1,17 @@
 ---
-id: trace-viewer
-title: "Trace Viewer"
+id: postmortem-debugging
+title: "Postmortem Debugging"
 ---
 
 Playwright Trace Viewer is a GUI tool that helps you explore recorded Playwright traces after the script has ran. You can open traces [locally](#viewing-the-trace) or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).
 
-<img width="1212" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/883973/120585896-6a1bca80-c3e7-11eb-951a-bd84002480f5.png"></img>
+<img width="1355" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/189141619-9bcc0e1e-b081-475d-89a4-e501a120dbbd.png" />
 
 
 ## Recording a trace
 * langs: js
 
-Set the `trace: 'on-first-retry'` option in the test configuration file. This will produce `trace.zip` file for each test that was retried.
+Set the `trace: 'on-first-retry'` option in the `playwright.config` file. This will produce a `trace.zip` file for each test that was retried.
 
 ```js tab=js-js
 // @ts-check
@@ -61,7 +61,7 @@ Available options to record a trace:
 
 You can also use `trace: 'retain-on-failure'` if you do not enable retries but still want traces for failed tests.
 
-If you are not using Playwright Test, use the [`property: BrowserContext.tracing`] API instead.
+If you are not using Playwright as a Test Runner, use the [`property: BrowserContext.tracing`] API instead.
 
 ## Recording a trace
 * langs: java, csharp, python
@@ -138,7 +138,7 @@ This will record the trace and place it into the file named `trace.zip`.
 
 ## Viewing the trace
 
-You can open the saved trace using Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).
+You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).
 
 ```bash js
 npx playwright show-trace trace.zip
@@ -156,56 +156,9 @@ playwright show-trace trace.zip
 pwsh bin/Debug/netX/playwright.ps1 show-trace trace.zip
 ```
 
-## Actions
-
-Once trace is opened, you will see the list of actions Playwright performed on the left hand side:
-
-<img width="301" alt="Actions" src="https://user-images.githubusercontent.com/883973/120588303-d39dd800-c3eb-11eb-9e8b-bfea8b775354.png"></img>
-
-Selecting each action reveals:
-- action snapshots,
-- action log,
-- source code location,
-- network log for this action
-
-In the properties pane you will also see rendered DOM snapshots associated with each action.
-
-## Screenshots
-
-When tracing with the [`option: screenshots`] option turned on, each trace records a screencast and renders it as a film strip:
-
-<img width="353" alt="Film strip" src="https://user-images.githubusercontent.com/883973/120588069-5d997100-c3eb-11eb-97a3-acbd5e0eb358.png"></img>
-
-You can hover over the film strip to see a magnified image:
-
-<img width="617" alt="Magnify" src="https://user-images.githubusercontent.com/883973/120588147-8f123c80-c3eb-11eb-864b-19d800619234.png"></img>
-
-That helps locating the action of interest very quickly.
-
-## Snapshots
-
-When tracing with the [`option: snapshots`] option turned on, Playwright captures a set of complete DOM snapshots for each action. Depending on the type of the action, it will capture:
-
-| Type | Description |
-|------|-------------|
-|Before|A snapshot at the time action is called.|
-|Action|A snapshot at the moment of the performed input. This type of snapshot is especially useful when exploring where exactly Playwright clicked.|
-|After|A snapshot after the action.|
-
-<br/>
-
-Here is what the typical Action snapshot looks like:
-
-<img width="682" alt="Snapshots" src="https://user-images.githubusercontent.com/883973/120588728-879f6300-c3ec-11eb-85d6-e67b0e92e4e3.png">
-</img>
-
-Notice how it highlights both, the DOM Node as well as the exact click position.
-
-
 ## Viewing remote Traces
 
-You can open remote traces using it's URL.
-They could be generated in a CI run and makes it easy to view the remote trace without having to manually download the file.
+You can open remote traces using it's URL. They could be generated on a CI run and then you can easily view the remote trace without having to manually download the file.
 
 ```bash js
 npx playwright show-trace https://example.com/trace.zip
@@ -239,4 +192,4 @@ You can also pass the URL of your uploaded trace (e.g. inside your CI) from some
 https://trace.playwright.dev/?trace=https://demo.playwright.dev/reports/todomvc/data/cb0fa77ebd9487a5c899f3ae65a7ffdbac681182.zip
 ```
 
-
+To learn more about the [Trace Viewer](./trace-viewer.md) check out our more detailed guide.

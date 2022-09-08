@@ -1,144 +1,17 @@
 ---
 id: traces
-title: "Traces"
+title: "Trace Viewer"
 ---
 
 Playwright Trace Viewer is a GUI tool that helps you explore recorded Playwright traces after the script has ran. You can open traces [locally](#viewing-the-trace) or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).
 
-<img width="1212" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/883973/120585896-6a1bca80-c3e7-11eb-951a-bd84002480f5.png"></img>
+<img width="1355" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/189141619-9bcc0e1e-b081-475d-89a4-e501a120dbbd.png" />
 
 
-## Recording a trace
-* langs: js
-
-Set the `trace: 'on-first-retry'` option in the `playwright.config` file. This will produce a `trace.zip` file for each test that was retried.
-
-```js tab=js-js
-// @ts-check
-
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  retries: 1,
-  use: {
-    trace: 'on-first-retry',
-  },
-};
-
-module.exports = config;
-```
-
-```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
-  retries: 1,
-  use: {
-    trace: 'on-first-retry',
-  },
-};
-export default config;
-```
-
-```js tab=js-library
-const browser = await chromium.launch();
-const context = await browser.newContext();
-
-// Start tracing before creating / navigating a page.
-await context.tracing.start({ screenshots: true, snapshots: true });
-
-const page = await context.newPage();
-await page.goto('https://playwright.dev');
-
-// Stop tracing and export it into a zip archive.
-await context.tracing.stop({ path: 'trace.zip' });
-```
-
-Available options to record a trace:
-- `'on-first-retry'` - Record a trace only when retrying a test for the first time.
-- `'off'` - Do not record a trace.
-- `'on'` - Record a trace for each test. (not recommended as it's performance heavy)
-- `'retain-on-failure'` - Record a trace for each test, but remove it from successful test runs.
-
-
-You can also use `trace: 'retain-on-failure'` if you do not enable retries but still want traces for failed tests.
-
-If you are not using Playwright as a Test Runner, use the [`property: BrowserContext.tracing`] API instead.
-
-## Recording a trace
-* langs: java, csharp, python
-
-Traces can be recorded using the [`property: BrowserContext.tracing`] API as follows:
-
-```java
-Browser browser = browserType.launch();
-BrowserContext context = browser.newContext();
-
-// Start tracing before creating / navigating a page.
-context.tracing().start(new Tracing.StartOptions()
-  .setScreenshots(true)
-  .setSnapshots(true)
-  .setSources(true));
-
-Page page = context.newPage();
-page.navigate("https://playwright.dev");
-
-// Stop tracing and export it into a zip archive.
-context.tracing().stop(new Tracing.StopOptions()
-  .setPath(Paths.get("trace.zip")));
-```
-
-```python async
-browser = await chromium.launch()
-context = await browser.new_context()
-
-# Start tracing before creating / navigating a page.
-await context.tracing.start(screenshots=True, snapshots=True, sources=True)
-
-await page.goto("https://playwright.dev")
-
-# Stop tracing and export it into a zip archive.
-await context.tracing.stop(path = "trace.zip")
-```
-
-```python sync
-browser = chromium.launch()
-context = browser.new_context()
-
-# Start tracing before creating / navigating a page.
-context.tracing.start(screenshots=True, snapshots=True, sources=True)
-
-page.goto("https://playwright.dev")
-
-# Stop tracing and export it into a zip archive.
-context.tracing.stop(path = "trace.zip")
-```
-
-```csharp
-await using var browser = playwright.Chromium.LaunchAsync();
-await using var context = await browser.NewContextAsync();
-
-// Start tracing before creating / navigating a page.
-await context.Tracing.StartAsync(new()
-{
-  Screenshots = true,
-  Snapshots = true,
-  Sources = true
-});
-
-var page = context.NewPageAsync();
-await page.GotoAsync("https://playwright.dev");
-
-// Stop tracing and export it into a zip archive.
-await context.Tracing.StopAsync(new()
-{
-  Path = "trace.zip"
-});
-```
-
-This will record the trace and place it into the file named `trace.zip`.
-
+To learn more on how to record a trace, see [Postmortem Debugging](./postmortem-debugging).
 ## Viewing the trace
 
-You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).
+You can open the saved trace using Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).
 
 ```bash js
 npx playwright show-trace trace.zip
@@ -156,40 +29,79 @@ playwright show-trace trace.zip
 pwsh bin/Debug/netX/playwright.ps1 show-trace trace.zip
 ```
 
-## Viewing remote Traces
+## Actions
 
-You can open remote traces using it's URL. They could be generated on a CI run and then you can easily view the remote trace without having to manually download the file.
+Once trace is opened, you will see the list of actions Playwright performed on the left hand side:
 
-```bash js
-npx playwright show-trace https://example.com/trace.zip
-```
+<img width="300" alt="Trace Viewer Actions Tab" src="https://user-images.githubusercontent.com/13063165/189152329-23e965de-581e-4a20-aed7-12cbf0583c92.png" />
 
-```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="show-trace https://example.com/trace.zip"
-```
+Selecting each action reveals:
+- action snapshots,
+- action log,
+- source code location,
+- network log for this action
 
-```bash python
-playwright show-trace https://example.com/trace.zip
-```
+In the properties pane you will also see rendered DOM snapshots associated with each action.
 
-```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 show-trace https://example.com/trace.zip
-```
+## Metadata
 
-## Using [trace.playwright.dev](https://trace.playwright.dev)
+See metadata such as the time the action was performed, what browser engine was used, what the viewport was and if it was mobile and how many pages, actions and events were recorded.
 
-[trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. 
+<img width="296" alt="Trace Viewer Metadata Tab" src="https://user-images.githubusercontent.com/13063165/189155450-3865a993-cb45-439c-a02f-1ddfe60a1719.png" />
 
-### Viewing local traces
+## Screenshots
 
-When navigating to [trace.playwright.dev](https://trace.playwright.dev), you can upload trace files using drag and drop.
+When tracing with the [`option: screenshots`] option turned on, each trace records a screencast and renders it as a film strip:
 
-### Remote traces
+<img width="1078" alt="Playwright Trace viewer > Film strip" src="https://user-images.githubusercontent.com/13063165/189174647-3e647d3d-6500-4be2-a237-9191f418eb12.png" />
 
-You can also pass the URL of your uploaded trace (e.g. inside your CI) from some accessible storage as a parameter. CORS (Cross-Origin Resource Sharing) rules might apply.
+You can hover over the film strip to see a magnified image:
 
-```txt
-https://trace.playwright.dev/?trace=https://demo.playwright.dev/reports/todomvc/data/cb0fa77ebd9487a5c899f3ae65a7ffdbac681182.zip
-```
+<img width="819" alt="Playwright Trace viewer magnify" src="https://user-images.githubusercontent.com/13063165/189174658-ba218339-2abc-4336-812e-526dbc4d2907.png" />
 
-To learn more about the [Trace Viewer](./trace-viewer-advanced.md) check out our more detailed guide.
+This helps you quickly locate the action of interest.
+
+## Snapshots
+
+When tracing with the [`option: snapshots`] option turned on, Playwright captures a set of complete DOM snapshots for each action. Depending on the type of the action, it will capture:
+
+| Type | Description |
+|------|-------------|
+|Before|A snapshot at the time action is called.|
+|Action|A snapshot at the moment of the performed input. This type of snapshot is especially useful when exploring where exactly Playwright clicked.|
+|After|A snapshot after the action.|
+
+<br/>
+
+Here is what the typical Action snapshot looks like:
+
+<img width="634" alt="Playwright Trace Viewer > Snapshots" src="https://user-images.githubusercontent.com/13063165/189153245-0bdcad4d-16a3-4a71-90d8-71a8038c0720.png" />
+
+Notice how it highlights both, the DOM Node as well as the exact click position.
+
+## Call 
+
+See what action was called, the time and duration as well as parameters, return value and log.
+
+<img width="321" alt="Trace Viewer Call Tab" src="https://user-images.githubusercontent.com/13063165/189155306-3c9275bc-d4cd-4e91-8b63-225832a66f51.png" />
+
+## Console
+
+See the console output for the action.
+
+<img width="299" alt="Trace Viewer Console Tab" src="https://user-images.githubusercontent.com/13063165/189173154-41d438dd-9334-4664-8c77-ee85f5040061.png" />
+
+
+## Network
+
+See any network requests that were made during the action.
+
+<img width="321" alt="Trace Viewer Network Tab" src="https://user-images.githubusercontent.com/13063165/189155367-e19f1c89-4e62-4258-970d-6a740e891711.png" />
+
+## Source
+
+See the source code location.
+
+<img width="476" alt="Trace Viewer Source Tab" src="https://user-images.githubusercontent.com/13063165/189155239-c0f6045c-ab67-404a-8140-e98f78c58ae1.png" />
+
+To learn more on how to record a trace, see [Postmortem Debugging](./postmortem-debugging).
