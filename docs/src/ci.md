@@ -293,15 +293,72 @@ Pipelines support [running containerized
 jobs](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops).
 Alternatively, you can use [Command line tools](./cli.md#install-system-dependencies) to install all necessary dependencies.
 
+For running the Playwright tests use this pipeline task:
 ```yml
-pool:
-  vmImage: 'ubuntu-20.04'
-
-container: mcr.microsoft.com/playwright:v1.26.0-focal
-
-steps:
-...
+jobs:
+    - deployment: Run_E2E_Tests
+      pool:
+        vmImage: ubuntu-20.04
+      container: mcr.microsoft.com/playwright:v1.26.0-focal
+      environment: testing
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: Bash@3
+              displayName: 'Run Playwright tests'
+              inputs:
+                workingDirectory: 'my-e2e-tests'
+                targetType: 'inline'
+                failOnStderr: true
+                env:
+                  CI: true
+                script: |
+                  npm ci
+                  npx playwright test
 ```
+This will make the pipeline run fail if any of the playwright tests fails.
+If you also want to integrate the test results with Azure DevOps, use `failOnStderr:false` and the built-in `PublishTestResults` task like so:
+```yml
+jobs:
+    - deployment: Run_E2E_Tests
+      pool:
+        vmImage: ubuntu-20.04
+      container: mcr.microsoft.com/playwright:v1.26.0-focal
+      environment: testing
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: Bash@3
+              displayName: 'Run Playwright tests'
+              inputs:
+                workingDirectory: 'my-e2e-tests'
+                targetType: 'inline'
+                failOnStderr: false
+                env:
+                  CI: true
+                script: |
+                  npm ci
+                  npx playwright test
+                  exit 0
+            - task: PublishTestResults@2
+              displayName: 'Publish test results'
+              inputs:
+                searchFolder: 'my-e2e-tests/test-results'
+                testResultsFormat: 'JUnit'
+                testResultsFiles: 'e2e-junit-results.xml' 
+                mergeTestResults: true
+                failTaskOnFailedTests: true
+                testRunTitle: 'My End-To-End Tests'
+```
+Note: The JUnit reporter needs to be configured accordingly via
+```ts
+["junit", { outputFile: "test-results/e2e-junit-results.xml" }]
+```
+in `playwright.config.ts`.
 
 ### CircleCI
 
