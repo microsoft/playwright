@@ -33,7 +33,7 @@ interface DockerImage {
   VirtualSize: number;
 }
 
-const VRT_IMAGE_DISTRO = 'jammy';
+const VRT_IMAGE_DISTRO = 'focal';
 const VRT_IMAGE_NAME = `playwright:local-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
 const VRT_CONTAINER_NAME = `playwright-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
 

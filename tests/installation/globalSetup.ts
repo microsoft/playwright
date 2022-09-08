@@ -63,9 +63,9 @@ async function globalSetup() {
     console.log('Skipped building docker. Unset PWTEST_INSTALLATION_TEST_SKIP_DOCKER_BUILD to build docker.');
   } else {
     console.log('Building docker. Set PWTEST_INSTALLATION_TEST_SKIP_DOCKER_BUILD to skip.');
-    const DOCKER_IMAGE_NAME =  'playwright:installation-tests-jammy';
+    const DOCKER_IMAGE_NAME =  'playwright:installation-tests-focal';
     const arch = process.arch === 'arm64' ? '--arm64' : '--amd64';
-    const { code, stderr, stdout } = await spawnAsync('bash', [DOCKER_BUILDER_SCRIPT, arch, 'jammy', DOCKER_IMAGE_NAME]);
+    const { code, stderr, stdout } = await spawnAsync('bash', [DOCKER_BUILDER_SCRIPT, arch, 'focal', DOCKER_IMAGE_NAME]);
     if (!!code)
       throw new Error(`Failed to build docker:\n${stderr}\n${stdout}`);
     console.log('Built: docker image ', DOCKER_IMAGE_NAME);
