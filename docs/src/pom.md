@@ -26,7 +26,7 @@ exports.PlaywrightDevPage = class PlaywrightDevPage {
     this.page = page;
     this.getStartedLink = page.locator('a', { hasText: 'Get started' });
     this.gettingStartedHeader = page.locator('h1', { hasText: 'Installation' });
-    this.pomLink = page.locator('li', { hasText: 'Playwright Test' }).locator('a', { hasText: 'Page Object Model' });
+    this.pomLink = page.locator('li', { hasText: 'Writing Tests' }).locator('a', { hasText: 'Page Object Model' });
     this.tocList = page.locator('article div.markdown ul > li > a');
   }
 
@@ -79,6 +79,32 @@ export class PlaywrightDevPage {
     await this.pomLink.click();
   }
 }
+```
+
+```js tab=js-library
+// models/PlaywrightDevPage.js
+class PlaywrightDevPage {
+  /**
+   * @param {import('playwright').Page} page 
+   */
+  constructor(page) {
+    this.page = page;
+    this.getStartedLink = page.locator('a', { hasText: 'Get started' });
+    this.gettingStartedHeader = page.locator('h1', { hasText: 'Installation' });
+    this.pomLink = page.locator('li', { hasText: 'Playwright Test' }).locator('a', { hasText: 'Page Object Model' });
+    this.tocList = page.locator('article div.markdown ul > li > a');
+  }
+  async getStarted() {
+    await this.getStartedLink.first().click();
+    await expect(this.gettingStartedHeader).toBeVisible();
+  }
+
+  async pageObjectModel() {
+    await this.getStarted();
+    await this.pomLink.click();
+  }
+}
+module.exports = { PlaywrightDevPage };
 ```
 
 Now we can use the `PlaywrightDevPage` class in our tests.
@@ -140,45 +166,27 @@ test('should show Page Object Model article', async ({ page }) => {
   await expect(page.locator('article')).toContainText('Page Object Model is a common pattern');
 });
 ```
-## Library
-* langs: js
 
-_For when not using Playwright as a Test Runner_
-
-Page object models wrap over a Playwright [Page].
-
-```js
-// models/Search.js
-class SearchPage {
-  /**
-   * @param {import('playwright').Page} page 
-   */
-  constructor(page) {
-    this.page = page;
-    this.searchTermInput = page.locator('[aria-label="Enter your search term"]');
-  }
-  async navigate() {
-    await this.page.goto('https://bing.com');
-  }
-  async search(text) {
-    await this.searchTermInput.fill(text);
-    await this.searchTermInput.press('Enter');
-  }
-}
-module.exports = { SearchPage };
-```
-
-Page objects can then be used inside a test.
-
-```js
-// search.spec.js
-const { SearchPage } = require('./models/Search');
+```js tab=js-library
+// example.spec.js
+const { PlaywrightDevPage } = require('./playwright-dev-page');
 
 // In the test
 const page = await browser.newPage();
-const searchPage = new SearchPage(page);
-await searchPage.navigate();
-await searchPage.search('search query');
+await playwrightDev.goto();
+await playwrightDev.getStarted();
+await expect(playwrightDev.tocList).toHaveText([
+    'Installation',
+    'First test',
+    'Configuration file',
+    'Writing assertions',
+    'Using test fixtures',
+    'Using test hooks',
+    'VS Code extension',
+    'Command line',
+    'Configure NPM scripts',
+    'Release notes'
+]);
 ```
 
 ## Implementation
