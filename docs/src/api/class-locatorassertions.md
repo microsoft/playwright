@@ -723,6 +723,9 @@ var locator = Page.Locator(".my-element");
 await Expect(locator).ToBeVisibleAsync();
 ```
 
+### option: LocatorAssertions.toBeVisible.visible
+* since: v1.26
+- `visible` <[boolean]>
 ### option: LocatorAssertions.toBeVisible.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.toBeVisible.timeout = %%-csharp-java-python-assertions-timeout-%%

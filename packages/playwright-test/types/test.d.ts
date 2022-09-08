@@ -3369,6 +3369,8 @@ interface LocatorAssertions {
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
+
+    visible?: boolean;
   }): Promise<void>;
 
   /**
