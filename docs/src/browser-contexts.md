@@ -7,29 +7,33 @@ Tests written with Playwright execute in isolated clean-slate environments calle
 
 [BrowserContext]s are equivalent to incognito-like profiles, they are fast and cheap to create and completely isolated, even when running in a single browser. Playwright creates a context for each test, and provides a default [Page] in that context.
 
-If you are not using Playwright as a Test Runner, we recommend you manually create a browser context for each test with [`method: Browser.newContext`].
+When using Playwright as a Test Runner, this happens out of the box for each test. Otherwise, you can create browser contexts manually.
 
 ```js tab=js-ts
 const { test } = require('@playwright/test');
 
-test('example', async ({ page, context }) => {
-  // Use the page and context objects.
+test('example test', async ({ page, context }) => {
+  // "context" is an isolated BrowserContext, created for this specific test.
+  // "page" belongs to this context.
 });
 
-test('example 2', async ({ page, context }) => {
-  // Different page and context object from the test above.
+test('another test', async ({ page, context }) => {
+  // "context" and "page" in this second test are completely
+  // isolated from the first test.
 });
 ```
 
 ```js tab=js-js
 import { test } from '@playwright/test';
 
-test('example', async ({ page, context }) => {
-  // Use the page and context objects.
+test('example test', async ({ page, context }) => {
+  // "context" is an isolated BrowserContext, created for this specific test.
+  // "page" belongs to this context.
 });
 
-test('example 2', async ({ page, context }) => {
-  // Different page and context object from the test above.
+test('another test', async ({ page, context }) => {
+  // "context" and "page" in this second test are completely
+  // isolated from the first test.
 });
 ```
 
