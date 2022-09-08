@@ -31,7 +31,8 @@ import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../brows
 import { Browser } from '../browser';
 import type * as types from '../types';
 import type * as channels from '../../protocol/channels';
-import { HTTPRequestParams, NET_DEFAULT_TIMEOUT } from '../../common/netUtils';
+import type { HTTPRequestParams } from '../../common/netUtils';
+import { NET_DEFAULT_TIMEOUT } from '../../common/netUtils';
 import { fetchData } from '../../common/netUtils';
 import { getUserAgent } from '../../common/userAgent';
 import { debugMode, headersArrayToObject, streamToString, wrapInASCIIBox } from '../../utils';
