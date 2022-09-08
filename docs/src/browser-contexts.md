@@ -3,7 +3,9 @@ id: browser-contexts
 title: "Isolation"
 ---
 
-Tests written with Playwright execute in isolated clean-slate environments called browser contexts. This isolation model improves reproducibility and prevents cascading test failures. Browser contexts are fast and cheap to create. 
+Tests written with Playwright execute in isolated clean-slate environments called browser contexts. This isolation model improves reproducibility and prevents cascading test failures. 
+
+[BrowserContext]s are equivalent to incognito-like profiles, they are fast and cheap to create and completely isolated, even when running in a single browser. Playwright creates a context for each test, and provides a default [Page] in that context.
 
 If you are not using Playwright as a Test Runner, we recommend you manually create a browser context for each test with [`method: Browser.newContext`].
 
