@@ -98,7 +98,7 @@ test('run hooks', async ({ page, mount }) => {
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}, app: true', 'After mount el: HTMLButtonElement'])
 })
 
-test('unmount ', async ({ page, mount }) => {
+test('unmount', async ({ page, mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit'

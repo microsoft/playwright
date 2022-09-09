@@ -103,7 +103,7 @@ test('run hooks', async ({ page, mount }) => {
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount']);
 });
 
-test('unmount ', async ({ page, mount }) => {
+test('unmount', async ({ page, mount }) => {
   const component = await mount(<Button title="Submit" />)
   await expect(page.locator('#root')).toContainText('Submit')
   await component.unmount();
