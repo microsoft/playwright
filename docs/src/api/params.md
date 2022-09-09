@@ -398,6 +398,12 @@ set to `application/octet-stream` if not explicitly set.
 
 Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
 
+## js-python-fetch-option-maxredirects
+* langs: js
+- `maxRedirects` <[int]>
+
+Maximum number of request allowed redirects. Defaults to `20`. Pass `0` to disable automatic follow.
+
 ## evaluate-expression
 - `expression` <[string]>
 

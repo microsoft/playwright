@@ -284,6 +284,7 @@ APIRequestContext:
         timeout: number?
         failOnStatusCode: boolean?
         ignoreHTTPSErrors: boolean?
+        maxRedirects: number?
       returns:
         response: APIResponse
 

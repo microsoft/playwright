@@ -310,6 +310,7 @@ export type APIRequestContextFetchParams = {
   timeout?: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
+  maxRedirects?: number,
 };
 export type APIRequestContextFetchOptions = {
   params?: NameValue[],
@@ -322,6 +323,7 @@ export type APIRequestContextFetchOptions = {
   timeout?: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
+  maxRedirects?: number,
 };
 export type APIRequestContextFetchResult = {
   response: APIResponse,

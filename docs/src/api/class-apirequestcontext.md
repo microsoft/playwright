@@ -161,6 +161,8 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.delete.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.delete.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.dispose
 * since: v1.16
@@ -214,6 +216,8 @@ If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/
 * since: v1.16
 ### option: APIRequestContext.fetch.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.fetch.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.get
 * since: v1.16
@@ -239,6 +243,8 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.get.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.get.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.head
 * since: v1.16
@@ -264,6 +270,8 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.head.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.head.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.patch
 * since: v1.16
@@ -299,6 +307,8 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.patch.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.patch.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.post
 * since: v1.16
@@ -334,6 +344,8 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.post.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.post.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.put
 * since: v1.16
@@ -369,6 +381,8 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.put.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.put.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.storageState
 * since: v1.16

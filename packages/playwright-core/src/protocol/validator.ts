@@ -171,6 +171,7 @@ scheme.APIRequestContextFetchParams = tObject({
   timeout: tOptional(tNumber),
   failOnStatusCode: tOptional(tBoolean),
   ignoreHTTPSErrors: tOptional(tBoolean),
+  maxRedirects: tOptional(tNumber),
 });
 scheme.APIRequestContextFetchResult = tObject({
   response: tType('APIResponse'),
