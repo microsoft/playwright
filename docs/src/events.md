@@ -51,7 +51,7 @@ var request = await waitForRequestTask;
 Console.WriteLine(request.Url);
 ```
 
-Wait for popup window using [method: Page.waitForEvent]:
+Wait for popup window using [`method: Page.waitForEvent`]:
 
 ```js
 // Note that Promise.all prevents a race condition
