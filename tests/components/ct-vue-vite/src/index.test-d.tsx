@@ -4,7 +4,7 @@ import Component from './components/Component.vue';
 import { type Locator } from '@playwright/test';
 import React from 'react';
 
-test('options api', async ({ mount }) => {
+test('jsx api', async ({ mount }) => {
   const component = await mount(<Component />);
 
   expectAssignable<Locator & { 
