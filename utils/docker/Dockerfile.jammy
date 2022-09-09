@@ -25,8 +25,8 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # 1. Add tip-of-tree Playwright package to install its browsers.
 #    The package should be built beforehand from tip-of-tree Playwright.
-
 COPY ./playwright-core.tar.gz /tmp/playwright-core.tar.gz
+
 # 2. Bake in browsers & deps.
 #    Browsers will be downloaded in `/ms-playwright`.
 #    Note: make sure to set 777 to the registry so that any user can access
