@@ -39,22 +39,22 @@ export function addTestCommands(program: Command) {
 
 function addDockerCommand(program: Command) {
   const dockerCommand = program.command('docker')
-      .description('EXPERIMENTAL (might change in future releases) docker integration.');
+      .description(`run tests in Docker (EXPERIMENTAL)`);
 
   dockerCommand.command('build')
-      .description('Build local docker image')
+      .description('build local docker image')
       .action(async function(options) {
         await docker.ensureDockerEngineIsRunningOrDie();
         await docker.buildImage();
       });
 
   dockerCommand.command('start')
-      .description('Start docker container')
+      .description('start docker container')
       .action(async function(options) {
         await docker.ensureDockerEngineIsRunningOrDie();
         let info = await docker.containerInfo();
         if (!info) {
-          process.stdout.write(`Launching docker container... `);
+          process.stdout.write(`Starting docker container... `);
           const time = Date.now();
           info = await docker.ensureContainerOrDie();
           const deltaMs = (Date.now() - time);
@@ -70,14 +70,14 @@ function addDockerCommand(program: Command) {
       });
 
   dockerCommand.command('delete-image', { hidden: true })
-      .description('Delete docker image, if any')
+      .description('delete docker image, if any')
       .action(async function(options) {
         await docker.ensureDockerEngineIsRunningOrDie();
         await docker.deleteImage();
       });
 
   dockerCommand.command('stop')
-      .description('Stop docker container')
+      .description('stop docker container')
       .action(async function(options) {
         await docker.ensureDockerEngineIsRunningOrDie();
         await docker.stopContainer();
@@ -89,9 +89,9 @@ function addDockerCommand(program: Command) {
 function addTestCommand(program: Command, isDocker: boolean) {
   const command = program.command('test [test-filter...]');
   if (isDocker)
-    command.description('Run tests with Playwright Test and browsers inside docker container');
+    command.description('run tests with Playwright Test and browsers inside docker container');
   else
-    command.description('Run tests with Playwright Test');
+    command.description('run tests with Playwright Test');
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
   command.option('--headed', `Run tests in headed browsers (default: headless)`);
   command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --maxFailures=1 --headed --workers=1" options`);
@@ -120,20 +120,20 @@ function addTestCommand(program: Command, isDocker: boolean) {
   command.action(async (args, opts) => {
     try {
       if (isDocker && !process.env.PW_TS_ESM_ON) {
+        console.log(colors.dim('Using docker container to run browsers.'));
         await docker.ensureDockerEngineIsRunningOrDie();
         let info = await docker.containerInfo();
-        if (info) {
-          console.log(colors.yellow('NOTE: Using docker container to run browsers'));
-          console.log(colors.yellow(` VNC: ${info.vncSession}`));
-        } else {
-          process.stdout.write(colors.dim(`Launching docker container... `));
+        if (!info) {
+          process.stdout.write(colors.dim(`Starting docker container... `));
           const time = Date.now();
           info = await docker.ensureContainerOrDie();
           const deltaMs = (Date.now() - time);
           console.log(colors.dim('Done in ' + (deltaMs / 1000).toFixed(1) + 's'));
-          console.log(colors.yellow('NOTE: Using docker container to run browsers'));
-          console.log(colors.yellow(` VNC: ${info.vncSession}`));
+          console.log(colors.dim('The Docker container will keep running after tests finished.'));
+          console.log(colors.dim('Stop manually using:'));
+          console.log(colors.dim('    npx playwright docker stop'));
         }
+        console.log(colors.dim(`View screen: ${info.vncSession}`));
         process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.wsEndpoint;
         process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
           'x-playwright-proxy': '*',
