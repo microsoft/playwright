@@ -52,15 +52,14 @@ function addDockerCommand(program: Command) {
       .description('Start docker container')
       .action(async function(options) {
         await docker.ensureDockerEngineIsRunningOrDie();
-        if (await docker.containerInfo()) {
-          console.log('Container is already running.');
-          return;
+        let info = await docker.containerInfo();
+        if (!info) {
+          process.stdout.write(`Launching docker container... `);
+          const time = Date.now();
+          info = await docker.ensureContainerOrDie();
+          const deltaMs = (Date.now() - time);
+          console.log('Done in ' + (deltaMs / 1000).toFixed(1) + 's');
         }
-        process.stdout.write(`Launching docker container... `);
-        const time = Date.now();
-        const info = await docker.ensureContainerOrDie();
-        const deltaMs = (Date.now() - time);
-        console.log('Done in ' + (deltaMs / 1000).toFixed(1) + 's');
         console.log([
           `- VNC session: ${info.vncSession}`,
           `- Run tests with browsers inside container:`,
@@ -139,7 +138,7 @@ function addTestCommand(program: Command, isDocker: boolean) {
         process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
           'x-playwright-proxy': '*',
         });
-        process.env.PW_TEST_IS_DOCKER = '1';
+        process.env.PW_TEST_SNAPSHOT_SUFFIX = 'docker';
       }
       await runTests(args, opts);
     } catch (e) {

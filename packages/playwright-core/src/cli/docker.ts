@@ -65,7 +65,7 @@ const CONTAINER_ENTRY_POINT = `#!/bin/bash
        --server-args="-screen 0 "$GEOMETRY" -fbdir /var/tmp -dpi "$SCREEN_DPI" -listen tcp -noreset -ac +extension RANDR" \
        /usr/bin/fluxbox -display "$DISPLAY" >/dev/null 2>&1 &
 
-  for i in $(seq 1 50)
+  for i in $(seq 1 500)
     do
       if xdpyinfo -display $DISPLAY >/dev/null 2>&1; then
         break
@@ -252,10 +252,8 @@ export async function ensureContainerOrDie(): Promise<ContainerInfo> {
 
 export async function stopContainer() {
   const containerId = await findRunningDockerContainerId();
-  if (!containerId) {
-    console.log(`Container is not running.`);
-    return undefined;
-  }
+  if (!containerId)
+    return;
   await Promise.all([
     // Make sure to wait for the container to be removed.
     postJSON(`/containers/${containerId}/wait?condition=removed`),
@@ -269,7 +267,7 @@ export async function ensureDockerEngineIsRunningOrDie() {
   } catch (e) {
     console.error(utils.wrapInASCIIBox([
       `Docker is not running!`,
-      `Please install if necessary and launch docker first:`,
+      `Please install and launch docker:`,
       ``,
       `    https://docs.docker.com/get-docker`,
       ``,
@@ -294,15 +292,8 @@ async function findRunningDockerContainerId(): Promise<string|undefined> {
   const containers: (Container[]|undefined) = await getJSON('/containers/json');
   if (!containers)
     return undefined;
-  // 1. Try findind a container with our name. This happens if the container is launched
-  // automatically with `npx playwright docker start`.
-  let container = containers.find((container: Container) => container.Names.some(name => name.includes(VRT_CONTAINER_NAME)));
-  // 2. Alternatively, the container might be launched manually with a direct docker command.
-  // In this case, we should look for a container with a proper base image.
-  if (!container) {
-    const dockerImage = await findDockerImage(VRT_IMAGE_NAME);
-    container = dockerImage ? containers.find((container: Container) => container.ImageID === dockerImage.Id) : undefined;
-  }
+  const dockerImage = await findDockerImage(VRT_IMAGE_NAME);
+  const container = dockerImage ? containers.find((container: Container) => container.ImageID === dockerImage.Id) : undefined;
   return container?.State === 'running' ? container.Id : undefined;
 }
 
