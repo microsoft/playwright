@@ -176,16 +176,16 @@ const page = await browser.newPage();
 await playwrightDev.goto();
 await playwrightDev.getStarted();
 await expect(playwrightDev.tocList).toHaveText([
-    'Installation',
-    'First test',
-    'Configuration file',
-    'Writing assertions',
-    'Using test fixtures',
-    'Using test hooks',
-    'VS Code extension',
-    'Command line',
-    'Configure NPM scripts',
-    'Release notes'
+  'Installation',
+  'First test',
+  'Configuration file',
+  'Writing assertions',
+  'Using test fixtures',
+  'Using test hooks',
+  'VS Code extension',
+  'Command line',
+  'Configure NPM scripts',
+  'Release notes'
 ]);
 ```
 
