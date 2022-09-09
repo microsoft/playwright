@@ -77,9 +77,10 @@ export type StepBeginPayload = {
   forceNoParent: boolean;
   wallTime: number;  // milliseconds since unix epoch
   location?: { file: string, line: number, column: number };
+  serializedTestResult: SerializedTestResult;
 };
 
-type SerializedTestResult  = Omit<TestResult, 'attachments' | 'startTime' | 'stderr' | 'stdout' | 'steps' > & {
+export type SerializedTestResult  = Omit<TestResult, 'attachments' | 'startTime' | 'stderr' | 'stdout' | 'steps' > & {
   attachments: Array<{
     name: string;
     contentType: string;

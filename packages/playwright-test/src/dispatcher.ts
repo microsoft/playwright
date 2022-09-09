@@ -17,7 +17,7 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import type { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload, WatchTestResolvedPayload, WorkerIsolation } from './ipc';
+import type { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload, WatchTestResolvedPayload, WorkerIsolation, SerializedTestResult } from './ipc';
 import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
 import type { Suite } from './test';
 import type { Loader } from './loader';
@@ -263,7 +263,7 @@ export class Dispatcher {
       (parentStep || result).steps.push(step);
       if (params.canHaveChildren)
         stepStack.add(step);
-      this._reporter.onStepBegin?.(data.test, result, step);
+      this._reporter.onStepBegin?.(data.test, testResultFromSerializedInfo(params.serializedTestResult, runData.result.steps), step);
     };
     worker.on('stepBegin', onStepBegin);
 
@@ -287,20 +287,7 @@ export class Dispatcher {
         step.error = params.error;
       stepStack.delete(step);
       steps.delete(params.stepId);
-      const testResult: TestResult = {
-        ...params.serializedTestResult,
-        attachments: params.serializedTestResult.attachments.map(a => ({
-          name: a.name,
-          path: a.path,
-          contentType: a.contentType,
-          body: a.body !== undefined ? Buffer.from(a.body, 'base64') : undefined
-        })),
-        stdout: params.serializedTestResult.stdout.map(val => stdioEntryDecode(val)),
-        stderr: params.serializedTestResult.stderr.map(val => stdioEntryDecode(val)),
-        startTime: new Date(params.serializedTestResult.startTime),
-        steps: runData.result.steps,
-      };
-      this._reporter.onStepEnd?.(data.test, testResult, step);
+      this._reporter.onStepEnd?.(data.test, testResultFromSerializedInfo(params.serializedTestResult, runData.result.steps), step);
     };
     worker.on('stepEnd', onStepEnd);
 
@@ -619,4 +606,20 @@ function chunkFromParams(params: TestOutputPayload): string | Buffer {
   if (typeof params.text === 'string')
     return params.text;
   return Buffer.from(params.buffer!, 'base64');
+}
+
+function testResultFromSerializedInfo(serializedTestResult: SerializedTestResult, steps: TestStep[]): TestResult {
+  return {
+    ...serializedTestResult,
+    attachments: serializedTestResult.attachments.map(a => ({
+      name: a.name,
+      path: a.path,
+      contentType: a.contentType,
+      body: a.body !== undefined ? Buffer.from(a.body, 'base64') : undefined
+    })),
+    stdout: serializedTestResult.stdout.map(val => stdioEntryDecode(val)),
+    stderr: serializedTestResult.stderr.map(val => stdioEntryDecode(val)),
+    startTime: new Date(serializedTestResult.startTime),
+    steps: steps,
+  };
 }

@@ -27,7 +27,7 @@ import { addSuffixToFilePath, getContainedPath, normalizeAndSaveAttachment, sani
 import { monotonicTime } from 'playwright-core/lib/utils';
 
 export class TestInfoImpl implements TestInfo {
-  private _addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
+  private _addStepImpl: (data: Omit<TestStepInternal, 'complete'>, testInfo: TestInfoImpl) => TestStepInternal;
   readonly _test: TestCase;
   readonly _timeoutManager: TimeoutManager;
   readonly _startTime: number;
@@ -89,7 +89,7 @@ export class TestInfoImpl implements TestInfo {
     workerParams: WorkerInitParams,
     test: TestCase,
     retry: number,
-    addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal,
+    addStepImpl: (data: Omit<TestStepInternal, 'complete'>, testInfo: TestInfoImpl) => TestStepInternal,
   ) {
     this._test = test;
     this._addStepImpl = addStepImpl;
@@ -190,7 +190,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _addStep(data: Omit<TestStepInternal, 'complete'>) {
-    return this._addStepImpl(data);
+    return this._addStepImpl(data, this);
   }
 
   _failWithError(error: TestError, isHardError: boolean) {

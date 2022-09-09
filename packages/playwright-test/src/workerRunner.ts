@@ -18,7 +18,7 @@ import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import { EventEmitter } from 'events';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from './util';
-import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, WatchTestResolvedPayload } from './ipc';
+import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, WatchTestResolvedPayload, SerializedTestResult } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import type { Suite, TestCase } from './test';
@@ -228,7 +228,7 @@ export class WorkerRunner extends EventEmitter {
 
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
     let lastStepId = 0;
-    const testInfo = new TestInfoImpl(this._loader, this._project, this._params, test, retry, data => {
+    const testInfo = new TestInfoImpl(this._loader, this._project, this._params, test, retry, (data, testInfo) => {
       const stepId = `${data.category}@${data.title}@${++lastStepId}`;
       let callbackHandled = false;
       const step: TestStepInternal = {
@@ -238,30 +238,13 @@ export class WorkerRunner extends EventEmitter {
             return;
           callbackHandled = true;
           const error = result.error instanceof Error ? serializeError(result.error) : result.error;
-          if (!this._currentTest) return;
           const payload: StepEndPayload = {
             testId: test.id,
             refinedTitle: step.refinedTitle,
             stepId,
             wallTime: Date.now(),
             error,
-            serializedTestResult: {
-              workerIndex: this._params.workerIndex,
-              duration: this._currentTest?.duration,
-              error: this._currentTest?.error,
-              retry: this._currentTest?.retry,
-              status: this._currentTest?.status,
-              errors: this._currentTest.errors,
-              startTime: this._currentTest?._startWallTime,
-              attachments: this._currentTest?.attachments.map(a => ({
-                name: a.name,
-                contentType: a.contentType,
-                path: a.path,
-                body: a.body?.toString('base64')
-              })),
-              stdout: this._currentTest?.stdout.map(v => stdioEntry(v)),
-              stderr: this._currentTest?.stderr.map(v => stdioEntry(v)),
-            }
+            serializedTestResult: serializedTestResult(testInfo, this._params.workerIndex)
           };
           this.emit('stepEnd', payload);
         }
@@ -275,6 +258,7 @@ export class WorkerRunner extends EventEmitter {
         ...data,
         location,
         wallTime: Date.now(),
+        serializedTestResult: serializedTestResult(testInfo, this._params.workerIndex)
       };
       this.emit('stepBegin', payload);
       return step;
@@ -656,4 +640,24 @@ function formatTestTitle(test: TestCase, projectName: string) {
   const location = `${relativeFilePath(test.location.file)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   return `${projectTitle}${location} › ${titles.join(' › ')}`;
+}
+
+function serializedTestResult(testInfo: TestInfoImpl, workerIndex: number): SerializedTestResult {
+  return {
+    workerIndex: workerIndex,
+    duration: testInfo.duration || 0,
+    error: testInfo.error,
+    retry: testInfo.retry || 0,
+    status: testInfo.status,
+    errors: testInfo.errors,
+    startTime: testInfo._startTime,
+    attachments: testInfo.attachments.map(a => ({
+      name: a.name,
+      contentType: a.contentType,
+      path: a.path,
+      body: a.body?.toString('base64')
+    })),
+    stdout: testInfo.stdout.map(v => stdioEntry(v)),
+    stderr: testInfo.stderr.map(v => stdioEntry(v)),
+  };
 }
