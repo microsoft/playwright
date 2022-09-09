@@ -46,6 +46,7 @@ function addTestCommand(program: Command) {
   command.option('-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`);
   command.option('-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`);
   command.option('--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`);
+  command.option('--ignore-snapshots', `Ignore screenshot and snapshot expectations`);
   command.option('-j, --workers <workers>', `Number of concurrent workers, use 1 to run in a single worker (default: number of CPU cores / 2)`);
   command.option('--list', `Collect all the tests and report them, but do not run`);
   command.option('--max-failures <N>', `Stop after the first N failures`);
@@ -59,7 +60,6 @@ function addTestCommand(program: Command) {
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
   command.option('--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`);
   command.option('--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
-  command.option('-i, --ignore-snapshots', `Ignore screenshot and snapshot expectations`);
   command.option('-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`);
   command.option('-x', `Stop after the first failure`);
   command.action(async (args, opts) => {
