@@ -143,9 +143,9 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.delete.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
-### option: APIRequestContext.delete.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.delete.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.delete.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.delete.data = %%-js-python-csharp-fetch-option-data-%%
 * since: v1.17
 ### option: APIRequestContext.delete.form = %%-js-python-fetch-option-form-%%
 * since: v1.17
@@ -155,13 +155,13 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.17
 ### option: APIRequestContext.delete.multipart = %%-csharp-fetch-option-multipart-%%
 * since: v1.17
-### option: APIRequestContext.delete.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.delete.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.delete.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.delete.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.delete.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.delete.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
-### option: APIRequestContext.delete.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+### option: APIRequestContext.delete.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
 
 ## async method: APIRequestContext.dispose
@@ -198,9 +198,9 @@ Target URL or Request to get all parameters from.
 If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) or
 [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)). If not specified, GET method is used.
 
-### option: APIRequestContext.fetch.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.fetch.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.fetch.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.fetch.data = %%-js-python-csharp-fetch-option-data-%%
 * since: v1.16
 ### option: APIRequestContext.fetch.form = %%-js-python-fetch-option-form-%%
 * since: v1.16
@@ -210,13 +210,13 @@ If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/
 * since: v1.16
 ### option: APIRequestContext.fetch.multipart = %%-csharp-fetch-option-multipart-%%
 * since: v1.16
-### option: APIRequestContext.fetch.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.fetch.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.fetch.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.fetch.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.fetch.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.fetch.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
-### option: APIRequestContext.fetch.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+### option: APIRequestContext.fetch.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
 
 ## async method: APIRequestContext.get
@@ -235,15 +235,15 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.get.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
-### option: APIRequestContext.get.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.get.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.get.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.get.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.get.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.get.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.get.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.get.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
-### option: APIRequestContext.get.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+### option: APIRequestContext.get.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
 
 ## async method: APIRequestContext.head
@@ -262,15 +262,15 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.head.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
-### option: APIRequestContext.head.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.head.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.head.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.head.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.head.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.head.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.head.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.head.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
-### option: APIRequestContext.head.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+### option: APIRequestContext.head.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
 
 ## async method: APIRequestContext.patch
@@ -289,9 +289,9 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.patch.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
-### option: APIRequestContext.patch.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.patch.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.patch.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.patch.data = %%-js-python-csharp-fetch-option-data-%%
 * since: v1.16
 ### option: APIRequestContext.patch.form = %%-js-python-fetch-option-form-%%
 * since: v1.16
@@ -301,13 +301,13 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.patch.multipart = %%-csharp-fetch-option-multipart-%%
 * since: v1.16
-### option: APIRequestContext.patch.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.patch.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.patch.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.patch.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.patch.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.patch.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
-### option: APIRequestContext.patch.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+### option: APIRequestContext.patch.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
 
 ## async method: APIRequestContext.post
@@ -326,9 +326,9 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.post.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
-### option: APIRequestContext.post.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.post.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.post.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.post.data = %%-js-python-csharp-fetch-option-data-%%
 * since: v1.16
 ### option: APIRequestContext.post.form = %%-js-python-fetch-option-form-%%
 * since: v1.16
@@ -338,13 +338,13 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.post.multipart = %%-csharp-fetch-option-multipart-%%
 * since: v1.16
-### option: APIRequestContext.post.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.post.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.post.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.post.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.post.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.post.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
-### option: APIRequestContext.post.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+### option: APIRequestContext.post.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
 
 ## async method: APIRequestContext.put
@@ -363,9 +363,9 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.put.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
-### option: APIRequestContext.put.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.put.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.put.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.put.data = %%-js-python-csharp-fetch-option-data-%%
 * since: v1.16
 ### option: APIRequestContext.put.form = %%-js-python-fetch-option-form-%%
 * since: v1.16
@@ -375,13 +375,13 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.put.multipart = %%-csharp-fetch-option-multipart-%%
 * since: v1.16
-### option: APIRequestContext.put.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.put.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.put.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.put.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.put.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.put.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
-### option: APIRequestContext.put.maxRedirects = %%-js-python-fetch-option-maxredirects-%%
+### option: APIRequestContext.put.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
 * since: v1.26
 
 ## async method: APIRequestContext.storageState
