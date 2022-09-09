@@ -3,10 +3,115 @@ id: videos
 title: "Videos"
 ---
 
-<!-- TOC -->
+With Playwright you can record videos for your tests.
 
-Playwright can record videos for all pages in a [browser context](./browser-contexts.md). Videos are saved
-upon context closure, so make sure to await [`method: BrowserContext.close`].
+## Record video
+* langs: js
+
+Playwright Test can record videos for your tests, controlled by the `video` option in your Playwright config. By default videos are off.
+
+- `'off'` - Do not record video.
+- `'on'` - Record video for each test.
+- `'retain-on-failure'` - Record video for each test, but remove all videos from successful test runs.
+- `'on-first-retry'` - Record video only when retrying a test for the first time.
+
+Video files will appear in the test output directory, typically `test-results`. See [`property: TestOptions.video`] for advanced video configuration.
+
+Videos are saved upon [browser context](./browser-contexts.md) closure at the end of a test. If you create a browser context manually, make sure to await [`method: BrowserContext.close`].
+
+```js tab=js-js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    video: 'on-first-retry',
+  },
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  use: {
+    video: 'on-first-retry',
+  },
+};
+export default config;
+```
+
+```js tab=js-library
+const context = await browser.newContext({ recordVideo: { dir: 'videos/' } });
+// Make sure to await close, so that videos are saved.
+await context.close();
+```
+
+You can also specify video size. The video size defaults to the viewport size scaled down to fit 800x800. The video of the viewport is placed in the top-left corner of the output video, scaled down to fit if necessary. You may need to set the viewport size to match your desired video size.
+
+```js tab=js-js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    video: {
+      mode: 'on-first-retry', 
+      size: { width: 640, height: 480 }
+    }
+  },
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  use: {
+    video: {
+      mode: 'on-first-retry', 
+      size: { width: 640, height: 480 }
+    }
+  },
+};
+export default config;
+```
+
+```js tab=js-library
+const context = await browser.newContext({
+  recordVideo: {
+    dir: 'videos/',
+    size: { width: 640, height: 480 },
+  }
+});
+```
+
+For multi-page scenarios, you can access the video file associated with the page via the
+[`method: Page.video`].
+
+
+```js tab=js-js
+const path = await page.video().path();
+```
+
+```js tab=js-ts
+const path = await page.video().path();
+```
+
+```js tab=js-library
+const path = await page.video().path();
+```
+
+:::note
+Note that the video is only available after the page or browser context is closed.
+:::
+
+## Record video
+* langs: python, java, csharp
+
+Videos are saved upon [browser context](./browser-contexts.md) closure at the end of a test. If you create a browser context manually, make sure to await [`method: BrowserContext.close`].
 
 ```js
 const context = await browser.newContext({ recordVideo: { dir: 'videos/' } });
@@ -110,9 +215,3 @@ var path = await page.Video.PathAsync();
 :::note
 Note that the video is only available after the page or browser context is closed.
 :::
-
-### API reference
-- [BrowserContext]
-- [`method: Browser.newContext`]
-- [`method: Browser.newPage`]
-- [`method: BrowserContext.close`]

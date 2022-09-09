@@ -57,6 +57,7 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
 
   await Promise.all([
     page.waitForNavigation(),
+    page.waitForResponse(server.PREFIX + '/frames/frame.html'),
     page.waitForTimeout(200).then(() => page.goto(server.PREFIX + '/frames/frame.html'))
   ]);
   await page.setViewportSize({ width: 500, height: 600 });
@@ -88,6 +89,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.evaluate/,
     /page.click"Click"/,
     /page.waitForNavigation/,
+    /page.waitForResponse/,
     /page.waitForTimeout/,
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
     /page.setViewportSize/,

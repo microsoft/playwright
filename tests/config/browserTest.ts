@@ -81,6 +81,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
 
   isAndroid: [false, { scope: 'worker' }],
   isElectron: [false, { scope: 'worker' }],
+  isWebView2: [false, { scope: 'worker' }],
 
   contextFactory: async ({ _contextFactory }: any, run) => {
     await run(_contextFactory);

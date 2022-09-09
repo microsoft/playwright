@@ -882,8 +882,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const point = data[i].pointInFrame;
       // Hit target in the parent frame should hit the child frame element.
       const hitTargetResult = await element.evaluateInUtility(([injected, element, hitPoint]) => {
-        const hitElement = injected.deepElementFromPoint(document, hitPoint.x, hitPoint.y);
-        return injected.expectHitTargetParent(hitElement, element);
+        return injected.expectHitTarget(hitPoint, element);
       }, point);
       if (hitTargetResult !== 'done')
         return hitTargetResult;

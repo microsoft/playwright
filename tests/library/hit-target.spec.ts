@@ -15,6 +15,7 @@
  */
 
 import { contextTest as it, expect } from '../config/browserTest';
+import type { ElementHandle } from 'playwright-core';
 
 declare const renderComponent;
 declare const e;
@@ -272,4 +273,92 @@ it('should not click an element overlaying iframe with the target', async ({ pag
 
   await target.click();
   expect(await page.evaluate('window._clicked')).toBe(3);
+});
+
+it('should click into frame inside closed shadow root', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <div id=framecontainer>
+    </div>
+    <script>
+      const iframe = document.createElement('iframe');
+      iframe.setAttribute('name', 'myframe');
+      iframe.setAttribute('srcdoc', '<div onclick="window.top.__clicked = true">click me</div>');
+      const div = document.getElementById('framecontainer');
+      const host = div.attachShadow({ mode: 'closed' });
+      host.appendChild(iframe);
+    </script>
+  `);
+
+  const frame = page.frame({ name: 'myframe' });
+  await frame.locator('text=click me').click();
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
+
+it('should click an element inside closed shadow root', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <div id=container>
+    </div>
+    <script>
+      const span = document.createElement('span');
+      span.textContent = 'click me';
+      span.addEventListener('click', () => window.__clicked = true);
+      const div = document.getElementById('container');
+      const host = div.attachShadow({ mode: 'closed' });
+      host.appendChild(span);
+      window.__target = span;
+    </script>
+  `);
+
+  const handle = await page.evaluateHandle('window.__target');
+  await (handle as any as ElementHandle).click();
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
+
+it('should detect overlay from another shadow root', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <style>
+      div > div {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 10px;
+        height: 10px;
+      }
+      span {
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 300px;
+        height: 300px;
+      }
+    </style>
+    <div style="position:relative; width:300px; height:300px">
+      <div id=container1></div>
+      <div id=container2></div>
+    </div>
+    <script>
+      for (const id of ['container1', 'container2']) {
+        const span = document.createElement('span');
+        span.id = id + '-span';
+        span.textContent = 'click me';
+        span.style.display = 'block';
+        span.style.position = 'absolute';
+        span.style.left = '20px';
+        span.style.top = '20px';
+        span.style.width = '300px';
+        span.style.height = '300px';
+        span.addEventListener('click', () => window.__clicked = id);
+        const div = document.getElementById(id);
+        const host = div.attachShadow({ mode: 'open' });
+        host.appendChild(span);
+      }
+    </script>
+  `);
+
+  const error = await page.locator('#container1 >> text=click me').click({ timeout: 2000 }).catch(e => e);
+  expect(error.message).toContain(`<div id="container2"></div> intercepts pointer events`);
 });

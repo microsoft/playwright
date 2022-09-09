@@ -3274,6 +3274,8 @@ interface LocatorAssertions {
    * @param options
    */
   toBeEditable(options?: {
+    editable?: boolean;
+
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -3308,6 +3310,8 @@ interface LocatorAssertions {
    * @param options
    */
   toBeEnabled(options?: {
+    enabled?: boolean;
+
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -3365,6 +3369,8 @@ interface LocatorAssertions {
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
+
+    visible?: boolean;
   }): Promise<void>;
 
   /**

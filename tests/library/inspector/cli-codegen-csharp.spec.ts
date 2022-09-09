@@ -232,7 +232,7 @@ public class Tests : PageTest
         };
     }
 
-    [TestMethod]
+    [PlaywrightTestMethod]
     public async Task MyTest()
     {
         // Go to ${emptyHTML}
@@ -250,6 +250,7 @@ test(`should print a valid basic program in nunit`, async ({ runCLI }) => {
 using Microsoft.Playwright;
 
 [Parallelizable(ParallelScope.Self)]
+[TestFixture]
 public class Tests : PageTest
 {
     public override BrowserNewContextOptions ContextOptions()
@@ -260,7 +261,7 @@ public class Tests : PageTest
         };
     }
 
-    [Test]
+    [PlaywrightTest]
     public async Task MyTest()
     {
         // Go to ${emptyHTML}

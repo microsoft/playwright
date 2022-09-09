@@ -1,18 +1,43 @@
 ---
 id: browser-contexts
-title: "Browser Contexts"
+title: "Isolation"
 ---
 
-<!-- TOC -->
+Tests written with Playwright execute in isolated clean-slate environments called browser contexts. This isolation model improves reproducibility and prevents cascading test failures. 
 
-## Browser context
+[BrowserContext]s are equivalent to incognito-like profiles, they are fast and cheap to create and completely isolated, even when running in a single browser. Playwright creates a context for each test, and provides a default [Page] in that context.
 
-A [BrowserContext] is an isolated incognito-alike session within a browser instance. Browser contexts are fast and
-cheap to create. We recommend running each test scenario in its own new Browser context, so that
-the browser state is isolated between the tests. If you are using [Playwright Test](./intro.md), this happens out of the
-box for each test. Otherwise, you can create browser contexts manually:
+When using Playwright as a Test Runner, this happens out of the box for each test. Otherwise, you can create browser contexts manually.
 
-```js
+```js tab=js-ts
+const { test } = require('@playwright/test');
+
+test('example test', async ({ page, context }) => {
+  // "context" is an isolated BrowserContext, created for this specific test.
+  // "page" belongs to this context.
+});
+
+test('another test', async ({ page, context }) => {
+  // "context" and "page" in this second test are completely
+  // isolated from the first test.
+});
+```
+
+```js tab=js-js
+import { test } from '@playwright/test';
+
+test('example test', async ({ page, context }) => {
+  // "context" is an isolated BrowserContext, created for this specific test.
+  // "page" belongs to this context.
+});
+
+test('another test', async ({ page, context }) => {
+  // "context" and "page" in this second test are completely
+  // isolated from the first test.
+});
+```
+
+```js tab=js-library
 const browser = await chromium.launch();
 const context = await browser.newContext();
 const page = await context.newPage();
@@ -42,114 +67,41 @@ var context = await browser.NewContextAsync();
 var page = await context.NewPageAsync();
 ```
 
-Browser contexts can also be used to emulate multi-page scenarios involving
-mobile devices, permissions, locale and color scheme.
+Browser contexts can also be used to emulate multi-page scenarios involving mobile devices, permissions, locale and color scheme. Check out our [Emulation](./emulation.md) guide for more details.
 
-```js
-const { devices } = require('playwright');
-const iPhone = devices['iPhone 11 Pro'];
+## Multiple contexts in a single test
 
-const context = await browser.newContext({
-  ...iPhone,
-  permissions: ['geolocation'],
-  geolocation: { latitude: 52.52, longitude: 13.39},
-  colorScheme: 'dark',
-  locale: 'de-DE'
+Playwright can create multiple browser contexts within a single scenario. This is useful when you want to test for multi-user functionality, like a chat.
+
+```js tab=js-js
+import { test } from '@playwright/test';
+
+test('admin and user', async ({ browser }) => {
+  // Create two isolated browser contexts
+  const adminContext = await browser.newContext();
+  const userContext = await browser.newContext();
+  
+  // Create pages and interact with contexts independently
+  const adminPage = await adminContext.newPage();
+  const userPage = await userContext.newPage();
 });
-const page = await context.newPage();
 ```
 
-```java
-// FIXME
-import com.microsoft.playwright.*;
+```js tab=js-ts
+const { test } = require('@playwright/test');
 
-public class Example {
-  public static void main(String[] args) {
-    try (Playwright playwright = Playwright.create()) {
-      BrowserType devices = playwright.devices();
-      BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-        .setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1")
-        .setViewportSize(375, 812)
-        .setDeviceScaleFactor(3)
-        .setIsMobile(true)
-        .setHasTouch(true)
-        .setPermissions(Arrays.asList("geolocation"))
-        .setGeolocation(52.52, 13.39)
-        .setColorScheme(ColorScheme.DARK)
-        .setLocale("de-DE"));
-      Page page = context.newPage();
-    }
-  }
-}
+test('admin and user', async ({ browser }) => {
+  // Create two isolated browser contexts
+  const adminContext = await browser.newContext();
+  const userContext = await browser.newContext();
+  
+  // Create pages and interact with contexts independently
+  const adminPage = await adminContext.newPage();
+  const userPage = await userContext.newPage();
+});
 ```
 
-```python async
-import asyncio
-from playwright.async_api import async_playwright
-
-async def main():
-    async with async_playwright() as p:
-        iphone_11 = p.devices['iPhone 11 Pro']
-        browser = await p.chromium.launch()
-        context = await browser.new_context(
-            **iphone_11,
-            locale='de-DE',
-            geolocation={ 'longitude': 12.492507, 'latitude': 41.889938 },
-            permissions=['geolocation'],
-            color_scheme='dark',
-        )
-        page = await browser.new_page()
-        await browser.close()
-
-asyncio.run(main())
-```
-
-```python sync
-from playwright.sync_api import sync_playwright
-
-with sync_playwright() as p:
-    iphone_11 = p.devices['iPhone 11 Pro']
-    browser = p.webkit.launch(headless=False)
-    context = browser.new_context(
-        **iphone_11,
-        locale='de-DE',
-        geolocation={ 'longitude': 12.492507, 'latitude': 41.889938 },
-        permissions=['geolocation']
-    )
-    page = context.new_page()
-    browser.close()
-```
-
-```csharp
-using Microsoft.Playwright;
-using System.Threading.Tasks;
-
-class PlaywrightExample
-{
-    public static async Task Main()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Webkit.LaunchAsync();
-        var options = new BrowserNewContextOptions(playwright.Devices["iPhone 11 Pro"])
-        {
-            Geolocation = new() { Longitude = 12.492507f, Latitude = 41.889938f },
-            Permissions = new[] { "geolocation" },
-            Locale = "de-DE"
-        };
-
-        await using var context = await browser.NewContextAsync(options);
-        var page = await browser.NewPageAsync();
-    }
-}
-```
-
-## Multiple contexts
-
-[Browser contexts](./browser-contexts.md) are isolated environments on a single browser instance.
-Playwright can create multiple browser contexts within a single scenario. This is useful when you want to test for
-multi-user functionality, like chat.
-
-```js
+```js tab=js-library
 const { chromium } = require('playwright');
 
 // Create a Chromium browser instance
@@ -160,6 +112,8 @@ const userContext = await browser.newContext();
 const adminContext = await browser.newContext();
 
 // Create pages and interact with contexts independently
+const adminPage = await adminContext.newPage();
+const userPage = await userContext.newPage();
 ```
 
 ```java
@@ -236,8 +190,3 @@ class Program
     }
 }
 ```
-
-### API reference
-- [BrowserContext]
-- [`method: Browser.newContext`]
-- [`method: BrowserContext.addCookies`]
