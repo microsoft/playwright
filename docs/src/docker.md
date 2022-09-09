@@ -162,6 +162,11 @@ Docker integration requires Docker installed & running on your computer.
 See https://docs.docker.com/get-docker/
 :::
 
+:::note
+If you use [Docker Desktop](https://www.docker.com/products/docker-desktop/), make sure to increase
+default CPU and mem limit for better performance.
+:::
+
 Docker integration usage:
 
 1. Build a local docker image that will be used to run containers. This step
