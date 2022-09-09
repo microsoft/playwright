@@ -1,5 +1,5 @@
-export NOVNC_REF = '1.3.0';
-export WEBSOCKIFY_REF = '0.10.0';
+export NOVNC_REF='1.3.0'
+export WEBSOCKIFY_REF='0.10.0'
 export DEBIAN_FRONTEND=noninteractive
 
 # Install FluxBox, VNC & noVNC
