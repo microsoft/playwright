@@ -21,7 +21,7 @@ import MultiRoot from './components/MultiRoot.svelte';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
-test('render a component with props', async ({ mount }) => {
+test('render props', async ({ mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit'

@@ -10,7 +10,7 @@ import Counter from './components/Counter';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
-test('render a component with props', async ({ mount }) => {
+test('render props', async ({ mount }) => {
   const component = await mount(<Button title="Submit" />);
   await expect(component).toContainText('Submit');
 });
