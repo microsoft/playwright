@@ -24,7 +24,7 @@ import type {
   Locator,
 } from '@playwright/test';
 import type { InlineConfig } from 'vite';
-import { type SvelteComponent, ComponentProps } from 'svelte/types/runtime'
+import type { SvelteComponent, ComponentProps } from 'svelte/types/runtime'
 
 export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   use?: BasePlaywrightTestConfig['use'] & {
