@@ -16,9 +16,9 @@
 /* eslint-disable no-console */
 
 import http from 'http';
-import * as utils from '../utils';
-import { spawnAsync } from '../utils/spawnAsync';
-import { getPlaywrightVersion } from '../common/userAgent';
+import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
+import * as utils from 'playwright-core/lib/utils';
+import { getPlaywrightVersion } from 'playwright-core/lib/common/userAgent';
 
 interface DockerImage {
   Containers: number;

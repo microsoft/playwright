@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
-import * as docker from 'playwright-core/lib/cli/docker';
+import * as docker from './docker/docker';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
