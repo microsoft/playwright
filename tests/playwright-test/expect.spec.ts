@@ -248,6 +248,9 @@ test('should propose only the relevant matchers when custom expect matcher class
 
       await test.expect(page.locator('foo')).not.toBeEditable();
       await test.expect(page.locator('foo')).toBeEditable({ editable: false });
+
+      await test.expect(page.locator('foo')).toBeVisible();
+      await test.expect(page.locator('foo')).not.toBeVisible({ visible: false });
     });
     `
   });

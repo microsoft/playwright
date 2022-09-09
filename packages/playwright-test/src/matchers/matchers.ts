@@ -110,10 +110,11 @@ export function toBeHidden(
 export function toBeVisible(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
-  options?: { timeout?: number },
+  options?: { visible?: boolean, timeout?: number },
 ) {
   return toBeTruthy.call(this, 'toBeVisible', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-    return await locator._expect(customStackTrace, 'to.be.visible', { isNot, timeout });
+    const visible = !options || options.visible === undefined || options.visible === true;
+    return await locator._expect(customStackTrace, visible ? 'to.be.visible' : 'to.be.hidden', { isNot, timeout });
   }, options);
 }
 
