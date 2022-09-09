@@ -24,6 +24,7 @@ import type {
   Locator,
 } from '@playwright/test';
 import type { InlineConfig } from 'vite';
+import { type SvelteComponent, ComponentProps } from 'svelte/types/runtime'
 
 export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   use?: BasePlaywrightTestConfig['use'] & {
@@ -36,8 +37,8 @@ export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
 
 type Slot = string | string[];
 
-export interface MountOptions<Props = Record<string, unknown>> {
-  props?: Props;
+export interface MountOptions<Component extends SvelteComponent> {
+  props?: ComponentProps<Component>;
   slots?: Record<string, Slot> & { default?: Slot };
   on?: Record<string, Function>;
   hooksConfig?: any;
@@ -48,8 +49,10 @@ interface MountResult extends Locator {
 }
 
 interface ComponentFixtures {
-  mount(component: any, options?: MountOptions): Promise<MountResult>;
-  mount<Props>(component: any, options: MountOptions & { props: Props }): Promise<MountResult>;
+  mount<Component extends SvelteComponent>(
+    component: new (...args: any[]) => Component,
+    options?: MountOptions<Component>
+  ): Promise<MountResult>;
 }
 
 export const test: TestType<
