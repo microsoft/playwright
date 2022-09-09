@@ -63,8 +63,10 @@ nohup /opt/bin/noVNC/utils/novnc_proxy --listen 7900 --vnc localhost:5900 >/dev/
 
 cd /ms-playwright-agent
 
+fbsetbg -c /ms-playwright-agent/node_modules/playwright-core/lib/server/chromium/appIcon.png
+
 NOVNC_UUID=$(cat /proc/sys/kernel/random/uuid)
-echo "novnc is listening on http://127.0.0.1:7900?path=$NOVNC_UUID&resize=scale"
+echo "novnc is listening on http://127.0.0.1:7900?path=$NOVNC_UUID&resize=scale&autoconnect=1"
 
 PW_UUID=$(cat /proc/sys/kernel/random/uuid)
 npx playwright run-server --port=5400 --path=/$PW_UUID
