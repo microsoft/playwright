@@ -60,7 +60,8 @@ export const fixtures: Fixtures<
               await window.playwrightUnmount(rootElement);
             });
           },
-          rerender: async (component: JsxComponent | string, options?: Omit<MountOptions, 'hooksConfig'>) => {
+          rerender: async (options: JsxComponent | Omit<MountOptions, 'hooksConfig'>) => {
+            if (isJsxApi(options)) return await innerRerender(page, options);
             await innerRerender(page, component, options);
           }
         });
@@ -68,6 +69,10 @@ export const fixtures: Fixtures<
       boundCallbacksForMount = [];
     },
   };
+
+function isJsxApi(options: Record<string, unknown>): options is JsxComponent {
+  return options?.kind === 'jsx';
+}
 
 async function innerRerender(page: Page, jsxOrType: JsxComponent | string, options: Omit<MountOptions, 'hooksConfig'> = {}): Promise<void> {
   const component = createComponent(jsxOrType, options);
