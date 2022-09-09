@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, Reporter, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep } from '../../types/testReporter';
+import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, Reporter, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportSTDIOEntry } from '../../types/testReporter';
 import { prepareErrorStack } from './base';
 
 export function toPosixPath(aPath: string): string {
@@ -211,10 +211,16 @@ function outputReport(report: JSONReport, outputFile: string | undefined) {
   }
 }
 
-function stdioEntry(s: string | Buffer): any {
+export function stdioEntry(s: string | Buffer): JSONReportSTDIOEntry {
   if (typeof s === 'string')
     return { text: s };
   return { buffer: s.toString('base64') };
+}
+
+export function stdioEntryDecode(e: JSONReportSTDIOEntry): string | Buffer {
+  if ('text' in e) return e.text;
+  if ('buffer' in e) return Buffer.from(e.buffer, 'base64');
+  return '';
 }
 
 export function serializePatterns(patterns: string | RegExp | (string | RegExp)[]): string[] {

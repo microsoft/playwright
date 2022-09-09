@@ -24,6 +24,7 @@ import type { Loader } from './loader';
 import { TestCase } from './test';
 import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
 import { TestTypeImpl } from './testType';
+import { stdioEntryDecode } from './reporters/json';
 
 export type TestGroup = {
   workerHash: string;
@@ -286,7 +287,20 @@ export class Dispatcher {
         step.error = params.error;
       stepStack.delete(step);
       steps.delete(params.stepId);
-      this._reporter.onStepEnd?.(data.test, result, step);
+      const testResult: TestResult = {
+        ...params.serializedTestResult,
+        attachments: params.serializedTestResult.attachments.map(a => ({
+          name: a.name,
+          path: a.path,
+          contentType: a.contentType,
+          body: a.body !== undefined ? Buffer.from(a.body, 'base64') : undefined
+        })),
+        stdout: params.serializedTestResult.stdout.map(val => stdioEntryDecode(val)),
+        stderr: params.serializedTestResult.stderr.map(val => stdioEntryDecode(val)),
+        startTime: new Date(params.serializedTestResult.startTime),
+        steps: runData.result.steps,
+      };
+      this._reporter.onStepEnd?.(data.test, testResult, step);
     };
     worker.on('stepEnd', onStepEnd);
 

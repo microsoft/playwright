@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestError } from '../types/testReporter';
+import type { JSONReportSTDIOEntry, TestError, TestResult } from '../types/testReporter';
 import type { ConfigCLIOverrides } from './runner';
 import type { TestStatus } from './types';
 
@@ -79,12 +79,25 @@ export type StepBeginPayload = {
   location?: { file: string, line: number, column: number };
 };
 
+type SerializedTestResult  = Omit<TestResult, 'attachments' | 'startTime' | 'stderr' | 'stdout' | 'steps' > & {
+  attachments: Array<{
+    name: string;
+    contentType: string;
+    path?: string;
+    body?: string;
+  }>;
+  startTime: number;
+  stderr: Array<JSONReportSTDIOEntry>;
+  stdout: Array<JSONReportSTDIOEntry>;
+};
+
 export type StepEndPayload = {
   testId: string;
   stepId: string;
   refinedTitle?: string;
   wallTime: number;  // milliseconds since unix epoch
   error?: TestError;
+  serializedTestResult: SerializedTestResult;
 };
 
 export type TestEntry = {

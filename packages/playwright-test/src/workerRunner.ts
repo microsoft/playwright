@@ -28,6 +28,7 @@ import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
 import { TestInfoImpl } from './testInfo';
 import type { TimeSlot } from './timeoutManager';
 import { TimeoutManager } from './timeoutManager';
+import { stdioEntry } from './reporters/json';
 
 const removeFolderAsync = util.promisify(rimraf);
 
@@ -237,12 +238,30 @@ export class WorkerRunner extends EventEmitter {
             return;
           callbackHandled = true;
           const error = result.error instanceof Error ? serializeError(result.error) : result.error;
+          if (!this._currentTest) return;
           const payload: StepEndPayload = {
             testId: test.id,
             refinedTitle: step.refinedTitle,
             stepId,
             wallTime: Date.now(),
             error,
+            serializedTestResult: {
+              workerIndex: this._params.workerIndex,
+              duration: this._currentTest?.duration,
+              error: this._currentTest?.error,
+              retry: this._currentTest?.retry,
+              status: this._currentTest?.status,
+              errors: this._currentTest.errors,
+              startTime: this._currentTest?._startWallTime,
+              attachments: this._currentTest?.attachments.map(a => ({
+                name: a.name,
+                contentType: a.contentType,
+                path: a.path,
+                body: a.body?.toString('base64')
+              })),
+              stdout: this._currentTest?.stdout.map(v => stdioEntry(v)),
+              stderr: this._currentTest?.stderr.map(v => stdioEntry(v)),
+            }
           };
           this.emit('stepEnd', payload);
         }
