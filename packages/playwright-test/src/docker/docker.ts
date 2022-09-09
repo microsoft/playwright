@@ -16,6 +16,8 @@
 /* eslint-disable no-console */
 
 import http from 'http';
+import path from 'path';
+import fs from 'fs';
 import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
 import * as utils from 'playwright-core/lib/utils';
 import { getPlaywrightVersion } from 'playwright-core/lib/common/userAgent';
@@ -36,87 +38,6 @@ interface DockerImage {
 const VRT_IMAGE_DISTRO = 'focal';
 const VRT_IMAGE_NAME = `playwright:local-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
 const VRT_CONTAINER_NAME = `playwright-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
-
-const GENERATE_FLUXBOX_BROWSERS_MENU = `
-  const { chromium, firefox, webkit } = require('playwright-core');
-
-  console.log(\`
-    [begin] (fluxbox)
-      [submenu] (Browsers) {}
-        [exec] (Chromium) { $\{chromium.executablePath()} --no-sandbox --test-type= } <>
-        [exec] (Firefox) { $\{firefox.executablePath()} } <>
-        [exec] (WebKit) { $\{webkit.executablePath()} } <>
-      [end]
-      [include] (/etc/X11/fluxbox/fluxbox-menu)
-    [end]
-  \`);
-`;
-
-const CONTAINER_ENTRY_POINT = `#!/bin/bash
-  set -e
-  SCREEN_WIDTH=1360
-  SCREEN_HEIGHT=1020
-  SCREEN_DEPTH=24
-  SCREEN_DPI=96
-  GEOMETRY="$SCREEN_WIDTH""x""$SCREEN_HEIGHT""x""$SCREEN_DEPTH"
-
-  nohup /usr/bin/xvfb-run --server-num=$DISPLAY_NUM \
-       --listen-tcp \
-       --server-args="-screen 0 "$GEOMETRY" -fbdir /var/tmp -dpi "$SCREEN_DPI" -listen tcp -noreset -ac +extension RANDR" \
-       /usr/bin/fluxbox -display "$DISPLAY" >/dev/null 2>&1 &
-
-  for i in $(seq 1 500)
-    do
-      if xdpyinfo -display $DISPLAY >/dev/null 2>&1; then
-        break
-      fi
-      echo "Waiting for Xvfb..."
-      sleep 0.2
-    done
-
-
-  nohup x11vnc -forever -shared -rfbport 5900 -rfbportv6 5900 -display "$DISPLAY" >/dev/null 2>&1 &
-  nohup /opt/bin/noVNC/utils/novnc_proxy --listen 7900 --vnc localhost:5900 >/dev/null 2>&1 &
-  cd /ms-playwright-agent
-  NOVNC_UUID=$(cat /proc/sys/kernel/random/uuid)
-  echo "novnc is listening on http://127.0.0.1:7900?path=$NOVNC_UUID&resize=scale"
-  PW_UUID=$(cat /proc/sys/kernel/random/uuid)
-  npx playwright run-server --port=5400 --path=/$PW_UUID
-`;
-
-const NOVNC_REF = '1.3.0';
-const WEBSOCKIFY_REF = '0.10.0';
-const CONTAINER_BUILD_SCRIPT = `
-  # Generate entry point script
-  cat <<'EOF' >/start.sh
-  ${CONTAINER_ENTRY_POINT}
-  EOF
-  chmod 755 /start.sh
-
-  export DEBIAN_FRONTEND=noninteractive
-
-  # Install FluxBox, VNC & noVNC
-  mkdir -p /opt/bin && chmod +x /dev/shm \
-      && apt-get update && apt-get install -y unzip fluxbox x11vnc \
-      && curl -L -o noVNC.zip "https://github.com/novnc/noVNC/archive/v${NOVNC_REF}.zip" \
-      && unzip -x noVNC.zip \
-      && rm -rf noVNC-${NOVNC_REF}/{docs,tests} \
-      && mv noVNC-${NOVNC_REF} /opt/bin/noVNC \
-      && cp /opt/bin/noVNC/vnc.html /opt/bin/noVNC/index.html \
-      && rm noVNC.zip \
-      && curl -L -o websockify.zip "https://github.com/novnc/websockify/archive/v${WEBSOCKIFY_REF}.zip" \
-      && unzip -x websockify.zip \
-      && rm websockify.zip \
-      && rm -rf websockify-${WEBSOCKIFY_REF}/{docs,tests} \
-      && mv websockify-${WEBSOCKIFY_REF} /opt/bin/noVNC/utils/websockify
-
-  # Configure FluxBox menus
-  cd /ms-playwright-agent
-  cat <<'EOF' | node > configuration.txt
-  ${GENERATE_FLUXBOX_BROWSERS_MENU}
-  EOF
-  mkdir /root/.fluxbox && mv /ms-playwright-agent/configuration.txt /root/.fluxbox/menu
-`.split('\n').map(line => line.substring(2)).join('\n');
 
 export async function deleteImage() {
   const dockerImage = await findDockerImage(VRT_IMAGE_NAME);
@@ -158,17 +79,18 @@ export async function buildImage() {
     throw new Error(`Failed to pull ${baseImageName}`);
   // 3. Launch container and install VNC in it
   console.log(`Building ${VRT_IMAGE_NAME}...`);
+  const buildScriptText = await fs.promises.readFile(path.join(__dirname, 'build.sh'), 'utf8');
   const containerId = await launchContainer({
     image: dockerImage,
     autoRemove: false,
-    command: ['/bin/bash', '-c', CONTAINER_BUILD_SCRIPT],
+    command: ['/bin/bash', '-c', buildScriptText],
   });
   await postJSON(`/containers/${containerId}/wait`);
 
   // 4. Commit a new image based on the launched container with installed VNC & noVNC.
   const [vrtRepo, vrtTag] = VRT_IMAGE_NAME.split(':');
   await postJSON(`/commit?container=${containerId}&repo=${vrtRepo}&tag=${vrtTag}`, {
-    Entrypoint: ['/start.sh'],
+    Entrypoint: ['/entrypoint.sh'],
     Env: [
       'DISPLAY_NUM=99',
       'DISPLAY=:99',
