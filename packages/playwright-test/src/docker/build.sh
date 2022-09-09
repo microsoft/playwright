@@ -23,16 +23,16 @@ cd /ms-playwright-agent
 cat <<'EOF' | node > /root/.fluxbox/menu
   const { chromium, firefox, webkit } = require('playwright-core');
 
-  console.log(\`
+  console.log(`
     [begin] (fluxbox)
       [submenu] (Browsers) {}
-        [exec] (Chromium) { $\{chromium.executablePath()} --no-sandbox --test-type= } <>
-        [exec] (Firefox) { $\{firefox.executablePath()} } <>
-        [exec] (WebKit) { $\{webkit.executablePath()} } <>
+        [exec] (Chromium) { ${chromium.executablePath()} --no-sandbox --test-type= } <>
+        [exec] (Firefox) { ${firefox.executablePath()} } <>
+        [exec] (WebKit) { ${webkit.executablePath()} } <>
       [end]
       [include] (/etc/X11/fluxbox/fluxbox-menu)
     [end]
-  \`);
+  `);
 EOF
 
 # Create entrypoint.sh
