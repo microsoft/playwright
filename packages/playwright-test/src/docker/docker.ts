@@ -273,6 +273,7 @@ function callDockerAPI(method: 'post'|'get'|'delete', url: string, body: Buffer|
     const request = http.request({
       socketPath: dockerSocket,
       path: `/v${DOCKER_API_VERSION}${url}`,
+      timeout: 30000,
       method,
     }, (response: http.IncomingMessage) => {
       let body = '';

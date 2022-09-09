@@ -149,12 +149,12 @@ docker run --rm -it playwright:localbuild /bin/bash
 ## (Experimental) Playwright Test Docker Integration
 * langs: js
 
-Playwright Test now ships an **experimental** docker integration.
-With this integration, **only** browser binaries are running inside a docker container,
+Playwright Test now ships an **experimental** Docker integration.
+With this integration, **only** browser binaries are running inside a Docker container,
 while all the code is still running on the host operating system.
 
 Docker container provides a consistent environment, eliminating browser rendering
-differences across platforms. Playwright Test will automatically proxy host network
+differences across platforms. Playwright Test will automatically proxy host network traffic
 into the container, so browsers can access servers running on the host.
 
 :::note
@@ -169,26 +169,26 @@ default CPU and mem limit for better performance.
 
 Docker integration usage:
 
-1. Build a local docker image that will be used to run containers. This step
-   should be done only once.
+1. Build a local Docker image that will be used to run containers. This step
+   needs to be done only once.
    ```bash js
    npx playwright docker build
    ```
 
-2. Run docker container in the background.
+2. Run Docker container in the background.
    ```bash js
    npx playwright docker start
    ```
 
-3. Run tests inside docker container. Note that this command accepts all the same arguments
+3. Run tests inside Docker container. Note that this command accepts all the same arguments
    as a regular `npx playwright test` command.
    ```bash js
    npx playwright docker test
    ```
 
-   Note that this command will detect running docker container, and auto-launch it if needed.
+   Note that this command will detect running Docker container, and auto-launch it if needed.
 
-4. Finally, stop docker container when it is no longer needed.
+4. Finally, stop Docker container when it is no longer needed.
    ```bash js
    npx playwright docker stop
    ```
