@@ -79,7 +79,7 @@ export async function buildImage() {
     throw new Error(`Failed to pull ${baseImageName}`);
   // 3. Launch container and install VNC in it
   console.log(`Building ${VRT_IMAGE_NAME}...`);
-  const buildScriptText = await fs.promises.readFile(path.join(__dirname, 'build.sh'), 'utf8');
+  const buildScriptText = await fs.promises.readFile(path.join(__dirname, 'build_docker_image.sh'), 'utf8');
   const containerId = await launchContainer({
     image: dockerImage,
     autoRemove: false,
