@@ -449,3 +449,18 @@ test('should not crash with duplicate titles and line filter', async ({ runInlin
     `   - example.spec.ts:8`,
   ].join('\n'));
 });
+
+test('should allow wildcards in project option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+    module.exports = { name: 'project-name' };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}) => {
+        expect(1).toBe(1);
+      });    `
+  }, { project: '*oj*t-na?e' }, {}, {});
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('Running 1 test using 1 worker');
+});

@@ -243,6 +243,13 @@ export class Runner {
         return true;
       const name = project.name.toLocaleLowerCase();
       unknownProjects!.delete(name);
+      for (const value of projectsToFind) {
+        const match = new RegExp('^' + value.replaceAll('*', '.*').replaceAll('?', '.?') + '$');
+        if (match.test(name)) {
+          unknownProjects!.delete(value);
+          return true;
+        }
+      }
       return projectsToFind.has(name);
     });
     if (unknownProjects && unknownProjects.size) {
