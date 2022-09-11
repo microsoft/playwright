@@ -94,7 +94,8 @@ type ComponentMountingOptions<T> = T extends DefineComponent<
   : MountOptions<any>;
 
 export interface ComponentFixtures {
-  mount(component: JSX.Element): Promise<MountResult>;
+  // Jsx component
+  mount(component: JSX.Element, options?: { hooksConfig?: any }): Promise<MountResult>;
   
   // Class component (without vue-class-component) - no props
   mount<V>(
