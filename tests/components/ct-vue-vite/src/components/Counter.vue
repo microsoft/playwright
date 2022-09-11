@@ -9,13 +9,8 @@
 let remountCount = 0
 </script>
 
-<script setup>
-defineProps({
-  count: {
-    type: Number,
-    required: true
-  }
-})
+<script setup lang="ts">
+defineProps<{ count: number }>()
 remountCount++
 </script>
 

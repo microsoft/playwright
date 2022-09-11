@@ -1,12 +1,7 @@
-<script setup>
-defineProps({
-  title: {
-    type: String,
-    required: true
-  }
-})
+<script lang="ts" setup>
+defineProps<{ title: string }>()
 </script>
 
 <template>
-  <button @click="$emit('submit', 'hello')">{{ title }}</button>
+  <div>{{ title }}</div>
 </template>
