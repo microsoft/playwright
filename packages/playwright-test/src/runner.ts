@@ -244,7 +244,7 @@ export class Runner {
       const name = project.name.toLocaleLowerCase();
       unknownProjects!.delete(name);
       for (const value of projectsToFind) {
-        const match = new RegExp('^' + value.replaceAll('*', '.*').replaceAll('?', '.?') + '$');
+        const match = new RegExp('^' + value.replace(/\*/g, '.*').replace(/\?/g, '.?') + '$');
         if (match.test(name)) {
           unknownProjects!.delete(value);
           return true;
