@@ -3,5 +3,5 @@ defineProps<{ title: string }>()
 </script>
 
 <template>
-  <div>{{ title }}</div>
+  <button @click="$emit('submit', 'hello')">{{ title }}</button>
 </template>
