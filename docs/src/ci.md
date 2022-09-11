@@ -37,7 +37,7 @@ configurations for common CI providers.
 
 1. **Run your tests**:
    ```bash js
-   npm test
+   npx playwright test
    ```
    ```bash python
    pytest
@@ -66,7 +66,7 @@ steps:
   - name: Install Playwright
     run: npx playwright install --with-deps
   - name: Run your tests
-    run: npm test
+    run: npx playwright test
   - name: Upload test results
     if: always()
     uses: actions/upload-artifact@v2
@@ -148,7 +148,7 @@ jobs:
     - name: Install Playwright
       run: npx playwright install --with-deps
     - name: Run Playwright tests
-      run: npm run test:e2e
+      run: npx playwright test
       env:
         # This might depend on your test-runner/language binding
         PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
@@ -394,7 +394,7 @@ Sharding in Circle CI is indexed with 0 which means that you will need to overri
       executor: pw-focal-development
       parallelism: 4
       steps:
-        - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; npm run test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}      
+        - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; npx playwright test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}      
   ```
 
 ### Jenkins
@@ -410,7 +410,7 @@ pipeline {
          steps {
             // Depends on your language / test framework
             sh 'npm install'
-            sh 'npm run test'
+            sh 'npx playwright test'
          }
       }
    }
@@ -524,7 +524,7 @@ configuration, against a hash of the Playwright version.
 Playwright supports the `DEBUG` environment variable to output debug logs during execution. Setting it to `pw:browser*` is helpful while debugging `Error: Failed to launch browser` errors.
 
 ```bash js
-DEBUG=pw:browser* npm run test
+DEBUG=pw:browser* npx playwright test
 ```
 ```bash python
 DEBUG=pw:browser* pytest
