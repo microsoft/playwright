@@ -36,8 +36,10 @@ interface DockerImage {
 }
 
 const VRT_IMAGE_DISTRO = 'focal';
-const VRT_IMAGE_NAME = `playwright:local-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
-const VRT_CONTAINER_NAME = `playwright-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
+const VRT_IMAGE_NAME = `playwright-local:${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
+// The regex is used to identify all playwright images from all playwright versions.
+const VRT_IMAGE_NAME_REGEX = /^playwright-local:\d+\.\d+\.\d+-/;
+const VRT_CONTAINER_NAME = `playwright-local-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
 
 export async function deleteImage() {
   const dockerImage = await findDockerImage(VRT_IMAGE_NAME);
@@ -45,7 +47,7 @@ export async function deleteImage() {
     return;
 
   if (await containerInfo())
-    await stopContainer();
+    await stopAllContainers();
   await callDockerAPI('delete', `/images/${dockerImage.Id}`);
 }
 
@@ -110,9 +112,17 @@ interface ContainerInfo {
 }
 
 export async function containerInfo(): Promise<ContainerInfo|undefined> {
-  const containerId = await findRunningDockerContainerId();
+  const allContainers: Container[] | undefined = await getJSON('/containers/json');
+  if (!allContainers?.length)
+    return undefined;
+  const allImages: DockerImage[] | undefined = await getJSON('/images/json');
+  const dockerImageId = allImages?.find((image: DockerImage) => image.RepoTags?.includes(VRT_IMAGE_NAME))?.Id;
+  if (!dockerImageId)
+    return undefined;
+  const containerId = allContainers.find((container: Container) => container.ImageID === dockerImageId && container.State === 'running')?.Id;
   if (!containerId)
     return undefined;
+
   const rawLogs = await callDockerAPI('get', `/containers/${containerId}/logs?stdout=true&stderr=true`).catch(e => '');
   if (!rawLogs)
     return undefined;
@@ -172,15 +182,22 @@ export async function ensureContainerOrDie(): Promise<ContainerInfo> {
   return info;
 }
 
-export async function stopContainer() {
-  const containerId = await findRunningDockerContainerId();
-  if (!containerId)
+export async function stopAllContainers() {
+  const allContainers: Container[] | undefined = await getJSON('/containers/json');
+  if (!allContainers?.length)
     return;
-  await Promise.all([
+  const allImages: DockerImage[] | undefined = await getJSON('/images/json');
+  // Get all docker images from current and past Playwright versions.
+  const dockerImageIds = new Set(allImages?.filter(image => image.RepoTags?.some(repoTag => VRT_IMAGE_NAME_REGEX.test(repoTag))).map(image => image.Id) ?? []);
+  if (!dockerImageIds.size)
+    return;
+
+  const containers: Container[] = allContainers.filter((container: Container) => dockerImageIds.has(container.ImageID) && container.State === 'running');
+  await Promise.all(containers.map((container: Container) => ([
     // Make sure to wait for the container to be removed.
-    postJSON(`/containers/${containerId}/wait?condition=removed`),
-    postJSON(`/containers/${containerId}/kill`),
-  ]);
+    postJSON(`/containers/${container.Id}/wait?condition=removed`),
+    postJSON(`/containers/${container.Id}/kill`),
+  ])).flat());
 }
 
 export async function ensureDockerEngineIsRunningOrDie() {
@@ -208,15 +225,6 @@ interface Container {
   State: string;
   Names: [string];
   Id: string;
-}
-
-async function findRunningDockerContainerId(): Promise<string|undefined> {
-  const containers: (Container[]|undefined) = await getJSON('/containers/json');
-  if (!containers)
-    return undefined;
-  const dockerImage = await findDockerImage(VRT_IMAGE_NAME);
-  const container = dockerImage ? containers.find((container: Container) => container.ImageID === dockerImage.Id) : undefined;
-  return container?.State === 'running' ? container.Id : undefined;
 }
 
 interface ContainerOptions {

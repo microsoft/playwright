@@ -57,6 +57,34 @@ test.describe('installed image', () => {
     expect(result).toContain('@chromium Linux');
   });
 
+  test('make sure it stops all containers of all versions', async ({ exec }) => {
+    await exec('npm i --foreground-scripts @playwright/test');
+    // Run usual Playwright container.
+    await exec(`npx playwright docker start`);
+
+    // Tag an ubuntu:20.04 image as-if it's some kind of a Playwright Docker image,
+    // and run a container off this image.
+    await exec(`docker pull ubuntu:20.04`);
+    await exec(`docker tag ubuntu:20.04 playwright-local:10.20.30`);
+    await exec(`docker run --rm -d --name old-pw-container playwright-local:10.20.30 sleep 100`);
+
+    await test.step('Make sure we have two containers running', async () => {
+      const result = await exec(`docker ps`);
+      expect(result).toContain('old-pw-container');
+      expect(result).toContain('playwright-local');
+      expect(result.split('\n').length).toBeGreaterThanOrEqual(3);
+    });
+
+    // Stop all playwright-like containers.
+    await exec(`npx playwright docker stop`);
+
+    await test.step('Make sure all containers are stopped', async () => {
+      const result = await exec(`docker ps`);
+      expect(result).not.toContain('old-pw-container');
+      expect(result).not.toContain('playwright-local');
+    });
+  });
+
   test.describe('running container', () => {
     test.beforeAll(async ({ exec }) => {
       await exec('npx playwright docker start', {

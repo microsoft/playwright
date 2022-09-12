@@ -80,7 +80,7 @@ function addDockerCommand(program: Command) {
       .description('stop docker container')
       .action(async function(options) {
         await docker.ensureDockerEngineIsRunningOrDie();
-        await docker.stopContainer();
+        await docker.stopAllContainers();
       });
 
   addTestCommand(dockerCommand, true /* isDocker */);
