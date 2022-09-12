@@ -58,7 +58,7 @@ export class Playwright extends SdkObject {
     this.firefox = new Firefox(this.options);
     this.webkit = new WebKit(this.options);
     this.electron = new Electron(this.options);
-    this.android = new Android(new AdbBackend(), this.options);
+    this.android = new Android(new AdbBackend(), this.options, 'android');
     this.selectors = this.options.selectors;
   }
 

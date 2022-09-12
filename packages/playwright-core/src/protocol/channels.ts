@@ -3855,9 +3855,13 @@ export interface ElectronApplicationEvents {
 export type AndroidInitializer = {};
 export interface AndroidEventTarget {
 }
+
+import type {BrowserServer} from '../client/browserType'
+import type {LaunchServerOptions} from '../client/types'
 export interface AndroidChannel extends AndroidEventTarget, Channel {
   _type_Android: boolean;
   devices(params: AndroidDevicesParams, metadata?: Metadata): Promise<AndroidDevicesResult>;
+  launchServer(params: LaunchServerOptions): Promise<BrowserServer>;
   setDefaultTimeoutNoReply(params: AndroidSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<AndroidSetDefaultTimeoutNoReplyResult>;
 }
 export type AndroidDevicesParams = {

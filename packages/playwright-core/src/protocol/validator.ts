@@ -2113,6 +2113,8 @@ scheme.ElectronApplicationEvaluateExpressionHandleResult = tObject({
 });
 scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
 scheme.ElectronApplicationCloseResult = tOptional(tObject({}));
+scheme.BrowserServerInitializer = tOptional(tObject({}));
+scheme.LaunchServerOptionsInitializer = tOptional(tObject({}));
 scheme.AndroidInitializer = tOptional(tObject({}));
 scheme.AndroidDevicesParams = tObject({
   host: tOptional(tString),
@@ -2121,6 +2123,12 @@ scheme.AndroidDevicesParams = tObject({
 });
 scheme.AndroidDevicesResult = tObject({
   devices: tArray(tChannel(['AndroidDevice'])),
+});
+scheme.AndroidLaunchServerParams = tObject({
+  params: tChannel(['LaunchServerOptions']),
+});
+scheme.AndroidLaunchServerResult = tObject({
+  server: tChannel(['BrowserServer']),
 });
 scheme.AndroidSetDefaultTimeoutNoReplyParams = tObject({
   timeout: tNumber,

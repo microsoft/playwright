@@ -48,8 +48,13 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
   }
 
   async devices(options: { port?: number } = {}): Promise<AndroidDevice[]> {
+
     const { devices } = await this._channel.devices(options);
     return devices.map(d => AndroidDevice.from(d));
+  }
+
+  async launchServer(options: types.LaunchServerOptions = {}): Promise<api.BrowserServer> {
+    return await this._channel.launchServer(options);
   }
 }
 

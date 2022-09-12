@@ -2935,6 +2935,11 @@ ElectronApplication:
   events:
     close:
 
+BrowserServer:
+  type: interface
+
+LaunchServerOptions:
+  type: interface
 
 Android:
   type: interface
@@ -2950,6 +2955,12 @@ Android:
         devices:
           type: array
           items: AndroidDevice
+
+    launchServer:
+      parameters:
+        params: LaunchServerOptions
+      returns:
+        server: BrowserServer 
 
     setDefaultTimeoutNoReply:
       parameters:

@@ -24,6 +24,7 @@ import { PlaywrightConnection } from './playwrightConnection';
 import { assert } from '../utils';
 import type  { LaunchOptions } from '../server/types';
 import { ManualPromise } from '../utils/manualPromise';
+import { AndroidDevice } from '../server/android/android';
 
 const debugLog = debug('pw:server');
 
@@ -43,6 +44,7 @@ type ServerOptions = {
   maxConcurrentConnections: number;
   enableSocksProxy: boolean;
   preLaunchedBrowser?: Browser
+  preLaunchedAndroidDevice?: AndroidDevice
 };
 
 export class PlaywrightServer {

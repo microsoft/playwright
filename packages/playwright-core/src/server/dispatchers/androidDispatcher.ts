@@ -19,6 +19,8 @@ import { Dispatcher, existingDispatcher } from './dispatcher';
 import type { Android, SocketBackend } from '../android/android';
 import { AndroidDevice } from '../android/android';
 import type * as channels from '../../protocol/channels';
+import type * as api from '../../../types/types';
+import type * as types from '../../client/types';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { CallMetadata } from '../instrumentation';
 
@@ -33,6 +35,10 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChann
     return {
       devices: devices.map(d => AndroidDeviceDispatcher.from(this, d))
     };
+  }
+
+  async launchServer(params?: types.LaunchServerOptions): Promise<api.BrowserServer> {
+    return await this._object.launchServer(params);
   }
 
   async setDefaultTimeoutNoReply(params: channels.AndroidSetDefaultTimeoutNoReplyParams) {
