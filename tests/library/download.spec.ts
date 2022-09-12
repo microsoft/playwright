@@ -50,7 +50,8 @@ it.describe('download event', () => {
     });
   });
 
-  it('should report download when navigation turns into download @smoke', async ({ browser, server, browserName }) => {
+  it('should report download when navigation turns into download @smoke', async ({ browser, server, browserName, isRemote }) => {
+    it.skip(isRemote, 'local paths do not work remote connection');
     const page = await browser.newPage();
     const [download, responseOrError] = await Promise.all([
       page.waitForEvent('download'),

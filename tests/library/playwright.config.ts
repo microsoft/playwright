@@ -129,6 +129,7 @@ for (const browserName of browserNames) {
       metadata: {
         platform: process.platform,
         docker: !!process.env.INSIDE_DOCKER,
+        dockerIntegration: !!process.env.PLAYWRIGHT_DOCKER,
         headful: !!headed,
         browserName,
         channel,

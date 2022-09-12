@@ -65,7 +65,8 @@ it('should respect CSP @smoke', async ({ page, server }) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it('should play video @smoke', async ({ page, asset, browserName, platform }) => {
+it('should play video @smoke', async ({ page, asset, browserName, platform, isRemote }) => {
+  it.skip(isRemote, 'local paths do not work with remote setup');
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
   // Also the test is very flaky on Linux WebKit.
@@ -83,10 +84,10 @@ it('should play video @smoke', async ({ page, asset, browserName, platform }) =>
   await page.$eval('video', v => v.pause());
 });
 
-it('should play audio @smoke', async ({ page, server, browserName, platform }) => {
-  it.fixme(browserName === 'firefox' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10887');
-  it.fixme(browserName === 'firefox' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/10887');
-  it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10892');
+it('should play audio @smoke', async ({ page, server, browserName, browserPlatform }) => {
+  it.fixme(browserName === 'firefox' && browserPlatform === 'win32', 'https://github.com/microsoft/playwright/issues/10887');
+  it.fixme(browserName === 'firefox' && browserPlatform === 'linux', 'https://github.com/microsoft/playwright/issues/10887');
+  it.fixme(browserName === 'webkit' && browserPlatform === 'win32', 'https://github.com/microsoft/playwright/issues/10892');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<audio src="${server.PREFIX}/example.mp3"></audio>`);
   await page.$eval('audio', e => e.play());
