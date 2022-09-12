@@ -4,6 +4,45 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.26
+
+### (Experimental) Docker integration
+
+Playwright Test now ships an **experimental** Docker integration. The Docker container provides a consistent environment, eliminating browser rendering differences across platforms.
+
+With this integration, only **browser binaries** are running inside a Docker container, while all the code is still running on the host operating system.
+
+![experimental docker integration](https://user-images.githubusercontent.com/746130/189769063-2ce2fc36-2554-4881-85c8-d649ebfea714.png)
+
+Read more in [our documentation](./docker#experimental-playwright-test-docker-integration).
+
+### Test Runner Improvements
+
+- New option `enabled` for [`method: LocatorAssertions.toBeEnabled`].
+- [`method: LocatorAssertions.toHaveText`] now pierces open shadow roots.
+- New option `editable` for [`method: LocatorAssertions.toBeEditable`].
+- New option `visible` for [`method: LocatorAssertions.toBeVisible`].
+- New flag `--pass-with-no-tests` that allows the test suite to pass when no files are found.
+- New flag `--ignore-snapshots` to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `expect(page).toHaveScreenshot()`.
+- New option `maxRedirects` for [`method: APIRequestContext.get`] and others to limit redirect count.
+
+### Behavior Change
+
+A bunch of Playwright APIs already support the `waitUntil: 'domcontentloaded'` option.
+For example:
+
+```js
+await page.goto('https://playwright.dev', {
+  waitUntil: 'domcontentloaded',
+});
+```
+
+Prior to 1.26, this would wait for all iframes to fire the `DOMContentLoaded`
+event. 
+
+To align with web specification, the `'domcontentloaded'` value only waits for
+the target frame to fire the `'DOMContentLoaded'` event. Use `waitUntil: 'load'` to wait for all iframes.
+
 ## Version 1.25
 
 <div className="embed-youtube">
