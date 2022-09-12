@@ -7,10 +7,10 @@ import MultiRoot from './components/MultiRoot.vue';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
-test('props should work', async ({ mount }) => {
-  const component = await mount(<Button title="Submit" />);
-  await expect(component).toContainText('Submit');
-});
+test('render props', async ({ mount }) => {
+  const component = await mount(<Button title="Submit" />)
+  await expect(component).toContainText('Submit')
+})
 
 test('renderer and keep the component instance intact', async ({ mount }) => {
   const component = await mount(<Counter count={9001} />);
@@ -68,7 +68,49 @@ test('named slots should work', async ({ mount }) => {
   await expect(component).toContainText('Footer');
 });
 
-test('slot should emit events', async ({ mount }) => {
+test('emit an submit event when the button is clicked', async ({ mount }) => {
+  const messages = []
+  const component = await mount(<Button title='Submit' v-on:submit={data => {
+    messages.push(data)
+  }}></Button>)
+  await component.click()
+  expect(messages).toEqual(['hello'])
+})
+
+test('render a default slot', async ({ mount }) => {
+  const component = await mount(<DefaultSlot>
+    Main Content
+  </DefaultSlot>)
+  await expect(component).toContainText('Main Content')
+})
+
+test('render a component with multiple slots', async ({ mount }) => {
+  const component = await mount(<DefaultSlot>
+    <div id="one">One</div>
+    <div id="two">Two</div>
+  </DefaultSlot>)
+  await expect(component.locator('#one')).toContainText('One')
+  await expect(component.locator('#two')).toContainText('Two')
+})
+
+test('render a component with a named slot', async ({ mount }) => {
+  const component = await mount(<NamedSlots>
+    <template v-slot:header>
+      Header
+    </template>
+    <template v-slot:main>
+      Main Content
+    </template>
+    <template v-slot:footer>
+      Footer
+    </template>
+  </NamedSlots>);
+  await expect(component).toContainText('Header')
+  await expect(component).toContainText('Main Content')
+  await expect(component).toContainText('Footer')
+})
+
+test('emit a event when a slot is clicked', async ({ mount }) => {
   let clickFired = false;
   const component = await mount(
     <DefaultSlot>
@@ -79,9 +121,9 @@ test('slot should emit events', async ({ mount }) => {
   expect(clickFired).toBeTruthy();
 });
 
-test('should run hooks', async ({ page, mount }) => {
-  const messages: string[] = [];
-  page.on('console', (m) => messages.push(m.text()));
+test('run hooks', async ({ page, mount }) => {
+  const messages = []
+  page.on('console', m => messages.push(m.text()))
   await mount(<Button title="Submit" />, {
     hooksConfig: { route: 'A' },
   });
@@ -91,11 +133,11 @@ test('should run hooks', async ({ page, mount }) => {
   ]);
 });
 
-test('unmount a multi root component should work', async ({ mount, page }) => {
-  const component = await mount(<MultiRoot />);
-  await expect(page.locator('#root')).toContainText('root 1');
-  await expect(page.locator('#root')).toContainText('root 2');
-  await component.unmount();
-  await expect(page.locator('#root')).not.toContainText('root 1');
-  await expect(page.locator('#root')).not.toContainText('root 2');
-});
+test('unmount a multi root component', async ({ mount, page }) => {
+  const component = await mount(<MultiRoot />)
+  await expect(page.locator('#root')).toContainText('root 1')
+  await expect(page.locator('#root')).toContainText('root 2')
+  await component.unmount()
+  await expect(page.locator('#root')).not.toContainText('root 1')
+  await expect(page.locator('#root')).not.toContainText('root 2')
+})

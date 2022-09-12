@@ -43,9 +43,9 @@ This guide describes migration to [Playwright Library](./library) and [Playwrigh
 
 `page.waitForNavigation` and `page.waitForSelector` remain, but in many cases will not be necessary due to [auto-waiting](./actionability).
 
-The use of [ElementHandle] is discouraged , use [Locator] objects and web-first assertions instead.
+The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
 
-Locators are the central piece of Playwright's auto-waiting and retry-ability. Locators are strict. This means that all operations on locators that imply some target DOM element will throw an exception if more than one element matches given selector.
+Locators are the central piece of Playwright's auto-waiting and retry-ability. Locators are strict. This means that all operations on locators that imply some target DOM element will throw an exception if more than one element matches a given selector.
 
 ## Examples
 
@@ -90,7 +90,7 @@ Migration highlights (see inline comments in the Playwright code snippet):
 1. Each Playwright Library file has explicit import of `chromium`. Other browsers `webkit` or `firefox` can be used.
 1. For browser state isolation, consider [browser contexts](./browser-contexts.md)
 1. `setViewport` becomes `setViewportSize`
-1. `networkidle2` becomes `networkidle`. Please note that on most cases it is not useful, thanks to auto-waiting.
+1. `networkidle2` becomes `networkidle`. Please note that in most cases it is not useful, thanks to auto-waiting.
 
 ### Test example
 
@@ -145,7 +145,7 @@ Playwright Test creates an isolated [Page] object for each test. However, if you
 
 With a few lines of code, you can hook up Playwright to your existing JavaScript [test runner](./test-runners).
 
-To improve testing, it is adviced to use [Locators](./api/class-locator) and web-first [Assertions](./test-assertions). See [Writing Tests](./writing-tests)
+To improve testing, it is advised to use [Locators](./api/class-locator) and web-first [Assertions](./test-assertions). See [Writing Tests](./writing-tests)
 
 It is common with Puppeteer to use `page.evaluate()` or `page.$eval()` to inspect an [ElementHandle] and extract the value of text content, attribute, class... Web-first [Assertions](./test-assertions) offers several matchers for this purpose, it is more reliable and readable.
 
@@ -161,7 +161,7 @@ Once you're on Playwright Test, you get a lot!
 - Run tests in isolation in parallel across multiple browsers
 - Built-in test artifact collection: [video recording](./test-configuration#record-video), [screenshots](./test-configuration#automatic-screenshots) and [playwright traces](./test-configuration#record-test-trace)
 
-Also you get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
+You also get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
 - [Playwright Inspector](./debug.md)
 - [Playwright Test Code generation](./auth#code-generation)
 - [Playwright Tracing](./trace-viewer) for post-mortem debugging
