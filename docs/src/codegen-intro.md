@@ -46,4 +46,4 @@ To learn more about generating tests check out or detailed guide on [Codegen](./
 
 ## What's Next
 
-- [See a trace of your tests](./trace-viewer.md)
+- [See a trace of your tests](./trace-viewer-intro.md)
