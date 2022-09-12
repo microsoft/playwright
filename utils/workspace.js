@@ -1,3 +1,4 @@
+
 #!/usr/bin/env node
 /**
  * Copyright (c) Microsoft Corporation.
@@ -186,6 +187,11 @@ const workspace = new Workspace(ROOT_PATH, [
   new PWPackage({
     name: '@playwright/experimental-ct-solid',
     path: path.join(ROOT_PATH, 'packages', 'playwright-ct-solid'),
+    files: ['LICENSE'],
+  }),
+  new PWPackage({
+    name: '@playwright/experimental-ct-web',
+    path: path.join(ROOT_PATH, 'packages', 'playwright-ct-web'),
     files: ['LICENSE'],
   }),
   new PWPackage({
