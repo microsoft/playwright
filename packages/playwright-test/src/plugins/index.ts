@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import type { Suite } from '../../types/testReporter';
+import type { Suite, Reporter } from '../../types/testReporter';
 import type { Runner } from '../runner';
 import type { FullConfig } from '../types';
 
 export interface TestRunnerPlugin {
   name: string;
-  setup?(config: FullConfig, configDir: string, rootSuite: Suite): Promise<void>;
+  setup?(config: FullConfig, configDir: string, rootSuite: Suite, reporter: Reporter): Promise<void>;
   teardown?(): Promise<void>;
 }
 
@@ -28,15 +28,18 @@ export { webServer } from './webServerPlugin';
 export { gitCommitInfo } from './gitCommitInfoPlugin';
 
 let runnerInstanceToAddPluginsTo: Runner | undefined;
+const deferredPlugins: TestRunnerPlugin[] = [];
 
 export const setRunnerToAddPluginsTo = (runner: Runner) => {
   runnerInstanceToAddPluginsTo = runner;
+  for (const plugin of deferredPlugins)
+    runnerInstanceToAddPluginsTo.addPlugin(plugin);
 };
 
 export const addRunnerPlugin = (plugin: TestRunnerPlugin | (() => TestRunnerPlugin)) => {
-  // Only present in runner, absent in worker.
-  if (runnerInstanceToAddPluginsTo) {
-    plugin = typeof plugin === 'function' ? plugin() : plugin;
+  plugin = typeof plugin === 'function' ? plugin() : plugin;
+  if (runnerInstanceToAddPluginsTo)
     runnerInstanceToAddPluginsTo.addPlugin(plugin);
-  }
+  else
+    deferredPlugins.push(plugin);
 };

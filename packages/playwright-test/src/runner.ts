@@ -603,14 +603,14 @@ export class Runner {
     };
 
     // Legacy webServer support.
-    this._plugins.push(...webServerPluginsForConfig(config, this._reporter));
+    this._plugins.push(...webServerPluginsForConfig(config));
 
     await this._runAndReportError(async () => {
       // First run the plugins, if plugin is a web server we want it to run before the
       // config's global setup.
       for (const plugin of this._plugins) {
         await Promise.race([
-          plugin.setup?.(config, config._configDir, rootSuite),
+          plugin.setup?.(config, config._configDir, rootSuite, this._reporter),
           sigintWatcher.promise(),
         ]);
         if (sigintWatcher.hadSignal())
