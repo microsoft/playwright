@@ -21,7 +21,7 @@ import MultiRoot from './components/MultiRoot.svelte';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
-test('props should work', async ({ mount }) => {
+test('render props', async ({ mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit'
@@ -30,7 +30,7 @@ test('props should work', async ({ mount }) => {
   await expect(component).toContainText('Submit')
 })
 
-test('event should work', async ({ mount }) => {
+test('emit an submit event when the button is clicked', async ({ mount }) => {
   const messages = []
   const component = await mount(Button, {
     props: {
@@ -44,7 +44,7 @@ test('event should work', async ({ mount }) => {
   expect(messages).toEqual(['hello'])
 })
 
-test('default slot should work', async ({ mount }) => {
+test('render a default slot', async ({ mount }) => {
   const component = await mount(DefaultSlot, {
     slots: {
       default: 'Main Content'
@@ -53,7 +53,7 @@ test('default slot should work', async ({ mount }) => {
   await expect(component).toContainText('Main Content')
 })
 
-test('should run hooks', async ({ page, mount }) => {
+test('run hooks', async ({ page, mount }) => {
   const messages = []
   page.on('console', m => messages.push(m.text()))
   await mount(Button, {
@@ -65,7 +65,7 @@ test('should run hooks', async ({ page, mount }) => {
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount']);
 })
 
-test('should unmount', async ({ page, mount }) => {
+test('unmount', async ({ page, mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit'
@@ -76,7 +76,7 @@ test('should unmount', async ({ page, mount }) => {
   await expect(page.locator('#root')).not.toContainText('Submit');
 });
 
-test('unmount a multi root component should work', async ({ mount, page }) => {
+test('unmount a multi root component', async ({ mount, page }) => {
   const component = await mount(MultiRoot)
   await expect(page.locator('#root')).toContainText('root 1')
   await expect(page.locator('#root')).toContainText('root 2')
