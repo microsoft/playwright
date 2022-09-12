@@ -226,11 +226,6 @@ for (const [name, type] of modelTypes)
 for (const [name, literals] of enumTypes)
   renderEnum(name, literals);
 
-if (process.argv[3] !== '--skip-format') {
-  // run the formatting tool for .NET, to ensure the files are prepped
-  execSync(`dotnet format "${outputDir}"`);
-}
-
 /**
  * @param {string} name
  */
