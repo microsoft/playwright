@@ -83,7 +83,7 @@ Migration highlights (see inline comments in the Playwright Test code snippet):
 
 ## Migrating queries
 
-All queries like `getBy...`, `findBy...`, `queryBy...` and their multi-element counterparts are replaced with `page.locator('...')`. Locators always auto-wait and retry when needed, so you don't have to worry about choosing the right method. When you want to do a [list operation](./locators#lists), e.g. assert a list of texts, Playwright automatically performs multi-element opertations.
+All queries like `getBy...`, `findBy...`, `queryBy...` and their multi-element counterparts are replaced with `page.locator('...')`. Locators always auto-wait and retry when needed, so you don't have to worry about choosing the right method. When you want to do a [list operation](./locators#lists), e.g. assert a list of texts, Playwright automatically performs multi-element operations.
 
 1. `getByRole`: use [role selector](./selectors#role-selector) `component.locator('role=button[name="Sign up"]')`.
 1. `getByText`: use `component.locator('text=some value')` and other variations of the [text selector](./selectors#text-selector).
@@ -141,7 +141,7 @@ Once you're on Playwright Test, you get a lot!
 - Run tests in isolation in parallel across multiple browsers
 - Built-in test artifact collection: [video recording](./test-configuration#record-video), [screenshots](./test-configuration#automatic-screenshots) and [playwright traces](./test-configuration#record-test-trace)
 
-Also you get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
+You also get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
 - [Playwright Inspector](./debug.md)
 - [Playwright Test Code generation](./auth#code-generation)
 - [Playwright Tracing](./trace-viewer) for post-mortem debugging

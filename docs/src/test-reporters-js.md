@@ -36,7 +36,7 @@ export default config;
 
 ### Multiple reporters
 
-You can use multiple reporters at the same time. For example  you can use`'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
+You can use multiple reporters at the same time. For example  you can use `'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
 
 ```js tab=js-js
 // playwright.config.js

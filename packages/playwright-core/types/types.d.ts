@@ -12668,6 +12668,12 @@ export interface APIRequestContext {
     ignoreHTTPSErrors?: boolean;
 
     /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
      * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
      * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
@@ -12748,6 +12754,12 @@ export interface APIRequestContext {
     ignoreHTTPSErrors?: boolean;
 
     /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
+
+    /**
      * If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) or
      * [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)). If not specified, GET method is used.
      */
@@ -12811,6 +12823,12 @@ export interface APIRequestContext {
     ignoreHTTPSErrors?: boolean;
 
     /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
+
+    /**
      * Query parameters to be sent with the URL.
      */
     params?: { [key: string]: string|number|boolean; };
@@ -12843,6 +12861,12 @@ export interface APIRequestContext {
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
 
     /**
      * Query parameters to be sent with the URL.
@@ -12891,6 +12915,12 @@ export interface APIRequestContext {
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
 
     /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
@@ -12964,6 +12994,12 @@ export interface APIRequestContext {
     ignoreHTTPSErrors?: boolean;
 
     /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
      * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
      * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
@@ -13033,6 +13069,12 @@ export interface APIRequestContext {
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
 
     /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
@@ -14457,7 +14499,7 @@ export interface FileChooser {
  * **Strictness**
  *
  * Frame locators are strict. This means that all operations on frame locators will throw if more than one element matches
- * given selector.
+ * a given selector.
  *
  * ```js
  * // Throws if there are several frames in DOM:

@@ -96,7 +96,7 @@ await page.Locator("text=First Name").FillAsync("Peter");
 
 ## Checkboxes and radio buttons
 
-Using [method: Locator.setChecked] is the easiest way to check and uncheck a checkbox or a radio button. This method can be used with `input[type=checkbox]`, `input[type=radio]`, `[role=checkbox]` or `label` associated with checkbox or radio button.
+Using [`method: Locator.setChecked`] is the easiest way to check and uncheck a checkbox or a radio button. This method can be used with `input[type=checkbox]`, `input[type=radio]`, `[role=checkbox]` or `label` associated with checkbox or radio button.
 
 ```js
 // Check the checkbox
@@ -367,7 +367,7 @@ await page.Locator("button#submit").ClickAsync(new() { Force = true });
 
 #### Programmatic click
 
-If you are not interested in testing your app under the real conditions and want to simulate the click by any means possible, you can trigger the [`HTMLElement.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click) behavior via simply dispatching a click event on the element with [method: Locator.dispatchEvent]:
+If you are not interested in testing your app under the real conditions and want to simulate the click by any means possible, you can trigger the [`HTMLElement.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click) behavior via simply dispatching a click event on the element with [`method: Locator.dispatchEvent`]:
 
 ```js
 await page.locator('button#submit').dispatchEvent('click');
@@ -391,7 +391,7 @@ await page.Locator("button#submit").DispatchEventAsync("click");
 
 ## Type characters
 
-Type into the field character by character, as if it was a user with a real keyboard with [method: Locator.type].
+Type into the field character by character, as if it was a user with a real keyboard with [`method: Locator.type`].
 
 ```js
 // Type character by character
@@ -481,7 +481,7 @@ await page.Locator("#name").PressAsync("Control+ArrowRight");
 await page.Locator("#value").PressAsync("$");
 ```
 
-The [method: Locator.press] method focuses the selected element and produces a single keystroke. It accepts the logical key names that are emitted in the [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) property of the keyboard events:
+The [`method: Locator.press`] method focuses the selected element and produces a single keystroke. It accepts the logical key names that are emitted in the [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) property of the keyboard events:
 
 ```
 Backquote, Minus, Equal, Backslash, Backspace, Tab, Delete, Escape,

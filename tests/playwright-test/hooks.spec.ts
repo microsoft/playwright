@@ -249,7 +249,7 @@ test('beforeAll/afterAll hooks are skipped when no tests in the suite are run 2'
   expect(result.output).not.toContain('%%afterAll');
 });
 
-test('should run hooks after failure', async ({ runInlineTest }) => {
+test('run hooks after failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;

@@ -162,7 +162,7 @@ export abstract class APIRequestContext extends SdkObject {
       method,
       headers,
       agent,
-      maxRedirects: 20,
+      maxRedirects: params.maxRedirects === 0 ? -1 : params.maxRedirects === undefined ? 20 : params.maxRedirects,
       timeout,
       deadline
     };
@@ -268,7 +268,7 @@ export abstract class APIRequestContext extends SdkObject {
         if (cookies.length)
           await this._addCookies(cookies);
 
-        if (redirectStatus.includes(response.statusCode!)) {
+        if (redirectStatus.includes(response.statusCode!) && options.maxRedirects >= 0) {
           if (!options.maxRedirects) {
             reject(new Error('Max redirect count exceeded'));
             request.destroy();

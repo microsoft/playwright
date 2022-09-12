@@ -9,6 +9,7 @@ on:
     paths-ignore:
       - 'browser_patches/**'
       - 'docs/**'
+    types: [ labeled ]
     branches:
       - main
       - release-*

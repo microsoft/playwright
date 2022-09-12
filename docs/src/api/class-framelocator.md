@@ -30,7 +30,7 @@ await locator.ClickAsync();
 
 **Strictness**
 
-Frame locators are strict. This means that all operations on frame locators will throw if more than one element matches given selector.
+Frame locators are strict. This means that all operations on frame locators will throw if more than one element matches a given selector.
 
 ```js
 // Throws if there are several frames in DOM:

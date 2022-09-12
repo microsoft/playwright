@@ -17,9 +17,11 @@
 /* eslint-disable no-console */
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
+import * as docker from './docker/docker';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
 import type { ConfigCLIOverrides } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
@@ -29,14 +31,67 @@ import { baseFullConfig, defaultTimeout, fileIsModule } from './loader';
 import type { TraceMode } from './types';
 
 export function addTestCommands(program: Command) {
-  addTestCommand(program);
+  addTestCommand(program, false /* isDocker */);
   addShowReportCommand(program);
   addListFilesCommand(program);
+  addDockerCommand(program);
 }
 
-function addTestCommand(program: Command) {
+function addDockerCommand(program: Command) {
+  const dockerCommand = program.command('docker')
+      .description(`run tests in Docker (EXPERIMENTAL)`);
+
+  dockerCommand.command('build')
+      .description('build local docker image')
+      .action(async function(options) {
+        await docker.ensureDockerEngineIsRunningOrDie();
+        await docker.buildImage();
+      });
+
+  dockerCommand.command('start')
+      .description('start docker container')
+      .action(async function(options) {
+        await docker.ensureDockerEngineIsRunningOrDie();
+        let info = await docker.containerInfo();
+        if (!info) {
+          process.stdout.write(`Starting docker container... `);
+          const time = Date.now();
+          info = await docker.ensureContainerOrDie();
+          const deltaMs = (Date.now() - time);
+          console.log('Done in ' + (deltaMs / 1000).toFixed(1) + 's');
+        }
+        console.log([
+          `- VNC session: ${info.vncSession}`,
+          `- Run tests with browsers inside container:`,
+          `      npx playwright docker test`,
+          `- Stop container *manually* when it is no longer needed:`,
+          `      npx playwright docker stop`,
+        ].join('\n'));
+      });
+
+  dockerCommand.command('delete-image', { hidden: true })
+      .description('delete docker image, if any')
+      .action(async function(options) {
+        await docker.ensureDockerEngineIsRunningOrDie();
+        await docker.deleteImage();
+      });
+
+  dockerCommand.command('stop')
+      .description('stop docker container')
+      .action(async function(options) {
+        await docker.ensureDockerEngineIsRunningOrDie();
+        await docker.stopContainer();
+      });
+
+  addTestCommand(dockerCommand, true /* isDocker */);
+}
+
+function addTestCommand(program: Command, isDocker: boolean) {
   const command = program.command('test [test-filter...]');
-  command.description('Run tests with Playwright Test');
+  if (isDocker)
+    command.description('run tests with Playwright Test and browsers inside docker container');
+  else
+    command.description('run tests with Playwright Test');
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
   command.option('--headed', `Run tests in headed browsers (default: headless)`);
   command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --maxFailures=1 --headed --workers=1" options`);
@@ -46,6 +101,7 @@ function addTestCommand(program: Command) {
   command.option('-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`);
   command.option('-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`);
   command.option('--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`);
+  command.option('--ignore-snapshots', `Ignore screenshot and snapshot expectations`);
   command.option('-j, --workers <workers>', `Number of concurrent workers, use 1 to run in a single worker (default: number of CPU cores / 2)`);
   command.option('--list', `Collect all the tests and report them, but do not run`);
   command.option('--max-failures <N>', `Stop after the first N failures`);
@@ -59,11 +115,31 @@ function addTestCommand(program: Command) {
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
   command.option('--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`);
   command.option('--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
-  command.option('-i, --ignore-snapshots', `Ignore screenshot and snapshot expectations`);
   command.option('-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`);
   command.option('-x', `Stop after the first failure`);
   command.action(async (args, opts) => {
     try {
+      if (isDocker && !process.env.PW_TS_ESM_ON) {
+        console.log(colors.dim('Using docker container to run browsers.'));
+        await docker.ensureDockerEngineIsRunningOrDie();
+        let info = await docker.containerInfo();
+        if (!info) {
+          process.stdout.write(colors.dim(`Starting docker container... `));
+          const time = Date.now();
+          info = await docker.ensureContainerOrDie();
+          const deltaMs = (Date.now() - time);
+          console.log(colors.dim('Done in ' + (deltaMs / 1000).toFixed(1) + 's'));
+          console.log(colors.dim('The Docker container will keep running after tests finished.'));
+          console.log(colors.dim('Stop manually using:'));
+          console.log(colors.dim('    npx playwright docker stop'));
+        }
+        console.log(colors.dim(`View screen: ${info.vncSession}`));
+        process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.wsEndpoint;
+        process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
+          'x-playwright-proxy': '*',
+        });
+        process.env.PW_TEST_SNAPSHOT_SUFFIX = 'docker';
+      }
       await runTests(args, opts);
     } catch (e) {
       console.error(e);
@@ -75,10 +151,10 @@ Arguments [test-filter...]:
   Pass arguments to filter test files. Each argument is treated as a regular expression.
 
 Examples:
-  $ npx playwright test my.spec.ts
-  $ npx playwright test some.spec.ts:42
-  $ npx playwright test --headed
-  $ npx playwright test --browser=webkit`);
+  $ npx playwright${isDocker ? ' docker ' : ' '}test my.spec.ts
+  $ npx playwright${isDocker ? ' docker ' : ' '}test some.spec.ts:42
+  $ npx playwright${isDocker ? ' docker ' : ' '}test --headed
+  $ npx playwright${isDocker ? ' docker ' : ' '}test --browser=webkit`);
 }
 
 function addListFilesCommand(program: Command) {
