@@ -429,7 +429,7 @@ test('should load web server w/o esm loader in ems module', async ({ runInlineTe
         webServer: {
           command: 'node ws.js',
           port: 9876,
-          timeout: 100,
+          timeout: 5000,
         },
         projects: [{name: 'foo'}]
       }`,
