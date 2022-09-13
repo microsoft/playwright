@@ -149,8 +149,7 @@ docker run --rm -it playwright:localbuild /bin/bash
 ## (Experimental) Playwright Test Docker Integration
 * langs: js
 
-Docker container provides a consistent environment, eliminating browser rendering
-differences across platforms. Playwright Test now ships an **experimental** Docker integration.
+Playwright Test now ships an **experimental** Docker integration. The Docker container provides a consistent environment, eliminating browser rendering differences across platforms. 
 With this integration, **only** browser binaries are running inside a Docker container,
 while all the code is still running on the host operating system.
 
