@@ -42,7 +42,6 @@ export class VideoPlayer {
     this.output = spawnSync(ffmpeg, ['-i', this.fileName, '-r', '25', `${this.fileName}-%03d.png`]).stderr.toString();
 
     const lines = this.output.split('\n');
-    lines.forEach(console.log);
     let framesLine = lines.find(l => l.startsWith('frame='))!;
     if (!framesLine)
       throw new Error(`No frame data in the output:\n${this.output}`);
