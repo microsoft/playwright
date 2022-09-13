@@ -21,7 +21,6 @@ import * as docker from './docker/docker';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
-import { colors } from 'playwright-core/lib/utilsBundle';
 import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
 import type { ConfigCLIOverrides } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
@@ -44,44 +43,25 @@ function addDockerCommand(program: Command) {
   dockerCommand.command('build')
       .description('build local docker image')
       .action(async function(options) {
-        await docker.ensureDockerEngineIsRunningOrDie();
-        await docker.buildImage();
+        await docker.buildPlaywrightImage();
       });
 
   dockerCommand.command('start')
       .description('start docker container')
       .action(async function(options) {
-        await docker.ensureDockerEngineIsRunningOrDie();
-        let info = await docker.containerInfo();
-        if (!info) {
-          process.stdout.write(`Starting docker container... `);
-          const time = Date.now();
-          info = await docker.ensureContainerOrDie();
-          const deltaMs = (Date.now() - time);
-          console.log('Done in ' + (deltaMs / 1000).toFixed(1) + 's');
-        }
-        console.log([
-          `- View screen:`,
-          `      ${info.vncSession}`,
-          `- Run tests with browsers inside container:`,
-          `      npx playwright docker test`,
-          `- Stop background container *manually* when you are done working with tests:`,
-          `      npx playwright docker stop`,
-        ].join('\n'));
-      });
-
-  dockerCommand.command('delete-image', { hidden: true })
-      .description('delete docker image, if any')
-      .action(async function(options) {
-        await docker.ensureDockerEngineIsRunningOrDie();
-        await docker.deleteImage();
+        await docker.startPlaywrightContainer();
       });
 
   dockerCommand.command('stop')
       .description('stop docker container')
       .action(async function(options) {
-        await docker.ensureDockerEngineIsRunningOrDie();
-        await docker.stopContainer();
+        await docker.stopPlaywrightContainer();
+      });
+
+  dockerCommand.command('delete-image', { hidden: true })
+      .description('delete docker image, if any')
+      .action(async function(options) {
+        await docker.deletePlaywrightImage();
       });
 
   addTestCommand(dockerCommand, true /* isDocker */);
@@ -121,27 +101,8 @@ function addTestCommand(program: Command, isDocker: boolean) {
   command.action(async (args, opts) => {
     try {
       isDocker = isDocker || !!process.env.PLAYWRIGHT_DOCKER;
-      if (isDocker && !process.env.PW_TS_ESM_ON) {
-        console.log(colors.dim('Using docker container to run browsers.'));
-        await docker.ensureDockerEngineIsRunningOrDie();
-        let info = await docker.containerInfo();
-        if (!info) {
-          process.stdout.write(colors.dim(`Starting docker container... `));
-          const time = Date.now();
-          info = await docker.ensureContainerOrDie();
-          const deltaMs = (Date.now() - time);
-          console.log(colors.dim('Done in ' + (deltaMs / 1000).toFixed(1) + 's'));
-          console.log(colors.dim('The Docker container will keep running after tests finished.'));
-          console.log(colors.dim('Stop manually using:'));
-          console.log(colors.dim('    npx playwright docker stop'));
-        }
-        console.log(colors.dim(`View screen: ${info.vncSession}`));
-        process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.wsEndpoint;
-        process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
-          'x-playwright-proxy': '*',
-        });
-        process.env.PLAYWRIGHT_DOCKER = '1';
-      }
+      if (isDocker && !process.env.PW_TS_ESM_ON)
+        await docker.configureTestRunnerToUseDocker();
       await runTests(args, opts);
     } catch (e) {
       console.error(e);
