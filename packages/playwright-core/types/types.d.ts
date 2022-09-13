@@ -12720,6 +12720,45 @@ export interface APIRequestContext {
   /**
    * Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
    * context cookies from the response. The method will automatically follow redirects.
+   *
+   * JSON objects can be passed directly to the request:
+   *
+   * ```js
+   * await request.fetch('https://example.com/api/createBook', {
+   *   method: 'post',
+   *   data: {
+   *     title: 'Book Title',
+   *     author: 'John Doe',
+   *   }
+   * });
+   * ```
+   *
+   * The common way to send file(s) in the body of a request is to encode it as form fields with `multipart/form-data`
+   * encoding. You can achieve that with Playwright API like this:
+   *
+   * ```js
+   * // Open file as a stream and pass it to the request:
+   * const stream = fs.createReadStream('team.csv');
+   * await request.fetch('https://example.com/api/uploadTeamList', {
+   *   method: 'post',
+   *   multipart: {
+   *     fileField: stream
+   *   }
+   * });
+   *
+   * // Or you can pass the file content directly as an object:
+   * await request.fetch('https://example.com/api/uploadScript', {
+   *   method: 'post',
+   *   multipart: {
+   *     fileField: {
+   *       name: 'f.js',
+   *       mimeType: 'text/javascript',
+   *       buffer: Buffer.from('console.log(2022);')
+   *     }
+   *   }
+   * });
+   * ```
+   *
    * @param urlOrRequest Target URL or Request to get all parameters from.
    * @param options
    */
@@ -12803,6 +12842,18 @@ export interface APIRequestContext {
    * Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its response. The
    * method will populate request cookies from the context and update context cookies from the response. The method will
    * automatically follow redirects.
+   *
+   * Request parameters can be configured with `params` option, they will be serialized into the URL search parameters:
+   *
+   * ```js
+   * await request.get('https://example.com/api/getText', {
+   *   params: {
+   *     'isbn': '1234',
+   *     'page': 23,
+   *   }
+   * });
+   * ```
+   *
    * @param url Target URL.
    * @param options
    */
@@ -12960,6 +13011,54 @@ export interface APIRequestContext {
    * Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its response.
    * The method will populate request cookies from the context and update context cookies from the response. The method will
    * automatically follow redirects.
+   *
+   * JSON objects can be passed directly to the request:
+   *
+   * ```js
+   * await request.post('https://example.com/api/createBook', {
+   *   data: {
+   *     title: 'Book Title',
+   *     author: 'John Doe',
+   *   }
+   * });
+   * ```
+   *
+   * To send form data to the server use `form` option. Its value will be encoded into the request body with
+   * `application/x-www-form-urlencoded` encoding (see below how to use `multipart/form-data` form encoding to send files):
+   *
+   * ```js
+   * await request.post('https://example.com/api/findBook', {
+   *   form: {
+   *     title: 'Book Title',
+   *     author: 'John Doe',
+   *   }
+   * });
+   * ```
+   *
+   * The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data`
+   * encoding. You can achieve that with Playwright API like this:
+   *
+   * ```js
+   * // Open file as a stream and pass it to the request:
+   * const stream = fs.createReadStream('team.csv');
+   * await request.post('https://example.com/api/uploadTeamList', {
+   *   multipart: {
+   *     fileField: stream
+   *   }
+   * });
+   *
+   * // Or you can pass the file content directly as an object:
+   * await request.post('https://example.com/api/uploadScript', {
+   *   multipart: {
+   *     fileField: {
+   *       name: 'f.js',
+   *       mimeType: 'text/javascript',
+   *       buffer: Buffer.from('console.log(2022);')
+   *     }
+   *   }
+   * });
+   * ```
+   *
    * @param url Target URL.
    * @param options
    */
