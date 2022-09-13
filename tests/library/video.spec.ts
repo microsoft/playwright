@@ -58,7 +58,7 @@ export class VideoPlayer {
 
     const inputMetadataLine = lines.find(line => line.includes('Stream #0:0: Video'));
     const fpsMatch = inputMetadataLine.match(/\s+(\d+) fps/);
-    this.fps = parseFloat(fpsMatch![1], 10);
+    this.fps = parseInt(fpsMatch![1], 10);
   }
 
   seekFirstNonEmptyFrame(offset?: { x: number, y: number }): PNG | undefined {
