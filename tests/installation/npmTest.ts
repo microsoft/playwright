@@ -39,6 +39,17 @@ const debug = debugLogger('itest');
  */
 
 _expect.extend({
+  async toExistOnFS(received: any) {
+    if (typeof received !== 'string')
+      throw new Error(`Expected argument to be a string.`);
+    try {
+      await fs.promises.access(received);
+      return { pass: true };
+    } catch (e) {
+      return { pass: false, message: () => 'file does not exist' };
+    }
+  },
+
   toHaveLoggedSoftwareDownload(received: any, browsers: ('chromium' | 'firefox' | 'webkit' | 'ffmpeg')[]) {
     if (typeof received !== 'string')
       throw new Error(`Expected argument to be a string.`);
