@@ -275,9 +275,9 @@ export class Loader {
     // Docker Integration: if `snapshotDir` is not defined explicitly,
     // then put all screenshots under `__screenshots__` folder and use `screenshotsDir` for snapshot
     // resolving.
-    if (projectConfig.snapshotDir === undefined && config.snapshotDir === undefined && process.env.PW_TEST_SNAPSHOT_SUFFIX === 'docker') {
+    if (process.env.PLAYWRIGHT_DOCKER) {
       screenshotsDir = path.join(testDir, '__screenshots__', name);
-      process.env.PWTEST_USE_SCREENSHOTS_DIR_FOR_TEST = '1';
+      process.env.PWTEST_USE_SCREENSHOTS_DIR = '1';
     }
     return {
       _id: '',

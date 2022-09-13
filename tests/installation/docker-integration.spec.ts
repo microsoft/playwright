@@ -77,6 +77,18 @@ test.describe('installed image', () => {
       expect(result).toContain('@firefox Linux');
     });
 
+    test('supports PLAYWRIGHT_DOCKER env variable', async ({ exec }) => {
+      await exec('npm i --foreground-scripts @playwright/test');
+      const result = await exec('npx playwright test docker.spec.js --grep platform --browser all', {
+        env: {
+          PLAYWRIGHT_DOCKER: '1',
+        },
+      });
+      expect(result).toContain('@chromium Linux');
+      expect(result).toContain('@webkit Linux');
+      expect(result).toContain('@firefox Linux');
+    });
+
     test('all browsers work headed', async ({ exec }) => {
       await exec('npm i --foreground-scripts @playwright/test');
       {
@@ -97,7 +109,7 @@ test.describe('installed image', () => {
       }
     });
 
-    test('screenshots use __screenshots__ folder by default', async ({ exec, tmpWorkspace }) => {
+    test('screenshots should use __screenshots__ folder', async ({ exec, tmpWorkspace }) => {
       await exec('npm i --foreground-scripts @playwright/test');
       await exec('npx playwright docker test docker.spec.js --grep screenshot --browser all', {
         expectToExitWithError: true,
@@ -105,19 +117,6 @@ test.describe('installed image', () => {
       await expect(path.join(tmpWorkspace, '__screenshots__', 'firefox', 'docker.spec.js', 'img.png')).toExistOnFS();
       await expect(path.join(tmpWorkspace, '__screenshots__', 'chromium', 'docker.spec.js', 'img.png')).toExistOnFS();
       await expect(path.join(tmpWorkspace, '__screenshots__', 'webkit', 'docker.spec.js', 'img.png')).toExistOnFS();
-    });
-
-    test('screenshots should respect configured snapshotDir and add platform suffix', async ({ exec, tmpWorkspace, writeFiles }) => {
-      await exec('npm i --foreground-scripts @playwright/test');
-      await writeFiles({
-        'playwright.config.ts': 'export default { snapshotDir: "__snaps__" }',
-      });
-      await exec('npx playwright docker test docker.spec.js --grep screenshot --browser all', {
-        expectToExitWithError: true,
-      });
-      await expect(path.join(tmpWorkspace, '__snaps__', 'docker.spec.js-snapshots', 'img-chromium-docker.png')).toExistOnFS();
-      await expect(path.join(tmpWorkspace, '__snaps__', 'docker.spec.js-snapshots', 'img-firefox-docker.png')).toExistOnFS();
-      await expect(path.join(tmpWorkspace, '__snaps__', 'docker.spec.js-snapshots', 'img-webkit-docker.png')).toExistOnFS();
     });
 
     test('port forwarding works', async ({ exec, tmpWorkspace }) => {
