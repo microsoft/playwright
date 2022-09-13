@@ -175,7 +175,7 @@ function createDevTools() {
 }
 
 const appKey = Symbol('appKey');
-const componentKey = Symbol('componentKey');
+const wrapperKey = Symbol('wrapperKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
   const wrapper = createWrapper(component);
@@ -188,7 +188,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
     await hook({ app, hooksConfig });
   const instance = app.mount(rootElement);
   rootElement[appKey] = app;
-  rootElement[componentKey] = wrapper;
+  rootElement[wrapperKey] = wrapper;
 
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
     await hook({ app, hooksConfig, instance });
@@ -202,18 +202,18 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightRerender = async (rootElement, options) => {
-  const component = rootElement[componentKey].component;
-  if (!component)
+  const wrapper = rootElement[wrapperKey];
+  if (!wrapper)
     throw new Error('Component was not mounted');
 
   const { slots, listeners, props } = createComponent(options);
 
-  component.slots = wrapFunctions(slots);
-  allListeners.set(component, listeners);
+  wrapper.component.slots = wrapFunctions(slots);
+  allListeners.set(wrapper, listeners);
 
   for (const [key, value] of Object.entries(props))
-    component.props[key] = value;
+    wrapper.component.props[key] = value;
 
   if (!Object.keys(props).length)
-    component.update();
+    wrapper.component.update();
 };
