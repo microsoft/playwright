@@ -15,7 +15,6 @@
  */
 import { test, expect } from './npmTest';
 import * as path from 'path';
-import * as fs from 'fs';
 import { TestServer } from '../../utils/testserver';
 
 // Skipping docker tests on CI on non-linux since GHA does not have
