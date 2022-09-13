@@ -17,6 +17,7 @@
 
 import path from 'path';
 import fs from 'fs';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
 import * as utils from 'playwright-core/lib/utils';
 import { getPlaywrightVersion } from 'playwright-core/lib/common/userAgent';
@@ -26,17 +27,54 @@ const VRT_IMAGE_DISTRO = 'focal';
 const VRT_IMAGE_NAME = `playwright:local-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
 const VRT_CONTAINER_NAME = `playwright-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
 
-export async function deleteImage() {
+export async function startPlaywrightContainer() {
+  await checkDockerEngineIsRunningOrDie();
+
+  let info = await containerInfo();
+  if (!info) {
+    process.stdout.write(`Starting docker container... `);
+    const time = Date.now();
+    info = await ensurePlaywrightContainerOrDie();
+    const deltaMs = (Date.now() - time);
+    console.log('Done in ' + (deltaMs / 1000).toFixed(1) + 's');
+  }
+  console.log([
+    `- View screen:`,
+    `      ${info.vncSession}`,
+    `- Run tests with browsers inside container:`,
+    `      npx playwright docker test`,
+    `- Stop background container *manually* when you are done working with tests:`,
+    `      npx playwright docker stop`,
+  ].join('\n'));
+}
+
+export async function stopPlaywrightContainer() {
+  await checkDockerEngineIsRunningOrDie();
+
+  const container = await findRunningDockerContainer();
+  if (!container)
+    return;
+  await dockerApi.stopContainer({
+    containerId: container.containerId,
+    waitUntil: 'removed',
+  });
+}
+
+export async function deletePlaywrightImage() {
+  await checkDockerEngineIsRunningOrDie();
+
   const dockerImage = await findDockerImage(VRT_IMAGE_NAME);
   if (!dockerImage)
     return;
 
   if (await containerInfo())
-    await stopContainer();
+    await stopPlaywrightContainer();
   await dockerApi.removeImage(dockerImage.imageId);
 }
 
-export async function buildImage() {
+export async function buildPlaywrightImage() {
+  await checkDockerEngineIsRunningOrDie();
+
   const isDevelopmentMode = getPlaywrightVersion().includes('next');
   let baseImageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
   // 1. Build or pull base image.
@@ -90,12 +128,35 @@ export async function buildImage() {
   console.log(`Done!`);
 }
 
+export async function configureTestRunnerToUseDocker() {
+  console.log(colors.dim('Using docker container to run browsers.'));
+  await checkDockerEngineIsRunningOrDie();
+  let info = await containerInfo();
+  if (!info) {
+    process.stdout.write(colors.dim(`Starting docker container... `));
+    const time = Date.now();
+    info = await ensurePlaywrightContainerOrDie();
+    const deltaMs = (Date.now() - time);
+    console.log(colors.dim('Done in ' + (deltaMs / 1000).toFixed(1) + 's'));
+    console.log(colors.dim('The Docker container will keep running after tests finished.'));
+    console.log(colors.dim('Stop manually using:'));
+    console.log(colors.dim('    npx playwright docker stop'));
+  }
+  console.log(colors.dim(`View screen: ${info.vncSession}`));
+  process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.wsEndpoint;
+  process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
+    'x-playwright-proxy': '*',
+  });
+  process.env.PLAYWRIGHT_DOCKER = '1';
+}
+
+
 interface ContainerInfo {
   wsEndpoint: string;
   vncSession: string;
 }
 
-export async function containerInfo(): Promise<ContainerInfo|undefined> {
+async function containerInfo(): Promise<ContainerInfo|undefined> {
   const container = await findRunningDockerContainer();
   if (!container)
     return undefined;
@@ -123,7 +184,7 @@ export async function containerInfo(): Promise<ContainerInfo|undefined> {
   return wsEndpoint && vncSession ? { wsEndpoint, vncSession } : undefined;
 }
 
-export async function ensureContainerOrDie(): Promise<ContainerInfo> {
+async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
   const pwImage = await findDockerImage(VRT_IMAGE_NAME);
   if (!pwImage) {
     console.error('\n' + utils.wrapInASCIIBox([
@@ -161,17 +222,7 @@ export async function ensureContainerOrDie(): Promise<ContainerInfo> {
   return info;
 }
 
-export async function stopContainer() {
-  const container = await findRunningDockerContainer();
-  if (!container)
-    return;
-  await dockerApi.stopContainer({
-    containerId: container.containerId,
-    waitUntil: 'removed',
-  });
-}
-
-export async function ensureDockerEngineIsRunningOrDie() {
+async function checkDockerEngineIsRunningOrDie() {
   if (await dockerApi.checkEngineRunning())
     return;
   console.error(utils.wrapInASCIIBox([
