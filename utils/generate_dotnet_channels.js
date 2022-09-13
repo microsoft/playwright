@@ -183,14 +183,14 @@ fs.mkdirSync(dir, { recursive: true });
 
 for (const [name, item] of Object.entries(protocol)) {
   if (item.type === 'interface') {
-    const init = objectType(item.initializer || {}, '    ');
+    const init = objectType(item.initializer || {}, '');
     const initializerName = name + 'Initializer';
     const superName = inherits.has(name) ? inherits.get(name) + 'Initializer' : null;
     writeCSharpClass(initializerName, superName, init.ts);
   } else if (item.type === 'object') {
     if (Object.keys(item.properties).length === 0)
       continue;
-    const init = objectType(item.properties, '    ', false, name);
+    const init = objectType(item.properties, '', false, name);
     writeCSharpClass(name, null, init.ts);
   }
 }
