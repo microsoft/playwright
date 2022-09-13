@@ -55,7 +55,7 @@ function addDockerCommand(program: Command) {
   dockerCommand.command('stop')
       .description('stop docker container')
       .action(async function(options) {
-        await docker.stopPlaywrightContainer();
+        await docker.stopAllPlaywrightContainers();
       });
 
   dockerCommand.command('delete-image', { hidden: true })
