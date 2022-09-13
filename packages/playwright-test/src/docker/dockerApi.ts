@@ -25,11 +25,18 @@ export interface DockerImage {
   names: string[];
 }
 
+export interface PortBinding {
+  ip: string;
+  hostPort: number;
+  containerPort: number;
+}
+
 export interface DockerContainer {
   containerId: string;
   imageId: string;
   state: 'created'|'restarting'|'running'|'removing'|'paused'|'exited'|'dead';
   names: string[];
+  portBindings: PortBinding[];
 }
 
 export async function listContainers(): Promise<DockerContainer[]> {
@@ -38,7 +45,12 @@ export async function listContainers(): Promise<DockerContainer[]> {
     containerId: container.Id,
     imageId: container.ImageID,
     state: container.State,
-    names: container.Names
+    names: container.Names,
+    portBindings: container.Ports?.map((portInfo: any) => ({
+      ip: portInfo.IP,
+      hostPort: portInfo.PublicPort,
+      containerPort: portInfo.PrivatePort,
+    })) ?? [],
   }));
 }
 
@@ -56,7 +68,7 @@ export async function launchContainer(options: LaunchContainerOptions): Promise<
   const PortBindings: any = {};
   for (const port of (options.ports ?? [])) {
     ExposedPorts[`${port}/tcp`] = {};
-    PortBindings[`${port}/tcp`] = [{ HostPort: port + '' }];
+    PortBindings[`${port}/tcp`] = [{ HostPort: '0', HostIp: '127.0.0.1' }];
   }
   const container = await postJSON(`/containers/create` + (options.name ? '?name=' + options.name : ''), {
     Cmd: options.command,

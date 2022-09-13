@@ -96,18 +96,31 @@ interface ContainerInfo {
 }
 
 export async function containerInfo(): Promise<ContainerInfo|undefined> {
-  const containerId = await findRunningDockerContainerId();
-  if (!containerId)
+  const container = await findRunningDockerContainer();
+  if (!container)
     return undefined;
-  const logLines = await dockerApi.getContainerLogs(containerId);
+  const logLines = await dockerApi.getContainerLogs(container.containerId);
+
+  const containerUrlToHostUrl = (address: string) => {
+    const url = new URL(address);
+    const portBinding = container.portBindings.find(binding => binding.containerPort === +url.port);
+    if (!portBinding)
+      return undefined;
+
+    url.host = portBinding.ip;
+    url.port = portBinding.hostPort + '';
+    return url.toString();
+  };
+
   const WS_LINE_PREFIX = 'Listening on ws://';
   const webSocketLine = logLines.find(line => line.startsWith(WS_LINE_PREFIX));
   const NOVNC_LINE_PREFIX = 'novnc is listening on ';
   const novncLine = logLines.find(line => line.startsWith(NOVNC_LINE_PREFIX));
-  return novncLine && webSocketLine ? {
-    wsEndpoint: 'ws://' + webSocketLine.substring(WS_LINE_PREFIX.length),
-    vncSession: novncLine.substring(NOVNC_LINE_PREFIX.length),
-  } : undefined;
+  if (!novncLine || !webSocketLine)
+    return undefined;
+  const wsEndpoint = containerUrlToHostUrl('ws://' + webSocketLine.substring(WS_LINE_PREFIX.length));
+  const vncSession = containerUrlToHostUrl(novncLine.substring(NOVNC_LINE_PREFIX.length));
+  return wsEndpoint && vncSession ? { wsEndpoint, vncSession } : undefined;
 }
 
 export async function ensureContainerOrDie(): Promise<ContainerInfo> {
@@ -149,11 +162,11 @@ export async function ensureContainerOrDie(): Promise<ContainerInfo> {
 }
 
 export async function stopContainer() {
-  const containerId = await findRunningDockerContainerId();
-  if (!containerId)
+  const container = await findRunningDockerContainer();
+  if (!container)
     return;
   await dockerApi.stopContainer({
-    containerId,
+    containerId: container.containerId,
     waitUntil: 'removed',
   });
 }
@@ -176,10 +189,10 @@ async function findDockerImage(imageName: string): Promise<dockerApi.DockerImage
   return images.find(image => image.names.includes(imageName));
 }
 
-async function findRunningDockerContainerId(): Promise<string|undefined> {
+async function findRunningDockerContainer(): Promise<dockerApi.DockerContainer|undefined> {
   const containers = await dockerApi.listContainers();
   const dockerImage = await findDockerImage(VRT_IMAGE_NAME);
   const container = dockerImage ? containers.find(container => container.imageId === dockerImage.imageId) : undefined;
-  return container?.state === 'running' ? container.containerId : undefined;
+  return container?.state === 'running' ? container : undefined;
 }
 
