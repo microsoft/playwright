@@ -272,9 +272,6 @@ export class Loader {
     const name = takeFirst(projectConfig.name, config.name, '');
 
     let screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
-    // Docker Integration: if `snapshotDir` is not defined explicitly,
-    // then put all screenshots under `__screenshots__` folder and use `screenshotsDir` for snapshot
-    // resolving.
     if (process.env.PLAYWRIGHT_DOCKER) {
       screenshotsDir = path.join(testDir, '__screenshots__', name);
       process.env.PWTEST_USE_SCREENSHOTS_DIR = '1';
