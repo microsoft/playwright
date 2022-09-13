@@ -183,14 +183,14 @@ fs.mkdirSync(dir, { recursive: true });
 
 for (const [name, item] of Object.entries(protocol)) {
   if (item.type === 'interface') {
-    const init = objectType(item.initializer || {}, '    ');
+    const init = objectType(item.initializer || {}, '');
     const initializerName = name + 'Initializer';
     const superName = inherits.has(name) ? inherits.get(name) + 'Initializer' : null;
     writeCSharpClass(initializerName, superName, init.ts);
   } else if (item.type === 'object') {
     if (Object.keys(item.properties).length === 0)
       continue;
-    const init = objectType(item.properties, '    ', false, name);
+    const init = objectType(item.properties, '', false, name);
     writeCSharpClass(name, null, init.ts);
   }
 }
@@ -209,11 +209,10 @@ function writeCSharpClass(className, inheritFrom, serializedProperties) {
   channels_ts.push('using System.Collections.Generic;');
   channels_ts.push('using System.Text.Json.Serialization;');
   channels_ts.push(``);
-  channels_ts.push(`namespace Microsoft.Playwright.Transport.Protocol`);
-  channels_ts.push(`{`);
-  channels_ts.push(`    internal class ${className}${inheritFrom ? ' : ' + inheritFrom : ''}`);
+  channels_ts.push(`namespace Microsoft.Playwright.Transport.Protocol;`);
+  channels_ts.push(``);
+  channels_ts.push(`internal class ${className}${inheritFrom ? ' : ' + inheritFrom : ''}`);
   channels_ts.push(serializedProperties);
-  channels_ts.push(`}`);
   channels_ts.push(``);
   writeFile(`${className}.cs`, channels_ts.join('\n'));
 }

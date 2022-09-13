@@ -37,9 +37,8 @@ using System.Threading.Tasks;
 
 #nullable enable
 
-namespace Microsoft.Playwright
-{
-	[CONTENT]
-}
+namespace Microsoft.Playwright;
+
+[CONTENT]
 
 #nullable disable
