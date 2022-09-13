@@ -61,10 +61,11 @@ function addDockerCommand(program: Command) {
           console.log('Done in ' + (deltaMs / 1000).toFixed(1) + 's');
         }
         console.log([
-          `- VNC session: ${info.vncSession}`,
+          `- View screen:`,
+          `      ${info.vncSession}`,
           `- Run tests with browsers inside container:`,
           `      npx playwright docker test`,
-          `- Stop container *manually* when it is no longer needed:`,
+          `- Stop background container *manually* when you are done working with tests:`,
           `      npx playwright docker stop`,
         ].join('\n'));
       });
