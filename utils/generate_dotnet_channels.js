@@ -209,11 +209,10 @@ function writeCSharpClass(className, inheritFrom, serializedProperties) {
   channels_ts.push('using System.Collections.Generic;');
   channels_ts.push('using System.Text.Json.Serialization;');
   channels_ts.push(``);
-  channels_ts.push(`namespace Microsoft.Playwright.Transport.Protocol`);
-  channels_ts.push(`{`);
-  channels_ts.push(`    internal class ${className}${inheritFrom ? ' : ' + inheritFrom : ''}`);
+  channels_ts.push(`namespace Microsoft.Playwright.Transport.Protocol;`);
+  channels_ts.push(``);
+  channels_ts.push(`internal class ${className}${inheritFrom ? ' : ' + inheritFrom : ''}`);
   channels_ts.push(serializedProperties);
-  channels_ts.push(`}`);
   channels_ts.push(``);
   writeFile(`${className}.cs`, channels_ts.join('\n'));
 }
