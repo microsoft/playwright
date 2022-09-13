@@ -44,6 +44,7 @@ import { SigIntWatcher } from './sigIntWatcher';
 import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
 import { webServerPluginsForConfig } from './plugins/webServerPlugin';
+import { dockerPlugin } from './docker/docker';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
 
 const removeFolderAsync = promisify(rimraf);
@@ -604,6 +605,9 @@ export class Runner {
 
     // Legacy webServer support.
     this._plugins.push(...webServerPluginsForConfig(config));
+
+    // Docker support.
+    this._plugins.push(dockerPlugin);
 
     await this._runAndReportError(async () => {
       // First run the plugins, if plugin is a web server we want it to run before the
