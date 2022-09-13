@@ -12,7 +12,7 @@ Playwright Test now ships an **experimental** Docker integration. The Docker con
 
 With this integration, only **browser binaries** are running inside a Docker container, while all the code is still running on the host operating system.
 
-<img width="450px" src="https://user-images.githubusercontent.com/746130/189774482-fd65d4ce-7b45-46c8-8761-36b76dba4671.png">
+<img width="450px" src="https://user-images.githubusercontent.com/746130/189774482-fd65d4ce-7b45-46c8-8761-36b76dba4671.png" />
 
 Read more in [our documentation](./docker#experimental-playwright-test-docker-integration).
 
