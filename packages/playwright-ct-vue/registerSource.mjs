@@ -33,7 +33,7 @@ export function register(components) {
     registry.set(name, value);
 }
 
-const allListeners = [];
+const allListeners = new Map();
 
 /**
  * @param {Component | string} child
@@ -149,7 +149,7 @@ function createWrapper(component) {
   const { Component, props, slots, listeners } = createComponent(component);
   // @ts-ignore
   const wrapper = h(Component, props, slots);
-  allListeners.push([wrapper, listeners]);
+  allListeners.set(wrapper, listeners);
   return wrapper;
 }
 
@@ -209,7 +209,7 @@ window.playwrightRerender = async (rootElement, options) => {
   const { slots, listeners, props } = createComponent(options);
 
   component.slots = wrapFunctions(slots);
-  allListeners[0][1] = listeners;
+  allListeners.set(component, listeners);
 
   for (const [key, value] of Object.entries(props))
     component.props[key] = value;
