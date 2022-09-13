@@ -99,14 +99,14 @@ export async function containerInfo(): Promise<ContainerInfo|undefined> {
   const container = await findRunningDockerContainer();
   if (!container)
     return undefined;
-  const vncBinding = container.portBindings.find(binding => binding.containerPort === 7900);
-  const wsBinding = container.portBindings.find(binding => binding.containerPort === 5400);
-  if (!vncBinding || !wsBinding)
-    return undefined;
   const logLines = await dockerApi.getContainerLogs(container.containerId);
 
-  const containerUrlToHostUrl = (address: string, portBinding: dockerApi.PortBinding) => {
+  const containerUrlToHostUrl = (address: string) => {
     const url = new URL(address);
+    const portBinding = container.portBindings.find(binding => binding.containerPort === +url.port);
+    if (!portBinding)
+      return undefined;
+
     url.host = portBinding.ip;
     url.port = portBinding.hostPort + '';
     return url.toString();
@@ -116,10 +116,11 @@ export async function containerInfo(): Promise<ContainerInfo|undefined> {
   const webSocketLine = logLines.find(line => line.startsWith(WS_LINE_PREFIX));
   const NOVNC_LINE_PREFIX = 'novnc is listening on ';
   const novncLine = logLines.find(line => line.startsWith(NOVNC_LINE_PREFIX));
-  return novncLine && webSocketLine ? {
-    wsEndpoint: containerUrlToHostUrl('ws://' + webSocketLine.substring(WS_LINE_PREFIX.length), wsBinding),
-    vncSession: containerUrlToHostUrl(novncLine.substring(NOVNC_LINE_PREFIX.length), vncBinding),
-  } : undefined;
+  if (!novncLine || !webSocketLine)
+    return undefined;
+  const wsEndpoint = containerUrlToHostUrl('ws://' + webSocketLine.substring(WS_LINE_PREFIX.length));
+  const vncSession = containerUrlToHostUrl(novncLine.substring(NOVNC_LINE_PREFIX.length));
+  return wsEndpoint && vncSession ? { wsEndpoint, vncSession } : undefined;
 }
 
 export async function ensureContainerOrDie(): Promise<ContainerInfo> {
