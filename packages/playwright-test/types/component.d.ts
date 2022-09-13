@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonObject | JsonArray;
-type JsonArray = JsonValue[];
-type JsonObject = { [Key in string]?: JsonValue };
-
 export type JsxComponent = {
   kind: 'jsx',
   type: string,
@@ -30,7 +25,7 @@ export type MountOptions = {
   props?: Record<string, any>,
   slots?: Record<string, any>,
   on?: { [key: string]: Function },
-  hooksConfig?: JsonObject,
+  hooksConfig?: any,
 };
 
 export type ObjectComponent = {
