@@ -10749,6 +10749,11 @@ export interface BrowserType<Unused = {}> {
          */
         height: number;
       };
+
+      /**
+       * Video frames per second. Works only in chrome and chromium. Default value is `25`.
+       */
+      fps?: number;
     };
 
     /**
@@ -10830,6 +10835,11 @@ export interface BrowserType<Unused = {}> {
        * Video frame height.
        */
       height: number;
+
+      /**
+       * Video frame rate per second(FPS). Works only in chrome and chromium. Default value is `25`.
+       */
+      fps?: number;
     };
 
     /**
@@ -11953,6 +11963,11 @@ export interface AndroidDevice {
          */
         height: number;
       };
+
+      /**
+       * Video frames per second. Works only in chrome and chromium. Default value is `25`.
+       */
+      fps?: number;
     };
 
     /**
@@ -12018,6 +12033,11 @@ export interface AndroidDevice {
        * Video frame height.
        */
       height: number;
+
+      /**
+       * Video frame rate per second(FPS). Works only in chrome and chromium. Default value is `25`.
+       */
+      fps?: number;
     };
 
     /**
@@ -13587,6 +13607,11 @@ export interface Browser extends EventEmitter {
          */
         height: number;
       };
+
+      /**
+       * Video frames per second. Works only in chrome and chromium. Default value is `25`.
+       */
+      fps?: number;
     };
 
     /**
@@ -13706,6 +13731,11 @@ export interface Browser extends EventEmitter {
        * Video frame height.
        */
       height: number;
+
+      /**
+       * Video frame rate per second(FPS). Works only in chrome and chromium. Default value is `25`.
+       */
+      fps?: number;
     };
 
     /**
@@ -14381,6 +14411,11 @@ export interface Electron {
          */
         height: number;
       };
+
+      /**
+       * Video frames per second. Works only in chrome and chromium. Default value is `25`.
+       */
+      fps?: number;
     };
 
     /**
@@ -16215,6 +16250,11 @@ export interface BrowserContextOptions {
        */
       height: number;
     };
+
+    /**
+     * Video frames per second. Works only in chrome and chromium. Default value is `25`.
+     */
+    fps?: number;
   };
 
   /**
@@ -16334,6 +16374,11 @@ export interface BrowserContextOptions {
      * Video frame height.
      */
     height: number;
+
+    /**
+     * Video frame rate per second(FPS). Works only in chrome and chromium. Default value is `25`.
+     */
+    fps?: number;
   };
 
   /**

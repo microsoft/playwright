@@ -761,7 +761,7 @@ it('should saveAs video', async ({ browser }, testInfo) => {
   expect(fs.existsSync(saveAsPath)).toBeTruthy();
 });
 
-it.only('should save video with 60 fps', async ({ browser }, testInfo) => {
+it('should save video with 60 fps', async ({ browser }, testInfo) => {
   it.slow();
 
   const videosPath = testInfo.outputPath('');

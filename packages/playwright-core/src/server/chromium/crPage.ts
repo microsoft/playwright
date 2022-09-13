@@ -848,13 +848,13 @@ class FrameSession {
     if (!this._page._frameManager.frame(this._targetId))
       return; // Our frame/subtree may be gone already.
     this._page.emit(Page.Events.Dialog, new dialog.Dialog(
-      this._page,
-      event.type,
-      event.message,
-      async (accept: boolean, promptText?: string) => {
-        await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
-      },
-      event.defaultPrompt));
+        this._page,
+        event.type,
+        event.message,
+        async (accept: boolean, promptText?: string) => {
+          await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
+        },
+        event.defaultPrompt));
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {

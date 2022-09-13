@@ -558,7 +558,7 @@ Logger sink for Playwright logging.
 - `videoSize` <[Object]>
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
-  - `fps` <[number]> Video frame rate per second(FPS). Works only in chrome and chromium. Default value is `25`.
+  - `fps` ?<[int]> Video frame rate per second(FPS). Works only in chrome and chromium. Default value is `25`.
 
 **DEPRECATED** Use [`option: recordVideo`] instead.
 
@@ -620,7 +620,7 @@ When set to `minimal`, only record information necessary for routing from HAR. T
     Actual picture of each page will be scaled down if necessary to fit the specified size.
     - `width` <[int]> Video frame width.
     - `height` <[int]> Video frame height.
-    - `fps` <[int]> Video frames per second. Default is `25`.
+  - `fps` ?<[int]> Video frames per second. Works only in chrome and chromium. Default value is `25`.
 
 Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
 sure to await [`method: BrowserContext.close`] for videos to be saved.
