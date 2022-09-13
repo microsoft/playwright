@@ -30,6 +30,7 @@ export class VideoPlayer {
   output: string;
   duration: number;
   frames: number;
+  fps: number; // input video FPS
   videoWidth: number;
   videoHeight: number;
   cache = new Map<number, PNG>();
@@ -41,6 +42,7 @@ export class VideoPlayer {
     this.output = spawnSync(ffmpeg, ['-i', this.fileName, '-r', '25', `${this.fileName}-%03d.png`]).stderr.toString();
 
     const lines = this.output.split('\n');
+    lines.forEach(console.log);
     let framesLine = lines.find(l => l.startsWith('frame='))!;
     if (!framesLine)
       throw new Error(`No frame data in the output:\n${this.output}`);
@@ -53,6 +55,10 @@ export class VideoPlayer {
     this.frames = parseInt(framesMatch![1], 10);
     this.videoWidth = parseInt(resolutionMatch![1], 10);
     this.videoHeight = parseInt(resolutionMatch![2], 10);
+
+    const inputMetadataLine = lines.find(line => line.includes('Stream #0:0: Video'));
+    const fpsMatch = inputMetadataLine.match(/\s+(\d+) fps/);
+    this.fps = parseFloat(fpsMatch![1], 10);
   }
 
   seekFirstNonEmptyFrame(offset?: { x: number, y: number }): PNG | undefined {
@@ -752,6 +758,35 @@ it('should saveAs video', async ({ browser }, testInfo) => {
 
   const saveAsPath = testInfo.outputPath('my-video.webm');
   await page.video().saveAs(saveAsPath);
+  expect(fs.existsSync(saveAsPath)).toBeTruthy();
+});
+
+it.only('should save video with 60 fps', async ({ browser }, testInfo) => {
+  it.slow();
+
+  const videosPath = testInfo.outputPath('');
+  const size = { width: 320, height: 240 };
+  const context = await browser.newContext({
+    recordVideo: {
+      dir: videosPath,
+      size,
+      // TODO: need to fix fps
+      // @ts-ignore
+      fps: 60,
+    },
+    viewport: size,
+  });
+  const page = await context.newPage();
+  await page.evaluate(() => document.body.style.backgroundColor = 'red');
+  await waitForRafs(page, 100);
+  await context.close();
+
+  const saveAsPath = testInfo.outputPath('my-video.webm');
+  await page.video().saveAs(saveAsPath);
+
+  const player = new VideoPlayer(saveAsPath);
+
+  expect(player.fps).toBe(60);
   expect(fs.existsSync(saveAsPath)).toBeTruthy();
 });
 

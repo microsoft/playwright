@@ -64,7 +64,7 @@ type RecordingState = {
   recording: boolean;
 };
 
-const kScreencastOptions = { width: 800, height: 600, quality: 90 };
+const kScreencastOptions = { width: 800, height: 600, quality: 90, fps: 25 };
 
 export class Tracing extends SdkObject implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
   private _writeChain = Promise.resolve();
@@ -395,7 +395,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
             sha1,
             width: params.width,
             height: params.height,
-            timestamp: monotonicTime()
+            timestamp: monotonicTime(),
+            fps: params.fps,
           };
           // Make sure to write the screencast frame before adding a reference to it.
           this._appendResource(sha1, params.buffer);

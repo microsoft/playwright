@@ -52,6 +52,7 @@ export type PageScreencastOptions = {
   width: number,
   height: number,
   outputFile: string,
+  fps?: number,
 };
 
 export type Credentials = {

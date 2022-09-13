@@ -669,7 +669,7 @@ export class Page extends SdkObject {
     return this._pageBindings.get(name) || this._browserContext._pageBindings.get(name);
   }
 
-  setScreencastOptions(options: { width: number, height: number, quality: number } | null) {
+  setScreencastOptions(options: { width: number, height: number, quality: number, fps: number } | null) {
     this._delegate.setScreencastOptions(options).catch(e => debugLogger.log('error', e));
     this._frameThrottler.setEnabled(!!options);
   }

@@ -44,6 +44,7 @@ export type ScreencastFrameTraceEvent = {
   sha1: string,
   width: number,
   height: number,
+  fps: number,
   timestamp: number,
 };
 

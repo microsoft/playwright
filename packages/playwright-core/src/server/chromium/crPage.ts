@@ -176,7 +176,7 @@ export class CRPage implements PageDelegate {
 
   async exposeBinding(binding: PageBinding) {
     await this._forAllFrameSessions(frame => frame._initBinding(binding));
-    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(binding.source, false, {}).catch(e => {})));
+    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(binding.source, false, {}).catch(e => { })));
   }
 
   async removeExposedBindings() {
@@ -353,7 +353,7 @@ export class CRPage implements PageDelegate {
   }
 
   async inputActionEpilogue(): Promise<void> {
-    await this._mainFrameSession._client.send('Page.enable').catch(e => {});
+    await this._mainFrameSession._client.send('Page.enable').catch(e => { });
   }
 
   async pdf(options: channels.PagePdfParams): Promise<Buffer> {
@@ -392,8 +392,8 @@ class FrameSession {
   private _eventListeners: RegisteredListener[] = [];
   readonly _targetId: string;
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
-  private _firstNonInitialNavigationCommittedFulfill = () => {};
-  private _firstNonInitialNavigationCommittedReject = (e: Error) => {};
+  private _firstNonInitialNavigationCommittedFulfill = () => { };
+  private _firstNonInitialNavigationCommittedReject = (e: Error) => { };
   private _windowId: number | undefined;
   // Marks the oopif session that remote -> local transition has happened in the parent.
   // See Target.detachedFromTarget handler for details.
@@ -473,6 +473,8 @@ class FrameSession {
         // validateBrowserContextOptions ensures correct video size.
         ...this._crPage._browserContext._options.recordVideo.size!,
         outputFile,
+        // @ts-ignore
+        fps: 60,
       };
       await this._crPage._browserContext._ensureVideosPath();
       // Note: it is important to start video recorder before sending Page.startScreencast,
@@ -480,7 +482,7 @@ class FrameSession {
       await this._createVideoRecorder(screencastId, screencastOptions);
       this._crPage.pageOrError().then(p => {
         if (p instanceof Error)
-          this._stopVideoRecording().catch(() => {});
+          this._stopVideoRecording().catch(() => { });
       });
     }
 
@@ -504,16 +506,16 @@ class FrameSession {
             worldName: UTILITY_WORLD_NAME,
           });
           for (const binding of this._crPage._browserContext._pageBindings.values())
-            frame.evaluateExpression(binding.source, false, undefined).catch(e => {});
+            frame.evaluateExpression(binding.source, false, undefined).catch(e => { });
           for (const source of this._crPage._browserContext.initScripts)
-            frame.evaluateExpression(source, false, undefined, 'main').catch(e => {});
+            frame.evaluateExpression(source, false, undefined, 'main').catch(e => { });
         }
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
         if (isInitialEmptyPage) {
           // Ignore lifecycle events for the initial empty page. It is never the final page
           // hence we are going to get more lifecycle updates after the actual navigation has
           // started (even if the target url is about:blank).
-          lifecycleEventsEnabled.catch(e => {}).then(() => {
+          lifecycleEventsEnabled.catch(e => { }).then(() => {
             this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
           });
         } else {
@@ -610,7 +612,7 @@ class FrameSession {
       this._handleFrameTree(child);
   }
 
-  private _eventBelongsToStaleFrame(frameId: string)  {
+  private _eventBelongsToStaleFrame(frameId: string) {
     const frame = this._page._frameManager.frame(frameId);
     // Subtree may be already gone because some ancestor navigation destroyed the oopif.
     if (!frame)
@@ -690,7 +692,7 @@ class FrameSession {
     if (!frame || this._eventBelongsToStaleFrame(frame._id))
       return;
     const delegate = new CRExecutionContext(this._client, contextPayload);
-    let worldName: types.World|null = null;
+    let worldName: types.World | null = null;
     if (contextPayload.auxData && !!contextPayload.auxData.isDefault)
       worldName = 'main';
     else if (contextPayload.name === UTILITY_WORLD_NAME)
@@ -846,13 +848,13 @@ class FrameSession {
     if (!this._page._frameManager.frame(this._targetId))
       return; // Our frame/subtree may be gone already.
     this._page.emit(Page.Events.Dialog, new dialog.Dialog(
-        this._page,
-        event.type,
-        event.message,
-        async (accept: boolean, promptText?: string) => {
-          await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
-        },
-        event.defaultPrompt));
+      this._page,
+      event.type,
+      event.message,
+      async (accept: boolean, promptText?: string) => {
+        await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
+      },
+      event.defaultPrompt));
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
@@ -906,7 +908,7 @@ class FrameSession {
 
   _onScreencastFrame(payload: Protocol.Page.screencastFramePayload) {
     this._page.throttleScreencastFrameAck(() => {
-      this._client.send('Page.screencastFrameAck', { sessionId: payload.sessionId }).catch(() => {});
+      this._client.send('Page.screencastFrameAck', { sessionId: payload.sessionId }).catch(() => { });
     });
     const buffer = Buffer.from(payload.data, 'base64');
     this._page.emit(Page.Events.ScreencastFrame, {
@@ -927,7 +929,7 @@ class FrameSession {
   async _startVideoRecording(options: types.PageScreencastOptions) {
     const screencastId = this._screencastId;
     assert(screencastId);
-    this._page.once(Page.Events.Close, () => this._stopVideoRecording().catch(() => {}));
+    this._page.once(Page.Events.Close, () => this._stopVideoRecording().catch(() => { }));
     const gotFirstFrame = new Promise(f => this._client.once('Page.screencastFrame', f));
     await this._startScreencast(this._videoRecorder, {
       format: 'jpeg',
@@ -949,7 +951,7 @@ class FrameSession {
     const recorder = this._videoRecorder!;
     this._videoRecorder = null;
     await this._stopScreencast(recorder);
-    await recorder.stop().catch(() => {});
+    await recorder.stop().catch(() => { });
     // Keep the video artifact in the map utntil encoding is fully finished, if the context
     // starts closing before the video is fully written to disk it will wait for it.
     const video = this._crPage._browserContext._browser._takeVideo(screencastId);
@@ -1094,7 +1096,7 @@ class FrameSession {
     const enabled = this._page.fileChooserIntercepted();
     if (initial && !enabled)
       return;
-    await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(() => {}); // target can be closed.
+    await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(() => { }); // target can be closed.
   }
 
   async _evaluateOnNewDocument(source: string, world: types.World): Promise<void> {

@@ -23,7 +23,7 @@ import { ProgressController } from '../progress';
 import { serverSideCallMetadata } from '../instrumentation';
 import type * as types from '../types';
 
-const fps = 25;
+const DEFAULT_FPS = 25;
 
 export class VideoRecorder {
   private _process: ChildProcess | null = null;
@@ -36,6 +36,8 @@ export class VideoRecorder {
   private _frameQueue: Buffer[] = [];
   private _isStopped = false;
   private _ffmpegPath: string;
+
+  private _fps = DEFAULT_FPS;
 
   static async launch(page: Page, ffmpegPath: string, options: types.PageScreencastOptions): Promise<VideoRecorder> {
     if (!options.outputFile.endsWith('.webm'))
@@ -93,12 +95,16 @@ export class VideoRecorder {
     //
     // "-y" means overwrite output.
     // "-an" means no audio.
+    // "-r" FPS controller. takes effect after all filtering, but before encoding of the video stream has taken place.
+    // see more about framerate https://trac.ffmpeg.org/wiki/ChangingFrameRate
+
     // "-threads 1" means using one thread. This drastically reduces stalling when
     //   cpu is overbooked. By default vp8 tries to use all available threads?
 
     const w = options.width;
     const h = options.height;
-    const args = `-loglevel error -f image2pipe -avioflags direct -fpsprobesize 0 -probesize 32 -analyzeduration 0 -c:v mjpeg -i - -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
+    this._fps = options.fps || DEFAULT_FPS;
+    const args = `-loglevel error -f image2pipe -avioflags direct -fpsprobesize 0 -probesize 32 -analyzeduration 0 -c:v mjpeg -i - -y -an -r ${this._fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
     args.push(options.outputFile);
     const progress = this._progress;
 
@@ -134,7 +140,7 @@ export class VideoRecorder {
 
     if (this._lastFrameBuffer) {
       const durationSec = timestamp - this._lastFrameTimestamp;
-      const repeatCount = Math.max(1, Math.round(fps * durationSec));
+      const repeatCount = Math.max(1, Math.round(this._fps * durationSec));
       for (let i = 0; i < repeatCount; ++i)
         this._frameQueue.push(this._lastFrameBuffer);
       this._lastWritePromise = this._lastWritePromise.then(() => this._sendFrames());
