@@ -91,5 +91,6 @@ node -e "${EMBED_METADATA_SCRIPT}" "$1" > "${REPORT_NAME}"
 gzip "${REPORT_NAME}"
 
 az storage blob upload --connection-string "${FLAKINESS_CONNECTION_STRING}" -c uploads -f "${REPORT_NAME}.gz" -n "${REPORT_NAME}.gz"
+az storage blob upload --connection-string "${FLAKINESS_CONNECTION_STRING}" -c uploads-permanent -f "${REPORT_NAME}.gz" -n "${REPORT_NAME}.gz"
 rm -rf "${REPORT_NAME}.gz"
 
