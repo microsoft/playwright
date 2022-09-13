@@ -98,15 +98,27 @@ test.describe('installed image', () => {
       }
     });
 
-    test('screenshots have docker suffix', async ({ exec, tmpWorkspace }) => {
+    test('screenshots use __screenshots__ folder by default', async ({ exec, tmpWorkspace }) => {
       await exec('npm i --foreground-scripts @playwright/test');
       await exec('npx playwright docker test docker.spec.js --grep screenshot --browser all', {
         expectToExitWithError: true,
       });
-      const files = await fs.promises.readdir(path.join(tmpWorkspace, 'docker.spec.js-snapshots'));
-      expect(files).toContain('img-chromium-docker.png');
-      expect(files).toContain('img-firefox-docker.png');
-      expect(files).toContain('img-webkit-docker.png');
+      await expect(path.join(tmpWorkspace, '__screenshots__', 'firefox', 'docker.spec.js', 'img.png')).toExistOnFS();
+      await expect(path.join(tmpWorkspace, '__screenshots__', 'chromium', 'docker.spec.js', 'img.png')).toExistOnFS();
+      await expect(path.join(tmpWorkspace, '__screenshots__', 'webkit', 'docker.spec.js', 'img.png')).toExistOnFS();
+    });
+
+    test('screenshots should respect configured snapshotDir and add platform suffix', async ({ exec, tmpWorkspace, writeFiles }) => {
+      await exec('npm i --foreground-scripts @playwright/test');
+      await writeFiles({
+        'playwright.config.ts': 'export default { snapshotDir: "__snaps__" }',
+      });
+      await exec('npx playwright docker test docker.spec.js --grep screenshot --browser all', {
+        expectToExitWithError: true,
+      });
+      await expect(path.join(tmpWorkspace, '__snaps__', 'docker.spec.js-snapshots', 'img-chromium-docker.png')).toExistOnFS();
+      await expect(path.join(tmpWorkspace, '__snaps__', 'docker.spec.js-snapshots', 'img-firefox-docker.png')).toExistOnFS();
+      await expect(path.join(tmpWorkspace, '__snaps__', 'docker.spec.js-snapshots', 'img-webkit-docker.png')).toExistOnFS();
     });
 
     test('port forwarding works', async ({ exec, tmpWorkspace }) => {
