@@ -107,11 +107,11 @@ export function source() {
 
   function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
     if (value && typeof value === 'object') {
-      if (globalThis.Window && value instanceof globalThis.Window)
+      if (typeof globalThis.Window === 'function' && value instanceof globalThis.Window)
         return 'ref: <Window>';
-      if (globalThis.Document && value instanceof globalThis.Document)
+      if (typeof globalThis.Document === 'function' && value instanceof globalThis.Document)
         return 'ref: <Document>';
-      if (globalThis.Node && value instanceof globalThis.Node)
+      if (typeof globalThis.Node === 'function' && value instanceof globalThis.Node)
         return 'ref: <Node>';
     }
     return innerSerialize(value, handleSerializer, visitorInfo);
