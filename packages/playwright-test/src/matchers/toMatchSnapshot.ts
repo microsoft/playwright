@@ -301,7 +301,7 @@ export async function toHaveScreenshot(
     return { pass: !this.isNot, message: () => '' };
 
   const config = (testInfo.project._expect as any)?.toHaveScreenshot;
-  const snapshotPathResolver = process.env.PWTEST_USE_SCREENSHOTS_DIR_FOR_TEST
+  const snapshotPathResolver = process.env.PWTEST_USE_SCREENSHOTS_DIR
     ? testInfo._screenshotPath.bind(testInfo)
     : testInfo.snapshotPath.bind(testInfo);
   const helper = new SnapshotHelper(
@@ -315,6 +315,7 @@ export async function toHaveScreenshot(
   if (!helper.snapshotPath.toLowerCase().endsWith('.png'))
     throw new Error(`Screenshot name "${path.basename(helper.snapshotPath)}" must have '.png' extension`);
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
+
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];
   const screenshotOptions = {
     animations: config?.animations ?? 'disabled',

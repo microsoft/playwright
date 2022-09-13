@@ -193,3 +193,18 @@ Docker integration usage:
     ```bash js
     npx playwright docker stop
     ```
+
+Playwright Test sets `PLAYWRIGHT_DOCKER` environment variable when it uses Docker integration.
+You can use this variable to customize config or tests behavior, for example:
+
+```ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  // Ignore all snapshot expectations when running outside
+  // of docker integration.
+  ignoreSnapshots: !process.env.PLAYWRIGHT_DOCKER,
+};
+export default config;
+```

@@ -120,6 +120,7 @@ function addTestCommand(program: Command, isDocker: boolean) {
   command.option('-x', `Stop after the first failure`);
   command.action(async (args, opts) => {
     try {
+      isDocker = isDocker || !!process.env.PLAYWRIGHT_DOCKER;
       if (isDocker && !process.env.PW_TS_ESM_ON) {
         console.log(colors.dim('Using docker container to run browsers.'));
         await docker.ensureDockerEngineIsRunningOrDie();
@@ -139,7 +140,7 @@ function addTestCommand(program: Command, isDocker: boolean) {
         process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
           'x-playwright-proxy': '*',
         });
-        process.env.PW_TEST_SNAPSHOT_SUFFIX = 'docker';
+        process.env.PLAYWRIGHT_DOCKER = '1';
       }
       await runTests(args, opts);
     } catch (e) {

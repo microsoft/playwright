@@ -270,7 +270,12 @@ export class Loader {
     const outputDir = takeFirst(projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
     const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
     const name = takeFirst(projectConfig.name, config.name, '');
-    const screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
+
+    let screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
+    if (process.env.PLAYWRIGHT_DOCKER) {
+      screenshotsDir = path.join(testDir, '__screenshots__', name);
+      process.env.PWTEST_USE_SCREENSHOTS_DIR = '1';
+    }
     return {
       _id: '',
       _fullConfig: fullConfig,
