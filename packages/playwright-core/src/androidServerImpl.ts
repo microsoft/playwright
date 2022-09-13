@@ -38,7 +38,7 @@ export class AndroidServerLauncherImpl implements BrowserServerLauncher {
     const playwright = createPlaywright('javascript');
     // 1. Pre-launch the browser
     const metadata = serverSideCallMetadata();
-    const browser = await playwright[this._browserName].launch(metadata, {
+    const [browser] = await playwright[this._browserName].launch(metadata, {
       ...options,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
@@ -54,16 +54,16 @@ export class AndroidServerLauncherImpl implements BrowserServerLauncher {
       path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
 
     // 2. Start the server
-    // const server = new PlaywrightServer('use-pre-launched-browser', { path, maxConcurrentConnections: Infinity, maxIncomingConnections: Infinity, enableSocksProxy: false, preLaunchedBrowser: browser });
-    // const wsEndpoint = await server.listen(options.port);
+    const server = new PlaywrightServer('use-pre-launched-browser', { path, maxConcurrentConnections: Infinity, maxIncomingConnections: Infinity, enableSocksProxy: false, preLaunchedAndroidDevice: browser });
+    const wsEndpoint = await server.listen(options.port);
 
     // 3. Return the BrowserServer interface
     const browserServer = new ws.EventEmitter() as (BrowserServer & WebSocketEventEmitter);
     // browserServer.process = () => browser.options.browserProcess.process!;
-    // browserServer.wsEndpoint = () => wsEndpoint;
+    browserServer.wsEndpoint = () => wsEndpoint;
     // browserServer.close = () => browser.options.browserProcess.close();
     // browserServer.kill = () => browser.options.browserProcess.kill();
-    // (browserServer as any)._disconnectForTest = () => server.close();
+    (browserServer as any)._disconnectForTest = () => server.close();
     (browserServer as any)._userDataDirForTest = (browser as any)._userDataDirForTest;
     // browser.options.browserProcess.onclose = async (exitCode, signal) => {
     //   server.close();

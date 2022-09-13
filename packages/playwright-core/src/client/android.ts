@@ -26,12 +26,20 @@ import type { Page } from './page';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
+import { Playwright } from './playwright'
 
 type Direction = 'down' | 'up' | 'left' | 'right';
 type SpeedOptions = { speed?: number };
 
+export interface AndroidServerLauncher {
+  launchServer(options?: types.LaunchServerOptions): Promise<api.BrowserServer>;
+}
+
 export class Android extends ChannelOwner<channels.AndroidChannel> implements api.Android {
   readonly _timeoutSettings: TimeoutSettings;
+  _serverLauncher?: AndroidServerLauncher;
+  _defaultLaunchOptions?: types.LaunchOptions;
+  _playwright!: Playwright;
 
   static from(android: channels.AndroidChannel): Android {
     return (android as any)._object;
@@ -48,13 +56,15 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
   }
 
   async devices(options: { port?: number } = {}): Promise<AndroidDevice[]> {
-
     const { devices } = await this._channel.devices(options);
     return devices.map(d => AndroidDevice.from(d));
   }
 
   async launchServer(options: types.LaunchServerOptions = {}): Promise<api.BrowserServer> {
-    return await this._channel.launchServer(options);
+    if (!this._serverLauncher)
+    throw new Error('Launching server is not supported');
+    options = { ...this._defaultLaunchOptions, ...options };
+    return this._serverLauncher.launchServer(options);
   }
 }
 

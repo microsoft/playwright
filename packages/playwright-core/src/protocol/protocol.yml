@@ -538,6 +538,17 @@ Root:
       returns:
         playwright: Playwright
 
+AndroidRoot:
+  type: interface
+
+  commands:
+
+    initialize:
+      parameters:
+        sdkLanguage: string
+      returns:
+        playwright: AndroidDevice
+
 Playwright:
   type: interface
 
@@ -2935,11 +2946,6 @@ ElectronApplication:
   events:
     close:
 
-BrowserServer:
-  type: interface
-
-LaunchServerOptions:
-  type: interface
 
 Android:
   type: interface
@@ -2955,12 +2961,6 @@ Android:
         devices:
           type: array
           items: AndroidDevice
-
-    launchServer:
-      parameters:
-        params: LaunchServerOptions
-      returns:
-        server: BrowserServer 
 
     setDefaultTimeoutNoReply:
       parameters:

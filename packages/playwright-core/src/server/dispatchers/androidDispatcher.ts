@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { RootDispatcher } from './dispatcher';
+import type { DispatcherScope, RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type { Android, SocketBackend } from '../android/android';
 import { AndroidDevice } from '../android/android';
@@ -46,19 +46,20 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChann
   }
 }
 
-export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceChannel, AndroidDispatcher> implements channels.AndroidDeviceChannel {
+export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceChannel, DispatcherScope> implements channels.AndroidDeviceChannel {
   _type_EventTarget = true;
   _type_AndroidDevice = true;
 
-  static from(scope: AndroidDispatcher, device: AndroidDevice): AndroidDeviceDispatcher {
+  static from(scope: DispatcherScope, device: AndroidDevice): AndroidDeviceDispatcher {
     const result = existingDispatcher<AndroidDeviceDispatcher>(device);
     return result || new AndroidDeviceDispatcher(scope, device);
   }
 
-  constructor(scope: AndroidDispatcher, device: AndroidDevice) {
+  constructor(scope: DispatcherScope, device: AndroidDevice) {
     super(scope, device, 'AndroidDevice', {
       model: device.model,
       serial: device.serial,
+      preLaunchedDevice: (device ? device : undefined),
     });
     for (const webView of device.webViews())
       this._dispatchEvent('webViewAdded', { webView });

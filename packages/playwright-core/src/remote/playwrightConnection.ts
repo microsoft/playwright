@@ -24,6 +24,9 @@ import { SocksProxy } from '../common/socksProxy';
 import type { Mode } from './playwrightServer';
 import { assert } from '../utils';
 import type { LaunchOptions } from '../server/types';
+import { AndroidDevice } from '../server/android/android';
+import { AndroidRoot, DispatcherScope } from '../server/dispatchers/dispatcher'
+import { AndroidDeviceDispatcher, AndroidDispatcher } from '../server/dispatchers/androidDispatcher';
 
 type Options = {
   enableSocksProxy: boolean,
@@ -34,6 +37,7 @@ type Options = {
 type PreLaunched = {
   playwright: Playwright | null;
   browser: Browser | null;
+  android: AndroidDevice | null;
 };
 
 export class PlaywrightConnection {
@@ -45,7 +49,7 @@ export class PlaywrightConnection {
   private _disconnected = false;
   private _preLaunched: PreLaunched;
   private _options: Options;
-  private _root: RootDispatcher;
+  private _root?: RootDispatcher;
 
   constructor(lock: Promise<void>, mode: Mode, ws: WebSocket, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
     this._ws = ws;
@@ -72,15 +76,37 @@ export class PlaywrightConnection {
     ws.on('close', () => this._onDisconnect());
     ws.on('error', error => this._onDisconnect(error));
 
-    this._root = new RootDispatcher(this._dispatcherConnection, async scope => {
-      if (mode === 'reuse-browser')
-        return await this._initReuseBrowsersMode(scope);
-      if (mode === 'use-pre-launched-browser')
-        return await this._initPreLaunchedBrowserMode(scope);
-      if (!options.browserName)
-        return await this._initPlaywrightConnectMode(scope);
-      return await this._initLaunchBrowserMode(scope);
+    if (this._preLaunched.android) {
+      new AndroidRoot(this._dispatcherConnection, async scope => {
+        assert(this._preLaunched.android)
+        return await this._initPreLaunchedAndroidMode(scope, this._preLaunched.android);
+      });
+    } else {
+      this._root = new RootDispatcher(this._dispatcherConnection, async scope => {
+        if (mode === 'reuse-browser')
+          return await this._initReuseBrowsersMode(scope);
+        if (mode === 'use-pre-launched-browser')
+          return await this._initPreLaunchedBrowserMode(scope);
+        if (!options.browserName)
+          return await this._initPlaywrightConnectMode(scope);
+        return await this._initLaunchBrowserMode(scope);
+      });
+    }
+  }
+
+  private async _initPreLaunchedAndroidMode(scope: DispatcherScope, android: AndroidDevice) {
+    this._debugLog(`[id=1] engaged pre-launched mode`);
+    android.on(AndroidDevice.Events.Closed, () => {
+      // Underlying android device did close for some reason - force disconnect the client.
+      this.close({ code: 1001, reason: 'Android Device closed' });
     });
+    // const playwright = android.options.rootSdkObject as Playwright;
+    // const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, undefined, browser);
+    const androidDispatcher = new AndroidDeviceDispatcher(scope, android);
+    // In pre-launched mode, keep the browser and just cleanup new contexts.
+    // TODO: it is technically possible to launch more browsers over protocol.
+    // this._cleanups.push(() => androidDispatcher.cleanup());
+    return androidDispatcher;
   }
 
   private async _initPlaywrightConnectMode(scope: RootDispatcher) {
@@ -188,7 +214,8 @@ export class PlaywrightConnection {
   private async _onDisconnect(error?: Error) {
     this._disconnected = true;
     this._debugLog(`disconnected. error: ${error}`);
-    this._root._dispose();
+    if (this._root)
+      this._root._dispose();
     this._debugLog(`starting cleanup`);
     for (const cleanup of this._cleanups)
       await cleanup().catch(() => {});

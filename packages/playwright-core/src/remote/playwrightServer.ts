@@ -56,12 +56,12 @@ export class PlaywrightServer {
   constructor(mode: Mode, options: ServerOptions) {
     this._mode = mode;
     this._options = options;
-    if (mode === 'use-pre-launched-browser') {
-      assert(options.preLaunchedBrowser);
-      this._preLaunchedPlaywright = options.preLaunchedBrowser.options.rootSdkObject as Playwright;
-    }
-    if (mode === 'reuse-browser')
-      this._preLaunchedPlaywright = createPlaywright('javascript');
+    // if (mode === 'use-pre-launched-browser') {
+    //   assert(options.preLaunchedBrowser);
+    //   this._preLaunchedPlaywright = options.preLaunchedBrowser.options.rootSdkObject as Playwright;
+    // }
+    // if (mode === 'reuse-browser')
+    //   this._preLaunchedPlaywright = createPlaywright('javascript');
   }
 
   preLaunchedPlaywright(): Playwright | null {
@@ -115,7 +115,7 @@ export class PlaywrightServer {
           semaphore.aquire(),
           this._mode, ws,
           { enableSocksProxy, browserName, launchOptions },
-          { playwright: this._preLaunchedPlaywright, browser: this._options.preLaunchedBrowser || null },
+          { playwright: this._preLaunchedPlaywright, browser: this._options.preLaunchedBrowser || null, android: this._options.preLaunchedAndroidDevice || null },
           log, () => semaphore.release());
       (ws as any)[kConnectionSymbol] = connection;
     });

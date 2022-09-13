@@ -53,6 +53,7 @@ export type InitializerTraits<T> =
     T extends SelectorsChannel ? SelectorsInitializer :
     T extends SocksSupportChannel ? SocksSupportInitializer :
     T extends PlaywrightChannel ? PlaywrightInitializer :
+    T extends AndroidRootChannel ? AndroidRootInitializer :
     T extends RootChannel ? RootInitializer :
     T extends LocalUtilsChannel ? LocalUtilsInitializer :
     T extends APIRequestContextChannel ? APIRequestContextInitializer :
@@ -90,6 +91,7 @@ export type EventsTraits<T> =
     T extends SelectorsChannel ? SelectorsEvents :
     T extends SocksSupportChannel ? SocksSupportEvents :
     T extends PlaywrightChannel ? PlaywrightEvents :
+    T extends AndroidRootChannel ? AndroidRootEvents :
     T extends RootChannel ? RootEvents :
     T extends LocalUtilsChannel ? LocalUtilsEvents :
     T extends APIRequestContextChannel ? APIRequestContextEvents :
@@ -127,6 +129,7 @@ export type EventTargetTraits<T> =
     T extends SelectorsChannel ? SelectorsEventTarget :
     T extends SocksSupportChannel ? SocksSupportEventTarget :
     T extends PlaywrightChannel ? PlaywrightEventTarget :
+    T extends AndroidRootChannel ? AndroidRootEventTarget :
     T extends RootChannel ? RootEventTarget :
     T extends LocalUtilsChannel ? LocalUtilsEventTarget :
     T extends APIRequestContextChannel ? APIRequestContextEventTarget :
@@ -460,6 +463,27 @@ export type RootInitializeResult = {
 };
 
 export interface RootEvents {
+}
+
+// ----------- AndroidRoot -----------
+export type AndroidRootInitializer = {};
+export interface AndroidRootEventTarget {
+}
+export interface AndroidRootChannel extends AndroidRootEventTarget, Channel {
+  _type_AndroidRoot: boolean;
+  initialize(params: AndroidRootInitializeParams, metadata?: Metadata): Promise<AndroidRootInitializeResult>;
+}
+export type AndroidRootInitializeParams = {
+  sdkLanguage: string,
+};
+export type AndroidRootInitializeOptions = {
+
+};
+export type AndroidRootInitializeResult = {
+  playwright: AndroidDeviceChannel,
+};
+
+export interface AndroidRootEvents {
 }
 
 // ----------- Playwright -----------
@@ -3855,13 +3879,9 @@ export interface ElectronApplicationEvents {
 export type AndroidInitializer = {};
 export interface AndroidEventTarget {
 }
-
-import type {BrowserServer} from '../client/browserType'
-import type {LaunchServerOptions} from '../client/types'
 export interface AndroidChannel extends AndroidEventTarget, Channel {
   _type_Android: boolean;
   devices(params: AndroidDevicesParams, metadata?: Metadata): Promise<AndroidDevicesResult>;
-  launchServer(params: LaunchServerOptions): Promise<BrowserServer>;
   setDefaultTimeoutNoReply(params: AndroidSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<AndroidSetDefaultTimeoutNoReplyResult>;
 }
 export type AndroidDevicesParams = {
