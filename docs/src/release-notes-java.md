@@ -9,10 +9,10 @@ toc_max_heading_level: 2
 ### Assertions
 
 - [`method: LocatorAssertions.toHaveAttribute`] can now be used for asserting attribute existence.
-- New option `setEnabled` for [`method: LocatorAssertions.toBeEnabled`].
+- New option `enabled` for [`method: LocatorAssertions.toBeEnabled`].
 - [`method: LocatorAssertions.toHaveText`] now pierces open shadow roots.
-- New option `setEditable` for [`method: LocatorAssertions.toBeEditable`].
-- New option `setVisible` for [`method: LocatorAssertions.toBeVisible`].
+- New option `editable` for [`method: LocatorAssertions.toBeEditable`].
+- New option `visible` for [`method: LocatorAssertions.toBeVisible`].
 
 ### Other highlights
 

@@ -21,11 +21,11 @@ toc_max_heading_level: 2
 
 ### Behavior Change
 
-A bunch of Playwright APIs already support the `wait_ntil: "domcontentloaded"` option.
+A bunch of Playwright APIs already support the `wait_until: "domcontentloaded"` option.
 For example:
 
 ```python
-page.goto("https://playwright.dev", waitUntil="domcontentloaded")
+page.goto("https://playwright.dev", wait_until="domcontentloaded")
 ```
 
 Prior to 1.26, this would wait for all iframes to fire the `DOMContentLoaded`

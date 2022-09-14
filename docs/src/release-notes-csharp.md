@@ -18,7 +18,7 @@ toc_max_heading_level: 2
 ### Other highlights
 
 - New option `MaxRedirects` for [`method: APIRequestContext.get`] and others to limit redirect count.
-- Codegen supports now NUnit and MSTest frameworks.
+- Codegen now supports NUnit and MSTest frameworks.
 - ASP .NET is now supported.
 
 ### Behavior Change
