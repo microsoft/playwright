@@ -20,6 +20,7 @@ loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
 import * as path from 'path';
 import type { TestModeWorkerOptions } from '../config/testModeFixtures';
+import type { TestModeName } from '../config/testMode';
 import type { CoverageWorkerOptions } from '../config/coverageFixtures';
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
@@ -33,7 +34,7 @@ const getExecutablePath = (browserName: BrowserName) => {
     return process.env.WKPATH;
 };
 
-let mode = 'default';
+let mode: TestModeName = 'default';
 if (process.env.PW_OUT_OF_PROCESS_DRIVER)
   mode = 'driver';
 else if (process.env.PLAYWRIGHT_DOCKER)
