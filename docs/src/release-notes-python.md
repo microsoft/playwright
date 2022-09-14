@@ -4,6 +4,36 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.26
+
+### Assertions
+
+- [`method: LocatorAssertions.toHaveAttribute`] can now be used for asserting attribute existence.
+- New option `enabled` for [`method: LocatorAssertions.toBeEnabled`].
+- [`method: LocatorAssertions.toHaveText`] now pierces open shadow roots.
+- New option `editable` for [`method: LocatorAssertions.toBeEditable`].
+- New option `visible` for [`method: LocatorAssertions.toBeVisible`].
+
+### Other highlights
+
+- New option `max_redirects` for [`method: APIRequestContext.get`] and others to limit redirect count.
+- Python 3.11 is now supported.
+
+### Behavior Change
+
+A bunch of Playwright APIs already support the `wait_ntil: "domcontentloaded"` option.
+For example:
+
+```python
+page.goto("https://playwright.dev", waitUntil="domcontentloaded")
+```
+
+Prior to 1.26, this would wait for all iframes to fire the `DOMContentLoaded`
+event. 
+
+To align with web specification, the `'domcontentloaded'` value only waits for
+the target frame to fire the `'DOMContentLoaded'` event. Use `wait_until="load"` to wait for all iframes.
+
 ## Version 1.25
 
 ### Announcements
