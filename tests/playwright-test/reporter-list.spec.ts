@@ -97,7 +97,10 @@ test('very long console line should not mess terminal', async ({ runInlineTest }
   }, { reporter: 'list' }, { _PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
 
   const renderedText = simpleAnsiRenderer(result.output, 80);
-  expect(renderedText).toContain('  ✓  1 a.test.ts:6:7 › passes');
+  if (process.platform === 'win32')
+    expect(renderedText).toContain('  ok 1 a.test.ts:6:7 › passes');
+  else
+    expect(renderedText).toContain('  ✓  1 a.test.ts:6:7 › passes');
   expect(renderedText).not.toContain('     1 a.test.ts:6:7 › passes');
   expect(renderedText).toContain('a'.repeat(80) + '\n' + 'b'.repeat(20));
 });
