@@ -403,7 +403,7 @@ export class Runner {
       return result;
 
     if (config._ignoreSnapshots) {
-      reporter.onStdOut?.(colors.yellow([
+      this._reporter.onStdOut?.(colors.dim([
         'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
         '- expect().toMatchSnapshot()',
         '- expect().toHaveScreenshot()',
