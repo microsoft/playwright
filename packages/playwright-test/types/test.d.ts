@@ -199,6 +199,10 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   metadata: Metadata;
   /**
+   * Unique project id within this config.
+   */
+  id: string;
+  /**
    * Project name is visible in the report and during test execution.
    */
   name: string;
@@ -577,6 +581,11 @@ interface TestConfig {
       maxDiffPixelRatio?: number;
     };
   };
+
+  /**
+   * Path to config file, if any.
+   */
+  configFile?: string;
 
   /**
    * Whether to exit with an error if any tests or groups are marked as
@@ -1298,6 +1307,10 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   webServer: TestConfigWebServer | null;
+  /**
+   * Path to config file, if any.
+   */
+  configFile?: string;
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
@@ -4401,6 +4414,11 @@ interface TestProject {
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
   grepInvert?: RegExp|Array<RegExp>;
+
+  /**
+   * Unique project id within this config.
+   */
+  id?: string;
 
   /**
    * Metadata that will be put directly to the test report serialized as JSON.

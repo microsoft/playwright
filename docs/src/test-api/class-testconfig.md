@@ -84,6 +84,12 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+## property: TestConfig.configFile
+* since: v1.27
+- type: ?<[string]>
+
+Path to config file, if any.
+
 ## property: TestConfig.forbidOnly
 * since: v1.10
 - type: ?<[boolean]>
