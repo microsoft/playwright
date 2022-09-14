@@ -44,14 +44,14 @@ namespace PlaywrightTests;
 [TestFixture]
 public class MyTest : PageTest
 {
-    [PlaywrightTest]
+    [Test]
     public async Task ShouldHaveTheCorrectSlogan()
     {
         await Page.GotoAsync("https://playwright.dev");
         await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
     }
 
-    [PlaywrightTest]
+    [Test]
     public async Task ShouldHaveTheCorrectTitle()
     {
         await Page.GotoAsync("https://playwright.dev");
@@ -125,7 +125,7 @@ namespace PlaywrightTests;
 [TestFixture]
 public class MyTest : PageTest
 {
-    [PlaywrightTest]
+    [Test]
     public async Task TestWithCustomContextOptions()
     {
         // The following Page (and BrowserContext) instance has the custom colorScheme, viewport and baseURL set:
@@ -217,10 +217,6 @@ There are a few base classes available to you in `Microsoft.Playwright.NUnit` na
 |BrowserTest   |Each test will get a browser and can create as many contexts as it likes. Each test is responsible for cleaning up all the contexts it created.|
 |PlaywrightTest|This gives each test a Playwright object so that the test could start and stop as many browsers as it likes.|
 
-### 'No test is available'
-
-You need to add `[TestFixture]` to your test class. NUnit does not discover tests without it, if the `TestAttribute` comes from a different assembly.
-
 ## MSTest
 
 Playwright provides base classes to write tests with MSTest via the [`Microsoft.Playwright.MSTest`](https://www.nuget.org/packages/Microsoft.Playwright.MSTest) package.
@@ -250,14 +246,14 @@ namespace PlaywrightTests;
 [TestClass]
 public class UnitTest1: PageTest
 {
-    [PlaywrightTestMethod]
+    [TestMethod]
     public async Task ShouldHaveTheCorrectSlogan()
     {
         await Page.GotoAsync("https://playwright.dev");
         await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
     }
 
-    [PlaywrightTestMethod]
+    [TestMethod]
     public async Task ShouldHaveTheCorrectTitle()
     {
         await Page.GotoAsync("https://playwright.dev");
@@ -335,7 +331,7 @@ namespace PlaywrightTests;
 [TestClass]
 public class UnitTest1 : PageTest
 {
-    [PlaywrightTestMethod]
+    [TestMethod]
     public async Task TestWithCustomContextOptions()
     {
         // The following Page (and BrowserContext) instance has the custom colorScheme, viewport and baseURL set:
