@@ -379,7 +379,7 @@ Playwright Test can produce test traces while running the tests. Later on, you c
 - `'retain-on-failure'` - Record trace for each test, but remove it from successful test runs.
 - `'on-first-retry'` - Record trace only when retrying a test for the first time.
 
-Trace files will appear in the test output directory, typically `test-results`. See [`property: TestOptions.trace`] for advanced video configuration.
+Trace files will appear in the test output directory, typically `test-results`. See [`property: TestOptions.trace`] for advanced configuration.
 
 ```js tab=js-js
 // @ts-check
