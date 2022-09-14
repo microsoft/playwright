@@ -87,6 +87,7 @@ test('render steps', async ({ runInlineTest }) => {
 });
 
 test('very long console line should not mess terminal', async ({ runInlineTest }) => {
+  const TTY_WIDTH = 80;
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
@@ -94,9 +95,9 @@ test('very long console line should not mess terminal', async ({ runInlineTest }
         console.log('a'.repeat(80) + 'b'.repeat(20));
       });
     `,
-  }, { reporter: 'list' }, { _PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
+  }, { reporter: 'list' }, { PWTEST_TTY_WIDTH: TTY_WIDTH + ''});
 
-  const renderedText = simpleAnsiRenderer(result.output, 80);
+  const renderedText = simpleAnsiRenderer(result.output, TTY_WIDTH);
   if (process.platform === 'win32')
     expect(renderedText).toContain('  ok 1 a.test.ts:6:7 › passes');
   else
@@ -169,7 +170,7 @@ test('should truncate long test names', async ({ runInlineTest }) => {
   expect(lines[7]).toBe(`  -  4 …› a.test.ts:13:12 › skipped very long name`);
 });
 
-function simpleAnsiRenderer(text, width) {
+function simpleAnsiRenderer(text, ttyWidth) {
   let lineNumber = 0;
   let columnNumber = 0;
   const screenLines = [];
@@ -177,7 +178,7 @@ function simpleAnsiRenderer(text, width) {
     if (lineNumber < 0)
       throw new Error('Bad terminal navigation!');
     while (lineNumber >= screenLines.length)
-      screenLines.push(new Array(width).fill(''));
+      screenLines.push(new Array(ttyWidth).fill(''));
   };
   const print = ch => {
     ensureScreenSize();
@@ -186,7 +187,7 @@ function simpleAnsiRenderer(text, width) {
       ++lineNumber;
     } else {
       screenLines[lineNumber][columnNumber++] = ch;
-      if (columnNumber === width) {
+      if (columnNumber === ttyWidth) {
         columnNumber = 0;
         ++lineNumber;
       }
@@ -213,7 +214,7 @@ function simpleAnsiRenderer(text, width) {
     } else if (code === '2K') {
       // Erase full line
       ensureScreenSize();
-      screenLines[lineNumber] = new Array(width).fill('');
+      screenLines[lineNumber] = new Array(ttyWidth).fill('');
     } else if (code === '0G') {
       // Go to start
       columnNumber = 0;
