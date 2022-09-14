@@ -33,9 +33,13 @@ const getExecutablePath = (browserName: BrowserName) => {
     return process.env.WKPATH;
 };
 
-const mode = process.env.PW_OUT_OF_PROCESS_DRIVER ?
-  'driver' :
-  (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | 'service' | 'service2');
+let mode = 'default';
+if (process.env.PW_OUT_OF_PROCESS_DRIVER)
+  mode = 'driver';
+else if (process.env.PLAYWRIGHT_DOCKER)
+  mode = 'docker';
+else
+  mode = (process.env.PWTEST_MODE ?? 'default') as ('default' | 'driver' | 'service' | 'service2');
 const headed = process.argv.includes('--headed');
 const channel = process.env.PWTEST_CHANNEL as any;
 const video = !!process.env.PWTEST_VIDEO;

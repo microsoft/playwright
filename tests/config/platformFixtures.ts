@@ -21,15 +21,11 @@ export type PlatformWorkerFixtures = {
   isWindows: boolean;
   isMac: boolean;
   isLinux: boolean;
-  browserPlatform: 'win32' | 'darwin' | 'linux';
-  isRemote: boolean;
 };
 
 export const platformTest = test.extend<{}, PlatformWorkerFixtures>({
-  platform: [process.platform as 'win32' | 'darwin' | 'linux', { scope: 'worker' }],
+  platform: [process.env.PLAYWRIGHT_DOCKER ? 'linux' : process.platform as 'win32' | 'darwin' | 'linux', { scope: 'worker' }],
   isWindows: [process.platform === 'win32', { scope: 'worker' }],
   isMac: [process.platform === 'darwin', { scope: 'worker' }],
   isLinux: [process.platform === 'linux', { scope: 'worker' }],
-  browserPlatform: [process.env.PW_TEST_SNAPSHOT_SUFFIX === 'docker' ? 'linux' : process.platform as 'win32' | 'darwin' | 'linux', { scope: 'worker' }],
-  isRemote: [!!process.env.PW_TEST_CONNECT_WS_ENDPOINT, { scope: 'worker' }],
 });
