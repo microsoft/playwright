@@ -103,7 +103,7 @@ namespace PlaywrightTests
 
         private IAPIRequestContext Request = null;
 
-        [PlaywrightTest]
+        [Test]
         public async Task ShouldCreateBugReport()
         {
             var data = new Dictionary<string, string>();
@@ -130,7 +130,7 @@ namespace PlaywrightTests
             Assert.AreEqual("Bug description", issue?.GetProperty("body").GetString());
         }
 
-        [PlaywrightTest]
+        [Test]
         public async Task ShouldCreateFeatureRequests()
         {
             var data = new Dictionary<string, string>();
@@ -229,7 +229,7 @@ namespace PlaywrightTests
 
         private IAPIRequestContext Request = null;
 
-        [PlaywrightTest]
+        [Test]
         public async Task ShouldCreateBugReport()
         {
             var data = new Dictionary<string, string>();
@@ -256,7 +256,7 @@ namespace PlaywrightTests
             Assert.AreEqual("Bug description", issue?.GetProperty("body").GetString());
         }
 
-        [PlaywrightTest]
+        [Test]
         public async Task ShouldCreateFeatureRequests()
         {
             var data = new Dictionary<string, string>();
@@ -343,7 +343,7 @@ The following test creates a new issue via API and then navigates to the list of
 project to check that it appears at the top of the list. The check is performed using [LocatorAssertions].
 
 ```csharp
-  [PlaywrightTest]
+  [Test]
   public async Task LastCreatedIssueShouldBeFirstInTheList()
   {
       var data = new Dictionary<string, string>();
@@ -366,7 +366,7 @@ The following test creates a new issue via user interface in the browser and the
 it was created:
 
 ```csharp
-  [PlaywrightTest]
+  [Test]
   public async Task LastCreatedIssueShouldBeOnTheServer()
   {
       await Page.GotoAsync("https://github.com/" + USER + "/" + REPO + "/issues");
