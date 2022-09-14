@@ -22,6 +22,8 @@ import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
 import * as utils from 'playwright-core/lib/utils';
 import { getPlaywrightVersion } from 'playwright-core/lib/common/userAgent';
 import * as dockerApi from './dockerApi';
+import type { TestRunnerPlugin } from '../plugins';
+import type { FullConfig, Reporter, Suite } from '../../types/testReporter';
 
 const VRT_IMAGE_DISTRO = 'focal';
 const VRT_IMAGE_NAME = `playwright:local-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
@@ -128,28 +130,37 @@ export async function buildPlaywrightImage() {
   console.log(`Done!`);
 }
 
-export async function configureTestRunnerToUseDocker() {
-  console.log(colors.dim('Using docker container to run browsers.'));
-  await checkDockerEngineIsRunningOrDie();
-  let info = await containerInfo();
-  if (!info) {
-    process.stdout.write(colors.dim(`Starting docker container... `));
-    const time = Date.now();
-    info = await ensurePlaywrightContainerOrDie();
-    const deltaMs = (Date.now() - time);
-    console.log(colors.dim('Done in ' + (deltaMs / 1000).toFixed(1) + 's'));
-    console.log(colors.dim('The Docker container will keep running after tests finished.'));
-    console.log(colors.dim('Stop manually using:'));
-    console.log(colors.dim('    npx playwright docker stop'));
-  }
-  console.log(colors.dim(`View screen: ${info.vncSession}`));
-  process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.wsEndpoint;
-  process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
-    'x-playwright-proxy': '*',
-  });
-  process.env.PLAYWRIGHT_DOCKER = '1';
-}
+export const dockerPlugin: TestRunnerPlugin = {
+  name: 'playwright:docker',
 
+  async setup(config: FullConfig, configDir: string, rootSuite: Suite, reporter: Reporter) {
+    if (!process.env.PLAYWRIGHT_DOCKER)
+      return;
+
+    const print = (text: string) => reporter.onStdOut?.(text);
+    const println = (text: string) => reporter.onStdOut?.(text + '\n');
+
+    println(colors.dim('Using docker container to run browsers.'));
+    await checkDockerEngineIsRunningOrDie();
+    let info = await containerInfo();
+    if (!info) {
+      print(colors.dim(`Starting docker container... `));
+      const time = Date.now();
+      info = await ensurePlaywrightContainerOrDie();
+      const deltaMs = (Date.now() - time);
+      println(colors.dim('Done in ' + (deltaMs / 1000).toFixed(1) + 's'));
+      println(colors.dim('The Docker container will keep running after tests finished.'));
+      println(colors.dim('Stop manually using:'));
+      println(colors.dim('    npx playwright docker stop'));
+    }
+    println(colors.dim(`View screen: ${info.vncSession}`));
+    println('');
+    process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.wsEndpoint;
+    process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
+      'x-playwright-proxy': '*',
+    });
+  },
+};
 
 interface ContainerInfo {
   wsEndpoint: string;

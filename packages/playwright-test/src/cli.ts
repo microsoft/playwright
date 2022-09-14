@@ -100,9 +100,8 @@ function addTestCommand(program: Command, isDocker: boolean) {
   command.option('-x', `Stop after the first failure`);
   command.action(async (args, opts) => {
     try {
-      isDocker = isDocker || !!process.env.PLAYWRIGHT_DOCKER;
-      if (isDocker && !process.env.PW_TS_ESM_ON)
-        await docker.configureTestRunnerToUseDocker();
+      if (isDocker)
+        process.env.PLAYWRIGHT_DOCKER = '1';
       await runTests(args, opts);
     } catch (e) {
       console.error(e);
