@@ -29,6 +29,7 @@ import { Loader } from './loader';
 import type { FullResult, Reporter, TestError } from '../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
 import { formatError } from './reporters/base';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import DotReporter from './reporters/dot';
 import GitHubReporter from './reporters/github';
 import LineReporter from './reporters/line';
@@ -602,6 +603,15 @@ export class Runner {
         }, result);
       }
     };
+
+    if (config._ignoreSnapshots) {
+      this._reporter.onStdOut?.(colors.dim([
+        'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
+        '- expect().toMatchSnapshot()',
+        '- expect().toHaveScreenshot()',
+        '',
+      ].join('\n')));
+    }
 
     // Legacy webServer support.
     this._plugins.push(...webServerPluginsForConfig(config));
