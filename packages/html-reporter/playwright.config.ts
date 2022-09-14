@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import type { PlaywrightTestConfig } from '@playwright/experimental-ct-react';
 import { devices } from '@playwright/experimental-ct-react';
 
