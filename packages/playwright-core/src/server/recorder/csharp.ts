@@ -207,7 +207,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       }`);
       formatter.newLine();
     }
-    formatter.add(`    [${this._mode === 'nunit' ? 'PlaywrightTest' : 'PlaywrightTestMethod'}]
+    formatter.add(`    [${this._mode === 'nunit' ? 'Test' : 'TestMethod'}]
     public async Task MyTest()
     {`);
     return formatter.format();
