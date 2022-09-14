@@ -958,7 +958,7 @@ presence.
 
 ```js
 const locator = page.locator('input');
-// Assert attribute existance.
+// Assert attribute existence.
 await expect(locator).toHaveAttribute('disabled');
 await expect(locator).not.toHaveAttribute('open');
 ```
