@@ -146,8 +146,14 @@ jobs:
     - run: npx playwright install --with-deps
     - run: npm run test-html-reporter
       if: always() && matrix.os != 'ubuntu-latest'
-    - run: xvfb-run npm run test-html-reporter
+    - run: |
+        ./utils/docker/build.sh --amd64 focal $PWTEST_DOCKER_BASE_IMAGE
+        npx playwright docker build
+        xvfb-run npm run test-html-reporter
       if: always() && matrix.os == 'ubuntu-latest'
+      env:
+        PLAYWRIGHT_DOCKER: 1
+        PWTEST_DOCKER_BASE_IMAGE: playwright:localbuild
     - run: npm run test-web
       if: always() && matrix.os != 'ubuntu-latest'
     - run: xvfb-run npm run test-web
