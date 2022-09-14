@@ -402,6 +402,15 @@ export class Runner {
     if (result.status !== 'passed')
       return result;
 
+    if (config._ignoreSnapshots) {
+      reporter.onStdOut?.(colors.yellow([
+        'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
+        '- expect().toMatchSnapshot()',
+        '- expect().toHaveScreenshot()',
+        '',
+      ].join('\n')));
+    }
+
     // 14. Run tests.
     try {
       const sigintWatcher = new SigIntWatcher();
@@ -603,15 +612,6 @@ export class Runner {
         }, result);
       }
     };
-
-    if (config._ignoreSnapshots) {
-      this._reporter.onStdOut?.(colors.dim([
-        'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
-        '- expect().toMatchSnapshot()',
-        '- expect().toHaveScreenshot()',
-        '',
-      ].join('\n')));
-    }
 
     // Legacy webServer support.
     this._plugins.push(...webServerPluginsForConfig(config));
