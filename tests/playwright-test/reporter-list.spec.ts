@@ -95,7 +95,7 @@ test('very long console line should not mess terminal', async ({ runInlineTest }
         console.log('a'.repeat(80) + 'b'.repeat(20));
       });
     `,
-  }, { reporter: 'list' }, { PWTEST_TTY_WIDTH: TTY_WIDTH + ''});
+  }, { reporter: 'list' }, { PWTEST_TTY_WIDTH: TTY_WIDTH + '' });
 
   const renderedText = simpleAnsiRenderer(result.output, TTY_WIDTH);
   if (process.platform === 'win32')
