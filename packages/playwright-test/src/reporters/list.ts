@@ -94,9 +94,9 @@ class ListReporter extends BaseReporter {
 
   private _updateLineCountAndNewLineFlagForOutput(text: string) {
     this._needNewLine = text[text.length - 1] !== '\n';
-    if (!this._liveTerminal)
-      return;
     const ttyWidth = this.ttyWidth();
+    if (!this._liveTerminal || ttyWidth === 0)
+      return;
     for (const ch of text) {
       if (ch === '\n') {
         this._lastColumn = 0;
