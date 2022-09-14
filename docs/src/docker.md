@@ -173,13 +173,13 @@ Docker integration usage:
     npx playwright docker build
     ```
 
-2. Run Docker container in the background.
+1. Run Docker container in the background.
 
     ```bash js
     npx playwright docker start
     ```
 
-3. Run tests inside Docker container. Note that this command accepts all the same arguments
+1. Run tests inside Docker container. Note that this command accepts all the same arguments
    as a regular `npx playwright test` command.
 
     ```bash js
@@ -188,7 +188,7 @@ Docker integration usage:
 
    Note that this command will detect running Docker container, and auto-launch it if needed.
 
-4. Finally, stop background Docker container when you're done working with tests:
+1. Finally, stop background Docker container when you're done working with tests:
 
     ```bash js
     npx playwright docker stop
