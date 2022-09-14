@@ -107,8 +107,12 @@ export class BaseReporter implements ReporterInternal  {
     this.result = result;
   }
 
+  protected ttyWidth() {
+    return this._ttyWidthForTest || process.stdout.columns || 0;
+  }
+
   protected fitToScreen(line: string, prefix?: string): string {
-    const ttyWidth = this._ttyWidthForTest || process.stdout.columns || 0;
+    const ttyWidth = this.ttyWidth();
     if (!ttyWidth) {
       // Guard against the case where we cannot determine available width.
       return line;
