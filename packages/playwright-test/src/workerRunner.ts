@@ -160,7 +160,7 @@ export class WorkerRunner extends EventEmitter {
       return;
 
     this._loader = await Loader.deserialize(this._params.loader);
-    this._project = this._loader.fullConfig().projects.find(p => p._id === this._params.projectId)!;
+    this._project = this._loader.fullConfig().projects.find(p => p.id === this._params.projectId)!;
   }
 
   async runTestGroup(runPayload: RunPayload) {

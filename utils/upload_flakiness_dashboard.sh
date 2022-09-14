@@ -95,7 +95,7 @@ az storage blob upload --connection-string "${FLAKINESS_CONNECTION_STRING}" -c u
 
 UTC_DATE=$(cat <<EOF | node
   const date = new Date();
-  console.log([date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()].join('-'));
+  console.log(date.toISOString().substring(0, 10).replace(/-/g, ''));
 EOF
 )
 

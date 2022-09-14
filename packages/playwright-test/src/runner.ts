@@ -502,10 +502,10 @@ export class Runner {
     for (const [project, files] of filesByProject) {
       for (const file of files) {
         const group: TestGroup = {
-          workerHash: `run${project._id}-repeat${repeatEachIndex}`,
+          workerHash: `run${project.id}-repeat${repeatEachIndex}`,
           requireFile: file,
           repeatEachIndex,
-          projectId: project._id,
+          projectId: project.id,
           tests: [],
           watchMode: true,
         };
