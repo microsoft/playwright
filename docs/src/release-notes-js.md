@@ -18,7 +18,7 @@ Read more in [our documentation](./docker#experimental-playwright-test-docker-in
 
 ### Assertions
 
-- [`method: LocatorAssertions.toHaveAttribute`] can now be used for asserting attribute existence.
+- [`method: LocatorAssertions.toHaveAttribute#2`] can now be used for asserting attribute existence.
 - New option `enabled` for [`method: LocatorAssertions.toBeEnabled`].
 - [`method: LocatorAssertions.toHaveText`] now pierces open shadow roots.
 - New option `editable` for [`method: LocatorAssertions.toBeEditable`].
