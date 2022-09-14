@@ -33,6 +33,7 @@ export interface PortBinding {
 
 export interface DockerContainer {
   containerId: string;
+  labels: Record<string, string>;
   imageId: string;
   state: 'created'|'restarting'|'running'|'removing'|'paused'|'exited'|'dead';
   names: string[];
@@ -51,6 +52,7 @@ export async function listContainers(): Promise<DockerContainer[]> {
       hostPort: portInfo.PublicPort,
       containerPort: portInfo.PrivatePort,
     })) ?? [],
+    labels: container.Labels ?? {},
   }));
 }
 
@@ -58,6 +60,7 @@ interface LaunchContainerOptions {
   imageId: string;
   autoRemove: boolean;
   command?: string[];
+  labels?: Record<string, string>;
   ports?: Number[];
   name?: string;
   waitUntil?: 'not-running' | 'next-exit' | 'removed';
@@ -72,6 +75,7 @@ export async function launchContainer(options: LaunchContainerOptions): Promise<
   }
   const container = await postJSON(`/containers/create` + (options.name ? '?name=' + options.name : ''), {
     Cmd: options.command,
+    Labels: options.labels ?? {},
     AttachStdout: true,
     AttachStderr: true,
     Image: options.imageId,

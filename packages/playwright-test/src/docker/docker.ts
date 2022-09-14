@@ -28,6 +28,8 @@ import type { FullConfig, Reporter, Suite } from '../../types/testReporter';
 const VRT_IMAGE_DISTRO = 'focal';
 const VRT_IMAGE_NAME = `playwright:local-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
 const VRT_CONTAINER_NAME = `playwright-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
+const VRT_CONTAINER_LABEL_NAME = 'dev.playwright.vrt-service.version';
+const VRT_CONTAINER_LABEL_VALUE = '1';
 
 export async function startPlaywrightContainer() {
   await checkDockerEngineIsRunningOrDie();
@@ -50,16 +52,15 @@ export async function startPlaywrightContainer() {
   ].join('\n'));
 }
 
-export async function stopPlaywrightContainer() {
+export async function stopAllPlaywrightContainers() {
   await checkDockerEngineIsRunningOrDie();
 
-  const container = await findRunningDockerContainer();
-  if (!container)
-    return;
-  await dockerApi.stopContainer({
+  const allContainers = await dockerApi.listContainers();
+  const vrtContainers = allContainers.filter(container => container.labels[VRT_CONTAINER_LABEL_NAME] === VRT_CONTAINER_LABEL_VALUE);
+  await Promise.all(vrtContainers.map(container => dockerApi.stopContainer({
     containerId: container.containerId,
     waitUntil: 'removed',
-  });
+  })));
 }
 
 export async function deletePlaywrightImage() {
@@ -70,7 +71,7 @@ export async function deletePlaywrightImage() {
     return;
 
   if (await containerInfo())
-    await stopPlaywrightContainer();
+    await stopAllPlaywrightContainers();
   await dockerApi.removeImage(dockerImage.imageId);
 }
 
@@ -168,7 +169,9 @@ interface ContainerInfo {
 }
 
 async function containerInfo(): Promise<ContainerInfo|undefined> {
-  const container = await findRunningDockerContainer();
+  const allContainers = await dockerApi.listContainers();
+  const pwDockerImage = await findDockerImage(VRT_IMAGE_NAME);
+  const container = allContainers.find(container => container.imageId === pwDockerImage?.imageId && container.state === 'running');
   if (!container)
     return undefined;
   const logLines = await dockerApi.getContainerLogs(container.containerId);
@@ -218,6 +221,9 @@ async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
     name: VRT_CONTAINER_NAME,
     autoRemove: true,
     ports: [5400, 7900],
+    labels: {
+      [VRT_CONTAINER_LABEL_NAME]: VRT_CONTAINER_LABEL_VALUE,
+    },
   });
 
   // Wait for the service to become available.
@@ -249,12 +255,5 @@ async function checkDockerEngineIsRunningOrDie() {
 async function findDockerImage(imageName: string): Promise<dockerApi.DockerImage|undefined> {
   const images = await dockerApi.listImages();
   return images.find(image => image.names.includes(imageName));
-}
-
-async function findRunningDockerContainer(): Promise<dockerApi.DockerContainer|undefined> {
-  const containers = await dockerApi.listContainers();
-  const dockerImage = await findDockerImage(VRT_IMAGE_NAME);
-  const container = dockerImage ? containers.find(container => container.imageId === dockerImage.imageId) : undefined;
-  return container?.state === 'running' ? container : undefined;
 }
 
