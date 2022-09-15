@@ -35,6 +35,7 @@ function newLogger() {
   return (message: string) => debugLog(`[id=${id}] ${message}`);
 }
 
+// TODO: replace 'reuse-browser' with 'allow-reuse' in 1.27.
 export type Mode = 'use-pre-launched-browser' | 'reuse-browser' | 'auto';
 
 type ServerOptions = {
@@ -58,11 +59,11 @@ export class PlaywrightServer {
       assert(options.preLaunchedBrowser);
       this._preLaunchedPlaywright = options.preLaunchedBrowser.options.rootSdkObject as Playwright;
     }
-    if (mode === 'reuse-browser')
-      this._preLaunchedPlaywright = createPlaywright('javascript');
   }
 
-  preLaunchedPlaywright(): Playwright | null {
+  preLaunchedPlaywright(): Playwright {
+    if (!this._preLaunchedPlaywright)
+      this._preLaunchedPlaywright = createPlaywright('javascript');
     return this._preLaunchedPlaywright;
   }
 
@@ -87,9 +88,10 @@ export class PlaywrightServer {
     debugLog('Listening at ' + wsEndpoint);
 
     this._wsServer = new wsServer({ server, path: this._options.path });
-    const semaphore = new Semaphore(this._options.maxConcurrentConnections);
+    const browserSemaphore = new Semaphore(this._options.maxConcurrentConnections);
+    const controllerSemaphore = new Semaphore(1);
     this._wsServer.on('connection', (ws, request) => {
-      if (semaphore.requested() >= this._options.maxIncomingConnections) {
+      if (browserSemaphore.requested() >= this._options.maxIncomingConnections) {
         ws.close(1013, 'Playwright Server is busy');
         return;
       }
@@ -109,9 +111,27 @@ export class PlaywrightServer {
 
       const log = newLogger();
       log(`serving connection: ${request.url}`);
+      const isReuseControllerClient = !!request.headers['x-playwright-reuse-controller'];
+      const semaphore = isReuseControllerClient ? controllerSemaphore : browserSemaphore;
+
+      // If we started in the legacy reuse-browser mode, create this._preLaunchedPlaywright.
+      // If we get a reuse-controller request,  create this._preLaunchedPlaywright.
+      if (isReuseControllerClient || (this._mode === 'reuse-browser') && !this._preLaunchedPlaywright)
+        this.preLaunchedPlaywright();
+
+      // If we have a playwright to reuse, consult controller for reuse mode.
+      let mode = this._mode;
+      if (mode === 'auto' && this._preLaunchedPlaywright?.reuseController.reuseBrowser())
+        mode = 'reuse-browser';
+
+      if (mode === 'reuse-browser')
+        semaphore.setMax(1);
+      else
+        semaphore.setMax(this._options.maxConcurrentConnections);
+
       const connection = new PlaywrightConnection(
           semaphore.aquire(),
-          this._mode, ws,
+          mode, ws, isReuseControllerClient,
           { enableSocksProxy, browserName, launchOptions },
           { playwright: this._preLaunchedPlaywright, browser: this._options.preLaunchedBrowser || null },
           log, () => semaphore.release());
@@ -149,7 +169,12 @@ export class Semaphore {
   private _max: number;
   private _aquired = 0;
   private _queue: ManualPromise[] = [];
+
   constructor(max: number) {
+    this._max = max;
+  }
+
+  setMax(max: number) {
     this._max = max;
   }
 
