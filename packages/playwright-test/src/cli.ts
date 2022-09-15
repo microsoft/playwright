@@ -30,7 +30,7 @@ import { baseFullConfig, defaultTimeout, fileIsModule } from './loader';
 import type { TraceMode } from './types';
 
 export function addTestCommands(program: Command) {
-  addTestCommand(program, false /* isDocker */);
+  addTestCommand(program);
   addShowReportCommand(program);
   addListFilesCommand(program);
   addDockerCommand(program);
@@ -38,41 +38,58 @@ export function addTestCommands(program: Command) {
 
 function addDockerCommand(program: Command) {
   const dockerCommand = program.command('docker')
-      .description(`run tests in Docker (EXPERIMENTAL)`);
+      .description(`Manage Docker integration (EXPERIMENTAL)`);
 
   dockerCommand.command('build')
       .description('build local docker image')
       .action(async function(options) {
-        await docker.buildPlaywrightImage();
+        try {
+          await docker.buildPlaywrightImage();
+        } catch (e) {
+          console.error(e.stack ? e : e.message);
+        }
       });
 
   dockerCommand.command('start')
       .description('start docker container')
       .action(async function(options) {
-        await docker.startPlaywrightContainer();
+        try {
+          await docker.startPlaywrightContainer();
+        } catch (e) {
+          console.error(e.stack ? e : e.message);
+        }
       });
 
   dockerCommand.command('stop')
       .description('stop docker container')
       .action(async function(options) {
-        await docker.stopAllPlaywrightContainers();
+        try {
+          await docker.stopAllPlaywrightContainers();
+        } catch (e) {
+          console.error(e.stack ? e : e.message);
+        }
       });
 
   dockerCommand.command('delete-image', { hidden: true })
       .description('delete docker image, if any')
       .action(async function(options) {
-        await docker.deletePlaywrightImage();
+        try {
+          await docker.deletePlaywrightImage();
+        } catch (e) {
+          console.error(e.stack ? e : e.message);
+        }
       });
 
-  addTestCommand(dockerCommand, true /* isDocker */);
+  dockerCommand.command('print-status-json', { hidden: true })
+      .description('print docker status')
+      .action(async function(options) {
+        await docker.printDockerStatus();
+      });
 }
 
-function addTestCommand(program: Command, isDocker: boolean) {
+function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
-  if (isDocker)
-    command.description('run tests with Playwright Test and browsers inside docker container');
-  else
-    command.description('run tests with Playwright Test');
+  command.description('run tests with Playwright Test');
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
   command.option('--headed', `Run tests in headed browsers (default: headless)`);
   command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --maxFailures=1 --headed --workers=1" options`);
@@ -100,8 +117,6 @@ function addTestCommand(program: Command, isDocker: boolean) {
   command.option('-x', `Stop after the first failure`);
   command.action(async (args, opts) => {
     try {
-      if (isDocker)
-        process.env.PLAYWRIGHT_DOCKER = '1';
       await runTests(args, opts);
     } catch (e) {
       console.error(e);
@@ -113,10 +128,10 @@ Arguments [test-filter...]:
   Pass arguments to filter test files. Each argument is treated as a regular expression.
 
 Examples:
-  $ npx playwright${isDocker ? ' docker ' : ' '}test my.spec.ts
-  $ npx playwright${isDocker ? ' docker ' : ' '}test some.spec.ts:42
-  $ npx playwright${isDocker ? ' docker ' : ' '}test --headed
-  $ npx playwright${isDocker ? ' docker ' : ' '}test --browser=webkit`);
+  $ npx playwright test my.spec.ts
+  $ npx playwright test some.spec.ts:42
+  $ npx playwright test --headed
+  $ npx playwright test --browser=webkit`);
 }
 
 function addListFilesCommand(program: Command) {
