@@ -143,15 +143,25 @@ export class Connection extends EventEmitter {
     const { id, guid, method, params, result, error } = message as any;
     if (id) {
       debugLogger.log('channel:response', message);
-      const callback = this._callbacks.get(id);
+      let callback = this._callbacks.get(id);
+      if (id === 1) {
+        console.log(`Received callback for message id 1`);
+        callback!.type = "AndroidRoot"
+      }
+
+      console.log(`dispatch callback ${JSON.stringify(callback)}`);
       if (!callback)
         throw new Error(`Cannot find command to respond: ${id}`);
       this._callbacks.delete(id);
       if (error && !result) {
+        console.log(`dispatch error for ${JSON.stringify(message)} and ${JSON.stringify(error)}`);
         callback.reject(parseError(error));
       } else {
+        console.log(`dispatch else 1`);
         const validator = findValidator(callback.type, callback.method, 'Result');
+        console.log(`dispatch else 2 ${JSON.stringify(validator)} ${JSON.stringify(result)}, ${JSON.stringify({ tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this.isRemote() ? 'fromBase64' : 'buffer' })}`);
         callback.resolve(validator(result, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this.isRemote() ? 'fromBase64' : 'buffer' }));
+        console.log(`dispatch else 3`);
       }
       return;
     }

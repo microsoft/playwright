@@ -88,7 +88,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
       const closePipe = () => pipe.close().catch(() => {});
       const connection = new Connection(this._connection.localUtils());
       connection.markAsRemote();
-      connection.on('close', closePipe);
+      connection.on('close', () => {console.log('connection close'); closePipe()});
 
       let closeError: string | undefined;
       const onPipeClosed = () => {
@@ -109,6 +109,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
           connection!.dispatch(message);
         } catch (e) {
           closeError = e.toString();
+          console.log(`pipe message catch ${JSON.stringify(message)} ${closeError}`);
           closePipe();
         }
       });
@@ -120,6 +121,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
 
         const playwright = await connection!.initializePlaywright();
         if (!playwright._initializer.preLaunchedBrowser) {
+          console.log('playwright._initializer.preLaunchedBrowser does not exist');
           closePipe();
           throw new Error('Malformed endpoint. Did you use launchServer method?');
         }
@@ -128,12 +130,13 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
         // browser._logger = logger;
         // browser._shouldCloseConnectionOnClose = true;
         // browser._setBrowserType(this);
-        browser.on(Events.Browser.Disconnected, closePipe);
+        // browser.on(Events.Browser.Disconnected, closePipe);
         return browser;
       }, deadline ? deadline - monotonicTime() : 0);
       if (!result.timedOut) {
         return result.result;
       } else {
+        console.log('result.timedOut false');
         closePipe();
         throw new Error(`Timeout ${params.timeout}ms exceeded`);
       }

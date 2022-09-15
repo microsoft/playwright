@@ -25,13 +25,21 @@ export type ValidatorContext = {
 export const scheme: { [key: string]: Validator } = {};
 
 export function findValidator(type: string, method: string, kind: 'Initializer' | 'Event' | 'Params' | 'Result'): Validator {
+  console.log(`findValidator ${type}, ${method}, ${kind}`);
   const validator = maybeFindValidator(type, method, kind);
+  console.log(`findValidator ${validator}`);
   if (!validator)
     throw new ValidationError(`Unknown scheme for ${kind}: ${type}.${method}`);
   return validator;
 }
 export function maybeFindValidator(type: string, method: string, kind: 'Initializer' | 'Event' | 'Params' | 'Result'): Validator | undefined {
-  const schemeName = type + (kind === 'Initializer' ? '' : method[0].toUpperCase() + method.substring(1)) + kind;
+  let schemeName = "";
+  try {
+    schemeName = type + (kind === 'Initializer' ? '' : method[0].toUpperCase() + method.substring(1)) + kind;
+    console.log(`maybeFindValidator ${schemeName}`);
+  } catch(e) {
+    console.log(`maybeFindValidator catch ${e}, ${schemeName}`);
+  }
   return scheme[schemeName];
 }
 export function createMetadataValidator(): Validator {

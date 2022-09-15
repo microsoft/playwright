@@ -41,8 +41,8 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   playwrightAPI._android._serverLauncher = new AndroidServerLauncherImpl('android');
 
   // Switch to async dispatch after we got Playwright object.
-  dispatcherConnection.onmessage = message => setImmediate(() => clientConnection.dispatch(message));
-  clientConnection.onmessage = message => setImmediate(() => dispatcherConnection.dispatch(message));
+  // dispatcherConnection.onmessage = message => setImmediate(() => clientConnection.dispatch(message));
+  // clientConnection.onmessage = message => setImmediate(() => dispatcherConnection.dispatch(message));
 
   clientConnection.toImpl = (x: any) => x ? dispatcherConnection._dispatchers.get(x._guid)!._object : dispatcherConnection._dispatchers.get('');
   (playwrightAPI as any)._toImpl = clientConnection.toImpl;
