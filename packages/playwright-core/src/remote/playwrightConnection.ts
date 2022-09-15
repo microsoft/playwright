@@ -55,10 +55,10 @@ export class PlaywrightConnection {
     this._ws = ws;
     this._preLaunched = preLaunched;
     this._options = options;
-    if (mode === 'reuse-browser' || mode === 'use-pre-launched-browser')
-      assert(preLaunched.playwright);
-    if (mode === 'use-pre-launched-browser')
-      assert(preLaunched.browser);
+    // if (mode === 'reuse-browser' || mode === 'use-pre-launched-browser')
+    //   assert(preLaunched.playwright);
+    // if (mode === 'use-pre-launched-browser')
+    //   assert(preLaunched.browser);
     this._onClose = onClose;
     this._debugLog = log;
 
