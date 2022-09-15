@@ -175,7 +175,7 @@ export async function printDockerStatus() {
     dockerEngineRunning: isDockerEngine,
     imageName: VRT_IMAGE_NAME,
     imageIsPulled,
-    containerWSEndpoing: info?.wsEndpoint ?? '',
+    containerWSEndpoint: info?.wsEndpoint ?? '',
     containerVNCEndpoint: info?.vncSession ?? '',
   }, null, 2));
 }
@@ -226,6 +226,40 @@ async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
   let info = await containerInfo();
   if (info)
     return info;
+
+  // The `npx playwright docker build` command is *NOT GUARANTEED* to produce
+  // images with the same SHA.
+  //
+  // Consider the following sequence of actions:
+  // 1. Build first version of image: `npx playwright docker build`
+  // 2. Run container off the image: `npx playwright docker start`
+  // 3. Build second version of image: `npx playwright docker build`
+  //
+  // Our container auto-detection is based on the parent image SHA.
+  // If the image produced at Step 3 has a different SHA then the one produced on Step 1,
+  // then we **won't be able** to auto-detect the container from Step 2.
+  //
+  // Additionally, we won't be able to launch a new container based off image
+  // from Step 3, since it will have a conflicting container name.
+  //
+  // We check if there's a same-named container running to detect & handle this situation.
+  const hasSameNamedContainer = async () => (await dockerApi.listContainers()).some(container => container.names.includes(VRT_CONTAINER_NAME));
+  if (await hasSameNamedContainer()) {
+    // Since we mark all our containers with labels, we'll be able to stop it.
+    await stopAllPlaywrightContainers();
+    // If it wasn't our container, then it was launched manually and has to be
+    // stopped manually as well.
+    if (await hasSameNamedContainer()) {
+      throw createStacklessError('\n' + utils.wrapInASCIIBox([
+        `There is already a container with name ${VRT_CONTAINER_NAME}`,
+        `Please stop this container manually and rerun tests:`,
+        ``,
+        `    docker kill ${VRT_CONTAINER_NAME}`,
+        ``,
+        `<3 Playwright Team`,
+      ].join('\n'), 1));
+    }
+  }
 
   await dockerApi.launchContainer({
     imageId: pwImage.imageId,
