@@ -52,6 +52,7 @@ export type InitializerTraits<T> =
     T extends BrowserTypeChannel ? BrowserTypeInitializer :
     T extends SelectorsChannel ? SelectorsInitializer :
     T extends SocksSupportChannel ? SocksSupportInitializer :
+    T extends ReuseControllerChannel ? ReuseControllerInitializer :
     T extends PlaywrightChannel ? PlaywrightInitializer :
     T extends RootChannel ? RootInitializer :
     T extends LocalUtilsChannel ? LocalUtilsInitializer :
@@ -89,6 +90,7 @@ export type EventsTraits<T> =
     T extends BrowserTypeChannel ? BrowserTypeEvents :
     T extends SelectorsChannel ? SelectorsEvents :
     T extends SocksSupportChannel ? SocksSupportEvents :
+    T extends ReuseControllerChannel ? ReuseControllerEvents :
     T extends PlaywrightChannel ? PlaywrightEvents :
     T extends RootChannel ? RootEvents :
     T extends LocalUtilsChannel ? LocalUtilsEvents :
@@ -126,6 +128,7 @@ export type EventTargetTraits<T> =
     T extends BrowserTypeChannel ? BrowserTypeEventTarget :
     T extends SelectorsChannel ? SelectorsEventTarget :
     T extends SocksSupportChannel ? SocksSupportEventTarget :
+    T extends ReuseControllerChannel ? ReuseControllerEventTarget :
     T extends PlaywrightChannel ? PlaywrightEventTarget :
     T extends RootChannel ? RootEventTarget :
     T extends LocalUtilsChannel ? LocalUtilsEventTarget :
@@ -553,6 +556,94 @@ export type PlaywrightHideHighlightOptions = {};
 export type PlaywrightHideHighlightResult = void;
 
 export interface PlaywrightEvents {
+}
+
+// ----------- ReuseController -----------
+export type ReuseControllerInitializer = {};
+export interface ReuseControllerEventTarget {
+  on(event: 'inspectRequested', callback: (params: ReuseControllerInspectRequestedEvent) => void): this;
+  on(event: 'browsersChanged', callback: (params: ReuseControllerBrowsersChangedEvent) => void): this;
+}
+export interface ReuseControllerChannel extends ReuseControllerEventTarget, Channel {
+  _type_ReuseController: boolean;
+  setTrackHierarchy(params: ReuseControllerSetTrackHierarchyParams, metadata?: Metadata): Promise<ReuseControllerSetTrackHierarchyResult>;
+  setReuseBrowser(params: ReuseControllerSetReuseBrowserParams, metadata?: Metadata): Promise<ReuseControllerSetReuseBrowserResult>;
+  resetForReuse(params?: ReuseControllerResetForReuseParams, metadata?: Metadata): Promise<ReuseControllerResetForReuseResult>;
+  navigateAll(params: ReuseControllerNavigateAllParams, metadata?: Metadata): Promise<ReuseControllerNavigateAllResult>;
+  setRecorderMode(params: ReuseControllerSetRecorderModeParams, metadata?: Metadata): Promise<ReuseControllerSetRecorderModeResult>;
+  setAutoClose(params: ReuseControllerSetAutoCloseParams, metadata?: Metadata): Promise<ReuseControllerSetAutoCloseResult>;
+  highlightAll(params: ReuseControllerHighlightAllParams, metadata?: Metadata): Promise<ReuseControllerHighlightAllResult>;
+  hideHighlightAll(params?: ReuseControllerHideHighlightAllParams, metadata?: Metadata): Promise<ReuseControllerHideHighlightAllResult>;
+  kill(params?: ReuseControllerKillParams, metadata?: Metadata): Promise<ReuseControllerKillResult>;
+}
+export type ReuseControllerInspectRequestedEvent = {
+  selector: string,
+};
+export type ReuseControllerBrowsersChangedEvent = {
+  browsers: {
+    contexts: {
+      pages: string[],
+    }[],
+  }[],
+};
+export type ReuseControllerSetTrackHierarchyParams = {
+  enabled: boolean,
+};
+export type ReuseControllerSetTrackHierarchyOptions = {
+
+};
+export type ReuseControllerSetTrackHierarchyResult = void;
+export type ReuseControllerSetReuseBrowserParams = {
+  enabled: boolean,
+};
+export type ReuseControllerSetReuseBrowserOptions = {
+
+};
+export type ReuseControllerSetReuseBrowserResult = void;
+export type ReuseControllerResetForReuseParams = {};
+export type ReuseControllerResetForReuseOptions = {};
+export type ReuseControllerResetForReuseResult = void;
+export type ReuseControllerNavigateAllParams = {
+  url: string,
+};
+export type ReuseControllerNavigateAllOptions = {
+
+};
+export type ReuseControllerNavigateAllResult = void;
+export type ReuseControllerSetRecorderModeParams = {
+  mode: 'inspecting' | 'recording' | 'none',
+  language?: string,
+  file?: string,
+};
+export type ReuseControllerSetRecorderModeOptions = {
+  language?: string,
+  file?: string,
+};
+export type ReuseControllerSetRecorderModeResult = void;
+export type ReuseControllerSetAutoCloseParams = {
+  enabled: boolean,
+};
+export type ReuseControllerSetAutoCloseOptions = {
+
+};
+export type ReuseControllerSetAutoCloseResult = void;
+export type ReuseControllerHighlightAllParams = {
+  selector: string,
+};
+export type ReuseControllerHighlightAllOptions = {
+
+};
+export type ReuseControllerHighlightAllResult = void;
+export type ReuseControllerHideHighlightAllParams = {};
+export type ReuseControllerHideHighlightAllOptions = {};
+export type ReuseControllerHideHighlightAllResult = void;
+export type ReuseControllerKillParams = {};
+export type ReuseControllerKillOptions = {};
+export type ReuseControllerKillResult = void;
+
+export interface ReuseControllerEvents {
+  'inspectRequested': ReuseControllerInspectRequestedEvent;
+  'browsersChanged': ReuseControllerBrowsersChangedEvent;
 }
 
 // ----------- SocksSupport -----------

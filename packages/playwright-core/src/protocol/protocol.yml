@@ -622,6 +622,68 @@ Playwright:
 
     hideHighlight:
 
+ReuseController:
+  type: interface
+
+  commands:
+    setTrackHierarchy:
+      parameters:
+        enabled: boolean
+
+    setReuseBrowser:
+      parameters:
+        enabled: boolean
+
+    resetForReuse:
+
+    navigateAll:
+      parameters:
+        url: string
+
+    setRecorderMode:
+      parameters:
+        mode:
+          type: enum
+          literals:
+            - inspecting
+            - recording
+            - none
+        language: string?
+        file: string?
+
+    setAutoClose:
+      parameters:
+        enabled: boolean
+
+    highlightAll:
+      parameters:
+        selector: string
+
+    hideHighlightAll:
+
+    kill:
+
+  events:
+    inspectRequested:
+      parameters:
+        selector: string
+
+    browsersChanged:
+      parameters:
+        browsers:
+          type: array
+          items:
+            type: object
+            properties:
+              contexts:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pages:
+                      type: array
+                      items: string
+
 SocksSupport:
   type: interface
 

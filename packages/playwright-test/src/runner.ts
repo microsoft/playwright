@@ -218,6 +218,7 @@ export class Runner {
     };
     for (const [project, files] of filesByProject) {
       report.projects.push({
+        docker: process.env.PLAYWRIGHT_DOCKER,
         name: project.name,
         testDir: path.resolve(configFile, project.testDir),
         files: files
