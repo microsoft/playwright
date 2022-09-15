@@ -80,7 +80,7 @@ function addDockerCommand(program: Command) {
         }
       });
 
-  dockerCommand.command('status', { hidden: true })
+  dockerCommand.command('print-status-json', { hidden: true })
       .description('print docker status')
       .action(async function(options) {
         await docker.printDockerStatus();

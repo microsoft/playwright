@@ -179,12 +179,7 @@ Docker integration usage:
     npx playwright docker start
     ```
 
-1. Run tests inside Docker container using the `PLAYWRIGHT_DOCKER` environment variable:
-
-    ```bash js
-    PLAYWRIGHT_DOCKER=1 npx playwright test
-    ```
-
+1. Run tests inside Docker container using the `PLAYWRIGHT_DOCKER` environment variable.
    You can set this environment variable as a part of your config:
 
     ```ts
@@ -199,7 +194,8 @@ Docker integration usage:
     export default config;
     ```
 
-   NOTE: this command will detect running Docker container, and auto-launch it if needed.
+   NOTE: Running tests with `PLAYWRIGHT_DOCKER` environment variable will detect pre-launched
+   Docker container, and auto-launch it if there's no running one.
 
 1. Finally, stop background Docker container when you're done working with tests:
 
