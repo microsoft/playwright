@@ -144,7 +144,7 @@ export class Connection extends EventEmitter {
     if (id) {
       debugLogger.log('channel:response', message);
       let callback = this._callbacks.get(id);
-      if (id === 1) {
+      if (id === 1 && result && result.playwright && result.playwright.guid && result.playwright.guid.includes("android-device@")) {
         console.log(`Received callback for message id 1`);
         callback!.type = "AndroidRoot"
       }

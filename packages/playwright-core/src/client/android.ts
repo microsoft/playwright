@@ -119,19 +119,19 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
         if ((params as any).__testHookBeforeCreateBrowser)
           await (params as any).__testHookBeforeCreateBrowser();
 
-        const playwright = await connection!.initializePlaywright();
-        if (!playwright._initializer.preLaunchedBrowser) {
-          console.log('playwright._initializer.preLaunchedBrowser does not exist');
-          closePipe();
-          throw new Error('Malformed endpoint. Did you use launchServer method?');
-        }
-        playwright._setSelectors(this._playwright.selectors);
-        // browser = AndroidDevice.from(playwright._initializer.preLaunchedBrowser!);
+        const playwright = await connection!.initializeAndroidDevice();
+        // if (!playwright._initializer.preLaunchedBrowser) {
+        //   console.log('playwright._initializer.preLaunchedBrowser does not exist');
+        //   closePipe();
+        //   throw new Error('Malformed endpoint. Did you use launchServer method?');
+        // }
+        // playwright._setSelectors(this._playwright.selectors);
+        // browser = AndroidDevice.from(playwright._initializer);
         // browser._logger = logger;
         // browser._shouldCloseConnectionOnClose = true;
         // browser._setBrowserType(this);
         // browser.on(Events.Browser.Disconnected, closePipe);
-        return browser;
+        return playwright;
       }, deadline ? deadline - monotonicTime() : 0);
       if (!result.timedOut) {
         return result.result;
