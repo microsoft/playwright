@@ -85,7 +85,7 @@ export async function buildPlaywrightImage() {
     // Use our docker build scripts in development mode!
     if (!process.env.PWTEST_DOCKER_BASE_IMAGE) {
       const arch = process.arch === 'arm64' ? '--arm64' : '--amd64';
-      console.error(utils.wrapInASCIIBox([
+      throw createStacklessError(utils.wrapInASCIIBox([
         `You are in DEVELOPMENT mode!`,
         ``,
         `1. Build local base image`,
@@ -93,7 +93,6 @@ export async function buildPlaywrightImage() {
         `2. Use the local base to build VRT image:`,
         `     PWTEST_DOCKER_BASE_IMAGE=playwright:localbuild npx playwright docker build`,
       ].join('\n'), 1));
-      process.exit(1);
     }
     baseImageName = process.env.PWTEST_DOCKER_BASE_IMAGE;
   } else {
@@ -168,6 +167,19 @@ interface ContainerInfo {
   vncSession: string;
 }
 
+export async function printDockerStatus() {
+  const isDockerEngine = await dockerApi.checkEngineRunning();
+  const imageIsPulled = isDockerEngine && !!(await findDockerImage(VRT_IMAGE_NAME));
+  const info = isDockerEngine ? await containerInfo() : undefined;
+  console.log(JSON.stringify({
+    dockerEngineRunning: isDockerEngine,
+    imageName: VRT_IMAGE_NAME,
+    imageIsPulled,
+    containerWSEndpoing: info?.wsEndpoint ?? '',
+    containerVNCEndpoint: info?.vncSession ?? '',
+  }, null, 2));
+}
+
 async function containerInfo(): Promise<ContainerInfo|undefined> {
   const allContainers = await dockerApi.listContainers();
   const pwDockerImage = await findDockerImage(VRT_IMAGE_NAME);
@@ -201,7 +213,7 @@ async function containerInfo(): Promise<ContainerInfo|undefined> {
 async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
   const pwImage = await findDockerImage(VRT_IMAGE_NAME);
   if (!pwImage) {
-    console.error('\n' + utils.wrapInASCIIBox([
+    throw createStacklessError('\n' + utils.wrapInASCIIBox([
       `Failed to find local docker image.`,
       `Please build local docker image with the following command:`,
       ``,
@@ -209,7 +221,6 @@ async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
       ``,
       `<3 Playwright Team`,
     ].join('\n'), 1));
-    process.exit(1);
   }
 
   let info = await containerInfo();
@@ -242,14 +253,13 @@ async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
 async function checkDockerEngineIsRunningOrDie() {
   if (await dockerApi.checkEngineRunning())
     return;
-  console.error(utils.wrapInASCIIBox([
+  throw createStacklessError(utils.wrapInASCIIBox([
     `Docker is not running!`,
     `Please install and launch docker:`,
     ``,
     `    https://docs.docker.com/get-docker`,
     ``,
   ].join('\n'), 1));
-  process.exit(1);
 }
 
 async function findDockerImage(imageName: string): Promise<dockerApi.DockerImage|undefined> {
@@ -257,3 +267,8 @@ async function findDockerImage(imageName: string): Promise<dockerApi.DockerImage
   return images.find(image => image.names.includes(imageName));
 }
 
+function createStacklessError(message: string) {
+  const error = new Error(message);
+  error.stack = '';
+  return error;
+}

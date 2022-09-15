@@ -179,14 +179,27 @@ Docker integration usage:
     npx playwright docker start
     ```
 
-1. Run tests inside Docker container. Note that this command accepts all the same arguments
-   as a regular `npx playwright test` command.
+1. Run tests inside Docker container using the `PLAYWRIGHT_DOCKER` environment variable:
 
     ```bash js
-    npx playwright docker test
+    PLAYWRIGHT_DOCKER=1 npx playwright test
     ```
 
-   Note that this command will detect running Docker container, and auto-launch it if needed.
+   You can set this environment variable as a part of your config:
+
+    ```ts
+    // playwright.config.ts
+    import type { PlaywrightTestConfig } from '@playwright/test';
+
+    process.env.PLAYWRIGHT_DOCKER = '1';
+
+    const config: PlaywrightTestConfig = {
+      /* ... configuration ... */
+    };
+    export default config;
+    ```
+
+   NOTE: this command will detect running Docker container, and auto-launch it if needed.
 
 1. Finally, stop background Docker container when you're done working with tests:
 
@@ -194,17 +207,3 @@ Docker integration usage:
     npx playwright docker stop
     ```
 
-Playwright Test sets `PLAYWRIGHT_DOCKER` environment variable when it uses Docker integration.
-You can use this variable to customize config or tests behavior, for example:
-
-```ts
-// playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-
-const config: PlaywrightTestConfig = {
-  // Ignore all snapshot expectations when running outside
-  // of docker integration.
-  ignoreSnapshots: !process.env.PLAYWRIGHT_DOCKER,
-};
-export default config;
-```
