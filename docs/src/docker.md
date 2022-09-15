@@ -194,8 +194,7 @@ Docker integration usage:
     export default config;
     ```
 
-   NOTE: Running tests with `PLAYWRIGHT_DOCKER` environment variable will detect pre-launched
-   Docker container, and auto-launch it if there's no running one.
+   NOTE: Playwright will automatically detect a running Docker container or start it if needed.
 
 1. Finally, stop background Docker container when you're done working with tests:
 
