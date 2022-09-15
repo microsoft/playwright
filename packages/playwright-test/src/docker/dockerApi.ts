@@ -48,7 +48,7 @@ export async function listContainers(): Promise<DockerContainer[]> {
     state: container.State,
     // Note: container names are usually prefixed with '/'.
     // See https://github.com/moby/moby/issues/6705
-    names: (container.Names ?? []).map(name => name.startsWith('/') ? name.substring(1) : name),
+    names: (container.Names ?? []).map((name: string) => name.startsWith('/') ? name.substring(1) : name),
     portBindings: container.Ports?.map((portInfo: any) => ({
       ip: portInfo.IP,
       hostPort: portInfo.PublicPort,
