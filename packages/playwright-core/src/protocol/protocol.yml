@@ -2966,6 +2966,16 @@ Android:
       parameters:
         timeout: number
 
+    connect:
+      parameters:
+        wsEndpoint: string
+        headers: json?
+        slowMo: number?
+        timeout: number?
+        socksProxyRedirectPortForTest: number?
+      returns:
+        pipe: JsonPipe
+
 AndroidSocket:
   type: interface
 

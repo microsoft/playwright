@@ -3883,6 +3883,7 @@ export interface AndroidChannel extends AndroidEventTarget, Channel {
   _type_Android: boolean;
   devices(params: AndroidDevicesParams, metadata?: Metadata): Promise<AndroidDevicesResult>;
   setDefaultTimeoutNoReply(params: AndroidSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<AndroidSetDefaultTimeoutNoReplyResult>;
+  connect(params: AndroidConnectParams, metadata?: Metadata): Promise<AndroidConnectResult>;
 }
 export type AndroidDevicesParams = {
   host?: string,
@@ -3904,6 +3905,22 @@ export type AndroidSetDefaultTimeoutNoReplyOptions = {
 
 };
 export type AndroidSetDefaultTimeoutNoReplyResult = void;
+export type AndroidConnectParams = {
+  wsEndpoint: string,
+  headers?: any,
+  slowMo?: number,
+  timeout?: number,
+  socksProxyRedirectPortForTest?: number,
+};
+export type AndroidConnectOptions = {
+  headers?: any,
+  slowMo?: number,
+  timeout?: number,
+  socksProxyRedirectPortForTest?: number,
+};
+export type AndroidConnectResult = {
+  pipe: JsonPipeChannel,
+};
 
 export interface AndroidEvents {
 }

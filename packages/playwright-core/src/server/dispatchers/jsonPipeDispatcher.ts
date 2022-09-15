@@ -19,10 +19,47 @@ import { Dispatcher } from './dispatcher';
 import { createGuid } from '../../utils';
 import { serializeError } from '../../protocol/serializers';
 import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
+import { AndroidDispatcher } from './androidDispatcher';
 
 export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeChannel, BrowserTypeDispatcher> implements channels.JsonPipeChannel {
   _type_JsonPipe = true;
   constructor(scope: BrowserTypeDispatcher) {
+    super(scope, { guid: 'jsonPipe@' + createGuid() }, 'JsonPipe', {});
+  }
+
+  async send(params: channels.JsonPipeSendParams): Promise<channels.JsonPipeSendResult> {
+    this.emit('message', params.message);
+  }
+
+  async close(): Promise<void> {
+    this.emit('close');
+    if (!this._disposed) {
+      this._dispatchEvent('closed', {});
+      this._dispose();
+    }
+  }
+
+  dispatch(message: Object) {
+    if (!this._disposed)
+      this._dispatchEvent('message', { message });
+  }
+
+  wasClosed(error?: Error): void {
+    if (!this._disposed) {
+      const params = error ? { error: serializeError(error) } : {};
+      this._dispatchEvent('closed', params);
+      this._dispose();
+    }
+  }
+
+  dispose() {
+    this._dispose();
+  }
+}
+
+export class AndroidJsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeChannel, AndroidDispatcher> implements channels.JsonPipeChannel {
+  _type_JsonPipe = true;
+  constructor(scope: AndroidDispatcher) {
     super(scope, { guid: 'jsonPipe@' + createGuid() }, 'JsonPipe', {});
   }
 
