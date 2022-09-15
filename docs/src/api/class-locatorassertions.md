@@ -204,28 +204,45 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 ### option: LocatorAssertions.NotToContainText.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
-## async method: LocatorAssertions.NotToHaveAttribute
+## async method: LocatorAssertions.NotToHaveAttribute#1
 * since: v1.18
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toHaveAttribute#1`].
 
-### param: LocatorAssertions.NotToHaveAttribute.name
+### param: LocatorAssertions.NotToHaveAttribute#1.name
 * since: v1.18
 - `name` <[string]>
 
 Attribute name.
 
-### param: LocatorAssertions.NotToHaveAttribute.value
+### param: LocatorAssertions.NotToHaveAttribute#1.value
 * since: v1.18
 - `value` <[string]|[RegExp]>
 
 Expected attribute value.
 
-### option: LocatorAssertions.NotToHaveAttribute.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveAttribute#1.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
-### option: LocatorAssertions.NotToHaveAttribute.timeout = %%-csharp-java-python-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveAttribute#1.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
+
+## async method: LocatorAssertions.NotToHaveAttribute#2
+* since: v1.26
+* langs: python
+
+The opposite of [`method: LocatorAssertions.toHaveAttribute#2`].
+
+### param: LocatorAssertions.NotToHaveAttribute#2.name
+* since: v1.26
+- `name` <[string]>
+
+Attribute name.
+
+### option: LocatorAssertions.NotToHaveAttribute#2.timeout = %%-js-assertions-timeout-%%
+* since: v1.26
+### option: LocatorAssertions.NotToHaveAttribute#2.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.26
 
 ## async method: LocatorAssertions.NotToHaveClass
 * since: v1.20
