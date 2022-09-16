@@ -2146,6 +2146,18 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * This method drags the source element (or position) to the target element (or position). It will first move to the source
+   * element, perform a `mousedown`, then move to the target element and perform a `mouseup`.
+   *
+   * ```js
+   * await page.dragAndDrop('#source', '#target');
+   * // or via specifying position
+   * await page.dragAndDrop('#source', '#target', {
+   *   sourcePosition: { x: 34, y: 7 },
+   *   targetPosition: { x: 10, y: 20 },
+   * });
+   * ```
+   *
    * @param source A selector to search for an element to drag. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param target A selector to search for an element to drop onto. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
@@ -9413,6 +9425,21 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * This method drags the locator to another target locator or target position. It will first move to the source element,
+   * perform a `mousedown`, then move to the target element or position and perform a `mouseup`.
+   *
+   * ```js
+   * const source = page.locator('#source');
+   * const target = page.locator('#target');
+   *
+   * await source.dragTo(target);
+   * // or via specifying position
+   * await source.dragTo(target, {
+   *   sourcePosition: { x: 34, y: 7 },
+   *   targetPosition: { x: 10, y: 20 },
+   * });
+   * ```
+   *
    * @param target Locator of the element to drag to.
    * @param options
    */
