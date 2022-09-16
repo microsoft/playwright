@@ -4,38 +4,6 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
-## Version 1.26
-
-### Assertions
-
-- [`method: LocatorAssertions.toHaveAttribute#2`] can now be used for asserting attribute existence.
-- New option `Enabled` for [`method: LocatorAssertions.toBeEnabled`].
-- [`method: LocatorAssertions.toHaveText`] now pierces open shadow roots.
-- New option `Editable` for [`method: LocatorAssertions.toBeEditable`].
-- New option `Visible` for [`method: LocatorAssertions.toBeVisible`].
-- [`method: APIResponseAssertions.toBeOK`] is now available.
-
-### Other highlights
-
-- New option `MaxRedirects` for [`method: APIRequestContext.get`] and others to limit redirect count.
-- Codegen now supports NUnit and MSTest frameworks.
-- ASP .NET is now supported.
-
-### Behavior Change
-
-A bunch of Playwright APIs already support the `WaitUntil: WaitUntilState.DOMContentLoaded` option.
-For example:
-
-```csharp
-await Page.GotoAsync("https://playwright.dev", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-```
-
-Prior to 1.26, this would wait for all iframes to fire the `DOMContentLoaded`
-event. 
-
-To align with web specification, the `WaitUntilState.DOMContentLoaded` value only waits for
-the target frame to fire the `'DOMContentLoaded'` event. Use `WaitUntil: WaitUntilState.Load` to wait for all iframes.
-
 ## Version 1.25
 
 ### New .runsettings file support

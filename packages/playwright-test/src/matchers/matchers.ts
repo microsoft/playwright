@@ -17,7 +17,7 @@
 import type { Locator, Page, APIResponse } from 'playwright-core';
 import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
 import { colors } from 'playwright-core/lib/utilsBundle';
-import { constructURLBasedOnBaseURL, isRegExp } from 'playwright-core/lib/utils';
+import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils';
 import type { Expect } from '../types';
 import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
@@ -141,25 +141,13 @@ export function toHaveAttribute(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
   name: string,
-  expected: string | RegExp | undefined | { timeout?: number},
+  expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  if (!options) {
-    // Update params for the case toHaveAttribute(name, options);
-    if (typeof expected === 'object' && !isRegExp(expected)) {
-      options = expected;
-      expected = undefined;
-    }
-  }
-  if (expected === undefined) {
-    return toBeTruthy.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-      return await locator._expect(customStackTrace, 'to.have.attribute', { expressionArg: name, isNot, timeout });
-    }, options);
-  }
   return toMatchText.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-    const expectedText = toExpectedTextValues([expected as (string | RegExp)]);
-    return await locator._expect(customStackTrace, 'to.have.attribute.value', { expressionArg: name, expectedText, isNot, timeout });
-  }, expected as (string | RegExp), options);
+    const expectedText = toExpectedTextValues([expected]);
+    return await locator._expect(customStackTrace, 'to.have.attribute', { expressionArg: name, expectedText, isNot, timeout });
+  }, expected, options);
 }
 
 export function toHaveClass(
