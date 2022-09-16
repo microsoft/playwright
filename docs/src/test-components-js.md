@@ -84,13 +84,13 @@ also link the script called `playwright/index.[tj]s`.
 #### `playwright/index.ts`
 
 You can include stylesheets, apply theme and inject code into the page where
-component is mounted using this script. It can be either `.js` or `.ts` file.
+component is mounted using this script. It can be either a `.js` or `.ts` file.
 
 ```js
 // Apply theme here, add anything your component needs at runtime here.
 ```
 
-### Step 2. Create a test file `src/App.spec.ts/tsx`
+### Step 2. Create a test file `src/App.spec.{ts,tsx}`
 
 <Tabs
   defaultValue="react"
