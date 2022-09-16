@@ -642,4 +642,6 @@ test('should connect when launching', async ({ browserType, startRemoteServer, h
     new Promise(f => browser.on('disconnected', f)),
     remoteServer.close(),
   ]);
+
+  (browserType as any)._defaultConnectOptions = undefined;
 });
