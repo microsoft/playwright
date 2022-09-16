@@ -48,7 +48,7 @@ export function source() {
 
   function isError(obj: any): obj is Error {
     try {
-      return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
+      return obj instanceof Error || (obj && Object.getPrototypeOf(obj)?.name === 'Error');
     } catch (error) {
       return false;
     }
