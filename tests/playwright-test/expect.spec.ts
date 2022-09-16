@@ -299,26 +299,6 @@ test('should return void/Promise when appropriate', async ({ runTSC }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should suppport toHaveAttribute withou optional value', async ({ runTSC }) => {
-  const result = await runTSC({
-    'a.spec.ts': `
-    const { test } = pwt;
-    test('custom matchers', async ({ page }) => {
-      const locator = page.locator('#node');
-      await test.expect(locator).toHaveAttribute('name', 'value');
-      await test.expect(locator).toHaveAttribute('name', 'value', { timeout: 10 });
-      await test.expect(locator).toHaveAttribute('disabled');
-      await test.expect(locator).toHaveAttribute('disabled', { timeout: 10 });
-      // @ts-expect-error
-      await test.expect(locator).toHaveAttribute('disabled', { foo: 1 });
-      // @ts-expect-error
-      await test.expect(locator).toHaveAttribute('name', 'value', 'opt');
-    });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
 test.describe('helpful expect errors', () => {
   test('top-level', async ({ runInlineTest }) => {
     const result = await runInlineTest({

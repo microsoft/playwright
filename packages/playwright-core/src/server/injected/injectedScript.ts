@@ -1038,9 +1038,7 @@ export class InjectedScript {
     {
       // Element state / boolean values.
       let elementState: boolean | 'error:notconnected' | 'error:notcheckbox' | undefined;
-      if (expression === 'to.have.attribute') {
-        elementState = element.hasAttribute(options.expressionArg);
-      } else if (expression === 'to.be.checked') {
+      if (expression === 'to.be.checked') {
         elementState = progress.injectedScript.elementState(element, 'checked');
       } else if (expression === 'to.be.unchecked') {
         elementState = progress.injectedScript.elementState(element, 'unchecked');
@@ -1100,7 +1098,7 @@ export class InjectedScript {
     {
       // Single text value.
       let received: string | undefined;
-      if (expression === 'to.have.attribute.value') {
+      if (expression === 'to.have.attribute') {
         received = element.getAttribute(options.expressionArg) || '';
       } else if (expression === 'to.have.class') {
         received = element.classList.toString();
