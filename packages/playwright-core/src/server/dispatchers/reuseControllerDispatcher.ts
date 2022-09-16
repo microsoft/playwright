@@ -69,6 +69,10 @@ export class ReuseControllerDispatcher extends Dispatcher<ReuseController, chann
     await this._object.kill();
   }
 
+  async closeAllBrowsers() {
+    await this._object.closeAllBrowsers();
+  }
+
   override _dispose() {
     super._dispose();
     this._object.dispose();

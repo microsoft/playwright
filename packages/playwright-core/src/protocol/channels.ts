@@ -575,6 +575,7 @@ export interface ReuseControllerChannel extends ReuseControllerEventTarget, Chan
   highlightAll(params: ReuseControllerHighlightAllParams, metadata?: Metadata): Promise<ReuseControllerHighlightAllResult>;
   hideHighlightAll(params?: ReuseControllerHideHighlightAllParams, metadata?: Metadata): Promise<ReuseControllerHideHighlightAllResult>;
   kill(params?: ReuseControllerKillParams, metadata?: Metadata): Promise<ReuseControllerKillResult>;
+  closeAllBrowsers(params?: ReuseControllerCloseAllBrowsersParams, metadata?: Metadata): Promise<ReuseControllerCloseAllBrowsersResult>;
 }
 export type ReuseControllerInspectRequestedEvent = {
   selector: string,
@@ -640,6 +641,9 @@ export type ReuseControllerHideHighlightAllResult = void;
 export type ReuseControllerKillParams = {};
 export type ReuseControllerKillOptions = {};
 export type ReuseControllerKillResult = void;
+export type ReuseControllerCloseAllBrowsersParams = {};
+export type ReuseControllerCloseAllBrowsersOptions = {};
+export type ReuseControllerCloseAllBrowsersResult = void;
 
 export interface ReuseControllerEvents {
   'inspectRequested': ReuseControllerInspectRequestedEvent;

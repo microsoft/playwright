@@ -663,6 +663,8 @@ ReuseController:
 
     kill:
 
+    closeAllBrowsers:
+
   events:
     inspectRequested:
       parameters:

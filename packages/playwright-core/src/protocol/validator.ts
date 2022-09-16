@@ -351,6 +351,8 @@ scheme.ReuseControllerHideHighlightAllParams = tOptional(tObject({}));
 scheme.ReuseControllerHideHighlightAllResult = tOptional(tObject({}));
 scheme.ReuseControllerKillParams = tOptional(tObject({}));
 scheme.ReuseControllerKillResult = tOptional(tObject({}));
+scheme.ReuseControllerCloseAllBrowsersParams = tOptional(tObject({}));
+scheme.ReuseControllerCloseAllBrowsersResult = tOptional(tObject({}));
 scheme.SocksSupportInitializer = tOptional(tObject({}));
 scheme.SocksSupportSocksRequestedEvent = tObject({
   uid: tString,

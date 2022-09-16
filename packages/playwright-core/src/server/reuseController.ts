@@ -153,6 +153,10 @@ export class ReuseController extends SdkObject {
     selfDestruct();
   }
 
+  async closeAllBrowsers() {
+    await Promise.all(this.allBrowsers().map(browser => browser.close()));
+  }
+
   private _emitSnapshot() {
     const browsers = [];
     for (const browser of this._playwright.allBrowsers()) {
