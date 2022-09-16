@@ -35,6 +35,11 @@ cat <<'EOF' | node > /root/.fluxbox/menu
   `);
 EOF
 
+cat <<'EOF' > /root/.fluxbox/lastwallpaper
+$center $full|/ms-playwright-agent/node_modules/playwright-core/lib/server/chromium/appIcon.png||:99
+$center $full|/ms-playwright-agent/node_modules/playwright-core/lib/server/chromium/appIcon.png||:99.0
+EOF
+
 # Create entrypoint.sh
 cat <<'EOF' > /entrypoint.sh
 #!/bin/bash
@@ -62,8 +67,6 @@ nohup x11vnc -forever -shared -rfbport 5900 -rfbportv6 5900 -display "$DISPLAY" 
 nohup /opt/bin/noVNC/utils/novnc_proxy --listen 7900 --vnc localhost:5900 >/dev/null 2>&1 &
 
 cd /ms-playwright-agent
-
-fbsetbg -c /ms-playwright-agent/node_modules/playwright-core/lib/server/chromium/appIcon.png
 
 NOVNC_UUID=$(cat /proc/sys/kernel/random/uuid)
 echo "novnc is listening on http://127.0.0.1:7900?path=$NOVNC_UUID&resize=scale&autoconnect=1"
