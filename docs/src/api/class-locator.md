@@ -266,6 +266,72 @@ Optional event-specific initialization properties.
 
 ## async method: Locator.dragTo
 * since: v1.18
+
+This method drags the locator to another target locator or target position. It will
+first move to the source element, perform a `mousedown`, then move to the target
+element or position and perform a `mouseup`.
+
+```js
+const source = page.locator('#source');
+const target = page.locator('#target');
+
+await source.dragTo(target);
+// or via specifying position
+await source.dragTo(target, {
+  sourcePosition: { x: 34, y: 7 },
+  targetPosition: { x: 10, y: 20 },
+});
+```
+
+```java
+Locator source = page.locator("#source");
+Locator target = page.locator("#target");
+
+source.dragTo(target);
+// or via specifying position
+source.dragTo(target, new Locator.DragToOptions()
+  .setSourcePosition(34, 7).setTargetPosition(10, 20));
+```
+
+```python async
+source = page.locator("#source")
+target = page.locator("#target")
+
+await source.drag_to(target)
+# Or via specifying the position:
+await source.drag_to(
+  target,
+  source_position={"x": 34, "y": 7},
+  target_position={"x": 10, "y": 20}
+)
+```
+
+```python sync
+source = page.locator("#source")
+target = page.locator("#target")
+
+source.drag_to(target)
+# Or via specifying the position:
+source.drag_to(
+  target,
+  source_position={"x": 34, "y": 7},
+  target_position={"x": 10, "y": 20}
+)
+```
+
+```csharp
+var source = Page.Locator("#source");
+var target = Page.Locator("#target");
+
+await source.DragToAsync(target);
+// Or via specifying the position:
+await source.DragToAsync(target, new()
+{
+    SourcePosition = new() { X = 34, Y = 7 },
+    TargetPosition = new() { X = 10, Y = 20 },
+});
+```
+
 ### param: Locator.dragTo.target
 * since: v1.18
 - `target` <[Locator]>
