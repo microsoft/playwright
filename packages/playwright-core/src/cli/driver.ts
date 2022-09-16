@@ -119,6 +119,10 @@ class ProtocolHandler {
     await this._controller.hideHighlightAll();
   }
 
+  async closeAllBrowsers() {
+    await this._controller.closeAllBrowsers();
+  }
+
   async kill() {
     await this._controller.kill();
   }
