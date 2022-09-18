@@ -77,7 +77,7 @@ The Playwright configuration file at the root level package can define projects 
 
 <img width="432" height="754" alt="The property 'projects' of the Playwright configuration file describing three projects due to the package 'apps/client', one project due to the package 'apps/server' and one project due to the package 'libs/common'." src="https://user-images.githubusercontent.com/594605/190918095-035aa6fb-3efe-46ac-8ee8-4269ffe8dd7d.png" />
 
-For more information about which options can be used when defining a project, please see the [options available for a project](./test-api/class-testproject.md).
+For more information about which options can be used when defining a project, please see the [options available for a project](./api/class-testproject.md).
 
 The testing tree and the dropdown menu **Select Configuration** will account for all projects.
 
