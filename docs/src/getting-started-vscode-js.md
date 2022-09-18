@@ -71,11 +71,19 @@ However, a single Playwright configuration file can still be used to test many p
 
 For example, suppose that a given root folder has a root level package, in which Playwright was installed, and three others packages in nested folders: "apps/client", "apps/server" and "libs/common".
 
+<img width="355" height="458" alt="A file explorer with a root level package and three nested packages: 'apps/client', 'apps/server' and 'libs/common'." src="https://user-images.githubusercontent.com/594605/190917713-c51da6a0-7bde-49fd-a78a-0274b712367a.png" />
+
 The Playwright configuration file at the root level package can define projects for each package by restricting the test files belonging to any given package.
+
+<img width="432" height="754" alt="The property 'projects' of the Playwright configuration file describing three projects due to the package 'apps/client', one project due to the package 'apps/server' and one project due to the package 'libs/common'." src="https://user-images.githubusercontent.com/594605/190918095-035aa6fb-3efe-46ac-8ee8-4269ffe8dd7d.png" />
 
 For more information about which options can be used when defining a project, please see the [options available for a project](./test-api/class-testproject.md).
 
-The dropdown menu **Select Configuration** will account for all projects.
+The testing tree and the dropdown menu **Select Configuration** will account for all projects.
+
+<img width="355" height="373" alt="The testing tree showing all tests belonging to all five projects." src="https://user-images.githubusercontent.com/594605/190918243-063936ea-e070-4297-8f40-776d9bd339ce.png" />
+
+<img width="504" height="199" alt="The dropdown menu 'Select Configuration' showing all five projects." src="https://user-images.githubusercontent.com/594605/190918293-1b1e5f39-9178-4906-897d-a256ca48c147.png" />
 
 ### Run Tests on Specific Browsers
 
