@@ -49,7 +49,7 @@ View all tests in the testing sidebar and extend the tests by clicking on each t
 
 ### Run Tests from Multiple Root Folders
 
-The VS Code extension will search for a Playwright config file at each root folder added to the workspace. Each root folder has its own root entry in the testing tree, but only those which have Playwright installed and tests will be expandable. If a root folder does not have Playwright installed and tests, then it will not be expandable.
+The VS Code extension will search for a Playwright config file at each root folder added to the workspace. Each root folder has its own root entry in the testing tree, but only those which have Playwright installed will be expandable. If a root folder does not have Playwright installed, then it will not be expandable.
 
 For example, suppose that a given workspace has three root folders: "Folder_A", "Folder_B" and "Folder_C".
 
@@ -62,6 +62,20 @@ Out of those, only "Bar" and "Foo" have Playwright installed.
 And the dropdown menu **Select Configuration** will account for all the projects in each configuration found.
 
 <img width="480" height="177" alt="Testing tree showing that only Folder_B and Folder_C have tests, while Folder_A does not." src="https://user-images.githubusercontent.com/594605/190904078-46beee2b-2a4a-4d79-a2d8-174308121a8d.png" />
+
+### Run Tests from Multiple Packages - Monorepos
+
+In order to use the VS Code extension when multiple packages are nested inside the root folder, a structure usually called as monorepo, it is advisable to have Playwright installed at the root level package. By installing Playwright at the root level package, it is not necessary to have it installed in each package as well. Remember that the VS Code extension will not look for Playwright configuration files in nested folders.
+
+However, a single Playwright configuration file can still be used to test many packages. And the tests for each package can still have its own set of independent options.
+
+For example, suppose that a given root folder has a root level package, in which Playwright was installed, and three others packages in nested folders: "apps/client", "apps/server" and "libs/common".
+
+The Playwright configuration file at the root level package can define projects for each package by restricting the test files belonging to any given package.
+
+For more information about which options can be used when defining a project, please see the [options available for a project](./test-api/class-testproject.md).
+
+The dropdown menu **Select Configuration** will account for all projects.
 
 ### Run Tests on Specific Browsers
 
