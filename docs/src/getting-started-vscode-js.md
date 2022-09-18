@@ -3,7 +3,7 @@ id: getting-started-vscode
 title: "Getting started - VS Code"
 ---
 
-Playwright Test was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation of Google Chrome for Android and Mobile Safari. 
+Playwright Test was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation of Google Chrome for Android and Mobile Safari.
 
 Get started by installing Playwright and generating a test to see it in action. Alternatively you can also get started and run your tests using the [CLI](./intro.md).
 
@@ -33,7 +33,7 @@ You can run a single test by clicking the green triangle next to your test block
 
 ### Run Tests and Show Browsers
 
-You can also run your tests and show the browsers by selecting the option **Show Browsers** in the testing sidebar. Then when you click the green triangle to run your test the browser will open and you will visually see it run through your test. Leave this selected if you want browsers open for all your tests or uncheck it if you prefer your tests to run in headless mode with no browser open. 
+You can also run your tests and show the browsers by selecting the option **Show Browsers** in the testing sidebar. Then when you click the green triangle to run your test the browser will open and you will visually see it run through your test. Leave this selected if you want browsers open for all your tests or uncheck it if you prefer your tests to run in headless mode with no browser open.
 
 <img width="1394" alt="Run Tests and Show Browsers in VS Code" src="https://user-images.githubusercontent.com/13063165/188662739-5b191b2d-7055-4f33-9399-bc8626163293.png" />
 
@@ -46,6 +46,16 @@ Use the **Close all browsers** button to close all browsers.
 View all tests in the testing sidebar and extend the tests by clicking on each test. Tests that have not been run will not have the green check next to them. Run all tests by clicking on the white triangle as you hover over the tests in the testing sidebar.
 
 <img width="1272" alt="View and Run All Tests in VS Code" src="https://user-images.githubusercontent.com/13063165/188641364-3bfa74f8-2e8a-45e5-92e1-4cbee0660e8a.png" />
+
+### Run Tests from Multiple Root Folders
+
+The VS Code extension will search for a Playwright config file at each root folder added to the workspace. Each root folder that does have Playwright installed will have its own root entry in the testing tree. If a root folder does not have Playwright installed, then it will be ignored by the testing tree.
+
+For example, suppose that a given workspace has three root folders: "Bar", "Baz" and "Foo".
+
+Out of those, only "Bar" and "Foo" have Playwright installed.
+
+And the dropdown menu **Select Configuration** will account for all the projects in each configuration found.
 
 ### Run Tests on Specific Browsers
 
@@ -91,7 +101,7 @@ To record a test click on the **Record new** button from the Testing sidebar. Th
 
 ### Record a Test Starting From Another Test
 
-Use the **Record from here** button to record a test from a specific line in your test file. This will open up a browser window and record the test from the line you selected. A new test file will now be created with the name `test-2.spec.ts` and will include the test code up to the selected line of the test file where you ran the **Record from here** button. You can then continue to generate the new test by clicking around in the browser window. 
+Use the **Record from here** button to record a test from a specific line in your test file. This will open up a browser window and record the test from the line you selected. A new test file will now be created with the name `test-2.spec.ts` and will include the test code up to the selected line of the test file where you ran the **Record from here** button. You can then continue to generate the new test by clicking around in the browser window.
 
 <img width="1272" alt="Record a test from here in VS Code" src="https://user-images.githubusercontent.com/13063165/188654397-dc6e8677-e957-48ca-906e-8dd38da97c3b.png" />
 
