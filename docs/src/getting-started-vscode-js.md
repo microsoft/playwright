@@ -49,13 +49,19 @@ View all tests in the testing sidebar and extend the tests by clicking on each t
 
 ### Run Tests from Multiple Root Folders
 
-The VS Code extension will search for a Playwright config file at each root folder added to the workspace. Each root folder that does have Playwright installed will have its own root entry in the testing tree. If a root folder does not have Playwright installed, then it will be ignored by the testing tree.
+The VS Code extension will search for a Playwright config file at each root folder added to the workspace. Each root folder has its own root entry in the testing tree, but only those which have Playwright installed and tests will be expandable. If a root folder does not have Playwright installed and tests, then it will not be expandable.
 
-For example, suppose that a given workspace has three root folders: "Bar", "Baz" and "Foo".
+For example, suppose that a given workspace has three root folders: "Folder_A", "Folder_B" and "Folder_C".
+
+<img width="356" height="466" alt="A workspace with three folders: Folder_A, Folder_B and Folder_C." src="https://user-images.githubusercontent.com/594605/190903911-49172cfc-374a-4e65-a2ca-da29ca0e7cb3.png" />
 
 Out of those, only "Bar" and "Foo" have Playwright installed.
 
+<img width="356" height="466" alt="Testing tree showing that only Folder_B and Folder_C have tests, while Folder_A does not." src="https://user-images.githubusercontent.com/594605/190903951-a804acb2-8a5c-4cfb-8a18-3f21d1de78e9.png" />
+
 And the dropdown menu **Select Configuration** will account for all the projects in each configuration found.
+
+<img width="480" height="177" alt="Testing tree showing that only Folder_B and Folder_C have tests, while Folder_A does not." src="https://user-images.githubusercontent.com/594605/190904078-46beee2b-2a4a-4d79-a2d8-174308121a8d.png" />
 
 ### Run Tests on Specific Browsers
 
