@@ -362,7 +362,7 @@ in `playwright.config.ts`.
 
 ### CircleCI
 
-Running Playwright on Circle CI is very similar to running on Github Actions. In order to specify the pre-built Playwright [Docker image](./docker.md) , simply modify the agent definition with `docker:` in your config like so:
+Running Playwright on Circle CI is very similar to running on GitHub Actions. In order to specify the pre-built Playwright [Docker image](./docker.md) , simply modify the agent definition with `docker:` in your config like so:
 
    ```yml
    executors:
