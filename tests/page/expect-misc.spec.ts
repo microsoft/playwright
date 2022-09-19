@@ -239,10 +239,10 @@ test.describe('toHaveAttribute', () => {
   test('should support boolean attribute with options', async ({ page }) => {
     await page.setContent('<div checked id=node>Text content</div>');
     const locator = page.locator('#node');
-    await expect(locator).toHaveAttribute('id', { timeout: 5000 });
-    await expect(locator).toHaveAttribute('checked', { timeout: 5000 });
-    await expect(locator).not.toHaveAttribute('open', { timeout: 5000 });
-    await expect(locator).toHaveAttribute('id', 'node', { timeout: 5000 });
+    await expect(locator).toHaveAttribute('id', { timeout: 100 });
+    await expect(locator).toHaveAttribute('checked', { timeout: 100 });
+    await expect(locator).not.toHaveAttribute('open', { timeout: 100 });
+    await expect(locator).toHaveAttribute('id', 'node', { timeout: 100 });
   });
 });
 
