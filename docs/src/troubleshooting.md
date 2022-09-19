@@ -40,10 +40,10 @@ Running TypeScript tests in `"type": "module"` project requires Node.js 16 or hi
 
 ## Incompatible Microsoft Edge / Google Chrome policy settings
 
-It's known that Playwright is not working as expected when some Microsoft Edge / Google Chrome policy settings are set. The following shows some of them, there might be more that affect Playwright's functionalities. If you find any other policy settings that break functionality, please file an issue. You can see a list of applied policies by running `chrome://policy` in the browser.
+It's known that Playwright is not working as expected when some Microsoft Edge / Google Chrome policy settings are set. The following shows some of them, there might be more that affect Playwright's functionalities. If you find any other policy settings that break functionality, please file an issue and we'll add it to this document. You can see a list of applied policies by running `chrome://policy` in the browser.
 
-- `UserDataDir` - This policy is used to specify the location of the user data directory. Playwright uses a temporary directory for user data, so this policy is not compatible with Playwright see [here](https://github.com/microsoft/playwright/issues/17448).
-- `ExtensionInstallForcelist` - This policy is used to specify a list of extensions that should be installed. Playwright's browser close will not work if this policy is set see [here](https://github.com/microsoft/playwright/issues/17299).
+- `UserDataDir` - This policy is used to specify the location of the user data directory. Playwright uses a temporary directory for user data, so this policy is not compatible with Playwright. See discussion in [this bug](https://github.com/microsoft/playwright/issues/17448).
+- `ExtensionInstallForcelist` - This policy is used to specify a list of extensions that should be installed. Playwright's browser close will not work if this policy is set. See discussion in [this bug](https://github.com/microsoft/playwright/issues/17299).
 
 ## .NET requirements
 * langs: csharp
