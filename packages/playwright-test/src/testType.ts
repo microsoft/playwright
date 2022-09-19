@@ -242,8 +242,8 @@ function throwIfRunningInsideJest() {
   const skipValidateRunningInJest =
     process.env.PLAYWRIGHT_SKIP_VALIDATE_RUNNING_IN_JEST;
   const shouldSkip =
-    skipValidateRunningInJest !== undefined &&
-    (skipValidateRunningInJest === "1" || skipValidateRunningInJest === "true");
+    skipValidateRunningInJest &&
+    (skipValidateRunningInJest === '1' || skipValidateRunningInJest === 'true');
   if (process.env.JEST_WORKER_ID && !shouldSkip) {
     throw new Error(
         `Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.\n` +
