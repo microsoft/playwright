@@ -254,7 +254,6 @@ export class DispatcherConnection {
 
   async dispatch(message: object) {
     const { id, guid, method, params, metadata } = message as any;
-    console.trace(message);
     const dispatcher = this._dispatchers.get(guid);
     if (!dispatcher) {
       this.onmessage({ id, error: serializeError(new Error(kBrowserOrContextClosedError)) });

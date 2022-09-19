@@ -38,7 +38,7 @@ export class AndroidServerLauncherImpl implements BrowserServerLauncher {
     const playwright = createPlaywright('javascript');
     // 1. Pre-launch the browser
     const metadata = serverSideCallMetadata();
-    const [browser] = await playwright[this._browserName].launch(metadata, {
+    let browsers = await playwright[this._browserName].launch(metadata, {
       ...options,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
@@ -48,6 +48,16 @@ export class AndroidServerLauncherImpl implements BrowserServerLauncher {
       rewriteErrorMessage(e, `${e.message} Failed to launch browser.${log}`);
       throw e;
     });
+
+    
+    try {
+      if (options.deviceSerialNumber) {
+        browsers = browsers.filter((ele) => ele.serial === options.deviceSerialNumber);
+      }
+    } catch(err) {
+      console.log(`Some Exception Occurred while filtering browsers list. Error Details: ${JSON.stringify(err)}`);
+    }
+    let browser = browsers[0];
 
     let path = `/${createGuid()}`;
     if (options.wsPath)
