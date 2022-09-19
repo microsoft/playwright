@@ -168,3 +168,8 @@ test('Intercept network requests', async ({ page }) => {
 * [Community showcase](https://playwright.dev/docs/showcase/)
 * [Contribution guide](CONTRIBUTING.md)
 * [Changelog](https://github.com/microsoft/playwright/releases)
+
+## Thanks to all contributors ❤
+ <a href = "https://github.com/microsoft/playwright/graphs/contributors">
+   <img src = "https://contrib.rocks/image?repo=microsoft/playwright"/>
+ </a>
