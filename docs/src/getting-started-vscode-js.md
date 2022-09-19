@@ -65,9 +65,9 @@ And the dropdown menu **Select Configuration** will account for all the projects
 
 ### Run Tests from Multiple Packages - Monorepos
 
-In order to use the VS Code extension when multiple packages are nested inside the root folder, a structure usually called as monorepo, it is advisable to have Playwright installed at the root level package. By installing Playwright at the root level package, it is not necessary to have it installed in each package as well. Remember that the VS Code extension will not look for Playwright configuration files in nested folders.
+In order to use the VS Code extension when multiple packages are nested inside the root folder, a structure usually called as monorepo, it is advisable to have Playwright installed at the root level package. By installing Playwright at the root level package, it is not necessary to have it installed in each nested package as well. Remember that the VS Code extension will not look for Playwright configuration files in nested folders.
 
-However, a single Playwright configuration file can still be used to test many packages. And the tests for each package can still have its own set of independent options.
+However, a single Playwright configuration file can still be used to test many packages. And the tests for each package can still have their own set of independent options.
 
 For example, suppose that a given root folder has a root level package, in which Playwright was installed, and three others packages in nested folders: "apps/client", "apps/server" and "libs/common".
 
