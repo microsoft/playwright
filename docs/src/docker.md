@@ -146,47 +146,47 @@ The image will be tagged as `playwright:localbuild-focal` and could be run as:
 docker run --rm -it playwright:localbuild /bin/bash
 ```
 
-## (Experimental) Playwright Test Docker Integration
+## (Experimental) Playwright Test Container Integration
 * langs: js
 
-Playwright Test now ships an **experimental** Docker integration. The Docker container provides a consistent environment, eliminating browser rendering differences across platforms. 
-With this integration, **only** browser binaries are running inside a Docker container,
+Playwright Test now ships an **experimental** container integration. This container provides a consistent environment, eliminating browser rendering differences across platforms.
+With this integration, **only** browser binaries are running inside a container,
 while all the code is still running on the host operating system.
 
 Playwright Test will automatically proxy host network traffic
 into the container, so browsers can access servers running on the host.
 
 :::note
-Docker integration requires Docker installed & running on your computer.
+Container integration requires Docker installed & running on your computer.
 See https://docs.docker.com/get-docker/
 
 If you use [Docker Desktop](https://www.docker.com/products/docker-desktop/), make sure to increase
 default CPU and memory limit for better performance.
 :::
 
-Docker integration usage:
+Container integration usage:
 
-1. Build a local Docker image that will be used to run containers. This step
+1. Build a local container image that will be used to run containers. This step
    needs to be done only once.
 
     ```bash js
-    npx playwright docker build
+    npx playwright ctr build
     ```
 
-1. Run Docker container in the background.
+1. Run container in the background:
 
     ```bash js
-    npx playwright docker start
+    npx playwright ctr start
     ```
 
-1. Run tests inside Docker container using the `PLAYWRIGHT_DOCKER` environment variable.
+1. Run tests inside container using the `PLAYWRIGHT_ENDPOINT=container` environment variable.
    You can set this environment variable as a part of your config:
 
     ```ts
     // playwright.config.ts
     import type { PlaywrightTestConfig } from '@playwright/test';
 
-    process.env.PLAYWRIGHT_DOCKER = '1';
+    process.env.PLAYWRIGHT_ENDPOINT = 'container';
 
     const config: PlaywrightTestConfig = {
       /* ... configuration ... */
@@ -194,11 +194,11 @@ Docker integration usage:
     export default config;
     ```
 
-   NOTE: Playwright will automatically detect a running Docker container or start it if needed.
+   NOTE: Playwright will automatically detect a running container or start it if needed.
 
-1. Finally, stop background Docker container when you're done working with tests:
+1. Finally, stop background container when you're done working with tests:
 
     ```bash js
-    npx playwright docker stop
+    npx playwright ctr stop
     ```
 

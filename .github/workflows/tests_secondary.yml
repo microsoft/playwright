@@ -817,7 +817,7 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps
     - run: ./utils/docker/build.sh --amd64 focal playwright:localbuild
-    - run: PWTEST_DOCKER_BASE_IMAGE=playwright:localbuild npx playwright docker build
+    - run: PWTEST_DOCKER_BASE_IMAGE=playwright:localbuild npx playwright ctr build
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run dtest
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()

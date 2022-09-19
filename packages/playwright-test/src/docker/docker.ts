@@ -36,7 +36,7 @@ export async function startPlaywrightContainer() {
 
   let info = await containerInfo();
   if (!info) {
-    process.stdout.write(`Starting docker container... `);
+    process.stdout.write(`Starting container... `);
     const time = Date.now();
     info = await ensurePlaywrightContainerOrDie();
     const deltaMs = (Date.now() - time);
@@ -46,9 +46,9 @@ export async function startPlaywrightContainer() {
     `- View screen:`,
     `      ${info.vncSession}`,
     `- Run tests with browsers inside container:`,
-    `      npx playwright docker test`,
+    `      npx playwright ctr test`,
     `- Stop background container *manually* when you are done working with tests:`,
-    `      npx playwright docker stop`,
+    `      npx playwright ctr stop`,
   ].join('\n'));
 }
 
@@ -91,14 +91,14 @@ export async function buildPlaywrightImage() {
         `1. Build local base image`,
         `     ./utils/docker/build.sh ${arch} ${VRT_IMAGE_DISTRO} playwright:localbuild`,
         `2. Use the local base to build VRT image:`,
-        `     PWTEST_DOCKER_BASE_IMAGE=playwright:localbuild npx playwright docker build`,
+        `     PWTEST_DOCKER_BASE_IMAGE=playwright:localbuild npx playwright ctr build`,
       ].join('\n'), 1));
     }
     baseImageName = process.env.PWTEST_DOCKER_BASE_IMAGE;
   } else {
     const { code } = await spawnAsync('docker', ['pull', baseImageName], { stdio: 'inherit' });
     if (code !== 0)
-      throw new Error('Failed to pull docker image!');
+      throw new Error('Failed to pull container image!');
   }
   // 2. Find pulled docker image
   const dockerImage = await findDockerImage(baseImageName);
@@ -140,18 +140,18 @@ export const dockerPlugin: TestRunnerPlugin = {
     const print = (text: string) => reporter.onStdOut?.(text);
     const println = (text: string) => reporter.onStdOut?.(text + '\n');
 
-    println(colors.dim('Using docker container to run browsers.'));
+    println(colors.dim('Using container to run browsers.'));
     await checkDockerEngineIsRunningOrDie();
     let info = await containerInfo();
     if (!info) {
-      print(colors.dim(`Starting docker container... `));
+      print(colors.dim(`Starting container... `));
       const time = Date.now();
       info = await ensurePlaywrightContainerOrDie();
       const deltaMs = (Date.now() - time);
       println(colors.dim('Done in ' + (deltaMs / 1000).toFixed(1) + 's'));
-      println(colors.dim('The Docker container will keep running after tests finished.'));
+      println(colors.dim('The container will keep running after tests finished.'));
       println(colors.dim('Stop manually using:'));
-      println(colors.dim('    npx playwright docker stop'));
+      println(colors.dim('    npx playwright ctr stop'));
     }
     println(colors.dim(`View screen: ${info.vncSession}`));
     println('');
@@ -214,10 +214,10 @@ async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
   const pwImage = await findDockerImage(VRT_IMAGE_NAME);
   if (!pwImage) {
     throw createStacklessError('\n' + utils.wrapInASCIIBox([
-      `Failed to find local docker image.`,
-      `Please build local docker image with the following command:`,
+      `Failed to find local container image.`,
+      `Please build local container image with the following command:`,
       ``,
-      `    npx playwright docker build`,
+      `    npx playwright ctr build`,
       ``,
       `<3 Playwright Team`,
     ].join('\n'), 1));
@@ -227,13 +227,13 @@ async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
   if (info)
     return info;
 
-  // The `npx playwright docker build` command is *NOT GUARANTEED* to produce
+  // The `npx playwright ctr build` command is *NOT GUARANTEED* to produce
   // images with the same SHA.
   //
   // Consider the following sequence of actions:
-  // 1. Build first version of image: `npx playwright docker build`
-  // 2. Run container off the image: `npx playwright docker start`
-  // 3. Build second version of image: `npx playwright docker build`
+  // 1. Build first version of image: `npx playwright ctr build`
+  // 2. Run container off the image: `npx playwright ctr start`
+  // 3. Build second version of image: `npx playwright ctr build`
   //
   // Our container auto-detection is based on the parent image SHA.
   // If the image produced at Step 3 has a different SHA then the one produced on Step 1,
@@ -280,7 +280,7 @@ async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
   } while (!info && Date.now() < startTime + 60000);
 
   if (!info)
-    throw new Error('Failed to launch docker container!');
+    throw new Error('Failed to launch container!');
   return info;
 }
 

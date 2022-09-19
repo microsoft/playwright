@@ -146,7 +146,7 @@ jobs:
     - run: npx playwright install --with-deps
     - run: |
         ./utils/docker/build.sh --amd64 focal $PWTEST_DOCKER_BASE_IMAGE
-        npx playwright docker build
+        npx playwright ctr build
         xvfb-run npm run test-html-reporter
       env:
         PLAYWRIGHT_DOCKER: 1

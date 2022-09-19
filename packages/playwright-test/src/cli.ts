@@ -33,15 +33,15 @@ export function addTestCommands(program: Command) {
   addTestCommand(program);
   addShowReportCommand(program);
   addListFilesCommand(program);
-  addDockerCommand(program);
+  addContainerCommand(program);
 }
 
-function addDockerCommand(program: Command) {
-  const dockerCommand = program.command('docker')
-      .description(`Manage Docker integration (EXPERIMENTAL)`);
+function addContainerCommand(program: Command) {
+  const ctrCommand = program.command('ctr')
+      .description(`Manage container integration (EXPERIMENTAL)`);
 
-  dockerCommand.command('build')
-      .description('build local docker image')
+  ctrCommand.command('build')
+      .description('build local container image')
       .action(async function(options) {
         try {
           await docker.buildPlaywrightImage();
@@ -50,8 +50,8 @@ function addDockerCommand(program: Command) {
         }
       });
 
-  dockerCommand.command('start')
-      .description('start docker container')
+  ctrCommand.command('start')
+      .description('start container')
       .action(async function(options) {
         try {
           await docker.startPlaywrightContainer();
@@ -60,8 +60,8 @@ function addDockerCommand(program: Command) {
         }
       });
 
-  dockerCommand.command('stop')
-      .description('stop docker container')
+  ctrCommand.command('stop')
+      .description('stop container')
       .action(async function(options) {
         try {
           await docker.stopAllPlaywrightContainers();
@@ -70,8 +70,8 @@ function addDockerCommand(program: Command) {
         }
       });
 
-  dockerCommand.command('delete-image', { hidden: true })
-      .description('delete docker image, if any')
+  ctrCommand.command('delete-image', { hidden: true })
+      .description('delete container image, if any')
       .action(async function(options) {
         try {
           await docker.deletePlaywrightImage();
@@ -80,8 +80,8 @@ function addDockerCommand(program: Command) {
         }
       });
 
-  dockerCommand.command('print-status-json', { hidden: true })
-      .description('print docker status')
+  ctrCommand.command('print-status-json', { hidden: true })
+      .description('print container status')
       .action(async function(options) {
         await docker.printDockerStatus();
       });
