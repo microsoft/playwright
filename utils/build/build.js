@@ -308,7 +308,7 @@ copyFiles.push({
 });
 
 copyFiles.push({
-  files: 'packages/playwright-test/src/**/*.(js|sh)',
+  files: 'packages/playwright-test/src/**/*.js',
   from: 'packages/playwright-test/src',
   to: 'packages/playwright-test/lib',
   ignored: ['**/.eslintrc.js']

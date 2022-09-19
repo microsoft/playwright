@@ -1,6 +1,5 @@
 [*]
 ./utilsBundle.ts
-docker/
 matchers/
 reporters/
 third_party/

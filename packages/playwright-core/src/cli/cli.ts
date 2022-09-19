@@ -291,7 +291,7 @@ program
 program
     .command('show-trace [trace...]')
     .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
-    .description('show trace viewer')
+    .description('Show trace viewer')
     .action(function(traces, options) {
       if (options.browser === 'cr')
         options.browser = 'chromium';
