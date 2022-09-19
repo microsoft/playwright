@@ -23,36 +23,36 @@ test.skip(() => process.env.CI && process.platform !== 'linux');
 
 test.beforeAll(async ({ exec }) => {
   // Delete any previous container image to ensure clean run.
-  await exec('npx playwright ctr delete-image', {
+  await exec('npx playwright container delete-image', {
     cwd: path.join(__dirname, '..', '..'),
   });
 });
 
-test('make sure it tells to run `npx playwright ctr build` when image is not instaleld', async ({ exec }) => {
+test('make sure it tells to run `npx playwright container build` when image is not instaleld', async ({ exec }) => {
   await exec('npm i --foreground-scripts @playwright/test');
   const result = await exec('npx playwright test docker.spec.js', {
     expectToExitWithError: true,
     env: { PLAYWRIGHT_DOCKER: '1' },
   });
-  expect(result).toContain('npx playwright ctr build');
+  expect(result).toContain('npx playwright container build');
 });
 
 test.describe('installed image', () => {
   test.beforeAll(async ({ exec }) => {
-    await exec('npx playwright ctr build', {
+    await exec('npx playwright container build', {
       env: { PWTEST_DOCKER_BASE_IMAGE: 'playwright:installation-tests-focal' },
       cwd: path.join(__dirname, '..', '..'),
     });
   });
   test.afterAll(async ({ exec }) => {
-    await exec('npx playwright ctr delete-image', {
+    await exec('npx playwright container delete-image', {
       cwd: path.join(__dirname, '..', '..'),
     });
   });
 
   test('make sure it auto-starts container', async ({ exec }) => {
     await exec('npm i --foreground-scripts @playwright/test');
-    await exec('npx playwright ctr stop');
+    await exec('npx playwright container stop');
     const result = await exec('npx playwright test docker.spec.js --grep platform', {
       env: { PLAYWRIGHT_DOCKER: '1' },
     });
@@ -61,13 +61,13 @@ test.describe('installed image', () => {
 
   test.describe('running container', () => {
     test.beforeAll(async ({ exec }) => {
-      await exec('npx playwright ctr start', {
+      await exec('npx playwright container start', {
         cwd: path.join(__dirname, '..', '..'),
       });
     });
 
     test.afterAll(async ({ exec }) => {
-      await exec('npx playwright ctr stop', {
+      await exec('npx playwright container stop', {
         cwd: path.join(__dirname, '..', '..'),
       });
     });

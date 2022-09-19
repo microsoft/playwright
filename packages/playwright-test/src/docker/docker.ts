@@ -45,10 +45,8 @@ export async function startPlaywrightContainer() {
   console.log([
     `- View screen:`,
     `      ${info.vncSession}`,
-    `- Run tests with browsers inside container:`,
-    `      npx playwright ctr test`,
     `- Stop background container *manually* when you are done working with tests:`,
-    `      npx playwright ctr stop`,
+    `      npx playwright container stop`,
   ].join('\n'));
 }
 
@@ -91,7 +89,7 @@ export async function buildPlaywrightImage() {
         `1. Build local base image`,
         `     ./utils/docker/build.sh ${arch} ${VRT_IMAGE_DISTRO} playwright:localbuild`,
         `2. Use the local base to build VRT image:`,
-        `     PWTEST_DOCKER_BASE_IMAGE=playwright:localbuild npx playwright ctr build`,
+        `     PWTEST_DOCKER_BASE_IMAGE=playwright:localbuild npx playwright container build`,
       ].join('\n'), 1));
     }
     baseImageName = process.env.PWTEST_DOCKER_BASE_IMAGE;
@@ -151,7 +149,7 @@ export const dockerPlugin: TestRunnerPlugin = {
       println(colors.dim('Done in ' + (deltaMs / 1000).toFixed(1) + 's'));
       println(colors.dim('The container will keep running after tests finished.'));
       println(colors.dim('Stop manually using:'));
-      println(colors.dim('    npx playwright ctr stop'));
+      println(colors.dim('    npx playwright container stop'));
     }
     println(colors.dim(`View screen: ${info.vncSession}`));
     println('');
@@ -217,7 +215,7 @@ async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
       `Failed to find local container image.`,
       `Please build local container image with the following command:`,
       ``,
-      `    npx playwright ctr build`,
+      `    npx playwright container build`,
       ``,
       `<3 Playwright Team`,
     ].join('\n'), 1));
@@ -227,13 +225,13 @@ async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
   if (info)
     return info;
 
-  // The `npx playwright ctr build` command is *NOT GUARANTEED* to produce
+  // The `npx playwright container build` command is *NOT GUARANTEED* to produce
   // images with the same SHA.
   //
   // Consider the following sequence of actions:
-  // 1. Build first version of image: `npx playwright ctr build`
-  // 2. Run container off the image: `npx playwright ctr start`
-  // 3. Build second version of image: `npx playwright ctr build`
+  // 1. Build first version of image: `npx playwright container build`
+  // 2. Run container off the image: `npx playwright container start`
+  // 3. Build second version of image: `npx playwright container build`
   //
   // Our container auto-detection is based on the parent image SHA.
   // If the image produced at Step 3 has a different SHA then the one produced on Step 1,

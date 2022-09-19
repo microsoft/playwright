@@ -37,10 +37,10 @@ export function addTestCommands(program: Command) {
 }
 
 function addContainerCommand(program: Command) {
-  const ctrCommand = program.command('ctr')
+  const containerCommand = program.command('container')
       .description(`Manage container integration (EXPERIMENTAL)`);
 
-  ctrCommand.command('build')
+  containerCommand.command('build')
       .description('build local container image')
       .action(async function(options) {
         try {
@@ -50,7 +50,7 @@ function addContainerCommand(program: Command) {
         }
       });
 
-  ctrCommand.command('start')
+  containerCommand.command('start')
       .description('start container')
       .action(async function(options) {
         try {
@@ -60,7 +60,7 @@ function addContainerCommand(program: Command) {
         }
       });
 
-  ctrCommand.command('stop')
+  containerCommand.command('stop')
       .description('stop container')
       .action(async function(options) {
         try {
@@ -70,7 +70,7 @@ function addContainerCommand(program: Command) {
         }
       });
 
-  ctrCommand.command('delete-image', { hidden: true })
+  containerCommand.command('delete-image', { hidden: true })
       .description('delete container image, if any')
       .action(async function(options) {
         try {
@@ -80,7 +80,7 @@ function addContainerCommand(program: Command) {
         }
       });
 
-  ctrCommand.command('print-status-json', { hidden: true })
+  containerCommand.command('print-status-json', { hidden: true })
       .description('print container status')
       .action(async function(options) {
         await docker.printDockerStatus();

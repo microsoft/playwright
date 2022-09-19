@@ -170,23 +170,23 @@ Container integration usage:
    needs to be done only once.
 
     ```bash js
-    npx playwright ctr build
+    npx playwright container build
     ```
 
 1. Run container in the background:
 
     ```bash js
-    npx playwright ctr start
+    npx playwright container start
     ```
 
-1. Run tests inside container using the `PLAYWRIGHT_ENDPOINT=container` environment variable.
+1. Run tests inside container using the `PLAYWRIGHT_DOCKER=1` environment variable.
    You can set this environment variable as a part of your config:
 
     ```ts
     // playwright.config.ts
     import type { PlaywrightTestConfig } from '@playwright/test';
 
-    process.env.PLAYWRIGHT_ENDPOINT = 'container';
+    process.env.PLAYWRIGHT_DOCKER = '1';
 
     const config: PlaywrightTestConfig = {
       /* ... configuration ... */
@@ -199,6 +199,6 @@ Container integration usage:
 1. Finally, stop background container when you're done working with tests:
 
     ```bash js
-    npx playwright ctr stop
+    npx playwright container stop
     ```
 
