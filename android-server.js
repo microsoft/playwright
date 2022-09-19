@@ -1,6 +1,7 @@
 const { _android } = require('playwright');  // Or 'webkit' or 'firefox'.
 (async () => {
   const browserServer = await _android.launchServer({
+    deviceSerialNumber: "<deviceSerialNumber>",
     logger: {
         // isEnabled: (name, severity) => name === 'browser',
         isEnabled: () => true,
