@@ -276,7 +276,7 @@ const source = page.locator('#source');
 const target = page.locator('#target');
 
 await source.dragTo(target);
-// or via specifying position
+// or specify exact positions relative to the top-left corners of the elements:
 await source.dragTo(target, {
   sourcePosition: { x: 34, y: 7 },
   targetPosition: { x: 10, y: 20 },
@@ -288,7 +288,7 @@ Locator source = page.locator("#source");
 Locator target = page.locator("#target");
 
 source.dragTo(target);
-// or via specifying position
+// or specify exact positions relative to the top-left corners of the elements:
 source.dragTo(target, new Locator.DragToOptions()
   .setSourcePosition(34, 7).setTargetPosition(10, 20));
 ```
@@ -298,7 +298,7 @@ source = page.locator("#source")
 target = page.locator("#target")
 
 await source.drag_to(target)
-# Or via specifying the position:
+# or specify exact positions relative to the top-left corners of the elements:
 await source.drag_to(
   target,
   source_position={"x": 34, "y": 7},
@@ -311,7 +311,7 @@ source = page.locator("#source")
 target = page.locator("#target")
 
 source.drag_to(target)
-# Or via specifying the position:
+# or specify exact positions relative to the top-left corners of the elements:
 source.drag_to(
   target,
   source_position={"x": 34, "y": 7},
@@ -324,7 +324,7 @@ var source = Page.Locator("#source");
 var target = Page.Locator("#target");
 
 await source.DragToAsync(target);
-// Or via specifying the position:
+// or specify exact positions relative to the top-left corners of the elements:
 await source.DragToAsync(target, new()
 {
     SourcePosition = new() { X = 34, Y = 7 },

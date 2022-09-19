@@ -2146,12 +2146,12 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * This method drags the source element (or position) to the target element (or position). It will first move to the source
-   * element, perform a `mousedown`, then move to the target element and perform a `mouseup`.
+   * This method drags the source element to the target element. It will first move to the source element, perform a
+   * `mousedown`, then move to the target element and perform a `mouseup`.
    *
    * ```js
    * await page.dragAndDrop('#source', '#target');
-   * // or via specifying position
+   * // or specify exact positions relative to the top-left corners of the elements:
    * await page.dragAndDrop('#source', '#target', {
    *   sourcePosition: { x: 34, y: 7 },
    *   targetPosition: { x: 10, y: 20 },
@@ -9433,7 +9433,7 @@ export interface Locator {
    * const target = page.locator('#target');
    *
    * await source.dragTo(target);
-   * // or via specifying position
+   * // or specify exact positions relative to the top-left corners of the elements:
    * await source.dragTo(target, {
    *   sourcePosition: { x: 34, y: 7 },
    *   targetPosition: { x: 10, y: 20 },
