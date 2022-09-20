@@ -143,7 +143,19 @@ export class Loader {
     this._fullConfig.shard = takeFirst(config.shard, baseFullConfig.shard);
     this._fullConfig._ignoreSnapshots = takeFirst(config.ignoreSnapshots, baseFullConfig._ignoreSnapshots);
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
-    this._fullConfig.workers = takeFirst(config.workers, baseFullConfig.workers);
+
+    const workers = takeFirst(config.workers, baseFullConfig.workers);
+    if (typeof workers === 'string') {
+      if (workers.endsWith('%')) {
+        const cpus = os.cpus().length;
+        this._fullConfig.workers = Math.max(1, Math.floor(cpus * (parseInt(workers, 10) / 100)));
+      } else {
+        this._fullConfig.workers = parseInt(workers, 10);
+      }
+    } else {
+      this._fullConfig.workers = workers;
+    }
+
     const webServers = takeFirst(config.webServer, baseFullConfig.webServer);
     if (Array.isArray(webServers)) { // multiple web server mode
       // Due to previous choices, this value shows up to the user in globalSetup as part of FullConfig. Arrays are not supported by the old type.
@@ -572,8 +584,10 @@ function validateConfig(file: string, config: Config) {
   }
 
   if ('workers' in config && config.workers !== undefined) {
-    if (typeof config.workers !== 'number' || config.workers <= 0)
+    if (typeof config.workers === 'number' && config.workers <= 0)
       throw errorWithFile(file, `config.workers must be a positive number`);
+    else if (typeof config.workers === 'string' && !config.workers.endsWith('%'))
+      throw errorWithFile(file, `config.workers must be a number or percentage`);
   }
 }
 

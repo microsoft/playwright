@@ -272,7 +272,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
-    workers: options.workers ? parseInt(options.workers, 10) : undefined,
+    workers: options.workers,
   };
 }
 
