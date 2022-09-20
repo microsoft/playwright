@@ -40,7 +40,7 @@ import type * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { RecentLogsCollector } from '../../common/debugLogger';
 import { serverSideCallMetadata, SdkObject } from '../instrumentation';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 

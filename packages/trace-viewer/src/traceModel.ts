@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { CallMetadata } from '@playwright-core/protocol/callMetadata';
+import type { CallMetadata } from '@protocol/callMetadata';
 import type * as trace from '@playwright-core/server/trace/common/traceEvents';
 import type zip from '@zip.js/zip.js';
 // @ts-ignore

@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import type * as actions from './recorder/recorderActions';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import type { ActionInContext } from './recorder/codeGenerator';
 import { CodeGenerator } from './recorder/codeGenerator';
 import { toClickOptions, toModifiers } from './recorder/utils';

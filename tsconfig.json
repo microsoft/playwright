@@ -11,6 +11,7 @@
          - playwright-core/lib means require dependency
       */
       "@playwright-core/*": ["./packages/playwright-core/src/*"],
+      "@protocol/*": ["./packages/protocol/src/*"],
       "@recorder/*": ["./packages/recorder/src/*"],
       "playwright-core/lib/*": ["./packages/playwright-core/src/*"]
     },

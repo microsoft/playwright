@@ -22,7 +22,7 @@ import type * as api from '../../types/types';
 import { isSafeCloseError } from '../common/errors';
 import { urlMatches } from '../common/netUtils';
 import { TimeoutSettings } from '../common/timeoutSettings';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { parseError, serializeError } from '../protocol/serializers';
 import { assert, headersObjectToArray, isObject, isRegExp, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';

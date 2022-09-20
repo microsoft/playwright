@@ -19,7 +19,7 @@ import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
 import type * as dom from '../dom';
 import type * as accessibility from '../accessibility';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 
 export async function getAccessibilityTree(client: CRSession, needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
   const { nodes } = await client.send('Accessibility.getFullAXTree');

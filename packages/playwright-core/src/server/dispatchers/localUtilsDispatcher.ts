@@ -17,7 +17,7 @@
 import type EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { ManualPromise } from '../../utils/manualPromise';
 import { assert, createGuid } from '../../utils';
 import type { RootDispatcher } from './dispatcher';
