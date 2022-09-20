@@ -408,9 +408,8 @@ Defaults to `20`. Pass `0` to not follow redirects.
 ## evaluate-expression
 - `expression` <[string]>
 
-JavaScript expression to be evaluated in the browser context. If it looks like
-a function declaration, it is interpreted as a function. Otherwise, evaluated
-as an expression.
+JavaScript expression to be evaluated in the browser context. If the expresion evaluates
+to a function, the function is automatically invoked.
 
 ## js-evaluate-pagefunction
 * langs: js
