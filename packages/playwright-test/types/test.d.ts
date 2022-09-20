@@ -493,13 +493,14 @@ interface TestConfig {
    */
   webServer?: TestConfigWebServer | TestConfigWebServer[];
   /**
-   * The maximum number of concurrent worker processes to use for parallelizing tests.
+   * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
+   * logical CPU cores, e.g. `'50%'.`
    *
    * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
    * speed up test execution.
    *
-   * Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
-   * Playwright Test.
+   * Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
+   * with Playwright Test.
    *
    * ```js
    * // playwright.config.ts
@@ -1209,13 +1210,14 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   updateSnapshots: 'all' | 'none' | 'missing';
   /**
-   * The maximum number of concurrent worker processes to use for parallelizing tests.
+   * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
+   * logical CPU cores, e.g. `'50%'.`
    *
    * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
    * speed up test execution.
    *
-   * Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
-   * Playwright Test.
+   * Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
+   * with Playwright Test.
    *
    * ```js
    * // playwright.config.ts
