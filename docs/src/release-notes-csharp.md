@@ -294,7 +294,7 @@ namespace PlaywrightTests;
 [TestFixture]
 public class ExampleTests : PageTest
 {
-    [PlaywrightTest]
+    [Test]
     public async Task StatusBecomesSubmitted()
     {
         await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
