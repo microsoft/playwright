@@ -17,14 +17,14 @@
 import type EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { ManualPromise } from '../../utils/manualPromise';
 import { assert, createGuid } from '../../utils';
 import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { yazl, yauzl } from '../../zipBundle';
 import { ZipFile } from '../../utils/zipFile';
-import type * as har from '../har/har';
+import type * as har from '@trace/har';
 import type { HeadersArray } from '../types';
 
 export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {

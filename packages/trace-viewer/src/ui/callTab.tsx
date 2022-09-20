@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { CallMetadata } from '@playwright-core/protocol/callMetadata';
-import type { SerializedValue } from '@playwright-core/protocol/channels';
-import type { ActionTraceEvent } from '@playwright-core/server/trace/common/traceEvents';
+import type { CallMetadata } from '@protocol/callMetadata';
+import type { SerializedValue } from '@protocol/channels';
+import type { ActionTraceEvent } from '@trace/trace';
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './callTab.css';

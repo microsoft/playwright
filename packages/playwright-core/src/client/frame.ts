@@ -16,7 +16,7 @@
  */
 
 import { assert } from '../utils';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { FrameLocator, Locator, type LocatorOptions } from './locator';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';

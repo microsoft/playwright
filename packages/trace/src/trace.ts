@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import type { Size } from '../../../common/types';
-import type { CallMetadata } from '../../instrumentation';
-import type { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
+import type { CallMetadata } from '@protocol/callMetadata';
+import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
+
+export type Size = { width: number, height: number };
 
 // Make sure you add _modernize_N_to_N1(event: any) to traceModel.ts.
-export const VERSION = 3;
+export type VERSION = 3;
 
 export type BrowserContextEventOptions = {
   viewport?: Size,

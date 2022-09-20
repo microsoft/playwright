@@ -17,6 +17,7 @@
     "baseUrl": ".",
     "useUnknownInCatchVariables": false,
     "paths": {
+      "@protocol/*": ["../protocol/src/*"],
       "@web/*": ["../web/src/*"],
     }
   },

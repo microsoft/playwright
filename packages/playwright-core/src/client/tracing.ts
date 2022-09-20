@@ -15,7 +15,7 @@
  */
 
 import type * as api from '../../types/types';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { Artifact } from './artifact';
 import { ChannelOwner } from './channelOwner';
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
 import type * as fs from 'fs';
 import { createGuid } from '../../utils';

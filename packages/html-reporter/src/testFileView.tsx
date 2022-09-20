@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { HTMLReport, TestCaseSummary, TestFileSummary } from '@playwright-test/reporters/html';
+import type { HTMLReport, TestCaseSummary, TestFileSummary } from './types';
 import * as React from 'react';
 import { msToString } from './uiUtils';
 import { Chip } from './chip';
