@@ -1101,7 +1101,7 @@ export class InjectedScript {
       if (expression === 'to.have.attribute') {
         const value = element.getAttribute(options.expressionArg);
         if (value === null)
-          return { received, matches: false };
+          return { received: null, matches: false };
         received = value;
       } else if (expression === 'to.have.class') {
         received = element.classList.toString();
