@@ -278,6 +278,13 @@ export class InjectedScript {
           return [];
         if (body === 'return-empty')
           return [];
+        if (body === 'component') {
+          if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
+            return [];
+          // Usually, we return the mounted component that is a single child.
+          // However, when mounting fragments, return the root instead.
+          return [root.childElementCount === 1 ? root.firstElementChild! : root as Element];
+        }
         throw new Error(`Internal error, unknown control selector ${body}`);
       }
     };
@@ -298,16 +305,6 @@ export class InjectedScript {
       if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
         return [];
       return isElementVisible(root as Element) === Boolean(body) ? [root as Element] : [];
-    };
-    return { queryAll };
-  }
-
-  private _createLayoutEngine(name: LayoutSelectorName): SelectorEngineV2 {
-    const queryAll = (root: SelectorRoot, body: ParsedSelector) => {
-      if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
-        return [];
-      const has = !!this.querySelector(body, root, false);
-      return has ? [root as Element] : [];
     };
     return { queryAll };
   }

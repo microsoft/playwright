@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/experimental-ct-solid'
 import Button from './components/Button';
 import DefaultChildren from './components/DefaultChildren';
 import MultiRoot from './components/MultiRoot';
+import EmptyFragment from './components/EmptyFragment';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
@@ -51,4 +52,11 @@ test('unmount a multi root component', async ({ mount, page }) => {
   await component.unmount()
   await expect(page.locator('#root')).not.toContainText('root 1')
   await expect(page.locator('#root')).not.toContainText('root 2')
+});
+
+test('get textContent of the empty fragment', async ({ mount }) => {
+  const component = await mount(<EmptyFragment />);
+  expect(await component.allTextContents()).toEqual(['']);
+  expect(await component.textContent()).toBe('');
+  await expect(component).toHaveText('');
 });
