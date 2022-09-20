@@ -301,14 +301,14 @@ copyFiles.push({
 // Babel doesn't touch JS files, so copy them manually.
 // For example: diff_match_patch.js
 copyFiles.push({
-  files: 'packages/playwright-core/src/**/*.js',
+  files: 'packages/playwright-core/src/**/*.(js|sh)',
   from: 'packages/playwright-core/src',
   to: 'packages/playwright-core/lib',
   ignored: ['**/.eslintrc.js', '**/webpack*.config.js', '**/injected/**/*']
 });
 
 copyFiles.push({
-  files: 'packages/playwright-test/src/**/*.(js|sh)',
+  files: 'packages/playwright-test/src/**/*.sh',
   from: 'packages/playwright-test/src',
   to: 'packages/playwright-test/lib',
   ignored: ['**/.eslintrc.js']
