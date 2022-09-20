@@ -24,7 +24,6 @@ import { PlaywrightConnection } from './playwrightConnection';
 import { assert } from '../utils';
 import type  { LaunchOptions } from '../server/types';
 import { ManualPromise } from '../utils/manualPromise';
-import { HttpServer } from '../utils/httpServer';
 
 const debugLog = debug('pw:server');
 
@@ -69,7 +68,7 @@ export class PlaywrightServer {
   }
 
   async listen(port: number = 0): Promise<string> {
-    let wsEndpoint: string | undefined;
+    let wsEndpoint: string | undefined = undefined;
     const server = http.createServer((request: http.IncomingMessage, response: http.ServerResponse) => {
       if (request.method === 'GET' && (request.url === '/json/' || request.url === '/json')) {
         response.end(JSON.stringify({
