@@ -31,6 +31,9 @@ export class ReuseControllerDispatcher extends Dispatcher<ReuseController, chann
     this._object.on(ReuseController.Events.InspectRequested, selector => {
       this._dispatchEvent('inspectRequested', { selector });
     });
+    this._object.on(ReuseController.Events.SourcesChanged, sources => {
+      this._dispatchEvent('sourcesChanged', { sources });
+    });
   }
 
   async setTrackHierarchy(params: channels.ReuseControllerSetTrackHierarchyParams) {

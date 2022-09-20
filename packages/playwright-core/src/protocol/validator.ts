@@ -308,6 +308,19 @@ scheme.PlaywrightNewRequestResult = tObject({
 });
 scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
 scheme.PlaywrightHideHighlightResult = tOptional(tObject({}));
+scheme.RecorderSource = tObject({
+  isRecorded: tBoolean,
+  id: tString,
+  label: tString,
+  text: tString,
+  language: tString,
+  highlight: tArray(tObject({
+    line: tNumber,
+    type: tString,
+  })),
+  revealLine: tOptional(tNumber),
+  group: tOptional(tString),
+});
 scheme.ReuseControllerInitializer = tOptional(tObject({}));
 scheme.ReuseControllerInspectRequestedEvent = tObject({
   selector: tString,
@@ -318,6 +331,9 @@ scheme.ReuseControllerBrowsersChangedEvent = tObject({
       pages: tArray(tString),
     })),
   })),
+});
+scheme.ReuseControllerSourcesChangedEvent = tObject({
+  sources: tArray(tType('RecorderSource')),
 });
 scheme.ReuseControllerSetTrackHierarchyParams = tObject({
   enabled: tBoolean,

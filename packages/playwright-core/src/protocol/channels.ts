@@ -558,11 +558,26 @@ export type PlaywrightHideHighlightResult = void;
 export interface PlaywrightEvents {
 }
 
+export type RecorderSource = {
+  isRecorded: boolean,
+  id: string,
+  label: string,
+  text: string,
+  language: string,
+  highlight: {
+    line: number,
+    type: string,
+  }[],
+  revealLine?: number,
+  group?: string,
+};
+
 // ----------- ReuseController -----------
 export type ReuseControllerInitializer = {};
 export interface ReuseControllerEventTarget {
   on(event: 'inspectRequested', callback: (params: ReuseControllerInspectRequestedEvent) => void): this;
   on(event: 'browsersChanged', callback: (params: ReuseControllerBrowsersChangedEvent) => void): this;
+  on(event: 'sourcesChanged', callback: (params: ReuseControllerSourcesChangedEvent) => void): this;
 }
 export interface ReuseControllerChannel extends ReuseControllerEventTarget, Channel {
   _type_ReuseController: boolean;
@@ -586,6 +601,9 @@ export type ReuseControllerBrowsersChangedEvent = {
       pages: string[],
     }[],
   }[],
+};
+export type ReuseControllerSourcesChangedEvent = {
+  sources: RecorderSource[],
 };
 export type ReuseControllerSetTrackHierarchyParams = {
   enabled: boolean,
@@ -648,6 +666,7 @@ export type ReuseControllerCloseAllBrowsersResult = void;
 export interface ReuseControllerEvents {
   'inspectRequested': ReuseControllerInspectRequestedEvent;
   'browsersChanged': ReuseControllerBrowsersChangedEvent;
+  'sourcesChanged': ReuseControllerSourcesChangedEvent;
 }
 
 // ----------- SocksSupport -----------

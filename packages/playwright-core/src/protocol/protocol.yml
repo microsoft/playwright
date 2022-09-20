@@ -622,6 +622,24 @@ Playwright:
 
     hideHighlight:
 
+RecorderSource:
+  type: object
+  properties:
+    isRecorded: boolean
+    id: string
+    label: string
+    text: string
+    language: string
+    highlight:
+      type: array
+      items:
+        type: object
+        properties:
+          line: number
+          type: string
+    revealLine: number?
+    group: string?
+
 ReuseController:
   type: interface
 
@@ -685,6 +703,12 @@ ReuseController:
                     pages:
                       type: array
                       items: string
+
+    sourcesChanged:
+      parameters:
+        sources:
+          type: array
+          items: RecorderSource
 
 SocksSupport:
   type: interface

@@ -15,7 +15,7 @@
  */
 
 import type { CallMetadata } from '../instrumentation';
-import type { CallLog, CallLogStatus } from './recorderTypes';
+import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
   let title = metadata.apiName || metadata.method;
@@ -38,7 +38,7 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus)
     messages: metadata.log,
     title,
     status,
-    error: metadata.error,
+    error: metadata.error?.error?.message,
     params,
     duration,
   };
