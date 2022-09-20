@@ -25,7 +25,7 @@ import type { Playwright } from '../server/playwright';
 import { IpcTransport, PipeTransport } from '../protocol/transport';
 import { PlaywrightServer } from '../remote/playwrightServer';
 import { gracefullyCloseAll } from '../utils/processLauncher';
-import type { Mode } from '../server/recorder/recorderTypes';
+import type { Mode } from '@recorder/recorderTypes';
 import { ReuseController } from '../server/reuseController';
 
 export function printApiJson() {

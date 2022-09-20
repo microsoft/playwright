@@ -16,6 +16,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
+      "@recorder/*": ["../recorder/src/*"],
       "@web/*": ["../web/src/*"],
       "@playwright-core/*": ["../playwright-core/src/*"],
     },

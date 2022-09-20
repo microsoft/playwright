@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Mode } from '../server/recorder/recorderTypes';
+import type { Mode, Source } from '@recorder/recorderTypes';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
@@ -29,7 +29,8 @@ const internalMetadata = serverSideCallMetadata();
 export class ReuseController extends SdkObject {
   static Events = {
     BrowsersChanged: 'browsersChanged',
-    InspectRequested: 'inspectRequested'
+    InspectRequested: 'inspectRequested',
+    SourcesChanged: 'sourcesChanged',
   };
 
   private _autoCloseTimer: NodeJS.Timeout | undefined;
@@ -61,9 +62,9 @@ export class ReuseController extends SdkObject {
         onPageNavigated: () => this._emitSnapshot(),
         onPageClose: () => this._emitSnapshot(),
       };
-      this.instrumentation.addListener(this._trackHierarchyListener, null);
+      this._playwright.instrumentation.addListener(this._trackHierarchyListener, null);
     } else if (!enabled && this._trackHierarchyListener) {
-      this.instrumentation.removeListener(this._trackHierarchyListener);
+      this._playwright.instrumentation.removeListener(this._trackHierarchyListener);
       this._trackHierarchyListener = undefined;
     }
   }
@@ -215,5 +216,9 @@ class InspectingRecorderApp extends EmptyRecorderApp {
 
   override async setSelector(selector: string): Promise<void> {
     this._reuseController.emit(ReuseController.Events.InspectRequested, selector);
+  }
+
+  override async setSources(sources: Source[]): Promise<void> {
+    this._reuseController.emit(ReuseController.Events.SourcesChanged, sources);
   }
 }
