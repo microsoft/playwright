@@ -35,7 +35,7 @@ event.
 To align with web specification, the `WaitUntilState.DOMContentLoaded` value only waits for
 the target frame to fire the `'DOMContentLoaded'` event. Use `WaitUntil: WaitUntilState.Load` to wait for all iframes.
 
-## Browser Versions
+### Browser Versions
 
 * Chromium 106.0.5249.30
 * Mozilla Firefox 104.0
