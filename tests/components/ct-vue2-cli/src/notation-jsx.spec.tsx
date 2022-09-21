@@ -3,6 +3,7 @@ import Button from './components/Button.vue'
 import Counter from './components/Counter.vue'
 import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
+import EmptyTemplate from './components/EmptyTemplate.vue'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -14,10 +15,10 @@ test('render props', async ({ mount }) => {
 test('renderer and keep the component instance intact', async ({ mount }) => {
   const component = await mount(<Counter count={9001} />)
   await expect(component.locator('#rerender-count')).toContainText('9001')
-  
+
   await component.rerender({ props: { count: 1337 } })
   await expect(component.locator('#rerender-count')).toContainText('1337')
-  
+
   await component.rerender({ props: { count: 42 } })
   await expect(component.locator('#rerender-count')).toContainText('42')
 
@@ -83,3 +84,10 @@ test('run hooks', async ({ page, mount }) => {
   })
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount el: HTMLButtonElement'])
 })
+
+test('get textContent of the empty template', async ({ mount }) => {
+  const component = await mount(<EmptyTemplate />);
+  expect(await component.allTextContents()).toEqual(['']);
+  expect(await component.textContent()).toBe('');
+  await expect(component).toHaveText('');
+});
