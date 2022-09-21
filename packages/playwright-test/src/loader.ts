@@ -29,7 +29,6 @@ import type { Reporter } from '../types/testReporter';
 import { builtInReporters } from './runner';
 import { isRegExp, calculateSha1 } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
-import { hostPlatform } from 'playwright-core/lib/utils/hostPlatform';
 import { FixturePool, isFixtureOption } from './fixtures';
 import type { TestTypeImpl } from './testType';
 
@@ -144,7 +143,7 @@ export class Loader {
     this._fullConfig._ignoreSnapshots = takeFirst(config.ignoreSnapshots, baseFullConfig._ignoreSnapshots);
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
 
-    const workers = takeFirst(config.workers, baseFullConfig.workers);
+    const workers = takeFirst(config.workers, '50%');
     if (typeof workers === 'string') {
       if (workers.endsWith('%')) {
         const cpus = os.cpus().length;
@@ -645,9 +644,6 @@ function validateProject(file: string, project: Project, title: string) {
   }
 }
 
-const cpus = os.cpus().length;
-const workers = hostPlatform.startsWith('mac') && hostPlatform.endsWith('arm64') ? cpus : Math.ceil(cpus / 2);
-
 export const baseFullConfig: FullConfigInternal = {
   forbidOnly: false,
   fullyParallel: false,
@@ -668,7 +664,7 @@ export const baseFullConfig: FullConfigInternal = {
   shard: null,
   updateSnapshots: 'missing',
   version: require('../package.json').version,
-  workers,
+  workers: 0,
   webServer: null,
   _watchMode: false,
   _webServers: [],

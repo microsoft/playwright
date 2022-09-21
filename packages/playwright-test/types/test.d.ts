@@ -493,28 +493,6 @@ interface TestConfig {
    */
   webServer?: TestConfigWebServer | TestConfigWebServer[];
   /**
-   * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
-   * logical CPU cores, e.g. `'50%'.`
-   *
-   * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
-   * speed up test execution.
-   *
-   * Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
-   * with Playwright Test.
-   *
-   * ```js
-   * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
-   *
-   * const config: PlaywrightTestConfig = {
-   *   workers: 3,
-   * };
-   * export default config;
-   * ```
-   *
-   */
-  workers?: number | string;
-  /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
    * ```js
@@ -955,7 +933,30 @@ interface TestConfig {
    *
    * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
    */
-  updateSnapshots?: "all"|"none"|"missing";}
+  updateSnapshots?: "all"|"none"|"missing";
+
+  /**
+   * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
+   * logical CPU cores, e.g. `'50%'.`
+   *
+   * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
+   * speed up test execution.
+   *
+   * Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
+   * with Playwright Test.
+   *
+   * ```js
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   workers: 3,
+   * };
+   * export default config;
+   * ```
+   *
+   */
+  workers?: number|string;}
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
