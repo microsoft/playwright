@@ -28,7 +28,6 @@ import type * as api from '../../types/types';
 import { kBrowserClosedError } from '../common/errors';
 import { raceAgainstTimeout } from '../utils/timeoutRunner';
 import type { Playwright } from './playwright';
-import { fetchData, NET_DEFAULT_TIMEOUT } from '../common/netUtils';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
@@ -143,7 +142,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return await this._wrapApiCall(async () => {
       const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
       let browser: Browser;
-      wsEndpoint = await urlToWSEndpoint(wsEndpoint, params.timeout || NET_DEFAULT_TIMEOUT);
       const headers = { 'x-playwright-browser': this.name(), ...params.headers };
       const connectParams: channels.BrowserTypeConnectParams = { wsEndpoint, headers, slowMo: params.slowMo, timeout: params.timeout };
       if ((params as any).__testHookRedirectPortForwarding)
@@ -233,14 +231,3 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   }
 }
 
-async function urlToWSEndpoint(endpointURL: string, timeout: number): Promise<string> {
-  if (endpointURL.startsWith('ws'))
-    return endpointURL;
-  const url = endpointURL.endsWith('/') ? `${endpointURL}json/` : `${endpointURL}/json/`;
-  const json = await fetchData({
-    url,
-    method: 'GET',
-    timeout,
-  });
-  return JSON.parse(json).wsEndpoint;
-}

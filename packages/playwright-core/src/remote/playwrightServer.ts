@@ -70,7 +70,8 @@ export class PlaywrightServer {
   async listen(port: number = 0): Promise<string> {
     let wsEndpoint: string | undefined = undefined;
     const server = http.createServer((request: http.IncomingMessage, response: http.ServerResponse) => {
-      if (request.method === 'GET' && (request.url === '/json/' || request.url === '/json')) {
+      if (request.method === 'GET' && request.url === '/json') {
+        response.setHeader('Content-Type', 'application/json');
         response.end(JSON.stringify({
           wsEndpoint,
         }));

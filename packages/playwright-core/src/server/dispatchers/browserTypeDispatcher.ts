@@ -26,8 +26,10 @@ import { getUserAgent } from '../../common/userAgent';
 import * as socks from '../../common/socksProxy';
 import EventEmitter from 'events';
 import { ProgressController } from '../progress';
+import type { Progress } from '../progress';
 import { WebSocketTransport } from '../transport';
 import { findValidator, ValidationError, type ValidatorContext } from '../../protocol/validator';
+import { fetchData } from '../../common/netUtils';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel, RootDispatcher> implements channels.BrowserTypeChannel {
   _type_BrowserType = true;
@@ -62,7 +64,10 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     controller.setLogName('browser');
     return await controller.run(async progress => {
       const paramsHeaders = Object.assign({ 'User-Agent': getUserAgent() }, params.headers || {});
-      const transport = await WebSocketTransport.connect(progress, params.wsEndpoint, paramsHeaders, true);
+      const wsEndpoint = await urlToWSEndpoint(progress, params.wsEndpoint);
+      progress.throwIfAborted();
+
+      const transport = await WebSocketTransport.connect(progress, wsEndpoint, paramsHeaders, true);
       let socksInterceptor: SocksInterceptor | undefined;
       const pipe = new JsonPipeDispatcher(this);
       transport.onmessage = json => {
@@ -153,4 +158,17 @@ class SocksInterceptor {
 
 function tChannelForSocks(names: '*' | string[], arg: any, path: string, context: ValidatorContext) {
   throw new ValidationError(`${path}: channels are not expected in SocksSupport`);
+}
+
+async function urlToWSEndpoint(progress: Progress, endpointURL: string): Promise<string> {
+  if (endpointURL.startsWith('ws'))
+    return endpointURL;
+  progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
+  const url = new URL(endpointURL);
+  url.pathname = '/json';
+  const json = await fetchData({
+    url: url.toString(),
+    method: 'GET',
+  });
+  return JSON.parse(json).wsEndpoint;
 }
