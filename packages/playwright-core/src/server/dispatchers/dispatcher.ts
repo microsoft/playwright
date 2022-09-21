@@ -26,6 +26,7 @@ import { rewriteErrorMessage } from '../../utils/stackTrace';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
 import { eventsHelper } from '../..//utils/eventsHelper';
 import type { RegisteredListener } from '../..//utils/eventsHelper';
+import { AndroidDeviceDispatcher, AndroidDispatcher } from './androidDispatcher'
 
 export const dispatcherSymbol = Symbol('dispatcher');
 const metadataValidator = createMetadataValidator();
@@ -156,6 +157,24 @@ export class RootDispatcher extends Dispatcher<{ guid: '' }, any, any> {
     this._initialized = true;
     return {
       playwright: await this.createPlaywright(this, params),
+    };
+  }
+}
+
+export class AndroidRoot extends Dispatcher<{ guid: '' }, any, any> {
+  private _initialized = false;
+  _type_Android = true;
+
+  constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: DispatcherScope, options: channels.RootInitializeParams) => Promise<AndroidDeviceDispatcher>) {
+    super(connection, { guid: '' }, 'AndroidRoot', {});
+  }
+
+  async initialize(params: channels.AndroidRootInitializeParams): Promise<channels.AndroidRootInitializeResult> {
+    assert(this.createPlaywright);
+    assert(!this._initialized);
+    this._initialized = true;
+    return {
+      playwright: await this.createPlaywright(this, params)
     };
   }
 }

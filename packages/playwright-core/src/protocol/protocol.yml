@@ -539,6 +539,17 @@ Root:
       returns:
         playwright: Playwright
 
+AndroidRoot:
+  type: interface
+
+  commands:
+
+    initialize:
+      parameters:
+        sdkLanguage: string
+      returns:
+        playwright: AndroidDevice
+
 Playwright:
   type: interface
 
@@ -2955,6 +2966,16 @@ Android:
     setDefaultTimeoutNoReply:
       parameters:
         timeout: number
+
+    connect:
+      parameters:
+        wsEndpoint: string
+        headers: json?
+        slowMo: number?
+        timeout: number?
+        socksProxyRedirectPortForTest: number?
+      returns:
+        pipe: JsonPipe
 
 AndroidSocket:
   type: interface

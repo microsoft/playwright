@@ -31,7 +31,11 @@ export function findValidator(type: string, method: string, kind: 'Initializer' 
   return validator;
 }
 export function maybeFindValidator(type: string, method: string, kind: 'Initializer' | 'Event' | 'Params' | 'Result'): Validator | undefined {
-  const schemeName = type + (kind === 'Initializer' ? '' : method[0].toUpperCase() + method.substring(1)) + kind;
+  let schemeName = "";
+  try {
+    schemeName = type + (kind === 'Initializer' ? '' : method[0].toUpperCase() + method.substring(1)) + kind;
+  } catch(e) {
+  }
   return scheme[schemeName];
 }
 export function createMetadataValidator(): Validator {

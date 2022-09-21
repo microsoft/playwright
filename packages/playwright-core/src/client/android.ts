@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import { isString, isRegExp } from '../utils';
+import { isString, isRegExp, monotonicTime } from '../utils';
 import type * as channels from '../protocol/channels';
 import { Events } from './events';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
@@ -26,12 +26,23 @@ import type { Page } from './page';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
+import { Connection } from './connection';
+import { Playwright } from './playwright';
+import { kDeviceClosedError } from '../common/errors';
+import { raceAgainstTimeout } from '../utils/timeoutRunner';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
 type SpeedOptions = { speed?: number };
 
+export interface AndroidServerLauncher {
+  launchServer(options?: types.LaunchServerOptions): Promise<api.BrowserServer>;
+}
+
 export class Android extends ChannelOwner<channels.AndroidChannel> implements api.Android {
   readonly _timeoutSettings: TimeoutSettings;
+  _serverLauncher?: AndroidServerLauncher;
+  _defaultLaunchOptions?: types.LaunchOptions;
+  _playwright!: Playwright;
 
   static from(android: channels.AndroidChannel): Android {
     return (android as any)._object;
@@ -50,6 +61,86 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
   async devices(options: { port?: number } = {}): Promise<AndroidDevice[]> {
     const { devices } = await this._channel.devices(options);
     return devices.map(d => AndroidDevice.from(d));
+  }
+
+  async launchServer(options: types.LaunchServerOptions = {}): Promise<api.BrowserServer> {
+    if (!this._serverLauncher)
+    throw new Error('Launching server is not supported');
+    options = { ...this._defaultLaunchOptions, ...options };
+    return this._serverLauncher.launchServer(options);
+  }
+
+  name(): string {
+    // return this._initializer.name
+    return "android-chrome";
+  }
+
+  async connect(wsEndpoint: string, params: api.ConnectOptions = {}): Promise<api.AndroidDevice> {
+    const logger = params.logger;
+    return await this._wrapApiCall(async () => {
+      const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
+      let browser: AndroidDevice;
+      const headers = { 'x-playwright-browser': this.name(), ...params.headers };
+      const connectParams: channels.BrowserTypeConnectParams = { wsEndpoint, headers, slowMo: params.slowMo, timeout: params.timeout };
+      if ((params as any).__testHookRedirectPortForwarding)
+        connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
+      const { pipe } = await this._channel.connect(connectParams);
+      const closePipe = () => pipe.close().catch(() => {});
+      const connection = new Connection(this._connection.localUtils());
+      connection.markAsRemote();
+      connection.on('close', () => {console.log('connection close'); closePipe()});
+
+      let closeError: string | undefined;
+      const onPipeClosed = () => {
+        // Emulate all pages, contexts and the browser closing upon disconnect.
+        // for (const context of browser?.contexts() || []) {
+        //   for (const page of context.pages())
+        //     page._onClose();
+        //   context._onClose();
+        // }
+        // browser?._didClose();
+        connection.close(closeError || kDeviceClosedError);
+      };
+      pipe.on('closed', onPipeClosed);
+      connection.onmessage = message => pipe.send({ message }).catch(onPipeClosed);
+
+      pipe.on('message', ({ message }: any) => {
+        try {
+          connection!.dispatch(message);
+        } catch (e) {
+          closeError = e.toString();
+          console.log(`pipe message catch ${JSON.stringify(message)} ${closeError}`);
+          closePipe();
+        }
+      });
+
+      const result = await raceAgainstTimeout(async () => {
+        // For tests.
+        if ((params as any).__testHookBeforeCreateBrowser)
+          await (params as any).__testHookBeforeCreateBrowser();
+
+        const playwright = await connection!.initializeAndroidDevice();
+        // if (!playwright._initializer.preLaunchedBrowser) {
+        //   console.log('playwright._initializer.preLaunchedBrowser does not exist');
+        //   closePipe();
+        //   throw new Error('Malformed endpoint. Did you use launchServer method?');
+        // }
+        // playwright._setSelectors(this._playwright.selectors);
+        // browser = AndroidDevice.from(playwright._initializer);
+        // browser._logger = logger;
+        // browser._shouldCloseConnectionOnClose = true;
+        // browser._setBrowserType(this);
+        // browser.on(Events.Browser.Disconnected, closePipe);
+        return playwright;
+      }, deadline ? deadline - monotonicTime() : 0);
+      if (!result.timedOut) {
+        return result.result;
+      } else {
+        console.log('result.timedOut false');
+        closePipe();
+        throw new Error(`Timeout ${params.timeout}ms exceeded`);
+      }
+    });
   }
 }
 

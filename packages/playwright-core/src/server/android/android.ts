@@ -20,8 +20,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import type * as stream from 'stream';
-import { wsReceiver, wsSender } from '../../utilsBundle';
-import { createGuid, makeWaitForNextTask, isUnderTest } from '../../utils';
+import { wsReceiver, wsSender, ws } from '../../utilsBundle';
+import { createGuid, makeWaitForNextTask, isUnderTest, debugMode } from '../../utils';
 import { removeFolders } from '../../utils/fileUtils';
 import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import type { BrowserContext } from '../browserContext';
@@ -34,8 +34,20 @@ import { RecentLogsCollector } from '../../common/debugLogger';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../common/timeoutSettings';
 import type * as channels from '../../protocol/channels';
+import type * as api from '../../../types/types';
+import type * as types from '../../client/types';
+import type { LaunchOptions } from '../../server/types';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
 import { DEFAULT_ARGS } from '../chromium/chromium';
+
+import type { WebSocketEventEmitter } from '../../utilsBundle';
+import type { CallMetadata } from '../instrumentation';
+import type { BrowserServerLauncher, BrowserServer } from '../../client/browserType';
+import { envObjectToArray } from '../../client/clientHelper';
+import type { ProtocolLogger } from '../../server/types';
+import { createPlaywright } from '../../server/playwright';
+import { PlaywrightServer } from '../../remote/playwrightServer';
+import { rewriteErrorMessage } from '../../utils/stackTrace';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -59,14 +71,16 @@ export interface SocketBackend extends EventEmitter {
 }
 
 export class Android extends SdkObject {
+  private _browserName: 'android';
   private _backend: Backend;
   private _devices = new Map<string, AndroidDevice>();
   readonly _timeoutSettings: TimeoutSettings;
   readonly _playwrightOptions: PlaywrightOptions;
 
-  constructor(backend: Backend, playwrightOptions: PlaywrightOptions) {
+  constructor(backend: Backend, playwrightOptions: PlaywrightOptions, _browserName: 'android') {
     super(playwrightOptions.rootSdkObject, 'android');
     this._backend = backend;
+    this._browserName = _browserName;
     this._playwrightOptions = playwrightOptions;
     this._timeoutSettings = new TimeoutSettings();
   }
@@ -94,6 +108,73 @@ export class Android extends SdkObject {
 
   _deviceClosed(device: AndroidDevice) {
     this._devices.delete(device.serial);
+  }
+
+  async launchServer(options: types.LaunchServerOptions = {}): Promise<api.BrowserServer> {
+    const playwright = createPlaywright('javascript');
+    // 1. Pre-launch the browser
+    const metadata = serverSideCallMetadata();
+    const [browser] = await playwright[this._browserName as 'android'].launch(metadata, {
+      ...options,
+      ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+      ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+      env: options.env ? envObjectToArray(options.env) : undefined,
+    }, this.toProtocolLogger(options.logger)).catch((e:any) => {
+      const log = helper.formatBrowserLogs(metadata.log);
+      rewriteErrorMessage(e, `${e.message} Failed to launch browser.${log}`);
+      throw e;
+    });
+
+    let path = `/${createGuid()}`;
+    if (options.wsPath)
+      path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
+
+    // 2. Start the server
+    const server = new PlaywrightServer('use-pre-launched-browser', { path, maxConcurrentConnections: Infinity, maxIncomingConnections: Infinity, enableSocksProxy: false, preLaunchedAndroidDevice: browser });
+    const wsEndpoint = await server.listen(options.port);
+
+    // 3. Return the BrowserServer interface
+    const browserServer = new ws.EventEmitter() as (BrowserServer & WebSocketEventEmitter);
+    // browserServer.process = () => browser.options.browserProcess.process!;
+    browserServer.wsEndpoint = () => wsEndpoint;
+    // browserServer.close = () => browser.options.browserProcess.close();
+    // browserServer.kill = () => browser.options.browserProcess.kill();
+    (browserServer as any)._disconnectForTest = () => server.close();
+    (browserServer as any)._userDataDirForTest = (browser as any)._userDataDirForTest;
+    // browser.options.browserProcess.onclose = async (exitCode: any, signal: any) => {
+    //   server.close();
+    //   browserServer.emit('close', exitCode, signal);
+    // };
+    return browserServer;
+  }
+
+  async launch(metadata: CallMetadata, options: LaunchOptions, protocolLogger?: ProtocolLogger): Promise<AndroidDevice[]> {
+    options = this._validateLaunchOptions(options);
+    const controller = new ProgressController(metadata, this);
+    controller.setLogName('browser');
+    const device = await controller.run(progress => {
+      return this.devices({});
+    }, TimeoutSettings.timeout(options));
+    return device;
+  }
+
+  private _validateLaunchOptions<Options extends LaunchOptions>(options: Options): Options {
+    const { devtools = false } = options;
+    let { headless = !devtools, downloadsPath, proxy } = options;
+    if (debugMode())
+      headless = false;
+    if (downloadsPath && !path.isAbsolute(downloadsPath))
+      downloadsPath = path.join(process.cwd(), downloadsPath);
+    if (this._playwrightOptions.socksProxyPort)
+      proxy = { server: `socks5://127.0.0.1:${this._playwrightOptions.socksProxyPort}` };
+    return { ...options, devtools, headless, downloadsPath, proxy };
+  }
+
+  toProtocolLogger(logger: types.Logger | undefined): ProtocolLogger | undefined {
+    return logger ? (direction: 'send' | 'receive', message: object) => {
+      if (logger.isEnabled('protocol', 'verbose'))
+        logger.log('protocol', 'verbose', (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(message), [], {});
+    } : undefined;
   }
 }
 

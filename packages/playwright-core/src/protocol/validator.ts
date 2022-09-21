@@ -252,6 +252,13 @@ scheme.RootInitializeParams = tObject({
 scheme.RootInitializeResult = tObject({
   playwright: tChannel(['Playwright']),
 });
+scheme.AndroidRootInitializer = tOptional(tObject({}));
+scheme.AndroidRootInitializeParams = tObject({
+  sdkLanguage: tString,
+});
+scheme.AndroidRootInitializeResult = tObject({
+  playwright: tChannel(['AndroidDevice']),
+});
 scheme.PlaywrightInitializer = tObject({
   chromium: tChannel(['BrowserType']),
   firefox: tChannel(['BrowserType']),
@@ -2127,6 +2134,16 @@ scheme.AndroidSetDefaultTimeoutNoReplyParams = tObject({
   timeout: tNumber,
 });
 scheme.AndroidSetDefaultTimeoutNoReplyResult = tOptional(tObject({}));
+scheme.AndroidConnectParams = tObject({
+  wsEndpoint: tString,
+  headers: tOptional(tAny),
+  slowMo: tOptional(tNumber),
+  timeout: tOptional(tNumber),
+  socksProxyRedirectPortForTest: tOptional(tNumber),
+});
+scheme.AndroidConnectResult = tObject({
+  pipe: tChannel(['JsonPipe']),
+});
 scheme.AndroidSocketInitializer = tOptional(tObject({}));
 scheme.AndroidSocketDataEvent = tObject({
   data: tBinary,

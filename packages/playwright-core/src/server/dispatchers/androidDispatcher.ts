@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
-import type { RootDispatcher } from './dispatcher';
+import type { DispatcherScope, RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type { Android, SocketBackend } from '../android/android';
 import { AndroidDevice } from '../android/android';
 import type * as channels from '../../protocol/channels';
+import type * as api from '../../../types/types';
+import type * as types from '../../client/types';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { CallMetadata } from '../instrumentation';
+import { ProgressController } from '../progress';
+import { getUserAgent } from '../../common/userAgent';
+import { WebSocketTransport } from '../transport';
+import { SocksInterceptor } from './browserTypeDispatcher';
+import { AndroidJsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
 
 export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChannel, RootDispatcher> implements channels.AndroidChannel {
   _type_Android = true;
@@ -35,24 +42,66 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChann
     };
   }
 
+  async launchServer(params?: types.LaunchServerOptions): Promise<api.BrowserServer> {
+    return await this._object.launchServer(params);
+  }
+
   async setDefaultTimeoutNoReply(params: channels.AndroidSetDefaultTimeoutNoReplyParams) {
     this._object.setDefaultTimeout(params.timeout);
   }
+
+  async connect(params: channels.AndroidConnectParams, metadata: CallMetadata): Promise<channels.AndroidConnectResult> {
+    const controller = new ProgressController(metadata, this._object);
+    controller.setLogName('browser');
+    return await controller.run(async progress => {
+      const paramsHeaders = Object.assign({ 'User-Agent': getUserAgent() }, params.headers || {});
+      const transport = await WebSocketTransport.connect(progress, params.wsEndpoint, paramsHeaders, true);
+      let socksInterceptor: SocksInterceptor | undefined;
+      const pipe = new AndroidJsonPipeDispatcher(this);
+      transport.onmessage = json => {
+        if (json.method === '__create__' && json.params.type === 'SocksSupport')
+          socksInterceptor = new SocksInterceptor(transport, params.socksProxyRedirectPortForTest, json.params.guid);
+        if (socksInterceptor?.interceptMessage(json))
+          return;
+        const cb = () => {
+          try {
+            pipe.dispatch(json);
+          } catch (e) {
+            transport.close();
+          }
+        };
+        if (params.slowMo)
+          setTimeout(cb, params.slowMo);
+        else
+          cb();
+      };
+      pipe.on('message', message => {
+        transport.send(message);
+      });
+      transport.onclose = () => {
+        socksInterceptor?.cleanup();
+        pipe.wasClosed();
+      };
+      pipe.on('close', () => transport.close());
+      return { pipe };
+    }, params.timeout || 0);
+  }
 }
 
-export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceChannel, AndroidDispatcher> implements channels.AndroidDeviceChannel {
+export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceChannel, DispatcherScope> implements channels.AndroidDeviceChannel {
   _type_EventTarget = true;
   _type_AndroidDevice = true;
 
-  static from(scope: AndroidDispatcher, device: AndroidDevice): AndroidDeviceDispatcher {
+  static from(scope: DispatcherScope, device: AndroidDevice): AndroidDeviceDispatcher {
     const result = existingDispatcher<AndroidDeviceDispatcher>(device);
     return result || new AndroidDeviceDispatcher(scope, device);
   }
 
-  constructor(scope: AndroidDispatcher, device: AndroidDevice) {
+  constructor(scope: DispatcherScope, device: AndroidDevice) {
     super(scope, device, 'AndroidDevice', {
       model: device.model,
       serial: device.serial,
+      preLaunchedDevice: (device ? device : undefined),
     });
     for (const webView of device.webViews())
       this._dispatchEvent('webViewAdded', { webView });

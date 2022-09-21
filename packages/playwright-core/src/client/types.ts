@@ -109,6 +109,7 @@ export type LaunchServerOptions = {
   chromiumSandbox?: boolean,
   port?: number,
   wsPath?: string,
+  deviceSerialNumber?: string,
   logger?: Logger,
 } & FirefoxUserPrefs;
 
