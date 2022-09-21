@@ -26,7 +26,7 @@ import { assert } from '../utils';
 import type { LaunchOptions } from '../server/types';
 import { ReuseControllerDispatcher } from '../server/dispatchers/reuseControllerDispatcher';
 import { AndroidDevice } from '../server/android/android';
-import { AndroidRoot, DispatcherScope } from '../server/dispatchers/dispatcher'
+import { AndroidRoot } from '../server/dispatchers/dispatcher'
 import { AndroidDeviceDispatcher, AndroidDispatcher } from '../server/dispatchers/androidDispatcher';
 
 type Options = {
