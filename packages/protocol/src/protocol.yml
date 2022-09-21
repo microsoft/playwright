@@ -640,7 +640,7 @@ RecorderSource:
     revealLine: number?
     group: string?
 
-ReuseController:
+DebugController:
   type: interface
 
   commands:
@@ -668,10 +668,6 @@ ReuseController:
             - none
         language: string?
         file: string?
-
-    setAutoClose:
-      parameters:
-        enabled: boolean
 
     highlightAll:
       parameters:

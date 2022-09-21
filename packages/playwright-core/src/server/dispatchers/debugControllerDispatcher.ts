@@ -15,32 +15,32 @@
  */
 
 import type * as channels from '@protocol/channels';
-import { ReuseController } from '../reuseController';
+import { DebugController } from '../debugController';
 import type { DispatcherConnection, RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 
-export class ReuseControllerDispatcher extends Dispatcher<ReuseController, channels.ReuseControllerChannel, RootDispatcher> implements channels.ReuseControllerChannel {
-  _type_ReuseController;
+export class DebugControllerDispatcher extends Dispatcher<DebugController, channels.DebugControllerChannel, RootDispatcher> implements channels.DebugControllerChannel {
+  _type_DebugController;
 
-  constructor(connection: DispatcherConnection, reuseController: ReuseController) {
-    super(connection, reuseController, 'ReuseController', {});
-    this._type_ReuseController = true;
-    this._object.on(ReuseController.Events.BrowsersChanged, browsers => {
+  constructor(connection: DispatcherConnection, debugController: DebugController) {
+    super(connection, debugController, 'DebugController', {});
+    this._type_DebugController = true;
+    this._object.on(DebugController.Events.BrowsersChanged, browsers => {
       this._dispatchEvent('browsersChanged', { browsers });
     });
-    this._object.on(ReuseController.Events.InspectRequested, selector => {
+    this._object.on(DebugController.Events.InspectRequested, selector => {
       this._dispatchEvent('inspectRequested', { selector });
     });
-    this._object.on(ReuseController.Events.SourcesChanged, sources => {
+    this._object.on(DebugController.Events.SourcesChanged, sources => {
       this._dispatchEvent('sourcesChanged', { sources });
     });
   }
 
-  async setTrackHierarchy(params: channels.ReuseControllerSetTrackHierarchyParams) {
+  async setTrackHierarchy(params: channels.DebugControllerSetTrackHierarchyParams) {
     this._object.setTrackHierarcy(params.enabled);
   }
 
-  async setReuseBrowser(params: channels.ReuseControllerSetReuseBrowserParams) {
+  async setReuseBrowser(params: channels.DebugControllerSetReuseBrowserParams) {
     this._object.setReuseBrowser(params.enabled);
   }
 
@@ -48,19 +48,15 @@ export class ReuseControllerDispatcher extends Dispatcher<ReuseController, chann
     await this._object.resetForReuse();
   }
 
-  async navigateAll(params: channels.ReuseControllerNavigateAllParams) {
+  async navigateAll(params: channels.DebugControllerNavigateAllParams) {
     await this._object.navigateAll(params.url);
   }
 
-  async setRecorderMode(params: channels.ReuseControllerSetRecorderModeParams) {
+  async setRecorderMode(params: channels.DebugControllerSetRecorderModeParams) {
     await this._object.setRecorderMode(params);
   }
 
-  async setAutoClose(params: channels.ReuseControllerSetAutoCloseParams) {
-    await this._object.setAutoCloseEnabled(params.enabled);
-  }
-
-  async highlightAll(params: channels.ReuseControllerHighlightAllParams) {
+  async highlightAll(params: channels.DebugControllerHighlightAllParams) {
     await this._object.highlightAll(params.selector);
   }
 
