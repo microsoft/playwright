@@ -24,7 +24,7 @@ import { SocksProxy } from '../common/socksProxy';
 import type { Mode } from './playwrightServer';
 import { assert } from '../utils';
 import type { LaunchOptions } from '../server/types';
-import { ReuseControllerDispatcher } from '../server/dispatchers/reuseControllerDispatcher';
+import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
 
 type Options = {
   enableSocksProxy: boolean,
@@ -48,7 +48,7 @@ export class PlaywrightConnection {
   private _options: Options;
   private _root: DispatcherScope;
 
-  constructor(lock: Promise<void>, mode: Mode, ws: WebSocket, isReuseControllerClient: boolean, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
+  constructor(lock: Promise<void>, mode: Mode, ws: WebSocket, isDebugControllerClient: boolean, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
     this._ws = ws;
     this._preLaunched = preLaunched;
     this._options = options;
@@ -73,8 +73,8 @@ export class PlaywrightConnection {
     ws.on('close', () => this._onDisconnect());
     ws.on('error', error => this._onDisconnect(error));
 
-    if (isReuseControllerClient) {
-      this._root = this._initReuseControllerMode();
+    if (isDebugControllerClient) {
+      this._root = this._initDebugControllerMode();
       return;
     }
 
@@ -136,12 +136,12 @@ export class PlaywrightConnection {
     return playwrightDispatcher;
   }
 
-  private _initReuseControllerMode(): ReuseControllerDispatcher {
+  private _initDebugControllerMode(): DebugControllerDispatcher {
     this._debugLog(`engaged reuse controller mode`);
     const playwright = this._preLaunched.playwright!;
     this._cleanups.push(() => gracefullyCloseAll());
     // Always create new instance based on the reused Playwright instance.
-    return new ReuseControllerDispatcher(this._dispatcherConnection, playwright.reuseController);
+    return new DebugControllerDispatcher(this._dispatcherConnection, playwright.debugController);
   }
 
   private async _initReuseBrowsersMode(scope: RootDispatcher) {
