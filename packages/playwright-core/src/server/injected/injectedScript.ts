@@ -1099,7 +1099,10 @@ export class InjectedScript {
       // Single text value.
       let received: string | undefined;
       if (expression === 'to.have.attribute') {
-        received = element.getAttribute(options.expressionArg) || '';
+        const value = element.getAttribute(options.expressionArg);
+        if (value === null)
+          return { received: null, matches: false };
+        received = value;
       } else if (expression === 'to.have.class') {
         received = element.classList.toString();
       } else if (expression === 'to.have.css') {
