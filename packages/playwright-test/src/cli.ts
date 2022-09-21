@@ -315,7 +315,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
 }
 
 export function experimentalLoaderOption() {
-  return ` --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
+  return ` --no-warnings --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
 }
 
 export function envWithoutExperimentalLoaderOptions(): NodeJS.ProcessEnv {
