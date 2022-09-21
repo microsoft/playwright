@@ -911,3 +911,19 @@ test('should report clashing folders', async ({ runInlineTest }) => {
   expect(output).toContain('Configuration Error');
   expect(output).toContain('html-report');
 });
+
+test('should create report relative to config', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'nested/project/playwright.config.ts': `
+      module.exports = { reporter: [['html', { outputFolder: '../my-report/' }]] };
+    `,
+    'nested/project/a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}) => {
+        expect(1).toBe(1);
+      });
+    `,
+  }, { reporter: '', config: './nested/project/playwright.config.ts' });
+  expect(result.exitCode).toBe(0);
+  expect(fs.existsSync(testInfo.outputPath(path.join('nested', 'my-report', 'index.html')))).toBeTruthy();
+});

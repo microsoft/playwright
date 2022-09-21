@@ -248,3 +248,19 @@ test('should have starting time in results', async ({ runInlineTest }, testInfo)
   const startTime = result.report.suites[0].specs[0].tests[0].results[0].startTime;
   expect(new Date(startTime).getTime()).toBeGreaterThan(new Date('1/1/2000').getTime());
 });
+
+test('should create report relative to config', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'nested/project/playwright.config.ts': `
+      module.exports = { reporter: [['json', { outputFile: '../my-report/a.json' }]] };
+    `,
+    'nested/project/a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}) => {
+        expect(1).toBe(1);
+      });
+    `,
+  }, { reporter: '', config: './nested/project/playwright.config.ts' });
+  expect(result.exitCode).toBe(0);
+  expect(fs.existsSync(testInfo.outputPath(path.join('nested', 'my-report', 'a.json')))).toBeTruthy();
+});

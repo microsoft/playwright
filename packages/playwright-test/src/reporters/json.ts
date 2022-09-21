@@ -19,13 +19,14 @@ import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, Reporter, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep } from '../../types/testReporter';
 import { prepareErrorStack } from './base';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
+import type { FullConfigInternal } from '../types';
 
 export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
 }
 
 class JSONReporter implements Reporter {
-  config!: FullConfig;
+  config!: FullConfigInternal;
   suite!: Suite;
   private _errors: TestError[] = [];
   private _outputFile: string | undefined;
@@ -38,7 +39,7 @@ class JSONReporter implements Reporter {
     return !this._outputFile;
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  onBegin(config: FullConfigInternal, suite: Suite) {
     this.config = config;
     this.suite = suite;
   }
@@ -48,7 +49,7 @@ class JSONReporter implements Reporter {
   }
 
   async onEnd(result: FullResult) {
-    outputReport(this._serializeReport(), this._outputFile);
+    outputReport(this._serializeReport(), this.config._configDir, this._outputFile);
   }
 
   private _serializeReport(): JSONReport {
@@ -210,9 +211,10 @@ class JSONReporter implements Reporter {
   }
 }
 
-function outputReport(report: JSONReport, outputFile: string | undefined) {
+function outputReport(report: JSONReport, configDir: string, outputFile: string | undefined) {
   const reportString = JSON.stringify(report, undefined, 2);
   if (outputFile) {
+    outputFile = path.resolve(configDir, outputFile);
     fs.mkdirSync(path.dirname(outputFile), { recursive: true });
     fs.writeFileSync(outputFile, reportString);
   } else {

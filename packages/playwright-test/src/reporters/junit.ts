@@ -16,12 +16,13 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../types/testReporter';
+import type { FullResult, Reporter, Suite, TestCase } from '../../types/testReporter';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import { formatFailure, formatTestTitle, stripAnsiEscapes } from './base';
+import type { FullConfigInternal } from '../types';
 
 class JUnitReporter implements Reporter {
-  private config!: FullConfig;
+  private config!: FullConfigInternal;
   private suite!: Suite;
   private timestamp!: number;
   private startTime!: number;
@@ -47,7 +48,7 @@ class JUnitReporter implements Reporter {
     return !this.outputFile;
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  onBegin(config: FullConfigInternal, suite: Suite) {
     this.config = config;
     this.suite = suite;
     this.timestamp = Date.now();
@@ -81,8 +82,9 @@ class JUnitReporter implements Reporter {
     serializeXML(root, tokens, this.stripANSIControlSequences);
     const reportString = tokens.join('\n');
     if (this.outputFile) {
-      fs.mkdirSync(path.dirname(this.outputFile), { recursive: true });
-      fs.writeFileSync(this.outputFile, reportString);
+      const outputFile = path.resolve(this.config._configDir, this.outputFile);
+      fs.mkdirSync(path.dirname(outputFile), { recursive: true });
+      fs.writeFileSync(outputFile, reportString);
     } else {
       console.log(reportString);
     }
