@@ -26,7 +26,7 @@ import { Frame } from '../frames';
 import type { Dialog } from '../dialog';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import type { CRSession } from './crConnection';
 import { ConnectionEvents, CRConnection } from './crConnection';
 import { CRPage } from './crPage';

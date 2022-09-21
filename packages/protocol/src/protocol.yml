@@ -633,6 +633,94 @@ Playwright:
 
     hideHighlight:
 
+RecorderSource:
+  type: object
+  properties:
+    isRecorded: boolean
+    id: string
+    label: string
+    text: string
+    language: string
+    highlight:
+      type: array
+      items:
+        type: object
+        properties:
+          line: number
+          type: string
+    revealLine: number?
+    group: string?
+
+ReuseController:
+  type: interface
+
+  commands:
+    setTrackHierarchy:
+      parameters:
+        enabled: boolean
+
+    setReuseBrowser:
+      parameters:
+        enabled: boolean
+
+    resetForReuse:
+
+    navigateAll:
+      parameters:
+        url: string
+
+    setRecorderMode:
+      parameters:
+        mode:
+          type: enum
+          literals:
+            - inspecting
+            - recording
+            - none
+        language: string?
+        file: string?
+
+    setAutoClose:
+      parameters:
+        enabled: boolean
+
+    highlightAll:
+      parameters:
+        selector: string
+
+    hideHighlightAll:
+
+    kill:
+
+    closeAllBrowsers:
+
+  events:
+    inspectRequested:
+      parameters:
+        selector: string
+
+    browsersChanged:
+      parameters:
+        browsers:
+          type: array
+          items:
+            type: object
+            properties:
+              contexts:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pages:
+                      type: array
+                      items: string
+
+    sourcesChanged:
+      parameters:
+        sources:
+          type: array
+          items: RecorderSource
+
 SocksSupport:
   type: interface
 

@@ -199,6 +199,10 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   metadata: Metadata;
   /**
+   * Unique project id within this config.
+   */
+  id: string;
+  /**
    * Project name is visible in the report and during test execution.
    */
   name: string;
@@ -577,6 +581,11 @@ interface TestConfig {
       maxDiffPixelRatio?: number;
     };
   };
+
+  /**
+   * Path to config file, if any.
+   */
+  configFile?: string;
 
   /**
    * Whether to exit with an error if any tests or groups are marked as
@@ -1298,6 +1307,10 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   webServer: TestConfigWebServer | null;
+  /**
+   * Path to config file, if any.
+   */
+  configFile?: string;
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
@@ -3437,11 +3450,10 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element with given attribute value.
+   * Ensures the [Locator] points to an element with given attribute.
    *
    * ```js
    * const locator = page.locator('input');
-   * // Assert attribute with given value.
    * await expect(locator).toHaveAttribute('type', 'text');
    * ```
    *
@@ -3450,26 +3462,6 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveAttribute(name: string, value: string|RegExp, options?: {
-    /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Ensures the [Locator] points to an element with given attribute. The method will assert attribute presence.
-   *
-   * ```js
-   * const locator = page.locator('input');
-   * // Assert attribute existance.
-   * await expect(locator).toHaveAttribute('disabled');
-   * await expect(locator).not.toHaveAttribute('open');
-   * ```
-   *
-   * @param name Attribute name.
-   * @param options
-   */
-  toHaveAttribute(name: string, options?: {
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -4401,6 +4393,11 @@ interface TestProject {
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
   grepInvert?: RegExp|Array<RegExp>;
+
+  /**
+   * Unique project id within this config.
+   */
+  id?: string;
 
   /**
    * Metadata that will be put directly to the test report serialized as JSON.

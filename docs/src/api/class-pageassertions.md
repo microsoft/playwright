@@ -59,7 +59,7 @@ namespace PlaywrightTests;
 [TestFixture]
 public class ExampleTests : PageTest
 {
-    [PlaywrightTest]
+    [Test]
     public async Task NavigatetoLoginPage()
     {
         // ..

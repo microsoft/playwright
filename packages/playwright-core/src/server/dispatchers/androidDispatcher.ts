@@ -18,7 +18,7 @@ import type { DispatcherScope, RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type { Android, SocketBackend } from '../android/android';
 import { AndroidDevice } from '../android/android';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import type * as api from '../../../types/types';
 import type * as types from '../../client/types';
 import { BrowserContextDispatcher } from './browserContextDispatcher';

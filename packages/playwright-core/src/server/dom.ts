@@ -16,7 +16,7 @@
 
 import { mime } from '../utilsBundle';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { isSessionClosedError } from './protocolError';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as frames from './frames';

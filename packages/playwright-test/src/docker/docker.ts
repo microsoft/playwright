@@ -15,41 +15,69 @@
  */
 /* eslint-disable no-console */
 
-import http from 'http';
 import path from 'path';
 import fs from 'fs';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
 import * as utils from 'playwright-core/lib/utils';
 import { getPlaywrightVersion } from 'playwright-core/lib/common/userAgent';
-
-interface DockerImage {
-  Containers: number;
-  Created: number;
-  Id: string;
-  Labels: null | Record<string, string>;
-  ParentId: string;
-  RepoDigests: null | string[];
-  RepoTags: null | string[];
-  SharedSize: number;
-  Size: number;
-  VirtualSize: number;
-}
+import * as dockerApi from './dockerApi';
+import type { TestRunnerPlugin } from '../plugins';
+import type { FullConfig, Reporter, Suite } from '../../types/testReporter';
 
 const VRT_IMAGE_DISTRO = 'focal';
 const VRT_IMAGE_NAME = `playwright:local-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
 const VRT_CONTAINER_NAME = `playwright-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
+const VRT_CONTAINER_LABEL_NAME = 'dev.playwright.vrt-service.version';
+const VRT_CONTAINER_LABEL_VALUE = '1';
 
-export async function deleteImage() {
+export async function startPlaywrightContainer() {
+  await checkDockerEngineIsRunningOrDie();
+
+  let info = await containerInfo();
+  if (!info) {
+    process.stdout.write(`Starting docker container... `);
+    const time = Date.now();
+    info = await ensurePlaywrightContainerOrDie();
+    const deltaMs = (Date.now() - time);
+    console.log('Done in ' + (deltaMs / 1000).toFixed(1) + 's');
+  }
+  console.log([
+    `- View screen:`,
+    `      ${info.vncSession}`,
+    `- Run tests with browsers inside container:`,
+    `      npx playwright docker test`,
+    `- Stop background container *manually* when you are done working with tests:`,
+    `      npx playwright docker stop`,
+  ].join('\n'));
+}
+
+export async function stopAllPlaywrightContainers() {
+  await checkDockerEngineIsRunningOrDie();
+
+  const allContainers = await dockerApi.listContainers();
+  const vrtContainers = allContainers.filter(container => container.labels[VRT_CONTAINER_LABEL_NAME] === VRT_CONTAINER_LABEL_VALUE);
+  await Promise.all(vrtContainers.map(container => dockerApi.stopContainer({
+    containerId: container.containerId,
+    waitUntil: 'removed',
+  })));
+}
+
+export async function deletePlaywrightImage() {
+  await checkDockerEngineIsRunningOrDie();
+
   const dockerImage = await findDockerImage(VRT_IMAGE_NAME);
   if (!dockerImage)
     return;
 
   if (await containerInfo())
-    await stopContainer();
-  await callDockerAPI('delete', `/images/${dockerImage.Id}`);
+    await stopAllPlaywrightContainers();
+  await dockerApi.removeImage(dockerImage.imageId);
 }
 
-export async function buildImage() {
+export async function buildPlaywrightImage() {
+  await checkDockerEngineIsRunningOrDie();
+
   const isDevelopmentMode = getPlaywrightVersion().includes('next');
   let baseImageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
   // 1. Build or pull base image.
@@ -57,7 +85,7 @@ export async function buildImage() {
     // Use our docker build scripts in development mode!
     if (!process.env.PWTEST_DOCKER_BASE_IMAGE) {
       const arch = process.arch === 'arm64' ? '--arm64' : '--amd64';
-      console.error(utils.wrapInASCIIBox([
+      throw createStacklessError(utils.wrapInASCIIBox([
         `You are in DEVELOPMENT mode!`,
         ``,
         `1. Build local base image`,
@@ -65,7 +93,6 @@ export async function buildImage() {
         `2. Use the local base to build VRT image:`,
         `     PWTEST_DOCKER_BASE_IMAGE=playwright:localbuild npx playwright docker build`,
       ].join('\n'), 1));
-      process.exit(1);
     }
     baseImageName = process.env.PWTEST_DOCKER_BASE_IMAGE;
   } else {
@@ -80,64 +107,113 @@ export async function buildImage() {
   // 3. Launch container and install VNC in it
   console.log(`Building ${VRT_IMAGE_NAME}...`);
   const buildScriptText = await fs.promises.readFile(path.join(__dirname, 'build_docker_image.sh'), 'utf8');
-  const containerId = await launchContainer({
-    image: dockerImage,
+  const containerId = await dockerApi.launchContainer({
+    imageId: dockerImage.imageId,
     autoRemove: false,
     command: ['/bin/bash', '-c', buildScriptText],
+    waitUntil: 'not-running',
   });
-  await postJSON(`/containers/${containerId}/wait`);
 
   // 4. Commit a new image based on the launched container with installed VNC & noVNC.
   const [vrtRepo, vrtTag] = VRT_IMAGE_NAME.split(':');
-  await postJSON(`/commit?container=${containerId}&repo=${vrtRepo}&tag=${vrtTag}`, {
-    Entrypoint: ['/entrypoint.sh'],
-    Env: [
-      'DISPLAY_NUM=99',
-      'DISPLAY=:99',
-    ],
+  await dockerApi.commitContainer({
+    containerId,
+    repo: vrtRepo,
+    tag: vrtTag,
+    entrypoint: '/entrypoint.sh',
+    env: {
+      'DISPLAY_NUM': '99',
+      'DISPLAY': ':99',
+    },
   });
-  await Promise.all([
-    // Make sure to wait for the container to be removed.
-    postJSON(`/containers/${containerId}/wait?condition=removed`),
-    callDockerAPI('delete', `/containers/${containerId}`),
-  ]);
+  await dockerApi.removeContainer(containerId);
   console.log(`Done!`);
 }
+
+export const dockerPlugin: TestRunnerPlugin = {
+  name: 'playwright:docker',
+
+  async setup(config: FullConfig, configDir: string, rootSuite: Suite, reporter: Reporter) {
+    if (!process.env.PLAYWRIGHT_DOCKER)
+      return;
+
+    const print = (text: string) => reporter.onStdOut?.(text);
+    const println = (text: string) => reporter.onStdOut?.(text + '\n');
+
+    println(colors.dim('Using docker container to run browsers.'));
+    await checkDockerEngineIsRunningOrDie();
+    let info = await containerInfo();
+    if (!info) {
+      print(colors.dim(`Starting docker container... `));
+      const time = Date.now();
+      info = await ensurePlaywrightContainerOrDie();
+      const deltaMs = (Date.now() - time);
+      println(colors.dim('Done in ' + (deltaMs / 1000).toFixed(1) + 's'));
+      println(colors.dim('The Docker container will keep running after tests finished.'));
+      println(colors.dim('Stop manually using:'));
+      println(colors.dim('    npx playwright docker stop'));
+    }
+    println(colors.dim(`View screen: ${info.vncSession}`));
+    println('');
+    process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.wsEndpoint;
+    process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
+      'x-playwright-proxy': '*',
+    });
+  },
+};
 
 interface ContainerInfo {
   wsEndpoint: string;
   vncSession: string;
 }
 
-export async function containerInfo(): Promise<ContainerInfo|undefined> {
-  const containerId = await findRunningDockerContainerId();
-  if (!containerId)
+export async function printDockerStatus() {
+  const isDockerEngine = await dockerApi.checkEngineRunning();
+  const imageIsPulled = isDockerEngine && !!(await findDockerImage(VRT_IMAGE_NAME));
+  const info = isDockerEngine ? await containerInfo() : undefined;
+  console.log(JSON.stringify({
+    dockerEngineRunning: isDockerEngine,
+    imageName: VRT_IMAGE_NAME,
+    imageIsPulled,
+    containerWSEndpoint: info?.wsEndpoint ?? '',
+    containerVNCEndpoint: info?.vncSession ?? '',
+  }, null, 2));
+}
+
+async function containerInfo(): Promise<ContainerInfo|undefined> {
+  const allContainers = await dockerApi.listContainers();
+  const pwDockerImage = await findDockerImage(VRT_IMAGE_NAME);
+  const container = allContainers.find(container => container.imageId === pwDockerImage?.imageId && container.state === 'running');
+  if (!container)
     return undefined;
-  const rawLogs = await callDockerAPI('get', `/containers/${containerId}/logs?stdout=true&stderr=true`).catch(e => '');
-  if (!rawLogs)
-    return undefined;
-  // Docker might prefix every log line with 8 characters. Stip them out.
-  // See https://github.com/moby/moby/issues/7375
-  // This doesn't happen if the containers is launched manually with attached terminal.
-  const logLines = rawLogs.split('\n').map(line => {
-    if ([0, 1, 2].includes(line.charCodeAt(0)))
-      return line.substring(8);
-    return line;
-  });
+  const logLines = await dockerApi.getContainerLogs(container.containerId);
+
+  const containerUrlToHostUrl = (address: string) => {
+    const url = new URL(address);
+    const portBinding = container.portBindings.find(binding => binding.containerPort === +url.port);
+    if (!portBinding)
+      return undefined;
+
+    url.host = portBinding.ip;
+    url.port = portBinding.hostPort + '';
+    return url.toString();
+  };
+
   const WS_LINE_PREFIX = 'Listening on ws://';
   const webSocketLine = logLines.find(line => line.startsWith(WS_LINE_PREFIX));
   const NOVNC_LINE_PREFIX = 'novnc is listening on ';
   const novncLine = logLines.find(line => line.startsWith(NOVNC_LINE_PREFIX));
-  return novncLine && webSocketLine ? {
-    wsEndpoint: 'ws://' + webSocketLine.substring(WS_LINE_PREFIX.length),
-    vncSession: novncLine.substring(NOVNC_LINE_PREFIX.length),
-  } : undefined;
+  if (!novncLine || !webSocketLine)
+    return undefined;
+  const wsEndpoint = containerUrlToHostUrl('ws://' + webSocketLine.substring(WS_LINE_PREFIX.length));
+  const vncSession = containerUrlToHostUrl(novncLine.substring(NOVNC_LINE_PREFIX.length));
+  return wsEndpoint && vncSession ? { wsEndpoint, vncSession } : undefined;
 }
 
-export async function ensureContainerOrDie(): Promise<ContainerInfo> {
+async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
   const pwImage = await findDockerImage(VRT_IMAGE_NAME);
   if (!pwImage) {
-    console.error('\n' + utils.wrapInASCIIBox([
+    throw createStacklessError('\n' + utils.wrapInASCIIBox([
       `Failed to find local docker image.`,
       `Please build local docker image with the following command:`,
       ``,
@@ -145,18 +221,54 @@ export async function ensureContainerOrDie(): Promise<ContainerInfo> {
       ``,
       `<3 Playwright Team`,
     ].join('\n'), 1));
-    process.exit(1);
   }
 
   let info = await containerInfo();
   if (info)
     return info;
 
-  await launchContainer({
-    image: pwImage,
+  // The `npx playwright docker build` command is *NOT GUARANTEED* to produce
+  // images with the same SHA.
+  //
+  // Consider the following sequence of actions:
+  // 1. Build first version of image: `npx playwright docker build`
+  // 2. Run container off the image: `npx playwright docker start`
+  // 3. Build second version of image: `npx playwright docker build`
+  //
+  // Our container auto-detection is based on the parent image SHA.
+  // If the image produced at Step 3 has a different SHA then the one produced on Step 1,
+  // then we **won't be able** to auto-detect the container from Step 2.
+  //
+  // Additionally, we won't be able to launch a new container based off image
+  // from Step 3, since it will have a conflicting container name.
+  //
+  // We check if there's a same-named container running to detect & handle this situation.
+  const hasSameNamedContainer = async () => (await dockerApi.listContainers()).some(container => container.names.includes(VRT_CONTAINER_NAME));
+  if (await hasSameNamedContainer()) {
+    // Since we mark all our containers with labels, we'll be able to stop it.
+    await stopAllPlaywrightContainers();
+    // If it wasn't our container, then it was launched manually and has to be
+    // stopped manually as well.
+    if (await hasSameNamedContainer()) {
+      throw createStacklessError('\n' + utils.wrapInASCIIBox([
+        `There is already a container with name ${VRT_CONTAINER_NAME}`,
+        `Please stop this container manually and rerun tests:`,
+        ``,
+        `    docker kill ${VRT_CONTAINER_NAME}`,
+        ``,
+        `<3 Playwright Team`,
+      ].join('\n'), 1));
+    }
+  }
+
+  await dockerApi.launchContainer({
+    imageId: pwImage.imageId,
     name: VRT_CONTAINER_NAME,
     autoRemove: true,
     ports: [5400, 7900],
+    labels: {
+      [VRT_CONTAINER_LABEL_NAME]: VRT_CONTAINER_LABEL_VALUE,
+    },
   });
 
   // Wait for the service to become available.
@@ -172,132 +284,25 @@ export async function ensureContainerOrDie(): Promise<ContainerInfo> {
   return info;
 }
 
-export async function stopContainer() {
-  const containerId = await findRunningDockerContainerId();
-  if (!containerId)
+async function checkDockerEngineIsRunningOrDie() {
+  if (await dockerApi.checkEngineRunning())
     return;
-  await Promise.all([
-    // Make sure to wait for the container to be removed.
-    postJSON(`/containers/${containerId}/wait?condition=removed`),
-    postJSON(`/containers/${containerId}/kill`),
-  ]);
+  throw createStacklessError(utils.wrapInASCIIBox([
+    `Docker is not running!`,
+    `Please install and launch docker:`,
+    ``,
+    `    https://docs.docker.com/get-docker`,
+    ``,
+  ].join('\n'), 1));
 }
 
-export async function ensureDockerEngineIsRunningOrDie() {
-  try {
-    await callDockerAPI('get', '/info');
-  } catch (e) {
-    console.error(utils.wrapInASCIIBox([
-      `Docker is not running!`,
-      `Please install and launch docker:`,
-      ``,
-      `    https://docs.docker.com/get-docker`,
-      ``,
-    ].join('\n'), 1));
-    process.exit(1);
-  }
+async function findDockerImage(imageName: string): Promise<dockerApi.DockerImage|undefined> {
+  const images = await dockerApi.listImages();
+  return images.find(image => image.names.includes(imageName));
 }
 
-async function findDockerImage(imageName: string): Promise<DockerImage|undefined> {
-  const images: DockerImage[] | null = await getJSON('/images/json');
-  return images ? images.find(image => image.RepoTags?.includes(imageName)) : undefined;
+function createStacklessError(message: string) {
+  const error = new Error(message);
+  error.stack = '';
+  return error;
 }
-
-interface Container {
-  ImageID: string;
-  State: string;
-  Names: [string];
-  Id: string;
-}
-
-async function findRunningDockerContainerId(): Promise<string|undefined> {
-  const containers: (Container[]|undefined) = await getJSON('/containers/json');
-  if (!containers)
-    return undefined;
-  const dockerImage = await findDockerImage(VRT_IMAGE_NAME);
-  const container = dockerImage ? containers.find((container: Container) => container.ImageID === dockerImage.Id) : undefined;
-  return container?.State === 'running' ? container.Id : undefined;
-}
-
-interface ContainerOptions {
-  image: DockerImage;
-  autoRemove: boolean;
-  command?: string[];
-  ports?: Number[];
-  name?: string;
-}
-
-async function launchContainer(options: ContainerOptions): Promise<string> {
-  const ExposedPorts: any = {};
-  const PortBindings: any = {};
-  for (const port of (options.ports ?? [])) {
-    ExposedPorts[`${port}/tcp`] = {};
-    PortBindings[`${port}/tcp`] = [{ HostPort: port + '' }];
-  }
-  const container = await postJSON(`/containers/create` + (options.name ? '?name=' + options.name : ''), {
-    Cmd: options.command,
-    AttachStdout: true,
-    AttachStderr: true,
-    Image: options.image.Id,
-    ExposedPorts,
-    HostConfig: {
-      Init: true,
-      AutoRemove: options.autoRemove,
-      ShmSize: 2 * 1024 * 1024 * 1024,
-      PortBindings,
-    },
-  });
-  await postJSON(`/containers/${container.Id}/start`);
-  return container.Id;
-}
-
-async function getJSON(url: string): Promise<any> {
-  const result = await callDockerAPI('get', url);
-  if (!result)
-    return result;
-  return JSON.parse(result);
-}
-
-async function postJSON(url: string, json: any = undefined) {
-  const result = await callDockerAPI('post', url, json ? JSON.stringify(json) : undefined);
-  if (!result)
-    return result;
-  return JSON.parse(result);
-}
-
-const DOCKER_API_VERSION = '1.41';
-
-function callDockerAPI(method: 'post'|'get'|'delete', url: string, body: Buffer|string|undefined = undefined): Promise<string> {
-  const dockerSocket = process.platform === 'win32' ? '\\\\.\\pipe\\docker_engine' : '/var/run/docker.sock';
-  return new Promise((resolve, reject) => {
-    const request = http.request({
-      socketPath: dockerSocket,
-      path: `/v${DOCKER_API_VERSION}${url}`,
-      timeout: 30000,
-      method,
-    }, (response: http.IncomingMessage) => {
-      let body = '';
-      response.on('data', function(chunk){
-        body += chunk;
-      });
-      response.on('end', function(){
-        if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300)
-          reject(new Error(`${method} ${url} FAILED with statusCode ${response.statusCode} and body\n${body}`));
-        else
-          resolve(body);
-      });
-    });
-    request.on('error', function(e){
-      reject(e);
-    });
-    if (body) {
-      request.setHeader('Content-Type', 'application/json');
-      request.setHeader('Content-Length', body.length);
-      request.write(body);
-    } else {
-      request.setHeader('Content-Type', 'text/plain');
-    }
-    request.end();
-  });
-}
-

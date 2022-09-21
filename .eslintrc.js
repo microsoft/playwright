@@ -71,6 +71,7 @@ module.exports = {
         "valid-typeof": 2,
         "no-implicit-globals": [2],
         "no-unused-expressions": [2, { "allowShortCircuit": true, "allowTernary": true, "allowTaggedTemplates": true}],
+        "no-proto": 2,
 
         // es2015 features
         "require-yield": 2,

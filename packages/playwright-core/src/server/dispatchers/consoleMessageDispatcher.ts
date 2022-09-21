@@ -15,7 +15,7 @@
  */
 
 import type { ConsoleMessage } from '../console';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import type { PageDispatcher } from './pageDispatcher';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';

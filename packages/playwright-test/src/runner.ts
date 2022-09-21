@@ -29,6 +29,7 @@ import { Loader } from './loader';
 import type { FullResult, Reporter, TestError } from '../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
 import { formatError } from './reporters/base';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import DotReporter from './reporters/dot';
 import GitHubReporter from './reporters/github';
 import LineReporter from './reporters/line';
@@ -44,6 +45,7 @@ import { SigIntWatcher } from './sigIntWatcher';
 import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
 import { webServerPluginsForConfig } from './plugins/webServerPlugin';
+import { dockerPlugin } from './docker/docker';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
 
 const removeFolderAsync = promisify(rimraf);
@@ -216,6 +218,7 @@ export class Runner {
     };
     for (const [project, files] of filesByProject) {
       report.projects.push({
+        docker: process.env.PLAYWRIGHT_DOCKER,
         name: project.name,
         testDir: path.resolve(configFile, project.testDir),
         files: files
@@ -400,6 +403,15 @@ export class Runner {
     if (result.status !== 'passed')
       return result;
 
+    if (config._ignoreSnapshots) {
+      this._reporter.onStdOut?.(colors.dim([
+        'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
+        '- expect().toMatchSnapshot()',
+        '- expect().toHaveScreenshot()',
+        '',
+      ].join('\n')));
+    }
+
     // 14. Run tests.
     try {
       const sigintWatcher = new SigIntWatcher();
@@ -501,10 +513,10 @@ export class Runner {
     for (const [project, files] of filesByProject) {
       for (const file of files) {
         const group: TestGroup = {
-          workerHash: `run${project._id}-repeat${repeatEachIndex}`,
+          workerHash: `run${project.id}-repeat${repeatEachIndex}`,
           requireFile: file,
           repeatEachIndex,
-          projectId: project._id,
+          projectId: project.id,
           tests: [],
           watchMode: true,
         };
@@ -603,14 +615,17 @@ export class Runner {
     };
 
     // Legacy webServer support.
-    this._plugins.push(...webServerPluginsForConfig(config, this._reporter));
+    this._plugins.push(...webServerPluginsForConfig(config));
+
+    // Docker support.
+    this._plugins.push(dockerPlugin);
 
     await this._runAndReportError(async () => {
       // First run the plugins, if plugin is a web server we want it to run before the
       // config's global setup.
       for (const plugin of this._plugins) {
         await Promise.race([
-          plugin.setup?.(config, config._configDir, rootSuite),
+          plugin.setup?.(config, config._configDir, rootSuite, this._reporter),
           sigintWatcher.promise(),
         ]);
         if (sigintWatcher.hadSignal())

@@ -33,7 +33,7 @@ import { PipeTransport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../common/debugLogger';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../common/timeoutSettings';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import type * as api from '../../../types/types';
 import type * as types from '../../client/types';
 import type { LaunchOptions } from '../../server/types';

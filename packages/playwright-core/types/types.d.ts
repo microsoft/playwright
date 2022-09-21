@@ -2146,6 +2146,18 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * This method drags the source element to the target element. It will first move to the source element, perform a
+   * `mousedown`, then move to the target element and perform a `mouseup`.
+   *
+   * ```js
+   * await page.dragAndDrop('#source', '#target');
+   * // or specify exact positions relative to the top-left corners of the elements:
+   * await page.dragAndDrop('#source', '#target', {
+   *   sourcePosition: { x: 34, y: 7 },
+   *   targetPosition: { x: 10, y: 20 },
+   * });
+   * ```
+   *
    * @param source A selector to search for an element to drag. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param target A selector to search for an element to drop onto. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
@@ -9413,6 +9425,21 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * This method drags the locator to another target locator or target position. It will first move to the source element,
+   * perform a `mousedown`, then move to the target element or position and perform a `mouseup`.
+   *
+   * ```js
+   * const source = page.locator('#source');
+   * const target = page.locator('#target');
+   *
+   * await source.dragTo(target);
+   * // or specify exact positions relative to the top-left corners of the elements:
+   * await source.dragTo(target, {
+   *   sourcePosition: { x: 34, y: 7 },
+   *   targetPosition: { x: 10, y: 20 },
+   * });
+   * ```
+   *
    * @param target Locator of the element to drag to.
    * @param options
    */
@@ -10696,7 +10723,7 @@ export interface BrowserType<Unused = {}> {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
        * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
        * all other file extensions.
        */
@@ -12058,7 +12085,7 @@ export interface AndroidDevice {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
        * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
        * all other file extensions.
        */
@@ -12878,6 +12905,45 @@ export interface APIRequestContext {
   /**
    * Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
    * context cookies from the response. The method will automatically follow redirects.
+   *
+   * JSON objects can be passed directly to the request:
+   *
+   * ```js
+   * await request.fetch('https://example.com/api/createBook', {
+   *   method: 'post',
+   *   data: {
+   *     title: 'Book Title',
+   *     author: 'John Doe',
+   *   }
+   * });
+   * ```
+   *
+   * The common way to send file(s) in the body of a request is to encode it as form fields with `multipart/form-data`
+   * encoding. You can achieve that with Playwright API like this:
+   *
+   * ```js
+   * // Open file as a stream and pass it to the request:
+   * const stream = fs.createReadStream('team.csv');
+   * await request.fetch('https://example.com/api/uploadTeamList', {
+   *   method: 'post',
+   *   multipart: {
+   *     fileField: stream
+   *   }
+   * });
+   *
+   * // Or you can pass the file content directly as an object:
+   * await request.fetch('https://example.com/api/uploadScript', {
+   *   method: 'post',
+   *   multipart: {
+   *     fileField: {
+   *       name: 'f.js',
+   *       mimeType: 'text/javascript',
+   *       buffer: Buffer.from('console.log(2022);')
+   *     }
+   *   }
+   * });
+   * ```
+   *
    * @param urlOrRequest Target URL or Request to get all parameters from.
    * @param options
    */
@@ -12961,6 +13027,18 @@ export interface APIRequestContext {
    * Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its response. The
    * method will populate request cookies from the context and update context cookies from the response. The method will
    * automatically follow redirects.
+   *
+   * Request parameters can be configured with `params` option, they will be serialized into the URL search parameters:
+   *
+   * ```js
+   * await request.get('https://example.com/api/getText', {
+   *   params: {
+   *     'isbn': '1234',
+   *     'page': 23,
+   *   }
+   * });
+   * ```
+   *
    * @param url Target URL.
    * @param options
    */
@@ -13118,6 +13196,54 @@ export interface APIRequestContext {
    * Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its response.
    * The method will populate request cookies from the context and update context cookies from the response. The method will
    * automatically follow redirects.
+   *
+   * JSON objects can be passed directly to the request:
+   *
+   * ```js
+   * await request.post('https://example.com/api/createBook', {
+   *   data: {
+   *     title: 'Book Title',
+   *     author: 'John Doe',
+   *   }
+   * });
+   * ```
+   *
+   * To send form data to the server use `form` option. Its value will be encoded into the request body with
+   * `application/x-www-form-urlencoded` encoding (see below how to use `multipart/form-data` form encoding to send files):
+   *
+   * ```js
+   * await request.post('https://example.com/api/findBook', {
+   *   form: {
+   *     title: 'Book Title',
+   *     author: 'John Doe',
+   *   }
+   * });
+   * ```
+   *
+   * The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data`
+   * encoding. You can achieve that with Playwright API like this:
+   *
+   * ```js
+   * // Open file as a stream and pass it to the request:
+   * const stream = fs.createReadStream('team.csv');
+   * await request.post('https://example.com/api/uploadTeamList', {
+   *   multipart: {
+   *     fileField: stream
+   *   }
+   * });
+   *
+   * // Or you can pass the file content directly as an object:
+   * await request.post('https://example.com/api/uploadScript', {
+   *   multipart: {
+   *     fileField: {
+   *       name: 'f.js',
+   *       mimeType: 'text/javascript',
+   *       buffer: Buffer.from('console.log(2022);')
+   *     }
+   *   }
+   * });
+   * ```
+   *
    * @param url Target URL.
    * @param options
    */
@@ -13692,7 +13818,7 @@ export interface Browser extends EventEmitter {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
        * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
        * all other file extensions.
        */
@@ -14486,7 +14612,7 @@ export interface Electron {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
        * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
        * all other file extensions.
        */
@@ -16320,7 +16446,7 @@ export interface BrowserContextOptions {
 
     /**
      * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-     * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+     * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
      * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
      * all other file extensions.
      */

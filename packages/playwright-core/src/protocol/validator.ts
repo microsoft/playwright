@@ -315,6 +315,67 @@ scheme.PlaywrightNewRequestResult = tObject({
 });
 scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
 scheme.PlaywrightHideHighlightResult = tOptional(tObject({}));
+scheme.RecorderSource = tObject({
+  isRecorded: tBoolean,
+  id: tString,
+  label: tString,
+  text: tString,
+  language: tString,
+  highlight: tArray(tObject({
+    line: tNumber,
+    type: tString,
+  })),
+  revealLine: tOptional(tNumber),
+  group: tOptional(tString),
+});
+scheme.ReuseControllerInitializer = tOptional(tObject({}));
+scheme.ReuseControllerInspectRequestedEvent = tObject({
+  selector: tString,
+});
+scheme.ReuseControllerBrowsersChangedEvent = tObject({
+  browsers: tArray(tObject({
+    contexts: tArray(tObject({
+      pages: tArray(tString),
+    })),
+  })),
+});
+scheme.ReuseControllerSourcesChangedEvent = tObject({
+  sources: tArray(tType('RecorderSource')),
+});
+scheme.ReuseControllerSetTrackHierarchyParams = tObject({
+  enabled: tBoolean,
+});
+scheme.ReuseControllerSetTrackHierarchyResult = tOptional(tObject({}));
+scheme.ReuseControllerSetReuseBrowserParams = tObject({
+  enabled: tBoolean,
+});
+scheme.ReuseControllerSetReuseBrowserResult = tOptional(tObject({}));
+scheme.ReuseControllerResetForReuseParams = tOptional(tObject({}));
+scheme.ReuseControllerResetForReuseResult = tOptional(tObject({}));
+scheme.ReuseControllerNavigateAllParams = tObject({
+  url: tString,
+});
+scheme.ReuseControllerNavigateAllResult = tOptional(tObject({}));
+scheme.ReuseControllerSetRecorderModeParams = tObject({
+  mode: tEnum(['inspecting', 'recording', 'none']),
+  language: tOptional(tString),
+  file: tOptional(tString),
+});
+scheme.ReuseControllerSetRecorderModeResult = tOptional(tObject({}));
+scheme.ReuseControllerSetAutoCloseParams = tObject({
+  enabled: tBoolean,
+});
+scheme.ReuseControllerSetAutoCloseResult = tOptional(tObject({}));
+scheme.ReuseControllerHighlightAllParams = tObject({
+  selector: tString,
+});
+scheme.ReuseControllerHighlightAllResult = tOptional(tObject({}));
+scheme.ReuseControllerHideHighlightAllParams = tOptional(tObject({}));
+scheme.ReuseControllerHideHighlightAllResult = tOptional(tObject({}));
+scheme.ReuseControllerKillParams = tOptional(tObject({}));
+scheme.ReuseControllerKillResult = tOptional(tObject({}));
+scheme.ReuseControllerCloseAllBrowsersParams = tOptional(tObject({}));
+scheme.ReuseControllerCloseAllBrowsersResult = tOptional(tObject({}));
 scheme.SocksSupportInitializer = tOptional(tObject({}));
 scheme.SocksSupportSocksRequestedEvent = tObject({
   uid: tString,

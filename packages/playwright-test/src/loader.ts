@@ -125,6 +125,7 @@ export class Loader {
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
 
     this._fullConfig._configDir = configDir;
+    this._fullConfig.configFile = this._configFile;
     this._fullConfig.rootDir = config.testDir || this._configDir;
     this._fullConfig._globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._globalOutputDir);
     this._fullConfig.forbidOnly = takeFirst(config.forbidOnly, baseFullConfig.forbidOnly);
@@ -165,7 +166,7 @@ export class Loader {
         const candidate = name + (i ? i : '');
         if (usedNames.has(candidate))
           continue;
-        p._id = candidate;
+        p.id = candidate;
         usedNames.add(candidate);
         break;
       }
@@ -270,9 +271,14 @@ export class Loader {
     const outputDir = takeFirst(projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
     const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
     const name = takeFirst(projectConfig.name, config.name, '');
-    const screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
+
+    let screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
+    if (process.env.PLAYWRIGHT_DOCKER) {
+      screenshotsDir = path.join(testDir, '__screenshots__', name);
+      process.env.PWTEST_USE_SCREENSHOTS_DIR = '1';
+    }
     return {
-      _id: '',
+      id: '',
       _fullConfig: fullConfig,
       _fullyParallel: takeFirst(projectConfig.fullyParallel, config.fullyParallel, undefined),
       _expect: takeFirst(projectConfig.expect, config.expect, {}),
@@ -386,20 +392,20 @@ class ProjectSuiteBuilder {
         test.retries = this._project.retries;
         const repeatEachIndexSuffix = repeatEachIndex ? ` (repeat:${repeatEachIndex})` : '';
         // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
-        const testIdExpression = `[project=${this._project._id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
+        const testIdExpression = `[project=${this._project.id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
         const testId = to._fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
         test.id = testId;
         test.repeatEachIndex = repeatEachIndex;
-        test._projectId = this._project._id;
+        test._projectId = this._project.id;
         if (!filter(test)) {
           to._entries.pop();
           to.tests.pop();
         } else {
           const pool = this._buildPool(entry);
           if (this._project._fullConfig._workerIsolation === 'isolate-pools')
-            test._workerHash = `run${this._project._id}-${pool.digest}-repeat${repeatEachIndex}`;
+            test._workerHash = `run${this._project.id}-${pool.digest}-repeat${repeatEachIndex}`;
           else
-            test._workerHash = `run${this._project._id}-repeat${repeatEachIndex}`;
+            test._workerHash = `run${this._project.id}-repeat${repeatEachIndex}`;
           test._pool = pool;
         }
       }
@@ -431,7 +437,7 @@ class ProjectSuiteBuilder {
           (originalFixtures as any)[key] = value;
       }
       if (Object.entries(optionsFromConfig).length)
-        result.push({ fixtures: optionsFromConfig, location: { file: `project#${this._project._id}`, line: 1, column: 1 } });
+        result.push({ fixtures: optionsFromConfig, location: { file: `project#${this._project.id}`, line: 1, column: 1 } });
       if (Object.entries(originalFixtures).length)
         result.push({ fixtures: originalFixtures, location: f.location });
     }
@@ -642,6 +648,7 @@ export const baseFullConfig: FullConfigInternal = {
   projects: [],
   reporter: [[process.env.CI ? 'dot' : 'list']],
   reportSlowTests: { max: 5, threshold: 15000 },
+  configFile: '',
   rootDir: path.resolve(process.cwd()),
   quiet: false,
   shard: null,

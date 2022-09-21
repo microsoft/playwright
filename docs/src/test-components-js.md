@@ -5,12 +5,9 @@ title: "Experimental: components"
 
 Playwright Test can now test your components.
 
-<!-- TOC -->
-
 <div className="embed-youtube">
   <iframe src="https://www.youtube.com/embed/y3YxX4sFJbM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" width="750" height="563" allowfullscreen></iframe>
 </div>
-
 
 ## Example
 
@@ -42,15 +39,30 @@ Adding Playwright Test to an existing React, Vue or Svelte project is easy. Belo
 
 ### Step 1: Install Playwright Test for components for your respective framework
 
-```sh
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+  ]
+}>
+<TabItem value="npm">
+
+```bash
 npm init playwright@latest -- --ct
 ```
 
-or with Yarn:
+</TabItem>
 
-```sh
+<TabItem value="yarn">
+
+```bash
 yarn create playwright --ct
 ```
+
+</TabItem>
+  
+</Tabs>
 
 This step creates several files in your workspace:
 
@@ -72,13 +84,23 @@ also link the script called `playwright/index.[tj]s`.
 #### `playwright/index.ts`
 
 You can include stylesheets, apply theme and inject code into the page where
-component is mounted using this script. It can be either `.js` or `.ts` file.
+component is mounted using this script. It can be either a `.js` or `.ts` file.
 
 ```js
 // Apply theme here, add anything your component needs at runtime here.
 ```
 
-### Step 2. Create a test file `src/App.spec.tsx`
+### Step 2. Create a test file `src/App.spec.{ts,tsx}`
+
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Vue', value: 'vue'},
+    {label: 'Svelte', value: 'svelte'},
+  ]
+}>
+<TabItem value="react">
 
 ```js
 import { test, expect } from '@playwright/experimental-ct-react';
@@ -92,7 +114,52 @@ test('should work', async ({ mount }) => {
 });
 ```
 
+</TabItem>
+
+<TabItem value="vue">
+
+```js
+import { test, expect } from '@playwright/experimental-ct-vue';
+import App from './App.vue';
+
+test.use({ viewport: { width: 500, height: 500 } });
+
+test('should work', async ({ mount }) => {
+  const component = await mount(<App></App>);
+  await expect(component).toContainText('Vite + Vue');
+});
+```
+
+If using TypeScript and Vue make sure to add a `vue.d.ts` file to your project:
+
+```ts
+declare module '*.vue';
+```
+
+</TabItem>
+  
+<TabItem value="svelte">
+
+```js
+import { test, expect } from '@playwright/experimental-ct-svelte';
+import App from './App.svelte';
+
+test.use({ viewport: { width: 500, height: 500 } });
+
+test('should work', async ({ mount }) => {
+  const component = await mount(App);
+  await expect(component).toContainText('Vite + Svelte');
+});
+```
+
+</TabItem>
+
+</Tabs>
+
+
 ### Step 3. Run the tests
+
+You can run tests using the [VS Code extension](./getting-started-vscode.md) or the command line.
 
 ```sh
 npm run test-ct

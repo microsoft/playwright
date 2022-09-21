@@ -86,6 +86,26 @@ test('render steps', async ({ runInlineTest }) => {
   ]);
 });
 
+test('very long console line should not mess terminal', async ({ runInlineTest }) => {
+  const TTY_WIDTH = 80;
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test('passes', async ({}) => {
+        console.log('a'.repeat(80) + 'b'.repeat(20));
+      });
+    `,
+  }, { reporter: 'list' }, { PWTEST_TTY_WIDTH: TTY_WIDTH + '' });
+
+  const renderedText = simpleAnsiRenderer(result.output, TTY_WIDTH);
+  if (process.platform === 'win32')
+    expect(renderedText).toContain('  ok 1 a.test.ts:6:7 › passes');
+  else
+    expect(renderedText).toContain('  ✓  1 a.test.ts:6:7 › passes');
+  expect(renderedText).not.toContain('     1 a.test.ts:6:7 › passes');
+  expect(renderedText).toContain('a'.repeat(80) + '\n' + 'b'.repeat(20));
+});
+
 test('render retries', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
@@ -149,3 +169,63 @@ test('should truncate long test names', async ({ runInlineTest }) => {
 
   expect(lines[7]).toBe(`  -  4 …› a.test.ts:13:12 › skipped very long name`);
 });
+
+function simpleAnsiRenderer(text, ttyWidth) {
+  let lineNumber = 0;
+  let columnNumber = 0;
+  const screenLines = [];
+  const ensureScreenSize = () => {
+    if (lineNumber < 0)
+      throw new Error('Bad terminal navigation!');
+    while (lineNumber >= screenLines.length)
+      screenLines.push(new Array(ttyWidth).fill(''));
+  };
+  const print = ch => {
+    ensureScreenSize();
+    if (ch === '\n') {
+      columnNumber = 0;
+      ++lineNumber;
+    } else {
+      screenLines[lineNumber][columnNumber++] = ch;
+      if (columnNumber === ttyWidth) {
+        columnNumber = 0;
+        ++lineNumber;
+      }
+    }
+    ensureScreenSize();
+  };
+
+  let index = 0;
+
+  const ansiCodes = [...text.matchAll(/\u001B\[(\d*)(.)/g)];
+  for (const ansiCode of ansiCodes) {
+    const [matchText, codeValue, codeType] = ansiCode;
+    const code = (codeValue + codeType).toUpperCase();
+    while (index < ansiCode.index)
+      print(text[index++]);
+    if (codeType.toUpperCase() === 'E') {
+      // Go X lines down
+      lineNumber += +codeValue;
+      ensureScreenSize();
+    } else if (codeType.toUpperCase() === 'A') {
+      // Go X lines up
+      lineNumber -= +codeValue;
+      ensureScreenSize();
+    } else if (code === '2K') {
+      // Erase full line
+      ensureScreenSize();
+      screenLines[lineNumber] = new Array(ttyWidth).fill('');
+    } else if (code === '0G') {
+      // Go to start
+      columnNumber = 0;
+    } else {
+      // Unsupported ANSI code (e.g. all colors).
+    }
+    index += matchText.length;
+  }
+  while (index < text.length)
+    print(text[index++]);
+
+  return screenLines.map(line => line.join('')).join('\n');
+}
+

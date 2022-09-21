@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import type { Tracing } from '../trace/recorder/tracing';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';

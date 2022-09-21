@@ -232,7 +232,7 @@ public class Tests : PageTest
         };
     }
 
-    [PlaywrightTestMethod]
+    [TestMethod]
     public async Task MyTest()
     {
         // Go to ${emptyHTML}
@@ -261,7 +261,7 @@ public class Tests : PageTest
         };
     }
 
-    [PlaywrightTest]
+    [Test]
     public async Task MyTest()
     {
         // Go to ${emptyHTML}

@@ -101,7 +101,7 @@ namespace PlaywrightTests;
 [TestFixture]
 public class Tests : PageTest
 {
-    [PlaywrightTest]
+    [Test]
     public async Task HomepageHasPlaywrightInTitleAndGetStartedLinkLinkingtoTheIntroPage()
     {
         await Page.GotoAsync("https://playwright.dev");
@@ -136,7 +136,7 @@ namespace PlaywrightTests;
 [TestClass]
 public class UnitTest1 : PageTest
 {
-    [PlaywrightTestMethod]
+    [TestMethod]
     public async Task HomepageHasPlaywrightInTitleAndGetStartedLinkLinkingtoTheIntroPage()
     {
         await Page.GotoAsync("https://playwright.dev");

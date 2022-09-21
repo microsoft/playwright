@@ -52,6 +52,7 @@ export type InitializerTraits<T> =
     T extends BrowserTypeChannel ? BrowserTypeInitializer :
     T extends SelectorsChannel ? SelectorsInitializer :
     T extends SocksSupportChannel ? SocksSupportInitializer :
+    T extends ReuseControllerChannel ? ReuseControllerInitializer :
     T extends PlaywrightChannel ? PlaywrightInitializer :
     T extends AndroidRootChannel ? AndroidRootInitializer :
     T extends RootChannel ? RootInitializer :
@@ -90,6 +91,7 @@ export type EventsTraits<T> =
     T extends BrowserTypeChannel ? BrowserTypeEvents :
     T extends SelectorsChannel ? SelectorsEvents :
     T extends SocksSupportChannel ? SocksSupportEvents :
+    T extends ReuseControllerChannel ? ReuseControllerEvents :
     T extends PlaywrightChannel ? PlaywrightEvents :
     T extends AndroidRootChannel ? AndroidRootEvents :
     T extends RootChannel ? RootEvents :
@@ -128,6 +130,7 @@ export type EventTargetTraits<T> =
     T extends BrowserTypeChannel ? BrowserTypeEventTarget :
     T extends SelectorsChannel ? SelectorsEventTarget :
     T extends SocksSupportChannel ? SocksSupportEventTarget :
+    T extends ReuseControllerChannel ? ReuseControllerEventTarget :
     T extends PlaywrightChannel ? PlaywrightEventTarget :
     T extends AndroidRootChannel ? AndroidRootEventTarget :
     T extends RootChannel ? RootEventTarget :
@@ -577,6 +580,117 @@ export type PlaywrightHideHighlightOptions = {};
 export type PlaywrightHideHighlightResult = void;
 
 export interface PlaywrightEvents {
+}
+
+export type RecorderSource = {
+  isRecorded: boolean,
+  id: string,
+  label: string,
+  text: string,
+  language: string,
+  highlight: {
+    line: number,
+    type: string,
+  }[],
+  revealLine?: number,
+  group?: string,
+};
+
+// ----------- ReuseController -----------
+export type ReuseControllerInitializer = {};
+export interface ReuseControllerEventTarget {
+  on(event: 'inspectRequested', callback: (params: ReuseControllerInspectRequestedEvent) => void): this;
+  on(event: 'browsersChanged', callback: (params: ReuseControllerBrowsersChangedEvent) => void): this;
+  on(event: 'sourcesChanged', callback: (params: ReuseControllerSourcesChangedEvent) => void): this;
+}
+export interface ReuseControllerChannel extends ReuseControllerEventTarget, Channel {
+  _type_ReuseController: boolean;
+  setTrackHierarchy(params: ReuseControllerSetTrackHierarchyParams, metadata?: Metadata): Promise<ReuseControllerSetTrackHierarchyResult>;
+  setReuseBrowser(params: ReuseControllerSetReuseBrowserParams, metadata?: Metadata): Promise<ReuseControllerSetReuseBrowserResult>;
+  resetForReuse(params?: ReuseControllerResetForReuseParams, metadata?: Metadata): Promise<ReuseControllerResetForReuseResult>;
+  navigateAll(params: ReuseControllerNavigateAllParams, metadata?: Metadata): Promise<ReuseControllerNavigateAllResult>;
+  setRecorderMode(params: ReuseControllerSetRecorderModeParams, metadata?: Metadata): Promise<ReuseControllerSetRecorderModeResult>;
+  setAutoClose(params: ReuseControllerSetAutoCloseParams, metadata?: Metadata): Promise<ReuseControllerSetAutoCloseResult>;
+  highlightAll(params: ReuseControllerHighlightAllParams, metadata?: Metadata): Promise<ReuseControllerHighlightAllResult>;
+  hideHighlightAll(params?: ReuseControllerHideHighlightAllParams, metadata?: Metadata): Promise<ReuseControllerHideHighlightAllResult>;
+  kill(params?: ReuseControllerKillParams, metadata?: Metadata): Promise<ReuseControllerKillResult>;
+  closeAllBrowsers(params?: ReuseControllerCloseAllBrowsersParams, metadata?: Metadata): Promise<ReuseControllerCloseAllBrowsersResult>;
+}
+export type ReuseControllerInspectRequestedEvent = {
+  selector: string,
+};
+export type ReuseControllerBrowsersChangedEvent = {
+  browsers: {
+    contexts: {
+      pages: string[],
+    }[],
+  }[],
+};
+export type ReuseControllerSourcesChangedEvent = {
+  sources: RecorderSource[],
+};
+export type ReuseControllerSetTrackHierarchyParams = {
+  enabled: boolean,
+};
+export type ReuseControllerSetTrackHierarchyOptions = {
+
+};
+export type ReuseControllerSetTrackHierarchyResult = void;
+export type ReuseControllerSetReuseBrowserParams = {
+  enabled: boolean,
+};
+export type ReuseControllerSetReuseBrowserOptions = {
+
+};
+export type ReuseControllerSetReuseBrowserResult = void;
+export type ReuseControllerResetForReuseParams = {};
+export type ReuseControllerResetForReuseOptions = {};
+export type ReuseControllerResetForReuseResult = void;
+export type ReuseControllerNavigateAllParams = {
+  url: string,
+};
+export type ReuseControllerNavigateAllOptions = {
+
+};
+export type ReuseControllerNavigateAllResult = void;
+export type ReuseControllerSetRecorderModeParams = {
+  mode: 'inspecting' | 'recording' | 'none',
+  language?: string,
+  file?: string,
+};
+export type ReuseControllerSetRecorderModeOptions = {
+  language?: string,
+  file?: string,
+};
+export type ReuseControllerSetRecorderModeResult = void;
+export type ReuseControllerSetAutoCloseParams = {
+  enabled: boolean,
+};
+export type ReuseControllerSetAutoCloseOptions = {
+
+};
+export type ReuseControllerSetAutoCloseResult = void;
+export type ReuseControllerHighlightAllParams = {
+  selector: string,
+};
+export type ReuseControllerHighlightAllOptions = {
+
+};
+export type ReuseControllerHighlightAllResult = void;
+export type ReuseControllerHideHighlightAllParams = {};
+export type ReuseControllerHideHighlightAllOptions = {};
+export type ReuseControllerHideHighlightAllResult = void;
+export type ReuseControllerKillParams = {};
+export type ReuseControllerKillOptions = {};
+export type ReuseControllerKillResult = void;
+export type ReuseControllerCloseAllBrowsersParams = {};
+export type ReuseControllerCloseAllBrowsersOptions = {};
+export type ReuseControllerCloseAllBrowsersResult = void;
+
+export interface ReuseControllerEvents {
+  'inspectRequested': ReuseControllerInspectRequestedEvent;
+  'browsersChanged': ReuseControllerBrowsersChangedEvent;
+  'sourcesChanged': ReuseControllerSourcesChangedEvent;
 }
 
 // ----------- SocksSupport -----------
@@ -4411,129 +4525,3 @@ export interface JsonPipeEvents {
   'message': JsonPipeMessageEvent;
   'closed': JsonPipeClosedEvent;
 }
-
-export const commandsWithTracingSnapshots = new Set([
-  'EventTarget.waitForEventInfo',
-  'BrowserContext.waitForEventInfo',
-  'Page.waitForEventInfo',
-  'WebSocket.waitForEventInfo',
-  'ElectronApplication.waitForEventInfo',
-  'AndroidDevice.waitForEventInfo',
-  'Page.goBack',
-  'Page.goForward',
-  'Page.reload',
-  'Page.expectScreenshot',
-  'Page.screenshot',
-  'Page.setViewportSize',
-  'Page.keyboardDown',
-  'Page.keyboardUp',
-  'Page.keyboardInsertText',
-  'Page.keyboardType',
-  'Page.keyboardPress',
-  'Page.mouseMove',
-  'Page.mouseDown',
-  'Page.mouseUp',
-  'Page.mouseClick',
-  'Page.mouseWheel',
-  'Page.touchscreenTap',
-  'Frame.evalOnSelector',
-  'Frame.evalOnSelectorAll',
-  'Frame.addScriptTag',
-  'Frame.addStyleTag',
-  'Frame.check',
-  'Frame.click',
-  'Frame.dragAndDrop',
-  'Frame.dblclick',
-  'Frame.dispatchEvent',
-  'Frame.evaluateExpression',
-  'Frame.evaluateExpressionHandle',
-  'Frame.fill',
-  'Frame.focus',
-  'Frame.getAttribute',
-  'Frame.goto',
-  'Frame.hover',
-  'Frame.innerHTML',
-  'Frame.innerText',
-  'Frame.inputValue',
-  'Frame.isChecked',
-  'Frame.isDisabled',
-  'Frame.isEnabled',
-  'Frame.isHidden',
-  'Frame.isVisible',
-  'Frame.isEditable',
-  'Frame.press',
-  'Frame.selectOption',
-  'Frame.setContent',
-  'Frame.setInputFiles',
-  'Frame.setInputFilePaths',
-  'Frame.tap',
-  'Frame.textContent',
-  'Frame.type',
-  'Frame.uncheck',
-  'Frame.waitForTimeout',
-  'Frame.waitForFunction',
-  'Frame.waitForSelector',
-  'Frame.expect',
-  'JSHandle.evaluateExpression',
-  'ElementHandle.evaluateExpression',
-  'JSHandle.evaluateExpressionHandle',
-  'ElementHandle.evaluateExpressionHandle',
-  'ElementHandle.evalOnSelector',
-  'ElementHandle.evalOnSelectorAll',
-  'ElementHandle.check',
-  'ElementHandle.click',
-  'ElementHandle.dblclick',
-  'ElementHandle.dispatchEvent',
-  'ElementHandle.fill',
-  'ElementHandle.hover',
-  'ElementHandle.innerHTML',
-  'ElementHandle.innerText',
-  'ElementHandle.inputValue',
-  'ElementHandle.isChecked',
-  'ElementHandle.isDisabled',
-  'ElementHandle.isEditable',
-  'ElementHandle.isEnabled',
-  'ElementHandle.isHidden',
-  'ElementHandle.isVisible',
-  'ElementHandle.press',
-  'ElementHandle.screenshot',
-  'ElementHandle.scrollIntoViewIfNeeded',
-  'ElementHandle.selectOption',
-  'ElementHandle.selectText',
-  'ElementHandle.setInputFiles',
-  'ElementHandle.setInputFilePaths',
-  'ElementHandle.tap',
-  'ElementHandle.textContent',
-  'ElementHandle.type',
-  'ElementHandle.uncheck',
-  'ElementHandle.waitForElementState',
-  'ElementHandle.waitForSelector'
-]);
-
-export const pausesBeforeInputActions = new Set([
-  'Frame.check',
-  'Frame.click',
-  'Frame.dragAndDrop',
-  'Frame.dblclick',
-  'Frame.fill',
-  'Frame.hover',
-  'Frame.press',
-  'Frame.selectOption',
-  'Frame.setInputFiles',
-  'Frame.setInputFilePaths',
-  'Frame.tap',
-  'Frame.type',
-  'Frame.uncheck',
-  'ElementHandle.check',
-  'ElementHandle.click',
-  'ElementHandle.dblclick',
-  'ElementHandle.fill',
-  'ElementHandle.hover',
-  'ElementHandle.press',
-  'ElementHandle.selectOption',
-  'ElementHandle.setInputFiles',
-  'ElementHandle.setInputFilePaths',
-  'ElementHandle.tap',
-  'ElementHandle.type',
-  'ElementHandle.uncheck'
-]);

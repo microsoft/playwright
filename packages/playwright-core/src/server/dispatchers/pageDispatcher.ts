@@ -17,7 +17,7 @@
 import type { BrowserContext } from '../browserContext';
 import type { Frame } from '../frames';
 import { Page, Worker } from '../page';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { Dispatcher, existingDispatcher, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError } from '../../protocol/serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';

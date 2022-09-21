@@ -16,7 +16,7 @@
 
 import './callLog.css';
 import * as React from 'react';
-import type { CallLog } from '@playwright-core/server/recorder/recorderTypes';
+import type { CallLog } from './recorderTypes';
 import { msToString } from '@web/uiUtils';
 
 export interface CallLogProps {
@@ -54,7 +54,7 @@ export const CallLogView: React.FC<CallLogProps> = ({
             { message.trim() }
           </div>;
         })}
-        { !!callLog.error && <div className='call-log-message error' hidden={!isExpanded}>{ callLog.error.error?.message }</div> }
+        { !!callLog.error && <div className='call-log-message error' hidden={!isExpanded}>{ callLog.error }</div> }
       </div>;
     })}
     <div ref={messagesEndRef}></div>

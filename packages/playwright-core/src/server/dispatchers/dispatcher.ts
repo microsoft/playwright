@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { serializeError } from '../../protocol/serializers';
 import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
 import { assert, debugAssert, isUnderTest, monotonicTime } from '../../utils';
