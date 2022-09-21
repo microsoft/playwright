@@ -249,7 +249,7 @@ onChanges.push({
 onChanges.push({
   committed: false,
   inputs: [
-    'packages/playwright-core/src/protocol/protocol.yml'
+    'packages/protocol/src/protocol.yml'
   ],
   script: 'utils/generate_channels.js',
 });
