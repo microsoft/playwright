@@ -230,4 +230,3 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return browser;
   }
 }
-
