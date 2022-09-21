@@ -162,17 +162,27 @@ function tChannelForSocks(names: '*' | string[], arg: any, path: string, context
 async function urlToWSEndpoint(progress: Progress, endpointURL: string): Promise<string> {
   if (endpointURL.startsWith('ws'))
     return endpointURL;
+
   progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
-  const parsedUrl = new URL(endpointURL);
-  parsedUrl.pathname = 'json';
+  const fetchUrl = new URL(endpointURL);
+  if (!fetchUrl.pathname.endsWith('/'))
+    fetchUrl.pathname += '/';
+  fetchUrl.pathname += 'json';
   const json = await fetchData({
-    url: parsedUrl.toString(),
+    url: fetchUrl.toString(),
     method: 'GET',
     timeout: progress.timeUntilDeadline(),
   });
   progress.throwIfAborted();
 
-  parsedUrl.pathname = JSON.parse(json).wsEndpointPath;
-  parsedUrl.protocol = parsedUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-  return parsedUrl.toString();
+  const wsUrl = new URL(endpointURL);
+  const wsEndpointPath = JSON.parse(json).wsEndpointPath;
+  if (wsUrl.pathname.endsWith('/') !== wsEndpointPath.startsWith('/'))
+    wsUrl.pathname += wsEndpointPath;
+  else if (wsEndpointPath.startsWith('/'))
+    wsUrl.pathname += wsEndpointPath.substring(1);
+  else
+    wsUrl.pathname += '/' + wsEndpointPath;
+  wsUrl.protocol = wsUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+  return wsUrl.toString();
 }
