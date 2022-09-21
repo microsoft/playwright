@@ -32,7 +32,6 @@ import { Browser } from '../browser';
 import type * as types from '../types';
 import type * as channels from '../../protocol/channels';
 import type { HTTPRequestParams } from '../../common/netUtils';
-import { NET_DEFAULT_TIMEOUT } from '../../common/netUtils';
 import { fetchData } from '../../common/netUtils';
 import { getUserAgent } from '../../common/userAgent';
 import { debugMode, headersArrayToObject, streamToString, wrapInASCIIBox } from '../../utils';
@@ -82,7 +81,6 @@ export class Chromium extends BrowserType {
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
 
     const wsEndpoint = await urlToWSEndpoint(progress, endpointURL);
-    progress.throwIfAborted();
 
     const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, headersMap);
     const cleanedUp = new ManualPromise<void>();
@@ -364,20 +362,15 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string) {
     return endpointURL;
   progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
   const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/version/` : `${endpointURL}/json/version/`;
-  const request = endpointURL.startsWith('https') ? https : http;
-  const json = await new Promise<string>((resolve, reject) => {
-    request.get(httpURL, {
-      timeout: NET_DEFAULT_TIMEOUT,
-    }, resp => {
-      if (resp.statusCode! < 200 || resp.statusCode! >= 400) {
-        reject(new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +
-        `This does not look like a DevTools server, try connecting via ws://.`));
-      }
-      let data = '';
-      resp.on('data', chunk => data += chunk);
-      resp.on('end', () => resolve(data));
-    }).on('error', reject);
-  });
+  const onError = async (params: HTTPRequestParams, response: http.IncomingMessage) => {
+    return new Error(`Unexpected status ${response.statusCode} when connecting to ${httpURL}.\n` +
+        `This does not look like a DevTools server, try connecting via ws://.`);
+  };
+  const json = await fetchData({
+    url: httpURL,
+    timeout: progress.timeUntilDeadline(),
+  }, onError);
+  progress.throwIfAborted();
   return JSON.parse(json).webSocketDebuggerUrl;
 }
 
