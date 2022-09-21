@@ -42,8 +42,7 @@ import { ProgressController } from '../progress';
 import { TimeoutSettings } from '../../common/timeoutSettings';
 import { helper } from '../helper';
 import type { CallMetadata } from '../instrumentation';
-import http from 'http';
-import https from 'https';
+import type http from 'http';
 import { registry } from '../registry';
 import { ManualPromise } from '../../utils/manualPromise';
 import { validateBrowserContextOptions } from '../browserContext';
@@ -367,6 +366,7 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string) {
         `This does not look like a DevTools server, try connecting via ws://.`);
   };
   const json = await fetchData({
+    method: 'GET',
     url: httpURL,
     timeout: progress.timeUntilDeadline(),
   }, onError);
