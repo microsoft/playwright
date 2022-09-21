@@ -17,7 +17,6 @@
 /* eslint-disable no-console */
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
-import * as docker from './docker/docker';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
@@ -33,58 +32,6 @@ export function addTestCommands(program: Command) {
   addTestCommand(program);
   addShowReportCommand(program);
   addListFilesCommand(program);
-  addDockerCommand(program);
-}
-
-function addDockerCommand(program: Command) {
-  const dockerCommand = program.command('docker')
-      .description(`Manage Docker integration (EXPERIMENTAL)`);
-
-  dockerCommand.command('build')
-      .description('build local docker image')
-      .action(async function(options) {
-        try {
-          await docker.buildPlaywrightImage();
-        } catch (e) {
-          console.error(e.stack ? e : e.message);
-        }
-      });
-
-  dockerCommand.command('start')
-      .description('start docker container')
-      .action(async function(options) {
-        try {
-          await docker.startPlaywrightContainer();
-        } catch (e) {
-          console.error(e.stack ? e : e.message);
-        }
-      });
-
-  dockerCommand.command('stop')
-      .description('stop docker container')
-      .action(async function(options) {
-        try {
-          await docker.stopAllPlaywrightContainers();
-        } catch (e) {
-          console.error(e.stack ? e : e.message);
-        }
-      });
-
-  dockerCommand.command('delete-image', { hidden: true })
-      .description('delete docker image, if any')
-      .action(async function(options) {
-        try {
-          await docker.deletePlaywrightImage();
-        } catch (e) {
-          console.error(e.stack ? e : e.message);
-        }
-      });
-
-  dockerCommand.command('print-status-json', { hidden: true })
-      .description('print docker status')
-      .action(async function(options) {
-        await docker.printDockerStatus();
-      });
 }
 
 function addTestCommand(program: Command) {

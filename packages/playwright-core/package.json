@@ -24,6 +24,7 @@
     "./lib/outofprocess": "./lib/outofprocess.js",
     "./lib/utils": "./lib/utils/index.js",
     "./lib/common/userAgent": "./lib/common/userAgent.js",
+    "./lib/containers/docker": "./lib/containers/docker.js",
     "./lib/utils/comparators": "./lib/utils/comparators.js",
     "./lib/utils/eventsHelper": "./lib/utils/eventsHelper.js",
     "./lib/utils/fileUtils": "./lib/utils/fileUtils.js",

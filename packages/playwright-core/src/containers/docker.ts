@@ -17,13 +17,11 @@
 
 import path from 'path';
 import fs from 'fs';
-import { colors } from 'playwright-core/lib/utilsBundle';
-import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
-import * as utils from 'playwright-core/lib/utils';
-import { getPlaywrightVersion } from 'playwright-core/lib/common/userAgent';
+import { spawnAsync } from '../utils/spawnAsync';
+import * as utils from '../utils';
+import { getPlaywrightVersion } from '../common/userAgent';
 import * as dockerApi from './dockerApi';
-import type { TestRunnerPlugin } from '../plugins';
-import type { FullConfig, Reporter, Suite } from '../../types/testReporter';
+import type { Command } from '../utilsBundle';
 
 const VRT_IMAGE_DISTRO = 'focal';
 const VRT_IMAGE_NAME = `playwright:local-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
@@ -31,7 +29,7 @@ const VRT_CONTAINER_NAME = `playwright-${getPlaywrightVersion()}-${VRT_IMAGE_DIS
 const VRT_CONTAINER_LABEL_NAME = 'dev.playwright.vrt-service.version';
 const VRT_CONTAINER_LABEL_VALUE = '1';
 
-export async function startPlaywrightContainer() {
+async function startPlaywrightContainer() {
   await checkDockerEngineIsRunningOrDie();
 
   let info = await containerInfo();
@@ -52,7 +50,7 @@ export async function startPlaywrightContainer() {
   ].join('\n'));
 }
 
-export async function stopAllPlaywrightContainers() {
+async function stopAllPlaywrightContainers() {
   await checkDockerEngineIsRunningOrDie();
 
   const allContainers = await dockerApi.listContainers();
@@ -63,7 +61,7 @@ export async function stopAllPlaywrightContainers() {
   })));
 }
 
-export async function deletePlaywrightImage() {
+async function deletePlaywrightImage() {
   await checkDockerEngineIsRunningOrDie();
 
   const dockerImage = await findDockerImage(VRT_IMAGE_NAME);
@@ -75,7 +73,7 @@ export async function deletePlaywrightImage() {
   await dockerApi.removeImage(dockerImage.imageId);
 }
 
-export async function buildPlaywrightImage() {
+async function buildPlaywrightImage() {
   await checkDockerEngineIsRunningOrDie();
 
   const isDevelopmentMode = getPlaywrightVersion().includes('next');
@@ -130,44 +128,12 @@ export async function buildPlaywrightImage() {
   console.log(`Done!`);
 }
 
-export const dockerPlugin: TestRunnerPlugin = {
-  name: 'playwright:docker',
-
-  async setup(config: FullConfig, configDir: string, rootSuite: Suite, reporter: Reporter) {
-    if (!process.env.PLAYWRIGHT_DOCKER)
-      return;
-
-    const print = (text: string) => reporter.onStdOut?.(text);
-    const println = (text: string) => reporter.onStdOut?.(text + '\n');
-
-    println(colors.dim('Using docker container to run browsers.'));
-    await checkDockerEngineIsRunningOrDie();
-    let info = await containerInfo();
-    if (!info) {
-      print(colors.dim(`Starting docker container... `));
-      const time = Date.now();
-      info = await ensurePlaywrightContainerOrDie();
-      const deltaMs = (Date.now() - time);
-      println(colors.dim('Done in ' + (deltaMs / 1000).toFixed(1) + 's'));
-      println(colors.dim('The Docker container will keep running after tests finished.'));
-      println(colors.dim('Stop manually using:'));
-      println(colors.dim('    npx playwright docker stop'));
-    }
-    println(colors.dim(`View screen: ${info.vncSession}`));
-    println('');
-    process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.wsEndpoint;
-    process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
-      'x-playwright-proxy': '*',
-    });
-  },
-};
-
 interface ContainerInfo {
   wsEndpoint: string;
   vncSession: string;
 }
 
-export async function printDockerStatus() {
+async function printDockerStatus() {
   const isDockerEngine = await dockerApi.checkEngineRunning();
   const imageIsPulled = isDockerEngine && !!(await findDockerImage(VRT_IMAGE_NAME));
   const info = isDockerEngine ? await containerInfo() : undefined;
@@ -180,7 +146,7 @@ export async function printDockerStatus() {
   }, null, 2));
 }
 
-async function containerInfo(): Promise<ContainerInfo|undefined> {
+export async function containerInfo(): Promise<ContainerInfo|undefined> {
   const allContainers = await dockerApi.listContainers();
   const pwDockerImage = await findDockerImage(VRT_IMAGE_NAME);
   const container = allContainers.find(container => container.imageId === pwDockerImage?.imageId && container.state === 'running');
@@ -210,7 +176,7 @@ async function containerInfo(): Promise<ContainerInfo|undefined> {
   return wsEndpoint && vncSession ? { wsEndpoint, vncSession } : undefined;
 }
 
-async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
+export async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
   const pwImage = await findDockerImage(VRT_IMAGE_NAME);
   if (!pwImage) {
     throw createStacklessError('\n' + utils.wrapInASCIIBox([
@@ -284,7 +250,7 @@ async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
   return info;
 }
 
-async function checkDockerEngineIsRunningOrDie() {
+export async function checkDockerEngineIsRunningOrDie() {
   if (await dockerApi.checkEngineRunning())
     return;
   throw createStacklessError(utils.wrapInASCIIBox([
@@ -305,4 +271,55 @@ function createStacklessError(message: string) {
   const error = new Error(message);
   error.stack = '';
   return error;
+}
+
+export function addDockerCLI(program: Command) {
+  const dockerCommand = program.command('docker')
+      .description(`Manage Docker integration (EXPERIMENTAL)`);
+
+  dockerCommand.command('build')
+      .description('build local docker image')
+      .action(async function(options) {
+        try {
+          await buildPlaywrightImage();
+        } catch (e) {
+          console.error(e.stack ? e : e.message);
+        }
+      });
+
+  dockerCommand.command('start')
+      .description('start docker container')
+      .action(async function(options) {
+        try {
+          await startPlaywrightContainer();
+        } catch (e) {
+          console.error(e.stack ? e : e.message);
+        }
+      });
+
+  dockerCommand.command('stop')
+      .description('stop docker container')
+      .action(async function(options) {
+        try {
+          await stopAllPlaywrightContainers();
+        } catch (e) {
+          console.error(e.stack ? e : e.message);
+        }
+      });
+
+  dockerCommand.command('delete-image', { hidden: true })
+      .description('delete docker image, if any')
+      .action(async function(options) {
+        try {
+          await deletePlaywrightImage();
+        } catch (e) {
+          console.error(e.stack ? e : e.message);
+        }
+      });
+
+  dockerCommand.command('print-status-json', { hidden: true })
+      .description('print docker status')
+      .action(async function(options) {
+        await printDockerStatus();
+      });
 }
