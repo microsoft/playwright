@@ -10723,7 +10723,7 @@ export interface BrowserType<Unused = {}> {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
        * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
        * all other file extensions.
        */
@@ -11927,7 +11927,7 @@ export interface AndroidDevice {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
        * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
        * all other file extensions.
        */
@@ -13660,7 +13660,7 @@ export interface Browser extends EventEmitter {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
        * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
        * all other file extensions.
        */
@@ -14454,7 +14454,7 @@ export interface Electron {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
        * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
        * all other file extensions.
        */
@@ -16288,7 +16288,7 @@ export interface BrowserContextOptions {
 
     /**
      * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-     * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+     * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
      * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
      * all other file extensions.
      */
