@@ -647,7 +647,7 @@ test('should connect when launching', async ({ browserType, startRemoteServer, h
 });
 
 test('should connect over http', async ({ browserType, startRemoteServer, mode }) => {
-  test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.
+  test.skip(mode !== 'default');
   const remoteServer = await startRemoteServer();
 
   const url = new URL(remoteServer.wsEndpoint());

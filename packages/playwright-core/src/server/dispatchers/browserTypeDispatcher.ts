@@ -65,7 +65,6 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     return await controller.run(async progress => {
       const paramsHeaders = Object.assign({ 'User-Agent': getUserAgent() }, params.headers || {});
       const wsEndpoint = await urlToWSEndpoint(progress, params.wsEndpoint);
-      progress.throwIfAborted();
 
       const transport = await WebSocketTransport.connect(progress, wsEndpoint, paramsHeaders, true);
       let socksInterceptor: SocksInterceptor | undefined;
@@ -164,11 +163,16 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string): Promise
   if (endpointURL.startsWith('ws'))
     return endpointURL;
   progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
-  const url = new URL(endpointURL);
-  url.pathname = '/json';
+  const parsedUrl = new URL(endpointURL);
+  parsedUrl.pathname = 'json';
   const json = await fetchData({
-    url: url.toString(),
+    url: parsedUrl.toString(),
     method: 'GET',
+    timeout: progress.timeUntilDeadline(),
   });
-  return JSON.parse(json).wsEndpoint;
+  progress.throwIfAborted();
+
+  parsedUrl.pathname = JSON.parse(json).wsEndpointPath;
+  parsedUrl.protocol = parsedUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+  return parsedUrl.toString();
 }

@@ -68,12 +68,11 @@ export class PlaywrightServer {
   }
 
   async listen(port: number = 0): Promise<string> {
-    let wsEndpoint: string | undefined = undefined;
     const server = http.createServer((request: http.IncomingMessage, response: http.ServerResponse) => {
       if (request.method === 'GET' && request.url === '/json') {
         response.setHeader('Content-Type', 'application/json');
         response.end(JSON.stringify({
-          wsEndpoint,
+          wsEndpointPath: this._options.path,
         }));
         return;
       }
@@ -81,7 +80,7 @@ export class PlaywrightServer {
     });
     server.on('error', error => debugLog(error));
 
-    wsEndpoint = await new Promise<string>((resolve, reject) => {
+    const wsEndpoint = await new Promise<string>((resolve, reject) => {
       server.listen(port, () => {
         const address = server.address();
         if (!address) {
