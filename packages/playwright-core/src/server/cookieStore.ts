@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 
 class Cookie {
   private _raw: channels.NetworkCookie;

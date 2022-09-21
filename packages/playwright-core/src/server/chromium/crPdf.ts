@@ -16,7 +16,7 @@
  */
 
 import { assert } from '../../utils';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import type { CRSession } from './crConnection';
 import { readProtocolStream } from './crProtocolHelper';
 

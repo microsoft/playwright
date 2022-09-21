@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { StackFrame } from '@playwright-core/protocol/channels';
-import type { ActionTraceEvent } from '@playwright-core/server/trace/common/traceEvents';
+import type { StackFrame } from '@protocol/channels';
+import type { ActionTraceEvent } from '@trace/trace';
 import { Source as SourceView } from '@web/components/source';
 import { SplitView } from '@web/components/splitView';
 import '@web/third_party/highlightjs/highlightjs/tomorrow.css';

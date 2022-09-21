@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import './stackTrace.css';
-import type { ActionTraceEvent } from '@playwright-core/server/trace/common/traceEvents';
+import type { ActionTraceEvent } from '@trace/trace';
 
 export const StackTraceView: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,

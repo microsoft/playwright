@@ -17,7 +17,7 @@
 import React from 'react';
 import { test, expect } from '@playwright/experimental-ct-react';
 import { TestCaseView } from './testCaseView';
-import type { TestCase, TestResult } from '../../playwright-test/src/reporters/html';
+import type { TestCase, TestResult } from './types';
 
 test.use({ viewport: { width: 800, height: 600 } });
 

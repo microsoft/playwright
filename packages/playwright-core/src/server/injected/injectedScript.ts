@@ -26,7 +26,7 @@ import { SelectorEvaluatorImpl } from './selectorEvaluator';
 import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost } from './domUtils';
 import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
 import { generateSelector } from './selectorGenerator';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
 import { getAriaDisabled, getAriaRole, getElementAccessibleName } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';

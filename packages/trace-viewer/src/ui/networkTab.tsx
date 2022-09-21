@@ -15,7 +15,7 @@
  */
 
 import * as React from 'react';
-import type { ActionTraceEvent } from '@playwright-core/server/trace/common/traceEvents';
+import type { ActionTraceEvent } from '@trace/trace';
 import * as modelUtil from './modelUtil';
 import { NetworkResourceDetails } from './networkResourceDetails';
 import './networkTab.css';

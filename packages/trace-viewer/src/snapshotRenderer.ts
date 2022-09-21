@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from '@playwright-core/server/trace/common/snapshotTypes';
+import type { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
 
 export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];

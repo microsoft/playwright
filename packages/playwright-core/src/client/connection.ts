@@ -30,7 +30,7 @@ import { parseError } from '../protocol/serializers';
 import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
 import { Electron, ElectronApplication } from './electron';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { Stream } from './stream';
 import { WritableStream } from './writableStream';
 import { debugLogger } from '../common/debugLogger';

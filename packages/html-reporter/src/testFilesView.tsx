@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { HTMLReport, TestFileSummary } from '@playwright-test/reporters/html';
+import type { HTMLReport, TestFileSummary } from './types';
 import * as React from 'react';
 import type { Filter } from './filter';
 import { TestFileView } from './testFileView';
