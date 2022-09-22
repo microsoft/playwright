@@ -29,7 +29,8 @@ import { ProgressController } from '../progress';
 import type { Progress } from '../progress';
 import { WebSocketTransport } from '../transport';
 import { findValidator, ValidationError, type ValidatorContext } from '../../protocol/validator';
-import { fetchData } from '../../common/netUtils';
+import { fetchData, HTTPRequestParams } from '../../common/netUtils';
+import http from 'http';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel, RootDispatcher> implements channels.BrowserTypeChannel {
   _type_BrowserType = true;
@@ -172,6 +173,10 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string): Promise
     url: fetchUrl.toString(),
     method: 'GET',
     timeout: progress.timeUntilDeadline(),
+    headers: { 'User-Agent': getUserAgent() },
+  }, async (params: HTTPRequestParams, response: http.IncomingMessage) => {
+    return new Error(`Unexpected status ${response.statusCode} when connecting to ${fetchUrl.toString()}.\n` +
+        `This does not look like a Playwright server, try connecting via ws://.`);
   });
   progress.throwIfAborted();
 
