@@ -105,7 +105,6 @@ const { _android } = require('playwright');
   await page.screenshot({ path: 'page-chrome-1.png' });
 
   await context.close();
-  await device.close();
 })();
 ```
 

@@ -144,9 +144,6 @@ export class Connection extends EventEmitter {
     if (id) {
       debugLogger.log('channel:response', message);
       let callback = this._callbacks.get(id);
-      if (id === 1 && result && result.playwright && result.playwright.guid && result.playwright.guid.includes("android-device@")) {
-        callback!.type = "AndroidRoot"
-      }
 
       if (!callback)
         throw new Error(`Cannot find command to respond: ${id}`);

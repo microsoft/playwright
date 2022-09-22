@@ -11657,7 +11657,6 @@ export {};
  *   await page.screenshot({ path: 'page-chrome-1.png' });
  *
  *   await context.close();
- *   await device.close();
  * })();
  * ```
  *

@@ -174,7 +174,7 @@ export class AndroidRootDispatcher extends Dispatcher<{ guid: '' }, any, any> {
     assert(!this._initialized);
     this._initialized = true;
     return {
-      playwright: await this.createPlaywright(this, params)
+      playwright: await this.createPlaywright((this as any), params)
     };
   }
 }

@@ -56,10 +56,12 @@ export class PlaywrightConnection {
     this._ws = ws;
     this._preLaunched = preLaunched;
     this._options = options;
-    // if (mode === 'reuse-browser' || mode === 'use-pre-launched-browser')
-    //   assert(preLaunched.playwright);
-    // if (mode === 'use-pre-launched-browser')
-    //   assert(preLaunched.browser);
+    if (mode === 'reuse-browser' || mode === 'use-pre-launched-browser')
+      assert(preLaunched.playwright);
+    if (mode === 'use-pre-launched-browser')
+      assert(preLaunched.browser);
+    if (mode === 'use-pre-launched-android-device')
+      assert(preLaunched.android);
     this._onClose = onClose;
     this._debugLog = log;
 
@@ -82,7 +84,7 @@ export class PlaywrightConnection {
       return;
     }
 
-    if (this._preLaunched.android) {
+    if (mode === 'use-pre-launched-android-device') {
       this._root = new AndroidRootDispatcher(this._dispatcherConnection, async scope => {
         assert(this._preLaunched.android)
         return await this._initPreLaunchedAndroidMode(scope, this._preLaunched.android);

@@ -36,9 +36,9 @@ export class AndroidServerLauncherImpl implements BrowserServerLauncher {
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
     const playwright = createPlaywright('javascript');
-    // 1. Pre-launch the browser
+    // 1. Pre-launch the Device
     const metadata = serverSideCallMetadata();
-    let browsers = await playwright[this._browserName].launch(metadata, {
+    let devices = await playwright[this._browserName].launch(metadata, {
       ...options,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
@@ -52,33 +52,26 @@ export class AndroidServerLauncherImpl implements BrowserServerLauncher {
     
     try {
       if (options.deviceSerialNumber) {
-        browsers = browsers.filter((ele) => ele.serial === options.deviceSerialNumber);
+        devices = devices.filter((ele) => ele.serial === options.deviceSerialNumber);
       }
     } catch(err) {
       console.log(`Some Exception Occurred while filtering browsers list. Error Details: ${JSON.stringify(err)}`);
     }
-    let browser = browsers[0];
+    let device = devices[0];
 
     let path = `/${createGuid()}`;
     if (options.wsPath)
       path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
 
     // 2. Start the server
-    const server = new PlaywrightServer('use-pre-launched-browser', { path, maxConcurrentConnections: Infinity, maxIncomingConnections: Infinity, enableSocksProxy: false, preLaunchedAndroidDevice: browser });
+    const server = new PlaywrightServer('use-pre-launched-android-device', { path, maxConcurrentConnections: Infinity, maxIncomingConnections: Infinity, enableSocksProxy: false, preLaunchedAndroidDevice: device });
     const wsEndpoint = await server.listen(options.port);
 
     // 3. Return the BrowserServer interface
     const browserServer = new ws.EventEmitter() as (BrowserServer & WebSocketEventEmitter);
-    // browserServer.process = () => browser.options.browserProcess.process!;
     browserServer.wsEndpoint = () => wsEndpoint;
-    // browserServer.close = () => browser.options.browserProcess.close();
-    // browserServer.kill = () => browser.options.browserProcess.kill();
+    browserServer.close = () => device.close();
     (browserServer as any)._disconnectForTest = () => server.close();
-    // (browserServer as any)._userDataDirForTest = (browser as any)._userDataDirForTest;
-    // browser.options.browserProcess.onclose = async (exitCode, signal) => {
-    //   server.close();
-    //   browserServer.emit('close', exitCode, signal);
-    // };
     return browserServer;
   }
 }

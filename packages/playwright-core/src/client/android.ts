@@ -79,7 +79,6 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
     const logger = params.logger;
     return await this._wrapApiCall(async () => {
       const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
-      let browser: AndroidDevice;
       const headers = { 'x-playwright-browser': this.name(), ...params.headers };
       const connectParams: channels.BrowserTypeConnectParams = { wsEndpoint, headers, slowMo: params.slowMo, timeout: params.timeout };
       if ((params as any).__testHookRedirectPortForwarding)
@@ -88,19 +87,10 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
       const closePipe = () => pipe.close().catch(() => {});
       const connection = new Connection(this._connection.localUtils());
       connection.markAsRemote();
-      connection.on('close', () => {console.log('connection close'); closePipe()});
+      connection.on('close', () => closePipe());
 
       let closeError: string | undefined;
-      const onPipeClosed = () => {
-        // Emulate all pages, contexts and the browser closing upon disconnect.
-        // for (const context of browser?.contexts() || []) {
-        //   for (const page of context.pages())
-        //     page._onClose();
-        //   context._onClose();
-        // }
-        // browser?._didClose();
-        connection.close(closeError || kDeviceClosedError);
-      };
+      const onPipeClosed = () => connection.close(closeError || kDeviceClosedError);
       pipe.on('closed', onPipeClosed);
       connection.onmessage = message => pipe.send({ message }).catch(onPipeClosed);
 
@@ -120,17 +110,13 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
           await (params as any).__testHookBeforeCreateBrowser();
 
         const playwright = await connection!.initializeAndroidDevice();
-        // if (!playwright._initializer.preLaunchedBrowser) {
-        //   console.log('playwright._initializer.preLaunchedBrowser does not exist');
-        //   closePipe();
-        //   throw new Error('Malformed endpoint. Did you use launchServer method?');
-        // }
-        // playwright._setSelectors(this._playwright.selectors);
-        // browser = AndroidDevice.from(playwright._initializer);
-        // browser._logger = logger;
-        // browser._shouldCloseConnectionOnClose = true;
-        // browser._setBrowserType(this);
-        // browser.on(Events.Browser.Disconnected, closePipe);
+        if (!playwright) {
+          console.log('Connection to Android Device does not exist');
+          closePipe();
+          throw new Error('Malformed endpoint. Did you use launchServer method?');
+        }
+        playwright._logger = logger;
+        playwright.on(Events.AndroidDevice.Close, playwright.close);
         return playwright;
       }, deadline ? deadline - monotonicTime() : 0);
       if (!result.timedOut) {

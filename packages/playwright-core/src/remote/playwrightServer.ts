@@ -37,7 +37,7 @@ function newLogger() {
 }
 
 // TODO: replace 'reuse-browser' with 'allow-reuse' in 1.27.
-export type Mode = 'use-pre-launched-browser' | 'reuse-browser' | 'auto';
+export type Mode = 'use-pre-launched-browser' | 'use-pre-launched-android-device' | 'reuse-browser' | 'auto';
 
 type ServerOptions = {
   path: string;
@@ -57,10 +57,12 @@ export class PlaywrightServer {
   constructor(mode: Mode, options: ServerOptions) {
     this._mode = mode;
     this._options = options;
-    // if (mode === 'use-pre-launched-browser') {
-    //   assert(options.preLaunchedBrowser);
-    //   this._preLaunchedPlaywright = options.preLaunchedBrowser.options.rootSdkObject as Playwright;
-    // }
+    if (mode === 'use-pre-launched-browser') {
+      assert(options.preLaunchedBrowser);
+      this._preLaunchedPlaywright = options.preLaunchedBrowser.options.rootSdkObject as Playwright;
+    }
+    if (mode === 'use-pre-launched-android-device')
+      assert(options.preLaunchedAndroidDevice);
   }
 
   preLaunchedPlaywright(): Playwright {
