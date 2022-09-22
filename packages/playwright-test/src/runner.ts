@@ -21,6 +21,7 @@ import * as path from 'path';
 import { promisify } from 'util';
 import type { TestGroup } from './dispatcher';
 import { Dispatcher } from './dispatcher';
+import { forceRegExp } from './util';
 import type { TestFileFilter } from './util';
 import { createFileMatcher, createTitleMatcher, serializeError } from './util';
 import type { TestCase } from './test';
@@ -226,37 +227,31 @@ export class Runner {
 
   private async _collectFiles(testFileFilters: TestFileFilter[], projectNames?: string[]): Promise<Map<FullProjectInternal, string[]>> {
     const testFileFilter = testFileFilters.length ? createFileMatcher(testFileFilters.map(e => e.re || e.exact || '')) : () => true;
-    let projectsToFind: Set<string> | undefined;
-    let unknownProjects: Map<string, string> | undefined;
+    let unmatchedProjectFilters: Map<string, string> | undefined;
     if (projectNames) {
-      projectsToFind = new Set();
-      unknownProjects = new Map();
+      unmatchedProjectFilters = new Map();
       projectNames.forEach(n => {
         const name = n.toLocaleLowerCase();
-        projectsToFind!.add(name);
-        unknownProjects!.set(name, n);
+        unmatchedProjectFilters!.set(name, n);
       });
     }
     const fullConfig = this._loader.fullConfig();
     const projects = fullConfig.projects.filter(project => {
-      if (!projectsToFind)
+      if (!projectNames)
         return true;
-      const name = project.name.toLocaleLowerCase();
-      unknownProjects!.delete(name);
-      for (const value of projectsToFind) {
-        const match = new RegExp('^' + value.replace(/\*/g, '.*').replace(/\?/g, '.?') + '$');
-        if (match.test(name)) {
-          unknownProjects!.delete(value);
+      for (const value of projectNames!) {
+        const match = forceRegExp('/^' + value + '$/i');
+        if (match.test(project.name)) {
+          unmatchedProjectFilters!.delete(value);
           return true;
         }
       }
-      return projectsToFind.has(name);
     });
-    if (unknownProjects && unknownProjects.size) {
+    if (unmatchedProjectFilters && unmatchedProjectFilters.size) {
       const names = fullConfig.projects.map(p => p.name).filter(name => !!name);
       if (!names.length)
         throw new Error(`No named projects are specified in the configuration file`);
-      const unknownProjectNames = Array.from(unknownProjects.values()).map(n => `"${n}"`).join(', ');
+      const unknownProjectNames = Array.from(unmatchedProjectFilters.values()).map(n => `"${n}"`).join(', ');
       throw new Error(`Project(s) ${unknownProjectNames} not found. Available named projects: ${names.map(name => `"${name}"`).join(', ')}`);
     }
 

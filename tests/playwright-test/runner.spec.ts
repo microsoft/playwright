@@ -460,7 +460,7 @@ test('should allow wildcards in project option', async ({ runInlineTest }) => {
       test('one', async ({}) => {
         expect(1).toBe(1);
       });    `
-  }, { project: '*oj*t-na?e' }, {}, {});
+  }, { project: '.*oj.*t-na.?e' }, {}, {});
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain('Running 1 test using 1 worker');
 });
