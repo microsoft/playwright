@@ -27,7 +27,7 @@ import * as os from 'os';
 import type { BuiltInReporter, ConfigCLIOverrides } from './runner';
 import type { Reporter } from '../types/testReporter';
 import { builtInReporters } from './runner';
-import { isRegExp, calculateSha1 } from 'playwright-core/lib/utils';
+import { isRegExp, calculateSha1, isString, isObject } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
 import { FixturePool, isFixtureOption } from './fixtures';
 import type { TestTypeImpl } from './testType';
@@ -167,6 +167,10 @@ export class Loader {
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
     this._assignUniqueProjectIds(this._fullConfig.projects);
+    // TODO: clone, resolve project
+    // TODO: define default group?
+    if (config.groups !== undefined)
+      this._fullConfig.groups = config.groups as any;
   }
 
   private _assignUniqueProjectIds(projects: FullProjectInternal[]) {
@@ -538,6 +542,8 @@ function validateConfig(file: string, config: Config) {
     });
   }
 
+  validateProjectGroups(file, config);
+
   if ('quiet' in config && config.quiet !== undefined) {
     if (typeof config.quiet !== 'boolean')
       throw errorWithFile(file, `config.quiet must be a boolean`);
@@ -644,6 +650,48 @@ function validateProject(file: string, project: Project, title: string) {
   }
 }
 
+function validateProjectGroups(file: string, config: Config) {
+  if (config.groups === undefined)
+    return;
+  const projectNames = new Set(config.projects?.filter(p => !!p.name).map(p => p.name));
+  for (const [groupName, group] of Object.entries(config.groups)) {
+    function validateProjectReference(projectName: string) {
+      if (projectName.trim() === '')
+        throw errorWithFile(file, `config.groups.${groupName} refers to an empty project name`);
+      if (!projectNames.has(projectName))
+        throw errorWithFile(file, `config.groups.${groupName} refers to an unknown project '${projectName}'`);
+    }
+    for (const step of group) {
+      if (isString(step)) {
+        validateProjectReference(step);
+      } else if (Array.isArray(step)) {
+        const parallelProjectNames = new Set();
+        for (const item of step) {
+          let projectName;
+          if (isString(item)) {
+            validateProjectReference(item);
+            projectName = item;
+          } else if (isObject(item)) {
+            const project = (item as any).project;
+            if (!isString(project))
+              throw errorWithFile(file, `config.groups.${groupName} has an entry with missing 'project' field.`);
+            validateProjectReference(project);
+            projectName = project;
+          } else {
+            throw errorWithFile(file, `config.groups.${groupName} unexpected group entry ${JSON.stringify(step, null, 2)}`);
+          }
+          // We can relax this later.
+          if (parallelProjectNames.has(projectName))
+            throw errorWithFile(file, `config.groups.${groupName} group mentions project '${projectName}' twice in one parallel group`);
+          parallelProjectNames.add(projectName);
+        }
+      } else {
+        throw errorWithFile(file, `config.groups.${groupName} unexpected group entry ${JSON.stringify(step, null, 2)}`);
+      }
+    }
+  }
+}
+
 export const baseFullConfig: FullConfigInternal = {
   forbidOnly: false,
   fullyParallel: false,
@@ -670,7 +718,7 @@ export const baseFullConfig: FullConfigInternal = {
   _webServers: [],
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
-  _testGroupsCount: 0,
+  _maxConcurrentTestGroups: 0,
   _ignoreSnapshots: false,
   _workerIsolation: 'isolate-pools',
 };

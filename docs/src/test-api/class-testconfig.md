@@ -232,6 +232,12 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 
 `grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
+## property: TestConfig.groups
+* since: v1.27
+- type: ?<[Object]<[string],[string]|[Array]<any>>>
+
+Project groups that control project execution order.
+
 ## property: TestConfig.ignoreSnapshots
 * since: v1.26
 - type: ?<[boolean]>

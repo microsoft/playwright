@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type { PlaywrightTestConfig } from '@playwright/test';
 import type { JSONReport, JSONReportSuite, JSONReportTest, JSONReportTestResult } from '@playwright/test/reporter';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -224,7 +225,8 @@ type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
   runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => Promise<RunResult>;
   runTSC: (files: Files) => Promise<TSCResult>;
-  nodeVersion: { major: number, minor: number, patch: number },
+  nodeVersion: { major: number, minor: number, patch: number };
+  runGroups: (options: { files: Files, config: PlaywrightTestConfig }) => Promise<{getTimeline: () => Promise<string[]>; } & RunResult>;
 };
 
 export const test = base
@@ -260,6 +262,41 @@ export const test = base
       nodeVersion: async ({}, use) => {
         const [major, minor, patch] = process.versions.node.split('.');
         await use({ major: +major, minor: +minor, patch: +patch });
+      },
+
+      runGroups: async ({ runInlineTest }, use, testInfo) => {
+        const timelinePath = testInfo.outputPath('timeline.json');
+        await use(async options => {
+          const result = await runInlineTest({
+            'reporter.ts': `
+              import { Reporter, TestCase } from '@playwright/test/reporter';
+              import fs from 'fs';
+              import path from 'path';
+              class TimelineReporter implements Reporter {
+                private _timeline: {project:string, title: string, event: 'begin' | 'end'}[] = [];
+                onTestBegin(test: TestCase) {
+                  this._timeline.push({ project: test.titlePath()[1] || '', title: test.title, event: 'begin' });
+                }
+                onTestEnd(test: TestCase) {
+                  this._timeline.push({ project: test.titlePath()[1] || '', title: test.title, event: 'end' });
+                }
+                onEnd() {
+                  fs.writeFileSync(path.join(${JSON.stringify(timelinePath)}), JSON.stringify(this._timeline, null, 2));
+                }
+              }
+              export default TimelineReporter;
+            `,
+            'playwright.config.ts': `
+            import * as path from 'path';
+            module.exports = ${JSON.stringify(options.config)};
+          `,
+            ...options.files,
+          }, { reporter: 'list,json,./reporter.ts', workers: 2 });
+
+          return {
+            ...result,
+            getTimeline: async () => (JSON.parse(await fs.promises.readFile(timelinePath, 'utf8')) as {project: string, title: string, event: 'begin' | 'end'}[]).map(e => [e.event, e.project, e.title].join('::')) };
+        });
       },
     });
 
