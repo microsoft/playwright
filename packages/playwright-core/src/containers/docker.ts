@@ -16,7 +16,6 @@
 /* eslint-disable no-console */
 
 import path from 'path';
-import fs from 'fs';
 import { spawnAsync } from '../utils/spawnAsync';
 import * as utils from '../utils';
 import { getPlaywrightVersion } from '../common/userAgent';
@@ -331,7 +330,7 @@ export function addDockerCLI(program: Command) {
   dockerCommand.command('run-service', { hidden: true })
       .description('delete docker image, if any')
       .action(async function() {
-        const { code } = await spawnAsync('bash', [path.join(__dirname, '..', '..', 'bin', 'container_run_service.sh')], { stdio: 'inherit' });
+        await spawnAsync('bash', [path.join(__dirname, '..', '..', 'bin', 'container_run_service.sh')], { stdio: 'inherit' });
       });
 
   dockerCommand.command('print-status-json', { hidden: true })

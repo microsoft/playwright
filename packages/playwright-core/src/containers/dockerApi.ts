@@ -145,7 +145,6 @@ export async function commitContainer(options: CommitContainerOptions) {
   const Env = [];
   for (const [key, value] of Object.entries(options.env ?? {}))
     Env.push(`${key}=${value}`);
-  const ExposedPorts = {};
   await postJSON(`/commit?container=${options.containerId}&repo=${options.repo}&tag=${options.tag}`, {
     Entrypoint: options.entrypoint,
     WorkingDir: options.workingDir,
