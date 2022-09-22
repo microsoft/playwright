@@ -108,13 +108,7 @@ export class PlaywrightConnection {
       // Underlying android device did close for some reason - force disconnect the client.
       this.close({ code: 1001, reason: 'Android Device closed' });
     });
-    // const playwright = android.options.rootSdkObject as Playwright;
-    // const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, undefined, browser);
-    const androidDispatcher = new AndroidDeviceDispatcher(scope, android);
-    // In pre-launched mode, keep the browser and just cleanup new contexts.
-    // TODO: it is technically possible to launch more browsers over protocol.
-    // this._cleanups.push(() => androidDispatcher.cleanup());
-    return androidDispatcher;
+    return new AndroidDeviceDispatcher(scope, android);
   }
 
   private async _initPlaywrightConnectMode(scope: RootDispatcher) {
@@ -230,8 +224,7 @@ export class PlaywrightConnection {
   private async _onDisconnect(error?: Error) {
     this._disconnected = true;
     this._debugLog(`disconnected. error: ${error}`);
-    if (this._root)
-      this._root._dispose();
+    this._root._dispose();
     this._debugLog(`starting cleanup`);
     for (const cleanup of this._cleanups)
       await cleanup().catch(() => {});

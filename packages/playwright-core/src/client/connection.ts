@@ -143,8 +143,7 @@ export class Connection extends EventEmitter {
     const { id, guid, method, params, result, error } = message as any;
     if (id) {
       debugLogger.log('channel:response', message);
-      let callback = this._callbacks.get(id);
-
+      const callback = this._callbacks.get(id);
       if (!callback)
         throw new Error(`Cannot find command to respond: ${id}`);
       this._callbacks.delete(id);

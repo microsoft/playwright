@@ -930,6 +930,11 @@ If specified, traces are saved into this directory.
 
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
 
+## browser-option-device-serial-number
+- `deviceSerialNumber` <[string]>
+
+Serial Number to uniquely identify a device
+
 ## shared-browser-options-list-v1.8
 - %%-browser-option-args-%%
 - %%-browser-option-channel-%%
@@ -947,6 +952,7 @@ Slows down Playwright operations by the specified amount of milliseconds. Useful
 - %%-browser-option-proxy-%%
 - %%-browser-option-timeout-%%
 - %%-browser-option-tracesdir-%%
+- %%-browser-option-device-serial-number-%%
 
 ## locator-option-has-text
 - `hasText` <[string]|[RegExp]>

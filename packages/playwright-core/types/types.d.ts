@@ -10547,6 +10547,11 @@ export interface BrowserType<Unused = {}> {
     deviceScaleFactor?: number;
 
     /**
+     * Serial Number to uniquely identify a device
+     */
+    deviceSerialNumber?: string;
+
+    /**
      * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`
      * option will be set `false`.
      */
@@ -10922,6 +10927,11 @@ export interface BrowserType<Unused = {}> {
      * Enable Chromium sandboxing. Defaults to `false`.
      */
     chromiumSandbox?: boolean;
+
+    /**
+     * Serial Number to uniquely identify a device
+     */
+    deviceSerialNumber?: string;
 
     /**
      * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`
@@ -11628,7 +11638,7 @@ export {};
  *
  * Server Side:
  *
- * ```
+ * ```js
  * const { _android } = require('playwright');  // Or 'webkit' or 'firefox'.
  * (async () => {
  *   const browserServer = await _android.launchServer({
@@ -11641,7 +11651,7 @@ export {};
  *
  * Client Side:
  *
- * ```
+ * ```js
  * const { _android } = require('playwright');
  * (async () => {
  *   const device = await _android.connect(`<wsEndpoint>`);
@@ -11750,6 +11760,11 @@ export interface Android {
      * Enable Chromium sandboxing. Defaults to `false`.
      */
     chromiumSandbox?: boolean;
+
+    /**
+     * Serial Number to uniquely identify a device
+     */
+    deviceSerialNumber?: string;
 
     /**
      * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`
@@ -16740,6 +16755,11 @@ export interface LaunchOptions {
    * Enable Chromium sandboxing. Defaults to `false`.
    */
   chromiumSandbox?: boolean;
+
+  /**
+   * Serial Number to uniquely identify a device
+   */
+  deviceSerialNumber?: string;
 
   /**
    * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`

@@ -61,8 +61,6 @@ export class PlaywrightServer {
       assert(options.preLaunchedBrowser);
       this._preLaunchedPlaywright = options.preLaunchedBrowser.options.rootSdkObject as Playwright;
     }
-    if (mode === 'use-pre-launched-android-device')
-      assert(options.preLaunchedAndroidDevice);
   }
 
   preLaunchedPlaywright(): Playwright {

@@ -135,16 +135,9 @@ export class Android extends SdkObject {
 
     // 3. Return the BrowserServer interface
     const browserServer = new ws.EventEmitter() as (BrowserServer & WebSocketEventEmitter);
-    // browserServer.process = () => browser.options.browserProcess.process!;
     browserServer.wsEndpoint = () => wsEndpoint;
-    // browserServer.close = () => browser.options.browserProcess.close();
-    // browserServer.kill = () => browser.options.browserProcess.kill();
     (browserServer as any)._disconnectForTest = () => server.close();
     (browserServer as any)._userDataDirForTest = (browser as any)._userDataDirForTest;
-    // browser.options.browserProcess.onclose = async (exitCode: any, signal: any) => {
-    //   server.close();
-    //   browserServer.emit('close', exitCode, signal);
-    // };
     return browserServer;
   }
 

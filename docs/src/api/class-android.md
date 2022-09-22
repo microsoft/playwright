@@ -76,7 +76,7 @@ An example of the Android automation script using the connect-launchServer metho
 
 Server Side:
 
-```
+```js
 const { _android } = require('playwright');  // Or 'webkit' or 'firefox'.
 (async () => {
   const browserServer = await _android.launchServer({
@@ -89,7 +89,7 @@ const { _android } = require('playwright');  // Or 'webkit' or 'firefox'.
 
 Client Side:
 
-```
+```js
 const { _android } = require('playwright');
 (async () => {
   const device = await _android.connect(`<wsEndpoint>`);

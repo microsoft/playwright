@@ -71,7 +71,6 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
   }
 
   name(): string {
-    // return this._initializer.name
     return "android-chrome";
   }
 
