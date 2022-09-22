@@ -21,7 +21,6 @@ import type { Progress } from './progress';
 import { debugLogger } from '../common/debugLogger';
 import type { RegisteredListener } from '../utils/eventsHelper';
 import { eventsHelper } from '../utils/eventsHelper';
-import { fetchData } from '../common/netUtils';
 
 class Helper {
   static completeUserURL(urlString: string): string {

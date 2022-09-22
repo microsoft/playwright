@@ -29,8 +29,9 @@ import { ProgressController } from '../progress';
 import type { Progress } from '../progress';
 import { WebSocketTransport } from '../transport';
 import { findValidator, ValidationError, type ValidatorContext } from '../../protocol/validator';
-import { fetchData, HTTPRequestParams } from '../../common/netUtils';
-import http from 'http';
+import { fetchData } from '../../common/netUtils';
+import type { HTTPRequestParams } from '../../common/netUtils';
+import type http from 'http';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel, RootDispatcher> implements channels.BrowserTypeChannel {
   _type_BrowserType = true;
