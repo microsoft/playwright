@@ -26,7 +26,7 @@ import { assert } from '../utils';
 import type { LaunchOptions } from '../server/types';
 import { ReuseControllerDispatcher } from '../server/dispatchers/reuseControllerDispatcher';
 import { AndroidDevice } from '../server/android/android';
-import { AndroidRoot } from '../server/dispatchers/dispatcher'
+import { AndroidRootDispatcher } from '../server/dispatchers/dispatcher'
 import { AndroidDeviceDispatcher, AndroidDispatcher } from '../server/dispatchers/androidDispatcher';
 
 type Options = {
@@ -50,7 +50,7 @@ export class PlaywrightConnection {
   private _disconnected = false;
   private _preLaunched: PreLaunched;
   private _options: Options;
-  private _root?: RootDispatcher;
+  private _root: DispatcherScope;
 
   constructor(lock: Promise<void>, mode: Mode, ws: WebSocket, isReuseControllerClient: boolean, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
     this._ws = ws;
@@ -83,7 +83,7 @@ export class PlaywrightConnection {
     }
 
     if (this._preLaunched.android) {
-      new AndroidRoot(this._dispatcherConnection, async scope => {
+      this._root = new AndroidRootDispatcher(this._dispatcherConnection, async scope => {
         assert(this._preLaunched.android)
         return await this._initPreLaunchedAndroidMode(scope, this._preLaunched.android);
       });
@@ -100,7 +100,7 @@ export class PlaywrightConnection {
     }
   }
 
-  private async _initPreLaunchedAndroidMode(scope: DispatcherScope, android: AndroidDevice) {
+  private async _initPreLaunchedAndroidMode(scope: AndroidDispatcher, android: AndroidDevice) {
     this._debugLog(`[id=1] engaged pre-launched mode`);
     android.on(AndroidDevice.Events.Closed, () => {
       // Underlying android device did close for some reason - force disconnect the client.

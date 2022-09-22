@@ -11624,6 +11624,43 @@ export {};
  * })();
  * ```
  *
+ * An example of the Android automation script using the connect-launchServer methods would be:
+ *
+ * Server Side:
+ *
+ * ```
+ * const { _android } = require('playwright');  // Or 'webkit' or 'firefox'.
+ * (async () => {
+ *   const browserServer = await _android.launchServer({
+ *     deviceSerialNumber: "<deviceSerialNumber>", // If you have multiple devices connected and want to keep one specific prelaunched device
+ *   });
+ *   const wsEndpoint = browserServer.wsEndpoint();
+ *   console.log(wsEndpoint);
+ * })();
+ * ```
+ *
+ * Client Side:
+ *
+ * ```
+ * const { _android } = require('playwright');
+ * (async () => {
+ *   const device = await _android.connect(`<wsEndpoint>`);
+ *
+ *   console.log(device.model());
+ *   console.log(device.serial());
+ *   await device.shell('am force-stop com.android.chrome');
+ *   const context = await device.launchBrowser();
+ *
+ *   const page = await context.newPage();
+ *   await page.goto('https://webkit.org/');
+ *   console.log(await page.evaluate(() => window.location.href));
+ *   await page.screenshot({ path: 'page-chrome-1.png' });
+ *
+ *   await context.close();
+ *   await device.close();
+ * })();
+ * ```
+ *
  * Note that since you don't need Playwright to install web browsers when testing Android, you can omit browser download
  * via setting the following environment variable when installing Playwright:
  *
@@ -11655,168 +11692,175 @@ export interface Android {
   }): Promise<Array<AndroidDevice>>;
 
   /**
-   * Returns the browser app instance. You can connect to it via
-   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect),
-   * which requires the major/minor client/server version to match (1.2.3 → is compatible with 1.2.x).
-   *
-   * Launches browser server that client can connect to. An example of launching a browser executable and connecting to it
-   * later:
-   *
-   * ```js
-   * const { _android: android } = require('playwright');
-   *
-   * (async () => {
-   *   const browserServer = await _android.launchServer();
-   *   const wsEndpoint = browserServer.wsEndpoint();
-   *   // Use web socket endpoint later to establish a connection.
-   *   const browser = await _android.connect(wsEndpoint);
-   *   // Close browser instance.
-   *   await browserServer.close();
-   * })();
-   * ```
-   *
-   * @param options
-   */
-   launchServer(options?: {
-    /**
-     * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
-     * [here](http://peter.sh/experiments/chromium-command-line-switches/).
-     */
-     args?: Array<string>;
-
-     /**
-      * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge",
-      * "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
-      * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
-      */
-     channel?: string;
- 
-     /**
-      * Enable Chromium sandboxing. Defaults to `false`.
-      */
-     chromiumSandbox?: boolean;
- 
-     /**
-      * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`
-      * option will be set `false`.
-      */
-     devtools?: boolean;
- 
-     /**
-      * If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is
-      * deleted when browser is closed. In either case, the downloads are deleted when the browser context they were created in
-      * is closed.
-      */
-     downloadsPath?: string;
- 
-     /**
-      * Specify environment variables that will be visible to the browser. Defaults to `process.env`.
-      */
-     env?: { [key: string]: string|number|boolean; };
- 
-     /**
-      * Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is
-      * resolved relative to the current working directory. Note that Playwright only works with the bundled Chromium, Firefox
-      * or WebKit, use at your own risk.
-      */
-     executablePath?: string;
- 
-     /**
-      * Firefox user preferences. Learn more about the Firefox user preferences at
-      * [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
-      */
-     firefoxUserPrefs?: { [key: string]: string|number|boolean; };
- 
-     /**
-      * Close the browser process on SIGHUP. Defaults to `true`.
-      */
-     handleSIGHUP?: boolean;
- 
-     /**
-      * Close the browser process on Ctrl-C. Defaults to `true`.
-      */
-     handleSIGINT?: boolean;
- 
-     /**
-      * Close the browser process on SIGTERM. Defaults to `true`.
-      */
-     handleSIGTERM?: boolean;
- 
-     /**
-      * Whether to run browser in headless mode. More details for
-      * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
-      * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
-      * `devtools` option is `true`.
-      */
-     headless?: boolean;
- 
-     /**
-      * If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is
-      * given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
-      */
-     ignoreDefaultArgs?: boolean|Array<string>;
- 
-     /**
-      * Logger sink for Playwright logging.
-      */
-     logger?: Logger;
- 
-     /**
-      * Port to use for the web socket. Defaults to 0 that picks any available port.
-      */
-     port?: number;
- 
-     /**
-      * Network proxy settings.
-      */
-     proxy?: {
-       /**
-        * Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
-        * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
-        */
-       server: string;
- 
-       /**
-        * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
-        */
-       bypass?: string;
- 
-       /**
-        * Optional username to use if HTTP proxy requires authentication.
-        */
-       username?: string;
- 
-       /**
-        * Optional password to use if HTTP proxy requires authentication.
-        */
-       password?: string;
-     };
- 
-     /**
-      * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
-      * disable timeout.
-      */
-     timeout?: number;
- 
-     /**
-      * If specified, traces are saved into this directory.
-      */
-     tracesDir?: string;
- 
-     /**
-      * Path at which to serve the Browser Server. For security, this defaults to an unguessable string.
-      *
-      * > NOTE: Any process or web page (including those running in Playwright) with knowledge of the `wsPath` can take control
-      * of the OS user. For this reason, you should use an unguessable token when using this option.
-      */
-     wsPath?: string;
-  }): Promise<BrowserServer>;
-
-  /**
    * This setting will change the default maximum time for all the methods accepting `timeout` option.
    * @param timeout Maximum time in milliseconds
    */
   setDefaultTimeout(timeout: number): void;
+
+  /**
+   * This methods attaches Playwright to an existing android instance.
+   * @param wsEndpoint A browser websocket endpoint to connect to.
+   * @param options
+   */
+  connect(wsEndpoint: string, options?: {
+    /**
+     * Additional HTTP headers to be sent with web socket connect request. Optional.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Logger sink for Playwright logging. Optional.
+     */
+    logger?: Logger;
+
+    /**
+     * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+     * Defaults to 0.
+     */
+    slowMo?: number;
+
+    /**
+     * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to
+     * disable timeout.
+     */
+    timeout?: number;
+  }): Promise<AndroidDevice>;
+
+  /**
+   * Returns the browser app instance.
+   *
+   * Launches browser server that client can connect to. An example of launching a browser executable and connecting to it
+   * later:
+   * @param options
+   */
+  launchServer(options?: {
+    /**
+     * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
+     * [here](http://peter.sh/experiments/chromium-command-line-switches/).
+     */
+    args?: Array<string>;
+
+    /**
+     * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge",
+     * "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
+     * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+     */
+    channel?: string;
+
+    /**
+     * Enable Chromium sandboxing. Defaults to `false`.
+     */
+    chromiumSandbox?: boolean;
+
+    /**
+     * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless`
+     * option will be set `false`.
+     */
+    devtools?: boolean;
+
+    /**
+     * If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is
+     * deleted when browser is closed. In either case, the downloads are deleted when the browser context they were created in
+     * is closed.
+     */
+    downloadsPath?: string;
+
+    /**
+     * Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+     */
+    env?: { [key: string]: string|number|boolean; };
+
+    /**
+     * Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is
+     * resolved relative to the current working directory. Note that Playwright only works with the bundled Chromium, Firefox
+     * or WebKit, use at your own risk.
+     */
+    executablePath?: string;
+
+    /**
+     * Close the browser process on SIGHUP. Defaults to `true`.
+     */
+    handleSIGHUP?: boolean;
+
+    /**
+     * Close the browser process on Ctrl-C. Defaults to `true`.
+     */
+    handleSIGINT?: boolean;
+
+    /**
+     * Close the browser process on SIGTERM. Defaults to `true`.
+     */
+    handleSIGTERM?: boolean;
+
+    /**
+     * Whether to run browser in headless mode. More details for
+     * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
+     * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
+     * `devtools` option is `true`.
+     */
+    headless?: boolean;
+
+    /**
+     * If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is
+     * given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+     */
+    ignoreDefaultArgs?: boolean|Array<string>;
+
+    /**
+     * Logger sink for Playwright logging.
+     */
+    logger?: Logger;
+
+    /**
+     * Port to use for the web socket. Defaults to 0 that picks any available port.
+     */
+    port?: number;
+
+    /**
+     * Network proxy settings.
+     */
+    proxy?: {
+      /**
+       * Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+       * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+       */
+      server: string;
+
+      /**
+       * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+       */
+      bypass?: string;
+
+      /**
+       * Optional username to use if HTTP proxy requires authentication.
+       */
+      username?: string;
+
+      /**
+       * Optional password to use if HTTP proxy requires authentication.
+       */
+      password?: string;
+    };
+
+    /**
+     * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
+     * disable timeout.
+     */
+    timeout?: number;
+
+    /**
+     * If specified, traces are saved into this directory.
+     */
+    tracesDir?: string;
+
+    /**
+     * Path at which to serve the Browser Server. For security, this defaults to an unguessable string.
+     *
+     * > NOTE: Any process or web page (including those running in Playwright) with knowledge of the `wsPath` can take control
+     * of the OS user. For this reason, you should use an unguessable token when using this option.
+     */
+    wsPath?: string;
+  }): Promise<BrowserServer>;
 }
 
 /**

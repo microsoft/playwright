@@ -88,16 +88,16 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChann
   }
 }
 
-export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceChannel, DispatcherScope> implements channels.AndroidDeviceChannel {
+export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceChannel, AndroidDispatcher> implements channels.AndroidDeviceChannel {
   _type_EventTarget = true;
   _type_AndroidDevice = true;
 
-  static from(scope: DispatcherScope, device: AndroidDevice): AndroidDeviceDispatcher {
+  static from(scope: AndroidDispatcher, device: AndroidDevice): AndroidDeviceDispatcher {
     const result = existingDispatcher<AndroidDeviceDispatcher>(device);
     return result || new AndroidDeviceDispatcher(scope, device);
   }
 
-  constructor(scope: DispatcherScope, device: AndroidDevice) {
+  constructor(scope: AndroidDispatcher, device: AndroidDevice) {
     super(scope, device, 'AndroidDevice', {
       model: device.model,
       serial: device.serial,

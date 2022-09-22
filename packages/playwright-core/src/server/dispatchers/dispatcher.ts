@@ -161,11 +161,11 @@ export class RootDispatcher extends Dispatcher<{ guid: '' }, any, any> {
   }
 }
 
-export class AndroidRoot extends Dispatcher<{ guid: '' }, any, any> {
+export class AndroidRootDispatcher extends Dispatcher<{ guid: '' }, any, any> {
   private _initialized = false;
   _type_Android = true;
 
-  constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: DispatcherScope, options: channels.RootInitializeParams) => Promise<AndroidDeviceDispatcher>) {
+  constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: AndroidDispatcher, options: channels.RootInitializeParams) => Promise<AndroidDeviceDispatcher>) {
     super(connection, { guid: '' }, 'AndroidRoot', {});
   }
 
