@@ -109,7 +109,7 @@ async function buildPlaywrightImage() {
     imageId: dockerImage.imageId,
     autoRemove: false,
     workingDir: '/ms-playwright-agent',
-    command: ['npx', 'playwright', 'docker', 'install-service-deps'],
+    command: ['npx', 'playwright', 'docker', 'install-server-deps'],
     waitUntil: 'not-running',
   });
 
@@ -120,7 +120,7 @@ async function buildPlaywrightImage() {
     repo: vrtRepo,
     tag: vrtTag,
     workingDir: '/ms-playwright-agent',
-    entrypoint: ['npx', 'playwright', 'docker', 'run-service'],
+    entrypoint: ['npx', 'playwright', 'docker', 'run-server'],
     env: {
       'DISPLAY_NUM': '99',
       'DISPLAY': ':99',
@@ -319,18 +319,18 @@ export function addDockerCLI(program: Command) {
         }
       });
 
-  dockerCommand.command('install-service-deps', { hidden: true })
+  dockerCommand.command('install-server-deps', { hidden: true })
       .description('delete docker image, if any')
       .action(async function() {
         const { code } = await spawnAsync('bash', [path.join(__dirname, '..', '..', 'bin', 'container_install_deps.sh')], { stdio: 'inherit' });
         if (code !== 0)
-          throw new Error('Failed to install service!');
+          throw new Error('Failed to install server dependencies!');
       });
 
-  dockerCommand.command('run-service', { hidden: true })
+  dockerCommand.command('run-server', { hidden: true })
       .description('delete docker image, if any')
       .action(async function() {
-        await spawnAsync('bash', [path.join(__dirname, '..', '..', 'bin', 'container_run_service.sh')], { stdio: 'inherit' });
+        await spawnAsync('bash', [path.join(__dirname, '..', '..', 'bin', 'container_run_server.sh')], { stdio: 'inherit' });
       });
 
   dockerCommand.command('print-status-json', { hidden: true })
