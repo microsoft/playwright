@@ -797,7 +797,10 @@ The maximum number of concurrent worker processes to use for parallelizing tests
 
 Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to speed up test execution.
 
-Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
+Defaults to the number of physical CPU cores, which is half of the number of logical cores (threads).
+Example: an 8-core CPU has 8 physical cores and 16 logical cores. So for an 8-core CPU, Playwright defaults to 8 workers.
+
+Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
 
 ```js tab=js-js
 // playwright.config.js
