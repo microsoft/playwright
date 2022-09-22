@@ -645,3 +645,13 @@ test('should connect when launching', async ({ browserType, startRemoteServer, h
 
   (browserType as any)._defaultConnectOptions = undefined;
 });
+
+test('should connect over http', async ({ browserType, startRemoteServer, mode }) => {
+  test.skip(mode !== 'default');
+  const remoteServer = await startRemoteServer();
+
+  const url = new URL(remoteServer.wsEndpoint());
+  const browser = await browserType.connect(`http://localhost:${url.port}`);
+  expect(browser.version()).toBeTruthy();
+  await browser.close();
+});
