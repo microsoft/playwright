@@ -47,7 +47,7 @@ test.beforeEach(async ({ page }) => {
   await page.locator('text=Login').click();
   await page.locator('input[name="login"]').fill('username');
   await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Submit').click();
+  await page.locator('input:has-text("Sign in")').click();
 });
 
 test('first', async ({ page }) => {
@@ -79,7 +79,7 @@ module.exports = async config => {
   await page.goto('https://github.com/login');
   await page.locator('input[name="login"]').fill('user');
   await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.locator('input:has-text("Sign in")').click();
   // Save signed-in state to 'storageState.json'.
   await page.context().storageState({ path: 'storageState.json' });
   await browser.close();
@@ -96,7 +96,7 @@ async function globalSetup(config: FullConfig) {
   await page.goto('https://github.com/login');
   await page.locator('input[name="login"]').fill('user');
   await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.locator('input:has-text("Sign in")').click();
   // Save signed-in state to 'storageState.json'.
   await page.context().storageState({ path: 'storageState.json' });
   await browser.close();
@@ -267,7 +267,7 @@ export const test = baseTest.extend({
       // Create a unique username for each worker.
       await page.locator('input[name="login"]').fill(users[testInfo.workerIndex].username);
       await page.locator('input[name="password"]').fill(users[testInfo.workerIndex].password);
-      await page.locator('text=Sign in').click();
+      await page.locator('input:has-text("Sign in")').click();
       await page.context().storageState({ path: fileName });
       await page.close();
     }
@@ -560,7 +560,7 @@ test.beforeAll(async ({ browser }) => {
   await page.goto('https://github.com/login');
   await page.locator('input[name="user"]').fill('user');
   await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.locator('input:has-text("Sign in")').click();
 });
 
 test.afterAll(async () => {
@@ -591,7 +591,7 @@ test.beforeAll(async ({ browser }) => {
   await page.goto('https://github.com/login');
   await page.locator('input[name="user"]').fill('user');
   await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.locator('input:has-text("Sign in")').click();
 });
 
 test.afterAll(async () => {
