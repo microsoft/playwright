@@ -65,6 +65,7 @@ interface LaunchContainerOptions {
   labels?: Record<string, string>;
   ports?: Number[];
   name?: string;
+  workingDir?: string;
   waitUntil?: 'not-running' | 'next-exit' | 'removed';
 }
 
@@ -77,6 +78,7 @@ export async function launchContainer(options: LaunchContainerOptions): Promise<
   }
   const container = await postJSON(`/containers/create` + (options.name ? '?name=' + options.name : ''), {
     Cmd: options.command,
+    WorkingDir: options.workingDir,
     Labels: options.labels ?? {},
     AttachStdout: true,
     AttachStderr: true,
@@ -134,7 +136,8 @@ interface CommitContainerOptions {
   containerId: string,
   repo: string,
   tag: string,
-  entrypoint?: string,
+  entrypoint?: string[],
+  workingDir?: string,
   env?: {[key: string]: string | number | boolean | undefined},
 }
 
@@ -142,8 +145,10 @@ export async function commitContainer(options: CommitContainerOptions) {
   const Env = [];
   for (const [key, value] of Object.entries(options.env ?? {}))
     Env.push(`${key}=${value}`);
+  const ExposedPorts = {};
   await postJSON(`/commit?container=${options.containerId}&repo=${options.repo}&tag=${options.tag}`, {
-    Entrypoint: options.entrypoint ?? '',
+    Entrypoint: options.entrypoint,
+    WorkingDir: options.workingDir,
     Env,
   });
 }

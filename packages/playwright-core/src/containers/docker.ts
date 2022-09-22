@@ -102,13 +102,15 @@ async function buildPlaywrightImage() {
   const dockerImage = await findDockerImage(baseImageName);
   if (!dockerImage)
     throw new Error(`Failed to pull ${baseImageName}`);
-  // 3. Launch container and install VNC in it
+  // 3. Delete previous build of the playwright image to avoid untagged images.
+  await deletePlaywrightImage();
+  // 4. Launch container and install VNC in it
   console.log(`Building ${VRT_IMAGE_NAME}...`);
-  const buildScriptText = await fs.promises.readFile(path.join(__dirname, 'build_docker_image.sh'), 'utf8');
   const containerId = await dockerApi.launchContainer({
     imageId: dockerImage.imageId,
     autoRemove: false,
-    command: ['/bin/bash', '-c', buildScriptText],
+    workingDir: '/ms-playwright-agent',
+    command: ['npx', 'playwright', 'docker', 'install-service-deps'],
     waitUntil: 'not-running',
   });
 
@@ -118,7 +120,8 @@ async function buildPlaywrightImage() {
     containerId,
     repo: vrtRepo,
     tag: vrtTag,
-    entrypoint: '/entrypoint.sh',
+    workingDir: '/ms-playwright-agent',
+    entrypoint: ['npx', 'playwright', 'docker', 'run-service'],
     env: {
       'DISPLAY_NUM': '99',
       'DISPLAY': ':99',
@@ -315,6 +318,20 @@ export function addDockerCLI(program: Command) {
         } catch (e) {
           console.error(e.stack ? e : e.message);
         }
+      });
+
+  dockerCommand.command('install-service-deps', { hidden: true })
+      .description('delete docker image, if any')
+      .action(async function() {
+        const { code } = await spawnAsync('bash', [path.join(__dirname, '..', '..', 'bin', 'container_install_deps.sh')], { stdio: 'inherit' });
+        if (code !== 0)
+          throw new Error('Failed to install service!');
+      });
+
+  dockerCommand.command('run-service', { hidden: true })
+      .description('delete docker image, if any')
+      .action(async function() {
+        const { code } = await spawnAsync('bash', [path.join(__dirname, '..', '..', 'bin', 'container_run_service.sh')], { stdio: 'inherit' });
       });
 
   dockerCommand.command('print-status-json', { hidden: true })
