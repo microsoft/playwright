@@ -25,6 +25,7 @@
 /* eslint-disable */
 
 import * as path from 'path';
+import * as process from 'process';
 import * as fs from 'fs';
 import { json5 } from '../utilsBundle';
 
@@ -67,7 +68,7 @@ export function tsConfigLoader({
 
   // tsconfig.loadSync handles if TS_NODE_PROJECT is a file or directory
   // and also overrides baseURL if TS_NODE_BASEURL is available.
-  const loadResult = loadSync(cwd, TS_NODE_PROJECT, TS_NODE_BASEURL);
+  const loadResult = loadSync(TS_NODE_PROJECT ? process.cwd() : cwd, TS_NODE_PROJECT, TS_NODE_BASEURL);
   loadResult.serialized = JSON.stringify(loadResult);
   return loadResult;
 }
