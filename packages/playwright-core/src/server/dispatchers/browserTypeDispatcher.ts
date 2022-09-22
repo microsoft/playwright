@@ -181,13 +181,12 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string): Promise
   progress.throwIfAborted();
 
   const wsUrl = new URL(endpointURL);
-  const wsEndpointPath = JSON.parse(json).wsEndpointPath;
-  if (wsUrl.pathname.endsWith('/') !== wsEndpointPath.startsWith('/'))
-    wsUrl.pathname += wsEndpointPath;
-  else if (wsEndpointPath.startsWith('/'))
-    wsUrl.pathname += wsEndpointPath.substring(1);
-  else
-    wsUrl.pathname += '/' + wsEndpointPath;
+  let wsEndpointPath = JSON.parse(json).wsEndpointPath;
+  if (wsEndpointPath.startsWith('/'))
+    wsEndpointPath = wsEndpointPath.substring(1);
+  if (!wsUrl.pathname.endsWith('/'))
+    wsUrl.pathname += '/';
+  wsUrl.pathname += wsEndpointPath;
   wsUrl.protocol = wsUrl.protocol === 'https:' ? 'wss:' : 'ws:';
   return wsUrl.toString();
 }
