@@ -499,11 +499,13 @@ export class Runner {
           // as soon as we can.
           sigintWatcher.disarm();
         }
-          await dispatcher.stop();
+        await dispatcher.stop();
         hasWorkerErrors = dispatcher.hasWorkerErrors();
         if (hasWorkerErrors)
           break;
         if (testGroups.some(testGroup => testGroup.tests.some(test => !test.ok())))
+          break;
+        if (sigintWatcher.hadSignal())
           break;
       }
       if (sigintWatcher?.hadSignal()) {

@@ -149,9 +149,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     return;
 
   const runner = new Runner(overrides);
-  let config;
   if (resolvedConfigFile)
-    config = await runner.loadConfigFromResolvedFile(resolvedConfigFile);
+    await runner.loadConfigFromResolvedFile(resolvedConfigFile);
   else
     await runner.loadEmptyConfig(configFileOrDirectory);
 

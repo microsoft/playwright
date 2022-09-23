@@ -151,11 +151,11 @@ test('should run parallel groups sequentially without overlaps', async ({ runGro
   const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
 
-  const expectedEndOfFirstPhase = (events) => {
-    const firstProjectEndIndex = project => events.findIndex(e => e.event == 'end' && e.titlePath[1] === project);
+  const expectedEndOfFirstPhase = events => {
+    const firstProjectEndIndex = project => events.findIndex(e => e.event === 'end' && e.titlePath[1] === project);
     return Math.max(...['a', 'b', 'c', 'd'].map(firstProjectEndIndex));
-  }
-  const formatPhaseEvents = (events) => events.map(e => e.titlePath[1] + ':' + e.event);
+  };
+  const formatPhaseEvents = events => events.map(e => e.titlePath[1] + ':' + e.event);
 
   let remainingTimeline = timeline;
   for (let i = 0; i < 3; i++) {
@@ -183,7 +183,7 @@ test('should support phase with multiple project names', async ({ runGroups }, t
     ]
   });
 
-  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+  const { exitCode, passed } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
   expect(passed).toBe(6);
 });
@@ -205,7 +205,7 @@ test('should support varios syntax', async ({ runGroups }, testInfo) => {
       'f'
     ]
   });
-  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+  const { exitCode, passed } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
   expect(passed).toBe(11);
 });
