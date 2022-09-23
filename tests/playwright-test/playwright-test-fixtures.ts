@@ -265,7 +265,7 @@ export const test = base
 
       runGroups: async ({ runInlineTest }, use, testInfo) => {
         const timelinePath = testInfo.outputPath('timeline.json');
-        await use(async (files, env, options) => {
+        await use(async (files, params, env, options) => {
           const result = await runInlineTest({
             ...files,
             'reporter.ts': `
@@ -286,11 +286,16 @@ export const test = base
               }
               export default TimelineReporter;
             `
-          }, { ...env, reporter: 'list,json,./reporter.ts', workers: 2 }, options);
+          }, { ...params, reporter: 'list,json,./reporter.ts', workers: 2 }, env, options);
 
+          let timeline;
+          try {
+            timeline = JSON.parse((await fs.promises.readFile(timelinePath, 'utf8')).toString('utf8'));
+          } catch (e) {
+          }
           return {
             ...result,
-            timeline: JSON.parse((await fs.promises.readFile(timelinePath, 'utf8')).toString('utf8'))
+            timeline
           };
         });
       },

@@ -209,3 +209,52 @@ test('should support varios syntax', async ({ runGroups }, testInfo) => {
   expect(exitCode).toBe(0);
   expect(passed).toBe(11);
 });
+
+test('should support --group option', async ({ runGroups }, testInfo) => {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
+    default: [
+      'a', 'b'
+    ],
+    foo: [
+      ['b', 'c']
+    ],
+    bar: [
+      'd', 'e'
+    ]
+  });
+  const formatPhaseEvents = events => events.map(e => e.titlePath[1] + ':' + e.event);
+  {
+    const { exitCode, passed, timeline } =  await runGroups(configWithFiles, { group: 'default' });
+    expect(exitCode).toBe(0);
+    expect(passed).toBe(2);
+    expect(formatPhaseEvents(timeline)).toEqual(['a:begin', 'a:end', 'b:begin', 'b:end']);
+  }
+  {
+    const { exitCode, passed, timeline } =  await runGroups(configWithFiles, { group: 'foo' });
+    expect(exitCode).toBe(0);
+    expect(passed).toBe(2);
+    const formatted = formatPhaseEvents(timeline);
+    formatted.sort();
+    expect(formatted).toEqual(['b:begin', 'b:end', 'c:begin', 'c:end']);
+  }
+  {
+    const { exitCode, passed, timeline } =  await runGroups(configWithFiles, { group: 'bar' });
+    expect(exitCode).toBe(0);
+    expect(passed).toBe(2);
+    expect(formatPhaseEvents(timeline)).toEqual(['d:begin', 'd:end', 'e:begin', 'e:end']);
+  }
+});
+
+test('should throw when unknown --group is passed', async ({ runGroups }, testInfo) => {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
+    default: [
+      'a', 'b'
+    ],
+    foo: [
+      ['b', 'c']
+    ]
+  });
+  const { exitCode, output } =  await runGroups(configWithFiles, { group: 'bar' });
+  expect(exitCode).toBe(1);
+  expect(output).toContain(`Cannot find project group 'bar' in the config`);
+});
