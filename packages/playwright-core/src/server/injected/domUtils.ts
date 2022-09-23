@@ -60,8 +60,6 @@ export function isElementVisible(element: Element): boolean {
   if (!element.ownerDocument || !element.ownerDocument.defaultView)
     return true;
   const style = element.ownerDocument.defaultView.getComputedStyle(element);
-  if (!style || style.visibility === 'hidden')
-    return false;
   if (style.display === 'contents') {
     // display:contents is not rendered itself, but its child nodes are.
     for (let child = element.firstChild; child; child = child.nextSibling) {
@@ -72,6 +70,14 @@ export function isElementVisible(element: Element): boolean {
     }
     return false;
   }
+  // Element.checkVisibility checks for content-visibility and also looks at
+  // styles up the flat tree including user-agent ShadowRoots, such as the
+  // details element for example.
+  // @ts-ignore Typescript doesn't know that checkVisibility exists yet.
+  if (Element.prototype.checkVisibility && !element.checkVisibility({ checkOpacity: false, checkVisibilityCSS: false }))
+    return false;
+  if (!style || style.visibility === 'hidden')
+    return false;
   const rect = element.getBoundingClientRect();
   return rect.width > 0 && rect.height > 0;
 }

@@ -34,8 +34,13 @@ export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   }
 };
 
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+type JsonArray = JsonValue[];
+type JsonObject = { [Key in string]?: JsonValue };
+
 export interface MountOptions {
-  hooksConfig?: any;
+  hooksConfig?: JsonObject;
 }
 
 interface MountResult extends Locator {

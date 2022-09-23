@@ -4,6 +4,7 @@ import Counter from './components/Counter.vue'
 import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
 import Component from './components/Component.vue'
+import EmptyTemplate from './components/EmptyTemplate.vue'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -105,4 +106,11 @@ test('unmount', async ({ page, mount }) => {
   await expect(page.locator('#root')).toContainText('Submit')
   await component.unmount();
   await expect(page.locator('#root')).not.toContainText('Submit');
+});
+
+test('get textContent of the empty template', async ({ mount }) => {
+  const component = await mount(EmptyTemplate);
+  expect(await component.allTextContents()).toEqual(['']);
+  expect(await component.textContent()).toBe('');
+  await expect(component).toHaveText('');
 });

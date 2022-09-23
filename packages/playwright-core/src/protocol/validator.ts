@@ -328,54 +328,50 @@ scheme.RecorderSource = tObject({
   revealLine: tOptional(tNumber),
   group: tOptional(tString),
 });
-scheme.ReuseControllerInitializer = tOptional(tObject({}));
-scheme.ReuseControllerInspectRequestedEvent = tObject({
+scheme.DebugControllerInitializer = tOptional(tObject({}));
+scheme.DebugControllerInspectRequestedEvent = tObject({
   selector: tString,
 });
-scheme.ReuseControllerBrowsersChangedEvent = tObject({
+scheme.DebugControllerBrowsersChangedEvent = tObject({
   browsers: tArray(tObject({
     contexts: tArray(tObject({
       pages: tArray(tString),
     })),
   })),
 });
-scheme.ReuseControllerSourcesChangedEvent = tObject({
+scheme.DebugControllerSourcesChangedEvent = tObject({
   sources: tArray(tType('RecorderSource')),
 });
-scheme.ReuseControllerSetTrackHierarchyParams = tObject({
+scheme.DebugControllerSetTrackHierarchyParams = tObject({
   enabled: tBoolean,
 });
-scheme.ReuseControllerSetTrackHierarchyResult = tOptional(tObject({}));
-scheme.ReuseControllerSetReuseBrowserParams = tObject({
+scheme.DebugControllerSetTrackHierarchyResult = tOptional(tObject({}));
+scheme.DebugControllerSetReuseBrowserParams = tObject({
   enabled: tBoolean,
 });
-scheme.ReuseControllerSetReuseBrowserResult = tOptional(tObject({}));
-scheme.ReuseControllerResetForReuseParams = tOptional(tObject({}));
-scheme.ReuseControllerResetForReuseResult = tOptional(tObject({}));
-scheme.ReuseControllerNavigateAllParams = tObject({
+scheme.DebugControllerSetReuseBrowserResult = tOptional(tObject({}));
+scheme.DebugControllerResetForReuseParams = tOptional(tObject({}));
+scheme.DebugControllerResetForReuseResult = tOptional(tObject({}));
+scheme.DebugControllerNavigateAllParams = tObject({
   url: tString,
 });
-scheme.ReuseControllerNavigateAllResult = tOptional(tObject({}));
-scheme.ReuseControllerSetRecorderModeParams = tObject({
+scheme.DebugControllerNavigateAllResult = tOptional(tObject({}));
+scheme.DebugControllerSetRecorderModeParams = tObject({
   mode: tEnum(['inspecting', 'recording', 'none']),
   language: tOptional(tString),
   file: tOptional(tString),
 });
-scheme.ReuseControllerSetRecorderModeResult = tOptional(tObject({}));
-scheme.ReuseControllerSetAutoCloseParams = tObject({
-  enabled: tBoolean,
-});
-scheme.ReuseControllerSetAutoCloseResult = tOptional(tObject({}));
-scheme.ReuseControllerHighlightAllParams = tObject({
+scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
+scheme.DebugControllerHighlightAllParams = tObject({
   selector: tString,
 });
-scheme.ReuseControllerHighlightAllResult = tOptional(tObject({}));
-scheme.ReuseControllerHideHighlightAllParams = tOptional(tObject({}));
-scheme.ReuseControllerHideHighlightAllResult = tOptional(tObject({}));
-scheme.ReuseControllerKillParams = tOptional(tObject({}));
-scheme.ReuseControllerKillResult = tOptional(tObject({}));
-scheme.ReuseControllerCloseAllBrowsersParams = tOptional(tObject({}));
-scheme.ReuseControllerCloseAllBrowsersResult = tOptional(tObject({}));
+scheme.DebugControllerHighlightAllResult = tOptional(tObject({}));
+scheme.DebugControllerHideHighlightAllParams = tOptional(tObject({}));
+scheme.DebugControllerHideHighlightAllResult = tOptional(tObject({}));
+scheme.DebugControllerKillParams = tOptional(tObject({}));
+scheme.DebugControllerKillResult = tOptional(tObject({}));
+scheme.DebugControllerCloseAllBrowsersParams = tOptional(tObject({}));
+scheme.DebugControllerCloseAllBrowsersResult = tOptional(tObject({}));
 scheme.SocksSupportInitializer = tOptional(tObject({}));
 scheme.SocksSupportSocksRequestedEvent = tObject({
   uid: tString,

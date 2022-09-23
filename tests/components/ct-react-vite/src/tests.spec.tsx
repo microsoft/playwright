@@ -4,6 +4,7 @@ import DefaultChildren from './components/DefaultChildren';
 import MultipleChildren from './components/MultipleChildren';
 import MultiRoot from './components/MultiRoot';
 import Counter from './components/Counter';
+import EmptyFragment from './components/EmptyFragment';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
@@ -27,8 +28,8 @@ test('renderer updates callbacks without remounting', async ({ mount }) => {
   const component = await mount(<Counter />)
 
   const messages: string[] = []
-  await component.rerender(<Counter onClick={message => { 
-    messages.push(message) 
+  await component.rerender(<Counter onClick={message => {
+    messages.push(message)
   }} />)
   await component.click();
   expect(messages).toEqual(['hello'])
@@ -117,4 +118,11 @@ test('unmount a multi root component', async ({ mount, page }) => {
   await component.unmount()
   await expect(page.locator('#root')).not.toContainText('root 1')
   await expect(page.locator('#root')).not.toContainText('root 2')
-})
+});
+
+test('get textContent of the empty fragment', async ({ mount }) => {
+  const component = await mount(<EmptyFragment />);
+  expect(await component.allTextContents()).toEqual(['']);
+  expect(await component.textContent()).toBe('');
+  await expect(component).toHaveText('');
+});

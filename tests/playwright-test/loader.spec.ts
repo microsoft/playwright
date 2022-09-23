@@ -245,6 +245,7 @@ test('should load ts from esm when package.json has type module', async ({ runIn
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+  expect(result.output).not.toContain(`is an experimental feature`);
 });
 
 test('should filter stack trace for simple expect', async ({ runInlineTest }) => {

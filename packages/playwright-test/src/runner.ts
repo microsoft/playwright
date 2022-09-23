@@ -45,7 +45,7 @@ import { SigIntWatcher } from './sigIntWatcher';
 import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
 import { webServerPluginsForConfig } from './plugins/webServerPlugin';
-import { dockerPlugin } from './docker/docker';
+import { dockerPlugin } from './plugins/dockerPlugin';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
 
 const removeFolderAsync = promisify(rimraf);
