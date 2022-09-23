@@ -231,8 +231,7 @@ export class Runner {
     if (projectNames) {
       unmatchedProjectFilters = new Map();
       projectNames.forEach(n => {
-        const name = n.toLocaleLowerCase();
-        unmatchedProjectFilters!.set(name, n);
+        unmatchedProjectFilters!.set(n, n);
       });
     }
     const fullConfig = this._loader.fullConfig();
