@@ -127,13 +127,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     });
   }
 
-  if (opts.group) {
-    if (opts.shard)
-      throw new Error('--group option can not be combined with --shard');
-    if (opts.project)
-      throw new Error('--group option can not be combined with --project');
-  }
-
   if (opts.headed || opts.debug)
     overrides.use = { headless: false };
   if (opts.debug) {
@@ -171,15 +164,11 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     };
   });
 
-  let projectGroup = opts.group;
-  if (!opts.group && config && config.groups?.default && !opts.shard && !opts.project && !testFileFilters.length)
-    projectGroup = 'default';
-
   const result = await runner.runAllTests({
     listOnly: !!opts.list,
     testFileFilters,
     projectFilter: opts.project || undefined,
-    projectGroup,
+    projectGroup: opts.group,
     watchMode: !!process.env.PW_TEST_WATCH,
     passWithNoTests: opts.passWithNoTests,
   });

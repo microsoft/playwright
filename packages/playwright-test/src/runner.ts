@@ -62,7 +62,7 @@ type RunPhase = {
 
 type RunOptions = {
   listOnly?: boolean;
-  testFileFilters?: TestFileFilter[];
+  testFileFilters: TestFileFilter[];
   projectFilter?: string[];
   projectGroup?: string;
   watchMode?: boolean;
@@ -237,12 +237,26 @@ export class Runner {
 
 
   private _collectRunPhases(options: RunOptions) {
-    const phases: RunPhase[] = [];
     const config = this._loader.fullConfig();
-    if (options.projectGroup) {
-      const group = config.groups?.[options.projectGroup];
+
+    let projectGroup = options.projectGroup;
+    if (options.projectFilter) {
+      if (projectGroup)
+        throw new Error('--group option can not be combined with --project');
+    } else {
+      if (!projectGroup && config.groups?.default && !options.testFileFilters.length)
+        projectGroup = 'default';
+      if (projectGroup) {
+        if (config.shard)
+          throw new Error(`Project group '${projectGroup}' cannot be combined with --shard`);
+      }
+    }
+
+    const phases: RunPhase[] = [];
+    if (projectGroup) {
+      const group = config.groups?.[projectGroup];
       if (!group)
-        throw new Error(`Cannot find project group '${options.projectGroup}' in the config`);
+        throw new Error(`Cannot find project group '${projectGroup}' in the config`);
       for (const entry of group) {
         const projectFilter: string[] = [];
         const testFileFilters: TestFileFilter[] = [];
