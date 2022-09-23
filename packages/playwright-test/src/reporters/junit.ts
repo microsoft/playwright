@@ -16,13 +16,13 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { FullResult, Reporter, Suite, TestCase } from '../../types/testReporter';
+import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../types/testReporter';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import { formatFailure, formatTestTitle, stripAnsiEscapes } from './base';
-import type { FullConfigInternal } from '../types';
+import assert from 'assert';
 
 class JUnitReporter implements Reporter {
-  private config!: FullConfigInternal;
+  private config!: FullConfig;
   private suite!: Suite;
   private timestamp!: number;
   private startTime!: number;
@@ -37,7 +37,7 @@ class JUnitReporter implements Reporter {
 
 
   constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, embedAnnotationsAsProperties?: boolean, textContentAnnotations?: string[], embedAttachmentsAsProperty?: string } = {}) {
-    this.outputFile = options.outputFile || process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`];
+    this.outputFile = options.outputFile || reportOutputNameFromEnv();
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
     this.embedAnnotationsAsProperties = options.embedAnnotationsAsProperties || false;
     this.textContentAnnotations = options.textContentAnnotations || [];
@@ -48,7 +48,7 @@ class JUnitReporter implements Reporter {
     return !this.outputFile;
   }
 
-  onBegin(config: FullConfigInternal, suite: Suite) {
+  onBegin(config: FullConfig, suite: Suite) {
     this.config = config;
     this.suite = suite;
     this.timestamp = Date.now();
@@ -82,7 +82,8 @@ class JUnitReporter implements Reporter {
     serializeXML(root, tokens, this.stripANSIControlSequences);
     const reportString = tokens.join('\n');
     if (this.outputFile) {
-      const outputFile = path.resolve(this.config._configDir, this.outputFile);
+      assert(this.config.configFile || path.isAbsolute(this.outputFile), 'Expected fully resolved path if not using config file.');
+      const outputFile = this.config.configFile ? path.resolve(path.dirname(this.config.configFile), this.outputFile) : this.outputFile;
       fs.mkdirSync(path.dirname(outputFile), { recursive: true });
       fs.writeFileSync(outputFile, reportString);
     } else {
@@ -299,6 +300,12 @@ function escape(text: string, stripANSIControlSequences: boolean, isCharacterDat
 
   text = text.replace(discouragedXMLCharacters, '');
   return text;
+}
+
+function reportOutputNameFromEnv(): string | undefined {
+  if (process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`])
+    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`]);
+  return undefined;
 }
 
 export default JUnitReporter;

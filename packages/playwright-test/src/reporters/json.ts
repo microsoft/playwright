@@ -19,27 +19,27 @@ import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, Reporter, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep } from '../../types/testReporter';
 import { prepareErrorStack } from './base';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
-import type { FullConfigInternal } from '../types';
+import assert from 'assert';
 
 export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
 }
 
 class JSONReporter implements Reporter {
-  config!: FullConfigInternal;
+  config!: FullConfig;
   suite!: Suite;
   private _errors: TestError[] = [];
   private _outputFile: string | undefined;
 
   constructor(options: { outputFile?: string } = {}) {
-    this._outputFile = options.outputFile || process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`];
+    this._outputFile = options.outputFile || reportOutputNameFromEnv();
   }
 
   printsToStdio() {
     return !this._outputFile;
   }
 
-  onBegin(config: FullConfigInternal, suite: Suite) {
+  onBegin(config: FullConfig, suite: Suite) {
     this.config = config;
     this.suite = suite;
   }
@@ -49,7 +49,7 @@ class JSONReporter implements Reporter {
   }
 
   async onEnd(result: FullResult) {
-    outputReport(this._serializeReport(), this.config._configDir, this._outputFile);
+    outputReport(this._serializeReport(), this.config, this._outputFile);
   }
 
   private _serializeReport(): JSONReport {
@@ -211,10 +211,11 @@ class JSONReporter implements Reporter {
   }
 }
 
-function outputReport(report: JSONReport, configDir: string, outputFile: string | undefined) {
+function outputReport(report: JSONReport, config: FullConfig, outputFile: string | undefined) {
   const reportString = JSON.stringify(report, undefined, 2);
   if (outputFile) {
-    outputFile = path.resolve(configDir, outputFile);
+    assert(config.configFile || path.isAbsolute(outputFile), 'Expected fully resolved path if not using config file.');
+    outputFile = config.configFile ? path.resolve(path.dirname(config.configFile), outputFile) : outputFile;
     fs.mkdirSync(path.dirname(outputFile), { recursive: true });
     fs.writeFileSync(outputFile, reportString);
   } else {
@@ -230,6 +231,12 @@ function stdioEntry(s: string | Buffer): any {
 
 function removePrivateFields(config: FullConfig): FullConfig {
   return Object.fromEntries(Object.entries(config).filter(([name, value]) => !name.startsWith('_'))) as FullConfig;
+}
+
+function reportOutputNameFromEnv(): string | undefined {
+  if (process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`])
+    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`]);
+  return undefined;
 }
 
 export function serializePatterns(patterns: string | RegExp | (string | RegExp)[]): string[] {
