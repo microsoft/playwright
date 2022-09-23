@@ -5,3 +5,5 @@
 ../../utils/
 ../../utilsBundle.ts
 ../chromium/
+../../remote/
+../../client/

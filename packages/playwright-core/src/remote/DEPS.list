@@ -3,5 +3,6 @@
 ../common/
 ../server/
 ../server/dispatchers/
+../server/android/
 ../utils/
 ../utilsBundle.ts
