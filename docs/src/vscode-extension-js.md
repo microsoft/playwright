@@ -17,15 +17,15 @@ The VS Code extension will search for a Playwright config file at each root fold
 
 For example, suppose that a given workspace has three root folders: "Client", "Docs" and "Server".
 
-<img width="356" height="466" alt="A workspace with three folders: Client, Docs and Server." src="https://user-images.githubusercontent.com/594605/190903911-49172cfc-374a-4e65-a2ca-da29ca0e7cb3.png" />
+<img width="355" height="496" alt="A workspace with three folders: Client, Docs and Server." src="https://user-images.githubusercontent.com/594605/191968872-162c802e-7298-4943-b139-18d87487e667.png" />
 
 Out of those, only "Client" and "Server" have Playwright installed.
 
-<img width="356" height="466" alt="Testing tree showing that only the folders Client and Server have tests, while the folder Docs has not." src="https://user-images.githubusercontent.com/594605/190903951-a804acb2-8a5c-4cfb-8a18-3f21d1de78e9.png" />
+<img width="353" height="442" alt="Testing tree showing that only the folders Client and Server have tests, while the folder Docs has not." src="https://user-images.githubusercontent.com/594605/191969322-a3b4eecf-ff34-486b-859e-58840dbef3d1.png" />
 
 The dropdown menu **Select Configuration** will account for all the projects found in the folders "Client" and "Server".
 
-<img width="480" height="177" alt="Testing tree showing that only Folder_B and Folder_C have tests, while Folder_A does not." src="https://user-images.githubusercontent.com/594605/190904078-46beee2b-2a4a-4d79-a2d8-174308121a8d.png" />
+<img width="446" height="186" alt="Testing tree showing that only Folder_B and Folder_C have tests, while Folder_A does not." src="https://user-images.githubusercontent.com/594605/191970160-32a56015-ce9c-48f3-b0e6-b479f4e44539.png" />
 
 ### Run Tests from Multiple Packages - Monorepos
 
