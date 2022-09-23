@@ -16,21 +16,24 @@
 import type { PlaywrightTestConfig, TestInfo } from '@playwright/test';
 import { test, expect } from './playwright-test-fixtures';
 
-function createConfigWithProjects(names: string[], testInfo: TestInfo): { files: Record<string, string>, config: PlaywrightTestConfig } {
-  const result = {
-    config: {
-      projects: names.map(name => ({ name, testDir: testInfo.outputPath(name) }))
-    },
-    files: {}
+function createConfigWithProjects(names: string[], testInfo: TestInfo, groups: PlaywrightTestConfig['groups']): Record<string, string> {
+  const config: PlaywrightTestConfig = {
+    projects: names.map(name => ({ name, testDir: testInfo.outputPath(name) })),
+    groups
   };
+  const files = {};
   for (const name of names) {
-    result.files[`${name}/${name}.spec.ts`] = `
-    const { test } = pwt;
-    test('${name} test', async () => {
-      await new Promise(f => setTimeout(f, 100));
-    });`;
+    files[`${name}/${name}.spec.ts`] = `
+      const { test } = pwt;
+      test('${name} test', async () => {
+        await new Promise(f => setTimeout(f, 100));
+      });`;
   }
-  return result;
+  files['playwright.config.ts'] = `
+    import * as path from 'path';
+    module.exports = ${JSON.stringify(config)};
+    `;
+  return files;
 }
 
 type Timeline = { titlePath: string[], event: 'begin' | 'end' }[];
@@ -63,10 +66,9 @@ function expectRunBefore(timeline: Timeline, before: string[], after: string[]) 
 }
 
 test('should work', async ({ runGroups }, testInfo) => {
-  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
-  configWithFiles.config.groups = {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
     default: ['a']
-  };
+  });
   const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
   expect(passed).toBe(1);
@@ -77,13 +79,12 @@ a > a/a.spec.ts > a test [end]`);
 
 test('should order two projects', async ({ runGroups }, testInfo) => {
   await test.step(`order a then b`, async () => {
-    const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
-    configWithFiles.config.groups = {
+    const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
       default: [
         'a',
         'b'
       ]
-    };
+    });
     const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
     expect(exitCode).toBe(0);
     expect(passed).toBe(2);
@@ -93,13 +94,12 @@ b > b/b.spec.ts > b test [begin]
 b > b/b.spec.ts > b test [end]`);
   });
   await test.step(`order b then a`, async () => {
-    const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
-    configWithFiles.config.groups = {
+    const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
       default: [
         'b',
         'a'
       ]
-    };
+    });
     const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
     expect(exitCode).toBe(0);
     expect(passed).toBe(2);
@@ -111,14 +111,13 @@ a > a/a.spec.ts > a test [end]`);
 });
 
 test('should order 1-3-1 projects', async ({ runGroups }, testInfo) => {
-  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
-  configWithFiles.config.groups = {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
     default: [
       'e',
       ['d', 'c', 'b'],
       'a',
     ]
-  };
+  });
   const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
   expectRunBefore(timeline, ['e'], ['d', 'c', 'b']);
@@ -127,14 +126,13 @@ test('should order 1-3-1 projects', async ({ runGroups }, testInfo) => {
 });
 
 test('should order 2-2-2 projects', async ({ runGroups }, testInfo) => {
-  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
-  configWithFiles.config.groups = {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
     default: [
       ['a', 'b'],
       ['d', 'c'],
       ['e', 'f'],
     ]
-  };
+  });
   const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
   expectRunBefore(timeline, ['a', 'b'], ['c', 'd']);
@@ -143,14 +141,13 @@ test('should order 2-2-2 projects', async ({ runGroups }, testInfo) => {
 });
 
 test('should run parallel groups sequentially without overlaps', async ({ runGroups }, testInfo) => {
-  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
-  configWithFiles.config.groups = {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
     default: [
       ['a', 'b', 'c', 'd'],
       ['a', 'b', 'c', 'd'],
       ['a', 'b', 'c', 'd'],
     ]
-  };
+  });
   const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
 
@@ -174,8 +171,7 @@ test('should run parallel groups sequentially without overlaps', async ({ runGro
 });
 
 test('should support phase with multiple project names', async ({ runGroups }, testInfo) => {
-  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
-  configWithFiles.config.groups = {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
     default: [
       [
         { project: ['a', 'b', 'c'] }
@@ -185,7 +181,7 @@ test('should support phase with multiple project names', async ({ runGroups }, t
         { project: ['e', 'f'] }
       ],
     ]
-  };
+  });
 
   const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
@@ -193,8 +189,7 @@ test('should support phase with multiple project names', async ({ runGroups }, t
 });
 
 test('should support varios syntax', async ({ runGroups }, testInfo) => {
-  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
-  configWithFiles.config.groups = {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
     default: [
       'a',
       ['a', 'b'],
@@ -209,7 +204,7 @@ test('should support varios syntax', async ({ runGroups }, testInfo) => {
       [{ project: 'e' }],
       'f'
     ]
-  };
+  });
   const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
   expect(passed).toBe(11);

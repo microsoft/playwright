@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type { PlaywrightTestConfig } from '@playwright/test';
 import type { JSONReport, JSONReportSuite, JSONReportTest, JSONReportTestResult } from '@playwright/test/reporter';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -226,7 +225,7 @@ type Fixtures = {
   runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => Promise<RunResult>;
   runTSC: (files: Files) => Promise<TSCResult>;
   nodeVersion: { major: number, minor: number, patch: number };
-  runGroups: (options: { files: Files, config: PlaywrightTestConfig }) => Promise<{ timeline: { titlePath: string[], event: 'begin' | 'end' }[] } & RunResult>;
+  runGroups: (files: Files, params?: Params, env?: Env, options?: RunOptions) => Promise<{ timeline: { titlePath: string[], event: 'begin' | 'end' }[] } & RunResult>;
 };
 
 export const test = base
@@ -266,8 +265,9 @@ export const test = base
 
       runGroups: async ({ runInlineTest }, use, testInfo) => {
         const timelinePath = testInfo.outputPath('timeline.json');
-        await use(async options => {
+        await use(async (files, env, options) => {
           const result = await runInlineTest({
+            ...files,
             'reporter.ts': `
               import { Reporter, TestCase } from '@playwright/test/reporter';
               import fs from 'fs';
@@ -285,17 +285,12 @@ export const test = base
                 }
               }
               export default TimelineReporter;
-            `,
-            'playwright.config.ts': `
-            import * as path from 'path';
-            module.exports = ${JSON.stringify(options.config)};
-          `,
-            ...options.files,
-          }, { reporter: 'list,json,./reporter.ts', workers: 2 });
+            `
+          }, { ...env, reporter: 'list,json,./reporter.ts', workers: 2 }, options);
 
           return {
             ...result,
-            timeline: JSON.parse(await fs.promises.readFile(timelinePath, 'utf8'))
+            timeline: JSON.parse((await fs.promises.readFile(timelinePath, 'utf8')).toString('utf8'))
           };
         });
       },

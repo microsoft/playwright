@@ -62,7 +62,7 @@ type RunPhase = {
 
 type RunOptions = {
   listOnly?: boolean;
-  testFileFilters: TestFileFilter[];
+  testFileFilters?: TestFileFilter[];
   projectFilter?: string[];
   projectGroup?: string;
   watchMode?: boolean;
@@ -244,7 +244,7 @@ export class Runner {
       if (projectGroup)
         throw new Error('--group option can not be combined with --project');
     } else {
-      if (!projectGroup && config.groups?.default && !options.testFileFilters.length)
+      if (!projectGroup && config.groups?.default && !options.testFileFilters?.length)
         projectGroup = 'default';
       if (projectGroup) {
         if (config.shard)
