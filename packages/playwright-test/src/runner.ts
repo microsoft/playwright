@@ -252,8 +252,10 @@ export class Runner {
           for (const p of entry) {
             if (isString(p))
               projectFilter.push(p);
-            else
+            else if (isString(p.project))
               projectFilter.push(p.project);
+            else
+              projectFilter.push(...p.project);
           }
         }
         // TODO: filter per project

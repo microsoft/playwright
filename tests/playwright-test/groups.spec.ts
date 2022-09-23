@@ -172,3 +172,22 @@ test('should run parallel groups sequentially without overlaps', async ({ runGro
 
   expect(passed).toBe(12);
 });
+
+test('should support phase with multiple project names', async ({ runGroups }, testInfo) => {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
+  configWithFiles.config.groups = {
+    default: [
+      [
+        { project: ['a', 'b', 'c'] }
+      ],
+      [
+        { project: ['d']},
+        { project: ['e', 'f'] }
+      ],
+    ]
+  };
+
+  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(6);
+});

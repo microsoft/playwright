@@ -234,7 +234,8 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 
 ## property: TestConfig.groups
 * since: v1.27
-- type: ?<[Object]<[string],[string]|[Array]<any>>>
+- type: ?<[Object]<[string],[Array]<[string]|[Array]<[string]|[Object]>>>>
+  - `project` <[string]|[Array]<[string]>> Project name(s).
 
 Project groups that control project execution order.
 

@@ -167,8 +167,7 @@ export class Loader {
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
     this._assignUniqueProjectIds(this._fullConfig.projects);
-    if (config.groups !== undefined)
-      this._fullConfig.groups = config.groups as any;
+    this._fullConfig.groups = config.groups;
   }
 
   private _assignUniqueProjectIds(projects: FullProjectInternal[]) {
@@ -671,9 +670,15 @@ function validateProjectGroups(file: string, config: Config) {
             projectName = item;
           } else if (isObject(item)) {
             const project = (item as any).project;
-            if (!isString(project))
-              throw errorWithFile(file, `config.groups.${groupName} has an entry with missing 'project' field.`);
-            validateProjectReference(project);
+            if (isString(project)) {
+              validateProjectReference(project);
+            } else if (Array.isArray(project)) {
+              project.forEach(name => {
+                if (!isString(name))
+                  throw errorWithFile(file, `config.groups.${groupName}[*].project contains non string value.`);
+                validateProjectReference(name);
+              });
+            }
             projectName = project;
           } else {
             throw errorWithFile(file, `config.groups.${groupName} unexpected group entry ${JSON.stringify(step, null, 2)}`);

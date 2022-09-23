@@ -58,7 +58,7 @@ export interface FullConfigInternal extends FullConfigPublic {
   projects: FullProjectInternal[];
 
   groups?: { [key: string]: Array<string | Array<string | {
-    project: string,
+    project: string | string[],
     grep?: RegExp | RegExp[],
     grepInvert?: RegExp | RegExp[],
     testMatch?: string | RegExp | Array<string | RegExp>,
