@@ -127,3 +127,34 @@ test('should order 2-2-2 projects', async ({ runGroups }, testInfo) => {
   expectRunBefore(timeline, ['c', 'd'], ['e', 'f']);
   expect(passed).toBe(6);
 });
+
+test('should run parallel groups sequentially without overlaps', async ({ runGroups }, testInfo) => {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
+  configWithFiles.config.groups = {
+    default: [
+      ['a', 'b', 'c', 'd'],
+      ['a', 'b', 'c', 'd'],
+      ['a', 'b', 'c', 'd'],
+    ]
+  };
+  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+  expect(exitCode).toBe(0);
+
+  const expectedEndOfFirstPhase = (events) => {
+    const firstProjectEndIndex = project => events.findIndex(e => e.event == 'end' && e.titlePath[1] === project);
+    return Math.max(...['a', 'b', 'c', 'd'].map(firstProjectEndIndex));
+  }
+  const formatPhaseEvents = (events) => events.map(e => e.titlePath[1] + ':' + e.event);
+
+  let remainingTimeline = timeline;
+  for (let i = 0; i < 3; i++) {
+    const phaseEndIndex = expectedEndOfFirstPhase(remainingTimeline);
+    const firstPhase = formatPhaseEvents(remainingTimeline.slice(0, phaseEndIndex + 1));
+    firstPhase.sort();
+    expect(firstPhase, `check phase ${i}`).toEqual(['a:begin', 'a:end', 'b:begin', 'b:end', 'c:begin', 'c:end', 'd:begin', 'd:end']);
+    remainingTimeline = remainingTimeline.slice(phaseEndIndex + 1);
+  }
+  expect(remainingTimeline.length).toBe(0);
+
+  expect(passed).toBe(12);
+});
