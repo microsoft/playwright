@@ -47,44 +47,6 @@ View all tests in the testing sidebar and extend the tests by clicking on each t
 
 <img width="1272" alt="View and Run All Tests in VS Code" src="https://user-images.githubusercontent.com/13063165/188641364-3bfa74f8-2e8a-45e5-92e1-4cbee0660e8a.png" />
 
-### Run Tests from Multiple Root Folders
-
-The VS Code extension will search for a Playwright config file at each root folder added to the workspace. Each root folder has its own root entry in the testing tree, but only those which have Playwright installed will be expandable. If a root folder does not have Playwright installed, then it will not be expandable.
-
-For example, suppose that a given workspace has three root folders: "Folder_A", "Folder_B" and "Folder_C".
-
-<img width="356" height="466" alt="A workspace with three folders: Folder_A, Folder_B and Folder_C." src="https://user-images.githubusercontent.com/594605/190903911-49172cfc-374a-4e65-a2ca-da29ca0e7cb3.png" />
-
-Out of those, only "Bar" and "Foo" have Playwright installed.
-
-<img width="356" height="466" alt="Testing tree showing that only Folder_B and Folder_C have tests, while Folder_A does not." src="https://user-images.githubusercontent.com/594605/190903951-a804acb2-8a5c-4cfb-8a18-3f21d1de78e9.png" />
-
-And the dropdown menu **Select Configuration** will account for all the projects in each configuration found.
-
-<img width="480" height="177" alt="Testing tree showing that only Folder_B and Folder_C have tests, while Folder_A does not." src="https://user-images.githubusercontent.com/594605/190904078-46beee2b-2a4a-4d79-a2d8-174308121a8d.png" />
-
-### Run Tests from Multiple Packages - Monorepos
-
-In order to use the VS Code extension when multiple packages are nested inside the root folder, a structure usually called as monorepo, it is advisable to have Playwright installed at the root level package. By installing Playwright at the root level package, it is not necessary to have it installed in each nested package as well. Remember that the VS Code extension will not look for Playwright configuration files in nested folders.
-
-However, a single Playwright configuration file can still be used to test many packages. And the tests for each package can still have their own set of independent options.
-
-For example, suppose that a given root folder has a root level package, in which Playwright was installed, and three others packages in nested folders: "apps/client", "apps/server" and "libs/common".
-
-<img width="355" height="458" alt="A file explorer with a root level package and three nested packages: 'apps/client', 'apps/server' and 'libs/common'." src="https://user-images.githubusercontent.com/594605/190917713-c51da6a0-7bde-49fd-a78a-0274b712367a.png" />
-
-The Playwright configuration file at the root level package can define projects for each package by restricting the test files belonging to any given package.
-
-<img width="432" height="754" alt="The property 'projects' of the Playwright configuration file describing three projects due to the package 'apps/client', one project due to the package 'apps/server' and one project due to the package 'libs/common'." src="https://user-images.githubusercontent.com/594605/190918095-035aa6fb-3efe-46ac-8ee8-4269ffe8dd7d.png" />
-
-For more information about which options can be used when defining a project, please see the [options available for a project](./api/class-testproject.md).
-
-The testing tree and the dropdown menu **Select Configuration** will account for all projects.
-
-<img width="355" height="373" alt="The testing tree showing all tests belonging to all five projects." src="https://user-images.githubusercontent.com/594605/190918243-063936ea-e070-4297-8f40-776d9bd339ce.png" />
-
-<img width="504" height="199" alt="The dropdown menu 'Select Configuration' showing all five projects." src="https://user-images.githubusercontent.com/594605/190918293-1b1e5f39-9178-4906-897d-a256ca48c147.png" />
-
 ### Run Tests on Specific Browsers
 
 The VS Code test runner runs your tests on the default browser of Chrome. To run on other/multiple browsers click the play button's dropdown and choose the option of "Select Default Profile" and select the browsers you wish to run your tests on.
@@ -107,7 +69,6 @@ To set a breakpoint click next to the line number where you want the breakpoint 
 
 <img width="1272" alt="Run tests in Debug Mode in VS Code" src="https://user-images.githubusercontent.com/13063165/188642947-48f4eeaa-486d-4657-9819-63ad742ee7e2.png" />
 
-
 ### Live Debugging
 
 You can modify your test right in VS Code while debugging and Playwright will highlight the selector in the browser. This is a great way of seeing if the selector exits or if there is more than one result. You can step through the tests, pause the test and rerun the tests from the menu in VS Code.
@@ -115,15 +76,12 @@ You can modify your test right in VS Code while debugging and Playwright will hi
 
 <img width="1394" alt="Live debugging in VS Code" src="https://user-images.githubusercontent.com/13063165/188644314-89967ab8-2415-4e55-bbca-b3840d347ca4.png" />
 
-
-
 ## Generating Tests
 
 CodeGen will auto generate your tests for you as you perform actions in the browser and is a great way to quickly get started. The viewport for the browser window is set to a specific width and height. See the [configuration guide](./test-configuration.md) to change the viewport or emulate different environments.
 ### Record a New Test
 
 To record a test click on the **Record new** button from the Testing sidebar. This will create a `test-1.spec.ts` file as well as open up a browser window. In the browser go to the URL you wish to test and start clicking around. Playwright will record your actions and generate a test for you. Once you are done recording click the **cancel** button or close the browser window. You can then inspect your `test-1.spec.ts` file and see your generated test.
-
 
 <img width="1272" alt="Recording a Test in VS Code" src="https://user-images.githubusercontent.com/13063165/188644755-2ab9c826-79a9-4c52-8963-26bb9e853170.png" />
 
@@ -145,10 +103,9 @@ Pick a selector and copy it into your test file by clicking the **Pick selector*
 
 <img width="1394" alt="Selector Highlighting in VS Code" src="https://user-images.githubusercontent.com/13063165/188645977-2d5d1a50-d0f0-4d2e-ba30-59899bd3c77c.png" />
 
-
-
 ## What's next
 
+- [See how to work with the VS Code Extension in different scenarios](./vscode-extension-js.md)
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [See test reports](./running-tests.md#test-reports)
 - [See a trace of your tests](./trace-viewer-intro.md)
