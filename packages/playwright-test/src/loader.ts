@@ -78,7 +78,6 @@ export class Loader {
     validateConfig(this._configFile || '<default config>', config);
 
     // 2. Override settings from CLI.
-    config.configFile = this._configFile;
     config.forbidOnly = takeFirst(this._configCLIOverrides.forbidOnly, config.forbidOnly);
     config.fullyParallel = takeFirst(this._configCLIOverrides.fullyParallel, config.fullyParallel);
     config.globalTimeout = takeFirst(this._configCLIOverrides.globalTimeout, config.globalTimeout);
