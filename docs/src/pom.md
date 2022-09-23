@@ -26,7 +26,7 @@ exports.PlaywrightDevPage = class PlaywrightDevPage {
     this.page = page;
     this.getStartedLink = page.locator('a', { hasText: 'Get started' });
     this.gettingStartedHeader = page.locator('h1', { hasText: 'Installation' });
-    this.pomLink = page.locator('li', { hasText: 'Writing Tests' }).locator('a', { hasText: 'Page Object Model' });
+    this.pomLink = page.locator('li', { hasText: 'Guides' }).locator('a', { hasText: 'Page Object Model' });
     this.tocList = page.locator('article div.markdown ul > li > a');
   }
 
@@ -61,7 +61,7 @@ export class PlaywrightDevPage {
     this.page = page;
     this.getStartedLink = page.locator('a', { hasText: 'Get started' });
     this.gettingStartedHeader = page.locator('h1', { hasText: 'Installation' });
-    this.pomLink = page.locator('li', { hasText: 'Playwright Test' }).locator('a', { hasText: 'Page Object Model' });
+    this.pomLink = page.locator('li', { hasText: 'Guides' }).locator('a', { hasText: 'Page Object Model' });
     this.tocList = page.locator('article div.markdown ul > li > a');
   }
 
@@ -176,16 +176,14 @@ const page = await browser.newPage();
 await playwrightDev.goto();
 await playwrightDev.getStarted();
 await expect(playwrightDev.tocList).toHaveText([
-  'Installation',
-  'First test',
-  'Configuration file',
-  'Writing assertions',
-  'Using test fixtures',
-  'Using test hooks',
-  'VS Code extension',
-  'Command line',
-  'Configure NPM scripts',
-  'Release notes'
+  `How to install Playwright`,
+  `What's Installed`,
+  `How to run the example test`,
+  `How to open the HTML test report`,
+  `Write tests using web first assertions, page fixtures and locators`,
+  `Run single tests, multiple tests, headed mode`,
+  `Generate tests with Codegen`,
+  `See a trace of your tests`
 ]);
 ```
 
