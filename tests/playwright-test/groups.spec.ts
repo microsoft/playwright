@@ -76,24 +76,38 @@ a > a/a.spec.ts > a test [end]`);
 
 
 test('should order two projects', async ({ runGroups }, testInfo) => {
-  for (const order of [['a', 'b'], ['b', 'a']]) {
-    await test.step(`order ${order[0]} then ${order[1]}`, async () => {
-      const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
-      configWithFiles.config.groups = {
-        default: [
-          order[0],
-          [order[1]]
-        ]
-      };
-      const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
-      expect(exitCode).toBe(0);
-      expect(passed).toBe(2);
-      expect(formatTimeline(timeline)).toEqual(`${order[0]} > ${order[0]}/${order[0]}.spec.ts > ${order[0]} test [begin]
-${order[0]} > ${order[0]}/${order[0]}.spec.ts > ${order[0]} test [end]
-${order[1]} > ${order[1]}/${order[1]}.spec.ts > ${order[1]} test [begin]
-${order[1]} > ${order[1]}/${order[1]}.spec.ts > ${order[1]} test [end]`);
-    });
-  }
+  await test.step(`order a then b`, async () => {
+    const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
+    configWithFiles.config.groups = {
+      default: [
+        'a',
+        'b'
+      ]
+    };
+    const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+    expect(exitCode).toBe(0);
+    expect(passed).toBe(2);
+    expect(formatTimeline(timeline)).toEqual(`a > a/a.spec.ts > a test [begin]
+a > a/a.spec.ts > a test [end]
+b > b/b.spec.ts > b test [begin]
+b > b/b.spec.ts > b test [end]`);
+  });
+  await test.step(`order b then a`, async () => {
+    const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
+    configWithFiles.config.groups = {
+      default: [
+        'b',
+        'a'
+      ]
+    };
+    const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+    expect(exitCode).toBe(0);
+    expect(passed).toBe(2);
+    expect(formatTimeline(timeline)).toEqual(`b > b/b.spec.ts > b test [begin]
+b > b/b.spec.ts > b test [end]
+a > a/a.spec.ts > a test [begin]
+a > a/a.spec.ts > a test [end]`);
+  });
 });
 
 test('should order 1-3-1 projects', async ({ runGroups }, testInfo) => {
