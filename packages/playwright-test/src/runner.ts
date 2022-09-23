@@ -472,29 +472,30 @@ export class Runner {
 
     // 14. Run tests.
     try {
-      const sigintWatcher = new SigIntWatcher();
+      let sigintWatcher;
 
       let hasWorkerErrors = false;
       for (const testGroups of concurrentTestGroups) {
         const dispatcher = new Dispatcher(this._loader, testGroups, this._reporter);
+        sigintWatcher = new SigIntWatcher();
         await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
-        await dispatcher.stop();
+        if (!sigintWatcher.hadSignal()) {
+          // We know for sure there was no Ctrl+C, so we remove custom SIGINT handler
+          // as soon as we can.
+          sigintWatcher.disarm();
+        }
+          await dispatcher.stop();
         hasWorkerErrors = dispatcher.hasWorkerErrors();
         if (hasWorkerErrors)
           break;
         if (testGroups.some(testGroup => testGroup.tests.some(test => !test.ok())))
           break;
       }
-      if (!sigintWatcher.hadSignal()) {
-        // We know for sure there was no Ctrl+C, so we remove custom SIGINT handler
-        // as soon as we can.
-        sigintWatcher.disarm();
-      }
-      if (!sigintWatcher.hadSignal()) {
+      if (sigintWatcher?.hadSignal()) {
+        result.status = 'interrupted';
+      } else {
         const failed = hasWorkerErrors || rootSuite.allTests().some(test => !test.ok());
         result.status = failed ? 'failed' : 'passed';
-      } else {
-        result.status = 'interrupted';
       }
     } catch (e) {
       this._reporter.onError?.(serializeError(e));
