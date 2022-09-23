@@ -105,7 +105,7 @@ Pick a selector and copy it into your test file by clicking the **Pick selector*
 
 ## What's next
 
-- [See how to work with the VS Code Extension in different scenarios](./vscode-extension-js.md)
+- [See how to work with the VS Code Extension in different scenarios](./vscode-extension.md)
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [See test reports](./running-tests.md#test-reports)
 - [See a trace of your tests](./trace-viewer-intro.md)
