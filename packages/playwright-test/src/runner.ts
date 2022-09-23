@@ -348,6 +348,7 @@ export class Runner {
         fatalErrors.push(duplicateTitlesError);
 
       // 3. Filter tests to respect line/column filter.
+      // TODO: figure out how this is supposed to work with groups.
       filterByFocusedLine(preprocessRoot, testFileFilters);
 
       // 4. Complain about only.

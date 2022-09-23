@@ -181,7 +181,7 @@ test('should support phase with multiple project names', async ({ runGroups }, t
         { project: ['a', 'b', 'c'] }
       ],
       [
-        { project: ['d']},
+        { project: ['d'] },
         { project: ['e', 'f'] }
       ],
     ]
@@ -190,4 +190,27 @@ test('should support phase with multiple project names', async ({ runGroups }, t
   const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
   expect(passed).toBe(6);
+});
+
+test('should support varios syntax', async ({ runGroups }, testInfo) => {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo);
+  configWithFiles.config.groups = {
+    default: [
+      'a',
+      ['a', 'b'],
+      [
+        { project: ['a', 'b'] }
+      ],
+      [
+        { project: ['a', 'b'] },
+        'c',
+        { project: 'd' },
+      ],
+      [{ project: 'e' }],
+      'f'
+    ]
+  };
+  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(11);
 });
