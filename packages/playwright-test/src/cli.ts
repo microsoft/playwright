@@ -156,8 +156,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     return;
 
   const runner = new Runner(overrides);
+  let config;
   if (resolvedConfigFile)
-    await runner.loadConfigFromResolvedFile(resolvedConfigFile);
+    config = await runner.loadConfigFromResolvedFile(resolvedConfigFile);
   else
     await runner.loadEmptyConfig(configFileOrDirectory);
 
@@ -170,11 +171,15 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     };
   });
 
+  let projectGroup = opts.group;
+  if (!opts.group && config && config.groups?.default && !opts.shard && !opts.project && !testFileFilters.length)
+    projectGroup = 'default';
+
   const result = await runner.runAllTests({
     listOnly: !!opts.list,
     testFileFilters,
     projectFilter: opts.project || undefined,
-    projectGroup: opts.group,
+    projectGroup,
     watchMode: !!process.env.PW_TEST_WATCH,
     passWithNoTests: opts.passWithNoTests,
   });

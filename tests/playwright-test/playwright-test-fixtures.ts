@@ -226,7 +226,7 @@ type Fixtures = {
   runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => Promise<RunResult>;
   runTSC: (files: Files) => Promise<TSCResult>;
   nodeVersion: { major: number, minor: number, patch: number };
-  runGroups: (options: { files: Files, config: PlaywrightTestConfig }) => Promise<{getTimeline: () => Promise<string[]>; } & RunResult>;
+  runGroups: (options: { files: Files, config: PlaywrightTestConfig }) => Promise<{ timeline: { titlePath: string[], event: 'begin' | 'end' }[] } & RunResult>;
 };
 
 export const test = base
@@ -273,12 +273,12 @@ export const test = base
               import fs from 'fs';
               import path from 'path';
               class TimelineReporter implements Reporter {
-                private _timeline: {project:string, title: string, event: 'begin' | 'end'}[] = [];
+                private _timeline: {titlePath: string, event: 'begin' | 'end'}[] = [];
                 onTestBegin(test: TestCase) {
-                  this._timeline.push({ project: test.titlePath()[1] || '', title: test.title, event: 'begin' });
+                  this._timeline.push({ titlePath: test.titlePath(), event: 'begin' });
                 }
                 onTestEnd(test: TestCase) {
-                  this._timeline.push({ project: test.titlePath()[1] || '', title: test.title, event: 'end' });
+                  this._timeline.push({ titlePath: test.titlePath(), event: 'end' });
                 }
                 onEnd() {
                   fs.writeFileSync(path.join(${JSON.stringify(timelinePath)}), JSON.stringify(this._timeline, null, 2));
@@ -295,7 +295,8 @@ export const test = base
 
           return {
             ...result,
-            getTimeline: async () => (JSON.parse(await fs.promises.readFile(timelinePath, 'utf8')) as {project: string, title: string, event: 'begin' | 'end'}[]).map(e => [e.event, e.project, e.title].join('::')) };
+            timeline: JSON.parse(await fs.promises.readFile(timelinePath, 'utf8'))
+          };
         });
       },
     });
