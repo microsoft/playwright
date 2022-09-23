@@ -167,8 +167,6 @@ export class Loader {
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
     this._assignUniqueProjectIds(this._fullConfig.projects);
-    // TODO: clone, resolve project
-    // TODO: define default group?
     if (config.groups !== undefined)
       this._fullConfig.groups = config.groups as any;
   }

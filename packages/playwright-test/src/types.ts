@@ -62,7 +62,7 @@ export interface FullConfigInternal extends FullConfigPublic {
     grep?: RegExp | RegExp[],
     grepInvert?: RegExp | RegExp[],
     testMatch?: string | RegExp | Array<string | RegExp>,
-    testIgnor?: string | RegExp | Array<string | RegExp>
+    testIgnore?: string | RegExp | Array<string | RegExp>
   }>> };
 }
 
