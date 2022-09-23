@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { DispatcherScope, RootDispatcher } from './dispatcher';
+import type { RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type { Android, SocketBackend } from '../android/android';
 import { AndroidDevice } from '../android/android';

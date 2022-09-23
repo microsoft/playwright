@@ -49,15 +49,13 @@ export class AndroidServerLauncherImpl implements BrowserServerLauncher {
       throw e;
     });
 
-    
     try {
-      if (options.deviceSerialNumber) {
-        devices = devices.filter((ele) => ele.serial === options.deviceSerialNumber);
-      }
-    } catch(err) {
-      console.log(`Some Exception Occurred while filtering browsers list. Error Details: ${JSON.stringify(err)}`);
+      if (options.deviceSerialNumber)
+        devices = devices.filter(ele => ele.serial === options.deviceSerialNumber);
+    } catch (err) {
+      // console.log(`Some Exception Occurred while filtering browsers list. Error Details: ${JSON.stringify(err)}`);
     }
-    let device = devices[0];
+    const device = devices[0];
 
     let path = `/${createGuid()}`;
     if (options.wsPath)

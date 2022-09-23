@@ -11680,33 +11680,6 @@ export {};
  */
 export interface Android {
   /**
-   * Returns the list of detected Android devices.
-   * @param options
-   */
-  devices(options?: {
-    /**
-     * Optional host to establish ADB server connection. Default to `127.0.0.1`.
-     */
-    host?: string;
-
-    /**
-     * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
-     */
-    omitDriverInstall?: boolean;
-
-    /**
-     * Optional port to establish ADB server connection. Default to `5037`.
-     */
-    port?: number;
-  }): Promise<Array<AndroidDevice>>;
-
-  /**
-   * This setting will change the default maximum time for all the methods accepting `timeout` option.
-   * @param timeout Maximum time in milliseconds
-   */
-  setDefaultTimeout(timeout: number): void;
-
-  /**
    * This methods attaches Playwright to an existing android instance.
    * @param wsEndpoint A browser websocket endpoint to connect to.
    * @param options
@@ -11734,6 +11707,27 @@ export interface Android {
      */
     timeout?: number;
   }): Promise<AndroidDevice>;
+
+  /**
+   * Returns the list of detected Android devices.
+   * @param options
+   */
+  devices(options?: {
+    /**
+     * Optional host to establish ADB server connection. Default to `127.0.0.1`.
+     */
+    host?: string;
+
+    /**
+     * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+     */
+    omitDriverInstall?: boolean;
+
+    /**
+     * Optional port to establish ADB server connection. Default to `5037`.
+     */
+    port?: number;
+  }): Promise<Array<AndroidDevice>>;
 
   /**
    * Returns the browser app instance.
@@ -11875,6 +11869,14 @@ export interface Android {
      */
     wsPath?: string;
   }): Promise<BrowserServer>;
+
+  name(): string;
+
+  /**
+   * This setting will change the default maximum time for all the methods accepting `timeout` option.
+   * @param timeout Maximum time in milliseconds
+   */
+  setDefaultTimeout(timeout: number): void;
 }
 
 /**

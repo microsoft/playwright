@@ -19,7 +19,7 @@ import { Dispatcher } from './dispatcher';
 import { createGuid } from '../../utils';
 import { serializeError } from '../../protocol/serializers';
 import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
-import { AndroidDispatcher } from './androidDispatcher';
+import type { AndroidDispatcher } from './androidDispatcher';
 
 export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeChannel, BrowserTypeDispatcher> implements channels.JsonPipeChannel {
   _type_JsonPipe = true;

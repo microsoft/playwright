@@ -27,7 +27,7 @@ import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
 import { Connection } from './connection';
-import { Playwright } from './playwright';
+import type { Playwright } from './playwright';
 import { kDeviceClosedError } from '../common/errors';
 import { raceAgainstTimeout } from '../utils/timeoutRunner';
 
@@ -65,23 +65,23 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
 
   async launchServer(options: types.LaunchServerOptions = {}): Promise<api.BrowserServer> {
     if (!this._serverLauncher)
-    throw new Error('Launching server is not supported');
+      throw new Error('Launching server is not supported');
     options = { ...this._defaultLaunchOptions, ...options };
     return this._serverLauncher.launchServer(options);
   }
 
   name(): string {
-    return "android-chrome";
+    return 'android-chrome';
   }
 
-  async connect(wsEndpoint: string, params: api.ConnectOptions = {}): Promise<api.AndroidDevice> {
-    const logger = params.logger;
+  async connect(wsEndpoint: string, options: api.ConnectOptions = {}): Promise<api.AndroidDevice> {
+    const logger = options.logger;
     return await this._wrapApiCall(async () => {
-      const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
-      const headers = { 'x-playwright-browser': this.name(), ...params.headers };
-      const connectParams: channels.BrowserTypeConnectParams = { wsEndpoint, headers, slowMo: params.slowMo, timeout: params.timeout };
-      if ((params as any).__testHookRedirectPortForwarding)
-        connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
+      const deadline = options.timeout ? monotonicTime() + options.timeout : 0;
+      const headers = { 'x-playwright-browser': this.name(), ...options.headers };
+      const connectParams: channels.BrowserTypeConnectParams = { wsEndpoint, headers, slowMo: options.slowMo, timeout: options.timeout };
+      if ((options as any).__testHookRedirectPortForwarding)
+        connectParams.socksProxyRedirectPortForTest = (options as any).__testHookRedirectPortForwarding;
       const { pipe } = await this._channel.connect(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
       const connection = new Connection(this._connection.localUtils());
@@ -98,19 +98,19 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
           connection!.dispatch(message);
         } catch (e) {
           closeError = e.toString();
-          console.log(`pipe message catch ${JSON.stringify(message)} ${closeError}`);
+          // console.log(`pipe message catch ${JSON.stringify(message)} ${closeError}`);
           closePipe();
         }
       });
 
       const result = await raceAgainstTimeout(async () => {
         // For tests.
-        if ((params as any).__testHookBeforeCreateBrowser)
-          await (params as any).__testHookBeforeCreateBrowser();
+        if ((options as any).__testHookBeforeCreateBrowser)
+          await (options as any).__testHookBeforeCreateBrowser();
 
         const playwright = await connection!.initializeAndroidDevice();
         if (!playwright) {
-          console.log('Connection to Android Device does not exist');
+          // console.log('Connection to Android Device does not exist');
           closePipe();
           throw new Error('Malformed endpoint. Did you use launchServer method?');
         }
@@ -121,9 +121,8 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
       if (!result.timedOut) {
         return result.result;
       } else {
-        console.log('result.timedOut false');
         closePipe();
-        throw new Error(`Timeout ${params.timeout}ms exceeded`);
+        throw new Error(`Timeout ${options.timeout}ms exceeded`);
       }
     });
   }

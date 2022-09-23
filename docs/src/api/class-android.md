@@ -114,41 +114,6 @@ Note that since you don't need Playwright to install web browsers when testing A
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
 ```
 
-## async method: Android.devices
-* since: v1.9
-- returns: <[Array]<[AndroidDevice]>>
-
-Returns the list of detected Android devices.
-
-### option: Android.devices.host
-* since: v1.22
-- `host` <[string]>
-
-Optional host to establish ADB server connection. Default to `127.0.0.1`.
-
-### option: Android.devices.port
-* since: v1.20
-- `port` <[int]>
-
-Optional port to establish ADB server connection. Default to `5037`.
-
-### option: Android.devices.omitDriverInstall
-* since: v1.21
-- `omitDriverInstall` <[boolean]>
-
-Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
-
-## method: Android.setDefaultTimeout
-* since: v1.9
-
-This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.
-
-### param: Android.setDefaultTimeout.timeout
-* since: v1.9
-- `timeout` <[float]>
-
-Maximum time in milliseconds
-
 ## async method: Android.connect
 * since: v1.27
 - returns: <[AndroidDevice]>
@@ -187,6 +152,30 @@ Logger sink for Playwright logging. Optional.
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
 `30000` (30 seconds). Pass `0` to disable timeout.
 
+## async method: Android.devices
+* since: v1.9
+- returns: <[Array]<[AndroidDevice]>>
+
+Returns the list of detected Android devices.
+
+### option: Android.devices.host
+* since: v1.22
+- `host` <[string]>
+
+Optional host to establish ADB server connection. Default to `127.0.0.1`.
+
+### option: Android.devices.port
+* since: v1.20
+- `port` <[int]>
+
+Optional port to establish ADB server connection. Default to `5037`.
+
+### option: Android.devices.omitDriverInstall
+* since: v1.21
+- `omitDriverInstall` <[boolean]>
+
+Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+
 ## async method: Android.launchServer
 * since: v1.27
 * langs: js
@@ -220,3 +209,18 @@ Any process or web page (including those running in Playwright) with knowledge
 of the `wsPath` can take control of the OS user. For this reason, you should
 use an unguessable token when using this option.
 :::
+
+## method: Android.name
+* since: v1.27
+- returns: <[string]>
+
+## method: Android.setDefaultTimeout
+* since: v1.9
+
+This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.
+
+### param: Android.setDefaultTimeout.timeout
+* since: v1.9
+- `timeout` <[float]>
+
+Maximum time in milliseconds

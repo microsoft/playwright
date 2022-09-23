@@ -26,7 +26,7 @@ import { rewriteErrorMessage } from '../../utils/stackTrace';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
 import { eventsHelper } from '../..//utils/eventsHelper';
 import type { RegisteredListener } from '../..//utils/eventsHelper';
-import { AndroidDeviceDispatcher, AndroidDispatcher } from './androidDispatcher'
+import type { AndroidDeviceDispatcher, AndroidDispatcher } from './androidDispatcher';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 const metadataValidator = createMetadataValidator();

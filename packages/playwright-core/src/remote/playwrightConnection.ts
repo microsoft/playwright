@@ -26,8 +26,9 @@ import { assert } from '../utils';
 import type { LaunchOptions } from '../server/types';
 import { ReuseControllerDispatcher } from '../server/dispatchers/reuseControllerDispatcher';
 import { AndroidDevice } from '../server/android/android';
-import { AndroidRootDispatcher } from '../server/dispatchers/dispatcher'
-import { AndroidDeviceDispatcher, AndroidDispatcher } from '../server/dispatchers/androidDispatcher';
+import { AndroidRootDispatcher } from '../server/dispatchers/dispatcher';
+import type { AndroidDispatcher } from '../server/dispatchers/androidDispatcher';
+import { AndroidDeviceDispatcher } from '../server/dispatchers/androidDispatcher';
 
 type Options = {
   enableSocksProxy: boolean,
@@ -86,7 +87,7 @@ export class PlaywrightConnection {
 
     if (mode === 'use-pre-launched-android-device') {
       this._root = new AndroidRootDispatcher(this._dispatcherConnection, async scope => {
-        assert(this._preLaunched.android)
+        assert(this._preLaunched.android);
         return await this._initPreLaunchedAndroidMode(scope, this._preLaunched.android);
       });
     } else {

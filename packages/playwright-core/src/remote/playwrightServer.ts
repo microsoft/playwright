@@ -24,7 +24,7 @@ import { PlaywrightConnection } from './playwrightConnection';
 import { assert } from '../utils';
 import type  { LaunchOptions } from '../server/types';
 import { ManualPromise } from '../utils/manualPromise';
-import { AndroidDevice } from '../server/android/android';
+import type { AndroidDevice } from '../server/android/android';
 
 const debugLog = debug('pw:server');
 

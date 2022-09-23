@@ -42,7 +42,7 @@ import { DEFAULT_ARGS } from '../chromium/chromium';
 
 import type { WebSocketEventEmitter } from '../../utilsBundle';
 import type { CallMetadata } from '../instrumentation';
-import type { BrowserServerLauncher, BrowserServer } from '../../client/browserType';
+import type { BrowserServer } from '../../client/browserType';
 import { envObjectToArray } from '../../client/clientHelper';
 import type { ProtocolLogger } from '../../server/types';
 import { createPlaywright } from '../../server/playwright';
@@ -119,7 +119,7 @@ export class Android extends SdkObject {
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
-    }, this.toProtocolLogger(options.logger)).catch((e:any) => {
+    }, this.toProtocolLogger(options.logger)).catch((e: any) => {
       const log = helper.formatBrowserLogs(metadata.log);
       rewriteErrorMessage(e, `${e.message} Failed to launch browser.${log}`);
       throw e;
