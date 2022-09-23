@@ -258,7 +258,7 @@ export class Runner {
               projectFilter.push(...p.project);
           }
         }
-        // TODO: filter per project
+        // TODO: filter per project set.
         phases.push({
           testFileFilters,
           projectFilter
@@ -325,6 +325,7 @@ export class Runner {
     const runPhases = this._collectRunPhases(options);
     assert(runPhases.length > 0);
     for (const { projectFilter, testFileFilters } of runPhases) {
+      // TODO: do not collect files for each project multiple times.
       const filesByProject = await this._collectFiles(testFileFilters, projectFilter);
 
       const allTestFiles = new Set<string>();
