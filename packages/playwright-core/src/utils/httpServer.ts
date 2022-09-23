@@ -51,14 +51,14 @@ export class HttpServer {
     return this._port;
   }
 
-  async start(port?: number): Promise<string> {
+  async start(port?: number, host = 'localhost'): Promise<string> {
     assert(!this._started, 'server already started');
     this._started = true;
     this._server.on('connection', socket => {
       this._activeSockets.add(socket);
       socket.once('close', () => this._activeSockets.delete(socket));
     });
-    this._server.listen(port, 'localhost');
+    this._server.listen(port, host);
     await new Promise(cb => this._server!.once('listening', cb));
     const address = this._server.address();
     assert(address, 'Could not bind server socket');
@@ -67,7 +67,7 @@ export class HttpServer {
         this._urlPrefix = address;
       } else {
         this._port = address.port;
-        this._urlPrefix = `http://localhost:${address.port}`;
+        this._urlPrefix = `http://${host}:${address.port}`;
       }
     }
     return this._urlPrefix;
