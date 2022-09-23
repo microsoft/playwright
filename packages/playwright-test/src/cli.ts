@@ -17,7 +17,6 @@
 /* eslint-disable no-console */
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
-import * as docker from './docker/docker';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
@@ -33,58 +32,6 @@ export function addTestCommands(program: Command) {
   addTestCommand(program);
   addShowReportCommand(program);
   addListFilesCommand(program);
-  addDockerCommand(program);
-}
-
-function addDockerCommand(program: Command) {
-  const dockerCommand = program.command('docker')
-      .description(`Manage Docker integration (EXPERIMENTAL)`);
-
-  dockerCommand.command('build')
-      .description('build local docker image')
-      .action(async function(options) {
-        try {
-          await docker.buildPlaywrightImage();
-        } catch (e) {
-          console.error(e.stack ? e : e.message);
-        }
-      });
-
-  dockerCommand.command('start')
-      .description('start docker container')
-      .action(async function(options) {
-        try {
-          await docker.startPlaywrightContainer();
-        } catch (e) {
-          console.error(e.stack ? e : e.message);
-        }
-      });
-
-  dockerCommand.command('stop')
-      .description('stop docker container')
-      .action(async function(options) {
-        try {
-          await docker.stopAllPlaywrightContainers();
-        } catch (e) {
-          console.error(e.stack ? e : e.message);
-        }
-      });
-
-  dockerCommand.command('delete-image', { hidden: true })
-      .description('delete docker image, if any')
-      .action(async function(options) {
-        try {
-          await docker.deletePlaywrightImage();
-        } catch (e) {
-          console.error(e.stack ? e : e.message);
-        }
-      });
-
-  dockerCommand.command('print-status-json', { hidden: true })
-      .description('print docker status')
-      .action(async function(options) {
-        await docker.printDockerStatus();
-      });
 }
 
 function addTestCommand(program: Command) {
@@ -100,7 +47,7 @@ function addTestCommand(program: Command) {
   command.option('-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`);
   command.option('--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`);
   command.option('--ignore-snapshots', `Ignore screenshot and snapshot expectations`);
-  command.option('-j, --workers <workers>', `Number of concurrent workers, use 1 to run in a single worker (default: number of CPU cores / 2)`);
+  command.option('-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`);
   command.option('--list', `Collect all the tests and report them, but do not run`);
   command.option('--max-failures <N>', `Stop after the first N failures`);
   command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
@@ -272,7 +219,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
-    workers: options.workers ? parseInt(options.workers, 10) : undefined,
+    workers: options.workers,
   };
 }
 
@@ -315,7 +262,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
 }
 
 export function experimentalLoaderOption() {
-  return ` --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
+  return ` --no-warnings --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
 }
 
 export function envWithoutExperimentalLoaderOptions(): NodeJS.ProcessEnv {

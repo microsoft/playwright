@@ -70,7 +70,14 @@ export class PlaywrightServer {
   }
 
   async listen(port: number = 0): Promise<string> {
-    const server = http.createServer((request, response) => {
+    const server = http.createServer((request: http.IncomingMessage, response: http.ServerResponse) => {
+      if (request.method === 'GET' && request.url === '/json') {
+        response.setHeader('Content-Type', 'application/json');
+        response.end(JSON.stringify({
+          wsEndpointPath: this._options.path,
+        }));
+        return;
+      }
       response.end('Running');
     });
     server.on('error', error => debugLog(error));
@@ -113,17 +120,17 @@ export class PlaywrightServer {
 
       const log = newLogger();
       log(`serving connection: ${request.url}`);
-      const isReuseControllerClient = !!request.headers['x-playwright-reuse-controller'];
-      const semaphore = isReuseControllerClient ? controllerSemaphore : browserSemaphore;
+      const isDebugControllerClient = !!request.headers['x-playwright-debug-controller'];
+      const semaphore = isDebugControllerClient ? controllerSemaphore : browserSemaphore;
 
       // If we started in the legacy reuse-browser mode, create this._preLaunchedPlaywright.
       // If we get a reuse-controller request,  create this._preLaunchedPlaywright.
-      if (isReuseControllerClient || (this._mode === 'reuse-browser') && !this._preLaunchedPlaywright)
+      if (isDebugControllerClient || (this._mode === 'reuse-browser') && !this._preLaunchedPlaywright)
         this.preLaunchedPlaywright();
 
       // If we have a playwright to reuse, consult controller for reuse mode.
       let mode = this._mode;
-      if (mode === 'auto' && this._preLaunchedPlaywright?.reuseController.reuseBrowser())
+      if (mode === 'auto' && this._preLaunchedPlaywright?.debugController.reuseBrowser())
         mode = 'reuse-browser';
 
       if (mode === 'reuse-browser')
@@ -133,7 +140,7 @@ export class PlaywrightServer {
 
       const connection = new PlaywrightConnection(
           semaphore.aquire(),
-          mode, ws, isReuseControllerClient,
+          mode, ws, isDebugControllerClient,
           { enableSocksProxy, browserName, launchOptions },
           { playwright: this._preLaunchedPlaywright, browser: this._options.preLaunchedBrowser || null, android: this._options.preLaunchedAndroidDevice || null },
           log, () => semaphore.release());

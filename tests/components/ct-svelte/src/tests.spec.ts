@@ -18,6 +18,7 @@ import { test, expect } from '@playwright/experimental-ct-svelte';
 import Button from './components/Button.svelte';
 import DefaultSlot from './components/DefaultSlot.svelte';
 import MultiRoot from './components/MultiRoot.svelte';
+import Empty from './components/Empty.svelte';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
@@ -83,4 +84,11 @@ test('unmount a multi root component', async ({ mount, page }) => {
   await component.unmount()
   await expect(page.locator('#root')).not.toContainText('root 1')
   await expect(page.locator('#root')).not.toContainText('root 2')
-})
+});
+
+test('get textContent of the empty component', async ({ mount }) => {
+  const component = await mount(Empty);
+  expect(await component.allTextContents()).toEqual(['']);
+  expect(await component.textContent()).toBe('');
+  await expect(component).toHaveText('');
+});
