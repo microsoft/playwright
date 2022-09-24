@@ -286,7 +286,7 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
       `packages/web/src/`,
     ],
     command: 'npx',
-    args: ['vite', 'build'],
+    args: ['vite', 'build', ...(watchMode ? ['--sourcemap'] : [])],
     cwd: path.join(__dirname, '..', '..', 'packages', webPackage),
   });
 }
@@ -335,7 +335,7 @@ if (lintMode) {
       command: 'npx',
       args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath(`packages/${webPackage}`))],
       shell: true,
-    });  
+    });
   }
 }
 

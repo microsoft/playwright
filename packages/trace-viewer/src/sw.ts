@@ -35,13 +35,20 @@ const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: S
 
 const clientIdToTraceUrls = new MultiMap<string, string>();
 
+class PrettyFetchError extends Error { }
+
 async function loadTrace(trace: string, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
   const entry = loadedTraces.get(trace);
   clientIdToTraceUrls.set(clientId, trace);
   if (entry)
     return entry.traceModel;
   const traceModel = new TraceModel();
-  await traceModel.load(trace, progress);
+  try {
+    await traceModel.load(trace, progress);
+  } catch (error) {
+    if (error.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
+      throw new PrettyFetchError('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
+  }
   const snapshotServer = new SnapshotServer(traceModel.storage());
   loadedTraces.set(trace, { traceModel, snapshotServer });
   return traceModel;
@@ -72,14 +79,20 @@ async function doFetch(event: FetchEvent): Promise<Response> {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
-      } catch (error: unknown) {
+      } catch (exception: unknown) {
         // eslint-disable-next-line no-console
-        console.error(error);
+        console.error(exception);
         const traceFileName = url.searchParams.get('traceFileName')!;
-        return new Response(JSON.stringify({
-          error: traceFileName ? `Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.` :
-            `Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`,
-        }), {
+
+        let error = '';
+        if (exception instanceof PrettyFetchError)
+          error = exception.message;
+        else if (traceFileName)
+          error = `Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.`;
+        else
+          error = `Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`;
+
+        return new Response(JSON.stringify({ error }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' }
         });
