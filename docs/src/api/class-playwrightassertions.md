@@ -55,6 +55,7 @@ using NUnit.Framework;
 
 namespace PlaywrightTests;
 
+[TestFixture]
 public class ExampleTests : PageTest
 {
     [Test]

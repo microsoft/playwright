@@ -52,6 +52,7 @@ export type InitializerTraits<T> =
     T extends BrowserTypeChannel ? BrowserTypeInitializer :
     T extends SelectorsChannel ? SelectorsInitializer :
     T extends SocksSupportChannel ? SocksSupportInitializer :
+    T extends DebugControllerChannel ? DebugControllerInitializer :
     T extends PlaywrightChannel ? PlaywrightInitializer :
     T extends RootChannel ? RootInitializer :
     T extends LocalUtilsChannel ? LocalUtilsInitializer :
@@ -89,6 +90,7 @@ export type EventsTraits<T> =
     T extends BrowserTypeChannel ? BrowserTypeEvents :
     T extends SelectorsChannel ? SelectorsEvents :
     T extends SocksSupportChannel ? SocksSupportEvents :
+    T extends DebugControllerChannel ? DebugControllerEvents :
     T extends PlaywrightChannel ? PlaywrightEvents :
     T extends RootChannel ? RootEvents :
     T extends LocalUtilsChannel ? LocalUtilsEvents :
@@ -126,6 +128,7 @@ export type EventTargetTraits<T> =
     T extends BrowserTypeChannel ? BrowserTypeEventTarget :
     T extends SelectorsChannel ? SelectorsEventTarget :
     T extends SocksSupportChannel ? SocksSupportEventTarget :
+    T extends DebugControllerChannel ? DebugControllerEventTarget :
     T extends PlaywrightChannel ? PlaywrightEventTarget :
     T extends RootChannel ? RootEventTarget :
     T extends LocalUtilsChannel ? LocalUtilsEventTarget :
@@ -310,6 +313,7 @@ export type APIRequestContextFetchParams = {
   timeout?: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
+  maxRedirects?: number,
 };
 export type APIRequestContextFetchOptions = {
   params?: NameValue[],
@@ -322,6 +326,7 @@ export type APIRequestContextFetchOptions = {
   timeout?: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
+  maxRedirects?: number,
 };
 export type APIRequestContextFetchResult = {
   response: APIResponse,
@@ -551,6 +556,109 @@ export type PlaywrightHideHighlightOptions = {};
 export type PlaywrightHideHighlightResult = void;
 
 export interface PlaywrightEvents {
+}
+
+export type RecorderSource = {
+  isRecorded: boolean,
+  id: string,
+  label: string,
+  text: string,
+  language: string,
+  highlight: {
+    line: number,
+    type: string,
+  }[],
+  revealLine?: number,
+  group?: string,
+};
+
+// ----------- DebugController -----------
+export type DebugControllerInitializer = {};
+export interface DebugControllerEventTarget {
+  on(event: 'inspectRequested', callback: (params: DebugControllerInspectRequestedEvent) => void): this;
+  on(event: 'browsersChanged', callback: (params: DebugControllerBrowsersChangedEvent) => void): this;
+  on(event: 'sourcesChanged', callback: (params: DebugControllerSourcesChangedEvent) => void): this;
+}
+export interface DebugControllerChannel extends DebugControllerEventTarget, Channel {
+  _type_DebugController: boolean;
+  setTrackHierarchy(params: DebugControllerSetTrackHierarchyParams, metadata?: Metadata): Promise<DebugControllerSetTrackHierarchyResult>;
+  setReuseBrowser(params: DebugControllerSetReuseBrowserParams, metadata?: Metadata): Promise<DebugControllerSetReuseBrowserResult>;
+  resetForReuse(params?: DebugControllerResetForReuseParams, metadata?: Metadata): Promise<DebugControllerResetForReuseResult>;
+  navigateAll(params: DebugControllerNavigateAllParams, metadata?: Metadata): Promise<DebugControllerNavigateAllResult>;
+  setRecorderMode(params: DebugControllerSetRecorderModeParams, metadata?: Metadata): Promise<DebugControllerSetRecorderModeResult>;
+  highlightAll(params: DebugControllerHighlightAllParams, metadata?: Metadata): Promise<DebugControllerHighlightAllResult>;
+  hideHighlightAll(params?: DebugControllerHideHighlightAllParams, metadata?: Metadata): Promise<DebugControllerHideHighlightAllResult>;
+  kill(params?: DebugControllerKillParams, metadata?: Metadata): Promise<DebugControllerKillResult>;
+  closeAllBrowsers(params?: DebugControllerCloseAllBrowsersParams, metadata?: Metadata): Promise<DebugControllerCloseAllBrowsersResult>;
+}
+export type DebugControllerInspectRequestedEvent = {
+  selector: string,
+};
+export type DebugControllerBrowsersChangedEvent = {
+  browsers: {
+    contexts: {
+      pages: string[],
+    }[],
+  }[],
+};
+export type DebugControllerSourcesChangedEvent = {
+  sources: RecorderSource[],
+};
+export type DebugControllerSetTrackHierarchyParams = {
+  enabled: boolean,
+};
+export type DebugControllerSetTrackHierarchyOptions = {
+
+};
+export type DebugControllerSetTrackHierarchyResult = void;
+export type DebugControllerSetReuseBrowserParams = {
+  enabled: boolean,
+};
+export type DebugControllerSetReuseBrowserOptions = {
+
+};
+export type DebugControllerSetReuseBrowserResult = void;
+export type DebugControllerResetForReuseParams = {};
+export type DebugControllerResetForReuseOptions = {};
+export type DebugControllerResetForReuseResult = void;
+export type DebugControllerNavigateAllParams = {
+  url: string,
+};
+export type DebugControllerNavigateAllOptions = {
+
+};
+export type DebugControllerNavigateAllResult = void;
+export type DebugControllerSetRecorderModeParams = {
+  mode: 'inspecting' | 'recording' | 'none',
+  language?: string,
+  file?: string,
+};
+export type DebugControllerSetRecorderModeOptions = {
+  language?: string,
+  file?: string,
+};
+export type DebugControllerSetRecorderModeResult = void;
+export type DebugControllerHighlightAllParams = {
+  selector: string,
+};
+export type DebugControllerHighlightAllOptions = {
+
+};
+export type DebugControllerHighlightAllResult = void;
+export type DebugControllerHideHighlightAllParams = {};
+export type DebugControllerHideHighlightAllOptions = {};
+export type DebugControllerHideHighlightAllResult = void;
+export type DebugControllerKillParams = {};
+export type DebugControllerKillOptions = {};
+export type DebugControllerKillResult = void;
+export type DebugControllerCloseAllBrowsersParams = {};
+export type DebugControllerCloseAllBrowsersOptions = {};
+export type DebugControllerCloseAllBrowsersResult = void;
+
+export interface DebugControllerEvents {
+  'inspectRequested': DebugControllerInspectRequestedEvent;
+  'browsersChanged': DebugControllerBrowsersChangedEvent;
+  'sourcesChanged': DebugControllerSourcesChangedEvent;
 }
 
 // ----------- SocksSupport -----------
@@ -4368,129 +4476,3 @@ export interface JsonPipeEvents {
   'message': JsonPipeMessageEvent;
   'closed': JsonPipeClosedEvent;
 }
-
-export const commandsWithTracingSnapshots = new Set([
-  'EventTarget.waitForEventInfo',
-  'BrowserContext.waitForEventInfo',
-  'Page.waitForEventInfo',
-  'WebSocket.waitForEventInfo',
-  'ElectronApplication.waitForEventInfo',
-  'AndroidDevice.waitForEventInfo',
-  'Page.goBack',
-  'Page.goForward',
-  'Page.reload',
-  'Page.expectScreenshot',
-  'Page.screenshot',
-  'Page.setViewportSize',
-  'Page.keyboardDown',
-  'Page.keyboardUp',
-  'Page.keyboardInsertText',
-  'Page.keyboardType',
-  'Page.keyboardPress',
-  'Page.mouseMove',
-  'Page.mouseDown',
-  'Page.mouseUp',
-  'Page.mouseClick',
-  'Page.mouseWheel',
-  'Page.touchscreenTap',
-  'Frame.evalOnSelector',
-  'Frame.evalOnSelectorAll',
-  'Frame.addScriptTag',
-  'Frame.addStyleTag',
-  'Frame.check',
-  'Frame.click',
-  'Frame.dragAndDrop',
-  'Frame.dblclick',
-  'Frame.dispatchEvent',
-  'Frame.evaluateExpression',
-  'Frame.evaluateExpressionHandle',
-  'Frame.fill',
-  'Frame.focus',
-  'Frame.getAttribute',
-  'Frame.goto',
-  'Frame.hover',
-  'Frame.innerHTML',
-  'Frame.innerText',
-  'Frame.inputValue',
-  'Frame.isChecked',
-  'Frame.isDisabled',
-  'Frame.isEnabled',
-  'Frame.isHidden',
-  'Frame.isVisible',
-  'Frame.isEditable',
-  'Frame.press',
-  'Frame.selectOption',
-  'Frame.setContent',
-  'Frame.setInputFiles',
-  'Frame.setInputFilePaths',
-  'Frame.tap',
-  'Frame.textContent',
-  'Frame.type',
-  'Frame.uncheck',
-  'Frame.waitForTimeout',
-  'Frame.waitForFunction',
-  'Frame.waitForSelector',
-  'Frame.expect',
-  'JSHandle.evaluateExpression',
-  'ElementHandle.evaluateExpression',
-  'JSHandle.evaluateExpressionHandle',
-  'ElementHandle.evaluateExpressionHandle',
-  'ElementHandle.evalOnSelector',
-  'ElementHandle.evalOnSelectorAll',
-  'ElementHandle.check',
-  'ElementHandle.click',
-  'ElementHandle.dblclick',
-  'ElementHandle.dispatchEvent',
-  'ElementHandle.fill',
-  'ElementHandle.hover',
-  'ElementHandle.innerHTML',
-  'ElementHandle.innerText',
-  'ElementHandle.inputValue',
-  'ElementHandle.isChecked',
-  'ElementHandle.isDisabled',
-  'ElementHandle.isEditable',
-  'ElementHandle.isEnabled',
-  'ElementHandle.isHidden',
-  'ElementHandle.isVisible',
-  'ElementHandle.press',
-  'ElementHandle.screenshot',
-  'ElementHandle.scrollIntoViewIfNeeded',
-  'ElementHandle.selectOption',
-  'ElementHandle.selectText',
-  'ElementHandle.setInputFiles',
-  'ElementHandle.setInputFilePaths',
-  'ElementHandle.tap',
-  'ElementHandle.textContent',
-  'ElementHandle.type',
-  'ElementHandle.uncheck',
-  'ElementHandle.waitForElementState',
-  'ElementHandle.waitForSelector'
-]);
-
-export const pausesBeforeInputActions = new Set([
-  'Frame.check',
-  'Frame.click',
-  'Frame.dragAndDrop',
-  'Frame.dblclick',
-  'Frame.fill',
-  'Frame.hover',
-  'Frame.press',
-  'Frame.selectOption',
-  'Frame.setInputFiles',
-  'Frame.setInputFilePaths',
-  'Frame.tap',
-  'Frame.type',
-  'Frame.uncheck',
-  'ElementHandle.check',
-  'ElementHandle.click',
-  'ElementHandle.dblclick',
-  'ElementHandle.fill',
-  'ElementHandle.hover',
-  'ElementHandle.press',
-  'ElementHandle.selectOption',
-  'ElementHandle.setInputFiles',
-  'ElementHandle.setInputFilePaths',
-  'ElementHandle.tap',
-  'ElementHandle.type',
-  'ElementHandle.uncheck'
-]);

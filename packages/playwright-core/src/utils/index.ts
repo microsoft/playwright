@@ -87,7 +87,7 @@ export function isObject(obj: any): obj is NonNullable<object> {
 }
 
 export function isError(obj: any): obj is Error {
-  return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
+  return obj instanceof Error || (obj && Object.getPrototypeOf(obj)?.name === 'Error');
 }
 
 const debugEnv = getFromENV('PWDEBUG') || '';

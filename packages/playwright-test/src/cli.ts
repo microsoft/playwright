@@ -36,17 +36,18 @@ export function addTestCommands(program: Command) {
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
-  command.description('Run tests with Playwright Test');
+  command.description('run tests with Playwright Test');
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
   command.option('--headed', `Run tests in headed browsers (default: headless)`);
-  command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --maxFailures=1 --headed --workers=1" options`);
+  command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`);
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`);
   command.option('--forbid-only', `Fail if test.only is called (default: false)`);
   command.option('--fully-parallel', `Run all tests in parallel (default: false)`);
   command.option('-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`);
   command.option('-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`);
   command.option('--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`);
-  command.option('-j, --workers <workers>', `Number of concurrent workers, use 1 to run in a single worker (default: number of CPU cores / 2)`);
+  command.option('--ignore-snapshots', `Ignore screenshot and snapshot expectations`);
+  command.option('-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`);
   command.option('--list', `Collect all the tests and report them, but do not run`);
   command.option('--max-failures <N>', `Stop after the first N failures`);
   command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
@@ -57,9 +58,9 @@ function addTestCommand(program: Command) {
   command.option('--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`);
   command.option('--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`);
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
+  command.option('--group <project-group-name>', `Only run tests from the specified project group (default: run all projects from the 'default' group or just all projects if 'default' group is not defined).`);
   command.option('--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`);
   command.option('--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
-  command.option('-i, --ignore-snapshots', `Ignore screenshot and snapshot expectations`);
   command.option('-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`);
   command.option('-x', `Stop after the first failure`);
   command.action(async (args, opts) => {
@@ -166,6 +167,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     listOnly: !!opts.list,
     testFileFilters,
     projectFilter: opts.project || undefined,
+    projectGroup: opts.group,
     watchMode: !!process.env.PW_TEST_WATCH,
     passWithNoTests: opts.passWithNoTests,
   });
@@ -219,7 +221,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
-    workers: options.workers ? parseInt(options.workers, 10) : undefined,
+    workers: options.workers,
   };
 }
 
@@ -262,7 +264,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
 }
 
 export function experimentalLoaderOption() {
-  return ` --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
+  return ` --no-warnings --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
 }
 
 export function envWithoutExperimentalLoaderOptions(): NodeJS.ProcessEnv {

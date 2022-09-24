@@ -17,7 +17,7 @@
 import type { Locator, Page, APIResponse } from 'playwright-core';
 import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
 import { colors } from 'playwright-core/lib/utilsBundle';
-import { constructURLBasedOnBaseURL, isRegExp } from 'playwright-core/lib/utils';
+import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils';
 import type { Expect } from '../types';
 import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
@@ -58,10 +58,11 @@ export function toBeDisabled(
 export function toBeEditable(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
-  options?: { timeout?: number },
+  options?: { editable?: boolean, timeout?: number },
 ) {
   return toBeTruthy.call(this, 'toBeEditable', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-    return await locator._expect(customStackTrace, 'to.be.editable', { isNot, timeout });
+    const editable = !options || options.editable === undefined || options.editable === true;
+    return await locator._expect(customStackTrace, editable ? 'to.be.editable' : 'to.be.readonly', { isNot, timeout });
   }, options);
 }
 
@@ -78,10 +79,11 @@ export function toBeEmpty(
 export function toBeEnabled(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
-  options?: { timeout?: number },
+  options?: { enabled?: boolean, timeout?: number },
 ) {
   return toBeTruthy.call(this, 'toBeEnabled', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-    return await locator._expect(customStackTrace, 'to.be.enabled', { isNot, timeout });
+    const enabled = !options || options.enabled === undefined || options.enabled === true;
+    return await locator._expect(customStackTrace, enabled ? 'to.be.enabled' : 'to.be.disabled', { isNot, timeout });
   }, options);
 }
 
@@ -108,10 +110,11 @@ export function toBeHidden(
 export function toBeVisible(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
-  options?: { timeout?: number },
+  options?: { visible?: boolean, timeout?: number },
 ) {
   return toBeTruthy.call(this, 'toBeVisible', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-    return await locator._expect(customStackTrace, 'to.be.visible', { isNot, timeout });
+    const visible = !options || options.visible === undefined || options.visible === true;
+    return await locator._expect(customStackTrace, visible ? 'to.be.visible' : 'to.be.hidden', { isNot, timeout });
   }, options);
 }
 
@@ -138,25 +141,13 @@ export function toHaveAttribute(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
   name: string,
-  expected: string | RegExp | undefined | { timeout?: number},
+  expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  if (!options) {
-    // Update params for the case toHaveAttribute(name, options);
-    if (typeof expected === 'object' && !isRegExp(expected)) {
-      options = expected;
-      expected = undefined;
-    }
-  }
-  if (expected === undefined) {
-    return toBeTruthy.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-      return await locator._expect(customStackTrace, 'to.have.attribute', { expressionArg: name, isNot, timeout });
-    }, options);
-  }
   return toMatchText.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-    const expectedText = toExpectedTextValues([expected as (string | RegExp)]);
-    return await locator._expect(customStackTrace, 'to.have.attribute.value', { expressionArg: name, expectedText, isNot, timeout });
-  }, expected as (string | RegExp), options);
+    const expectedText = toExpectedTextValues([expected]);
+    return await locator._expect(customStackTrace, 'to.have.attribute', { expressionArg: name, expectedText, isNot, timeout });
+  }, expected, options);
 }
 
 export function toHaveClass(

@@ -222,6 +222,13 @@ test('should propose only the relevant matchers when custom expect matcher class
       await test.expect(page).not.toBeEnabled();
 
       await test.expect(page.locator('foo')).toBeEnabled();
+      await test.expect(page.locator('foo')).toBeEnabled({ enabled: false });
+      await test.expect(page.locator('foo')).not.toBeEnabled({ enabled: true });
+      // @ts-expect-error
+      await test.expect(page.locator('foo')).toBeEnabled({ unknown: false });
+      // @ts-expect-error
+      await test.expect(page.locator('foo')).toBeEnabled({ enabled: 'foo' });
+
       await test.expect(page.locator('foo')).toBe(true);
       // @ts-expect-error
       await test.expect(page.locator('foo')).toHaveURL('https://example.com');
@@ -235,6 +242,15 @@ test('should propose only the relevant matchers when custom expect matcher class
       await test.expect(res as any).toHaveURL('https://example.com');
       // @ts-expect-error
       await test.expect(123).toHaveURL('https://example.com');
+
+      await test.expect(page.locator('foo')).toBeChecked();
+      await test.expect(page.locator('foo')).not.toBeChecked({ checked: true });
+
+      await test.expect(page.locator('foo')).not.toBeEditable();
+      await test.expect(page.locator('foo')).toBeEditable({ editable: false });
+
+      await test.expect(page.locator('foo')).toBeVisible();
+      await test.expect(page.locator('foo')).not.toBeVisible({ visible: false });
     });
     `
   });
@@ -278,26 +294,6 @@ test('should return void/Promise when appropriate', async ({ runTSC }) => {
           const assertion: AssertType<Promise<void>, typeof value> = true;
         }
       });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
-test('should suppport toHaveAttribute withou optional value', async ({ runTSC }) => {
-  const result = await runTSC({
-    'a.spec.ts': `
-    const { test } = pwt;
-    test('custom matchers', async ({ page }) => {
-      const locator = page.locator('#node');
-      await test.expect(locator).toHaveAttribute('name', 'value');
-      await test.expect(locator).toHaveAttribute('name', 'value', { timeout: 10 });
-      await test.expect(locator).toHaveAttribute('disabled');
-      await test.expect(locator).toHaveAttribute('disabled', { timeout: 10 });
-      // @ts-expect-error
-      await test.expect(locator).toHaveAttribute('disabled', { foo: 1 });
-      // @ts-expect-error
-      await test.expect(locator).toHaveAttribute('name', 'value', 'opt');
-    });
     `
   });
   expect(result.exitCode).toBe(0);

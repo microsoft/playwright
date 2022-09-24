@@ -98,6 +98,7 @@ using NUnit.Framework;
 namespace PlaywrightTests;
 
 [Parallelizable(ParallelScope.Self)]
+[TestFixture]
 public class Tests : PageTest
 {
     [Test]

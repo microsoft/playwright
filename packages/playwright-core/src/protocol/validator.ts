@@ -171,6 +171,7 @@ scheme.APIRequestContextFetchParams = tObject({
   timeout: tOptional(tNumber),
   failOnStatusCode: tOptional(tBoolean),
   ignoreHTTPSErrors: tOptional(tBoolean),
+  maxRedirects: tOptional(tNumber),
 });
 scheme.APIRequestContextFetchResult = tObject({
   response: tType('APIResponse'),
@@ -307,6 +308,63 @@ scheme.PlaywrightNewRequestResult = tObject({
 });
 scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
 scheme.PlaywrightHideHighlightResult = tOptional(tObject({}));
+scheme.RecorderSource = tObject({
+  isRecorded: tBoolean,
+  id: tString,
+  label: tString,
+  text: tString,
+  language: tString,
+  highlight: tArray(tObject({
+    line: tNumber,
+    type: tString,
+  })),
+  revealLine: tOptional(tNumber),
+  group: tOptional(tString),
+});
+scheme.DebugControllerInitializer = tOptional(tObject({}));
+scheme.DebugControllerInspectRequestedEvent = tObject({
+  selector: tString,
+});
+scheme.DebugControllerBrowsersChangedEvent = tObject({
+  browsers: tArray(tObject({
+    contexts: tArray(tObject({
+      pages: tArray(tString),
+    })),
+  })),
+});
+scheme.DebugControllerSourcesChangedEvent = tObject({
+  sources: tArray(tType('RecorderSource')),
+});
+scheme.DebugControllerSetTrackHierarchyParams = tObject({
+  enabled: tBoolean,
+});
+scheme.DebugControllerSetTrackHierarchyResult = tOptional(tObject({}));
+scheme.DebugControllerSetReuseBrowserParams = tObject({
+  enabled: tBoolean,
+});
+scheme.DebugControllerSetReuseBrowserResult = tOptional(tObject({}));
+scheme.DebugControllerResetForReuseParams = tOptional(tObject({}));
+scheme.DebugControllerResetForReuseResult = tOptional(tObject({}));
+scheme.DebugControllerNavigateAllParams = tObject({
+  url: tString,
+});
+scheme.DebugControllerNavigateAllResult = tOptional(tObject({}));
+scheme.DebugControllerSetRecorderModeParams = tObject({
+  mode: tEnum(['inspecting', 'recording', 'none']),
+  language: tOptional(tString),
+  file: tOptional(tString),
+});
+scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
+scheme.DebugControllerHighlightAllParams = tObject({
+  selector: tString,
+});
+scheme.DebugControllerHighlightAllResult = tOptional(tObject({}));
+scheme.DebugControllerHideHighlightAllParams = tOptional(tObject({}));
+scheme.DebugControllerHideHighlightAllResult = tOptional(tObject({}));
+scheme.DebugControllerKillParams = tOptional(tObject({}));
+scheme.DebugControllerKillResult = tOptional(tObject({}));
+scheme.DebugControllerCloseAllBrowsersParams = tOptional(tObject({}));
+scheme.DebugControllerCloseAllBrowsersResult = tOptional(tObject({}));
 scheme.SocksSupportInitializer = tOptional(tObject({}));
 scheme.SocksSupportSocksRequestedEvent = tObject({
   uid: tString,

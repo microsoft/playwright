@@ -638,7 +638,7 @@ it('should not resolve goto upon window.stop()', async ({ browserName, page, ser
     response = res;
   });
   let done = false;
-  const promise = page.goto(server.PREFIX + '/window-stop.html').then(() => done = true).catch(() => {});
+  page.goto(server.PREFIX + '/window-stop.html').then(() => done = true).catch(() => {});
   await server.waitForRequest('/module.js');
   expect(done).toBe(false);
   await page.waitForTimeout(1000);  // give it some time to erroneously resolve

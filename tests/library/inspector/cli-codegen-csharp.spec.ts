@@ -250,6 +250,7 @@ test(`should print a valid basic program in nunit`, async ({ runCLI }) => {
 using Microsoft.Playwright;
 
 [Parallelizable(ParallelScope.Self)]
+[TestFixture]
 public class Tests : PageTest
 {
     public override BrowserNewContextOptions ContextOptions()

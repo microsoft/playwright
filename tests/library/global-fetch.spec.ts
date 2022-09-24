@@ -383,3 +383,40 @@ it('should return body for failing requests', async ({ playwright, server }) => 
   }
   await request.dispose();
 });
+
+it('should throw an error when maxRedirects is exceeded', async ({ playwright, server }) => {
+  server.setRedirect('/a/redirect1', '/b/c/redirect2');
+  server.setRedirect('/b/c/redirect2', '/b/c/redirect3');
+  server.setRedirect('/b/c/redirect3', '/b/c/redirect4');
+  server.setRedirect('/b/c/redirect4', '/simple.json');
+
+  const request = await playwright.request.newContext();
+  for (const method of ['GET', 'PUT', 'POST', 'OPTIONS', 'HEAD', 'PATCH']) {
+    for (const maxRedirects of [1, 2, 3])
+      await expect(async () => request.fetch(`${server.PREFIX}/a/redirect1`, { method: method, maxRedirects: maxRedirects })).rejects.toThrow('Max redirect count exceeded');
+  }
+  await request.dispose();
+});
+
+it('should not follow redirects when maxRedirects is set to 0', async ({ playwright, server }) => {
+  server.setRedirect('/a/redirect1', '/b/c/redirect2');
+  server.setRedirect('/b/c/redirect2', '/simple.json');
+
+  const request = await playwright.request.newContext();
+  for (const method of ['GET', 'PUT', 'POST', 'OPTIONS', 'HEAD', 'PATCH']){
+    const response = await request.fetch(`${server.PREFIX}/a/redirect1`, { method, maxRedirects: 0 });
+    expect(response.headers()['location']).toBe('/b/c/redirect2');
+    expect(response.status()).toBe(302);
+  }
+  await request.dispose();
+});
+
+it('should throw an error when maxRedirects is less than 0', async ({ playwright, server }) => {
+  server.setRedirect('/a/redirect1', '/b/c/redirect2');
+  server.setRedirect('/b/c/redirect2', '/simple.json');
+
+  const request = await playwright.request.newContext();
+  for (const method of ['GET', 'PUT', 'POST', 'OPTIONS', 'HEAD', 'PATCH'])
+    await expect(async () => request.fetch(`${server.PREFIX}/a/redirect1`, { method, maxRedirects: -1 })).rejects.toThrow(`'maxRedirects' should be greater than or equal to '0'`);
+  await request.dispose();
+});

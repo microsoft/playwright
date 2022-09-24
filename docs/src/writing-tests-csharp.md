@@ -24,6 +24,7 @@ using Microsoft.Playwright.NUnit;
 namespace PlaywrightTests;
 
 [Parallelizable(ParallelScope.Self)]
+[TestFixture]
 public class Tests : PageTest
 {
     [Test]
@@ -136,6 +137,7 @@ using NUnit.Framework;
 namespace PlaywrightTests;
 
 [Parallelizable(ParallelScope.Self)]
+[TestFixture]
 public class Tests : PageTest
 {
     [Test]
@@ -190,6 +192,7 @@ using NUnit.Framework;
 namespace PlaywrightTests;
 
 [Parallelizable(ParallelScope.Self)]
+[TestFixture]
 public class Tests : PageTest
 {
     [Test]

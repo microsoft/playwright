@@ -324,19 +324,19 @@ Query parameters to be sent with the URL.
 
 Optional request parameters.
 
-## js-python-fetch-option-headers
+## js-python-csharp-fetch-option-headers
 * langs: js, python, csharp
 - `headers` <[Object]<[string], [string]>>
 
 Allows to set HTTP headers.
 
-## js-python-fetch-option-timeout
+## js-python-csharp-fetch-option-timeout
 * langs: js, python, csharp
 - `timeout` <[float]>
 
 Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 
-## js-python-fetch-option-failonstatuscode
+## js-python-csharp-fetch-option-failonstatuscode
 * langs: js, python, csharp
 - `failOnStatusCode` <[boolean]>
 
@@ -384,7 +384,7 @@ or as file-like object containing file name, mime-type and its content.
 
 An instance of [FormData] can be created via [`method: APIRequestContext.createFormData`].
 
-## js-python-fetch-option-data
+## js-python-csharp-fetch-option-data
 * langs: js, python, csharp
 - `data` <[string]|[Buffer]|[Serializable]>
 
@@ -392,18 +392,24 @@ Allows to set post data of the request. If the data parameter is an object, it w
 and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will be
 set to `application/octet-stream` if not explicitly set.
 
-## js-python-fetch-option-ignorehttpserrors
+## js-python-csharp-fetch-option-ignorehttpserrors
 * langs: js, python, csharp
 - `ignoreHTTPSErrors` <[boolean]>
 
 Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
 
+## js-python-csharp-fetch-option-maxredirects
+* langs: js, python, csharp
+- `maxRedirects` <[int]>
+
+Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is exceeded.
+Defaults to `20`. Pass `0` to not follow redirects.
+
 ## evaluate-expression
 - `expression` <[string]>
 
-JavaScript expression to be evaluated in the browser context. If it looks like
-a function declaration, it is interpreted as a function. Otherwise, evaluated
-as an expression.
+JavaScript expression to be evaluated in the browser context. If the expresion evaluates
+to a function, the function is automatically invoked.
 
 ## js-evaluate-pagefunction
 * langs: js
@@ -559,7 +565,7 @@ Logger sink for Playwright logging.
 - `recordHar` <[Object]>
   - `omitContent` ?<[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to
     `false`. Deprecated, use `content` policy instead.
-  - `content` ?<[HarContentPolicy]<"omit"|"embed"|"attach">> Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for all other file extensions.
+  - `content` ?<[HarContentPolicy]<"omit"|"embed"|"attach">> Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for all other file extensions.
   - `path` <[path]> Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by default.
   - `mode` ?<[HarMode]<"full"|"minimal">> When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
   - `urlFilter` ?<[string]|[RegExp]> A glob or regex pattern to filter requests that are stored in the HAR. When a [`option: baseURL`] via the context options was provided and the passed URL is a path, it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
@@ -589,7 +595,7 @@ Optional setting to control whether to omit request content from the HAR. Defaul
   - alias-python: record_har_content
 - `recordHarContent` ?<[HarContentPolicy]<"omit"|"embed"|"attach">>
 
-Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persistet as separate files and all of these files are archived along with the HAR file. Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
+Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files and all of these files are archived along with the HAR file. Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
 
 ## context-option-recordhar-mode
 * langs: csharp, java, python

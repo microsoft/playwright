@@ -26,6 +26,7 @@ const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x' : '✘';
 
 class ListReporter extends BaseReporter {
   private _lastRow = 0;
+  private _lastColumn = 0;
   private _testRows = new Map<TestCase, number>();
   private _resultIndex = new Map<TestResult, number>();
   private _needNewLine = false;
@@ -93,9 +94,20 @@ class ListReporter extends BaseReporter {
 
   private _updateLineCountAndNewLineFlagForOutput(text: string) {
     this._needNewLine = text[text.length - 1] !== '\n';
-    if (this._liveTerminal) {
-      const newLineCount = text.split('\n').length - 1;
-      this._lastRow += newLineCount;
+    const ttyWidth = this.ttyWidth();
+    if (!this._liveTerminal || ttyWidth === 0)
+      return;
+    for (const ch of text) {
+      if (ch === '\n') {
+        this._lastColumn = 0;
+        ++this._lastRow;
+        continue;
+      }
+      ++this._lastColumn;
+      if (this._lastColumn > ttyWidth) {
+        this._lastColumn = 0;
+        ++this._lastRow;
+      }
     }
   }
 

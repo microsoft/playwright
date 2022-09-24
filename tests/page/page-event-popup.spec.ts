@@ -144,7 +144,9 @@ it('should work with clicking target=_blank and rel=noopener', async ({ page, se
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should not treat navigations as new popups', async ({ page, server }) => {
+it('should not treat navigations as new popups', async ({ page, server, isWebView2 }) => {
+  it.skip(isWebView2, 'Page.close() is not supported in WebView2');
+
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([

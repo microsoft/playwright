@@ -17,7 +17,7 @@
 import { contextTest } from '../../config/browserTest';
 import type { ConsoleMessage, Page } from 'playwright-core';
 import * as path from 'path';
-import type { Source } from '../../../packages/playwright-core/src/server/recorder/recorderTypes';
+import type { Source } from '../../../packages/recorder/src/recorderTypes';
 import type { CommonFixtures, TestChildProcess } from '../../config/commonFixtures';
 export { expect } from '@playwright/test';
 

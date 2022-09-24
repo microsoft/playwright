@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ResourceSnapshot } from '@playwright-core/server/trace/common/snapshotTypes';
+import type { ResourceSnapshot } from '@trace/snapshot';
 import { Expandable } from '@web/components/expandable';
 import * as React from 'react';
 import './networkResourceDetails.css';

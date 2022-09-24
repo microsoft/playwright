@@ -3,10 +3,6 @@ id: test-reporters
 title: "Reporters"
 ---
 
-<!-- TOC -->
-
-## Using reporters
-
 Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass `--reporter` [command line option](./test-cli.md).
 
 
@@ -40,7 +36,7 @@ export default config;
 
 ### Multiple reporters
 
-You can use multiple reporters at the same time. For example  you can use`'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
+You can use multiple reporters at the same time. For example  you can use `'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
 
 ```js tab=js-js
 // playwright.config.js

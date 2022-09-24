@@ -41,6 +41,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   grep: RegExp | RegExp[];
   grepInvert: RegExp | RegExp[] | null;
   metadata: Metadata;
+  id: string;
   name: string;
   snapshotDir: string;
   outputDir: string;
@@ -92,6 +93,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   updateSnapshots: 'all' | 'none' | 'missing';
   workers: number;
   webServer: TestConfigWebServer | null;
+  configFile?: string;
   // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 

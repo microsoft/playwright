@@ -242,6 +242,7 @@ test.describe('Editing', () => {
   test('should cancel edits on escape', async ({ page }) => {
     const todoItems = page.locator('.todo-list li');
     await todoItems.nth(1).dblclick();
+    await todoItems.nth(1).locator('.edit').fill('buy some sausages');
     await todoItems.nth(1).locator('.edit').press('Escape');
     await expect(todoItems).toHaveText(TODO_ITEMS);
   });

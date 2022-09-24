@@ -321,8 +321,8 @@ it('should add cookies with an expiration', async ({ context }) => {
   }])).rejects.toThrow(/Cookie should have a valid expires/);
 });
 
-it('should be able to send third party cookies via an iframe', async ({ browser, httpsServer, browserName }) => {
-  it.fixme(browserName === 'firefox' || browserName === 'webkit');
+it('should be able to send third party cookies via an iframe', async ({ browser, httpsServer, browserName, isMac }) => {
+  it.fixme(browserName === 'webkit' && isMac);
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16937' });
 
   const context = await browser.newContext({

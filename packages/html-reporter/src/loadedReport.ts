@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { HTMLReport } from '@playwright-test/reporters/html';
+import type { HTMLReport } from './types';
 
 export interface LoadedReport {
   json(): HTMLReport;

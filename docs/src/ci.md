@@ -37,7 +37,7 @@ configurations for common CI providers.
 
 1. **Run your tests**:
    ```bash js
-   npm test
+   npx playwright test
    ```
    ```bash python
    pytest
@@ -66,7 +66,7 @@ steps:
   - name: Install Playwright
     run: npx playwright install --with-deps
   - name: Run your tests
-    run: npm test
+    run: npx playwright test
   - name: Upload test results
     if: always()
     uses: actions/upload-artifact@v2
@@ -148,7 +148,7 @@ jobs:
     - name: Install Playwright
       run: npx playwright install --with-deps
     - name: Run Playwright tests
-      run: npm run test:e2e
+      run: npx playwright test
       env:
         # This might depend on your test-runner/language binding
         PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
@@ -176,7 +176,7 @@ steps:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.26.0-focal
+      image: mcr.microsoft.com/playwright:v1.27.0-focal
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v2
@@ -194,7 +194,7 @@ steps:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.26.0-focal
+      image: mcr.microsoft.com/playwright:v1.27.0-focal
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -218,7 +218,7 @@ steps:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.26.0-focal
+      image: mcr.microsoft.com/playwright:v1.27.0-focal
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
@@ -239,7 +239,7 @@ steps:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.26.0-focal
+      image: mcr.microsoft.com/playwright:v1.27.0-focal
     steps:
       - uses: actions/checkout@v3
       - name: Setup dotnet
@@ -264,7 +264,7 @@ steps:
     name: 'Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shardIndex }} of ${{ matrix.shardTotal }}'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.26.0-focal
+      image: mcr.microsoft.com/playwright:v1.27.0-focal
     strategy:
       fail-fast: false
       matrix:
@@ -293,30 +293,89 @@ Pipelines support [running containerized
 jobs](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops).
 Alternatively, you can use [Command line tools](./cli.md#install-system-dependencies) to install all necessary dependencies.
 
+For running the Playwright tests use this pipeline task:
 ```yml
-pool:
-  vmImage: 'ubuntu-20.04'
-
-container: mcr.microsoft.com/playwright:v1.26.0-focal
-
-steps:
-...
+jobs:
+    - deployment: Run_E2E_Tests
+      pool:
+        vmImage: ubuntu-20.04
+      container: mcr.microsoft.com/playwright:v1.27.0-focal
+      environment: testing
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: Bash@3
+              displayName: 'Run Playwright tests'
+              inputs:
+                workingDirectory: 'my-e2e-tests'
+                targetType: 'inline'
+                failOnStderr: true
+                env:
+                  CI: true
+                script: |
+                  npm ci
+                  npx playwright test
 ```
+This will make the pipeline run fail if any of the playwright tests fails.
+If you also want to integrate the test results with Azure DevOps, use `failOnStderr:false` and the built-in `PublishTestResults` task like so:
+```yml
+jobs:
+    - deployment: Run_E2E_Tests
+      pool:
+        vmImage: ubuntu-20.04
+      container: mcr.microsoft.com/playwright:v1.27.0-focal
+      environment: testing
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: Bash@3
+              displayName: 'Run Playwright tests'
+              inputs:
+                workingDirectory: 'my-e2e-tests'
+                targetType: 'inline'
+                failOnStderr: false
+                env:
+                  CI: true
+                script: |
+                  npm ci
+                  npx playwright test
+                  exit 0
+            - task: PublishTestResults@2
+              displayName: 'Publish test results'
+              inputs:
+                searchFolder: 'my-e2e-tests/test-results'
+                testResultsFormat: 'JUnit'
+                testResultsFiles: 'e2e-junit-results.xml' 
+                mergeTestResults: true
+                failTaskOnFailedTests: true
+                testRunTitle: 'My End-To-End Tests'
+```
+Note: The JUnit reporter needs to be configured accordingly via
+```ts
+["junit", { outputFile: "test-results/e2e-junit-results.xml" }]
+```
+in `playwright.config.ts`.
 
 ### CircleCI
 
-Running Playwright on CircleCI requires the following steps:
-
-1. Use the pre-built [Docker image](./docker.md) in your config like so:
+Running Playwright on Circle CI is very similar to running on GitHub Actions. In order to specify the pre-built Playwright [Docker image](./docker.md) , simply modify the agent definition with `docker:` in your config like so:
 
    ```yml
-   docker:
-     - image: mcr.microsoft.com/playwright:v1.26.0-focal
-   environment:
-     NODE_ENV: development # Needed if playwright is in `devDependencies`
+   executors:
+      pw-focal-development:
+        docker:
+          - image: mcr.microsoft.com/playwright:v1.27.0-focal
+      environment:
+        NODE_ENV: development # Needed if playwright is in `devDependencies`
    ```
 
-1. If you’re using Playwright through Jest, then you may encounter an error spawning child processes:
+Note: When using the docker agent definition, you are specifying the resource class of where playwright runs to the 'medium' tier [here](https://circleci.com/docs/configuration-reference?#docker-execution-environment). The default behavior of Playwright is to set the number of workers to the detected core count (2 in the case of the medium tier). Overriding the number of workers to greater than this number will cause unnecessary timeouts and failures.
+
+Similarly, If you’re using Playwright through Jest, then you may encounter an error spawning child processes:
 
    ```
    [00:00.0]  jest args: --e2e --spec --max-workers=36
@@ -326,6 +385,18 @@ Running Playwright on CircleCI requires the following steps:
 
    This is likely caused by Jest autodetecting the number of processes on the entire machine (`36`) rather than the number allowed to your container (`2`). To fix this, set `jest --maxWorkers=2` in your test command.
 
+#### Sharding in Circle CI
+
+Sharding in Circle CI is indexed with 0 which means that you will need to override the default parallelism ENV VARS. The following example demonstrates how to run Playwright with a Circle CI Parallelism of 4 by adding 1 to the `CIRCLE_NODE_INDEX` to pass into the `--shard` cli arg.
+
+  ```yml
+    playwright-job-name:
+      executor: pw-focal-development
+      parallelism: 4
+      steps:
+        - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; npx playwright test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}      
+  ```
+
 ### Jenkins
 
 Jenkins supports Docker agents for pipelines. Use the [Playwright Docker image](./docker.md)
@@ -333,13 +404,13 @@ to run tests on Jenkins.
 
 ```groovy
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright:v1.26.0-focal' } }
+   agent { docker { image 'mcr.microsoft.com/playwright:v1.27.0-focal' } }
    stages {
       stage('e2e-tests') {
          steps {
             // Depends on your language / test framework
             sh 'npm install'
-            sh 'npm run test'
+            sh 'npx playwright test'
          }
       }
    }
@@ -351,7 +422,7 @@ pipeline {
 Bitbucket Pipelines can use public [Docker images as build environments](https://confluence.atlassian.com/bitbucket/use-docker-images-as-build-environments-792298897.html). To run Playwright tests on Bitbucket, use our public Docker image ([see Dockerfile](./docker.md)).
 
 ```yml
-image: mcr.microsoft.com/playwright:v1.26.0-focal
+image: mcr.microsoft.com/playwright:v1.27.0-focal
 ```
 
 ### GitLab CI
@@ -364,7 +435,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v1.26.0-focal
+  image: mcr.microsoft.com/playwright:v1.27.0-focal
   script:
   ...
 ```
@@ -380,7 +451,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v1.26.0-focal
+  image: mcr.microsoft.com/playwright:v1.27.0-focal
   parallel: 7
   script:
     - npm ci
@@ -395,7 +466,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v1.26.0-focal
+  image: mcr.microsoft.com/playwright:v1.27.0-focal
   parallel:
     matrix:
       - PROJECT: ['chromium', 'webkit']
@@ -453,7 +524,7 @@ configuration, against a hash of the Playwright version.
 Playwright supports the `DEBUG` environment variable to output debug logs during execution. Setting it to `pw:browser*` is helpful while debugging `Error: Failed to launch browser` errors.
 
 ```bash js
-DEBUG=pw:browser* npm run test
+DEBUG=pw:browser* npx playwright test
 ```
 ```bash python
 DEBUG=pw:browser* pytest

@@ -14,19 +14,19 @@ This image is published on [Docker Hub].
 ### Pull the image
 
 ```bash js
-docker pull mcr.microsoft.com/playwright:v1.26.0-focal
+docker pull mcr.microsoft.com/playwright:v1.27.0-focal
 ```
 
 ```bash python
-docker pull mcr.microsoft.com/playwright/python:v1.26.0-focal
+docker pull mcr.microsoft.com/playwright/python:v1.27.0-focal
 ```
 
 ```bash csharp
-docker pull mcr.microsoft.com/playwright/dotnet:v1.26.0-focal
+docker pull mcr.microsoft.com/playwright/dotnet:v1.27.0-focal
 ```
 
 ```bash java
-docker pull mcr.microsoft.com/playwright/java:v1.26.0-focal
+docker pull mcr.microsoft.com/playwright/java:v1.27.0-focal
 ```
 
 ### Run the image
@@ -38,19 +38,19 @@ By default, the Docker image will use the `root` user to run the browsers. This 
 On trusted websites, you can avoid creating a separate user and use root for it since you trust the code which will run on the browsers.
 
 ```bash js
-docker run -it --rm --ipc=host mcr.microsoft.com/playwright:v1.26.0-focal /bin/bash
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright:v1.27.0-focal /bin/bash
 ```
 
 ```bash python
-docker run -it --rm --ipc=host mcr.microsoft.com/playwright/python:v1.26.0-focal /bin/bash
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright/python:v1.27.0-focal /bin/bash
 ```
 
 ```bash csharp
-docker run -it --rm --ipc=host mcr.microsoft.com/playwright/dotnet:v1.26.0-focal /bin/bash
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright/dotnet:v1.27.0-focal /bin/bash
 ```
 
 ```bash java
-docker run -it --rm --ipc=host mcr.microsoft.com/playwright/java:v1.26.0-focal /bin/bash
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright/java:v1.27.0-focal /bin/bash
 ```
 
 #### Crawling and scraping
@@ -58,19 +58,19 @@ docker run -it --rm --ipc=host mcr.microsoft.com/playwright/java:v1.26.0-focal /
 On untrusted websites, it's recommended to use a separate user for launching the browsers in combination with the seccomp profile. Inside the container or if you are using the Docker image as a base image you have to use `adduser` for it.
 
 ```bash js
-docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:v1.26.0-focal /bin/bash
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:v1.27.0-focal /bin/bash
 ```
 
 ```bash python
-docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/python:v1.26.0-focal /bin/bash
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/python:v1.27.0-focal /bin/bash
 ```
 
 ```bash csharp
-docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/dotnet:v1.26.0-focal /bin/bash
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/dotnet:v1.27.0-focal /bin/bash
 ```
 
 ```bash java
-docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/java:v1.26.0-focal /bin/bash
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/java:v1.27.0-focal /bin/bash
 ```
 
 [`seccomp_profile.json`](https://github.com/microsoft/playwright/blob/main/utils/docker/seccomp_profile.json) is needed to run Chromium with sandbox. This is a [default Docker seccomp profile](https://github.com/docker/engine/blob/d0d99b04cf6e00ed3fc27e81fc3d94e7eda70af3/profiles/seccomp/default.json) with extra user namespace cloning permissions:
@@ -145,3 +145,60 @@ The image will be tagged as `playwright:localbuild-focal` and could be run as:
 ```
 docker run --rm -it playwright:localbuild /bin/bash
 ```
+
+## (Experimental) Playwright Test Docker Integration
+* langs: js
+
+Playwright Test now ships an **experimental** Docker integration. The Docker container provides a consistent environment, eliminating browser rendering differences across platforms. 
+With this integration, **only** browser binaries are running inside a Docker container,
+while all the code is still running on the host operating system.
+
+Playwright Test will automatically proxy host network traffic
+into the container, so browsers can access servers running on the host.
+
+:::note
+Docker integration requires Docker installed & running on your computer.
+See https://docs.docker.com/get-docker/
+
+If you use [Docker Desktop](https://www.docker.com/products/docker-desktop/), make sure to increase
+default CPU and memory limit for better performance.
+:::
+
+Docker integration usage:
+
+1. Build a local Docker image that will be used to run containers. This step
+   needs to be done only once.
+
+    ```bash js
+    npx playwright docker build
+    ```
+
+1. Run Docker container in the background.
+
+    ```bash js
+    npx playwright docker start
+    ```
+
+1. Run tests inside Docker container using the `PLAYWRIGHT_DOCKER` environment variable.
+   You can set this environment variable as a part of your config:
+
+    ```ts
+    // playwright.config.ts
+    import type { PlaywrightTestConfig } from '@playwright/test';
+
+    process.env.PLAYWRIGHT_DOCKER = '1';
+
+    const config: PlaywrightTestConfig = {
+      /* ... configuration ... */
+    };
+    export default config;
+    ```
+
+   NOTE: Playwright will automatically detect a running Docker container or start it if needed.
+
+1. Finally, stop background Docker container when you're done working with tests:
+
+    ```bash js
+    npx playwright docker stop
+    ```
+

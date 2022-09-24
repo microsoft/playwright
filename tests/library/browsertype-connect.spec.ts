@@ -478,7 +478,10 @@ test('should properly disconnect when connection closes from the client side', a
   await disconnectedPromise;
   expect(browser.isConnected()).toBe(false);
 
-  expect((await navigationPromise).message).toContain('Connection closed');
+  const navMessage = (await navigationPromise).message;
+  expect(navMessage).toContain('Connection closed');
+  expect(navMessage).toContain('Closed by');
+  expect(navMessage).toContain(__filename);
   expect((await waitForNavigationPromise).message).toContain('Navigation failed because page was closed');
   expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
   expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
@@ -627,4 +630,28 @@ test('should upload large file', async ({ browserType, startRemoteServer, server
   await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
 });
 
+test('should connect when launching', async ({ browserType, startRemoteServer, httpsServer, mode }) => {
+  const remoteServer = await startRemoteServer();
+  (browserType as any)._defaultConnectOptions = {
+    wsEndpoint: remoteServer.wsEndpoint()
+  };
 
+  const browser = await browserType.launch();
+
+  await Promise.all([
+    new Promise(f => browser.on('disconnected', f)),
+    remoteServer.close(),
+  ]);
+
+  (browserType as any)._defaultConnectOptions = undefined;
+});
+
+test('should connect over http', async ({ browserType, startRemoteServer, mode }) => {
+  test.skip(mode !== 'default');
+  const remoteServer = await startRemoteServer();
+
+  const url = new URL(remoteServer.wsEndpoint());
+  const browser = await browserType.connect(`http://localhost:${url.port}`);
+  expect(browser.version()).toBeTruthy();
+  await browser.close();
+});

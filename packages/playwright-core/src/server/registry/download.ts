@@ -45,6 +45,7 @@ function downloadFile(url: string, destinationPath: string, options: DownloadFil
     headers: options.userAgent ? {
       'User-Agent': options.userAgent,
     } : undefined,
+    timeout: 10_000,
   }, response => {
     log(`-- response status code: ${response.statusCode}`);
     if (response.statusCode !== 200) {

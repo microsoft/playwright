@@ -18,9 +18,9 @@ import fs from 'fs';
 import path from 'path';
 import { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
-import type * as har from './har';
+import type * as har from '@trace/har';
 import { HarTracer } from './harTracer';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { yazl } from '../../zipBundle';
 import type { ZipFile } from '../../zipBundle';
 import { ManualPromise } from '../../utils/manualPromise';
@@ -45,6 +45,7 @@ export class HarRecorder {
       content,
       slimMode: options.mode === 'minimal',
       includeTraceInfo: false,
+      recordRequestOverrides: true,
       waitForContentOnStop: true,
       skipScripts: false,
       urlFilter: urlFilterRe ?? options.urlGlob,

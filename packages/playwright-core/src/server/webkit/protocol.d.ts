@@ -881,6 +881,14 @@ export module Protocol {
        * The variation axes defined by the font.
        */
       variationAxes: FontVariationAxis[];
+      /**
+       * Whether the font has synthesized its boldness or not.
+       */
+      synthesizedBold?: boolean;
+      /**
+       * Whether the font has synthesized its obliqueness or not
+       */
+      synthesizedOblique?: boolean;
     }
     /**
      * A single variation axis associated with a Font.
@@ -910,7 +918,7 @@ export module Protocol {
     /**
      * Relevant layout information about the node. Things not in this list are not important to Web Inspector.
      */
-    export type LayoutFlag = "rendered"|"flex"|"grid"|"event";
+    export type LayoutFlag = "rendered"|"scrollable"|"flex"|"grid"|"event";
     /**
      * The mode for how layout context type changes are handled (default: <code>Observed</code>). <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and all nodes with a known layout context are sent to the frontend.
      */
@@ -4023,6 +4031,25 @@ might return multiple quads for inline nodes.
        * Information about the function.
        */
       details: FunctionDetails;
+    }
+    /**
+     * Returns a list of valid breakpoint locations within the given location range.
+     */
+    export type getBreakpointLocationsParameters = {
+      /**
+       * Starting location to look for breakpoint locations after (inclusive). Must have same scriptId as end.
+       */
+      start: Location;
+      /**
+       * Ending location to look for breakpoint locations before (exclusive). Must have same scriptId as start.
+       */
+      end: Location;
+    }
+    export type getBreakpointLocationsReturnValue = {
+      /**
+       * List of resolved breakpoint locations.
+       */
+      locations: Location[];
     }
     /**
      * Control whether the debugger pauses execution before `debugger` statements.
@@ -9130,6 +9157,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Debugger.searchInContent": Debugger.searchInContentParameters;
     "Debugger.getScriptSource": Debugger.getScriptSourceParameters;
     "Debugger.getFunctionDetails": Debugger.getFunctionDetailsParameters;
+    "Debugger.getBreakpointLocations": Debugger.getBreakpointLocationsParameters;
     "Debugger.setPauseOnDebuggerStatements": Debugger.setPauseOnDebuggerStatementsParameters;
     "Debugger.setPauseOnExceptions": Debugger.setPauseOnExceptionsParameters;
     "Debugger.setPauseOnAssertions": Debugger.setPauseOnAssertionsParameters;
@@ -9437,6 +9465,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Debugger.searchInContent": Debugger.searchInContentReturnValue;
     "Debugger.getScriptSource": Debugger.getScriptSourceReturnValue;
     "Debugger.getFunctionDetails": Debugger.getFunctionDetailsReturnValue;
+    "Debugger.getBreakpointLocations": Debugger.getBreakpointLocationsReturnValue;
     "Debugger.setPauseOnDebuggerStatements": Debugger.setPauseOnDebuggerStatementsReturnValue;
     "Debugger.setPauseOnExceptions": Debugger.setPauseOnExceptionsReturnValue;
     "Debugger.setPauseOnAssertions": Debugger.setPauseOnAssertionsReturnValue;

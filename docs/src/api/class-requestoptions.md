@@ -114,6 +114,17 @@ Header value.
 
 Whether to ignore HTTPS errors when sending network requests.
 
+## method: RequestOptions.setMaxRedirects
+* since: v1.26
+- returns: <[RequestOptions]>
+
+### param: RequestOptions.setMaxRedirects.maxRedirects
+* since: v1.26
+- `maxRedirects` <[int]>
+
+Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is exceeded.
+Defaults to `20`. Pass `0` to not follow redirects.
+
 ## method: RequestOptions.setMethod
 * since: v1.18
 - returns: <[RequestOptions]>

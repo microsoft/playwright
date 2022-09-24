@@ -65,7 +65,8 @@ it('should respect CSP @smoke', async ({ page, server }) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it('should play video @smoke', async ({ page, asset, browserName, platform }) => {
+it('should play video @smoke', async ({ page, asset, browserName, platform, mode }) => {
+  it.skip(mode === 'docker', 'local paths do not work with remote setup');
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
   // Also the test is very flaky on Linux WebKit.

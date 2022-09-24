@@ -21,7 +21,7 @@ import fs from 'fs';
 import http2 from 'http2';
 import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
-import type { Log } from '../../packages/playwright-core/src/server/har/har';
+import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
 
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean } = {}) {
@@ -256,6 +256,32 @@ it('should include secure set-cookies', async ({ contextFactory, httpsServer }, 
   expect(cookies[0]).toEqual({ name: 'name1', value: 'value1', secure: true });
 });
 
+it('should record request overrides', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  page.route('**/foo', route => {
+    route.fallback({
+      url: server.EMPTY_PAGE,
+      method: 'POST',
+      headers: {
+        ...route.request().headers(),
+        'content-type': 'text/plain',
+        'cookie': 'foo=bar',
+        'custom': 'value'
+      },
+      postData: 'Hi!'
+    });
+  });
+
+  await page.goto(server.PREFIX + '/foo');
+  const log = await getLog();
+  const request = log.entries[0].request;
+  expect(request.url).toBe(server.EMPTY_PAGE);
+  expect(request.method).toBe('POST');
+  expect(request.headers).toContainEqual({ name: 'custom', value: 'value' });
+  expect(request.cookies).toContainEqual({ name: 'foo', value: 'bar' });
+  expect(request.postData).toEqual({ 'mimeType': 'text/plain', 'params': [], 'text': 'Hi!' });
+});
+
 it('should include content @smoke', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
@@ -409,7 +435,7 @@ it('should have -1 _transferSize when its a failed request', async ({ contextFac
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
-    res.connection.destroy();
+    res.socket.destroy();
   });
   const failedRequests = [];
   page.on('requestfailed', request => failedRequests.push(request));
@@ -417,6 +443,49 @@ it('should have -1 _transferSize when its a failed request', async ({ contextFac
   const log = await getLog();
   expect(log.entries[1].request.url.endsWith('/one-style.css')).toBe(true);
   expect(log.entries[1].response._transferSize).toBe(-1);
+});
+
+it('should record failed request headers', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  server.setRoute('/har.html', (req, res) => {
+    res.socket.destroy();
+  });
+  await page.goto(server.PREFIX + '/har.html').catch(() => {});
+  const log = await getLog();
+  expect(log.entries[0].response._failureText).toBeTruthy();
+  const request = log.entries[0].request;
+  expect(request.url.endsWith('/har.html')).toBe(true);
+  expect(request.method).toBe('GET');
+  expect(request.headers).toContainEqual(expect.objectContaining({ name: 'User-Agent' }));
+});
+
+it('should record failed request overrides', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  server.setRoute('/empty.html', (req, res) => {
+    res.socket.destroy();
+  });
+  await page.route('**/foo', route => {
+    route.fallback({
+      url: server.EMPTY_PAGE,
+      method: 'POST',
+      headers: {
+        ...route.request().headers(),
+        'content-type': 'text/plain',
+        'cookie': 'foo=bar',
+        'custom': 'value'
+      },
+      postData: 'Hi!'
+    });
+  });
+  await page.goto(server.PREFIX + '/foo').catch(() => {});
+  const log = await getLog();
+  expect(log.entries[0].response._failureText).toBeTruthy();
+  const request = log.entries[0].request;
+  expect(request.url).toBe(server.EMPTY_PAGE);
+  expect(request.method).toBe('POST');
+  expect(request.headers).toContainEqual({ name: 'custom', value: 'value' });
+  expect(request.cookies).toContainEqual({ name: 'foo', value: 'bar' });
+  expect(request.postData).toEqual({ 'mimeType': 'text/plain', 'params': [], 'text': 'Hi!' });
 });
 
 it('should report the correct request body size', async ({ contextFactory, server }, testInfo) => {
@@ -556,7 +625,7 @@ it('should have connection details for redirects', async ({ contextFactory, serv
 it('should have connection details for failed requests', async ({ contextFactory, server, browserName, platform, mode }, testInfo) => {
   server.setRoute('/one-style.css', (_, res) => {
     res.setHeader('Content-Type', 'text/css');
-    res.connection.destroy();
+    res.socket.destroy();
   });
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/one-style.html');

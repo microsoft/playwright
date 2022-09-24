@@ -16,7 +16,7 @@
 
 import type { BrowserContext } from '../../browserContext';
 import type { Page } from '../../page';
-import type { FrameSnapshot } from '../common/snapshotTypes';
+import type { FrameSnapshot } from '@trace/snapshot';
 import type { SnapshotRenderer } from '../../../../../trace-viewer/src/snapshotRenderer';
 import { BaseSnapshotStorage } from '../../../../../trace-viewer/src/snapshotStorage';
 import type { SnapshotterBlob, SnapshotterDelegate } from '../recorder/snapshotter';
@@ -24,7 +24,7 @@ import { Snapshotter } from '../recorder/snapshotter';
 import type { ElementHandle } from '../../dom';
 import type { HarTracerDelegate } from '../../har/harTracer';
 import { HarTracer } from '../../har/harTracer';
-import type * as har from '../../har/har';
+import type * as har from '@trace/har';
 
 export class InMemorySnapshotter extends BaseSnapshotStorage implements SnapshotterDelegate, HarTracerDelegate {
   private _blobs = new Map<string, Buffer>();
@@ -34,7 +34,7 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
   constructor(context: BrowserContext) {
     super();
     this._snapshotter = new Snapshotter(context, this);
-    this._harTracer = new HarTracer(context, null, this, { content: 'attach', includeTraceInfo: true, waitForContentOnStop: false, skipScripts: true });
+    this._harTracer = new HarTracer(context, null, this, { content: 'attach', includeTraceInfo: true, recordRequestOverrides: false, waitForContentOnStop: false, skipScripts: true });
   }
 
   async initialize(): Promise<void> {

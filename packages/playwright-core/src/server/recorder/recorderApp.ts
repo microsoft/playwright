@@ -20,7 +20,7 @@ import type { Page } from '../page';
 import { ProgressController } from '../progress';
 import { EventEmitter } from 'events';
 import { serverSideCallMetadata } from '../instrumentation';
-import type { CallLog, EventData, Mode, Source } from './recorderTypes';
+import type { CallLog, EventData, Mode, Source } from '@recorder/recorderTypes';
 import { isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
 import { installAppIcon } from '../chromium/crApp';

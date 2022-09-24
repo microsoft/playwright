@@ -54,6 +54,7 @@ using NUnit.Framework;
 
 namespace PlaywrightTests;
 
+[TestFixture]
 public class ExampleTests : PageTest
 {
     [Test]
@@ -113,6 +114,9 @@ The opposite of [`method: LocatorAssertions.toBeDisabled`].
 
 The opposite of [`method: LocatorAssertions.toBeEditable`].
 
+### option: LocatorAssertions.NotToBeEditable.editable
+* since: v1.26
+- `editable` <[boolean]>
 ### option: LocatorAssertions.NotToBeEditable.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.NotToBeEditable.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -135,6 +139,9 @@ The opposite of [`method: LocatorAssertions.toBeEmpty`].
 
 The opposite of [`method: LocatorAssertions.toBeEnabled`].
 
+### option: LocatorAssertions.NotToBeEnabled.enabled
+* since: v1.26
+- `enabled` <[boolean]>
 ### option: LocatorAssertions.NotToBeEnabled.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.NotToBeEnabled.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -168,6 +175,9 @@ The opposite of [`method: LocatorAssertions.toBeHidden`].
 
 The opposite of [`method: LocatorAssertions.toBeVisible`].
 
+### option: LocatorAssertions.NotToBeVisible.visible
+* since: v1.26
+- `visible` <[boolean]>
 ### option: LocatorAssertions.NotToBeVisible.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.NotToBeVisible.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -204,10 +214,10 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 * since: v1.18
 
 ## async method: LocatorAssertions.NotToHaveAttribute
-* since: v1.18
+* since: v1.20
 * langs: python
 
-The opposite of [`method: LocatorAssertions.toHaveAttribute#1`].
+The opposite of [`method: LocatorAssertions.toHaveAttribute`].
 
 ### param: LocatorAssertions.NotToHaveAttribute.name
 * since: v1.18
@@ -511,6 +521,9 @@ var locator = Page.Locator("input");
 await Expect(locator).ToBeEditableAsync();
 ```
 
+### option: LocatorAssertions.toBeEditable.editable
+* since: v1.26
+- `editable` <[boolean]>
 ### option: LocatorAssertions.toBeEditable.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.toBeEditable.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -593,6 +606,9 @@ var locator = Page.Locator("button.submit");
 await Expect(locator).toBeEnabledAsync();
 ```
 
+### option: LocatorAssertions.toBeEnabled.enabled
+* since: v1.26
+- `enabled` <[boolean]>
 ### option: LocatorAssertions.toBeEnabled.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.toBeEnabled.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -645,7 +661,7 @@ await Expect(locator).ToBeFocusedAsync();
 * langs:
   - alias-java: isHidden
 
-Ensures the [Locator] points to a hidden DOM node, which is the opposite of [visible](./actionability.md#visible).
+Ensures that [Locator] either does not resolve to any DOM node, or resolves to a [non-visible](./actionability.md#visible) one.
 
 ```js
 const locator = page.locator('.my-element');
@@ -686,7 +702,7 @@ await Expect(locator).ToBeHiddenAsync();
 * langs:
   - alias-java: isVisible
 
-Ensures the [Locator] points to a [visible](./actionability.md#visible) DOM node.
+Ensures that [Locator] points to an [attached](./actionability.md#visible) and [visible](./actionability.md#visible) DOM node.
 
 ```js
 const locator = page.locator('.my-element');
@@ -716,6 +732,9 @@ var locator = Page.Locator(".my-element");
 await Expect(locator).ToBeVisibleAsync();
 ```
 
+### option: LocatorAssertions.toBeVisible.visible
+* since: v1.26
+- `visible` <[boolean]>
 ### option: LocatorAssertions.toBeVisible.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.toBeVisible.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -885,16 +904,15 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 * since: v1.18
 
 
-## async method: LocatorAssertions.toHaveAttribute#1
-* since: v1.18
+## async method: LocatorAssertions.toHaveAttribute
+* since: v1.20
 * langs:
   - alias-java: hasAttribute
 
-Ensures the [Locator] points to an element with given attribute value.
+Ensures the [Locator] points to an element with given attribute.
 
 ```js
 const locator = page.locator('input');
-// Assert attribute with given value.
 await expect(locator).toHaveAttribute('type', 'text');
 ```
 
@@ -921,75 +939,22 @@ var locator = Page.Locator("input");
 await Expect(locator).ToHaveAttributeAsync("type", "text");
 ```
 
-### param: LocatorAssertions.toHaveAttribute#1.name
+### param: LocatorAssertions.toHaveAttribute.name
 * since: v1.18
 - `name` <[string]>
 
 Attribute name.
 
-### param: LocatorAssertions.toHaveAttribute#1.value
+### param: LocatorAssertions.toHaveAttribute.value
 * since: v1.18
 - `value` <[string]|[RegExp]>
 
 Expected attribute value.
 
-### option: LocatorAssertions.toHaveAttribute#1.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveAttribute.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
-### option: LocatorAssertions.toHaveAttribute#1.timeout = %%-csharp-java-python-assertions-timeout-%%
+### option: LocatorAssertions.toHaveAttribute.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
-
-## async method: LocatorAssertions.toHaveAttribute#2
-* since: v1.26
-* langs:
-  - alias-java: hasAttribute
-
-Ensures the [Locator] points to an element with given attribute. The method will assert attribute
-presence.
-
-```js
-const locator = page.locator('input');
-// Assert attribute existance.
-await expect(locator).toHaveAttribute('disabled');
-await expect(locator).not.toHaveAttribute('open');
-```
-
-```java
-assertThat(page.locator("input")).hasAttribute("disabled");
-assertThat(page.locator("input")).not().hasAttribute("open");
-```
-
-```python async
-from playwright.async_api import expect
-
-locator = page.locator("input")
-await expect(locator).to_have_attribute("disabled")
-await expect(locator).not_to_have_attribute("open")
-```
-
-```python sync
-from playwright.sync_api import expect
-
-locator = page.locator("input")
-expect(locator).to_have_attribute("disabled")
-expect(locator).not_to_have_attribute("open")
-```
-
-```csharp
-var locator = Page.Locator("input");
-await Expect(locator).ToHaveAttributeAsync("disabled");
-await Expect(locator).Not.ToHaveAttributeAsync("open");
-```
-
-### param: LocatorAssertions.toHaveAttribute#2.name
-* since: v1.26
-- `name` <[string]>
-
-Attribute name.
-
-### option: LocatorAssertions.toHaveAttribute#2.timeout = %%-js-assertions-timeout-%%
-* since: v1.26
-### option: LocatorAssertions.toHaveAttribute#2.timeout = %%-csharp-java-python-assertions-timeout-%%
-* since: v1.26
 
 ## async method: LocatorAssertions.toHaveClass
 * since: v1.20
