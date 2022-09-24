@@ -66,8 +66,6 @@ function expectRunBefore(timeline: Timeline, before: string[], after: string[]) 
   }
 }
 
-
-
 test('should work', async ({ runGroups }, testInfo) => {
   const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
     default: ['a']
@@ -78,7 +76,6 @@ test('should work', async ({ runGroups }, testInfo) => {
   expect(formatTimeline(timeline)).toEqual(`a > a${path.sep}a.spec.ts > a test [begin]
 a > a${path.sep}a.spec.ts > a test [end]`);
 });
-
 
 test('should order two projects', async ({ runGroups }, testInfo) => {
   await test.step(`order a then b`, async () => {
