@@ -98,6 +98,17 @@ type ComponentMountingOptions<T> = T extends DefineComponent<
       Record<string, any>
   : MountOptions<any>;
 
+/**
+ * The types for mount have been copied directly from the VTU mount
+ * https://github.com/vuejs/vue-test-utils-next/blob/master/src/mount.ts.
+ *
+ * There isn't a good way to make them generic enough that we can extend them.
+ *
+ * In addition, we modify the types slightly.
+ *
+ * Changed MountingOptions<...> to MountOptions<...>
+ * and VueWrapper<...> to MountResult<...>.
+ */
 export interface ComponentFixtures {
   // Jsx component
   mount(component: JSX.Element, options?: { hooksConfig?: any }): Promise<MountResult>;
