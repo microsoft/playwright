@@ -13,6 +13,7 @@
   },
   "license": "Apache-2.0",
   "scripts": {
+    "dtest": "cross-env PLAYWRIGHT_DOCKER=1 playwright docker --config=tests/library/playwright.config.ts --grep '@smoke'",
     "ctest": "playwright test --config=tests/library/playwright.config.ts --project=chromium",
     "ftest": "playwright test --config=tests/library/playwright.config.ts --project=firefox",
     "wtest": "playwright test --config=tests/library/playwright.config.ts --project=webkit",
@@ -24,7 +25,6 @@
     "test-html-reporter": "playwright test --config=packages/html-reporter",
     "test-web": "playwright test --config=packages/web",
     "ttest": "node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/cli test --config=tests/playwright-test/playwright.config.ts",
-    "vtest": "cross-env PLAYWRIGHT_DOCKER=1 node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/cli test --config=tests/playwright-test/playwright.config.ts",
     "ct": "playwright test tests/components/test-all.spec.js --reporter=list",
     "test": "playwright test --config=tests/library/playwright.config.ts",
     "eslint": "eslint --ext ts,tsx .",

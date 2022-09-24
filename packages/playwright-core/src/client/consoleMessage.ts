@@ -16,7 +16,7 @@
 
 import * as util from 'util';
 import { JSHandle } from './jsHandle';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import type * as api from '../../types/types';
 

@@ -33,8 +33,8 @@ export type Attribution = {
   frame?: Frame;
 };
 
-import type { CallMetadata } from '../protocol/callMetadata';
-export type { CallMetadata } from '../protocol/callMetadata';
+import type { CallMetadata } from '@protocol/callMetadata';
+export type { CallMetadata } from '@protocol/callMetadata';
 
 export const kTestSdkObjects = new WeakSet<SdkObject>();
 

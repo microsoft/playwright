@@ -53,13 +53,18 @@ export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, "use"> & {
   };
 };
 
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+type JsonArray = JsonValue[];
+type JsonObject = { [Key in string]?: JsonValue };
+
 type Slot = string | string[];
 
 interface MountOptions<Props> {
   props?: (RawProps & Props) | ({} extends Props ? null : never);
   slots?: Record<string, Slot> & { default?: Slot };
-  on?: Record<string, Function>;
-  hooksConfig?: any;
+  on?: Record<string, Function>,
+  hooksConfig?: JsonObject,
 }
 
 interface MountResult<Props> extends Locator {

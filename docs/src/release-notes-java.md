@@ -4,6 +4,46 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.26
+
+### Assertions
+
+- New option `enabled` for [`method: LocatorAssertions.toBeEnabled`].
+- [`method: LocatorAssertions.toHaveText`] now pierces open shadow roots.
+- New option `editable` for [`method: LocatorAssertions.toBeEditable`].
+- New option `visible` for [`method: LocatorAssertions.toBeVisible`].
+
+### Other highlights
+
+- New option `setMaxRedirects` for [`method: APIRequestContext.get`] and others to limit redirect count.
+- Docker images are now using OpenJDK 17.
+
+### Behavior Change
+
+A bunch of Playwright APIs already support the `setWaitUntil(WaitUntilState.DOMCONTENTLOADED)` option.
+For example:
+
+```js
+page.navigate("https://playwright.dev", new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+```
+
+Prior to 1.26, this would wait for all iframes to fire the `DOMContentLoaded`
+event. 
+
+To align with web specification, the `WaitUntilState.DOMCONTENTLOADED` value only waits for
+the target frame to fire the `'DOMContentLoaded'` event. Use `setWaitUntil(WaitUntilState.LOAD)` to wait for all iframes.
+
+### Browser Versions
+
+* Chromium 106.0.5249.30
+* Mozilla Firefox 104.0
+* WebKit 16.0
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 105
+* Microsoft Edge 105
+
 ## Version 1.25
 
 ### New APIs & changes

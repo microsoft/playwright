@@ -135,6 +135,22 @@ it('should upload large file with relative path', async ({ page, server, browser
   await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
 });
 
+it('should upload the file with spaces in name', async ({ page, server, asset }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17451' });
+  await page.goto(server.PREFIX + '/input/fileupload.html');
+  const filePath = path.relative(process.cwd(), asset('file to upload.txt'));
+  const input = await page.$('input');
+  await input.setInputFiles(filePath);
+  expect(await page.evaluate(e => e.files[0].name, input)).toBe('file to upload.txt');
+  expect(await page.evaluate(e => {
+    const reader = new FileReader();
+    const promise = new Promise(fulfill => reader.onload = fulfill);
+    reader.readAsText(e.files[0]);
+    return promise.then(() => reader.result);
+  }, input)).toBe('contents of the file');
+});
+
+
 it('should work @smoke', async ({ page, asset }) => {
   await page.setContent(`<input type=file>`);
   await page.setInputFiles('input', asset('file-to-upload.txt'));

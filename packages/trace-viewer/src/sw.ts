@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { MultiMap } from '@playwright-core/utils/multimap';
+import { MultiMap } from './multimap';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
 

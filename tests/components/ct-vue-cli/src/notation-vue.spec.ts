@@ -6,6 +6,7 @@ import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
 import MultiRoot from './components/MultiRoot.vue'
 import Component from './components/Component.vue'
+import EmptyTemplate from './components/EmptyTemplate.vue'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -20,15 +21,15 @@ test('render props', async ({ mount }) => {
 
 test('renderer and keep the component instance intact', async ({ mount }) => {
   const component = await mount<{ count: number }>(Counter, {
-    props: { 
+    props: {
       count: 9001
     }
   });
   await expect(component.locator('#rerender-count')).toContainText('9001')
-  
+
   await component.rerender({ props: { count: 1337 } })
   await expect(component.locator('#rerender-count')).toContainText('1337')
-  
+
   await component.rerender({ props: { count: 42 } })
   await expect(component.locator('#rerender-count')).toContainText('42')
 
@@ -117,3 +118,10 @@ test('unmount a multi root component', async ({ mount, page }) => {
   await expect(page.locator('#root')).not.toContainText('root 1')
   await expect(page.locator('#root')).not.toContainText('root 2')
 })
+
+test('get textContent of the empty template', async ({ mount }) => {
+  const component = await mount(EmptyTemplate);
+  expect(await component.allTextContents()).toEqual(['']);
+  expect(await component.textContent()).toBe('');
+  await expect(component).toHaveText('');
+});

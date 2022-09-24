@@ -30,13 +30,13 @@ import { parseError } from '../protocol/serializers';
 import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
 import { Electron, ElectronApplication } from './electron';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { Stream } from './stream';
 import { WritableStream } from './writableStream';
 import { debugLogger } from '../common/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { Android, AndroidSocket, AndroidDevice } from './android';
-import type { ParsedStackTrace } from '../utils/stackTrace';
+import { captureStackTrace, type ParsedStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
 import { EventEmitter } from 'events';
 import { JsonPipe } from './jsonPipe';
@@ -166,6 +166,9 @@ export class Connection extends EventEmitter {
   }
 
   close(errorMessage: string = 'Connection closed') {
+    const stack = captureStackTrace().frameTexts.join('\n');
+    if (stack)
+      errorMessage += '\n    ==== Closed by ====\n' + stack + '\n';
     this._closedErrorMessage = errorMessage;
     for (const callback of this._callbacks.values())
       callback.reject(new Error(errorMessage));

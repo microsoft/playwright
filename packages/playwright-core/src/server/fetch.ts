@@ -21,7 +21,7 @@ import { pipeline, Transform } from 'stream';
 import url from 'url';
 import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../common/userAgent';
 import { assert, createGuid, monotonicTime } from '../utils';

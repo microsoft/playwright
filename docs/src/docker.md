@@ -149,46 +149,56 @@ docker run --rm -it playwright:localbuild /bin/bash
 ## (Experimental) Playwright Test Docker Integration
 * langs: js
 
-Playwright Test now ships an **experimental** Docker integration.
+Playwright Test now ships an **experimental** Docker integration. The Docker container provides a consistent environment, eliminating browser rendering differences across platforms. 
 With this integration, **only** browser binaries are running inside a Docker container,
 while all the code is still running on the host operating system.
 
-Docker container provides a consistent environment, eliminating browser rendering
-differences across platforms. Playwright Test will automatically proxy host network traffic
+Playwright Test will automatically proxy host network traffic
 into the container, so browsers can access servers running on the host.
 
 :::note
 Docker integration requires Docker installed & running on your computer.
 See https://docs.docker.com/get-docker/
-:::
 
-:::note
 If you use [Docker Desktop](https://www.docker.com/products/docker-desktop/), make sure to increase
-default CPU and mem limit for better performance.
+default CPU and memory limit for better performance.
 :::
 
 Docker integration usage:
 
 1. Build a local Docker image that will be used to run containers. This step
    needs to be done only once.
-   ```bash js
-   npx playwright docker build
-   ```
 
-2. Run Docker container in the background.
-   ```bash js
-   npx playwright docker start
-   ```
+    ```bash js
+    npx playwright docker build
+    ```
 
-3. Run tests inside Docker container. Note that this command accepts all the same arguments
-   as a regular `npx playwright test` command.
-   ```bash js
-   npx playwright docker test
-   ```
+1. Run Docker container in the background.
 
-   Note that this command will detect running Docker container, and auto-launch it if needed.
+    ```bash js
+    npx playwright docker start
+    ```
 
-4. Finally, stop Docker container when it is no longer needed.
-   ```bash js
-   npx playwright docker stop
-   ```
+1. Run tests inside Docker container using the `PLAYWRIGHT_DOCKER` environment variable.
+   You can set this environment variable as a part of your config:
+
+    ```ts
+    // playwright.config.ts
+    import type { PlaywrightTestConfig } from '@playwright/test';
+
+    process.env.PLAYWRIGHT_DOCKER = '1';
+
+    const config: PlaywrightTestConfig = {
+      /* ... configuration ... */
+    };
+    export default config;
+    ```
+
+   NOTE: Playwright will automatically detect a running Docker container or start it if needed.
+
+1. Finally, stop background Docker container when you're done working with tests:
+
+    ```bash js
+    npx playwright docker stop
+    ```
+

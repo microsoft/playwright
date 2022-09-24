@@ -16,8 +16,10 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
+      "@protocol/*": ["../protocol/src/*"],
+      "@recorder/*": ["../recorder/src/*"],
+      "@trace/*": ["../trace/src/*"],
       "@web/*": ["../web/src/*"],
-      "@playwright-core/*": ["../playwright-core/src/*"],
     },
     "useUnknownInCatchVariables": false,
   },

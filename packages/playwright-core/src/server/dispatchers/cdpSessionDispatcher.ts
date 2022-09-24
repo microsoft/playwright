@@ -16,7 +16,7 @@
 
 import type { CRSession } from '../chromium/crConnection';
 import { CRSessionEvents } from '../chromium/crConnection';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
 import type { BrowserDispatcher } from './browserDispatcher';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';

@@ -964,6 +964,58 @@ Optional event-specific initialization properties.
 ## async method: Page.dragAndDrop
 * since: v1.13
 
+This method drags the source element to the target element.
+It will first move to the source element, perform a `mousedown`,
+then move to the target element and perform a `mouseup`.
+
+```js
+await page.dragAndDrop('#source', '#target');
+// or specify exact positions relative to the top-left corners of the elements:
+await page.dragAndDrop('#source', '#target', {
+  sourcePosition: { x: 34, y: 7 },
+  targetPosition: { x: 10, y: 20 },
+});
+```
+
+```java
+page.dragAndDrop("#source", '#target');
+// or specify exact positions relative to the top-left corners of the elements:
+page.dragAndDrop("#source", '#target', new Page.DragAndDropOptions()
+  .setSourcePosition(34, 7).setTargetPosition(10, 20));
+```
+
+```python async
+await page.drag_and_drop("#source", "#target")
+# or specify exact positions relative to the top-left corners of the elements:
+await page.drag_and_drop(
+  "#source",
+  "#target",
+  source_position={"x": 34, "y": 7},
+  target_position={"x": 10, "y": 20}
+)
+```
+
+```python sync
+page.drag_and_drop("#source", "#target")
+# or specify exact positions relative to the top-left corners of the elements:
+page.drag_and_drop(
+  "#source",
+  "#target",
+  source_position={"x": 34, "y": 7},
+  target_position={"x": 10, "y": 20}
+)
+```
+
+```csharp
+await Page.DragAndDropAsync("#source", "#target");
+// or specify exact positions relative to the top-left corners of the elements:
+await Page.DragAndDropAsync("#source", "#target", new()
+{
+    SourcePosition = new() { X = 34, Y = 7 },
+    TargetPosition = new() { X = 10, Y = 20 },
+});
+```
+
 ### param: Page.dragAndDrop.source = %%-input-source-%%
 * since: v1.13
 ### param: Page.dragAndDrop.target = %%-input-target-%%

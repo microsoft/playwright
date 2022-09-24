@@ -124,8 +124,7 @@ async function innerMount(page: Page, jsxOrType: JsxComponent | string, options:
 
     await window.playwrightMount(component, rootElement, hooksConfig);
 
-    // When mounting fragments, return selector pointing to the root element.
-    return rootElement.childNodes.length > 1 ? '#root' : '#root > *';
+    return '#root >> control=component';
   }, { component, hooksConfig: options.hooksConfig });
   return selector;
 }
