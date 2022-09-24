@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { ResourceSnapshot } from '@playwright-core/server/trace/common/snapshotTypes';
-import type * as trace from '@playwright-core/server/trace/common/traceEvents';
-import type { ActionTraceEvent } from '@playwright-core/server/trace/common/traceEvents';
+import type { ResourceSnapshot } from '@trace/snapshot';
+import type * as trace from '@trace/trace';
+import type { ActionTraceEvent } from '@trace/trace';
 import type { ContextEntry, PageEntry } from '../entries';
 
 const contextSymbol = Symbol('context');

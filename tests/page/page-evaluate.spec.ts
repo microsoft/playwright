@@ -680,3 +680,25 @@ it('should work with overridden Object.defineProperty', async ({ page, server })
   await page.goto(server.PREFIX + '/test');
   expect(await page.evaluate('1+2')).toBe(3);
 });
+
+it('should work with overridden globalThis.Window/Document/Node', async ({ page, server }) => {
+  const testCases = [
+    // @ts-ignore
+    () => globalThis.Window = {},
+    // @ts-ignore
+    () => globalThis.Document = {},
+    // @ts-ignore
+    () => globalThis.Node = {},
+    () => globalThis.Window = null,
+    () => globalThis.Document = null,
+    () => globalThis.Node = null,
+  ];
+  for (const testCase of testCases) {
+    await it.step(testCase.toString(), async () => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(testCase);
+      expect(await page.evaluate('1+2')).toBe(3);
+      expect(await page.evaluate(() => ['foo'])).toEqual(['foo']);
+    });
+  }
+});

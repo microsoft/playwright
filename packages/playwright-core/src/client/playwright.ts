@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { TimeoutError } from '../common/errors';
 import type * as socks from '../common/socksProxy';
 import { Android } from './android';

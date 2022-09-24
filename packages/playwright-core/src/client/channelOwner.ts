@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { maybeFindValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { debugLogger } from '../common/debugLogger';
 import type { ParsedStackTrace } from '../utils/stackTrace';

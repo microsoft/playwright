@@ -107,8 +107,12 @@ export class BaseReporter implements ReporterInternal  {
     this.result = result;
   }
 
+  protected ttyWidth() {
+    return this._ttyWidthForTest || process.stdout.columns || 0;
+  }
+
   protected fitToScreen(line: string, prefix?: string): string {
-    const ttyWidth = this._ttyWidthForTest || process.stdout.columns || 0;
+    const ttyWidth = this.ttyWidth();
     if (!ttyWidth) {
       // Guard against the case where we cannot determine available width.
       return line;
@@ -117,7 +121,7 @@ export class BaseReporter implements ReporterInternal  {
   }
 
   protected generateStartingMessage() {
-    const jobs = Math.min(this.config.workers, this.config._testGroupsCount);
+    const jobs = Math.min(this.config.workers, this.config._maxConcurrentTestGroups);
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
     if (this.config._watchMode)
       return `\nRunning tests in the --watch mode`;

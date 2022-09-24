@@ -13,6 +13,7 @@
 [cli.ts]
 ../server/trace/viewer/traceViewer.ts
 ../server/
+../containers/
 
 [driver.ts]
 ../**

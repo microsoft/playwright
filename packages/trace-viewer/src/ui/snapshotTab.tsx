@@ -18,7 +18,7 @@ import './snapshotTab.css';
 import './tabbedPane.css';
 import * as React from 'react';
 import { useMeasure } from './helpers';
-import type { ActionTraceEvent } from '@playwright-core/server/trace/common/traceEvents';
+import type { ActionTraceEvent } from '@trace/trace';
 import { context } from './modelUtil';
 
 export const SnapshotTab: React.FunctionComponent<{

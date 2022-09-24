@@ -754,6 +754,8 @@ export module Protocol {
     export type executionContextDestroyedPayload = {
       executionContextId: string;
     }
+    export type executionContextsClearedPayload = {
+    }
     export type consolePayload = {
       executionContextId: string;
       args: {
@@ -1067,6 +1069,7 @@ export module Protocol {
     "Page.screencastFrame": Page.screencastFramePayload;
     "Runtime.executionContextCreated": Runtime.executionContextCreatedPayload;
     "Runtime.executionContextDestroyed": Runtime.executionContextDestroyedPayload;
+    "Runtime.executionContextsCleared": Runtime.executionContextsClearedPayload;
     "Runtime.console": Runtime.consolePayload;
     "Network.requestWillBeSent": Network.requestWillBeSentPayload;
     "Network.responseReceived": Network.responseReceivedPayload;

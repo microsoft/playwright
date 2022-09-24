@@ -177,6 +177,106 @@ discards all stored responses, and makes [`method: APIResponse.body`] throw "Res
 Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
+JSON objects can be passed directly to the request:
+
+```js
+await request.fetch('https://example.com/api/createBook', {
+  method: 'post',
+  data: {
+    title: 'Book Title',
+    author: 'John Doe',
+  }
+});
+```
+
+```java
+Map<String, Object> data = new HashMap();
+data.put("title", "Book Title");
+data.put("body", "John Doe");
+request.fetch("https://example.com/api/createBook", RequestOptions.create().setMethod("post").setData(data));
+```
+
+```python
+data = {
+    "title": "Book Title",
+    "body": "John Doe",
+}
+api_request_context.fetch("https://example.com/api/createBook", method="post", data=data)
+```
+
+```csharp
+var data = new Dictionary<string, object>() {
+  { "title", "Book Title" },
+  { "body", "John Doe" }
+};
+await Request.FetchAsync("https://example.com/api/createBook", new() { Method = "post", DataObject = data });
+```
+
+The common way to send file(s) in the body of a request is to encode it as form fields with `multipart/form-data` encoding. You can achieve that with Playwright API like this:
+
+```js
+// Open file as a stream and pass it to the request:
+const stream = fs.createReadStream('team.csv');
+await request.fetch('https://example.com/api/uploadTeamList', {
+  method: 'post',
+  multipart: {
+    fileField: stream
+  }
+});
+
+// Or you can pass the file content directly as an object:
+await request.fetch('https://example.com/api/uploadScript', {
+  method: 'post',
+  multipart: {
+    fileField: {
+      name: 'f.js',
+      mimeType: 'text/javascript',
+      buffer: Buffer.from('console.log(2022);')
+    }
+  }
+});
+```
+
+```java
+// Pass file path to the form data constructor:
+Path file = Paths.get("team.csv");
+APIResponse response = request.fetch("https://example.com/api/uploadTeamList",
+  RequestOptions.create().setMethod("post").setMultipart(
+    FormData.create().set("fileField", file)));
+
+// Or you can pass the file content directly as FilePayload object:
+FilePayload filePayload = new FilePayload("f.js", "text/javascript",
+      "console.log(2022);".getBytes(StandardCharsets.UTF_8));
+APIResponse response = request.fetch("https://example.com/api/uploadTeamList",
+  RequestOptions.create().setMethod("post").setMultipart(
+    FormData.create().set("fileField", filePayload)));
+```
+
+```python
+api_request_context.fetch(
+  "https://example.com/api/uploadScrip'",
+  method="post",
+  multipart={
+    "fileField": {
+      "name": "f.js",
+      "mimeType": "text/javascript",
+      "buffer": b"console.log(2022);",
+    },
+  })
+```
+
+```csharp
+var file = new FilePayload()
+{
+    Name = "f.js",
+    MimeType = "text/javascript",
+    Buffer = System.Text.Encoding.UTF8.GetBytes("console.log(2022);")
+};
+var multipart = Context.APIRequest.CreateFormData();
+multipart.Set("fileField", file);
+await Request.FetchAsync("https://example.com/api/uploadScript", new() { Method = "post", Multipart = multipart });
+```
+
 ### param: APIRequestContext.fetch.urlOrRequest
 * since: v1.16
 - `urlOrRequest` <[string]|[Request]>
@@ -226,6 +326,40 @@ If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/
 Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its response.
 The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
+
+Request parameters can be configured with `params` option, they will be serialized into the URL search parameters:
+
+```js
+await request.get('https://example.com/api/getText', {
+  params: {
+    'isbn': '1234',
+    'page': 23,
+  }
+});
+```
+
+```java
+request.get("https://example.com/api/getText", RequestOptions.create()
+  .setQueryParam("isbn", "1234")
+  .setQueryParam("page", 23));
+```
+
+```python
+query_params = {
+  "isbn": "1234",
+  "page": "23"
+}
+api_request_context.get("https://example.com/api/getText", params=query_params)
+```
+
+```csharp
+var params = new Dictionary<string, object>()
+{
+  { "isbn", "1234" },
+  { "page", 23 },
+}
+await request.GetAsync("https://example.com/api/getText", new() { Params = params });
+```
 
 ### param: APIRequestContext.get.url = %%-fetch-param-url-%%
 * since: v1.16
@@ -317,6 +451,134 @@ context cookies from the response. The method will automatically follow redirect
 Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its response.
 The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
+
+JSON objects can be passed directly to the request:
+
+```js
+await request.post('https://example.com/api/createBook', {
+  data: {
+    title: 'Book Title',
+    author: 'John Doe',
+  }
+});
+```
+
+```java
+Map<String, Object> data = new HashMap();
+data.put("title", "Book Title");
+data.put("body", "John Doe");
+request.post("https://example.com/api/createBook", RequestOptions.create().setData(data));
+```
+
+```python
+data = {
+    "title": "Book Title",
+    "body": "John Doe",
+}
+api_request_context.post("https://example.com/api/createBook", data=data)
+```
+
+```csharp
+var data = new Dictionary<string, object>() {
+  { "firstNam", "John" },
+  { "lastName", "Doe" }
+};
+await request.PostAsync("https://example.com/api/createBook", new() { DataObject = data });
+```
+
+To send form data to the server use `form` option. Its value will be encoded into the request body with `application/x-www-form-urlencoded` encoding (see below how to use `multipart/form-data` form encoding to send files):
+
+```js
+await request.post('https://example.com/api/findBook', {
+  form: {
+    title: 'Book Title',
+    author: 'John Doe',
+  }
+});
+```
+
+```java
+request.post("https://example.com/api/findBook", RequestOptions.create().setForm(
+    FormData.create().set("title", "Book Title").set("body", "John Doe")
+));
+```
+
+```python
+formData = {
+    "title": "Book Title",
+    "body": "John Doe",
+}
+api_request_context.post("https://example.com/api/findBook", form=formData)
+```
+
+```csharp
+var formData = Context.APIRequest.CreateFormData();
+formData.Set("title", "Book Title");
+formData.Set("body", "John Doe");
+await request.PostAsync("https://example.com/api/findBook", new() { Form = formData });
+```
+
+The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data` encoding. You can achieve that with Playwright API like this:
+
+```js
+// Open file as a stream and pass it to the request:
+const stream = fs.createReadStream('team.csv');
+await request.post('https://example.com/api/uploadTeamList', {
+  multipart: {
+    fileField: stream
+  }
+});
+
+// Or you can pass the file content directly as an object:
+await request.post('https://example.com/api/uploadScript', {
+  multipart: {
+    fileField: {
+      name: 'f.js',
+      mimeType: 'text/javascript',
+      buffer: Buffer.from('console.log(2022);')
+    }
+  }
+});
+```
+
+```java
+// Pass file path to the form data constructor:
+Path file = Paths.get("team.csv");
+APIResponse response = request.post("https://example.com/api/uploadTeamList",
+  RequestOptions.create().setMultipart(
+    FormData.create().set("fileField", file)));
+
+// Or you can pass the file content directly as FilePayload object:
+FilePayload filePayload = new FilePayload("f.js", "text/javascript",
+      "console.log(2022);".getBytes(StandardCharsets.UTF_8));
+APIResponse response = request.post("https://example.com/api/uploadTeamList",
+  RequestOptions.create().setMultipart(
+    FormData.create().set("fileField", filePayload)));
+```
+
+```python
+api_request_context.post(
+  "https://example.com/api/uploadScrip'",
+  multipart={
+    "fileField": {
+      "name": "f.js",
+      "mimeType": "text/javascript",
+      "buffer": b"console.log(2022);",
+    },
+  })
+```
+
+```csharp
+var file = new FilePayload()
+{
+    Name = "f.js",
+    MimeType = "text/javascript",
+    Buffer = System.Text.Encoding.UTF8.GetBytes("console.log(2022);")
+};
+var multipart = Context.APIRequest.CreateFormData();
+multipart.Set("fileField", file);
+await request.PostAsync("https://example.com/api/uploadScript", new() { Multipart = multipart });
+```
 
 ### param: APIRequestContext.post.url = %%-fetch-param-url-%%
 * since: v1.16

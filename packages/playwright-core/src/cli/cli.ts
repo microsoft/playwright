@@ -38,6 +38,7 @@ import type { GridFactory } from '../grid/gridServer';
 import { GridServer } from '../grid/gridServer';
 import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
+import { addDockerCLI } from '../containers/docker';
 
 const packageJSON = require('../../package.json');
 
@@ -113,6 +114,7 @@ function checkBrowsersToInstall(args: string[]): Executable[] {
   }
   return executables;
 }
+
 
 program
     .command('install [browser...]')
@@ -304,6 +306,8 @@ program
 Examples:
 
   $ show-trace https://example.com/trace.zip`);
+
+addDockerCLI(program);
 
 if (!process.env.PW_LANG_NAME) {
   let playwrightTestPackagePath = null;

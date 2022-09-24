@@ -16,7 +16,7 @@
  */
 
 import type * as dom from './dom';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 
 export interface AXNode {
     isInteresting(insideControl: boolean): boolean;

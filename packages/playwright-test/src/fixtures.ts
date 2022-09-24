@@ -282,15 +282,10 @@ export class FixturePool {
   }
 
   validateFunction(fn: Function, prefix: string, location: Location) {
-    const visit = (registration: FixtureRegistration) => {
-      for (const name of registration.deps)
-        visit(this.resolveDependency(registration, name)!);
-    };
     for (const name of fixtureParameterNames(fn, location)) {
       const registration = this.registrations.get(name);
       if (!registration)
         throw errorWithLocations(`${prefix} has unknown parameter "${name}".`, { location, name: prefix, quoted: false });
-      visit(registration);
     }
   }
 

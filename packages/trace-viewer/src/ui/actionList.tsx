@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent } from '@playwright-core/server/trace/common/traceEvents';
+import type { ActionTraceEvent } from '@trace/trace';
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';

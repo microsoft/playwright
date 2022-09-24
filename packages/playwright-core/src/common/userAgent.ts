@@ -75,7 +75,7 @@ export function getClientLanguage(): { langName: string, langVersion: string } {
   return { langName, langVersion };
 }
 
-export function getPlaywrightVersion(majorMinorOnly = false) {
+export function getPlaywrightVersion(majorMinorOnly = false): string {
   const packageJson = require('./../../package.json');
   return majorMinorOnly ? packageJson.version.split('.').slice(0, 2).join('.') : packageJson.version;
 }

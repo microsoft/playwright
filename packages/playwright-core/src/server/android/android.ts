@@ -33,7 +33,7 @@ import { PipeTransport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../common/debugLogger';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../common/timeoutSettings';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
 import { DEFAULT_ARGS } from '../chromium/chromium';
 

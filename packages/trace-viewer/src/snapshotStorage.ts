@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FrameSnapshot, ResourceSnapshot } from '@playwright-core/server/trace/common/snapshotTypes';
+import type { FrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
 import { EventEmitter } from './events';
 import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRenderer';
 

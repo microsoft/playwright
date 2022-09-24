@@ -199,6 +199,10 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   metadata: Metadata;
   /**
+   * Unique project id within this config.
+   */
+  id: string;
+  /**
    * Project name is visible in the report and during test execution.
    */
   name: string;
@@ -579,6 +583,11 @@ interface TestConfig {
   };
 
   /**
+   * Path to config file, if any.
+   */
+  configFile?: string;
+
+  /**
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
    * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
@@ -677,6 +686,16 @@ interface TestConfig {
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
   grepInvert?: RegExp|Array<RegExp>;
+
+  /**
+   * Project groups that control project execution order.
+   */
+  groups?: { [key: string]: Array<string|Array<string|{
+    /**
+     * Project name(s).
+     */
+    project: string|Array<string>;
+  }>>; };
 
   /**
    * Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await
@@ -927,13 +946,14 @@ interface TestConfig {
   updateSnapshots?: "all"|"none"|"missing";
 
   /**
-   * The maximum number of concurrent worker processes to use for parallelizing tests.
+   * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
+   * logical CPU cores, e.g. `'50%'.`
    *
    * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
    * speed up test execution.
    *
-   * Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
-   * Playwright Test.
+   * Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
+   * with Playwright Test.
    *
    * ```js
    * // playwright.config.ts
@@ -946,7 +966,7 @@ interface TestConfig {
    * ```
    *
    */
-  workers?: number;}
+  workers?: number|string;}
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
@@ -1201,13 +1221,14 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   updateSnapshots: 'all' | 'none' | 'missing';
   /**
-   * The maximum number of concurrent worker processes to use for parallelizing tests.
+   * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
+   * logical CPU cores, e.g. `'50%'.`
    *
    * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
    * speed up test execution.
    *
-   * Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
-   * Playwright Test.
+   * Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
+   * with Playwright Test.
    *
    * ```js
    * // playwright.config.ts
@@ -1298,6 +1319,10 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   webServer: TestConfigWebServer | null;
+  /**
+   * Path to config file, if any.
+   */
+  configFile?: string;
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
@@ -3437,11 +3462,10 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element with given attribute value.
+   * Ensures the [Locator] points to an element with given attribute.
    *
    * ```js
    * const locator = page.locator('input');
-   * // Assert attribute with given value.
    * await expect(locator).toHaveAttribute('type', 'text');
    * ```
    *
@@ -3450,26 +3474,6 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveAttribute(name: string, value: string|RegExp, options?: {
-    /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Ensures the [Locator] points to an element with given attribute. The method will assert attribute presence.
-   *
-   * ```js
-   * const locator = page.locator('input');
-   * // Assert attribute existance.
-   * await expect(locator).toHaveAttribute('disabled');
-   * await expect(locator).not.toHaveAttribute('open');
-   * ```
-   *
-   * @param name Attribute name.
-   * @param options
-   */
-  toHaveAttribute(name: string, options?: {
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -4401,6 +4405,11 @@ interface TestProject {
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
   grepInvert?: RegExp|Array<RegExp>;
+
+  /**
+   * Unique project id within this config.
+   */
+  id?: string;
 
   /**
    * Metadata that will be put directly to the test report serialized as JSON.

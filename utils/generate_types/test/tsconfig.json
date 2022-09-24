@@ -3,7 +3,7 @@
     "strict": true,
     "target": "ES2019",
     "noEmit": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
   },
   "include": [
     "test.ts"
