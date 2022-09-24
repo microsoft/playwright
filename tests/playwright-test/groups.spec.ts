@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import type { PlaywrightTestConfig, TestInfo } from '@playwright/test';
+import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
 function createConfigWithProjects(names: string[], testInfo: TestInfo, groups: PlaywrightTestConfig['groups']): Record<string, string> {
@@ -65,6 +66,8 @@ function expectRunBefore(timeline: Timeline, before: string[], after: string[]) 
   }
 }
 
+
+
 test('should work', async ({ runGroups }, testInfo) => {
   const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
     default: ['a']
@@ -72,8 +75,8 @@ test('should work', async ({ runGroups }, testInfo) => {
   const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
   expect(passed).toBe(1);
-  expect(formatTimeline(timeline)).toEqual(`a > a/a.spec.ts > a test [begin]
-a > a/a.spec.ts > a test [end]`);
+  expect(formatTimeline(timeline)).toEqual(`a > a${path.sep}a.spec.ts > a test [begin]
+a > a${path.sep}a.spec.ts > a test [end]`);
 });
 
 
@@ -88,10 +91,10 @@ test('should order two projects', async ({ runGroups }, testInfo) => {
     const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
     expect(exitCode).toBe(0);
     expect(passed).toBe(2);
-    expect(formatTimeline(timeline)).toEqual(`a > a/a.spec.ts > a test [begin]
-a > a/a.spec.ts > a test [end]
-b > b/b.spec.ts > b test [begin]
-b > b/b.spec.ts > b test [end]`);
+    expect(formatTimeline(timeline)).toEqual(`a > a${path.sep}a.spec.ts > a test [begin]
+a > a${path.sep}a.spec.ts > a test [end]
+b > b${path.sep}b.spec.ts > b test [begin]
+b > b${path.sep}b.spec.ts > b test [end]`);
   });
   await test.step(`order b then a`, async () => {
     const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
@@ -103,10 +106,10 @@ b > b/b.spec.ts > b test [end]`);
     const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
     expect(exitCode).toBe(0);
     expect(passed).toBe(2);
-    expect(formatTimeline(timeline)).toEqual(`b > b/b.spec.ts > b test [begin]
-b > b/b.spec.ts > b test [end]
-a > a/a.spec.ts > a test [begin]
-a > a/a.spec.ts > a test [end]`);
+    expect(formatTimeline(timeline)).toEqual(`b > b${path.sep}b.spec.ts > b test [begin]
+b > b${path.sep}b.spec.ts > b test [end]
+a > a${path.sep}a.spec.ts > a test [begin]
+a > a${path.sep}a.spec.ts > a test [end]`);
   });
 });
 
