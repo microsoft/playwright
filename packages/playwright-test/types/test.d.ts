@@ -688,6 +688,16 @@ interface TestConfig {
   grepInvert?: RegExp|Array<RegExp>;
 
   /**
+   * Project groups that control project execution order.
+   */
+  groups?: { [key: string]: Array<string|Array<string|{
+    /**
+     * Project name(s).
+     */
+    project: string|Array<string>;
+  }>>; };
+
+  /**
    * Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await
    * expect(page).toHaveScreenshot()`.
    */
