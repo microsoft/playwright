@@ -368,7 +368,7 @@ test('should support describe() without a title', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toContain('a.spec.js:8:17 › suite1 › suite2 › my test');
 });
 
-test('test.{skip,fixme} should define a skipped test', async ({ runInlineTest }) => {
+test('test.{skip,fixme,todo} should define a skipped test', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
@@ -483,6 +483,32 @@ test('should support describe.fixme', async ({ runInlineTest }) => {
       });
       test.describe('not skipped', () => {
         test.describe.fixme('skipped', () => {
+          test('test4', () => {});
+        });
+        test('test4', () => {
+          console.log('heytest4');
+        });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.skipped).toBe(3);
+  expect(result.output).toContain('heytest4');
+});
+
+test('should support describe.todo', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'nested-skip.spec.js': `
+      const { test } = pwt;
+      test.describe.todo('skipped', () => {
+        test.describe('nested', () => {
+          test('test1', () => {});
+        });
+        test('test2', () => {});
+      });
+      test.describe('not skipped', () => {
+        test.describe.todo('skipped', () => {
           test('test4', () => {});
         });
         test('test4', () => {

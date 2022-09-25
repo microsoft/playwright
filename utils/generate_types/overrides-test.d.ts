@@ -124,6 +124,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
     only: SuiteFunction;
     skip: SuiteFunction;
     fixme: SuiteFunction;
+    todo: SuiteFunction;
     serial: SuiteFunction & {
       only: SuiteFunction;
     };
@@ -140,6 +141,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   fixme(): void;
   fixme(condition: boolean, description?: string): void;
   fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+  todo(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  todo(): void;
+  todo(condition: boolean, description?: string): void;
+  todo(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   fail(): void;
   fail(condition: boolean, description?: string): void;
   fail(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;

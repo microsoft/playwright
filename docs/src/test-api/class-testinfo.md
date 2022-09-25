@@ -240,6 +240,28 @@ Test is marked as "fixme" when the condition is `true`.
 
 Optional description that will be reflected in a test report.
 
+## method: TestInfo.todo#1
+* since: v1.27
+
+Mark a test as "todo", with the intention to fix it. Test is immediately aborted. This is similar to [`method: Test.todo#2`].
+
+## method: TestInfo.todo#2
+* since: v1.27
+
+Conditionally mark the currently running test as "todo" with an optional description. This is similar to [`method: Test.todo#3`].
+
+### param: TestInfo.todo#2.condition
+* since: v1.10
+- `condition` <[boolean]>
+
+Test is marked as "todo" when the condition is `true`.
+
+### param: TestInfo.todo#2.description
+* since: v1.10
+- `description` ?<[string]>
+
+Optional description that will be reflected in a test report.
+
 
 ## property: TestInfo.fn
 * since: v1.10

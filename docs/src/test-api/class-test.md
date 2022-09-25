@@ -383,6 +383,39 @@ Group title.
 
 A callback that is run immediately when calling [`method: Test.describe.fixme`]. Any tests added in this callback will belong to the group, and will not be run.
 
+## method: Test.describe.todo
+* since: v1.27
+
+Declares a test group similarly to [`method: Test.describe#1`]. Tests in this group are marked as "todo" and will not be executed.
+
+```js tab=js-js
+test.describe.todo('broken tests', () => {
+  test('example', async ({ page }) => {
+    // This test will not run
+  });
+});
+```
+
+```js tab=js-ts
+test.describe.todo('broken tests', () => {
+  test('example', async ({ page }) => {
+    // This test will not run
+  });
+});
+```
+
+### param: Test.describe.todo.title
+* since: v1.27
+- `title` <[string]>
+
+Group title.
+
+### param: Test.describe.todo.callback
+* since: v1.27
+- `callback` <[function]>
+
+A callback that is run immediately when calling [`method: Test.describe.todo`]. Any tests added in this callback will belong to the group, and will not be run.
+
 
 
 ## method: Test.describe.only
@@ -1013,6 +1046,176 @@ A function that returns whether to mark as "fixme", based on test fixtures. Test
 
 ### param: Test.fixme#4.description
 * since: v1.10
+- `description` ?<[string]>
+
+Optional description that will be reflected in a test report.
+
+## method: Test.todo#1
+* since: v1.27
+
+Declares a test to be fixed, similarly to [`method: Test.(call)`]. This test will not be run.
+
+```js tab=js-js
+const { test, expect } = require('@playwright/test');
+
+test.todo('test to be implemented in the future', async ({ page }) => {
+  // ...
+});
+```
+
+```js tab=js-ts
+import { test, expect } from '@playwright/test';
+
+test.todo('test to be implemented in the future', async ({ page }) => {
+  // ...
+});
+```
+
+### param: Test.todo#1.title
+* since: v1.27
+- `title` <[string]>
+
+Test title.
+
+### param: Test.todo#1.testFunction
+* since: v1.27
+- `testFunction` <[function]\([Fixtures], [TestInfo]\)>
+
+Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+
+
+
+## method: Test.todo#2
+* since: v1.27
+
+Mark a test as "todo", with the intention to implement it. Test is immediately aborted when you call [`method: Test.todo#2`].
+
+```js tab=js-js
+const { test, expect } = require('@playwright/test');
+
+test('test to be fixed', async ({ page }) => {
+  test.todo();
+  // ...
+});
+```
+
+```js tab=js-ts
+import { test, expect } from '@playwright/test';
+
+test('test to be fixed', async ({ page }) => {
+  test.todo();
+  // ...
+});
+```
+
+Mark all tests in a file or [`method: Test.describe#1`] group as "todo".
+
+```js tab=js-js
+const { test, expect } = require('@playwright/test');
+
+test.todo();
+
+test('test to be implemented 1', async ({ page }) => {
+  // ...
+});
+test('test to be implemented 2', async ({ page }) => {
+  // ...
+});
+```
+
+```js tab=js-ts
+import { test, expect } from '@playwright/test';
+
+test.todo();
+
+test('test to be implemented 1', async ({ page }) => {
+  // ...
+});
+test('test to be implemented 2', async ({ page }) => {
+  // ...
+});
+```
+
+
+## method: Test.todo#3
+* since: v1.27
+
+Conditionally mark a test as "todo" with an optional description.
+
+```js tab=js-js
+const { test, expect } = require('@playwright/test');
+
+test('broken in WebKit', async ({ page, browserName }) => {
+  test.todo(browserName === 'webkit', 'This feature is not implemented on Mac yet');
+  // ...
+});
+```
+
+```js tab=js-ts
+import { test, expect } from '@playwright/test';
+
+test('broken in WebKit', async ({ page, browserName }) => {
+  test.todo(browserName === 'webkit', 'This feature is not implemented on Mac yet');
+  // ...
+});
+```
+
+
+### param: Test.todo#3.condition
+* since: v1.27
+- `condition` <[boolean]>
+
+Test is marked as "todo" when the condition is `true`.
+
+### param: Test.todo#3.description
+* since: v1.27
+- `description` ?<[string]>
+
+Optional description that will be reflected in a test report.
+
+
+
+
+## method: Test.todo#4
+* since: v1.27
+
+Conditionally mark all tests in a file or [`method: Test.describe#1`] group as "todo".
+
+```js tab=js-js
+const { test, expect } = require('@playwright/test');
+
+test.todo(({ browserName }) => browserName === 'webkit');
+
+test('to implement in WebKit 1', async ({ page }) => {
+  // ...
+});
+test('to implement in WebKit 2', async ({ page }) => {
+  // ...
+});
+```
+
+```js tab=js-ts
+import { test, expect } from '@playwright/test';
+
+test.todo(({ browserName }) => browserName === 'webkit');
+
+test('to implement in WebKit 1', async ({ page }) => {
+  // ...
+});
+test('to implement in WebKit 2', async ({ page }) => {
+  // ...
+});
+```
+
+
+### param: Test.todo#4.condition
+* since: v1.27
+- `callback` <[function]\([Fixtures]\):[boolean]>
+
+A function that returns whether to mark as "todo", based on test fixtures. Test or tests are marked as "todo" when the return value is `true`.
+
+### param: Test.todo#4.description
+* since: v1.27
 - `description` ?<[string]>
 
 Optional description that will be reflected in a test report.

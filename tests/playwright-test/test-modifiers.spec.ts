@@ -37,7 +37,13 @@ test('test modifiers should work', async ({ runInlineTest }) => {
       test('passed4', async () => {
         test.fixme(undefined, 'reason')
       });
-      test('passed5', async ({foo}) => {
+      test('passed5', async () => {
+        test.todo(undefined);
+      });
+      test('passed6', async () => {
+        test.todo(undefined, 'reason')
+      });
+      test('passed7', async ({foo}) => {
         test.skip(false);
       });
 
@@ -58,6 +64,12 @@ test('test modifiers should work', async ({ runInlineTest }) => {
       });
       test('skipped6', async () => {
         test.fixme(true, 'reason');
+      });
+      test('skipped7', async () => {
+        test.todo();
+      });
+      test('skipped8', async () => {
+        test.todo(true, 'reason');
       });
 
       test('failed1', async ({foo}) => {
@@ -112,12 +124,16 @@ test('test modifiers should work', async ({ runInlineTest }) => {
   expectTest('passed3', 'passed', 'passed', []);
   expectTest('passed4', 'passed', 'passed', []);
   expectTest('passed5', 'passed', 'passed', []);
+  expectTest('passed6', 'passed', 'passed', []);
+  expectTest('passed7', 'passed', 'passed', []);
   expectTest('skipped1', 'skipped', 'skipped', [{ type: 'skip' }]);
   expectTest('skipped2', 'skipped', 'skipped', [{ type: 'skip' }]);
   expectTest('skipped3', 'skipped', 'skipped', [{ type: 'skip' }]);
   expectTest('skipped4', 'skipped', 'skipped', [{ type: 'skip', description: 'reason' }]);
-  expectTest('skipped5', 'skipped', 'skipped', [{ type: 'fixme' }]);
+  expectTest('skipped5', 'skipped', 'skipped', [{ type: 'todo' }]);
   expectTest('skipped6', 'skipped', 'skipped', [{ type: 'fixme', description: 'reason' }]);
+  expectTest('skipped7', 'skipped', 'skipped', [{ type: 'todo' }]);
+  expectTest('skipped8', 'skipped', 'skipped', [{ type: 'todo', description: 'reason' }]);
   expectTest('failed1', 'failed', 'failed', [{ type: 'fail' }]);
   expectTest('failed2', 'failed', 'failed', [{ type: 'fail' }]);
   expectTest('failed3', 'failed', 'failed', [{ type: 'fail' }]);
@@ -126,8 +142,8 @@ test('test modifiers should work', async ({ runInlineTest }) => {
   expectTest('suite2', 'skipped', 'skipped', [{ type: 'skip' }]);
   expectTest('suite3', 'skipped', 'skipped', [{ type: 'skip', description: 'reason' }]);
   expectTest('suite4', 'passed', 'passed', []);
-  expect(result.passed).toBe(10);
-  expect(result.skipped).toBe(9);
+  expect(result.passed).toBe(12);
+  expect(result.skipped).toBe(11);
 });
 
 test.describe('test modifier annotations', () => {
@@ -142,6 +158,9 @@ test.describe('test modifier annotations', () => {
           test('skip inner', () => { test.skip(); });
           test.fixme('fixme wrap', () => {});
           test('fixme inner', () => { test.fixme(); });
+          test.todo('todo wrap', () => {});
+          test('todo inner', () => { test.todo(); });
+
         });
 
         test('example', () => {});
@@ -151,12 +170,14 @@ test.describe('test modifier annotations', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(2);
-    expect(result.skipped).toBe(4);
+    expect(result.skipped).toBe(6);
     expectTest('no marker', 'passed', 'expected', []);
     expectTest('skip wrap', 'skipped', 'skipped', ['skip']);
     expectTest('skip inner', 'skipped', 'skipped', ['skip']);
     expectTest('fixme wrap', 'skipped', 'skipped', ['fixme']);
     expectTest('fixme inner', 'skipped', 'skipped', ['fixme']);
+    expectTest('todo wrap', 'skipped', 'skipped', ['todo']);
+    expectTest('todo inner', 'skipped', 'skipped', ['todo']);
     expectTest('example', 'passed', 'expected', []);
   });
 
@@ -173,6 +194,8 @@ test.describe('test modifier annotations', () => {
           test('skip inner', () => { test.skip(); });
           test.fixme('fixme wrap', () => {});
           test('fixme inner', () => { test.fixme(); });
+          test.todo('todo wrap', () => {});
+          test('todo inner', () => { test.todo(); });
         });
 
         test('example', () => {});
@@ -182,12 +205,14 @@ test.describe('test modifier annotations', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(0);
-    expect(result.skipped).toBe(6);
+    expect(result.skipped).toBe(8);
     expectTest('no marker', 'skipped', 'skipped', ['fixme']);
     expectTest('skip wrap', 'skipped', 'skipped', ['skip', 'fixme']);
     expectTest('skip inner', 'skipped', 'skipped', ['fixme']);
     expectTest('fixme wrap', 'skipped', 'skipped', ['fixme', 'fixme']);
     expectTest('fixme inner', 'skipped', 'skipped', ['fixme']);
+    expectTest('todo wrap', 'skipped', 'skipped', ['todo', 'todo']);
+    expectTest('todo inner', 'skipped', 'skipped', ['todo']);
     expectTest('example', 'skipped', 'skipped', ['fixme']);
   });
 
@@ -202,6 +227,8 @@ test.describe('test modifier annotations', () => {
           test('skip inner', () => { test.skip(); });
           test.fixme('fixme wrap', () => {});
           test('fixme inner', () => { test.fixme(); });
+          test.todo('todo wrap', () => {});
+          test('todo inner', () => { test.todo(); });
         });
 
         test('example', () => {});
@@ -215,8 +242,8 @@ test.describe('test modifier annotations', () => {
     expectTest('no marker', 'skipped', 'skipped', ['skip']);
     expectTest('skip wrap', 'skipped', 'skipped', ['skip', 'skip']);
     expectTest('skip inner', 'skipped', 'skipped', ['skip']);
-    expectTest('fixme wrap', 'skipped', 'skipped', ['fixme', 'skip']);
-    expectTest('fixme inner', 'skipped', 'skipped', ['skip']);
+    expectTest('todo wrap', 'skipped', 'skipped', ['todo', 'skip']);
+    expectTest('todo inner', 'skipped', 'skipped', ['skip']);
     expectTest('example', 'passed', 'expected', []);
   });
 
@@ -239,15 +266,29 @@ test.describe('test modifier annotations', () => {
             })
           })
         });
+        test.describe.skip('suite2', () => {
+          test.describe.skip('sub2', () => {
+            test.describe('a', () => {
+              test.describe('b', () => {
+                test.todo();
+
+                test.todo('todo wrap', () => {});
+                test('todo inner', () => { test.todo(); });
+              })
+            })
+          })
+        });
       `,
     });
     const expectTest = expectTestHelper(result);
 
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(0);
-    expect(result.skipped).toBe(2);
+    expect(result.skipped).toBe(4);
     expectTest('fixme wrap', 'skipped', 'skipped', ['fixme', 'fixme', 'skip', 'skip', 'fixme']);
     expectTest('fixme inner', 'skipped', 'skipped', ['fixme', 'skip', 'skip', 'fixme']);
+    expectTest('todo wrap', 'skipped', 'skipped', ['todo', 'todo', 'skip', 'skip', 'todo']);
+    expectTest('todo inner', 'skipped', 'skipped', ['todo', 'skip', 'skip', 'todo']);
   });
 
   test('should work with only', async ({ runInlineTest }) => {
@@ -258,6 +299,7 @@ test.describe('test modifier annotations', () => {
         test.describe.only("suite", () => {
           test.skip('focused skip by suite', () => {});
           test.fixme('focused fixme by suite', () => {});
+          test.todo('focused todo by suite', () => {});
         });
 
         test.describe.skip('not focused', () => {
@@ -269,9 +311,10 @@ test.describe('test modifier annotations', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(0);
-    expect(result.skipped).toBe(2);
+    expect(result.skipped).toBe(3);
     expectTest('focused skip by suite', 'skipped', 'skipped', ['skip']);
     expectTest('focused fixme by suite', 'skipped', 'skipped', ['fixme']);
+    expectTest('focused todo by suite', 'skipped', 'skipped', ['todo']);
   });
 
   test('should not multiple on retry', async ({ runInlineTest }) => {
@@ -315,12 +358,15 @@ test('test modifiers should check types', async ({ runTSC }) => {
         foo: async ({}, use, testInfo) => {
           testInfo.skip();
           testInfo.fixme(false);
+          testInfo.todo(false);
           testInfo.slow(true, 'reason');
           testInfo.fail(false, 'reason');
           // @ts-expect-error
           testInfo.skip('reason');
           // @ts-expect-error
           testInfo.fixme('foo', 'reason');
+          // @ts-expect-error
+          testInfo.todo('foo', 'reason');
           // @ts-expect-error
           testInfo.slow(() => true);
           use(true);
@@ -366,9 +412,11 @@ test('test modifiers should check types', async ({ runTSC }) => {
       // @ts-expect-error
       test.fixme('fixme', 'fixme');
       // @ts-expect-error
+      test.todo('todo', 'todo');
+      // @ts-expect-error
       test.skip(true, async () => {});
       // @ts-expect-error
-      test.fixme(true, async () => {});
+      test.todo(true, async () => {});
     `,
   });
   expect(result.exitCode).toBe(0);

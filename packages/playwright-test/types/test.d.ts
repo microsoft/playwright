@@ -1566,12 +1566,26 @@ export interface TestInfo {
   fixme(): void;
 
   /**
+   * Mark a test as "todo", with the intention to add in the future. Test is immediately aborted. This is similar to
+   * [test.fixme()](https://playwright.dev/docs/api/class-test#test-fixme-2).
+   */
+  todo(): void;
+
+  /**
    * Conditionally mark the currently running test as "fixme" with an optional description. This is similar to
    * [test.fixme(condition[, description])](https://playwright.dev/docs/api/class-test#test-fixme-3).
    * @param condition Test is marked as "fixme" when the condition is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(condition: boolean, description?: string): void;
+
+  /**
+   * Conditionally mark the currently running test as "todo" with an optional description. This is similar to
+   * [test.fixme(condition[, description])](https://playwright.dev/docs/api/class-test#test-fixme-3).
+   * @param condition Test is marked as "fixme" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  todo(condition: boolean, description?: string): void;
 
   /**
    * Test function as passed to `test(title, testFunction)`.
@@ -1948,6 +1962,24 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   fixme: SuiteFunction;
     /**
+   * Declares a test group similarly to
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Tests in this group are
+   * marked as "todo" and will not be executed.
+   *
+   * ```js
+   * test.describe.todo('future tests', () => {
+   *   test('example', async ({ page }) => {
+   *     // This test will not run
+   *   });
+   * });
+   * ```
+   *
+   * @param title Group title.
+   * @param callback A callback that is run immediately when calling [test.describe.todo(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-todo). Any tests added
+   * in this callback will belong to the group, and will not be run.
+   */
+  todo: SuiteFunction;
+    /**
    * Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are
    * skipped. All tests in a group are retried together.
    *
@@ -2146,6 +2178,90 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param description Optional description that will be reflected in a test report.
    */
   skip(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+  /**
+ * Declares a test to be skipped and fixed in the future, similarly to
+ * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call). This test will not be run.
+ *
+ * ```js
+ * import { test, expect } from '@playwright/test';
+ *
+ * test.todo('test to be written in the future', async ({ page }) => {
+ *   // ...
+ * });
+ * ```
+ *
+ * @param title Test title.
+ * @param testFunction Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
+ */
+  todo(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  /**
+  * Mark a test as "todo", with the intention write in the future. Test is immediately aborted when you call
+  * [test.todo()](https://playwright.dev/docs/api/class-test#test-todo).
+  *
+  * ```js
+  * import { test, expect } from '@playwright/test';
+  *
+  * test('test to be written in the future', async ({ page }) => {
+  *   test.todo();
+  *   // ...
+  * });
+  * ```
+  *
+  * Mark all tests in a file or [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1)
+  * group as "todo".
+  *
+  * ```js
+  * import { test, expect } from '@playwright/test';
+  *
+  * test.todo();
+  *
+  * test('test to be written in the future 1', async ({ page }) => {
+  *   // ...
+  * });
+  * test('test to be written in the future 2', async ({ page }) => {
+  *   // ...
+  * });
+  * ```
+  *
+  */
+  todo(): void;
+  /**
+  * Conditionally mark a test as "todo" with an optional description.
+  *
+  * ```js
+  * import { test, expect } from '@playwright/test';
+  *
+  * test('broken in WebKit', async ({ page, browserName }) => {
+  *   test.todo(browserName === 'webkit', 'This feature is not implemented on Mac yet');
+  *   // ...
+  * });
+  * ```
+  *
+  * @param condition Test is marked as "todo" when the condition is `true`.
+  * @param description Optional description that will be reflected in a test report.
+  */
+  todo(condition: boolean, description?: string): void;
+  /**
+  * Conditionally mark all tests in a file or
+  * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group as "todo".
+  *
+  * ```js
+  * import { test, expect } from '@playwright/test';
+  *
+  * test.todo(({ browserName }) => browserName === 'webkit');
+  *
+  * test('broken in WebKit 1', async ({ page }) => {
+  *   // ...
+  * });
+  * test('broken in WebKit 2', async ({ page }) => {
+  *   // ...
+  * });
+  * ```
+  *
+  * @param callback A function that returns whether to mark as "todo", based on test fixtures. Test or tests are marked as "todo" when the return value is `true`.
+  * @param description Optional description that will be reflected in a test report.
+  */
+  todo(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   /**
    * Declares a test to be fixed, similarly to
    * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call). This test will not be run.

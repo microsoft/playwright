@@ -38,6 +38,7 @@ export class TestTypeImpl {
     test.describe.only = wrapFunctionWithLocation(this._describe.bind(this, 'only'));
     test.describe.configure = wrapFunctionWithLocation(this._configure.bind(this));
     test.describe.fixme = wrapFunctionWithLocation(this._describe.bind(this, 'fixme'));
+    test.describe.todo = wrapFunctionWithLocation(this._describe.bind(this, 'todo'));
     test.describe.parallel = wrapFunctionWithLocation(this._describe.bind(this, 'parallel'));
     test.describe.parallel.only = wrapFunctionWithLocation(this._describe.bind(this, 'parallel.only'));
     test.describe.serial = wrapFunctionWithLocation(this._describe.bind(this, 'serial'));
@@ -49,6 +50,7 @@ export class TestTypeImpl {
     test.afterAll = wrapFunctionWithLocation(this._hook.bind(this, 'afterAll'));
     test.skip = wrapFunctionWithLocation(this._modifier.bind(this, 'skip'));
     test.fixme = wrapFunctionWithLocation(this._modifier.bind(this, 'fixme'));
+    test.todo = wrapFunctionWithLocation(this._modifier.bind(this, 'todo'));
     test.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
     test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
@@ -80,7 +82,7 @@ export class TestTypeImpl {
     return suite;
   }
 
-  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, title: string, fn: Function) {
+  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'todo', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, 'test()');
     const test = new TestCase(title, fn, this, location);
@@ -89,7 +91,7 @@ export class TestTypeImpl {
 
     if (type === 'only')
       test._only = true;
-    if (type === 'skip' || type === 'fixme') {
+    if (type === 'skip' || type === 'fixme' || type === 'todo') {
       test.annotations.push({ type });
       test.expectedStatus = 'skipped';
     }
@@ -99,7 +101,7 @@ export class TestTypeImpl {
     }
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, title: string | Function, fn?: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme' | 'todo', location: Location, title: string | Function, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, 'test.describe()');
 
@@ -119,7 +121,7 @@ export class TestTypeImpl {
       child._parallelMode = 'serial';
     if (type === 'parallel' || type === 'parallel.only')
       child._parallelMode = 'parallel';
-    if (type === 'skip' || type === 'fixme') {
+    if (type === 'skip' || type === 'fixme' || type === 'todo') {
       child._skipped = true;
       child._annotations.push({ type });
     }
@@ -154,7 +156,7 @@ export class TestTypeImpl {
     }
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {
+  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow' | 'todo', location: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
       if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'function' && (type === 'skip' || type === 'fixme')) {

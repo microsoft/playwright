@@ -137,7 +137,7 @@ export class TestInfoImpl implements TestInfo {
     })();
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', modifierArgs: [arg?: any, description?: string]) {
+  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'todo' |'slow', modifierArgs: [arg?: any, description?: string]) {
     if (typeof modifierArgs[1] === 'function') {
       throw new Error([
         'It looks like you are calling test.skip() inside the test and pass a callback.',
@@ -155,7 +155,7 @@ export class TestInfoImpl implements TestInfo {
     this.annotations.push({ type, description });
     if (type === 'slow') {
       this._timeoutManager.slow();
-    } else if (type === 'skip' || type === 'fixme') {
+    } else if (type === 'skip' || type === 'fixme' || type === 'todo') {
       this.expectedStatus = 'skipped';
       throw new SkipError('Test is skipped: ' + (description || ''));
     } else if (type === 'fail') {
@@ -274,6 +274,10 @@ export class TestInfoImpl implements TestInfo {
 
   slow(...args: [arg?: any, description?: string]) {
     this._modifier('slow', args);
+  }
+
+  todo(...args: [arg?: any, description?: string]) {
+    this._modifier('todo', args);
   }
 
   setTimeout(timeout: number) {

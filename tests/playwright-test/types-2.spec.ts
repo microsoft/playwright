@@ -31,6 +31,7 @@ test('basics should work', async ({ runTSC }) => {
         });
         test.skip('my test', async () => {});
         test.fixme('my test', async () => {});
+        test.todo('my test', async () => {});
       });
       test.describe(() => {
         test('my test', () => {});
@@ -41,6 +42,7 @@ test('basics should work', async ({ runTSC }) => {
       test.describe.serial.only('suite', () => {});
       test.describe.skip('suite', () => {});
       test.describe.fixme('suite', () => {});
+      test.describe.todo('suite', () => {});
       // @ts-expect-error
       test.foo();
     `

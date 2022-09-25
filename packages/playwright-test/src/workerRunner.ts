@@ -265,6 +265,7 @@ export class WorkerRunner extends EventEmitter {
       testInfo.annotations.push(annotation);
       switch (annotation.type) {
         case 'fixme':
+        case 'todo':
         case 'skip':
           testInfo.expectedStatus = 'skipped';
           break;

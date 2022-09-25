@@ -25,7 +25,7 @@ export type TimeSlot = {
 };
 
 type RunnableDescription = {
-  type: 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'slow' | 'skip' | 'fail' | 'fixme' | 'teardown';
+  type: 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'slow' | 'skip' | 'fail' | 'fixme' | 'todo' | 'teardown';
   location?: Location;
   slot?: TimeSlot;  // Falls back to test slot.
 };
@@ -130,6 +130,7 @@ export class TimeoutManager {
       case 'skip':
       case 'slow':
       case 'fixme':
+      case 'todo':
       case 'fail':
         message = `"${this._runnable.type}" modifier timeout of ${timeout}ms exceeded.`;
         break;
