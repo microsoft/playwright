@@ -240,6 +240,12 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return (await response._channel.sizes()).sizes;
   }
 
+  _setResponseEndTiming(responseEndTiming: number) {
+    this._timing.responseEnd = responseEndTiming;
+    if (this._timing.responseStart === -1)
+      this._timing.responseStart = responseEndTiming;
+  }
+
   _finalRequest(): Request {
     return this._redirectedTo ? this._redirectedTo._finalRequest() : this;
   }

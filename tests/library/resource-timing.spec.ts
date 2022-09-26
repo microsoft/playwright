@@ -119,7 +119,7 @@ it('should work when serving from memory cache', async ({ contextFactory, server
   const timing = response.request().timing();
   verifyConnectionTimingConsistency(timing);
 
-  expect(timing.responseStart).toBe(-1);
+  expect(timing.responseStart).toBe(timing.responseEnd);
   expect(timing.responseEnd).toBeLessThan(1000);
   await context.close();
 });
