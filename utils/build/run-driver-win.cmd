@@ -1,5 +1,5 @@
-@ECHO OFF
-SETLOCAL
+@echo off
+setlocal
 if not defined PLAYWRIGHT_NODEJS_PATH (
   set PLAYWRIGHT_NODEJS_PATH=%~dp0\node.exe
 )
