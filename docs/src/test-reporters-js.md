@@ -238,13 +238,19 @@ By default, HTML report is opened automatically if some of the tests failed. You
 `open` property in the Playwright config. The possible values for that property are `always`, `never` and `on-failure`
 (default).
 
+You can also configure `host` and `port` that are used to serve the HTML report.
+
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [ ['html', { open: 'never' }] ],
+  reporter: [ ['html', {
+    open: 'never',
+    host: '0.0.0.0',
+    port: 9223,
+  }] ],
 };
 
 module.exports = config;
