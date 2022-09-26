@@ -67,65 +67,6 @@ await locator.HoverAsync();
 await locator.ClickAsync();
 ```
 
-## Creating Locators
-
-Use [`method: Page.locator`] method to create a locator. This method takes a selector that describes how to find an element in the page. Playwright supports many different selectors like [Text](./selectors.md#text-selector), [CSS](./selectors.md#css-selector), [XPath](./selectors.md#xpath-selectors) and many more. Learn more about available selectors and how to pick one in this [in-depth guide](./selectors.md).
-
-```js
-// Find by text.
-await page.locator('text=Sign up').click();
-
-// Find by CSS.
-await page.locator('button.sign-up').click();
-
-// Find by test id.
-await page.locator('data-testid=sign-up').click();
-```
-
-```python async
-# Find by text.
-await page.locator("text=Sign up").click()
-
-# Find by CSS.
-await page.locator("button.sign-up").click()
-
-# Find by test id.
-await page.locator("data-testid=sign-up").click()
-```
-
-```python sync
-# Find by text.
-page.locator("text=Sign up").click()
-
-# Find by CSS.
-page.locator("button.sign-up").click()
-
-# Find by test id.
-page.locator("data-testid=sign-up").click()
-```
-
-```java
-// Find by text.
-page.locator("text=Sign up").click();
-
-// Find by CSS.
-page.locator("button.sign-up").click();
-
-// Find by test id.
-page.locator("data-testid=sign-up").click();
-```
-
-```csharp
-// Find by text.
-await page.Locator("text=Sign up").ClickAsync();
-
-// Find by CSS.
-await page.Locator("button.sign-up").ClickAsync();
-
-// Find by test id.
-await page.Locator("data-testid=sign-up").ClickAsync();
-```
-
 ## Strictness
 
 Locators are strict. This means that all operations on locators that imply
@@ -188,8 +129,507 @@ await page.Locator("button").CountAsync();
 ```
 
 :::caution
-Using [`method: Locator.first`], [`method: Locator.last`], and [`method: Locator.nth`] is discouraged since it disables the concept of strictness, and as your page changes, Playwright may click on an element you did not intend. It's better to make your locator more specific. Learn more below in [Filtering Locators](#filtering-locators) and the [selectors guide](./selectors.md).
+Using [`method: Locator.first`], [`method: Locator.last`], and [`method: Locator.nth`] is discouraged since it disables the concept of strictness, and as your page changes, Playwright may click on an element you did not intend. It's better to make your locator more specific.
 :::
+
+
+## Locating elements
+
+Use [`method: Page.locator`] method to create a locator. This method takes a selector that describes how to find an element in the page. The choice of selectors determines the resiliency of the test when the underlying web page changes. To reduce the maintenance burden, we recommend prioritizing user-facing attributes and explicit contracts.
+
+### Locate by text content using `text=`
+
+The easiest way to find an element is to look for the text it contains.
+
+```js
+await page.locator('text=Log in').click();
+```
+```java
+page.locator("text=Log in").click();
+```
+```python async
+await page.locator("text=Log in").click()
+```
+```python sync
+page.locator("text=Log in").click()
+```
+```csharp
+await page.Locator("text=Log in").ClickAsync();
+```
+
+You can also [filter by text](#filter-by-text) when locating in some other way, for example find a particular item in the list.
+
+```js
+await page.locator('data-test-id=product-item', { hasText: 'Playwright Book' }).click();
+```
+```java
+page.locator("data-test-id=product-item", new Page.LocatorOptions().setHasText("Playwright Book")).click();
+```
+```python async
+await page.locator("data-test-id=product-item", has_text="Playwright Book").click()
+```
+```python sync
+page.locator("data-test-id=product-item", has_text="Playwright Book").click()
+```
+```csharp
+await page.Locator("data-test-id=product-item", new() { HasText = "Playwright Book" }).ClickAsync();
+```
+
+[Learn more about the `text` selector](./selectors.md#text-selector).
+
+### Locate based on accessible attributes using `role=`
+
+The `role` selector reflects how users and assistive technology percieve the page, for example whether some element is a button or a checkbox. When locating by role, you should usually pass the accessible name as well, so that locator pinpoints the exact element.
+
+```js
+// Click the button with the text "submit".
+await page.locator('role=button[name=/submit/i]').click();
+
+// Ensure that "Check me" checkbox is checked.
+await page.locator('role=checkbox[checked][name="Check me"]').check();
+```
+
+```python async
+# Click the button with the text "submit".
+await page.locator('role=button[name=/submit/i]').click()
+
+# Ensure that "Check me" checkbox is checked.
+await page.locator('role=checkbox[checked][name="Check me"]').check()
+```
+
+```python sync
+# Click the button with the text "submit".
+page.locator('role=button[name=/submit/i]').click()
+
+# Ensure that "Check me" checkbox is checked.
+page.locator('role=checkbox[checked][name="Check me"]').check()
+```
+
+```java
+// Click the button with the text "submit".
+page.locator("role=button[name=/submit/i]").click();
+
+// Ensure that "Check me" checkbox is checked.
+page.locator("role=checkbox[checked][name=\"Check me\"]").check();
+```
+
+```csharp
+// Click the button with the text "submit".
+await page.Locator("role=button[name=/submit/i]").ClickAsync();
+
+// Ensure that "Check me" checkbox is checked.
+await page.Locator("role=checkbox[checked][name=\"Check me\"]").CheckAsync();
+```
+
+[Learn more about the `role` selector](./selectors.md#role-selector).
+
+### Define explicit contract and use `data-test-id=`
+
+User-facing attributes like text or accessible name can change frequently. In this case it is convenient to define explicit test ids, for example with a `data-test-id` attribute. Playwright has dedicated support for `id`, `data-test-id`, `data-test` and `data-testid` attributes.
+
+```html
+<button data-test-id="directions">Itinéraire</button>
+```
+
+```js
+await page.locator('data-test-id=directions').click();
+```
+
+```java
+page.locator("data-test-id=directions").click();
+```
+
+```python async
+await page.locator('data-test-id=directions').click()
+```
+
+```python sync
+page.locator('data-test-id=directions').click()
+```
+
+```csharp
+await page.Locator("data-test-id=directions").ClickAsync();
+```
+
+### Locate by label text
+
+Most form controls usually have dedicated labels that could be conveniently used to interact with the form. Input actions in Playwright automatically distinguish between labels and controls, so you can just locate the label to perform an action on the associated control.
+
+For example, consider the following DOM structure.
+
+```html
+<label for="password">Password:</label><input type="password">
+```
+
+You can target the label with something like `text=Password` and perform the following actions on the password input:
+- `click` will click the label and automatically focus the input field;
+- `fill` will fill the input field;
+- `inputValue` will return the value of the input field;
+- `selectText` will select text in the input field;
+- `setInputFiles` will set files for the input field with `type=file`;
+- `selectOption` will select an option from the select box.
+
+```js
+// Fill the input by targeting the label.
+await page.locator('text=Password').fill('secret');
+```
+
+```java
+// Fill the input by targeting the label.
+page.locator("text=Password").fill("secret");
+```
+
+```python async
+# Fill the input by targeting the label.
+await page.locator('text=Password').fill('secret')
+```
+
+```python sync
+# Fill the input by targeting the label.
+page.locator('text=Password').fill('secret')
+```
+
+```csharp
+// Fill the input by targeting the label.
+await page.Locator("text=Password").FillAsync("secret");
+```
+
+However, other methods will target the label itself, for example `textContent` will return the text content of the label, not the input field.
+
+### Locate in a subtree
+
+You can chain [`method: Page.locator`] and [`method: Locator.locator`] calls to narrow down the search to a particular part of the page.
+
+For example, consider the following DOM structure:
+
+```html
+<div data-test-id='product-card'>
+  <span>Product 1</span>
+  <button>Buy</button>
+</div>
+<div data-test-id='product-card'>
+  <span>Product 2</span>
+  <button>Buy</button>
+</div>
+```
+
+You can now click a button for a particular product:
+
+```js
+// Find a product card that contains text "Product 2"
+const product = page.locator('data-test-id=product-card', { hasText: 'Product 2' });
+// Click the button in this specific product card
+await product.locator('text=Buy').click();
+```
+
+```python async
+# Find a product card that contains text "Product 2"
+product = page.locator("data-test-id=product-card", has_text="Product 2")
+# Click the button in this specific product card
+await product.locator("text=Buy").click()
+```
+
+```python sync
+# Find a product card that contains text "Product 2"
+product = page.locator("data-test-id=product-card", has_text="Product 2")
+# Click the button in this specific product card
+product.locator("text=Buy").click()
+```
+
+```java
+// Find a product card that contains text "Product 2"
+Locator product = page.locator("data-test-id=product-card", new Page.LocatorOptions().setHasText("Product 2"));
+// Click the button in this specific product card
+product.locator("text=Buy").click();
+```
+
+```csharp
+// Find a product card that contains text "Product 2"
+var product = page.Locator("data-test-id=product-card", new() { HasText = "Product 2" });
+// Click the button in this specific product card
+await product.Locator("text=Buy").clickAsync();
+```
+
+### Locate by CSS or XPath selector
+
+Playwright supports CSS and XPath selectors.
+
+```js
+// CSS
+await page.locator('css=button').click();
+
+// CSS shorthand
+await page.locator('button').click();
+
+// XPath
+await page.locator('xpath=//button').click();
+
+// XPath shorthand
+await page.locator('//button').click();
+```
+
+```java
+// CSS
+page.locator("css=button").click();
+
+// CSS shorthand
+page.locator("button").click();
+
+// XPath
+page.locator("x[ath=//button").click();
+
+// XPath shorthand
+page.locator("//button").click();
+```
+
+```python async
+# CSS
+await page.locator('css=button').click()
+
+# CSS shorthand
+await page.locator('button').click()
+
+# XPath
+await page.locator('xpath=//button').click()
+
+# XPath shorthand
+await page.locator('//button').click()
+```
+
+```python sync
+# CSS
+page.locator('css=button').click()
+
+# CSS shorthand
+page.locator('button').click()
+
+# XPath
+page.locator('xpath=//button').click()
+
+# XPath shorthand
+page.locator('//button').click()
+```
+
+```csharp
+// CSS
+await page.Locator('css=button').ClickAsync();
+
+// CSS shorthand
+await page.Locator('button').ClickAsync();
+
+// XPath
+await page.Locator('xpath=//button').ClickAsync();
+
+// XPath shorthand
+await page.Locator('//button').ClickAsync();
+```
+
+### Avoid locators tied to implementation
+
+XPath and CSS selectors can be tied to the DOM structure or implementation. These selectors can break when the DOM structure changes. Similarly, [`method: Locator.nth`], [`method: Locator.first`], and [`method: Locator.last`] are tied to implementation and the structure of the DOM, and will target the incorrect element if the DOM changes.
+
+```js
+// BAD PRACTICE: avoid long css or xpath chains
+await page.locator('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input').click();
+await page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click();
+```
+
+```java
+// BAD PRACTICE: avoid long css or xpath chains
+page.locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input").click();
+page.locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").click();
+```
+
+```python async
+# BAD PRACTICE: avoid long css or xpath chains
+await page.locator('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input').click()
+await page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click()
+```
+
+```python sync
+# BAD PRACTICE: avoid long css or xpath chains
+page.locator('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input').click()
+page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click()
+```
+
+```csharp
+// BAD PRACTICE: avoid long css or xpath chains
+await page.Locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input").ClickAsync();
+await page.Locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").ClickAsync();
+```
+
+Instead, try to come up with a locator that is close to how user perceives the page or [define an explicit testing contract](#define-explicit-contract-and-use-data-test-id).
+
+### Locate elements that contain other elements
+
+#### Filter by text
+
+Locator can be optionally filtered by text. It will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
+
+```js
+await page.locator('button', { hasText: 'Click me' }).click();
+await page.locator('button', { hasText: /Click me/ }).click();
+```
+```java
+page.locator("button", new Page.LocatorOptions().setHasText("Click me")).click();
+page.locator("button", new Page.LocatorOptions().setHasText(Pattern.compile("Click me"))).click();
+```
+```python async
+await page.locator("button", has_text="Click me").click()
+await page.locator("button", has_text=re.compile("Click me")).click()
+```
+```python sync
+page.locator("button", has_text="Click me").click()
+page.locator("button", has_text=re.compile("Click me")).click()
+```
+```csharp
+await page.Locator("button", new() { HasText = "Click me" }).ClickAsync();
+await page.Locator("button", new() { HasText = new Regex("Click me") }).ClickAsync();
+```
+
+#### Filter by another locator
+
+Locators support an option to only select elements that have a descendant matching another locator.
+
+```js
+page.locator('article', { has: page.locator('button.subscribe') })
+```
+```java
+page.locator("article", new Page.LocatorOptions().setHas(page.locator("button.subscribe")))
+```
+```python async
+page.locator("article", has=page.locator("button.subscribe"))
+```
+```python sync
+page.locator("article", has=page.locator("button.subscribe"))
+```
+```csharp
+page.Locator("article", new() { Has = page.Locator("button.subscribe") })
+```
+
+Note that inner locator is matched starting from the outer one, not from the document root.
+
+#### Augment an existing locator
+
+You can filter an existing locator by text or another one, using [`method: Locator.filter`] method, possibly chaining it multiple times.
+
+```js
+const rowLocator = page.locator('tr');
+// ...
+await rowLocator
+    .filter({ hasText: 'text in column 1' })
+    .filter({ has: page.locator('button', { hasText: 'column 2 button' }) })
+    .screenshot();
+```
+```java
+Locator rowLocator = page.locator("tr");
+// ...
+rowLocator
+    .filter(new Locator.FilterOptions().setHasText("text in column 1"))
+    .filter(new Locator.FilterOptions().setHas(
+        page.locator("button", new Page.LocatorOptions().setHasText("column 2 button"))
+    ))
+    .screenshot();
+```
+```python async
+row_locator = page.locator("tr")
+# ...
+await row_locator
+    .filter(has_text="text in column 1")
+    .filter(has=page.locator("tr", has_text="column 2 button"))
+    .screenshot()
+```
+```python sync
+row_locator = page.locator("tr")
+# ...
+row_locator
+    .filter(has_text="text in column 1")
+    .filter(has=page.locator("tr", has_text="column 2 button"))
+    .screenshot()
+```
+```csharp
+var rowLocator = page.Locator("tr");
+// ...
+await rowLocator
+    .Filter(new LocatorFilterOptions { HasText = "text in column 1" })
+    .Filter(new LocatorFilterOptions {
+        Has = page.Locator("tr", new PageLocatorOptions { HasText = "column 2 button" } )
+    })
+    .ScreenshotAsync();
+```
+
+### Locate elements in Shadow DOM
+
+All locators in Playwright **by default** work with elements in Shadow DOM. The exceptions are:
+- Locating by XPath selector does not pierce shadow roots.
+- [Closed-mode shadow roots](https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow#parameters) are not supported.
+
+Consider the following example with a custom web component:
+```html
+<x-badge>
+  <span>Title</span>
+  #shadow-root
+    <span>Details</span>
+</x-badge>
+```
+
+You can locate in the same way as if the shadow root was not present at all:
+
+```js
+// Clicks <span>Details</span>
+await page.locator('text=Details').click();
+
+// Clicks <x-badge>
+await page.locator('x-badge', { hasText: 'Details' }).click();
+
+// Ensures that <x-badge> contains "Details" text
+await expect(page.locator('x-badge')).toContainText('Details');
+```
+
+```java
+// Clicks <span>Details</span>
+page.locator("text=Details").click();
+
+// Clicks <x-badge>
+page.locator("x-badge", new Page.LocatorOptions().setHasText("Details")).click();
+
+// Ensures that <x-badge> contains "Details" text
+assertThat(page.locator("x-badge")).containsText("Details");
+```
+
+```python async
+# Clicks <span>Details</span>
+await page.locator("text=Details").click()
+
+# Clicks <x-badge>
+await page.locator("x-badge", has_text="Details" ).click()
+
+# Ensures that <x-badge> contains "Details" text
+await expect(page.locator("x-badge")).to_contain_text("Details")
+```
+
+```python sync
+# Clicks <span>Details</span>
+page.locator("text=Details").click()
+
+# Clicks <x-badge>
+page.locator("x-badge", has_text="Details" ).click()
+
+# Ensures that <x-badge> contains "Details" text
+expect(page.locator("x-badge")).to_contain_text("Details")
+```
+
+```csharp
+// Clicks <span>Details</span>
+await page.Locator("text=Details").ClickAsync();
+
+// Clicks <x-badge>
+await page.Locator("x-badge", new() { HasText = "Details" }).ClickAsync();
+
+// Ensures that <x-badge> contains "Details" text
+await Expect(page.Locator("x-badge")).ToContainTextAsync("Details");
+```
+
 
 ## Lists
 
@@ -280,91 +720,36 @@ for (let i = 0; i < count; ++i)
 var texts = await rows.EvaluateAllAsync("list => list.map(element => element.textContent)");
 ```
 
-## Filtering Locators
+### Picking specific element from a list
 
-When creating a locator, you can pass additional options to filter it.
+If you have a list of identical elements, and the only way to distinguish between them is the order, you can choose a specific element from a list with [`method: Locator.first`], [`method: Locator.last`] or [`method: Locator.nth`].
 
-Filtering by text will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
+However, use these methods with caution. Often times, the page might change, and locator will point to a completely different element from the one you expected. Instead, try to come up with a unique locator that will pass the [strictness criteria](#strictness).
 
-```js
-await page.locator('button', { hasText: 'Sign up' }).click();
-```
-```java
-page.locator("button", new Page.LocatorOptions().setHasText("Sign up")).click();
-```
-```python async
-await page.locator("button", has_text="Sign up").click()
-```
-```python sync
-page.locator("button", has_text="Sign up").click()
-```
-```csharp
-await page.Locator("button", new PageLocatorOptions { HasText = "Sign up" }).ClickAsync();
-```
-
-Locators also support an option to only select elements that have a descendant matching another locator. Note that inner locator is matched starting from the outer one, not from the document root.
 
 ```js
-page.locator('article', { has: page.locator('button.subscribe') })
-```
-```java
-page.locator("article", new Page.LocatorOptions().setHas(page.locator("button.subscribe")))
-```
-```python async
-page.locator("article", has=page.locator("button.subscribe"))
-```
-```python sync
-page.locator("article", has=page.locator("button.subscribe"))
-```
-```csharp
-page.Locator("article", new PageLocatorOptions { Has = page.Locator("button.subscribe") })
+// Click the third item in the list of products
+await page.locator('data-test-id=product-card').nth(3).click();
 ```
 
-You can also filter an existing locator with [`method: Locator.filter`] method, possibly chaining it multiple times.
-
-```js
-const rowLocator = page.locator('tr');
-// ...
-await rowLocator
-    .filter({ hasText: 'text in column 1' })
-    .filter({ has: page.locator('button', { hasText: 'column 2 button' }) })
-    .screenshot();
-```
 ```java
-Locator rowLocator = page.locator("tr");
-// ...
-rowLocator
-    .filter(new Locator.FilterOptions().setHasText("text in column 1"))
-    .filter(new Locator.FilterOptions().setHas(
-        page.locator("button", new Page.LocatorOptions().setHasText("column 2 button"))
-    ))
-    .screenshot();
+// Click the third item in the list of products
+page.locator("data-test-id=product-card").nth(3).click();
 ```
+
 ```python async
-row_locator = page.locator("tr")
-# ...
-await row_locator
-    .filter(has_text="text in column 1")
-    .filter(has=page.locator("tr", has_text="column 2 button"))
-    .screenshot()
+# Click the third item in the list of products
+await page.locator("data-test-id=product-card").nth(3).click()
 ```
+
 ```python sync
-row_locator = page.locator("tr")
-# ...
-row_locator
-    .filter(has_text="text in column 1")
-    .filter(has=page.locator("tr", has_text="column 2 button"))
-    .screenshot()
+# Click the third item in the list of products
+page.locator("data-test-id=product-card").nth(3).click()
 ```
+
 ```csharp
-var rowLocator = page.Locator("tr");
-// ...
-await rowLocator
-    .Filter(new LocatorFilterOptions { HasText = "text in column 1" })
-    .Filter(new LocatorFilterOptions {
-        Has = page.Locator("tr", new PageLocatorOptions { HasText = "column 2 button" } )
-    })
-    .ScreenshotAsync();
+// Click the third item in the list of products
+await page.Locator("data-test-id=product-card").Nth(3).ClickAsync();
 ```
 
 ## Locator vs ElementHandle
