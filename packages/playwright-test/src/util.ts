@@ -115,7 +115,7 @@ export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[
     if (isRegExp(pattern)) {
       reList.push(pattern);
     } else {
-      if (!pattern.startsWith('**/') && !pattern.startsWith('**/'))
+      if (!pattern.startsWith('**/'))
         filePatterns.push('**/' + pattern);
       else
         filePatterns.push(pattern);

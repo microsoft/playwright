@@ -247,7 +247,7 @@ function parseVariable(line) {
     if (depth === 0)
       return { name, type: remainder.substring(1, i), text: remainder.substring(i + 2), optional, experimental };
   }
-  throw new Error('Should not be reached');
+  throw new Error('Should not be reached, line: ' + line);
 }
 
 /**

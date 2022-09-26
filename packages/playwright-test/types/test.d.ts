@@ -695,6 +695,28 @@ interface TestConfig {
      * Project name(s).
      */
     project: string|Array<string>;
+
+    /**
+     * Filter to only run tests with a title matching one of the patterns.
+     */
+    grep?: RegExp|Array<RegExp>;
+
+    /**
+     * Filter to only run tests with a title **not** matching one of the patterns.
+     */
+    grepInvert?: RegExp|Array<RegExp>;
+
+    /**
+     * Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute
+     * file path. Strings are treated as glob patterns.
+     */
+    testMatch?: string|RegExp|Array<string|RegExp>;
+
+    /**
+     * Files matching one of these patterns are not executed as test files. Matching is performed against the absolute file
+     * path. Strings are treated as glob patterns.
+     */
+    testIgnore?: string|RegExp|Array<string|RegExp>;
   }>>; };
 
   /**

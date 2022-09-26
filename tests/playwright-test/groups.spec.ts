@@ -30,10 +30,16 @@ function createConfigWithProjects(names: string[], testInfo: TestInfo, groups: P
         await new Promise(f => setTimeout(f, 100));
       });`;
   }
+  function replacer(key, value) {
+    if (value instanceof RegExp)
+      return `RegExp(${value.toString()})`;
+    else
+      return value;
+  }
   files['playwright.config.ts'] = `
     import * as path from 'path';
-    module.exports = ${JSON.stringify(config)};
-    `;
+    module.exports = ${JSON.stringify(config, replacer, 2)};
+    `.replace(/"RegExp\((.*)\)"/g, '$1');
   return files;
 }
 
@@ -257,4 +263,41 @@ test('should throw when unknown --group is passed', async ({ runGroups }, testIn
   const { exitCode, output } =  await runGroups(configWithFiles, { group: 'bar' });
   expect(exitCode).toBe(1);
   expect(output).toContain(`Cannot find project group 'bar' in the config`);
+});
+
+test('should support testMatch and testIgnore', async ({ runGroups }, testInfo) => {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
+    default: [
+      [
+        { project: ['a', 'b'], testMatch: ['**/a.spec.ts'] },
+        { project: ['c', 'd'], testMatch: [/.*c.spec.ts/, '**/*d*'] },
+        { project: ['e'], testIgnore: [/.*e.spec.ts/] },
+        { project: ['f'], testMatch: /does not match/ },
+    ],
+    ]
+  });
+  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(3);
+  const projectNames = Array.from(new Set(timeline.map(({titlePath}) => titlePath[1])).keys());
+  projectNames.sort();
+  expect(projectNames).toEqual(['a', 'c', 'd']);
+});
+
+test('should support grep and grepInvert', async ({ runGroups }, testInfo) => {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
+    default: [
+      [
+        { project: ['a', 'b'], grep: /.*a test/ },
+        { project: ['c', 'd'], grepInvert: [/.*c test/] },
+        { project: ['e', 'f'], grep: /.*(e|f) test/, grepInvert: [/.*f test/] },
+      ],
+    ]
+  });
+  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(3);
+  const projectNames = Array.from(new Set(timeline.map(({titlePath}) => titlePath[1])).keys());
+  projectNames.sort();
+  expect(projectNames).toEqual(['a', 'd', 'e']);
 });
