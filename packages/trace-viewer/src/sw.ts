@@ -35,22 +35,27 @@ const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: S
 
 const clientIdToTraceUrls = new MultiMap<string, string>();
 
-class PrettyFetchError extends Error { }
-
-async function loadTrace(trace: string, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
-  const entry = loadedTraces.get(trace);
-  clientIdToTraceUrls.set(clientId, trace);
+async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
+  const entry = loadedTraces.get(traceUrl);
+  clientIdToTraceUrls.set(clientId, traceUrl);
   if (entry)
     return entry.traceModel;
   const traceModel = new TraceModel();
   try {
-    await traceModel.load(trace, progress);
-  } catch (error) {
-    if (error.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
-      throw new PrettyFetchError('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
+    await traceModel.load(traceUrl, progress);
+  } catch (exception: any) {
+    // eslint-disable-next-line no-console
+    console.error(exception);
+
+    if (exception?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
+      throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
+    else if (traceFileName)
+      throw new Error(`Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.`);
+    else
+      throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
   }
   const snapshotServer = new SnapshotServer(traceModel.storage());
-  loadedTraces.set(trace, { traceModel, snapshotServer });
+  loadedTraces.set(traceUrl, { traceModel, snapshotServer });
   return traceModel;
 }
 
@@ -72,27 +77,15 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
     if (relativePath === '/context') {
       try {
-        const traceModel = await loadTrace(traceUrl, event.clientId, (done: number, total: number) => {
+        const traceModel = await loadTrace(traceUrl, url.searchParams.get('traceFileName'), event.clientId, (done: number, total: number) => {
           client.postMessage({ method: 'progress', params: { done, total } });
         });
         return new Response(JSON.stringify(traceModel!.contextEntry), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
-      } catch (exception: unknown) {
-        // eslint-disable-next-line no-console
-        console.error(exception);
-        const traceFileName = url.searchParams.get('traceFileName')!;
-
-        let error = '';
-        if (exception instanceof PrettyFetchError)
-          error = exception.message;
-        else if (traceFileName)
-          error = `Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.`;
-        else
-          error = `Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`;
-
-        return new Response(JSON.stringify({ error }), {
+      } catch (exception: any) {
+        return new Response(JSON.stringify({ error: exception?.message }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' }
         });
