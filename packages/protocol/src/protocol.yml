@@ -528,6 +528,16 @@ LocalUtils:
         zipFile: string
         harFile: string
 
+    connect:
+      parameters:
+        wsEndpoint: string
+        headers: json?
+        slowMo: number?
+        timeout: number?
+        socksProxyRedirectPortForTest: number?
+      returns:
+        pipe: JsonPipe
+
 Root:
   type: interface
 
@@ -771,16 +781,6 @@ BrowserType:
     name: string
 
   commands:
-
-    connect:
-      parameters:
-        wsEndpoint: string
-        headers: json?
-        slowMo: number?
-        timeout: number?
-        socksProxyRedirectPortForTest: number?
-      returns:
-        pipe: JsonPipe
 
     launch:
       parameters:
