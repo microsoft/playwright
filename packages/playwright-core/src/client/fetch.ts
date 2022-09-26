@@ -51,7 +51,6 @@ type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHe
 };
 
 type RequestWithBodyOptions = Omit<FetchOptions, 'method'>;
-type RequestWithoutBodyOptions = Omit<RequestWithBodyOptions, 'data'|'form'|'multipart'>;
 
 export class APIRequest implements api.APIRequest {
   private _playwright: Playwright;
@@ -107,14 +106,14 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     });
   }
 
-  async head(url: string, options?: RequestWithoutBodyOptions): Promise<APIResponse> {
+  async head(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
     return this.fetch(url, {
       ...options,
       method: 'HEAD',
     });
   }
 
-  async get(url: string, options?: RequestWithoutBodyOptions): Promise<APIResponse> {
+  async get(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
     return this.fetch(url, {
       ...options,
       method: 'GET',
