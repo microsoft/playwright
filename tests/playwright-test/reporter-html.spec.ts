@@ -73,30 +73,6 @@ test('should generate report', async ({ runInlineTest, showReport, page }) => {
   await expect(page.locator('.metadata-view')).not.toBeVisible();
 });
 
-test('should generate report wrt package.json', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    'foo/package.json': `{ "name": "foo" }`,
-    'foo/bar/playwright.config.js': `
-      module.exports = { projects: [ {} ] };
-    `,
-    'foo/bar/baz/tests/a.spec.js': `
-      const { test } = pwt;
-      const fs = require('fs');
-      test('pass', ({}, testInfo) => {
-      });
-    `
-  }, { 'reporter': 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, {
-    cwd: 'foo/bar/baz/tests',
-    usesCustomOutputDir: true
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  expect(fs.existsSync(testInfo.outputPath('playwright-report'))).toBe(false);
-  expect(fs.existsSync(testInfo.outputPath('foo', 'playwright-report'))).toBe(true);
-  expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'playwright-report'))).toBe(false);
-  expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'tests', 'playwright-report'))).toBe(false);
-});
-
 
 test('should not throw when attachment is missing', async ({ runInlineTest, page, showReport }, testInfo) => {
   const result = await runInlineTest({
@@ -911,3 +887,70 @@ test('should report clashing folders', async ({ runInlineTest }) => {
   expect(output).toContain('Configuration Error');
   expect(output).toContain('html-report');
 });
+
+test.describe('report location', () => {
+  test('with config should create report relative to config', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'nested/project/playwright.config.ts': `
+        module.exports = { reporter: [['html', { outputFolder: '../my-report/' }]] };
+      `,
+      'nested/project/a.test.js': `
+        const { test } = pwt;
+        test('one', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+    }, { reporter: '', config: './nested/project/playwright.config.ts' });
+    expect(result.exitCode).toBe(0);
+    expect(fs.existsSync(testInfo.outputPath(path.join('nested', 'my-report', 'index.html')))).toBeTruthy();
+  });
+
+  test('without config should create relative to package.json', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'foo/package.json': `{ "name": "foo" }`,
+      // unused config along "search path"
+      'foo/bar/playwright.config.js': `
+        module.exports = { projects: [ {} ] };
+      `,
+      'foo/bar/baz/tests/a.spec.js': `
+        const { test } = pwt;
+        const fs = require('fs');
+        test('pass', ({}, testInfo) => {
+        });
+      `
+    }, { 'reporter': 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, {
+      cwd: 'foo/bar/baz/tests',
+      usesCustomOutputDir: true
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    expect(fs.existsSync(testInfo.outputPath('playwright-report'))).toBe(false);
+    expect(fs.existsSync(testInfo.outputPath('foo', 'playwright-report'))).toBe(true);
+    expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'playwright-report'))).toBe(false);
+    expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'tests', 'playwright-report'))).toBe(false);
+  });
+
+  test('with env var should create relative to cwd', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'foo/package.json': `{ "name": "foo" }`,
+      // unused config along "search path"
+      'foo/bar/playwright.config.js': `
+        module.exports = { projects: [ {} ] };
+      `,
+      'foo/bar/baz/tests/a.spec.js': `
+        const { test } = pwt;
+        const fs = require('fs');
+        test('pass', ({}, testInfo) => {
+        });
+      `
+    }, { 'reporter': 'html' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_HTML_REPORT': '../my-report' }, {
+      cwd: 'foo/bar/baz/tests',
+      usesCustomOutputDir: true
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report'))).toBe(true);
+  });
+});
+
+

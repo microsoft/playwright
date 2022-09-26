@@ -19,6 +19,7 @@ import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, Reporter, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep } from '../../types/testReporter';
 import { prepareErrorStack } from './base';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
+import { assert } from 'playwright-core/lib/utils';
 
 export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
@@ -31,7 +32,7 @@ class JSONReporter implements Reporter {
   private _outputFile: string | undefined;
 
   constructor(options: { outputFile?: string } = {}) {
-    this._outputFile = options.outputFile || process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`];
+    this._outputFile = options.outputFile || reportOutputNameFromEnv();
   }
 
   printsToStdio() {
@@ -48,7 +49,7 @@ class JSONReporter implements Reporter {
   }
 
   async onEnd(result: FullResult) {
-    outputReport(this._serializeReport(), this._outputFile);
+    outputReport(this._serializeReport(), this.config, this._outputFile);
   }
 
   private _serializeReport(): JSONReport {
@@ -210,9 +211,11 @@ class JSONReporter implements Reporter {
   }
 }
 
-function outputReport(report: JSONReport, outputFile: string | undefined) {
+function outputReport(report: JSONReport, config: FullConfig, outputFile: string | undefined) {
   const reportString = JSON.stringify(report, undefined, 2);
   if (outputFile) {
+    assert(config.configFile || path.isAbsolute(outputFile), 'Expected fully resolved path if not using config file.');
+    outputFile = config.configFile ? path.resolve(path.dirname(config.configFile), outputFile) : outputFile;
     fs.mkdirSync(path.dirname(outputFile), { recursive: true });
     fs.writeFileSync(outputFile, reportString);
   } else {
@@ -228,6 +231,12 @@ function stdioEntry(s: string | Buffer): any {
 
 function removePrivateFields(config: FullConfig): FullConfig {
   return Object.fromEntries(Object.entries(config).filter(([name, value]) => !name.startsWith('_'))) as FullConfig;
+}
+
+function reportOutputNameFromEnv(): string | undefined {
+  if (process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`])
+    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_JSON_OUTPUT_NAME`]);
+  return undefined;
 }
 
 export function serializePatterns(patterns: string | RegExp | (string | RegExp)[]): string[] {

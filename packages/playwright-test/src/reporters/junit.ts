@@ -19,6 +19,7 @@ import path from 'path';
 import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../types/testReporter';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import { formatFailure, formatTestTitle, stripAnsiEscapes } from './base';
+import { assert } from 'playwright-core/lib/utils';
 
 class JUnitReporter implements Reporter {
   private config!: FullConfig;
@@ -36,7 +37,7 @@ class JUnitReporter implements Reporter {
 
 
   constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, embedAnnotationsAsProperties?: boolean, textContentAnnotations?: string[], embedAttachmentsAsProperty?: string } = {}) {
-    this.outputFile = options.outputFile || process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`];
+    this.outputFile = options.outputFile || reportOutputNameFromEnv();
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
     this.embedAnnotationsAsProperties = options.embedAnnotationsAsProperties || false;
     this.textContentAnnotations = options.textContentAnnotations || [];
@@ -81,8 +82,10 @@ class JUnitReporter implements Reporter {
     serializeXML(root, tokens, this.stripANSIControlSequences);
     const reportString = tokens.join('\n');
     if (this.outputFile) {
-      fs.mkdirSync(path.dirname(this.outputFile), { recursive: true });
-      fs.writeFileSync(this.outputFile, reportString);
+      assert(this.config.configFile || path.isAbsolute(this.outputFile), 'Expected fully resolved path if not using config file.');
+      const outputFile = this.config.configFile ? path.resolve(path.dirname(this.config.configFile), this.outputFile) : this.outputFile;
+      fs.mkdirSync(path.dirname(outputFile), { recursive: true });
+      fs.writeFileSync(outputFile, reportString);
     } else {
       console.log(reportString);
     }
@@ -297,6 +300,12 @@ function escape(text: string, stripANSIControlSequences: boolean, isCharacterDat
 
   text = text.replace(discouragedXMLCharacters, '');
   return text;
+}
+
+function reportOutputNameFromEnv(): string | undefined {
+  if (process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`])
+    return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`]);
+  return undefined;
 }
 
 export default JUnitReporter;

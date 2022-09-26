@@ -17,6 +17,7 @@
 import xml2js from 'xml2js';
 import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
+import fs from 'fs';
 
 test('should render expected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -440,4 +441,45 @@ test('should not embed attachments to a custom testcase property, if not explict
   const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
   expect(testcase['properties']).not.toBeTruthy();
   expect(result.exitCode).toBe(0);
+});
+
+
+test.describe('report location', () => {
+  test('with config should create report relative to config', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'nested/project/playwright.config.ts': `
+        module.exports = { reporter: [['junit', { outputFile: '../my-report/a.xml' }]] };
+      `,
+      'nested/project/a.test.js': `
+        const { test } = pwt;
+        test('one', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+    }, { reporter: '', config: './nested/project/playwright.config.ts' });
+    expect(result.exitCode).toBe(0);
+    expect(fs.existsSync(testInfo.outputPath(path.join('nested', 'my-report', 'a.xml')))).toBeTruthy();
+  });
+
+  test('with env var should create relative to cwd', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'foo/package.json': `{ "name": "foo" }`,
+      // unused config along "search path"
+      'foo/bar/playwright.config.js': `
+        module.exports = { projects: [ {} ] };
+      `,
+      'foo/bar/baz/tests/a.spec.js': `
+        const { test } = pwt;
+        const fs = require('fs');
+        test('pass', ({}, testInfo) => {
+        });
+      `
+    }, { 'reporter': 'junit' }, { 'PLAYWRIGHT_JUNIT_OUTPUT_NAME': '../my-report.xml' }, {
+      cwd: 'foo/bar/baz/tests',
+      usesCustomOutputDir: true
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.xml'))).toBe(true);
+  });
 });
