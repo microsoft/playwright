@@ -43,11 +43,11 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
   const traceModel = new TraceModel();
   try {
     await traceModel.load(traceUrl, progress);
-  } catch (exception: any) {
+  } catch (error: any) {
     // eslint-disable-next-line no-console
-    console.error(exception);
+    console.error(error);
 
-    if (exception?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
+    if (error?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
       throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
     else if (traceFileName)
       throw new Error(`Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.`);
@@ -84,8 +84,8 @@ async function doFetch(event: FetchEvent): Promise<Response> {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
-      } catch (exception: any) {
-        return new Response(JSON.stringify({ error: exception?.message }), {
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error?.message }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' }
         });
