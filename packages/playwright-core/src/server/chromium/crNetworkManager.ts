@@ -639,7 +639,7 @@ class ResponseExtraInfoTracker {
   }
 
   servedFromCache(requestId: string): boolean {
-    let info = this._requests.get(requestId);
+    const info = this._requests.get(requestId);
     return !!info?.servedFromCache;
   }
 
