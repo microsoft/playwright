@@ -19,7 +19,7 @@ import path from 'path';
 import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../types/testReporter';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import { formatFailure, formatTestTitle, stripAnsiEscapes } from './base';
-import assert from 'assert';
+import { assert } from 'playwright-core/lib/utils';
 
 class JUnitReporter implements Reporter {
   private config!: FullConfig;
