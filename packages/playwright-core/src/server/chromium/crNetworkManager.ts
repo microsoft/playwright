@@ -279,7 +279,7 @@ export class CRNetworkManager {
     (this._page?._frameManager || this._serviceWorker)!.requestStarted(request.request, route || undefined);
   }
 
-  _createResponse(request: InterceptableRequest, responseTimestamp: Protocol.Network.MonotonicTime, responsePayload: Protocol.Network.Response, hasExtraInfo: boolean): network.Response {
+  _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response, hasExtraInfo: boolean): network.Response {
     const getResponseBody = async () => {
       const contentLengthHeader = Object.entries(responsePayload.headers).find(header => header[0].toLowerCase() === 'content-length');
       const expectedLength = contentLengthHeader ? +contentLengthHeader[1] : undefined;
@@ -347,7 +347,7 @@ export class CRNetworkManager {
   }
 
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number, hasExtraInfo: boolean) {
-    const response = this._createResponse(request, timestamp, responsePayload, hasExtraInfo);
+    const response = this._createResponse(request, responsePayload, hasExtraInfo);
     response.setTransferSize(null);
     response.setEncodedBodySize(null);
     response._requestFinished((timestamp - request._timestamp) * 1000);
@@ -382,7 +382,7 @@ export class CRNetworkManager {
     // FileUpload sends a response without a matching request.
     if (!request)
       return;
-    const response = this._createResponse(request, event.timestamp, event.response, event.hasExtraInfo);
+    const response = this._createResponse(request, event.response, event.hasExtraInfo);
     (this._page?._frameManager || this._serviceWorker)!.requestReceivedResponse(response);
   }
 
