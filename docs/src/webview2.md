@@ -7,7 +7,7 @@ The following will explain how to use Playwright with [Microsoft Edge WebView2](
 
 ## Overview
 
-A WebView2 control can be instructed to listen on CDP by setting either the `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` environment variable with `--remote-debugging-port=9222` or call [EnsureCoreWebView2Async](https://docs.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.wpf.webview2.ensurecorewebview2async?view=webview2-dotnet-1.0.1343.22) with the `--remote-debugging-port=9222` argument. This will start the WebView2 process with the Chrome DevTools Protocol enabled. 9222 is an example port in this case, but any other unused port can be used as well.
+A WebView2 control can be instructed to listen to incoming CDP connections by setting either the `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` environment variable with `--remote-debugging-port=9222` or call [EnsureCoreWebView2Async](https://docs.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.wpf.webview2.ensurecorewebview2async?view=webview2-dotnet-1.0.1343.22) with the `--remote-debugging-port=9222` argument. This will start the WebView2 process with the Chrome DevTools Protocol enabled. 9222 is an example port in this case, but any other unused port can be used as well.
 
 ```txt
 await this.webView.EnsureCoreWebView2Async(await CoreWebView2Environment.CreateAsync(null, null, new CoreWebView2EnvironmentOptions()
@@ -62,7 +62,7 @@ this.webView.CoreWebView2InitializationCompleted += (_, e) =>
 
 ## Writing and running tests
 
-By default, the WebView2 control will use the same user data directory for all instances. This means that if you run multiple tests in parallel, they will interfere with each other. To avoid this, you can set the `WEBVIEW2_USER_DATA_FOLDER` environment variable (or [WebView2.EnsureCoreWebView2Async Method](https://docs.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.wpf.webview2.ensurecorewebview2async?view=webview2-dotnet-1.0.1343.22) method) to a different folder for each test. This will make sure that each test runs in its own user data directory.
+By default, the WebView2 control will use the same user data directory for all instances. This means that if you run multiple tests in parallel, they will interfere with each other. To avoid this, you can set the `WEBVIEW2_USER_DATA_FOLDER` environment variable (or use [WebView2.EnsureCoreWebView2Async Method](https://docs.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.wpf.webview2.ensurecorewebview2async?view=webview2-dotnet-1.0.1343.22)) to a different folder for each test. This will make sure that each test runs in its own user data directory.
 
 Using the following, Playwright will run your WebView2 application as a sub-process, assigns a unique user data directory to it and provide the [Page] instance to your test:
 
@@ -428,6 +428,6 @@ public class Tests : WebView2Test
 
 ## Debugging
 
-Inside your webview2 control, you can just right-click to open the context menu and select "Inspect" to open the DevTools. You can also use the [WebView2.OpenDevToolsWindow Method](https://docs.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.wpf.webview2.opendevtoolswindow?view=webview2-dotnet-1.0.1343.22) method to open the DevTools programmatically.
+Inside your webview2 control, you can just right-click to open the context menu and select "Inspect" to open the DevTools or press <kbd>F12</kbd>. You can also use the [WebView2.OpenDevToolsWindow Method](https://docs.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.wpf.webview2.opendevtoolswindow?view=webview2-dotnet-1.0.1343.22) method to open the DevTools programmatically.
 
 For debugging tests, see the Playwright [Debugging guide](./debug).
