@@ -9,7 +9,7 @@ The following will explain how to use Playwright with [Microsoft Edge WebView2](
 
 A WebView2 control can be instructed to listen to incoming CDP connections by setting either the `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` environment variable with `--remote-debugging-port=9222` or calling [EnsureCoreWebView2Async](https://docs.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.wpf.webview2.ensurecorewebview2async?view=webview2-dotnet-1.0.1343.22) with the `--remote-debugging-port=9222` argument. This will start the WebView2 process with the Chrome DevTools Protocol enabled which allows the automation by Playwright. 9222 is an example port in this case, but any other unused port can be used as well.
 
-```txt
+```csharp generic
 await this.webView.EnsureCoreWebView2Async(await CoreWebView2Environment.CreateAsync(null, null, new CoreWebView2EnvironmentOptions()
 {
   AdditionalBrowserArguments = "--remote-debugging-port=9222",
@@ -50,7 +50,7 @@ var page = context.Pages[0];
 
 To ensure that the WebView2 control is ready, you can wait for the [`CoreWebView2InitializationCompleted`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.wpf.webview2.corewebview2initializationcompleted?view=webview2-dotnet-1.0.1343.22) event:
 
-```txt
+```csharp generic
 this.webView.CoreWebView2InitializationCompleted += (_, e) =>
 {
     if (e.IsSuccess)
