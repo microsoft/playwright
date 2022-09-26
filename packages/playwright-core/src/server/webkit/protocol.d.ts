@@ -3738,7 +3738,7 @@ might return multiple quads for inline nodes.
       /**
        * Pause reason.
        */
-      reason: "XHR"|"Fetch"|"DOM"|"AnimationFrame"|"Interval"|"Listener"|"Timeout"|"exception"|"assert"|"CSPViolation"|"DebuggerStatement"|"Breakpoint"|"PauseOnNextStatement"|"Microtask"|"FunctionCall"|"BlackboxedScript"|"other";
+      reason: "URL"|"DOM"|"AnimationFrame"|"Interval"|"Listener"|"Timeout"|"exception"|"assert"|"CSPViolation"|"DebuggerStatement"|"Breakpoint"|"PauseOnNextStatement"|"Microtask"|"FunctionCall"|"BlackboxedScript"|"other";
       /**
        * Object containing break-specific auxiliary properties.
        */
