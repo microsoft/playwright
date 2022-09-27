@@ -416,6 +416,7 @@ export type RequestSizes = {
   requestHeadersSize: number;
   responseBodySize: number;
   responseHeadersSize: number;
+  transferSize: number;
 };
 
 export class Response extends ChannelOwner<channels.ResponseChannel> implements api.Response {

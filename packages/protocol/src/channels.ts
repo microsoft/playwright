@@ -3521,6 +3521,7 @@ export type RequestSizes = {
   requestHeadersSize: number,
   responseBodySize: number,
   responseHeadersSize: number,
+  transferSize: number,
 };
 
 export type RemoteAddr = {

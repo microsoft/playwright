@@ -60,6 +60,7 @@ it('should set bodySize, headersSize, and transferSize', async ({ page, server }
   const sizes = await response.request().sizes();
   expect(sizes.responseBodySize).toBe(6);
   expect(sizes.responseHeadersSize).toBeGreaterThanOrEqual(100);
+  expect(sizes.transferSize).toBeGreaterThanOrEqual(sizes.responseHeadersSize + sizes.responseBodySize);
 });
 
 it('should set bodySize to 0 when there was no response body', async ({ page, server }) => {
@@ -67,6 +68,7 @@ it('should set bodySize to 0 when there was no response body', async ({ page, se
   const sizes = await response.request().sizes();
   expect(sizes.responseBodySize).toBe(0);
   expect(sizes.responseHeadersSize).toBeGreaterThanOrEqual(150);
+  expect(sizes.transferSize).toBeGreaterThanOrEqual(sizes.responseHeadersSize + sizes.responseBodySize);
 });
 
 it('should have the correct responseBodySize', async ({ page, server, asset, browserName }) => {

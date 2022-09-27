@@ -15299,6 +15299,11 @@ export interface Request {
      * Total number of bytes from the start of the HTTP response message until (and including) the double CRLF before the body.
      */
     responseHeadersSize: number;
+
+    /**
+     * Total number of bytes received from the start of the HTTP response including the header and body sizes.
+     */
+    transferSize: number;
   }>;
 
   /**
