@@ -1972,6 +1972,7 @@ scheme.RequestSizes = tObject({
   requestHeadersSize: tNumber,
   responseBodySize: tNumber,
   responseHeadersSize: tNumber,
+  transferSize: tNumber,
 });
 scheme.RemoteAddr = tObject({
   ipAddress: tString,
