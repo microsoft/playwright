@@ -415,6 +415,9 @@ export class Response extends SdkObject {
 
   _requestFinished(responseEndTiming: number) {
     this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
+    // Set start time equal to end when request is served from memory cache.
+    if (this._timing.requestStart === -1)
+      this._timing.requestStart = this._request._responseEndTiming;
     this._finishedPromise.resolve();
   }
 
