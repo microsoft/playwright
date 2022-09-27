@@ -294,6 +294,14 @@ function applyTemplates(body, params) {
       if (!template)
         throw new Error('Bad template: ' + key);
       node.children.push(...template.children.map(c => md.clone(c)));
+    } else if (node.text && node.text.includes('%%-template-')) {
+      node.text.replace(/%%-template-[^%]+-%%/, templateName => {
+        const template = paramsMap.get(templateName);
+        if (!template)
+          throw new Error('Bad template: ' + templateName);
+        const nodeIndex = parent.children.indexOf(node);
+        parent.children = [...parent.children.slice(0, nodeIndex), ...template.children, ...parent.children.slice(nodeIndex + 1)];
+      });
     }
     for (const child of node.children || [])
       visit(child, node);

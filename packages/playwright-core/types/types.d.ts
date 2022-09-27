@@ -9837,7 +9837,7 @@ export interface Locator {
   last(): Locator;
 
   /**
-   * The method finds an element matching the specified selector in the `Locator`'s subtree. It also accepts filter options,
+   * The method finds an element matching the specified selector in the locator's subtree. It also accepts filter options,
    * similar to [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) method.
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
@@ -14738,7 +14738,8 @@ export interface FrameLocator {
   last(): FrameLocator;
 
   /**
-   * The method finds an element matching the specified selector in the FrameLocator's subtree.
+   * The method finds an element matching the specified selector in the locator's subtree. It also accepts filter options,
+   * similar to [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) method.
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */

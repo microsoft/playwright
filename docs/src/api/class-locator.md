@@ -762,7 +762,7 @@ Returns locator to the last matching element.
 * since: v1.14
 - returns: <[Locator]>
 
-The method finds an element matching the specified selector in the `Locator`'s subtree. It also accepts filter options, similar to [`method: Locator.filter`] method.
+%%-template-locator-locator-%%
 
 ### param: Locator.locator.selector = %%-find-selector-%%
 * since: v1.14
