@@ -37,7 +37,7 @@ const imageDiff: ImageDiff = {
 
 test('should render links', async ({ mount }) => {
   const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
-  await expect(component.locator('a')).toHaveText([
+  await expect(component.get('a')).toHaveText([
     'screenshot-actual.png',
     'screenshot-expected.png',
     'screenshot-diff.png',
@@ -46,11 +46,11 @@ test('should render links', async ({ mount }) => {
 
 test('should show actual by default', async ({ mount }) => {
   const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
-  const sliderElement = component.locator('data-testid=test-result-image-mismatch-grip');
+  const sliderElement = component.get('data-testid=test-result-image-mismatch-grip');
   await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Actual slider is on the right').toBe('611px');
 
-  const images = component.locator('img');
-  const imageCount = await component.locator('img').count();
+  const images = component.get('img');
+  const imageCount = await component.get('img').count();
   for (let i = 0; i < imageCount; ++i) {
     const image = images.nth(i);
     const box = await image.boundingBox();
@@ -60,12 +60,12 @@ test('should show actual by default', async ({ mount }) => {
 
 test('should switch to expected', async ({ mount }) => {
   const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
-  await component.locator('text="Expected"').click();
-  const sliderElement = component.locator('data-testid=test-result-image-mismatch-grip');
+  await component.getByText('Expected', { exact: true }).click();
+  const sliderElement = component.get('data-testid=test-result-image-mismatch-grip');
   await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Expected slider is on the left').toBe('371px');
 
-  const images = component.locator('img');
-  const imageCount = await component.locator('img').count();
+  const images = component.get('img');
+  const imageCount = await component.get('img').count();
   for (let i = 0; i < imageCount; ++i) {
     const image = images.nth(i);
     const box = await image.boundingBox();
@@ -75,9 +75,9 @@ test('should switch to expected', async ({ mount }) => {
 
 test('should switch to diff', async ({ mount }) => {
   const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
-  await component.locator('text="Diff"').click();
+  await component.getByText('Diff', { exact: true }).click();
 
-  const image = component.locator('img');
+  const image = component.get('img');
   const box = await image.boundingBox();
   expect(box).toEqual({ x: 400, y: 80, width: 200, height: 200 });
 });
