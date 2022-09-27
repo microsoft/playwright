@@ -1058,17 +1058,29 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-mask-%%
 - %%-input-timeout-%%
 
+## locator-get-by-test-id-test-id
+* since: v1.27
+- `testId` <[string]>
+
+Id to locate the element by.
+
 ## locator-get-by-text-text
 * since: v1.27
 - `text` <[string]|[RegExp]>
+
+Text to locate the element for.
 
 ## locator-get-by-text-exact
 * since: v1.27
 - `exact` <[boolean]>
 
+Whether to find an exact match: case-sensitive and whole-string. Default to false.
+
 ## locator-get-by-role-role
 * since: v1.27
 - `role` <[string]>
+
+Required aria role.
 
 ## locator-get-by-role-option-checked
 * since: v1.27
@@ -1159,6 +1171,10 @@ The method returns an element locator that can be used to perform actions on thi
 Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
 
 [Learn more about locators](../locators.md).
+
+## template-locator-get-by-test-id
+
+Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use [`method: Selectors.setTestIdAttribute`] to configure a different test id attribute if necessary.
 
 ## template-locator-get-by-text
 

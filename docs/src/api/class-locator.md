@@ -657,6 +657,16 @@ Attribute name to get the value for.
 * since: v1.27
 
 
+## method: Locator.getByTestId
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-test-id-%%
+
+### param: Locator.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
+* since: v1.27
+
+
 ## method: Locator.getByText
 * since: v1.27
 - returns: <[Locator]>

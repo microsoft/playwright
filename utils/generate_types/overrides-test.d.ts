@@ -237,6 +237,7 @@ export interface PlaywrightTestOptions {
   actionTimeout: number | undefined;
   navigationTimeout: number | undefined;
   serviceWorkers: ServiceWorkerPolicy | undefined;
+  testIdAttribute: string | undefined;
 }
 
 

@@ -413,3 +413,10 @@ it('css on the handle should be relative', async ({ page }) => {
   expect(await div.$eval(`.find-me`, e => e.id)).toBe('target2');
   expect(await page.$eval(`div >> .find-me`, e => e.id)).toBe('target2');
 });
+
+it('getByTestId should work', async ({ page }) => {
+  await page.setContent('<div><div data-testid="Hello">Hello world</div></div>');
+  await expect(page.getByTestId('Hello')).toHaveText('Hello world');
+  await expect(page.mainFrame().getByTestId('Hello')).toHaveText('Hello world');
+  await expect(page.get('div').getByTestId('Hello')).toHaveText('Hello world');
+});
