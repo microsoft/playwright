@@ -133,11 +133,17 @@ test('should show steps', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.report.suites.length).toBe(1);
   expect(result.report.suites[0].specs.length).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![0].title).toBe('math works in a step');
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![0].steps![0].title).toBe('nested step');
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![0].steps![0].steps![0].title).toBe('deeply nested step');
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![0].steps![0].steps![0].steps).toBeUndefined();
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![1].error).not.toBeUndefined();
+  const testResult = result.report.suites[0].specs[0].tests[0].results[0];
+  const steps = testResult.steps!;
+  expect(steps[0].title).toBe('math works in a step');
+  expect(steps[0].steps![0].title).toBe('nested step');
+  expect(steps[0].steps![0].steps![0].title).toBe('deeply nested step');
+  expect(steps[0].steps![0].steps![0].steps).toBeUndefined();
+  expect(steps[1].error).not.toBeUndefined();
+  expect(testResult.errors).toHaveLength(1);
+  const snippet = stripAnsi(testResult.errors[0].message);
+  expect(snippet).toContain('failing step');
+  expect(snippet).toContain('expect(2 + 2).toBe(5)');
 });
 
 test('should display tags separately from title', async ({ runInlineTest }) => {
