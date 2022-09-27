@@ -1,6 +1,6 @@
 {
   "name": "@playwright/experimental-ct-react",
-  "version": "1.26.0",
+  "version": "1.26.1",
   "description": "Playwright Component Testing for React",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^2.0.1",
-    "@playwright/test": "1.26.0",
+    "@playwright/test": "1.26.1",
     "vite": "^3.0.9"
   }
 }
