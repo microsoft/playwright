@@ -97,11 +97,17 @@ export interface JSONReportTest {
   status: 'skipped' | 'expected' | 'unexpected' | 'flaky';
 }
 
+export interface JSONReportError {
+  message: string;
+  location?: Location;
+}
+
 export interface JSONReportTestResult {
   workerIndex: number;
   status: TestStatus | undefined;
   duration: number;
   error: TestError | undefined;
+  errors: JSONReportError[];
   stdout: JSONReportSTDIOEntry[];
   stderr: JSONReportSTDIOEntry[];
   retry: number;
