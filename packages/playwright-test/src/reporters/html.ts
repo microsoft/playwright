@@ -149,7 +149,7 @@ function standaloneDefaultFolder(): string {
   return reportFolderFromEnv() ?? defaultReportFolder(process.cwd());
 }
 
-export async function showHTMLReport(reportFolder: string | undefined, host: string = 'localhost', port: number = 9223, testId?: string) {
+export async function showHTMLReport(reportFolder: string | undefined, host: string = 'localhost', port?: number, testId?: string) {
   const folder = reportFolder ?? standaloneDefaultFolder();
   try {
     assert(fs.statSync(folder).isDirectory());
@@ -159,7 +159,7 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
     return;
   }
   const server = startHtmlReportServer(folder);
-  let url = await server.start(port, host);
+  let url = await server.start({ port, host, preferredPort: port ? undefined : 9223 });
   console.log('');
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
   if (testId)

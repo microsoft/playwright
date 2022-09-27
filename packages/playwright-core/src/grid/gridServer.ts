@@ -393,7 +393,7 @@ export class GridServer {
   }
 
   async start(port?: number) {
-    await this._server.start(port);
+    await this._server.start({ port });
   }
 
   gridURL(): string {
