@@ -85,6 +85,13 @@ test('run hooks', async ({ page, mount }) => {
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount el: HTMLButtonElement'])
 })
 
+test('unmount', async ({ page, mount }) => {
+  const component = await mount(<Button title="Submit" />)
+  await expect(page.locator('#root')).toContainText('Submit')
+  await component.unmount();
+  await expect(page.locator('#root')).not.toContainText('Submit');
+})
+
 test('get textContent of the empty template', async ({ mount }) => {
   const component = await mount(<EmptyTemplate />);
   expect(await component.allTextContents()).toEqual(['']);
