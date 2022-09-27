@@ -125,7 +125,7 @@ Returns locator to the last matching frame.
 * since: v1.17
 - returns: <[Locator]>
 
-The method finds an element matching the specified selector in the FrameLocator's subtree.
+%%-template-locator-locator-%%
 
 ### param: FrameLocator.locator.selector = %%-find-selector-%%
 * since: v1.17

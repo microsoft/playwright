@@ -1057,3 +1057,7 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%
 - %%-input-timeout-%%
+
+## template-locator-locator
+
+The method finds an element matching the specified selector in the locator's subtree. It also accepts filter options, similar to [`method: Locator.filter`] method.
