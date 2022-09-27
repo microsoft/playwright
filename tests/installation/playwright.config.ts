@@ -27,7 +27,7 @@ const config: PlaywrightTestConfig = {
   timeout: 5 * 60 * 1000,
   retries: 0,
   reporter: process.env.CI ? [
-    ['list'],
+    ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
   ] : [['list'], ['html', { open: 'on-failure' }]],
   forbidOnly: !!process.env.CI,
