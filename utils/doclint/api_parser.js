@@ -22,6 +22,9 @@ const md = require('../markdown');
 const Documentation = require('./documentation');
 
 /** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
+/** @typedef {import('../markdown').MarkdownHeaderNode} MarkdownHeaderNode */
+/** @typedef {import('../markdown').MarkdownLiNode} MarkdownLiNode */
+/** @typedef {import('../markdown').MarkdownTextNode} MarkdownTextNode */
 
 class ApiParser {
   /**
@@ -39,7 +42,7 @@ class ApiParser {
         bodyParts.push(fs.readFileSync(path.join(apiDir, name)).toString());
     }
     const body = md.parse(bodyParts.join('\n'));
-    const params = paramsPath ? md.parse(fs.readFileSync(paramsPath).toString()) : null;
+    const params = paramsPath ? md.parse(fs.readFileSync(paramsPath).toString()) : undefined;
     checkNoDuplicateParamEntries(params);
     const api = params ? applyTemplates(body, params) : body;
     /** @type {Map<string, Documentation.Class>} */
@@ -61,7 +64,7 @@ class ApiParser {
   }
 
   /**
-   * @param {MarkdownNode} node
+   * @param {MarkdownHeaderNode} node
    */
   parseClass(node) {
     let extendsName = null;
@@ -80,7 +83,7 @@ class ApiParser {
 
 
   /**
-   * @param {MarkdownNode} spec
+   * @param {MarkdownHeaderNode} spec
    */
   parseMember(spec) {
     const match = spec.text.match(/(event|method|property|async method|optional method|optional async method): ([^.]+)\.(.*)/);
@@ -112,10 +115,13 @@ class ApiParser {
       if (match[1].includes('optional'))
         member.required = false;
     }
-    const clazz = this.classes.get(match[2]);
+    if (!member)
+      throw new Error('Unknown member: ' + spec.text);
+
+    const clazz = /** @type {Documentation.Class} */(this.classes.get(match[2]));
     const existingMember = clazz.membersArray.find(m => m.name === name && m.kind === member.kind);
     if (existingMember && isTypeOverride(existingMember, member)) {
-      for (const lang of member.langs.only) {
+      for (const lang of member?.langs?.only || []) {
         existingMember.langs.types = existingMember.langs.types || {};
         existingMember.langs.types[lang] = returnType;
       }
@@ -125,7 +131,7 @@ class ApiParser {
   }
 
   /**
-   * @param {MarkdownNode} spec
+   * @param {MarkdownHeaderNode} spec
    */
   parseArgument(spec) {
     const match = spec.text.match(/(param|option): (.*)/);
@@ -173,34 +179,35 @@ class ApiParser {
       }
       const p = this.parseProperty(spec);
       p.required = false;
+      // @ts-ignore
       options.type.properties.push(p);
     }
   }
 
   /**
-   * @param {MarkdownNode} spec
+   * @param {MarkdownHeaderNode} spec
    */
   parseProperty(spec) {
     const param = childrenWithoutProperties(spec)[0];
-    const text = param.text;
+    const text = /** @type {string}*/(param.text);
     let typeStart = text.indexOf('<');
     while ('?e'.includes(text[typeStart - 1]))
       typeStart--;
     const name = text.substring(0, typeStart).replace(/\`/g, '').trim();
     const comments = extractComments(spec);
-    const { type, optional } = this.parseType(param);
+    const { type, optional } = this.parseType(/** @type {MarkdownLiNode} */(param));
     return Documentation.Member.createProperty(extractMetainfo(spec), name, type, comments, !optional);
   }
 
   /**
-   * @param {MarkdownNode=} spec
+   * @param {MarkdownLiNode} spec
    * @return {{ type: Documentation.Type, optional: boolean, experimental: boolean }}
    */
   parseType(spec) {
     const arg = parseVariable(spec.text);
     const properties = [];
-    for (const child of spec.children || []) {
-      const { name, text } = parseVariable(child.text);
+    for (const child of /** @type {MarkdownLiNode[]} */ (spec.children) || []) {
+      const { name, text } = parseVariable(/** @type {string} */(child.text));
       const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
       const childType = this.parseType(child);
       properties.push(Documentation.Member.createProperty({ langs: {}, experimental: childType.experimental, since: 'v1.0' }, name, childType.type, comments, !childType.optional));
@@ -271,7 +278,7 @@ function applyTemplates(body, params) {
         if (!template)
           throw new Error('Bad template: ' + prop.text);
         const children = childrenWithoutProperties(template);
-        const { name: argName } = parseVariable(children[0].text);
+        const { name: argName } = parseVariable(children[0].text || '');
         newChildren.push({
           type: node.type,
           text: name + argName,
@@ -301,7 +308,7 @@ function applyTemplates(body, params) {
 }
 
 /**
- * @param {MarkdownNode} item
+ * @param {MarkdownHeaderNode} item
  * @returns {MarkdownNode[]}
  */
 function extractComments(item) {
@@ -323,7 +330,7 @@ function parseApi(apiDir, paramsPath) {
 }
 
 /**
- * @param {MarkdownNode} spec
+ * @param {MarkdownHeaderNode} spec
  * @returns {import('./documentation').Metainfo}
  */
 function extractMetainfo(spec) {
@@ -339,7 +346,7 @@ function extractMetainfo(spec) {
  * @returns {import('./documentation').Langs}
  */
 function extractLangs(spec) {
-  for (const child of spec.children) {
+  for (const child of spec.children || []) {
     if (child.type !== 'li' || child.liType !== 'bullet' || !child.text.startsWith('langs:'))
       continue;
 
@@ -347,7 +354,7 @@ function extractLangs(spec) {
     /** @type {Object<string, string>} */
     const aliases = {};
     for (const p of child.children || []) {
-      const match = p.text.match(/alias-(\w+)[\s]*:(.*)/);
+      const match = /** @type {string}*/(p.text).match(/alias-(\w+)[\s]*:(.*)/);
       if (match)
         aliases[match[1].trim()] = match[2].trim();
     }
@@ -362,7 +369,7 @@ function extractLangs(spec) {
 }
 
 /**
- * @param {MarkdownNode} spec
+ * @param {MarkdownHeaderNode} spec
  * @returns {string}
  */
 function extractSince(spec) {
@@ -377,7 +384,7 @@ function extractSince(spec) {
 }
 
 /**
- * @param {MarkdownNode} spec
+ * @param {MarkdownHeaderNode} spec
  * @returns {boolean}
  */
  function extractExperimental(spec) {
@@ -389,12 +396,12 @@ function extractSince(spec) {
 }
 
 /**
- * @param {MarkdownNode} spec
+ * @param {MarkdownHeaderNode} spec
  * @returns {MarkdownNode[]}
  */
 function childrenWithoutProperties(spec) {
   return (spec.children || []).filter(c => {
-    const isProperty = c.liType === 'bullet' && (c.text.startsWith('langs:') || c.text.startsWith('since:') || c.text === 'experimental');
+    const isProperty = c.type === 'li' && c.liType === 'bullet' && (c.text.startsWith('langs:') || c.text.startsWith('since:') || c.text === 'experimental');
     return !isProperty;
   });
 }
@@ -405,11 +412,12 @@ function childrenWithoutProperties(spec) {
  * @returns {boolean}
  */
 function isTypeOverride(existingMember, member) {
-  if (!existingMember.langs.only)
+  if (!existingMember.langs.only || !member.langs.only)
     return true;
-  if (member.langs.only.every(l => existingMember.langs.only.includes(l))) {
+  const existingOnly = existingMember.langs.only;
+  if (member.langs.only.every(l => existingOnly.includes(l))) {
     return true;
-  } else if (member.langs.only.some(l => existingMember.langs.only.includes(l))) {
+  } else if (member.langs.only.some(l => existingOnly.includes(l))) {
     throw new Error(`Ambiguous language override for: ${member.name}`);
   }
   return false;
