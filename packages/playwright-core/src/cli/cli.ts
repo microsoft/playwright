@@ -39,6 +39,8 @@ import { GridServer } from '../grid/gridServer';
 import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
 import { addDockerCLI } from '../containers/docker';
+import { spawnAsync } from '../utils/spawnAsync';
+import { existsAsync } from '../utils/fileUtils';
 
 const packageJSON = require('../../package.json');
 
@@ -272,8 +274,19 @@ program
     .option('--path <path>', 'Endpoint Path', '/')
     .option('--max-clients <maxClients>', 'Maximum clients')
     .option('--no-socks-proxy', 'Disable Socks Proxy')
-    .action(function(options) {
-      runServer(options.port ? +options.port : undefined,  options.path, options.maxClients ? +options.maxClients : Infinity, options.socksProxy, options.reuseBrowser).catch(logErrorAndExit);
+    .option('--check-browsers', 'Check that browsers launch without errors')
+    .action(async function(options) {
+      if (options.checkBrowsers) {
+        // Only check Firefox because other browsers always launch without any errors.
+        const executable = registry.findExecutable('firefox');
+        const tempPng = path.resolve(process.cwd(), 'temp.png');
+        const result = await spawnAsync(executable.executablePathOrDie('javascript'), ['--headless', '--screenshot', tempPng, 'about:blank'], { stdio: 'pipe' });
+        if (result.code || result.error || !await existsAsync(tempPng)) {
+          console.error(`Failed to launch Firefox!\n${result.error || ''}\n${result.stdout}\n${result.stderr}`);
+          process.exit(1);
+        }
+      }
+      await runServer(options.port ? +options.port : undefined,  options.path, options.maxClients ? +options.maxClients : Infinity, options.socksProxy, options.reuseBrowser).catch(logErrorAndExit);
     });
 
 program
