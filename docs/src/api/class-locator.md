@@ -828,13 +828,13 @@ Returns locator to the n-th matching element. It's zero based, `nth(0)` selects 
 * since: v1.27
 - returns: <[Array]<[Locator]>>
 
-Returns shallow array of locators
+The `toArray()` method is used to convert the given structure into a normal array. An array containing the values will be returned if the provided selector string is non empty.
 
 ## property: Locator.[Symbol.asyncIterator]()
 * since: v1.27
 - type: <[AsyncIterator]<[Locator]>>
 
-Returns iterator of array representation
+The `Symbol.asyncIterator` symbol is a builtin symbol that is used to access an object's @@asyncIterator method. In order for an object to be async iterable, it must have a `Symbol.asyncIterator` key.
 
 ## method: Locator.page
 * since: v1.19

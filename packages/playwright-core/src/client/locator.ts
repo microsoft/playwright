@@ -242,10 +242,9 @@ export class Locator implements api.Locator {
   }
   [Symbol.asyncIterator](): AsyncIterator<Locator> {
     let i = 0;
-    const self = this;
-    // context close, or in `next()` function `this` will be undefined.
-    const nth = self.nth.bind(self);
-    const count = self.count.bind(self);
+    // context closure, otherwise in the `next()` function `this` will be undefined.
+    const nth = this.nth.bind(this);
+    const count = this.count.bind(this);
     return {
       async next(): Promise<IteratorResult<Locator>> {
         const done = i === await count();
@@ -258,23 +257,6 @@ export class Locator implements api.Locator {
       }
     };
   }
-
-  // [Symbol.asyncIterator](): AsyncIterator<api.Locator> {
-  //   let i = 0;
-  //   const countPromise = this.count();
-  //   const nth = this.nth;
-  //   return {
-  //     async next(): Promise<IteratorResult<Locator>> {
-  //       const done = i === await countPromise;
-  //       const locator = done ? undefined : nth(i);
-  //       i++;
-  //       return {
-  //         done: done as true,
-  //         value: locator,
-  //       };
-  //     }
-  //   };
-  // }
 
   async getAttribute(name: string, options?: TimeoutOptions): Promise<string | null> {
     return this._frame.getAttribute(this._selector, name, { strict: true, ...options });
