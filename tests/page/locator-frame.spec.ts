@@ -30,7 +30,7 @@ async function routeIframe(page: Page) {
       body: `
         <html>
           <div>
-            <button>Hello iframe</button>
+            <button data-testid="buttonId">Hello iframe</button>
             <iframe src="iframe-2.html"></iframe>
           </div>
           <span>1</span>
@@ -243,6 +243,8 @@ it('role and text coverage', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const button1 = page.frameLocator('iframe').getByRole('button');
   const button2 = page.frameLocator('iframe').getByText('Hello');
+  const button3 = page.frameLocator('iframe').getByTestId('buttonId');
   await expect(button1).toHaveText('Hello iframe');
   await expect(button2).toHaveText('Hello iframe');
+  await expect(button3).toHaveText('Hello iframe');
 });

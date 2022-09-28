@@ -2969,6 +2969,12 @@ export interface PlaywrightTestOptions {
    * - `'block'`: Playwright will block all registration of Service Workers.
    */
   serviceWorkers: ServiceWorkerPolicy | undefined;
+  /**
+   * Custom attribute to be used in
+   * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used by
+   * default.
+   */
+  testIdAttribute: string | undefined;
 }
 
 

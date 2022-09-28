@@ -46,6 +46,15 @@ export class Locator implements api.Locator {
   _frame: Frame;
   _selector: string;
 
+  static _testIdAttributeName = 'data-testid';
+  static _setTestIdAttribute(attributeName: string) {
+    Locator._testIdAttributeName = attributeName;
+  }
+
+  static getByTestIdSelector(testId: string): string {
+    return `css=[${Locator._testIdAttributeName}=${testId}]`;
+  }
+
   static getByTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
     if (!isString(text))
       return `text=${text}`;
@@ -174,6 +183,10 @@ export class Locator implements api.Locator {
 
   get(selector: string, options?: LocatorOptions): Locator {
     return this.locator(selector, options);
+  }
+
+  getByTestId(testId: string): Locator {
+    return this.locator(Locator.getByTestIdSelector(testId));
   }
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
@@ -360,6 +373,10 @@ export class FrameLocator implements api.FrameLocator {
 
   get(selector: string, options?: LocatorOptions): Locator {
     return this.locator(selector, options);
+  }
+
+  getByTestId(testId: string): Locator {
+    return this.locator(Locator.getByTestIdSelector(testId));
   }
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {

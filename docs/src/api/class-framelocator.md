@@ -137,6 +137,16 @@ in that iframe.
 * since: v1.27
 
 
+## method: FrameLocator.getByTestId
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-test-id-%%
+
+### param: FrameLocator.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
+* since: v1.27
+
+
 ## method: FrameLocator.getByText
 * since: v1.27
 - returns: <[Locator]>

@@ -568,6 +568,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this.mainFrame().locator(selector, options);
   }
 
+  getByTestId(testId: string): Locator {
+    return this.mainFrame().getByTestId(testId);
+  }
+
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.mainFrame().getByText(text, options);
   }

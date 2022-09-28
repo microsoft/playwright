@@ -214,3 +214,14 @@ Script that evaluates to a selector engine instance. The script is evaluated in 
 Whether to run this selector engine in isolated JavaScript environment. This environment has access to the same DOM, but
 not any JavaScript objects from the frame's scripts. Defaults to `false`. Note that running as a content script is not
 guaranteed when this engine is used together with other registered engines.
+
+## method: Selectors.setTestIdAttribute
+* since: v1.27
+
+Defines custom attribute name to be used in [`method: Page.getByTestId`]. `data-testid` is used by default.
+
+### param: Selectors.setTestIdAttribute.attributeName
+* since: v1.27
+- `attributeName` <[string]>
+
+Test id attribute name.

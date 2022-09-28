@@ -2492,7 +2492,7 @@ export interface Page {
    * [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You
    * can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not
    * recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
-   * @param role
+   * @param role Required aria role.
    * @param options
    */
   getByRole(role: string, options?: {
@@ -2558,11 +2558,22 @@ export interface Page {
   }): Locator;
 
   /**
+   * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
+   * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
+   * to configure a different test id attribute if necessary.
+   * @param testId Id to locate the element by.
+   */
+  getByTestId(testId: string): Locator;
+
+  /**
    * Allows locating elements that contain given text.
-   * @param text
+   * @param text Text to locate the element for.
    * @param options
    */
   getByText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
     exact?: boolean;
   }): Locator;
 
@@ -5522,7 +5533,7 @@ export interface Frame {
    * [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You
    * can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not
    * recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
-   * @param role
+   * @param role Required aria role.
    * @param options
    */
   getByRole(role: string, options?: {
@@ -5588,11 +5599,22 @@ export interface Frame {
   }): Locator;
 
   /**
+   * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
+   * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
+   * to configure a different test id attribute if necessary.
+   * @param testId Id to locate the element by.
+   */
+  getByTestId(testId: string): Locator;
+
+  /**
    * Allows locating elements that contain given text.
-   * @param text
+   * @param text Text to locate the element for.
    * @param options
    */
   getByText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
     exact?: boolean;
   }): Locator;
 
@@ -9899,7 +9921,7 @@ export interface Locator {
    * [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You
    * can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not
    * recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
-   * @param role
+   * @param role Required aria role.
    * @param options
    */
   getByRole(role: string, options?: {
@@ -9965,11 +9987,22 @@ export interface Locator {
   }): Locator;
 
   /**
+   * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
+   * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
+   * to configure a different test id attribute if necessary.
+   * @param testId Id to locate the element by.
+   */
+  getByTestId(testId: string): Locator;
+
+  /**
    * Allows locating elements that contain given text.
-   * @param text
+   * @param text Text to locate the element for.
    * @param options
    */
   getByText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
     exact?: boolean;
   }): Locator;
 
@@ -15097,7 +15130,7 @@ export interface FrameLocator {
    * [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You
    * can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not
    * recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
-   * @param role
+   * @param role Required aria role.
    * @param options
    */
   getByRole(role: string, options?: {
@@ -15163,11 +15196,22 @@ export interface FrameLocator {
   }): Locator;
 
   /**
+   * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
+   * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
+   * to configure a different test id attribute if necessary.
+   * @param testId Id to locate the element by.
+   */
+  getByTestId(testId: string): Locator;
+
+  /**
    * Allows locating elements that contain given text.
-   * @param text
+   * @param text Text to locate the element for.
    * @param options
    */
   getByText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
     exact?: boolean;
   }): Locator;
 
@@ -16252,6 +16296,14 @@ export interface Selectors {
      */
     contentScript?: boolean;
   }): Promise<void>;
+
+  /**
+   * Defines custom attribute name to be used in
+   * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used by
+   * default.
+   * @param attributeName Test id attribute name.
+   */
+  setTestIdAttribute(attributeName: string): void;
 }
 
 /**
