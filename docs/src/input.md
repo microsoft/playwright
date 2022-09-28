@@ -698,3 +698,74 @@ page.locator('input#name').focus()
 ```csharp
 await page.Locator("input#name").FocusAsync();
 ```
+
+## Drag and Drop
+
+You can perform drag&drop operation with [`method: Locator.dragTo`]. This method will:
+- Hover the element that will be dragged.
+- Press left mouse button.
+- Move mouse to the element that will receive the drop.
+- Release left mouse button.
+
+```js
+await page.locator('#item-to-be-dragged').dragTo(page.locator('#item-to-drop-at'));
+```
+
+```java
+page.locator("#item-to-be-dragged").dragTo(page.locator("#item-to-drop-at"));
+```
+
+```python async
+await page.locator("#item-to-be-dragged").drag_to(page.locator("#item-to-drop-at"))
+```
+
+```python sync
+page.locator("#item-to-be-dragged").drag_to(page.locator("#item-to-drop-at"))
+```
+
+```csharp
+await page.Locator("#item-to-be-dragged").DragToAsync(page.Locator("#item-to-drop-at"));
+```
+
+### Dragging manually
+
+If you want precise control over the drag operation, use lower-level methods like [`method: Locator.hover`], [`method: Mouse.down`], [`method: Mouse.move`] and [`method: Mouse.up`].
+
+```js
+await page.locator('#item-to-be-dragged').hover();
+await page.mouse.down();
+await page.locator('#item-to-drop-at').hover();
+await page.mouse.up();
+```
+
+```java
+page.locator("#item-to-be-dragged").hover();
+page.mouse.down();
+page.locator("#item-to-drop-at").hover();
+page.mouse.up();
+```
+
+```python async
+await page.locator("#item-to-be-dragged").hover()
+await page.mouse.down()
+await page.locator("#item-to-drop-at").hover()
+await page.mouse.up()
+```
+
+```python sync
+page.locator("#item-to-be-dragged").hover()
+page.mouse.down()
+page.locator("#item-to-drop-at").hover()
+page.mouse.up()
+```
+
+```csharp
+await page.Locator("#item-to-be-dragged").HoverAsync();
+await page.Mouse.DownAsync();
+await page.Locator("#item-to-drop-at").HoverAsync();
+await page.Mouse.UpAsync();
+```
+
+:::note
+If your page relies on the `dragover` event being dispatched, you need at least two mouse moves to trigger it in all browsers. To reliably issue the second mouse move, repeat your [`method: Mouse.move`] or [`method: Locator.hover`] twice. The sequence of operations would be: hover the drag element, mouse down, hover the drop element, hover the drop element second time, mouse up.
+:::
