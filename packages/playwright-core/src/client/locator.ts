@@ -232,6 +232,49 @@ export class Locator implements api.Locator {
   async count(): Promise<number> {
     return this._frame._queryCount(this._selector);
   }
+  async toArray(): Promise<api.Locator[]> {
+    const items = [];
+
+    for await (const locator of this)
+      items.push(locator);
+
+    return items;
+  }
+  [Symbol.asyncIterator](): AsyncIterator<Locator> {
+    let i = 0;
+    const self = this;
+    // context close, or in `next()` function `this` will be undefined.
+    const nth = self.nth.bind(self);
+    const count = self.count.bind(self);
+    return {
+      async next(): Promise<IteratorResult<Locator>> {
+        const done = i === await count();
+        const value = done ? undefined : nth(i);
+        i++;
+        return {
+          done: done as true,
+          value,
+        };
+      }
+    };
+  }
+
+  // [Symbol.asyncIterator](): AsyncIterator<api.Locator> {
+  //   let i = 0;
+  //   const countPromise = this.count();
+  //   const nth = this.nth;
+  //   return {
+  //     async next(): Promise<IteratorResult<Locator>> {
+  //       const done = i === await countPromise;
+  //       const locator = done ? undefined : nth(i);
+  //       i++;
+  //       return {
+  //         done: done as true,
+  //         value: locator,
+  //       };
+  //     }
+  //   };
+  // }
 
   async getAttribute(name: string, options?: TimeoutOptions): Promise<string | null> {
     return this._frame.getAttribute(this._selector, name, { strict: true, ...options });

@@ -10229,6 +10229,16 @@ export interface Locator {
   nth(index: number): Locator;
 
   /**
+   * Returns shallow array of locators
+   */
+  toArray(): Promise<Array<Locator>>;
+
+  /**
+   * Returns iterator of array representation
+   */
+  [Symbol.asyncIterator](): AsyncIterator<Locator>;
+
+  /**
    * A page this locator belongs to.
    */
   page(): Page;

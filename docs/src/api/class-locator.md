@@ -823,6 +823,19 @@ Returns locator to the n-th matching element. It's zero based, `nth(0)` selects 
 * since: v1.14
 - `index` <[int]>
 
+
+## async method: Locator.toArray
+* since: v1.27
+- returns: <[Array]<[Locator]>>
+
+Returns shallow array of locators
+
+## property: Locator.[Symbol.asyncIterator]()
+* since: v1.27
+- type: <[AsyncIterator]<[Locator]>>
+
+Returns iterator of array representation
+
 ## method: Locator.page
 * since: v1.19
 - returns: <[Page]>

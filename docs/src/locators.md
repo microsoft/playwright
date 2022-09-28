@@ -441,3 +441,49 @@ var locator = page.Locator("text=Submit");
 await locator.HoverAsync();
 await locator.ClickAsync();
 ```
+
+## Working with Arrays
+
+With new Api Called `toArray` you can return first-level of elements. This is similar to `getCount` and create shallow array of elements
+
+```js
+const locators = page.locator('li');
+// ...
+const array = await locators.toArray();
+const texts = await Promise.all(array.map(el => el.textContext()))
+
+// or use iterator
+
+const texts = [];
+
+for await (const text of locators){
+  texts.push(text);
+}
+
+```
+
+```java
+Locator locators = page.locator("li");
+
+Array<Locator> array = locators.toArray();
+
+// working with array
+```
+
+```python async
+locator = page.locator("li")
+
+# TODO: complete example
+```
+
+```python sync
+locator = page.locator("li")
+
+# TODO: complete example
+```
+
+```csharp
+var locator = page.Locator("li");
+
+// TODO: complete example
+```
