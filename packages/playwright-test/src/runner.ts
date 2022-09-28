@@ -282,14 +282,14 @@ export class Runner {
               });
             } else {
               const testMatch = p.testMatch ? createFileMatcher(p.testMatch) : () => true;
-              const testIgnore = p.testIgnore ? createFileMatcher(p.testIgnore) : undefined;
+              const testIgnore = p.testIgnore ? createFileMatcher(p.testIgnore) : () => false;
               const grep = p.grep ? createTitleMatcher(p.grep) : () => true;
-              const grepInvert = p.grepInvert ? createTitleMatcher(p.grepInvert) : undefined;
+              const grepInvert = p.grepInvert ? createTitleMatcher(p.grepInvert) : () => false;
               const projects = isString(p.project) ? [p.project] : p.project;
               phase.push(...projects.map(projectName => ({
                 projectName,
-                testFileMatcher: (file: string) => !testIgnore?.(file) && testMatch(file),
-                testTitleMatcher: (title: string) => !grepInvert?.(title) && grep(title),
+                testFileMatcher: (file: string) => !testIgnore(file) && testMatch(file),
+                testTitleMatcher: (title: string) => !grepInvert(title) && grep(title),
               })));
             }
           }
@@ -317,13 +317,13 @@ export class Runner {
     const unknownProjects = new Map<string, string>();
     projectNames.forEach(n => {
       const name = n.toLocaleLowerCase();
-      projectsToFind!.add(name);
-      unknownProjects!.set(name, n);
+      projectsToFind.add(name);
+      unknownProjects.set(name, n);
     });
     const fullConfig = this._loader.fullConfig();
     const projects = fullConfig.projects.filter(project => {
       const name = project.name.toLocaleLowerCase();
-      unknownProjects!.delete(name);
+      unknownProjects.delete(name);
       return projectsToFind.has(name);
     });
     if (unknownProjects.size) {
@@ -1049,7 +1049,7 @@ class ListModeReporter implements Reporter {
 
 function fileMatcherFrom(testFileFilters?: TestFileFilter[]): Matcher {
   if (testFileFilters?.length)
-    return  createFileMatcher(testFileFilters.map(e => e.re || e.exact || ''))
+    return createFileMatcher(testFileFilters.map(e => e.re || e.exact || ''));
   return () => true;
 }
 

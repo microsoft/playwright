@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { PlaywrightTestConfig, TestInfo } from '@playwright/test';
+import type { PlaywrightTestConfig, TestInfo, PlaywrightTestProject } from '@playwright/test';
 import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
-function createConfigWithProjects(names: string[], testInfo: TestInfo, groups: PlaywrightTestConfig['groups']): Record<string, string> {
+function createConfigWithProjects(names: string[], testInfo: TestInfo, groups: PlaywrightTestConfig['groups'], projectTemplates?: { [name: string]: PlaywrightTestProject }): Record<string, string> {
   const config: PlaywrightTestConfig = {
-    projects: names.map(name => ({ name, testDir: testInfo.outputPath(name) })),
+    projects: names.map(name => ({ ...projectTemplates?.[name], name, testDir: testInfo.outputPath(name) })),
     groups
   };
   const files = {};
@@ -47,6 +47,12 @@ type Timeline = { titlePath: string[], event: 'begin' | 'end' }[];
 
 function formatTimeline(timeline: Timeline) {
   return timeline.map(e => `${e.titlePath.slice(1).join(' > ')} [${e.event}]`).join('\n');
+}
+
+function projectNames(timeline: Timeline) {
+  const projectNames = Array.from(new Set(timeline.map(({ titlePath }) => titlePath[1])).keys());
+  projectNames.sort();
+  return projectNames;
 }
 
 function expectRunBefore(timeline: Timeline, before: string[], after: string[]) {
@@ -273,15 +279,13 @@ test('should support testMatch and testIgnore', async ({ runGroups }, testInfo) 
         { project: ['c', 'd'], testMatch: [/.*c.spec.ts/, '**/*d*'] },
         { project: ['e'], testIgnore: [/.*e.spec.ts/] },
         { project: ['f'], testMatch: /does not match/ },
-    ],
+      ],
     ]
   });
   const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
   expect(passed).toBe(3);
-  const projectNames = Array.from(new Set(timeline.map(({titlePath}) => titlePath[1])).keys());
-  projectNames.sort();
-  expect(projectNames).toEqual(['a', 'c', 'd']);
+  expect(projectNames(timeline)).toEqual(['a', 'c', 'd']);
 });
 
 test('should support grep and grepInvert', async ({ runGroups }, testInfo) => {
@@ -297,7 +301,66 @@ test('should support grep and grepInvert', async ({ runGroups }, testInfo) => {
   const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
   expect(passed).toBe(3);
-  const projectNames = Array.from(new Set(timeline.map(({titlePath}) => titlePath[1])).keys());
-  projectNames.sort();
-  expect(projectNames).toEqual(['a', 'd', 'e']);
+  expect(projectNames(timeline)).toEqual(['a', 'd', 'e']);
+});
+
+test('should intercect gpoup and project level grep and grepInvert', async ({ runGroups }, testInfo) => {
+  const projectTemplates = {
+    'a' : {
+      grep: /a test/,
+      grepInvert: [/no test/],
+    },
+    'b' : {
+      grep: /.*b te.*/,
+      grepInvert: [/.*a test/],
+    },
+    'c' : {
+      grepInvert: [/.*test/],
+    },
+    'd' : {
+      grep: [/.*unkwnown test/],
+    },
+  }
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
+    default: [
+      [
+        { project: ['a', 'b', 'c', 'd', 'e'], grep: /.*(b|c|d|e) test/, grepInvert: /.*d test/ },
+      ],
+    ]
+  }, projectTemplates);
+  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(2);
+  expect(projectNames(timeline)).toEqual(['b', 'e']);
+});
+
+test('should intercect gpoup and project level testMatch and testIgnore', async ({ runGroups }, testInfo) => {
+  const projectTemplates = {
+    'a' : {
+      testMatch: /.*a.spec.ts/,
+      testIgnore: [/no test/],
+    },
+    'b' : {
+      testMatch: '**/b.spec.ts',
+      testIgnore: [/.*a.spec.ts/],
+    },
+    'c' : {
+      testIgnore: [/.*no-match.spec.ts/],
+    },
+    'd' : {
+      testMatch: [/.*unkwnown/],
+    },
+  }
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
+    default: [
+      [
+        { project: ['a', 'b', 'c', 'd'], testMatch: /.*(b|c|d).spec.ts/, testIgnore: /.*c.spec.ts/ },
+        { project: ['c', 'd', 'e', 'f'], testIgnore: /.*[^ef].spec.ts/ },
+      ],
+    ]
+  }, projectTemplates);
+  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(3);
+  expect(projectNames(timeline)).toEqual(['b', 'e', 'f']);
 });
