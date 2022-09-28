@@ -202,6 +202,11 @@ Learn more about [automatic screenshots](../test-configuration.md#automatic-scre
 ## property: TestOptions.storageState = %%-js-python-context-option-storage-state-%%
 * since: v1.10
 
+## property: TestOptions.testIdAttribute
+* since: v1.27
+
+Custom attribute to be used in [`method: Page.getByTestId`]. `data-testid` is used by default.
+
 ## property: TestOptions.timezoneId = %%-context-option-timezoneid-%%
 * since: v1.10
 

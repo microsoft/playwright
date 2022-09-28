@@ -887,6 +887,18 @@ await locator.ClickAsync();
 * since: v1.17
 
 
+## method: Frame.get
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-root-locator-%%
+
+### param: Frame.get.selector = %%-find-selector-%%
+* since: v1.27
+### option: Frame.get.-inline- = %%-locator-options-list-v1.14-%%
+* since: v1.27
+
+
 ## async method: Frame.getAttribute
 * since: v1.8
 - returns: <[null]|[string]>
@@ -906,6 +918,39 @@ Attribute name to get the value for.
 * since: v1.14
 ### option: Frame.getAttribute.timeout = %%-input-timeout-%%
 * since: v1.8
+
+
+## method: Frame.getByRole
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-role-%%
+
+
+### param: Frame.getByRole.role = %%-locator-get-by-role-role-%%
+### option: Frame.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
+* since: v1.27
+
+
+## method: Frame.getByTestId
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-test-id-%%
+
+### param: Frame.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
+* since: v1.27
+
+
+## method: Frame.getByText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-text-%%
+
+### param: Frame.getByText.text = %%-locator-get-by-text-text-%%
+### option: Frame.getByText.exact = %%-locator-get-by-text-exact-%%
+
 
 ## async method: Frame.goto
 * since: v1.8
@@ -1131,8 +1176,7 @@ Returns whether the element is [visible](../actionability.md#visible). [`option:
 * since: v1.14
 - returns: <[Locator]>
 
-The method returns an element locator that can be used to perform actions in the frame.
-Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
+%%-template-locator-root-locator-%%
 
 [Learn more about locators](../locators.md).
 

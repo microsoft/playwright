@@ -24,9 +24,11 @@ it('should work @smoke', async ({ page }) => {
   expect(await page.$eval(`text=/^[ay]+$/`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`text=/Ya/i`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`text=ye`, e => e.outerHTML)).toBe('<div>\nye  </div>');
+  expect(await page.getByText('ye').evaluate(e => e.outerHTML)).toBe('<div>\nye  </div>');
 
   await page.setContent(`<div> ye </div><div>ye</div>`);
   expect(await page.$eval(`text="ye"`, e => e.outerHTML)).toBe('<div> ye </div>');
+  expect(await page.getByText('ye', { exact: true }).first().evaluate(e => e.outerHTML)).toBe('<div> ye </div>');
 
   await page.setContent(`<div>yo</div><div>"ya</div><div> hello world! </div>`);
   expect(await page.$eval(`text="\\"ya"`, e => e.outerHTML)).toBe('<div>"ya</div>');
