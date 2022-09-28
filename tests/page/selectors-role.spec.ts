@@ -321,7 +321,7 @@ test('should support name', async ({ page }) => {
     <div role="button" aria-label="Hallo"></div>
     <div role="button" aria-label="Hello" aria-hidden="true"></div>
     <div role="button" aria-label="123" aria-hidden="true"></div>
-    <div role="button" aria-label="foo\"bar" aria-hidden="true"></div>
+    <div role="button" aria-label='foo"bar' aria-hidden="true"></div>
   `);
   expect(await page.get(`role=button[name="Hello"]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="Hello"></div>`,
