@@ -618,6 +618,18 @@ await locator.ClickAsync();
 * since: v1.17
 
 
+## method: Locator.get
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-locator-%%
+
+### param: Locator.get.selector = %%-find-selector-%%
+* since: v1.27
+### option: Locator.get.-inline- = %%-locator-options-list-v1.14-%%
+* since: v1.27
+
+
 ## async method: Locator.getAttribute
 * since: v1.14
 - returns: <[null]|[string]>
@@ -632,6 +644,38 @@ Attribute name to get the value for.
 
 ### option: Locator.getAttribute.timeout = %%-input-timeout-%%
 * since: v1.14
+
+
+## method: Locator.getByRole
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-role-%%
+
+### param: Locator.getByRole.role = %%-locator-get-by-role-role-%%
+### option: Locator.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
+* since: v1.27
+
+
+## method: Locator.getByTestId
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-test-id-%%
+
+### param: Locator.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
+* since: v1.27
+
+
+## method: Locator.getByText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-text-%%
+
+### param: Locator.getByText.text = %%-locator-get-by-text-text-%%
+### option: Locator.getByText.exact = %%-locator-get-by-text-exact-%%
+
 
 ## async method: Locator.highlight
 * since: v1.20

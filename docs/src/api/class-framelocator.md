@@ -114,6 +114,49 @@ in that iframe.
 * since: v1.17
 
 
+## method: FrameLocator.get
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-locator-%%
+
+### param: FrameLocator.get.selector = %%-find-selector-%%
+* since: v1.27
+### option: FrameLocator.get.-inline- = %%-locator-options-list-v1.14-%%
+* since: v1.27
+
+
+## method: FrameLocator.getByRole
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-role-%%
+
+### param: FrameLocator.getByRole.role = %%-locator-get-by-role-role-%%
+### option: FrameLocator.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
+* since: v1.27
+
+
+## method: FrameLocator.getByTestId
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-test-id-%%
+
+### param: FrameLocator.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
+* since: v1.27
+
+
+## method: FrameLocator.getByText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-text-%%
+
+### param: FrameLocator.getByText.text = %%-locator-get-by-text-text-%%
+### option: FrameLocator.getByText.exact = %%-locator-get-by-text-exact-%%
+
+
 ## method: FrameLocator.last
 * since: v1.17
 - returns: <[FrameLocator]>
