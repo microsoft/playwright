@@ -3,10 +3,7 @@ id: navigations
 title: "Navigations"
 ---
 
-Playwright can navigate to URLs and handle navigations caused by page interactions. This guide covers common scenarios
-to wait for page navigations and loading to complete.
-
-<!-- TOC -->
+Playwright can navigate to URLs and handle navigations caused by page interactions. This guide covers common scenarios to wait for page navigations and loading to complete.
 
 ## Navigation lifecycle
 
@@ -61,7 +58,6 @@ page.goto("https://example.com")
 // Navigate the page
 await page.GotoAsync("https://example.com");
 ```
-
 
 ### Custom wait
 
@@ -153,20 +149,13 @@ await page.GotoAsync("https://example.com");
 await page.Locator("text=Example Domain").ClickAsync();
 ```
 
-### API reference
-- [`method: Page.goto`]
-- [`method: Page.reload`]
-- [`method: Page.goBack`]
-- [`method: Page.goForward`]
-
 ## Scenarios initiated by page interaction
 
 In the scenarios below, [`method: Locator.click`] initiates a navigation and then waits for the navigation to complete.
 
 ### Auto-wait
 
-By default, [`method: Locator.click`] will wait for the navigation step to complete. This can be combined with a page interaction on
-the navigated page which would auto-wait for an element.
+By default, [`method: Locator.click`] will wait for the navigation step to complete. This can be combined with a page interaction on the navigated page which would auto-wait for an element.
 
 ```js
 // Click will auto-wait for navigation to complete
@@ -412,8 +401,7 @@ await page.RunAndWaitForNavigationAsync(async () =>
 
 ### Loading a popup
 
-When popup is opened, explicitly calling [`method: Page.waitForLoadState`] ensures that popup is loaded to the desired
-state.
+When popup is opened, explicitly calling [`method: Page.waitForLoadState`] ensures that popup is loaded to the desired state.
 
 ```js
 // Note that Promise.all prevents a race condition
@@ -456,16 +444,9 @@ var popup = await page.RunAndWaitForPopupAsync(async () =>
 popup.WaitForLoadStateAsync(LoadState.Load);
 ```
 
-### API reference
-- [`method: Locator.click`]
-- [`method: Page.waitForLoadState`]
-- [`method: Page.waitForNavigation`]
-- [`method: Page.waitForFunction`]
-
 ## Advanced patterns
 
-For pages that have complicated loading patterns, [`method: Page.waitForFunction`] is a powerful and extensible approach
-to define a custom wait criteria.
+For pages that have complicated loading patterns, [`method: Page.waitForFunction`] is a powerful and extensible approach to define a custom wait criteria.
 
 ```js
 await page.goto('http://example.com');
@@ -501,6 +482,3 @@ await page.WaitForFunctionAsync("() => window.amILoadedYet()");
 // Ready to take a screenshot, according to the page itself.
 await page.ScreenshotAsync();
 ```
-
-### API reference
-- [`method: Page.waitForFunction`]

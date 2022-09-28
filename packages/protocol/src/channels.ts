@@ -389,6 +389,7 @@ export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   harLookup(params: LocalUtilsHarLookupParams, metadata?: Metadata): Promise<LocalUtilsHarLookupResult>;
   harClose(params: LocalUtilsHarCloseParams, metadata?: Metadata): Promise<LocalUtilsHarCloseResult>;
   harUnzip(params: LocalUtilsHarUnzipParams, metadata?: Metadata): Promise<LocalUtilsHarUnzipResult>;
+  connect(params: LocalUtilsConnectParams, metadata?: Metadata): Promise<LocalUtilsConnectResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -442,6 +443,22 @@ export type LocalUtilsHarUnzipOptions = {
 
 };
 export type LocalUtilsHarUnzipResult = void;
+export type LocalUtilsConnectParams = {
+  wsEndpoint: string,
+  headers?: any,
+  slowMo?: number,
+  timeout?: number,
+  socksProxyRedirectPortForTest?: number,
+};
+export type LocalUtilsConnectOptions = {
+  headers?: any,
+  slowMo?: number,
+  timeout?: number,
+  socksProxyRedirectPortForTest?: number,
+};
+export type LocalUtilsConnectResult = {
+  pipe: JsonPipeChannel,
+};
 
 export interface LocalUtilsEvents {
 }
@@ -765,27 +782,10 @@ export interface BrowserTypeEventTarget {
 }
 export interface BrowserTypeChannel extends BrowserTypeEventTarget, Channel {
   _type_BrowserType: boolean;
-  connect(params: BrowserTypeConnectParams, metadata?: Metadata): Promise<BrowserTypeConnectResult>;
   launch(params: BrowserTypeLaunchParams, metadata?: Metadata): Promise<BrowserTypeLaunchResult>;
   launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, metadata?: Metadata): Promise<BrowserTypeLaunchPersistentContextResult>;
   connectOverCDP(params: BrowserTypeConnectOverCDPParams, metadata?: Metadata): Promise<BrowserTypeConnectOverCDPResult>;
 }
-export type BrowserTypeConnectParams = {
-  wsEndpoint: string,
-  headers?: any,
-  slowMo?: number,
-  timeout?: number,
-  socksProxyRedirectPortForTest?: number,
-};
-export type BrowserTypeConnectOptions = {
-  headers?: any,
-  slowMo?: number,
-  timeout?: number,
-  socksProxyRedirectPortForTest?: number,
-};
-export type BrowserTypeConnectResult = {
-  pipe: JsonPipeChannel,
-};
 export type BrowserTypeLaunchParams = {
   channel?: string,
   executablePath?: string,

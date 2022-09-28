@@ -16,8 +16,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, Reporter, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep } from '../../types/testReporter';
-import { prepareErrorStack } from './base';
+import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, Reporter, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportError } from '../../types/testReporter';
+import { formatError, prepareErrorStack } from './base';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
 import { assert } from 'playwright-core/lib/utils';
 
@@ -183,6 +183,7 @@ class JSONReporter implements Reporter {
       status: result.status,
       duration: result.duration,
       error: result.error,
+      errors: result.errors.map(e => this._serializeError(e)),
       stdout: result.stdout.map(s => stdioEntry(s)),
       stderr: result.stderr.map(s => stdioEntry(s)),
       retry: result.retry,
@@ -198,6 +199,10 @@ class JSONReporter implements Reporter {
     if (result.error?.stack)
       jsonResult.errorLocation = prepareErrorStack(result.error.stack).location;
     return jsonResult;
+  }
+
+  private _serializeError(error: TestError): JSONReportError {
+    return formatError(this.config, error, true);
   }
 
   private _serializeTestStep(step: TestStep): JSONReportTestStep {

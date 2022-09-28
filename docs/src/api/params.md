@@ -1057,3 +1057,116 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%
 - %%-input-timeout-%%
+
+## locator-get-by-text-text
+* since: v1.27
+- `text` <[string]|[RegExp]>
+
+## locator-get-by-text-exact
+* since: v1.27
+- `exact` <[boolean]>
+
+## locator-get-by-role-role
+* since: v1.27
+- `role` <[string]>
+
+## locator-get-by-role-option-checked
+* since: v1.27
+- `checked` <[boolean]>
+
+An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for checked are `true`, `false` and `"mixed"`.
+
+Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+
+## locator-get-by-role-option-disabled
+* since: v1.27
+- `disabled` <[boolean]>
+
+A boolean attribute that is usually set by `aria-disabled` or `disabled`.
+
+:::note
+Unlike most other attributes, `disabled` is inherited through the DOM hierarchy.
+Learn more about [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+:::
+
+## locator-get-by-role-option-expanded
+* since: v1.27
+- `expanded` <[boolean]>
+
+A boolean attribute that is usually set by `aria-expanded`.
+
+  Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+
+## locator-get-by-role-option-includeHidden
+* since: v1.27
+- `includeHidden` <[boolean]>
+
+A boolean attribute that controls whether hidden elements are matched. By default, only non-hidden elements, as [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
+
+Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+
+## locator-get-by-role-option-level
+* since: v1.27
+- `level` <[int]>
+
+A number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values for `<h1>-<h6>` elements.
+
+Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+
+## locator-get-by-role-option-name
+* since: v1.27
+- `name` <[string]|[RegExp]>
+
+A string attribute that matches [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+## locator-get-by-role-option-pressed
+* since: v1.27
+- `pressed` <[boolean]>
+
+An attribute that is usually set by `aria-pressed`. Available values for pressed are `true`, `false` and `"mixed"`.
+
+Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+
+## locator-get-by-role-option-selected
+* since: v1.27
+- `selected` <boolean>
+
+A boolean attribute that is usually set by `aria-selected`.
+
+Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
+
+## locator-get-by-role-option-list-v1.27
+- %%-locator-get-by-role-option-checked-%%
+- %%-locator-get-by-role-option-disabled-%%
+- %%-locator-get-by-role-option-expanded-%%
+- %%-locator-get-by-role-option-includeHidden-%%
+- %%-locator-get-by-role-option-level-%%
+- %%-locator-get-by-role-option-name-%%
+- %%-locator-get-by-role-option-pressed-%%
+- %%-locator-get-by-role-option-selected-%%
+
+## template-locator-locator
+
+The method finds an element matching the specified selector in the locator's subtree. It also accepts filter options, similar to [`method: Locator.filter`] method.
+
+[Learn more about locators](../locators.md).
+
+## template-locator-root-locator
+
+The method returns an element locator that can be used to perform actions on this page / frame.
+Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
+
+[Learn more about locators](../locators.md).
+
+## template-locator-get-by-text
+
+Allows locating elements that contain given text.
+
+## template-locator-get-by-role
+
+Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace** accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+
+Note that many html elements have an implicitly [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
+

@@ -2162,6 +2162,18 @@ await locator.ClickAsync();
 
 An array of all frames attached to the page.
 
+## method: Page.get
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-root-locator-%%
+
+### param: Page.get.selector = %%-find-selector-%%
+* since: v1.27
+### option: Page.get.-inline- = %%-locator-options-list-v1.14-%%
+* since: v1.27
+
+
 ## async method: Page.getAttribute
 * since: v1.8
 - returns: <[null]|[string]>
@@ -2181,6 +2193,28 @@ Attribute name to get the value for.
 * since: v1.14
 ### option: Page.getAttribute.timeout = %%-input-timeout-%%
 * since: v1.8
+
+
+## method: Page.getByRole
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-role-%%
+
+### param: Page.getByRole.role = %%-locator-get-by-role-role-%%
+### option: Page.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
+* since: v1.27
+
+
+## method: Page.getByText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-text-%%
+
+### param: Page.getByText.text = %%-locator-get-by-text-text-%%
+### option: Page.getByText.exact = %%-locator-get-by-text-exact-%%
+
 
 ## async method: Page.goBack
 * since: v1.8
@@ -2447,12 +2481,7 @@ Returns whether the element is [visible](../actionability.md#visible). [`option:
 * since: v1.14
 - returns: <[Locator]>
 
-The method returns an element locator that can be used to perform actions on the page.
-Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
-
-[Learn more about locators](../locators.md).
-
-Shortcut for main frame's [`method: Frame.locator`].
+%%-template-locator-root-locator-%%
 
 ### param: Page.locator.selector = %%-find-selector-%%
 * since: v1.14

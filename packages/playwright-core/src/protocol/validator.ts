@@ -245,6 +245,16 @@ scheme.LocalUtilsHarUnzipParams = tObject({
   harFile: tString,
 });
 scheme.LocalUtilsHarUnzipResult = tOptional(tObject({}));
+scheme.LocalUtilsConnectParams = tObject({
+  wsEndpoint: tString,
+  headers: tOptional(tAny),
+  slowMo: tOptional(tNumber),
+  timeout: tOptional(tNumber),
+  socksProxyRedirectPortForTest: tOptional(tNumber),
+});
+scheme.LocalUtilsConnectResult = tObject({
+  pipe: tChannel(['JsonPipe']),
+});
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tString,
@@ -413,16 +423,6 @@ scheme.SelectorsRegisterResult = tOptional(tObject({}));
 scheme.BrowserTypeInitializer = tObject({
   executablePath: tString,
   name: tString,
-});
-scheme.BrowserTypeConnectParams = tObject({
-  wsEndpoint: tString,
-  headers: tOptional(tAny),
-  slowMo: tOptional(tNumber),
-  timeout: tOptional(tNumber),
-  socksProxyRedirectPortForTest: tOptional(tNumber),
-});
-scheme.BrowserTypeConnectResult = tObject({
-  pipe: tChannel(['JsonPipe']),
 });
 scheme.BrowserTypeLaunchParams = tObject({
   channel: tOptional(tString),
