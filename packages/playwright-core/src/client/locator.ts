@@ -52,7 +52,7 @@ export class Locator implements api.Locator {
   }
 
   static getByTestIdSelector(testId: string): string {
-    return `css=[${Locator._testIdAttributeName}=${testId}]`;
+    return `css=[${Locator._testIdAttributeName}=${JSON.stringify(testId)}]`;
   }
 
   static getByTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
