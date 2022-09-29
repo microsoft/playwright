@@ -92,7 +92,7 @@ test('config.grep should intercect with --grep and --grepInvert', async ({ runIn
       test('test3', async () => { console.log('\\n%% test3'); });
       test('test4', async () => { console.log('\\n%% test4'); });
     `,
-  }, { grep: 'test[23]', 'grep-invert': '..st3' });
+  }, { 'grep': 'test[23]', 'grep-invert': '..st3' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('%% test2');
