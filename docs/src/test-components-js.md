@@ -237,7 +237,7 @@ Playwright is using [Vite](https://vitejs.dev/) to create the components bundle 
 
 ### Q) I can't import anything other than the components from TSX/JSX/Component files
 
-As per above, you can only import your components from you test file. If you have utility methods or constants in your TSX files, it is advised to extract them into the TS files and import those utility methods and constants from your component files and from your test files. That allows us to not load any of the component code in the Node-based test runner and keep Playwright fast at executing your tests.
+As per above, you can only import your components from your test file. If you have utility methods or constants in your TSX files, it is advised to extract them into the TS files and import those utility methods and constants from your component files and from your test files. That allows us to not load any of the component code in the Node-based test runner and keep Playwright fast at executing your tests.
 
 ### Q) I have a project that already uses Vite. Can I reuse the config?
 
