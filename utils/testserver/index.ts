@@ -1,5 +1,6 @@
 /**
  * Copyright 2017 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,41 +15,48 @@
  * limitations under the License.
  */
 
-const http = require('http');
-const https = require('https');
-const url = require('url');
-const fs = require('fs');
-const path = require('path');
-const zlib = require('zlib');
-const util = require('util');
-const mime = require('mime');
-const WebSocketServer = require('ws').Server;
+import fs from 'fs';
+import http from 'http';
+import https from 'https';
+import mime from 'mime';
+import type net from 'net';
+import path from 'path';
+import url from 'url';
+import util from 'util';
+import ws from 'ws';
+import zlib, { gzip } from 'zlib';
 
 const fulfillSymbol = Symbol('fullfil callback');
 const rejectSymbol = Symbol('reject callback');
 
-const gzipAsync = util.promisify(zlib.gzip.bind(zlib));
+const gzipAsync = util.promisify(gzip.bind(zlib));
 
-class TestServer {
-  /**
-   * @param {string} dirPath
-   * @param {number} port
-   * @param {string=} loopback
-   * @return {!Promise<TestServer>}
-   */
-  static async create(dirPath, port, loopback) {
+export class TestServer {
+  private _server: http.Server;
+  private _wsServer: ws.WebSocketServer;
+  private _dirPath: string;
+  readonly debugServer: any;
+  private _startTime: Date;
+  private _cachedPathPrefix: string | null;
+  private _sockets = new Set<net.Socket>();
+  private _routes = new Map<string, (arg0: http.IncomingMessage, arg1: http.ServerResponse) => any>();
+  private _auths = new Map<string, { username: string; password: string; }>();
+  private _csp = new Map<string, string>();
+  private _extraHeaders = new Map<string, object>();
+  private _gzipRoutes = new Set<string>();
+  private _requestSubscribers = new Map<string, Promise<any>>();
+  readonly PORT: number;
+  readonly PREFIX: string;
+  readonly CROSS_PROCESS_PREFIX: string;
+  readonly EMPTY_PAGE: string;
+
+  static async create(dirPath: string, port: number, loopback?: string): Promise<TestServer> {
     const server = new TestServer(dirPath, port, loopback);
     await new Promise(x => server._server.once('listening', x));
     return server;
   }
 
-  /**
-   * @param {string} dirPath
-   * @param {number} port
-   * @param {string=} loopback
-   * @return {!Promise<TestServer>}
-   */
-  static async createHTTPS(dirPath, port, loopback) {
+  static async createHTTPS(dirPath: string, port: number, loopback?: string): Promise<TestServer> {
     const server = new TestServer(dirPath, port, loopback, {
       key: await fs.promises.readFile(path.join(__dirname, 'key.pem')),
       cert: await fs.promises.readFile(path.join(__dirname, 'cert.pem')),
@@ -58,21 +66,15 @@ class TestServer {
     return server;
   }
 
-  /**
-   * @param {string} dirPath
-   * @param {number} port
-   * @param {string=} loopback
-   * @param {!Object=} sslOptions
-   */
-  constructor(dirPath, port, loopback, sslOptions) {
+  constructor(dirPath: string, port: number, loopback?: string, sslOptions?: object) {
     if (sslOptions)
       this._server = https.createServer(sslOptions, this._onRequest.bind(this));
     else
       this._server = http.createServer(this._onRequest.bind(this));
     this._server.on('connection', socket => this._onSocket(socket));
-    this._wsServer = new WebSocketServer({ noServer: true });
+    this._wsServer = new ws.WebSocketServer({ noServer: true });
     this._server.on('upgrade', async (request, socket, head) => {
-      const pathname = url.parse(request.url).pathname;
+      const pathname = url.parse(request.url!).path;
       if (pathname === '/ws-slow')
         await new Promise(f => setTimeout(f, 2000));
       if (!['/ws', '/ws-slow'].includes(pathname)) {
@@ -92,21 +94,6 @@ class TestServer {
     this._startTime = new Date();
     this._cachedPathPrefix = null;
 
-    /** @type {!Set<!NodeJS.Socket>} */
-    this._sockets = new Set();
-    /** @type {!Map<string, function(!http.IncomingMessage,http.ServerResponse)>} */
-    this._routes = new Map();
-    /** @type {!Map<string, !{username:string, password:string}>} */
-    this._auths = new Map();
-    /** @type {!Map<string, string>} */
-    this._csp = new Map();
-    /** @type {!Map<string, Object>} */
-    this._extraHeaders = new Map();
-    /** @type {!Set<string>} */
-    this._gzipRoutes = new Set();
-    /** @type {!Map<string, !Promise>} */
-    this._requestSubscribers = new Map();
-
     const cross_origin = loopback || '127.0.0.1';
     const same_origin = loopback || 'localhost';
     const protocol = sslOptions ? 'https' : 'http';
@@ -116,51 +103,35 @@ class TestServer {
     this.EMPTY_PAGE = `${protocol}://${same_origin}:${port}/empty.html`;
   }
 
-  _onSocket(socket) {
+  _onSocket(socket: net.Socket) {
     this._sockets.add(socket);
     // ECONNRESET and HPE_INVALID_EOF_STATE are legit errors given
     // that tab closing aborts outgoing connections to the server.
     socket.on('error', error => {
-      if (error.code !== 'ECONNRESET' && error.code !== 'HPE_INVALID_EOF_STATE')
+      if ((error as any).code !== 'ECONNRESET' && (error as any).code !== 'HPE_INVALID_EOF_STATE')
         throw error;
     });
     socket.once('close', () => this._sockets.delete(socket));
   }
 
-  /**
-   * @param {string} pathPrefix
-   */
-  enableHTTPCache(pathPrefix) {
+  enableHTTPCache(pathPrefix: string) {
     this._cachedPathPrefix = pathPrefix;
   }
 
-  /**
-   * @param {string} path
-   * @param {string} username
-   * @param {string} password
-   */
-  setAuth(path, username, password) {
+  setAuth(path: string, username: string, password: string) {
     this.debugServer(`set auth for ${path} to ${username}:${password}`);
-    this._auths.set(path, {username, password});
+    this._auths.set(path, { username, password });
   }
 
-  enableGzip(path) {
+  enableGzip(path: string) {
     this._gzipRoutes.add(path);
   }
 
-  /**
-   * @param {string} path
-   * @param {string} csp
-   */
-  setCSP(path, csp) {
+  setCSP(path: string, csp: string) {
     this._csp.set(path, csp);
   }
 
-  /**
-   * @param {string} path
-   * @param {Object<string, string>} object
-   */
-  setExtraHeaders(path, object) {
+  setExtraHeaders(path: string, object: Record<string, string>) {
     this._extraHeaders.set(path, object);
   }
 
@@ -172,31 +143,19 @@ class TestServer {
     await new Promise(x => this._server.close(x));
   }
 
-  /**
-   * @param {string} path
-   * @param {function(!http.IncomingMessage,http.ServerResponse)} handler
-   */
-  setRoute(path, handler) {
+  setRoute(path: string, handler: (arg0: http.IncomingMessage & { postBody: Promise<Buffer> }, arg1: http.ServerResponse) => any) {
     this._routes.set(path, handler);
   }
 
-  /**
-   * @param {string} from
-   * @param {string} to
-   */
-  setRedirect(from, to) {
+  setRedirect(from: string, to: string) {
     this.setRoute(from, (req, res) => {
-      let headers = this._extraHeaders.get(req.url) || {};
+      const headers = this._extraHeaders.get(req.url!) || {};
       res.writeHead(302, { ...headers, location: to });
       res.end();
     });
   }
 
-  /**
-   * @param {string} path
-   * @return {!Promise<!http.IncomingMessage>}
-   */
-  waitForRequest(path) {
+  waitForRequest(path: string): Promise<http.IncomingMessage & { postBody: Promise<Buffer> }> {
     let promise = this._requestSubscribers.get(path);
     if (promise)
       return promise;
@@ -223,28 +182,24 @@ class TestServer {
     this._requestSubscribers.clear();
   }
 
-  /**
-   * @param {http.IncomingMessage} request
-   * @param {http.ServerResponse} response
-   */
-  _onRequest(request, response) {
+  _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
     request.on('error', error => {
-      if (error.code === 'ECONNRESET')
+      if ((error as any).code === 'ECONNRESET')
         response.end();
       else
         throw error;
     });
-    request.postBody = new Promise(resolve => {
-      const chunks = [];
+    (request as any).postBody = new Promise(resolve => {
+      const chunks: Buffer[] = [];
       request.on('data', chunk => {
         chunks.push(chunk);
       });
       request.on('end', () => resolve(Buffer.concat(chunks)));
     });
-    const path = url.parse(request.url).path;
+    const path = url.parse(request.url!).path;
     this.debugServer(`request ${request.method} ${path}`);
     if (this._auths.has(path)) {
-      const auth = this._auths.get(path);
+      const auth = this._auths.get(path)!;
       const credentials = Buffer.from((request.headers.authorization || '').split(' ')[1] || '', 'base64').toString();
       this.debugServer(`request credentials ${credentials}`);
       this.debugServer(`actual credentials ${auth.username}:${auth.password}`);
@@ -257,24 +212,18 @@ class TestServer {
     }
     // Notify request subscriber.
     if (this._requestSubscribers.has(path)) {
-      this._requestSubscribers.get(path)[fulfillSymbol].call(null, request);
+      this._requestSubscribers.get(path)![fulfillSymbol].call(null, request);
       this._requestSubscribers.delete(path);
     }
     const handler = this._routes.get(path);
-    if (handler) {
+    if (handler)
       handler.call(null, request, response);
-    } else {
+    else
       this.serveFile(request, response);
-    }
   }
 
-  /**
-   * @param {!http.IncomingMessage} request
-   * @param {!http.ServerResponse} response
-   * @param {string|undefined} filePath
-   */
-  async serveFile(request, response, filePath) {
-    let pathName = url.parse(request.url).path;
+  async serveFile(request: http.IncomingMessage, response: http.ServerResponse, filePath?: string) {
+    let pathName = url.parse(request.url!).path;
     if (!filePath) {
       if (pathName === '/')
         pathName = '/index.html';
@@ -293,7 +242,7 @@ class TestServer {
       response.setHeader('Cache-Control', 'no-cache, no-store');
     }
     if (this._csp.has(pathName))
-      response.setHeader('Content-Security-Policy', this._csp.get(pathName));
+      response.setHeader('Content-Security-Policy', this._csp.get(pathName)!);
 
     if (this._extraHeaders.has(pathName)) {
       const object = this._extraHeaders.get(pathName);
@@ -301,7 +250,7 @@ class TestServer {
         response.setHeader(key, object[key]);
     }
 
-    const {err, data} = await fs.promises.readFile(filePath).then(data => ({data})).catch(err => ({err}));
+    const { err, data } = await fs.promises.readFile(filePath).then(data => ({ data, err: undefined })).catch(err => ({ data: undefined, err }));
     // The HTTP transaction might be already terminated after async hop here - do nothing in this case.
     if (response.writableEnded)
       return;
@@ -332,7 +281,7 @@ class TestServer {
   }
 
   waitForWebSocketConnectionRequest() {
-    return new Promise(fullfil => {
+    return new Promise<http.IncomingMessage & { headers: http.IncomingHttpHeaders }>(fullfil => {
       this._wsServer.once('connection', (ws, req) => fullfil(req));
     });
   }
@@ -341,5 +290,3 @@ class TestServer {
     this.onceWebSocketConnection(ws => ws.send(data));
   }
 }
-
-module.exports = {TestServer};

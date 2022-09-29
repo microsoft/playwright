@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { ServerResponse } from '../../utils/testserver';
+import type { ServerResponse } from 'http';
 import { test as it, expect } from './pageTest';
 
 it('Page.Events.Request @smoke', async ({ page, server }) => {
