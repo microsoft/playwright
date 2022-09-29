@@ -748,7 +748,6 @@ export const baseFullConfig: FullConfigInternal = {
   version: require('../package.json').version,
   workers: 0,
   webServer: null,
-  _watchMode: false,
   _webServers: [],
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
