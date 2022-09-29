@@ -63,7 +63,7 @@ class JSONReporter implements Reporter {
             repeatEach: project.repeatEach,
             retries: project.retries,
             metadata: project.metadata,
-            id: project.id,
+            id: (project as any)._id,
             name: project.name,
             testDir: toPosixPath(project.testDir),
             testIgnore: serializePatterns(project.testIgnore),
@@ -80,7 +80,7 @@ class JSONReporter implements Reporter {
   private _mergeSuites(suites: Suite[]): JSONReportSuite[] {
     const fileSuites = new MultiMap<string, JSONReportSuite>();
     for (const projectSuite of suites) {
-      const projectId = projectSuite.project()!.id;
+      const projectId = (projectSuite.project() as any)._id;
       const projectName = projectSuite.project()!.name;
       for (const fileSuite of projectSuite.suites) {
         const file = fileSuite.location!.file;

@@ -199,10 +199,6 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   metadata: Metadata;
   /**
-   * Unique project id within this config.
-   */
-  id: string;
-  /**
    * Project name is visible in the report and during test execution.
    */
   name: string;
@@ -4433,11 +4429,6 @@ interface TestProject {
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
   grepInvert?: RegExp|Array<RegExp>;
-
-  /**
-   * Unique project id within this config.
-   */
-  id?: string;
 
   /**
    * Metadata that will be put directly to the test report serialized as JSON.

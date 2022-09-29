@@ -41,7 +41,6 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   grep: RegExp | RegExp[];
   grepInvert: RegExp | RegExp[] | null;
   metadata: Metadata;
-  id: string;
   name: string;
   snapshotDir: string;
   outputDir: string;
