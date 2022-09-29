@@ -199,7 +199,7 @@ async function listTestFiles(opts: { [key: string]: any }) {
 function forceRegExp(pattern: string): RegExp {
   const match = pattern.match(/^\/(.*)\/([gi]*)$/);
   if (match)
-    return new RegExp(match[1], match[2]);
+    return new RegExp(match[1].replace(/([^\\]|^)\\([^\\]|$)/g, '$1\\\\$2'), match[2]);
   return new RegExp(pattern.replace(/([^\\]|^)\\([^\\]|$)/g, '$1\\\\$2'), 'gi');
 }
 
