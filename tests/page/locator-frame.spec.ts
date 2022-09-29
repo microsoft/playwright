@@ -69,7 +69,7 @@ async function routeAmbiguous(page: Page) {
 it('should work for iframe @smoke', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
-  const button = page.frameLocator('iframe').get('button');
+  const button = page.frameLocator('iframe').locator('button');
   await button.waitFor();
   expect(await button.innerText()).toBe('Hello iframe');
   await expect(button).toHaveText('Hello iframe');
@@ -79,7 +79,7 @@ it('should work for iframe @smoke', async ({ page, server }) => {
 it('should work for nested iframe', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
-  const button = page.frameLocator('iframe').frameLocator('iframe').get('button');
+  const button = page.frameLocator('iframe').frameLocator('iframe').locator('button');
   await button.waitFor();
   expect(await button.innerText()).toBe('Hello nested iframe');
   await expect(button).toHaveText('Hello nested iframe');
@@ -89,15 +89,15 @@ it('should work for nested iframe', async ({ page, server }) => {
 it('should work for $ and $$', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
-  const locator = page.frameLocator('iframe').get('button');
+  const locator = page.frameLocator('iframe').locator('button');
   await expect(locator).toHaveText('Hello iframe');
-  const spans = page.frameLocator('iframe').get('span');
+  const spans = page.frameLocator('iframe').locator('span');
   await expect(spans).toHaveCount(2);
 });
 
 it('should wait for frame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  const error = await page.frameLocator('iframe').get('span').click({ timeout: 1000 }).catch(e => e);
+  const error = await page.frameLocator('iframe').locator('span').click({ timeout: 1000 }).catch(e => e);
   expect(error.message).toContain('waiting for frame "iframe"');
 });
 

@@ -460,5 +460,5 @@ it('getByLabelText should work', async ({ page, asset }) => {
   expect(await page.getByText('Name').evaluate(e => e.nodeName)).toBe('LABEL');
   expect(await page.getByLabelText('Name').evaluate(e => e.nodeName)).toBe('INPUT');
   expect(await page.mainFrame().getByLabelText('Name').evaluate(e => e.nodeName)).toBe('INPUT');
-  expect(await page.get('div').getByLabelText('Name').evaluate(e => e.nodeName)).toBe('INPUT');
+  expect(await page.locator('div').getByLabelText('Name').evaluate(e => e.nodeName)).toBe('INPUT');
 });

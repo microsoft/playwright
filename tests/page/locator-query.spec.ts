@@ -175,8 +175,8 @@ it('should enforce same frame for has/leftOf/rightOf/above/below/near', async ({
 
 it('alias methods coverage', async ({ page }) => {
   await page.setContent(`<div><button>Submit</button></div>`);
-  await expect(page.get('button')).toHaveCount(1);
-  await expect(page.get('div').get('button')).toHaveCount(1);
-  await expect(page.get('div').getByRole('button')).toHaveCount(1);
-  await expect(page.mainFrame().get('button')).toHaveCount(1);
+  await expect(page.locator('button')).toHaveCount(1);
+  await expect(page.locator('div').locator('button')).toHaveCount(1);
+  await expect(page.locator('div').getByRole('button')).toHaveCount(1);
+  await expect(page.mainFrame().locator('button')).toHaveCount(1);
 });

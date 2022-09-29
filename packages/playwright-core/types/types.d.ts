@@ -2435,32 +2435,6 @@ export interface Page {
   frames(): Array<Frame>;
 
   /**
-   * The method returns an element locator that can be used to perform actions on this page / frame. Locator is resolved to
-   * the element immediately before performing an action, so a series of actions on the same locator can in fact be performed
-   * on different DOM elements. That would happen if the DOM structure between those actions has changed.
-   *
-   * [Learn more about locators](https://playwright.dev/docs/locators).
-   * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param options
-   */
-  get(selector: string, options?: {
-    /**
-     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
-     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    has?: Locator;
-
-    /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
-     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
-     * `<article><div>Playwright</div></article>`.
-     */
-    hasText?: string|RegExp;
-  }): Locator;
-
-  /**
    * Returns element attribute value.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param name Attribute name to get the value for.
@@ -5493,32 +5467,6 @@ export interface Frame {
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
   frameLocator(selector: string): FrameLocator;
-
-  /**
-   * The method returns an element locator that can be used to perform actions on this page / frame. Locator is resolved to
-   * the element immediately before performing an action, so a series of actions on the same locator can in fact be performed
-   * on different DOM elements. That would happen if the DOM structure between those actions has changed.
-   *
-   * [Learn more about locators](https://playwright.dev/docs/locators).
-   * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param options
-   */
-  get(selector: string, options?: {
-    /**
-     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
-     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    has?: Locator;
-
-    /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
-     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
-     * `<article><div>Playwright</div></article>`.
-     */
-    hasText?: string|RegExp;
-  }): Locator;
 
   /**
    * Returns element attribute value.
@@ -9908,31 +9856,6 @@ export interface Locator {
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
   frameLocator(selector: string): FrameLocator;
-
-  /**
-   * The method finds an element matching the specified selector in the locator's subtree. It also accepts filter options,
-   * similar to [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) method.
-   *
-   * [Learn more about locators](https://playwright.dev/docs/locators).
-   * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param options
-   */
-  get(selector: string, options?: {
-    /**
-     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
-     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    has?: Locator;
-
-    /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
-     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
-     * `<article><div>Playwright</div></article>`.
-     */
-    hasText?: string|RegExp;
-  }): Locator;
 
   /**
    * Returns element attribute value.
@@ -15151,31 +15074,6 @@ export interface FrameLocator {
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
   frameLocator(selector: string): FrameLocator;
-
-  /**
-   * The method finds an element matching the specified selector in the locator's subtree. It also accepts filter options,
-   * similar to [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) method.
-   *
-   * [Learn more about locators](https://playwright.dev/docs/locators).
-   * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param options
-   */
-  get(selector: string, options?: {
-    /**
-     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
-     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    has?: Locator;
-
-    /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
-     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
-     * `<article><div>Playwright</div></article>`.
-     */
-    hasText?: string|RegExp;
-  }): Locator;
 
   /**
    * Allows locating input elements by the text of the associated label. For example, this method will find the input by

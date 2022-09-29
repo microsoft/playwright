@@ -299,10 +299,6 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return new Locator(this, selector, options);
   }
 
-  get(selector: string, options?: LocatorOptions): Locator {
-    return this.locator(selector, options);
-  }
-
   getByTestId(testId: string): Locator {
     return this.locator(Locator.getByTestIdSelector(testId));
   }

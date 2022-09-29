@@ -2162,18 +2162,6 @@ await locator.ClickAsync();
 
 An array of all frames attached to the page.
 
-## method: Page.get
-* since: v1.27
-- returns: <[Locator]>
-
-%%-template-locator-root-locator-%%
-
-### param: Page.get.selector = %%-find-selector-%%
-* since: v1.27
-### option: Page.get.-inline- = %%-locator-options-list-v1.14-%%
-* since: v1.27
-
-
 ## async method: Page.getAttribute
 * since: v1.8
 - returns: <[null]|[string]>
