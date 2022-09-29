@@ -396,6 +396,7 @@ export class Runner {
       for (const [project, files] of filesByProject) {
         const grepMatcher = createTitleMatcher(project.grep);
         const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
+        // TODO: also apply title matcher from options.
         const groupTitleMatcher = phase.find(p => p.projectName.toLocaleLowerCase() === project.name.toLocaleLowerCase())!.testTitleMatcher;
         const projectSuite = new Suite(project.name, 'project');
         projectSuite._projectConfig = project;
