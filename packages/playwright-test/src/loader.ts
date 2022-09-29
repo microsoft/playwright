@@ -81,8 +81,6 @@ export class Loader {
     config.forbidOnly = takeFirst(this._configCLIOverrides.forbidOnly, config.forbidOnly);
     config.fullyParallel = takeFirst(this._configCLIOverrides.fullyParallel, config.fullyParallel);
     config.globalTimeout = takeFirst(this._configCLIOverrides.globalTimeout, config.globalTimeout);
-    config.grep = takeFirst(this._configCLIOverrides.grep, config.grep);
-    config.grepInvert = takeFirst(this._configCLIOverrides.grepInvert, config.grepInvert);
     config.maxFailures = takeFirst(this._configCLIOverrides.maxFailures, config.maxFailures);
     config.outputDir = takeFirst(this._configCLIOverrides.outputDir, config.outputDir);
     config.quiet = takeFirst(this._configCLIOverrides.quiet, config.quiet);
@@ -257,8 +255,6 @@ export class Loader {
 
   private _applyCLIOverridesToProject(projectConfig: Project) {
     projectConfig.fullyParallel = takeFirst(this._configCLIOverrides.fullyParallel, projectConfig.fullyParallel);
-    projectConfig.grep = takeFirst(this._configCLIOverrides.grep, projectConfig.grep);
-    projectConfig.grepInvert = takeFirst(this._configCLIOverrides.grepInvert, projectConfig.grepInvert);
     projectConfig.outputDir = takeFirst(this._configCLIOverrides.outputDir, projectConfig.outputDir);
     projectConfig.repeatEach = takeFirst(this._configCLIOverrides.repeatEach, projectConfig.repeatEach);
     projectConfig.retries = takeFirst(this._configCLIOverrides.retries, projectConfig.retries);
