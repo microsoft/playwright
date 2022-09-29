@@ -306,21 +306,21 @@ test('should support grep and grepInvert', async ({ runGroups }, testInfo) => {
 
 test('should intercect gpoup and project level grep and grepInvert', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
-    'a' : {
+    'a': {
       grep: /a test/,
       grepInvert: [/no test/],
     },
-    'b' : {
+    'b': {
       grep: /.*b te.*/,
       grepInvert: [/.*a test/],
     },
-    'c' : {
+    'c': {
       grepInvert: [/.*test/],
     },
-    'd' : {
+    'd': {
       grep: [/.*unkwnown test/],
     },
-  }
+  };
   const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
     default: [
       [
@@ -336,21 +336,21 @@ test('should intercect gpoup and project level grep and grepInvert', async ({ ru
 
 test('should intercect gpoup and project level testMatch and testIgnore', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
-    'a' : {
+    'a': {
       testMatch: /.*a.spec.ts/,
       testIgnore: [/no test/],
     },
-    'b' : {
+    'b': {
       testMatch: '**/b.spec.ts',
       testIgnore: [/.*a.spec.ts/],
     },
-    'c' : {
+    'c': {
       testIgnore: [/.*no-match.spec.ts/],
     },
-    'd' : {
+    'd': {
       testMatch: [/.*unkwnown/],
     },
-  }
+  };
   const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, {
     default: [
       [
