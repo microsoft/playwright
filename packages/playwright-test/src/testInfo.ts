@@ -115,8 +115,8 @@ export class TestInfoImpl implements TestInfo {
       const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ');
 
       let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
-      if (project.id)
-        testOutputDir += '-' + sanitizeForFilePath(project.id);
+      if (project._id)
+        testOutputDir += '-' + sanitizeForFilePath(project._id);
       if (this.retry)
         testOutputDir += '-retry' + this.retry;
       if (this.repeatEachIndex)

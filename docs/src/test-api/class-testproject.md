@@ -150,13 +150,6 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 
 `grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
-## property: TestProject.id
-* since: v1.27
-- type: ?<[string]>
-
-Unique project id within this config.
-
-
 ## property: TestProject.metadata
 * since: v1.10
 - type: ?<[Metadata]>
