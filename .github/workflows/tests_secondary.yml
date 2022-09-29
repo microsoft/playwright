@@ -39,28 +39,6 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # Debugging for https://github.com/microsoft/playwright/issues/17394
-    - name: Download Playwright using Node.js debug build
-      if: matrix.os == 'ubuntu-20.04'
-      run: |
-        base_filename="node-linux-dbg-x64.tar.gz"
-        curl -O "https://playwrightdebugnodejs.blob.core.windows.net/node/${base_filename}"
-        tar -xzf "${base_filename}" --strip-components=1
-        echo "Hello from Node.js $(./node --version)"
-        ./node node_modules/.bin/playwright install ${{ matrix.browser }} chromium
-        rm -rf ./node
-    - name: Upload Node.js coredumps
-      uses: actions/upload-artifact@v2
-      with:
-        name: NodeJsCoredumps
-        path: core.*
-    - name: Break if there is a coredump
-      if: matrix.os == 'ubuntu-20.04'
-      run: |
-        if [ -f core.* ]; then
-          echo "Found coredump"
-          exit 1
-        fi
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
     - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
@@ -92,26 +70,6 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # Debugging for https://github.com/microsoft/playwright/issues/17394
-    - name: Download Playwright using Node.js debug build
-      run: |
-        base_filename="node-darwin-dbg-x64.tar.gz"
-        curl -O "https://playwrightdebugnodejs.blob.core.windows.net/node/${base_filename}"
-        tar -xzf "${base_filename}" --strip-components=1
-        echo "Hello from Node.js $(./node --version)"
-        ./node node_modules/.bin/playwright install ${{ matrix.browser }} chromium
-        rm -rf ./node
-    - name: Upload Node.js coredumps
-      uses: actions/upload-artifact@v2
-      with:
-        name: NodeJsCoredumps
-        path: core.*
-    - name: Break if there is a coredump
-      run: |
-        if [ -f core.* ]; then
-          echo "Found coredump"
-          exit 1
-        fi
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: npm run test -- --project=${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
@@ -174,28 +132,7 @@ jobs:
     - run: npm ci
       env:
         DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # Debugging for https://github.com/microsoft/playwright/issues/17394
-    - name: Download Playwright using Node.js debug build
-      run: |
-        base_filename="node-linux-dbg-x64.tar.gz"
-        curl -O "https://playwrightdebugnodejs.blob.core.windows.net/node/${base_filename}"
-        tar -xzf "${base_filename}" --strip-components=1
-        echo "Hello from Node.js $(./node --version)"
-        ./node node_modules/.bin/playwright install
-        rm -rf ./node
-    - name: Upload Node.js coredumps
-      uses: actions/upload-artifact@v2
-      with:
-        name: NodeJsCoredumps
-        path: core.*
-    - name: Break if there is a coredump
-      run: |
-        if [ -f core.* ]; then
-          echo "Found coredump"
-          exit 1
-        fi
     - run: npx playwright install-deps
     - run: npm run itest
       if: matrix.os != 'ubuntu-latest'
@@ -224,32 +161,6 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # Debugging for https://github.com/microsoft/playwright/issues/17394
-    - name: Download Playwright using Node.js debug build
-      if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
-      run: |
-        base_filename="node-linux-dbg-x64.tar.gz"
-        if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-          base_filename="node-darwin-dbg-x64.tar.gz"
-        fi
-        curl -O "https://playwrightdebugnodejs.blob.core.windows.net/node/${base_filename}"
-        tar -xzf "${base_filename}" --strip-components=1
-        echo "Hello from Node.js $(./node --version)"
-        ./node node_modules/.bin/playwright install ${{ matrix.browser }} chromium
-        rm -rf ./node
-    - name: Upload Node.js coredumps
-      if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
-      uses: actions/upload-artifact@v2
-      with:
-        name: NodeJsCoredumps
-        path: core.*
-    - name: Break if there is a coredump
-      if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
-      run: |
-        if [ -f core.* ]; then
-          echo "Found coredump"
-          exit 1
-        fi
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }} --headed
       if: always() && startsWith(matrix.os, 'ubuntu-')
@@ -282,26 +193,6 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # Debugging for https://github.com/microsoft/playwright/issues/17394
-    - name: Download Playwright using Node.js debug build
-      run: |
-        base_filename="node-linux-dbg-x64.tar.gz"
-        curl -O "https://playwrightdebugnodejs.blob.core.windows.net/node/${base_filename}"
-        tar -xzf "${base_filename}" --strip-components=1
-        echo "Hello from Node.js $(./node --version)"
-        ./node node_modules/.bin/playwright install chromium
-        rm -rf ./node
-    - name: Upload Node.js coredumps
-      uses: actions/upload-artifact@v2
-      with:
-        name: NodeJsCoredumps
-        path: core.*
-    - name: Break if there is a coredump
-      run: |
-        if [ -f core.* ]; then
-          echo "Found coredump"
-          exit 1
-        fi
     - run: npx playwright install --with-deps chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project='Chromium page tests'
       if: matrix.mode == 'service'
@@ -343,26 +234,6 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # Debugging for https://github.com/microsoft/playwright/issues/17394
-    - name: Download Playwright using Node.js debug build
-      run: |
-        base_filename="node-linux-dbg-x64.tar.gz"
-        curl -O "https://playwrightdebugnodejs.blob.core.windows.net/node/${base_filename}"
-        tar -xzf "${base_filename}" --strip-components=1
-        echo "Hello from Node.js $(./node --version)"
-        ./node node_modules/.bin/playwright install ${{ matrix.browser }} chromium
-        rm -rf ./node
-    - name: Upload Node.js coredumps
-      uses: actions/upload-artifact@v2
-      with:
-        name: NodeJsCoredumps
-        path: core.*
-    - name: Break if there is a coredump
-      run: |
-        if [ -f core.* ]; then
-          echo "Found coredump"
-          exit 1
-        fi
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium ${{ matrix.channel }}
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
       env:
@@ -468,29 +339,6 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # Debugging for https://github.com/microsoft/playwright/issues/17394
-    - name: Download Playwright using Node.js debug build
-      if: matrix.os == 'macos-12'
-      run: |
-        base_filename="node-darwin-dbg-x64.tar.gz"
-        curl -O "https://playwrightdebugnodejs.blob.core.windows.net/node/${base_filename}"
-        tar -xzf "${base_filename}" --strip-components=1
-        echo "Hello from Node.js $(./node --version)"
-        ./node node_modules/.bin/playwright install chromium-tip-of-tree
-        rm -rf ./node
-    - name: Upload Node.js coredumps
-      if: matrix.os == 'macos-12'
-      uses: actions/upload-artifact@v2
-      with:
-        name: NodeJsCoredumps
-        path: core.*
-    - name: Break if there is a coredump
-      if: matrix.os == 'macos-12'
-      run: |
-        if [ -f core.* ]; then
-          echo "Found coredump"
-          exit 1
-        fi
     - run: npx playwright install --with-deps chromium-tip-of-tree
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
       if: matrix.os == 'ubuntu-18.04'
@@ -526,32 +374,6 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # Debugging for https://github.com/microsoft/playwright/issues/17394
-    - name: Download Playwright using Node.js debug build
-      if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
-      run: |
-        base_filename="node-linux-dbg-x64.tar.gz"
-        if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-          base_filename="node-darwin-dbg-x64.tar.gz"
-        fi
-        curl -O "https://playwrightdebugnodejs.blob.core.windows.net/node/${base_filename}"
-        tar -xzf "${base_filename}" --strip-components=1
-        echo "Hello from Node.js $(./node --version)"
-        ./node node_modules/.bin/playwright install chromium-tip-of-tree
-        rm -rf ./node
-    - name: Upload Node.js coredumps
-      if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v2
-      with:
-        name: NodeJsCoredumps
-        path: core.*
-    - name: Break if there is a coredump
-      if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
-      run: |
-        if [ -f core.* ]; then
-          echo "Found coredump"
-          exit 1
-        fi
     - run: npx playwright install --with-deps chromium-tip-of-tree
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest -- --headed
       if: matrix.os == 'ubuntu-latest'
@@ -583,26 +405,6 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # Debugging for https://github.com/microsoft/playwright/issues/17394
-    - name: Download Playwright using Node.js debug build
-      run: |
-        base_filename="node-linux-dbg-x64.tar.gz"
-        curl -O "https://playwrightdebugnodejs.blob.core.windows.net/node/${base_filename}"
-        tar -xzf "${base_filename}" --strip-components=1
-        echo "Hello from Node.js $(./node --version)"
-        ./node node_modules/.bin/playwright install firefox-beta chromium
-        rm -rf ./node
-    - name: Upload Node.js coredumps
-      uses: actions/upload-artifact@v2
-      with:
-        name: NodeJsCoredumps
-        path: core.*
-    - name: Break if there is a coredump
-      run: |
-        if [ -f core.* ]; then
-          echo "Found coredump"
-          exit 1
-        fi
     - run: npx playwright install --with-deps firefox-beta chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ftest
       env:
@@ -656,26 +458,6 @@ jobs:
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    # Debugging for https://github.com/microsoft/playwright/issues/17394
-    - name: Download Playwright using Node.js debug build
-      run: |
-        base_filename="node-darwin-dbg-x64.tar.gz"
-        curl -O "https://playwrightdebugnodejs.blob.core.windows.net/node/${base_filename}"
-        tar -xzf "${base_filename}" --strip-components=1
-        echo "Hello from Node.js $(./node --version)"
-        ./node node_modules/.bin/playwright install firefox-beta chromium
-        rm -rf ./node
-    - name: Upload Node.js coredumps
-      uses: actions/upload-artifact@v2
-      with:
-        name: NodeJsCoredumps
-        path: core.*
-    - name: Break if there is a coredump
-      run: |
-        if [ -f core.* ]; then
-          echo "Found coredump"
-          exit 1
-        fi
     - run: npx playwright install --with-deps firefox-beta chromium
     - run: npm run ftest
       env:
