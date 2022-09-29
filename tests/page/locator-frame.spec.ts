@@ -35,6 +35,7 @@ async function routeIframe(page: Page) {
           </div>
           <span>1</span>
           <span>2</span>
+          <label for=target>Name</label><input id=target type=text>
         </html>`,
       contentType: 'text/html'
     }).catch(() => {});
@@ -247,4 +248,6 @@ it('role and text coverage', async ({ page, server }) => {
   await expect(button1).toHaveText('Hello iframe');
   await expect(button2).toHaveText('Hello iframe');
   await expect(button3).toHaveText('Hello iframe');
+  const input = page.frameLocator('iframe').getByLabelText('Name');
+  await expect(input).toHaveValue('');
 });

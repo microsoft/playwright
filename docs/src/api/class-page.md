@@ -2195,6 +2195,16 @@ Attribute name to get the value for.
 * since: v1.8
 
 
+## method: Page.getByLabelText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-label-text-%%
+
+### param: Page.getByLabelText.text = %%-locator-get-by-text-text-%%
+### option: Page.getByLabelText.exact = %%-locator-get-by-text-exact-%%
+
+
 ## method: Page.getByRole
 * since: v1.27
 - returns: <[Locator]>

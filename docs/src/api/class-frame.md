@@ -920,6 +920,16 @@ Attribute name to get the value for.
 * since: v1.8
 
 
+## method: Frame.getByLabelText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-label-text-%%
+
+### param: Frame.getByLabelText.text = %%-locator-get-by-text-text-%%
+### option: Frame.getByLabelText.exact = %%-locator-get-by-text-exact-%%
+
+
 ## method: Frame.getByRole
 * since: v1.27
 - returns: <[Locator]>

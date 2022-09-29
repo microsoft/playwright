@@ -1180,6 +1180,15 @@ Locate element by the test id. By default, the `data-testid` attribute is used a
 
 Allows locating elements that contain given text.
 
+## template-locator-get-by-label-text
+
+Allows locating input elements by the text of the associated label. For example, this method will find the input by label text Password in the following DOM:
+
+```html
+<label for="password-input">Password:</label>
+<input id="password-input">
+```
+
 ## template-locator-get-by-role
 
 Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace** accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.

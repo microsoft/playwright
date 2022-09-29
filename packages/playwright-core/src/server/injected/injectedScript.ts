@@ -278,6 +278,10 @@ export class InjectedScript {
           return [];
         if (body === 'return-empty')
           return [];
+        if (body === 'resolve-label') {
+          const control = (root as HTMLLabelElement).control;
+          return control ? [control] : [];
+        }
         if (body === 'component') {
           if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
             return [];
