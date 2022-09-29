@@ -63,7 +63,8 @@ type RunPhase = {
 
 type RunOptions = {
   listOnly?: boolean;
-  testFileFilters?: TestFileFilter[];
+  testFileFilters: TestFileFilter[];
+  testTitleMatcher: Matcher;
   projectFilter?: string[];
   projectGroup?: string;
   passWithNoTests?: boolean;
@@ -73,8 +74,6 @@ export type ConfigCLIOverrides = {
   forbidOnly?: boolean;
   fullyParallel?: boolean;
   globalTimeout?: number;
-  grep?: RegExp;
-  grepInvert?: RegExp;
   maxFailures?: number;
   outputDir?: string;
   quiet?: boolean;
@@ -183,7 +182,7 @@ export class Runner {
     return new Multiplexer(reporters);
   }
 
-  async runAllTests(options: RunOptions = {}): Promise<FullResult> {
+  async runAllTests(options: RunOptions): Promise<FullResult> {
     this._reporter = await this._createReporter(!!options.listOnly);
     const config = this._loader.fullConfig();
     const result = await raceAgainstTimeout(() => this._run(options), config.globalTimeout);
@@ -236,7 +235,7 @@ export class Runner {
       if (projectGroup)
         throw new Error('--group option can not be combined with --project');
     } else {
-      if (!projectGroup && config.groups?.default && !options.testFileFilters?.length)
+      if (!projectGroup && config.groups?.default && !options.testFileFilters.length)
         projectGroup = 'default';
       if (projectGroup) {
         if (config.shard)
@@ -289,7 +288,7 @@ export class Runner {
 
   private _runPhaseFromOptions(options: RunOptions): RunPhase {
     const testFileMatcher = fileMatcherFrom(options.testFileFilters);
-    const testTitleMatcher = () => true;
+    const testTitleMatcher = options.testTitleMatcher;
     const projects = options.projectFilter ?? this._loader.fullConfig().projects.map(p => p.name);
     return projects.map(projectName => ({
       projectName,
@@ -374,7 +373,7 @@ export class Runner {
 
       // 3. Filter tests to respect line/column filter.
       // TODO: figure out how this is supposed to work with groups.
-      if (options.testFileFilters?.length)
+      if (options.testFileFilters.length)
         filterByFocusedLine(preprocessRoot, options.testFileFilters);
 
       // 4. Complain about only.
