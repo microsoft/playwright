@@ -346,6 +346,7 @@ export const deps: any = {
       'libxml2',
       'libxslt1.1',
       'libatomic1',
+      'libevent-2.1-7',
     ],
     lib2package: {
       'libasound.so.2': 'libasound2',
@@ -435,6 +436,7 @@ export const deps: any = {
       'libxshmfence.so.1': 'libxshmfence1',
       'libatomic.so.1': 'libatomic1',
       'libenchant-2.so.2': 'libenchant-2-2',
+      'libevent-2.1.so.7': 'libevent-2.1-7',
     },
   },
 
@@ -562,6 +564,7 @@ export const deps: any = {
       'libxslt1.1',
       'libx264-163',
       'libatomic1',
+      'libevent-2.1-7',
     ],
     lib2package: {
       'libasound.so.2': 'libasound2',
@@ -650,6 +653,7 @@ export const deps: any = {
       'libx264.so': 'libx264-163',
       'libvpx.so.7': 'libvpx7',
       'libatomic.so.1': 'libatomic1',
+      'libevent-2.1.so.7': 'libevent-2.1-7',
     },
   },
   'debian11': {
@@ -871,11 +875,9 @@ deps['ubuntu20.04-arm64'] = {
   ],
   webkit: [
     ...deps['ubuntu20.04'].webkit,
-    'libevent-2.1-7',
   ],
   lib2package: {
     ...deps['ubuntu20.04'].lib2package,
-    'libevent-2.1.so.7': 'libevent-2.1.so.7',
   },
 };
 
@@ -887,11 +889,9 @@ deps['ubuntu22.04-arm64'] = {
   ],
   webkit: [
     ...deps['ubuntu22.04'].webkit,
-    'libevent-2.1-7',
   ],
   lib2package: {
     ...deps['ubuntu22.04'].lib2package,
-    'libevent-2.1.so.7': 'libevent-2.1.so.7',
   },
 };
 
