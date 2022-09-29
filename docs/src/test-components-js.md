@@ -235,8 +235,182 @@ Playwright is using [Vite](https://vitejs.dev/) to create the components bundle 
 
 ## Known issues and limitations
 
-Please refer to [this issue](https://github.com/microsoft/playwright/issues/14298) for the list of known issues and limitations.
+### Q) I can't import anything other than the components from TSX/JSX/Component files
 
-## Planned work
+As per above, you can only import your components from you test file. If you have utility methods or constants in your TSX files, it is advised to extract them into the TS files and import those utility methods and constants from your component files and from your test files. That allows us to not load any of the component code in the Node-based test runner and keep Playwright fast at executing your tests.
 
-- Watch mode: watch mode is highly anticipated and should be relatively straightforward in implementation.
+### Q) I have a project that already uses Vite. Can I reuse the config?
+
+At this point, Playwright is bundler-agnostic, so it is not reusing your existing Vite config. Your config might have a lot of things we won't be able to reuse. So for now, you would copy your path mappings and other high level settings into the `ctViteConfig` property of Playwright config.
+
+```js
+import type { PlaywrightTestConfig } from '@playwright/experimental-ct-react';
+
+const config: PlaywrightTestConfig = {
+  use: {
+    ctViteConfig: { ... },
+  },
+};
+export default config
+```
+
+### Q) What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue}`?
+
+```ts
+test('…', async { mount, page, context } => {
+    // …
+});
+```
+
+`@playwright/experimental-ct-{react,svelte,vue}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
+
+<details>
+<summary>React Example</summary>
+<pre>
+import { test, expect } from '@playwright/experimental-ct-react'
+
+import HelloWorld from './HelloWorld.tsx'
+
+test.use({ viewport: { width: 500, height: 500 } })
+
+test('should work', async ({ mount }) => {
+  const component = await mount(<HelloWorld msg='greetings' />);
+  await expect(component).toContainText('Greetings')
+})</pre>
+</details>
+
+<details>
+<summary>Vue Example</summary>
+<pre>
+import { test, expect } from '@playwright/experimental-ct-vue'
+
+import HelloWorld from './HelloWorld.vue'
+
+test.use({ viewport: { width: 500, height: 500 } })
+
+test('should work', async ({ mount }) => {
+  const component = await mount(HelloWorld, {
+    props: {
+      msg: 'Greetings'
+    }
+  });
+  await expect(component).toContainText('Greetings')
+})</pre>
+</details>
+
+<details>
+<summary>Svelte Example</summary>
+<pre>
+import { test, expect } from '@playwright/experimental-ct-vue'
+
+import NamedSlots from './NamedSlots.vue'
+
+test.use({ viewport: { width: 500, height: 500 } })
+
+test('named slots should work', async ({ mount }) => {
+  const component = await mount(NamedSlots, {
+    slots: {
+      header: 'Header',
+      main: 'Main Content',
+      footer: 'Footer'
+    }
+  })
+  await expect(component).toContainText('Header')
+  await expect(component).toContainText('Main Content')
+  await expect(component).toContainText('Footer')
+})</pre>
+</details>
+
+
+Additionally, it adds some config options you can use in your `playwright-ct.config.{ts,js}`.
+
+Finally, under the hood, each test re-uses the `context` and `page` fixture as a speed optimization for Component Testing. 
+It resets them in between each test so it should be functionally equivalent to `@playwright/test`'s guarantee that you get a new, isolated `context` and `page` fixture per-test.
+
+### Q) Can I use `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue}`?
+
+Yes. Use a Playwright Config for each and follow their respective guides ([E2E Playwright Test](https://playwright.dev/docs/intro), [Component Tests](https://playwright.dev/docs/test-components))
+
+### Q) Why can't I pass a variable to mount?
+
+This is a [known issue](https://github.com/microsoft/playwright/issues/14401). Following pattern does not work:
+
+```js
+const app = <App></App>;
+await mount(app);
+```
+
+results in
+
+```
+undefined: TypeError: Cannot read properties of undefined (reading 'map')
+```
+
+while this works:
+
+```js
+await mount(<App></App>);
+```
+
+### Q) How can I use Vite plugins?
+
+You can specify plugins via Vite config for testing settings. Note that once you start specifying plugins, you are responsible for specifying the framework plugin as well, `vue()` in this case:
+
+```js
+import { type PlaywrightTestConfig, devices } from '@playwright/experimental-ct-vue'
+
+import { resolve } from 'path'
+import vue from '@vitejs/plugin-vue'
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+
+const config: PlaywrightTestConfig = {
+  testDir: './tests/component',
+  use: {
+    trace: 'on-first-retry',
+    ctViteConfig: {
+      plugins: [
+        vue(),
+        AutoImport({
+          imports: [
+            'vue',
+            'vue-router',
+            '@vueuse/head',
+            'pinia',
+            {
+              '@/store': ['useStore'],
+            },
+          ],
+          dts: 'src/auto-imports.d.ts',
+          eslintrc: {
+            enabled: true,
+          },
+        }),
+        Components({
+          dirs: ['src/components'],
+          extensions: ['vue'],
+        }),
+      ],
+      resolve: {
+        alias: {
+          '@': resolve(__dirname, './src'),
+        },
+      },
+    },
+  },
+```
+
+don't forget to initialize your plugins, for example if you are using Pinia, add init code into your `playwright/index.js`:
+
+```js
+import { createTestingPinia } from '@pinia/testing';
+
+createTestingPinia({
+  createSpy: (args) => {
+    console.log('spy', args)
+    return () => {
+      console.log('spyreturns')
+    }
+  },
+});
+```
