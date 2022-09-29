@@ -136,6 +136,7 @@ export const deps: any = {
       'libxkbcommon0',
       'libxml2',
       'libxslt1.1',
+      'libevent-2.1-6',
     ],
     lib2package: {
       'libasound.so.2': 'libasound2',
@@ -223,6 +224,7 @@ export const deps: any = {
       'libxslt.so.1': 'libxslt1.1',
       'libXt.so.6': 'libxt6',
       'libXtst.so.6': 'libxtst6',
+      'libevent-2.1-6': 'libevent-2.1-6',
     },
   },
 
