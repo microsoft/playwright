@@ -90,11 +90,6 @@ export type ConfigCLIOverrides = {
   use?: any;
 };
 
-type WatchProgress = {
-  canceled: boolean;
-  dispatcher: Dispatcher | undefined;
-};
-
 export class Runner {
   private _loader: Loader;
   private _reporter!: ReporterInternal;
