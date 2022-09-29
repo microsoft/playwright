@@ -75,6 +75,11 @@ export class TestServer {
     this._wsServer = new ws.WebSocketServer({ noServer: true });
     this._server.on('upgrade', async (request, socket, head) => {
       const pathname = url.parse(request.url!).path;
+      if (pathname === '/ws-401') {
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\nUnauthorized body');
+        socket.destroy();
+        return;
+      }
       if (pathname === '/ws-slow')
         await new Promise(f => setTimeout(f, 2000));
       if (!['/ws', '/ws-slow'].includes(pathname)) {

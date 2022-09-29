@@ -62,6 +62,13 @@ test('should connect over wss', async ({ browserType, startRemoteServer, httpsSe
   }
 });
 
+test('should print HTTP error', async ({ browserType, server, mode }) => {
+  test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.
+  const error = await browserType.connect(`ws://localhost:${server.PORT}/ws-401`).catch(e => e);
+  expect(error.message).toContain('401');
+  expect(error.message).toContain('Unauthorized body');
+});
+
 test('should be able to reconnect to a browser', async ({ browserType, startRemoteServer, server }) => {
   const remoteServer = await startRemoteServer();
   {
