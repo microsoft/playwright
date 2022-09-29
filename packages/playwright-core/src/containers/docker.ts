@@ -276,7 +276,7 @@ function createStacklessError(message: string) {
 }
 
 export function addDockerCLI(program: Command) {
-  const dockerCommand = program.command('docker')
+  const dockerCommand = program.command('docker', { hidden: true })
       .description(`Manage Docker integration (EXPERIMENTAL)`);
 
   dockerCommand.command('build')
