@@ -21,7 +21,7 @@ import * as path from 'path';
 import { promisify } from 'util';
 import type { TestGroup } from './dispatcher';
 import { Dispatcher } from './dispatcher';
-import type { TestFileFilter } from './util';
+import type { Matcher, TestFileFilter } from './util';
 import { createFileMatcher, createTitleMatcher, serializeError } from './util';
 import type { TestCase } from './test';
 import { Suite } from './test';
@@ -56,9 +56,10 @@ export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.j
 
 // Project group is a sequence of run phases.
 type RunPhase = {
-  testFileFilters: TestFileFilter[];
-  projectFilter?: string[];
-};
+  projectName: string;
+  testFileMatcher: Matcher;
+  testTitleMatcher: Matcher;
+}[];
 
 type RunOptions = {
   listOnly?: boolean;
@@ -220,7 +221,13 @@ export class Runner {
   }
 
   async listTestFiles(configFile: string, projectNames: string[] | undefined): Promise<any> {
-    const filesByProject = await this._collectFiles([], projectNames);
+    const projects = projectNames ?? this._loader.fullConfig().projects.map(p => p.name);
+    const phase: RunPhase = projects.map(projectName => ({
+      projectName,
+      testFileMatcher: () => true,
+      testTitleMatcher: () => true,
+    }));
+    const filesByProject = await this._collectFiles(phase);
     const report: any = {
       projects: []
     };
@@ -234,7 +241,6 @@ export class Runner {
     }
     return report;
   }
-
 
   private _collectRunPhases(options: RunOptions) {
     const config = this._loader.fullConfig();
@@ -258,64 +264,82 @@ export class Runner {
       if (!group)
         throw new Error(`Cannot find project group '${projectGroup}' in the config`);
       for (const entry of group) {
-        const projectFilter: string[] = [];
-        const testFileFilters: TestFileFilter[] = [];
         if (isString(entry)) {
-          projectFilter.push(entry);
+          phases.push([{
+            projectName: entry,
+            testFileMatcher: () => true,
+            testTitleMatcher: () => true,
+          }]);
         } else {
+          const phase: RunPhase = [];
+          phases.push(phase);
           for (const p of entry) {
-            if (isString(p))
-              projectFilter.push(p);
-            else if (isString(p.project))
-              projectFilter.push(p.project);
-            else
-              projectFilter.push(...p.project);
+            if (isString(p)) {
+              phase.push({
+                projectName: p,
+                testFileMatcher: () => true,
+                testTitleMatcher: () => true,
+              });
+            } else {
+              const testMatch = p.testMatch ? createFileMatcher(p.testMatch) : () => true;
+              const testIgnore = p.testIgnore ? createFileMatcher(p.testIgnore) : () => false;
+              const grep = p.grep ? createTitleMatcher(p.grep) : () => true;
+              const grepInvert = p.grepInvert ? createTitleMatcher(p.grepInvert) : () => false;
+              const projects = isString(p.project) ? [p.project] : p.project;
+              phase.push(...projects.map(projectName => ({
+                projectName,
+                testFileMatcher: (file: string) => !testIgnore(file) && testMatch(file),
+                testTitleMatcher: (title: string) => !grepInvert(title) && grep(title),
+              })));
+            }
           }
         }
-        // TODO: filter per project set.
-        phases.push({
-          testFileFilters,
-          projectFilter
-        });
       }
     } else {
-      phases.push({
-        projectFilter: options.projectFilter,
-        testFileFilters: options.testFileFilters || [],
-      });
+      phases.push(this._runPhaseFromOptions(options));
     }
     return phases;
   }
 
-  private async _collectFiles(testFileFilters: TestFileFilter[], projectNames?: string[]): Promise<Map<FullProjectInternal, string[]>> {
-    const testFileFilter = testFileFilters.length ? createFileMatcher(testFileFilters.map(e => e.re || e.exact || '')) : () => true;
-    let projectsToFind: Set<string> | undefined;
-    let unknownProjects: Map<string, string> | undefined;
-    if (projectNames) {
-      projectsToFind = new Set();
-      unknownProjects = new Map();
-      projectNames.forEach(n => {
-        const name = n.toLocaleLowerCase();
-        projectsToFind!.add(name);
-        unknownProjects!.set(name, n);
-      });
-    }
+  private _runPhaseFromOptions(options: RunOptions): RunPhase {
+    const testFileMatcher = fileMatcherFrom(options.testFileFilters);
+    const testTitleMatcher = () => true;
+    const projects = options.projectFilter ?? this._loader.fullConfig().projects.map(p => p.name);
+    return projects.map(projectName => ({
+      projectName,
+      testFileMatcher,
+      testTitleMatcher
+    }));
+  }
+
+  private _collectProjects(projectNames: string[]): FullProjectInternal[] {
+    const projectsToFind = new Set<string>();
+    const unknownProjects = new Map<string, string>();
+    projectNames.forEach(n => {
+      const name = n.toLocaleLowerCase();
+      projectsToFind.add(name);
+      unknownProjects.set(name, n);
+    });
     const fullConfig = this._loader.fullConfig();
     const projects = fullConfig.projects.filter(project => {
-      if (!projectsToFind)
-        return true;
       const name = project.name.toLocaleLowerCase();
-      unknownProjects!.delete(name);
+      unknownProjects.delete(name);
       return projectsToFind.has(name);
     });
-    if (unknownProjects && unknownProjects.size) {
+    if (unknownProjects.size) {
       const names = fullConfig.projects.map(p => p.name).filter(name => !!name);
       if (!names.length)
         throw new Error(`No named projects are specified in the configuration file`);
       const unknownProjectNames = Array.from(unknownProjects.values()).map(n => `"${n}"`).join(', ');
       throw new Error(`Project(s) ${unknownProjectNames} not found. Available named projects: ${names.map(name => `"${name}"`).join(', ')}`);
     }
+    return projects;
+  }
 
+  private async _collectFiles(runPhase: RunPhase): Promise<Map<FullProjectInternal, string[]>> {
+    const projectNames = runPhase.map(p => p.projectName);
+    const projects = this._collectProjects(projectNames);
+    const projectToGroupEntry = new Map(runPhase.map(p => [p.projectName.toLocaleLowerCase(), p]));
     const files = new Map<FullProjectInternal, string[]>();
     for (const project of projects) {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
@@ -323,6 +347,7 @@ export class Runner {
       const testIgnore = createFileMatcher(project.testIgnore);
       const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
       const testFileExtension = (file: string) => extensions.includes(path.extname(file));
+      const testFileFilter = projectToGroupEntry.get(project.name.toLocaleLowerCase())!.testFileMatcher;
       const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
       files.set(project, testFiles);
     }
@@ -338,9 +363,9 @@ export class Runner {
     const rootSuite = new Suite('', 'root');
     const runPhases = this._collectRunPhases(options);
     assert(runPhases.length > 0);
-    for (const { projectFilter, testFileFilters } of runPhases) {
+    for (const phase of runPhases) {
       // TODO: do not collect files for each project multiple times.
-      const filesByProject = await this._collectFiles(testFileFilters, projectFilter);
+      const filesByProject = await this._collectFiles(phase);
 
       const allTestFiles = new Set<string>();
       for (const files of filesByProject.values())
@@ -363,7 +388,8 @@ export class Runner {
 
       // 3. Filter tests to respect line/column filter.
       // TODO: figure out how this is supposed to work with groups.
-      filterByFocusedLine(preprocessRoot, testFileFilters);
+      if (options.testFileFilters?.length)
+        filterByFocusedLine(preprocessRoot, options.testFileFilters);
 
       // 4. Complain about only.
       if (config.forbidOnly) {
@@ -385,6 +411,7 @@ export class Runner {
       for (const [project, files] of filesByProject) {
         const grepMatcher = createTitleMatcher(project.grep);
         const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
+        const groupTitleMatcher = phase.find(p => p.projectName.toLocaleLowerCase() === project.name.toLocaleLowerCase())!.testTitleMatcher;
         const projectSuite = new Suite(project.name, 'project');
         projectSuite._projectConfig = project;
         if (project._fullyParallel)
@@ -399,7 +426,7 @@ export class Runner {
               const grepTitle = test.titlePath().join(' ');
               if (grepInvertMatcher?.(grepTitle))
                 return false;
-              return grepMatcher(grepTitle);
+              return grepMatcher(grepTitle) && groupTitleMatcher(grepTitle);
             });
             if (builtSuite)
               projectSuite._addSuite(builtSuite);
@@ -546,8 +573,7 @@ export class Runner {
 
     const runAndWatch = async () => {
       // 5. Collect all files.
-      const testFileFilters = options.testFileFilters || [];
-      const filesByProject = await this._collectFiles(testFileFilters, options.projectFilter);
+      const filesByProject = await this._collectFiles(this._runPhaseFromOptions(options));
 
       const allTestFiles = new Set<string>();
       for (const files of filesByProject.values())
@@ -579,12 +605,10 @@ export class Runner {
     if (progress.canceled)
       return;
 
-    const testFileFilters: TestFileFilter[] = [...testFiles].map(f => ({
-      exact: f,
-      line: null,
-      column: null,
-    }));
-    const filesByProject = await this._collectFiles(testFileFilters, options.projectFilter);
+    const fileMatcher = createFileMatcher([...testFiles]);
+    const phase = this._runPhaseFromOptions(options);
+    phase.forEach(p => p.testFileMatcher = fileMatcher);
+    const filesByProject = await this._collectFiles(phase);
 
     if (progress.canceled)
       return;
@@ -1021,6 +1045,12 @@ class ListModeReporter implements Reporter {
     // eslint-disable-next-line no-console
     console.error('\n' + formatError(this.config, error, false).message);
   }
+}
+
+function fileMatcherFrom(testFileFilters?: TestFileFilter[]): Matcher {
+  if (testFileFilters?.length)
+    return createFileMatcher(testFileFilters.map(e => e.re || e.exact || ''));
+  return () => true;
 }
 
 function createForbidOnlyError(config: FullConfigInternal, onlyTestsAndSuites: (TestCase | Suite)[]): TestError {
