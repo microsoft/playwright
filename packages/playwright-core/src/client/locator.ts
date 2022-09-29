@@ -55,6 +55,14 @@ export class Locator implements api.Locator {
     return `css=[${Locator._testIdAttributeName}=${JSON.stringify(testId)}]`;
   }
 
+  static getByLabelTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
+    if (!isString(text))
+      return `text=${text}`;
+    const escaped = JSON.stringify(text);
+    const selector = options?.exact ? `text=${escaped}` : `text=${escaped.substring(1, escaped.length - 1)}`;
+    return selector +  ' >> control=resolve-label';
+  }
+
   static getByTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
     if (!isString(text))
       return `text=${text}`;
@@ -187,6 +195,10 @@ export class Locator implements api.Locator {
 
   getByTestId(testId: string): Locator {
     return this.locator(Locator.getByTestIdSelector(testId));
+  }
+
+  getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByLabelTextSelector(text, options));
   }
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
@@ -379,6 +391,9 @@ export class FrameLocator implements api.FrameLocator {
     return this.locator(Locator.getByTestIdSelector(testId));
   }
 
+  getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByLabelTextSelector(text, options));
+  }
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.locator(Locator.getByTextSelector(text, options));
   }

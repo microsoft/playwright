@@ -646,6 +646,16 @@ Attribute name to get the value for.
 * since: v1.14
 
 
+## method: Locator.getByLabelText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-label-text-%%
+
+### param: Locator.getByLabelText.text = %%-locator-get-by-text-text-%%
+### option: Locator.getByLabelText.exact = %%-locator-get-by-text-exact-%%
+
+
 ## method: Locator.getByRole
 * since: v1.27
 - returns: <[Locator]>

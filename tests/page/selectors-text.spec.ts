@@ -454,3 +454,11 @@ it('should work with paired quotes in the middle of selector', async ({ page }) 
   // Should double escape inside quoted text.
   await expect(page.locator(`div >> text='pattern "^-?\\\\d+$"'`)).toBeVisible();
 });
+
+it('getByLabelText should work', async ({ page, asset }) => {
+  await page.setContent(`<div><label for=target>Name</label><input id=target type=text></div>`);
+  expect(await page.getByText('Name').evaluate(e => e.nodeName)).toBe('LABEL');
+  expect(await page.getByLabelText('Name').evaluate(e => e.nodeName)).toBe('INPUT');
+  expect(await page.mainFrame().getByLabelText('Name').evaluate(e => e.nodeName)).toBe('INPUT');
+  expect(await page.get('div').getByLabelText('Name').evaluate(e => e.nodeName)).toBe('INPUT');
+});

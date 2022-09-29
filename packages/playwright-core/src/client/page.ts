@@ -572,6 +572,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this.mainFrame().getByTestId(testId);
   }
 
+  getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByLabelText(text, options);
+  }
+
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.mainFrame().getByText(text, options);
   }
