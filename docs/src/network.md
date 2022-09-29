@@ -8,7 +8,7 @@ Playwright provides APIs to **monitor** and **modify** network traffic, both HTT
 
 ## HTTP Authentication
 
-Check HTTP Authentication with [`method: Browser.newContext`].
+Perform HTTP Authentication with [`method: Browser.newContext`].
 
 ```js
 const context = await browser.newContext({
