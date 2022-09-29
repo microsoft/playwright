@@ -418,7 +418,7 @@ it('getByTestId should work', async ({ page }) => {
   await page.setContent('<div><div data-testid="Hello">Hello world</div></div>');
   await expect(page.getByTestId('Hello')).toHaveText('Hello world');
   await expect(page.mainFrame().getByTestId('Hello')).toHaveText('Hello world');
-  await expect(page.get('div').getByTestId('Hello')).toHaveText('Hello world');
+  await expect(page.locator('div').getByTestId('Hello')).toHaveText('Hello world');
 });
 
 it('getByTestId should escape id', async ({ page }) => {

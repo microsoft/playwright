@@ -887,18 +887,6 @@ await locator.ClickAsync();
 * since: v1.17
 
 
-## method: Frame.get
-* since: v1.27
-- returns: <[Locator]>
-
-%%-template-locator-root-locator-%%
-
-### param: Frame.get.selector = %%-find-selector-%%
-* since: v1.27
-### option: Frame.get.-inline- = %%-locator-options-list-v1.14-%%
-* since: v1.27
-
-
 ## async method: Frame.getAttribute
 * since: v1.8
 - returns: <[null]|[string]>

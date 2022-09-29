@@ -564,10 +564,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this.mainFrame().locator(selector, options);
   }
 
-  get(selector: string, options?: LocatorOptions): Locator {
-    return this.mainFrame().locator(selector, options);
-  }
-
   getByTestId(testId: string): Locator {
     return this.mainFrame().getByTestId(testId);
   }

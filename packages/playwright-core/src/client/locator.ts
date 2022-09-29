@@ -189,10 +189,6 @@ export class Locator implements api.Locator {
     return new Locator(this._frame, this._selector + ' >> ' + selector, options);
   }
 
-  get(selector: string, options?: LocatorOptions): Locator {
-    return this.locator(selector, options);
-  }
-
   getByTestId(testId: string): Locator {
     return this.locator(Locator.getByTestIdSelector(testId));
   }
@@ -381,10 +377,6 @@ export class FrameLocator implements api.FrameLocator {
 
   locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
     return new Locator(this._frame, this._frameSelector + ' >> control=enter-frame >> ' + selector, options);
-  }
-
-  get(selector: string, options?: LocatorOptions): Locator {
-    return this.locator(selector, options);
   }
 
   getByTestId(testId: string): Locator {

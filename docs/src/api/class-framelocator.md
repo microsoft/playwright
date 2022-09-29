@@ -114,18 +114,6 @@ in that iframe.
 * since: v1.17
 
 
-## method: FrameLocator.get
-* since: v1.27
-- returns: <[Locator]>
-
-%%-template-locator-locator-%%
-
-### param: FrameLocator.get.selector = %%-find-selector-%%
-* since: v1.27
-### option: FrameLocator.get.-inline- = %%-locator-options-list-v1.14-%%
-* since: v1.27
-
-
 ## method: FrameLocator.getByLabelText
 * since: v1.27
 - returns: <[Locator]>

@@ -618,18 +618,6 @@ await locator.ClickAsync();
 * since: v1.17
 
 
-## method: Locator.get
-* since: v1.27
-- returns: <[Locator]>
-
-%%-template-locator-locator-%%
-
-### param: Locator.get.selector = %%-find-selector-%%
-* since: v1.27
-### option: Locator.get.-inline- = %%-locator-options-list-v1.14-%%
-* since: v1.27
-
-
 ## async method: Locator.getAttribute
 * since: v1.14
 - returns: <[null]|[string]>
