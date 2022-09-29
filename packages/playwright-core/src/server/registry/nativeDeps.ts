@@ -779,6 +779,7 @@ export const deps: any = {
       'libxml2',
       'libxslt1.1',
       'libatomic1',
+      'libevent-2.1-7',
     ],
     lib2package: {
       'libasound.so.2': 'libasound2',
@@ -863,6 +864,7 @@ export const deps: any = {
       'libxslt.so.1': 'libxslt1.1',
       'libXtst.so.6': 'libxtst6',
       'libatomic.so.1': 'libatomic1',
+      'libevent-2.1.so.7': 'libevent-2.1-7',
     }
   }
 };
