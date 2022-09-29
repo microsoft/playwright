@@ -45,7 +45,6 @@ export interface FullConfigInternal extends FullConfigPublic {
   _globalOutputDir: string;
   _configDir: string;
   _maxConcurrentTestGroups: number;
-  _watchMode: boolean;
   _ignoreSnapshots: boolean;
   _workerIsolation: WorkerIsolation;
   /**

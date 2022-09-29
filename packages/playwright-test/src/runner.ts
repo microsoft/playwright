@@ -66,7 +66,6 @@ type RunOptions = {
   testFileFilters?: TestFileFilter[];
   projectFilter?: string[];
   projectGroup?: string;
-  watchMode?: boolean;
   passWithNoTests?: boolean;
 };
 
@@ -100,8 +99,6 @@ export class Runner {
   private _loader: Loader;
   private _reporter!: ReporterInternal;
   private _plugins: TestRunnerPlugin[] = [];
-  private _watchRepeatEachIndex = 0;
-  private _watchJobsQueue = Promise.resolve();
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
     this._loader = new Loader(configCLIOverrides);
@@ -194,12 +191,6 @@ export class Runner {
   async runAllTests(options: RunOptions = {}): Promise<FullResult> {
     this._reporter = await this._createReporter(!!options.listOnly);
     const config = this._loader.fullConfig();
-    if (options.watchMode) {
-      config._watchMode = true;
-      config._workerIsolation = 'isolate-projects';
-      return await this._watch(options);
-    }
-
     const result = await raceAgainstTimeout(() => this._run(options), config.globalTimeout);
     let fullResult: FullResult;
     if (result.timedOut) {
@@ -548,124 +539,6 @@ export class Runner {
       await globalTearDown?.();
     }
     return result;
-  }
-
-  private async _watch(options: RunOptions): Promise<FullResult> {
-    const config = this._loader.fullConfig();
-
-    // 1. Create empty suite.
-    const rootSuite = new Suite('', 'root');
-
-    // 2. Report begin.
-    this._reporter.onBegin?.(config, rootSuite);
-
-    // 3. Remove output directores.
-    if (!this._removeOutputDirs(options))
-      return { status: 'failed' };
-
-    // 4. Run Global setup.
-    const result: FullResult = { status: 'passed' };
-    const globalTearDown = await this._performGlobalSetup(config, rootSuite, result);
-    if (result.status !== 'passed')
-      return result;
-
-    const progress: WatchProgress = { canceled: false, dispatcher: undefined };
-
-    const runAndWatch = async () => {
-      // 5. Collect all files.
-      const filesByProject = await this._collectFiles(this._runPhaseFromOptions(options));
-
-      const allTestFiles = new Set<string>();
-      for (const files of filesByProject.values())
-        files.forEach(file => allTestFiles.add(file));
-
-      // 6. Trigger 'all files changed'.
-      await this._runAndReportError(async () => {
-        await this._runModifiedTestFilesForWatch(progress, options, allTestFiles);
-      }, result);
-
-      // 7. Start watching the filesystem for modifications.
-      await this._watchTestFiles(progress, options);
-    };
-
-    try {
-      const sigintWatcher = new SigIntWatcher();
-      await Promise.race([runAndWatch(), sigintWatcher.promise()]);
-      if (!sigintWatcher.hadSignal())
-        sigintWatcher.disarm();
-      progress.canceled = true;
-      await progress.dispatcher?.stop();
-    } finally {
-      await globalTearDown?.();
-    }
-    return result;
-  }
-
-  private async _runModifiedTestFilesForWatch(progress: WatchProgress, options: RunOptions, testFiles: Set<string>): Promise<void> {
-    if (progress.canceled)
-      return;
-
-    const fileMatcher = createFileMatcher([...testFiles]);
-    const phase = this._runPhaseFromOptions(options);
-    phase.forEach(p => p.testFileMatcher = fileMatcher);
-    const filesByProject = await this._collectFiles(phase);
-
-    if (progress.canceled)
-      return;
-
-    const testGroups: TestGroup[] = [];
-    const repeatEachIndex = ++this._watchRepeatEachIndex;
-    for (const [project, files] of filesByProject) {
-      for (const file of files) {
-        const group: TestGroup = {
-          workerHash: `run${project.id}-repeat${repeatEachIndex}`,
-          requireFile: file,
-          repeatEachIndex,
-          projectId: project.id,
-          tests: [],
-          watchMode: true,
-        };
-        testGroups.push(group);
-      }
-    }
-
-    const dispatcher = new Dispatcher(this._loader, testGroups, this._reporter);
-    progress.dispatcher = dispatcher;
-    await dispatcher.run();
-    await dispatcher.stop();
-    progress.dispatcher = undefined;
-  }
-
-  private async _watchTestFiles(progress: WatchProgress, options: RunOptions): Promise<void> {
-    const folders = new Set<string>();
-    const config = this._loader.fullConfig();
-    for (const project of config.projects) {
-      if (options.projectFilter && !options.projectFilter.includes(project.name))
-        continue;
-      folders.add(project.testDir);
-    }
-
-    for (const folder of folders) {
-      const changedFiles = new Set<string>();
-      let throttleTimer: NodeJS.Timeout | undefined;
-      fs.watch(folder, (event, filename) => {
-        if (event !== 'change')
-          return;
-
-        const fullName = path.join(folder, filename);
-        changedFiles.add(fullName);
-        if (throttleTimer)
-          clearTimeout(throttleTimer);
-
-        throttleTimer = setTimeout(() => {
-          const copy = new Set(changedFiles);
-          changedFiles.clear();
-          this._watchJobsQueue = this._watchJobsQueue.then(() => this._runModifiedTestFilesForWatch(progress, options, copy));
-        }, 250);
-      });
-    }
-
-    await new Promise(() => {});
   }
 
   private async _removeOutputDirs(options: RunOptions): Promise<boolean> {

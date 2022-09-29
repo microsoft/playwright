@@ -168,7 +168,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     testFileFilters,
     projectFilter: opts.project || undefined,
     projectGroup: opts.group,
-    watchMode: !!process.env.PW_TEST_WATCH,
     passWithNoTests: opts.passWithNoTests,
   });
   await stopProfiling(undefined);
