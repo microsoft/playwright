@@ -333,7 +333,7 @@ Yes. Use a Playwright Config for each and follow their respective guides ([E2E P
 
 ### Q) Why can't I pass a variable to mount?
 
-This is a [known issue](https://github.com/microsoft/playwright/issues/14401). Following pattern does not work:
+This is a [known issue](https://github.com/microsoft/playwright/issues/14401). The following pattern does not work:
 
 ```js
 const app = <App></App>;
