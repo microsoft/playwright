@@ -568,6 +568,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this.mainFrame().getByTestId(testId);
   }
 
+  getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByAltText(text, options);
+  }
+
   getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.mainFrame().getByLabelText(text, options);
   }
@@ -578,6 +582,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.mainFrame().getByText(text, options);
+  }
+
+  getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByTitle(text, options);
   }
 
   getByRole(role: string, options: ByRoleOptions = {}): Locator {

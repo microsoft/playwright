@@ -58,3 +58,31 @@ it('getByPlaceholderText should work', async ({ page }) => {
   await expect(page.mainFrame().getByPlaceholderText('hello')).toHaveCount(2);
   await expect(page.locator('div').getByPlaceholderText('hello')).toHaveCount(2);
 });
+
+it('getByAltText should work', async ({ page }) => {
+  await page.setContent(`<div>
+    <input alt='Hello'>
+    <input alt='Hello World'>
+  </div>`);
+  await expect(page.getByAltText('hello')).toHaveCount(2);
+  await expect(page.getByAltText('Hello', { exact: true })).toHaveCount(1);
+  await expect(page.getByAltText(/wor/i)).toHaveCount(1);
+
+  // Coverage
+  await expect(page.mainFrame().getByAltText('hello')).toHaveCount(2);
+  await expect(page.locator('div').getByAltText('hello')).toHaveCount(2);
+});
+
+it('getByTitle should work', async ({ page }) => {
+  await page.setContent(`<div>
+    <input title='Hello'>
+    <input title='Hello World'>
+  </div>`);
+  await expect(page.getByTitle('hello')).toHaveCount(2);
+  await expect(page.getByTitle('Hello', { exact: true })).toHaveCount(1);
+  await expect(page.getByTitle(/wor/i)).toHaveCount(1);
+
+  // Coverage
+  await expect(page.mainFrame().getByTitle('hello')).toHaveCount(2);
+  await expect(page.locator('div').getByTitle('hello')).toHaveCount(2);
+});

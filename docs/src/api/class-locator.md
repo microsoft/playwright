@@ -634,6 +634,16 @@ Attribute name to get the value for.
 * since: v1.14
 
 
+## method: Locator.getByAltText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-alt-text-%%
+
+### param: Locator.getByAltText.text = %%-locator-get-by-text-text-%%
+### option: Locator.getByAltText.exact = %%-locator-get-by-text-exact-%%
+
+
 ## method: Locator.getByLabelText
 * since: v1.27
 - returns: <[Locator]>
@@ -683,6 +693,16 @@ Attribute name to get the value for.
 
 ### param: Locator.getByText.text = %%-locator-get-by-text-text-%%
 ### option: Locator.getByText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Locator.getByTitle
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-title-%%
+
+### param: Locator.getByTitle.text = %%-locator-get-by-text-text-%%
+### option: Locator.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
 
 ## async method: Locator.highlight

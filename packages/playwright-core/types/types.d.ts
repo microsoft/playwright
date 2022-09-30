@@ -2457,6 +2457,23 @@ export interface Page {
   }): Promise<null|string>;
 
   /**
+   * Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+   *
+   * ```html
+   * <img alt='Castle'>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByAltText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
    * Allows locating input elements by the text of the associated label. For example, this method will find the input by
    * label text Password in the following DOM:
    *
@@ -2582,6 +2599,23 @@ export interface Page {
    * @param options
    */
   getByText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   *
+   * ```html
+   * <button title='Place the order'>Order Now</button>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByTitle(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
@@ -5509,6 +5543,23 @@ export interface Frame {
   }): Promise<null|string>;
 
   /**
+   * Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+   *
+   * ```html
+   * <img alt='Castle'>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByAltText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
    * Allows locating input elements by the text of the associated label. For example, this method will find the input by
    * label text Password in the following DOM:
    *
@@ -5634,6 +5685,23 @@ export interface Frame {
    * @param options
    */
   getByText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   *
+   * ```html
+   * <button title='Place the order'>Order Now</button>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByTitle(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
@@ -9909,6 +9977,23 @@ export interface Locator {
   }): Promise<null|string>;
 
   /**
+   * Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+   *
+   * ```html
+   * <img alt='Castle'>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByAltText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
    * Allows locating input elements by the text of the associated label. For example, this method will find the input by
    * label text Password in the following DOM:
    *
@@ -10034,6 +10119,23 @@ export interface Locator {
    * @param options
    */
   getByText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   *
+   * ```html
+   * <button title='Place the order'>Order Now</button>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByTitle(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
@@ -15130,6 +15232,23 @@ export interface FrameLocator {
   frameLocator(selector: string): FrameLocator;
 
   /**
+   * Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+   *
+   * ```html
+   * <img alt='Castle'>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByAltText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
    * Allows locating input elements by the text of the associated label. For example, this method will find the input by
    * label text Password in the following DOM:
    *
@@ -15255,6 +15374,23 @@ export interface FrameLocator {
    * @param options
    */
   getByText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   *
+   * ```html
+   * <button title='Place the order'>Order Now</button>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByTitle(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */

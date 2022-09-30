@@ -1180,6 +1180,14 @@ Locate element by the test id. By default, the `data-testid` attribute is used a
 
 Allows locating elements that contain given text.
 
+## template-locator-get-by-alt-text
+
+Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+
+```html
+<img alt='Castle'>
+```
+
 ## template-locator-get-by-label-text
 
 Allows locating input elements by the text of the associated label. For example, this method will find the input by label text Password in the following DOM:
@@ -1188,6 +1196,7 @@ Allows locating input elements by the text of the associated label. For example,
 <label for="password-input">Password:</label>
 <input id="password-input">
 ```
+
 ## template-locator-get-by-placeholder-text
 
 Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder "Country":
@@ -1202,3 +1211,10 @@ Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2
 
 Note that many html elements have an implicitly [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
 
+## template-locator-get-by-title
+
+Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+
+```html
+<button title='Place the order'>Order Now</button>
+```
