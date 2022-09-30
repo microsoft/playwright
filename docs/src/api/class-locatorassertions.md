@@ -702,7 +702,7 @@ await Expect(locator).ToBeHiddenAsync();
 * langs:
   - alias-java: isVisible
 
-Ensures that [Locator] points to an [attached](./actionability.md#visible) and [visible](./actionability.md#visible) DOM node.
+Ensures that [Locator] points to an [attached](./actionability.md#attached) and [visible](./actionability.md#visible) DOM node.
 
 ```js
 const locator = page.locator('.my-element');
