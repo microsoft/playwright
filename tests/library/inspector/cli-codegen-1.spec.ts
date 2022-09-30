@@ -26,7 +26,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`);
 
     const selector = await recorder.hoverOverElement('button');
-    expect(selector).toBe('text=Submit');
+    expect(selector).toBe('role=button[name=\"Submit\"]');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -35,19 +35,19 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('text=Submit').click();`);
+  await page.locator('role=button[name=\"Submit\"]').click();`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator("text=Submit").click()`);
+    page.locator(\"role=button[name=\\\"Submit\\\"]\").click()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator("text=Submit").click()`);
+    await page.locator(\"role=button[name=\\\"Submit\\\"]\").click()`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("text=Submit").click();`);
+      page.locator(\"role=button[name=\\\"Submit\\\"]\").click()`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator("text=Submit").ClickAsync();`);
+        await page.Locator(\"role=button[name=\\\"Submit\\\"]\").ClickAsync();`);
 
     expect(message.text()).toBe('click');
   });
@@ -69,7 +69,7 @@ test.describe('cli codegen', () => {
     await page.waitForTimeout(1000);
 
     const selector = await recorder.hoverOverElement('button');
-    expect(selector).toBe('text=Submit');
+    expect(selector).toBe('role=button[name=\"Submit\"]');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -78,7 +78,7 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('text=Submit').click();`);
+  await page.locator('role=button[name=\"Submit\"]').click();`);
     expect(message.text()).toBe('click');
   });
 
@@ -149,7 +149,7 @@ test.describe('cli codegen', () => {
     </body>`);
 
     const selector = await recorder.hoverOverElement('button');
-    expect(selector).toBe('text=Submit');
+    expect(selector).toBe('role=button[name=\"Submit\"]');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -158,19 +158,19 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('text=Submit').click();`);
+  await page.locator('role=button[name=\"Submit\"]').click();`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator("text=Submit").click()`);
+    page.locator(\"role=button[name=\\\"Submit\\\"]\").click()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator("text=Submit").click()`);
+    await page.locator(\"role=button[name=\\\"Submit\\\"]\").click()`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("text=Submit").click();`);
+      page.locator(\"role=button[name=\\\"Submit\\\"]\").click()`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator("text=Submit").ClickAsync();`);
+        await page.Locator(\"role=button[name=\\\"Submit\\\"]\").ClickAsync();`);
 
     expect(message.text()).toBe('click');
   });
@@ -540,7 +540,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait('<a target=_blank rel=noopener href="about:blank">link</a>');
 
     const selector = await recorder.hoverOverElement('a');
-    expect(selector).toBe('text=link');
+    expect(selector).toBe('role=link[name=\"link\"]');
 
     const [popup, sources] = await Promise.all([
       page.context().waitForEvent('page'),
@@ -551,28 +551,28 @@ test.describe('cli codegen', () => {
     expect(sources.get('JavaScript').text).toContain(`
   const [page1] = await Promise.all([
     page.waitForEvent('popup'),
-    page.locator('text=link').click()
+    page.locator('role=link[name=\"link\"]').click()
   ]);`);
 
     expect(sources.get('Java').text).toContain(`
       Page page1 = page.waitForPopup(() -> {
-        page.locator("text=link").click();
+        page.locator("role=link[name=\\\"link\\\"]").click();
       });`);
 
     expect(sources.get('Python').text).toContain(`
     with page.expect_popup() as popup_info:
-        page.locator(\"text=link\").click()
+        page.locator(\"role=link[name=\\\"link\\\"]\").click()
     page1 = popup_info.value`);
 
     expect(sources.get('Python Async').text).toContain(`
     async with page.expect_popup() as popup_info:
-        await page.locator(\"text=link\").click()
+        await page.locator(\"role=link[name=\\\"link\\\"]\").click()
     page1 = await popup_info.value`);
 
     expect(sources.get('C#').text).toContain(`
         var page1 = await page.RunAndWaitForPopupAsync(async () =>
         {
-            await page.Locator(\"text=link\").ClickAsync();
+            await page.Locator(\"role=link[name=\\\"link\\\"]\").ClickAsync();
         });`);
 
     expect(popup.url()).toBe('about:blank');

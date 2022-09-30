@@ -28,7 +28,7 @@ test.describe('cli codegen', () => {
     `);
 
     const selector = await recorder.hoverOverElement('button');
-    expect(selector).toBe('text=Submit >> nth=0');
+    expect(selector).toBe('role=button[name=\"Submit\"] >> nth=0');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -37,19 +37,19 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('text=Submit').first().click();`);
+  await page.locator('role=button[name=\"Submit\"]').first().click();`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator("text=Submit").first.click()`);
+    page.locator("role=button[name=\\\"Submit\\\"]").first.click()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator("text=Submit").first.click()`);
+    await page.locator("role=button[name=\\\"Submit\\\"]").first.click()`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("text=Submit").first().click();`);
+      page.locator("role=button[name=\\\"Submit\\\"]").first().click();`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator("text=Submit").First.ClickAsync();`);
+        await page.Locator("role=button[name=\\\"Submit\\\"]").First.ClickAsync();`);
 
     expect(message.text()).toBe('click1');
   });
@@ -63,7 +63,7 @@ test.describe('cli codegen', () => {
     `);
 
     const selector = await recorder.hoverOverElement('button >> nth=1');
-    expect(selector).toBe('text=Submit >> nth=1');
+    expect(selector).toBe('role=button[name=\"Submit\"] >> nth=1');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -72,19 +72,19 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('text=Submit').nth(1).click();`);
+  await page.locator('role=button[name=\"Submit\"]').nth(1).click();`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator("text=Submit").nth(1).click()`);
+    page.locator("role=button[name=\\\"Submit\\\"]").nth(1).click()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator("text=Submit").nth(1).click()`);
+    await page.locator("role=button[name=\\\"Submit\\\"]").nth(1).click()`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("text=Submit").nth(1).click();`);
+      page.locator("role=button[name=\\\"Submit\\\"]").nth(1).click();`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator("text=Submit").Nth(1).ClickAsync();`);
+        await page.Locator("role=button[name=\\\"Submit\\\"]").Nth(1).ClickAsync();`);
 
     expect(message.text()).toBe('click2');
   });
