@@ -17,6 +17,8 @@
 
 import { test as it, expect } from './pageTest';
 
+it.skip(({ isWebView2 }) => isWebView2, 'Page.close() is not supported in WebView2');
+
 it('should close page with active dialog', async ({ page }) => {
   await page.setContent(`<button onclick="setTimeout(() => alert(1))">alert</button>`);
   page.click('button');

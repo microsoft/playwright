@@ -21,14 +21,14 @@ If you use DOM Testing Library in the browser (for example, you bundle end-to-en
 | [queries](https://testing-library.com/docs/queries/about) | [locators](./locators) |
 | [async helpers](https://testing-library.com/docs/dom-testing-library/api-async) | [assertions](./test-assertions) |
 | [user events](https://testing-library.com/docs/user-event/intro) | [actions](./api/class-locator) |
-| `await user.click(screen.getByText('Click me'))`        | `await component.locator('text=Click me').click()` |
-| `await user.click(await screen.findByText('Click me'))` | `await component.locator('text=Click me').click()` |
-| `await user.type(screen.getByLabelText('Password'), 'secret')` | `await component.locator('text=Password').fill('secret')` |
-| `expect(screen.getByLabelText('Password')).toHaveValue('secret')` | `await expect(component.locator('text=Password')).toHaveValue('secret')` |
-| `screen.findByText('...')`                              | `component.locator('text=...')`                    |
-| `screen.getByTestId('...')`                             | `component.locator('data-testid=...')`             |
-| `screen.queryByPlaceholderText('...')`                  | `component.locator('[placeholder="..."]')`         |
-| `screen.getAllByRole('button', { pressed: true })`      | `component.locator('role=button[pressed]')`        |
+| `await user.click(screen.getByText('Click me'))`        | `await component.getByText('Click me').click()` |
+| `await user.click(await screen.findByText('Click me'))` | `await component.getByText('Click me').click()` |
+| `await user.type(screen.getByLabelText('Password'), 'secret')` | `await component.getByLabelText('Password').fill('secret')` |
+| `expect(screen.getByLabelText('Password')).toHaveValue('secret')` | `await expect(component.getByLabelText('Password')).toHaveValue('secret')` |
+| `screen.findByText('...')`                              | `component.getByText('...')`                      |
+| `screen.getByTestId('...')`                             | `component.getByTestId('...')`                    |
+| `screen.queryByPlaceholderText('...')`                  | `component.locator('[placeholder="..."]')`            |
+| `screen.getByRole('button', { pressed: true })`         | `component.getByRole('button', { pressed: true })`|
 
 ## Example
 
@@ -83,7 +83,7 @@ Migration highlights (see inline comments in the Playwright Test code snippet):
 
 ## Migrating queries
 
-All queries like `getBy...`, `findBy...`, `queryBy...` and their multi-element counterparts are replaced with `page.locator('...')`. Locators always auto-wait and retry when needed, so you don't have to worry about choosing the right method. When you want to do a [list operation](./locators#lists), e.g. assert a list of texts, Playwright automatically performs multi-element opertations.
+All queries like `getBy...`, `findBy...`, `queryBy...` and their multi-element counterparts are replaced with `page.locator('...')`. Locators always auto-wait and retry when needed, so you don't have to worry about choosing the right method. When you want to do a [list operation](./locators#lists), e.g. assert a list of texts, Playwright automatically performs multi-element operations.
 
 1. `getByRole`: use [role selector](./selectors#role-selector) `component.locator('role=button[name="Sign up"]')`.
 1. `getByText`: use `component.locator('text=some value')` and other variations of the [text selector](./selectors#text-selector).
@@ -141,7 +141,7 @@ Once you're on Playwright Test, you get a lot!
 - Run tests in isolation in parallel across multiple browsers
 - Built-in test artifact collection: [video recording](./test-configuration#record-video), [screenshots](./test-configuration#automatic-screenshots) and [playwright traces](./test-configuration#record-test-trace)
 
-Also you get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
+You also get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
 - [Playwright Inspector](./debug.md)
 - [Playwright Test Code generation](./auth#code-generation)
 - [Playwright Tracing](./trace-viewer) for post-mortem debugging

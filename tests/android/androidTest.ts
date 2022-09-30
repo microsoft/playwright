@@ -50,6 +50,7 @@ export const androidTest = baseTest.extend<PageTestFixtures, AndroidWorkerFixtur
 
   isAndroid: [true, { scope: 'worker' }],
   isElectron: [false, { scope: 'worker' }],
+  isWebView2: [false, { scope: 'worker' }],
 
   androidContext: [async ({ androidDevice }, run) => {
     const context = await androidDevice.launchBrowser();

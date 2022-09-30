@@ -59,6 +59,7 @@
 .console-line-message {
   white-space: initial;
   word-break: break-word;
+  white-space: pre-wrap;
   position: relative;
   top: -2px;
 }

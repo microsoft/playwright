@@ -45,7 +45,7 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
 ```
 
 ```java
-// Script that evaluates to a selector engine instance.
+// Script that evaluates to a selector engine instance. The script is evaluated in the page context.
 String createTagNameEngine = "{\n" +
   "  // Returns the first element matching given selector in the root's subtree.\n" +
   "  query(root, selector) {\n" +
@@ -146,7 +146,7 @@ with sync_playwright() as playwright:
 
 ```csharp
 using var playwright = await Playwright.CreateAsync();
-// Script that evaluates to a selector engine instance.
+// Script that evaluates to a selector engine instance. The script is evaluated in the page context.
 await playwright.Selectors.RegisterAsync("tag", @"{
 // Returns the first element matching given selector in the root's subtree.
 query(root, selector) {
@@ -184,28 +184,28 @@ contain `[a-zA-Z0-9_]` characters.
     current working directory. Optional.
   - `content` ?<[string]> Raw script content. Optional.
 
-Script that evaluates to a selector engine instance.
+Script that evaluates to a selector engine instance. The script is evaluated in the page context.
 
 ### param: Selectors.register.script
 * since: v1.8
 * langs: java
 - `script` <[string]|[path]>
 
-Script that evaluates to a selector engine instance.
+Script that evaluates to a selector engine instance. The script is evaluated in the page context.
 
 ### option: Selectors.register.script
 * since: v1.8
 * langs: csharp
 - `script` <[string]>
 
-Script that evaluates to a selector engine instance.
+Script that evaluates to a selector engine instance. The script is evaluated in the page context.
 
 ### option: Selectors.register.path
 * since: v1.8
 * langs: csharp
 - `path` <[path]>
 
-Script that evaluates to a selector engine instance.
+Script that evaluates to a selector engine instance. The script is evaluated in the page context.
 
 ### option: Selectors.register.contentScript
 * since: v1.8
@@ -214,3 +214,14 @@ Script that evaluates to a selector engine instance.
 Whether to run this selector engine in isolated JavaScript environment. This environment has access to the same DOM, but
 not any JavaScript objects from the frame's scripts. Defaults to `false`. Note that running as a content script is not
 guaranteed when this engine is used together with other registered engines.
+
+## method: Selectors.setTestIdAttribute
+* since: v1.27
+
+Defines custom attribute name to be used in [`method: Page.getByTestId`]. `data-testid` is used by default.
+
+### param: Selectors.setTestIdAttribute.attributeName
+* since: v1.27
+- `attributeName` <[string]>
+
+Test id attribute name.

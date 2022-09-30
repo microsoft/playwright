@@ -24,6 +24,7 @@ import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
 import type { ConfigCLIOverrides } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import type { TestFileFilter } from './util';
+import { createTitleMatcher } from './util';
 import { showHTMLReport } from './reporters/html';
 import { baseFullConfig, defaultTimeout, fileIsModule } from './loader';
 import type { TraceMode } from './types';
@@ -36,26 +37,29 @@ export function addTestCommands(program: Command) {
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
-  command.description('Run tests with Playwright Test');
+  command.description('run tests with Playwright Test');
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
   command.option('--headed', `Run tests in headed browsers (default: headless)`);
-  command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --maxFailures=1 --headed --workers=1" options`);
+  command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`);
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`);
   command.option('--forbid-only', `Fail if test.only is called (default: false)`);
   command.option('--fully-parallel', `Run all tests in parallel (default: false)`);
   command.option('-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`);
   command.option('-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`);
   command.option('--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`);
-  command.option('-j, --workers <workers>', `Number of concurrent workers, use 1 to run in a single worker (default: number of CPU cores / 2)`);
+  command.option('--ignore-snapshots', `Ignore screenshot and snapshot expectations`);
+  command.option('-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`);
   command.option('--list', `Collect all the tests and report them, but do not run`);
   command.option('--max-failures <N>', `Stop after the first N failures`);
   command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
+  command.option('--pass-with-no-tests', `Makes test run succeed even if no tests were found`);
   command.option('--quiet', `Suppress stdio`);
   command.option('--repeat-each <N>', `Run each test N times (default: 1)`);
   command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${baseFullConfig.reporter[0]}")`);
   command.option('--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`);
   command.option('--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`);
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
+  command.option('--group <project-group-name>', `Only run tests from the specified project group (default: run all projects from the 'default' group or just all projects if 'default' group is not defined).`);
   command.option('--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`);
   command.option('--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
   command.option('-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`);
@@ -160,11 +164,17 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     };
   });
 
+  const grepMatcher = opts.grep ? createTitleMatcher(forceRegExp(opts.grep)) : () => true;
+  const grepInvertMatcher = opts.grepInvert ? createTitleMatcher(forceRegExp(opts.grepInvert)) : () => false;
+  const testTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+
   const result = await runner.runAllTests({
     listOnly: !!opts.list,
     testFileFilters,
+    testTitleMatcher,
     projectFilter: opts.project || undefined,
-    watchMode: !!process.env.PW_TEST_WATCH,
+    projectGroup: opts.group,
+    passWithNoTests: opts.passWithNoTests,
   });
   await stopProfiling(undefined);
 
@@ -204,8 +214,6 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     forbidOnly: options.forbidOnly ? true : undefined,
     fullyParallel: options.fullyParallel ? true : undefined,
     globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,
-    grep: options.grep ? forceRegExp(options.grep) : undefined,
-    grepInvert: options.grepInvert ? forceRegExp(options.grepInvert) : undefined,
     maxFailures: options.x ? 1 : (options.maxFailures ? parseInt(options.maxFailures, 10) : undefined),
     outputDir: options.output ? path.resolve(process.cwd(), options.output) : undefined,
     quiet: options.quiet ? options.quiet : undefined,
@@ -214,8 +222,9 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     reporter: (options.reporter && options.reporter.length) ? options.reporter.split(',').map((r: string) => [resolveReporter(r)]) : undefined,
     shard: shardPair ? { current: shardPair[0], total: shardPair[1] } : undefined,
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
+    ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
-    workers: options.workers ? parseInt(options.workers, 10) : undefined,
+    workers: options.workers,
   };
 }
 
@@ -225,7 +234,7 @@ function resolveReporter(id: string) {
   const localPath = path.resolve(process.cwd(), id);
   if (fs.existsSync(localPath))
     return localPath;
-  return require.resolve(id, { paths: [ process.cwd() ] });
+  return require.resolve(id, { paths: [process.cwd()] });
 }
 
 function restartWithExperimentalTsEsm(configFile: string | null): boolean {
@@ -239,11 +248,9 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
     return false;
   if (process.env.PW_TS_ESM_ON)
     return false;
-  if (!configFile.endsWith('.ts'))
-    return false;
   if (!fileIsModule(configFile))
     return false;
-  const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ` --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
+  const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + experimentalLoaderOption();
   const innerProcess = require('child_process').fork(require.resolve('playwright-core/cli'), process.argv.slice(2), {
     env: {
       ...process.env,
@@ -257,6 +264,18 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
       process.exit(code);
   });
   return true;
+}
+
+export function experimentalLoaderOption() {
+  return ` --no-warnings --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
+}
+
+export function envWithoutExperimentalLoaderOptions(): NodeJS.ProcessEnv {
+  const substring = experimentalLoaderOption();
+  const result = { ...process.env };
+  if (result.NODE_OPTIONS)
+    result.NODE_OPTIONS = result.NODE_OPTIONS.replace(substring, '').trim() || undefined;
+  return result;
 }
 
 const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'retain-on-failure'];

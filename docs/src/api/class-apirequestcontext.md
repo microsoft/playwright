@@ -143,9 +143,9 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.delete.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
-### option: APIRequestContext.delete.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.delete.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.delete.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.delete.data = %%-js-python-csharp-fetch-option-data-%%
 * since: v1.17
 ### option: APIRequestContext.delete.form = %%-js-python-fetch-option-form-%%
 * since: v1.17
@@ -155,12 +155,14 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.17
 ### option: APIRequestContext.delete.multipart = %%-csharp-fetch-option-multipart-%%
 * since: v1.17
-### option: APIRequestContext.delete.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.delete.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.delete.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.delete.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.delete.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.delete.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.delete.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.dispose
 * since: v1.16
@@ -174,6 +176,106 @@ discards all stored responses, and makes [`method: APIResponse.body`] throw "Res
 
 Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
+
+JSON objects can be passed directly to the request:
+
+```js
+await request.fetch('https://example.com/api/createBook', {
+  method: 'post',
+  data: {
+    title: 'Book Title',
+    author: 'John Doe',
+  }
+});
+```
+
+```java
+Map<String, Object> data = new HashMap();
+data.put("title", "Book Title");
+data.put("body", "John Doe");
+request.fetch("https://example.com/api/createBook", RequestOptions.create().setMethod("post").setData(data));
+```
+
+```python
+data = {
+    "title": "Book Title",
+    "body": "John Doe",
+}
+api_request_context.fetch("https://example.com/api/createBook", method="post", data=data)
+```
+
+```csharp
+var data = new Dictionary<string, object>() {
+  { "title", "Book Title" },
+  { "body", "John Doe" }
+};
+await Request.FetchAsync("https://example.com/api/createBook", new() { Method = "post", DataObject = data });
+```
+
+The common way to send file(s) in the body of a request is to encode it as form fields with `multipart/form-data` encoding. You can achieve that with Playwright API like this:
+
+```js
+// Open file as a stream and pass it to the request:
+const stream = fs.createReadStream('team.csv');
+await request.fetch('https://example.com/api/uploadTeamList', {
+  method: 'post',
+  multipart: {
+    fileField: stream
+  }
+});
+
+// Or you can pass the file content directly as an object:
+await request.fetch('https://example.com/api/uploadScript', {
+  method: 'post',
+  multipart: {
+    fileField: {
+      name: 'f.js',
+      mimeType: 'text/javascript',
+      buffer: Buffer.from('console.log(2022);')
+    }
+  }
+});
+```
+
+```java
+// Pass file path to the form data constructor:
+Path file = Paths.get("team.csv");
+APIResponse response = request.fetch("https://example.com/api/uploadTeamList",
+  RequestOptions.create().setMethod("post").setMultipart(
+    FormData.create().set("fileField", file)));
+
+// Or you can pass the file content directly as FilePayload object:
+FilePayload filePayload = new FilePayload("f.js", "text/javascript",
+      "console.log(2022);".getBytes(StandardCharsets.UTF_8));
+APIResponse response = request.fetch("https://example.com/api/uploadTeamList",
+  RequestOptions.create().setMethod("post").setMultipart(
+    FormData.create().set("fileField", filePayload)));
+```
+
+```python
+api_request_context.fetch(
+  "https://example.com/api/uploadScrip'",
+  method="post",
+  multipart={
+    "fileField": {
+      "name": "f.js",
+      "mimeType": "text/javascript",
+      "buffer": b"console.log(2022);",
+    },
+  })
+```
+
+```csharp
+var file = new FilePayload()
+{
+    Name = "f.js",
+    MimeType = "text/javascript",
+    Buffer = System.Text.Encoding.UTF8.GetBytes("console.log(2022);")
+};
+var multipart = Context.APIRequest.CreateFormData();
+multipart.Set("fileField", file);
+await Request.FetchAsync("https://example.com/api/uploadScript", new() { Method = "post", Multipart = multipart });
+```
 
 ### param: APIRequestContext.fetch.urlOrRequest
 * since: v1.16
@@ -196,9 +298,9 @@ Target URL or Request to get all parameters from.
 If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) or
 [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)). If not specified, GET method is used.
 
-### option: APIRequestContext.fetch.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.fetch.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.fetch.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.fetch.data = %%-js-python-csharp-fetch-option-data-%%
 * since: v1.16
 ### option: APIRequestContext.fetch.form = %%-js-python-fetch-option-form-%%
 * since: v1.16
@@ -208,12 +310,14 @@ If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/
 * since: v1.16
 ### option: APIRequestContext.fetch.multipart = %%-csharp-fetch-option-multipart-%%
 * since: v1.16
-### option: APIRequestContext.fetch.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.fetch.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.fetch.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.fetch.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.fetch.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.fetch.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.fetch.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.get
 * since: v1.16
@@ -223,6 +327,40 @@ Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GE
 The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
+Request parameters can be configured with `params` option, they will be serialized into the URL search parameters:
+
+```js
+await request.get('https://example.com/api/getText', {
+  params: {
+    'isbn': '1234',
+    'page': 23,
+  }
+});
+```
+
+```java
+request.get("https://example.com/api/getText", RequestOptions.create()
+  .setQueryParam("isbn", "1234")
+  .setQueryParam("page", 23));
+```
+
+```python
+query_params = {
+  "isbn": "1234",
+  "page": "23"
+}
+api_request_context.get("https://example.com/api/getText", params=query_params)
+```
+
+```csharp
+var params = new Dictionary<string, object>()
+{
+  { "isbn", "1234" },
+  { "page", 23 },
+}
+await request.GetAsync("https://example.com/api/getText", new() { Params = params });
+```
+
 ### param: APIRequestContext.get.url = %%-fetch-param-url-%%
 * since: v1.16
 ### param: APIRequestContext.get.params = %%-java-csharp-fetch-params-%%
@@ -231,14 +369,26 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.get.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
-### option: APIRequestContext.get.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.get.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.get.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.get.data = %%-js-python-csharp-fetch-option-data-%%
+* since: v1.26
+### option: APIRequestContext.get.form = %%-js-python-fetch-option-form-%%
+* since: v1.26
+### option: APIRequestContext.get.form = %%-csharp-fetch-option-form-%%
+* since: v1.26
+### option: APIRequestContext.get.multipart = %%-js-python-fetch-option-multipart-%%
+* since: v1.26
+### option: APIRequestContext.get.multipart = %%-csharp-fetch-option-multipart-%%
+* since: v1.26
+### option: APIRequestContext.get.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.get.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.get.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.get.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.get.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.get.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.head
 * since: v1.16
@@ -256,14 +406,26 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.head.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
-### option: APIRequestContext.head.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.head.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.head.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.head.data = %%-js-python-csharp-fetch-option-data-%%
+* since: v1.26
+### option: APIRequestContext.head.form = %%-js-python-fetch-option-form-%%
+* since: v1.26
+### option: APIRequestContext.head.form = %%-csharp-fetch-option-form-%%
+* since: v1.26
+### option: APIRequestContext.head.multipart = %%-js-python-fetch-option-multipart-%%
+* since: v1.26
+### option: APIRequestContext.head.multipart = %%-csharp-fetch-option-multipart-%%
+* since: v1.26
+### option: APIRequestContext.head.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.head.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.head.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.head.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.head.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.head.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.patch
 * since: v1.16
@@ -281,9 +443,9 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.patch.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
-### option: APIRequestContext.patch.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.patch.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.patch.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.patch.data = %%-js-python-csharp-fetch-option-data-%%
 * since: v1.16
 ### option: APIRequestContext.patch.form = %%-js-python-fetch-option-form-%%
 * since: v1.16
@@ -293,12 +455,14 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.patch.multipart = %%-csharp-fetch-option-multipart-%%
 * since: v1.16
-### option: APIRequestContext.patch.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.patch.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.patch.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.patch.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.patch.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.patch.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.patch.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.post
 * since: v1.16
@@ -308,6 +472,134 @@ Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/P
 The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
 
+JSON objects can be passed directly to the request:
+
+```js
+await request.post('https://example.com/api/createBook', {
+  data: {
+    title: 'Book Title',
+    author: 'John Doe',
+  }
+});
+```
+
+```java
+Map<String, Object> data = new HashMap();
+data.put("title", "Book Title");
+data.put("body", "John Doe");
+request.post("https://example.com/api/createBook", RequestOptions.create().setData(data));
+```
+
+```python
+data = {
+    "title": "Book Title",
+    "body": "John Doe",
+}
+api_request_context.post("https://example.com/api/createBook", data=data)
+```
+
+```csharp
+var data = new Dictionary<string, object>() {
+  { "firstNam", "John" },
+  { "lastName", "Doe" }
+};
+await request.PostAsync("https://example.com/api/createBook", new() { DataObject = data });
+```
+
+To send form data to the server use `form` option. Its value will be encoded into the request body with `application/x-www-form-urlencoded` encoding (see below how to use `multipart/form-data` form encoding to send files):
+
+```js
+await request.post('https://example.com/api/findBook', {
+  form: {
+    title: 'Book Title',
+    author: 'John Doe',
+  }
+});
+```
+
+```java
+request.post("https://example.com/api/findBook", RequestOptions.create().setForm(
+    FormData.create().set("title", "Book Title").set("body", "John Doe")
+));
+```
+
+```python
+formData = {
+    "title": "Book Title",
+    "body": "John Doe",
+}
+api_request_context.post("https://example.com/api/findBook", form=formData)
+```
+
+```csharp
+var formData = Context.APIRequest.CreateFormData();
+formData.Set("title", "Book Title");
+formData.Set("body", "John Doe");
+await request.PostAsync("https://example.com/api/findBook", new() { Form = formData });
+```
+
+The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data` encoding. You can achieve that with Playwright API like this:
+
+```js
+// Open file as a stream and pass it to the request:
+const stream = fs.createReadStream('team.csv');
+await request.post('https://example.com/api/uploadTeamList', {
+  multipart: {
+    fileField: stream
+  }
+});
+
+// Or you can pass the file content directly as an object:
+await request.post('https://example.com/api/uploadScript', {
+  multipart: {
+    fileField: {
+      name: 'f.js',
+      mimeType: 'text/javascript',
+      buffer: Buffer.from('console.log(2022);')
+    }
+  }
+});
+```
+
+```java
+// Pass file path to the form data constructor:
+Path file = Paths.get("team.csv");
+APIResponse response = request.post("https://example.com/api/uploadTeamList",
+  RequestOptions.create().setMultipart(
+    FormData.create().set("fileField", file)));
+
+// Or you can pass the file content directly as FilePayload object:
+FilePayload filePayload = new FilePayload("f.js", "text/javascript",
+      "console.log(2022);".getBytes(StandardCharsets.UTF_8));
+APIResponse response = request.post("https://example.com/api/uploadTeamList",
+  RequestOptions.create().setMultipart(
+    FormData.create().set("fileField", filePayload)));
+```
+
+```python
+api_request_context.post(
+  "https://example.com/api/uploadScrip'",
+  multipart={
+    "fileField": {
+      "name": "f.js",
+      "mimeType": "text/javascript",
+      "buffer": b"console.log(2022);",
+    },
+  })
+```
+
+```csharp
+var file = new FilePayload()
+{
+    Name = "f.js",
+    MimeType = "text/javascript",
+    Buffer = System.Text.Encoding.UTF8.GetBytes("console.log(2022);")
+};
+var multipart = Context.APIRequest.CreateFormData();
+multipart.Set("fileField", file);
+await request.PostAsync("https://example.com/api/uploadScript", new() { Multipart = multipart });
+```
+
 ### param: APIRequestContext.post.url = %%-fetch-param-url-%%
 * since: v1.16
 ### param: APIRequestContext.post.params = %%-java-csharp-fetch-params-%%
@@ -316,9 +608,9 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.post.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
-### option: APIRequestContext.post.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.post.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.post.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.post.data = %%-js-python-csharp-fetch-option-data-%%
 * since: v1.16
 ### option: APIRequestContext.post.form = %%-js-python-fetch-option-form-%%
 * since: v1.16
@@ -328,12 +620,14 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.post.multipart = %%-csharp-fetch-option-multipart-%%
 * since: v1.16
-### option: APIRequestContext.post.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.post.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.post.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.post.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.post.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.post.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.post.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.put
 * since: v1.16
@@ -351,9 +645,9 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.put.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
-### option: APIRequestContext.put.headers = %%-js-python-fetch-option-headers-%%
+### option: APIRequestContext.put.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
-### option: APIRequestContext.put.data = %%-js-python-fetch-option-data-%%
+### option: APIRequestContext.put.data = %%-js-python-csharp-fetch-option-data-%%
 * since: v1.16
 ### option: APIRequestContext.put.form = %%-js-python-fetch-option-form-%%
 * since: v1.16
@@ -363,12 +657,14 @@ context cookies from the response. The method will automatically follow redirect
 * since: v1.16
 ### option: APIRequestContext.put.multipart = %%-csharp-fetch-option-multipart-%%
 * since: v1.16
-### option: APIRequestContext.put.timeout = %%-js-python-fetch-option-timeout-%%
+### option: APIRequestContext.put.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
-### option: APIRequestContext.put.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
+### option: APIRequestContext.put.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
-### option: APIRequestContext.put.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
+### option: APIRequestContext.put.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
 * since: v1.16
+### option: APIRequestContext.put.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
+* since: v1.26
 
 ## async method: APIRequestContext.storageState
 * since: v1.16

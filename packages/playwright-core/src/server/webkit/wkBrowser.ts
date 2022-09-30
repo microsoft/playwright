@@ -25,7 +25,7 @@ import * as network from '../network';
 import type { Page, PageBinding, PageDelegate } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import type { Protocol } from './protocol';
 import type { PageProxyMessageReceivedPayload } from './wkConnection';
 import { kPageProxyMessageReceived, WKConnection, WKSession } from './wkConnection';
@@ -215,7 +215,7 @@ export class WKBrowserContext extends BrowserContext {
   override async _initialize() {
     assert(!this._wkPages().length);
     const browserContextId = this._browserContextId;
-    const promises: Promise<any>[] = [ super._initialize() ];
+    const promises: Promise<any>[] = [super._initialize()];
     promises.push(this._browser._browserSession.send('Playwright.setDownloadBehavior', {
       behavior: this._options.acceptDownloads ? 'allow' : 'deny',
       downloadPath: this._browser.options.downloadsPath,

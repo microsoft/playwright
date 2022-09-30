@@ -3,10 +3,6 @@ id: test-cli
 title: "Command line"
 ---
 
-<!-- TOC -->
-
-## Examples
-
 Here are the most common options available in the command line.
 
 - Run all the tests
@@ -77,7 +73,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 
 - `--browser`: Run test in a specific browser. Available options are  `"chromium"`, `"firefox"`, `"webkit"` or `"all"` to run tests in all three browsers at the same time.
 
-- `--debug`: Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --maxFailures=1 --headed --workers=1` options.
+- `--debug`: Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --max-failures=1 --headed --workers=1` options.
 
 - `-c <file>` or `--config <file>`: Configuration file. If not passed, defaults to `playwright.config.ts` or `playwright.config.js` in the current directory.
 
@@ -110,6 +106,8 @@ Complete set of Playwright Test options is available in the [configuration file]
 - `--shard <shard>`: [Shard](./test-parallel.md#shard-tests-between-multiple-machines) tests and execute only selected shard, specified in the form `current/all`, 1-based, for example `3/5`.
 
 - `--timeout <number>`: Maximum timeout in milliseconds for each test, defaults to 30 seconds. Learn more about [various timeouts](./test-timeouts.md).
+
+- `--ignore-snapshots` or `-i`: Whether to ignore [snapshots](./test-snapshots.md). Use this when snapshot expectations are known to be different, e.g. running tests on Linux against Windows screenshots.
 
 - `--update-snapshots` or `-u`: Whether to update [snapshots](./test-snapshots.md) with actual results instead of comparing them. Use this when snapshot expectations have changed.
 

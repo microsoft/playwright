@@ -26,8 +26,9 @@ import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 import deviceDescriptors from '../deviceDescriptors';
 
 export class PythonLanguageGenerator implements LanguageGenerator {
-  id = 'python';
-  fileName = 'Python';
+  id: string;
+  groupName = 'Python';
+  name: string;
   highlighter = 'python';
 
   private _awaitPrefix: '' | 'await ';
@@ -37,7 +38,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
 
   constructor(isAsync: boolean, isPyTest: boolean) {
     this.id = isPyTest ? 'pytest' : (isAsync ? 'python-async' : 'python');
-    this.fileName = isPyTest ? 'Pytest' : (isAsync ? 'Python Async' : 'Python');
+    this.name = isPyTest ? 'Pytest' : (isAsync ? 'Library Async' : 'Library');
     this._isAsync = isAsync;
     this._isPyTest = isPyTest;
     this._awaitPrefix = isAsync ? 'await ' : '';

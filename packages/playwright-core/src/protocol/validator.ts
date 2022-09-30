@@ -171,6 +171,7 @@ scheme.APIRequestContextFetchParams = tObject({
   timeout: tOptional(tNumber),
   failOnStatusCode: tOptional(tBoolean),
   ignoreHTTPSErrors: tOptional(tBoolean),
+  maxRedirects: tOptional(tNumber),
 });
 scheme.APIRequestContextFetchResult = tObject({
   response: tType('APIResponse'),
@@ -244,6 +245,16 @@ scheme.LocalUtilsHarUnzipParams = tObject({
   harFile: tString,
 });
 scheme.LocalUtilsHarUnzipResult = tOptional(tObject({}));
+scheme.LocalUtilsConnectParams = tObject({
+  wsEndpoint: tString,
+  headers: tOptional(tAny),
+  slowMo: tOptional(tNumber),
+  timeout: tOptional(tNumber),
+  socksProxyRedirectPortForTest: tOptional(tNumber),
+});
+scheme.LocalUtilsConnectResult = tObject({
+  pipe: tChannel(['JsonPipe']),
+});
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tString,
@@ -307,6 +318,63 @@ scheme.PlaywrightNewRequestResult = tObject({
 });
 scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
 scheme.PlaywrightHideHighlightResult = tOptional(tObject({}));
+scheme.RecorderSource = tObject({
+  isRecorded: tBoolean,
+  id: tString,
+  label: tString,
+  text: tString,
+  language: tString,
+  highlight: tArray(tObject({
+    line: tNumber,
+    type: tString,
+  })),
+  revealLine: tOptional(tNumber),
+  group: tOptional(tString),
+});
+scheme.DebugControllerInitializer = tOptional(tObject({}));
+scheme.DebugControllerInspectRequestedEvent = tObject({
+  selector: tString,
+});
+scheme.DebugControllerBrowsersChangedEvent = tObject({
+  browsers: tArray(tObject({
+    contexts: tArray(tObject({
+      pages: tArray(tString),
+    })),
+  })),
+});
+scheme.DebugControllerSourcesChangedEvent = tObject({
+  sources: tArray(tType('RecorderSource')),
+});
+scheme.DebugControllerSetTrackHierarchyParams = tObject({
+  enabled: tBoolean,
+});
+scheme.DebugControllerSetTrackHierarchyResult = tOptional(tObject({}));
+scheme.DebugControllerSetReuseBrowserParams = tObject({
+  enabled: tBoolean,
+});
+scheme.DebugControllerSetReuseBrowserResult = tOptional(tObject({}));
+scheme.DebugControllerResetForReuseParams = tOptional(tObject({}));
+scheme.DebugControllerResetForReuseResult = tOptional(tObject({}));
+scheme.DebugControllerNavigateAllParams = tObject({
+  url: tString,
+});
+scheme.DebugControllerNavigateAllResult = tOptional(tObject({}));
+scheme.DebugControllerSetRecorderModeParams = tObject({
+  mode: tEnum(['inspecting', 'recording', 'none']),
+  language: tOptional(tString),
+  file: tOptional(tString),
+});
+scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
+scheme.DebugControllerHighlightAllParams = tObject({
+  selector: tString,
+});
+scheme.DebugControllerHighlightAllResult = tOptional(tObject({}));
+scheme.DebugControllerHideHighlightAllParams = tOptional(tObject({}));
+scheme.DebugControllerHideHighlightAllResult = tOptional(tObject({}));
+scheme.DebugControllerKillParams = tOptional(tObject({}));
+scheme.DebugControllerKillResult = tOptional(tObject({}));
+scheme.DebugControllerCloseAllBrowsersParams = tOptional(tObject({}));
+scheme.DebugControllerCloseAllBrowsersResult = tOptional(tObject({}));
 scheme.SocksSupportInitializer = tOptional(tObject({}));
 scheme.SocksSupportSocksRequestedEvent = tObject({
   uid: tString,
@@ -355,16 +423,6 @@ scheme.SelectorsRegisterResult = tOptional(tObject({}));
 scheme.BrowserTypeInitializer = tObject({
   executablePath: tString,
   name: tString,
-});
-scheme.BrowserTypeConnectParams = tObject({
-  wsEndpoint: tString,
-  headers: tOptional(tAny),
-  slowMo: tOptional(tNumber),
-  timeout: tOptional(tNumber),
-  socksProxyRedirectPortForTest: tOptional(tNumber),
-});
-scheme.BrowserTypeConnectResult = tObject({
-  pipe: tChannel(['JsonPipe']),
 });
 scheme.BrowserTypeLaunchParams = tObject({
   channel: tOptional(tString),
@@ -656,7 +714,6 @@ scheme.BrowserContextPageEvent = tObject({
 });
 scheme.BrowserContextRouteEvent = tObject({
   route: tChannel(['Route']),
-  request: tChannel(['Request']),
 });
 scheme.BrowserContextVideoEvent = tObject({
   artifact: tChannel(['Artifact']),
@@ -842,7 +899,6 @@ scheme.PagePageErrorEvent = tObject({
 });
 scheme.PageRouteEvent = tObject({
   route: tChannel(['Route']),
-  request: tChannel(['Request']),
 });
 scheme.PageVideoEvent = tObject({
   artifact: tChannel(['Artifact']),

@@ -1,13 +1,13 @@
 ---
 id: input
-title: "Input"
+title: "Actions"
 ---
 
-<!-- TOC -->
+Playwright can interact with HTML Input elements such as text inputs, checkboxes, radio buttons, select options, mouse clicks, type characters, keys and shortcuts as well as upload files and focus elements.
 
 ## Text input
 
-This is the easiest way to fill out the form fields. It focuses the element and triggers an `input` event with the entered text. It works for `<input>`, `<textarea>`, `[contenteditable]` and `<label>` associated with an input or textarea.
+Using [`method: Locator.fill`] is the easiest way to fill out the form fields. It focuses the element and triggers an `input` event with the entered text. It works for `<input>`, `<textarea>`, `[contenteditable]` and `<label>` associated with an input or textarea.
 
 ```js
 // Text input
@@ -94,17 +94,9 @@ await page.Locator("#local").FillAsync("2020-03-02T05:15");
 await page.Locator("text=First Name").FillAsync("Peter");
 ```
 
-### API reference
-
-- [`method: Locator.fill`]
-- [`method: Page.fill`]
-- [`method: Frame.fill`]
-
-<br/>
-
 ## Checkboxes and radio buttons
 
-This is the easiest way to check and uncheck a checkbox or a radio button. This method can be used with `input[type=checkbox]`, `input[type=radio]`, `[role=checkbox]` or `label` associated with checkbox or radio button.
+Using [`method: Locator.setChecked`] is the easiest way to check and uncheck a checkbox or a radio button. This method can be used with `input[type=checkbox]`, `input[type=radio]`, `[role=checkbox]` or `label` associated with checkbox or radio button.
 
 ```js
 // Check the checkbox
@@ -176,20 +168,9 @@ await page.Locator("#subscribe-label").UncheckAsync();
 await page.Locator("text=XL").CheckAsync();
 ```
 
-### API reference
-
-- [`method: Locator.check`]
-- [`method: Locator.isChecked`]
-- [`method: Locator.uncheck`]
-- [`method: Page.check`]
-- [`method: Page.isChecked`]
-- [`method: Page.uncheck`]
-
-<br/>
-
 ## Select options
 
-Selects one or multiple options in the `<select>` element.
+Selects one or multiple options in the `<select>` element with [`method: Locator.selectOption`].
 You can specify option `value`, or `label` to select. Multiple options can be selected.
 
 ```js
@@ -246,14 +227,6 @@ await page.Locator("select#colors").SelectOptionAsync(new SelectOptionValue { La
 // Multiple selected items
 await page.Locator("select#colors").SelectOptionAsync(new[] { "blue", "green", "red" });
 ```
-
-### API reference
-
-- [`method: Locator.selectOption`]
-- [`method: Page.selectOption`]
-- [`method: Frame.selectOption`]
-
-<br/>
 
 ## Mouse click
 
@@ -394,7 +367,7 @@ await page.Locator("button#submit").ClickAsync(new() { Force = true });
 
 #### Programmatic click
 
-If you are not interested in testing your app under the real conditions and want to simulate the click by any means possible, you can trigger the [`HTMLElement.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click) behavior via simply dispatching a click event on the element:
+If you are not interested in testing your app under the real conditions and want to simulate the click by any means possible, you can trigger the [`HTMLElement.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click) behavior via simply dispatching a click event on the element with [`method: Locator.dispatchEvent`]:
 
 ```js
 await page.locator('button#submit').dispatchEvent('click');
@@ -416,26 +389,9 @@ page.locator('button#submit').dispatch_event('click')
 await page.Locator("button#submit").DispatchEventAsync("click");
 ```
 
-### API reference
-
-- [`method: Locator.click`]
-- [`method: Page.click`]
-- [`method: Frame.click`]
-- [`method: Locator.dblclick`]
-- [`method: Page.dblclick`]
-- [`method: Frame.dblclick`]
-- [`method: Locator.hover`]
-- [`method: Page.hover`]
-- [`method: Frame.hover`]
-- [`method: Locator.dispatchEvent`]
-- [`method: Page.dispatchEvent`]
-- [`method: Frame.dispatchEvent`]
-
-<br/>
-
 ## Type characters
 
-Type into the field character by character, as if it was a user with a real keyboard.
+Type into the field character by character, as if it was a user with a real keyboard with [`method: Locator.type`].
 
 ```js
 // Type character by character
@@ -467,15 +423,6 @@ This method will emit all the necessary keyboard events, with all the `keydown`,
 :::note
 Most of the time, [`method: Page.fill`] will just work. You only need to type characters if there is special keyboard handling on the page.
 :::
-
-### API reference
-
-- [`method: Locator.type`]
-- [`method: Page.type`]
-- [`method: Frame.type`]
-- [`method: Keyboard.type`]
-
-<br/>
 
 ## Keys and shortcuts
 
@@ -534,7 +481,7 @@ await page.Locator("#name").PressAsync("Control+ArrowRight");
 await page.Locator("#value").PressAsync("$");
 ```
 
-This method focuses the selected element and produces a single keystroke. It accepts the logical key names that are emitted in the [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) property of the keyboard events:
+The [`method: Locator.press`] method focuses the selected element and produces a single keystroke. It accepts the logical key names that are emitted in the [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) property of the keyboard events:
 
 ```
 Backquote, Minus, Equal, Backslash, Backspace, Tab, Delete, Escape,
@@ -593,19 +540,9 @@ Shortcuts such as `"Control+o"` or `"Control+Shift+T"` are supported as well. Wh
 
 Note that you still need to specify the capital `A` in `Shift-A` to produce the capital character. `Shift-a` produces a lower-case one as if you had the `CapsLock` toggled.
 
-
-### API reference
-
-- [`method: Locator.press`]
-- [`method: Page.press`]
-- [`method: Frame.press`]
-- [`method: Keyboard.press`]
-
-<br/>
-
 ## Upload files
 
-You can select input files for upload using the [`method: Page.setInputFiles`] method. It expects first argument to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input) with the type `"file"`. Multiple files can be passed in the array. If some of the file paths are relative, they are resolved relative to the current working directory. Empty array clears the selected files.
+You can select input files for upload using the [`method: Locator.setInputFiles`] method. It expects first argument to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input) with the type `"file"`. Multiple files can be passed in the array. If some of the file paths are relative, they are resolved relative to the current working directory. Empty array clears the selected files.
 
 ```js
 // Select one file
@@ -738,17 +675,9 @@ var fileChooser = page.RunAndWaitForFileChooserAsync(async () =>
 await fileChooser.SetFilesAsync("myfile.pdf");
 ```
 
-### API reference
-- [FileChooser]
-- [`method: Locator.setInputFiles`]
-- [`method: Page.setInputFiles`]
-- [`method: Frame.setInputFiles`]
-
-<br/>
-
 ## Focus element
 
-For the dynamic pages that handle focus events, you can focus the given element.
+For the dynamic pages that handle focus events, you can focus the given element with [`method: Locator.focus`].
 
 ```js
 await page.locator('input#name').focus();
@@ -770,9 +699,73 @@ page.locator('input#name').focus()
 await page.Locator("input#name").FocusAsync();
 ```
 
-### API reference
+## Drag and Drop
 
-- [`method: Locator.focus`]
-- [`method: Page.focus`]
-- [`method: Frame.focus`]
-<br/>
+You can perform drag&drop operation with [`method: Locator.dragTo`]. This method will:
+- Hover the element that will be dragged.
+- Press left mouse button.
+- Move mouse to the element that will receive the drop.
+- Release left mouse button.
+
+```js
+await page.locator('#item-to-be-dragged').dragTo(page.locator('#item-to-drop-at'));
+```
+
+```java
+page.locator("#item-to-be-dragged").dragTo(page.locator("#item-to-drop-at"));
+```
+
+```python async
+await page.locator("#item-to-be-dragged").drag_to(page.locator("#item-to-drop-at"))
+```
+
+```python sync
+page.locator("#item-to-be-dragged").drag_to(page.locator("#item-to-drop-at"))
+```
+
+```csharp
+await page.Locator("#item-to-be-dragged").DragToAsync(page.Locator("#item-to-drop-at"));
+```
+
+### Dragging manually
+
+If you want precise control over the drag operation, use lower-level methods like [`method: Locator.hover`], [`method: Mouse.down`], [`method: Mouse.move`] and [`method: Mouse.up`].
+
+```js
+await page.locator('#item-to-be-dragged').hover();
+await page.mouse.down();
+await page.locator('#item-to-drop-at').hover();
+await page.mouse.up();
+```
+
+```java
+page.locator("#item-to-be-dragged").hover();
+page.mouse.down();
+page.locator("#item-to-drop-at").hover();
+page.mouse.up();
+```
+
+```python async
+await page.locator("#item-to-be-dragged").hover()
+await page.mouse.down()
+await page.locator("#item-to-drop-at").hover()
+await page.mouse.up()
+```
+
+```python sync
+page.locator("#item-to-be-dragged").hover()
+page.mouse.down()
+page.locator("#item-to-drop-at").hover()
+page.mouse.up()
+```
+
+```csharp
+await page.Locator("#item-to-be-dragged").HoverAsync();
+await page.Mouse.DownAsync();
+await page.Locator("#item-to-drop-at").HoverAsync();
+await page.Mouse.UpAsync();
+```
+
+:::note
+If your page relies on the `dragover` event being dispatched, you need at least two mouse moves to trigger it in all browsers. To reliably issue the second mouse move, repeat your [`method: Mouse.move`] or [`method: Locator.hover`] twice. The sequence of operations would be: hover the drag element, mouse down, hover the drop element, hover the drop element second time, mouse up.
+:::

@@ -40,7 +40,7 @@ import type * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { RecentLogsCollector } from '../../common/debugLogger';
 import { serverSideCallMetadata, SdkObject } from '../instrumentation';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -125,7 +125,7 @@ export class Electron extends SdkObject {
     controller.setLogName('browser');
     return controller.run(async progress => {
       let app: ElectronApplication | undefined = undefined;
-      const electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...args];
+      const electronArguments = [...args, '--inspect=0', '--remote-debugging-port=0'];
 
       if (os.platform() === 'linux') {
         const runningAsRoot = process.geteuid && process.geteuid() === 0;
@@ -171,7 +171,7 @@ export class Electron extends SdkObject {
         },
         stdio: 'pipe',
         cwd: options.cwd,
-        tempDirectories: [ artifactsDir ],
+        tempDirectories: [artifactsDir],
         attemptToGracefullyClose: () => app!.close(),
         handleSIGINT: true,
         handleSIGTERM: true,

@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LaunchOptions, BrowserContextOptions, Page, Browser, BrowserContext, Video, APIRequestContext, Tracing } from 'playwright-core';
+import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Video, APIRequestContext, Tracing } from 'playwright-core';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, VideoMode, TraceMode } from '../types/test';
 import { rootTestType } from './testType';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
@@ -25,6 +25,7 @@ export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 import * as outOfProcess from 'playwright-core/lib/outofprocess';
+import * as playwrightLibrary from 'playwright-core';
 import type { TestInfoImpl } from './testInfo';
 
 if ((process as any)['__pw_initiator__']) {
@@ -47,33 +48,37 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
-  _connectedBrowser: Browser | undefined,
   _browserOptions: LaunchOptions;
   _artifactsDir: () => string;
   _snapshotSuffix: string;
 };
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
-  defaultBrowserType: [ 'chromium', { scope: 'worker', option: true } ],
-  browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true } ],
+  defaultBrowserType: ['chromium', { scope: 'worker', option: true }],
+  browserName: [({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true }],
   playwright: [async ({ }, use) => {
     if (process.env.PW_OUT_OF_PROCESS_DRIVER) {
       const impl = await outOfProcess.start({
         NODE_OPTIONS: undefined  // Hide driver process while debugging.
       });
-      await use(impl.playwright as any);
+      const pw = impl.playwright as any;
+      pw._setSelectors(playwrightLibrary.selectors);
+      await use(pw);
       await impl.stop();
     } else {
       await use(require('playwright-core'));
     }
-  }, { scope: 'worker' } ],
-  headless: [ ({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true } ],
-  channel: [ ({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true } ],
-  launchOptions: [ {}, { scope: 'worker', option: true } ],
-  connectOptions: [ process.env.PW_TEST_CONNECT_WS_ENDPOINT ? { wsEndpoint: process.env.PW_TEST_CONNECT_WS_ENDPOINT } : undefined, { scope: 'worker', option: true } ],
-  screenshot: [ 'off', { scope: 'worker', option: true } ],
-  video: [ 'off', { scope: 'worker', option: true } ],
-  trace: [ 'off', { scope: 'worker', option: true } ],
+  }, { scope: 'worker' }],
+  headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
+  channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
+  launchOptions: [{}, { scope: 'worker', option: true }],
+  connectOptions: [process.env.PW_TEST_CONNECT_WS_ENDPOINT ? {
+    wsEndpoint: process.env.PW_TEST_CONNECT_WS_ENDPOINT,
+    headers: process.env.PW_TEST_CONNECT_HEADERS ? JSON.parse(process.env.PW_TEST_CONNECT_HEADERS) : undefined,
+  } : undefined, { scope: 'worker', option: true }],
+  screenshot: ['off', { scope: 'worker', option: true }],
+  video: ['off', { scope: 'worker', option: true }],
+  trace: ['off', { scope: 'worker', option: true }],
 
   _artifactsDir: [async ({}, use, workerInfo) => {
     let dir: string | undefined;
@@ -88,7 +93,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       await removeFolders([dir]);
   }, { scope: 'worker', _title: 'playwright configuration' } as any],
 
-  _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
+  _browserOptions: [async ({ playwright, headless, channel, launchOptions, connectOptions }, use) => {
     const options: LaunchOptions = {
       handleSIGINT: false,
       timeout: 0,
@@ -99,71 +104,52 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     if (channel !== undefined)
       options.channel = channel;
 
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
       (browserType as any)._defaultLaunchOptions = options;
+      (browserType as any)._defaultConnectOptions = connectOptions;
+    }
     await use(options);
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
       (browserType as any)._defaultLaunchOptions = undefined;
+      (browserType as any)._defaultConnectOptions = undefined;
+    }
   }, { scope: 'worker', auto: true }],
 
-  _connectedBrowser: [async ({ playwright, browserName, channel, headless, connectOptions, launchOptions }, use) => {
-    if (!connectOptions) {
-      await use(undefined);
-      return;
-    }
-    if (!['chromium', 'firefox', 'webkit'].includes(browserName))
-      throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
-    const browser = await playwright[browserName].connect(connectOptions.wsEndpoint, {
-      headers: {
-        'x-playwright-browser': browserName,
-        'x-playwright-launch-options': JSON.stringify(launchOptions),
-        ...connectOptions.headers,
-      },
-      timeout: connectOptions.timeout ?? 3 * 60 * 1000, // 3 minutes
-    });
-    await use(browser);
-    await browser.close();
-  }, { scope: 'worker', timeout: 0, _title: 'remote connection' } as any],
-
-  browser: [async ({ playwright, browserName, _connectedBrowser }, use) => {
-    if (_connectedBrowser) {
-      await use(_connectedBrowser);
-      return;
-    }
-
+  browser: [async ({ playwright, browserName }, use) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     const browser = await playwright[browserName].launch();
     await use(browser);
     await browser.close();
-  }, { scope: 'worker', timeout: 0 } ],
+  }, { scope: 'worker', timeout: 0 }],
 
-  acceptDownloads: [ ({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true } ],
-  bypassCSP: [ ({ contextOptions }, use) => use(contextOptions.bypassCSP), { option: true } ],
-  colorScheme: [ ({ contextOptions }, use) => use(contextOptions.colorScheme), { option: true } ],
-  deviceScaleFactor: [ ({ contextOptions }, use) => use(contextOptions.deviceScaleFactor), { option: true } ],
-  extraHTTPHeaders: [ ({ contextOptions }, use) => use(contextOptions.extraHTTPHeaders), { option: true } ],
-  geolocation: [ ({ contextOptions }, use) => use(contextOptions.geolocation), { option: true } ],
-  hasTouch: [ ({ contextOptions }, use) => use(contextOptions.hasTouch), { option: true } ],
-  httpCredentials: [ ({ contextOptions }, use) => use(contextOptions.httpCredentials), { option: true } ],
-  ignoreHTTPSErrors: [ ({ contextOptions }, use) => use(contextOptions.ignoreHTTPSErrors), { option: true } ],
-  isMobile: [ ({ contextOptions }, use) => use(contextOptions.isMobile), { option: true } ],
-  javaScriptEnabled: [ ({ contextOptions }, use) => use(contextOptions.javaScriptEnabled ?? true), { option: true } ],
-  locale: [ ({ contextOptions }, use) => use(contextOptions.locale ?? 'en-US'), { option: true } ],
-  offline: [ ({ contextOptions }, use) => use(contextOptions.offline), { option: true } ],
-  permissions: [ ({ contextOptions }, use) => use(contextOptions.permissions), { option: true } ],
-  proxy: [ ({ contextOptions }, use) => use(contextOptions.proxy), { option: true } ],
-  storageState: [ ({ contextOptions }, use) => use(contextOptions.storageState), { option: true } ],
-  timezoneId: [ ({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true } ],
-  userAgent: [ ({ contextOptions }, use) => use(contextOptions.userAgent), { option: true } ],
+  acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
+  bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP), { option: true }],
+  colorScheme: [({ contextOptions }, use) => use(contextOptions.colorScheme), { option: true }],
+  deviceScaleFactor: [({ contextOptions }, use) => use(contextOptions.deviceScaleFactor), { option: true }],
+  extraHTTPHeaders: [({ contextOptions }, use) => use(contextOptions.extraHTTPHeaders), { option: true }],
+  geolocation: [({ contextOptions }, use) => use(contextOptions.geolocation), { option: true }],
+  hasTouch: [({ contextOptions }, use) => use(contextOptions.hasTouch), { option: true }],
+  httpCredentials: [({ contextOptions }, use) => use(contextOptions.httpCredentials), { option: true }],
+  ignoreHTTPSErrors: [({ contextOptions }, use) => use(contextOptions.ignoreHTTPSErrors), { option: true }],
+  isMobile: [({ contextOptions }, use) => use(contextOptions.isMobile), { option: true }],
+  javaScriptEnabled: [({ contextOptions }, use) => use(contextOptions.javaScriptEnabled ?? true), { option: true }],
+  locale: [({ contextOptions }, use) => use(contextOptions.locale ?? 'en-US'), { option: true }],
+  offline: [({ contextOptions }, use) => use(contextOptions.offline), { option: true }],
+  permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true }],
+  proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true }],
+  storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true }],
+  timezoneId: [({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true }],
+  userAgent: [({ contextOptions }, use) => use(contextOptions.userAgent), { option: true }],
   viewport: [({ contextOptions }, use) => use(contextOptions.viewport === undefined ? { width: 1280, height: 720 } : contextOptions.viewport), { option: true }],
-  actionTimeout: [ 0, { option: true } ],
-  navigationTimeout: [ 0, { option: true } ],
-  baseURL: [ async ({ }, use) => {
+  actionTimeout: [0, { option: true }],
+  testIdAttribute: ['data-testid', { option: true }],
+  navigationTimeout: [0, { option: true }],
+  baseURL: [async ({ }, use) => {
     await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
-  }, { option: true } ],
-  serviceWorkers: [ ({ contextOptions }, use) => use(contextOptions.serviceWorkers ?? 'allow'), { option: true } ],
-  contextOptions: [ {}, { option: true } ],
+  }, { option: true }],
+  serviceWorkers: [({ contextOptions }, use) => use(contextOptions.serviceWorkers ?? 'allow'), { option: true }],
+  contextOptions: [{}, { option: true }],
 
   _combinedContextOptions: async ({
     acceptDownloads,
@@ -240,7 +226,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
   _snapshotSuffix: [process.platform, { scope: 'worker' }],
 
-  _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _browserOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
+  _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _browserOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+    if (testIdAttribute)
+      playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = _snapshotSuffix;
     if (debugMode())
       testInfo.setTimeout(0);

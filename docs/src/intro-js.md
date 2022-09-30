@@ -21,7 +21,8 @@ Get started by installing Playwright using npm or yarn. Alternatively you can al
   defaultValue="npm"
   values={[
     {label: 'npm', value: 'npm'},
-    {label: 'yarn', value: 'yarn'}
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
   ]
 }>
 <TabItem value="npm">
@@ -36,6 +37,14 @@ npm init playwright@latest
 
 ```bash
 yarn create playwright
+```
+
+</TabItem>
+  
+<TabItem value="pnpm">
+
+```bash
+pnpm dlx create-playwright
 ```
 
 </TabItem>
@@ -91,5 +100,5 @@ npx playwright show-report
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [Run single tests, multiple tests, headed mode](./running-tests.md)
-- [Generate tests with Codegen](./codegen.md)
+- [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)

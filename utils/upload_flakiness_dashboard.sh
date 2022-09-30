@@ -80,6 +80,7 @@ EMBED_METADATA_SCRIPT=$(cat <<EOF
     commitTitle: process.env.COMMIT_TITLE,
     commitAuthorName: process.env.COMMIT_AUTHOR_NAME,
     commitAuthorEmail: process.env.COMMIT_AUTHOR_EMAIL,
+    gitBranchName: process.env.GITHUB_REF_NAME,
   };
   console.log(JSON.stringify(json));
 EOF
@@ -91,5 +92,13 @@ node -e "${EMBED_METADATA_SCRIPT}" "$1" > "${REPORT_NAME}"
 gzip "${REPORT_NAME}"
 
 az storage blob upload --connection-string "${FLAKINESS_CONNECTION_STRING}" -c uploads -f "${REPORT_NAME}.gz" -n "${REPORT_NAME}.gz"
+
+UTC_DATE=$(cat <<EOF | node
+  const date = new Date();
+  console.log(date.toISOString().substring(0, 10).replace(/-/g, ''));
+EOF
+)
+
+az storage blob upload --connection-string "${FLAKINESS_CONNECTION_STRING}" -c uploads-permanent -f "${REPORT_NAME}.gz" -n "${UTC_DATE}-${REPORT_NAME}.gz"
 rm -rf "${REPORT_NAME}.gz"
 

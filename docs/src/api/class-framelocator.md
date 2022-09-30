@@ -30,7 +30,7 @@ await locator.ClickAsync();
 
 **Strictness**
 
-Frame locators are strict. This means that all operations on frame locators will throw if more than one element matches given selector.
+Frame locators are strict. This means that all operations on frame locators will throw if more than one element matches a given selector.
 
 ```js
 // Throws if there are several frames in DOM:
@@ -114,6 +114,77 @@ in that iframe.
 * since: v1.17
 
 
+## method: FrameLocator.getByAltText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-alt-text-%%
+
+### param: FrameLocator.getByAltText.text = %%-locator-get-by-text-text-%%
+### option: FrameLocator.getByAltText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: FrameLocator.getByLabelText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-label-text-%%
+
+### param: FrameLocator.getByLabelText.text = %%-locator-get-by-text-text-%%
+### option: FrameLocator.getByLabelText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: FrameLocator.getByPlaceholderText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-placeholder-text-%%
+
+### param: FrameLocator.getByPlaceholderText.text = %%-locator-get-by-text-text-%%
+### option: FrameLocator.getByPlaceholderText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: FrameLocator.getByRole
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-role-%%
+
+### param: FrameLocator.getByRole.role = %%-locator-get-by-role-role-%%
+### option: FrameLocator.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
+* since: v1.27
+
+
+## method: FrameLocator.getByTestId
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-test-id-%%
+
+### param: FrameLocator.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
+* since: v1.27
+
+
+## method: FrameLocator.getByText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-text-%%
+
+### param: FrameLocator.getByText.text = %%-locator-get-by-text-text-%%
+### option: FrameLocator.getByText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: FrameLocator.getByTitle
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-title-%%
+
+### param: FrameLocator.getByTitle.text = %%-locator-get-by-text-text-%%
+### option: FrameLocator.getByTitle.exact = %%-locator-get-by-text-exact-%%
+
+
 ## method: FrameLocator.last
 * since: v1.17
 - returns: <[FrameLocator]>
@@ -125,7 +196,7 @@ Returns locator to the last matching frame.
 * since: v1.17
 - returns: <[Locator]>
 
-The method finds an element matching the specified selector in the FrameLocator's subtree.
+%%-template-locator-locator-%%
 
 ### param: FrameLocator.locator.selector = %%-find-selector-%%
 * since: v1.17

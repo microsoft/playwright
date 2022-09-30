@@ -29,8 +29,8 @@ jobs:
         os: [ubuntu-18.04, ubuntu-20.04]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -45,7 +45,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: always()
       with:
         name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
@@ -60,8 +60,8 @@ jobs:
         browser: [chromium, firefox, webkit]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -75,7 +75,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
@@ -89,8 +89,8 @@ jobs:
         browser: [chromium, firefox, webkit]
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -105,7 +105,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: ${{ matrix.browser }}-win-test-results
@@ -124,8 +124,8 @@ jobs:
           node_version: "^16.0.0"
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node_version }}
     - run: npm i -g npm@8
@@ -151,8 +151,8 @@ jobs:
         os: [ubuntu-20.04, ubuntu-22.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -169,7 +169,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: always() && startsWith(matrix.os, 'ubuntu-')
       with:
         name: headful-${{ matrix.browser }}-linux-test-results
@@ -183,8 +183,8 @@ jobs:
         mode: [driver, service]
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -205,7 +205,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: mode-${{ matrix.mode }}-linux-test-results
@@ -224,8 +224,8 @@ jobs:
             channel: chromium-tip-of-tree
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -247,8 +247,8 @@ jobs:
     name: "Chrome Stable (Linux)"
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -263,7 +263,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: chrome-stable-linux-test-results
@@ -273,8 +273,8 @@ jobs:
     name: "Chrome Stable (Win)"
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -290,7 +290,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: chrome-stable-win-test-results
@@ -300,8 +300,8 @@ jobs:
     name: "Chrome Stable (Mac)"
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -316,7 +316,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: chrome-stable-mac-test-results
@@ -330,8 +330,8 @@ jobs:
       matrix:
         os: [ubuntu-18.04, macos-12, windows-latest]
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -351,7 +351,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: always()
       with:
         name: chromium-tot-${{ matrix.os }}-test-results
@@ -365,8 +365,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -386,7 +386,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: always()
       with:
         name: chromium-tot-headed-${{ matrix.os }}-test-results
@@ -396,8 +396,8 @@ jobs:
     name: "Firefox Beta (Linux)"
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -412,7 +412,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: firefox-beta-linux-test-results
@@ -422,8 +422,8 @@ jobs:
     name: "Firefox Beta (Win)"
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -439,7 +439,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: firefox-beta-win-test-results
@@ -449,8 +449,8 @@ jobs:
     name: "Firefox Beta (Mac)"
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -465,7 +465,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: firefox-beta-mac-test-results
@@ -475,8 +475,8 @@ jobs:
     name: "Edge Stable (Mac)"
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -491,7 +491,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: msedge-stable-mac-test-results
@@ -502,8 +502,8 @@ jobs:
     name: "Edge Stable (Win)"
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -519,7 +519,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: edge-stable-win-test-results
@@ -529,8 +529,8 @@ jobs:
     name: "Edge Stable (Linux)"
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -545,7 +545,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: edge-stable-linux-test-results
@@ -555,8 +555,8 @@ jobs:
     name: "Edge Beta (Mac)"
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -571,7 +571,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: msedge-beta-mac-test-results
@@ -581,8 +581,8 @@ jobs:
     name: "Edge Beta (Win)"
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -598,7 +598,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: edge-beta-win-test-results
@@ -608,8 +608,8 @@ jobs:
     name: "Edge Beta (Linux)"
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -624,7 +624,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: edge-beta-linux-test-results
@@ -634,8 +634,8 @@ jobs:
     name: "Edge Dev (Mac)"
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -650,7 +650,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: msedge-dev-mac-test-results
@@ -660,8 +660,8 @@ jobs:
     name: "Edge Dev (Win)"
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -677,7 +677,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: edge-dev-win-test-results
@@ -687,8 +687,8 @@ jobs:
     name: "Edge Dev (Linux)"
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -703,7 +703,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: edge-dev-linux-test-results
@@ -713,8 +713,8 @@ jobs:
     name: "Chrome Beta (Linux)"
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -729,7 +729,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: chrome-beta-linux-test-results
@@ -739,8 +739,8 @@ jobs:
     name: "Chrome Beta (Win)"
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -756,7 +756,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: chrome-beta-win-test-results
@@ -766,8 +766,8 @@ jobs:
     name: "Chrome Beta (Mac)"
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -782,7 +782,7 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
         name: chrome-beta-mac-test-results
@@ -792,8 +792,8 @@ jobs:
     name: "build-playwright-driver"
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: 14
     - run: npm i -g npm@8
@@ -801,3 +801,30 @@ jobs:
     - run: npm run build
     - run: npx playwright install-deps
     - run: utils/build/build-playwright-driver.sh
+
+  smoke_test_docker_integration:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 14
+    - run: npm i -g npm@8
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps
+    - run: ./utils/docker/build.sh --amd64 focal playwright:localbuild
+    - run: PWTEST_DOCKER_BASE_IMAGE=playwright:localbuild npx playwright docker build
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run dtest
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+      shell: bash
+    - uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: docker-integration-test-results
+        path: test-results
+

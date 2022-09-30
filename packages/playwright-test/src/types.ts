@@ -44,8 +44,8 @@ export interface TestStepInternal {
 export interface FullConfigInternal extends FullConfigPublic {
   _globalOutputDir: string;
   _configDir: string;
-  _testGroupsCount: number;
-  _watchMode: boolean;
+  _maxConcurrentTestGroups: number;
+  _ignoreSnapshots: boolean;
   _workerIsolation: WorkerIsolation;
   /**
    * If populated, this should also be the first/only entry in _webServers. Legacy singleton `webServer` as well as those provided via an array in the user-facing playwright.config.{ts,js} will be in `_webServers`. The legacy field (`webServer`) field additionally stores the backwards-compatible singleton `webServer` since it had been showing up in globalSetup to the user.
@@ -55,6 +55,14 @@ export interface FullConfigInternal extends FullConfigPublic {
 
   // Overrides the public field.
   projects: FullProjectInternal[];
+
+  groups?: { [key: string]: Array<string | Array<string | {
+    project: string | string[],
+    grep?: RegExp | RegExp[],
+    grepInvert?: RegExp | RegExp[],
+    testMatch?: string | RegExp | Array<string | RegExp>,
+    testIgnore?: string | RegExp | Array<string | RegExp>
+  }>> };
 }
 
 /**

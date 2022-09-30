@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { HTMLReport } from '@playwright-test/reporters/html';
+import type { HTMLReport } from './types';
 import type zip from '@zip.js/zip.js';
 // @ts-ignore
 import zipImport from '@zip.js/zip.js/dist/zip-no-worker-inflate.min.js';

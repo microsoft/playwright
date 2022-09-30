@@ -1,3 +1,6 @@
 #!/bin/sh
 SCRIPT_PATH="$(cd "$(dirname "$0")" ; pwd -P)"
-"$SCRIPT_PATH/node" "$SCRIPT_PATH/package/lib/cli/cli.js" "$@"
+if [ -z "$PLAYWRIGHT_NODEJS_PATH" ]; then
+  PLAYWRIGHT_NODEJS_PATH="$SCRIPT_PATH/node"
+fi
+"$PLAYWRIGHT_NODEJS_PATH" "$SCRIPT_PATH/package/lib/cli/cli.js" "$@"

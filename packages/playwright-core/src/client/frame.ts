@@ -16,9 +16,10 @@
  */
 
 import { assert } from '../utils';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import { FrameLocator, Locator, type LocatorOptions } from './locator';
+import { FrameLocator, Locator } from './locator';
+import type { ByRoleOptions, LocatorOptions } from './locator';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { assertMaxArguments, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import fs from 'fs';
@@ -296,6 +297,34 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   locator(selector: string, options?: LocatorOptions): Locator {
     return new Locator(this, selector, options);
+  }
+
+  getByTestId(testId: string): Locator {
+    return this.locator(Locator.getByTestIdSelector(testId));
+  }
+
+  getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByAltTextSelector(text, options));
+  }
+
+  getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByLabelTextSelector(text, options));
+  }
+
+  getByPlaceholderText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByPlaceholderTextSelector(text, options));
+  }
+
+  getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByTextSelector(text, options));
+  }
+
+  getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByTitleSelector(text, options));
+  }
+
+  getByRole(role: string, options: ByRoleOptions = {}): Locator {
+    return this.locator(Locator.getByRoleSelector(role, options));
   }
 
   frameLocator(selector: string): FrameLocator {

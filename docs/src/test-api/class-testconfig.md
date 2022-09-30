@@ -84,6 +84,12 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+## property: TestConfig.configFile
+* since: v1.27
+- type: ?<[string]>
+
+Path to config file, if any.
+
 ## property: TestConfig.forbidOnly
 * since: v1.10
 - type: ?<[boolean]>
@@ -226,6 +232,22 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 
 `grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
+## property: TestConfig.groups
+* since: v1.27
+- type: ?<[Object]<[string],[Array]<[string]|[Array]<[string]|[Object]>>>>
+  - `project` <[string]|[Array]<[string]>> Project name(s).
+  - `grep` ?<[RegExp]|[Array]<[RegExp]>> Filter to only run tests with a title matching one of the patterns.
+  - `grepInvert` ?<[RegExp]|[Array]<[RegExp]>> Filter to only run tests with a title **not** matching one of the patterns.
+  - `testMatch` ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>> Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute file path. Strings are treated as glob patterns.
+  - `testIgnore` ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>> Files matching one of these patterns are not executed as test files. Matching is performed against the absolute file path. Strings are treated as glob patterns.
+
+Project groups that control project execution order.
+
+## property: TestConfig.ignoreSnapshots
+* since: v1.26
+- type: ?<[boolean]>
+
+Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await expect(page).toHaveScreenshot()`.
 
 ## property: TestConfig.maxFailures
 * since: v1.10
@@ -780,13 +802,13 @@ module.exports = config;
 
 ## property: TestConfig.workers
 * since: v1.10
-- type: ?<[int]>
+- type: ?<[int]|[string]>
 
-The maximum number of concurrent worker processes to use for parallelizing tests.
+The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of logical CPU cores, e.g. `'50%'.`
 
 Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to speed up test execution.
 
-Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
+Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
 
 ```js tab=js-js
 // playwright.config.js

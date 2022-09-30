@@ -579,6 +579,11 @@ interface TestConfig {
   };
 
   /**
+   * Path to config file, if any.
+   */
+  configFile?: string;
+
+  /**
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
    * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
@@ -677,6 +682,44 @@ interface TestConfig {
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
   grepInvert?: RegExp|Array<RegExp>;
+
+  /**
+   * Project groups that control project execution order.
+   */
+  groups?: { [key: string]: Array<string|Array<string|{
+    /**
+     * Project name(s).
+     */
+    project: string|Array<string>;
+
+    /**
+     * Filter to only run tests with a title matching one of the patterns.
+     */
+    grep?: RegExp|Array<RegExp>;
+
+    /**
+     * Filter to only run tests with a title **not** matching one of the patterns.
+     */
+    grepInvert?: RegExp|Array<RegExp>;
+
+    /**
+     * Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute
+     * file path. Strings are treated as glob patterns.
+     */
+    testMatch?: string|RegExp|Array<string|RegExp>;
+
+    /**
+     * Files matching one of these patterns are not executed as test files. Matching is performed against the absolute file
+     * path. Strings are treated as glob patterns.
+     */
+    testIgnore?: string|RegExp|Array<string|RegExp>;
+  }>>; };
+
+  /**
+   * Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await
+   * expect(page).toHaveScreenshot()`.
+   */
+  ignoreSnapshots?: boolean;
 
   /**
    * The maximum number of test failures for the whole test suite run. After reaching this number, testing will stop and exit
@@ -921,13 +964,14 @@ interface TestConfig {
   updateSnapshots?: "all"|"none"|"missing";
 
   /**
-   * The maximum number of concurrent worker processes to use for parallelizing tests.
+   * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
+   * logical CPU cores, e.g. `'50%'.`
    *
    * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
    * speed up test execution.
    *
-   * Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
-   * Playwright Test.
+   * Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
+   * with Playwright Test.
    *
    * ```js
    * // playwright.config.ts
@@ -940,7 +984,7 @@ interface TestConfig {
    * ```
    *
    */
-  workers?: number;}
+  workers?: number|string;}
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
@@ -1195,13 +1239,14 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   updateSnapshots: 'all' | 'none' | 'missing';
   /**
-   * The maximum number of concurrent worker processes to use for parallelizing tests.
+   * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
+   * logical CPU cores, e.g. `'50%'.`
    *
    * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
    * speed up test execution.
    *
-   * Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
-   * Playwright Test.
+   * Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
+   * with Playwright Test.
    *
    * ```js
    * // playwright.config.ts
@@ -1292,6 +1337,10 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   webServer: TestConfigWebServer | null;
+  /**
+   * Path to config file, if any.
+   */
+  configFile?: string;
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
@@ -2938,6 +2987,12 @@ export interface PlaywrightTestOptions {
    * - `'block'`: Playwright will block all registration of Service Workers.
    */
   serviceWorkers: ServiceWorkerPolicy | undefined;
+  /**
+   * Custom attribute to be used in
+   * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used by
+   * default.
+   */
+  testIdAttribute: string | undefined;
 }
 
 
@@ -3180,7 +3235,7 @@ interface APIResponseAssertions {
   not: APIResponseAssertions;
 
   /**
-   * Ensures the response status code is within [200..299] range.
+   * Ensures the response status code is within `200..299` range.
    *
    * ```js
    * await expect(response).toBeOK();
@@ -3268,6 +3323,8 @@ interface LocatorAssertions {
    * @param options
    */
   toBeEditable(options?: {
+    editable?: boolean;
+
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -3302,6 +3359,8 @@ interface LocatorAssertions {
    * @param options
    */
   toBeEnabled(options?: {
+    enabled?: boolean;
+
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -3326,7 +3385,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to a hidden DOM node, which is the opposite of [visible](https://playwright.dev/docs/api/actionability#visible).
+   * Ensures that [Locator] either does not resolve to any DOM node, or resolves to a
+   * [non-visible](https://playwright.dev/docs/api/actionability#visible) one.
    *
    * ```js
    * const locator = page.locator('.my-element');
@@ -3343,7 +3403,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to a [visible](https://playwright.dev/docs/api/actionability#visible) DOM node.
+   * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/api/actionability#attached) and [visible](https://playwright.dev/docs/api/actionability#visible)
+   * DOM node.
    *
    * ```js
    * const locator = page.locator('.my-element');
@@ -3357,6 +3418,8 @@ interface LocatorAssertions {
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
+
+    visible?: boolean;
   }): Promise<void>;
 
   /**

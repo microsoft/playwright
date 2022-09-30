@@ -964,6 +964,58 @@ Optional event-specific initialization properties.
 ## async method: Page.dragAndDrop
 * since: v1.13
 
+This method drags the source element to the target element.
+It will first move to the source element, perform a `mousedown`,
+then move to the target element and perform a `mouseup`.
+
+```js
+await page.dragAndDrop('#source', '#target');
+// or specify exact positions relative to the top-left corners of the elements:
+await page.dragAndDrop('#source', '#target', {
+  sourcePosition: { x: 34, y: 7 },
+  targetPosition: { x: 10, y: 20 },
+});
+```
+
+```java
+page.dragAndDrop("#source", '#target');
+// or specify exact positions relative to the top-left corners of the elements:
+page.dragAndDrop("#source", '#target', new Page.DragAndDropOptions()
+  .setSourcePosition(34, 7).setTargetPosition(10, 20));
+```
+
+```python async
+await page.drag_and_drop("#source", "#target")
+# or specify exact positions relative to the top-left corners of the elements:
+await page.drag_and_drop(
+  "#source",
+  "#target",
+  source_position={"x": 34, "y": 7},
+  target_position={"x": 10, "y": 20}
+)
+```
+
+```python sync
+page.drag_and_drop("#source", "#target")
+# or specify exact positions relative to the top-left corners of the elements:
+page.drag_and_drop(
+  "#source",
+  "#target",
+  source_position={"x": 34, "y": 7},
+  target_position={"x": 10, "y": 20}
+)
+```
+
+```csharp
+await Page.DragAndDropAsync("#source", "#target");
+// or specify exact positions relative to the top-left corners of the elements:
+await Page.DragAndDropAsync("#source", "#target", new()
+{
+    SourcePosition = new() { X = 34, Y = 7 },
+    TargetPosition = new() { X = 10, Y = 20 },
+});
+```
+
 ### param: Page.dragAndDrop.source = %%-input-source-%%
 * since: v1.13
 ### param: Page.dragAndDrop.target = %%-input-target-%%
@@ -1187,10 +1239,6 @@ Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce
 - `forcedColors` <null|[ForcedColors]<"active"|"none">>
 
 Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables forced colors emulation.
-
-:::note
-It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
-:::
 
 ### option: Page.emulateMedia.forcedColors
 * since: v1.15
@@ -2134,6 +2182,78 @@ Attribute name to get the value for.
 ### option: Page.getAttribute.timeout = %%-input-timeout-%%
 * since: v1.8
 
+
+## method: Page.getByAltText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-alt-text-%%
+
+### param: Page.getByAltText.text = %%-locator-get-by-text-text-%%
+### option: Page.getByAltText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Page.getByLabelText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-label-text-%%
+
+### param: Page.getByLabelText.text = %%-locator-get-by-text-text-%%
+### option: Page.getByLabelText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Page.getByPlaceholderText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-placeholder-text-%%
+
+### param: Page.getByPlaceholderText.text = %%-locator-get-by-text-text-%%
+### option: Page.getByPlaceholderText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Page.getByRole
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-role-%%
+
+### param: Page.getByRole.role = %%-locator-get-by-role-role-%%
+### option: Page.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
+* since: v1.27
+
+
+## method: Page.getByTestId
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-test-id-%%
+
+### param: Page.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
+* since: v1.27
+
+
+## method: Page.getByText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-text-%%
+
+### param: Page.getByText.text = %%-locator-get-by-text-text-%%
+### option: Page.getByText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Page.getByTitle
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-title-%%
+
+### param: Page.getByTitle.text = %%-locator-get-by-text-text-%%
+### option: Page.getByTitle.exact = %%-locator-get-by-text-exact-%%
+
+
 ## async method: Page.goBack
 * since: v1.8
 - returns: <[null]|[Response]>
@@ -2399,12 +2519,7 @@ Returns whether the element is [visible](../actionability.md#visible). [`option:
 * since: v1.14
 - returns: <[Locator]>
 
-The method returns an element locator that can be used to perform actions on the page.
-Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
-
-[Learn more about locators](../locators.md).
-
-Shortcut for main frame's [`method: Frame.locator`].
+%%-template-locator-root-locator-%%
 
 ### param: Page.locator.selector = %%-find-selector-%%
 * since: v1.14
@@ -3384,7 +3499,7 @@ page.type("#mytextarea", "world", delay=100) # types slower, like a user
 
 ```csharp
 await page.TypeAsync("#mytextarea", "hello"); // types instantly
-await page.TypeAsync("#mytextarea", "world"); // types slower, like a user
+await page.TypeAsync("#mytextarea", "world", new() { Delay = 100 }); // types slower, like a user
 ```
 
 Shortcut for main frame's [`method: Frame.type`].
@@ -4162,7 +4277,7 @@ Returns when element specified by selector satisfies [`option: state`] option. R
 
 :::note
 Playwright automatically waits for element to be ready before performing an action. Using
-[Locator] objects and web-first assertions make the code wait-for-selector-free.
+[Locator] objects and web-first assertions makes the code wait-for-selector-free.
 :::
 
 Wait for the [`param: selector`] to satisfy [`option: state`] option (either appear/disappear from dom, or become

@@ -20,13 +20,13 @@ import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import { assert } from '../../utils';
 import * as network from '../network';
-import type { PageBinding, PageDelegate , Worker } from '../page';
+import type { PageBinding, PageDelegate, Worker } from '../page';
 import { Page } from '../page';
 import { Frame } from '../frames';
 import type { Dialog } from '../dialog';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import type { CRSession } from './crConnection';
 import { ConnectionEvents, CRConnection } from './crConnection';
 import { CRPage } from './crPage';
@@ -322,7 +322,7 @@ export class CRBrowserContext extends BrowserContext {
 
   override async _initialize() {
     assert(!Array.from(this._browser._crPages.values()).some(page => page._browserContext === this));
-    const promises: Promise<any>[] = [ super._initialize() ];
+    const promises: Promise<any>[] = [super._initialize()];
     if (this._browser.options.name !== 'electron' && this._browser.options.name !== 'clank') {
       promises.push(this._browser._session.send('Browser.setDownloadBehavior', {
         behavior: this._options.acceptDownloads ? 'allowAndName' : 'deny',
@@ -364,7 +364,7 @@ export class CRBrowserContext extends BrowserContext {
           newKeys.delete(key);
       }
       assert(newKeys.size === 1);
-      [ targetId ] = [...newKeys];
+      [targetId] = [...newKeys];
     }
     return this._browser._crPages.get(targetId)!;
   }

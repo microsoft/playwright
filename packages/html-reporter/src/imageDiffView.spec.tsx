@@ -60,7 +60,7 @@ test('should show actual by default', async ({ mount }) => {
 
 test('should switch to expected', async ({ mount }) => {
   const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
-  await component.locator('text="Expected"').click();
+  await component.getByText('Expected', { exact: true }).click();
   const sliderElement = component.locator('data-testid=test-result-image-mismatch-grip');
   await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Expected slider is on the left').toBe('371px');
 
@@ -75,7 +75,7 @@ test('should switch to expected', async ({ mount }) => {
 
 test('should switch to diff', async ({ mount }) => {
   const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
-  await component.locator('text="Diff"').click();
+  await component.getByText('Diff', { exact: true }).click();
 
   const image = component.locator('img');
   const box = await image.boundingBox();

@@ -27,7 +27,7 @@ value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 - `strict` <[boolean]>
 
 When true, the call requires selector to resolve to a single element. If given selector resolves to more
-then one element, the call throws an exception.
+than one element, the call throws an exception.
 
 ## input-timeout
 - `timeout` <[float]>
@@ -324,19 +324,19 @@ Query parameters to be sent with the URL.
 
 Optional request parameters.
 
-## js-python-fetch-option-headers
+## js-python-csharp-fetch-option-headers
 * langs: js, python, csharp
 - `headers` <[Object]<[string], [string]>>
 
 Allows to set HTTP headers.
 
-## js-python-fetch-option-timeout
+## js-python-csharp-fetch-option-timeout
 * langs: js, python, csharp
 - `timeout` <[float]>
 
 Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 
-## js-python-fetch-option-failonstatuscode
+## js-python-csharp-fetch-option-failonstatuscode
 * langs: js, python, csharp
 - `failOnStatusCode` <[boolean]>
 
@@ -384,7 +384,7 @@ or as file-like object containing file name, mime-type and its content.
 
 An instance of [FormData] can be created via [`method: APIRequestContext.createFormData`].
 
-## js-python-fetch-option-data
+## js-python-csharp-fetch-option-data
 * langs: js, python, csharp
 - `data` <[string]|[Buffer]|[Serializable]>
 
@@ -392,18 +392,24 @@ Allows to set post data of the request. If the data parameter is an object, it w
 and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will be
 set to `application/octet-stream` if not explicitly set.
 
-## js-python-fetch-option-ignorehttpserrors
+## js-python-csharp-fetch-option-ignorehttpserrors
 * langs: js, python, csharp
 - `ignoreHTTPSErrors` <[boolean]>
 
 Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
 
+## js-python-csharp-fetch-option-maxredirects
+* langs: js, python, csharp
+- `maxRedirects` <[int]>
+
+Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is exceeded.
+Defaults to `20`. Pass `0` to not follow redirects.
+
 ## evaluate-expression
 - `expression` <[string]>
 
-JavaScript expression to be evaluated in the browser context. If it looks like
-a function declaration, it is interpreted as a function. Otherwise, evaluated
-as an expression.
+JavaScript expression to be evaluated in the browser context. If the expresion evaluates
+to a function, the function is automatically invoked.
 
 ## js-evaluate-pagefunction
 * langs: js
@@ -534,10 +540,6 @@ to `'no-preference'`.
 Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See [`method: Page.emulateMedia`] for more details. Defaults
 to `'none'`.
 
-:::note
-It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
-:::
-
 ## context-option-logger
 * langs: js
 - `logger` <[Logger]>
@@ -563,7 +565,7 @@ Logger sink for Playwright logging.
 - `recordHar` <[Object]>
   - `omitContent` ?<[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to
     `false`. Deprecated, use `content` policy instead.
-  - `content` ?<[HarContentPolicy]<"omit"|"embed"|"attach">> Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for all other file extensions.
+  - `content` ?<[HarContentPolicy]<"omit"|"embed"|"attach">> Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for all other file extensions.
   - `path` <[path]> Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by default.
   - `mode` ?<[HarMode]<"full"|"minimal">> When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
   - `urlFilter` ?<[string]|[RegExp]> A glob or regex pattern to filter requests that are stored in the HAR. When a [`option: baseURL`] via the context options was provided and the passed URL is a path, it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
@@ -593,7 +595,7 @@ Optional setting to control whether to omit request content from the HAR. Defaul
   - alias-python: record_har_content
 - `recordHarContent` ?<[HarContentPolicy]<"omit"|"embed"|"attach">>
 
-Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persistet as separate files and all of these files are archived along with the HAR file. Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
+Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files and all of these files are archived along with the HAR file. Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
 
 ## context-option-recordhar-mode
 * langs: csharp, java, python
@@ -1055,3 +1057,164 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%
 - %%-input-timeout-%%
+
+## locator-get-by-test-id-test-id
+* since: v1.27
+- `testId` <[string]>
+
+Id to locate the element by.
+
+## locator-get-by-text-text
+* since: v1.27
+- `text` <[string]|[RegExp]>
+
+Text to locate the element for.
+
+## locator-get-by-text-exact
+* since: v1.27
+- `exact` <[boolean]>
+
+Whether to find an exact match: case-sensitive and whole-string. Default to false.
+
+## locator-get-by-role-role
+* since: v1.27
+- `role` <[string]>
+
+Required aria role.
+
+## locator-get-by-role-option-checked
+* since: v1.27
+- `checked` <[boolean]>
+
+An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for checked are `true`, `false` and `"mixed"`.
+
+Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+
+## locator-get-by-role-option-disabled
+* since: v1.27
+- `disabled` <[boolean]>
+
+A boolean attribute that is usually set by `aria-disabled` or `disabled`.
+
+:::note
+Unlike most other attributes, `disabled` is inherited through the DOM hierarchy.
+Learn more about [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+:::
+
+## locator-get-by-role-option-expanded
+* since: v1.27
+- `expanded` <[boolean]>
+
+A boolean attribute that is usually set by `aria-expanded`.
+
+  Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+
+## locator-get-by-role-option-includeHidden
+* since: v1.27
+- `includeHidden` <[boolean]>
+
+A boolean attribute that controls whether hidden elements are matched. By default, only non-hidden elements, as [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
+
+Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+
+## locator-get-by-role-option-level
+* since: v1.27
+- `level` <[int]>
+
+A number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values for `<h1>-<h6>` elements.
+
+Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+
+## locator-get-by-role-option-name
+* since: v1.27
+- `name` <[string]|[RegExp]>
+
+A string attribute that matches [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+## locator-get-by-role-option-pressed
+* since: v1.27
+- `pressed` <[boolean]>
+
+An attribute that is usually set by `aria-pressed`. Available values for pressed are `true`, `false` and `"mixed"`.
+
+Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+
+## locator-get-by-role-option-selected
+* since: v1.27
+- `selected` <boolean>
+
+A boolean attribute that is usually set by `aria-selected`.
+
+Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
+
+## locator-get-by-role-option-list-v1.27
+- %%-locator-get-by-role-option-checked-%%
+- %%-locator-get-by-role-option-disabled-%%
+- %%-locator-get-by-role-option-expanded-%%
+- %%-locator-get-by-role-option-includeHidden-%%
+- %%-locator-get-by-role-option-level-%%
+- %%-locator-get-by-role-option-name-%%
+- %%-locator-get-by-role-option-pressed-%%
+- %%-locator-get-by-role-option-selected-%%
+
+## template-locator-locator
+
+The method finds an element matching the specified selector in the locator's subtree. It also accepts filter options, similar to [`method: Locator.filter`] method.
+
+[Learn more about locators](../locators.md).
+
+## template-locator-root-locator
+
+The method returns an element locator that can be used to perform actions on this page / frame.
+Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
+
+[Learn more about locators](../locators.md).
+
+## template-locator-get-by-test-id
+
+Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use [`method: Selectors.setTestIdAttribute`] to configure a different test id attribute if necessary.
+
+## template-locator-get-by-text
+
+Allows locating elements that contain given text.
+
+## template-locator-get-by-alt-text
+
+Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+
+```html
+<img alt='Castle'>
+```
+
+## template-locator-get-by-label-text
+
+Allows locating input elements by the text of the associated label. For example, this method will find the input by label text Password in the following DOM:
+
+```html
+<label for="password-input">Password:</label>
+<input id="password-input">
+```
+
+## template-locator-get-by-placeholder-text
+
+Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder "Country":
+
+```html
+<input placeholder="Country">
+```
+
+## template-locator-get-by-role
+
+Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace** accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+
+Note that many html elements have an implicitly [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
+
+## template-locator-get-by-title
+
+Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+
+```html
+<button title='Place the order'>Order Now</button>
+```

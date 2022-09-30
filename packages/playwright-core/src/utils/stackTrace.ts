@@ -64,9 +64,6 @@ export function isInternalFileName(file: string, functionName?: string): boolean
   // EventEmitter.emit has 'events.js' file.
   if (file === 'events.js' && functionName?.endsWith('emit'))
     return true;
-  // Node 12
-  if (file === '_stream_readable.js' || file === '_stream_writable.js')
-    return true;
   return false;
 }
 

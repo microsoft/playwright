@@ -133,11 +133,17 @@ test('should show steps', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.report.suites.length).toBe(1);
   expect(result.report.suites[0].specs.length).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![0].title).toBe('math works in a step');
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![0].steps![0].title).toBe('nested step');
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![0].steps![0].steps![0].title).toBe('deeply nested step');
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![0].steps![0].steps![0].steps).toBeUndefined();
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![1].error).not.toBeUndefined();
+  const testResult = result.report.suites[0].specs[0].tests[0].results[0];
+  const steps = testResult.steps!;
+  expect(steps[0].title).toBe('math works in a step');
+  expect(steps[0].steps![0].title).toBe('nested step');
+  expect(steps[0].steps![0].steps![0].title).toBe('deeply nested step');
+  expect(steps[0].steps![0].steps![0].steps).toBeUndefined();
+  expect(steps[1].error).not.toBeUndefined();
+  expect(testResult.errors).toHaveLength(1);
+  const snippet = stripAnsi(testResult.errors[0].message);
+  expect(snippet).toContain('failing step');
+  expect(snippet).toContain('expect(2 + 2).toBe(5)');
 });
 
 test('should display tags separately from title', async ({ runInlineTest }) => {
@@ -234,4 +240,57 @@ test('should add line in addition to file json without CI', async ({ runInlineTe
   expect(result.exitCode).toBe(0);
   expect(stripAnsi(result.output)).toContain('[1/1] a.test.js:6:7 › one');
   expect(fs.existsSync(testInfo.outputPath('a.json'))).toBeTruthy();
+});
+test('should have starting time in results', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('math works!', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  },   { reporter: 'json' });
+  expect(result.exitCode).toBe(0);
+  const startTime = result.report.suites[0].specs[0].tests[0].results[0].startTime;
+  expect(new Date(startTime).getTime()).toBeGreaterThan(new Date('1/1/2000').getTime());
+});
+
+test.describe('report location', () => {
+  test('with config should create report relative to config', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'nested/project/playwright.config.ts': `
+        module.exports = { reporter: [['json', { outputFile: '../my-report/a.json' }]] };
+      `,
+      'nested/project/a.test.js': `
+        const { test } = pwt;
+        test('one', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+    }, { reporter: '', config: './nested/project/playwright.config.ts' });
+    expect(result.exitCode).toBe(0);
+    expect(fs.existsSync(testInfo.outputPath(path.join('nested', 'my-report', 'a.json')))).toBeTruthy();
+  });
+
+  test('with env var should create relative to cwd', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'foo/package.json': `{ "name": "foo" }`,
+      // unused config along "search path"
+      'foo/bar/playwright.config.js': `
+        module.exports = { projects: [ {} ] };
+      `,
+      'foo/bar/baz/tests/a.spec.js': `
+        const { test } = pwt;
+        const fs = require('fs');
+        test('pass', ({}, testInfo) => {
+        });
+      `
+    }, { 'reporter': 'json' }, { 'PW_TEST_HTML_REPORT_OPEN': 'never', 'PLAYWRIGHT_JSON_OUTPUT_NAME': '../my-report.json' }, {
+      cwd: 'foo/bar/baz/tests',
+      usesCustomOutputDir: true
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.json'))).toBe(true);
+  });
 });

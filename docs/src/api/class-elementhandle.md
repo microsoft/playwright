@@ -921,7 +921,7 @@ element_handle.type("world", delay=100) # types slower, like a user
 
 ```csharp
 await elementHandle.TypeAsync("Hello"); // Types instantly
-await elementHandle.TypeAsync("World", delay: 100); // Types slower, like a user
+await elementHandle.TypeAsync("World", new() { Delay = 100 }); // Types slower, like a user
 ```
 
 An example of typing into a text field and then submitting the form:

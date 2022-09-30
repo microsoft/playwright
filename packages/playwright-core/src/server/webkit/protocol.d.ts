@@ -881,6 +881,14 @@ export module Protocol {
        * The variation axes defined by the font.
        */
       variationAxes: FontVariationAxis[];
+      /**
+       * Whether the font has synthesized its boldness or not.
+       */
+      synthesizedBold?: boolean;
+      /**
+       * Whether the font has synthesized its obliqueness or not
+       */
+      synthesizedOblique?: boolean;
     }
     /**
      * A single variation axis associated with a Font.
@@ -910,7 +918,7 @@ export module Protocol {
     /**
      * Relevant layout information about the node. Things not in this list are not important to Web Inspector.
      */
-    export type LayoutFlag = "rendered"|"flex"|"grid";
+    export type LayoutFlag = "rendered"|"scrollable"|"flex"|"grid"|"event";
     /**
      * The mode for how layout context type changes are handled (default: <code>Observed</code>). <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and all nodes with a known layout context are sent to the frontend.
      */
@@ -2557,6 +2565,10 @@ export module Protocol {
        * Id of the node to get listeners for.
        */
       nodeId: NodeId;
+      /**
+       * Controls whether ancestor event listeners are included. Defaults to true.
+       */
+      includeAncestors?: boolean;
     }
     export type getEventListenersForNodeReturnValue = {
       /**
@@ -2974,6 +2986,10 @@ export module Protocol {
        * Source element handle.
        */
       objectId?: Runtime.RemoteObjectId;
+      /**
+       * Id of the frame to resolve the owner element.
+       */
+      frameId?: Network.FrameId;
       /**
        * Specifies in which execution context to adopt to.
        */
@@ -3722,7 +3738,7 @@ might return multiple quads for inline nodes.
       /**
        * Pause reason.
        */
-      reason: "XHR"|"Fetch"|"DOM"|"AnimationFrame"|"Interval"|"Listener"|"Timeout"|"exception"|"assert"|"CSPViolation"|"DebuggerStatement"|"Breakpoint"|"PauseOnNextStatement"|"Microtask"|"BlackboxedScript"|"other";
+      reason: "URL"|"DOM"|"AnimationFrame"|"Interval"|"Listener"|"Timeout"|"exception"|"assert"|"CSPViolation"|"DebuggerStatement"|"Breakpoint"|"PauseOnNextStatement"|"Microtask"|"FunctionCall"|"BlackboxedScript"|"other";
       /**
        * Object containing break-specific auxiliary properties.
        */
@@ -3858,6 +3874,48 @@ might return multiple quads for inline nodes.
     export type removeBreakpointReturnValue = {
     }
     /**
+     * Adds a JavaScript breakpoint that pauses execution whenever a function with the given name is about to be called.
+     */
+    export type addSymbolicBreakpointParameters = {
+      /**
+       * The name of the function to pause in when called.
+       */
+      symbol: string;
+      /**
+       * If true, symbol is case sensitive. Defaults to true.
+       */
+      caseSensitive?: boolean;
+      /**
+       * If true, treats symbol as a regex. Defaults to false.
+       */
+      isRegex?: boolean;
+      /**
+       * Options to apply to this breakpoint to modify its behavior.
+       */
+      options?: BreakpointOptions;
+    }
+    export type addSymbolicBreakpointReturnValue = {
+    }
+    /**
+     * Removes a previously added symbolic breakpoint.
+     */
+    export type removeSymbolicBreakpointParameters = {
+      /**
+       * The name of the function to pause in when called.
+       */
+      symbol: string;
+      /**
+       * If true, symbol is case sensitive. Defaults to true.
+       */
+      caseSensitive?: boolean;
+      /**
+       * If true, treats symbol as a regex. Defaults to false.
+       */
+      isRegex?: boolean;
+    }
+    export type removeSymbolicBreakpointReturnValue = {
+    }
+    /**
      * Continues execution until the current evaluation completes. This will trigger either a Debugger.paused or Debugger.resumed event.
      */
     export type continueUntilNextRunLoopParameters = {
@@ -3973,6 +4031,25 @@ might return multiple quads for inline nodes.
        * Information about the function.
        */
       details: FunctionDetails;
+    }
+    /**
+     * Returns a list of valid breakpoint locations within the given location range.
+     */
+    export type getBreakpointLocationsParameters = {
+      /**
+       * Starting location to look for breakpoint locations after (inclusive). Must have same scriptId as end.
+       */
+      start: Location;
+      /**
+       * Ending location to look for breakpoint locations before (exclusive). Must have same scriptId as start.
+       */
+      end: Location;
+    }
+    export type getBreakpointLocationsReturnValue = {
+      /**
+       * List of resolved breakpoint locations.
+       */
+      locations: Location[];
     }
     /**
      * Control whether the debugger pauses execution before `debugger` statements.
@@ -6115,6 +6192,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type ReducedMotion = "Reduce"|"NoPreference";
     /**
+     * Page forced-colors media query override.
+     */
+    export type ForcedColors = "Active"|"None";
+    /**
      * Information about the Frame on the page.
      */
     export interface Frame {
@@ -6797,6 +6878,14 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       reducedMotion?: ReducedMotion;
     }
     export type setForcedReducedMotionReturnValue = {
+    }
+    /**
+     * Forces the forced-colors media query for the page.
+     */
+    export type setForcedColorsParameters = {
+      forcedColors?: ForcedColors;
+    }
+    export type setForcedColorsReturnValue = {
     }
     /**
      * Enables time zone emulation.
@@ -9055,6 +9144,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Debugger.setBreakpointByUrl": Debugger.setBreakpointByUrlParameters;
     "Debugger.setBreakpoint": Debugger.setBreakpointParameters;
     "Debugger.removeBreakpoint": Debugger.removeBreakpointParameters;
+    "Debugger.addSymbolicBreakpoint": Debugger.addSymbolicBreakpointParameters;
+    "Debugger.removeSymbolicBreakpoint": Debugger.removeSymbolicBreakpointParameters;
     "Debugger.continueUntilNextRunLoop": Debugger.continueUntilNextRunLoopParameters;
     "Debugger.continueToLocation": Debugger.continueToLocationParameters;
     "Debugger.stepNext": Debugger.stepNextParameters;
@@ -9066,6 +9157,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Debugger.searchInContent": Debugger.searchInContentParameters;
     "Debugger.getScriptSource": Debugger.getScriptSourceParameters;
     "Debugger.getFunctionDetails": Debugger.getFunctionDetailsParameters;
+    "Debugger.getBreakpointLocations": Debugger.getBreakpointLocationsParameters;
     "Debugger.setPauseOnDebuggerStatements": Debugger.setPauseOnDebuggerStatementsParameters;
     "Debugger.setPauseOnExceptions": Debugger.setPauseOnExceptionsParameters;
     "Debugger.setPauseOnAssertions": Debugger.setPauseOnAssertionsParameters;
@@ -9152,6 +9244,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setEmulatedMedia": Page.setEmulatedMediaParameters;
     "Page.setForcedAppearance": Page.setForcedAppearanceParameters;
     "Page.setForcedReducedMotion": Page.setForcedReducedMotionParameters;
+    "Page.setForcedColors": Page.setForcedColorsParameters;
     "Page.setTimeZone": Page.setTimeZoneParameters;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledParameters;
     "Page.snapshotNode": Page.snapshotNodeParameters;
@@ -9359,6 +9452,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Debugger.setBreakpointByUrl": Debugger.setBreakpointByUrlReturnValue;
     "Debugger.setBreakpoint": Debugger.setBreakpointReturnValue;
     "Debugger.removeBreakpoint": Debugger.removeBreakpointReturnValue;
+    "Debugger.addSymbolicBreakpoint": Debugger.addSymbolicBreakpointReturnValue;
+    "Debugger.removeSymbolicBreakpoint": Debugger.removeSymbolicBreakpointReturnValue;
     "Debugger.continueUntilNextRunLoop": Debugger.continueUntilNextRunLoopReturnValue;
     "Debugger.continueToLocation": Debugger.continueToLocationReturnValue;
     "Debugger.stepNext": Debugger.stepNextReturnValue;
@@ -9370,6 +9465,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Debugger.searchInContent": Debugger.searchInContentReturnValue;
     "Debugger.getScriptSource": Debugger.getScriptSourceReturnValue;
     "Debugger.getFunctionDetails": Debugger.getFunctionDetailsReturnValue;
+    "Debugger.getBreakpointLocations": Debugger.getBreakpointLocationsReturnValue;
     "Debugger.setPauseOnDebuggerStatements": Debugger.setPauseOnDebuggerStatementsReturnValue;
     "Debugger.setPauseOnExceptions": Debugger.setPauseOnExceptionsReturnValue;
     "Debugger.setPauseOnAssertions": Debugger.setPauseOnAssertionsReturnValue;
@@ -9456,6 +9552,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setEmulatedMedia": Page.setEmulatedMediaReturnValue;
     "Page.setForcedAppearance": Page.setForcedAppearanceReturnValue;
     "Page.setForcedReducedMotion": Page.setForcedReducedMotionReturnValue;
+    "Page.setForcedColors": Page.setForcedColorsReturnValue;
     "Page.setTimeZone": Page.setTimeZoneReturnValue;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledReturnValue;
     "Page.snapshotNode": Page.snapshotNodeReturnValue;

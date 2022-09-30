@@ -3,8 +3,6 @@ id: test-advanced
 title: "Advanced: configuration"
 ---
 
-<!-- TOC -->
-
 ## Configuration object
 
 Configuration file exports a single [TestConfig] object. See [TestConfig] properties for available configuration options.
@@ -681,10 +679,14 @@ test('numeric ranges', () => {
 });
 ```
 
-For TypeScript, also add the following to `global.d.ts`. You don't need it for JavaScript.
+For TypeScript, also add the following to your [`global.d.ts`](https://www.typescriptlang.org/docs/handbook/declaration-files/templates/global-d-ts.html). If it does not exist, you need to create it inside your repository. Make sure that your `global.d.ts` gets included inside your `tsconfig.json` via the `include` or `compilerOptions.typeRoots` option so that your IDE will pick it up.
+
+You don't need it for JavaScript.
 
 ```js
 // global.d.ts
+export {};
+
 declare global {
  namespace PlaywrightTest {
     interface Matchers<R, T> {

@@ -17,7 +17,7 @@
 import React from 'react';
 import { test, expect } from '@playwright/experimental-ct-react';
 import { TestCaseView } from './testCaseView';
-import type { TestCase, TestResult } from '../../playwright-test/src/reporters/html';
+import type { TestCase, TestResult } from './types';
 
 test.use({ viewport: { width: 800, height: 600 } });
 
@@ -63,13 +63,13 @@ const testCase: TestCase = {
 
 test('should render test case', async ({ mount }) => {
   const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase} run={0} anchor=''></TestCaseView>);
-  await expect(component.locator('text=Annotation text').first()).toBeVisible();
-  await component.locator('text=Annotations').click();
-  await expect(component.locator('text=Annotation text')).not.toBeVisible();
-  await expect(component.locator('text=Outer step')).toBeVisible();
-  await expect(component.locator('text=Inner step')).not.toBeVisible();
-  await component.locator('text=Outer step').click();
-  await expect(component.locator('text=Inner step')).toBeVisible();
-  await expect(component.locator('text=test.spec.ts:42')).toBeVisible();
-  await expect(component.locator('text=My test')).toBeVisible();
+  await expect(component.getByText('Annotation text', { exact: false }).first()).toBeVisible();
+  await component.getByText('Annotations').click();
+  await expect(component.getByText('Annotation text')).not.toBeVisible();
+  await expect(component.getByText('Outer step')).toBeVisible();
+  await expect(component.getByText('Inner step')).not.toBeVisible();
+  await component.getByText('Outer step').click();
+  await expect(component.getByText('Inner step')).toBeVisible();
+  await expect(component.getByText('test.spec.ts:42')).toBeVisible();
+  await expect(component.getByText('My test')).toBeVisible();
 });

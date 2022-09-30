@@ -180,7 +180,7 @@ it('should support acceptDownloads option', async ({ server, launchPersistent, m
     res.end(`Hello world`);
   });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-  const [ download ] = await Promise.all([
+  const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);

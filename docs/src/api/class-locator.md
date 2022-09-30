@@ -266,6 +266,72 @@ Optional event-specific initialization properties.
 
 ## async method: Locator.dragTo
 * since: v1.18
+
+This method drags the locator to another target locator or target position. It will
+first move to the source element, perform a `mousedown`, then move to the target
+element or position and perform a `mouseup`.
+
+```js
+const source = page.locator('#source');
+const target = page.locator('#target');
+
+await source.dragTo(target);
+// or specify exact positions relative to the top-left corners of the elements:
+await source.dragTo(target, {
+  sourcePosition: { x: 34, y: 7 },
+  targetPosition: { x: 10, y: 20 },
+});
+```
+
+```java
+Locator source = page.locator("#source");
+Locator target = page.locator("#target");
+
+source.dragTo(target);
+// or specify exact positions relative to the top-left corners of the elements:
+source.dragTo(target, new Locator.DragToOptions()
+  .setSourcePosition(34, 7).setTargetPosition(10, 20));
+```
+
+```python async
+source = page.locator("#source")
+target = page.locator("#target")
+
+await source.drag_to(target)
+# or specify exact positions relative to the top-left corners of the elements:
+await source.drag_to(
+  target,
+  source_position={"x": 34, "y": 7},
+  target_position={"x": 10, "y": 20}
+)
+```
+
+```python sync
+source = page.locator("#source")
+target = page.locator("#target")
+
+source.drag_to(target)
+# or specify exact positions relative to the top-left corners of the elements:
+source.drag_to(
+  target,
+  source_position={"x": 34, "y": 7},
+  target_position={"x": 10, "y": 20}
+)
+```
+
+```csharp
+var source = Page.Locator("#source");
+var target = Page.Locator("#target");
+
+await source.DragToAsync(target);
+// or specify exact positions relative to the top-left corners of the elements:
+await source.DragToAsync(target, new()
+{
+    SourcePosition = new() { X = 34, Y = 7 },
+    TargetPosition = new() { X = 10, Y = 20 },
+});
+```
+
 ### param: Locator.dragTo.target
 * since: v1.18
 - `target` <[Locator]>
@@ -567,6 +633,78 @@ Attribute name to get the value for.
 ### option: Locator.getAttribute.timeout = %%-input-timeout-%%
 * since: v1.14
 
+
+## method: Locator.getByAltText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-alt-text-%%
+
+### param: Locator.getByAltText.text = %%-locator-get-by-text-text-%%
+### option: Locator.getByAltText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Locator.getByLabelText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-label-text-%%
+
+### param: Locator.getByLabelText.text = %%-locator-get-by-text-text-%%
+### option: Locator.getByLabelText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Locator.getByPlaceholderText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-placeholder-text-%%
+
+### param: Locator.getByPlaceholderText.text = %%-locator-get-by-text-text-%%
+### option: Locator.getByPlaceholderText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Locator.getByRole
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-role-%%
+
+### param: Locator.getByRole.role = %%-locator-get-by-role-role-%%
+### option: Locator.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
+* since: v1.27
+
+
+## method: Locator.getByTestId
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-test-id-%%
+
+### param: Locator.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
+* since: v1.27
+
+
+## method: Locator.getByText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-text-%%
+
+### param: Locator.getByText.text = %%-locator-get-by-text-text-%%
+### option: Locator.getByText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Locator.getByTitle
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-title-%%
+
+### param: Locator.getByTitle.text = %%-locator-get-by-text-text-%%
+### option: Locator.getByTitle.exact = %%-locator-get-by-text-exact-%%
+
+
 ## async method: Locator.highlight
 * since: v1.20
 
@@ -696,7 +834,7 @@ Returns locator to the last matching element.
 * since: v1.14
 - returns: <[Locator]>
 
-The method finds an element matching the specified selector in the `Locator`'s subtree. It also accepts filter options, similar to [`method: Locator.filter`] method.
+%%-template-locator-locator-%%
 
 ### param: Locator.locator.selector = %%-find-selector-%%
 * since: v1.14
@@ -984,7 +1122,7 @@ element.type("world", delay=100) # types slower, like a user
 
 ```csharp
 await element.TypeAsync("Hello"); // Types instantly
-await element.TypeAsync("World", delay: 100); // Types slower, like a user
+await element.TypeAsync("World", new() { Delay = 100 }); // Types slower, like a user
 ```
 
 An example of typing into a text field and then submitting the form:

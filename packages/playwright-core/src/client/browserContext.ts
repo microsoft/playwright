@@ -18,7 +18,7 @@
 import { Page, BindingCall } from './page';
 import { Frame } from './frame';
 import * as network from './network';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import fs from 'fs';
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
@@ -79,7 +79,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', ({ page }) => this._onPage(Page.from(page)));
-    this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
+    this._channel.on('route', ({ route }) => this._onRoute(network.Route.from(route)));
     this._channel.on('backgroundPage', ({ page }) => {
       const backgroundPage = Page.from(page);
       this._backgroundPages.add(backgroundPage);
@@ -126,8 +126,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   private _onRequestFailed(request: network.Request, responseEndTiming: number, failureText: string | undefined, page: Page | null) {
     request._failureText = failureText || null;
-    if (request._timing)
-      request._timing.responseEnd = responseEndTiming;
+    request._setResponseEndTiming(responseEndTiming);
     this.emit(Events.BrowserContext.RequestFailed, request);
     if (page)
       page.emit(Events.Page.RequestFailed, request);
@@ -138,8 +137,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     const request = network.Request.from(params.request);
     const response = network.Response.fromNullable(params.response);
     const page = Page.fromNullable(params.page);
-    if (request._timing)
-      request._timing.responseEnd = responseEndTiming;
+    request._setResponseEndTiming(responseEndTiming);
     this.emit(Events.BrowserContext.RequestFinished, request);
     if (page)
       page.emit(Events.Page.RequestFinished, request);
@@ -147,14 +145,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       response._finishedPromise.resolve();
   }
 
-  async _onRoute(route: network.Route, request: network.Request) {
+  async _onRoute(route: network.Route) {
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
-      if (!routeHandler.matches(request.url()))
+      if (!routeHandler.matches(route.request().url()))
         continue;
       if (routeHandler.willExpire())
         this._routes.splice(this._routes.indexOf(routeHandler), 1);
-      const handled = await routeHandler.handle(route, request);
+      const handled = await routeHandler.handle(route);
       if (!this._routes.length)
         this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
       if (handled)
@@ -202,7 +200,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (!urls)
       urls = [];
     if (urls && typeof urls === 'string')
-      urls = [ urls ];
+      urls = [urls];
     return (await this._channel.cookies({ urls: urls as string[] })).cookies;
   }
 

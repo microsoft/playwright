@@ -602,6 +602,7 @@ class TypesGenerator {
       ignoreMissing: new Set([
         'FullResult',
         'JSONReport',
+        'JSONReportError',
         'JSONReportSuite',
         'JSONReportSpec',
         'JSONReportTest',

@@ -39,6 +39,17 @@ const debug = debugLogger('itest');
  */
 
 _expect.extend({
+  async toExistOnFS(received: any) {
+    if (typeof received !== 'string')
+      throw new Error(`Expected argument to be a string.`);
+    try {
+      await fs.promises.access(received);
+      return { pass: true };
+    } catch (e) {
+      return { pass: false, message: () => 'file does not exist' };
+    }
+  },
+
   toHaveLoggedSoftwareDownload(received: any, browsers: ('chromium' | 'firefox' | 'webkit' | 'ffmpeg')[]) {
     if (typeof received !== 'string')
       throw new Error(`Expected argument to be a string.`);
@@ -139,27 +150,30 @@ export const test = _test.extend<{
                 });
               });
 
-              const stdio = `${result.stdout}\n${result.stderr}`;
-
-              await testInfo.attach(`${[cmd, ...args].join(' ')}`, { body: `COMMAND: ${[cmd, ...args].join(' ')}\n\nEXIT CODE: ${result.code}\n\n====== STDIO + STDERR ======\n\n${stdio}` });
+              const command = [cmd, ...args].join(' ');
+              const stdio = result.stdout + result.stderr;
+              await testInfo.attach(command, { body: `COMMAND: ${command}\n\nEXIT CODE: ${result.code}\n\n====== STDOUT + STDERR ======\n\n${stdio}` });
 
               // This means something is really off with spawn
               if (result.error)
                 throw result.error;
 
-              // User expects command to fail
-              if (options.expectToExitWithError) {
-                if (result.code === 0) {
-                  const message = options.message ? ` Message: ${options.message}` : '';
-                  throw new Error(`Expected the command to exit with an error, but exited cleanly.${message}`);
-                }
-              } else if (result.code !== 0) {
-                const message = options.message ? ` Message: ${options.message}` : '';
-                throw new Error(`Expected the command to exit cleanly (0 status code), but exited with ${result.code}.${message}`);
-              }
+              const error: string[] = [];
+              if (options.expectToExitWithError && result.code === 0)
+                error.push(`Expected the command to exit with an error, but exited cleanly.`);
+              else if (!options.expectToExitWithError && result.code !== 0)
+                error.push(`Expected the command to exit cleanly (0 status code), but exited with ${result.code}.`);
 
-              return stdio;
+              if (!error.length)
+                return stdio;
 
+              if (options.message)
+                error.push(`Message: ${options.message}`);
+              error.push(`Command: ${command}`);
+              error.push(`EXIT CODE: ${result.code}`);
+              error.push(`====== STDIO ======\n${stdio}`);
+
+              throw new Error(error.join('\n'));
             });
           },
           tsc: async ({ exec }, use) => {

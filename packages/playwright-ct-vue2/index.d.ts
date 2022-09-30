@@ -34,24 +34,29 @@ export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   }
 };
 
-interface MountResult extends Locator {
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+type JsonArray = JsonValue[];
+type JsonObject = { [Key in string]?: JsonValue };
+
+type Slot = string | string[];
+
+export interface MountOptions<Props = Record<string, unknown>> {
+  props?: Props;
+  slots?: Record<string, Slot> & { default?: Slot };
+  on?: Record<string, Function>;
+  hooksConfig?: JsonObject;
+}
+
+interface MountResult<Props = Record<string, unknown>> extends Locator {
   unmount(): Promise<void>;
+  rerender(options: { props: Props }): Promise<void>
 }
 
 export interface ComponentFixtures {
   mount(component: JSX.Element): Promise<MountResult>;
-  mount(component: any, options?: {
-    props?: { [key: string]: any },
-    slots?: { [key: string]: any },
-    on?: { [key: string]: Function },
-    hooksConfig?: any,
-  }): Promise<MountResult>;
-  mount<Props>(component: any, options: {
-    props: Props,
-    slots?: { [key: string]: any },
-    on?: { [key: string]: Function },
-    hooksConfig?: any,
-  }): Promise<MountResult>;
+  mount(component: any, options?: MountOptions): Promise<MountResult>;
+  mount<Props>(component: any, options: MountOptions & { props: Props }): Promise<MountResult<Props>>;
 }
 
 export const test: TestType<

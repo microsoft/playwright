@@ -19,8 +19,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import type { NameValue } from '../../../common/types';
-import type { TracingTracingStopChunkParams } from '../../../protocol/channels';
-import { commandsWithTracingSnapshots } from '../../../protocol/channels';
+import type { TracingTracingStopChunkParams } from '@protocol/channels';
+import { commandsWithTracingSnapshots } from '../../../protocol/debug';
 import { ManualPromise } from '../../../utils/manualPromise';
 import type { RegisteredListener } from '../../../utils/eventsHelper';
 import { eventsHelper } from '../../../utils/eventsHelper';
@@ -33,15 +33,17 @@ import type { APIRequestContext } from '../../fetch';
 import type { CallMetadata, InstrumentationListener } from '../../instrumentation';
 import { SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
-import type * as har from '../../har/har';
+import type * as har from '@trace/har';
 import type { HarTracerDelegate } from '../../har/harTracer';
 import { HarTracer } from '../../har/harTracer';
-import type { FrameSnapshot } from '../common/snapshotTypes';
-import type * as trace from '../common/traceEvents';
-import { VERSION } from '../common/traceEvents';
+import type { FrameSnapshot } from '@trace/snapshot';
+import type * as trace from '@trace/trace';
+import type { VERSION } from '@trace/trace';
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { Snapshotter } from './snapshotter';
 import { yazl } from '../../../zipBundle';
+
+const version: VERSION = 3;
 
 export type TracerOptions = {
   name?: string;
@@ -87,11 +89,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._harTracer = new HarTracer(context, null, this, {
       content: 'attach',
       includeTraceInfo: true,
+      recordRequestOverrides: false,
       waitForContentOnStop: false,
       skipScripts: true,
     });
     this._contextCreatedEvent = {
-      version: VERSION,
+      version,
       type: 'context-options',
       browserName: '',
       options: {},
@@ -200,13 +203,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return this._tracesTmpDir;
   }
 
-  async flush() {
-    this._snapshotter?.dispose();
-    await this._writeChain;
-  }
-
   async dispose() {
     this._snapshotter?.dispose();
+    this._harTracer.stop();
+    await this._writeChain;
   }
 
   async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] | undefined }> {

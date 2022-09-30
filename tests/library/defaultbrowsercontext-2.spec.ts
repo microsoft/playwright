@@ -46,7 +46,6 @@ it('should support reducedMotion option', async ({ launchPersistent }) => {
 });
 
 it('should support forcedColors option', async ({ launchPersistent, browserName }) => {
-  it.skip(browserName === 'webkit', 'https://bugs.webkit.org/show_bug.cgi?id=225281');
   const { page } = await launchPersistent({ forcedColors: 'active' });
   expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(false);
@@ -160,7 +159,7 @@ it('should have passed URL when launching with ignoreDefaultArgs: true', async (
   await browserContext.close();
 });
 
-it('should handle timeout', async ({ browserType,createUserDataDir, mode }) => {
+it('should handle timeout', async ({ browserType, createUserDataDir, mode }) => {
   it.skip(mode !== 'default');
 
   const options: any = { timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
@@ -168,7 +167,7 @@ it('should handle timeout', async ({ browserType,createUserDataDir, mode }) => {
   expect(error.message).toContain(`browserType.launchPersistentContext: Timeout 5000ms exceeded.`);
 });
 
-it('should handle exception', async ({ browserType,createUserDataDir, mode }) => {
+it('should handle exception', async ({ browserType, createUserDataDir, mode }) => {
   it.skip(mode !== 'default');
 
   const e = new Error('Dummy');
@@ -215,7 +214,7 @@ it('should respect selectors', async ({ playwright, launchPersistent }) => {
   expect(await page.innerHTML('defaultContextCSS=div')).toBe('hello');
 });
 
-it('should connect to a browser with the default page', async ({ browserType,createUserDataDir, mode }) => {
+it('should connect to a browser with the default page', async ({ browserType, createUserDataDir, mode }) => {
   it.skip(mode !== 'default');
 
   const options: any = { __testHookOnConnectToBrowser: () => new Promise(f => setTimeout(f, 3000)) };

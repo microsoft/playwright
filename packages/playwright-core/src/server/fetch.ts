@@ -21,7 +21,7 @@ import { pipeline, Transform } from 'stream';
 import url from 'url';
 import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../common/userAgent';
 import { assert, createGuid, monotonicTime } from '../utils';
@@ -162,7 +162,7 @@ export abstract class APIRequestContext extends SdkObject {
       method,
       headers,
       agent,
-      maxRedirects: 20,
+      maxRedirects: params.maxRedirects === 0 ? -1 : params.maxRedirects === undefined ? 20 : params.maxRedirects,
       timeout,
       deadline
     };
@@ -176,11 +176,7 @@ export abstract class APIRequestContext extends SdkObject {
         requestUrl.searchParams.set(name, value);
     }
 
-    let postData: Buffer | undefined;
-    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method))
-      postData = serializePostData(params, headers);
-    else if (params.postData || params.jsonData || params.formData || params.multipartData)
-      throw new Error(`Method ${method} does not accept post data`);
+    const postData = serializePostData(params, headers);
     if (postData)
       headers['content-length'] = String(postData.byteLength);
     const controller = new ProgressController(metadata, this);
@@ -272,7 +268,7 @@ export abstract class APIRequestContext extends SdkObject {
         if (cookies.length)
           await this._addCookies(cookies);
 
-        if (redirectStatus.includes(response.statusCode!)) {
+        if (redirectStatus.includes(response.statusCode!) && options.maxRedirects >= 0) {
           if (!options.maxRedirects) {
             reject(new Error('Max redirect count exceeded'));
             request.destroy();
@@ -509,9 +505,8 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   }
 
   override async dispose() {
-    await this._tracing.flush();
+    await this._tracing.dispose();
     await this._tracing.deleteTmpTracesDir();
-    this._tracing.dispose();
     this._disposeImpl();
   }
 

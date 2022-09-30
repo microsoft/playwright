@@ -593,7 +593,7 @@ export interface Page {
    * `detached`.
    *
    * > NOTE: Playwright automatically waits for element to be ready before performing an action. Using [Locator] objects and
-   * web-first assertions make the code wait-for-selector-free.
+   * web-first assertions makes the code wait-for-selector-free.
    *
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
    * the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
@@ -625,7 +625,7 @@ export interface Page {
    * `detached`.
    *
    * > NOTE: Playwright automatically waits for element to be ready before performing an action. Using [Locator] objects and
-   * web-first assertions make the code wait-for-selector-free.
+   * web-first assertions makes the code wait-for-selector-free.
    *
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
    * the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
@@ -657,7 +657,7 @@ export interface Page {
    * `detached`.
    *
    * > NOTE: Playwright automatically waits for element to be ready before performing an action. Using [Locator] objects and
-   * web-first assertions make the code wait-for-selector-free.
+   * web-first assertions makes the code wait-for-selector-free.
    *
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
    * the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
@@ -689,7 +689,7 @@ export interface Page {
    * `detached`.
    *
    * > NOTE: Playwright automatically waits for element to be ready before performing an action. Using [Locator] objects and
-   * web-first assertions make the code wait-for-selector-free.
+   * web-first assertions makes the code wait-for-selector-free.
    *
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
    * the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
@@ -1877,7 +1877,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -1959,7 +1959,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2075,7 +2075,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2131,7 +2131,7 @@ export interface Page {
    */
   dispatchEvent(selector: string, type: string, eventInit?: EvaluationArgument, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2146,6 +2146,18 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * This method drags the source element to the target element. It will first move to the source element, perform a
+   * `mousedown`, then move to the target element and perform a `mouseup`.
+   *
+   * ```js
+   * await page.dragAndDrop('#source', '#target');
+   * // or specify exact positions relative to the top-left corners of the elements:
+   * await page.dragAndDrop('#source', '#target', {
+   *   sourcePosition: { x: 34, y: 7 },
+   *   targetPosition: { x: 10, y: 20 },
+   * });
+   * ```
+   *
    * @param source A selector to search for an element to drag. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param target A selector to search for an element to drop onto. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
@@ -2174,7 +2186,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2249,8 +2261,6 @@ export interface Page {
     /**
      * Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables forced
      * colors emulation.
-     *
-     * > NOTE: It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
      */
     forcedColors?: null|"active"|"none";
 
@@ -2342,7 +2352,7 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2366,7 +2376,7 @@ export interface Page {
    */
   focus(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2432,7 +2442,7 @@ export interface Page {
    */
   getAttribute(selector: string, name: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2445,6 +2455,172 @@ export interface Page {
      */
     timeout?: number;
   }): Promise<null|string>;
+
+  /**
+   * Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+   *
+   * ```html
+   * <img alt='Castle'>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByAltText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating input elements by the text of the associated label. For example, this method will find the input by
+   * label text Password in the following DOM:
+   *
+   * ```html
+   * <label for="password-input">Password:</label>
+   * <input id="password-input">
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByLabelText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder
+   * "Country":
+   *
+   * ```html
+   * <input placeholder="Country">
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByPlaceholderText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles),
+   * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and
+   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace**
+   * accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+   *
+   * Note that many html elements have an implicitly
+   * [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You
+   * can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not
+   * recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
+   * @param role Required aria role.
+   * @param options
+   */
+  getByRole(role: string, options?: {
+    /**
+     * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for
+     * checked are `true`, `false` and `"mixed"`.
+     *
+     * Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+     */
+    checked?: boolean;
+
+    /**
+     * A boolean attribute that is usually set by `aria-disabled` or `disabled`.
+     *
+     * > NOTE: Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
+     * [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+     */
+    disabled?: boolean;
+
+    /**
+     * A boolean attribute that is usually set by `aria-expanded`.
+     *
+     * Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+     */
+    expanded?: boolean;
+
+    /**
+     * A boolean attribute that controls whether hidden elements are matched. By default, only non-hidden elements, as
+     * [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
+     *
+     * Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+     */
+    includeHidden?: boolean;
+
+    /**
+     * A number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values for
+     * `<h1>-<h6>` elements.
+     *
+     * Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+     */
+    level?: number;
+
+    /**
+     * A string attribute that matches [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+     *
+     * Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+     */
+    name?: string|RegExp;
+
+    /**
+     * An attribute that is usually set by `aria-pressed`. Available values for pressed are `true`, `false` and `"mixed"`.
+     *
+     * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+     */
+    pressed?: boolean;
+
+    /**
+     * A boolean attribute that is usually set by `aria-selected`.
+     *
+     * Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
+     */
+    selected?: boolean;
+  }): Locator;
+
+  /**
+   * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
+   * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
+   * to configure a different test id attribute if necessary.
+   * @param testId Id to locate the element by.
+   */
+  getByTestId(testId: string): Locator;
+
+  /**
+   * Allows locating elements that contain given text.
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   *
+   * ```html
+   * <button title='Place the order'>Order Now</button>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByTitle(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
 
   /**
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
@@ -2594,7 +2770,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2621,7 +2797,7 @@ export interface Page {
    */
   innerHTML(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2642,7 +2818,7 @@ export interface Page {
    */
   innerText(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2666,7 +2842,7 @@ export interface Page {
    */
   inputValue(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2687,7 +2863,7 @@ export interface Page {
    */
   isChecked(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2713,7 +2889,7 @@ export interface Page {
    */
   isDisabled(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2734,7 +2910,7 @@ export interface Page {
    */
   isEditable(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2755,7 +2931,7 @@ export interface Page {
    */
   isEnabled(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2777,7 +2953,7 @@ export interface Page {
    */
   isHidden(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2799,7 +2975,7 @@ export interface Page {
    */
   isVisible(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -2816,14 +2992,11 @@ export interface Page {
   keyboard: Keyboard;
 
   /**
-   * The method returns an element locator that can be used to perform actions on the page. Locator is resolved to the
-   * element immediately before performing an action, so a series of actions on the same locator can in fact be performed on
-   * different DOM elements. That would happen if the DOM structure between those actions has changed.
+   * The method returns an element locator that can be used to perform actions on this page / frame. Locator is resolved to
+   * the element immediately before performing an action, so a series of actions on the same locator can in fact be performed
+   * on different DOM elements. That would happen if the DOM structure between those actions has changed.
    *
    * [Learn more about locators](https://playwright.dev/docs/locators).
-   *
-   * Shortcut for main frame's
-   * [frame.locator(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-locator).
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -3063,7 +3236,7 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3284,7 +3457,7 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3343,7 +3516,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3480,7 +3653,7 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3579,7 +3752,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3606,7 +3779,7 @@ export interface Page {
    */
   textContent(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3661,7 +3834,7 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -3719,7 +3892,7 @@ export interface Page {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -4955,7 +5128,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5037,7 +5210,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5120,7 +5293,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5176,7 +5349,7 @@ export interface Frame {
    */
   dispatchEvent(selector: string, type: string, eventInit?: EvaluationArgument, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5219,7 +5392,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5279,7 +5452,7 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5301,7 +5474,7 @@ export interface Frame {
    */
   focus(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5355,7 +5528,7 @@ export interface Frame {
    */
   getAttribute(selector: string, name: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5368,6 +5541,172 @@ export interface Frame {
      */
     timeout?: number;
   }): Promise<null|string>;
+
+  /**
+   * Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+   *
+   * ```html
+   * <img alt='Castle'>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByAltText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating input elements by the text of the associated label. For example, this method will find the input by
+   * label text Password in the following DOM:
+   *
+   * ```html
+   * <label for="password-input">Password:</label>
+   * <input id="password-input">
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByLabelText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder
+   * "Country":
+   *
+   * ```html
+   * <input placeholder="Country">
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByPlaceholderText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles),
+   * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and
+   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace**
+   * accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+   *
+   * Note that many html elements have an implicitly
+   * [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You
+   * can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not
+   * recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
+   * @param role Required aria role.
+   * @param options
+   */
+  getByRole(role: string, options?: {
+    /**
+     * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for
+     * checked are `true`, `false` and `"mixed"`.
+     *
+     * Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+     */
+    checked?: boolean;
+
+    /**
+     * A boolean attribute that is usually set by `aria-disabled` or `disabled`.
+     *
+     * > NOTE: Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
+     * [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+     */
+    disabled?: boolean;
+
+    /**
+     * A boolean attribute that is usually set by `aria-expanded`.
+     *
+     * Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+     */
+    expanded?: boolean;
+
+    /**
+     * A boolean attribute that controls whether hidden elements are matched. By default, only non-hidden elements, as
+     * [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
+     *
+     * Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+     */
+    includeHidden?: boolean;
+
+    /**
+     * A number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values for
+     * `<h1>-<h6>` elements.
+     *
+     * Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+     */
+    level?: number;
+
+    /**
+     * A string attribute that matches [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+     *
+     * Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+     */
+    name?: string|RegExp;
+
+    /**
+     * An attribute that is usually set by `aria-pressed`. Available values for pressed are `true`, `false` and `"mixed"`.
+     *
+     * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+     */
+    pressed?: boolean;
+
+    /**
+     * A boolean attribute that is usually set by `aria-selected`.
+     *
+     * Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
+     */
+    selected?: boolean;
+  }): Locator;
+
+  /**
+   * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
+   * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
+   * to configure a different test id attribute if necessary.
+   * @param testId Id to locate the element by.
+   */
+  getByTestId(testId: string): Locator;
+
+  /**
+   * Allows locating elements that contain given text.
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   *
+   * ```html
+   * <button title='Place the order'>Order Now</button>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByTitle(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
 
   /**
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
@@ -5456,7 +5795,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5483,7 +5822,7 @@ export interface Frame {
    */
   innerHTML(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5504,7 +5843,7 @@ export interface Frame {
    */
   innerText(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5528,7 +5867,7 @@ export interface Frame {
    */
   inputValue(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5549,7 +5888,7 @@ export interface Frame {
    */
   isChecked(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5575,7 +5914,7 @@ export interface Frame {
    */
   isDisabled(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5596,7 +5935,7 @@ export interface Frame {
    */
   isEditable(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5617,7 +5956,7 @@ export interface Frame {
    */
   isEnabled(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5639,7 +5978,7 @@ export interface Frame {
    */
   isHidden(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5661,7 +6000,7 @@ export interface Frame {
    */
   isVisible(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5676,9 +6015,11 @@ export interface Frame {
   }): Promise<boolean>;
 
   /**
-   * The method returns an element locator that can be used to perform actions in the frame. Locator is resolved to the
-   * element immediately before performing an action, so a series of actions on the same locator can in fact be performed on
-   * different DOM elements. That would happen if the DOM structure between those actions has changed.
+   * The method returns an element locator that can be used to perform actions on this page / frame. Locator is resolved to
+   * the element immediately before performing an action, so a series of actions on the same locator can in fact be performed
+   * on different DOM elements. That would happen if the DOM structure between those actions has changed.
+   *
+   * [Learn more about locators](https://playwright.dev/docs/locators).
    *
    * [Learn more about locators](https://playwright.dev/docs/locators).
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
@@ -5755,7 +6096,7 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5841,7 +6182,7 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5897,7 +6238,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -5993,7 +6334,7 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -6054,7 +6395,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -6081,7 +6422,7 @@ export interface Frame {
    */
   textContent(selector: string, options?: {
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -6131,7 +6472,7 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -6186,7 +6527,7 @@ export interface Frame {
     };
 
     /**
-     * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
     strict?: boolean;
@@ -9415,6 +9756,21 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * This method drags the locator to another target locator or target position. It will first move to the source element,
+   * perform a `mousedown`, then move to the target element or position and perform a `mouseup`.
+   *
+   * ```js
+   * const source = page.locator('#source');
+   * const target = page.locator('#target');
+   *
+   * await source.dragTo(target);
+   * // or specify exact positions relative to the top-left corners of the elements:
+   * await source.dragTo(target, {
+   *   sourcePosition: { x: 34, y: 7 },
+   *   targetPosition: { x: 10, y: 20 },
+   * });
+   * ```
+   *
    * @param target Locator of the element to drag to.
    * @param options
    */
@@ -9621,6 +9977,172 @@ export interface Locator {
   }): Promise<null|string>;
 
   /**
+   * Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+   *
+   * ```html
+   * <img alt='Castle'>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByAltText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating input elements by the text of the associated label. For example, this method will find the input by
+   * label text Password in the following DOM:
+   *
+   * ```html
+   * <label for="password-input">Password:</label>
+   * <input id="password-input">
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByLabelText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder
+   * "Country":
+   *
+   * ```html
+   * <input placeholder="Country">
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByPlaceholderText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles),
+   * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and
+   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace**
+   * accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+   *
+   * Note that many html elements have an implicitly
+   * [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You
+   * can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not
+   * recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
+   * @param role Required aria role.
+   * @param options
+   */
+  getByRole(role: string, options?: {
+    /**
+     * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for
+     * checked are `true`, `false` and `"mixed"`.
+     *
+     * Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+     */
+    checked?: boolean;
+
+    /**
+     * A boolean attribute that is usually set by `aria-disabled` or `disabled`.
+     *
+     * > NOTE: Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
+     * [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+     */
+    disabled?: boolean;
+
+    /**
+     * A boolean attribute that is usually set by `aria-expanded`.
+     *
+     * Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+     */
+    expanded?: boolean;
+
+    /**
+     * A boolean attribute that controls whether hidden elements are matched. By default, only non-hidden elements, as
+     * [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
+     *
+     * Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+     */
+    includeHidden?: boolean;
+
+    /**
+     * A number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values for
+     * `<h1>-<h6>` elements.
+     *
+     * Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+     */
+    level?: number;
+
+    /**
+     * A string attribute that matches [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+     *
+     * Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+     */
+    name?: string|RegExp;
+
+    /**
+     * An attribute that is usually set by `aria-pressed`. Available values for pressed are `true`, `false` and `"mixed"`.
+     *
+     * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+     */
+    pressed?: boolean;
+
+    /**
+     * A boolean attribute that is usually set by `aria-selected`.
+     *
+     * Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
+     */
+    selected?: boolean;
+  }): Locator;
+
+  /**
+   * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
+   * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
+   * to configure a different test id attribute if necessary.
+   * @param testId Id to locate the element by.
+   */
+  getByTestId(testId: string): Locator;
+
+  /**
+   * Allows locating elements that contain given text.
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   *
+   * ```html
+   * <button title='Place the order'>Order Now</button>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByTitle(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
    * Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses
    * [locator.highlight()](https://playwright.dev/docs/api/class-locator#locator-highlight).
    */
@@ -9812,8 +10334,10 @@ export interface Locator {
   last(): Locator;
 
   /**
-   * The method finds an element matching the specified selector in the `Locator`'s subtree. It also accepts filter options,
+   * The method finds an element matching the specified selector in the locator's subtree. It also accepts filter options,
    * similar to [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) method.
+   *
+   * [Learn more about locators](https://playwright.dev/docs/locators).
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -10365,6 +10889,13 @@ export interface BrowserType<Unused = {}> {
    * [browser.contexts()](https://playwright.dev/docs/api/class-browser#browser-contexts).
    *
    * > NOTE: Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
+   *
+   * ```js
+   * const browser = await playwright.chromium.connectOverCDP('http://localhost:9222');
+   * const defaultContext = browser.contexts()[0];
+   * const page = defaultContext.pages()[0];
+   * ```
+   *
    * @param endpointURL A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
    * @param options
    */
@@ -10380,6 +10911,13 @@ export interface BrowserType<Unused = {}> {
    * [browser.contexts()](https://playwright.dev/docs/api/class-browser#browser-contexts).
    *
    * > NOTE: Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
+   *
+   * ```js
+   * const browser = await playwright.chromium.connectOverCDP('http://localhost:9222');
+   * const defaultContext = browser.contexts()[0];
+   * const page = defaultContext.pages()[0];
+   * ```
+   *
    * @param endpointURL A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
    * @param options
    */
@@ -10541,8 +11079,6 @@ export interface BrowserType<Unused = {}> {
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
      * to `'none'`.
-     *
-     * > NOTE: It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
      */
     forcedColors?: "active"|"none";
 
@@ -10686,7 +11222,7 @@ export interface BrowserType<Unused = {}> {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
        * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
        * all other file extensions.
        */
@@ -11186,7 +11722,7 @@ type AccessibilityNode = {
   children?: AccessibilityNode[];
 }
 
-export const devices: Devices & DeviceDescriptor[];
+export const devices: Devices;
 
 //@ts-ignore this will be any if electron is not installed
 type ElectronType = typeof import('electron');
@@ -11802,8 +12338,6 @@ export interface AndroidDevice {
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
      * to `'none'`.
-     *
-     * > NOTE: It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
      */
     forcedColors?: "active"|"none";
 
@@ -11892,7 +12426,7 @@ export interface AndroidDevice {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
        * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
        * all other file extensions.
        */
@@ -12660,6 +13194,12 @@ export interface APIRequestContext {
     ignoreHTTPSErrors?: boolean;
 
     /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
      * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
      * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
@@ -12706,6 +13246,45 @@ export interface APIRequestContext {
   /**
    * Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
    * context cookies from the response. The method will automatically follow redirects.
+   *
+   * JSON objects can be passed directly to the request:
+   *
+   * ```js
+   * await request.fetch('https://example.com/api/createBook', {
+   *   method: 'post',
+   *   data: {
+   *     title: 'Book Title',
+   *     author: 'John Doe',
+   *   }
+   * });
+   * ```
+   *
+   * The common way to send file(s) in the body of a request is to encode it as form fields with `multipart/form-data`
+   * encoding. You can achieve that with Playwright API like this:
+   *
+   * ```js
+   * // Open file as a stream and pass it to the request:
+   * const stream = fs.createReadStream('team.csv');
+   * await request.fetch('https://example.com/api/uploadTeamList', {
+   *   method: 'post',
+   *   multipart: {
+   *     fileField: stream
+   *   }
+   * });
+   *
+   * // Or you can pass the file content directly as an object:
+   * await request.fetch('https://example.com/api/uploadScript', {
+   *   method: 'post',
+   *   multipart: {
+   *     fileField: {
+   *       name: 'f.js',
+   *       mimeType: 'text/javascript',
+   *       buffer: Buffer.from('console.log(2022);')
+   *     }
+   *   }
+   * });
+   * ```
+   *
    * @param urlOrRequest Target URL or Request to get all parameters from.
    * @param options
    */
@@ -12738,6 +13317,12 @@ export interface APIRequestContext {
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
 
     /**
      * If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) or
@@ -12783,14 +13368,40 @@ export interface APIRequestContext {
    * Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its response. The
    * method will populate request cookies from the context and update context cookies from the response. The method will
    * automatically follow redirects.
+   *
+   * Request parameters can be configured with `params` option, they will be serialized into the URL search parameters:
+   *
+   * ```js
+   * await request.get('https://example.com/api/getText', {
+   *   params: {
+   *     'isbn': '1234',
+   *     'page': 23,
+   *   }
+   * });
+   * ```
+   *
    * @param url Target URL.
    * @param options
    */
   get(url: string, options?: {
     /**
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string and
+     * `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will
+     * be set to `application/octet-stream` if not explicitly set.
+     */
+    data?: string|Buffer|Serializable;
+
+    /**
      * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
      */
     failOnStatusCode?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+     * this request body. If this parameter is specified `content-type` header will be set to
+     * `application/x-www-form-urlencoded` unless explicitly provided.
+     */
+    form?: { [key: string]: string|number|boolean; };
 
     /**
      * Allows to set HTTP headers.
@@ -12801,6 +13412,35 @@ export interface APIRequestContext {
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
+
+    /**
+     * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
+     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
+     * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
+     * or as file-like object containing file name, mime-type and its content.
+     */
+    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+      /**
+       * File name
+       */
+      name: string;
+
+      /**
+       * File type
+       */
+      mimeType: string;
+
+      /**
+       * File content
+       */
+      buffer: Buffer;
+    }; };
 
     /**
      * Query parameters to be sent with the URL.
@@ -12822,9 +13462,23 @@ export interface APIRequestContext {
    */
   head(url: string, options?: {
     /**
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string and
+     * `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will
+     * be set to `application/octet-stream` if not explicitly set.
+     */
+    data?: string|Buffer|Serializable;
+
+    /**
      * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status codes.
      */
     failOnStatusCode?: boolean;
+
+    /**
+     * Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+     * this request body. If this parameter is specified `content-type` header will be set to
+     * `application/x-www-form-urlencoded` unless explicitly provided.
+     */
+    form?: { [key: string]: string|number|boolean; };
 
     /**
      * Allows to set HTTP headers.
@@ -12835,6 +13489,35 @@ export interface APIRequestContext {
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
+
+    /**
+     * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
+     * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
+     * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
+     * or as file-like object containing file name, mime-type and its content.
+     */
+    multipart?: { [key: string]: string|number|boolean|ReadStream|{
+      /**
+       * File name
+       */
+      name: string;
+
+      /**
+       * File type
+       */
+      mimeType: string;
+
+      /**
+       * File content
+       */
+      buffer: Buffer;
+    }; };
 
     /**
      * Query parameters to be sent with the URL.
@@ -12885,6 +13568,12 @@ export interface APIRequestContext {
     ignoreHTTPSErrors?: boolean;
 
     /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
+
+    /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
      * body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless explicitly
      * provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
@@ -12922,6 +13611,54 @@ export interface APIRequestContext {
    * Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its response.
    * The method will populate request cookies from the context and update context cookies from the response. The method will
    * automatically follow redirects.
+   *
+   * JSON objects can be passed directly to the request:
+   *
+   * ```js
+   * await request.post('https://example.com/api/createBook', {
+   *   data: {
+   *     title: 'Book Title',
+   *     author: 'John Doe',
+   *   }
+   * });
+   * ```
+   *
+   * To send form data to the server use `form` option. Its value will be encoded into the request body with
+   * `application/x-www-form-urlencoded` encoding (see below how to use `multipart/form-data` form encoding to send files):
+   *
+   * ```js
+   * await request.post('https://example.com/api/findBook', {
+   *   form: {
+   *     title: 'Book Title',
+   *     author: 'John Doe',
+   *   }
+   * });
+   * ```
+   *
+   * The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data`
+   * encoding. You can achieve that with Playwright API like this:
+   *
+   * ```js
+   * // Open file as a stream and pass it to the request:
+   * const stream = fs.createReadStream('team.csv');
+   * await request.post('https://example.com/api/uploadTeamList', {
+   *   multipart: {
+   *     fileField: stream
+   *   }
+   * });
+   *
+   * // Or you can pass the file content directly as an object:
+   * await request.post('https://example.com/api/uploadScript', {
+   *   multipart: {
+   *     fileField: {
+   *       name: 'f.js',
+   *       mimeType: 'text/javascript',
+   *       buffer: Buffer.from('console.log(2022);')
+   *     }
+   *   }
+   * });
+   * ```
+   *
    * @param url Target URL.
    * @param options
    */
@@ -12954,6 +13691,12 @@ export interface APIRequestContext {
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
 
     /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
@@ -13025,6 +13768,12 @@ export interface APIRequestContext {
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
      */
     ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
 
     /**
      * Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this request
@@ -13366,8 +14115,6 @@ export interface Browser extends EventEmitter {
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
      * to `'none'`.
-     *
-     * > NOTE: It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
      */
     forcedColors?: "active"|"none";
 
@@ -13486,7 +14233,7 @@ export interface Browser extends EventEmitter {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
        * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
        * all other file extensions.
        */
@@ -14280,7 +15027,7 @@ export interface Electron {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
        * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
        * all other file extensions.
        */
@@ -14451,7 +15198,7 @@ export interface FileChooser {
  * **Strictness**
  *
  * Frame locators are strict. This means that all operations on frame locators will throw if more than one element matches
- * given selector.
+ * a given selector.
  *
  * ```js
  * // Throws if there are several frames in DOM:
@@ -14485,12 +15232,181 @@ export interface FrameLocator {
   frameLocator(selector: string): FrameLocator;
 
   /**
+   * Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+   *
+   * ```html
+   * <img alt='Castle'>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByAltText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating input elements by the text of the associated label. For example, this method will find the input by
+   * label text Password in the following DOM:
+   *
+   * ```html
+   * <label for="password-input">Password:</label>
+   * <input id="password-input">
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByLabelText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder
+   * "Country":
+   *
+   * ```html
+   * <input placeholder="Country">
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByPlaceholderText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles),
+   * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and
+   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace**
+   * accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+   *
+   * Note that many html elements have an implicitly
+   * [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You
+   * can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not
+   * recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
+   * @param role Required aria role.
+   * @param options
+   */
+  getByRole(role: string, options?: {
+    /**
+     * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for
+     * checked are `true`, `false` and `"mixed"`.
+     *
+     * Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+     */
+    checked?: boolean;
+
+    /**
+     * A boolean attribute that is usually set by `aria-disabled` or `disabled`.
+     *
+     * > NOTE: Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
+     * [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+     */
+    disabled?: boolean;
+
+    /**
+     * A boolean attribute that is usually set by `aria-expanded`.
+     *
+     * Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+     */
+    expanded?: boolean;
+
+    /**
+     * A boolean attribute that controls whether hidden elements are matched. By default, only non-hidden elements, as
+     * [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
+     *
+     * Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+     */
+    includeHidden?: boolean;
+
+    /**
+     * A number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values for
+     * `<h1>-<h6>` elements.
+     *
+     * Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+     */
+    level?: number;
+
+    /**
+     * A string attribute that matches [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+     *
+     * Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+     */
+    name?: string|RegExp;
+
+    /**
+     * An attribute that is usually set by `aria-pressed`. Available values for pressed are `true`, `false` and `"mixed"`.
+     *
+     * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+     */
+    pressed?: boolean;
+
+    /**
+     * A boolean attribute that is usually set by `aria-selected`.
+     *
+     * Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
+     */
+    selected?: boolean;
+  }): Locator;
+
+  /**
+   * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
+   * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
+   * to configure a different test id attribute if necessary.
+   * @param testId Id to locate the element by.
+   */
+  getByTestId(testId: string): Locator;
+
+  /**
+   * Allows locating elements that contain given text.
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   *
+   * ```html
+   * <button title='Place the order'>Order Now</button>
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByTitle(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
    * Returns locator to the last matching frame.
    */
   last(): FrameLocator;
 
   /**
-   * The method finds an element matching the specified selector in the FrameLocator's subtree.
+   * The method finds an element matching the specified selector in the locator's subtree. It also accepts filter options,
+   * similar to [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) method.
+   *
+   * [Learn more about locators](https://playwright.dev/docs/locators).
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -15540,7 +16456,7 @@ export interface Selectors {
    * ```
    *
    * @param name Name that is used in selectors as a prefix, e.g. `{name: 'foo'}` enables `foo=myselectorbody` selectors. May only contain `[a-zA-Z0-9_]` characters.
-   * @param script Script that evaluates to a selector engine instance.
+   * @param script Script that evaluates to a selector engine instance. The script is evaluated in the page context.
    * @param options
    */
   register(name: string, script: Function|string|{
@@ -15562,6 +16478,14 @@ export interface Selectors {
      */
     contentScript?: boolean;
   }): Promise<void>;
+
+  /**
+   * Defines custom attribute name to be used in
+   * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used by
+   * default.
+   * @param attributeName Test id attribute name.
+   */
+  setTestIdAttribute(attributeName: string): void;
 }
 
 /**
@@ -16015,8 +16939,6 @@ export interface BrowserContextOptions {
    * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
    * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
    * to `'none'`.
-   *
-   * > NOTE: It's not supported in WebKit, see [here](https://bugs.webkit.org/show_bug.cgi?id=225281) in their issue tracker.
    */
   forcedColors?: "active"|"none";
 
@@ -16116,7 +17038,7 @@ export interface BrowserContextOptions {
 
     /**
      * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-     * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+     * is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content
      * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
      * all other file extensions.
      */
@@ -16605,7 +17527,7 @@ interface ElementHandleWaitForSelectorOptions {
   state?: "attached"|"detached"|"visible"|"hidden";
 
   /**
-   * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+   * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
    * element, the call throws an exception.
    */
   strict?: boolean;
@@ -16653,7 +17575,7 @@ interface PageWaitForSelectorOptions {
   state?: "attached"|"detached"|"visible"|"hidden";
 
   /**
-   * When true, the call requires selector to resolve to a single element. If given selector resolves to more then one
+   * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
    * element, the call throws an exception.
    */
   strict?: boolean;
@@ -16844,8 +17766,6 @@ type Devices = {
   "iPhone 13 Pro Max landscape": DeviceDescriptor;
   "iPhone 13 Mini": DeviceDescriptor;
   "iPhone 13 Mini landscape": DeviceDescriptor;
-  "JioPhone 2": DeviceDescriptor;
-  "JioPhone 2 landscape": DeviceDescriptor;
   "Kindle Fire HDX": DeviceDescriptor;
   "Kindle Fire HDX landscape": DeviceDescriptor;
   "LG Optimus L70": DeviceDescriptor;

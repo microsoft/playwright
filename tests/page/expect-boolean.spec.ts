@@ -78,47 +78,93 @@ test.describe('toBeChecked', () => {
   });
 });
 
-test('toBeEditable', async ({ page }) => {
-  await page.setContent('<input></input>');
-  const locator = page.locator('input');
-  await expect(locator).toBeEditable();
+test.describe('toBeEditable', () => {
+  test('default', async ({ page }) => {
+    await page.setContent('<input></input>');
+    const locator = page.locator('input');
+    await expect(locator).toBeEditable();
+  });
+
+  test('with not', async ({ page }) => {
+    await page.setContent('<input readonly></input>');
+    const locator = page.locator('input');
+    await expect(locator).not.toBeEditable();
+  });
+
+  test('with editable:true', async ({ page }) => {
+    await page.setContent('<input></input>');
+    const locator = page.locator('input');
+    await expect(locator).toBeEditable({ editable: true });
+  });
+
+  test('with editable:false', async ({ page }) => {
+    await page.setContent('<input readonly></input>');
+    const locator = page.locator('input');
+    await expect(locator).toBeEditable({ editable: false });
+  });
+
+  test('with not and editable:false', async ({ page }) => {
+    await page.setContent('<input></input>');
+    const locator = page.locator('input');
+    await expect(locator).not.toBeEditable({ editable: false });
+  });
 });
 
-test('toBeEnabled', async ({ page }) => {
-  await page.setContent('<button>Text</button>');
-  const locator = page.locator('button');
-  await expect(locator).toBeEnabled();
-});
+test.describe('toBeEnabled', () => {
+  test('default', async ({ page }) => {
+    await page.setContent('<button>Text</button>');
+    const locator = page.locator('button');
+    await expect(locator).toBeEnabled();
+  });
 
-test('toBeEnabled failed', async ({ page }) => {
-  await page.setContent('<button disabled>Text</button>');
-  const locator = page.locator('button');
-  const error = await expect(locator).toBeEnabled({ timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain(`selector resolved to <button disabled>Text</button>`);
-});
+  test('with enabled:true', async ({ page }) => {
+    await page.setContent('<button>Text</button>');
+    const locator = page.locator('button');
+    await expect(locator).toBeEnabled({ enabled: true });
+  });
 
-test('toBeEnabled eventually', async ({ page }) => {
-  await page.setContent('<button disabled>Text</button>');
-  const locator = page.locator('button');
-  setTimeout(() => {
-    locator.evaluate(e => e.removeAttribute('disabled')).catch(() => {});
-  }, 500);
-  await expect(locator).toBeEnabled();
-});
+  test('with enabled:false', async ({ page }) => {
+    await page.setContent('<button disabled>Text</button>');
+    const locator = page.locator('button');
+    await expect(locator).toBeEnabled({ enabled: false });
+  });
 
-test('not.toBeEnabled eventually', async ({ page }) => {
-  await page.setContent('<button>Text</button>');
-  const locator = page.locator('button');
-  setTimeout(() => {
-    locator.evaluate(e => e.setAttribute('disabled', '')).catch(() => {});
-  }, 500);
-  await expect(locator).not.toBeEnabled();
-});
+  test('failed', async ({ page }) => {
+    await page.setContent('<button disabled>Text</button>');
+    const locator = page.locator('button');
+    const error = await expect(locator).toBeEnabled({ timeout: 1000 }).catch(e => e);
+    expect(error.message).toContain(`selector resolved to <button disabled>Text</button>`);
+  });
 
-test('toBeDisabled', async ({ page }) => {
-  await page.setContent('<button disabled>Text</button>');
-  const locator = page.locator('button');
-  await expect(locator).toBeDisabled();
+  test('eventually', async ({ page }) => {
+    await page.setContent('<button disabled>Text</button>');
+    const locator = page.locator('button');
+    setTimeout(() => {
+      locator.evaluate(e => e.removeAttribute('disabled')).catch(() => {});
+    }, 500);
+    await expect(locator).toBeEnabled();
+  });
+
+  test('eventually with not', async ({ page }) => {
+    await page.setContent('<button>Text</button>');
+    const locator = page.locator('button');
+    setTimeout(() => {
+      locator.evaluate(e => e.setAttribute('disabled', '')).catch(() => {});
+    }, 500);
+    await expect(locator).not.toBeEnabled();
+  });
+
+  test('with not and enabled:false', async ({ page }) => {
+    await page.setContent('<button>Text</button>');
+    const locator = page.locator('button');
+    await expect(locator).not.toBeEnabled({ enabled: false });
+  });
+
+  test('toBeDisabled', async ({ page }) => {
+    await page.setContent('<button disabled>Text</button>');
+    const locator = page.locator('button');
+    await expect(locator).toBeDisabled();
+  });
 });
 
 test('toBeEmpty input', async ({ page }) => {
@@ -163,105 +209,127 @@ test('not.toBeDisabled div', async ({ page }) => {
   await expect(locator).not.toBeDisabled();
 });
 
-test('toBeVisible', async ({ page }) => {
-  await page.setContent('<input></input>');
-  const locator = page.locator('input');
-  await expect(locator).toBeVisible();
+test.describe('toBeVisible', () => {
+  test('default', async ({ page }) => {
+    await page.setContent('<input></input>');
+    const locator = page.locator('input');
+    await expect(locator).toBeVisible();
+  });
+
+  test('with not', async ({ page }) => {
+    await page.setContent('<button style="display: none">hello</button>');
+    const locator = page.locator('button');
+    await expect(locator).not.toBeVisible();
+  });
+
+  test('with visible:true', async ({ page }) => {
+    await page.setContent('<button>hello</button>');
+    const locator = page.locator('button');
+    await expect(locator).toBeVisible({ visible: true });
+  });
+
+  test('with visible:false', async ({ page }) => {
+    await page.setContent('<button hidden>hello</button>');
+    const locator = page.locator('button');
+    await expect(locator).toBeVisible({ visible: false });
+  });
+
+  test('with not and visible:false', async ({ page }) => {
+    await page.setContent('<button>hello</button>');
+    const locator = page.locator('button');
+    await expect(locator).not.toBeVisible({ visible: false });
+  });
+
+  test('eventually', async ({ page }) => {
+    await page.setContent('<div></div>');
+    const locator = page.locator('span');
+    setTimeout(() => {
+      page.$eval('div', div => div.innerHTML = '<span>Hello</span>').catch(() => {});
+    }, 0);
+    await expect(locator).toBeVisible();
+  });
+
+  test('eventually with not', async ({ page }) => {
+    await page.setContent('<div><span>Hello</span></div>');
+    const locator = page.locator('span');
+    setTimeout(() => {
+      page.$eval('span', span => span.textContent = '').catch(() => {});
+    }, 0);
+    await expect(locator).not.toBeVisible();
+  });
+
+  test('fail', async ({ page }) => {
+    await page.setContent('<button style="display: none"></button>');
+    const locator = page.locator('button');
+    const error = await expect(locator).toBeVisible({ timeout: 1000 }).catch(e => e);
+    expect(error.message).toContain(`selector resolved to <button></button>`);
+  });
+
+  test('fail with not', async ({ page }) => {
+    await page.setContent('<input></input>');
+    const locator = page.locator('input');
+    const error = await expect(locator).not.toBeVisible({ timeout: 1000 }).catch(e => e);
+    expect(error.message).toContain(`selector resolved to <input/>`);
+  });
 });
 
-test('not.toBeVisible', async ({ page }) => {
-  await page.setContent('<button style="display: none"></button>');
-  const locator = page.locator('button');
-  await expect(locator).not.toBeVisible();
-});
+test.describe('toBeHidden', () => {
+  test('default', async ({ page }) => {
+    await page.setContent('<button style="display: none"></button>');
+    const locator = page.locator('button');
+    await expect(locator).toBeHidden();
+  });
 
-test('toBeHidden', async ({ page }) => {
-  await page.setContent('<button style="display: none"></button>');
-  const locator = page.locator('button');
-  await expect(locator).toBeHidden();
-});
+  test('when nothing matches', async ({ page }) => {
+    await page.setContent('<div></div>');
+    const locator = page.locator('button');
+    await expect(locator).toBeHidden();
+  });
 
-test('toBeHidden when nothing matches', async ({ page }) => {
-  await page.setContent('<div></div>');
-  const locator = page.locator('button');
-  await expect(locator).toBeHidden();
-});
+  test('with not', async ({ page }) => {
+    await page.setContent('<input></input>');
+    const locator = page.locator('input');
+    await expect(locator).not.toBeHidden();
+  });
 
-test('not.toBeHidden', async ({ page }) => {
-  await page.setContent('<input></input>');
-  const locator = page.locator('input');
-  await expect(locator).not.toBeHidden();
-});
+  test('eventually with not', async ({ page }) => {
+    await page.setContent('<div></div>');
+    const locator = page.locator('span');
+    setTimeout(() => {
+      page.$eval('div', div => div.innerHTML = '<span>Hello</span>').catch(() => {});
+    }, 0);
+    await expect(locator).not.toBeHidden();
+  });
 
-test('toBeVisible eventually', async ({ page }) => {
-  await page.setContent('<div></div>');
-  const locator = page.locator('span');
-  setTimeout(() => {
-    page.$eval('div', div => div.innerHTML = '<span>Hello</span>').catch(() => {});
-  }, 0);
-  await expect(locator).toBeVisible();
-});
+  test('eventually', async ({ page }) => {
+    await page.setContent('<div><span>Hello</span></div>');
+    const locator = page.locator('span');
+    setTimeout(() => {
+      page.$eval('span', span => span.textContent = '').catch(() => {});
+    }, 0);
+    await expect(locator).toBeHidden();
+  });
 
-test('not.toBeHidden eventually', async ({ page }) => {
-  await page.setContent('<div></div>');
-  const locator = page.locator('span');
-  setTimeout(() => {
-    page.$eval('div', div => div.innerHTML = '<span>Hello</span>').catch(() => {});
-  }, 0);
-  await expect(locator).not.toBeHidden();
-});
+  test('fail', async ({ page }) => {
+    await page.setContent('<input></input>');
+    const locator = page.locator('input');
+    const error = await expect(locator).toBeHidden({ timeout: 1000 }).catch(e => e);
+    expect(error.message).toContain(`selector resolved to <input/>`);
+  });
 
-test('not.toBeVisible eventually', async ({ page }) => {
-  await page.setContent('<div><span>Hello</span></div>');
-  const locator = page.locator('span');
-  setTimeout(() => {
-    page.$eval('span', span => span.textContent = '').catch(() => {});
-  }, 0);
-  await expect(locator).not.toBeVisible();
-});
+  test('fail with not', async ({ page }) => {
+    await page.setContent('<button style="display: none"></button>');
+    const locator = page.locator('button');
+    const error = await expect(locator).not.toBeHidden({ timeout: 1000 }).catch(e => e);
+    expect(error.message).toContain(`selector resolved to <button></button>`);
+  });
 
-test('toBeHidden eventually', async ({ page }) => {
-  await page.setContent('<div><span>Hello</span></div>');
-  const locator = page.locator('span');
-  setTimeout(() => {
-    page.$eval('span', span => span.textContent = '').catch(() => {});
-  }, 0);
-  await expect(locator).toBeHidden();
-});
-
-test('toBeVisible fail', async ({ page }) => {
-  await page.setContent('<button style="display: none"></button>');
-  const locator = page.locator('button');
-  const error = await expect(locator).toBeVisible({ timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain(`selector resolved to <button></button>`);
-});
-
-test('not.toBeVisible fail', async ({ page }) => {
-  await page.setContent('<input></input>');
-  const locator = page.locator('input');
-  const error = await expect(locator).not.toBeVisible({ timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain(`selector resolved to <input/>`);
-});
-
-test('toBeHidden fail', async ({ page }) => {
-  await page.setContent('<input></input>');
-  const locator = page.locator('input');
-  const error = await expect(locator).toBeHidden({ timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain(`selector resolved to <input/>`);
-});
-
-test('not.toBeHidden fail', async ({ page }) => {
-  await page.setContent('<button style="display: none"></button>');
-  const locator = page.locator('button');
-  const error = await expect(locator).not.toBeHidden({ timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain(`selector resolved to <button></button>`);
-});
-
-test('not.toBeHidden fail not matching', async ({ page }) => {
-  await page.setContent('<div></div>');
-  const locator = page.locator('button');
-  const error = await expect(locator).not.toBeHidden({ timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain(`expect.toBeHidden with timeout 1000ms`);
+  test('fail with not when nothing matching', async ({ page }) => {
+    await page.setContent('<div></div>');
+    const locator = page.locator('button');
+    const error = await expect(locator).not.toBeHidden({ timeout: 1000 }).catch(e => e);
+    expect(error.message).toContain(`expect.toBeHidden with timeout 1000ms`);
+  });
 });
 
 test('toBeFocused', async ({ page }) => {
@@ -300,66 +368,72 @@ test('should print selector syntax error', async ({ page }) => {
   expect(error.message).toContain(`Unexpected token "]" while parsing selector "row]"`);
 });
 
-test('toBeOK', async ({ page, server }) => {
-  const res = await page.request.get(server.EMPTY_PAGE);
-  await expect(res).toBeOK();
-});
+test.describe(() => {
+  test.skip(({ isAndroid }) => isAndroid, 'server.EMPTY_PAGE is the emulator address 10.0.2.2');
+  test.skip(({ isElectron }) => isElectron, 'Protocol error (Storage.getCookies): Browser context management is not supported.');
 
-test('not.toBeOK', async ({ page, server }) => {
-  const res = await page.request.get(`${server.PREFIX}/unknown`);
-  await expect(res).not.toBeOK();
-});
-
-test('toBeOK fail with invalid argument', async ({ page }) => {
-  const error = await (expect(page) as any).toBeOK().catch(e => e);
-  expect(error.message).toContain('toBeOK can be only used with APIResponse object');
-});
-
-test('toBeOK fail with promise', async ({ page, server }) => {
-  const res = page.request.get(server.EMPTY_PAGE).catch(e => {});
-  const error = await (expect(res) as any).toBeOK().catch(e => e);
-  expect(error.message).toContain('toBeOK can be only used with APIResponse object');
-});
-
-test.describe('toBeOK should print response with text content type when fails', () => {
-  test.beforeEach(async ({ server }) => {
-    server.setRoute('/text-content-type', (req, res) => {
-      res.statusCode = 404;
-      res.setHeader('Content-type', 'text/plain');
-      res.end('Text error');
-    });
-    server.setRoute('/no-content-type', (req, res) => {
-      res.statusCode = 404;
-      res.end('No content type error');
-    });
-    server.setRoute('/binary-content-type', (req, res) => {
-      res.statusCode = 404;
-      res.setHeader('Content-type', 'image/bmp');
-      res.end('Image content type error');
-    });
+  test('toBeOK', async ({ page, server }) => {
+    const res = await page.request.get(server.EMPTY_PAGE);
+    await expect(res).toBeOK();
   });
 
-  test('text content type', async ({ page, server }) => {
-    const res = await page.request.get(`${server.PREFIX}/text-content-type`);
-    const error = await expect(res).toBeOK().catch(e => e);
-    expect(error.message).toContain(`→ GET ${server.PREFIX}/text-content-type`);
-    expect(error.message).toContain(`← 404 Not Found`);
-    expect(error.message).toContain(`Text error`);
+  test('not.toBeOK', async ({ page, server }) => {
+    const res = await page.request.get(`${server.PREFIX}/unknown`);
+    await expect(res).not.toBeOK();
   });
 
-  test('no content type', async ({ page, server }) => {
-    const res = await page.request.get(`${server.PREFIX}/no-content-type`);
-    const error = await expect(res).toBeOK().catch(e => e);
-    expect(error.message).toContain(`→ GET ${server.PREFIX}/no-content-type`);
-    expect(error.message).toContain(`← 404 Not Found`);
-    expect(error.message).not.toContain(`No content type error`);
+
+  test('toBeOK fail with invalid argument', async ({ page }) => {
+    const error = await (expect(page) as any).toBeOK().catch(e => e);
+    expect(error.message).toContain('toBeOK can be only used with APIResponse object');
   });
 
-  test('image content type', async ({ page, server }) => {
-    const res = await page.request.get(`${server.PREFIX}/image-content-type`);
-    const error = await expect(res).toBeOK().catch(e => e);
-    expect(error.message).toContain(`→ GET ${server.PREFIX}/image-content-type`);
-    expect(error.message).toContain(`← 404 Not Found`);
-    expect(error.message).not.toContain(`Image content type error`);
+  test('toBeOK fail with promise', async ({ page, server }) => {
+    const res = page.request.get(server.EMPTY_PAGE).catch(e => {});
+    const error = await (expect(res) as any).toBeOK().catch(e => e);
+    expect(error.message).toContain('toBeOK can be only used with APIResponse object');
+  });
+
+  test.describe('toBeOK should print response with text content type when fails', () => {
+    test.beforeEach(async ({ server }) => {
+      server.setRoute('/text-content-type', (req, res) => {
+        res.statusCode = 404;
+        res.setHeader('Content-type', 'text/plain');
+        res.end('Text error');
+      });
+      server.setRoute('/no-content-type', (req, res) => {
+        res.statusCode = 404;
+        res.end('No content type error');
+      });
+      server.setRoute('/binary-content-type', (req, res) => {
+        res.statusCode = 404;
+        res.setHeader('Content-type', 'image/bmp');
+        res.end('Image content type error');
+      });
+    });
+
+    test('text content type', async ({ page, server }) => {
+      const res = await page.request.get(`${server.PREFIX}/text-content-type`);
+      const error = await expect(res).toBeOK().catch(e => e);
+      expect(error.message).toContain(`→ GET ${server.PREFIX}/text-content-type`);
+      expect(error.message).toContain(`← 404 Not Found`);
+      expect(error.message).toContain(`Text error`);
+    });
+
+    test('no content type', async ({ page, server }) => {
+      const res = await page.request.get(`${server.PREFIX}/no-content-type`);
+      const error = await expect(res).toBeOK().catch(e => e);
+      expect(error.message).toContain(`→ GET ${server.PREFIX}/no-content-type`);
+      expect(error.message).toContain(`← 404 Not Found`);
+      expect(error.message).not.toContain(`No content type error`);
+    });
+
+    test('image content type', async ({ page, server }) => {
+      const res = await page.request.get(`${server.PREFIX}/image-content-type`);
+      const error = await expect(res).toBeOK().catch(e => e);
+      expect(error.message).toContain(`→ GET ${server.PREFIX}/image-content-type`);
+      expect(error.message).toContain(`← 404 Not Found`);
+      expect(error.message).not.toContain(`Image content type error`);
+    });
   });
 });

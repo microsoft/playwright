@@ -17,6 +17,7 @@
 
 import { ws } from '../utilsBundle';
 import type { WebSocket } from '../utilsBundle';
+import type { ClientRequest, IncomingMessage } from 'http';
 import type { Progress } from './progress';
 import { makeWaitForNextTask } from '../utils';
 
@@ -62,14 +63,25 @@ export class WebSocketTransport implements ConnectionTransport {
         await transport.closeAndWait().catch(e => null);
     });
     await new Promise<WebSocketTransport>((fulfill, reject) => {
-      transport._ws.addEventListener('open', async () => {
+      transport._ws.on('open', async () => {
         progress.log(`<ws connected> ${url}`);
         fulfill(transport);
       });
-      transport._ws.addEventListener('error', event => {
+      transport._ws.on('error', event => {
         progress.log(`<ws connect error> ${url} ${event.message}`);
         reject(new Error('WebSocket error: ' + event.message));
         transport._ws.close();
+      });
+      transport._ws.on('unexpected-response', (request: ClientRequest, response: IncomingMessage) => {
+        const chunks: Buffer[] = [];
+        const errorPrefix = `${url} ${response.statusCode} ${response.statusMessage}`;
+        response.on('data', chunk => chunks.push(chunk));
+        response.on('close', () => {
+          const error = chunks.length ? `${errorPrefix}\n${Buffer.concat(chunks)}` : errorPrefix;
+          progress.log(`<ws unexpected response> ${error}`);
+          reject(new Error('WebSocket error: ' + error));
+          transport._ws.close();
+        });
       });
     });
     success = true;

@@ -89,6 +89,50 @@ it.describe('page screenshot', () => {
     expect(hasDifferentScreenshots).toBe(true);
   });
 
+  it('should capture blinking caret in shadow dom', async ({ page, browserName }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16732' });
+    await page.addScriptTag({
+      content: `
+      class CustomElementContainer extends HTMLElement {
+        #shadowRoot;
+        constructor() {
+          super();
+          this.#shadowRoot = this.attachShadow({ mode: 'open' });
+          this.#shadowRoot.innerHTML = '<custom-element-input-wrapper><input type="text"/></custom-element-input-wrapper>';
+        }
+      }
+      class CustomElementInputWrapper extends HTMLElement {
+        #shadowRoot;
+        constructor() {
+          super();
+          this.#shadowRoot = this.attachShadow({ mode: 'open' });
+          this.#shadowRoot.innerHTML = '<style>:host { all: initial; }</style><slot/>';
+        }
+      }
+      customElements.define('custom-element-input-wrapper', CustomElementInputWrapper);
+      customElements.define('custom-element-container', CustomElementContainer);
+
+      const container = document.createElement('custom-element-container');
+      document.body.appendChild(container);`,
+    });
+
+    const input = await page.locator('input');
+    // TODO: click fails in webkit
+    await input.focus();
+
+    const screenshot = await input.screenshot();
+    let hasDifferentScreenshots = false;
+    for (let i = 0; !hasDifferentScreenshots && i < 10; ++i) {
+      // Caret blinking time is set to 500ms.
+      // Try to capture variety of screenshots to make
+      // sure we capture blinking caret.
+      await new Promise(x => setTimeout(x, 150));
+      const newScreenshot = await input.screenshot({ caret: 'hide' });
+      hasDifferentScreenshots = !newScreenshot.equals(screenshot);
+    }
+    expect(hasDifferentScreenshots).toBe(false);
+  });
+
   it('should clip rect', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');
@@ -229,9 +273,10 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-canvas.png', { threshold: 0.4 });
   });
 
-  it('should capture canvas changes', async ({ page, isElectron, browserName, isMac }) => {
+  it('should capture canvas changes', async ({ page, isElectron, browserName, isMac, isWebView2 }) => {
     it.fixme(browserName === 'webkit' && isMac, 'https://github.com/microsoft/playwright/issues/8796,https://github.com/microsoft/playwright/issues/16180');
     it.skip(isElectron);
+    it.skip(isWebView2);
     await page.goto('data:text/html,<canvas></canvas>');
     await page.evaluate(() => {
       const canvas = document.querySelector('canvas');
@@ -386,7 +431,7 @@ it.describe('page screenshot', () => {
       await page.setViewportSize({ width: 500, height: 500 });
       await page.goto(server.PREFIX + '/grid.html');
       expect(await page.screenshot({
-        mask: [ page.locator('div').nth(5) ],
+        mask: [page.locator('div').nth(5)],
       })).toMatchSnapshot('mask-should-work.png');
     });
 
@@ -395,7 +440,7 @@ it.describe('page screenshot', () => {
       await page.goto(server.PREFIX + '/grid.html');
       const bodyLocator = page.locator('body');
       expect(await bodyLocator.screenshot({
-        mask: [ page.locator('div').nth(5) ],
+        mask: [page.locator('div').nth(5)],
       })).toMatchSnapshot('mask-should-work-with-locator.png');
     });
 
@@ -404,7 +449,7 @@ it.describe('page screenshot', () => {
       await page.goto(server.PREFIX + '/grid.html');
       const bodyHandle = await page.$('body');
       expect(await bodyHandle.screenshot({
-        mask: [ page.locator('div').nth(5) ],
+        mask: [page.locator('div').nth(5)],
       })).toMatchSnapshot('mask-should-work-with-elementhandle.png');
     });
 
@@ -439,10 +484,10 @@ it.describe('page screenshot', () => {
       await page.addStyleTag({ content: 'iframe { border: none; }' });
       const screenshots = await Promise.all([
         page.screenshot({
-          mask: [ page.frameLocator('#frame1').locator('div').nth(1) ],
+          mask: [page.frameLocator('#frame1').locator('div').nth(1)],
         }),
         page.screenshot({
-          mask: [ page.frameLocator('#frame2').locator('div').nth(3) ],
+          mask: [page.frameLocator('#frame2').locator('div').nth(3)],
         }),
       ]);
       expect(screenshots[0]).toMatchSnapshot('should-mask-in-parallel-1.png');
@@ -454,7 +499,7 @@ it.describe('page screenshot', () => {
       await page.goto(server.PREFIX + '/grid.html');
       const screenshot1 = await page.screenshot();
       await page.screenshot({
-        mask: [ page.locator('div').nth(1) ],
+        mask: [page.locator('div').nth(1)],
       });
       const screenshot2 = await page.screenshot();
       expect(screenshot1.equals(screenshot2)).toBe(true);
@@ -469,7 +514,7 @@ it.describe('page screenshot', () => {
       const done = page.setContent(`<iframe src='/subframe.html'></iframe>`);
       const route = await routeReady;
 
-      await page.screenshot({ mask: [ page.locator('non-existent') ] });
+      await page.screenshot({ mask: [page.locator('non-existent')] });
       await route.fulfill({ body: '' });
       await done;
     });
@@ -484,7 +529,7 @@ it.describe('page screenshot', () => {
         iframe.contentDocument.write('Hello');
         iframe.contentDocument.close();
       });
-      await page.screenshot({ mask: [ page.locator('non-existent') ] });
+      await page.screenshot({ mask: [page.locator('non-existent')] });
     });
   });
 });
@@ -769,3 +814,17 @@ it.describe('page screenshot animations', () => {
   });
 });
 
+it('should throw if screenshot size is too large', async ({ page, browserName, isMac }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16727' });
+  {
+    await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 32767px; background: red;'></div>`);
+    const result = await page.screenshot({ fullPage: true });
+    expect(result).toBeTruthy();
+  }
+  {
+    await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 32768px; background: red;'></div>`);
+    const exception = await page.screenshot({ fullPage: true }).catch(e => e);
+    if (browserName === 'firefox' || (browserName === 'webkit' && !isMac))
+      expect(exception.message).toContain('Cannot take screenshot larger than 32767');
+  }
+});

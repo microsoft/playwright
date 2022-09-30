@@ -38,6 +38,7 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
   browserMajorVersion: [Number(chromiumVersion.split('.')[0]), { scope: 'worker' }],
   isAndroid: [false, { scope: 'worker' }],
   isElectron: [true, { scope: 'worker' }],
+  isWebView2: [false, { scope: 'worker' }],
 
   electronApp: async ({ playwright }, run) => {
     // This env prevents 'Electron Security Policy' console message.
@@ -52,7 +53,7 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
   newWindow: async ({ electronApp }, run) => {
     const windows: Page[] = [];
     await run(async () => {
-      const [ window ] = await Promise.all([
+      const [window] = await Promise.all([
         electronApp.waitForEvent('window'),
         electronApp.evaluate(async electron => {
           // Avoid "Error: Cannot create BrowserWindow before app is ready".

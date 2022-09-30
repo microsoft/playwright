@@ -286,7 +286,7 @@ it('should parse the data if content-type is application/x-www-form-urlencoded',
   await page.setContent(`<form method='POST' action='/post'><input type='text' name='foo' value='bar'><input type='number' name='baz' value='123'><input type='submit'></form>`);
   await page.click('input[type=submit]');
   expect(request).toBeTruthy();
-  expect(request.postDataJSON()).toEqual({ 'foo': 'bar','baz': '123' });
+  expect(request.postDataJSON()).toEqual({ 'foo': 'bar', 'baz': '123' });
 });
 
 it('should get |undefined| with postDataJSON() when there is no post data', async ({ page, server }) => {

@@ -370,7 +370,7 @@ test.describe('cli codegen', () => {
     const selector = await recorder.hoverOverElement('a');
     expect(selector).toBe('text=link');
 
-    await page.click('a', { modifiers: [ platform === 'darwin' ? 'Meta' : 'Control'] });
+    await page.click('a', { modifiers: [platform === 'darwin' ? 'Meta' : 'Control'] });
     const sources = await recorder.waitForOutput('JavaScript', 'page1');
 
     if (browserName !== 'firefox') {
@@ -465,7 +465,7 @@ test.describe('cli codegen', () => {
     const recorder = await openRecorder();
 
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name='updated'"></input>`);
-    const [ models ] = await Promise.all([
+    const [models] = await Promise.all([
       recorder.waitForActionPerformed(),
       page.click('input')
     ]);
@@ -477,7 +477,7 @@ test.describe('cli codegen', () => {
 
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name='updated'"></input>`);
-    const [ models ] = await Promise.all([
+    const [models] = await Promise.all([
       recorder.waitForActionPerformed(),
       page.click('input')
     ]);

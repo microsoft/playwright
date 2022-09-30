@@ -24,8 +24,8 @@ export type CoverageWorkerOptions = {
 };
 
 export const coverageTest = test.extend<{}, { __collectCoverage: void } & CoverageWorkerOptions>({
-  coverageName: [ undefined, { scope: 'worker', option: true  } ],
-  __collectCoverage: [ async ({ coverageName }, run, workerInfo) => {
+  coverageName: [undefined, { scope: 'worker', option: true  }],
+  __collectCoverage: [async ({ coverageName }, run, workerInfo) => {
     if (!coverageName) {
       await run();
       return;
@@ -38,5 +38,5 @@ export const coverageTest = test.extend<{}, { __collectCoverage: void } & Covera
     const coverageJSON = Array.from(coverage.keys()).filter(key => coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
-  }, { scope: 'worker', auto: true } ],
+  }, { scope: 'worker', auto: true }],
 });

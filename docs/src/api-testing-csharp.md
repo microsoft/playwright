@@ -39,42 +39,40 @@ using Microsoft.Playwright.NUnit;
 using Microsoft.Playwright;
 using NUnit.Framework;
 
-namespace PlaywrightTests
+namespace PlaywrightTests;
+
+public class TestGitHubAPI : PlaywrightTest
 {
+    static string API_TOKEN = Environment.GetEnvironmentVariable("GITHUB_API_TOKEN");
 
-    public class TestGitHubAPI : PlaywrightTest
+    private IAPIRequestContext Request = null;
+
+    [SetUp]
+    public async Task SetUpAPITesting()
     {
-        static string API_TOKEN = Environment.GetEnvironmentVariable("GITHUB_API_TOKEN");
+        await CreateAPIRequestContext();
+    }
 
-        private IAPIRequestContext Request = null;
+    private async Task CreateAPIRequestContext()
+    {
+        var headers = new Dictionary<string, string>();
+        // We set this header per GitHub guidelines.
+        headers.Add("Accept", "application/vnd.github.v3+json");
+        // Add authorization token to all requests.
+        // Assuming personal access token available in the environment.
+        headers.Add("Authorization", "token " + API_TOKEN);
 
-        [SetUp]
-        public async Task SetUpAPITesting()
-        {
-            await CreateAPIRequestContext();
-        }
+        Request = await this.Playwright.APIRequest.NewContextAsync(new() {
+            // All requests we send go to this API endpoint.
+            BaseURL = "https://api.github.com",
+            ExtraHTTPHeaders = headers,
+        });
+    }
 
-        private async Task CreateAPIRequestContext()
-        {
-            var headers = new Dictionary<string, string>();
-            // We set this header per GitHub guidelines.
-            headers.Add("Accept", "application/vnd.github.v3+json");
-            // Add authorization token to all requests.
-            // Assuming personal access token available in the environment.
-            headers.Add("Authorization", "token " + API_TOKEN);
-
-            Request = await this.Playwright.APIRequest.NewContextAsync(new() {
-                // All requests we send go to this API endpoint.
-                BaseURL = "https://api.github.com",
-                ExtraHTTPHeaders = headers,
-            });
-        }
-
-        [TearDown]
-        public async Task TearDownAPITesting()
-        {
-            await Request.DisposeAsync();
-        }
+    [TearDown]
+    public async Task TearDownAPITesting()
+    {
+        await Request.DisposeAsync();
     }
 }
 ```
@@ -91,75 +89,74 @@ using Microsoft.Playwright.NUnit;
 using Microsoft.Playwright;
 using NUnit.Framework;
 
-namespace PlaywrightTests
+namespace PlaywrightTests;
+
+[TestFixture]
+public class TestGitHubAPI : PlaywrightTest
 {
+    static string REPO = "test-repo-2";
+    static string USER = Environment.GetEnvironmentVariable("GITHUB_USER");
+    static string API_TOKEN = Environment.GetEnvironmentVariable("GITHUB_API_TOKEN");
 
-    public class TestGitHubAPI : PlaywrightTest
+    private IAPIRequestContext Request = null;
+
+    [Test]
+    public async Task ShouldCreateBugReport()
     {
-        static string REPO = "test-repo-2";
-        static string USER = Environment.GetEnvironmentVariable("GITHUB_USER");
-        static string API_TOKEN = Environment.GetEnvironmentVariable("GITHUB_API_TOKEN");
+        var data = new Dictionary<string, string>();
+        data.Add("title", "[Bug] report 1");
+        data.Add("body", "Bug description");
+        var newIssue = await Request.PostAsync("/repos/" + USER + "/" + REPO + "/issues", new() { DataObject = data });
+        Assert.True(newIssue.Ok);
 
-        private IAPIRequestContext Request = null;
-
-        [Test]
-        public async Task ShouldCreateBugReport()
+        var issues = await Request.GetAsync("/repos/" + USER + "/" + REPO + "/issues");
+        Assert.True(issues.Ok);
+        var issuesJsonResponse = await issues.JsonAsync();
+        JsonElement? issue = null;
+        foreach (JsonElement issueObj in issuesJsonResponse?.EnumerateArray())
         {
-            var data = new Dictionary<string, string>();
-            data.Add("title", "[Bug] report 1");
-            data.Add("body", "Bug description");
-            var newIssue = await Request.PostAsync("/repos/" + USER + "/" + REPO + "/issues", new() { DataObject = data });
-            Assert.True(newIssue.Ok);
-
-            var issues = await Request.GetAsync("/repos/" + USER + "/" + REPO + "/issues");
-            Assert.True(issues.Ok);
-            var issuesJsonResponse = await issues.JsonAsync();
-            JsonElement? issue = null;
-            foreach (JsonElement issueObj in issuesJsonResponse?.EnumerateArray())
+            if (issueObj.TryGetProperty("title", out var title) == true)
             {
-                if (issueObj.TryGetProperty("title", out var title) == true)
+                if (title.GetString() == "[Bug] report 1")
                 {
-                    if (title.GetString() == "[Bug] report 1")
-                    {
-                        issue = issueObj;
-                    }
+                    issue = issueObj;
                 }
             }
-            Assert.NotNull(issue);
-            Assert.AreEqual("Bug description", issue?.GetProperty("body").GetString());
         }
-
-        [Test]
-        public async Task ShouldCreateFeatureRequests()
-        {
-            var data = new Dictionary<string, string>();
-            data.Add("title", "[Feature] request 1");
-            data.Add("body", "Feature description");
-            var newIssue = await Request.PostAsync("/repos/" + USER + "/" + REPO + "/issues", new() { DataObject = data });
-            Assert.True(newIssue.Ok);
-
-            var issues = await Request.GetAsync("/repos/" + USER + "/" + REPO + "/issues");
-            Assert.True(issues.Ok);
-            var issuesJsonResponse = await issues.JsonAsync();
-            var issuesJson = (await issues.JsonAsync())?.EnumerateArray();
-
-            JsonElement? issue = null;
-            foreach (JsonElement issueObj in issuesJsonResponse?.EnumerateArray())
-            {
-                if (issueObj.TryGetProperty("title", out var title) == true)
-                {
-                    if (title.GetString() == "[Feature] request 1")
-                    {
-                        issue = issueObj;
-                    }
-                }
-            }
-            Assert.NotNull(issue);
-            Assert.AreEqual("Feature description", issue?.GetProperty("body").GetString());
-        }
-
-        // ...
+        Assert.NotNull(issue);
+        Assert.AreEqual("Bug description", issue?.GetProperty("body").GetString());
     }
+
+    [Test]
+    public async Task ShouldCreateFeatureRequests()
+    {
+        var data = new Dictionary<string, string>();
+        data.Add("title", "[Feature] request 1");
+        data.Add("body", "Feature description");
+        var newIssue = await Request.PostAsync("/repos/" + USER + "/" + REPO + "/issues", new() { DataObject = data });
+        Assert.True(newIssue.Ok);
+
+        var issues = await Request.GetAsync("/repos/" + USER + "/" + REPO + "/issues");
+        Assert.True(issues.Ok);
+        var issuesJsonResponse = await issues.JsonAsync();
+        var issuesJson = (await issues.JsonAsync())?.EnumerateArray();
+
+        JsonElement? issue = null;
+        foreach (JsonElement issueObj in issuesJsonResponse?.EnumerateArray())
+        {
+            if (issueObj.TryGetProperty("title", out var title) == true)
+            {
+                if (title.GetString() == "[Feature] request 1")
+                {
+                    issue = issueObj;
+                }
+            }
+        }
+        Assert.NotNull(issue);
+        Assert.AreEqual("Feature description", issue?.GetProperty("body").GetString());
+    }
+
+    // ...
 }
 ```
 
@@ -216,121 +213,120 @@ using Microsoft.Playwright.NUnit;
 using Microsoft.Playwright;
 using NUnit.Framework;
 
-namespace PlaywrightTests
+namespace PlaywrightTests;
+
+[TestFixture]
+public class TestGitHubAPI : PlaywrightTest
 {
+    static string REPO = "test-repo-2";
+    static string USER = Environment.GetEnvironmentVariable("GITHUB_USER");
+    static string API_TOKEN = Environment.GetEnvironmentVariable("GITHUB_API_TOKEN");
 
-    public class TestGitHubAPI : PlaywrightTest
+    private IAPIRequestContext Request = null;
+
+    [Test]
+    public async Task ShouldCreateBugReport()
     {
-        static string REPO = "test-repo-2";
-        static string USER = Environment.GetEnvironmentVariable("GITHUB_USER");
-        static string API_TOKEN = Environment.GetEnvironmentVariable("GITHUB_API_TOKEN");
+        var data = new Dictionary<string, string>();
+        data.Add("title", "[Bug] report 1");
+        data.Add("body", "Bug description");
+        var newIssue = await Request.PostAsync("/repos/" + USER + "/" + REPO + "/issues", new() { DataObject = data });
+        Assert.True(newIssue.Ok);
 
-        private IAPIRequestContext Request = null;
-
-        [Test]
-        public async Task ShouldCreateBugReport()
+        var issues = await Request.GetAsync("/repos/" + USER + "/" + REPO + "/issues");
+        Assert.True(issues.Ok);
+        var issuesJsonResponse = await issues.JsonAsync();
+        JsonElement? issue = null;
+        foreach (JsonElement issueObj in issuesJsonResponse?.EnumerateArray())
         {
-            var data = new Dictionary<string, string>();
-            data.Add("title", "[Bug] report 1");
-            data.Add("body", "Bug description");
-            var newIssue = await Request.PostAsync("/repos/" + USER + "/" + REPO + "/issues", new() { DataObject = data });
-            Assert.True(newIssue.Ok);
-
-            var issues = await Request.GetAsync("/repos/" + USER + "/" + REPO + "/issues");
-            Assert.True(issues.Ok);
-            var issuesJsonResponse = await issues.JsonAsync();
-            JsonElement? issue = null;
-            foreach (JsonElement issueObj in issuesJsonResponse?.EnumerateArray())
+            if (issueObj.TryGetProperty("title", out var title) == true)
             {
-                if (issueObj.TryGetProperty("title", out var title) == true)
+                if (title.GetString() == "[Bug] report 1")
                 {
-                    if (title.GetString() == "[Bug] report 1")
-                    {
-                        issue = issueObj;
-                    }
+                    issue = issueObj;
                 }
             }
-            Assert.NotNull(issue);
-            Assert.AreEqual("Bug description", issue?.GetProperty("body").GetString());
         }
+        Assert.NotNull(issue);
+        Assert.AreEqual("Bug description", issue?.GetProperty("body").GetString());
+    }
 
-        [Test]
-        public async Task ShouldCreateFeatureRequests()
+    [Test]
+    public async Task ShouldCreateFeatureRequests()
+    {
+        var data = new Dictionary<string, string>();
+        data.Add("title", "[Feature] request 1");
+        data.Add("body", "Feature description");
+        var newIssue = await Request.PostAsync("/repos/" + USER + "/" + REPO + "/issues", new() { DataObject = data });
+        Assert.True(newIssue.Ok);
+
+        var issues = await Request.GetAsync("/repos/" + USER + "/" + REPO + "/issues");
+        Assert.True(issues.Ok);
+        var issuesJsonResponse = await issues.JsonAsync();
+        var issuesJson = (await issues.JsonAsync())?.EnumerateArray();
+
+        JsonElement? issue = null;
+        foreach (JsonElement issueObj in issuesJsonResponse?.EnumerateArray())
         {
-            var data = new Dictionary<string, string>();
-            data.Add("title", "[Feature] request 1");
-            data.Add("body", "Feature description");
-            var newIssue = await Request.PostAsync("/repos/" + USER + "/" + REPO + "/issues", new() { DataObject = data });
-            Assert.True(newIssue.Ok);
-
-            var issues = await Request.GetAsync("/repos/" + USER + "/" + REPO + "/issues");
-            Assert.True(issues.Ok);
-            var issuesJsonResponse = await issues.JsonAsync();
-            var issuesJson = (await issues.JsonAsync())?.EnumerateArray();
-
-            JsonElement? issue = null;
-            foreach (JsonElement issueObj in issuesJsonResponse?.EnumerateArray())
+            if (issueObj.TryGetProperty("title", out var title) == true)
             {
-                if (issueObj.TryGetProperty("title", out var title) == true)
+                if (title.GetString() == "[Feature] request 1")
                 {
-                    if (title.GetString() == "[Feature] request 1")
-                    {
-                        issue = issueObj;
-                    }
+                    issue = issueObj;
                 }
             }
-            Assert.NotNull(issue);
-            Assert.AreEqual("Feature description", issue?.GetProperty("body").GetString());
         }
+        Assert.NotNull(issue);
+        Assert.AreEqual("Feature description", issue?.GetProperty("body").GetString());
+    }
 
-        [SetUp]
-        public async Task SetUpAPITesting()
+    [SetUp]
+    public async Task SetUpAPITesting()
+    {
+        await CreateAPIRequestContext();
+        await CreateTestRepository();
+    }
+
+    private async Task CreateAPIRequestContext()
+    {
+        var headers = new Dictionary<string, string>();
+        // We set this header per GitHub guidelines.
+        headers.Add("Accept", "application/vnd.github.v3+json");
+        // Add authorization token to all requests.
+        // Assuming personal access token available in the environment.
+        headers.Add("Authorization", "token " + API_TOKEN);
+
+        Request = await this.Playwright.APIRequest.NewContextAsync(new()
         {
-            await CreateAPIRequestContext();
-            await CreateTestRepository();
-        }
+            // All requests we send go to this API endpoint.
+            BaseURL = "https://api.github.com",
+            ExtraHTTPHeaders = headers,
+        });
+    }
 
-        private async Task CreateAPIRequestContext()
+    private async Task CreateTestRepository()
+    {
+        var resp = await Request.PostAsync("/user/repos", new()
         {
-            var headers = new Dictionary<string, string>();
-            // We set this header per GitHub guidelines.
-            headers.Add("Accept", "application/vnd.github.v3+json");
-            // Add authorization token to all requests.
-            // Assuming personal access token available in the environment.
-            headers.Add("Authorization", "token " + API_TOKEN);
-
-            Request = await this.Playwright.APIRequest.NewContextAsync(new()
+            DataObject = new Dictionary<string, string>()
             {
-                // All requests we send go to this API endpoint.
-                BaseURL = "https://api.github.com",
-                ExtraHTTPHeaders = headers,
-            });
-        }
+                ["name"] = REPO,
+            },
+        });
+        Assert.True(resp.Ok);
+    }
 
-        private async Task CreateTestRepository()
-        {
-            var resp = await Request.PostAsync("/user/repos", new()
-            {
-                DataObject = new Dictionary<string, string>()
-                {
-                    ["name"] = REPO,
-                },
-            });
-            Assert.True(resp.Ok);
-        }
+    [TearDown]
+    public async Task TearDownAPITesting()
+    {
+        await DeleteTestRepository();
+        await Request.DisposeAsync();
+    }
 
-        [TearDown]
-        public async Task TearDownAPITesting()
-        {
-            await DeleteTestRepository();
-            await Request.DisposeAsync();
-        }
-
-        private async Task DeleteTestRepository()
-        {
-            var resp = await Request.DeleteAsync("/repos/" + USER + "/" + REPO);
-            Assert.True(resp.Ok);
-        }
+    private async Task DeleteTestRepository()
+    {
+        var resp = await Request.DeleteAsync("/repos/" + USER + "/" + REPO);
+        Assert.True(resp.Ok);
     }
 }
 ```

@@ -24,9 +24,11 @@ it('should work @smoke', async ({ page }) => {
   expect(await page.$eval(`text=/^[ay]+$/`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`text=/Ya/i`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`text=ye`, e => e.outerHTML)).toBe('<div>\nye  </div>');
+  expect(await page.getByText('ye').evaluate(e => e.outerHTML)).toContain('>\nye  </div>');
 
   await page.setContent(`<div> ye </div><div>ye</div>`);
   expect(await page.$eval(`text="ye"`, e => e.outerHTML)).toBe('<div> ye </div>');
+  expect(await page.getByText('ye', { exact: true }).first().evaluate(e => e.outerHTML)).toContain('> ye </div>');
 
   await page.setContent(`<div>yo</div><div>"ya</div><div> hello world! </div>`);
   expect(await page.$eval(`text="\\"ya"`, e => e.outerHTML)).toBe('<div>"ya</div>');
@@ -438,4 +440,17 @@ it('should work with unpaired quotes when not at the start', async ({ page }) =>
   expect(await page.$(`text='wor >> span`)).toBe(null);
   expect(await page.$(`text=" >> span`)).toBe(null);
   expect(await page.$(`text=\` >> span`)).toBe(null);
+});
+
+it('should work with paired quotes in the middle of selector', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16858' });
+  await page.setContent(`<div>pattern "^-?\\d+$"</div>`);
+  expect(await page.locator(`div >> text=pattern "^-?\\d+$`).isVisible());
+  expect(await page.locator(`div >> text=pattern "^-?\\d+$"`).isVisible());
+  // Should double escape inside quoted text.
+  expect(await page.locator(`div >> text='pattern "^-?\\\\d+$"'`).isVisible());
+  await expect(page.locator(`div >> text=pattern "^-?\\d+$`)).toBeVisible();
+  await expect(page.locator(`div >> text=pattern "^-?\\d+$"`)).toBeVisible();
+  // Should double escape inside quoted text.
+  await expect(page.locator(`div >> text='pattern "^-?\\\\d+$"'`)).toBeVisible();
 });

@@ -107,8 +107,12 @@ export class BaseReporter implements ReporterInternal  {
     this.result = result;
   }
 
+  protected ttyWidth() {
+    return this._ttyWidthForTest || process.stdout.columns || 0;
+  }
+
   protected fitToScreen(line: string, prefix?: string): string {
-    const ttyWidth = this._ttyWidthForTest || process.stdout.columns || 0;
+    const ttyWidth = this.ttyWidth();
     if (!ttyWidth) {
       // Guard against the case where we cannot determine available width.
       return line;
@@ -117,12 +121,9 @@ export class BaseReporter implements ReporterInternal  {
   }
 
   protected generateStartingMessage() {
-    const jobs = Math.min(this.config.workers, this.config._testGroupsCount);
+    const jobs = Math.min(this.config.workers, this.config._maxConcurrentTestGroups);
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
-    if (this.config._watchMode)
-      return `\nRunning tests in the --watch mode`;
-    else
-      return `\nRunning ${this.totalTestCount} test${this.totalTestCount !== 1 ? 's' : ''} using ${jobs} worker${jobs !== 1 ? 's' : ''}${shardDetails}`;
+    return `\nRunning ${this.totalTestCount} test${this.totalTestCount !== 1 ? 's' : ''} using ${jobs} worker${jobs !== 1 ? 's' : ''}${shardDetails}`;
   }
 
   protected getSlowTests(): [string, number][] {
@@ -132,7 +133,7 @@ export class BaseReporter implements ReporterInternal  {
     fileDurations.sort((a, b) => b[1] - a[1]);
     const count = Math.min(fileDurations.length, this.config.reportSlowTests.max || Number.POSITIVE_INFINITY);
     const threshold =  this.config.reportSlowTests.threshold;
-    return fileDurations.filter(([,duration]) => duration > threshold).slice(0, count);
+    return fileDurations.filter(([, duration]) => duration > threshold).slice(0, count);
   }
 
   protected generateSummaryMessage({ skipped, expected, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {
@@ -356,10 +357,14 @@ function stepSuffix(step: TestStep | undefined) {
   return stepTitles.map(t => ' › ' + t).join('');
 }
 
-export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep): string {
+export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep, omitLocation: boolean = false): string {
   // root, project, file, ...describes, test
   const [, projectName, , ...titles] = test.titlePath();
-  const location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
+  let location;
+  if (omitLocation)
+    location = `${relativeTestPath(config, test)}`;
+  else
+    location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}`;
 }
@@ -375,7 +380,9 @@ export function formatError(config: FullConfig, error: TestError, highlightCode:
   const tokens = [];
   let location: Location | undefined;
   if (stack) {
-    const parsed = prepareErrorStack(stack, file);
+    // Now that we filter out internals from our stack traces, we can safely render
+    // the helper / original exception locations.
+    const parsed = prepareErrorStack(stack);
     tokens.push(parsed.message);
     location = parsed.location;
     if (location) {
@@ -416,15 +423,11 @@ function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-export function prepareErrorStack(stack: string, file?: string): {
+export function prepareErrorStack(stack: string): {
   message: string;
   stackLines: string[];
   location?: Location;
 } {
-  if (file) {
-    // Stack will have /private/var/folders instead of /var/folders on Mac.
-    file = fs.realpathSync(file);
-  }
   const lines = stack.split('\n');
   let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
   if (firstStackLine === -1)
@@ -436,10 +439,8 @@ export function prepareErrorStack(stack: string, file?: string): {
     const { frame: parsed, fileName: resolvedFile } = parseStackTraceLine(line);
     if (!parsed || !resolvedFile)
       continue;
-    if (!file || resolvedFile === file) {
-      location = { file: resolvedFile, column: parsed.column || 0, line: parsed.line || 0 };
-      break;
-    }
+    location = { file: resolvedFile, column: parsed.column || 0, line: parsed.line || 0 };
+    break;
   }
   return { message, stackLines, location };
 }

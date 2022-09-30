@@ -28,7 +28,8 @@ export type LanguageGeneratorOptions = {
 
 export interface LanguageGenerator {
   id: string;
-  fileName: string;
+  groupName: string;
+  name: string;
   highlighter: string;
   generateHeader(options: LanguageGeneratorOptions): string;
   generateAction(actionInContext: ActionInContext): string;

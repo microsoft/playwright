@@ -17,6 +17,7 @@
 import xml2js from 'xml2js';
 import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
+import fs from 'fs';
 
 test('should render expected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -212,6 +213,31 @@ test('should report skipped due to sharding', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should not render projects if they dont exist', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}) => {
+        expect(1).toBe(1);
+      });
+    `,
+  }, { reporter: 'junit' });
+  const xml = parseXML(result.output);
+  expect(xml['testsuites']['$']['tests']).toBe('1');
+  expect(xml['testsuites']['$']['failures']).toBe('0');
+  expect(xml['testsuites']['testsuite'].length).toBe(1);
+
+  expect(xml['testsuites']['testsuite'][0]['$']['name']).toBe('a.test.js');
+  expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('1');
+  expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
+  expect(xml['testsuites']['testsuite'][0]['$']['skipped']).toBe('0');
+  expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['name']).toBe('one');
+  expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['classname']).toContain('a.test.js › one');
+  expect(result.exitCode).toBe(0);
+});
 
 test('should render projects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -235,14 +261,14 @@ test('should render projects', async ({ runInlineTest }) => {
   expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
   expect(xml['testsuites']['testsuite'][0]['$']['skipped']).toBe('0');
   expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['name']).toBe('one');
-  expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['classname']).toContain('[project1] › a.test.js:6:7 › one');
+  expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['classname']).toContain('[project1] › a.test.js › one');
 
   expect(xml['testsuites']['testsuite'][1]['$']['name']).toBe('a.test.js');
   expect(xml['testsuites']['testsuite'][1]['$']['tests']).toBe('1');
   expect(xml['testsuites']['testsuite'][1]['$']['failures']).toBe('0');
   expect(xml['testsuites']['testsuite'][1]['$']['skipped']).toBe('0');
   expect(xml['testsuites']['testsuite'][1]['testcase'][0]['$']['name']).toBe('one');
-  expect(xml['testsuites']['testsuite'][1]['testcase'][0]['$']['classname']).toContain('[project2] › a.test.js:6:7 › one');
+  expect(xml['testsuites']['testsuite'][1]['testcase'][0]['$']['classname']).toContain('[project2] › a.test.js › one');
   expect(result.exitCode).toBe(0);
 });
 
@@ -415,4 +441,45 @@ test('should not embed attachments to a custom testcase property, if not explict
   const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
   expect(testcase['properties']).not.toBeTruthy();
   expect(result.exitCode).toBe(0);
+});
+
+
+test.describe('report location', () => {
+  test('with config should create report relative to config', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'nested/project/playwright.config.ts': `
+        module.exports = { reporter: [['junit', { outputFile: '../my-report/a.xml' }]] };
+      `,
+      'nested/project/a.test.js': `
+        const { test } = pwt;
+        test('one', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+    }, { reporter: '', config: './nested/project/playwright.config.ts' });
+    expect(result.exitCode).toBe(0);
+    expect(fs.existsSync(testInfo.outputPath(path.join('nested', 'my-report', 'a.xml')))).toBeTruthy();
+  });
+
+  test('with env var should create relative to cwd', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'foo/package.json': `{ "name": "foo" }`,
+      // unused config along "search path"
+      'foo/bar/playwright.config.js': `
+        module.exports = { projects: [ {} ] };
+      `,
+      'foo/bar/baz/tests/a.spec.js': `
+        const { test } = pwt;
+        const fs = require('fs');
+        test('pass', ({}, testInfo) => {
+        });
+      `
+    }, { 'reporter': 'junit' }, { 'PLAYWRIGHT_JUNIT_OUTPUT_NAME': '../my-report.xml' }, {
+      cwd: 'foo/bar/baz/tests',
+      usesCustomOutputDir: true
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.xml'))).toBe(true);
+  });
 });

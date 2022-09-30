@@ -8,9 +8,10 @@ jobs:
   trigger-nodejs-roll:
     name: Trigger Roll
     runs-on: ubuntu-22.04
+    if: github.repository == 'microsoft/playwright'
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: 16
       - run: node utils/build/update-playwright-driver-version.mjs
@@ -32,10 +33,10 @@ jobs:
           git push origin $BRANCH_NAME
       - name: Create Pull Request
         if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
-        uses: actions/github-script@v4
+        uses: actions/github-script@v6
         with:
           script: |
-            await github.pulls.create({
+            await github.rest.pulls.create({
               owner: 'microsoft',
               repo: 'playwright',
               head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',

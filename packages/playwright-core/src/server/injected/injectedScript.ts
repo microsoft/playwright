@@ -19,14 +19,15 @@ import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
 import { RoleEngine } from './roleSelectorEngine';
+import { parseAttributeSelector } from '../isomorphic/selectorParser';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../isomorphic/selectorParser';
 import { allEngineNames, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
 import { type TextMatcher, elementMatchesText, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher, elementText } from './selectorUtils';
 import { SelectorEvaluatorImpl } from './selectorEvaluator';
-import { isElementVisible, parentElementOrShadowHost } from './domUtils';
+import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost } from './domUtils';
 import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
 import { generateSelector } from './selectorGenerator';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
 import { getAriaDisabled, getAriaRole, getElementAccessibleName } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
@@ -104,6 +105,7 @@ export class InjectedScript {
     this._engines.set('visible', this._createVisibleEngine());
     this._engines.set('control', this._createControlEngine());
     this._engines.set('has', this._createHasEngine());
+    this._engines.set('attr', this._createNamedAttributeEngine());
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -271,6 +273,31 @@ export class InjectedScript {
     };
   }
 
+  private _createNamedAttributeEngine(): SelectorEngine {
+    const queryList = (root: SelectorRoot, selector: string): Element[] => {
+      const parsed = parseAttributeSelector(selector, true);
+      if (parsed.name || parsed.attributes.length !== 1)
+        throw new Error('Malformed attribute selector: ' + selector);
+      const { name, value, caseSensitive } = parsed.attributes[0];
+      const lowerCaseValue = caseSensitive ? null : value.toLowerCase();
+      let matcher: (s: string) => boolean;
+      if (value instanceof RegExp)
+        matcher = s => !!s.match(value);
+      else if (caseSensitive)
+        matcher = s => s === value;
+      else
+        matcher = s => s.toLowerCase().includes(lowerCaseValue!);
+      const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, `[${name}]`);
+      return elements.filter(e => matcher(e.getAttribute(name)!));
+    };
+
+    return {
+      queryAll: (root: SelectorRoot, selector: string): Element[] => {
+        return queryList(root, selector);
+      }
+    };
+  }
+
   private _createControlEngine(): SelectorEngineV2 {
     return {
       queryAll(root: SelectorRoot, body: any) {
@@ -278,6 +305,17 @@ export class InjectedScript {
           return [];
         if (body === 'return-empty')
           return [];
+        if (body === 'resolve-label') {
+          const control = (root as HTMLLabelElement).control;
+          return control ? [control] : [];
+        }
+        if (body === 'component') {
+          if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
+            return [];
+          // Usually, we return the mounted component that is a single child.
+          // However, when mounting fragments, return the root instead.
+          return [root.childElementCount === 1 ? root.firstElementChild! : root as Element];
+        }
         throw new Error(`Internal error, unknown control selector ${body}`);
       }
     };
@@ -298,16 +336,6 @@ export class InjectedScript {
       if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
         return [];
       return isElementVisible(root as Element) === Boolean(body) ? [root as Element] : [];
-    };
-    return { queryAll };
-  }
-
-  private _createLayoutEngine(name: LayoutSelectorName): SelectorEngineV2 {
-    const queryAll = (root: SelectorRoot, body: ParsedSelector) => {
-      if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
-        return [];
-      const has = !!this.querySelector(body, root, false);
-      return has ? [root as Element] : [];
     };
     return { queryAll };
   }
@@ -726,7 +754,49 @@ export class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  expectHitTargetParent(hitElement: Element | undefined, targetElement: Element) {
+  expectHitTarget(hitPoint: { x: number, y: number }, targetElement: Element) {
+    const roots: (Document | ShadowRoot)[] = [];
+
+    // Get all component roots leading to the target element.
+    // Go from the bottom to the top to make it work with closed shadow roots.
+    let parentElement = targetElement;
+    while (parentElement) {
+      const root = enclosingShadowRootOrDocument(parentElement);
+      if (!root)
+        break;
+      roots.push(root);
+      if (root.nodeType === 9 /* Node.DOCUMENT_NODE */)
+        break;
+      parentElement = (root as ShadowRoot).host;
+    }
+
+    // Hit target in each component root should point to the next component root.
+    // Hit target in the last component root should point to the target or its descendant.
+    let hitElement: Element | undefined;
+    for (let index = roots.length - 1; index >= 0; index--) {
+      const root = roots[index];
+      // All browsers have different behavior around elementFromPoint and elementsFromPoint.
+      // https://github.com/w3c/csswg-drafts/issues/556
+      // http://crbug.com/1188919
+      const elements: Element[] = root.elementsFromPoint(hitPoint.x, hitPoint.y);
+      const singleElement = root.elementFromPoint(hitPoint.x, hitPoint.y);
+      if (singleElement && elements[0] && parentElementOrShadowHost(singleElement) === elements[0]) {
+        const style = document.defaultView?.getComputedStyle(singleElement);
+        if (style?.display === 'contents') {
+          // Workaround a case where elementsFromPoint misses the inner-most element with display:contents.
+          // https://bugs.chromium.org/p/chromium/issues/detail?id=1342092
+          elements.unshift(singleElement);
+        }
+      }
+      const innerElement = elements[0] as Element | undefined;
+      if (!innerElement)
+        break;
+      hitElement = innerElement;
+      if (index && innerElement !== (roots[index - 1] as ShadowRoot).host)
+        break;
+    }
+
+    // Check whether hit target is the target or its descendant.
     const hitParents: Element[] = [];
     while (hitElement && hitElement !== targetElement) {
       hitParents.push(hitElement);
@@ -734,6 +804,7 @@ export class InjectedScript {
     }
     if (hitElement === targetElement)
       return 'done';
+
     const hitTargetDescription = this.previewNode(hitParents[0] || document.documentElement);
     // Root is the topmost element in the hitTarget's chain that is not in the
     // element's chain. For example, it might be a dialog element that overlays
@@ -791,8 +862,7 @@ export class InjectedScript {
 
     // First do a preliminary check, to reduce the possibility of some iframe
     // intercepting the action.
-    const preliminaryHitElement = this.deepElementFromPoint(document, hitPoint.x, hitPoint.y);
-    const preliminaryResult = this.expectHitTargetParent(preliminaryHitElement, element);
+    const preliminaryResult = this.expectHitTarget(hitPoint, element);
     if (preliminaryResult !== 'done')
       return preliminaryResult.hitTargetDescription;
 
@@ -825,10 +895,8 @@ export class InjectedScript {
 
       // Check that we hit the right element at the first event, and assume all
       // subsequent events will be fine.
-      if (result === undefined && point) {
-        const hitElement = this.deepElementFromPoint(document, point.clientX, point.clientY);
-        result = this.expectHitTargetParent(hitElement, element);
-      }
+      if (result === undefined && point)
+        result = this.expectHitTarget({ x: point.clientX, y: point.clientY }, element);
 
       if (blockAllEvents || (result !== 'done' && result !== undefined)) {
         event.preventDefault();
@@ -867,32 +935,6 @@ export class InjectedScript {
       default: event = new Event(type, eventInit); break;
     }
     node.dispatchEvent(event);
-  }
-
-  deepElementFromPoint(document: Document, x: number, y: number): Element | undefined {
-    let container: Document | ShadowRoot | null = document;
-    let element: Element | undefined;
-    while (container) {
-      // All browsers have different behavior around elementFromPoint and elementsFromPoint.
-      // https://github.com/w3c/csswg-drafts/issues/556
-      // http://crbug.com/1188919
-      const elements: Element[] = container.elementsFromPoint(x, y);
-      const singleElement = container.elementFromPoint(x, y);
-      if (singleElement && elements[0] && parentElementOrShadowHost(singleElement) === elements[0]) {
-        const style = document.defaultView?.getComputedStyle(singleElement);
-        if (style?.display === 'contents') {
-          // Workaround a case where elementsFromPoint misses the inner-most element with display:contents.
-          // https://bugs.chromium.org/p/chromium/issues/detail?id=1342092
-          elements.unshift(singleElement);
-        }
-      }
-      const innerElement = elements[0] as Element | undefined;
-      if (!innerElement || element === innerElement)
-        break;
-      element = innerElement;
-      container = element.shadowRoot;
-    }
-    return element;
   }
 
   previewNode(node: Node): string {
@@ -1032,6 +1074,8 @@ export class InjectedScript {
         elementState = progress.injectedScript.elementState(element, 'disabled');
       } else if (expression === 'to.be.editable') {
         elementState = progress.injectedScript.elementState(element, 'editable');
+      } else if (expression === 'to.be.readonly') {
+        elementState = !progress.injectedScript.elementState(element, 'editable');
       } else if (expression === 'to.be.empty') {
         if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
           elementState = !(element as HTMLInputElement).value;
@@ -1083,7 +1127,10 @@ export class InjectedScript {
       // Single text value.
       let received: string | undefined;
       if (expression === 'to.have.attribute') {
-        received = element.getAttribute(options.expressionArg) || '';
+        const value = element.getAttribute(options.expressionArg);
+        if (value === null)
+          return { received: null, matches: false };
+        received = value;
       } else if (expression === 'to.have.class') {
         received = element.classList.toString();
       } else if (expression === 'to.have.css') {

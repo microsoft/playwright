@@ -53,7 +53,7 @@ const buttonCount = await page.locator('tag=button').count();
 ```
 
 ```java
-// Must be a script that evaluates to a selector engine instance.
+// Must be a script that evaluates to a selector engine instance.  The script is evaluated in the page context.
 String createTagNameEngine = "{\n" +
   "  // Returns the first element matching given selector in the root's subtree.\n" +
   "  query(root, selector) {\n" +

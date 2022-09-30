@@ -50,9 +50,10 @@ it.describe('download event', () => {
     });
   });
 
-  it('should report download when navigation turns into download @smoke', async ({ browser, server, browserName }) => {
+  it('should report download when navigation turns into download @smoke', async ({ browser, server, browserName, mode }) => {
+    it.skip(mode === 'docker', 'local paths do not work remote connection');
     const page = await browser.newPage();
-    const [ download, responseOrError ] = await Promise.all([
+    const [download, responseOrError] = await Promise.all([
       page.waitForEvent('download'),
       page.goto(server.PREFIX + '/download').catch(e => e)
     ]);
@@ -70,15 +71,15 @@ it.describe('download event', () => {
       expect(responseOrError.message).toContain('Download is starting');
       expect(page.url()).toBe('about:blank');
     } else {
-      expect(responseOrError.status()).toBe(200);
-      expect(page.url()).toBe(server.PREFIX + '/download');
+      expect(responseOrError instanceof Error).toBeTruthy();
+      expect(responseOrError.message).toContain('Download is starting');
     }
     await page.close();
   });
 
   it('should work with Cross-Origin-Opener-Policy', async ({ browser, server, browserName }) => {
     const page = await browser.newPage();
-    const [ download, responseOrError ] = await Promise.all([
+    const [download, responseOrError] = await Promise.all([
       page.waitForEvent('download'),
       page.goto(server.PREFIX + '/downloadWithCOOP').catch(e => e)
     ]);
@@ -96,8 +97,8 @@ it.describe('download event', () => {
       expect(responseOrError.message).toContain('Download is starting');
       expect(page.url()).toBe('about:blank');
     } else {
-      expect(responseOrError.status()).toBe(200);
-      expect(page.url()).toBe(server.PREFIX + '/downloadWithCOOP');
+      expect(responseOrError instanceof Error).toBeTruthy();
+      expect(responseOrError.message).toContain('Download is starting');
     }
     await page.close();
   });
@@ -105,7 +106,7 @@ it.describe('download event', () => {
   it('should report downloads with acceptDownloads: false', async ({ browser, server }) => {
     const page = await browser.newPage({ acceptDownloads: false });
     await page.setContent(`<a href="${server.PREFIX}/downloadWithFilename">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -122,7 +123,7 @@ it.describe('download event', () => {
   it('should report downloads with acceptDownloads: true', async ({ browser, server }) => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -136,7 +137,7 @@ it.describe('download event', () => {
     const page = await browser.newPage();
     await page.goto(server.PREFIX + '/empty.html');
     await page.setContent(`<a href="${server.PREFIX}/chromium-linux.zip" download="foo.zip">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -148,7 +149,7 @@ it.describe('download event', () => {
     const page = await browser.newPage();
     await page.goto(server.PREFIX + '/empty.html');
     await page.setContent(`<a href="${server.PREFIX}/chromium-linux.zip" download="foo.zip">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -161,7 +162,7 @@ it.describe('download event', () => {
   it('should save to user-specified path without updating original path', async ({ browser, server }, testInfo) => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -179,7 +180,7 @@ it.describe('download event', () => {
   it('should save to two different paths with multiple saveAs calls', async ({ browser, server }, testInfo) => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -198,7 +199,7 @@ it.describe('download event', () => {
   it('should save to overwritten filepath', async ({ browser, server }, testInfo) => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -216,7 +217,7 @@ it.describe('download event', () => {
   it('should create subdirectories when saving to non-existent user-specified path', async ({ browser, server }, testInfo) => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -230,7 +231,7 @@ it.describe('download event', () => {
   it('should error when saving with downloads disabled', async ({ browser, server }, testInfo) => {
     const page = await browser.newPage({ acceptDownloads: false });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -243,7 +244,7 @@ it.describe('download event', () => {
   it('should error when saving after deletion', async ({ browser, server }, testInfo) => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -264,7 +265,7 @@ it.describe('download event', () => {
     const page = await browser.newPage();
     await page.goto(server.EMPTY_PAGE);
     await page.setContent(`<a download="file.txt" href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -316,7 +317,7 @@ it.describe('download event', () => {
     const page = await browser.newPage();
     await page.goto(server.EMPTY_PAGE);
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a', { modifiers: ['Alt'] })
     ]);
@@ -329,7 +330,7 @@ it.describe('download event', () => {
   it('should report new window downloads', async ({ browser, server }) => {
     const page = await browser.newPage();
     await page.setContent(`<a target=_blank href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -341,7 +342,7 @@ it.describe('download event', () => {
   it('should delete file', async ({ browser, server }) => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -355,7 +356,7 @@ it.describe('download event', () => {
   it('should expose stream', async ({ browser, server }) => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -370,11 +371,11 @@ it.describe('download event', () => {
   it('should delete downloads on context destruction', async ({ browser, server }) => {
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download1 ] = await Promise.all([
+    const [download1] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
-    const [ download2 ] = await Promise.all([
+    const [download2] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -391,11 +392,11 @@ it.describe('download event', () => {
     const browser = await browserType.launch();
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download1 ] = await Promise.all([
+    const [download1] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
-    const [ download2 ] = await Promise.all([
+    const [download2] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -501,7 +502,7 @@ it.describe('download event', () => {
     const page = await browser.newPage();
     await page.goto(server.PREFIX + '/empty.html');
     await page.setContent(`<a href="${server.PREFIX}/binary.zip" download="binary.zip">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -527,7 +528,7 @@ it.describe('download event', () => {
     it.fixme(browserName === 'chromium' && Number(browserVersion.split('.')[0]) < 91, 'The upstream Browser.cancelDownload command is not available before Chrome 91');
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/downloadWithDelay">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -542,7 +543,7 @@ it.describe('download event', () => {
     it.fixme(browserName === 'chromium' && Number(browserVersion.split('.')[0]) < 91, 'The upstream Browser.cancelDownload command is not available before Chrome 91');
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -559,7 +560,7 @@ it.describe('download event', () => {
     const page = await browser.newPage();
     await page.route(/.*/, r => r.continue());
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
+    const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.click('a')
     ]);
@@ -613,7 +614,7 @@ it('should be able to download a PDF file', async ({ browser, server, asset }) =
   await page.close();
 });
 
-it('should be able to download a inline PDF file', async ({ browser, server, asset, browserName }) => {
+it('should be able to download a inline PDF file via response interception', async ({ browser, server, asset, browserName }) => {
   it.fixme(browserName === 'webkit');
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -638,6 +639,21 @@ it('should be able to download a inline PDF file', async ({ browser, server, ass
   await page.close();
 });
 
+it('should be able to download a inline PDF file via navigation', async ({ browser, server, asset, browserName }) => {
+  it.fixme(browserName === 'chromium' || browserName === 'webkit');
+  const page = await browser.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <a href="/empty.pdf">open</a>
+  `);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a'),
+  ]);
+  await assertDownloadToPDF(download, asset('empty.pdf'));
+  await page.close();
+});
+
 it('should save to user-specified path', async ({ browser, server, mode }, testInfo) => {
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
@@ -647,7 +663,7 @@ it('should save to user-specified path', async ({ browser, server, mode }, testI
 
   const page = await browser.newPage();
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-  const [ download ] = await Promise.all([
+  const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);

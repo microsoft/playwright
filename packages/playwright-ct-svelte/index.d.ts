@@ -24,6 +24,7 @@ import type {
   Locator,
 } from '@playwright/test';
 import type { InlineConfig } from 'vite';
+import type { SvelteComponent, ComponentProps } from 'svelte/types/runtime'
 
 export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   use?: BasePlaywrightTestConfig['use'] & {
@@ -34,23 +35,29 @@ export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   }
 };
 
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+type JsonArray = JsonValue[];
+type JsonObject = { [Key in string]?: JsonValue };
+
+type Slot = string | string[];
+
+export interface MountOptions<Component extends SvelteComponent> {
+  props?: ComponentProps<Component>;
+  slots?: Record<string, Slot> & { default?: Slot };
+  on?: Record<string, Function>;
+  hooksConfig?: JsonObject;
+}
+
 interface MountResult extends Locator {
   unmount(): Promise<void>;
 }
 
 interface ComponentFixtures {
-  mount(component: any, options?: {
-    props?: { [key: string]: any },
-    slots?: { [key: string]: any },
-    on?: { [key: string]: Function },
-    hooksConfig?: any,
-  }): Promise<MountResult>;
-  mount<Props>(component: any, options: {
-    props: Props,
-    slots?: { [key: string]: any },
-    on?: { [key: string]: Function },
-    hooksConfig?: any,
-  }): Promise<MountResult>;
+  mount<Component extends SvelteComponent>(
+    component: new (...args: any[]) => Component,
+    options?: MountOptions<Component>
+  ): Promise<MountResult>;
 }
 
 export const test: TestType<

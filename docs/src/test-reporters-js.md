@@ -3,10 +3,6 @@ id: test-reporters
 title: "Reporters"
 ---
 
-<!-- TOC -->
-
-## Using reporters
-
 Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass `--reporter` [command line option](./test-cli.md).
 
 
@@ -40,7 +36,7 @@ export default config;
 
 ### Multiple reporters
 
-You can use multiple reporters at the same time. For example  you can use`'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
+You can use multiple reporters at the same time. For example  you can use `'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
 
 ```js tab=js-js
 // playwright.config.js
@@ -242,13 +238,19 @@ By default, HTML report is opened automatically if some of the tests failed. You
 `open` property in the Playwright config. The possible values for that property are `always`, `never` and `on-failure`
 (default).
 
+You can also configure `host` and `port` that are used to serve the HTML report.
+
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [ ['html', { open: 'never' }] ],
+  reporter: [ ['html', {
+    open: 'never',
+    host: '0.0.0.0',
+    port: 9223,
+  }] ],
 };
 
 module.exports = config;

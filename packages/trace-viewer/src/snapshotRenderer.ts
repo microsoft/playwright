@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from '@playwright-core/server/trace/common/snapshotTypes';
+import type { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
 
 export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
@@ -286,7 +286,7 @@ function snapshotScript() {
  * Best-effort Electron support: rewrite custom protocol in DOM.
  * vscode-file://vscode-app/ -> https://pw-vscode-file--vscode-app/
  */
-const schemas = ['about:', 'blob:', 'data:', 'file:', 'ftp:', 'http:', 'https:', 'mailto:', 'sftp:', 'ws:', 'wss:' ];
+const schemas = ['about:', 'blob:', 'data:', 'file:', 'ftp:', 'http:', 'https:', 'mailto:', 'sftp:', 'ws:', 'wss:'];
 const kLegacyBlobPrefix = 'http://playwright.bloburl/#';
 
 export function rewriteURLForCustomProtocol(href: string): string {

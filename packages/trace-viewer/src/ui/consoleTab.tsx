@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type * as channels from '@playwright-core/protocol/channels';
-import type { ActionTraceEvent } from '@playwright-core/server/trace/common/traceEvents';
+import type * as channels from '@protocol/channels';
+import type { ActionTraceEvent } from '@trace/trace';
 import * as React from 'react';
 import './consoleTab.css';
 import * as modelUtil from './modelUtil';

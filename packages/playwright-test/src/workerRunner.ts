@@ -165,7 +165,7 @@ export class WorkerRunner extends EventEmitter {
 
   async runTestGroup(runPayload: RunPayload) {
     this._runFinished = new ManualPromise<void>();
-    const entries = new Map(runPayload.entries.map(e => [ e.testId, e ]));
+    const entries = new Map(runPayload.entries.map(e => [e.testId, e]));
     let fatalUnknownTestIds;
     try {
       await this._loadIfNeeded();

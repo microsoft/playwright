@@ -15,7 +15,7 @@
  */
 
 import type { Playwright as PlaywrightAPI } from './client/playwright';
-import { createPlaywright, DispatcherConnection, Root, PlaywrightDispatcher } from './server';
+import { createPlaywright, DispatcherConnection, RootDispatcher, PlaywrightDispatcher } from './server';
 import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 
@@ -29,7 +29,7 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   dispatcherConnection.onmessage = message => clientConnection.dispatch(message);
   clientConnection.onmessage = message => dispatcherConnection.dispatch(message);
 
-  const rootScope = new Root(dispatcherConnection);
+  const rootScope = new RootDispatcher(dispatcherConnection);
 
   // Initialize Playwright channel.
   new PlaywrightDispatcher(rootScope, playwright);

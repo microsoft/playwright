@@ -74,6 +74,19 @@ async function run() {
   if (playwrightVersion.endsWith('-next'))
     playwrightVersion = playwrightVersion.substring(0, playwrightVersion.indexOf('-next'));
 
+  // Ensure browser versions in browsers.json. This is most important for WebKit
+  // since its version is hardcoded in Playwright library rather then in browser builds.
+  // @see https://github.com/microsoft/playwright/issues/15702
+  {
+    const browsersJSONPath = path.join(__dirname, '..', '..', 'packages/playwright-core/browsers.json');
+    const browsersJSON = JSON.parse(await fs.promises.readFile(browsersJSONPath, 'utf8'));
+    for (const browser of browsersJSON.browsers) {
+      if (versions[browser.name])
+        browser.browserVersion = versions[browser.name];
+    }
+    writeAssumeNoop(browsersJSONPath, JSON.stringify(browsersJSON, null, 2) + '\n', dirtyFiles);
+  }
+
   // Patch docker version in docs
   {
     const regex = new RegExp("(mcr.microsoft.com/playwright[^: ]*):?([^ ]*)");
@@ -128,6 +141,9 @@ async function run() {
           break;
       }
     }
+    const invalidConfigurations = Object.entries(devicesDescriptors).filter(([_, deviceDescriptor]) => deviceDescriptor.isMobile && deviceDescriptor.defaultBrowserType === 'firefox').map(([deviceName, deviceDescriptor]) => deviceName);
+    if (invalidConfigurations.length > 0)
+      throw new Error(`Invalid Device Configurations. isMobile with Firefox not supported: ${invalidConfigurations.join(', ')}`);
     writeAssumeNoop(devicesDescriptorsSourceFile, JSON.stringify(devicesDescriptors, null, 2), dirtyFiles);
   }
 

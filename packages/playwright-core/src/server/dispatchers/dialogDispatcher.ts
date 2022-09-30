@@ -15,13 +15,14 @@
  */
 
 import type { Dialog } from '../dialog';
-import type * as channels from '../../protocol/channels';
-import type { DispatcherScope } from './dispatcher';
+import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
+import type { PageDispatcher } from './pageDispatcher';
 
-export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel> implements channels.DialogChannel {
+export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel, PageDispatcher> implements channels.DialogChannel {
   _type_Dialog = true;
-  constructor(scope: DispatcherScope, dialog: Dialog) {
+
+  constructor(scope: PageDispatcher, dialog: Dialog) {
     super(scope, dialog, 'Dialog', {
       type: dialog.type(),
       message: dialog.message(),

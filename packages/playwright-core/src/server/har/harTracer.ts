@@ -21,7 +21,7 @@ import { helper } from '../helper';
 import * as network from '../network';
 import type { Worker } from '../page';
 import type { Page } from '../page';
-import type * as har from './har';
+import type * as har from '@trace/har';
 import { assert, calculateSha1, monotonicTime } from '../../utils';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
@@ -30,7 +30,7 @@ import { ManualPromise } from '../../utils/manualPromise';
 import { getPlaywrightVersion } from '../../common/userAgent';
 import { urlMatches } from '../../common/netUtils';
 import { Frame } from '../frames';
-import type { LifecycleEvent } from '../types';
+import type { HeadersArray, LifecycleEvent } from '../types';
 import { isTextualMimeType } from '../../utils/mimeType';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
@@ -45,6 +45,7 @@ type HarTracerOptions = {
   content: 'omit' | 'attach' | 'embed';
   skipScripts: boolean;
   includeTraceInfo: boolean;
+  recordRequestOverrides: boolean;
   waitForContentOnStop: boolean;
   urlFilter?: string | RegExp;
   slimMode?: boolean;
@@ -248,6 +249,7 @@ export class HarTracer {
     const harEntry = createHarEntry(request.method(), url, request.frame()?.guid, this._options);
     if (pageEntry)
       harEntry.pageref = pageEntry.id;
+    this._recordRequestHeadersAndCookies(harEntry, request.headers());
     harEntry.request.postData = this._postDataForRequest(request, this._options.content);
     if (!this._options.omitSizes)
       harEntry.request.bodySize = request.bodySize();
@@ -259,6 +261,24 @@ export class HarTracer {
     (request as any)[this._entrySymbol] = harEntry;
     assert(this._started);
     this._delegate.onEntryStarted(harEntry);
+  }
+
+  private _recordRequestHeadersAndCookies(harEntry: har.Entry, headers: HeadersArray) {
+    if (!this._options.omitCookies) {
+      harEntry.request.cookies = [];
+      for (const header of headers.filter(header => header.name.toLowerCase() === 'cookie'))
+        harEntry.request.cookies.push(...header.value.split(';').map(parseCookie));
+    }
+    harEntry.request.headers = headers;
+  }
+
+  private _recordRequestOverrides(harEntry: har.Entry, request: network.Request) {
+    if (!request._hasOverrides() || !this._options.recordRequestOverrides)
+      return;
+    harEntry.request.method = request.method();
+    harEntry.request.url = request.url();
+    harEntry.request.postData = this._postDataForRequest(request, this._options.content);
+    this._recordRequestHeadersAndCookies(harEntry, request.headers());
   }
 
   private async _onRequestFinished(request: network.Request, response: network.Response | null) {
@@ -330,6 +350,7 @@ export class HarTracer {
 
     if (request._failureText !== null)
       harEntry.response._failureText = request._failureText;
+    this._recordRequestOverrides(harEntry, request);
     if (this._started)
       this._delegate.onEntryFinished(harEntry);
   }
@@ -423,12 +444,9 @@ export class HarTracer {
           harEntry._securityDetails = details;
       }));
     }
+    this._recordRequestOverrides(harEntry, request);
     this._addBarrier(page || request.serviceWorker(), request.rawRequestHeaders().then(headers => {
-      if (!this._options.omitCookies) {
-        for (const header of headers.filter(header => header.name.toLowerCase() === 'cookie'))
-          harEntry.request.cookies.push(...header.value.split(';').map(parseCookie));
-      }
-      harEntry.request.headers = headers;
+      this._recordRequestHeadersAndCookies(harEntry, headers);
     }));
     this._addBarrier(page || request.serviceWorker(), response.rawResponseHeaders().then(headers => {
       if (!this._options.omitCookies) {

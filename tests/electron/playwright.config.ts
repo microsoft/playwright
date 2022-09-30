@@ -35,8 +35,8 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
   preserveOutput: process.env.CI ? 'failures-only' : 'always',
   retries: process.env.CI ? 3 : 0,
   reporter: process.env.CI ? [
-    [ 'dot' ],
-    [ 'json', { outputFile: path.join(outputDir, 'report.json') } ],
+    ['dot'],
+    ['json', { outputFile: path.join(outputDir, 'report.json') }],
   ] : 'line',
   projects: [],
 };

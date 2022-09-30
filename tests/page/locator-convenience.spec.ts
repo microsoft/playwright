@@ -95,25 +95,6 @@ it('textContent should work', async ({ page, server }) => {
   expect(await page.textContent('#inner')).toBe('Text,\nmore text');
 });
 
-it('isVisible and isHidden should work', async ({ page }) => {
-  await page.setContent(`<div>Hi</div><span></span>`);
-
-  const div = page.locator('div');
-  expect(await div.isVisible()).toBe(true);
-  expect(await div.isHidden()).toBe(false);
-  expect(await page.isVisible('div')).toBe(true);
-  expect(await page.isHidden('div')).toBe(false);
-
-  const span = page.locator('span');
-  expect(await span.isVisible()).toBe(false);
-  expect(await span.isHidden()).toBe(true);
-  expect(await page.isVisible('span')).toBe(false);
-  expect(await page.isHidden('span')).toBe(true);
-
-  expect(await page.isVisible('no-such-element')).toBe(false);
-  expect(await page.isHidden('no-such-element')).toBe(true);
-});
-
 it('isEnabled and isDisabled should work', async ({ page }) => {
   await page.setContent(`
     <button disabled>button1</button>
@@ -173,20 +154,6 @@ it('allInnerTexts should work', async ({ page }) => {
   expect(await page.locator('div').allInnerTexts()).toEqual(['A', 'B', 'C']);
 });
 
-it('isVisible and isHidden should work with details', async ({ page }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10674' });
-  await page.setContent(`<details>
-    <summary>click to open</summary>
-      <ul>
-        <li>hidden item 1</li>
-        <li>hidden item 2</li>
-        <li>hidden item 3</li>
-      </ul
-  </details>`);
-
-  await expect(page.locator('ul')).toBeHidden();
-});
-
 it('should return page', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/two-frames.html');
   const outer = page.locator('#outer');
@@ -197,30 +164,4 @@ it('should return page', async ({ page, server }) => {
 
   const inFrame = page.frames()[1].locator('div');
   expect(inFrame.page()).toBe(page);
-});
-
-it('isVisible inside a button', async ({ page }) => {
-  await page.setContent(`<button><span></span>a button</button>`);
-  const span = page.locator('span');
-  expect(await span.isVisible()).toBe(false);
-  expect(await span.isHidden()).toBe(true);
-  expect(await page.isVisible('span')).toBe(false);
-  expect(await page.isHidden('span')).toBe(true);
-  await expect(span).not.toBeVisible();
-  await expect(span).toBeHidden();
-  await span.waitFor({ state: 'hidden' });
-  await page.locator('button').waitFor({ state: 'visible' });
-});
-
-it('isVisible inside a role=button', async ({ page }) => {
-  await page.setContent(`<div role=button><span></span>a button</div>`);
-  const span = page.locator('span');
-  expect(await span.isVisible()).toBe(false);
-  expect(await span.isHidden()).toBe(true);
-  expect(await page.isVisible('span')).toBe(false);
-  expect(await page.isHidden('span')).toBe(true);
-  await expect(span).not.toBeVisible();
-  await expect(span).toBeHidden();
-  await span.waitFor({ state: 'hidden' });
-  await page.locator('[role=button]').waitFor({ state: 'visible' });
 });

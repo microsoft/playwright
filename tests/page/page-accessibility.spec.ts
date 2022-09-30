@@ -74,7 +74,7 @@ it('should work @smoke', async ({ page, browserName }) => {
       { role: 'textbox', name: 'Input with whitespace', value: '  ' },
       { role: 'textbox', name: '', value: 'value only' },
       { role: 'textbox', name: 'placeholder', value: 'and a value' },
-      { role: 'textbox', name: 'This is a description!',value: 'and a value' }, // webkit uses the description over placeholder for the name
+      { role: 'textbox', name: 'This is a description!', value: 'and a value' }, // webkit uses the description over placeholder for the name
     ]
   };
   expect(await page.accessibility.snapshot()).toEqual(golden);
@@ -141,7 +141,7 @@ it('should not report text nodes inside controls', async function({ page, browse
   expect(await page.accessibility.snapshot()).toEqual(golden);
 });
 
-it('rich text editable fields should have children', async function({ page, browserName }) {
+it('rich text editable fields should have children', async function({ page, browserName, browserVersion }) {
   it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
 
   await page.setContent(`
@@ -164,7 +164,7 @@ it('rich text editable fields should have children', async function({ page, brow
     value: 'Edit this image: ',
     children: [{
       role: 'text',
-      name: 'Edit this image:'
+      name: chromiumVersionLessThan(browserVersion, '108.0.5325.0') ? 'Edit this image:' : 'Edit this image: '
     }, {
       role: 'img',
       name: 'my fake image'
@@ -202,7 +202,7 @@ it('rich text editable fields with role should have children', async function({ 
       name: 'my fake image'
     }] : [{
       role: 'text',
-      name: 'Edit this image:'
+      name: chromiumVersionLessThan(browserVersion, '108.0.5325.0') ? 'Edit this image:' : 'Edit this image: '
     }]
   };
   const snapshot = await page.accessibility.snapshot();
@@ -301,9 +301,9 @@ it('should work on a menu', async ({ page, browserName, browserVersion }) => {
     role: 'menu',
     name: 'My Menu',
     children:
-    [ { role: 'menuitem', name: 'First Item' },
+    [{ role: 'menuitem', name: 'First Item' },
       { role: 'menuitem', name: 'Second Item' },
-      { role: 'menuitem', name: 'Third Item' } ],
+      { role: 'menuitem', name: 'Third Item' }],
     orientation: (browserName === 'webkit' || (browserName === 'chromium' && !chromiumVersionLessThan(browserVersion, '98.0.1089'))) ? 'vertical' : undefined
   });
 });

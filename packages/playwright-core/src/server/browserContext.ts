@@ -29,7 +29,7 @@ import { Page, PageBinding } from './page';
 import type { Progress } from './progress';
 import type { Selectors } from './selectors';
 import type * as types from './types';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import path from 'path';
 import fs from 'fs';
 import type { CallMetadata } from './instrumentation';
@@ -100,6 +100,8 @@ export abstract class BrowserContext extends SdkObject {
 
   setSelectors(selectors: Selectors) {
     this._selectors = selectors;
+    for (const page of this.pages())
+      page.selectors = selectors;
   }
 
   selectors(): Selectors {
@@ -182,7 +184,7 @@ export abstract class BrowserContext extends SdkObject {
     await page?._frameManager.closeOpenDialogs();
     // Navigate to about:blank first to ensure no page scripts are running after this point.
     await page?.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
-    await this._clearStorage();
+    await this._resetStorage();
     await this._removeExposedBindings();
     await this._removeInitScripts();
     // TODO: following can be optimized to not perform noops.
@@ -194,7 +196,7 @@ export abstract class BrowserContext extends SdkObject {
     await this.setGeolocation(this._options.geolocation);
     await this.setOffline(!!this._options.offline);
     await this.setUserAgent(this._options.userAgent);
-    await this.clearCookies();
+    await this._resetCookies();
 
     await page?.resetForReuse(metadata);
   }
@@ -214,7 +216,7 @@ export abstract class BrowserContext extends SdkObject {
     this._closedStatus = 'closed';
     this._deleteAllDownloads();
     this._downloads.clear();
-    this.tracing.dispose();
+    this.tracing.dispose().catch(() => {});
     if (this._isPersistentContext)
       this.onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
@@ -245,7 +247,7 @@ export abstract class BrowserContext extends SdkObject {
 
   async cookies(urls: string | string[] | undefined = []): Promise<channels.NetworkCookie[]> {
     if (urls && !Array.isArray(urls))
-      urls = [ urls ];
+      urls = [urls];
     return await this.doGetCookies(urls as string[]);
   }
 
@@ -387,7 +389,7 @@ export abstract class BrowserContext extends SdkObject {
 
       for (const harRecorder of this._harRecorders.values())
         await harRecorder.flush();
-      await this.tracing.flush();
+      await this.tracing.dispose();
 
       // Cleanup.
       const promises: Promise<void>[] = [];
@@ -472,8 +474,10 @@ export abstract class BrowserContext extends SdkObject {
     return result;
   }
 
-  async _clearStorage() {
-    if (!this._origins.size)
+  async _resetStorage() {
+    const oldOrigins = this._origins;
+    const newOrigins = new Map(this._options.storageState?.origins?.map(p => [p.origin, p]) || []);
+    if (!oldOrigins.size && !newOrigins.size)
       return;
     let page = this.pages()[0];
 
@@ -482,13 +486,23 @@ export abstract class BrowserContext extends SdkObject {
     await page._setServerRequestInterceptor(handler => {
       handler.fulfill({ body: '<html></html>' }).catch(() => {});
     });
-    for (const origin of this._origins) {
+
+    for (const origin of new Set([...oldOrigins, ...newOrigins.keys()])) {
       const frame = page.mainFrame();
       await frame.goto(internalMetadata, origin);
-      await frame.clearStorageForCurrentOriginBestEffort();
+      await frame.resetStorageForCurrentOriginBestEffort(newOrigins.get(origin));
     }
+
     await page._setServerRequestInterceptor(undefined);
+
+    this._origins = new Set([...newOrigins.keys()]);
     // It is safe to not restore the URL to about:blank since we are doing it in Page::resetForReuse.
+  }
+
+  async _resetCookies() {
+    await this.clearCookies();
+    if (this._options.storageState?.cookies)
+      await this.addCookies(this._options.storageState?.cookies);
   }
 
   isSettingStorageState(): boolean {

@@ -27,13 +27,14 @@ import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
   id: string;
-  fileName: string;
+  groupName = 'Node.js';
+  name: string;
   highlighter = 'javascript';
   private _isTest: boolean;
 
   constructor(isTest: boolean) {
     this.id = isTest ? 'test' : 'javascript';
-    this.fileName = isTest ? 'Playwright Test' : 'JavaScript';
+    this.name = isTest ? 'Test Runner' : 'Library';
     this._isTest = isTest;
   }
 

@@ -907,6 +907,79 @@ Attribute name to get the value for.
 ### option: Frame.getAttribute.timeout = %%-input-timeout-%%
 * since: v1.8
 
+
+## method: Frame.getByAltText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-alt-text-%%
+
+### param: Frame.getByAltText.text = %%-locator-get-by-text-text-%%
+### option: Frame.getByAltText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Frame.getByLabelText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-label-text-%%
+
+### param: Frame.getByLabelText.text = %%-locator-get-by-text-text-%%
+### option: Frame.getByLabelText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Frame.getByPlaceholderText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-placeholder-text-%%
+
+### param: Frame.getByPlaceholderText.text = %%-locator-get-by-text-text-%%
+### option: Frame.getByPlaceholderText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Frame.getByRole
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-role-%%
+
+
+### param: Frame.getByRole.role = %%-locator-get-by-role-role-%%
+### option: Frame.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
+* since: v1.27
+
+
+## method: Frame.getByTestId
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-test-id-%%
+
+### param: Frame.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
+* since: v1.27
+
+
+## method: Frame.getByText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-text-%%
+
+### param: Frame.getByText.text = %%-locator-get-by-text-text-%%
+### option: Frame.getByText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Frame.getByTitle
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-title-%%
+
+### param: Frame.getByTitle.text = %%-locator-get-by-text-text-%%
+### option: Frame.getByTitle.exact = %%-locator-get-by-text-exact-%%
+
+
 ## async method: Frame.goto
 * since: v1.8
 * langs:
@@ -1131,8 +1204,7 @@ Returns whether the element is [visible](../actionability.md#visible). [`option:
 * since: v1.14
 - returns: <[Locator]>
 
-The method returns an element locator that can be used to perform actions in the frame.
-Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
+%%-template-locator-root-locator-%%
 
 [Learn more about locators](../locators.md).
 
@@ -1484,7 +1556,7 @@ frame.type("#mytextarea", "world", delay=100) # types slower, like a user
 
 ```csharp
 await frame.TypeAsync("#mytextarea", "hello"); // types instantly
-await frame.TypeAsync("#mytextarea", "world", delay: 100); // types slower, like a user
+await frame.TypeAsync("#mytextarea", "world", new() { Delay = 100 }); // types slower, like a user
 ```
 
 ### param: Frame.type.selector = %%-input-selector-%%

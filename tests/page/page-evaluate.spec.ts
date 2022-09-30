@@ -141,7 +141,6 @@ it('should work with large strings', async ({ page }) => {
 });
 
 it('should work with large unicode strings', async ({ page, browserName, platform }) => {
-  it.fixme(browserName === 'firefox' && platform === 'darwin');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16367' });
 
   const expected = '🎭'.repeat(10000);
@@ -361,7 +360,7 @@ it('shuld properly serialize window.performance object', async ({ page }) => {
   expect(await page.evaluate(() => performance)).toEqual({
     'navigation': {
       'redirectCount': 0,
-      'type': 0
+      'type': expect.any(Number),
     },
     'timeOrigin': expect.any(Number),
     'timing': {
@@ -636,7 +635,7 @@ it('should not use Array.prototype.toJSON when evaluating', async ({ page }) => 
     (Array.prototype as any).toJSON = () => 'busted';
     return [1, 2, 3];
   });
-  expect(result).toEqual([1,2,3]);
+  expect(result).toEqual([1, 2, 3]);
 });
 
 it('should not add a toJSON property to newly created Arrays after evaluation', async ({ page, browserName }) => {
@@ -662,4 +661,44 @@ it('should throw when frame is detached', async ({ page, server }) => {
   const error = await promise;
   expect(error).toBeTruthy();
   expect(error.message).toMatch(/frame.evaluate: (Frame was detached|Execution context was destroyed)/);
+});
+
+it('should work with overridden Object.defineProperty', async ({ page, server }) => {
+  server.setRoute('/test', (req, res) => {
+    res.writeHead(200, {
+      'content-type': 'text/html',
+    });
+    res.end(`<script>
+    Object.create = null;
+    Object.defineProperty = null;
+    Object.getOwnPropertyDescriptor = null;
+    Object.getOwnPropertyNames = null;
+    Object.getPrototypeOf = null;
+    Object.prototype.hasOwnProperty = null;
+    </script>`);
+  });
+  await page.goto(server.PREFIX + '/test');
+  expect(await page.evaluate('1+2')).toBe(3);
+});
+
+it('should work with overridden globalThis.Window/Document/Node', async ({ page, server }) => {
+  const testCases = [
+    // @ts-ignore
+    () => globalThis.Window = {},
+    // @ts-ignore
+    () => globalThis.Document = {},
+    // @ts-ignore
+    () => globalThis.Node = {},
+    () => globalThis.Window = null,
+    () => globalThis.Document = null,
+    () => globalThis.Node = null,
+  ];
+  for (const testCase of testCases) {
+    await it.step(testCase.toString(), async () => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(testCase);
+      expect(await page.evaluate('1+2')).toBe(3);
+      expect(await page.evaluate(() => ['foo'])).toEqual(['foo']);
+    });
+  }
 });

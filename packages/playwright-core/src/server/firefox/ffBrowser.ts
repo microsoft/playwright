@@ -24,7 +24,7 @@ import * as network from '../network';
 import type { Page, PageBinding, PageDelegate } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { ConnectionEvents, FFConnection } from './ffConnection';
 import { FFPage } from './ffPage';
 import type { Protocol } from './protocol';
@@ -122,6 +122,10 @@ export class FFBrowser extends Browser {
     assert(ffPage);
     if (!ffPage)
       return;
+
+    // Abort the navigation that turned into download.
+    ffPage._page._frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
+
     let originPage = ffPage._initializedPage;
     // If it's a new window download, report it on the opener page.
     if (!originPage) {
@@ -163,7 +167,7 @@ export class FFBrowserContext extends BrowserContext {
   override async _initialize() {
     assert(!this._ffPages().length);
     const browserContextId = this._browserContextId;
-    const promises: Promise<any>[] = [ super._initialize() ];
+    const promises: Promise<any>[] = [super._initialize()];
     promises.push(this._browser._connection.send('Browser.setDownloadOptions', {
       browserContextId,
       downloadOptions: {

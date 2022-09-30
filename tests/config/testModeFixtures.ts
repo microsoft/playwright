@@ -17,6 +17,7 @@
 import { test } from '@playwright/test';
 import type { TestModeName } from './testMode';
 import { DefaultTestMode, DriverTestMode } from './testMode';
+import * as playwrightLibrary from 'playwright-core';
 
 export type TestModeWorkerOptions = {
   mode: TestModeName;
@@ -32,19 +33,21 @@ export type TestModeWorkerFixtures = {
 };
 
 export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOptions & TestModeWorkerFixtures>({
-  mode: [ 'default', { scope: 'worker', option: true } ],
-  playwright: [ async ({ mode }, run) => {
+  mode: ['default', { scope: 'worker', option: true }],
+  playwright: [async ({ mode }, run) => {
     const testMode = {
       default: new DefaultTestMode(),
+      docker: new DefaultTestMode(),
       service: new DefaultTestMode(),
       driver: new DriverTestMode(),
       service2: new DefaultTestMode(),
     }[mode];
     require('playwright-core/lib/utils').setUnderTest();
     const playwright = await testMode.setup();
+    playwright._setSelectors(playwrightLibrary.selectors);
     await run(playwright);
     await testMode.teardown();
-  }, { scope: 'worker' } ],
+  }, { scope: 'worker' }],
 
   toImplInWorkerScope: [async ({ playwright }, use) => {
     await use((playwright as any)._toImpl);

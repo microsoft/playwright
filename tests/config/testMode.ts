@@ -17,7 +17,7 @@
 import { start } from '../../packages/playwright-core/lib/outofprocess';
 import type { Playwright } from '../../packages/playwright-core/lib/client/playwright';
 
-export type TestModeName = 'default' | 'driver' | 'service' | 'service2';
+export type TestModeName = 'default' | 'driver' | 'service' | 'service2' | 'docker';
 
 interface TestMode {
   setup(): Promise<Playwright>;

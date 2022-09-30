@@ -39,23 +39,27 @@ export type HTTPRequestParams = {
   timeout?: number,
 };
 
+export const NET_DEFAULT_TIMEOUT = 30_000;
+
 export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMessage) => void, onError: (error: Error) => void) {
   const parsedUrl = URL.parse(params.url);
   let options: https.RequestOptions = { ...parsedUrl };
   options.method = params.method || 'GET';
   options.headers = params.headers;
+  const timeout = params.timeout ?? NET_DEFAULT_TIMEOUT;
 
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {
+    const parsedProxyURL = URL.parse(proxyURL);
     if (params.url.startsWith('http:')) {
-      const proxy = URL.parse(proxyURL);
       options = {
         path: parsedUrl.href,
-        host: proxy.hostname,
-        port: proxy.port,
+        host: parsedProxyURL.hostname,
+        port: parsedProxyURL.port,
+        headers: options.headers,
+        method: options.method
       };
     } else {
-      const parsedProxyURL = URL.parse(proxyURL);
       (parsedProxyURL as any).secureProxy = parsedProxyURL.protocol === 'https:';
 
       options.agent = new HttpsProxyAgent(parsedProxyURL);
@@ -74,16 +78,16 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
     https.request(options, requestCallback) :
     http.request(options, requestCallback);
   request.on('error', onError);
-  if (params.timeout !== undefined) {
+  if (timeout !== undefined) {
     const rejectOnTimeout = () =>  {
-      onError(new Error(`Request to ${params.url} timed out after ${params.timeout}ms`));
+      onError(new Error(`Request to ${params.url} timed out after ${timeout}ms`));
       request.abort();
     };
-    if (params.timeout <= 0) {
+    if (timeout <= 0) {
       rejectOnTimeout();
       return;
     }
-    request.setTimeout(params.timeout, rejectOnTimeout);
+    request.setTimeout(timeout, rejectOnTimeout);
   }
   request.end(params.data);
 }

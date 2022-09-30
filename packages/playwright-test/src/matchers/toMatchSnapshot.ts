@@ -251,6 +251,10 @@ export function toMatchSnapshot(
     throw new Error(`toMatchSnapshot() must be called during the test`);
   if (received instanceof Promise)
     throw new Error('An unresolved Promise was passed to toMatchSnapshot(), make sure to resolve it by adding await to it.');
+
+  if (testInfo.config._ignoreSnapshots)
+    return { pass: !this.isNot, message: () => '' };
+
   const helper = new SnapshotHelper(
       testInfo, testInfo.snapshotPath.bind(testInfo), determineFileExtension(received),
       testInfo.project._expect?.toMatchSnapshot || {},
@@ -292,8 +296,12 @@ export async function toHaveScreenshot(
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
+
+  if (testInfo.config._ignoreSnapshots)
+    return { pass: !this.isNot, message: () => '' };
+
   const config = (testInfo.project._expect as any)?.toHaveScreenshot;
-  const snapshotPathResolver = process.env.PWTEST_USE_SCREENSHOTS_DIR_FOR_TEST
+  const snapshotPathResolver = process.env.PWTEST_USE_SCREENSHOTS_DIR
     ? testInfo._screenshotPath.bind(testInfo)
     : testInfo.snapshotPath.bind(testInfo);
   const helper = new SnapshotHelper(
@@ -307,6 +315,7 @@ export async function toHaveScreenshot(
   if (!helper.snapshotPath.toLowerCase().endsWith('.png'))
     throw new Error(`Screenshot name "${path.basename(helper.snapshotPath)}" must have '.png' extension`);
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
+
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];
   const screenshotOptions = {
     animations: config?.animations ?? 'disabled',

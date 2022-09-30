@@ -32,14 +32,13 @@ import type { Page } from '../client/page';
 import type { BrowserType } from '../client/browserType';
 import type { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
-import { getPlaywrightVersion } from '../common/userAgent';
 import { wrapInASCIIBox, isLikelyNpxGlobal, assert } from '../utils';
-import { spawnAsync } from '../utils/spawnAsync';
 import { launchGridAgent } from '../grid/gridAgent';
 import type { GridFactory } from '../grid/gridServer';
 import { GridServer } from '../grid/gridServer';
 import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
+import { addDockerCLI } from '../containers/docker';
 
 const packageJSON = require('../../package.json');
 
@@ -69,7 +68,7 @@ Examples:
 commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
-      ['--target <language>', `language to generate, one of javascript, test, python, python-async, pytest, csharp, java`, language()],
+      ['--target <language>', `language to generate, one of javascript, test, python, python-async, pytest, csharp, csharp-mstest, csharp-nunit, java`, language()],
       ['--save-trace <filename>', 'record a trace for the session and save it to a file'],
     ]).action(function(url, options) {
   codegen(options, url, options.target, options.output).catch(logErrorAndExit);
@@ -116,12 +115,14 @@ function checkBrowsersToInstall(args: string[]): Executable[] {
   return executables;
 }
 
+
 program
     .command('install [browser...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
     .option('--with-deps', 'install system dependencies for browsers')
+    .option('--dry-run', 'do not execute installation, only print information')
     .option('--force', 'force reinstall of stable browser channels')
-    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean }) {
+    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean }) {
       if (isLikelyNpxGlobal()) {
         console.error(wrapInASCIIBox([
           `WARNING: It looks like you are running 'npx playwright install' without first`,
@@ -143,27 +144,26 @@ program
         ].join('\n'), 1));
       }
       try {
-        if (!args.length) {
-          const executables = registry.defaultExecutables();
-          if (options.withDeps)
-            await registry.installDeps(executables, false);
-          await registry.install(executables, false /* forceReinstall */);
-        } else {
-          const installDockerImage = args.some(arg => arg === 'docker-image');
-          args = args.filter(arg => arg !== 'docker-image');
-          if (installDockerImage) {
-            const imageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}-focal`;
-            const { code } = await spawnAsync('docker', ['pull', imageName], { stdio: 'inherit' });
-            if (code !== 0) {
-              console.log('Failed to pull docker image');
-              process.exit(1);
+        const hasNoArguments = !args.length;
+        const executables = hasNoArguments ? registry.defaultExecutables() : checkBrowsersToInstall(args);
+        if (options.withDeps)
+          await registry.installDeps(executables, !!options.dryRun);
+        if (options.dryRun) {
+          for (const executable of executables) {
+            const version = executable.browserVersion ? `version ` + executable.browserVersion : '';
+            console.log(`browser: ${executable.name}${version ? ' ' + version : ''}`);
+            console.log(`  Install location:    ${executable.directory ?? '<system>'}`);
+            if (executable.downloadURLs?.length) {
+              const [url, ...fallbacks] = executable.downloadURLs;
+              console.log(`  Download url:        ${url}`);
+              for (let i = 0; i < fallbacks.length; ++i)
+                console.log(`  Download fallback ${i + 1}: ${fallbacks[i]}`);
             }
+            console.log(``);
           }
-
-          const executables = checkBrowsersToInstall(args);
-          if (options.withDeps)
-            await registry.installDeps(executables, false);
-          await registry.install(executables, !!options.force /* forceReinstall */);
+        } else {
+          const forceReinstall = hasNoArguments ? false : !!options.force;
+          await registry.install(executables, forceReinstall);
         }
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
@@ -293,7 +293,7 @@ program
 program
     .command('show-trace [trace...]')
     .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
-    .description('Show trace viewer')
+    .description('show trace viewer')
     .action(function(traces, options) {
       if (options.browser === 'cr')
         options.browser = 'chromium';
@@ -307,15 +307,37 @@ Examples:
 
   $ show-trace https://example.com/trace.zip`);
 
+addDockerCLI(program);
+
 if (!process.env.PW_LANG_NAME) {
   let playwrightTestPackagePath = null;
+  const resolvePwTestPaths = [__dirname, process.cwd()];
   try {
     playwrightTestPackagePath = require.resolve('@playwright/test/lib/cli', {
-      paths: [__dirname, process.cwd()]
+      paths: resolvePwTestPaths,
     });
   } catch {}
 
   if (playwrightTestPackagePath) {
+    const pwTestVersion = require(require.resolve('@playwright/test/package.json', {
+      paths: resolvePwTestPaths,
+    })).version;
+    const pwCoreVersion = require(path.join(__dirname, '../../package.json')).version;
+    if (pwTestVersion !== pwCoreVersion) {
+      let hasPlaywrightPackage = false;
+      try {
+        require('playwright');
+        hasPlaywrightPackage = true;
+      } catch {}
+      console.error(wrapInASCIIBox([
+        `Playwright Test compatibility check failed:`,
+        `@playwright/test version '${pwTestVersion}' does not match ${hasPlaywrightPackage ? 'playwright' : 'playwright-core'} version '${pwCoreVersion}'!`,
+        `To fix this either align the versions or only keep @playwright/test since it depends on playwright-core.`,
+        `If you still receive this error, execute 'npm ci' or delete 'node_modules' and do 'npm install' again.`,
+      ].join('\n'), 1));
+      process.exit(1);
+    }
+
     require(playwrightTestPackagePath).addTestCommands(program);
   } else {
     {
@@ -432,7 +454,7 @@ async function launchContext(options: Options, headless: boolean, executablePath
   // Viewport size
   if (options.viewportSize) {
     try {
-      const [ width, height ] = options.viewportSize.split(',').map(n => parseInt(n, 10));
+      const [width, height] = options.viewportSize.split(',').map(n => parseInt(n, 10));
       contextOptions.viewport = { width, height };
     } catch (e) {
       console.log('Invalid window size format: use "width, height", for example --window-size=800,600');

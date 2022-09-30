@@ -15,7 +15,7 @@
  */
 
 import { URLSearchParams } from 'url';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { Worker } from './worker';
@@ -238,6 +238,12 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     if (!response)
       throw new Error('Unable to fetch sizes for failed request');
     return (await response._channel.sizes()).sizes;
+  }
+
+  _setResponseEndTiming(responseEndTiming: number) {
+    this._timing.responseEnd = responseEndTiming;
+    if (this._timing.responseStart === -1)
+      this._timing.responseStart = responseEndTiming;
   }
 
   _finalRequest(): Request {
@@ -604,14 +610,14 @@ export class RouteHandler {
     return urlMatches(this._baseURL, requestURL, this.url);
   }
 
-  public async handle(route: Route, request: Request): Promise<boolean> {
+  public async handle(route: Route): Promise<boolean> {
     ++this.handledCount;
     const handledPromise = route._startHandling();
     // Extract handler into a variable to avoid [RouteHandler.handler] in the stack.
     const handler = this.handler;
     const [handled] = await Promise.all([
       handledPromise,
-      handler(route, request),
+      handler(route, route.request()),
     ]);
     return handled;
   }

@@ -409,20 +409,83 @@ it('should return error with wrong credentials', async ({ context, server }) => 
   expect(response2.status()).toBe(401);
 });
 
-for (const method of ['delete', 'patch', 'post', 'put']) {
-  it(`${method} should support post data`, async ({ context, server }) => {
-    const [request, response] = await Promise.all([
-      server.waitForRequest('/simple.json'),
-      context.request[method](`${server.PREFIX}/simple.json`, {
-        data: 'My request'
-      })
-    ]);
-    expect(request.method).toBe(method.toUpperCase());
-    expect((await request.postBody).toString()).toBe('My request');
-    expect(response.status()).toBe(200);
-    expect(request.url).toBe('/simple.json');
-  });
-}
+it('delete should support post data', async ({ context, server }) => {
+  const [request, response] = await Promise.all([
+    server.waitForRequest('/simple.json'),
+    context.request.delete(`${server.PREFIX}/simple.json`, {
+      data: 'My request'
+    })
+  ]);
+  expect(request.method).toBe('DELETE');
+  expect((await request.postBody).toString()).toBe('My request');
+  expect(response.status()).toBe(200);
+  expect(request.url).toBe('/simple.json');
+});
+
+it('get should support post data', async ({ context, server }) => {
+  const [request, response] = await Promise.all([
+    server.waitForRequest('/simple.json'),
+    context.request.get(`${server.PREFIX}/simple.json`, {
+      data: 'My request'
+    })
+  ]);
+  expect(request.method).toBe('GET');
+  expect((await request.postBody).toString()).toBe('My request');
+  expect(response.status()).toBe(200);
+  expect(request.url).toBe('/simple.json');
+});
+
+it('head should support post data', async ({ context, server }) => {
+  const [request, response] = await Promise.all([
+    server.waitForRequest('/simple.json'),
+    context.request.head(`${server.PREFIX}/simple.json`, {
+      data: 'My request'
+    })
+  ]);
+  expect(request.method).toBe('HEAD');
+  expect((await request.postBody).toString()).toBe('My request');
+  expect(response.status()).toBe(200);
+  expect(request.url).toBe('/simple.json');
+});
+
+it('patch should support post data', async ({ context, server }) => {
+  const [request, response] = await Promise.all([
+    server.waitForRequest('/simple.json'),
+    context.request.patch(`${server.PREFIX}/simple.json`, {
+      data: 'My request'
+    })
+  ]);
+  expect(request.method).toBe('PATCH');
+  expect((await request.postBody).toString()).toBe('My request');
+  expect(response.status()).toBe(200);
+  expect(request.url).toBe('/simple.json');
+});
+
+it('post should support post data', async ({ context, server }) => {
+  const [request, response] = await Promise.all([
+    server.waitForRequest('/simple.json'),
+    context.request.post(`${server.PREFIX}/simple.json`, {
+      data: 'My request'
+    })
+  ]);
+  expect(request.method).toBe('POST');
+  expect((await request.postBody).toString()).toBe('My request');
+  expect(response.status()).toBe(200);
+  expect(request.url).toBe('/simple.json');
+});
+
+it('put should support post data', async ({ context, server }) => {
+  const [request, response] = await Promise.all([
+    server.waitForRequest('/simple.json'),
+    context.request.put(`${server.PREFIX}/simple.json`, {
+      data: 'My request'
+    })
+  ]);
+  expect(request.method).toBe('PUT');
+  expect((await request.postBody).toString()).toBe('My request');
+  expect(response.status()).toBe(200);
+  expect(request.url).toBe('/simple.json');
+});
 
 it('should add default headers', async ({ context, server, page }) => {
   const [request] = await Promise.all([
@@ -876,16 +939,6 @@ it('should throw nice error on unsupported data type', async function({ context,
   expect(error.message).toContain(`Unexpected 'data' type`);
 });
 
-it('should throw when data passed for unsupported request', async function({ context, server }) {
-  const error = await context.request.fetch(server.EMPTY_PAGE, {
-    method: 'GET',
-    data: {
-      foo: 'bar'
-    }
-  }).catch(e => e);
-  expect(error.message).toContain(`Method GET does not accept post data`);
-});
-
 it('context request should export same storage state as context', async ({ context, page, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=b', 'c=d']);
@@ -946,7 +999,7 @@ it('should abort requests when browser context closes', async ({ contextFactory,
     });
   });
   const context = await contextFactory();
-  const [ error ] = await Promise.all([
+  const [error] = await Promise.all([
     context.request.get(server.EMPTY_PAGE).catch(e => e),
     context.request.post(server.EMPTY_PAGE).catch(e => e),
     server.waitForRequest('/empty.html').then(() => context.close())

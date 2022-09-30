@@ -194,8 +194,8 @@ export class WKPage implements PageDelegate {
     if (contextOptions.userAgent)
       promises.push(this.updateUserAgent());
     const emulatedMedia = this._page.emulatedMedia();
-    if (emulatedMedia.media || emulatedMedia.colorScheme || emulatedMedia.reducedMotion)
-      promises.push(WKPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion));
+    if (emulatedMedia.media || emulatedMedia.colorScheme || emulatedMedia.reducedMotion || emulatedMedia.forcedColors)
+      promises.push(WKPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion, emulatedMedia.forcedColors));
     for (const binding of this._page.allBindings())
       promises.push(session.send('Runtime.addBinding', { name: binding.name }));
     const bootstrapScript = this._calculateBootstrapScript();
@@ -380,9 +380,8 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.willCheckNavigationPolicy', event => this._onWillCheckNavigationPolicy(event.frameId)),
       eventsHelper.addEventListener(this._session, 'Page.didCheckNavigationPolicy', event => this._onDidCheckNavigationPolicy(event.frameId, event.cancel)),
       eventsHelper.addEventListener(this._session, 'Page.frameScheduledNavigation', event => this._onFrameScheduledNavigation(event.frameId)),
-      eventsHelper.addEventListener(this._session, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
-      eventsHelper.addEventListener(this._session, 'Page.loadEventFired', event => this._onLifecycleEvent(event.frameId, 'load')),
-      eventsHelper.addEventListener(this._session, 'Page.domContentEventFired', event => this._onLifecycleEvent(event.frameId, 'domcontentloaded')),
+      eventsHelper.addEventListener(this._session, 'Page.loadEventFired', event => this._page._frameManager.frameLifecycleEvent(event.frameId, 'load')),
+      eventsHelper.addEventListener(this._session, 'Page.domContentEventFired', event => this._page._frameManager.frameLifecycleEvent(event.frameId, 'domcontentloaded')),
       eventsHelper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
       eventsHelper.addEventListener(this._session, 'Runtime.bindingCalled', event => this._onBindingCalled(event.contextId, event.argument)),
       eventsHelper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
@@ -448,14 +447,6 @@ export class WKPage implements PageDelegate {
 
   private _onFrameScheduledNavigation(frameId: string) {
     this._page._frameManager.frameRequestedNavigation(frameId);
-  }
-
-  private _onFrameStoppedLoading(frameId: string) {
-    this._page._frameManager.frameStoppedLoading(frameId);
-  }
-
-  private _onLifecycleEvent(frameId: string, event: types.LifecycleEvent) {
-    this._page._frameManager.frameLifecycleEvent(frameId, event);
   }
 
   private _handleFrameTree(frameTree: Protocol.Page.FrameResourceTree) {
@@ -636,7 +627,7 @@ export class WKPage implements PageDelegate {
     await this._page._onFileChooserOpened(handle);
   }
 
-  private static async _setEmulateMedia(session: WKSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null, reducedMotion: types.ReducedMotion | null): Promise<void> {
+  private static async _setEmulateMedia(session: WKSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null, reducedMotion: types.ReducedMotion | null, forcedColors: types.ForcedColors | null): Promise<void> {
     const promises = [];
     promises.push(session.send('Page.setEmulatedMedia', { media: mediaType || '' }));
     let appearance: any = undefined;
@@ -651,6 +642,12 @@ export class WKPage implements PageDelegate {
       case 'no-preference': reducedMotionWk = 'NoPreference'; break;
     }
     promises.push(session.send('Page.setForcedReducedMotion', { reducedMotion: reducedMotionWk }));
+    let forcedColorsWk: any = undefined;
+    switch (forcedColors) {
+      case 'active': forcedColorsWk = 'Active'; break;
+      case 'none': forcedColorsWk = 'None'; break;
+    }
+    promises.push(session.send('Page.setForcedColors', { forcedColors: forcedColorsWk }));
     await Promise.all(promises);
   }
 
@@ -672,7 +669,8 @@ export class WKPage implements PageDelegate {
     const emulatedMedia = this._page.emulatedMedia();
     const colorScheme = emulatedMedia.colorScheme;
     const reducedMotion = emulatedMedia.reducedMotion;
-    await this._forAllSessions(session => WKPage._setEmulateMedia(session, emulatedMedia.media, colorScheme, reducedMotion));
+    const forcedColors = emulatedMedia.forcedColors;
+    await this._forAllSessions(session => WKPage._setEmulateMedia(session, emulatedMedia.media, colorScheme, reducedMotion, forcedColors));
   }
 
   async updateEmulatedViewportSize(): Promise<void> {
@@ -831,9 +829,23 @@ export class WKPage implements PageDelegate {
     this._recordingVideoFile = null;
   }
 
+  private validateScreenshotDimension(side: number, omitDeviceScaleFactor: boolean) {
+    // Cairo based implementations (Linux and Windows) have hard limit of 32767
+    // (see https://github.com/microsoft/playwright/issues/16727).
+    if (process.platform === 'darwin')
+      return;
+    if (!omitDeviceScaleFactor && this._page._browserContext._options.deviceScaleFactor)
+      side = Math.ceil(side * this._page._browserContext._options.deviceScaleFactor);
+    if (side > 32767)
+      throw new Error('Cannot take screenshot larger than 32767 pixels on any dimension');
+  }
+
   async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
     const rect = (documentRect || viewportRect)!;
-    const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor: scale === 'css' });
+    const omitDeviceScaleFactor = scale === 'css';
+    this.validateScreenshotDimension(rect.width, omitDeviceScaleFactor);
+    this.validateScreenshotDimension(rect.height, omitDeviceScaleFactor);
+    const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor });
     const prefix = 'data:image/png;base64,';
     let buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
     if (format === 'jpeg')
@@ -976,17 +988,14 @@ export class WKPage implements PageDelegate {
     const parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    const info = this._page.parseSelector('frame,iframe');
-    const handles = await this._page.selectors._queryAll(parent, info);
-    const items = await Promise.all(handles.map(async handle => {
-      const frame = await handle.contentFrame().catch(e => null);
-      return { handle, frame };
-    }));
-    const result = items.find(item => item.frame === frame);
-    items.map(item => item === result ? Promise.resolve() : item.handle.dispose());
-    if (!result)
+    const context = await parent._mainContext();
+    const result = await this._session.send('DOM.resolveNode', {
+      frameId: frame._id,
+      executionContextId: ((context as any)[contextDelegateSymbol] as WKExecutionContext)._contextId
+    });
+    if (!result || result.object.subtype === 'null')
       throw new Error('Frame has been detached.');
-    return result.handle;
+    return context.createHandle(result.object) as dom.ElementHandle;
   }
 
   _onRequestWillBeSent(session: WKSession, event: Protocol.Network.requestWillBeSentPayload) {

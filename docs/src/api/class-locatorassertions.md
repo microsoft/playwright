@@ -54,6 +54,7 @@ using NUnit.Framework;
 
 namespace PlaywrightTests;
 
+[TestFixture]
 public class ExampleTests : PageTest
 {
     [Test]
@@ -113,6 +114,9 @@ The opposite of [`method: LocatorAssertions.toBeDisabled`].
 
 The opposite of [`method: LocatorAssertions.toBeEditable`].
 
+### option: LocatorAssertions.NotToBeEditable.editable
+* since: v1.26
+- `editable` <[boolean]>
 ### option: LocatorAssertions.NotToBeEditable.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.NotToBeEditable.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -135,6 +139,9 @@ The opposite of [`method: LocatorAssertions.toBeEmpty`].
 
 The opposite of [`method: LocatorAssertions.toBeEnabled`].
 
+### option: LocatorAssertions.NotToBeEnabled.enabled
+* since: v1.26
+- `enabled` <[boolean]>
 ### option: LocatorAssertions.NotToBeEnabled.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.NotToBeEnabled.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -168,6 +175,9 @@ The opposite of [`method: LocatorAssertions.toBeHidden`].
 
 The opposite of [`method: LocatorAssertions.toBeVisible`].
 
+### option: LocatorAssertions.NotToBeVisible.visible
+* since: v1.26
+- `visible` <[boolean]>
 ### option: LocatorAssertions.NotToBeVisible.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.NotToBeVisible.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -511,6 +521,9 @@ var locator = Page.Locator("input");
 await Expect(locator).ToBeEditableAsync();
 ```
 
+### option: LocatorAssertions.toBeEditable.editable
+* since: v1.26
+- `editable` <[boolean]>
 ### option: LocatorAssertions.toBeEditable.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.toBeEditable.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -593,6 +606,9 @@ var locator = Page.Locator("button.submit");
 await Expect(locator).toBeEnabledAsync();
 ```
 
+### option: LocatorAssertions.toBeEnabled.enabled
+* since: v1.26
+- `enabled` <[boolean]>
 ### option: LocatorAssertions.toBeEnabled.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.toBeEnabled.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -645,7 +661,7 @@ await Expect(locator).ToBeFocusedAsync();
 * langs:
   - alias-java: isHidden
 
-Ensures the [Locator] points to a hidden DOM node, which is the opposite of [visible](./actionability.md#visible).
+Ensures that [Locator] either does not resolve to any DOM node, or resolves to a [non-visible](./actionability.md#visible) one.
 
 ```js
 const locator = page.locator('.my-element');
@@ -686,7 +702,7 @@ await Expect(locator).ToBeHiddenAsync();
 * langs:
   - alias-java: isVisible
 
-Ensures the [Locator] points to a [visible](./actionability.md#visible) DOM node.
+Ensures that [Locator] points to an [attached](./actionability.md#attached) and [visible](./actionability.md#visible) DOM node.
 
 ```js
 const locator = page.locator('.my-element');
@@ -716,6 +732,9 @@ var locator = Page.Locator(".my-element");
 await Expect(locator).ToBeVisibleAsync();
 ```
 
+### option: LocatorAssertions.toBeVisible.visible
+* since: v1.26
+- `visible` <[boolean]>
 ### option: LocatorAssertions.toBeVisible.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 ### option: LocatorAssertions.toBeVisible.timeout = %%-csharp-java-python-assertions-timeout-%%

@@ -20,7 +20,7 @@ import * as util from 'util';
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray } from '../common/types';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { kBrowserOrContextClosedError } from '../common/errors';
 import { assert, headersObjectToArray, isFilePayload, isString, objectToArray } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
@@ -42,6 +42,7 @@ export type FetchOptions = {
   timeout?: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
+  maxRedirects?: number,
 };
 
 type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'storageState'> & {
@@ -50,7 +51,6 @@ type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHe
 };
 
 type RequestWithBodyOptions = Omit<FetchOptions, 'method'>;
-type RequestWithoutBodyOptions = Omit<RequestWithBodyOptions, 'data'|'form'|'multipart'>;
 
 export class APIRequest implements api.APIRequest {
   private _playwright: Playwright;
@@ -106,14 +106,14 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     });
   }
 
-  async head(url: string, options?: RequestWithoutBodyOptions): Promise<APIResponse> {
+  async head(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
     return this.fetch(url, {
       ...options,
       method: 'HEAD',
     });
   }
 
-  async get(url: string, options?: RequestWithoutBodyOptions): Promise<APIResponse> {
+  async get(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
     return this.fetch(url, {
       ...options,
       method: 'GET',
@@ -146,9 +146,11 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       const request: network.Request | undefined = (urlOrRequest instanceof network.Request) ? urlOrRequest as network.Request : undefined;
       assert(request || typeof urlOrRequest === 'string', 'First argument must be either URL string or Request');
       assert((options.data === undefined ? 0 : 1) + (options.form === undefined ? 0 : 1) + (options.multipart === undefined ? 0 : 1) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
+      assert(options.maxRedirects === undefined || options.maxRedirects >= 0, `'maxRedirects' should be greater than or equal to '0'`);
       const url = request ? request.url() : urlOrRequest as string;
       const params = objectToArray(options.params);
       const method = options.method || request?.method();
+      const maxRedirects = options.maxRedirects;
       // Cannot call allHeaders() here as the request may be paused inside route handler.
       const headersObj = options.headers || request?.headers() ;
       const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
@@ -201,6 +203,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         timeout: options.timeout,
         failOnStatusCode: options.failOnStatusCode,
         ignoreHTTPSErrors: options.ignoreHTTPSErrors,
+        maxRedirects: maxRedirects,
       });
       return new APIResponse(this, result.response);
     });

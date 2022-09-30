@@ -14,33 +14,35 @@
  * limitations under the License.
  */
 
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import type { APIRequestContext } from '../fetch';
 import type { CallMetadata } from '../instrumentation';
 import type { Request, Response, Route } from '../network';
 import { WebSocket } from '../network';
-import type { DispatcherScope } from './dispatcher';
+import type { RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
+import { TracingDispatcher } from './tracingDispatcher';
+import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import type { PageDispatcher } from './pageDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { WorkerDispatcher } from './pageDispatcher';
-import { TracingDispatcher } from './tracingDispatcher';
 
-export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel> implements channels.RequestChannel {
+export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel, BrowserContextDispatcher> implements channels.RequestChannel {
   _type_Request: boolean;
 
-  static from(scope: DispatcherScope, request: Request): RequestDispatcher {
+  static from(scope: BrowserContextDispatcher, request: Request): RequestDispatcher {
     const result = existingDispatcher<RequestDispatcher>(request);
     return result || new RequestDispatcher(scope, request);
   }
 
-  static fromNullable(scope: DispatcherScope, request: Request | null): RequestDispatcher | undefined {
+  static fromNullable(scope: BrowserContextDispatcher, request: Request | null): RequestDispatcher | undefined {
     return request ? RequestDispatcher.from(scope, request) : undefined;
   }
 
-  private constructor(scope: DispatcherScope, request: Request) {
+  private constructor(scope: BrowserContextDispatcher, request: Request) {
     const postData = request.postDataBuffer();
     super(scope, request, 'Request', {
-      frame: FrameDispatcher.fromNullable(scope, request.frame()),
+      frame: FrameDispatcher.fromNullable(scope as any as PageDispatcher, request.frame()),
       serviceWorker: WorkerDispatcher.fromNullable(scope, request.serviceWorker()),
       url: request.url(),
       resourceType: request.resourceType(),
@@ -62,19 +64,19 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
   }
 }
 
-export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseChannel> implements channels.ResponseChannel {
+export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseChannel, BrowserContextDispatcher> implements channels.ResponseChannel {
   _type_Response = true;
 
-  static from(scope: DispatcherScope, response: Response): ResponseDispatcher {
+  static from(scope: BrowserContextDispatcher, response: Response): ResponseDispatcher {
     const result = existingDispatcher<ResponseDispatcher>(response);
     return result || new ResponseDispatcher(scope, response);
   }
 
-  static fromNullable(scope: DispatcherScope, response: Response | null): ResponseDispatcher | undefined {
+  static fromNullable(scope: BrowserContextDispatcher, response: Response | null): ResponseDispatcher | undefined {
     return response ? ResponseDispatcher.from(scope, response) : undefined;
   }
 
-  private constructor(scope: DispatcherScope, response: Response) {
+  private constructor(scope: BrowserContextDispatcher, response: Response) {
     super(scope, response, 'Response', {
       // TODO: responses in popups can point to non-reported requests.
       request: RequestDispatcher.from(scope, response.request()),
@@ -108,22 +110,24 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
   }
 }
 
-export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel> implements channels.RouteChannel {
+export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, RequestDispatcher> implements channels.RouteChannel {
   _type_Route = true;
 
-  static from(scope: DispatcherScope, route: Route): RouteDispatcher {
+  static from(scope: RequestDispatcher, route: Route): RouteDispatcher {
     const result = existingDispatcher<RouteDispatcher>(route);
     return result || new RouteDispatcher(scope, route);
   }
 
-  private constructor(scope: DispatcherScope, route: Route) {
+  private constructor(scope: RequestDispatcher, route: Route) {
     super(scope, route, 'Route', {
       // Context route can point to a non-reported request.
-      request: RequestDispatcher.from(scope, route.request())
+      request: scope
     });
   }
 
   async continue(params: channels.RouteContinueParams, metadata: CallMetadata): Promise<channels.RouteContinueResult> {
+    // Used to discriminate between continue in tracing.
+    metadata.params.requestUrl = this._object.request().url();
     await this._object.continue({
       url: params.url,
       method: params.method,
@@ -132,11 +136,15 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel> im
     });
   }
 
-  async fulfill(params: channels.RouteFulfillParams): Promise<void> {
+  async fulfill(params: channels.RouteFulfillParams, metadata: CallMetadata): Promise<void> {
+    // Used to discriminate between fulfills in tracing.
+    metadata.params.requestUrl = this._object.request().url();
     await this._object.fulfill(params);
   }
 
-  async abort(params: channels.RouteAbortParams): Promise<void> {
+  async abort(params: channels.RouteAbortParams, metadata: CallMetadata): Promise<void> {
+    // Used to discriminate between abort in tracing.
+    metadata.params.requestUrl = this._object.request().url();
     await this._object.abort(params.errorCode || 'failed');
   }
 
@@ -145,11 +153,11 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel> im
   }
 }
 
-export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocketChannel> implements channels.WebSocketChannel {
+export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocketChannel, PageDispatcher> implements channels.WebSocketChannel {
   _type_EventTarget = true;
   _type_WebSocket = true;
 
-  constructor(scope: DispatcherScope, webSocket: WebSocket) {
+  constructor(scope: PageDispatcher, webSocket: WebSocket) {
     super(scope, webSocket, 'WebSocket', {
       url: webSocket.url(),
     });
@@ -160,25 +168,25 @@ export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocke
   }
 }
 
-export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, channels.APIRequestContextChannel> implements channels.APIRequestContextChannel {
+export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, channels.APIRequestContextChannel, RootDispatcher | BrowserContextDispatcher> implements channels.APIRequestContextChannel {
   _type_APIRequestContext = true;
 
-  static from(scope: DispatcherScope, request: APIRequestContext): APIRequestContextDispatcher {
+  static from(scope: RootDispatcher | BrowserContextDispatcher, request: APIRequestContext): APIRequestContextDispatcher {
     const result = existingDispatcher<APIRequestContextDispatcher>(request);
     return result || new APIRequestContextDispatcher(scope, request);
   }
 
-  static fromNullable(scope: DispatcherScope, request: APIRequestContext | null): APIRequestContextDispatcher | undefined {
+  static fromNullable(scope: RootDispatcher | BrowserContextDispatcher, request: APIRequestContext | null): APIRequestContextDispatcher | undefined {
     return request ? APIRequestContextDispatcher.from(scope, request) : undefined;
   }
 
-  private constructor(parentScope: DispatcherScope, request: APIRequestContext) {
+  private constructor(parentScope: RootDispatcher | BrowserContextDispatcher, request: APIRequestContext) {
     // We will reparent these to the context below.
-    const tracing = TracingDispatcher.from(parentScope, request.tracing());
+    const tracing = TracingDispatcher.from(parentScope as any as APIRequestContextDispatcher, request.tracing());
 
     super(parentScope, request, 'APIRequestContext', {
       tracing,
-    }, true);
+    });
 
     this.adopt(tracing);
   }

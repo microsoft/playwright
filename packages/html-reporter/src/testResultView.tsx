@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestAttachment, TestCase, TestResult, TestStep } from '@playwright-test/reporters/html';
+import type { TestAttachment, TestCase, TestResult, TestStep } from './types';
 import ansi2html from 'ansi-to-html';
 import * as React from 'react';
 import { TreeItem } from './treeItem';
@@ -76,7 +76,7 @@ export const TestResultView: React.FC<{
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
     const diffs = groupImageDiffs(screenshots);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs };
-  }, [ result ]);
+  }, [result]);
 
   const videoRef = React.useRef<HTMLDivElement>(null);
   const imageDiffRef = React.useRef<HTMLDivElement>(null);

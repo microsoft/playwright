@@ -135,7 +135,7 @@ test('should fail with proper error when unsupported argument is given', async (
 
 test('should use match snapshot paths by default', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    // The helper function `playwrightConfig` set PWTEST_USE_SCREENSHOTS_DIR_FOR_TEST env variable.
+    // The helper function `playwrightConfig` set PWTEST_USE_SCREENSHOTS env variable.
     // Provide default config manually instead.
     'playwright.config.js': `
       module.exports = {};
@@ -553,6 +553,20 @@ test('should fail on same snapshots with negate matcher', async ({ runInlineTest
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Screenshot comparison failed:');
   expect(result.output).toContain('Expected result should be different from the actual one.');
+});
+
+test('should not fail if --ignore-snapshots is passed', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    '__screenshots__/a.spec.js/snapshot.png': redImage,
+    'a.spec.js': `
+      pwt.test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+      });
+    `
+  }, { 'ignore-snapshots': true });
+
+  expect(result.exitCode).toBe(0);
 });
 
 test('should write missing expectations locally twice and continue', async ({ runInlineTest }, testInfo) => {
@@ -1003,7 +1017,7 @@ test('should update expectations with retries', async ({ runInlineTest }, testIn
 function playwrightConfig(obj: any) {
   return {
     'playwright.config.js': `
-      process.env.PWTEST_USE_SCREENSHOTS_DIR_FOR_TEST = '1';
+      process.env.PWTEST_USE_SCREENSHOTS_DIR = '1';
       module.exports = ${JSON.stringify(obj, null, 2)}
     `,
   };

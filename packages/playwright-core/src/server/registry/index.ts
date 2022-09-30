@@ -28,7 +28,7 @@ import { removeFolders, existsAsync, canAccessFile } from '../../utils/fileUtils
 import { hostPlatform } from '../../utils/hostPlatform';
 import { spawnAsync } from '../../utils/spawnAsync';
 import type { DependencyGroup } from './dependencies';
-import { transformCommandsForRoot } from './dependencies';
+import { transformCommandsForRoot, dockerVersion, readDockerVersionSync } from './dependencies';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 export { writeDockerVersion } from './dependencies';
@@ -187,7 +187,7 @@ const DOWNLOAD_PATHS = {
     'debian11': 'builds/webkit/%s/webkit-debian-11.zip',
     'mac10.13': undefined,
     'mac10.14': 'builds/deprecated-webkit-mac-10.14/%s/deprecated-webkit-mac-10.14.zip',
-    'mac10.15': 'builds/webkit/%s/webkit-mac-10.15.zip',
+    'mac10.15': 'builds/deprecated-webkit-mac-10.15/%s/deprecated-webkit-mac-10.15.zip',
     'mac11': 'builds/webkit/%s/webkit-mac-11.zip',
     'mac11-arm64': 'builds/webkit/%s/webkit-mac-11-arm64.zip',
     'mac12': 'builds/webkit/%s/webkit-mac-12.zip',
@@ -310,6 +310,8 @@ export interface Executable {
   browserName: BrowserName | undefined;
   installType: 'download-by-default' | 'download-on-demand' | 'install-script' | 'none';
   directory: string | undefined;
+  downloadURLs?: string[],
+  browserVersion?: string,
   executablePathOrDie(sdkLanguage: string): string;
   executablePath(sdkLanguage: string): string | undefined;
   validateHostRequirements(sdkLanguage: string): Promise<void>;
@@ -341,7 +343,17 @@ export class Registry {
         throw new Error(`${name} is not supported on ${hostPlatform}`);
       const installCommand = buildPlaywrightCLICommand(sdkLanguage, `install${installByDefault ? '' : ' ' + name}`);
       if (!canAccessFile(e)) {
-        const prettyMessage = [
+        const currentDockerVersion = readDockerVersionSync();
+        const preferredDockerVersion = currentDockerVersion ? dockerVersion(currentDockerVersion.dockerImageNameTemplate) : null;
+        const isOutdatedDockerImage = currentDockerVersion && preferredDockerVersion && currentDockerVersion.dockerImageName !== preferredDockerVersion.dockerImageName;
+        const prettyMessage = isOutdatedDockerImage ? [
+          `Looks like ${sdkLanguage === 'javascript' ? 'Playwright Test or ' : ''}Playwright was just updated to ${preferredDockerVersion.driverVersion}.`,
+          `Please update docker image as well.`,
+          `-  current: ${currentDockerVersion.dockerImageName}`,
+          `- required: ${preferredDockerVersion.dockerImageName}`,
+          ``,
+          `<3 Playwright Team`,
+        ].join('\n') : [
           `Looks like ${sdkLanguage === 'javascript' ? 'Playwright Test or ' : ''}Playwright was just installed or updated.`,
           `Please run the following command to download new browser${installByDefault ? 's' : ''}:`,
           ``,
@@ -366,7 +378,9 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumExecutable, chromium.installByDefault, sdkLanguage),
       installType: chromium.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromium.dir, ['chrome-linux'], [], ['chrome-win']),
-      _install: () => this._downloadExecutable(chromium, chromiumExecutable, DOWNLOAD_PATHS['chromium'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
+      downloadURLs: this._downloadURLs(chromium),
+      browserVersion: chromium.browserVersion,
+      _install: () => this._downloadExecutable(chromium, chromiumExecutable),
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
     });
@@ -382,7 +396,9 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium-with-symbols', chromiumWithSymbolsExecutable, chromiumWithSymbols.installByDefault, sdkLanguage),
       installType: chromiumWithSymbols.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromiumWithSymbols.dir, ['chrome-linux'], [], ['chrome-win']),
-      _install: () => this._downloadExecutable(chromiumWithSymbols, chromiumWithSymbolsExecutable, DOWNLOAD_PATHS['chromium-with-symbols'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
+      downloadURLs: this._downloadURLs(chromiumWithSymbols),
+      browserVersion: chromiumWithSymbols.browserVersion,
+      _install: () => this._downloadExecutable(chromiumWithSymbols, chromiumWithSymbolsExecutable),
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
     });
@@ -398,7 +414,9 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium-tip-of-tree', chromiumTipOfTreeExecutable, chromiumTipOfTree.installByDefault, sdkLanguage),
       installType: chromiumTipOfTree.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromiumTipOfTree.dir, ['chrome-linux'], [], ['chrome-win']),
-      _install: () => this._downloadExecutable(chromiumTipOfTree, chromiumTipOfTreeExecutable, DOWNLOAD_PATHS['chromium-tip-of-tree'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
+      downloadURLs: this._downloadURLs(chromiumTipOfTree),
+      browserVersion: chromiumTipOfTree.browserVersion,
+      _install: () => this._downloadExecutable(chromiumTipOfTree, chromiumTipOfTreeExecutable),
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
     });
@@ -482,7 +500,9 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox', firefoxExecutable, firefox.installByDefault, sdkLanguage),
       installType: firefox.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefox.dir, ['firefox'], [], ['firefox']),
-      _install: () => this._downloadExecutable(firefox, firefoxExecutable, DOWNLOAD_PATHS['firefox'][hostPlatform], 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST'),
+      downloadURLs: this._downloadURLs(firefox),
+      browserVersion: firefox.browserVersion,
+      _install: () => this._downloadExecutable(firefox, firefoxExecutable),
       _dependencyGroup: 'firefox',
       _isHermeticInstallation: true,
     });
@@ -498,7 +518,9 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox-beta', firefoxBetaExecutable, firefoxBeta.installByDefault, sdkLanguage),
       installType: firefoxBeta.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefoxBeta.dir, ['firefox'], [], ['firefox']),
-      _install: () => this._downloadExecutable(firefoxBeta, firefoxBetaExecutable, DOWNLOAD_PATHS['firefox-beta'][hostPlatform], 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST'),
+      downloadURLs: this._downloadURLs(firefoxBeta),
+      browserVersion: firefoxBeta.browserVersion,
+      _install: () => this._downloadExecutable(firefoxBeta, firefoxBetaExecutable),
       _dependencyGroup: 'firefox',
       _isHermeticInstallation: true,
     });
@@ -524,7 +546,9 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('webkit', webkitExecutable, webkit.installByDefault, sdkLanguage),
       installType: webkit.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'webkit', webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
-      _install: () => this._downloadExecutable(webkit, webkitExecutable, DOWNLOAD_PATHS['webkit'][hostPlatform], 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST'),
+      downloadURLs: this._downloadURLs(webkit),
+      browserVersion: webkit.browserVersion,
+      _install: () => this._downloadExecutable(webkit, webkitExecutable),
       _dependencyGroup: 'webkit',
       _isHermeticInstallation: true,
     });
@@ -540,7 +564,8 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('ffmpeg', ffmpegExecutable, ffmpeg.installByDefault, sdkLanguage),
       installType: ffmpeg.installByDefault ? 'download-by-default' : 'download-on-demand',
       validateHostRequirements: () => Promise.resolve(),
-      _install: () => this._downloadExecutable(ffmpeg, ffmpegExecutable, DOWNLOAD_PATHS['ffmpeg'][hostPlatform], 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST'),
+      downloadURLs: this._downloadURLs(ffmpeg),
+      _install: () => this._downloadExecutable(ffmpeg, ffmpegExecutable),
       _dependencyGroup: 'tools',
       _isHermeticInstallation: true,
     });
@@ -717,17 +742,33 @@ export class Registry {
     }
   }
 
-  private async _downloadExecutable(descriptor: BrowsersJSONDescriptor, executablePath: string | undefined, downloadPathTemplate: string | undefined, downloadHostEnv: string) {
-    if (!downloadPathTemplate || !executablePath)
-      throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
-    if (hostPlatform === 'generic-linux' || hostPlatform === 'generic-linux-arm64')
-      logPolitely('BEWARE: your OS is not officially supported by Playwright; downloading fallback build.');
+  private _downloadURLs(descriptor: BrowsersJSONDescriptor): string[] {
+    const downloadPathTemplate: string|undefined = (DOWNLOAD_PATHS as any)[descriptor.name][hostPlatform];
+    if (!downloadPathTemplate)
+      return [];
     const downloadPath = util.format(downloadPathTemplate, descriptor.revision);
 
     let downloadURLs = PLAYWRIGHT_CDN_MIRRORS.map(mirror => `${mirror}/${downloadPath}`) ;
+    let downloadHostEnv;
+    if (descriptor.name.startsWith('chromium'))
+      downloadHostEnv = 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST';
+    else if (descriptor.name.startsWith('firefox'))
+      downloadHostEnv = 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST';
+    else if (descriptor.name.startsWith('webkit'))
+      downloadHostEnv = 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST';
+
     const customHostOverride = (downloadHostEnv && getFromENV(downloadHostEnv)) || getFromENV('PLAYWRIGHT_DOWNLOAD_HOST');
     if (customHostOverride)
       downloadURLs = [`${customHostOverride}/${downloadPath}`];
+    return downloadURLs;
+  }
+
+  private async _downloadExecutable(descriptor: BrowsersJSONDescriptor, executablePath: string | undefined) {
+    const downloadURLs = this._downloadURLs(descriptor);
+    if (!downloadURLs.length || !executablePath)
+      throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
+    if (hostPlatform === 'generic-linux' || hostPlatform === 'generic-linux-arm64')
+      logPolitely('BEWARE: your OS is not officially supported by Playwright; downloading fallback build.');
 
     const displayName = descriptor.name.split('-').map(word => {
       return word === 'ffmpeg' ? 'FFMPEG' : word.charAt(0).toUpperCase() + word.slice(1);

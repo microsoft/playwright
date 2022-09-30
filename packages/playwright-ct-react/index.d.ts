@@ -34,12 +34,22 @@ export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   }
 };
 
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+type JsonArray = JsonValue[];
+type JsonObject = { [Key in string]?: JsonValue };
+
+export interface MountOptions {
+  hooksConfig?: JsonObject;
+}
+
 interface MountResult extends Locator {
   unmount(): Promise<void>;
+  rerender(component: JSX.Element): Promise<void>;
 }
 
 export interface ComponentFixtures {
-  mount(component: JSX.Element, options?: { hooksConfig?: any }): Promise<MountResult>;
+  mount(component: JSX.Element, options?: MountOptions): Promise<MountResult>;
 }
 
 export const test: TestType<

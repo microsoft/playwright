@@ -711,8 +711,8 @@ class PageAgent {
         false /*aIgnoreRootScrollFrame*/,
         undefined /*pressure*/,
         undefined /*inputSource*/,
-        undefined /*isDOMEventSynthesized*/,
-        undefined /*isWidgetEventSynthesized*/,
+        true /*isDOMEventSynthesized*/,
+        false /*isWidgetEventSynthesized*/,
         buttons);
       obs.removeObserver(trapDrag, 'on-datatransfer-available');
 

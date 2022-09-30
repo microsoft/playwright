@@ -71,6 +71,7 @@ module.exports = {
         "valid-typeof": 2,
         "no-implicit-globals": [2],
         "no-unused-expressions": [2, { "allowShortCircuit": true, "allowTernary": true, "allowTaggedTemplates": true}],
+        "no-proto": 2,
 
         // es2015 features
         "require-yield": 2,
@@ -79,6 +80,9 @@ module.exports = {
         // spacing details
         "space-infix-ops": 2,
         "space-in-parens": [2, "never"],
+        "array-bracket-spacing": [2, "never"],
+        "comma-spacing": [2, { "before": false, "after": true }],
+        "keyword-spacing": [2, "always"],
         "space-before-function-paren": [2, {
             "anonymous": "never",
             "named": "never",

@@ -22,7 +22,7 @@ import type * as api from '../../types/types';
 import { isSafeCloseError } from '../common/errors';
 import { urlMatches } from '../common/netUtils';
 import { TimeoutSettings } from '../common/timeoutSettings';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { parseError, serializeError } from '../protocol/serializers';
 import { assert, headersObjectToArray, isObject, isRegExp, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
@@ -45,9 +45,10 @@ import { Frame, verifyLoadState } from './frame';
 import { HarRouter } from './harRouter';
 import { Keyboard, Mouse, Touchscreen } from './input';
 import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
-import type { FrameLocator, Locator, LocatorOptions } from './locator';
+import type { ByRoleOptions, FrameLocator, Locator, LocatorOptions } from './locator';
 import type { RouteHandlerCallback } from './network';
-import { Request, Response, Route, RouteHandler, validateHeaders, WebSocket } from './network';
+import { Response, Route, RouteHandler, validateHeaders, WebSocket } from './network';
+import type { Request } from './network';
 import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, URLMatch, WaitForEventOptions, WaitForFunctionOptions } from './types';
 import { Video } from './video';
 import { Waiter } from './waiter';
@@ -145,7 +146,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._channel.on('frameAttached', ({ frame }) => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', ({ frame }) => this._onFrameDetached(Frame.from(frame)));
     this._channel.on('pageError', ({ error }) => this.emit(Events.Page.PageError, parseError(error)));
-    this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
+    this._channel.on('route', ({ route }) => this._onRoute(Route.from(route)));
     this._channel.on('video', ({ artifact }) => {
       const artifactObject = Artifact.from(artifact);
       this._forceVideo()._artifactReady(artifactObject);
@@ -177,20 +178,20 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this.emit(Events.Page.FrameDetached, frame);
   }
 
-  private async _onRoute(route: Route, request: Request) {
+  private async _onRoute(route: Route) {
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
-      if (!routeHandler.matches(request.url()))
+      if (!routeHandler.matches(route.request().url()))
         continue;
       if (routeHandler.willExpire())
         this._routes.splice(this._routes.indexOf(routeHandler), 1);
-      const handled = await routeHandler.handle(route, request);
+      const handled = await routeHandler.handle(route);
       if (!this._routes.length)
         this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
       if (handled)
         return;
     }
-    await this._browserContext._onRoute(route, request);
+    await this._browserContext._onRoute(route);
   }
 
   async _onBinding(bindingCall: BindingCall) {
@@ -561,6 +562,34 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   locator(selector: string, options?: LocatorOptions): Locator {
     return this.mainFrame().locator(selector, options);
+  }
+
+  getByTestId(testId: string): Locator {
+    return this.mainFrame().getByTestId(testId);
+  }
+
+  getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByAltText(text, options);
+  }
+
+  getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByLabelText(text, options);
+  }
+
+  getByPlaceholderText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByPlaceholderText(text, options);
+  }
+
+  getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByText(text, options);
+  }
+
+  getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByTitle(text, options);
+  }
+
+  getByRole(role: string, options: ByRoleOptions = {}): Locator {
+    return this.mainFrame().getByRole(role, options);
   }
 
   frameLocator(selector: string): FrameLocator {
