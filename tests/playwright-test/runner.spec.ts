@@ -187,7 +187,7 @@ test('worker interrupt should report errors', async ({ runInlineTest }) => {
   expect(result.output).toContain('Error: INTERRUPT');
 });
 
-test.only('should not stall when workers are available', async ({ runInlineTest }) => {
+test('should not stall when workers are available', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
       const { test } = pwt;
