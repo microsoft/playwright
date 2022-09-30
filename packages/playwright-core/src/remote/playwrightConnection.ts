@@ -16,6 +16,7 @@
 
 import type { WebSocket } from '../utilsBundle';
 import type { DispatcherScope, Playwright } from '../server';
+import { EventEmitter } from 'events';
 import { createPlaywright, DispatcherConnection, RootDispatcher, PlaywrightDispatcher } from '../server';
 import { Browser } from '../server/browser';
 import { serverSideCallMetadata } from '../server/instrumentation';
@@ -23,23 +24,24 @@ import { gracefullyCloseAll } from '../utils/processLauncher';
 import { SocksProxy } from '../common/socksProxy';
 import type { LaunchOptions } from '../server/types';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
+import { ManualPromise } from '../utils/manualPromise';
 
 type Options = {
   enableSocksProxy: boolean,
   launchOptions: LaunchOptions,
 };
 
-export class PlaywrightConnection {
+export class PlaywrightConnection extends EventEmitter {
   private _ws: WebSocket;
-  private _onClose: () => void;
+  private _semaphore: Semaphore;
   private _dispatcherConnection: DispatcherConnection;
   private _cleanups: (() => Promise<void>)[] = [];
   private _debugLog: (m: string) => void;
   private _disconnected = false;
   private _root: DispatcherScope | undefined;
 
-  static createForPreLaunchedBrowser(lock: Promise<void>, ws: WebSocket, log: (m: string) => void, onClose: () => void, playwright: Playwright, browser: Browser) {
-    const connection = new PlaywrightConnection(lock, ws, log, onClose);
+  static createForPreLaunchedBrowser(semaphore: Semaphore, ws: WebSocket, log: (m: string) => void, playwright: Playwright, browser: Browser) {
+    const connection = new PlaywrightConnection(semaphore, ws, log);
     connection._root = new RootDispatcher(connection._dispatcherConnection, async (scope: RootDispatcher) => {
       log(`engaged pre-launched mode`);
       browser.on(Browser.Events.Disconnected, () => {
@@ -58,17 +60,17 @@ export class PlaywrightConnection {
     return connection;
   }
 
-  static createForDebugController(lock: Promise<void>, ws: WebSocket, log: (m: string) => void, onClose: () => void, playwright: Playwright) {
+  static createForDebugController(semaphore: Semaphore, ws: WebSocket, log: (m: string) => void, playwright: Playwright) {
     log(`engaged reuse controller mode`);
-    const connection = new PlaywrightConnection(lock, ws, log, onClose);
+    const connection = new PlaywrightConnection(semaphore, ws, log);
     connection._cleanups.push(() => gracefullyCloseAll());
     // Always create new instance based on the reused Playwright instance.
     connection._root = new DebugControllerDispatcher(connection._dispatcherConnection, playwright.debugController);
     return connection;
   }
 
-  static createForBrowserReuse(lock: Promise<void>, ws: WebSocket, log: (m: string) => void, onClose: () => void, playwright: Playwright, browserName: string, options: Options) {
-    const connection = new PlaywrightConnection(lock, ws, log, onClose);
+  static createForBrowserReuse(semaphore: Semaphore, ws: WebSocket, log: (m: string) => void, playwright: Playwright, browserName: string, options: Options) {
+    const connection = new PlaywrightConnection(semaphore, ws, log);
     connection._root = new RootDispatcher(connection._dispatcherConnection, async scope => {
       connection._debugLog(`engaged reuse browsers mode for ${browserName}`);
       const requestedOptions = launchOptionsHash(options.launchOptions);
@@ -117,8 +119,8 @@ export class PlaywrightConnection {
     return connection;
   }
 
-  static createForBrowserLaunch(lock: Promise<void>, ws: WebSocket, log: (m: string) => void, onClose: () => void, browserName: string, options: Options) {
-    const connection = new PlaywrightConnection(lock, ws, log, onClose);
+  static createForBrowserLaunch(semaphore: Semaphore, ws: WebSocket, log: (m: string) => void, browserName: string, options: Options) {
+    const connection = new PlaywrightConnection(semaphore, ws, log);
     connection._root = new RootDispatcher(connection._dispatcherConnection, async scope => {
       log(`engaged launch mode for "${browserName}"`);
 
@@ -140,8 +142,8 @@ export class PlaywrightConnection {
     return connection;
   }
 
-  static createForPlaywrightConnect(lock: Promise<void>, ws: WebSocket, log: (m: string) => void, onClose: () => void, options: Options) {
-    const connection = new PlaywrightConnection(lock, ws, log, onClose);
+  static createForPlaywrightConnect(semaphore: Semaphore, ws: WebSocket, log: (m: string) => void, options: Options) {
+    const connection = new PlaywrightConnection(semaphore, ws, log);
     connection._root = new RootDispatcher(connection._dispatcherConnection, async scope => {
       log(`engaged playwright.connect mode`);
       const playwright = createPlaywright('javascript');
@@ -154,11 +156,13 @@ export class PlaywrightConnection {
     return connection;
   }
 
-  constructor(lock: Promise<void>, ws: WebSocket, log: (m: string) => void, onClose: () => void) {
+  constructor(semaphore: Semaphore, ws: WebSocket, log: (m: string) => void) {
+    super();
     this._ws = ws;
-    this._onClose = onClose;
     this._debugLog = log;
+    this._semaphore = semaphore;
 
+    const lock = semaphore.aquire();
     this._dispatcherConnection = new DispatcherConnection();
     this._dispatcherConnection.onmessage = async message => {
       await lock;
@@ -189,7 +193,8 @@ export class PlaywrightConnection {
     this._debugLog(`starting cleanup`);
     for (const cleanup of this._cleanups)
       await cleanup().catch(() => {});
-    this._onClose();
+    this.emit('close');
+    this._semaphore.release();
     this._debugLog(`finished cleanup`);
   }
 
@@ -200,6 +205,42 @@ export class PlaywrightConnection {
     try {
       this._ws.close(reason?.code, reason?.reason);
     } catch (e) {
+    }
+  }
+}
+export class Semaphore {
+  private _max: number;
+  private _aquired = 0;
+  private _queue: ManualPromise[] = [];
+
+  constructor(max: number) {
+    this._max = max;
+  }
+
+  setMax(max: number) {
+    this._max = max;
+  }
+
+  aquire(): Promise<void> {
+    const lock = new ManualPromise();
+    this._queue.push(lock);
+    this._flush();
+    return lock;
+  }
+
+  requested() {
+    return this._aquired + this._queue.length;
+  }
+
+  release() {
+    --this._aquired;
+    this._flush();
+  }
+
+  private _flush() {
+    while (this._aquired < this._max && this._queue.length) {
+      ++this._aquired;
+      this._queue.shift()!.resolve();
     }
   }
 }

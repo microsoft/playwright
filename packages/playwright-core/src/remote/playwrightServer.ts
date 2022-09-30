@@ -20,10 +20,9 @@ import http from 'http';
 import type { Browser } from '../server/browser';
 import type { Playwright } from '../server/playwright';
 import { createPlaywright } from '../server/playwright';
-import { PlaywrightConnection } from './playwrightConnection';
+import { PlaywrightConnection, Semaphore } from './playwrightConnection';
 import { assert } from '../utils';
 import type  { LaunchOptions } from '../server/types';
-import { ManualPromise } from '../utils/manualPromise';
 
 const debugLog = debug('pw:server');
 
@@ -122,11 +121,11 @@ export class PlaywrightServer {
       let connection;
       if (!!request.headers['x-playwright-debug-controller']) {
         connection = PlaywrightConnection.createForDebugController(
-            controllerSemaphore.aquire(), ws, log, () => controllerSemaphore.release(),
+            controllerSemaphore, ws, log,
             this.preLaunchedPlaywright());
       } if (this._preLaunchedBrowser && this._preLaunchedPlaywright) {
         connection = PlaywrightConnection.createForPreLaunchedBrowser(
-            browserSemaphore.aquire(), ws, log, () => browserSemaphore.release(),
+            browserSemaphore, ws, log,
             this._preLaunchedPlaywright, this._preLaunchedBrowser);
       } else if (this._preLaunchedPlaywright?.debugController.reuseBrowser()) {
         if (!browserName) {
@@ -134,16 +133,16 @@ export class PlaywrightServer {
           return;
         }
         connection = PlaywrightConnection.createForBrowserReuse(
-            reuseBrowserSemaphore.aquire(), ws, log, () => reuseBrowserSemaphore.release(),
+            reuseBrowserSemaphore, ws, log,
             this.preLaunchedPlaywright(), browserName,
             { enableSocksProxy, launchOptions });
       } if (browserName) {
         connection = PlaywrightConnection.createForBrowserLaunch(
-            browserSemaphore.aquire(), ws, log, () => browserSemaphore.release(),
+            browserSemaphore, ws, log,
             browserName, { enableSocksProxy, launchOptions });
       } else {
         connection = PlaywrightConnection.createForPlaywrightConnect(
-            browserSemaphore.aquire(), ws, log, () => browserSemaphore.release(),
+            browserSemaphore, ws, log,
             { enableSocksProxy, launchOptions });
       }
       (ws as any)[kConnectionSymbol] = connection;
@@ -176,39 +175,3 @@ export class PlaywrightServer {
   }
 }
 
-export class Semaphore {
-  private _max: number;
-  private _aquired = 0;
-  private _queue: ManualPromise[] = [];
-
-  constructor(max: number) {
-    this._max = max;
-  }
-
-  setMax(max: number) {
-    this._max = max;
-  }
-
-  aquire(): Promise<void> {
-    const lock = new ManualPromise();
-    this._queue.push(lock);
-    this._flush();
-    return lock;
-  }
-
-  requested() {
-    return this._aquired + this._queue.length;
-  }
-
-  release() {
-    --this._aquired;
-    this._flush();
-  }
-
-  private _flush() {
-    while (this._aquired < this._max && this._queue.length) {
-      ++this._aquired;
-      this._queue.shift()!.resolve();
-    }
-  }
-}

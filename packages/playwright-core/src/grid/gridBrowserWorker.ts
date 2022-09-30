@@ -16,20 +16,22 @@
 
 import { debug } from '../utilsBundle';
 import { ws as WebSocket } from '../utilsBundle';
-import { PlaywrightConnection } from '../remote/playwrightConnection';
+import { PlaywrightConnection, Semaphore } from '../remote/playwrightConnection';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 
 function launchGridBrowserWorker(gridURL: string, agentId: string, workerId: string, browserName: string) {
   const log = debug(`pw:grid:worker:${workerId}`);
   log('created');
   const ws = new WebSocket(gridURL.replace('http://', 'ws://') + `/registerWorker?agentId=${agentId}&workerId=${workerId}`);
-  PlaywrightConnection.createForBrowserLaunch(Promise.resolve(), ws, log, async () => {
+  const connection = PlaywrightConnection.createForBrowserLaunch(new Semaphore(1), ws, log, browserName, { enableSocksProxy: true, launchOptions: {} });
+
+  connection.once('close', async () => {
     log('exiting process');
     setTimeout(() => process.exit(0), 30000);
     // Meanwhile, try to gracefully close all browsers.
     await gracefullyCloseAll();
     process.exit(0);
-  }, browserName, { enableSocksProxy: true, launchOptions: {} });
+  });
 }
 
 launchGridBrowserWorker(process.argv[2], process.argv[3], process.argv[4], process.argv[5]);
