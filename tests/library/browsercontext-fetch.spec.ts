@@ -1026,3 +1026,39 @@ it('should work with connectOverCDP', async ({ browserName, browserType, server 
     await browserServer.close();
   }
 });
+
+it('should support SameSite cookie attribute over https', async ({ contextFactory, httpsServer }) => {
+  // Cookies with SameSite=None must also specify the Secure attribute. WebKit navigation
+  // to HTTP url will fail if the response contains a cookie with Secure attribute, so
+  // we do HTTPS navigation.
+  const context = await contextFactory({ ignoreHTTPSErrors: true });
+  const page = await context.newPage();
+  for (const value of ['None', 'Lax', 'Strict']) {
+    await it.step(`SameSite=${value}`, async () => {
+      httpsServer.setRoute('/empty.html', (req, res) => {
+        res.setHeader('Set-Cookie', `SID=2022; Path=/; Secure; SameSite=${value}`);
+        res.end();
+      });
+      await page.request.get(httpsServer.EMPTY_PAGE);
+      const [cookie] = await page.context().cookies();
+      expect(cookie.sameSite).toBe(value);
+    });
+  }
+});
+
+it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName }) => {
+  for (const value of ['None', 'Lax', 'Strict']) {
+    await it.step(`SameSite=${value}`, async () => {
+      server.setRoute('/empty.html', (req, res) => {
+        res.setHeader('Set-Cookie', `SID=2022; Path=/; SameSite=${value}`);
+        res.end();
+      });
+      await page.request.get(server.EMPTY_PAGE);
+      const [cookie] = await page.context().cookies();
+      if (browserName === 'chromium' && value === 'None')
+        expect(cookie).toBeFalsy();
+      else
+        expect(cookie.sameSite).toBe(value);
+    });
+  }
+});
