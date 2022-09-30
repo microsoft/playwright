@@ -97,7 +97,7 @@ export class PlaywrightServer {
     const reuseBrowserSemaphore = new Semaphore(1);
 
     this._wsServer.on('connection', (ws, request) => {
-      if (browserSemaphore.requested() >= this._options.maxIncomingConnections) {
+      if ((this._wsServer?.clients.size ?? 0 )>= this._options.maxIncomingConnections) {
         ws.close(1013, 'Playwright Server is busy');
         return;
       }
