@@ -15,68 +15,38 @@
  */
 
 import fs from 'fs';
-import { progress as ProgressBar } from '../../utilsBundle';
-import { httpRequest } from '../../common/netUtils';
+import path from 'path';
+import childProcess from 'child_process';
+import { ManualPromise } from '../../utils/manualPromise';
 
-type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 type DownloadFileLogger = (message: string) => void;
 type DownloadFileOptions = {
-  progressCallback?: OnProgressCallback,
+  progressBarName?: string,
   log?: DownloadFileLogger,
   userAgent?: string
 };
 
-function downloadFile(url: string, destinationPath: string, options: DownloadFileOptions = {}): Promise<{ error: any }> {
-  const {
-    progressCallback,
-    log = () => { },
-  } = options;
-  log(`running download:`);
-  log(`-- from url: ${url}`);
-  log(`-- to location: ${destinationPath}`);
-  let fulfill: ({ error }: { error: any }) => void = ({ error }) => { };
-  let downloadedBytes = 0;
-  let totalBytes = 0;
-
-  const promise: Promise<{ error: any }> = new Promise(x => { fulfill = x; });
-
-  httpRequest({
-    url,
-    headers: options.userAgent ? {
-      'User-Agent': options.userAgent,
-    } : undefined,
-    timeout: 10_000,
-  }, response => {
-    log(`-- response status code: ${response.statusCode}`);
-    if (response.statusCode !== 200) {
-      let content = '';
-      const handleError = () => {
-        const error = new Error(`Download failed: server returned code ${response.statusCode} body '${content}'. URL: ${url}`);
-        // consume response data to free up memory
-        response.resume();
-        fulfill({ error });
-      };
-      response
-          .on('data', chunk => content += chunk)
-          .on('end', handleError)
-          .on('error', handleError);
+function downloadFileOutOfProcess(url: string, destinationPath: string, options: DownloadFileOptions = {}): Promise<{ error: Error | null }> {
+  const cp = childProcess.fork(path.join(__dirname, 'downloadMain.js'), [url, destinationPath, options.progressBarName || '', options.userAgent || '']);
+  const promise = new ManualPromise<{ error: Error | null }>();
+  cp.on('message', (message: any) => {
+    if (message?.method === 'log')
+      options.log?.(message.params.message);
+  });
+  cp.on('exit', code => {
+    if (code !== 0) {
+      promise.resolve({ error: new Error(`Download process exited with code ${code}`) });
       return;
     }
-    const file = fs.createWriteStream(destinationPath);
-    file.on('finish', () => fulfill({ error: null }));
-    file.on('error', error => fulfill({ error }));
-    response.pipe(file);
-    totalBytes = parseInt(response.headers['content-length'] || '0', 10);
-    log(`-- total bytes: ${totalBytes}`);
-    if (progressCallback)
-      response.on('data', onData);
-  }, (error: any) => fulfill({ error }));
+    // Node.js has a bug where the process can exit with 0 code even though there was an uncaught exception.
+    // Thats why we manually check if the destination file exists.
+    // https://github.com/microsoft/playwright/issues/17394
+    if (!fs.existsSync(destinationPath))
+      promise.resolve({ error: new Error(`Download process failed to write to ${destinationPath}`) });
+    else
+      promise.resolve({ error: null });
+  });
   return promise;
-
-  function onData(chunk: string) {
-    downloadedBytes += chunk.length;
-    progressCallback!(downloadedBytes, totalBytes);
-  }
 }
 
 type DownloadOptions = {
@@ -99,8 +69,9 @@ export async function download(
     if (!Array.isArray(urls))
       urls = [urls];
     const url = urls[(attempt - 1) % urls.length];
-    const { error } = await downloadFile(url, destination, {
-      progressCallback: getDownloadProgress(progressBarName),
+
+    const { error } = await downloadFileOutOfProcess(url, destination, {
+      progressBarName,
       log,
       userAgent,
     });
@@ -113,57 +84,4 @@ export async function download(
     if (attempt >= retryCount)
       throw error;
   }
-}
-
-function getDownloadProgress(progressBarName: string): OnProgressCallback {
-  if (process.stdout.isTTY)
-    return _getAnimatedDownloadProgress(progressBarName);
-  return _getBasicDownloadProgress(progressBarName);
-}
-
-function _getAnimatedDownloadProgress(progressBarName: string): OnProgressCallback {
-  let progressBar: ProgressBar;
-  let lastDownloadedBytes = 0;
-
-  return (downloadedBytes: number, totalBytes: number) => {
-    if (!progressBar) {
-      progressBar = new ProgressBar(
-          `Downloading ${progressBarName} - ${toMegabytes(
-              totalBytes
-          )} [:bar] :percent :etas `,
-          {
-            complete: '=',
-            incomplete: ' ',
-            width: 20,
-            total: totalBytes,
-          }
-      );
-    }
-    const delta = downloadedBytes - lastDownloadedBytes;
-    lastDownloadedBytes = downloadedBytes;
-    progressBar.tick(delta);
-  };
-}
-
-function _getBasicDownloadProgress(progressBarName: string): OnProgressCallback {
-  // eslint-disable-next-line no-console
-  console.log(`Downloading ${progressBarName}...`);
-  const totalRows = 10;
-  const stepWidth = 8;
-  let lastRow = -1;
-  return (downloadedBytes: number, totalBytes: number) => {
-    const percentage = downloadedBytes / totalBytes;
-    const row = Math.floor(totalRows * percentage);
-    if (row > lastRow) {
-      lastRow = row;
-      const percentageString = String(percentage * 100 | 0).padStart(3);
-      // eslint-disable-next-line no-console
-      console.log(`|${'■'.repeat(row * stepWidth)}${' '.repeat((totalRows - row) * stepWidth)}| ${percentageString}% of ${toMegabytes(totalBytes)}`);
-    }
-  };
-}
-
-function toMegabytes(bytes: number) {
-  const mb = bytes / 1024 / 1024;
-  return `${Math.round(mb * 10) / 10} Mb`;
 }
