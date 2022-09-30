@@ -52,7 +52,13 @@ export class Locator implements api.Locator {
   }
 
   static getByTestIdSelector(testId: string): string {
-    return `attr=[${Locator._testIdAttributeName}=${JSON.stringify(testId)}]`;
+    return Locator.getByAttributeTextSelector(this._testIdAttributeName, testId, { exact: true });
+  }
+
+  private static getByAttributeTextSelector(attrName: string, text: string | RegExp, options?: { exact?: boolean }): string {
+    if (!isString(text))
+      return `attr=[${attrName}=${text}]`;
+    return `attr=[${attrName}=${JSON.stringify(text)}${options?.exact ? 's' : 'i'}]`;
   }
 
   static getByLabelTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
@@ -63,10 +69,16 @@ export class Locator implements api.Locator {
     return selector +  ' >> control=resolve-label';
   }
 
+  static getByAltTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
+    return Locator.getByAttributeTextSelector('alt', text, options);
+  }
+
+  static getByTitleSelector(text: string | RegExp, options?: { exact?: boolean }): string {
+    return Locator.getByAttributeTextSelector('title', text, options);
+  }
+
   static getByPlaceholderTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
-    if (!isString(text))
-      return `attr=[placeholder=${text}]`;
-    return `attr=[placeholder=${JSON.stringify(text)}${options?.exact ? 's' : 'i'}]`;
+    return Locator.getByAttributeTextSelector('placeholder', text, options);
   }
 
   static getByTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
@@ -199,6 +211,10 @@ export class Locator implements api.Locator {
     return this.locator(Locator.getByTestIdSelector(testId));
   }
 
+  getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByAltTextSelector(text, options));
+  }
+
   getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.locator(Locator.getByLabelTextSelector(text, options));
   }
@@ -209,6 +225,10 @@ export class Locator implements api.Locator {
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.locator(Locator.getByTextSelector(text, options));
+  }
+
+  getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByTitleSelector(text, options));
   }
 
   getByRole(role: string, options: ByRoleOptions = {}): Locator {
@@ -393,6 +413,10 @@ export class FrameLocator implements api.FrameLocator {
     return this.locator(Locator.getByTestIdSelector(testId));
   }
 
+  getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByAltTextSelector(text, options));
+  }
+
   getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.locator(Locator.getByLabelTextSelector(text, options));
   }
@@ -403,6 +427,10 @@ export class FrameLocator implements api.FrameLocator {
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.locator(Locator.getByTextSelector(text, options));
+  }
+
+  getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByTitleSelector(text, options));
   }
 
   getByRole(role: string, options: ByRoleOptions = {}): Locator {

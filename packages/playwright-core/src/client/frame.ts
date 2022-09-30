@@ -303,6 +303,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return this.locator(Locator.getByTestIdSelector(testId));
   }
 
+  getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByAltTextSelector(text, options));
+  }
+
   getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.locator(Locator.getByLabelTextSelector(text, options));
   }
@@ -313,6 +317,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.locator(Locator.getByTextSelector(text, options));
+  }
+
+  getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByTitleSelector(text, options));
   }
 
   getByRole(role: string, options: ByRoleOptions = {}): Locator {

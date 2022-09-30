@@ -908,6 +908,16 @@ Attribute name to get the value for.
 * since: v1.8
 
 
+## method: Frame.getByAltText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-alt-text-%%
+
+### param: Frame.getByAltText.text = %%-locator-get-by-text-text-%%
+### option: Frame.getByAltText.exact = %%-locator-get-by-text-exact-%%
+
+
 ## method: Frame.getByLabelText
 * since: v1.27
 - returns: <[Locator]>
@@ -958,6 +968,16 @@ Attribute name to get the value for.
 
 ### param: Frame.getByText.text = %%-locator-get-by-text-text-%%
 ### option: Frame.getByText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Frame.getByTitle
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-title-%%
+
+### param: Frame.getByTitle.text = %%-locator-get-by-text-text-%%
+### option: Frame.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
 
 ## async method: Frame.goto

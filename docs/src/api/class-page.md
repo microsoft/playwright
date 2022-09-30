@@ -2183,6 +2183,16 @@ Attribute name to get the value for.
 * since: v1.8
 
 
+## method: Page.getByAltText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-alt-text-%%
+
+### param: Page.getByAltText.text = %%-locator-get-by-text-text-%%
+### option: Page.getByAltText.exact = %%-locator-get-by-text-exact-%%
+
+
 ## method: Page.getByLabelText
 * since: v1.27
 - returns: <[Locator]>
@@ -2232,6 +2242,16 @@ Attribute name to get the value for.
 
 ### param: Page.getByText.text = %%-locator-get-by-text-text-%%
 ### option: Page.getByText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Page.getByTitle
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-title-%%
+
+### param: Page.getByTitle.text = %%-locator-get-by-text-text-%%
+### option: Page.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
 
 ## async method: Page.goBack

@@ -35,7 +35,7 @@ async function routeIframe(page: Page) {
           </div>
           <span>1</span>
           <span>2</span>
-          <label for=target>Name</label><input id=target type=text placeholder=Placeholder>
+          <label for=target>Name</label><input id=target type=text placeholder=Placeholder title=Title alt=Alternative>
         </html>`,
       contentType: 'text/html'
     }).catch(() => {});
@@ -252,4 +252,8 @@ it('getBy coverage', async ({ page, server }) => {
   await expect(input1).toHaveValue('');
   const input2 = page.frameLocator('iframe').getByPlaceholderText('Placeholder');
   await expect(input2).toHaveValue('');
+  const input3 = page.frameLocator('iframe').getByAltText('Alternative');
+  await expect(input3).toHaveValue('');
+  const input4 = page.frameLocator('iframe').getByTitle('Title');
+  await expect(input4).toHaveValue('');
 });
