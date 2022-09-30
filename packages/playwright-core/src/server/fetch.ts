@@ -601,7 +601,7 @@ function parseCookie(header: string): channels.NetworkCookie | null {
         switch (value.toLowerCase()) {
           case 'none':
             cookie.sameSite = 'None';
-            break
+            break;
           case 'lax':
             cookie.sameSite = 'Lax';
             break;
