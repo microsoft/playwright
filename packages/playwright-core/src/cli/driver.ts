@@ -52,7 +52,9 @@ export function runDriver() {
 export async function runServer(port: number | undefined, path = '/', maxClients = Infinity, enableSocksProxy = true, reuseBrowser = false) {
   const maxIncomingConnections = maxClients;
   const maxConcurrentConnections = reuseBrowser ? 1 : maxClients;
-  const server = new PlaywrightServer(reuseBrowser ? 'reuse-browser' : 'auto', { path, maxIncomingConnections, maxConcurrentConnections, enableSocksProxy });
+  const server = new PlaywrightServer({ path, maxIncomingConnections, maxConcurrentConnections, enableSocksProxy });
+  if (reuseBrowser)
+    server.preLaunchedPlaywright().debugController.setReuseBrowser(true);
   const wsEndpoint = await server.listen(port);
   process.on('exit', () => server.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console

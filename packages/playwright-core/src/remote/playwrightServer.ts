@@ -35,9 +35,6 @@ function newLogger() {
   return (message: string) => debugLog(`[id=${id}] ${message}`);
 }
 
-// TODO: replace 'reuse-browser' with 'allow-reuse' in 1.27.
-export type Mode = 'use-pre-launched-browser' | 'reuse-browser' | 'auto';
-
 type ServerOptions = {
   path: string;
   maxIncomingConnections: number;
@@ -49,17 +46,17 @@ export class PlaywrightServer {
   private _preLaunchedPlaywright?: Playwright;
   private _preLaunchedBrowser?: Browser;
   private _wsServer: WebSocketServer | undefined;
-  private _mode: Mode;
   private _options: ServerOptions;
 
-  constructor(mode: Mode, options: ServerOptions, preLaunchedBrowser?: Browser) {
-    this._mode = mode;
+  static createWithPrelaunchedBrowser(browser: Browser, options: ServerOptions) {
+    const server = new PlaywrightServer(options);
+    server._preLaunchedBrowser = browser;
+    server._preLaunchedPlaywright = browser.options.rootSdkObject as Playwright;
+    return server;
+  }
+
+  constructor(options: ServerOptions) {
     this._options = options;
-    this._preLaunchedBrowser = preLaunchedBrowser;
-    if (mode === 'use-pre-launched-browser') {
-      assert(this._preLaunchedBrowser);
-      this._preLaunchedPlaywright = this._preLaunchedBrowser.options.rootSdkObject as Playwright;
-    }
   }
 
   preLaunchedPlaywright(): Playwright {
@@ -122,14 +119,16 @@ export class PlaywrightServer {
       const log = newLogger();
       log(`serving connection: ${request.url}`);
 
-      const isDebugControllerClient = !!request.headers['x-playwright-debug-controller'];
-
       let connection;
-      if (isDebugControllerClient) {
+      if (!!request.headers['x-playwright-debug-controller']) {
         connection = PlaywrightConnection.createForDebugController(
             controllerSemaphore.aquire(), ws, log, () => controllerSemaphore.release(),
             this.preLaunchedPlaywright());
-      } else if (this._mode === 'reuse-browser' || (this._mode === 'auto' && this._preLaunchedPlaywright?.debugController.reuseBrowser())) {
+      } if (this._preLaunchedBrowser && this._preLaunchedPlaywright) {
+        connection = PlaywrightConnection.createForPreLaunchedBrowser(
+            browserSemaphore.aquire(), ws, log, () => browserSemaphore.release(),
+            this._preLaunchedPlaywright, this._preLaunchedBrowser);
+      } else if (this._preLaunchedPlaywright?.debugController.reuseBrowser()) {
         if (!browserName) {
           ws.close(1013, 'must supply browser name');
           return;
@@ -138,10 +137,6 @@ export class PlaywrightServer {
             reuseBrowserSemaphore.aquire(), ws, log, () => reuseBrowserSemaphore.release(),
             this.preLaunchedPlaywright(), browserName,
             { enableSocksProxy, launchOptions });
-      } if (this._preLaunchedBrowser && this._preLaunchedPlaywright) {
-        connection = PlaywrightConnection.createForPreLaunchedBrowser(
-            browserSemaphore.aquire(), ws, log, () => browserSemaphore.release(),
-            this._preLaunchedPlaywright, this._preLaunchedBrowser);
       } if (browserName) {
         connection = PlaywrightConnection.createForBrowserLaunch(
             browserSemaphore.aquire(), ws, log, () => browserSemaphore.release(),

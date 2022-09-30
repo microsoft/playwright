@@ -54,7 +54,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
 
     // 2. Start the server
-    const server = new PlaywrightServer('use-pre-launched-browser', { path, maxConcurrentConnections: Infinity, maxIncomingConnections: Infinity, enableSocksProxy: false, }, browser);
+    const server = PlaywrightServer.createWithPrelaunchedBrowser(browser, { path, maxConcurrentConnections: Infinity, maxIncomingConnections: Infinity, enableSocksProxy: false });
     const wsEndpoint = await server.listen(options.port);
 
     // 3. Return the BrowserServer interface
