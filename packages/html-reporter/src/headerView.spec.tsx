@@ -29,11 +29,11 @@ test('should render counters', async ({ mount }) => {
     ok: false,
     duration: 100000
   }} filterText='' setFilterText={() => {}}></HeaderView>);
-  await expect(component.get('a', { hasText: 'All' }).get('.counter')).toHaveText('100');
-  await expect(component.get('a', { hasText: 'Passed' }).get('.counter')).toHaveText('42');
-  await expect(component.get('a', { hasText: 'Failed' }).get('.counter')).toHaveText('31');
-  await expect(component.get('a', { hasText: 'Flaky' }).get('.counter')).toHaveText('17');
-  await expect(component.get('a', { hasText: 'Skipped' }).get('.counter')).toHaveText('10');
+  await expect(component.locator('a', { hasText: 'All' }).locator('.counter')).toHaveText('100');
+  await expect(component.locator('a', { hasText: 'Passed' }).locator('.counter')).toHaveText('42');
+  await expect(component.locator('a', { hasText: 'Failed' }).locator('.counter')).toHaveText('31');
+  await expect(component.locator('a', { hasText: 'Flaky' }).locator('.counter')).toHaveText('17');
+  await expect(component.locator('a', { hasText: 'Skipped' }).locator('.counter')).toHaveText('10');
 });
 
 test('should toggle filters', async ({ page, mount: mount }) => {
@@ -51,14 +51,14 @@ test('should toggle filters', async ({ page, mount: mount }) => {
     filterText=''
     setFilterText={(filterText: string) => filters.push(filterText)}>
   </HeaderView>);
-  await component.get('a', { hasText: 'All' }).click();
-  await component.get('a', { hasText: 'Passed' }).click();
+  await component.locator('a', { hasText: 'All' }).click();
+  await component.locator('a', { hasText: 'Passed' }).click();
   await expect(page).toHaveURL(/#\?q=s:passed/);
-  await component.get('a', { hasText: 'Failed' }).click();
+  await component.locator('a', { hasText: 'Failed' }).click();
   await expect(page).toHaveURL(/#\?q=s:failed/);
-  await component.get('a', { hasText: 'Flaky' }).click();
+  await component.locator('a', { hasText: 'Flaky' }).click();
   await expect(page).toHaveURL(/#\?q=s:flaky/);
-  await component.get('a', { hasText: 'Skipped' }).click();
+  await component.locator('a', { hasText: 'Skipped' }).click();
   await expect(page).toHaveURL(/#\?q=s:skipped/);
   expect(filters).toEqual(['', 's:passed', 's:failed', 's:flaky', 's:skipped']);
 });
