@@ -644,6 +644,16 @@ Attribute name to get the value for.
 ### option: Locator.getByLabelText.exact = %%-locator-get-by-text-exact-%%
 
 
+## method: Locator.getByPlaceholderText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-placeholder-text-%%
+
+### param: Locator.getByPlaceholderText.text = %%-locator-get-by-text-text-%%
+### option: Locator.getByPlaceholderText.exact = %%-locator-get-by-text-exact-%%
+
+
 ## method: Locator.getByRole
 * since: v1.27
 - returns: <[Locator]>

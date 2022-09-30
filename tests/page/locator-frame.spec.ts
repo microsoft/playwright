@@ -35,7 +35,7 @@ async function routeIframe(page: Page) {
           </div>
           <span>1</span>
           <span>2</span>
-          <label for=target>Name</label><input id=target type=text>
+          <label for=target>Name</label><input id=target type=text placeholder=Placeholder>
         </html>`,
       contentType: 'text/html'
     }).catch(() => {});
@@ -239,7 +239,7 @@ it('locator.frameLocator should not throw on first/last/nth', async ({ page, ser
   await expect(button3).toHaveText('Hello from iframe-3.html');
 });
 
-it('role and text coverage', async ({ page, server }) => {
+it('getBy coverage', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button1 = page.frameLocator('iframe').getByRole('button');
@@ -248,6 +248,8 @@ it('role and text coverage', async ({ page, server }) => {
   await expect(button1).toHaveText('Hello iframe');
   await expect(button2).toHaveText('Hello iframe');
   await expect(button3).toHaveText('Hello iframe');
-  const input = page.frameLocator('iframe').getByLabelText('Name');
-  await expect(input).toHaveValue('');
+  const input1 = page.frameLocator('iframe').getByLabelText('Name');
+  await expect(input1).toHaveValue('');
+  const input2 = page.frameLocator('iframe').getByPlaceholderText('Placeholder');
+  await expect(input2).toHaveValue('');
 });

@@ -1188,6 +1188,13 @@ Allows locating input elements by the text of the associated label. For example,
 <label for="password-input">Password:</label>
 <input id="password-input">
 ```
+## template-locator-get-by-placeholder-text
+
+Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder "Country":
+
+```html
+<input placeholder="Country">
+```
 
 ## template-locator-get-by-role
 
