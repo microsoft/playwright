@@ -144,6 +144,6 @@ test.describe("navigation", () => {
 
 ## What's Next
 
-- [Run single tests, multiple tests, headed mode](./running-tests.md)
+- [Run single test, multiple tests, headed mode](./running-tests.md)
 - [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
