@@ -264,9 +264,17 @@ test('…', async { mount, page, context } => {
 
 `@playwright/experimental-ct-{react,svelte,vue}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
 
-<details>
-<summary>React Example</summary>
-<pre>
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Vue', value: 'vue'},
+    {label: 'Svelte', value: 'svelte'},
+  ]
+}>
+<TabItem value="react">
+
+```js
 import { test, expect } from '@playwright/experimental-ct-react'
 
 import HelloWorld from './HelloWorld.tsx'
@@ -276,12 +284,14 @@ test.use({ viewport: { width: 500, height: 500 } })
 test('should work', async ({ mount }) => {
   const component = await mount(<HelloWorld msg='greetings' />);
   await expect(component).toContainText('Greetings')
-})</pre>
-</details>
+})
+```
 
-<details>
-<summary>Vue Example</summary>
-<pre>
+</TabItem>
+
+<TabItem value="vue">
+
+```js
 import { test, expect } from '@playwright/experimental-ct-vue'
 
 import HelloWorld from './HelloWorld.vue'
@@ -295,12 +305,14 @@ test('should work', async ({ mount }) => {
     }
   });
   await expect(component).toContainText('Greetings')
-})</pre>
-</details>
+})
+```
 
-<details>
-<summary>Svelte Example</summary>
-<pre>
+</TabItem>
+  
+<TabItem value="svelte">
+
+```js
 import { test, expect } from '@playwright/experimental-ct-vue'
 
 import NamedSlots from './NamedSlots.vue'
@@ -318,9 +330,12 @@ test('named slots should work', async ({ mount }) => {
   await expect(component).toContainText('Header')
   await expect(component).toContainText('Main Content')
   await expect(component).toContainText('Footer')
-})</pre>
-</details>
+})
+```
 
+</TabItem>
+
+</Tabs>
 
 Additionally, it adds some config options you can use in your `playwright-ct.config.{ts,js}`.
 
