@@ -37,23 +37,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Click text=Submit >> nth=0
   await page.locator('text=Submit').first().click();`);
 
     expect(sources.get('Python').text).toContain(`
-    # Click text=Submit >> nth=0
     page.locator("text=Submit").first.click()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Click text=Submit >> nth=0
     await page.locator("text=Submit").first.click()`);
 
     expect(sources.get('Java').text).toContain(`
-      // Click text=Submit >> nth=0
       page.locator("text=Submit").first().click();`);
 
     expect(sources.get('C#').text).toContain(`
-        // Click text=Submit >> nth=0
         await page.Locator("text=Submit").First.ClickAsync();`);
 
     expect(message.text()).toBe('click1');
@@ -77,23 +72,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Click text=Submit >> nth=1
   await page.locator('text=Submit').nth(1).click();`);
 
     expect(sources.get('Python').text).toContain(`
-    # Click text=Submit >> nth=1
     page.locator("text=Submit").nth(1).click()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Click text=Submit >> nth=1
     await page.locator("text=Submit").nth(1).click()`);
 
     expect(sources.get('Java').text).toContain(`
-      // Click text=Submit >> nth=1
       page.locator("text=Submit").nth(1).click();`);
 
     expect(sources.get('C#').text).toContain(`
-        // Click text=Submit >> nth=1
         await page.Locator("text=Submit").Nth(1).ClickAsync();`);
 
     expect(message.text()).toBe('click2');
@@ -131,23 +121,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Click text=Hello1
   await page.frameLocator('#frame1').locator('text=Hello1').click();`);
 
     expect(sources.get('Java').text).toContain(`
-      // Click text=Hello1
       page.frameLocator("#frame1").locator("text=Hello1").click();`);
 
     expect(sources.get('Python').text).toContain(`
-    # Click text=Hello1
     page.frame_locator("#frame1").locator("text=Hello1").click()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Click text=Hello1
     await page.frame_locator("#frame1").locator("text=Hello1").click()`);
 
     expect(sources.get('C#').text).toContain(`
-        // Click text=Hello1
         await page.FrameLocator("#frame1").Locator("text=Hello1").ClickAsync();`);
 
 
@@ -157,23 +142,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Click text=Hello2
   await page.frameLocator('#frame1').frameLocator('iframe').locator('text=Hello2').click();`);
 
     expect(sources.get('Java').text).toContain(`
-      // Click text=Hello2
       page.frameLocator("#frame1").frameLocator("iframe").locator("text=Hello2").click();`);
 
     expect(sources.get('Python').text).toContain(`
-    # Click text=Hello2
     page.frame_locator("#frame1").frame_locator("iframe").locator("text=Hello2").click()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Click text=Hello2
     await page.frame_locator("#frame1").frame_locator("iframe").locator("text=Hello2").click()`);
 
     expect(sources.get('C#').text).toContain(`
-        // Click text=Hello2
         await page.FrameLocator("#frame1").FrameLocator("iframe").Locator("text=Hello2").ClickAsync();`);
 
 
@@ -183,25 +163,20 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Click text=HelloNameOne
   await page.frame({
     name: 'one'
   }).locator('text=HelloNameOne').click();`);
 
     expect(sources.get('Java').text).toContain(`
-      // Click text=HelloNameOne
       page.frame("one").locator("text=HelloNameOne").click();`);
 
     expect(sources.get('Python').text).toContain(`
-    # Click text=HelloNameOne
     page.frame(name=\"one\").locator(\"text=HelloNameOne\").click()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Click text=HelloNameOne
     await page.frame(name=\"one\").locator(\"text=HelloNameOne\").click()`);
 
     expect(sources.get('C#').text).toContain(`
-        // Click text=HelloNameOne
         await page.Frame(\"one\").Locator(\"text=HelloNameOne\").ClickAsync();`);
 
 
@@ -211,25 +186,20 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Click text=HelloNameAnonymous
   await page.frame({
     url: 'about:blank'
   }).locator('text=HelloNameAnonymous').click();`);
 
     expect(sources.get('Java').text).toContain(`
-      // Click text=HelloNameAnonymous
       page.frameByUrl("about:blank").locator("text=HelloNameAnonymous").click();`);
 
     expect(sources.get('Python').text).toContain(`
-    # Click text=HelloNameAnonymous
     page.frame(url=\"about:blank\").locator(\"text=HelloNameAnonymous\").click()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Click text=HelloNameAnonymous
     await page.frame(url=\"about:blank\").locator(\"text=HelloNameAnonymous\").click()`);
 
     expect(sources.get('C#').text).toContain(`
-        // Click text=HelloNameAnonymous
         await page.FrameByUrl(\"about:blank\").Locator(\"text=HelloNameAnonymous\").ClickAsync();`);
   });
 });

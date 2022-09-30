@@ -19,7 +19,6 @@ import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { sanitizeDeviceOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
-import { actionTitle } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
@@ -65,7 +64,6 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     if (this._mode !== 'library')
       pageAlias = pageAlias.replace('page', 'Page');
     const formatter = new CSharpFormatter(8);
-    formatter.add('// ' + actionTitle(action));
 
     if (action.name === 'openPage') {
       formatter.add(`var ${pageAlias} = await context.NewPageAsync();`);

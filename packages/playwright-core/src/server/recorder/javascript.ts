@@ -19,7 +19,6 @@ import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { sanitizeDeviceOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
-import { actionTitle } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import deviceDescriptors from '../deviceDescriptors';
@@ -46,7 +45,6 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new JavaScriptFormatter(2);
     formatter.newLine();
-    formatter.add('// ' + actionTitle(action));
 
     if (action.name === 'openPage') {
       formatter.add(`const ${pageAlias} = await context.newPage();`);
