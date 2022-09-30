@@ -43,6 +43,7 @@ const attachmentTypesArray = [
 ] as const;
 
 type TAttachmentType = Array<typeof attachmentTypesArray[number]>;
+type TTestRunConfig = Omit<TestInterfaces.RunCreateModel, 'name' | 'configurationIds' | 'automated' | 'plan' | 'pointIds'> | undefined;
 
 export interface AzureReporterOptions {
   token: string;
@@ -54,6 +55,7 @@ export interface AzureReporterOptions {
   testRunTitle?: string | undefined;
   uploadAttachments?: boolean | undefined;
   attachmentsType?: TAttachmentType | undefined;
+  testRunConfig?: TTestRunConfig;
 }
 
 interface TestResultsToTestRun {
@@ -127,6 +129,7 @@ class AzureDevOpsReporter implements Reporter {
   private resolveRunId: (value: number) => void = () => {};
   private rejectRunId: (reason: any) => void = () => {};
   private log = debug('pw:test:azure');
+  private testRunConfig: TTestRunConfig;
 
   public constructor(options: AzureReporterOptions) {
     this.runIdPromise = new Promise<number | void>((resolve, reject) => {
@@ -184,6 +187,7 @@ class AzureDevOpsReporter implements Reporter {
       `${this.environment ? `[${this.environment}]:` : ''}Test plan ${this.planId}`;
     this.uploadAttachments = options?.uploadAttachments || false;
     this.connection = new azdev.WebApi(this.orgUrl, azdev.getPersonalAccessTokenHandler(this.token));
+    this.testRunConfig = options?.testRunConfig || undefined;
   }
 
   async onBegin(): Promise<void> {
@@ -202,13 +206,15 @@ class AzureDevOpsReporter implements Reporter {
       }
     } catch (error) {
       this.isDisabled = true;
-      this._warning(error.message);
-      if (error.message.includes('401'))
-        this._warning(colors.red('Failed to create test run. Check your token. Reporting is disabled.'));
-      else if (error.message.includes('getaddrinfo ENOTFOUND'))
-        this._warning(colors.red('Failed to create test run. Check your orgUrl. Reporting is disabled.'));
-      else
-        this._warning(colors.red(`Failed to create test run. Reporting is disabled. \n ${error.message}`));
+      if (error.message.includes('401')) {
+        this._warning('Failed to create test run. Check your token. Reporting is disabled.');
+      } else if (error.message.includes('getaddrinfo ENOTFOUND')) {
+        this._warning('Failed to create test run. Check your orgUrl. Reporting is disabled.');
+      } else {
+        this._warning('Failed to create test run. Reporting is disabled.');
+        const parsedError = JSON.parse(String(error.message.trim()));
+        this._warning(parsedError?.message || error.message);
+      }
     }
   }
 
@@ -296,7 +302,8 @@ class AzureDevOpsReporter implements Reporter {
           name: runName,
           automated: true,
           configurationIds: [1],
-          plan: { id: String(this.planId) }
+          plan: { id: String(this.planId) },
+          ...(this.testRunConfig && this.testRunConfig),
         };
         if (!this.testApi)
           this.testApi = await this.connection.getTestApi();
@@ -350,10 +357,12 @@ class AzureDevOpsReporter implements Reporter {
         pointsQueryResult.points.forEach((point: TestPoint) => {
           if (point.testPlan && point.testPlan.id && parseInt(point.testPlan.id, 10) === planId)
             pointsIds.push(point.id);
-          else
-            throw new Error(`Could not find test point for test case [${point.testCase.id}] associated with test plan ${this.planId}. Check, maybe testPlanId, what you specified, is incorrect.`);
+
         });
       }
+      if (pointsIds.length === 0)
+        throw new Error(`Could not find test point for test cases [${testcaseIds.join(',')}] associated with test plan ${this.planId}. Check, maybe testPlanId, what you specified, is incorrect.`);
+
       return pointsIds;
     } catch (error) {
       this._warning(colors.red(error.message));

@@ -171,7 +171,6 @@ test('correct orgUrl config expected', async ({ runInlineTest }) => {
       });
     `
   }, { reporter: '' });
-  expect(stripAnsi(result.output)).toContain('getaddrinfo ENOTFOUND azure.devops.com');
   expect(stripAnsi(result.output)).toContain('Failed to create test run. Check your orgUrl. Reporting is disabled.');
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
@@ -205,7 +204,6 @@ test('06 correct orgUrl config, incorrect token', async ({ runInlineTest, server
       });
     `
   }, { reporter: '' });
-  expect(stripAnsi(result.output)).toContain('Failed request: (401)');
   expect(stripAnsi(result.output)).toContain('pw:test:azure Failed to create test run. Check your token. Reporting is disabled.');
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
@@ -581,7 +579,7 @@ test('04 incorrect planId', async ({ runInlineTest, server }) => {
   expect(stripAnsi(result.output)).toMatch(/pw:test:azure Using run (\d.*) to publish test results/);
   expect(stripAnsi(result.output)).toContain('pw:test:azure [3] foobar - failed');
   expect(stripAnsi(result.output)).toContain('pw:test:azure Start publishing: [3] foobar');
-  expect(stripAnsi(result.output)).toContain('Could not find test point for test case [3] associated with test plan 44. Check, maybe testPlanId, what you specified, is incorrect');
+  expect(stripAnsi(result.output)).toContain('Could not find test point for test cases [3] associated with test plan 44. Check, maybe testPlanId, what you specified, is incorrect');
   expect(result.output).toContain(colors.yellow(colors.red('No test points found for test case [3]')));
   expect(stripAnsi(result.output)).not.toContain('pw:test:azure Result published: [3] foobar');
   expect(stripAnsi(result.output)).toMatch(/pw:test:azure Run (\d.*) - Completed/);
