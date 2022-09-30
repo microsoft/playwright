@@ -26,8 +26,13 @@ type DownloadFileOptions = {
   userAgent?: string
 };
 
+/**
+ * Node.js has a bug where the process can exit with 0 code even though there was an uncaught exception.
+ * Thats why we execute it in a separate process and check manually if the destination file exists.
+ * https://github.com/microsoft/playwright/issues/17394
+ */
 function downloadFileOutOfProcess(url: string, destinationPath: string, options: DownloadFileOptions = {}): Promise<{ error: Error | null }> {
-  const cp = childProcess.fork(path.join(__dirname, 'downloadMain.js'), [url, destinationPath, options.progressBarName || '', options.userAgent || '']);
+  const cp = childProcess.fork(path.join(__dirname, 'oopDownloadMain.js'), [url, destinationPath, options.progressBarName || '', options.userAgent || '']);
   const promise = new ManualPromise<{ error: Error | null }>();
   cp.on('message', (message: any) => {
     if (message?.method === 'log')
@@ -35,16 +40,16 @@ function downloadFileOutOfProcess(url: string, destinationPath: string, options:
   });
   cp.on('exit', code => {
     if (code !== 0) {
-      promise.resolve({ error: new Error(`Download process exited with code ${code}`) });
+      promise.resolve({ error: new Error(`Download failure, code=${code}`) });
       return;
     }
-    // Node.js has a bug where the process can exit with 0 code even though there was an uncaught exception.
-    // Thats why we manually check if the destination file exists.
-    // https://github.com/microsoft/playwright/issues/17394
     if (!fs.existsSync(destinationPath))
-      promise.resolve({ error: new Error(`Download process failed to write to ${destinationPath}`) });
+      promise.resolve({ error: new Error(`Download failure, ${destinationPath} does not exist`) });
     else
       promise.resolve({ error: null });
+  });
+  cp.on('error', error => {
+    promise.resolve({ error });
   });
   return promise;
 }
