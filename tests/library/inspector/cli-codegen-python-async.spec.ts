@@ -97,13 +97,10 @@ async def run(playwright: Playwright) -> None:
     browser = await playwright.${browserName}.launch(${launchOptions(channel)})
     context = await browser.new_context()
 
-    # Open new page
     page = await context.new_page()
 
-    # Go to ${emptyHTML}
     await page.goto("${emptyHTML}")
 
-    # Close page
     await page.close()
 
     # ---------------------

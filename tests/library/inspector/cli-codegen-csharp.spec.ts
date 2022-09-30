@@ -235,7 +235,6 @@ public class Tests : PageTest
     [TestMethod]
     public async Task MyTest()
     {
-        // Go to ${emptyHTML}
         await Page.GotoAsync("${emptyHTML}");
 
     }
@@ -264,7 +263,6 @@ public class Tests : PageTest
     [Test]
     public async Task MyTest()
     {
-        // Go to ${emptyHTML}
         await Page.GotoAsync("${emptyHTML}");
 
     }

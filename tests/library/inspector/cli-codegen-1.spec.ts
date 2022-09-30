@@ -35,23 +35,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Click text=Submit
   await page.locator('text=Submit').click();`);
 
     expect(sources.get('Python').text).toContain(`
-    # Click text=Submit
     page.locator("text=Submit").click()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Click text=Submit
     await page.locator("text=Submit").click()`);
 
     expect(sources.get('Java').text).toContain(`
-      // Click text=Submit
       page.locator("text=Submit").click();`);
 
     expect(sources.get('C#').text).toContain(`
-        // Click text=Submit
         await page.Locator("text=Submit").ClickAsync();`);
 
     expect(message.text()).toBe('click');
@@ -83,7 +78,6 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Click text=Submit
   await page.locator('text=Submit').click();`);
     expect(message.text()).toBe('click');
   });
@@ -114,7 +108,6 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Click canvas
   await page.locator('canvas').click({
     position: {
       x: 250,
@@ -123,20 +116,16 @@ test.describe('cli codegen', () => {
   });`);
 
     expect(sources.get('Python').text).toContain(`
-    # Click canvas
     page.locator("canvas").click(position={"x":250,"y":250})`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Click canvas
     await page.locator("canvas").click(position={"x":250,"y":250})`);
 
     expect(sources.get('Java').text).toContain(`
-      // Click canvas
       page.locator("canvas").click(new Locator.ClickOptions()
         .setPosition(250, 250));`);
 
     expect(sources.get('C#').text).toContain(`
-        // Click canvas
         await page.Locator("canvas").ClickAsync(new LocatorClickOptions
         {
             Position = new Position
@@ -169,23 +158,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Click text=Submit
   await page.locator('text=Submit').click();`);
 
     expect(sources.get('Python').text).toContain(`
-    # Click text=Submit
     page.locator("text=Submit").click()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Click text=Submit
     await page.locator("text=Submit").click()`);
 
     expect(sources.get('Java').text).toContain(`
-      // Click text=Submit
       page.locator("text=Submit").click();`);
 
     expect(sources.get('C#').text).toContain(`
-        // Click text=Submit
         await page.Locator("text=Submit").ClickAsync();`);
 
     expect(message.text()).toBe('click');
@@ -220,7 +204,6 @@ test.describe('cli codegen', () => {
       page.dispatchEvent('div', 'click', { detail: 1 })
     ]);
     expect(sources.get('JavaScript').text).toContain(`
-  // Click text=Some long text here
   await page.locator('text=Some long text here').click();`);
     expect(message.text()).toBe('click');
   });
@@ -239,22 +222,17 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Fill input[name="name"]
   await page.locator('input[name="name"]').fill('John');`);
     expect(sources.get('Java').text).toContain(`
-      // Fill input[name="name"]
       page.locator("input[name=\\\"name\\\"]").fill("John");`);
 
     expect(sources.get('Python').text).toContain(`
-    # Fill input[name="name"]
     page.locator(\"input[name=\\\"name\\\"]\").fill(\"John\")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Fill input[name="name"]
     await page.locator(\"input[name=\\\"name\\\"]\").fill(\"John\")`);
 
     expect(sources.get('C#').text).toContain(`
-        // Fill input[name="name"]
         await page.Locator(\"input[name=\\\"name\\\"]\").FillAsync(\"John\");`);
 
     expect(message.text()).toBe('John');
@@ -278,22 +256,17 @@ test.describe('cli codegen', () => {
       })()
     ]);
     expect(sources.get('JavaScript').text).toContain(`
-  // Fill input[name="name"]
   await page.locator('input[name="name"]').fill('てすと');`);
     expect(sources.get('Java').text).toContain(`
-      // Fill input[name="name"]
       page.locator("input[name=\\\"name\\\"]").fill("てすと");`);
 
     expect(sources.get('Python').text).toContain(`
-    # Fill input[name="name"]
     page.locator(\"input[name=\\\"name\\\"]\").fill(\"てすと\")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Fill input[name="name"]
     await page.locator(\"input[name=\\\"name\\\"]\").fill(\"てすと\")`);
 
     expect(sources.get('C#').text).toContain(`
-        // Fill input[name="name"]
         await page.Locator(\"input[name=\\\"name\\\"]\").FillAsync(\"てすと\");`);
 
     expect(message.text()).toBe('てすと');
@@ -312,7 +285,6 @@ test.describe('cli codegen', () => {
       page.fill('textarea', 'John')
     ]);
     expect(sources.get('JavaScript').text).toContain(`
-  // Fill textarea[name="name"]
   await page.locator('textarea[name="name"]').fill('John');`);
     expect(message.text()).toBe('John');
   });
@@ -334,23 +306,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Press Enter with modifiers
   await page.locator('input[name="name"]').press('Shift+Enter');`);
 
     expect(sources.get('Java').text).toContain(`
-      // Press Enter with modifiers
       page.locator("input[name=\\\"name\\\"]").press("Shift+Enter");`);
 
     expect(sources.get('Python').text).toContain(`
-    # Press Enter with modifiers
     page.locator(\"input[name=\\\"name\\\"]\").press(\"Shift+Enter\")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Press Enter with modifiers
     await page.locator(\"input[name=\\\"name\\\"]\").press(\"Shift+Enter\")`);
 
     expect(sources.get('C#').text).toContain(`
-        // Press Enter with modifiers
         await page.Locator(\"input[name=\\\"name\\\"]\").PressAsync(\"Shift+Enter\");`);
 
     expect(messages[0].text()).toBe('press');
@@ -376,15 +343,12 @@ test.describe('cli codegen', () => {
 
     const text = recorder.sources().get('JavaScript').text;
     expect(text).toContain(`
-  // Fill input[name="one"]
   await page.locator('input[name="one"]').fill('foobar123');`);
 
     expect(text).toContain(`
-  // Press Tab
   await page.locator('input[name="one"]').press('Tab');`);
 
     expect(text).toContain(`
-  // Fill input[name="two"]
   await page.locator('input[name="two"]').fill('barfoo321');`);
   });
 
@@ -406,7 +370,6 @@ test.describe('cli codegen', () => {
       page.press('input', 'ArrowDown')
     ]);
     expect(sources.get('JavaScript').text).toContain(`
-  // Press ArrowDown
   await page.locator('input[name="name"]').press('ArrowDown');`);
     expect(messages[0].text()).toBe('press:ArrowDown');
   });
@@ -430,7 +393,6 @@ test.describe('cli codegen', () => {
       page.press('input', 'ArrowDown')
     ]);
     expect(sources.get('JavaScript').text).toContain(`
-  // Press ArrowDown
   await page.locator('input[name="name"]').press('ArrowDown');`);
     expect(messages.length).toBe(2);
     expect(messages[0].text()).toBe('down:ArrowDown');
@@ -452,23 +414,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Check input[name="accept"]
   await page.locator('input[name="accept"]').check();`);
 
     expect(sources.get('Java').text).toContain(`
-      // Check input[name="accept"]
       page.locator("input[name=\\\"accept\\\"]").check();`);
 
     expect(sources.get('Python').text).toContain(`
-    # Check input[name="accept"]
     page.locator(\"input[name=\\\"accept\\\"]\").check()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Check input[name="accept"]
     await page.locator(\"input[name=\\\"accept\\\"]\").check()`);
 
     expect(sources.get('C#').text).toContain(`
-        // Check input[name="accept"]
         await page.Locator(\"input[name=\\\"accept\\\"]\").CheckAsync();`);
 
     expect(message.text()).toBe('true');
@@ -489,7 +446,6 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Check input[name="accept"]
   await page.locator('input[name="accept"]').check();`);
     expect(message.text()).toBe('true');
   });
@@ -509,7 +465,6 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Check input[name="accept"]
   await page.locator('input[name="accept"]').check();`);
     expect(message.text()).toBe('true');
   });
@@ -529,23 +484,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Uncheck input[name="accept"]
   await page.locator('input[name="accept"]').uncheck();`);
 
     expect(sources.get('Java').text).toContain(`
-      // Uncheck input[name="accept"]
       page.locator("input[name=\\\"accept\\\"]").uncheck();`);
 
     expect(sources.get('Python').text).toContain(`
-    # Uncheck input[name="accept"]
     page.locator(\"input[name=\\\"accept\\\"]\").uncheck()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Uncheck input[name="accept"]
     await page.locator(\"input[name=\\\"accept\\\"]\").uncheck()`);
 
     expect(sources.get('C#').text).toContain(`
-        // Uncheck input[name="accept"]
         await page.Locator(\"input[name=\\\"accept\\\"]\").UncheckAsync();`);
 
     expect(message.text()).toBe('false');
@@ -566,23 +516,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Select 2
   await page.locator('select').selectOption('2');`);
 
     expect(sources.get('Java').text).toContain(`
-      // Select 2
       page.locator("select").selectOption("2");`);
 
     expect(sources.get('Python').text).toContain(`
-    # Select 2
     page.locator(\"select\").select_option(\"2\")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Select 2
     await page.locator(\"select\").select_option(\"2\")`);
 
     expect(sources.get('C#').text).toContain(`
-        // Select 2
         await page.Locator(\"select\").SelectOptionAsync(new[] { \"2\" });`);
 
     expect(message.text()).toBe('2');
@@ -604,26 +549,22 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  // Click text=link
   const [page1] = await Promise.all([
     page.waitForEvent('popup'),
     page.locator('text=link').click()
   ]);`);
 
     expect(sources.get('Java').text).toContain(`
-      // Click text=link
       Page page1 = page.waitForPopup(() -> {
         page.locator("text=link").click();
       });`);
 
     expect(sources.get('Python').text).toContain(`
-    # Click text=link
     with page.expect_popup() as popup_info:
         page.locator(\"text=link\").click()
     page1 = popup_info.value`);
 
     expect(sources.get('Python Async').text).toContain(`
-    # Click text=link
     async with page.expect_popup() as popup_info:
         await page.locator(\"text=link\").click()
     page1 = await popup_info.value`);
@@ -651,37 +592,30 @@ test.describe('cli codegen', () => {
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
-  // Click text=link
   await page.locator('text=link').click();
   await page.waitForURL('about:blank#foo');`);
 
     expect.soft(sources.get('Playwright Test').text).toContain(`
-  // Click text=link
   await page.locator('text=link').click();
   await expect(page).toHaveURL('about:blank#foo');`);
 
     expect.soft(sources.get('Java').text).toContain(`
-      // Click text=link
       page.locator("text=link").click();
       assertThat(page).hasURL("about:blank#foo");`);
 
     expect.soft(sources.get('Python').text).toContain(`
-    # Click text=link
     page.locator("text=link").click()
     page.wait_for_url("about:blank#foo")`);
 
     expect.soft(sources.get('Python Async').text).toContain(`
-    # Click text=link
     await page.locator("text=link").click()
     await page.wait_for_url("about:blank#foo")`);
 
     expect.soft(sources.get('Pytest').text).toContain(`
-    # Click text=link
     page.locator("text=link").click()
     expect(page).to_have_url("about:blank#foo")`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        // Click text=link
         await page.Locator("text=link").ClickAsync();
         await page.WaitForURLAsync("about:blank#foo");`);
 
@@ -704,27 +638,22 @@ test.describe('cli codegen', () => {
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
-  // Click text=link
   await page.locator('text=link').click();
   await page.waitForURL('about:blank#foo');`);
 
     expect.soft(sources.get('Java').text).toContain(`
-      // Click text=link
       page.locator("text=link").click();
       assertThat(page).hasURL("about:blank#foo");`);
 
     expect.soft(sources.get('Python').text).toContain(`
-    # Click text=link
     page.locator(\"text=link\").click()
     page.wait_for_url("about:blank#foo")`);
 
     expect.soft(sources.get('Python Async').text).toContain(`
-    # Click text=link
     await page.locator(\"text=link\").click()
     await page.wait_for_url("about:blank#foo")`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        // Click text=link
         await page.Locator(\"text=link\").ClickAsync();
         await page.WaitForURLAsync(\"about:blank#foo\");`);
 
