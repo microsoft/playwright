@@ -27,7 +27,7 @@ If you use DOM Testing Library in the browser (for example, you bundle end-to-en
 | `expect(screen.getByLabelText('Password')).toHaveValue('secret')` | `await expect(component.getByLabelText('Password')).toHaveValue('secret')` |
 | `screen.findByText('...')`                              | `component.getByText('...')`                      |
 | `screen.getByTestId('...')`                             | `component.getByTestId('...')`                    |
-| `screen.queryByPlaceholderText('...')`                  | `component.get('[placeholder="..."]')`            |
+| `screen.queryByPlaceholderText('...')`                  | `component.locator('[placeholder="..."]')`            |
 | `screen.getByRole('button', { pressed: true })`         | `component.getByRole('button', { pressed: true })`|
 
 ## Example
