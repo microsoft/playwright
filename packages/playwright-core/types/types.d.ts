@@ -2476,6 +2476,24 @@ export interface Page {
   }): Locator;
 
   /**
+   * Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder
+   * "Country":
+   *
+   * ```html
+   * <input placeholder="Country">
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByPlaceholderText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
    * Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles),
    * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and
    * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace**
@@ -5503,6 +5521,24 @@ export interface Frame {
    * @param options
    */
   getByLabelText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder
+   * "Country":
+   *
+   * ```html
+   * <input placeholder="Country">
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByPlaceholderText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
@@ -9885,6 +9921,24 @@ export interface Locator {
    * @param options
    */
   getByLabelText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder
+   * "Country":
+   *
+   * ```html
+   * <input placeholder="Country">
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByPlaceholderText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
@@ -15088,6 +15142,24 @@ export interface FrameLocator {
    * @param options
    */
   getByLabelText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     */
+    exact?: boolean;
+  }): Locator;
+
+  /**
+   * Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder
+   * "Country":
+   *
+   * ```html
+   * <input placeholder="Country">
+   * ```
+   *
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  getByPlaceholderText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */

@@ -52,7 +52,7 @@ export class Locator implements api.Locator {
   }
 
   static getByTestIdSelector(testId: string): string {
-    return `css=[${Locator._testIdAttributeName}=${JSON.stringify(testId)}]`;
+    return `attr=[${Locator._testIdAttributeName}=${JSON.stringify(testId)}]`;
   }
 
   static getByLabelTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
@@ -61,6 +61,12 @@ export class Locator implements api.Locator {
     const escaped = JSON.stringify(text);
     const selector = options?.exact ? `text=${escaped}` : `text=${escaped.substring(1, escaped.length - 1)}`;
     return selector +  ' >> control=resolve-label';
+  }
+
+  static getByPlaceholderTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
+    if (!isString(text))
+      return `attr=[placeholder=${text}]`;
+    return `attr=[placeholder=${JSON.stringify(text)}${options?.exact ? 's' : 'i'}]`;
   }
 
   static getByTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
@@ -195,6 +201,10 @@ export class Locator implements api.Locator {
 
   getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.locator(Locator.getByLabelTextSelector(text, options));
+  }
+
+  getByPlaceholderText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByPlaceholderTextSelector(text, options));
   }
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
@@ -386,6 +396,11 @@ export class FrameLocator implements api.FrameLocator {
   getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.locator(Locator.getByLabelTextSelector(text, options));
   }
+
+  getByPlaceholderText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByPlaceholderTextSelector(text, options));
+  }
+
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.locator(Locator.getByTextSelector(text, options));
   }

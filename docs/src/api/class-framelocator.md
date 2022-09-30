@@ -124,6 +124,16 @@ in that iframe.
 ### option: FrameLocator.getByLabelText.exact = %%-locator-get-by-text-exact-%%
 
 
+## method: FrameLocator.getByPlaceholderText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-placeholder-text-%%
+
+### param: FrameLocator.getByPlaceholderText.text = %%-locator-get-by-text-text-%%
+### option: FrameLocator.getByPlaceholderText.exact = %%-locator-get-by-text-exact-%%
+
+
 ## method: FrameLocator.getByRole
 * since: v1.27
 - returns: <[Locator]>

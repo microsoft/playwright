@@ -19,6 +19,7 @@ import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
 import { RoleEngine } from './roleSelectorEngine';
+import { parseAttributeSelector } from '../isomorphic/selectorParser';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../isomorphic/selectorParser';
 import { allEngineNames, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
 import { type TextMatcher, elementMatchesText, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher, elementText } from './selectorUtils';
@@ -104,6 +105,7 @@ export class InjectedScript {
     this._engines.set('visible', this._createVisibleEngine());
     this._engines.set('control', this._createControlEngine());
     this._engines.set('has', this._createHasEngine());
+    this._engines.set('attr', this._createNamedAttributeEngine());
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -262,6 +264,31 @@ export class InjectedScript {
       for (const element of elements)
         appendElement(element);
       return result;
+    };
+
+    return {
+      queryAll: (root: SelectorRoot, selector: string): Element[] => {
+        return queryList(root, selector);
+      }
+    };
+  }
+
+  private _createNamedAttributeEngine(): SelectorEngine {
+    const queryList = (root: SelectorRoot, selector: string): Element[] => {
+      const parsed = parseAttributeSelector(selector, true);
+      if (parsed.name || parsed.attributes.length !== 1)
+        throw new Error('Malformed attribute selector: ' + selector);
+      const { name, value, caseSensitive } = parsed.attributes[0];
+      const lowerCaseValue = caseSensitive ? null : value.toLowerCase();
+      let matcher: (s: string) => boolean;
+      if (value instanceof RegExp)
+        matcher = s => !!s.match(value);
+      else if (caseSensitive)
+        matcher = s => s === value;
+      else
+        matcher = s => s.toLowerCase().includes(lowerCaseValue!);
+      const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, `[${name}]`);
+      return elements.filter(e => matcher(e.getAttribute(name)!));
     };
 
     return {

@@ -2193,6 +2193,16 @@ Attribute name to get the value for.
 ### option: Page.getByLabelText.exact = %%-locator-get-by-text-exact-%%
 
 
+## method: Page.getByPlaceholderText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-placeholder-text-%%
+
+### param: Page.getByPlaceholderText.text = %%-locator-get-by-text-text-%%
+### option: Page.getByPlaceholderText.exact = %%-locator-get-by-text-exact-%%
+
+
 ## method: Page.getByRole
 * since: v1.27
 - returns: <[Locator]>
