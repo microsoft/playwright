@@ -182,42 +182,32 @@ await page.Locator("data-test-id=product-item", new() { HasText = "Playwright Bo
 The `role` selector reflects how users and assistive technology percieve the page, for example whether some element is a button or a checkbox. When locating by role, you should usually pass the accessible name as well, so that locator pinpoints the exact element.
 
 ```js
-// Click the button with the text "submit".
 await page.locator('role=button[name=/submit/i]').click();
 
-// Ensure that "Check me" checkbox is checked.
 await page.locator('role=checkbox[checked][name="Check me"]').check();
 ```
 
 ```python async
-# Click the button with the text "submit".
 await page.locator('role=button[name=/submit/i]').click()
 
-# Ensure that "Check me" checkbox is checked.
 await page.locator('role=checkbox[checked][name="Check me"]').check()
 ```
 
 ```python sync
-# Click the button with the text "submit".
 page.locator('role=button[name=/submit/i]').click()
 
-# Ensure that "Check me" checkbox is checked.
 page.locator('role=checkbox[checked][name="Check me"]').check()
 ```
 
 ```java
-// Click the button with the text "submit".
 page.locator("role=button[name=/submit/i]").click();
 
-// Ensure that "Check me" checkbox is checked.
 page.locator("role=checkbox[checked][name=\"Check me\"]").check();
 ```
 
 ```csharp
-// Click the button with the text "submit".
 await page.Locator("role=button[name=/submit/i]").ClickAsync();
 
-// Ensure that "Check me" checkbox is checked.
 await page.Locator("role=checkbox[checked][name=\"Check me\"]").CheckAsync();
 ```
 
@@ -269,28 +259,25 @@ You can target the label with something like `text=Password` and perform the fol
 - `setInputFiles` will set files for the input field with `type=file`;
 - `selectOption` will select an option from the select box.
 
+For example, to fill the input by targeting the label:
+
 ```js
-// Fill the input by targeting the label.
 await page.locator('text=Password').fill('secret');
 ```
 
 ```java
-// Fill the input by targeting the label.
 page.locator("text=Password").fill("secret");
 ```
 
 ```python async
-# Fill the input by targeting the label.
 await page.locator('text=Password').fill('secret')
 ```
 
 ```python sync
-# Fill the input by targeting the label.
 page.locator('text=Password').fill('secret')
 ```
 
 ```csharp
-// Fill the input by targeting the label.
 await page.Locator("text=Password").FillAsync("secret");
 ```
 
@@ -313,114 +300,79 @@ For example, consider the following DOM structure:
 </div>
 ```
 
-You can now click a button for a particular product:
+For example, we can first find a product card that contains text "Product 2", and then click the button in this specific product card.
 
 ```js
-// Find a product card that contains text "Product 2"
 const product = page.locator('data-test-id=product-card', { hasText: 'Product 2' });
-// Click the button in this specific product card
+
 await product.locator('text=Buy').click();
 ```
 
 ```python async
-# Find a product card that contains text "Product 2"
 product = page.locator("data-test-id=product-card", has_text="Product 2")
-# Click the button in this specific product card
+
 await product.locator("text=Buy").click()
 ```
 
 ```python sync
-# Find a product card that contains text "Product 2"
 product = page.locator("data-test-id=product-card", has_text="Product 2")
-# Click the button in this specific product card
+
 product.locator("text=Buy").click()
 ```
 
 ```java
-// Find a product card that contains text "Product 2"
 Locator product = page.locator("data-test-id=product-card", new Page.LocatorOptions().setHasText("Product 2"));
-// Click the button in this specific product card
+
 product.locator("text=Buy").click();
 ```
 
 ```csharp
-// Find a product card that contains text "Product 2"
 var product = page.Locator("data-test-id=product-card", new() { HasText = "Product 2" });
-// Click the button in this specific product card
+
 await product.Locator("text=Buy").clickAsync();
 ```
 
 ### Locate by CSS or XPath selector
 
-Playwright supports CSS and XPath selectors.
+Playwright supports CSS and XPath selectors, and auto-detects them if you omit `css=` or `xpath=` prefix:
 
 ```js
-// CSS
 await page.locator('css=button').click();
-
-// CSS shorthand
-await page.locator('button').click();
-
-// XPath
 await page.locator('xpath=//button').click();
 
-// XPath shorthand
+await page.locator('button').click();
 await page.locator('//button').click();
 ```
 
 ```java
-// CSS
 page.locator("css=button").click();
+page.locator("xpath=//button").click();
 
-// CSS shorthand
 page.locator("button").click();
-
-// XPath
-page.locator("x[ath=//button").click();
-
-// XPath shorthand
 page.locator("//button").click();
 ```
 
 ```python async
-# CSS
 await page.locator('css=button').click()
-
-# CSS shorthand
-await page.locator('button').click()
-
-# XPath
 await page.locator('xpath=//button').click()
 
-# XPath shorthand
+await page.locator('button').click()
 await page.locator('//button').click()
 ```
 
 ```python sync
-# CSS
 page.locator('css=button').click()
-
-# CSS shorthand
-page.locator('button').click()
-
-# XPath
 page.locator('xpath=//button').click()
 
-# XPath shorthand
+page.locator('button').click()
 page.locator('//button').click()
 ```
 
 ```csharp
-// CSS
 await page.Locator('css=button').ClickAsync();
-
-// CSS shorthand
-await page.Locator('button').ClickAsync();
-
-// XPath
 await page.Locator('xpath=//button').ClickAsync();
 
-// XPath shorthand
+await page.Locator('button').ClickAsync();
 await page.Locator('//button').ClickAsync();
 ```
 
@@ -428,33 +380,35 @@ await page.Locator('//button').ClickAsync();
 
 XPath and CSS selectors can be tied to the DOM structure or implementation. These selectors can break when the DOM structure changes. Similarly, [`method: Locator.nth`], [`method: Locator.first`], and [`method: Locator.last`] are tied to implementation and the structure of the DOM, and will target the incorrect element if the DOM changes.
 
+Long CSS or XPath chains below are an example of a **bad practice** that leads to unstable tests:
+
 ```js
-// BAD PRACTICE: avoid long css or xpath chains
 await page.locator('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input').click();
+
 await page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click();
 ```
 
 ```java
-// BAD PRACTICE: avoid long css or xpath chains
 page.locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input").click();
+
 page.locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").click();
 ```
 
 ```python async
-# BAD PRACTICE: avoid long css or xpath chains
 await page.locator('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input').click()
+
 await page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click()
 ```
 
 ```python sync
-# BAD PRACTICE: avoid long css or xpath chains
 page.locator('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input').click()
+
 page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click()
 ```
 
 ```csharp
-// BAD PRACTICE: avoid long css or xpath chains
 await page.Locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input").ClickAsync();
+
 await page.Locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").ClickAsync();
 ```
 
@@ -573,152 +527,141 @@ Consider the following example with a custom web component:
 </x-badge>
 ```
 
-You can locate in the same way as if the shadow root was not present at all:
+You can locate in the same way as if the shadow root was not present at all.
 
-```js
-// Clicks <span>Details</span>
-await page.locator('text=Details').click();
+- Click `<span>Details</span>`
+  ```js
+  await page.locator('text=Details').click();
+  ```
+  ```java
+  page.locator("text=Details").click();
+  ```
+  ```python async
+  await page.locator("text=Details").click()
+  ```
+  ```python sync
+  page.locator("text=Details").click()
+  ```
+  ```csharp
+  await page.Locator("text=Details").ClickAsync();
+  ```
 
-// Clicks <x-badge>
-await page.locator('x-badge', { hasText: 'Details' }).click();
+- Click `<x-badge>`
+  ```js
+  await page.locator('x-badge', { hasText: 'Details' }).click();
+  ```
+  ```java
+  page.locator("x-badge", new Page.LocatorOptions().setHasText("Details")).click();
+  ```
+  ```python async
+  await page.locator("x-badge", has_text="Details" ).click()
+  ```
+  ```python sync
+  page.locator("x-badge", has_text="Details" ).click()
+  ```
+  ```csharp
+  await page.Locator("x-badge", new() { HasText = "Details" }).ClickAsync();
+  ```
 
-// Ensures that <x-badge> contains "Details" text
-await expect(page.locator('x-badge')).toContainText('Details');
-```
-
-```java
-// Clicks <span>Details</span>
-page.locator("text=Details").click();
-
-// Clicks <x-badge>
-page.locator("x-badge", new Page.LocatorOptions().setHasText("Details")).click();
-
-// Ensures that <x-badge> contains "Details" text
-assertThat(page.locator("x-badge")).containsText("Details");
-```
-
-```python async
-# Clicks <span>Details</span>
-await page.locator("text=Details").click()
-
-# Clicks <x-badge>
-await page.locator("x-badge", has_text="Details" ).click()
-
-# Ensures that <x-badge> contains "Details" text
-await expect(page.locator("x-badge")).to_contain_text("Details")
-```
-
-```python sync
-# Clicks <span>Details</span>
-page.locator("text=Details").click()
-
-# Clicks <x-badge>
-page.locator("x-badge", has_text="Details" ).click()
-
-# Ensures that <x-badge> contains "Details" text
-expect(page.locator("x-badge")).to_contain_text("Details")
-```
-
-```csharp
-// Clicks <span>Details</span>
-await page.Locator("text=Details").ClickAsync();
-
-// Clicks <x-badge>
-await page.Locator("x-badge", new() { HasText = "Details" }).ClickAsync();
-
-// Ensures that <x-badge> contains "Details" text
-await Expect(page.Locator("x-badge")).ToContainTextAsync("Details");
-```
-
+- Ensure that `<x-badge>` contains text "Details"
+  ```js
+  await expect(page.locator('x-badge')).toContainText('Details');
+  ```
+  ```java
+  assertThat(page.locator("x-badge")).containsText("Details");
+  ```
+  ```python async
+  await expect(page.locator("x-badge")).to_contain_text("Details")
+  ```
+  ```python sync
+  expect(page.locator("x-badge")).to_contain_text("Details")
+  ```
+  ```csharp
+  await Expect(page.Locator("x-badge")).ToContainTextAsync("Details");
+  ```
 
 ## Lists
 
 You can also use locators to work with the element lists.
 
+For example, let's create a locator pointing to a list:
+
 ```js
-// Locate elements, this locator points to a list.
 const rows = page.locator('table tr');
-
-// Pattern 1: use locator methods to calculate text on the whole list.
-const texts = await rows.allTextContents();
-
-// Pattern 2: do something with each element in the list.
-const count = await rows.count()
-for (let i = 0; i < count; ++i)
-  console.log(await rows.nth(i).textContent());
-
-// Pattern 3: resolve locator to elements on page and map them to their text content.
-// Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
-const texts = await rows.evaluateAll(list => list.map(element => element.textContent));
 ```
-
 ```python async
-# Locate elements, this locator points to a list.
 rows = page.locator("table tr")
-
-# Pattern 1: use locator methods to calculate text on the whole list.
-texts = await rows.all_text_contents()
-
-# Pattern 2: do something with each element in the list.
-count = await rows.count()
-for i in range(count):
-  print(await rows.nth(i).text_content())
-
-# Pattern 3: resolve locator to elements on page and map them to their text content.
-# Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
-texts = await rows.evaluate_all("list => list.map(element => element.textContent)")
 ```
-
 ```python sync
-# Locate elements, this locator points to a list.
 rows = page.locator("table tr")
-
-# Pattern 1: use locator methods to calculate text on the whole list.
-texts = rows.all_text_contents()
-
-# Pattern 2: do something with each element in the list.
-count = rows.count()
-for i in range(count):
-  print(rows.nth(i).text_content())
-
-# Pattern 3: resolve locator to elements on page and map them to their text content.
-# Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
-texts = rows.evaluate_all("list => list.map(element => element.textContent)")
 ```
-
 ```java
-// Locate elements, this locator points to a list.
 Locator rows = page.locator("table tr");
-
-// Pattern 1: use locator methods to calculate text on the whole list.
-List<String> texts = rows.allTextContents();
-
-// Pattern 2: do something with each element in the list.
-int count = rows.count()
-for (int i = 0; i < count; ++i)
-  System.out.println(rows.nth(i).textContent());
-
-// Pattern 3: resolve locator to elements on page and map them to their text content.
-// Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
-Object texts = rows.evaluateAll("list => list.map(element => element.textContent)");
 ```
-
 ```csharp
-// Locate elements, this locator points to a list.
 var rows = page.Locator("table tr");
-
-// Pattern 1: use locator methods to calculate text on the whole list.
-var texts = await rows.AllTextContentsAsync();
-
-// Pattern 2: do something with each element in the list:
-var count = await rows.CountAsync()
-for (let i = 0; i < count; ++i)
-  Console.WriteLine(await rows.Nth(i).TextContentAsync());
-
-// Pattern 3: resolve locator to elements on page and map them to their text content
-// Note: the code inside evaluateAll runs in page, you can call any DOM apis there
-var texts = await rows.EvaluateAllAsync("list => list.map(element => element.textContent)");
 ```
+
+- Pattern 1: use locator methods to calculate text on the whole list
+  ```js
+  const texts = await rows.allTextContents();
+  ```
+  ```python async
+  texts = await rows.all_text_contents()
+  ```
+  ```python sync
+  texts = rows.all_text_contents()
+  ```
+  ```java
+  List<String> texts = rows.allTextContents();
+  ```
+  ```csharp
+  var texts = await rows.AllTextContentsAsync();
+  ```
+
+- Pattern 2: do something with each element in the list
+  ```js
+  const count = await rows.count()
+  for (let i = 0; i < count; ++i)
+    console.log(await rows.nth(i).textContent());
+  ```
+  ```python async
+  count = await rows.count()
+  for i in range(count):
+    print(await rows.nth(i).text_content())
+  ```
+  ```python sync
+  count = rows.count()
+  for i in range(count):
+    print(rows.nth(i).text_content())
+  ```
+  ```java
+  int count = rows.count()
+  for (int i = 0; i < count; ++i)
+    System.out.println(rows.nth(i).textContent());
+  ```
+  ```csharp
+  var count = await rows.CountAsync()
+  for (let i = 0; i < count; ++i)
+    Console.WriteLine(await rows.Nth(i).TextContentAsync());
+  ```
+
+- Pattern 3: resolve locator to elements on page and map them to their text content. Note that code inside [`method: Locator.evaluateAll`] runs in the web page and you can call any DOM apis there.
+  ```js
+  const texts = await rows.evaluateAll(list => list.map(element => element.textContent));
+  ```
+  ```python async
+  texts = await rows.evaluate_all("list => list.map(element => element.textContent)")
+  ```
+  ```python sync
+  texts = rows.evaluate_all("list => list.map(element => element.textContent)")
+  ```
+  ```java
+  Object texts = rows.evaluateAll("list => list.map(element => element.textContent)");
+  ```
+  ```csharp
+  var texts = await rows.EvaluateAllAsync("list => list.map(element => element.textContent)");
+  ```
 
 ### Picking specific element from a list
 
@@ -726,29 +669,25 @@ If you have a list of identical elements, and the only way to distinguish betwee
 
 However, use these methods with caution. Often times, the page might change, and locator will point to a completely different element from the one you expected. Instead, try to come up with a unique locator that will pass the [strictness criteria](#strictness).
 
+For example, to click the third item in the list of products:
 
 ```js
-// Click the third item in the list of products
 await page.locator('data-test-id=product-card').nth(3).click();
 ```
 
 ```java
-// Click the third item in the list of products
 page.locator("data-test-id=product-card").nth(3).click();
 ```
 
 ```python async
-# Click the third item in the list of products
 await page.locator("data-test-id=product-card").nth(3).click()
 ```
 
 ```python sync
-# Click the third item in the list of products
 page.locator("data-test-id=product-card").nth(3).click()
 ```
 
 ```csharp
-// Click the third item in the list of products
 await page.Locator("data-test-id=product-card").Nth(3).ClickAsync();
 ```
 
