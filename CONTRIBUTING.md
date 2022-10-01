@@ -17,6 +17,12 @@
 
 ### Getting Code
 
+Make sure you're running node >= 14.x and npm >= 8, if not upgrading your npm
+
+```bash
+npm i -g npm@8
+```
+
 1. Clone this repository
 
 ```bash
@@ -27,7 +33,8 @@ cd playwright
 2. Install dependencies
 
 ```bash
-npm install
+npm ci
+npm ci @playwright/test
 ```
 
 3. Build Playwright
