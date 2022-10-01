@@ -25,3 +25,7 @@ export function escapeWithQuotes(text: string, char: string = '\'') {
     return char + escapedText.replace(/[`]/g, '`') + char;
   throw new Error('Invalid escape char');
 }
+
+export function toTitleCase(name: string) {
+  return name.charAt(0).toUpperCase() + name.substring(1);
+}

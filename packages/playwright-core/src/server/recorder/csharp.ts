@@ -15,13 +15,14 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
+import { asLocator } from './language';
+import type { LanguageGenerator, LanguageGeneratorOptions, LocatorBase, LocatorType } from './language';
 import { sanitizeDeviceOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
-import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
+import { escapeWithQuotes, toTitleCase } from '../../utils/isomorphic/stringUtils';
 import deviceDescriptors from '../deviceDescriptors';
 
 type CSharpLanguageMode = 'library' | 'mstest' | 'nunit';
@@ -76,7 +77,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
     } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
-      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'FrameLocator'));
+      const locators = actionInContext.frame.selectorsChain.map(selector => `.FrameLocator(${quote(selector)})`);
       subject = `${pageAlias}${locators.join('')}`;
     } else if (actionInContext.frame.name) {
       subject = `${pageAlias}.Frame(${quote(actionInContext.frame.name)})`;
@@ -139,28 +140,32 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         if (action.position)
           options.position = action.position;
         if (!Object.entries(options).length)
-          return asLocator(action.selector) + `.${method}Async()`;
+          return this._asLocator(action.selector) + `.${method}Async()`;
         const optionsString = formatObject(options, '    ', 'Locator' + method + 'Options');
-        return asLocator(action.selector) + `.${method}Async(${optionsString})`;
+        return this._asLocator(action.selector) + `.${method}Async(${optionsString})`;
       }
       case 'check':
-        return asLocator(action.selector) + `.CheckAsync()`;
+        return this._asLocator(action.selector) + `.CheckAsync()`;
       case 'uncheck':
-        return asLocator(action.selector) + `.UncheckAsync()`;
+        return this._asLocator(action.selector) + `.UncheckAsync()`;
       case 'fill':
-        return asLocator(action.selector) + `.FillAsync(${quote(action.text)})`;
+        return this._asLocator(action.selector) + `.FillAsync(${quote(action.text)})`;
       case 'setInputFiles':
-        return asLocator(action.selector) + `.SetInputFilesAsync(${formatObject(action.files)})`;
+        return this._asLocator(action.selector) + `.SetInputFilesAsync(${formatObject(action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return asLocator(action.selector) + `.PressAsync(${quote(shortcut)})`;
+        return this._asLocator(action.selector) + `.PressAsync(${quote(shortcut)})`;
       }
       case 'navigate':
         return `GotoAsync(${quote(action.url)})`;
       case 'select':
-        return asLocator(action.selector) + `.SelectOptionAsync(${formatObject(action.options)})`;
+        return this._asLocator(action.selector) + `.SelectOptionAsync(${formatObject(action.options)})`;
     }
+  }
+
+  private _asLocator(selector: string) {
+    return asLocator(this, selector);
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
@@ -216,6 +221,47 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     return `${storageStateLine}    }
 }\n`;
   }
+
+  generateLocator(base: LocatorBase, kind: LocatorType, body: string, options: { attrs?: Record<string, string | boolean>, hasText?: string, exact?: boolean } = {}): string {
+    switch (kind) {
+      case 'default':
+        return `Locator(${quote(body)})`;
+      case 'nth':
+        return `Nth(${body})`;
+      case 'first':
+        return `First`;
+      case 'last':
+        return `Last`;
+      case 'role':
+        const attrs: string[] = [];
+        for (const [name, value] of Object.entries(options.attrs!))
+          attrs.push(`${toTitleCase(name)} = ${typeof value === 'string' ? quote(value) : value}`);
+        const attrString = attrs.length ? `, new () { ${attrs.join(', ')} }` : '';
+        return `GetByRole(${quote(body)}${attrString})`;
+      case 'has-text':
+        return `Locator(${quote(body)}, new () { HasTextString: ${quote(options.hasText!)} })`;
+      case 'test-id':
+        return `GetByTestId(${quote(body)})`;
+      case 'text':
+        return toCallWithExact('GetByText', body, !!options.exact);
+      case 'alt':
+        return toCallWithExact('GetByAltText', body, !!options.exact);
+      case 'placeholder':
+        return toCallWithExact('GetByPlaceholderText', body, !!options.exact);
+      case 'label':
+        return toCallWithExact('GetByLabelText', body, !!options.exact);
+      case 'title':
+        return toCallWithExact('GetByTitle', body, !!options.exact);
+      default:
+        throw new Error('Unknown selector kind ' + kind);
+    }
+  }
+}
+
+function toCallWithExact(method: string, body: string, exact: boolean) {
+  if (exact)
+    return `${method}(${quote(body)}, new () { Exact: true })`;
+  return `${method}(${quote(body)})`;
 }
 
 function formatObject(value: any, indent = '    ', name = ''): string {
@@ -346,13 +392,4 @@ class CSharpFormatter {
 
 function quote(text: string) {
   return escapeWithQuotes(text, '\"');
-}
-
-function asLocator(selector: string, locatorFn = 'Locator') {
-  const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
-  if (!match)
-    return `${locatorFn}(${quote(selector)})`;
-  if (+match[2] === 0)
-    return `${locatorFn}(${quote(match[1])}).First`;
-  return `${locatorFn}(${quote(match[1])}).Nth(${match[2]})`;
 }

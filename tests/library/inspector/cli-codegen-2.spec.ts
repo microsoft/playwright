@@ -231,28 +231,28 @@ test.describe('cli codegen', () => {
     expect(sources.get('JavaScript').text).toContain(`
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.locator('role=link[name=\"Download\"]').click()
+    page.getByRole('link', { name: 'Download' }).click()
   ]);`);
 
     expect(sources.get('Java').text).toContain(`
       BrowserContext context = browser.newContext();`);
     expect(sources.get('Java').text).toContain(`
       Download download = page.waitForDownload(() -> {
-        page.locator("role=link[name=\\\"Download\\\"]").click();
+        page.getByRole("link", new Page.GetByRoleOptions().setName("Download")).click();
       });`);
 
     expect(sources.get('Python').text).toContain(`
     context = browser.new_context()`);
     expect(sources.get('Python').text).toContain(`
     with page.expect_download() as download_info:
-        page.locator(\"role=link[name=\\\"Download\\\"]\").click()
+        page.get_by_role("link", name="Download").click()
     download = download_info.value`);
 
     expect(sources.get('Python Async').text).toContain(`
     context = await browser.new_context()`);
     expect(sources.get('Python Async').text).toContain(`
     async with page.expect_download() as download_info:
-        await page.locator(\"role=link[name=\\\"Download\\\"]\").click()
+        await page.get_by_role("link", name="Download").click()
     download = await download_info.value`);
 
     expect(sources.get('C#').text).toContain(`
@@ -260,7 +260,7 @@ test.describe('cli codegen', () => {
     expect(sources.get('C#').text).toContain(`
         var download1 = await page.RunAndWaitForDownloadAsync(async () =>
         {
-            await page.Locator(\"role=link[name=\\\"Download\\\"]\").ClickAsync();
+            await page.GetByRole("link", new () { Name = "Download" }).ClickAsync();
         });`);
   });
 
@@ -283,22 +283,22 @@ test.describe('cli codegen', () => {
     console.log(\`Dialog message: \${dialog.message()}\`);
     dialog.dismiss().catch(() => {});
   });
-  await page.locator('role=button[name=\"click me\"]').click();`);
+  await page.getByRole('button', { name: 'click me' }).click();`);
 
     expect(sources.get('Java').text).toContain(`
       page.onceDialog(dialog -> {
         System.out.println(String.format("Dialog message: %s", dialog.message()));
         dialog.dismiss();
       });
-      page.locator("role=button[name=\\\"click me\\\"]").click();`);
+      page.getByRole("button", new Page.GetByRoleOptions().setName("click me")).click();`);
 
     expect(sources.get('Python').text).toContain(`
     page.once(\"dialog\", lambda dialog: dialog.dismiss())
-    page.locator(\"role=button[name=\\\"click me\\\"]\").click()`);
+    page.get_by_role("button", name="click me").click()`);
 
     expect(sources.get('Python Async').text).toContain(`
     page.once(\"dialog\", lambda dialog: dialog.dismiss())
-    await page.locator(\"role=button[name=\\\"click me\\\"]\").click()`);
+    await page.get_by_role("button", name="click me").click()`);
 
     expect(sources.get('C#').text).toContain(`
         void page_Dialog1_EventHandler(object sender, IDialog dialog)
@@ -308,7 +308,7 @@ test.describe('cli codegen', () => {
             page.Dialog -= page_Dialog1_EventHandler;
         }
         page.Dialog += page_Dialog1_EventHandler;
-        await page.Locator(\"role=button[name=\\\"click me\\\"]\").ClickAsync();`);
+        await page.GetByRole("button", new () { Name = "click me" }).ClickAsync();`);
 
   });
 
@@ -352,7 +352,7 @@ test.describe('cli codegen', () => {
       expect(sources.get('JavaScript').text).toContain(`
   const [page1] = await Promise.all([
     page.waitForEvent('popup'),
-    page.locator('role=link[name=\"link\"]').click({
+    page.getByRole('link', { name: 'link' }).click({
       modifiers: ['${platform === 'darwin' ? 'Meta' : 'Control'}']
     })
   ]);`);
