@@ -60,13 +60,13 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       else
         formatter.add(`const ${pageAlias} = await context.newPage();`);
 
-      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
-        if (this._isCodeceptjs === true) {
+      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/') {
+        if (this._isCodeceptjs === true)
           formatter.add('');
-        }
-        else {
+
+        else
           formatter.add(`await ${pageAlias}.goto(${quote(action.url)});`);
-        }
+      }
 
       return formatter.format();
     }
@@ -282,10 +282,10 @@ function asCodeceptjsLocator(selector: string) {
   if (!match)
     return `locate(${quote(selector)})`;
   if (+match[2] === 0) {
-    if (match[1].includes("text="))
-      return `locate(${quote(`//*[text() = "${match[1].split('=')[1]}"]`)}).first()`
+    if (match[1].includes('text='))
+      return `locate(${quote(`//*[text() = "${match[1].split('=')[1]}"]`)}).first()`;
   }
-  return `locate(${quote(`//*[text() = "${match[1].split('=')[1]}"]`)}).at(${match[2] + 1})`
+  return `locate(${quote(`//*[text() = "${match[1].split('=')[1]}"]`)}).at(${match[2] + 1})`;
 }
 
 function formatOptions(value: any, hasArguments: boolean): string {
