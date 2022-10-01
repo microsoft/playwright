@@ -45,7 +45,7 @@ npm run build
 4. Run all Playwright tests locally. For more information about tests, read [Running & Writing Tests](#running--writing-tests).
 
 ```bash
-npm run local-test
+npm test
 ```
 
 ### Code reviews
