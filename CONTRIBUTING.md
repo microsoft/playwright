@@ -34,7 +34,6 @@ cd playwright
 
 ```bash
 npm ci
-npm ci @playwright/test
 ```
 
 3. Build Playwright
