@@ -140,3 +140,10 @@ test('should print load/save storageState', async ({ browserName, channel, runCL
 })();`;
   await cli.waitFor(expectedResult2);
 });
+
+test('should print the correct codeceptjs template', async ({ browserName, channel, runCLI }) => {
+  const cli = runCLI(['--target=codeceptjs', emptyHTML]);
+  const expectedResult = `Scenario('Your Tests', async ({ I }) => {`;
+  await cli.waitFor(expectedResult);
+  expect(cli.text()).toContain(expectedResult);
+});

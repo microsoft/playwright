@@ -364,6 +364,7 @@ class ContextRecorder extends EventEmitter {
       new JavaLanguageGenerator(),
       new JavaScriptLanguageGenerator(/* isPlaywrightTest */false),
       new JavaScriptLanguageGenerator(/* isPlaywrightTest */true),
+      new JavaScriptLanguageGenerator(/* isCodeceptjsTest */false, true),
       new PythonLanguageGenerator(/* isAsync */false, /* isPytest */true),
       new PythonLanguageGenerator(/* isAsync */false, /* isPytest */false),
       new PythonLanguageGenerator(/* isAsync */true,  /* isPytest */false),

@@ -31,11 +31,13 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   name: string;
   highlighter = 'javascript';
   private _isTest: boolean;
+  private _isCodeceptjs: undefined | boolean;
 
-  constructor(isTest: boolean) {
-    this.id = isTest ? 'test' : 'javascript';
-    this.name = isTest ? 'Test Runner' : 'Library';
+  constructor(isTest: boolean, isCodeceptjs?: boolean) {
+    this.id = isTest ? 'test' : (isCodeceptjs ? 'codeceptjs' : 'javascript');
+    this.name = isTest ? 'Test Runner' : (isCodeceptjs ? 'CodeceptJS Playwright' : 'Library');
     this._isTest = isTest;
+    this._isCodeceptjs = isCodeceptjs;
   }
 
   generateAction(actionInContext: ActionInContext): string {
@@ -43,15 +45,29 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     if (this._isTest && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
 
-    const pageAlias = actionInContext.frame.pageAlias;
+    if (this._isCodeceptjs && (action.name === 'openPage' || action.name === 'closePage'))
+      return '';
+
+    const pageAlias = this._isCodeceptjs ? 'I' : actionInContext.frame.pageAlias;
+
     const formatter = new JavaScriptFormatter(2);
     formatter.newLine();
     formatter.add('// ' + actionTitle(action));
 
     if (action.name === 'openPage') {
-      formatter.add(`const ${pageAlias} = await context.newPage();`);
+      if (this._isCodeceptjs)
+        formatter.add('');
+      else
+        formatter.add(`const ${pageAlias} = await context.newPage();`);
+
       if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
-        formatter.add(`await ${pageAlias}.goto(${quote(action.url)});`);
+        if (this._isCodeceptjs === true) {
+          formatter.add('');
+        }
+        else {
+          formatter.add(`await ${pageAlias}.goto(${quote(action.url)});`);
+        }
+
       return formatter.format();
     }
 
@@ -97,7 +113,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       formatter.add(`${pageAlias}.waitForEvent('download'),`);
 
     const prefix = (signals.popup || signals.download) ? '' : 'await ';
-    const actionCall = this._generateActionCall(action);
+    const actionCall = this._generateActionCall(action, this._isCodeceptjs);
     const suffix = emitPromiseAll ? '' : ';';
     formatter.add(`${prefix}${subject}.${actionCall}${suffix}`);
 
@@ -106,13 +122,48 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     } else if (signals.assertNavigation) {
       if (this._isTest)
         formatter.add(`await expect(${pageAlias}).toHaveURL(${quote(signals.assertNavigation.url)});`);
+      else if (this._isCodeceptjs)
+        formatter.add(`I.seeInCurrentUrl(${quote(signals.assertNavigation.url)});`);
       else
         formatter.add(`await ${pageAlias}.waitForURL(${quote(signals.assertNavigation.url)});`);
     }
     return formatter.format();
   }
 
-  private _generateActionCall(action: Action): string {
+  private _generateActionCall(action: Action, isCodeceptjs?: boolean): string {
+    if (isCodeceptjs) {
+      switch (action.name) {
+        case 'openPage':
+          throw Error('Not reached');
+        case 'click': {
+          let method = 'click';
+          if (action.clickCount === 2)
+            method = 'doubleClick';
+          const modifiers = toModifiers(action.modifiers);
+          const options: MouseClickOptions = {};
+          if (action.button !== 'left')
+            options.button = action.button;
+          if (modifiers.length)
+            options.modifiers = modifiers;
+          if (action.clickCount > 2)
+            options.clickCount = action.clickCount;
+          if (action.position)
+            options.position = action.position;
+          return `${method}(${asCodeceptjsLocator(action.selector)})`;
+        }
+        case 'check':
+          return `checkOption(${asCodeceptjsLocator(action.selector)})`;
+        case 'uncheck':
+          return `uncheckOption(${asCodeceptjsLocator(action.selector)})`;
+        case 'fill':
+          return `fillField(${asCodeceptjsLocator(action.selector)}, ${quote(action.text)})`;
+        case 'navigate':
+          return `amOnPage(${quote(action.url)})`;
+        case 'select':
+          return `selectOption(${asCodeceptjsLocator(action.selector)}, ${formatObject(action.options.length > 1 ? action.options : action.options[0])})`;
+      }
+    }
+
     switch (action.name) {
       case 'openPage':
         throw Error('Not reached');
@@ -158,12 +209,16 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   generateHeader(options: LanguageGeneratorOptions): string {
     if (this._isTest)
       return this.generateTestHeader(options);
+    if (this._isCodeceptjs)
+      return this.generateCodeceptjsHeader(options);
     return this.generateStandaloneHeader(options);
   }
 
   generateFooter(saveStorage: string | undefined): string {
     if (this._isTest)
       return this.generateTestFooter(saveStorage);
+    if (this._isCodeceptjs)
+      return this.generateCodeceptjsFooter(saveStorage);
     return this.generateStandaloneFooter(saveStorage);
   }
 
@@ -177,7 +232,19 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
     return formatter.format();
   }
 
+  generateCodeceptjsHeader(options?: LanguageGeneratorOptions): string {
+    const formatter = new JavaScriptFormatter();
+    formatter.add(`
+      Scenario('Your Tests', async ({ I }) => {
+   `);
+    return formatter.format();
+  }
+
   generateTestFooter(saveStorage: string | undefined): string {
+    return `\n});`;
+  }
+
+  generateCodeceptjsFooter(saveStorage: string | undefined): string {
     return `\n});`;
   }
 
@@ -208,6 +275,17 @@ function asLocator(selector: string, locatorFn = 'locator') {
   if (+match[2] === 0)
     return `${locatorFn}(${quote(match[1])}).first()`;
   return `${locatorFn}(${quote(match[1])}).nth(${match[2]})`;
+}
+
+function asCodeceptjsLocator(selector: string) {
+  const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
+  if (!match)
+    return `locate(${quote(selector)})`;
+  if (+match[2] === 0) {
+    if (match[1].includes("text="))
+      return `locate(${quote(`//*[text() = "${match[1].split('=')[1]}"]`)}).first()`
+  }
+  return `locate(${quote(`//*[text() = "${match[1].split('=')[1]}"]`)}).at(${match[2] + 1})`
 }
 
 function formatOptions(value: any, hasArguments: boolean): string {
