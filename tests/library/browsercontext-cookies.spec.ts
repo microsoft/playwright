@@ -349,3 +349,48 @@ it('should be able to send third party cookies via an iframe', async ({ browser,
     await context.close();
   }
 });
+
+it('should support requestStorageAccess', async ({ page, server, browserName, isMac }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17285' });
+  it.skip(browserName === 'chromium', 'requestStorageAccess API is not available in Chromium');
+  it.fixme(browserName === 'webkit' && isMac, 'Have to accept dialog');
+  server.setRoute('/set-cookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', 'name=value; Path=/');
+    res.end();
+  });
+  // Navigate once to the domain as top level.
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/set-cookie.html');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<iframe src="${server.CROSS_PROCESS_PREFIX + '/empty.html'}"></iframe>`);
+
+  const frame = page.frames()[1];
+  if (browserName === 'firefox') {
+    expect(await frame.evaluate(() => document.hasStorageAccess())).toBeTruthy();
+    {
+      const [serverRequest] = await Promise.all([
+        server.waitForRequest('/title.html'),
+        frame.evaluate(() => fetch('/title.html'))
+      ]);
+      expect(serverRequest.headers.cookie).toBe('name=value');
+    }
+    return;
+  } else {
+    expect(await frame.evaluate(() => document.hasStorageAccess())).toBeFalsy();
+    {
+      const [serverRequest] = await Promise.all([
+        server.waitForRequest('/title.html'),
+        frame.evaluate(() => fetch('/title.html'))
+      ]);
+      expect(serverRequest.headers.cookie).toBeFalsy();
+    }
+    expect(await frame.evaluate(() => document.requestStorageAccess().then(() => true, e => false))).toBeTruthy();
+    expect(await frame.evaluate(() => document.hasStorageAccess())).toBeTruthy();
+    {
+      const [serverRequest] = await Promise.all([
+        server.waitForRequest('/title.html'),
+        frame.evaluate(() => fetch('/title.html'))
+      ]);
+      expect(serverRequest.headers.cookie).toBe('name=value');
+    }
+  }
+});
