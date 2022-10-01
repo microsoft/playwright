@@ -20,7 +20,7 @@
 Make sure you're running node >= 14.x and npm >= 8, if not upgrading your npm
 
 ```bash
-npm i -g npm@8
+npm i -g npm@latest
 ```
 
 1. Clone this repository
