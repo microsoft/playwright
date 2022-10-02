@@ -48,23 +48,30 @@ export const fixtures: Fixtures<
     },
 
     mount: async ({ page }, use) => {
-      await use(async (component: JsxComponent | string, options?: MountOptions) => {
-        const selector = await (page as any)._wrapApiCall(async () => {
-          return await innerMount(page, component, options);
-        }, true);
-        const locator = page.locator(selector);
-        return Object.assign(locator, {
-          unmount: async () => {
-            await locator.evaluate(async () => {
-              const rootElement = document.getElementById('root')!;
-              await window.playwrightUnmount(rootElement);
-            });
-          },
-          update: async (options: JsxComponent | Omit<MountOptions, 'hooksConfig'>) => {
-            if (isJsxApi(options)) return await innerUpdate(page, options);
-            await innerUpdate(page, component, options);
-          }
+      await use((component: JsxComponent | string, options?: MountOptions) => {
+        async function mount() {
+          const selector = await (page as any)._wrapApiCall(async () => {
+            return await innerMount(page, component, options);
+          }, true);
+          const locator = page.locator(selector);
+          return Object.assign(locator, {
+            unmount: async () => {
+              await locator.evaluate(async () => {
+                const rootElement = document.getElementById('root')!;
+                await window.playwrightUnmount(rootElement);
+              });
+            },
+            update: async (options: JsxComponent | Omit<MountOptions, 'hooksConfig'>) => {
+              if (isJsxApi(options)) return await innerUpdate(page, options);
+              await innerUpdate(page, component, options);
+            }
+          });
+        }
+        page.addListener('load', async page => {
+          if (page.url().startsWith(process.env.PLAYWRIGHT_TEST_BASE_URL!))
+            await mount();
         });
+        return mount();
       });
       boundCallbacksForMount = [];
     },
