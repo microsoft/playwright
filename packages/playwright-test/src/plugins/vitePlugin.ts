@@ -139,8 +139,10 @@ export function createPlugin(
         sourcemap: true,
       };
 
-      if (sourcesDirty)
+      if (sourcesDirty) {
         await build(viteConfig);
+        fs.renameSync(`${outDir}/${relativeTemplateDir}/index.html`, `${outDir}/index.html`);
+      }
 
       if (hasNewTests || hasNewComponents || sourcesDirty)
         await fs.promises.writeFile(buildInfoFile, JSON.stringify(buildInfo, undefined, 2));
@@ -150,7 +152,7 @@ export function createPlugin(
       const isAddressInfo = (x: any): x is AddressInfo => x?.address;
       const address = previewServer.httpServer.address();
       if (isAddressInfo(address))
-        process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL = `http://localhost:${address.port}/${relativeTemplateDir}/index.html`;
+        process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL = `http://localhost:${address.port}`;
     },
 
     teardown: async () => {
