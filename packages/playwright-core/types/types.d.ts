@@ -28,7 +28,7 @@ type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelector
   state?: 'visible'|'attached';
 };
 
-// https://www.w3.org/TR/wai-aria-1.1/#widget_roles
+// https://www.w3.org/TR/wai-aria-1.2/#widget_roles
 type ARIAWidgetRole =
   | 'button'
   | 'checkbox'
