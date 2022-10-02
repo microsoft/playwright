@@ -278,8 +278,7 @@ test('…', async { mount, page, context } => {
 
 ```js
 import { test, expect } from '@playwright/experimental-ct-react'
-
-import HelloWorld from './HelloWorld.tsx'
+import HelloWorld from './HelloWorld'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -295,7 +294,6 @@ test('should work', async ({ mount }) => {
 
 ```js
 import { test, expect } from '@playwright/experimental-ct-vue'
-
 import HelloWorld from './HelloWorld.vue'
 
 test.use({ viewport: { width: 500, height: 500 } })
@@ -316,22 +314,17 @@ test('should work', async ({ mount }) => {
 
 ```js
 import { test, expect } from '@playwright/experimental-ct-svelte'
-
-import NamedSlots from './NamedSlots.svelte'
+import HelloWorld from './HelloWorld.svelte'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
-test('named slots should work', async ({ mount }) => {
-  const component = await mount(NamedSlots, {
-    slots: {
-      header: 'Header',
-      main: 'Main Content',
-      footer: 'Footer'
+test('should work', async ({ mount }) => {
+  const component = await mount(HelloWorld, {
+    props: {
+      msg: 'Greetings'
     }
-  })
-  await expect(component).toContainText('Header')
-  await expect(component).toContainText('Main Content')
-  await expect(component).toContainText('Footer')
+  });
+  await expect(component).toContainText('Greetings')
 })
 ```
 
@@ -341,22 +334,13 @@ test('named slots should work', async ({ mount }) => {
 
 ```js
 import { test, expect } from '@playwright/experimental-ct-solid'
-
-import NamedSlots from './NamedSlots'
+import HelloWorld from './HelloWorld'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
-test('named slots should work', async ({ mount }) => {
-  const component = await mount(NamedSlots, {
-    slots: {
-      header: 'Header',
-      main: 'Main Content',
-      footer: 'Footer'
-    }
-  })
-  await expect(component).toContainText('Header')
-  await expect(component).toContainText('Main Content')
-  await expect(component).toContainText('Footer')
+test('should work', async ({ mount }) => {
+  const component = await mount(<HelloWorld msg="greetings" />);
+  await expect(component).toContainText('Greetings')
 })
 ```
 
