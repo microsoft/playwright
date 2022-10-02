@@ -28,6 +28,108 @@ type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelector
   state?: 'visible'|'attached';
 };
 
+// https://www.w3.org/TR/wai-aria-1.1/#widget_roles
+type ARIAWidgetRole =
+  | 'button'
+  | 'checkbox'
+  | 'gridcell'
+  | 'link'
+  | 'menuitem'
+  | 'menuitemcheckbox'
+  | 'menuitemradio'
+  | 'option'
+  | 'progressbar'
+  | 'radio'
+  | 'scrollbar'
+  | 'searchbox'
+  | 'separator'
+  | 'slider'
+  | 'spinbutton'
+  | 'switch'
+  | 'tab'
+  | 'tabpanel'
+  | 'textbox'
+  | 'treeitem'
+  | 'combobox'
+  | 'grid'
+  | 'listbox'
+  | 'menu'
+  | 'menubar'
+  | 'radiogroup'
+  | 'tablist'
+  | 'tree'
+  | 'treegrid';
+
+// https://www.w3.org/TR/wai-aria-1.2/#document_structure_roles
+type ARIADocumentStructureRole =
+  | 'application'
+  | 'article'
+  | 'blockquote'
+  | 'caption'
+  | 'cell'
+  | 'columnheader'
+  | 'definition'
+  | 'deletion'
+  | 'directory'
+  | 'document'
+  | 'emphasis'
+  | 'feed'
+  | 'figure'
+  | 'generic'
+  | 'group'
+  | 'heading'
+  | 'img'
+  | 'insertion'
+  | 'list'
+  | 'listitem'
+  | 'math'
+  | 'meter'
+  | 'none'
+  | 'note'
+  | 'paragraph'
+  | 'presentation'
+  | 'row'
+  | 'rowgroup'
+  | 'rowheader'
+  | 'separator'
+  | 'strong'
+  | 'subscript'
+  | 'superscript'
+  | 'table'
+  | 'term'
+  | 'time'
+  | 'toolbar'
+  | 'tooltip';
+
+// https://www.w3.org/TR/wai-aria-1.2/#landmark_roles
+type ARIALandmarkRole =
+ | 'banner'
+ | 'complementary'
+ | 'contentinfo'
+ | 'form'
+ | 'main'
+ | 'navigation'
+ | 'region'
+ | 'search';
+
+//https://www.w3.org/TR/wai-aria-1.2/#live_region_roles
+type ARIALiveRegionRole = 'alert' | 'log' | 'marquee' | 'status' | 'timer';
+
+// https://www.w3.org/TR/wai-aria-1.2/#window_roles
+type ARIAWindowRole = 'alertdialog' | 'dialog';
+
+type ARIAUncategorizedRole = 'code';
+
+// Typed version of: https://www.w3.org/TR/wai-aria-1.2/#roles
+type AriaRole = 
+  | ARIAWidgetRole 
+  | ARIADocumentStructureRole 
+  | ARIALandmarkRole 
+  | ARIALiveRegionRole
+  | ARIAWindowRole 
+  | ARIADocumentStructureRole  
+  | ARIAUncategorizedRole;
+
 /**
  * - extends: [EventEmitter]
  *
@@ -2523,7 +2625,7 @@ export interface Page {
    * @param role Required aria role.
    * @param options
    */
-  getByRole(role: string, options?: {
+  getByRole(role: AriaRole, options?: {
     /**
      * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for
      * checked are `true`, `false` and `"mixed"`.
@@ -5609,7 +5711,7 @@ export interface Frame {
    * @param role Required aria role.
    * @param options
    */
-  getByRole(role: string, options?: {
+  getByRole(role: AriaRole, options?: {
     /**
      * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for
      * checked are `true`, `false` and `"mixed"`.
@@ -10043,7 +10145,7 @@ export interface Locator {
    * @param role Required aria role.
    * @param options
    */
-  getByRole(role: string, options?: {
+  getByRole(role: AriaRole, options?: {
     /**
      * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for
      * checked are `true`, `false` and `"mixed"`.
@@ -15298,7 +15400,7 @@ export interface FrameLocator {
    * @param role Required aria role.
    * @param options
    */
-  getByRole(role: string, options?: {
+  getByRole(role: AriaRole, options?: {
     /**
      * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for
      * checked are `true`, `false` and `"mixed"`.
