@@ -38,22 +38,22 @@ it.describe('Drag and drop', () => {
     await page.hover('#target');
     await page.mouse.up();
     expect(await events.jsonValue()).toEqual(browserName === 'firefox' ? [
-      'mousemove at 121;87',
-      'mousedown at 121;87',
-      'dragstart at 121;87',
-      'mousemove at 241;351',
+      'mousemove at 120;86',
+      'mousedown at 120;86',
+      'dragstart at 120;86',
+      'mousemove at 240;350',
       'dragenter at 0;0',
       'dragover at 0;0',
       'drop at 0;0',
       'dragend',
     ] : [
-      'mousemove at 121;87',
-      'mousedown at 121;87',
-      'mousemove at 241;351',
-      'dragstart at 121;87',
-      'dragenter at 241;351',
-      'dragover at 241;351',
-      'drop at 241;351',
+      'mousemove at 120;86',
+      'mousedown at 120;86',
+      'mousemove at 240;350',
+      'dragstart at 120;86',
+      'dragenter at 240;350',
+      'dragover at 240;350',
+      'drop at 240;350',
       'dragend',
     ]);
   });
@@ -67,17 +67,17 @@ it.describe('Drag and drop', () => {
     await page.mouse.down();
     await page.hover('#target');
     expect(await events.jsonValue()).toEqual(browserName === 'firefox' ? [
-      'mousemove at 121;87',
-      'mousedown at 121;87',
-      'dragstart at 121;87',
-      'mousemove at 241;351',
+      'mousemove at 120;86',
+      'mousedown at 120;86',
+      'dragstart at 120;86',
+      'mousemove at 240;350',
       'dragenter at 0;0',
     ] : [
-      'mousemove at 121;87',
-      'mousedown at 121;87',
-      'mousemove at 241;351',
-      'dragstart at 121;87',
-      'dragenter at 241;351',
+      'mousemove at 120;86',
+      'mousedown at 120;86',
+      'mousemove at 240;350',
+      'dragstart at 120;86',
+      'dragenter at 240;350',
     ]);
   });
 
@@ -98,22 +98,22 @@ it.describe('Drag and drop', () => {
     await page.mouse.up();
     expect(await frame.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
     expect(await frameEvents.jsonValue()).toEqual(browserName === 'firefox' ? [
-      'mousemove at 121;87',
-      'mousedown at 121;87',
-      'dragstart at 121;87',
-      'mousemove at 241;351',
+      'mousemove at 120;86',
+      'mousedown at 120;86',
+      'dragstart at 120;86',
+      'mousemove at 240;350',
       'dragenter at 0;0',
       'dragover at 0;0',
       'drop at 0;0',
       'dragend',
     ] : [
-      'mousemove at 121;87',
-      'mousedown at 121;87',
-      'mousemove at 241;351',
-      'dragstart at 121;87',
-      'dragenter at 241;351',
-      'dragover at 241;351',
-      'drop at 241;351',
+      'mousemove at 120;86',
+      'mousedown at 120;86',
+      'mousemove at 240;350',
+      'dragstart at 120;86',
+      'dragenter at 240;350',
+      'dragover at 240;350',
+      'drop at 240;350',
       'dragend',
     ]);
     expect(await pageEvents.jsonValue()).toEqual([]);
@@ -129,23 +129,23 @@ it.describe('Drag and drop', () => {
     await page.mouse.up();
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(false); // found source in target
     expect(await events.jsonValue()).toEqual(browserName === 'firefox' ? [
-      'mousemove at 121;87',
-      'mousedown at 121;87',
-      'dragstart at 121;87',
-      'mousemove at 241;351',
+      'mousemove at 120;86',
+      'mousedown at 120;86',
+      'dragstart at 120;86',
+      'mousemove at 240;350',
       'dragenter at 0;0',
       'dragover at 0;0',
       'dragend',
-      'mouseup at 241;351',
+      'mouseup at 240;350',
     ] : [
-      'mousemove at 121;87',
-      'mousedown at 121;87',
-      'mousemove at 241;351',
-      'dragstart at 121;87',
-      'dragenter at 241;351',
-      browserName === 'chromium' ? null : 'dragover at 241;351',
+      'mousemove at 120;86',
+      'mousedown at 120;86',
+      'mousemove at 240;350',
+      'dragstart at 120;86',
+      'dragenter at 240;350',
+      browserName === 'chromium' ? null : 'dragover at 240;350',
       'dragend',
-      'mouseup at 241;351',
+      'mouseup at 240;350',
     ].filter(Boolean));
   });
 
