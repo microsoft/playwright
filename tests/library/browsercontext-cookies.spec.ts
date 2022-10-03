@@ -375,7 +375,7 @@ it('should support requestStorageAccess', async ({ page, server, browserName, is
     return;
   } else {
     if (isLinux && browserName === 'webkit')
-      expect(await frame.evaluate(() => document.hasStorageAccess())).toBeFalsy();
+      expect(await frame.evaluate(() => document.hasStorageAccess())).toBeTruthy();
     else
       expect(await frame.evaluate(() => document.hasStorageAccess())).toBeFalsy();
     {
