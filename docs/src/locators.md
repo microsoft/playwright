@@ -353,19 +353,19 @@ page.locator("//button").click();
 ```
 
 ```python async
-await page.locator('css=button').click()
-await page.locator('xpath=//button').click()
+await page.locator("css=button").click()
+await page.locator("xpath=//button").click()
 
-await page.locator('button').click()
-await page.locator('//button').click()
+await page.locator("button").click()
+await page.locator("//button").click()
 ```
 
 ```python sync
-page.locator('css=button').click()
-page.locator('xpath=//button').click()
+page.locator("css=button").click()
+page.locator("xpath=//button").click()
 
-page.locator('button').click()
-page.locator('//button').click()
+page.locator("button").click()
+page.locator("//button").click()
 ```
 
 ```csharp
@@ -395,15 +395,15 @@ page.locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").click();
 ```
 
 ```python async
-await page.locator('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input').click()
+await page.locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input").click()
 
-await page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click()
+await page.locator("//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input").click()
 ```
 
 ```python sync
-page.locator('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input').click()
+page.locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input").click()
 
-page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click()
+page.locator("//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input").click()
 ```
 
 ```csharp
@@ -584,84 +584,90 @@ You can locate in the same way as if the shadow root was not present at all.
 
 You can also use locators to work with the element lists.
 
-For example, let's create a locator pointing to a list:
-
 ```js
+// Locate elements, this locator points to a list.
 const rows = page.locator('table tr');
+
+// Pattern 1: use locator methods to calculate text on the whole list.
+const texts = await rows.allTextContents();
+
+// Pattern 2: do something with each element in the list.
+const count = await rows.count()
+for (let i = 0; i < count; ++i)
+  console.log(await rows.nth(i).textContent());
+
+// Pattern 3: resolve locator to elements on page and map them to their text content.
+// Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
+const texts = await rows.evaluateAll(list => list.map(element => element.textContent));
 ```
+
 ```python async
+# Locate elements, this locator points to a list.
 rows = page.locator("table tr")
+
+# Pattern 1: use locator methods to calculate text on the whole list.
+texts = await rows.all_text_contents()
+
+# Pattern 2: do something with each element in the list.
+count = await rows.count()
+for i in range(count):
+  print(await rows.nth(i).text_content())
+
+# Pattern 3: resolve locator to elements on page and map them to their text content.
+# Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
+texts = await rows.evaluate_all("list => list.map(element => element.textContent)")
 ```
+
 ```python sync
+# Locate elements, this locator points to a list.
 rows = page.locator("table tr")
+
+# Pattern 1: use locator methods to calculate text on the whole list.
+texts = rows.all_text_contents()
+
+# Pattern 2: do something with each element in the list.
+count = rows.count()
+for i in range(count):
+  print(rows.nth(i).text_content())
+
+# Pattern 3: resolve locator to elements on page and map them to their text content.
+# Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
+texts = rows.evaluate_all("list => list.map(element => element.textContent)")
 ```
+
 ```java
+// Locate elements, this locator points to a list.
 Locator rows = page.locator("table tr");
+
+// Pattern 1: use locator methods to calculate text on the whole list.
+List<String> texts = rows.allTextContents();
+
+// Pattern 2: do something with each element in the list.
+int count = rows.count()
+for (int i = 0; i < count; ++i)
+  System.out.println(rows.nth(i).textContent());
+
+// Pattern 3: resolve locator to elements on page and map them to their text content.
+// Note: the code inside evaluateAll runs in page, you can call any DOM apis there.
+Object texts = rows.evaluateAll("list => list.map(element => element.textContent)");
 ```
+
 ```csharp
+// Locate elements, this locator points to a list.
 var rows = page.Locator("table tr");
+
+// Pattern 1: use locator methods to calculate text on the whole list.
+var texts = await rows.AllTextContentsAsync();
+
+// Pattern 2: do something with each element in the list:
+var count = await rows.CountAsync()
+for (let i = 0; i < count; ++i)
+  Console.WriteLine(await rows.Nth(i).TextContentAsync());
+
+// Pattern 3: resolve locator to elements on page and map them to their text content
+// Note: the code inside evaluateAll runs in page, you can call any DOM apis there
+var texts = await rows.EvaluateAllAsync("list => list.map(element => element.textContent)");
 ```
-
-- Pattern 1: use locator methods to calculate text on the whole list
-  ```js
-  const texts = await rows.allTextContents();
-  ```
-  ```python async
-  texts = await rows.all_text_contents()
-  ```
-  ```python sync
-  texts = rows.all_text_contents()
-  ```
-  ```java
-  List<String> texts = rows.allTextContents();
-  ```
-  ```csharp
-  var texts = await rows.AllTextContentsAsync();
-  ```
-
-- Pattern 2: do something with each element in the list
-  ```js
-  const count = await rows.count()
-  for (let i = 0; i < count; ++i)
-    console.log(await rows.nth(i).textContent());
-  ```
-  ```python async
-  count = await rows.count()
-  for i in range(count):
-    print(await rows.nth(i).text_content())
-  ```
-  ```python sync
-  count = rows.count()
-  for i in range(count):
-    print(rows.nth(i).text_content())
-  ```
-  ```java
-  int count = rows.count()
-  for (int i = 0; i < count; ++i)
-    System.out.println(rows.nth(i).textContent());
-  ```
-  ```csharp
-  var count = await rows.CountAsync()
-  for (let i = 0; i < count; ++i)
-    Console.WriteLine(await rows.Nth(i).TextContentAsync());
-  ```
-
-- Pattern 3: resolve locator to elements on page and map them to their text content. Note that code inside [`method: Locator.evaluateAll`] runs in the web page and you can call any DOM apis there.
-  ```js
-  const texts = await rows.evaluateAll(list => list.map(element => element.textContent));
-  ```
-  ```python async
-  texts = await rows.evaluate_all("list => list.map(element => element.textContent)")
-  ```
-  ```python sync
-  texts = rows.evaluate_all("list => list.map(element => element.textContent)")
-  ```
-  ```java
-  Object texts = rows.evaluateAll("list => list.map(element => element.textContent)");
-  ```
-  ```csharp
-  var texts = await rows.EvaluateAllAsync("list => list.map(element => element.textContent)");
-  ```
 
 ### Picking specific element from a list
 
