@@ -859,27 +859,27 @@ in that iframe. Following snippet locates element with text "Submit" in the ifra
 like `<iframe id="my-frame">`:
 
 ```js
-const locator = frame.frameLocator('#my-iframe').locator('text=Submit');
+const locator = frame.frameLocator('#my-iframe').getByText('Submit');
 await locator.click();
 ```
 
 ```java
-Locator locator = frame.frameLocator("#my-iframe").locator("text=Submit");
+Locator locator = frame.frameLocator("#my-iframe").getByText("Submit");
 locator.click();
 ```
 
 ```python async
-locator = frame.frame_locator("#my-iframe").locator("text=Submit")
+locator = frame.frame_locator("#my-iframe").get_by_text("Submit")
 await locator.click()
 ```
 
 ```python sync
-locator = frame.frame_locator("#my-iframe").locator("text=Submit")
+locator = frame.frame_locator("#my-iframe").get_by_text("Submit")
 locator.click()
 ```
 
 ```csharp
-var locator = frame.FrameLocator("#my-iframe").Locator("text=Submit");
+var locator = frame.FrameLocator("#my-iframe").GetByText("Submit");
 await locator.ClickAsync();
 ```
 

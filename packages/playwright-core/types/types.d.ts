@@ -2421,7 +2421,7 @@ export interface Page {
    * id="my-frame">`:
    *
    * ```js
-   * const locator = page.frameLocator('#my-iframe').locator('text=Submit');
+   * const locator = page.frameLocator('#my-iframe').getByText('Submit');
    * await locator.click();
    * ```
    *
@@ -4152,7 +4152,7 @@ export interface Page {
    * when this method is called. If current document has already reached the required state, resolves immediately.
    *
    * ```js
-   * await page.click('button'); // Click triggers navigation.
+   * await page.getByRole('button').click(); // Click triggers navigation.
    * await page.waitForLoadState(); // The promise resolves after 'load' event.
    * ```
    *
@@ -4161,7 +4161,7 @@ export interface Page {
    *   // It is important to call waitForEvent before click to set up waiting.
    *   page.waitForEvent('popup'),
    *   // Click triggers a popup.
-   *   page.locator('button').click(),
+   *   page.getByRole('button').click(),
    * ])
    * await popup.waitForLoadState('domcontentloaded'); // The promise resolves after 'domcontentloaded' event.
    * console.log(await popup.title()); // Popup is ready to use.
@@ -5512,7 +5512,7 @@ export interface Frame {
    * id="my-frame">`:
    *
    * ```js
-   * const locator = frame.frameLocator('#my-iframe').locator('text=Submit');
+   * const locator = frame.frameLocator('#my-iframe').getByText('Submit');
    * await locator.click();
    * ```
    *
@@ -6724,7 +6724,7 @@ export interface BrowserContext {
    *     <button onclick="onClick()">Click me</button>
    *     <div></div>
    *   `);
-   *   await page.locator('button').click();
+   *   await page.getByRole('button').click();
    * })();
    * ```
    *
@@ -6778,7 +6778,7 @@ export interface BrowserContext {
    *     <button onclick="onClick()">Click me</button>
    *     <div></div>
    *   `);
-   *   await page.locator('button').click();
+   *   await page.getByRole('button').click();
    * })();
    * ```
    *
@@ -7350,7 +7350,7 @@ export interface BrowserContext {
    *     <button onclick="onClick()">Click me</button>
    *     <div></div>
    *   `);
-   *   await page.locator('button').click();
+   *   await page.getByRole('button').click();
    * })();
    * ```
    *
@@ -8030,7 +8030,7 @@ export interface JSHandle<T = any> {
  * in the snippet below, underlying DOM element is going to be located twice.
  *
  * ```js
- * const locator = page.locator('text=Submit');
+ * const locator = page.getByText('Submit');
  * // ...
  * await locator.hover();
  * await locator.click();
@@ -9906,7 +9906,7 @@ export interface Locator {
    * // ...
    * await rowLocator
    *     .filter({ hasText: 'text in column 1' })
-   *     .filter({ has: page.locator('button', { hasText: 'column 2 button' }) })
+   *     .filter({ has: page.getByRole('button', { name: 'column 2 button' }) })
    *     .screenshot();
    * ```
    *
@@ -9953,7 +9953,7 @@ export interface Locator {
    * that iframe:
    *
    * ```js
-   * const locator = page.frameLocator('iframe').locator('text=Submit');
+   * const locator = page.frameLocator('iframe').getByText('Submit');
    * await locator.click();
    * ```
    *
@@ -10746,8 +10746,8 @@ export interface Locator {
    * An example of typing into a text field and then submitting the form:
    *
    * ```js
-   * const element = page.locator('input');
-   * await element.type('some text');
+   * const element = page.getByLabelText('Password');
+   * await element.type('my password');
    * await element.press('Enter');
    * ```
    *
@@ -14805,7 +14805,7 @@ export interface Dialog {
  *   // It is important to call waitForEvent before click to set up waiting.
  *   page.waitForEvent('download'),
  *   // Triggers the download.
- *   page.locator('text=Download file').click(),
+ *   page.getByText('Download file').click(),
  * ]);
  * // wait for download to complete
  * const path = await download.path();
@@ -15108,7 +15108,7 @@ export interface Electron {
  *   // It is important to call waitForEvent before click to set up waiting.
  *   page.waitForEvent('filechooser'),
  *   // Opens the file chooser.
- *   page.locator('text=Upload').click(),
+ *   page.getByText('Upload').click(),
  * ]);
  * await fileChooser.setFiles('myfile.pdf');
  * ```
@@ -15191,7 +15191,7 @@ export interface FileChooser {
  * [locator.frameLocator(selector)](https://playwright.dev/docs/api/class-locator#locator-frame-locator) method.
  *
  * ```js
- * const locator = page.frameLocator('#my-frame').locator('text=Submit');
+ * const locator = page.frameLocator('#my-frame').getByText('Submit');
  * await locator.click();
  * ```
  *
@@ -15202,10 +15202,10 @@ export interface FileChooser {
  *
  * ```js
  * // Throws if there are several frames in DOM:
- * await page.frameLocator('.result-frame').locator('button').click();
+ * await page.frameLocator('.result-frame').getByRole('button').click();
  *
  * // Works because we explicitly tell locator to pick the first frame:
- * await page.frameLocator('.result-frame').first().locator('button').click();
+ * await page.frameLocator('.result-frame').first().getByRole('button').click();
  * ```
  *
  * **Converting Locator to FrameLocator**
@@ -16572,7 +16572,7 @@ export interface Tracing {
    * await page.goto('https://playwright.dev');
    *
    * await context.tracing.startChunk();
-   * await page.locator('text=Get Started').click();
+   * await page.getByText('Get Started').click();
    * // Everything between startChunk and stopChunk will be recorded in the trace.
    * await context.tracing.stopChunk({ path: 'trace1.zip' });
    *

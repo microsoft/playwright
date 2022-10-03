@@ -189,7 +189,7 @@ test.beforeEach(async ({ page, isMobile }) => {
 });
 
 test('user profile', async ({ page }) => {
-  await page.locator('text=My Profile').click();
+  await page.getByText('My Profile').click();
   // ...
 });
 ```
@@ -204,7 +204,7 @@ test.beforeEach(async ({ page, isMobile }) => {
 });
 
 test('user profile', async ({ page }) => {
-  await page.locator('text=My Profile').click();
+  await page.getByText('My Profile').click();
   // ...
 });
 ```

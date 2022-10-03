@@ -3078,9 +3078,9 @@ export interface PlaywrightTestArgs {
    *
    * test('basic test', async ({ page }) => {
    *   await page.goto('/signin');
-   *   await page.locator('#username').fill('User');
-   *   await page.locator('#password').fill('pwd');
-   *   await page.locator('text=Sign in').click();
+   *   await page.getByLabelText('User Name').fill('user');
+   *   await page.getByLabelText('Password').fill('password');
+   *   await page.getByText('Sign in').click();
    *   // ...
    * });
    * ```
@@ -3255,7 +3255,7 @@ interface APIResponseAssertions {
  *
  * test('status becomes submitted', async ({ page }) => {
  *   // ...
- *   await page.locator('#submit-button').click();
+ *   await page.getByRole('button').click();
  *   await expect(page.locator('.status')).toHaveText('Submitted');
  * });
  * ```
@@ -3277,7 +3277,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to a checked input.
    *
    * ```js
-   * const locator = page.locator('.subscribe');
+   * const locator = page.getByLabelText('Subscribe to newsletter');
    * await expect(locator).toBeChecked();
    * ```
    *
@@ -3316,7 +3316,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to an editable element.
    *
    * ```js
-   * const locator = page.locator('input');
+   * const locator = page.getByRole('textbox');
    * await expect(locator).toBeEditable();
    * ```
    *
@@ -3371,7 +3371,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to a focused DOM node.
    *
    * ```js
-   * const locator = page.locator('input');
+   * const locator = page.getByRole('textbox');
    * await expect(locator).toBeFocused();
    * ```
    *
@@ -3557,7 +3557,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] resolves to an element with the given computed CSS style.
    *
    * ```js
-   * const locator = page.locator('button');
+   * const locator = page.getByRole('button');
    * await expect(locator).toHaveCSS('display', 'flex');
    * ```
    *
@@ -3576,7 +3576,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to an element with the given DOM Node ID.
    *
    * ```js
-   * const locator = page.locator('input');
+   * const locator = page.getByRole('textbox');
    * await expect(locator).toHaveId('lastname');
    * ```
    *
@@ -3615,7 +3615,7 @@ interface LocatorAssertions {
    * screenshot with the expectation.
    *
    * ```js
-   * const locator = page.locator('button');
+   * const locator = page.getByRole('button');
    * await expect(locator).toHaveScreenshot('image.png');
    * ```
    *
@@ -3690,7 +3690,7 @@ interface LocatorAssertions {
    * screenshot with the expectation.
    *
    * ```js
-   * const locator = page.locator('button');
+   * const locator = page.getByRole('button');
    * await expect(locator).toHaveScreenshot();
    * ```
    *
@@ -3880,7 +3880,7 @@ interface LocatorAssertions {
  *
  * test('navigates to login', async ({ page }) => {
  *   // ...
- *   await page.locator('#login').click();
+ *   await page.getByText('Sign in').click();
  *   await expect(page).toHaveURL(/.*\/login/);
  * });
  * ```

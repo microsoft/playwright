@@ -524,7 +524,7 @@ const rowLocator = page.locator('tr');
 // ...
 await rowLocator
     .filter({ hasText: 'text in column 1' })
-    .filter({ has: page.locator('button', { hasText: 'column 2 button' }) })
+    .filter({ has: page.getByRole('button', { name: 'column 2 button' }) })
     .screenshot();
 ```
 ```java
@@ -533,7 +533,7 @@ Locator rowLocator = page.locator("tr");
 rowLocator
     .filter(new Locator.FilterOptions().setHasText("text in column 1"))
     .filter(new Locator.FilterOptions().setHas(
-        page.locator("button", new Page.LocatorOptions().setHasText("column 2 button"))
+        page.getByRole("button", new Page.GetByRoleOptions().setName("column 2 button"))
     ))
     .screenshot();
 ```
@@ -542,7 +542,7 @@ row_locator = page.locator("tr")
 # ...
 await row_locator
     .filter(has_text="text in column 1")
-    .filter(has=page.locator("tr", has_text="column 2 button"))
+    .filter(has=page.get_by_role("button", name="column 2 button"))
     .screenshot()
 ```
 ```python sync
@@ -550,7 +550,7 @@ row_locator = page.locator("tr")
 # ...
 row_locator
     .filter(has_text="text in column 1")
-    .filter(has=page.locator("tr", has_text="column 2 button"))
+    .filter(has=page.get_by_role("button", name="column 2 button"))
     .screenshot()
 ```
 ```csharp
@@ -559,7 +559,7 @@ var rowLocator = page.Locator("tr");
 await rowLocator
     .Filter(new LocatorFilterOptions { HasText = "text in column 1" })
     .Filter(new LocatorFilterOptions {
-        Has = page.Locator("tr", new PageLocatorOptions { HasText = "column 2 button" } )
+        Has = page.GetByRole("button", new() { Name = "column 2 button" } )
     })
     .ScreenshotAsync();
 ```
@@ -590,27 +590,27 @@ When working with iframes, you can create a frame locator that will enter the if
 in that iframe:
 
 ```js
-const locator = page.frameLocator('iframe').locator('text=Submit');
+const locator = page.frameLocator('iframe').getByText('Submit');
 await locator.click();
 ```
 
 ```java
-Locator locator = page.frameLocator("iframe").locator("text=Submit");
+Locator locator = page.frameLocator("iframe").getByText("Submit");
 locator.click();
 ```
 
 ```python async
-locator = page.frame_locator("iframe").locator("text=Submit")
+locator = page.frame_locator("iframe").get_by_text("Submit")
 await locator.click()
 ```
 
 ```python sync
-locator = page.frame_locator("iframe").locator("text=Submit")
+locator = page.frame_locator("iframe").get_by_text("Submit")
 locator.click()
 ```
 
 ```csharp
-var locator = page.FrameLocator("iframe").Locator("text=Submit");
+var locator = page.FrameLocator("iframe").GetByText("Submit");
 await locator.ClickAsync();
 ```
 
@@ -1128,32 +1128,32 @@ await element.TypeAsync("World", new() { Delay = 100 }); // Types slower, like a
 An example of typing into a text field and then submitting the form:
 
 ```js
-const element = page.locator('input');
-await element.type('some text');
+const element = page.getByLabelText('Password');
+await element.type('my password');
 await element.press('Enter');
 ```
 
 ```java
-Locator element = page.locator("input");
-element.type("some text");
+Locator element = page.getByLabelText("Password");
+element.type("my password");
 element.press("Enter");
 ```
 
 ```python async
-element = page.locator("input")
-await element.type("some text")
+element = page.get_by_label_text("Password")
+await element.type("my password")
 await element.press("Enter")
 ```
 
 ```python sync
-element = page.locator("input")
-element.type("some text")
+element = page.get_by_label_text("Password")
+element.type("my password")
 element.press("Enter")
 ```
 
 ```csharp
-var element = page.Locator("input");
-await element.TypeAsync("some text");
+var element = page.GetByLabelText("Password");
+await element.TypeAsync("my password");
 await element.PressAsync("Enter");
 ```
 

@@ -27,7 +27,7 @@ If you use DOM Testing Library in the browser (for example, you bundle end-to-en
 | `expect(screen.getByLabelText('Password')).toHaveValue('secret')` | `await expect(component.getByLabelText('Password')).toHaveValue('secret')` |
 | `screen.findByText('...')`                              | `component.getByText('...')`                      |
 | `screen.getByTestId('...')`                             | `component.getByTestId('...')`                    |
-| `screen.queryByPlaceholderText('...')`                  | `component.locator('[placeholder="..."]')`            |
+| `screen.queryByPlaceholderText('...')`                  | `component.getByPlaceholderText('...')`            |
 | `screen.getByRole('button', { pressed: true })`         | `component.getByRole('button', { pressed: true })`|
 
 ## Example
@@ -64,12 +64,12 @@ test('should sign in', async ({ page, mount }) => { // 2
   const component = await mount(<SignInPage />); // 3
 
   // Perform actions.
-  await component.locator('text=Username').fill('John'); // 4
-  await component.locator('text=Password').fill('secret');
-  await component.locator('text=Sign in').click();
+  await component.getByText('Username').fill('John'); // 4
+  await component.getByText('Password').fill('secret');
+  await component.getByText('Sign in').click();
 
   // Verify signed in state by waiting until "Welcome" message appears.
-  await expect(component.locator('text=Welcome, John')).toBeVisible(); // 5
+  await expect(component.getByText('Welcome, John')).toBeVisible(); // 5
 });
 ```
 
@@ -83,14 +83,7 @@ Migration highlights (see inline comments in the Playwright Test code snippet):
 
 ## Migrating queries
 
-All queries like `getBy...`, `findBy...`, `queryBy...` and their multi-element counterparts are replaced with `page.locator('...')`. Locators always auto-wait and retry when needed, so you don't have to worry about choosing the right method. When you want to do a [list operation](./locators#lists), e.g. assert a list of texts, Playwright automatically performs multi-element operations.
-
-1. `getByRole`: use [role selector](./selectors#role-selector) `component.locator('role=button[name="Sign up"]')`.
-1. `getByText`: use `component.locator('text=some value')` and other variations of the [text selector](./selectors#text-selector).
-1. `getByTestId`: use [test id selectors](./selectors#id-data-testid-data-test-id-data-test-selectors), for example `component.locator('data-testid=some value')`.
-1. `getByPlaceholderText`: use css alternative `component.locator('[placeholder="some value"]')`.
-1. `getByAltText`: use css alternative `component.locator('[alt="some value"]')` or [role selector](./selectors#role-selector) `component.locator('role=img[name="some value"]')`.
-1. `getByTitle`: use css alternative `component.locator('[title="some value"]')`
+All queries like `getBy...`, `findBy...`, `queryBy...` and their multi-element counterparts are replaced with `component.getBy...` locators. Locators always auto-wait and retry when needed, so you don't have to worry about choosing the right method. When you want to do a [list operation](./locators#lists), e.g. assert a list of texts, Playwright automatically performs multi-element operations.
 
 ## Replacing `waitFor`
 
@@ -104,8 +97,8 @@ await waitFor(() => {
 await waitForElementToBeRemoved(() => queryByText('the mummy'))
 
 // Playwright
-await expect(page.locator('text=the lion king')).toBeVisible()
-await expect(page.locator('text=the mummy')).toBeHidden()
+await expect(page.getByText('the lion king')).toBeVisible()
+await expect(page.getByText('the mummy')).toBeHidden()
 ```
 
 When you cannot find a suitable assertion, use [`expect.poll`](./test-assertions#polling) instead.
@@ -128,7 +121,7 @@ const helloMessage = within(messages).getByText('hello')
 
 // Playwright
 const messages = component.locator('id=messages')
-const helloMessage = messages.locator('text=hello')
+const helloMessage = messages.getByText('hello')
 ```
 
 ## Playwright Test Super Powers

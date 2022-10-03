@@ -120,7 +120,7 @@ import { test, expect } from './webView2Test';
 
 test('test WebView2', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  const getStarted = page.locator('text=Get Started');
+  const getStarted = page.getByText('Get Started');
   await expect(getStarted).toBeVisible();
 });
 ```
@@ -242,7 +242,7 @@ public class TestExample {
   @Test
   public void shouldClickButton() {
     page.navigate("https://playwright.dev");
-    Locator gettingStarted = page.locator("text=Get started");
+    Locator gettingStarted = page.getByText("Get started");
     assertThat(gettingStarted).isVisible();
   }
 }
@@ -338,7 +338,7 @@ from playwright.sync_api import Page, expect
 
 def test_webview2(page: Page):
     page.goto("https://playwright.dev")
-    get_started = page.locator("text=Get Started")
+    get_started = page.get_by_text("Get Started")
     expect(get_started).to_be_visible()
 ```
 
@@ -420,7 +420,7 @@ public class Tests : WebView2Test
     public async Task HomepageHasPlaywrightInTitleAndGetStartedLinkLinkingtoTheIntroPage()
     {
         await Page.GotoAsync("https://playwright.dev");
-        var getStarted = Page.Locator("text=Get Started");
+        var getStarted = Page.GetByText("Get Started");
         await Expect(getStarted).ToBeVisibleAsync();
     }
 }

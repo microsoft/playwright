@@ -28,14 +28,14 @@ test('homepage has Playwright in title and get started link linking to the intro
   await expect(page).toHaveTitle(/Playwright/);
 
   // create a locator
-  const getStarted = page.locator('text=Get Started');
+  const getStarted = page.getByText('Get Started');
 
   // Expect an attribute "to be strictly equal" to the value.
   await expect(getStarted).toHaveAttribute('href', '/docs/intro');
 
   // Click the get started link.
   await getStarted.click();
- 
+
   // Expects the URL to contain intro.
   await expect(page).toHaveURL(/.*intro/);
 });
@@ -51,7 +51,7 @@ test('homepage has Playwright in title and get started link linking to the intro
   await expect(page).toHaveTitle(/Playwright/);
 
   // create a locator
-  const getStarted = page.locator('text=Get Started');
+  const getStarted = page.getByText('Get Started');
 
   // Expect an attribute "to be strictly equal" to the value.
   await expect(getStarted).toHaveAttribute('href', '/docs/intro');
@@ -82,7 +82,7 @@ await expect(page).toHaveTitle(/Playwright/);
 [Locators](./locators.md) are the central piece of Playwright's auto-waiting and retry-ability. Locators represent a way to find element(s) on the page at any moment and are used to perform actions on elements such as `.click` `.fill` etc. Custom locators can be created with the [`method: Page.locator`] method.
 
 ```js
-const getStarted = page.locator('text=Get Started');
+const getStarted = page.getByText('Get Started');
 
 await expect(getStarted).toHaveAttribute('href', '/docs/installation');
 await getStarted.click();
@@ -92,7 +92,7 @@ await getStarted.click();
 
 
 ```js
-await expect(page.locator('text=Installation')).toBeVisible();
+await expect(page.getByText('Installation')).toBeVisible();
 ```
 
 

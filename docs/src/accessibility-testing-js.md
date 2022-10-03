@@ -74,7 +74,7 @@ For example, you can use [`AxeBuilder.include()`](https://github.com/dequelabs/a
 test('navigation menu flyout should not have automatically detectable accessibility violations', async ({ page }) => {
   await page.goto('https://your-site.com/');
 
-  await page.locator('button[aria-label="Navigation Menu"]').click();
+  await page.getByRole('button', { name: 'Navigation Menu' }).click();
 
   // It is important to waitFor() the page to be in the desired
   // state *before* running analyze(). Otherwise, axe might not
