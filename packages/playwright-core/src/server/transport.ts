@@ -94,7 +94,7 @@ export class WebSocketTransport implements ConnectionTransport {
     this.wsEndpoint = url;
 
     const endpointURL = URL.parse(url);
-    const proxyURL = url.startsWith('ws') ? getProxyForUrl(`http://${endpointURL.hostname}`) : getProxyForUrl(`https://${endpointURL.hostname}`);
+    const proxyURL = url.startsWith('ws:') ? getProxyForUrl(`http://${endpointURL.hostname}`) : getProxyForUrl(`https://${endpointURL.hostname}`);
     let agent: Agent | undefined = undefined;
     if (proxyURL) {
       const parsedProxyURL = URL.parse(proxyURL);
