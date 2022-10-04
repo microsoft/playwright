@@ -350,10 +350,9 @@ it('should be able to send third party cookies via an iframe', async ({ browser,
   }
 });
 
-it('should support requestStorageAccess', async ({ page, server, browserName, isMac }) => {
+it('should support requestStorageAccess', async ({ page, server, browserName, isMac, isLinux, isWindows }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17285' });
   it.skip(browserName === 'chromium', 'requestStorageAccess API is not available in Chromium');
-  it.fixme(browserName === 'webkit' && isMac, 'Have to accept dialog');
   server.setRoute('/set-cookie.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value; Path=/');
     res.end();
@@ -375,13 +374,19 @@ it('should support requestStorageAccess', async ({ page, server, browserName, is
     }
     return;
   } else {
-    expect(await frame.evaluate(() => document.hasStorageAccess())).toBeFalsy();
+    if (isLinux && browserName === 'webkit')
+      expect(await frame.evaluate(() => document.hasStorageAccess())).toBeTruthy();
+    else
+      expect(await frame.evaluate(() => document.hasStorageAccess())).toBeFalsy();
     {
       const [serverRequest] = await Promise.all([
         server.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
-      expect(serverRequest.headers.cookie).toBeFalsy();
+      if (!isMac && browserName === 'webkit')
+        expect(serverRequest.headers.cookie).toBe('name=value');
+      else
+        expect(serverRequest.headers.cookie).toBeFalsy();
     }
     expect(await frame.evaluate(() => document.requestStorageAccess().then(() => true, e => false))).toBeTruthy();
     expect(await frame.evaluate(() => document.hasStorageAccess())).toBeTruthy();
