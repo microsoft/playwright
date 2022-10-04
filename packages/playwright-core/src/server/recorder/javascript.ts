@@ -15,7 +15,8 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
+import { asLocator } from './language';
+import type { LanguageGenerator, LanguageGeneratorOptions, LocatorBase, LocatorType } from './language';
 import { sanitizeDeviceOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
@@ -57,7 +58,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
     } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
-      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'frameLocator'));
+      const locators = actionInContext.frame.selectorsChain.map(selector => `.frameLocator(${quote(selector)})`);
       subject = `${pageAlias}${locators.join('')}`;
     } else if (actionInContext.frame.name) {
       subject = `${pageAlias}.frame(${formatObject({ name: actionInContext.frame.name })})`;
@@ -131,26 +132,30 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         if (action.position)
           options.position = action.position;
         const optionsString = formatOptions(options, false);
-        return asLocator(action.selector) + `.${method}(${optionsString})`;
+        return this._asLocator(action.selector) + `.${method}(${optionsString})`;
       }
       case 'check':
-        return asLocator(action.selector) + `.check()`;
+        return this._asLocator(action.selector) + `.check()`;
       case 'uncheck':
-        return asLocator(action.selector) + `.uncheck()`;
+        return this._asLocator(action.selector) + `.uncheck()`;
       case 'fill':
-        return asLocator(action.selector) + `.fill(${quote(action.text)})`;
+        return this._asLocator(action.selector) + `.fill(${quote(action.text)})`;
       case 'setInputFiles':
-        return asLocator(action.selector) + `.setInputFiles(${formatObject(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return this._asLocator(action.selector) + `.setInputFiles(${formatObject(action.files.length === 1 ? action.files[0] : action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return asLocator(action.selector) + `.press(${quote(shortcut)})`;
+        return this._asLocator(action.selector) + `.press(${quote(shortcut)})`;
       }
       case 'navigate':
         return `goto(${quote(action.url)})`;
       case 'select':
-        return asLocator(action.selector) + `.selectOption(${formatObject(action.options.length > 1 ? action.options : action.options[0])})`;
+        return this._asLocator(action.selector) + `.selectOption(${formatObject(action.options.length > 1 ? action.options : action.options[0])})`;
     }
+  }
+
+  private _asLocator(selector: string) {
+    return asLocator(this, selector);
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
@@ -197,15 +202,45 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
   await browser.close();
 })();`;
   }
+
+  generateLocator(base: LocatorBase, kind: LocatorType, body: string, options: { attrs?: Record<string, string | boolean>, hasText?: string, exact?: boolean } = {}): string {
+    switch (kind) {
+      case 'default':
+        return `locator(${quote(body)})`;
+      case 'nth':
+        return `nth(${body})`;
+      case 'first':
+        return `first()`;
+      case 'last':
+        return `last()`;
+      case 'role':
+        const attrs: string[] = [];
+        for (const [name, value] of Object.entries(options.attrs!))
+          attrs.push(`${name}: ${typeof value === 'string' ? quote(value) : value}`);
+        const attrString = attrs.length ? `, { ${attrs.join(', ')} }` : '';
+        return `getByRole(${quote(body)}${attrString})`;
+      case 'has-text':
+        return `locator(${quote(body)}, { hasText: ${quote(options.hasText!)} })`;
+      case 'test-id':
+        return `getByTestId(${quote(body)})`;
+      case 'text':
+        return toCallWithExact('getByText', body, !!options.exact);
+      case 'alt':
+        return toCallWithExact('getByAltText', body, !!options.exact);
+      case 'placeholder':
+        return toCallWithExact('getByPlaceholderText', body, !!options.exact);
+      case 'label':
+        return toCallWithExact('getByLabelText', body, !!options.exact);
+      case 'title':
+        return toCallWithExact('getByTitle', body, !!options.exact);
+      default:
+        throw new Error('Unknown selector kind ' + kind);
+    }
+  }
 }
 
-function asLocator(selector: string, locatorFn = 'locator') {
-  const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
-  if (!match)
-    return `${locatorFn}(${quote(selector)})`;
-  if (+match[2] === 0)
-    return `${locatorFn}(${quote(match[1])}).first()`;
-  return `${locatorFn}(${quote(match[1])}).nth(${match[2]})`;
+function toCallWithExact(method: string, body: string, exact: boolean) {
+  return exact ? `${method}(${quote(body)}, { exact: true })` : `${method}(${quote(body)})`;
 }
 
 function formatOptions(value: any, hasArguments: boolean): string {

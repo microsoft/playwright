@@ -15,7 +15,8 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
+import { asLocator } from './language';
+import type { LanguageGenerator, LanguageGeneratorOptions, LocatorBase, LocatorType } from './language';
 import { toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
@@ -23,7 +24,7 @@ import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import deviceDescriptors from '../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
-import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
+import { escapeWithQuotes, toTitleCase } from '../../utils/isomorphic/stringUtils';
 
 export class JavaLanguageGenerator implements LanguageGenerator {
   id = 'java';
@@ -45,11 +46,13 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     }
 
     let subject: string;
+    let inFrameLocator = false;
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
     } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
-      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'frameLocator'));
+      const locators = actionInContext.frame.selectorsChain.map(selector => `.frameLocator(${quote(selector)})`);
       subject = `${pageAlias}${locators.join('')}`;
+      inFrameLocator = true;
     } else if (actionInContext.frame.name) {
       subject = `${pageAlias}.frame(${quote(actionInContext.frame.name)})`;
     } else {
@@ -65,7 +68,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       });`);
     }
 
-    const actionCall = this._generateActionCall(action);
+    const actionCall = this._generateActionCall(action, inFrameLocator);
     let code = `${subject}.${actionCall};`;
 
     if (signals.popup) {
@@ -87,7 +90,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  private _generateActionCall(action: Action): string {
+  private _generateActionCall(action: Action, inFrameLocator: boolean): string {
     switch (action.name) {
       case 'openPage':
         throw Error('Not reached');
@@ -108,26 +111,30 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         if (action.position)
           options.position = action.position;
         const optionsText = formatClickOptions(options);
-        return asLocator(action.selector) + `.${method}(${optionsText})`;
+        return this._asLocator(action.selector, inFrameLocator) + `.${method}(${optionsText})`;
       }
       case 'check':
-        return asLocator(action.selector) + `.check()`;
+        return this._asLocator(action.selector, inFrameLocator) + `.check()`;
       case 'uncheck':
-        return asLocator(action.selector) + `.uncheck()`;
+        return this._asLocator(action.selector, inFrameLocator) + `.uncheck()`;
       case 'fill':
-        return asLocator(action.selector) + `.fill(${quote(action.text)})`;
+        return this._asLocator(action.selector, inFrameLocator) + `.fill(${quote(action.text)})`;
       case 'setInputFiles':
-        return asLocator(action.selector) + `.setInputFiles(${formatPath(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return this._asLocator(action.selector, inFrameLocator) + `.setInputFiles(${formatPath(action.files.length === 1 ? action.files[0] : action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return asLocator(action.selector) + `.press(${quote(shortcut)})`;
+        return this._asLocator(action.selector, inFrameLocator) + `.press(${quote(shortcut)})`;
       }
       case 'navigate':
         return `navigate(${quote(action.url)})`;
       case 'select':
-        return asLocator(action.selector) + `.selectOption(${formatSelectOption(action.options.length > 1 ? action.options : action.options[0])})`;
+        return this._asLocator(action.selector, inFrameLocator) + `.selectOption(${formatSelectOption(action.options.length > 1 ? action.options : action.options[0])})`;
     }
+  }
+
+  private _asLocator(selector: string, inFrameLocator: boolean) {
+    return asLocator(this, selector, inFrameLocator);
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
@@ -152,6 +159,53 @@ export class JavaLanguageGenerator implements LanguageGenerator {
   }
 }`;
   }
+
+  generateLocator(base: LocatorBase, kind: LocatorType, body: string, options: { attrs?: Record<string, string | boolean>, hasText?: string, exact?: boolean } = {}): string {
+    let clazz: string;
+    switch (base) {
+      case 'page': clazz = 'Page'; break;
+      case 'frame-locator': clazz = 'FrameLocator'; break;
+      case 'locator': clazz = 'Locator'; break;
+    }
+    switch (kind) {
+      case 'default':
+        return `locator(${quote(body)})`;
+      case 'nth':
+        return `nth(${body})`;
+      case 'first':
+        return `first()`;
+      case 'last':
+        return `last()`;
+      case 'role':
+        const attrs: string[] = [];
+        for (const [name, value] of Object.entries(options.attrs!))
+          attrs.push(`.set${toTitleCase(name)}(${typeof value === 'string' ? quote(value) : value})`);
+        const attrString = attrs.length ? `, new ${clazz}.GetByRoleOptions()${attrs.join('')}` : '';
+        return `getByRole(${quote(body)}${attrString})`;
+      case 'has-text':
+        return `locator(${quote(body)}, new ${clazz}.LocatorOptions().setHasText(${quote(options.hasText!)}))`;
+      case 'test-id':
+        return `getByTestId(${quote(body)})`;
+      case 'text':
+        return toCallWithExact(clazz, 'getByText', body, !!options.exact);
+      case 'alt':
+        return toCallWithExact(clazz, 'getByAltText', body, !!options.exact);
+      case 'placeholder':
+        return toCallWithExact(clazz, 'getByPlaceholderText', body, !!options.exact);
+      case 'label':
+        return toCallWithExact(clazz, 'getByLabelText', body, !!options.exact);
+      case 'title':
+        return toCallWithExact(clazz, 'getByTitle', body, !!options.exact);
+      default:
+        throw new Error('Unknown selector kind ' + kind);
+    }
+  }
+}
+
+function toCallWithExact(clazz: string, method: string, body: string, exact: boolean) {
+  if (exact)
+    return `${method}(${quote(body)}, new ${clazz}.${toTitleCase(method)}Options().setExact(exact))`;
+  return `${method}(${quote(body)})`;
 }
 
 function formatPath(files: string | string[]): string {
@@ -250,13 +304,4 @@ function formatClickOptions(options: MouseClickOptions) {
 
 function quote(text: string) {
   return escapeWithQuotes(text, '\"');
-}
-
-function asLocator(selector: string, locatorFn = 'locator') {
-  const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
-  if (!match)
-    return `${locatorFn}(${quote(selector)})`;
-  if (+match[2] === 0)
-    return `${locatorFn}(${quote(match[1])}).first()`;
-  return `${locatorFn}(${quote(match[1])}).nth(${match[2]})`;
 }
