@@ -23,11 +23,11 @@ If you use DOM Testing Library in the browser (for example, you bundle end-to-en
 | [user events](https://testing-library.com/docs/user-event/intro) | [actions](./api/class-locator) |
 | `await user.click(screen.getByText('Click me'))`        | `await component.getByText('Click me').click()` |
 | `await user.click(await screen.findByText('Click me'))` | `await component.getByText('Click me').click()` |
-| `await user.type(screen.getByLabelText('Password'), 'secret')` | `await component.getByLabelText('Password').fill('secret')` |
-| `expect(screen.getByLabelText('Password')).toHaveValue('secret')` | `await expect(component.getByLabelText('Password')).toHaveValue('secret')` |
+| `await user.type(screen.getByLabel('Password'), 'secret')` | `await component.getByLabel('Password').fill('secret')` |
+| `expect(screen.getByLabel('Password')).toHaveValue('secret')` | `await expect(component.getByLabel('Password')).toHaveValue('secret')` |
 | `screen.findByText('...')`                              | `component.getByText('...')`                      |
 | `screen.getByTestId('...')`                             | `component.getByTestId('...')`                    |
-| `screen.queryByPlaceholderText('...')`                  | `component.getByPlaceholderText('...')`            |
+| `screen.queryByPlaceholderText('...')`                  | `component.getByPlaceholder('...')`            |
 | `screen.getByRole('button', { pressed: true })`         | `component.getByRole('button', { pressed: true })`|
 
 ## Example
@@ -45,8 +45,8 @@ test('should sign in', async () => {
   render(<SignInPage />);
 
   // Perform actions.
-  await user.type(screen.getByLabelText('Username'), 'John');
-  await user.type(screen.getByLabelText('Password'), 'secret');
+  await user.type(screen.getByLabel('Username'), 'John');
+  await user.type(screen.getByLabel('Password'), 'secret');
   await user.click(screen.getByText('Sign in'));
 
   // Verify signed in state by waiting until "Welcome" message appears.

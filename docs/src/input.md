@@ -14,13 +14,13 @@ Using [`method: Locator.fill`] is the easiest way to fill out the form fields. I
 await page.getByRole('textbox').fill('Peter');
 
 // Date input
-await page.getByLabelText('Birth date').fill('2020-02-02');
+await page.getByLabel('Birth date').fill('2020-02-02');
 
 // Time input
-await page.getByLabelText('Appointment time').fill('13:15');
+await page.getByLabel('Appointment time').fill('13:15');
 
 // Local datetime input
-await page.getByLabelText('Local time').fill('2020-03-02T05:15');
+await page.getByLabel('Local time').fill('2020-03-02T05:15');
 ```
 
 ```java
@@ -28,13 +28,13 @@ await page.getByLabelText('Local time').fill('2020-03-02T05:15');
 page.getByRole("textbox").fill("Peter");
 
 // Date input
-page.getByLabelText("Birth date").fill("2020-02-02");
+page.getByLabel("Birth date").fill("2020-02-02");
 
 // Time input
-page.getByLabelText("Appointment time").fill("13-15");
+page.getByLabel("Appointment time").fill("13-15");
 
 // Local datetime input
-page.getByLabelText("Local time").fill("2020-03-02T05:15");
+page.getByLabel("Local time").fill("2020-03-02T05:15");
 ```
 
 ```python async
@@ -42,13 +42,13 @@ page.getByLabelText("Local time").fill("2020-03-02T05:15");
 await page.get_by_role("textbox").fill("Peter")
 
 # Date input
-await page.get_by_label_text("Birth date").fill("2020-02-02")
+await page.get_by_label("Birth date").fill("2020-02-02")
 
 # Time input
-await page.get_by_label_text("Appointment time").fill("13:15")
+await page.get_by_label("Appointment time").fill("13:15")
 
 # Local datetime input
-await page.get_by_label_text("Local time").fill("2020-03-02T05:15")
+await page.get_by_label("Local time").fill("2020-03-02T05:15")
 ```
 
 ```python sync
@@ -56,13 +56,13 @@ await page.get_by_label_text("Local time").fill("2020-03-02T05:15")
 page.get_by_role("textbox").fill("Peter")
 
 # Date input
-page.get_by_label_text("Birth date").fill("2020-02-02")
+page.get_by_label("Birth date").fill("2020-02-02")
 
 # Time input
-page.get_by_label_text("Appointment time").fill("13:15")
+page.get_by_label("Appointment time").fill("13:15")
 
 # Local datetime input
-page.get_by_label_text("Local time").fill("2020-03-02T05:15")
+page.get_by_label("Local time").fill("2020-03-02T05:15")
 ```
 
 ```csharp
@@ -70,13 +70,13 @@ page.get_by_label_text("Local time").fill("2020-03-02T05:15")
 await page.GetByRole("textbox").FillAsync("Peter");
 
 // Date input
-await page.GetByLabelText("Birth date").FillAsync("2020-02-02");
+await page.GetByLabel("Birth date").FillAsync("2020-02-02");
 
 // Time input
-await page.GetByLabelText("Appointment time").FillAsync("13-15");
+await page.GetByLabel("Appointment time").FillAsync("13-15");
 
 // Local datetime input
-await page.GetByLabelText("Local time").FillAsync("2020-03-02T05:15");
+await page.GetByLabel("Local time").FillAsync("2020-03-02T05:15");
 ```
 
 ## Checkboxes and radio buttons
@@ -85,57 +85,57 @@ Using [`method: Locator.setChecked`] is the easiest way to check and uncheck a c
 
 ```js
 // Check the checkbox
-await page.getByLabelText('I agree to the terms above').check();
+await page.getByLabel('I agree to the terms above').check();
 
 // Assert the checked state
-expect(await page.getByLabelText('Subscribe to newsletter').isChecked()).toBeTruthy()
+expect(await page.getByLabel('Subscribe to newsletter').isChecked()).toBeTruthy()
 
 // Select the radio button
-await page.getByLabelText('XL').check();
+await page.getByLabel('XL').check();
 ```
 
 ```java
 // Check the checkbox
-page.getByLabelText("I agree to the terms above").check();
+page.getByLabel("I agree to the terms above").check();
 
 // Assert the checked state
-assertTrue(page.getByLabelText("Subscribe to newsletter").isChecked());
+assertTrue(page.getByLabel("Subscribe to newsletter").isChecked());
 
 // Select the radio button
-page.getByLabelText("XL").check();
+page.getByLabel("XL").check();
 ```
 
 ```python async
 # Check the checkbox
-await page.get_by_label_text('I agree to the terms above').check()
+await page.get_by_label('I agree to the terms above').check()
 
 # Assert the checked state
-assert await page.get_by_label_text('Subscribe to newsletter').is_checked() is True
+assert await page.get_by_label('Subscribe to newsletter').is_checked() is True
 
 # Select the radio button
-await page.get_by_label_text('XL').check()
+await page.get_by_label('XL').check()
 ```
 
 ```python sync
 # Check the checkbox
-page.get_by_label_text('I agree to the terms above').check()
+page.get_by_label('I agree to the terms above').check()
 
 # Assert the checked state
-assert page.get_by_label_text('Subscribe to newsletter').is_checked() is True
+assert page.get_by_label('Subscribe to newsletter').is_checked() is True
 
 # Select the radio button
-page.get_by_label_text('XL').check()
+page.get_by_label('XL').check()
 ```
 
 ```csharp
 // Check the checkbox
-await page.GetByLabelText("I agree to the terms above").CheckAsync();
+await page.GetByLabel("I agree to the terms above").CheckAsync();
 
 // Assert the checked state
-Assert.True(await page.GetByLabelText("Subscribe to newsletter").IsCheckedAsync());
+Assert.True(await page.GetByLabel("Subscribe to newsletter").IsCheckedAsync());
 
 // Select the radio button
-await page.GetByLabelText("XL").CheckAsync();
+await page.GetByLabel("XL").CheckAsync();
 ```
 
 ## Select options
@@ -145,57 +145,57 @@ You can specify option `value`, or `label` to select. Multiple options can be se
 
 ```js
 // Single selection matching the value
-await page.getByLabelText('Choose a color').selectOption('blue');
+await page.getByLabel('Choose a color').selectOption('blue');
 
 // Single selection matching the label
-await page.getByLabelText('Choose a color').selectOption({ label: 'Blue' });
+await page.getByLabel('Choose a color').selectOption({ label: 'Blue' });
 
 // Multiple selected items
-await page.getByLabelText('Choose multiple colors').selectOption(['red', 'green', 'blue']);
+await page.getByLabel('Choose multiple colors').selectOption(['red', 'green', 'blue']);
 ```
 
 ```java
 // Single selection matching the value
-page.getByLabelText("Choose a color").selectOption("blue");
+page.getByLabel("Choose a color").selectOption("blue");
 
 // Single selection matching the label
-page.getByLabelText("Choose a color").selectOption(new SelectOption().setLabel("Blue"));
+page.getByLabel("Choose a color").selectOption(new SelectOption().setLabel("Blue"));
 
 // Multiple selected items
-page.getByLabelText("Choose multiple colors").selectOption(new String[] {"red", "green", "blue"});
+page.getByLabel("Choose multiple colors").selectOption(new String[] {"red", "green", "blue"});
 ```
 
 ```python async
 # Single selection matching the value
-await page.get_by_label_text('Choose a color').select_option('blue')
+await page.get_by_label('Choose a color').select_option('blue')
 
 # Single selection matching the label
-await page.get_by_label_text('Choose a color').select_option(label='Blue')
+await page.get_by_label('Choose a color').select_option(label='Blue')
 
 # Multiple selected items
-await page.get_by_label_text('Choose multiple colors').select_option(['red', 'green', 'blue'])
+await page.get_by_label('Choose multiple colors').select_option(['red', 'green', 'blue'])
 ```
 
 ```python sync
 # Single selection matching the value
-page.get_by_label_text('Choose a color').select_option('blue')
+page.get_by_label('Choose a color').select_option('blue')
 
 # Single selection matching the label
-page.get_by_label_text('Choose a color').select_option(label='Blue')
+page.get_by_label('Choose a color').select_option(label='Blue')
 
 # Multiple selected items
-page.get_by_label_text('Choose multiple colors').select_option(['red', 'green', 'blue'])
+page.get_by_label('Choose multiple colors').select_option(['red', 'green', 'blue'])
 ```
 
 ```csharp
 // Single selection matching the value
-await page.GetByLabelText("Choose a color").SelectOptionAsync("blue");
+await page.GetByLabel("Choose a color").SelectOptionAsync("blue");
 
 // Single selection matching the label
-await page.GetByLabelText("Choose a color").SelectOptionAsync(new SelectOptionValue { Label = "blue" }));
+await page.GetByLabel("Choose a color").SelectOptionAsync(new SelectOptionValue { Label = "blue" }));
 
 // Multiple selected items
-await page.GetByLabelText("Choose multiple colors").SelectOptionAsync(new[] { "blue", "green", "red" });
+await page.GetByLabel("Choose multiple colors").SelectOptionAsync(new[] { "blue", "green", "red" });
 ```
 
 ## Mouse click
@@ -516,16 +516,16 @@ You can select input files for upload using the [`method: Locator.setInputFiles`
 
 ```js
 // Select one file
-await page.getByLabelText('Upload file').setInputFiles('myfile.pdf');
+await page.getByLabel('Upload file').setInputFiles('myfile.pdf');
 
 // Select multiple files
-await page.getByLabelText('Upload files').setInputFiles(['file1.txt', 'file2.txt']);
+await page.getByLabel('Upload files').setInputFiles(['file1.txt', 'file2.txt']);
 
 // Remove all the selected files
-await page.getByLabelText('Upload file').setInputFiles([]);
+await page.getByLabel('Upload file').setInputFiles([]);
 
 // Upload buffer from memory
-await page.getByLabelText('Upload file').setInputFiles({
+await page.getByLabel('Upload file').setInputFiles({
   name: 'file.txt',
   mimeType: 'text/plain',
   buffer: Buffer.from('this is test')
@@ -534,31 +534,31 @@ await page.getByLabelText('Upload file').setInputFiles({
 
 ```java
 // Select one file
-page.getByLabelText("Upload file").setInputFiles(Paths.get("myfile.pdf"));
+page.getByLabel("Upload file").setInputFiles(Paths.get("myfile.pdf"));
 
 // Select multiple files
-page.getByLabelText("Upload files").setInputFiles(new Path[] {Paths.get("file1.txt"), Paths.get("file2.txt")});
+page.getByLabel("Upload files").setInputFiles(new Path[] {Paths.get("file1.txt"), Paths.get("file2.txt")});
 
 // Remove all the selected files
-page.getByLabelText("Upload file").setInputFiles(new Path[0]);
+page.getByLabel("Upload file").setInputFiles(new Path[0]);
 
 // Upload buffer from memory
-page.getByLabelText("Upload file").setInputFiles(new FilePayload(
+page.getByLabel("Upload file").setInputFiles(new FilePayload(
   "file.txt", "text/plain", "this is test".getBytes(StandardCharsets.UTF_8)));
 ```
 
 ```python async
 # Select one file
-await page.get_by_label_text("Upload file").set_input_files('myfile.pdf')
+await page.get_by_label("Upload file").set_input_files('myfile.pdf')
 
 # Select multiple files
-await page.get_by_label_text("Upload files").set_input_files(['file1.txt', 'file2.txt'])
+await page.get_by_label("Upload files").set_input_files(['file1.txt', 'file2.txt'])
 
 # Remove all the selected files
-await page.get_by_label_text("Upload file").set_input_files([])
+await page.get_by_label("Upload file").set_input_files([])
 
 # Upload buffer from memory
-await page.get_by_label_text("Upload file").set_input_files(
+await page.get_by_label("Upload file").set_input_files(
     files=[
         {"name": "test.txt", "mimeType": "text/plain", "buffer": b"this is a test"}
     ],
@@ -567,16 +567,16 @@ await page.get_by_label_text("Upload file").set_input_files(
 
 ```python sync
 # Select one file
-page.get_by_label_text("Upload file").set_input_files('myfile.pdf')
+page.get_by_label("Upload file").set_input_files('myfile.pdf')
 
 # Select multiple files
-page.get_by_label_text("Upload files").set_input_files(['file1.txt', 'file2.txt'])
+page.get_by_label("Upload files").set_input_files(['file1.txt', 'file2.txt'])
 
 # Remove all the selected files
-page.get_by_label_text("Upload file").set_input_files([])
+page.get_by_label("Upload file").set_input_files([])
 
 # Upload buffer from memory
-page.get_by_label_text("Upload file").set_input_files(
+page.get_by_label("Upload file").set_input_files(
     files=[
         {"name": "test.txt", "mimeType": "text/plain", "buffer": b"this is a test"}
     ],
@@ -585,16 +585,16 @@ page.get_by_label_text("Upload file").set_input_files(
 
 ```csharp
 // Select one file
-await page.GetByLabelText("Upload file").SetInputFilesAsync("myfile.pdf");
+await page.GetByLabel("Upload file").SetInputFilesAsync("myfile.pdf");
 
 // Select multiple files
-await page.GetByLabelText("Upload files").SetInputFilesAsync(new[] { "file1.txt", "file12.txt" });
+await page.GetByLabel("Upload files").SetInputFilesAsync(new[] { "file1.txt", "file12.txt" });
 
 // Remove all the selected files
-await page.GetByLabelText("Upload file").SetInputFilesAsync(new[] {});
+await page.GetByLabel("Upload file").SetInputFilesAsync(new[] {});
 
 // Upload buffer from memory
-await page.GetByLabelText("Upload file").SetInputFilesAsync(new FilePayload
+await page.GetByLabel("Upload file").SetInputFilesAsync(new FilePayload
 {
     Name = "file.txt",
     MimeType = "text/plain",
@@ -650,23 +650,23 @@ await fileChooser.SetFilesAsync("myfile.pdf");
 For the dynamic pages that handle focus events, you can focus the given element with [`method: Locator.focus`].
 
 ```js
-await page.getByLabelText('Password').focus();
+await page.getByLabel('Password').focus();
 ```
 
 ```java
-page.getByLabelText("Password").focus();
+page.getByLabel("Password").focus();
 ```
 
 ```python async
-await page.get_by_label_text('password').focus()
+await page.get_by_label('password').focus()
 ```
 
 ```python sync
-page.get_by_label_text('password').focus()
+page.get_by_label('password').focus()
 ```
 
 ```csharp
-await page.GetByLabelText("Password").FocusAsync();
+await page.GetByLabel("Password").FocusAsync();
 ```
 
 ## Drag and Drop

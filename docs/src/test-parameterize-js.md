@@ -143,7 +143,7 @@ exports.test = base.test.extend({
   page: async ({ page, person }, use) => {
     await page.goto('/chat');
     // We use "person" parameter as a "name" for the chat room.
-    await page.getByLabelText('User Name').fill(person);
+    await page.getByLabel('User Name').fill(person);
     await page.getByText('Enter chat room').click();
     // Each test will get a "page" that already has the person name.
     await use(page);
@@ -168,7 +168,7 @@ export const test = base.test.extend<TestOptions>({
   page: async ({ page, person }, use) => {
     await page.goto('/chat');
     // We use "person" parameter as a "name" for the chat room.
-    await page.getByLabelText('User Name').fill(person);
+    await page.getByLabel('User Name').fill(person);
     await page.getByText('Enter chat room').click();
     // Each test will get a "page" that already has the person name.
     await use(page);
@@ -190,8 +190,8 @@ For example, consider the following test file that needs a username and a passwo
 // example.spec.js
 test(`example test`, async ({ page }) => {
   // ...
-  await page.getByLabelText('User Name').fill(process.env.USERNAME);
-  await page.getByLabelText('Password').fill(process.env.PASSWORD);
+  await page.getByLabel('User Name').fill(process.env.USERNAME);
+  await page.getByLabel('Password').fill(process.env.PASSWORD);
 });
 ```
 
@@ -199,8 +199,8 @@ test(`example test`, async ({ page }) => {
 // example.spec.ts
 test(`example test`, async ({ page }) => {
   // ...
-  await page.getByLabelText('User Name').fill(process.env.USERNAME);
-  await page.getByLabelText('Password').fill(process.env.PASSWORD);
+  await page.getByLabel('User Name').fill(process.env.USERNAME);
+  await page.getByLabel('Password').fill(process.env.PASSWORD);
 });
 ```
 

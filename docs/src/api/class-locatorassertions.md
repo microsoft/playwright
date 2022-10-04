@@ -404,30 +404,30 @@ Expected options currently selected.
 Ensures the [Locator] points to a checked input.
 
 ```js
-const locator = page.getByLabelText('Subscribe to newsletter');
+const locator = page.getByLabel('Subscribe to newsletter');
 await expect(locator).toBeChecked();
 ```
 
 ```java
-assertThat(page.getByLabelText("Subscribe to newsletter")).isChecked();
+assertThat(page.getByLabel("Subscribe to newsletter")).isChecked();
 ```
 
 ```python async
 from playwright.async_api import expect
 
-locator = page.get_by_label_text("Subscribe to newsletter")
+locator = page.get_by_label("Subscribe to newsletter")
 await expect(locator).to_be_checked()
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
-locator = page.get_by_label_text("Subscribe to newsletter")
+locator = page.get_by_label("Subscribe to newsletter")
 expect(locator).to_be_checked()
 ```
 
 ```csharp
-var locator = Page.GetByLabelText("Subscribe to newsletter");
+var locator = Page.GetByLabel("Subscribe to newsletter");
 await Expect(locator).ToBeCheckedAsync();
 ```
 

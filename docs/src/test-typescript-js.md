@@ -25,8 +25,8 @@ import { test, expect } from '@playwright/test';
 import { username, password } from './helper';
 
 test('example', async ({ page }) => {
-  await page.getByLabelText('User Name').fill(username);
-  await page.getByLabelText('Password').fill(password);
+  await page.getByLabel('User Name').fill(username);
+  await page.getByLabel('Password').fill(password);
 });
 ```
 
@@ -62,8 +62,8 @@ import { test, expect } from '@playwright/test';
 import { username, password } from './helper.ts';
 
 test('example', async ({ page }) => {
-  await page.getByLabelText('User Name').fill(username);
-  await page.getByLabelText('Password').fill(password);
+  await page.getByLabel('User Name').fill(username);
+  await page.getByLabel('Password').fill(password);
 });
 ```
 
@@ -96,8 +96,8 @@ import { test, expect } from '@playwright/test';
 import { username, password } from '@myhelper/credentials';
 
 test('example', async ({ page }) => {
-  await page.getByLabelText('User Name').fill(username);
-  await page.getByLabelText('Password').fill(password);
+  await page.getByLabel('User Name').fill(username);
+  await page.getByLabel('Password').fill(password);
 });
 ```
 

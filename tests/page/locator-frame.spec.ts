@@ -248,9 +248,9 @@ it('getBy coverage', async ({ page, server }) => {
   await expect(button1).toHaveText('Hello iframe');
   await expect(button2).toHaveText('Hello iframe');
   await expect(button3).toHaveText('Hello iframe');
-  const input1 = page.frameLocator('iframe').getByLabelText('Name');
+  const input1 = page.frameLocator('iframe').getByLabel('Name');
   await expect(input1).toHaveValue('');
-  const input2 = page.frameLocator('iframe').getByPlaceholderText('Placeholder');
+  const input2 = page.frameLocator('iframe').getByPlaceholder('Placeholder');
   await expect(input2).toHaveValue('');
   const input3 = page.frameLocator('iframe').getByAltText('Alternative');
   await expect(input3).toHaveValue('');

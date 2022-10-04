@@ -918,24 +918,24 @@ Attribute name to get the value for.
 ### option: Frame.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
 
-## method: Frame.getByLabelText
+## method: Frame.getByLabel
 * since: v1.27
 - returns: <[Locator]>
 
 %%-template-locator-get-by-label-text-%%
 
-### param: Frame.getByLabelText.text = %%-locator-get-by-text-text-%%
-### option: Frame.getByLabelText.exact = %%-locator-get-by-text-exact-%%
+### param: Frame.getByLabel.text = %%-locator-get-by-text-text-%%
+### option: Frame.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
 
-## method: Frame.getByPlaceholderText
+## method: Frame.getByPlaceholder
 * since: v1.27
 - returns: <[Locator]>
 
 %%-template-locator-get-by-placeholder-text-%%
 
-### param: Frame.getByPlaceholderText.text = %%-locator-get-by-text-text-%%
-### option: Frame.getByPlaceholderText.exact = %%-locator-get-by-text-exact-%%
+### param: Frame.getByPlaceholder.text = %%-locator-get-by-text-text-%%
+### option: Frame.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
 
 
 ## method: Frame.getByRole

@@ -334,8 +334,8 @@ exports.test = base.test.extend({
     // Create the account with Playwright.
     const page = await browser.newPage();
     await page.goto('/signup');
-    await page.getByLabelText('User Name').fill(username);
-    await page.getByLabelText('Password').fill(password);
+    await page.getByLabel('User Name').fill(username);
+    await page.getByLabel('Password').fill(password);
     await page.getByText('Sign up').click();
     // Make sure everything is ok.
     await expect(page.locator('#result')).toHaveText('Success');
@@ -350,8 +350,8 @@ exports.test = base.test.extend({
     // Sign in with our account.
     const { username, password } = account;
     await page.goto('/signin');
-    await page.getByLabelText('User Name').fill(username);
-    await page.getByLabelText('Password').fill(password);
+    await page.getByLabel('User Name').fill(username);
+    await page.getByLabel('Password').fill(password);
     await page.getByText('Sign in').click();
     await expect(page.locator('#userinfo')).toHaveText(username);
 
@@ -381,8 +381,8 @@ export const test = base.extend<{}, { account: Account }>({
     // Create the account with Playwright.
     const page = await browser.newPage();
     await page.goto('/signup');
-    await page.getByLabelText('User Name').fill(username);
-    await page.getByLabelText('Password').fill(password);
+    await page.getByLabel('User Name').fill(username);
+    await page.getByLabel('Password').fill(password);
     await page.getByText('Sign up').click();
     // Make sure everything is ok.
     await expect(page.locator('#result')).toHaveText('Success');
@@ -397,8 +397,8 @@ export const test = base.extend<{}, { account: Account }>({
     // Sign in with our account.
     const { username, password } = account;
     await page.goto('/signin');
-    await page.getByLabelText('User Name').fill(username);
-    await page.getByLabelText('Password').fill(password);
+    await page.getByLabel('User Name').fill(username);
+    await page.getByLabel('Password').fill(password);
     await page.getByText('Sign in').click();
     await expect(page.locator('#userinfo')).toHaveText(username);
 

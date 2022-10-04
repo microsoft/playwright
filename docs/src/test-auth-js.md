@@ -24,8 +24,8 @@ test.beforeEach(async ({ page }) => {
   // Runs before each test and signs in each page.
   await page.goto('https://github.com/login');
   await page.getByText('Login').click();
-  await page.getByLabelText('User Name').fill('user');
-  await page.getByLabelText('Password').fill('password');
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
   await page.getByText('Submit').click();
 });
 
@@ -45,8 +45,8 @@ test.beforeEach(async ({ page }) => {
   // Runs before each test and signs in each page.
   await page.goto('https://github.com/login');
   await page.getByText('Login').click();
-  await page.getByLabelText('User Name').fill('user');
-  await page.getByLabelText('Password').fill('password');
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
   await page.getByText('Sign in').click();
 });
 
@@ -77,8 +77,8 @@ module.exports = async config => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.getByLabelText('User Name').fill('user');
-  await page.getByLabelText('Password').fill('password');
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
   await page.getByText('Sign in').click();
   // Save signed-in state to 'storageState.json'.
   await page.context().storageState({ path: 'storageState.json' });
@@ -94,8 +94,8 @@ async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.getByLabelText('User Name').fill('user');
-  await page.getByLabelText('Password').fill('password');
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
   await page.getByText('Sign in').click();
   // Save signed-in state to 'storageState.json'.
   await page.context().storageState({ path: 'storageState.json' });
@@ -226,8 +226,8 @@ exports.test = base.extend({
       // Make sure we are not using any other storage state.
       const page = await browser.newPage({ storageState: undefined });
       await page.goto('https://github.com/login');
-      await page.getByLabelText('User Name').fill(users[testInfo.workerIndex].username);
-      await page.getByLabelText('Password').fill(users[testInfo.workerIndex].password);
+      await page.getByLabel('User Name').fill(users[testInfo.workerIndex].username);
+      await page.getByLabel('Password').fill(users[testInfo.workerIndex].password);
       await page.getByText('Sign in').click();
       await page.context().storageState({ path: fileName });
       await page.close();
@@ -265,8 +265,8 @@ export const test = baseTest.extend({
       const page = await browser.newPage({ storageState: undefined });
       await page.goto('https://github.com/login');
       // Create a unique username for each worker.
-      await page.getByLabelText('User Name').fill(users[testInfo.workerIndex].username);
-      await page.getByLabelText('Password').fill(users[testInfo.workerIndex].password);
+      await page.getByLabel('User Name').fill(users[testInfo.workerIndex].username);
+      await page.getByLabel('Password').fill(users[testInfo.workerIndex].password);
       await page.getByText('Sign in').click();
       await page.context().storageState({ path: fileName });
       await page.close();
@@ -558,8 +558,8 @@ test.beforeAll(async ({ browser }) => {
   // Create page yourself and sign in.
   page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.getByLabelText('User Name').fill('user');
-  await page.getByLabelText('Password').fill('password');
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
   await page.getByText('Sign in').click();
 });
 
@@ -589,8 +589,8 @@ test.beforeAll(async ({ browser }) => {
   // Create page once and sign in.
   page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.getByLabelText('User Name').fill('user');
-  await page.getByLabelText('Password').fill('password');
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
   await page.getByText('Sign in').click();
 });
 

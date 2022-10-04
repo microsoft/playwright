@@ -124,24 +124,24 @@ in that iframe.
 ### option: FrameLocator.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
 
-## method: FrameLocator.getByLabelText
+## method: FrameLocator.getByLabel
 * since: v1.27
 - returns: <[Locator]>
 
 %%-template-locator-get-by-label-text-%%
 
-### param: FrameLocator.getByLabelText.text = %%-locator-get-by-text-text-%%
-### option: FrameLocator.getByLabelText.exact = %%-locator-get-by-text-exact-%%
+### param: FrameLocator.getByLabel.text = %%-locator-get-by-text-text-%%
+### option: FrameLocator.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
 
-## method: FrameLocator.getByPlaceholderText
+## method: FrameLocator.getByPlaceholder
 * since: v1.27
 - returns: <[Locator]>
 
 %%-template-locator-get-by-placeholder-text-%%
 
-### param: FrameLocator.getByPlaceholderText.text = %%-locator-get-by-text-text-%%
-### option: FrameLocator.getByPlaceholderText.exact = %%-locator-get-by-text-exact-%%
+### param: FrameLocator.getByPlaceholder.text = %%-locator-get-by-text-text-%%
+### option: FrameLocator.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
 
 
 ## method: FrameLocator.getByRole

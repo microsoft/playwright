@@ -261,7 +261,7 @@ test.describe('cli codegen', () => {
     expect(message.text()).toBe('click');
   });
 
-  test('should generate getByPlaceholderText', async ({ page, openRecorder }) => {
+  test('should generate getByPlaceholder', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 
     await recorder.setContentAndWait(`<input placeholder="Country"></input>`);
@@ -275,19 +275,19 @@ test.describe('cli codegen', () => {
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
-  await page.getByPlaceholderText('Country').click();`);
+  await page.getByPlaceholder('Country').click();`);
 
     expect.soft(sources.get('Python').text).toContain(`
-    page.get_by_placeholder_text("Country").click()`);
+    page.get_by_placeholder("Country").click()`);
 
     expect.soft(sources.get('Python Async').text).toContain(`
-    await page.get_by_placeholder_text("Country").click()`);
+    await page.get_by_placeholder("Country").click()`);
 
     expect.soft(sources.get('Java').text).toContain(`
-      page.getByPlaceholderText("Country").click()`);
+      page.getByPlaceholder("Country").click()`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.GetByPlaceholderText("Country").ClickAsync();`);
+        await page.GetByPlaceholder("Country").ClickAsync();`);
   });
 
   test('should generate getByAltText', async ({ page, openRecorder }) => {

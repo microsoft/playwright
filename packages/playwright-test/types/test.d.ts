@@ -3078,8 +3078,8 @@ export interface PlaywrightTestArgs {
    *
    * test('basic test', async ({ page }) => {
    *   await page.goto('/signin');
-   *   await page.getByLabelText('User Name').fill('user');
-   *   await page.getByLabelText('Password').fill('password');
+   *   await page.getByLabel('User Name').fill('user');
+   *   await page.getByLabel('Password').fill('password');
    *   await page.getByText('Sign in').click();
    *   // ...
    * });
@@ -3277,7 +3277,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to a checked input.
    *
    * ```js
-   * const locator = page.getByLabelText('Subscribe to newsletter');
+   * const locator = page.getByLabel('Subscribe to newsletter');
    * await expect(locator).toBeChecked();
    * ```
    *

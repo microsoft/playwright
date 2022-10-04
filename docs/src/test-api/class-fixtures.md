@@ -77,8 +77,8 @@ const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
   await page.goto('/signin');
-  await page.getByLabelText('User Name').fill('user');
-  await page.getByLabelText('Password').fill('password');
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
   await page.getByText('Sign in').click();
   // ...
 });
@@ -89,8 +89,8 @@ import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
   await page.goto('/signin');
-  await page.getByLabelText('User Name').fill('user');
-  await page.getByLabelText('Password').fill('password');
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
   await page.getByText('Sign in').click();
   // ...
 });

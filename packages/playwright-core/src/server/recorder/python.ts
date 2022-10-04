@@ -246,9 +246,9 @@ with sync_playwright() as playwright:
       case 'alt':
         return toCallWithExact('get_by_alt_text', body, !!options.exact);
       case 'placeholder':
-        return toCallWithExact('get_by_placeholder_text', body, !!options.exact);
+        return toCallWithExact('get_by_placeholder', body, !!options.exact);
       case 'label':
-        return toCallWithExact('get_by_label_text', body, !!options.exact);
+        return toCallWithExact('get_by_label', body, !!options.exact);
       case 'title':
         return toCallWithExact('get_by_title', body, !!options.exact);
       default:

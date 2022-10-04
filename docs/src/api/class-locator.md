@@ -644,24 +644,24 @@ Attribute name to get the value for.
 ### option: Locator.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
 
-## method: Locator.getByLabelText
+## method: Locator.getByLabel
 * since: v1.27
 - returns: <[Locator]>
 
 %%-template-locator-get-by-label-text-%%
 
-### param: Locator.getByLabelText.text = %%-locator-get-by-text-text-%%
-### option: Locator.getByLabelText.exact = %%-locator-get-by-text-exact-%%
+### param: Locator.getByLabel.text = %%-locator-get-by-text-text-%%
+### option: Locator.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
 
-## method: Locator.getByPlaceholderText
+## method: Locator.getByPlaceholder
 * since: v1.27
 - returns: <[Locator]>
 
 %%-template-locator-get-by-placeholder-text-%%
 
-### param: Locator.getByPlaceholderText.text = %%-locator-get-by-text-text-%%
-### option: Locator.getByPlaceholderText.exact = %%-locator-get-by-text-exact-%%
+### param: Locator.getByPlaceholder.text = %%-locator-get-by-text-text-%%
+### option: Locator.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
 
 
 ## method: Locator.getByRole
@@ -1128,31 +1128,31 @@ await element.TypeAsync("World", new() { Delay = 100 }); // Types slower, like a
 An example of typing into a text field and then submitting the form:
 
 ```js
-const element = page.getByLabelText('Password');
+const element = page.getByLabel('Password');
 await element.type('my password');
 await element.press('Enter');
 ```
 
 ```java
-Locator element = page.getByLabelText("Password");
+Locator element = page.getByLabel("Password");
 element.type("my password");
 element.press("Enter");
 ```
 
 ```python async
-element = page.get_by_label_text("Password")
+element = page.get_by_label("Password")
 await element.type("my password")
 await element.press("Enter")
 ```
 
 ```python sync
-element = page.get_by_label_text("Password")
+element = page.get_by_label("Password")
 element.type("my password")
 element.press("Enter")
 ```
 
 ```csharp
-var element = page.GetByLabelText("Password");
+var element = page.GetByLabel("Password");
 await element.TypeAsync("my password");
 await element.PressAsync("Enter");
 ```

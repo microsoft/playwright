@@ -228,9 +228,9 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
       case 'alt':
         return toCallWithExact('getByAltText', body, !!options.exact);
       case 'placeholder':
-        return toCallWithExact('getByPlaceholderText', body, !!options.exact);
+        return toCallWithExact('getByPlaceholder', body, !!options.exact);
       case 'label':
-        return toCallWithExact('getByLabelText', body, !!options.exact);
+        return toCallWithExact('getByLabel', body, !!options.exact);
       case 'title':
         return toCallWithExact('getByTitle', body, !!options.exact);
       default:

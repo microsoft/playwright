@@ -162,7 +162,7 @@ By default, [`method: Locator.click`] will wait for the navigation step to compl
 await page.getByText('Login').click();
 
 // Fill will auto-wait for element on navigated page
-await page.getByLabelText('User Name').fill('John Doe');
+await page.getByLabel('User Name').fill('John Doe');
 ```
 
 ```java
@@ -170,7 +170,7 @@ await page.getByLabelText('User Name').fill('John Doe');
 page.getByText("Login").click();
 
 // Fill will auto-wait for element on navigated page
-page.getByLabelText("User Name").fill("John Doe");
+page.getByLabel("User Name").fill("John Doe");
 ```
 
 ```python async
@@ -178,7 +178,7 @@ page.getByLabelText("User Name").fill("John Doe");
 await page.get_by_text("Login").click()
 
 # Fill will auto-wait for element on navigated page
-await page.get_by_label_text("User Name").fill("John Doe")
+await page.get_by_label("User Name").fill("John Doe")
 ```
 
 ```python sync
@@ -186,7 +186,7 @@ await page.get_by_label_text("User Name").fill("John Doe")
 page.get_by_text("Login").click()
 
 # Fill will auto-wait for element on navigated page
-page.get_by_label_text("User Name").fill("John Doe")
+page.get_by_label("User Name").fill("John Doe")
 ```
 
 ```csharp
@@ -194,7 +194,7 @@ page.get_by_label_text("User Name").fill("John Doe")
 await page.GetByText("Login").ClickAsync();
 
 // Fill will auto-wait for element on navigated page
-await page.GetByLabelText("User Name").FillAsync("John Doe");
+await page.GetByLabel("User Name").FillAsync("John Doe");
 ```
 
 ### Custom wait
@@ -235,60 +235,60 @@ Alternatively, page interactions like [`method: Locator.click`] auto-wait for el
 // Click will auto-wait for the element and trigger navigation
 await page.getByText('Login').click();
 // Wait for the element
-await page.getByLabelText('User Name').waitFor();
+await page.getByLabel('User Name').waitFor();
 
 // Click triggers navigation
 await page.getByText('Login').click();
 // Fill will auto-wait for element
-await page.getByLabelText('User Name').fill('John Doe');
+await page.getByLabel('User Name').fill('John Doe');
 ```
 
 ```java
 // Click will auto-wait for the element and trigger navigation
 page.getByText("Login").click();
 // Wait for the element
-page.getByLabelText("User Name").waitFor();
+page.getByLabel("User Name").waitFor();
 
 // Click triggers navigation
 page.getByText("Login").click();
 // Fill will auto-wait for element
-page.getByLabelText("User Name").fill("John Doe");
+page.getByLabel("User Name").fill("John Doe");
 ```
 
 ```python async
 # Click will auto-wait for the element and trigger navigation
 await page.get_by_text("Login").click()
 # Wait for the element
-await page.get_by_label_text("User Name").wait_for()
+await page.get_by_label("User Name").wait_for()
 
 # Click triggers navigation
 await page.get_by_text("Login").click()
 # Fill will auto-wait for element
-await page.get_by_label_text("User Name").fill("John Doe")
+await page.get_by_label("User Name").fill("John Doe")
 ```
 
 ```python sync
 # Click triggers navigation
 page.get_by_text("Login").click()
 # Click will auto-wait for the element
-page.get_by_label_text("User Name").wait_for()
+page.get_by_label("User Name").wait_for()
 
 # Click triggers navigation
 page.get_by_text("Login").click()
 # Fill will auto-wait for element
-page.get_by_label_text("User Name").fill("John Doe")
+page.get_by_label("User Name").fill("John Doe")
 ```
 
 ```csharp
 // Click will auto-wait for the element and trigger navigation
 await page.GetByText("Login").ClickAsync();
 // Wait for the element
-await page.GetByLabelText("User Name").WaitForAsync();
+await page.GetByLabel("User Name").WaitForAsync();
 
 // Click triggers navigation
 await page.GetByText("Login").ClickAsync();
 // Fill will auto-wait for element
-await page.GetByLabelText("User Name").FillAsync("John Doe");
+await page.GetByLabel("User Name").FillAsync("John Doe");
 ```
 
 ### Asynchronous navigation

@@ -2193,24 +2193,24 @@ Attribute name to get the value for.
 ### option: Page.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
 
-## method: Page.getByLabelText
+## method: Page.getByLabel
 * since: v1.27
 - returns: <[Locator]>
 
 %%-template-locator-get-by-label-text-%%
 
-### param: Page.getByLabelText.text = %%-locator-get-by-text-text-%%
-### option: Page.getByLabelText.exact = %%-locator-get-by-text-exact-%%
+### param: Page.getByLabel.text = %%-locator-get-by-text-text-%%
+### option: Page.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
 
-## method: Page.getByPlaceholderText
+## method: Page.getByPlaceholder
 * since: v1.27
 - returns: <[Locator]>
 
 %%-template-locator-get-by-placeholder-text-%%
 
-### param: Page.getByPlaceholderText.text = %%-locator-get-by-text-text-%%
-### option: Page.getByPlaceholderText.exact = %%-locator-get-by-text-exact-%%
+### param: Page.getByPlaceholder.text = %%-locator-get-by-text-text-%%
+### option: Page.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
 
 
 ## method: Page.getByRole
