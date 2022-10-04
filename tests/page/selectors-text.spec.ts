@@ -238,6 +238,12 @@ it('should work with :has-text', async ({ page }) => {
   expect(await page.$eval(`div:has-text("find me") :has-text("maybe me")`, e => e.tagName)).toBe('WRAP');
   expect(await page.$eval(`div:has-text("find me") span:has-text("maybe me")`, e => e.id)).toBe('span2');
 
+  await page.setContent(`<div id=me>hello
+  wo"r>>ld</div>`);
+  expect(await page.$eval(`div:has-text("hello wo\\"r>>ld")`, e => e.id)).toBe('me');
+  expect(await page.$eval(`div:has-text("hello\\a wo\\"r>>ld")`, e => e.id)).toBe('me');
+  expect(await page.locator('div', { hasText: 'hello\nwo"r>>ld' }).getAttribute('id')).toBe('me');
+
   const error1 = await page.$(`:has-text("foo", "bar")`).catch(e => e);
   expect(error1.message).toContain(`"has-text" engine expects a single string`);
   const error2 = await page.$(`:has-text(foo > bar)`).catch(e => e);

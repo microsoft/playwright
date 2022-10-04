@@ -19,12 +19,12 @@ import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 import type { ParsedStackTrace } from '../utils/stackTrace';
 import * as util from 'util';
-import { isRegExp, isString, monotonicTime } from '../utils';
+import { isString, monotonicTime } from '../utils';
 import { ElementHandle } from './elementHandle';
 import type { Frame } from './frame';
 import type { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import { parseResult, serializeArgument } from './jsHandle';
-import { escapeWithQuotes } from '../utils/isomorphic/stringUtils';
+import { escapeForAttributeSelector, escapeForTextSelector } from '../utils/isomorphic/stringUtils';
 
 export type LocatorOptions = {
   hasText?: string | RegExp;
@@ -58,15 +58,11 @@ export class Locator implements api.Locator {
   private static getByAttributeTextSelector(attrName: string, text: string | RegExp, options?: { exact?: boolean }): string {
     if (!isString(text))
       return `attr=[${attrName}=${text}]`;
-    return `attr=[${attrName}=${JSON.stringify(text)}${options?.exact ? 's' : 'i'}]`;
+    return `attr=[${attrName}=${escapeForAttributeSelector(text)}${options?.exact ? 's' : 'i'}]`;
   }
 
   static getByLabelSelector(text: string | RegExp, options?: { exact?: boolean }): string {
-    if (!isString(text))
-      return `text=${text}`;
-    const escaped = JSON.stringify(text);
-    const selector = options?.exact ? `text=${escaped}` : `text=${escaped.substring(1, escaped.length - 1)}`;
-    return selector +  ' >> control=resolve-label';
+    return Locator.getByTextSelector(text, options) + ' >> control=resolve-label';
   }
 
   static getByAltTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
@@ -82,11 +78,7 @@ export class Locator implements api.Locator {
   }
 
   static getByTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
-    if (!isString(text))
-      return `text=${text}`;
-    const escaped = JSON.stringify(text);
-    const selector = options?.exact ? `text=${escaped}` : `text=${escaped.substring(1, escaped.length - 1)}`;
-    return selector;
+    return 'text=' + escapeForTextSelector(text, !!options?.exact);
   }
 
   static getByRoleSelector(role: string, options: ByRoleOptions = {}): string {
@@ -104,7 +96,7 @@ export class Locator implements api.Locator {
     if (options.level !== undefined)
       props.push(['level', String(options.level)]);
     if (options.name !== undefined)
-      props.push(['name', isString(options.name) ? escapeWithQuotes(options.name, '"') : String(options.name)]);
+      props.push(['name', isString(options.name) ? escapeForAttributeSelector(options.name) : String(options.name)]);
     if (options.pressed !== undefined)
       props.push(['pressed', String(options.pressed)]);
     return `role=${role}${props.map(([n, v]) => `[${n}=${v}]`).join('')}`;
@@ -115,11 +107,8 @@ export class Locator implements api.Locator {
     this._selector = selector;
 
     if (options?.hasText) {
-      const text = options.hasText;
-      if (isRegExp(text))
-        this._selector += ` >> has=${JSON.stringify('text=' + text.toString())}`;
-      else
-        this._selector += ` >> :scope:has-text(${escapeWithQuotes(text, '"')})`;
+      const textSelector = 'text=' + escapeForTextSelector(options.hasText, false);
+      this._selector += ` >> has=${JSON.stringify(textSelector)}`;
     }
 
     if (options?.has) {

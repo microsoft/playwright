@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cssEscape, escapeForAttributeSelector, escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
 import { type InjectedScript } from './injectedScript';
 import { getAriaRole, getElementAccessibleName } from './roleUtils';
 import { elementText } from './selectorUtils';
@@ -147,7 +148,7 @@ function buildCandidates(element: Element, accessibleNameCache: Map<Element, boo
   const candidates: SelectorToken[] = [];
 
   if (element.getAttribute('data-testid'))
-    candidates.push({ engine: 'attr', selector: `[data-testid=${quoteAttributeValue(element.getAttribute('data-testid')!)}]`, score: 1 });
+    candidates.push({ engine: 'attr', selector: `[data-testid=${escapeForAttributeSelector(element.getAttribute('data-testid')!)}]`, score: 1 });
 
   for (const attr of ['data-test-id', 'data-test']) {
     if (element.getAttribute(attr))
@@ -157,20 +158,20 @@ function buildCandidates(element: Element, accessibleNameCache: Map<Element, boo
   if (element.nodeName === 'INPUT') {
     const input = element as HTMLInputElement;
     if (input.placeholder)
-      candidates.push({ engine: 'attr', selector: `[placeholder=${quoteAttributeValue(input.placeholder)}]`, score: 3 });
+      candidates.push({ engine: 'attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder)}]`, score: 3 });
   }
 
   const ariaRole = getAriaRole(element);
   if (ariaRole) {
     const ariaName = getElementAccessibleName(element, false, accessibleNameCache);
     if (ariaName)
-      candidates.push({ engine: 'role', selector: `${ariaRole}[name=${quoteAttributeValue(ariaName)}]`, score: 3 });
+      candidates.push({ engine: 'role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName)}]`, score: 3 });
     else
       candidates.push({ engine: 'role', selector: ariaRole, score: 150 });
   }
 
   if (element.getAttribute('alt') && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName))
-    candidates.push({ engine: 'attr', selector: `[alt=${quoteAttributeValue(element.getAttribute('alt')!)}]`, score: 10 });
+    candidates.push({ engine: 'attr', selector: `[alt=${escapeForAttributeSelector(element.getAttribute('alt')!)}]`, score: 10 });
 
   if (element.getAttribute('name') && ['BUTTON', 'FORM', 'FIELDSET', 'FRAME', 'IFRAME', 'INPUT', 'KEYGEN', 'OBJECT', 'OUTPUT', 'SELECT', 'TEXTAREA', 'MAP', 'META', 'PARAM'].includes(element.nodeName))
     candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[name=${quoteAttributeValue(element.getAttribute('name')!)}]`, score: 50 });
@@ -199,9 +200,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
     return [];
   const candidates: SelectorToken[] = [];
 
-  let escaped = text;
-  if (text.includes('"') || text.includes('>>') || text[0] === '/')
-    escaped = `/.*${escapeForRegex(text)}.*/`;
+  const escaped = escapeForTextSelector(text, false, true);
 
   if (isTargetNode)
     candidates.push({ engine: 'text', selector: escaped, score: 10 });
@@ -304,10 +303,6 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, str
   return makeStrict(uniqueCSSSelector()!);
 }
 
-function escapeForRegex(text: string): string {
-  return text.replace(/[.*+?^>${}()|[\]\\]/g, '\\$&');
-}
-
 function quoteAttributeValue(text: string): string {
   return `"${cssEscape(text).replace(/\\ /g, ' ')}"`;
 }
@@ -386,27 +381,4 @@ function isGuidLike(id: string): boolean {
     lastCharacterType = characterType;
   }
   return transitionCount >= id.length / 4;
-}
-
-function cssEscape(s: string): string {
-  let result = '';
-  for (let i = 0; i < s.length; i++)
-    result += cssEscapeOne(s, i);
-  return result;
-}
-
-function cssEscapeOne(s: string, i: number): string {
-  // https://drafts.csswg.org/cssom/#serialize-an-identifier
-  const c = s.charCodeAt(i);
-  if (c === 0x0000)
-    return '\uFFFD';
-  if ((c >= 0x0001 && c <= 0x001f) ||
-      (c >= 0x0030 && c <= 0x0039 && (i === 0 || (i === 1 && s.charCodeAt(0) === 0x002d))))
-    return '\\' + c.toString(16) + ' ';
-  if (i === 0 && c === 0x002d && s.length === 1)
-    return '\\' + s.charAt(i);
-  if (c >= 0x0080 || c === 0x002d || c === 0x005f || (c >= 0x0030 && c <= 0x0039) ||
-      (c >= 0x0041 && c <= 0x005a) || (c >= 0x0061 && c <= 0x007a))
-    return s.charAt(i);
-  return '\\' + s.charAt(i);
 }

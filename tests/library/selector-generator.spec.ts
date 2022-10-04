@@ -319,7 +319,8 @@ it.describe('selector generator', () => {
 
     await page.setContent(`<button><span></span></button><button></button>`);
     await page.$eval('button', button => button.setAttribute('aria-label', `!#'!?:`));
-    expect(await generate(page, 'button')).toBe("role=button[name=\"\\!\\#\\'\\!\\?\\:\"]");
+    expect(await generate(page, 'button')).toBe(`role=button[name="!#'!?:"]`);
+    expect(await page.$(`role=button[name="!#'!?:"]`)).toBeTruthy();
 
     await page.setContent(`<div><span></span></div>`);
     await page.$eval('div', div => div.id = `!#'!?:`);
