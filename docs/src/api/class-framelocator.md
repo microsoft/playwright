@@ -4,7 +4,7 @@
 FrameLocator represents a view to the `iframe` on the page. It captures the logic sufficient to retrieve the `iframe` and locate elements in that iframe. FrameLocator can be created with either [`method: Page.frameLocator`] or [`method: Locator.frameLocator`] method.
 
 ```js
-const locator = page.frameLocator('#my-frame').locator('text=Submit');
+const locator = page.frameLocator('#my-frame').getByText('Submit');
 await locator.click();
 ```
 
@@ -34,42 +34,42 @@ Frame locators are strict. This means that all operations on frame locators will
 
 ```js
 // Throws if there are several frames in DOM:
-await page.frameLocator('.result-frame').locator('button').click();
+await page.frameLocator('.result-frame').getByRole('button').click();
 
 // Works because we explicitly tell locator to pick the first frame:
-await page.frameLocator('.result-frame').first().locator('button').click();
+await page.frameLocator('.result-frame').first().getByRole('button').click();
 ```
 
 ```python async
 # Throws if there are several frames in DOM:
-await page.frame_locator('.result-frame').locator('button').click()
+await page.frame_locator('.result-frame').get_by_role('button').click()
 
 # Works because we explicitly tell locator to pick the first frame:
-await page.frame_locator('.result-frame').first.locator('button').click()
+await page.frame_locator('.result-frame').first.get_by_role('button').click()
 ```
 
 ```python sync
 # Throws if there are several frames in DOM:
-page.frame_locator('.result-frame').locator('button').click()
+page.frame_locator('.result-frame').get_by_role('button').click()
 
 # Works because we explicitly tell locator to pick the first frame:
-page.frame_locator('.result-frame').first.locator('button').click()
+page.frame_locator('.result-frame').first.get_by_role('button').click()
 ```
 
 ```java
 // Throws if there are several frames in DOM:
-page.frame_locator(".result-frame").locator("button").click();
+page.frame_locator(".result-frame").getByRole("button").click();
 
 // Works because we explicitly tell locator to pick the first frame:
-page.frame_locator(".result-frame").first().locator("button").click();
+page.frame_locator(".result-frame").first().getByRole("button").click();
 ```
 
 ```csharp
 // Throws if there are several frames in DOM:
-await page.FrameLocator(".result-frame").Locator("button").ClickAsync();
+await page.FrameLocator(".result-frame").GetByRole("button").ClickAsync();
 
 // Works because we explicitly tell locator to pick the first frame:
-await page.FrameLocator(".result-frame").First.Locator("button").ClickAsync();
+await page.FrameLocator(".result-frame").First.getByRole("button").ClickAsync();
 ```
 
 **Converting Locator to FrameLocator**

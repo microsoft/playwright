@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 
 test('status becomes submitted', async ({ page }) => {
   // ...
-  await page.locator('#submit-button').click();
+  await page.getByRole('button').click();
   await expect(page.locator('.status')).toHaveText('Submitted');
 });
 ```
@@ -22,7 +22,7 @@ public class TestLocator {
   @Test
   void statusBecomesSubmitted() {
     ...
-    page.locator("#submit-button").click();
+    page.getByRole("button").click();
     assertThat(page.locator(".status")).hasText("Submitted");
   }
 }
@@ -33,7 +33,7 @@ from playwright.async_api import Page, expect
 
 async def test_status_becomes_submitted(page: Page) -> None:
     # ..
-    await page.locator("#submit-button").click()
+    await page.get_by_role("button").click()
     await expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
@@ -42,7 +42,7 @@ from playwright.sync_api import Page, expect
 
 def test_status_becomes_submitted(page: Page) -> None:
     # ..
-    page.locator("#submit-button").click()
+    page.get_by_role("button").click()
     expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
@@ -61,7 +61,7 @@ public class ExampleTests : PageTest
     public async Task StatusBecomesSubmitted()
     {
         // ..
-        await Page.Locator("#submit-button").ClickAsync();
+        await Page.GetByRole("button").ClickAsync();
         await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
     }
 }
@@ -404,30 +404,30 @@ Expected options currently selected.
 Ensures the [Locator] points to a checked input.
 
 ```js
-const locator = page.locator('.subscribe');
+const locator = page.getByLabelText('Subscribe to newsletter');
 await expect(locator).toBeChecked();
 ```
 
 ```java
-assertThat(page.locator(".subscribe")).isChecked();
+assertThat(page.getByLabelText("Subscribe to newsletter")).isChecked();
 ```
 
 ```python async
 from playwright.async_api import expect
 
-locator = page.locator(".subscribe")
+locator = page.get_by_label_text("Subscribe to newsletter")
 await expect(locator).to_be_checked()
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
-locator = page.locator(".subscribe")
+locator = page.get_by_label_text("Subscribe to newsletter")
 expect(locator).to_be_checked()
 ```
 
 ```csharp
-var locator = Page.Locator(".subscribe");
+var locator = Page.GetByLabelText("Subscribe to newsletter");
 await Expect(locator).ToBeCheckedAsync();
 ```
 
@@ -494,30 +494,30 @@ await Expect(locator).ToBeDisabledAsync();
 Ensures the [Locator] points to an editable element.
 
 ```js
-const locator = page.locator('input');
+const locator = page.getByRole('textbox');
 await expect(locator).toBeEditable();
 ```
 
 ```java
-assertThat(page.locator("input")).isEditable();
+assertThat(page.getByRole("textbox")).isEditable();
 ```
 
 ```python async
 from playwright.async_api import expect
 
-locator = page.locator(".input")
+locator = page.get_by_role("textbox")
 await expect(locator).to_be_editable()
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
-locator = page.locator(".input")
+locator = page.get_by_role("textbox")
 expect(locator).to_be_editable()
 ```
 
 ```csharp
-var locator = Page.Locator("input");
+var locator = Page.GetByRole("textbox");
 await Expect(locator).ToBeEditableAsync();
 ```
 
@@ -623,30 +623,30 @@ await Expect(locator).toBeEnabledAsync();
 Ensures the [Locator] points to a focused DOM node.
 
 ```js
-const locator = page.locator('input');
+const locator = page.getByRole('textbox');
 await expect(locator).toBeFocused();
 ```
 
 ```java
-assertThat(page.locator("input")).isFocused();
+assertThat(page.getByRole("textbox")).isFocused();
 ```
 
 ```python async
 from playwright.async_api import expect
 
-locator = page.locator('input')
+locator = page.get_by_role("textbox")
 await expect(locator).to_be_focused()
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
-locator = page.locator('input')
+locator = page.get_by_role("textbox")
 expect(locator).to_be_focused()
 ```
 
 ```csharp
-var locator = Page.Locator("input");
+var locator = Page.GetByRole("textbox");
 await Expect(locator).ToBeFocusedAsync();
 ```
 
@@ -1105,30 +1105,30 @@ Expected count.
 Ensures the [Locator] resolves to an element with the given computed CSS style.
 
 ```js
-const locator = page.locator('button');
+const locator = page.getByRole('button');
 await expect(locator).toHaveCSS('display', 'flex');
 ```
 
 ```java
-assertThat(page.locator("button")).hasCSS("display", "flex");
+assertThat(page.getByRole("button")).hasCSS("display", "flex");
 ```
 
 ```python async
 from playwright.async_api import expect
 
-locator = page.locator("button")
+locator = page.get_by_role("button")
 await expect(locator).to_have_css("display", "flex")
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
-locator = page.locator("button")
+locator = page.get_by_role("button")
 expect(locator).to_have_css("display", "flex")
 ```
 
 ```csharp
-var locator = Page.Locator("button");
+var locator = Page.GetByRole("button");
 await Expect(locator).ToHaveCSSAsync("display", "flex");
 ```
 
@@ -1157,30 +1157,30 @@ CSS property value.
 Ensures the [Locator] points to an element with the given DOM Node ID.
 
 ```js
-const locator = page.locator('input');
+const locator = page.getByRole('textbox');
 await expect(locator).toHaveId('lastname');
 ```
 
 ```java
-assertThat(page.locator("input")).hasId("lastname");
+assertThat(page.getByRole("textbox")).hasId("lastname");
 ```
 
 ```python async
 from playwright.async_api import expect
 
-locator = page.locator("input")
+locator = page.get_by_role("textbox")
 await expect(locator).to_have_id("lastname")
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
-locator = page.locator("input")
+locator = page.get_by_role("textbox")
 expect(locator).to_have_id("lastname")
 ```
 
 ```csharp
-var locator = Page.Locator("input");
+var locator = Page.GetByRole("textbox");
 await Expect(locator).ToHaveIdAsync("lastname");
 ```
 
@@ -1258,7 +1258,7 @@ This function will wait until two consecutive locator screenshots
 yield the same result, and then compare the last screenshot with the expectation.
 
 ```js
-const locator = page.locator('button');
+const locator = page.getByRole('button');
 await expect(locator).toHaveScreenshot('image.png');
 ```
 
@@ -1296,7 +1296,7 @@ This function will wait until two consecutive locator screenshots
 yield the same result, and then compare the last screenshot with the expectation.
 
 ```js
-const locator = page.locator('button');
+const locator = page.getByRole('button');
 await expect(locator).toHaveScreenshot();
 ```
 

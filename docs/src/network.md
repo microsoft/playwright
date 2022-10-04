@@ -251,35 +251,35 @@ Or wait for a network response after the button click with [`method: Page.waitFo
 // Use a glob URL pattern
 const [response] = await Promise.all([
   page.waitForResponse('**/api/fetch_data'),
-  page.locator('button#update').click(),
+  page.getByText('Update').click(),
 ]);
 ```
 
 ```java
 // Use a glob URL pattern
 Response response = page.waitForResponse("**/api/fetch_data", () -> {
-  page.locator("button#update").click();
+  page.getByText("Update").click();
 });
 ```
 
 ```python async
 # Use a glob url pattern
 async with page.expect_response("**/api/fetch_data") as response_info:
-    await page.locator("button#update").click()
+    await page.get_by_text("Update").click()
 response = await response_info.value
 ```
 
 ```python sync
 # Use a glob url pattern
 with page.expect_response("**/api/fetch_data") as response_info:
-    page.locator("button#update").click()
+    page.get_by_text("Update").click()
 response = response_info.value
 ```
 
 ```csharp
 // Use a glob URL pattern
 var waitForResponseTask = page.WaitForResponseAsync("**/api/fetch_data");
-await page.Locator("button#update").ClickAsync();
+await page.GetByText("Update").ClickAsync();
 var response = await waitForResponseTask;
 ```
 
@@ -291,61 +291,61 @@ Wait for [Response]s with [`method: Page.waitForResponse`]
 // Use a RegExp
 const [response] = await Promise.all([
   page.waitForResponse(/\.jpeg$/),
-  page.locator('button#update').click(),
+  page.getByText('Update').click(),
 ]);
 
 // Use a predicate taking a Response object
 const [response] = await Promise.all([
   page.waitForResponse(response => response.url().includes(token)),
-  page.locator('button#update').click(),
+  page.getByText('Update').click(),
 ]);
 ```
 
 ```java
 // Use a RegExp
 Response response = page.waitForResponse(Pattern.compile("\\.jpeg$"), () -> {
-  page.locator("button#update").click();
+  page.getByText("Update").click();
 });
 
 // Use a predicate taking a Response object
 Response response = page.waitForResponse(r -> r.url().contains(token), () -> {
-  page.locator("button#update").click();
+  page.getByText("Update").click();
 });
 ```
 
 ```python async
 # Use a regular expression
 async with page.expect_response(re.compile(r"\.jpeg$")) as response_info:
-    await page.locator("button#update").click()
+    await page.get_by_text("Update").click()
 response = await response_info.value
 
 # Use a predicate taking a response object
 async with page.expect_response(lambda response: token in response.url) as response_info:
-    await page.locator("button#update").click()
+    await page.get_by_text("Update").click()
 response = await response_info.value
 ```
 
 ```python sync
 # Use a regular expression
 with page.expect_response(re.compile(r"\.jpeg$")) as response_info:
-    page.locator("button#update").click()
+    page.get_by_text("Update").click()
 response = response_info.value
 
 # Use a predicate taking a response object
 with page.expect_response(lambda response: token in response.url) as response_info:
-    page.locator("button#update").click()
+    page.get_by_text("Update").click()
 response = response_info.value
 ```
 
 ```csharp
 // Use a regular expression
 var waitForResponseTask = page.WaitForResponseAsync(new Regex("\\.jpeg$"));
-await page.Locator("button#update").ClickAsync();
+await page.GetByText("Update").ClickAsync();
 var response = await waitForResponseTask;
 
 // Use a predicate taking a Response object
 var waitForResponseTask = page.WaitForResponseAsync(r => r.Url.Contains(token));
-await page.Locator("button#update").ClickAsync();
+await page.GetByText("Update").ClickAsync();
 var response = await waitForResponseTask;
 ```
 ## Handle requests

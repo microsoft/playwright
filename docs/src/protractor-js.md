@@ -71,7 +71,7 @@ test.describe('angularjs homepage todo list', function() {
     });
 
     // You wrote your first test, cross it off the list
-    await todoList.nth(2).locator('input').click();
+    await todoList.nth(2).getByRole('textbox').click();
     var completedAmount = page.locator('.done-true');
     await expect(completedAmount).toHaveCount(2);
   });

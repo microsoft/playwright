@@ -97,56 +97,56 @@ Alternatively, page interactions like [`method: Page.click`] auto-wait for eleme
 ```js
 // Navigate and wait for element
 await page.goto('https://example.com');
-await page.locator('text=Example Domain').waitFor();
+await page.getByText('Example Domain').waitFor();
 
 // Navigate and click element
 // Click will auto-wait for the element
 await page.goto('https://example.com');
-await page.locator('text=Example Domain').click();
+await page.getByText('Example Domain').click();
 ```
 
 ```java
 // Navigate and wait for element
 page.navigate("https://example.com");
-page.locator("text=Example Domain").waitFor();
+page.getByText("Example Domain").waitFor();
 
 // Navigate and click element
 // Click will auto-wait for the element
 page.navigate("https://example.com");
-page.locator("text=Example Domain").click();
+page.getByText("Example Domain").click();
 ```
 
 ```python async
 # Navigate and wait for element
 await page.goto("https://example.com")
-await page.locator("text=example domain").wait_for()
+await page.get_by_text("example domain").wait_for()
 
 # Navigate and click element
 # Click will auto-wait for the element
 await page.goto("https://example.com")
-await page.locator("text=example domain").click()
+await page.get_by_text("example domain").click()
 ```
 
 ```python sync
 # Navigate and wait for element
 page.goto("https://example.com")
-page.locator("text=example domain").wait_for()
+page.get_by_text("example domain").wait_for()
 
 # Navigate and click element
 # Click will auto-wait for the element
 page.goto("https://example.com")
-page.locator("text=example domain").click()
+page.get_by_text("example domain").click()
 ```
 
 ```csharp
 // Navigate and wait for element
 await page.GotoAsync("https://example.com");
-await page.Locator("text=Example Domain").WaitForAsync();
+await page.GetByText("Example Domain").WaitForAsync();
 
 // Navigate and click element
 // Click will auto-wait for the element
 await page.GotoAsync("https://example.com");
-await page.Locator("text=Example Domain").ClickAsync();
+await page.GetByText("Example Domain").ClickAsync();
 ```
 
 ## Scenarios initiated by page interaction
@@ -159,42 +159,42 @@ By default, [`method: Locator.click`] will wait for the navigation step to compl
 
 ```js
 // Click will auto-wait for navigation to complete
-await page.locator('text=Login').click();
+await page.getByText('Login').click();
 
 // Fill will auto-wait for element on navigated page
-await page.locator('#username').fill('John Doe');
+await page.getByLabelText('User Name').fill('John Doe');
 ```
 
 ```java
 // Click will auto-wait for navigation to complete
-page.locator("text=Login").click();
+page.getByText("Login").click();
 
 // Fill will auto-wait for element on navigated page
-page.locator("#username").fill("John Doe");
+page.getByLabelText("User Name").fill("John Doe");
 ```
 
 ```python async
 # Click will auto-wait for navigation to complete
-await page.locator("text=Login").click()
+await page.get_by_text("Login").click()
 
 # Fill will auto-wait for element on navigated page
-await page.locator("#username").fill("John Doe")
+await page.get_by_label_text("User Name").fill("John Doe")
 ```
 
 ```python sync
 # Click will auto-wait for navigation to complete
-page.locator("text=Login").click()
+page.get_by_text("Login").click()
 
 # Fill will auto-wait for element on navigated page
-page.locator("#username").fill("John Doe")
+page.get_by_label_text("User Name").fill("John Doe")
 ```
 
 ```csharp
 // Click will auto-wait for navigation to complete
-await page.Locator("text=Login").ClickAsync();
+await page.GetByText("Login").ClickAsync();
 
 // Fill will auto-wait for element on navigated page
-await page.Locator("#username").FillAsync("John Doe");
+await page.GetByLabelText("User Name").FillAsync("John Doe");
 ```
 
 ### Custom wait
@@ -202,7 +202,7 @@ await page.Locator("#username").FillAsync("John Doe");
 `locator.click` can be combined with [`method: Page.waitForLoadState`] to wait for a loading event.
 
 ```js
-await page.locator('button').click(); // Click triggers navigation
+await page.getByRole('button').click(); // Click triggers navigation
 await page.waitForLoadState('networkidle'); // This resolves after 'networkidle'
 ```
 
@@ -233,62 +233,62 @@ Alternatively, page interactions like [`method: Locator.click`] auto-wait for el
 
 ```js
 // Click will auto-wait for the element and trigger navigation
-await page.locator('text=Login').click();
+await page.getByText('Login').click();
 // Wait for the element
-await page.locator('#username').waitFor();
+await page.getByLabelText('User Name').waitFor();
 
 // Click triggers navigation
-await page.locator('text=Login').click();
+await page.getByText('Login').click();
 // Fill will auto-wait for element
-await page.locator('#username').fill('John Doe');
+await page.getByLabelText('User Name').fill('John Doe');
 ```
 
 ```java
 // Click will auto-wait for the element and trigger navigation
-page.locator("text=Login").click();
+page.getByText("Login").click();
 // Wait for the element
-page.locator("#username").waitFor();
+page.getByLabelText("User Name").waitFor();
 
 // Click triggers navigation
-page.locator("text=Login").click();
+page.getByText("Login").click();
 // Fill will auto-wait for element
-page.locator("#username").fill("John Doe");
+page.getByLabelText("User Name").fill("John Doe");
 ```
 
 ```python async
 # Click will auto-wait for the element and trigger navigation
-await page.locator("text=Login").click()
+await page.get_by_text("Login").click()
 # Wait for the element
-await page.locator("#username").wait_for()
+await page.get_by_label_text("User Name").wait_for()
 
 # Click triggers navigation
-await page.locator("text=Login").click()
+await page.get_by_text("Login").click()
 # Fill will auto-wait for element
-await page.locator("#username").fill("John Doe")
+await page.get_by_label_text("User Name").fill("John Doe")
 ```
 
 ```python sync
 # Click triggers navigation
-page.locator("text=Login").click()
+page.get_by_text("Login").click()
 # Click will auto-wait for the element
-page.locator("#username").wait_for()
+page.get_by_label_text("User Name").wait_for()
 
 # Click triggers navigation
-page.locator("text=Login").click()
+page.get_by_text("Login").click()
 # Fill will auto-wait for element
-page.locator("#username").fill("John Doe")
+page.get_by_label_text("User Name").fill("John Doe")
 ```
 
 ```csharp
 // Click will auto-wait for the element and trigger navigation
-await page.Locator("text=Login").ClickAsync();
+await page.GetByText("Login").ClickAsync();
 // Wait for the element
-await page.Locator("#username").WaitForAsync();
+await page.GetByLabelText("User Name").WaitForAsync();
 
 // Click triggers navigation
-await page.Locator("text=Login").ClickAsync();
+await page.GetByText("Login").ClickAsync();
 // Fill will auto-wait for element
-await page.Locator("#username").FillAsync("John Doe");
+await page.GetByLabelText("User Name").FillAsync("John Doe");
 ```
 
 ### Asynchronous navigation
@@ -358,7 +358,7 @@ await Promise.all([
   // It is important to call waitForNavigation before click to set up waiting.
   page.waitForNavigation({ url: '**/login' }),
   // Triggers a navigation with a script redirect.
-  page.locator('text=Click me').click(),
+  page.getByText('Click me').click(),
 ]);
 ```
 
@@ -366,7 +366,7 @@ await Promise.all([
 // Running action in the callback of waitForNavigation prevents a race
 // condition between clicking and waiting for a navigation.
 page.waitForNavigation(new Page.WaitForNavigationOptions().setUrl("**/login"), () -> {
-  page.locator("a").click(); // Triggers a navigation with a script redirect
+  page.getByText("Click me").click(); // Triggers a navigation with a script redirect
 });
 ```
 
@@ -375,7 +375,7 @@ page.waitForNavigation(new Page.WaitForNavigationOptions().setUrl("**/login"), (
 # between clicking and waiting for a navigation.
 async with page.expect_navigation(url="**/login"):
     # Triggers a navigation with a script redirect
-    await page.locator("a").click()
+    await page.get_by_text("Click me").click()
 ```
 
 ```python sync
@@ -383,7 +383,7 @@ async with page.expect_navigation(url="**/login"):
 # between clicking and waiting for a navigation.
 with page.expect_navigation(url="**/login"):
     # Triggers a navigation with a script redirect
-    page.locator("a").click()
+    page.get_by_text("Click me").click()
 ```
 
 ```csharp
@@ -392,7 +392,7 @@ with page.expect_navigation(url="**/login"):
 await page.RunAndWaitForNavigationAsync(async () =>
 {
     // Triggers a navigation with a script redirect.
-    await page.Locator("a").ClickAsync();
+    await page.GetByText("Click me").ClickAsync();
 }, new()
 {
     UrlString = "**/login"

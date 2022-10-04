@@ -7,27 +7,27 @@ title: "Locators"
 a way to find element(s) on the page at any moment. Locator can be created with the [`method: Page.locator`] method.
 
 ```js
-const locator = page.locator('text=Submit');
+const locator = page.getByText('Submit');
 await locator.click();
 ```
 
 ```java
-Locator locator = page.locator("text=Submit");
+Locator locator = page.getByText("Submit");
 locator.click();
 ```
 
 ```python async
-locator = page.locator("text=Submit")
+locator = page.get_by_text("Submit")
 await locator.click()
 ```
 
 ```python sync
-locator = page.locator("text=Submit")
+locator = page.get_by_text("Submit")
 locator.click()
 ```
 
 ```csharp
-var locator = page.Locator("text=Submit");
+var locator = page.GetByText("Submit");
 await locator.ClickAsync();
 ```
 
@@ -37,32 +37,32 @@ DOM changes in between the calls due to re-render, the new element corresponding
 locator will be used.
 
 ```js
-const locator = page.locator('text=Submit');
+const locator = page.getByText('Submit');
 // ...
 await locator.hover();
 await locator.click();
 ```
 
 ```java
-Locator locator = page.locator("text=Submit");
+Locator locator = page.getByText("Submit");
 locator.hover();
 locator.click();
 ```
 
 ```python async
-locator = page.locator("text=Submit")
+locator = page.get_by_text("Submit")
 await locator.hover()
 await locator.click()
 ```
 
 ```python sync
-locator = page.locator("text=Submit")
+locator = page.get_by_text("Submit")
 locator.hover()
 locator.click()
 ```
 
 ```csharp
-var locator = page.Locator("text=Submit");
+var locator = page.GetByText("Submit");
 await locator.HoverAsync();
 await locator.ClickAsync();
 ```
@@ -75,57 +75,57 @@ given selector.
 
 ```js
 // Throws if there are several buttons in DOM:
-await page.locator('button').click();
+await page.getByRole('button').click();
 
 // Works because we explicitly tell locator to pick the first element:
-await page.locator('button').first().click(); // ⚠️ using first disables strictness
+await page.getByRole('button').first().click(); // ⚠️ using first disables strictness
 
 // Works because count knows what to do with multiple matches:
-await page.locator('button').count();
+await page.getByRole('button').count();
 ```
 
 ```python async
 # Throws if there are several buttons in DOM:
-await page.locator('button').click()
+await page.get_by_role("button").click()
 
 # Works because we explicitly tell locator to pick the first element:
-await page.locator('button').first.click() # ⚠️ using first disables strictness
+await page.get_by_role("button").first.click() # ⚠️ using first disables strictness
 
 # Works because count knows what to do with multiple matches:
-await page.locator('button').count()
+await page.get_by_role("button").count()
 ```
 
 ```python sync
 # Throws if there are several buttons in DOM:
-page.locator('button').click()
+page.get_by_role("button").click()
 
 # Works because we explicitly tell locator to pick the first element:
-page.locator('button').first.click() # ⚠️ using first disables strictness
+page.get_by_role("button").first.click() # ⚠️ using first disables strictness
 
 # Works because count knows what to do with multiple matches:
-page.locator('button').count()
+page.get_by_role("button").count()
 ```
 
 ```java
 // Throws if there are several buttons in DOM:
-page.locator("button").click();
+page.getByRole("button").click();
 
 // Works because we explicitly tell locator to pick the first element:
-page.locator("button").first().click(); // ⚠️ using first disables strictness
+page.getByRole("button").first().click(); // ⚠️ using first disables strictness
 
 // Works because count knows what to do with multiple matches:
-page.locator("button").count();
+page.getByRole("button").count();
 ```
 
 ```csharp
 // Throws if there are several buttons in DOM:
-await page.Locator("button").ClickAsync();
+await page.GetByRole("button").ClickAsync();
 
 // Works because we explicitly tell locator to pick the first element:
-await page.Locator("button").First.ClickAsync(); // ⚠️ using First disables strictness
+await page.GetByRole("button").First.ClickAsync(); // ⚠️ using First disables strictness
 
 // Works because Count knows what to do with multiple matches:
-await page.Locator("button").CountAsync();
+await page.GetByRole("button").CountAsync();
 ```
 
 :::caution
@@ -142,19 +142,19 @@ Use [`method: Page.locator`] method to create a locator. This method takes a sel
 The easiest way to find an element is to look for the text it contains.
 
 ```js
-await page.locator('text=Log in').click();
+await page.getByText('Log in').click();
 ```
 ```java
-page.locator("text=Log in").click();
+page.getByText("Log in").click();
 ```
 ```python async
-await page.locator("text=Log in").click()
+await page.get_by_text("Log in").click()
 ```
 ```python sync
-page.locator("text=Log in").click()
+page.get_by_text("Log in").click()
 ```
 ```csharp
-await page.Locator("text=Log in").ClickAsync();
+await page.GetByText("Log in").ClickAsync();
 ```
 
 You can also [filter by text](#filter-by-text) when locating in some other way, for example find a particular item in the list.
@@ -182,33 +182,33 @@ await page.Locator("data-test-id=product-item", new() { HasText = "Playwright Bo
 The `role` selector reflects how users and assistive technology percieve the page, for example whether some element is a button or a checkbox. When locating by role, you should usually pass the accessible name as well, so that locator pinpoints the exact element.
 
 ```js
-await page.locator('role=button[name=/submit/i]').click();
+await page.getByRole('button', { name: /submit/i }).click();
 
-await page.locator('role=checkbox[checked][name="Check me"]').check();
+await page.getByRole('checkbox', { checked: true, name: "Check me" }).check();
 ```
 
 ```python async
-await page.locator('role=button[name=/submit/i]').click()
+await page.get_by_role("button", name=re.compile("(?i)submit")).click()
 
-await page.locator('role=checkbox[checked][name="Check me"]').check()
+await page.get_by_role("checkbox", checked=True, name="Check me"]).check()
 ```
 
 ```python sync
-page.locator('role=button[name=/submit/i]').click()
+page.get_by_role("button", name=re.compile("(?i)submit")).click()
 
-page.locator('role=checkbox[checked][name="Check me"]').check()
+page.get_by_role("checkbox", checked=True, name="Check me"]).check()
 ```
 
 ```java
-page.locator("role=button[name=/submit/i]").click();
+page.getByRole("button", new Page.GetByRoleOptions().setName(Pattern.compile("(?i)submit"))).click();
 
-page.locator("role=checkbox[checked][name=\"Check me\"]").check();
+page.getByRole("checkbox", new Page.GetByRoleOptions().setChecked(true).setName("Check me"))).check();
 ```
 
 ```csharp
-await page.Locator("role=button[name=/submit/i]").ClickAsync();
+await page.GetByRole("button", new() { Name = new Regex("(?i)submit") }).ClickAsync();
 
-await page.Locator("role=checkbox[checked][name=\"Check me\"]").CheckAsync();
+await page.GetByRole("checkbox", new() { Checked = true, Name = "Check me" }).CheckAsync();
 ```
 
 [Learn more about the `role` selector](./selectors.md#role-selector).
@@ -262,23 +262,23 @@ You can target the label with something like `text=Password` and perform the fol
 For example, to fill the input by targeting the label:
 
 ```js
-await page.locator('text=Password').fill('secret');
+await page.getByText('Password').fill('secret');
 ```
 
 ```java
-page.locator("text=Password").fill("secret");
+page.getByText("Password").fill("secret");
 ```
 
 ```python async
-await page.locator('text=Password').fill('secret')
+await page.get_by_text('Password').fill('secret')
 ```
 
 ```python sync
-page.locator('text=Password').fill('secret')
+page.get_by_text('Password').fill('secret')
 ```
 
 ```csharp
-await page.Locator("text=Password").FillAsync("secret");
+await page.GetByText("Password").FillAsync("secret");
 ```
 
 However, other methods will target the label itself, for example `textContent` will return the text content of the label, not the input field.
@@ -305,31 +305,31 @@ For example, we can first find a product card that contains text "Product 2", an
 ```js
 const product = page.locator('data-test-id=product-card', { hasText: 'Product 2' });
 
-await product.locator('text=Buy').click();
+await product.getByText('Buy').click();
 ```
 
 ```python async
 product = page.locator("data-test-id=product-card", has_text="Product 2")
 
-await product.locator("text=Buy").click()
+await product.getByText("Buy").click()
 ```
 
 ```python sync
 product = page.locator("data-test-id=product-card", has_text="Product 2")
 
-product.locator("text=Buy").click()
+product.get_by_text("Buy").click()
 ```
 
 ```java
 Locator product = page.locator("data-test-id=product-card", new Page.LocatorOptions().setHasText("Product 2"));
 
-product.locator("text=Buy").click();
+product.get_by_text("Buy").click();
 ```
 
 ```csharp
 var product = page.Locator("data-test-id=product-card", new() { HasText = "Product 2" });
 
-await product.Locator("text=Buy").clickAsync();
+await product.GetByText("Buy").clickAsync();
 ```
 
 ### Locate by CSS or XPath selector
@@ -531,19 +531,19 @@ You can locate in the same way as if the shadow root was not present at all.
 
 - Click `<span>Details</span>`
   ```js
-  await page.locator('text=Details').click();
+  await page.getByText('Details').click();
   ```
   ```java
-  page.locator("text=Details").click();
+  page.getByText("Details").click();
   ```
   ```python async
-  await page.locator("text=Details").click()
+  await page.get_by_text("Details").click()
   ```
   ```python sync
-  page.locator("text=Details").click()
+  page.get_by_text("Details").click()
   ```
   ```csharp
-  await page.Locator("text=Details").ClickAsync();
+  await page.GetByText("Details").ClickAsync();
   ```
 
 - Click `<x-badge>`
@@ -742,32 +742,32 @@ await handle.ClickAsync();
 With the locator, every time the locator is used, up-to-date DOM element is located in the page using the selector. So in the snippet below, underlying DOM element is going to be located twice.
 
 ```js
-const locator = page.locator('text=Submit');
+const locator = page.getByText('Submit');
 // ...
 await locator.hover();
 await locator.click();
 ```
 
 ```java
-Locator locator = page.locator("text=Submit");
+Locator locator = page.getByText("Submit");
 locator.hover();
 locator.click();
 ```
 
 ```python async
-locator = page.locator("text=Submit")
+locator = page.get_by_text("Submit")
 await locator.hover()
 await locator.click()
 ```
 
 ```python sync
-locator = page.locator("text=Submit")
+locator = page.get_by_text("Submit")
 locator.hover()
 locator.click()
 ```
 
 ```csharp
-var locator = page.Locator("text=Submit");
+var locator = page.GetByText("Submit");
 await locator.HoverAsync();
 await locator.ClickAsync();
 ```
