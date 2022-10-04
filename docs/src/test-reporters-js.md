@@ -655,3 +655,4 @@ export default config;
 * [Monocart](https://github.com/cenfun/monocart-reporter)
 * [Tesults](https://www.tesults.com/docs/playwright)
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
+
