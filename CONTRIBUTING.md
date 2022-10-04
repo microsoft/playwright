@@ -17,6 +17,14 @@
 
 ### Getting Code
 
+Make sure you're running Node.js 14+ and NPM 8+, to verify and upgrade NPM do:
+
+```bash
+node --version
+npm --version
+npm i -g npm@latest
+```
+
 1. Clone this repository
 
 ```bash
@@ -27,7 +35,7 @@ cd playwright
 2. Install dependencies
 
 ```bash
-npm install
+npm ci
 ```
 
 3. Build Playwright
