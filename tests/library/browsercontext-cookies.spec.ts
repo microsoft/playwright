@@ -383,7 +383,7 @@ it('should support requestStorageAccess', async ({ page, server, browserName, is
         server.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
-      if (isWindows && browserName === 'webkit')
+      if (!isMac && browserName === 'webkit')
         expect(serverRequest.headers.cookie).toBe('name=value');
       else
         expect(serverRequest.headers.cookie).toBeFalsy();
