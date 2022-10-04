@@ -307,12 +307,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return this.locator(Locator.getByAltTextSelector(text, options));
   }
 
-  getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByLabelTextSelector(text, options));
+  getByLabel(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByLabelSelector(text, options));
   }
 
-  getByPlaceholderText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByPlaceholderTextSelector(text, options));
+  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByPlaceholderSelector(text, options));
   }
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {

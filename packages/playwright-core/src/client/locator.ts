@@ -61,7 +61,7 @@ export class Locator implements api.Locator {
     return `attr=[${attrName}=${JSON.stringify(text)}${options?.exact ? 's' : 'i'}]`;
   }
 
-  static getByLabelTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
+  static getByLabelSelector(text: string | RegExp, options?: { exact?: boolean }): string {
     if (!isString(text))
       return `text=${text}`;
     const escaped = JSON.stringify(text);
@@ -77,7 +77,7 @@ export class Locator implements api.Locator {
     return Locator.getByAttributeTextSelector('title', text, options);
   }
 
-  static getByPlaceholderTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
+  static getByPlaceholderSelector(text: string | RegExp, options?: { exact?: boolean }): string {
     return Locator.getByAttributeTextSelector('placeholder', text, options);
   }
 
@@ -215,12 +215,12 @@ export class Locator implements api.Locator {
     return this.locator(Locator.getByAltTextSelector(text, options));
   }
 
-  getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByLabelTextSelector(text, options));
+  getByLabel(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByLabelSelector(text, options));
   }
 
-  getByPlaceholderText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByPlaceholderTextSelector(text, options));
+  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByPlaceholderSelector(text, options));
   }
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
@@ -417,12 +417,12 @@ export class FrameLocator implements api.FrameLocator {
     return this.locator(Locator.getByAltTextSelector(text, options));
   }
 
-  getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByLabelTextSelector(text, options));
+  getByLabel(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByLabelSelector(text, options));
   }
 
-  getByPlaceholderText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByPlaceholderTextSelector(text, options));
+  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.locator(Locator.getByPlaceholderSelector(text, options));
   }
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {

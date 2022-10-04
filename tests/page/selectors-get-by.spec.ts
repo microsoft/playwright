@@ -37,26 +37,26 @@ it('getByText should work', async ({ page }) => {
   expect(await page.getByText('ye', { exact: true }).first().evaluate(e => e.outerHTML)).toContain('> ye </div>');
 });
 
-it('getByLabelText should work', async ({ page }) => {
+it('getByLabel should work', async ({ page }) => {
   await page.setContent(`<div><label for=target>Name</label><input id=target type=text></div>`);
   expect(await page.getByText('Name').evaluate(e => e.nodeName)).toBe('LABEL');
-  expect(await page.getByLabelText('Name').evaluate(e => e.nodeName)).toBe('INPUT');
-  expect(await page.mainFrame().getByLabelText('Name').evaluate(e => e.nodeName)).toBe('INPUT');
-  expect(await page.locator('div').getByLabelText('Name').evaluate(e => e.nodeName)).toBe('INPUT');
+  expect(await page.getByLabel('Name').evaluate(e => e.nodeName)).toBe('INPUT');
+  expect(await page.mainFrame().getByLabel('Name').evaluate(e => e.nodeName)).toBe('INPUT');
+  expect(await page.locator('div').getByLabel('Name').evaluate(e => e.nodeName)).toBe('INPUT');
 });
 
-it('getByPlaceholderText should work', async ({ page }) => {
+it('getByPlaceholder should work', async ({ page }) => {
   await page.setContent(`<div>
     <input placeholder='Hello'>
     <input placeholder='Hello World'>
   </div>`);
-  await expect(page.getByPlaceholderText('hello')).toHaveCount(2);
-  await expect(page.getByPlaceholderText('Hello', { exact: true })).toHaveCount(1);
-  await expect(page.getByPlaceholderText(/wor/i)).toHaveCount(1);
+  await expect(page.getByPlaceholder('hello')).toHaveCount(2);
+  await expect(page.getByPlaceholder('Hello', { exact: true })).toHaveCount(1);
+  await expect(page.getByPlaceholder(/wor/i)).toHaveCount(1);
 
   // Coverage
-  await expect(page.mainFrame().getByPlaceholderText('hello')).toHaveCount(2);
-  await expect(page.locator('div').getByPlaceholderText('hello')).toHaveCount(2);
+  await expect(page.mainFrame().getByPlaceholder('hello')).toHaveCount(2);
+  await expect(page.locator('div').getByPlaceholder('hello')).toHaveCount(2);
 });
 
 it('getByAltText should work', async ({ page }) => {

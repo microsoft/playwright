@@ -247,9 +247,9 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       case 'alt':
         return toCallWithExact('GetByAltText', body, !!options.exact);
       case 'placeholder':
-        return toCallWithExact('GetByPlaceholderText', body, !!options.exact);
+        return toCallWithExact('GetByPlaceholder', body, !!options.exact);
       case 'label':
-        return toCallWithExact('GetByLabelText', body, !!options.exact);
+        return toCallWithExact('GetByLabel', body, !!options.exact);
       case 'title':
         return toCallWithExact('GetByTitle', body, !!options.exact);
       default:

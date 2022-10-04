@@ -572,12 +572,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this.mainFrame().getByAltText(text, options);
   }
 
-  getByLabelText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.mainFrame().getByLabelText(text, options);
+  getByLabel(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByLabel(text, options);
   }
 
-  getByPlaceholderText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.mainFrame().getByPlaceholderText(text, options);
+  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByPlaceholder(text, options);
   }
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {

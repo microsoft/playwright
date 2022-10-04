@@ -191,9 +191,9 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       case 'alt':
         return toCallWithExact(clazz, 'getByAltText', body, !!options.exact);
       case 'placeholder':
-        return toCallWithExact(clazz, 'getByPlaceholderText', body, !!options.exact);
+        return toCallWithExact(clazz, 'getByPlaceholder', body, !!options.exact);
       case 'label':
-        return toCallWithExact(clazz, 'getByLabelText', body, !!options.exact);
+        return toCallWithExact(clazz, 'getByLabel', body, !!options.exact);
       case 'title':
         return toCallWithExact(clazz, 'getByTitle', body, !!options.exact);
       default:

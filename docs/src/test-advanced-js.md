@@ -224,8 +224,8 @@ module.exports = async config => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto(baseURL);
-  await page.getByLabelText('User Name').fill('user');
-  await page.getByLabelText('Password').fill('password');
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
   await page.getByText('Sign in').click();
   await page.context().storageState({ path: storageState });
   await browser.close();
@@ -241,8 +241,8 @@ async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto(baseURL!);
-  await page.getByLabelText('User Name').fill('user');
-  await page.getByLabelText('Password').fill('password');
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
   await page.getByText('Sign in').click();
   await page.context().storageState({ path: storageState as string });
   await browser.close();
@@ -373,8 +373,8 @@ module.exports = async config => {
   try {
     await context.tracing.start({ screenshots: true, snapshots: true });
     await page.goto(baseURL);
-    await page.getByLabelText('User Name').fill('user');
-    await page.getByLabelText('Password').fill('password');
+    await page.getByLabel('User Name').fill('user');
+    await page.getByLabel('Password').fill('password');
     await page.getByText('Sign in').click();
     await context.storageState({ path: storageState });
     await context.tracing.stop({
@@ -403,8 +403,8 @@ async function globalSetup(config: FullConfig) {
   try {
     await context.tracing.start({ screenshots: true, snapshots: true });
     await page.goto(baseURL!);
-    await page.getByLabelText('User Name').fill('user');
-    await page.getByLabelText('Password').fill('password');
+    await page.getByLabel('User Name').fill('user');
+    await page.getByLabel('Password').fill('password');
     await page.getByText('Sign in').click();
     await context.storageState({ path: storageState as string });
     await context.tracing.stop({

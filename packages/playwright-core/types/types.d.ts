@@ -2485,7 +2485,7 @@ export interface Page {
    * @param text Text to locate the element for.
    * @param options
    */
-  getByLabelText(text: string|RegExp, options?: {
+  getByLabel(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
@@ -2503,7 +2503,7 @@ export interface Page {
    * @param text Text to locate the element for.
    * @param options
    */
-  getByPlaceholderText(text: string|RegExp, options?: {
+  getByPlaceholder(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
@@ -5571,7 +5571,7 @@ export interface Frame {
    * @param text Text to locate the element for.
    * @param options
    */
-  getByLabelText(text: string|RegExp, options?: {
+  getByLabel(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
@@ -5589,7 +5589,7 @@ export interface Frame {
    * @param text Text to locate the element for.
    * @param options
    */
-  getByPlaceholderText(text: string|RegExp, options?: {
+  getByPlaceholder(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
@@ -10005,7 +10005,7 @@ export interface Locator {
    * @param text Text to locate the element for.
    * @param options
    */
-  getByLabelText(text: string|RegExp, options?: {
+  getByLabel(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
@@ -10023,7 +10023,7 @@ export interface Locator {
    * @param text Text to locate the element for.
    * @param options
    */
-  getByPlaceholderText(text: string|RegExp, options?: {
+  getByPlaceholder(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
@@ -10746,7 +10746,7 @@ export interface Locator {
    * An example of typing into a text field and then submitting the form:
    *
    * ```js
-   * const element = page.getByLabelText('Password');
+   * const element = page.getByLabel('Password');
    * await element.type('my password');
    * await element.press('Enter');
    * ```
@@ -15260,7 +15260,7 @@ export interface FrameLocator {
    * @param text Text to locate the element for.
    * @param options
    */
-  getByLabelText(text: string|RegExp, options?: {
+  getByLabel(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
@@ -15278,7 +15278,7 @@ export interface FrameLocator {
    * @param text Text to locate the element for.
    * @param options
    */
-  getByPlaceholderText(text: string|RegExp, options?: {
+  getByPlaceholder(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false.
      */
