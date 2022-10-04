@@ -180,3 +180,31 @@ it('alias methods coverage', async ({ page }) => {
   await expect(page.locator('div').getByRole('button')).toHaveCount(1);
   await expect(page.mainFrame().locator('button')).toHaveCount(1);
 });
+
+it('getBy escaping', async ({ page }) => {
+  await page.setContent(`<label id=label for=control>Hello
+wo"rld</label><input id=control />`);
+  await page.$eval('input', input => {
+    input.setAttribute('placeholder', 'hello\nwo"rld');
+    input.setAttribute('title', 'hello\nwo"rld');
+    input.setAttribute('alt', 'hello\nwo"rld');
+  });
+  await expect(page.getByText('hello\nwo"rld')).toHaveAttribute('id', 'label');
+  await expect(page.getByLabel('hello\nwo"rld')).toHaveAttribute('id', 'control');
+  await expect(page.getByPlaceholder('hello\nwo"rld')).toHaveAttribute('id', 'control');
+  await expect(page.getByAltText('hello\nwo"rld')).toHaveAttribute('id', 'control');
+  await expect(page.getByTitle('hello\nwo"rld')).toHaveAttribute('id', 'control');
+
+  await page.setContent(`<label id=label for=control>Hello
+world</label><input id=control />`);
+  await page.$eval('input', input => {
+    input.setAttribute('placeholder', 'hello\nworld');
+    input.setAttribute('title', 'hello\nworld');
+    input.setAttribute('alt', 'hello\nworld');
+  });
+  await expect(page.getByText('hello\nworld')).toHaveAttribute('id', 'label');
+  await expect(page.getByLabel('hello\nworld')).toHaveAttribute('id', 'control');
+  await expect(page.getByPlaceholder('hello\nworld')).toHaveAttribute('id', 'control');
+  await expect(page.getByAltText('hello\nworld')).toHaveAttribute('id', 'control');
+  await expect(page.getByTitle('hello\nworld')).toHaveAttribute('id', 'control');
+});
