@@ -45,8 +45,8 @@ export class Selectors {
       'data-testid', 'data-testid:light',
       'data-test-id', 'data-test-id:light',
       'data-test', 'data-test:light',
-      'nth', 'visible', 'control', 'has',
-      'role', 'attr'
+      'nth', 'visible', 'internal:control', 'internal:has',
+      'role', 'internal:attr', 'internal:label'
     ]);
     this._builtinEnginesInMainWorld = new Set([
       '_react', '_vue',

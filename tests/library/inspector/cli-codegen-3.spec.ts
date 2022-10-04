@@ -235,7 +235,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<div data-testid=testid onclick="console.log('click')">Submit</div>`);
 
     const selector = await recorder.hoverOverElement('div');
-    expect(selector).toBe('attr=[data-testid="testid"]');
+    expect(selector).toBe('internal:attr=[data-testid="testid"]');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -267,7 +267,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<input placeholder="Country"></input>`);
 
     const selector = await recorder.hoverOverElement('input');
-    expect(selector).toBe('attr=[placeholder="Country"]');
+    expect(selector).toBe('internal:attr=[placeholder="Country"]');
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -296,7 +296,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<input alt="Country"></input>`);
 
     const selector = await recorder.hoverOverElement('input');
-    expect(selector).toBe('attr=[alt="Country"]');
+    expect(selector).toBe('internal:attr=[alt="Country"]');
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),

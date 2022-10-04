@@ -57,12 +57,12 @@ export class Locator implements api.Locator {
 
   private static getByAttributeTextSelector(attrName: string, text: string | RegExp, options?: { exact?: boolean }): string {
     if (!isString(text))
-      return `attr=[${attrName}=${text}]`;
-    return `attr=[${attrName}=${escapeForAttributeSelector(text)}${options?.exact ? 's' : 'i'}]`;
+      return `internal:attr=[${attrName}=${text}]`;
+    return `internal:attr=[${attrName}=${escapeForAttributeSelector(text)}${options?.exact ? 's' : 'i'}]`;
   }
 
   static getByLabelSelector(text: string | RegExp, options?: { exact?: boolean }): string {
-    return Locator.getByTextSelector(text, options) + ' >> control=resolve-label';
+    return 'internal:label=' + escapeForTextSelector(text, !!options?.exact);
   }
 
   static getByAltTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
@@ -108,14 +108,14 @@ export class Locator implements api.Locator {
 
     if (options?.hasText) {
       const textSelector = 'text=' + escapeForTextSelector(options.hasText, false);
-      this._selector += ` >> has=${JSON.stringify(textSelector)}`;
+      this._selector += ` >> internal:has=${JSON.stringify(textSelector)}`;
     }
 
     if (options?.has) {
       const locator = options.has;
       if (locator._frame !== frame)
         throw new Error(`Inner "has" locator must belong to the same frame.`);
-      this._selector += ` >> has=` + JSON.stringify(locator._selector);
+      this._selector += ` >> internal:has=` + JSON.stringify(locator._selector);
     }
   }
 
@@ -395,7 +395,7 @@ export class FrameLocator implements api.FrameLocator {
   }
 
   locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
-    return new Locator(this._frame, this._frameSelector + ' >> control=enter-frame >> ' + selector, options);
+    return new Locator(this._frame, this._frameSelector + ' >> internal:control=enter-frame >> ' + selector, options);
   }
 
   getByTestId(testId: string): Locator {
@@ -427,7 +427,7 @@ export class FrameLocator implements api.FrameLocator {
   }
 
   frameLocator(selector: string): FrameLocator {
-    return new FrameLocator(this._frame, this._frameSelector + ' >> control=enter-frame >> ' + selector);
+    return new FrameLocator(this._frame, this._frameSelector + ' >> internal:control=enter-frame >> ' + selector);
   }
 
   first(): FrameLocator {

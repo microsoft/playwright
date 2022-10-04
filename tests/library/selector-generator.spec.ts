@@ -45,7 +45,7 @@ it.describe('selector generator', () => {
 
   it('should not escape spaces inside named attr selectors', async ({ page }) => {
     await page.setContent(`<input placeholder="Foo b ar"/>`);
-    expect(await generate(page, 'input')).toBe('attr=[placeholder=\"Foo b ar\"]');
+    expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"Foo b ar\"]');
   });
 
   it('should generate text for <input type=button>', async ({ page }) => {
@@ -60,17 +60,17 @@ it.describe('selector generator', () => {
 
   it('should escape text with >>', async ({ page }) => {
     await page.setContent(`<div>text&gt;&gt;text</div>`);
-    expect(await generate(page, 'div')).toBe('text=/.*text\\>\\>text.*/');
+    expect(await generate(page, 'div')).toBe('text=/text\\>\\>text/');
   });
 
   it('should escape text with quote', async ({ page }) => {
     await page.setContent(`<div>text"text</div>`);
-    expect(await generate(page, 'div')).toBe('text=/.*text"text.*/');
+    expect(await generate(page, 'div')).toBe('text=/text"text/');
   });
 
   it('should escape text with slash', async ({ page }) => {
     await page.setContent(`<div>/text</div>`);
-    expect(await generate(page, 'div')).toBe('text=/.*\/text.*/');
+    expect(await generate(page, 'div')).toBe('text=/\/text/');
   });
 
   it('should not use text for select', async ({ page }) => {
@@ -88,7 +88,7 @@ it.describe('selector generator', () => {
 
   it('should prefer data-testid', async ({ page }) => {
     await page.setContent(`<div>Text</div><div>Text</div><div data-testid=a>Text</div><div>Text</div>`);
-    expect(await generate(page, '[data-testid="a"]')).toBe('attr=[data-testid=\"a\"]');
+    expect(await generate(page, '[data-testid="a"]')).toBe('internal:attr=[data-testid=\"a\"]');
   });
 
   it('should handle first non-unique data-testid', async ({ page }) => {
@@ -99,7 +99,7 @@ it.describe('selector generator', () => {
       <div data-testid=a>
         Text
       </div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe('attr=[data-testid=\"a\"] >> nth=0');
+    expect(await generate(page, 'div[mark="1"]')).toBe('internal:attr=[data-testid=\"a\"] >> nth=0');
   });
 
   it('should handle second non-unique data-testid', async ({ page }) => {
@@ -110,7 +110,7 @@ it.describe('selector generator', () => {
       <div data-testid=a mark=1>
         Text
       </div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe(`attr=[data-testid=\"a\"] >> nth=1`);
+    expect(await generate(page, 'div[mark="1"]')).toBe(`internal:attr=[data-testid=\"a\"] >> nth=1`);
   });
 
   it('should use readable id', async ({ page }) => {
@@ -232,7 +232,7 @@ it.describe('selector generator', () => {
     });
     it('placeholder', async ({ page }) => {
       await page.setContent(`<input placeholder="foobar" type="text"/>`);
-      expect(await generate(page, 'input')).toBe('attr=[placeholder=\"foobar\"]');
+      expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"foobar\"]');
     });
     it('type', async ({ page }) => {
       await page.setContent(`<input type="text"/>`);

@@ -32,6 +32,7 @@ it('getByText should work', async ({ page }) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.getByText('ye').evaluate(e => e.outerHTML)).toContain('>\nye  </div>');
   expect(await page.getByText(/ye/).evaluate(e => e.outerHTML)).toContain('>\nye  </div>');
+  expect(await page.getByText(/e/).evaluate(e => e.outerHTML)).toContain('>\nye  </div>');
 
   await page.setContent(`<div> ye </div><div>ye</div>`);
   expect(await page.getByText('ye', { exact: true }).first().evaluate(e => e.outerHTML)).toContain('> ye </div>');
@@ -46,6 +47,22 @@ it('getByLabel should work', async ({ page }) => {
   expect(await page.getByLabel('Name').evaluate(e => e.nodeName)).toBe('INPUT');
   expect(await page.mainFrame().getByLabel('Name').evaluate(e => e.nodeName)).toBe('INPUT');
   expect(await page.locator('div').getByLabel('Name').evaluate(e => e.nodeName)).toBe('INPUT');
+});
+
+it('getByLabel should work with nested elements', async ({ page }) => {
+  await page.setContent(`<label for=target>Last <span>Name</span></label><input id=target type=text>`);
+
+  await expect(page.getByLabel('last name')).toHaveAttribute('id', 'target');
+  await expect(page.getByLabel('st na')).toHaveAttribute('id', 'target');
+  await expect(page.getByLabel('Name')).toHaveAttribute('id', 'target');
+  await expect(page.getByLabel('Last Name', { exact: true })).toHaveAttribute('id', 'target');
+  await expect(page.getByLabel(/Last\s+name/i)).toHaveAttribute('id', 'target');
+
+  expect(await page.getByLabel('Last', { exact: true }).elementHandles()).toEqual([]);
+  expect(await page.getByLabel('last name', { exact: true }).elementHandles()).toEqual([]);
+  expect(await page.getByLabel('Name', { exact: true }).elementHandles()).toEqual([]);
+  expect(await page.getByLabel('what?').elementHandles()).toEqual([]);
+  expect(await page.getByLabel(/last name/).elementHandles()).toEqual([]);
 });
 
 it('getByPlaceholder should work', async ({ page }) => {
@@ -88,4 +105,32 @@ it('getByTitle should work', async ({ page }) => {
   // Coverage
   await expect(page.mainFrame().getByTitle('hello')).toHaveCount(2);
   await expect(page.locator('div').getByTitle('hello')).toHaveCount(2);
+});
+
+it('getBy escaping', async ({ page }) => {
+  await page.setContent(`<label id=label for=control>Hello
+wo"rld</label><input id=control />`);
+  await page.$eval('input', input => {
+    input.setAttribute('placeholder', 'hello\nwo"rld');
+    input.setAttribute('title', 'hello\nwo"rld');
+    input.setAttribute('alt', 'hello\nwo"rld');
+  });
+  await expect(page.getByText('hello\nwo"rld')).toHaveAttribute('id', 'label');
+  await expect(page.getByLabel('hello\nwo"rld')).toHaveAttribute('id', 'control');
+  await expect(page.getByPlaceholder('hello\nwo"rld')).toHaveAttribute('id', 'control');
+  await expect(page.getByAltText('hello\nwo"rld')).toHaveAttribute('id', 'control');
+  await expect(page.getByTitle('hello\nwo"rld')).toHaveAttribute('id', 'control');
+
+  await page.setContent(`<label id=label for=control>Hello
+world</label><input id=control />`);
+  await page.$eval('input', input => {
+    input.setAttribute('placeholder', 'hello\nworld');
+    input.setAttribute('title', 'hello\nworld');
+    input.setAttribute('alt', 'hello\nworld');
+  });
+  await expect(page.getByText('hello\nworld')).toHaveAttribute('id', 'label');
+  await expect(page.getByLabel('hello\nworld')).toHaveAttribute('id', 'control');
+  await expect(page.getByPlaceholder('hello\nworld')).toHaveAttribute('id', 'control');
+  await expect(page.getByAltText('hello\nworld')).toHaveAttribute('id', 'control');
+  await expect(page.getByTitle('hello\nworld')).toHaveAttribute('id', 'control');
 });

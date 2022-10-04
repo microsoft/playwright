@@ -64,7 +64,7 @@ export function escapeForTextSelector(text: string | RegExp, exact: boolean, cas
   if (exact)
     return '"' + text.replace(/["]/g, '\\"') + '"';
   if (text.includes('"') || text.includes('>>') || text[0] === '/')
-    return `/.*${escapeForRegex(text).replace(/\s+/, '\\s+')}.*/` + (caseSensitive ? '' : 'i');
+    return `/${escapeForRegex(text).replace(/\s+/, '\\s+')}/` + (caseSensitive ? '' : 'i');
   return text;
 }
 
