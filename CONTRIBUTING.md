@@ -17,9 +17,11 @@
 
 ### Getting Code
 
-Make sure you're running node >= 14.x and npm >= 8, if not upgrading your npm
+Make sure you're running Node.js 14+ and NPM 8+, to verify do:
 
 ```bash
+node --version
+npm --version
 npm i -g npm@latest
 ```
 
