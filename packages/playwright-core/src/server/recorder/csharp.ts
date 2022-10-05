@@ -259,6 +259,11 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
 }
 
 function toCallWithExact(method: string, body: string, exact: boolean) {
+  if (body.startsWith('/') && (body.endsWith('/') || body.endsWith('/i'))) {
+    const regex = body.substring(1, body.lastIndexOf('/'));
+    const suffix = body.endsWith('i') ? ', RegexOptions.IgnoreCase' : '';
+    return `${method}(new Regex(${quote(regex)}${suffix}))`;
+  }
   if (exact)
     return `${method}(${quote(body)}, new () { Exact: true })`;
   return `${method}(${quote(body)})`;

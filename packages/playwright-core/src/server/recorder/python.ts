@@ -258,6 +258,11 @@ with sync_playwright() as playwright:
 }
 
 function toCallWithExact(method: string, body: string, exact: boolean) {
+  if (body.startsWith('/') && (body.endsWith('/') || body.endsWith('/i'))) {
+    const regex = body.substring(1, body.lastIndexOf('/'));
+    const suffix = body.endsWith('i') ? ', re.IGNORECASE' : '';
+    return `${method}(re.compile(r${quote(regex)}${suffix}))`;
+  }
   if (exact)
     return `${method}(${quote(body)}, exact=true)`;
   return `${method}(${quote(body)})`;

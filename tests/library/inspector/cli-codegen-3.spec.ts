@@ -319,4 +319,61 @@ test.describe('cli codegen', () => {
         await page.GetByAltText("Country").ClickAsync();`);
   });
 
+  test('should generate getByLabel', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`<label for=target>Country</label><input id=target>`);
+
+    const selector = await recorder.hoverOverElement('input');
+    expect(selector).toBe('internal:label=Country');
+
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'click'),
+      page.dispatchEvent('input', 'click', { detail: 1 })
+    ]);
+
+    expect.soft(sources.get('JavaScript').text).toContain(`
+  await page.getByLabel('Country').click();`);
+
+    expect.soft(sources.get('Python').text).toContain(`
+    page.get_by_label("Country").click()`);
+
+    expect.soft(sources.get('Python Async').text).toContain(`
+    await page.get_by_label("Country").click()`);
+
+    expect.soft(sources.get('Java').text).toContain(`
+      page.getByLabel("Country").click()`);
+
+    expect.soft(sources.get('C#').text).toContain(`
+        await page.GetByLabel("Country").ClickAsync();`);
+  });
+
+  test('should generate getByLabel with regex', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`<label for=target>Coun"try</label><input id=target>`);
+
+    const selector = await recorder.hoverOverElement('input');
+    expect(selector).toBe('internal:label=/Coun"try/');
+
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'click'),
+      page.dispatchEvent('input', 'click', { detail: 1 })
+    ]);
+
+    expect.soft(sources.get('JavaScript').text).toContain(`
+  await page.getByLabel(/Coun"try/).click();`);
+
+    expect.soft(sources.get('Python').text).toContain(`
+    page.get_by_label(re.compile(r"Coun\\\"try")).click()`);
+
+    expect.soft(sources.get('Python Async').text).toContain(`
+    await page.get_by_label(re.compile(r"Coun\\\"try")).click()`);
+
+    expect.soft(sources.get('Java').text).toContain(`
+      page.getByLabel(Pattern.compile("Coun\\\"try")).click()`);
+
+    expect.soft(sources.get('C#').text).toContain(`
+        await page.GetByLabel(new Regex("Coun\\\"try")).ClickAsync();`);
+  });
 });

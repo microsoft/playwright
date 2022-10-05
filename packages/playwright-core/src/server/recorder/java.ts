@@ -203,6 +203,11 @@ export class JavaLanguageGenerator implements LanguageGenerator {
 }
 
 function toCallWithExact(clazz: string, method: string, body: string, exact: boolean) {
+  if (body.startsWith('/') && (body.endsWith('/') || body.endsWith('/i'))) {
+    const regex = body.substring(1, body.lastIndexOf('/'));
+    const suffix = body.endsWith('i') ? ', Pattern.CASE_INSENSITIVE' : '';
+    return `${method}(Pattern.compile(${quote(regex)}${suffix}))`;
+  }
   if (exact)
     return `${method}(${quote(body)}, new ${clazz}.${toTitleCase(method)}Options().setExact(exact))`;
   return `${method}(${quote(body)})`;
