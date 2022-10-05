@@ -80,7 +80,6 @@ function loadAndValidateTsconfigForFile(file: string): ParsedTsConfigData | unde
   const cwd = path.dirname(file);
   if (!cachedTSConfigs.has(cwd)) {
     const loaded = tsConfigLoader({
-      getEnv: (name: string) => process.env[name],
       cwd
     });
     cachedTSConfigs.set(cwd, validateTsConfig(loaded));
