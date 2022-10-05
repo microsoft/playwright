@@ -573,6 +573,7 @@ class TypesGenerator {
         ['PlaywrightTestArgs', 'Fixtures'],
       ]),
       ignoreMissing: new Set([
+        'FullConfig.configFile',
         'FullConfig.version',
         'FullConfig.rootDir',
         'SuiteFunction',

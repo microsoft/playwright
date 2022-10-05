@@ -84,12 +84,6 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-## property: TestConfig.configFile
-* since: v1.27
-- type: ?<[string]>
-
-Path to config file, if any.
-
 ## property: TestConfig.forbidOnly
 * since: v1.10
 - type: ?<[boolean]>
@@ -231,17 +225,6 @@ Filter to only run tests with a title matching one of the patterns. For example,
 Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestConfig.grep`]. Also available in the [command line](../test-cli.md) with the `--grep-invert` option.
 
 `grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
-
-## property: TestConfig.groups
-* since: v1.27
-- type: ?<[Object]<[string],[Array]<[string]|[Array]<[string]|[Object]>>>>
-  - `project` <[string]|[Array]<[string]>> Project name(s).
-  - `grep` ?<[RegExp]|[Array]<[RegExp]>> Filter to only run tests with a title matching one of the patterns.
-  - `grepInvert` ?<[RegExp]|[Array]<[RegExp]>> Filter to only run tests with a title **not** matching one of the patterns.
-  - `testMatch` ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>> Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute file path. Strings are treated as glob patterns.
-  - `testIgnore` ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>> Files matching one of these patterns are not executed as test files. Matching is performed against the absolute file path. Strings are treated as glob patterns.
-
-Project groups that control project execution order.
 
 ## property: TestConfig.ignoreSnapshots
 * since: v1.26

@@ -165,7 +165,10 @@ export class Loader {
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
     this._assignUniqueProjectIds(this._fullConfig.projects);
-    this._fullConfig.groups = config.groups;
+
+    // TODO: restore or remove once groups are decided upon.
+    this._fullConfig.groups = (config as any).groups;
+    validateProjectGroups(this._configFile || '<default config>', this._fullConfig);
   }
 
   private _assignUniqueProjectIds(projects: FullProjectInternal[]) {
@@ -533,8 +536,6 @@ function validateConfig(file: string, config: Config) {
     });
   }
 
-  validateProjectGroups(file, config);
-
   if ('quiet' in config && config.quiet !== undefined) {
     if (typeof config.quiet !== 'boolean')
       throw errorWithFile(file, `config.quiet must be a boolean`);
@@ -641,7 +642,7 @@ function validateProject(file: string, project: Project, title: string) {
   }
 }
 
-function validateProjectGroups(file: string, config: Config) {
+function validateProjectGroups(file: string, config: FullConfigInternal) {
   if (config.groups === undefined)
     return;
   const projectNames = new Set(config.projects?.filter(p => !!p.name).map(p => p.name));
