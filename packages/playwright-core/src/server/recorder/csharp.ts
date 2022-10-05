@@ -15,15 +15,15 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import { asLocator } from './language';
-import type { LanguageGenerator, LanguageGeneratorOptions, LocatorBase, LocatorType } from './language';
+import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { sanitizeDeviceOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
-import { escapeWithQuotes, toTitleCase } from '../../utils/isomorphic/stringUtils';
+import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 import deviceDescriptors from '../deviceDescriptors';
+import { asLocator } from '../isomorphic/locatorGenerators';
 
 type CSharpLanguageMode = 'library' | 'mstest' | 'nunit';
 
@@ -165,7 +165,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   }
 
   private _asLocator(selector: string) {
-    return asLocator(this, selector);
+    return asLocator('csharp', selector);
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
@@ -221,52 +221,6 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     return `${storageStateLine}    }
 }\n`;
   }
-
-  generateLocator(base: LocatorBase, kind: LocatorType, body: string, options: { attrs?: Record<string, string | boolean>, hasText?: string, exact?: boolean } = {}): string {
-    switch (kind) {
-      case 'default':
-        return `Locator(${quote(body)})`;
-      case 'nth':
-        return `Nth(${body})`;
-      case 'first':
-        return `First`;
-      case 'last':
-        return `Last`;
-      case 'role':
-        const attrs: string[] = [];
-        for (const [name, value] of Object.entries(options.attrs!))
-          attrs.push(`${toTitleCase(name)} = ${typeof value === 'string' ? quote(value) : value}`);
-        const attrString = attrs.length ? `, new () { ${attrs.join(', ')} }` : '';
-        return `GetByRole(${quote(body)}${attrString})`;
-      case 'has-text':
-        return `Locator(${quote(body)}, new () { HasTextString: ${quote(options.hasText!)} })`;
-      case 'test-id':
-        return `GetByTestId(${quote(body)})`;
-      case 'text':
-        return toCallWithExact('GetByText', body, !!options.exact);
-      case 'alt':
-        return toCallWithExact('GetByAltText', body, !!options.exact);
-      case 'placeholder':
-        return toCallWithExact('GetByPlaceholder', body, !!options.exact);
-      case 'label':
-        return toCallWithExact('GetByLabel', body, !!options.exact);
-      case 'title':
-        return toCallWithExact('GetByTitle', body, !!options.exact);
-      default:
-        throw new Error('Unknown selector kind ' + kind);
-    }
-  }
-}
-
-function toCallWithExact(method: string, body: string, exact: boolean) {
-  if (body.startsWith('/') && (body.endsWith('/') || body.endsWith('/i'))) {
-    const regex = body.substring(1, body.lastIndexOf('/'));
-    const suffix = body.endsWith('i') ? ', RegexOptions.IgnoreCase' : '';
-    return `${method}(new Regex(${quote(regex)}${suffix}))`;
-  }
-  if (exact)
-    return `${method}(${quote(body)}, new () { Exact: true })`;
-  return `${method}(${quote(body)})`;
 }
 
 function formatObject(value: any, indent = '    ', name = ''): string {

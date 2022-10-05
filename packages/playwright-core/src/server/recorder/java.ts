@@ -15,8 +15,7 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import { asLocator } from './language';
-import type { LanguageGenerator, LanguageGeneratorOptions, LocatorBase, LocatorType } from './language';
+import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
@@ -24,7 +23,8 @@ import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import deviceDescriptors from '../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
-import { escapeWithQuotes, toTitleCase } from '../../utils/isomorphic/stringUtils';
+import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
+import { asLocator } from '../isomorphic/locatorGenerators';
 
 export class JavaLanguageGenerator implements LanguageGenerator {
   id = 'java';
@@ -134,7 +134,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
   }
 
   private _asLocator(selector: string, inFrameLocator: boolean) {
-    return asLocator(this, selector, inFrameLocator);
+    return asLocator('java', selector, inFrameLocator);
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
@@ -159,58 +159,6 @@ export class JavaLanguageGenerator implements LanguageGenerator {
   }
 }`;
   }
-
-  generateLocator(base: LocatorBase, kind: LocatorType, body: string, options: { attrs?: Record<string, string | boolean>, hasText?: string, exact?: boolean } = {}): string {
-    let clazz: string;
-    switch (base) {
-      case 'page': clazz = 'Page'; break;
-      case 'frame-locator': clazz = 'FrameLocator'; break;
-      case 'locator': clazz = 'Locator'; break;
-    }
-    switch (kind) {
-      case 'default':
-        return `locator(${quote(body)})`;
-      case 'nth':
-        return `nth(${body})`;
-      case 'first':
-        return `first()`;
-      case 'last':
-        return `last()`;
-      case 'role':
-        const attrs: string[] = [];
-        for (const [name, value] of Object.entries(options.attrs!))
-          attrs.push(`.set${toTitleCase(name)}(${typeof value === 'string' ? quote(value) : value})`);
-        const attrString = attrs.length ? `, new ${clazz}.GetByRoleOptions()${attrs.join('')}` : '';
-        return `getByRole(${quote(body)}${attrString})`;
-      case 'has-text':
-        return `locator(${quote(body)}, new ${clazz}.LocatorOptions().setHasText(${quote(options.hasText!)}))`;
-      case 'test-id':
-        return `getByTestId(${quote(body)})`;
-      case 'text':
-        return toCallWithExact(clazz, 'getByText', body, !!options.exact);
-      case 'alt':
-        return toCallWithExact(clazz, 'getByAltText', body, !!options.exact);
-      case 'placeholder':
-        return toCallWithExact(clazz, 'getByPlaceholder', body, !!options.exact);
-      case 'label':
-        return toCallWithExact(clazz, 'getByLabel', body, !!options.exact);
-      case 'title':
-        return toCallWithExact(clazz, 'getByTitle', body, !!options.exact);
-      default:
-        throw new Error('Unknown selector kind ' + kind);
-    }
-  }
-}
-
-function toCallWithExact(clazz: string, method: string, body: string, exact: boolean) {
-  if (body.startsWith('/') && (body.endsWith('/') || body.endsWith('/i'))) {
-    const regex = body.substring(1, body.lastIndexOf('/'));
-    const suffix = body.endsWith('i') ? ', Pattern.CASE_INSENSITIVE' : '';
-    return `${method}(Pattern.compile(${quote(regex)}${suffix}))`;
-  }
-  if (exact)
-    return `${method}(${quote(body)}, new ${clazz}.${toTitleCase(method)}Options().setExact(exact))`;
-  return `${method}(${quote(body)})`;
 }
 
 function formatPath(files: string | string[]): string {
