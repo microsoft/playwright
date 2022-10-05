@@ -153,7 +153,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       if (this._loadStates.has(state)) {
         waiter.log(`  not waiting, "${state}" event already fired`);
       } else {
-        await waiter.waitForEvent(this._eventEmitter, 'loadstate', s => {
+        await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
           waiter.log(`  "${s}" event fired`);
           return s === state;
         });
