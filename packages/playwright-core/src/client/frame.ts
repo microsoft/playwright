@@ -18,7 +18,7 @@
 import { assert } from '../utils';
 import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import { FrameLocator, Locator } from './locator';
+import { FrameLocator, getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector, Locator } from './locator';
 import type { ByRoleOptions, LocatorOptions } from './locator';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { assertMaxArguments, JSHandle, serializeArgument, parseResult } from './jsHandle';
@@ -300,31 +300,31 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   getByTestId(testId: string): Locator {
-    return this.locator(Locator.getByTestIdSelector(testId));
+    return this.locator(getByTestIdSelector(testId));
   }
 
   getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByAltTextSelector(text, options));
+    return this.locator(getByAltTextSelector(text, options));
   }
 
   getByLabel(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByLabelSelector(text, options));
+    return this.locator(getByLabelSelector(text, options));
   }
 
   getByPlaceholder(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByPlaceholderSelector(text, options));
+    return this.locator(getByPlaceholderSelector(text, options));
   }
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByTextSelector(text, options));
+    return this.locator(getByTextSelector(text, options));
   }
 
   getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByTitleSelector(text, options));
+    return this.locator(getByTitleSelector(text, options));
   }
 
   getByRole(role: string, options: ByRoleOptions = {}): Locator {
-    return this.locator(Locator.getByRoleSelector(role, options));
+    return this.locator(getByRoleSelector(role, options));
   }
 
   frameLocator(selector: string): FrameLocator {

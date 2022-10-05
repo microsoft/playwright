@@ -19,7 +19,7 @@ import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
-import { Locator } from './locator';
+import { setTestIdAttribute } from './locator';
 
 export class Selectors implements api.Selectors {
   private _channels = new Set<SelectorsOwner>();
@@ -34,7 +34,7 @@ export class Selectors implements api.Selectors {
   }
 
   setTestIdAttribute(attributeName: string) {
-    Locator._setTestIdAttribute(attributeName);
+    setTestIdAttribute(attributeName);
   }
 
   _addChannel(channel: SelectorsOwner) {
