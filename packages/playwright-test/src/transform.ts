@@ -154,6 +154,13 @@ export function resolveHook(filename: string, specifier: string): string | undef
         return tsResolved;
     }
   }
+
+  if (isRelativeSpecifier(specifier)) {
+    const resolved = path.resolve(path.dirname(filename), specifier);
+
+    for (const ext of ['', '.js', '.ts', '.mjs', '.cjs', '.jsx', '.tsx', '.cjs', '.mts', '.cts'])
+      if (fs.existsSync(resolved + ext)) return resolved + ext;
+  }
 }
 
 export function transformHook(code: string, filename: string, moduleUrl?: string): string {
