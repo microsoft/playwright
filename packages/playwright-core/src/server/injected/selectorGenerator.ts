@@ -81,7 +81,7 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
       // Do not use regex for parent elements (for performance).
       textCandidates = filterRegexTokens(textCandidates);
     }
-    const noTextCandidates = buildCandidates(element, accessibleNameCache).map(token => [token]);
+    const noTextCandidates = buildCandidates(injectedScript, element, accessibleNameCache).map(token => [token]);
 
     // First check all text and non-text candidates for the element.
     let result = chooseFirstSelector(injectedScript, targetElement.ownerDocument, element, [...textCandidates, ...noTextCandidates], allowNthMatch, strict);
@@ -144,7 +144,7 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
   return calculateCached(targetElement, true);
 }
 
-function buildCandidates(element: Element, accessibleNameCache: Map<Element, boolean>): SelectorToken[] {
+function buildCandidates(injectedScript: InjectedScript, element: Element, accessibleNameCache: Map<Element, boolean>): SelectorToken[] {
   const candidates: SelectorToken[] = [];
 
   if (element.getAttribute('data-testid'))
@@ -155,10 +155,15 @@ function buildCandidates(element: Element, accessibleNameCache: Map<Element, boo
       candidates.push({ engine: 'css', selector: `[${attr}=${quoteAttributeValue(element.getAttribute(attr)!)}]`, score: 2 });
   }
 
-  if (element.nodeName === 'INPUT') {
-    const input = element as HTMLInputElement;
+  if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
+    const input = element as HTMLInputElement | HTMLTextAreaElement;
     if (input.placeholder)
       candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder)}]`, score: 3 });
+    const label = input.labels?.[0];
+    if (label) {
+      const labelText = elementText(injectedScript._evaluator._cacheText, label).full.trim();
+      candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, false, true), score: 3 });
+    }
   }
 
   const ariaRole = getAriaRole(element);

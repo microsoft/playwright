@@ -366,4 +366,11 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'button')).toBe('[data-test-id="testId"]');
   });
 
+  it('should generate label selector', async ({ page }) => {
+    await page.setContent(`<label for=target>Country</label><input id=target>`);
+    expect(await generate(page, 'input')).toBe('internal:label=Country');
+
+    await page.setContent(`<label for=target>Coun"try</label><input id=target>`);
+    expect(await generate(page, 'input')).toBe('internal:label=/Coun"try/');
+  });
 });

@@ -104,6 +104,11 @@ export function asLocator(generator: LanguageGenerator, selector: string, isFram
       tokens.push(generator.generateLocator(base, 'text', text, { exact }));
       continue;
     }
+    if (part.name === 'internal:label') {
+      const { exact, text } = detectExact(part.body as string);
+      tokens.push(generator.generateLocator(base, 'label', text, { exact }));
+      continue;
+    }
     if (part.name === 'role') {
       const attrSelector = parseAttributeSelector(part.body as string, true);
       const attrs: Record<string, boolean | string> = {};

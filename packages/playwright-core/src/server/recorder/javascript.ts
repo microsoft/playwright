@@ -240,6 +240,8 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
 }
 
 function toCallWithExact(method: string, body: string, exact: boolean) {
+  if (body.startsWith('/') && (body.endsWith('/') || body.endsWith('/i')))
+    return `${method}(${body})`;
   return exact ? `${method}(${quote(body)}, { exact: true })` : `${method}(${quote(body)})`;
 }
 
