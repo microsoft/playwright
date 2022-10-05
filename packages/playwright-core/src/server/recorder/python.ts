@@ -15,15 +15,15 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import { asLocator } from './language';
-import type { LanguageGenerator, LanguageGeneratorOptions, LocatorBase, LocatorType } from './language';
+import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { sanitizeDeviceOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
-import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
+import { escapeWithQuotes, toSnakeCase } from '../../utils/isomorphic/stringUtils';
 import deviceDescriptors from '../deviceDescriptors';
+import { asLocator } from '../isomorphic/locatorGenerators';
 
 export class PythonLanguageGenerator implements LanguageGenerator {
   id: string;
@@ -150,7 +150,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
   }
 
   private _asLocator(selector: string) {
-    return asLocator(this, selector);
+    return asLocator('python', selector);
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
@@ -220,52 +220,6 @@ with sync_playwright() as playwright:
 `;
     }
   }
-
-  generateLocator(base: LocatorBase, kind: LocatorType, body: string, options: { attrs?: Record<string, string | boolean>, hasText?: string, exact?: boolean } = {}): string {
-    switch (kind) {
-      case 'default':
-        return `locator(${quote(body)})`;
-      case 'nth':
-        return `nth(${body})`;
-      case 'first':
-        return `first`;
-      case 'last':
-        return `last`;
-      case 'role':
-        const attrs: string[] = [];
-        for (const [name, value] of Object.entries(options.attrs!))
-          attrs.push(`${toSnakeCase(name)}=${typeof value === 'string' ? quote(value) : value}`);
-        const attrString = attrs.length ? `, ${attrs.join(', ')}` : '';
-        return `get_by_role(${quote(body)}${attrString})`;
-      case 'has-text':
-        return `locator(${quote(body)}, has_text=${quote(options.hasText!)})`;
-      case 'test-id':
-        return `get_by_test_id(${quote(body)})`;
-      case 'text':
-        return toCallWithExact('get_by_text', body, !!options.exact);
-      case 'alt':
-        return toCallWithExact('get_by_alt_text', body, !!options.exact);
-      case 'placeholder':
-        return toCallWithExact('get_by_placeholder', body, !!options.exact);
-      case 'label':
-        return toCallWithExact('get_by_label', body, !!options.exact);
-      case 'title':
-        return toCallWithExact('get_by_title', body, !!options.exact);
-      default:
-        throw new Error('Unknown selector kind ' + kind);
-    }
-  }
-}
-
-function toCallWithExact(method: string, body: string, exact: boolean) {
-  if (body.startsWith('/') && (body.endsWith('/') || body.endsWith('/i'))) {
-    const regex = body.substring(1, body.lastIndexOf('/'));
-    const suffix = body.endsWith('i') ? ', re.IGNORECASE' : '';
-    return `${method}(re.compile(r${quote(regex)}${suffix}))`;
-  }
-  if (exact)
-    return `${method}(${quote(body)}, exact=true)`;
-  return `${method}(${quote(body)})`;
 }
 
 function formatValue(value: any): string {
@@ -282,11 +236,6 @@ function formatValue(value: any): string {
   if (typeof value === 'object')
     return JSON.stringify(value);
   return String(value);
-}
-
-function toSnakeCase(name: string): string {
-  const toSnakeCaseRegex = /((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))/g;
-  return name.replace(toSnakeCaseRegex, `_$1`).toLowerCase();
 }
 
 function formatOptions(value: any, hasArguments: boolean, asDict?: boolean): string {

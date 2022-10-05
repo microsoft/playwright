@@ -31,6 +31,11 @@ export function toTitleCase(name: string) {
   return name.charAt(0).toUpperCase() + name.substring(1);
 }
 
+export function toSnakeCase(name: string): string {
+  const toSnakeCaseRegex = /((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))/g;
+  return name.replace(toSnakeCaseRegex, `_$1`).toLowerCase();
+}
+
 export function cssEscape(s: string): string {
   let result = '';
   for (let i = 0; i < s.length; i++)
