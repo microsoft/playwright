@@ -23,6 +23,9 @@ import type { InstrumentationListener } from './instrumentation';
 import type { Playwright } from './playwright';
 import { Recorder } from './recorder';
 import { EmptyRecorderApp } from './recorder/recorderApp';
+import { asLocator } from './isomorphic/locatorGenerators';
+import type { Language } from './isomorphic/locatorGenerators';
+import type { NameValue } from '../common/types';
 
 const internalMetadata = serverSideCallMetadata();
 
@@ -215,7 +218,8 @@ class InspectingRecorderApp extends EmptyRecorderApp {
   }
 
   override async setSelector(selector: string): Promise<void> {
-    this._debugController.emit(DebugController.Events.InspectRequested, selector);
+    const locators: NameValue[] = ['javascript', 'python', 'java', 'csharp'].map(l => ({ name: l, value: asLocator(l as Language, selector) }));
+    this._debugController.emit(DebugController.Events.InspectRequested, { selector, locators });
   }
 
   override async setSources(sources: Source[]): Promise<void> {

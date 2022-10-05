@@ -15,7 +15,7 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { sanitizeDeviceOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
@@ -31,7 +31,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   id: string;
   groupName = '.NET C#';
   name: string;
-  highlighter = 'csharp';
+  highlighter = 'csharp' as Language;
   _mode: CSharpLanguageMode;
 
   constructor(mode: CSharpLanguageMode) {

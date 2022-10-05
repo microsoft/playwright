@@ -27,7 +27,7 @@ it('should highlight locator', async ({ page, isAndroid }) => {
   const textPromise = waitForTestLog<string>(page, 'Highlight text for test: ');
   const boxPromise = waitForTestLog<{ x: number, y: number, width: number, height: number }>(page, 'Highlight box for test: ');
   await page.locator('input').highlight();
-  expect(await textPromise).toBe('input');
+  expect(await textPromise).toBe('locator(\'input\')');
   let box1 = await page.locator('input').boundingBox();
   let box2 = await boxPromise;
 
