@@ -121,7 +121,7 @@ export function asLocator(generator: LanguageGenerator, selector: string, isFram
       }
     }
 
-    if (part.name === 'attr') {
+    if (part.name === 'internal:attr') {
       const attrSelector = parseAttributeSelector(part.body as string, true);
       const { name, value } = attrSelector.attributes[0];
       if (name === 'data-testid') {

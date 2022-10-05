@@ -19,7 +19,7 @@ import { InvalidSelectorError, parseCSS } from './cssParser';
 export { InvalidSelectorError, isInvalidSelectorError } from './cssParser';
 
 export type NestedSelectorBody = { parsed: ParsedSelector, distance?: number };
-const kNestedSelectorNames = new Set(['has', 'left-of', 'right-of', 'above', 'below', 'near']);
+const kNestedSelectorNames = new Set(['internal:has', 'left-of', 'right-of', 'above', 'below', 'near']);
 const kNestedSelectorNamesWithDistance = new Set(['left-of', 'right-of', 'above', 'below', 'near']);
 
 export type ParsedSelectorPart = {
@@ -70,7 +70,7 @@ export function parseSelector(selector: string): ParsedSelector {
         throw new Error(`Malformed selector: ${part.name}=` + part.body);
       }
       const result = { name: part.name, source: part.body, body: { parsed: parseSelector(innerSelector), distance } };
-      if (result.body.parsed.parts.some(part => part.name === 'control' && part.body === 'enter-frame'))
+      if (result.body.parsed.parts.some(part => part.name === 'internal:control' && part.body === 'enter-frame'))
         throw new Error(`Frames are not allowed inside "${part.name}" selectors`);
       return result;
     }
@@ -93,7 +93,7 @@ export function splitSelectorByFrame(selectorText: string): ParsedSelector[] {
   let chunkStartIndex = 0;
   for (let i = 0; i < selector.parts.length; ++i) {
     const part = selector.parts[i];
-    if (part.name === 'control' && part.body === 'enter-frame') {
+    if (part.name === 'internal:control' && part.body === 'enter-frame') {
       if (!chunk.parts.length)
         throw new InvalidSelectorError('Selector cannot start with entering frame, select the iframe first');
       result.push(chunk);

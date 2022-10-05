@@ -22,7 +22,7 @@ import { RoleEngine } from './roleSelectorEngine';
 import { parseAttributeSelector } from '../isomorphic/selectorParser';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../isomorphic/selectorParser';
 import { allEngineNames, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
-import { type TextMatcher, elementMatchesText, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher, elementText } from './selectorUtils';
+import { type TextMatcher, elementMatchesText, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher, elementText, createStrictFullTextMatcher } from './selectorUtils';
 import { SelectorEvaluatorImpl } from './selectorEvaluator';
 import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost } from './domUtils';
 import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
@@ -103,9 +103,10 @@ export class InjectedScript {
     this._engines.set('css', this._createCSSEngine());
     this._engines.set('nth', { queryAll: () => [] });
     this._engines.set('visible', this._createVisibleEngine());
-    this._engines.set('control', this._createControlEngine());
-    this._engines.set('has', this._createHasEngine());
-    this._engines.set('attr', this._createNamedAttributeEngine());
+    this._engines.set('internal:control', this._createControlEngine());
+    this._engines.set('internal:has', this._createHasEngine());
+    this._engines.set('internal:label', this._createLabelEngine());
+    this._engines.set('internal:attr', this._createNamedAttributeEngine());
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -173,7 +174,7 @@ export class InjectedScript {
       const withHas: ParsedSelector = { parts: selector.parts.slice(0, selector.capture + 1) };
       if (selector.capture < selector.parts.length - 1) {
         const parsed: ParsedSelector = { parts: selector.parts.slice(selector.capture + 1) };
-        const has: ParsedSelectorPart = { name: 'has', body: { parsed }, source: stringifySelector(parsed) };
+        const has: ParsedSelectorPart = { name: 'internal:has', body: { parsed }, source: stringifySelector(parsed) };
         withHas.parts.push(has);
       }
       return this.querySelectorAll(withHas, root);
@@ -243,7 +244,7 @@ export class InjectedScript {
 
   private _createTextEngine(shadow: boolean): SelectorEngine {
     const queryList = (root: SelectorRoot, selector: string): Element[] => {
-      const { matcher, kind } = createTextMatcher(selector);
+      const { matcher, kind } = createTextMatcher(selector, false);
       const result: Element[] = [];
       let lastDidNotMatchSelf: Element | null = null;
 
@@ -269,6 +270,23 @@ export class InjectedScript {
     return {
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
         return queryList(root, selector);
+      }
+    };
+  }
+
+  private _createLabelEngine(): SelectorEngine {
+    const evaluator = this._evaluator;
+    return {
+      queryAll: (root: SelectorRoot, selector: string): Element[] => {
+        const { matcher } = createTextMatcher(selector, true);
+        const result: Element[] = [];
+        const labels = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, 'label') as HTMLLabelElement[];
+        for (const label of labels) {
+          const control = label.control;
+          if (control && matcher(elementText(evaluator._cacheText, label)))
+            result.push(control);
+        }
+        return result;
       }
     };
   }
@@ -305,10 +323,6 @@ export class InjectedScript {
           return [];
         if (body === 'return-empty')
           return [];
-        if (body === 'resolve-label') {
-          const control = (root as HTMLLabelElement).control;
-          return control ? [control] : [];
-        }
         if (body === 'component') {
           if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
             return [];
@@ -316,7 +330,7 @@ export class InjectedScript {
           // However, when mounting fragments, return the root instead.
           return [root.childElementCount === 1 ? root.firstElementChild! : root as Element];
         }
-        throw new Error(`Internal error, unknown control selector ${body}`);
+        throw new Error(`Internal error, unknown internal:control selector ${body}`);
       }
     };
   }
@@ -1280,7 +1294,7 @@ function unescape(s: string): string {
   return r.join('');
 }
 
-function createTextMatcher(selector: string): { matcher: TextMatcher, kind: 'regex' | 'strict' | 'lax' } {
+function createTextMatcher(selector: string, strictMatchesFullText: boolean): { matcher: TextMatcher, kind: 'regex' | 'strict' | 'lax' } {
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
     const lastSlash = selector.lastIndexOf('/');
     const matcher: TextMatcher = createRegexTextMatcher(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
@@ -1295,8 +1309,9 @@ function createTextMatcher(selector: string): { matcher: TextMatcher, kind: 'reg
     selector = unescape(selector.substring(1, selector.length - 1));
     strict = true;
   }
-  const matcher = strict ? createStrictTextMatcher(selector) : createLaxTextMatcher(selector);
-  return { matcher, kind: strict ? 'strict' : 'lax' };
+  if (strict)
+    return { matcher: strictMatchesFullText ? createStrictFullTextMatcher(selector) : createStrictTextMatcher(selector), kind: 'strict' };
+  return { matcher: createLaxTextMatcher(selector), kind: 'lax' };
 }
 
 class ExpectedTextMatcher {

@@ -28,10 +28,10 @@ function createLocator(injectedScript: InjectedScript, initial: string, options?
       this.selector = selector;
       if (options?.hasText) {
         const textSelector = 'text=' + escapeForTextSelector(options.hasText, false);
-        this.selector += ` >> has=${JSON.stringify(textSelector)}`;
+        this.selector += ` >> internal:has=${JSON.stringify(textSelector)}`;
       }
       if (options?.has)
-        this.selector += ` >> has=` + JSON.stringify(options.has.selector);
+        this.selector += ` >> internal:has=` + JSON.stringify(options.has.selector);
       const parsed = injectedScript.parseSelector(this.selector);
       this.element = injectedScript.querySelector(parsed, document, false);
       this.elements = injectedScript.querySelectorAll(parsed, document);

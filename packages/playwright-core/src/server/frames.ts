@@ -1501,7 +1501,7 @@ export class Frame extends SdkObject {
     return this.retryWithProgress(progress, selector, options, async selectorInFrame => {
       // Be careful, |this| can be different from |frame|.
       progress.log(`waiting for selector "${selector}"`);
-      const { frame, info } = selectorInFrame || { frame: this, info: { parsed: { parts: [{ name: 'control', body: 'return-empty', source: 'control=return-empty' }] }, world: 'utility', strict: !!options.strict } };
+      const { frame, info } = selectorInFrame || { frame: this, info: { parsed: { parts: [{ name: 'internal:control', body: 'return-empty', source: 'internal:control=return-empty' }] }, world: 'utility', strict: !!options.strict } };
       return await frame._scheduleRerunnableTaskInFrame(progress, info, callbackText, taskData, options);
     });
   }

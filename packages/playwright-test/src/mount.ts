@@ -124,7 +124,7 @@ async function innerMount(page: Page, jsxOrType: JsxComponent | string, options:
 
     await window.playwrightMount(component, rootElement, hooksConfig);
 
-    return '#root >> control=component';
+    return '#root >> internal:control=component';
   }, { component, hooksConfig: options.hooksConfig });
   return selector;
 }

@@ -148,7 +148,7 @@ function buildCandidates(element: Element, accessibleNameCache: Map<Element, boo
   const candidates: SelectorToken[] = [];
 
   if (element.getAttribute('data-testid'))
-    candidates.push({ engine: 'attr', selector: `[data-testid=${escapeForAttributeSelector(element.getAttribute('data-testid')!)}]`, score: 1 });
+    candidates.push({ engine: 'internal:attr', selector: `[data-testid=${escapeForAttributeSelector(element.getAttribute('data-testid')!)}]`, score: 1 });
 
   for (const attr of ['data-test-id', 'data-test']) {
     if (element.getAttribute(attr))
@@ -158,7 +158,7 @@ function buildCandidates(element: Element, accessibleNameCache: Map<Element, boo
   if (element.nodeName === 'INPUT') {
     const input = element as HTMLInputElement;
     if (input.placeholder)
-      candidates.push({ engine: 'attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder)}]`, score: 3 });
+      candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder)}]`, score: 3 });
   }
 
   const ariaRole = getAriaRole(element);
@@ -171,7 +171,7 @@ function buildCandidates(element: Element, accessibleNameCache: Map<Element, boo
   }
 
   if (element.getAttribute('alt') && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName))
-    candidates.push({ engine: 'attr', selector: `[alt=${escapeForAttributeSelector(element.getAttribute('alt')!)}]`, score: 10 });
+    candidates.push({ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(element.getAttribute('alt')!)}]`, score: 10 });
 
   if (element.getAttribute('name') && ['BUTTON', 'FORM', 'FIELDSET', 'FRAME', 'IFRAME', 'INPUT', 'KEYGEN', 'OBJECT', 'OUTPUT', 'SELECT', 'TEXTAREA', 'MAP', 'META', 'PARAM'].includes(element.nodeName))
     candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[name=${quoteAttributeValue(element.getAttribute('name')!)}]`, score: 50 });
