@@ -579,11 +579,6 @@ interface TestConfig {
   };
 
   /**
-   * Path to config file, if any.
-   */
-  configFile?: string;
-
-  /**
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
    * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
@@ -682,38 +677,6 @@ interface TestConfig {
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
   grepInvert?: RegExp|Array<RegExp>;
-
-  /**
-   * Project groups that control project execution order.
-   */
-  groups?: { [key: string]: Array<string|Array<string|{
-    /**
-     * Project name(s).
-     */
-    project: string|Array<string>;
-
-    /**
-     * Filter to only run tests with a title matching one of the patterns.
-     */
-    grep?: RegExp|Array<RegExp>;
-
-    /**
-     * Filter to only run tests with a title **not** matching one of the patterns.
-     */
-    grepInvert?: RegExp|Array<RegExp>;
-
-    /**
-     * Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute
-     * file path. Strings are treated as glob patterns.
-     */
-    testMatch?: string|RegExp|Array<string|RegExp>;
-
-    /**
-     * Files matching one of these patterns are not executed as test files. Matching is performed against the absolute file
-     * path. Strings are treated as glob patterns.
-     */
-    testIgnore?: string|RegExp|Array<string|RegExp>;
-  }>>; };
 
   /**
    * Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await
@@ -1337,9 +1300,6 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   webServer: TestConfigWebServer | null;
-  /**
-   * Path to config file, if any.
-   */
   configFile?: string;
 }
 
