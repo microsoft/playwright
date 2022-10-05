@@ -46,62 +46,6 @@ export class Locator implements api.Locator {
   _frame: Frame;
   _selector: string;
 
-  static _testIdAttributeName = 'data-testid';
-  static _setTestIdAttribute(attributeName: string) {
-    Locator._testIdAttributeName = attributeName;
-  }
-
-  static getByTestIdSelector(testId: string): string {
-    return Locator.getByAttributeTextSelector(this._testIdAttributeName, testId, { exact: true });
-  }
-
-  private static getByAttributeTextSelector(attrName: string, text: string | RegExp, options?: { exact?: boolean }): string {
-    if (!isString(text))
-      return `internal:attr=[${attrName}=${text}]`;
-    return `internal:attr=[${attrName}=${escapeForAttributeSelector(text)}${options?.exact ? 's' : 'i'}]`;
-  }
-
-  static getByLabelSelector(text: string | RegExp, options?: { exact?: boolean }): string {
-    return 'internal:label=' + escapeForTextSelector(text, !!options?.exact);
-  }
-
-  static getByAltTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
-    return Locator.getByAttributeTextSelector('alt', text, options);
-  }
-
-  static getByTitleSelector(text: string | RegExp, options?: { exact?: boolean }): string {
-    return Locator.getByAttributeTextSelector('title', text, options);
-  }
-
-  static getByPlaceholderSelector(text: string | RegExp, options?: { exact?: boolean }): string {
-    return Locator.getByAttributeTextSelector('placeholder', text, options);
-  }
-
-  static getByTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
-    return 'text=' + escapeForTextSelector(text, !!options?.exact);
-  }
-
-  static getByRoleSelector(role: string, options: ByRoleOptions = {}): string {
-    const props: string[][] = [];
-    if (options.checked !== undefined)
-      props.push(['checked', String(options.checked)]);
-    if (options.disabled !== undefined)
-      props.push(['disabled', String(options.disabled)]);
-    if (options.selected !== undefined)
-      props.push(['selected', String(options.selected)]);
-    if (options.expanded !== undefined)
-      props.push(['expanded', String(options.expanded)]);
-    if (options.includeHidden !== undefined)
-      props.push(['include-hidden', String(options.includeHidden)]);
-    if (options.level !== undefined)
-      props.push(['level', String(options.level)]);
-    if (options.name !== undefined)
-      props.push(['name', isString(options.name) ? escapeForAttributeSelector(options.name) : String(options.name)]);
-    if (options.pressed !== undefined)
-      props.push(['pressed', String(options.pressed)]);
-    return `role=${role}${props.map(([n, v]) => `[${n}=${v}]`).join('')}`;
-  }
-
   constructor(frame: Frame, selector: string, options?: LocatorOptions) {
     this._frame = frame;
     this._selector = selector;
@@ -197,31 +141,31 @@ export class Locator implements api.Locator {
   }
 
   getByTestId(testId: string): Locator {
-    return this.locator(Locator.getByTestIdSelector(testId));
+    return this.locator(getByTestIdSelector(testId));
   }
 
   getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByAltTextSelector(text, options));
+    return this.locator(getByAltTextSelector(text, options));
   }
 
   getByLabel(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByLabelSelector(text, options));
+    return this.locator(getByLabelSelector(text, options));
   }
 
   getByPlaceholder(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByPlaceholderSelector(text, options));
+    return this.locator(getByPlaceholderSelector(text, options));
   }
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByTextSelector(text, options));
+    return this.locator(getByTextSelector(text, options));
   }
 
   getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByTitleSelector(text, options));
+    return this.locator(getByTitleSelector(text, options));
   }
 
   getByRole(role: string, options: ByRoleOptions = {}): Locator {
-    return this.locator(Locator.getByRoleSelector(role, options));
+    return this.locator(getByRoleSelector(role, options));
   }
 
   frameLocator(selector: string): FrameLocator {
@@ -399,31 +343,31 @@ export class FrameLocator implements api.FrameLocator {
   }
 
   getByTestId(testId: string): Locator {
-    return this.locator(Locator.getByTestIdSelector(testId));
+    return this.locator(getByTestIdSelector(testId));
   }
 
   getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByAltTextSelector(text, options));
+    return this.locator(getByAltTextSelector(text, options));
   }
 
   getByLabel(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByLabelSelector(text, options));
+    return this.locator(getByLabelSelector(text, options));
   }
 
   getByPlaceholder(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByPlaceholderSelector(text, options));
+    return this.locator(getByPlaceholderSelector(text, options));
   }
 
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByTextSelector(text, options));
+    return this.locator(getByTextSelector(text, options));
   }
 
   getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
-    return this.locator(Locator.getByTitleSelector(text, options));
+    return this.locator(getByTitleSelector(text, options));
   }
 
   getByRole(role: string, options: ByRoleOptions = {}): Locator {
-    return this.locator(Locator.getByRoleSelector(role, options));
+    return this.locator(getByRoleSelector(role, options));
   }
 
   frameLocator(selector: string): FrameLocator {
@@ -441,4 +385,62 @@ export class FrameLocator implements api.FrameLocator {
   nth(index: number): FrameLocator {
     return new FrameLocator(this._frame, this._frameSelector + ` >> nth=${index}`);
   }
+}
+
+let testIdAttributeName: string = 'data-testid';
+
+export function setTestIdAttribute(attributeName: string) {
+  testIdAttributeName = attributeName;
+}
+
+function getByAttributeTextSelector(attrName: string, text: string | RegExp, options?: { exact?: boolean }): string {
+  if (!isString(text))
+    return `internal:attr=[${attrName}=${text}]`;
+  return `internal:attr=[${attrName}=${escapeForAttributeSelector(text)}${options?.exact ? 's' : 'i'}]`;
+}
+
+export function getByTestIdSelector(testId: string): string {
+  return getByAttributeTextSelector(testIdAttributeName, testId, { exact: true });
+}
+
+
+export function getByLabelSelector(text: string | RegExp, options?: { exact?: boolean }): string {
+  return 'internal:label=' + escapeForTextSelector(text, !!options?.exact);
+}
+
+export function getByAltTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
+  return getByAttributeTextSelector('alt', text, options);
+}
+
+export function getByTitleSelector(text: string | RegExp, options?: { exact?: boolean }): string {
+  return getByAttributeTextSelector('title', text, options);
+}
+
+export function getByPlaceholderSelector(text: string | RegExp, options?: { exact?: boolean }): string {
+  return getByAttributeTextSelector('placeholder', text, options);
+}
+
+export function getByTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
+  return 'text=' + escapeForTextSelector(text, !!options?.exact);
+}
+
+export function getByRoleSelector(role: string, options: ByRoleOptions = {}): string {
+  const props: string[][] = [];
+  if (options.checked !== undefined)
+    props.push(['checked', String(options.checked)]);
+  if (options.disabled !== undefined)
+    props.push(['disabled', String(options.disabled)]);
+  if (options.selected !== undefined)
+    props.push(['selected', String(options.selected)]);
+  if (options.expanded !== undefined)
+    props.push(['expanded', String(options.expanded)]);
+  if (options.includeHidden !== undefined)
+    props.push(['include-hidden', String(options.includeHidden)]);
+  if (options.level !== undefined)
+    props.push(['level', String(options.level)]);
+  if (options.name !== undefined)
+    props.push(['name', isString(options.name) ? escapeForAttributeSelector(options.name) : String(options.name)]);
+  if (options.pressed !== undefined)
+    props.push(['pressed', String(options.pressed)]);
+  return `role=${role}${props.map(([n, v]) => `[${n}=${v}]`).join('')}`;
 }
