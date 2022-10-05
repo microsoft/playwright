@@ -250,6 +250,35 @@ export interface Page {
   evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<SmartHandle<R>>;
 
   /**
+   * Adds a script which would be evaluated in one of the following scenarios:
+   * - Whenever the page is navigated.
+   * - Whenever the child frame is attached or navigated. In this case, the script is evaluated in the context of the newly
+   *   attached frame.
+   *
+   * The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend
+   * the JavaScript environment, e.g. to seed `Math.random`.
+   *
+   * An example of overriding `Math.random` before the page loads:
+   *
+   * ```js
+   * // preload.js
+   * Math.random = () => 42;
+   * ```
+   *
+   * ```js
+   * // In your playwright script, assuming the preload.js file is in same directory
+   * await page.addInitScript({ path: './preload.js' });
+   * ```
+   *
+   * > NOTE: The order of evaluation of multiple scripts installed via
+   * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
+   * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not defined.
+   * @param script Script to be evaluated in the page.
+   * @param arg Optional argument to pass to `script` (only supported when passing a function).
+   */
+  addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
+
+  /**
    * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
    *
    * The method finds an element matching the specified selector within the page. If no elements match the selector, the
@@ -1730,46 +1759,6 @@ export interface Page {
    * @deprecated
    */
   accessibility: Accessibility;
-
-  /**
-   * Adds a script which would be evaluated in one of the following scenarios:
-   * - Whenever the page is navigated.
-   * - Whenever the child frame is attached or navigated. In this case, the script is evaluated in the context of the newly
-   *   attached frame.
-   *
-   * The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend
-   * the JavaScript environment, e.g. to seed `Math.random`.
-   *
-   * An example of overriding `Math.random` before the page loads:
-   *
-   * ```js
-   * // preload.js
-   * Math.random = () => 42;
-   * ```
-   *
-   * ```js
-   * // In your playwright script, assuming the preload.js file is in same directory
-   * await page.addInitScript({ path: './preload.js' });
-   * ```
-   *
-   * > NOTE: The order of evaluation of multiple scripts installed via
-   * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
-   * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not defined.
-   * @param script Script to be evaluated in the page.
-   * @param arg Optional argument to pass to `script` (only supported when passing a function).
-   */
-  addInitScript(script: Function|string|{
-    /**
-     * Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working
-     * directory. Optional.
-     */
-    path?: string;
-
-    /**
-     * Raw script content. Optional.
-     */
-    content?: string;
-  }, arg?: Serializable): Promise<void>;
 
   /**
    * Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
@@ -6802,6 +6791,37 @@ export interface BrowserContext {
    * @param options
    */
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<void>;
+
+  /**
+   * Adds a script which would be evaluated in one of the following scenarios:
+   * - Whenever a page is created in the browser context or is navigated.
+   * - Whenever a child frame is attached or navigated in any page in the browser context. In this case, the script is
+   *   evaluated in the context of the newly attached frame.
+   *
+   * The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend
+   * the JavaScript environment, e.g. to seed `Math.random`.
+   *
+   * An example of overriding `Math.random` before the page loads:
+   *
+   * ```js
+   * // preload.js
+   * Math.random = () => 42;
+   * ```
+   *
+   * ```js
+   * // In your playwright script, assuming the preload.js file is in same directory.
+   * await browserContext.addInitScript({
+   *   path: 'preload.js'
+   * });
+   * ```
+   *
+   * > NOTE: The order of evaluation of multiple scripts installed via
+   * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
+   * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not defined.
+   * @param script Script to be evaluated in all pages in the browser context.
+   * @param arg Optional argument to pass to `script` (only supported when passing a function).
+   */
+  addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
   /**
    * > NOTE: Only works with Chromium browser's persistent context.
    *
@@ -7234,48 +7254,6 @@ export interface BrowserContext {
      */
     sameSite?: "Strict"|"Lax"|"None";
   }>): Promise<void>;
-
-  /**
-   * Adds a script which would be evaluated in one of the following scenarios:
-   * - Whenever a page is created in the browser context or is navigated.
-   * - Whenever a child frame is attached or navigated in any page in the browser context. In this case, the script is
-   *   evaluated in the context of the newly attached frame.
-   *
-   * The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend
-   * the JavaScript environment, e.g. to seed `Math.random`.
-   *
-   * An example of overriding `Math.random` before the page loads:
-   *
-   * ```js
-   * // preload.js
-   * Math.random = () => 42;
-   * ```
-   *
-   * ```js
-   * // In your playwright script, assuming the preload.js file is in same directory.
-   * await browserContext.addInitScript({
-   *   path: 'preload.js'
-   * });
-   * ```
-   *
-   * > NOTE: The order of evaluation of multiple scripts installed via
-   * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
-   * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not defined.
-   * @param script Script to be evaluated in all pages in the browser context.
-   * @param arg Optional argument to pass to `script` (only supported when passing a function).
-   */
-  addInitScript(script: Function|string|{
-    /**
-     * Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working
-     * directory. Optional.
-     */
-    path?: string;
-
-    /**
-     * Raw script content. Optional.
-     */
-    content?: string;
-  }, arg?: Serializable): Promise<void>;
 
   /**
    * > NOTE: Background pages are only supported on Chromium-based browsers.

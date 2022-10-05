@@ -576,6 +576,17 @@ playwright.chromium.launch().then(async browser => {
     });
   }
 
+  {
+    await page.addInitScript((args) => {
+      args.foo === args.hello.world
+    }, {
+      foo: 'bar',
+      hello: {
+        world: 'bar'
+      }
+    });
+  }
+
   await browser.close();
 })();
 
