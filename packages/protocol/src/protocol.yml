@@ -1764,6 +1764,7 @@ Frame:
         position: Point?
         timeout: number?
         trial: boolean?
+        noWaitAfter: boolean?
       tracing:
         snapshot: true
         pausesBeforeInput: true
@@ -2329,6 +2330,7 @@ ElementHandle:
         position: Point?
         timeout: number?
         trial: boolean?
+        noWaitAfter: boolean?
       tracing:
         snapshot: true
         pausesBeforeInput: true

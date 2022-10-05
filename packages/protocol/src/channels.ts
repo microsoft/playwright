@@ -2440,6 +2440,7 @@ export type FrameHoverParams = {
   position?: Point,
   timeout?: number,
   trial?: boolean,
+  noWaitAfter?: boolean,
 };
 export type FrameHoverOptions = {
   strict?: boolean,
@@ -2448,6 +2449,7 @@ export type FrameHoverOptions = {
   position?: Point,
   timeout?: number,
   trial?: boolean,
+  noWaitAfter?: boolean,
 };
 export type FrameHoverResult = void;
 export type FrameInnerHTMLParams = {
@@ -3094,6 +3096,7 @@ export type ElementHandleHoverParams = {
   position?: Point,
   timeout?: number,
   trial?: boolean,
+  noWaitAfter?: boolean,
 };
 export type ElementHandleHoverOptions = {
   force?: boolean,
@@ -3101,6 +3104,7 @@ export type ElementHandleHoverOptions = {
   position?: Point,
   timeout?: number,
   trial?: boolean,
+  noWaitAfter?: boolean,
 };
 export type ElementHandleHoverResult = void;
 export type ElementHandleInnerHTMLParams = {};
