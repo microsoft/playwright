@@ -91,7 +91,7 @@ function inlineType(type, indent = '', name, level) {
     if (['string', 'boolean', 'number', 'undefined'].includes(type))
       return { ts: mapType(type), scheme: `t${titleCase(type)}`, optional };
     if (channels.has(type))
-      return { ts: `Core.${type}`, scheme: `tChannel('${type}')` , optional };
+      return { ts: `Core.${type}`, scheme: `tChannel('${type}')`, optional };
     if (type === 'Channel')
       return { ts: `Channel`, scheme: `tChannel('*')`, optional };
     return { ts: mapType(type), scheme: `tType('${type}')`, optional };
@@ -160,7 +160,7 @@ function objectType(props, indent, onlyOptional = false, parentName = '') {
   return { ts: `${indent}{${inner.ts}\n${indent}}`, scheme: `tObject({\n${inner.scheme}\n${indent}})` };
 }
 
-const yml = fs.readFileSync(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'protocol', 'protocol.yml'), 'utf-8');
+const yml = fs.readFileSync(path.join(__dirname, '..', 'packages', 'protocol', 'src', 'protocol.yml'), 'utf-8');
 const protocol = yaml.parse(yml);
 
 for (const [name, value] of Object.entries(protocol)) {
@@ -198,7 +198,7 @@ for (const [name, item] of Object.entries(protocol)) {
 /**
  *
  * @param {string} className
- * @param {string|undefined} inheritFrom
+ * @param {string|null} inheritFrom
  * @param {any} serializedProperties
  */
 function writeCSharpClass(className, inheritFrom, serializedProperties) {
