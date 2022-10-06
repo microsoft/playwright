@@ -109,7 +109,7 @@ test('should respect path resolver in experimental mode', async ({ runInlineTest
       },
     }`,
     'a.test.ts': `
-      import { foo } from 'util/b.ts';
+      import { foo } from 'util/b.js';
       const { test } = pwt;
       test('check project name', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
