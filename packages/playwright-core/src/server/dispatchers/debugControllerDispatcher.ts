@@ -28,8 +28,8 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
     this._object.on(DebugController.Events.BrowsersChanged, browsers => {
       this._dispatchEvent('browsersChanged', { browsers });
     });
-    this._object.on(DebugController.Events.InspectRequested, selector => {
-      this._dispatchEvent('inspectRequested', { selector });
+    this._object.on(DebugController.Events.InspectRequested, ({ selector, locators }) => {
+      this._dispatchEvent('inspectRequested', { selector, locators });
     });
     this._object.on(DebugController.Events.SourcesChanged, sources => {
       this._dispatchEvent('sourcesChanged', { sources });

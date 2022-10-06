@@ -132,6 +132,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       <div>Target:</div>
       <select className='recorder-chooser' hidden={!sources.length} value={fileId} onChange={event => {
         setFileId(event.target.selectedOptions[0].value);
+        window.dispatch({ event: 'fileChanged', params: { file: event.target.selectedOptions[0].value } });
       }}>{renderSourceOptions(sources)}</select>
       <ToolbarButton icon='clear-all' title='Clear' disabled={!source || !source.text} onClick={() => {
         window.dispatch({ event: 'clear' });

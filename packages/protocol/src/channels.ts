@@ -610,6 +610,7 @@ export interface DebugControllerChannel extends DebugControllerEventTarget, Chan
 }
 export type DebugControllerInspectRequestedEvent = {
   selector: string,
+  locators: NameValue[],
 };
 export type DebugControllerBrowsersChangedEvent = {
   browsers: {

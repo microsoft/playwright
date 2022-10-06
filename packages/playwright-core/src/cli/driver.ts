@@ -90,8 +90,8 @@ class ProtocolHandler {
     this._controller.on(DebugController.Events.BrowsersChanged, browsers => {
       process.send!({ method: 'browsersChanged', params: { browsers } });
     });
-    this._controller.on(DebugController.Events.InspectRequested, selector => {
-      process.send!({ method: 'inspectRequested', params: { selector } });
+    this._controller.on(DebugController.Events.InspectRequested, ({ selector, locators }) => {
+      process.send!({ method: 'inspectRequested', params: { selector, locators } });
     });
   }
 

@@ -334,6 +334,7 @@ scheme.RecorderSource = tObject({
 scheme.DebugControllerInitializer = tOptional(tObject({}));
 scheme.DebugControllerInspectRequestedEvent = tObject({
   selector: tString,
+  locators: tArray(tType('NameValue')),
 });
 scheme.DebugControllerBrowsersChangedEvent = tObject({
   browsers: tArray(tObject({

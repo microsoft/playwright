@@ -19,7 +19,7 @@ import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
 import { parseAttributeSelector, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
 import type { ParsedSelector } from '../isomorphic/selectorParser';
 
-type Language = 'javascript' | 'python' | 'java' | 'csharp';
+export type Language = 'javascript' | 'python' | 'java' | 'csharp';
 export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 
