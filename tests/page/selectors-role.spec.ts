@@ -360,6 +360,10 @@ test('should support name', async ({ page }) => {
     `<div role="button" aria-label="Hello"></div>`,
     `<div role="button" aria-label="Hello" aria-hidden="true"></div>`,
   ]);
+  expect(await page.getByRole('button', { name: 'hello', includeHidden: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label="Hello" aria-hidden="true"></div>`,
+  ]);
 
   expect(await page.locator(`role=button[name=Hello]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="Hello"></div>`,
