@@ -38,7 +38,7 @@ it('getByText should work', async ({ page }) => {
   expect(await page.getByText('ye', { exact: true }).first().evaluate(e => e.outerHTML)).toContain('> ye </div>');
 
   await page.setContent(`<div>Hello world</div><div>Hello</div>`);
-  expect(await page.getByText('Hello', { exact: true }).evaluate(e => e.outerHTML)).toBe('<div>Hello</div>');
+  expect(await page.getByText('Hello', { exact: true }).evaluate(e => e.outerHTML)).toContain('>Hello</div>');
 });
 
 it('getByLabel should work', async ({ page }) => {
