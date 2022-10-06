@@ -61,7 +61,7 @@ You can optionally install only selected browsers, see [install browsers](https:
 
 ### No trade-offs • No limits
 
-Browsers run web content belonging to different origins in different processes. Playwright is aligned with the architecture of the modern browser and runs tests out-of-process. This makes Playwright free of the typical in-process test runner limitations.
+Browsers run web content belonging to different origins in different processes. Playwright is aligned with the architecture of the modern browsers and runs tests out-of-process. This makes Playwright free of the typical in-process test runner limitations.
 
 **Multiple everything**. Test scenarios that span multiple tabs, multiple origins and multiple users. Create scenarios with different contexts for different users and run them against your server, all in one test.
 
