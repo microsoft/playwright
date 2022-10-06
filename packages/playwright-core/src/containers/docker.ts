@@ -286,6 +286,7 @@ export function addDockerCLI(program: Command) {
           await buildPlaywrightImage();
         } catch (e) {
           console.error(e.stack ? e : e.message);
+          process.exit(1);
         }
       });
 
@@ -296,6 +297,7 @@ export function addDockerCLI(program: Command) {
           await startPlaywrightContainer();
         } catch (e) {
           console.error(e.stack ? e : e.message);
+          process.exit(1);
         }
       });
 
@@ -306,6 +308,7 @@ export function addDockerCLI(program: Command) {
           await stopAllPlaywrightContainers();
         } catch (e) {
           console.error(e.stack ? e : e.message);
+          process.exit(1);
         }
       });
 
@@ -316,11 +319,12 @@ export function addDockerCLI(program: Command) {
           await deletePlaywrightImage();
         } catch (e) {
           console.error(e.stack ? e : e.message);
+          process.exit(1);
         }
       });
 
   dockerCommand.command('install-server-deps', { hidden: true })
-      .description('delete docker image, if any')
+      .description('install run-server dependencies')
       .action(async function() {
         const { code } = await spawnAsync('bash', [path.join(__dirname, '..', '..', 'bin', 'container_install_deps.sh')], { stdio: 'inherit' });
         if (code !== 0)
@@ -328,7 +332,7 @@ export function addDockerCLI(program: Command) {
       });
 
   dockerCommand.command('run-server', { hidden: true })
-      .description('delete docker image, if any')
+      .description('run playwright server')
       .action(async function() {
         await spawnAsync('bash', [path.join(__dirname, '..', '..', 'bin', 'container_run_server.sh')], { stdio: 'inherit' });
       });
