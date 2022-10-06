@@ -740,11 +740,11 @@ test('test.setTimeout should work separately in afterAll', async ({ runInlineTes
       });
       test.afterAll(async () => {
         console.log('\\n%%afterAll');
-        test.setTimeout(1000);
-        await new Promise(f => setTimeout(f, 800));
+        test.setTimeout(3000);
+        await new Promise(f => setTimeout(f, 2000));
       });
     `,
-  }, { timeout: '100' });
+  }, { timeout: '1000' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
