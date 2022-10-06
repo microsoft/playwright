@@ -396,7 +396,7 @@ export function setTestIdAttribute(attributeName: string) {
 function getByAttributeTextSelector(attrName: string, text: string | RegExp, options?: { exact?: boolean }): string {
   if (!isString(text))
     return `internal:attr=[${attrName}=${text}]`;
-  return `internal:attr=[${attrName}=${escapeForAttributeSelector(text)}${options?.exact ? 's' : 'i'}]`;
+  return `internal:attr=[${attrName}=${escapeForAttributeSelector(text, options?.exact || false)}]`;
 }
 
 export function getByTestIdSelector(testId: string): string {
@@ -439,7 +439,7 @@ export function getByRoleSelector(role: string, options: ByRoleOptions = {}): st
   if (options.level !== undefined)
     props.push(['level', String(options.level)]);
   if (options.name !== undefined)
-    props.push(['name', isString(options.name) ? escapeForAttributeSelector(options.name) : String(options.name)]);
+    props.push(['name', isString(options.name) ? escapeForAttributeSelector(options.name, false) : String(options.name)]);
   if (options.pressed !== undefined)
     props.push(['pressed', String(options.pressed)]);
   return `role=${role}${props.map(([n, v]) => `[${n}=${v}]`).join('')}`;

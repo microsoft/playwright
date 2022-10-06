@@ -72,10 +72,10 @@ export function escapeForTextSelector(text: string | RegExp, exact: boolean, cas
   return text;
 }
 
-export function escapeForAttributeSelector(value: string): string {
+export function escapeForAttributeSelector(value: string, exact: boolean): string {
   // TODO: this should actually be
   //   cssEscape(value).replace(/\\ /g, ' ')
   // However, our attribute selectors do not conform to CSS parsing spec,
   // so we escape them differently.
-  return `"${value.replace(/["]/g, '\\"')}"`;
+  return `"${value.replace(/["]/g, '\\"')}"${exact ? '' : 'i'}`;
 }
