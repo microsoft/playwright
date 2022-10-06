@@ -108,29 +108,31 @@ it('getByTitle should work', async ({ page }) => {
 });
 
 it('getBy escaping', async ({ page }) => {
-  await page.setContent(`<label id=label for=control>Hello
+  await page.setContent(`<label id=label for=control>Hello my
 wo"rld</label><input id=control />`);
   await page.$eval('input', input => {
-    input.setAttribute('placeholder', 'hello\nwo"rld');
-    input.setAttribute('title', 'hello\nwo"rld');
-    input.setAttribute('alt', 'hello\nwo"rld');
+    input.setAttribute('placeholder', 'hello my\nwo"rld');
+    input.setAttribute('title', 'hello my\nwo"rld');
+    input.setAttribute('alt', 'hello my\nwo"rld');
   });
-  await expect(page.getByText('hello\nwo"rld')).toHaveAttribute('id', 'label');
-  await expect(page.getByLabel('hello\nwo"rld')).toHaveAttribute('id', 'control');
-  await expect(page.getByPlaceholder('hello\nwo"rld')).toHaveAttribute('id', 'control');
-  await expect(page.getByAltText('hello\nwo"rld')).toHaveAttribute('id', 'control');
-  await expect(page.getByTitle('hello\nwo"rld')).toHaveAttribute('id', 'control');
+  await expect(page.getByText('hello my\nwo"rld')).toHaveAttribute('id', 'label');
+  await expect(page.getByText('hello       my     wo"rld')).toHaveAttribute('id', 'label');
+  await expect(page.getByLabel('hello my\nwo"rld')).toHaveAttribute('id', 'control');
+  await expect(page.getByPlaceholder('hello my\nwo"rld')).toHaveAttribute('id', 'control');
+  await expect(page.getByAltText('hello my\nwo"rld')).toHaveAttribute('id', 'control');
+  await expect(page.getByTitle('hello my\nwo"rld')).toHaveAttribute('id', 'control');
 
-  await page.setContent(`<label id=label for=control>Hello
+  await page.setContent(`<label id=label for=control>Hello my
 world</label><input id=control />`);
   await page.$eval('input', input => {
-    input.setAttribute('placeholder', 'hello\nworld');
-    input.setAttribute('title', 'hello\nworld');
-    input.setAttribute('alt', 'hello\nworld');
+    input.setAttribute('placeholder', 'hello my\nworld');
+    input.setAttribute('title', 'hello my\nworld');
+    input.setAttribute('alt', 'hello my\nworld');
   });
-  await expect(page.getByText('hello\nworld')).toHaveAttribute('id', 'label');
-  await expect(page.getByLabel('hello\nworld')).toHaveAttribute('id', 'control');
-  await expect(page.getByPlaceholder('hello\nworld')).toHaveAttribute('id', 'control');
-  await expect(page.getByAltText('hello\nworld')).toHaveAttribute('id', 'control');
-  await expect(page.getByTitle('hello\nworld')).toHaveAttribute('id', 'control');
+  await expect(page.getByText('hello my\nworld')).toHaveAttribute('id', 'label');
+  await expect(page.getByText('hello        my    world')).toHaveAttribute('id', 'label');
+  await expect(page.getByLabel('hello my\nworld')).toHaveAttribute('id', 'control');
+  await expect(page.getByPlaceholder('hello my\nworld')).toHaveAttribute('id', 'control');
+  await expect(page.getByAltText('hello my\nworld')).toHaveAttribute('id', 'control');
+  await expect(page.getByTitle('hello my\nworld')).toHaveAttribute('id', 'control');
 });
