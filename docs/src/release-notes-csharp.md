@@ -4,6 +4,54 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.27
+
+### Locators
+
+With these new APIs writing locators is a joy:
+- [`method: Page.getByText`] to locate by text content.
+- [`method: Page.getByRole`] to locate by [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+- [`method: Page.getByLabel`] to locate a form control by associated label's text.
+- [`method: Page.getByPlaceholder`] to locate an input by placeholder.
+- [`method: Page.getByAltText`] to locate an element, usually image, by its text alternative.
+- [`method: Page.getByTitle`] to locate an element by its title.
+
+```csharp
+await page.GetByLabel("User Name").FillAsync("John");
+
+await page.GetByLabel("Password").FillAsync("secret-password");
+
+await page.GetByRole("button", new() { Name = "Sign in" }).ClickAsync();
+
+await Expect(page.GetByText("Welcome, John!")).ToBeVisibleAsync();
+```
+
+All the same methods are also available on [Locator], [FrameLocator] and [Frame] classes.
+
+### Other highlights
+
+- As announced in v1.25, Ubuntu 18 will not be supported as of Dec 2022. In addition to that, there will be no WebKit updates on Ubuntu 18 starting from the next Playwright release.
+
+### Behavior Changes
+
+- [`method: LocatorAssertions.toHaveAttribute`] with an empty value does not match missing attribute anymore. For example, the following snippet will succeed when `button` **does not** have a `disabled` attribute.
+
+   ```js
+   await Expect(page.GetByRole("button")).ToHaveAttribute("disabled", "");
+   ```
+
+### Browser Versions
+
+* Chromium 107.0.5304.18
+* Mozilla Firefox 105.0.1
+* WebKit 16.0
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 106
+* Microsoft Edge 106
+
+
 ## Version 1.26
 
 ### Assertions
@@ -30,7 +78,7 @@ await Page.GotoAsync("https://playwright.dev", new() { WaitUntil = WaitUntilStat
 ```
 
 Prior to 1.26, this would wait for all iframes to fire the `DOMContentLoaded`
-event. 
+event.
 
 To align with web specification, the `WaitUntilState.DOMContentLoaded` value only waits for
 the target frame to fire the `'DOMContentLoaded'` event. Use `WaitUntil: WaitUntilState.Load` to wait for all iframes.
@@ -57,7 +105,7 @@ The following does now work:
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
-  <!-- Playwright -->  
+  <!-- Playwright -->
   <Playwright>
     <BrowserName>chromium</BrowserName>
     <ExpectTimeout>5000</ExpectTimeout>
@@ -106,7 +154,7 @@ if you encounter any issues!
 Linux support looks like this:
 
 |          | Ubuntu 18.04 | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11
-| :--- | :---: | :---: | :---: | :---: | 
+| :--- | :---: | :---: | :---: | :---: |
 | Chromium | ✅ | ✅ | ✅ | ✅ |
 | WebKit | ✅ | ✅ | ✅ | ✅ |
 | Firefox | ✅ | ✅ | ✅ | ✅ |
@@ -518,7 +566,7 @@ Its now possible to emulate the `forced-colors` CSS media feature by passing it 
 - [Tracing.StopChunkAsync()](https://playwright.dev/dotnet/docs/next/api/class-tracing#tracing-stop-chunk) - Stops a new trace chunk.
 
 ### Important ⚠
-* ⬆ .NET Core Apps 2.1 are **no longer** supported for our CLI tooling. As of August 31st, 2021, .NET Core 2.1 is no [longer supported](https://devblogs.microsoft.com/dotnet/net-core-2-1-will-reach-end-of-support-on-august-21-2021/) and will not receive any security updates. We've decided to move the CLI forward and require .NET Core 3.1 as a minimum. 
+* ⬆ .NET Core Apps 2.1 are **no longer** supported for our CLI tooling. As of August 31st, 2021, .NET Core 2.1 is no [longer supported](https://devblogs.microsoft.com/dotnet/net-core-2-1-will-reach-end-of-support-on-august-21-2021/) and will not receive any security updates. We've decided to move the CLI forward and require .NET Core 3.1 as a minimum.
 
 ### Browser Versions
 
