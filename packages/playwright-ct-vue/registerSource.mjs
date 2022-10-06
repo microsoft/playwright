@@ -33,21 +33,20 @@ export function register(components) {
     registry.set(name, value);
 }
 
-const allListeners = [];
+const allListeners = new Map();
 
 /**
  * @param {Component | string} child
  * @returns {import('vue').VNode | string}
  */
-function renderChild(child) {
-  return typeof child === 'string' ? child : render(child);
+function createChild(child) {
+  return typeof child === 'string' ? child : createWrapper(child);
 }
 
 /**
  * @param {Component} component
- * @returns {import('vue').VNode}
  */
-function render(component) {
+function createComponent(component) {
   if (typeof component === 'string')
     return component;
 
@@ -87,9 +86,9 @@ function render(component) {
       if (typeof child !== 'string' && child.type === 'template' && child.kind === 'jsx') {
         const slotProperty = Object.keys(child.props).find(k => k.startsWith('v-slot:'));
         const slot = slotProperty ? slotProperty.substring('v-slot:'.length) : 'default';
-        slots[slot] = child.children.map(renderChild);
+        slots[slot] = child.children.map(createChild);
       } else {
-        children.push(renderChild(child));
+        children.push(createChild(child));
       }
     }
 
@@ -128,9 +127,29 @@ function render(component) {
     lastArg = children;
   }
 
+  return { Component: componentFunc, props, slots: lastArg, listeners };
+}
+
+function wrapFunctions(slots) {
+  const slotsWithRenderFunctions = {};
+  if (!Array.isArray(slots)) {
+    for (const [key, value] of Object.entries(slots || {}))
+      slotsWithRenderFunctions[key] = () => [value];
+  } else if (slots?.length) {
+    slots['default'] = () => slots;
+  }
+  return slotsWithRenderFunctions;
+}
+
+/**
+ * @param {Component} component
+ * @returns {import('vue').VNode | string}
+ */
+function createWrapper(component) {
+  const { Component, props, slots, listeners } = createComponent(component);
   // @ts-ignore
-  const wrapper = h(componentFunc, props, lastArg);
-  allListeners.push([wrapper, listeners]);
+  const wrapper = h(Component, props, slots);
+  allListeners.set(wrapper, listeners);
   return wrapper;
 }
 
@@ -156,10 +175,10 @@ function createDevTools() {
 }
 
 const appKey = Symbol('appKey');
-const componentKey = Symbol('componentKey');
+const wrapperKey = Symbol('wrapperKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  const wrapper = render(component);
+  const wrapper = createWrapper(component);
   const app = createApp({
     render: () => wrapper
   });
@@ -169,7 +188,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
     await hook({ app, hooksConfig });
   const instance = app.mount(rootElement);
   rootElement[appKey] = app;
-  rootElement[componentKey] = wrapper;
+  rootElement[wrapperKey] = wrapper;
 
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
     await hook({ app, hooksConfig, instance });
@@ -183,10 +202,18 @@ window.playwrightUnmount = async rootElement => {
 };
 
 window.playwrightRerender = async (rootElement, options) => {
-  const component = rootElement[componentKey].component;
-  if (!component)
+  const wrapper = rootElement[wrapperKey];
+  if (!wrapper)
     throw new Error('Component was not mounted');
 
-  for (const [key, value] of Object.entries(options.props || {}))
-    component.props[key] = value;
+  const { slots, listeners, props } = createComponent(options);
+
+  wrapper.component.slots = wrapFunctions(slots);
+  allListeners.set(wrapper, listeners);
+
+  for (const [key, value] of Object.entries(props))
+    wrapper.component.props[key] = value;
+
+  if (!Object.keys(props).length)
+    wrapper.component.update();
 };

@@ -163,6 +163,6 @@ window.playwrightRerender = async (element, options) => {
   if (!component)
     throw new Error('Component was not mounted');
 
-  for (const [key, value] of Object.entries(/** @type {any} */(options).props))
+  for (const [key, value] of Object.entries(/** @type {any} */(options).props || /** @type {any} */(options).options.props))
     component.$children[0][key] = value;
 };
