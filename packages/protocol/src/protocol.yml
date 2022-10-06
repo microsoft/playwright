@@ -693,6 +693,9 @@ DebugController:
     inspectRequested:
       parameters:
         selector: string
+        locators:
+          type: array
+          items: NameValue
 
     browsersChanged:
       parameters:

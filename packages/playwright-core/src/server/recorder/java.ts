@@ -15,7 +15,7 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
@@ -30,7 +30,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
   id = 'java';
   groupName = 'Java';
   name = 'Library';
-  highlighter = 'java';
+  highlighter = 'java' as Language;
 
   generateAction(actionInContext: ActionInContext): string {
     const action = actionInContext.action;

@@ -15,7 +15,7 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { sanitizeDeviceOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
@@ -29,7 +29,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   id: string;
   groupName = 'Node.js';
   name: string;
-  highlighter = 'javascript';
+  highlighter = 'javascript' as Language;
   private _isTest: boolean;
 
   constructor(isTest: boolean) {
