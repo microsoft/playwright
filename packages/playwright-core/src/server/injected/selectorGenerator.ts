@@ -148,7 +148,7 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, acces
   const candidates: SelectorToken[] = [];
 
   if (element.getAttribute('data-testid'))
-    candidates.push({ engine: 'internal:attr', selector: `[data-testid=${escapeForAttributeSelector(element.getAttribute('data-testid')!)}]`, score: 1 });
+    candidates.push({ engine: 'internal:attr', selector: `[data-testid=${escapeForAttributeSelector(element.getAttribute('data-testid')!, true)}]`, score: 1 });
 
   for (const attr of ['data-test-id', 'data-test']) {
     if (element.getAttribute(attr))
@@ -158,7 +158,7 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, acces
   if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
     const input = element as HTMLInputElement | HTMLTextAreaElement;
     if (input.placeholder)
-      candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder)}]`, score: 3 });
+      candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder, true)}]`, score: 3 });
     const label = input.labels?.[0];
     if (label) {
       const labelText = elementText(injectedScript._evaluator._cacheText, label).full.trim();
@@ -170,13 +170,13 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, acces
   if (ariaRole) {
     const ariaName = getElementAccessibleName(element, false, accessibleNameCache);
     if (ariaName)
-      candidates.push({ engine: 'role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName)}]`, score: 3 });
+      candidates.push({ engine: 'role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: 3 });
     else
       candidates.push({ engine: 'role', selector: ariaRole, score: 150 });
   }
 
   if (element.getAttribute('alt') && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName))
-    candidates.push({ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(element.getAttribute('alt')!)}]`, score: 10 });
+    candidates.push({ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(element.getAttribute('alt')!, true)}]`, score: 10 });
 
   if (element.getAttribute('name') && ['BUTTON', 'FORM', 'FIELDSET', 'FRAME', 'IFRAME', 'INPUT', 'KEYGEN', 'OBJECT', 'OUTPUT', 'SELECT', 'TEXTAREA', 'MAP', 'META', 'PARAM'].includes(element.nodeName))
     candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[name=${quoteAttributeValue(element.getAttribute('name')!)}]`, score: 50 });
