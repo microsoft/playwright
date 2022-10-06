@@ -3354,7 +3354,9 @@ export interface Page {
     notFound?: "abort"|"fallback";
 
     /**
-     * If specified, updates the given HAR with the actual network information instead of serving from file.
+     * If specified, updates the given HAR with the actual network information instead of serving from file. The file is
+     * written to disk when
+     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is called.
      */
     update?: boolean;
 
@@ -7468,7 +7470,9 @@ export interface BrowserContext {
     notFound?: "abort"|"fallback";
 
     /**
-     * If specified, updates the given HAR with the actual network information instead of serving from file.
+     * If specified, updates the given HAR with the actual network information instead of serving from file. The file is
+     * written to disk when
+     * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is called.
      */
     update?: boolean;
 
