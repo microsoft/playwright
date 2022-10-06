@@ -18,7 +18,7 @@ test('event should work', async ({ mount }) => {
   let clicked = false;
 
   // Mount a component. Returns locator pointing to the component.
-  const component = await mount(<Button title='Submit'
+  const component = await mount(<Button title="Submit"
     onClick={() => clicked = true}>
   </Button>);
 
@@ -98,6 +98,7 @@ component is mounted using this script. It can be either a `.js` or `.ts` file.
     {label: 'React', value: 'react'},
     {label: 'Vue', value: 'vue'},
     {label: 'Svelte', value: 'svelte'},
+    {label: 'Solid', value: 'solid'},
   ]
 }>
 <TabItem value="react">
@@ -254,7 +255,7 @@ const config: PlaywrightTestConfig = {
 export default config
 ```
 
-### Q) What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue}`?
+### Q) What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue,solid}`?
 
 ```ts
 test('…', async { mount, page, context } => {
@@ -262,7 +263,7 @@ test('…', async { mount, page, context } => {
 });
 ```
 
-`@playwright/experimental-ct-{react,svelte,vue}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
+`@playwright/experimental-ct-{react,svelte,vue,solid}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
 
 <Tabs
   defaultValue="react"
@@ -270,19 +271,19 @@ test('…', async { mount, page, context } => {
     {label: 'React', value: 'react'},
     {label: 'Vue', value: 'vue'},
     {label: 'Svelte', value: 'svelte'},
+    {label: 'Solid', value: 'solid'},
   ]
 }>
 <TabItem value="react">
 
 ```js
 import { test, expect } from '@playwright/experimental-ct-react'
-
-import HelloWorld from './HelloWorld.tsx'
+import HelloWorld from './HelloWorld'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
 test('should work', async ({ mount }) => {
-  const component = await mount(<HelloWorld msg='greetings' />);
+  const component = await mount(<HelloWorld msg="greetings" />);
   await expect(component).toContainText('Greetings')
 })
 ```
@@ -293,7 +294,6 @@ test('should work', async ({ mount }) => {
 
 ```js
 import { test, expect } from '@playwright/experimental-ct-vue'
-
 import HelloWorld from './HelloWorld.vue'
 
 test.use({ viewport: { width: 500, height: 500 } })
@@ -313,23 +313,34 @@ test('should work', async ({ mount }) => {
 <TabItem value="svelte">
 
 ```js
-import { test, expect } from '@playwright/experimental-ct-vue'
-
-import NamedSlots from './NamedSlots.vue'
+import { test, expect } from '@playwright/experimental-ct-svelte'
+import HelloWorld from './HelloWorld.svelte'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
-test('named slots should work', async ({ mount }) => {
-  const component = await mount(NamedSlots, {
-    slots: {
-      header: 'Header',
-      main: 'Main Content',
-      footer: 'Footer'
+test('should work', async ({ mount }) => {
+  const component = await mount(HelloWorld, {
+    props: {
+      msg: 'Greetings'
     }
-  })
-  await expect(component).toContainText('Header')
-  await expect(component).toContainText('Main Content')
-  await expect(component).toContainText('Footer')
+  });
+  await expect(component).toContainText('Greetings')
+})
+```
+
+</TabItem>
+
+<TabItem value="solid">
+
+```js
+import { test, expect } from '@playwright/experimental-ct-solid'
+import HelloWorld from './HelloWorld'
+
+test.use({ viewport: { width: 500, height: 500 } })
+
+test('should work', async ({ mount }) => {
+  const component = await mount(<HelloWorld msg="greetings" />);
+  await expect(component).toContainText('Greetings')
 })
 ```
 
@@ -342,7 +353,7 @@ Additionally, it adds some config options you can use in your `playwright-ct.con
 Finally, under the hood, each test re-uses the `context` and `page` fixture as a speed optimization for Component Testing. 
 It resets them in between each test so it should be functionally equivalent to `@playwright/test`'s guarantee that you get a new, isolated `context` and `page` fixture per-test.
 
-### Q) Can I use `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue}`?
+### Q) Can I use `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue,solid}`?
 
 Yes. Use a Playwright Config for each and follow their respective guides ([E2E Playwright Test](https://playwright.dev/docs/intro), [Component Tests](https://playwright.dev/docs/test-components))
 
