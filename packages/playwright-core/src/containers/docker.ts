@@ -76,7 +76,7 @@ async function buildPlaywrightImage() {
   await checkDockerEngineIsRunningOrDie();
 
   const isDevelopmentMode = getPlaywrightVersion().includes('next');
-  let baseImageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
+  let baseImageName = process.env.PWTEST_DOCKER_BASE_IMAGE || `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
   // 1. Build or pull base image.
   if (isDevelopmentMode) {
     // Use our docker build scripts in development mode!
