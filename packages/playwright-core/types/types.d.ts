@@ -19,7 +19,12 @@ import { EventEmitter } from 'events';
 import { Readable } from 'stream';
 import { ReadStream } from 'fs';
 import { Protocol } from './protocol';
-import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
+import { Serializable, EvaluationArgument, PageFunction0, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
+
+type AddInitScriptOptions = {
+  path?: string;
+  content?: string;
+}
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
@@ -276,7 +281,35 @@ export interface Page {
    * @param script Script to be evaluated in the page.
    * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
-  addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
+  addInitScript<Arg>(script: PageFunction<Arg, any> | AddInitScriptOptions, arg: Arg): Promise<void>
+  /**
+   * Adds a script which would be evaluated in one of the following scenarios:
+   * - Whenever the page is navigated.
+   * - Whenever the child frame is attached or navigated. In this case, the script is evaluated in the context of the newly
+   *   attached frame.
+   *
+   * The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend
+   * the JavaScript environment, e.g. to seed `Math.random`.
+   *
+   * An example of overriding `Math.random` before the page loads:
+   *
+   * ```js
+   * // preload.js
+   * Math.random = () => 42;
+   * ```
+   *
+   * ```js
+   * // In your playwright script, assuming the preload.js file is in same directory
+   * await page.addInitScript({ path: './preload.js' });
+   * ```
+   *
+   * > NOTE: The order of evaluation of multiple scripts installed via
+   * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
+   * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not defined.
+   * @param script Script to be evaluated in the page.
+   * @param arg Optional argument to pass to `script` (only supported when passing a function).
+   */
+  addInitScript(script: PageFunction0<any> | AddInitScriptOptions): Promise<void>
 
   /**
    * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
@@ -6821,7 +6854,37 @@ export interface BrowserContext {
    * @param script Script to be evaluated in all pages in the browser context.
    * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
-  addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
+  addInitScript<Arg>(script: PageFunction<Arg, any> | AddInitScriptOptions, arg: Arg): Promise<void>
+  /**
+   * Adds a script which would be evaluated in one of the following scenarios:
+   * - Whenever a page is created in the browser context or is navigated.
+   * - Whenever a child frame is attached or navigated in any page in the browser context. In this case, the script is
+   *   evaluated in the context of the newly attached frame.
+   *
+   * The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend
+   * the JavaScript environment, e.g. to seed `Math.random`.
+   *
+   * An example of overriding `Math.random` before the page loads:
+   *
+   * ```js
+   * // preload.js
+   * Math.random = () => 42;
+   * ```
+   *
+   * ```js
+   * // In your playwright script, assuming the preload.js file is in same directory.
+   * await browserContext.addInitScript({
+   *   path: 'preload.js'
+   * });
+   * ```
+   *
+   * > NOTE: The order of evaluation of multiple scripts installed via
+   * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
+   * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not defined.
+   * @param script Script to be evaluated in all pages in the browser context.
+   * @param arg Optional argument to pass to `script` (only supported when passing a function).
+   */
+  addInitScript(script: PageFunction0<any> | AddInitScriptOptions): Promise<void>
   /**
    * > NOTE: Only works with Chromium browser's persistent context.
    *
