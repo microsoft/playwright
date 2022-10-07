@@ -734,6 +734,8 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.14
 ### option: Locator.hover.trial = %%-input-trial-%%
 * since: v1.14
+### option: Locator.hover.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.28
 
 ## async method: Locator.innerHTML
 * since: v1.14

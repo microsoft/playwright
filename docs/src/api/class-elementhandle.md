@@ -555,6 +555,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.hover.trial = %%-input-trial-%%
 * since: v1.11
 
+### option: ElementHandle.hover.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.28
+
 ## async method: ElementHandle.innerHTML
 * since: v1.8
 - returns: <[string]>

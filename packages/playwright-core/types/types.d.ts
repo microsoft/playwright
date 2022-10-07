@@ -2754,6 +2754,13 @@ export interface Page {
     modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
 
     /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
      * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
      * element.
      */
@@ -5786,6 +5793,13 @@ export interface Frame {
     modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
 
     /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
      * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
      * element.
      */
@@ -8711,6 +8725,13 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
 
     /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
      * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
      * element.
      */
@@ -10170,6 +10191,13 @@ export interface Locator {
      * modifiers back. If not specified, currently pressed modifiers are used.
      */
     modifiers?: Array<"Alt"|"Control"|"Meta"|"Shift">;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
 
     /**
      * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the

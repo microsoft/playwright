@@ -173,6 +173,16 @@ it('should trigger hover state', async ({ page, server }) => {
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-91');
 });
 
+it('hover should support noWaitAfter', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<button onmouseover='location.href="${server.PREFIX}/next"'>GO</button>`);
+  await Promise.all([
+    new Promise(fulfill => server.setRoute('/next', fulfill)),
+    page.hover('button', { noWaitAfter: true })
+  ]);
+  expect(page.url()).toBe(server.EMPTY_PAGE);
+});
+
 it('should trigger hover state on disabled button', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.$eval('#button-6', (button: HTMLButtonElement) => button.disabled = true);

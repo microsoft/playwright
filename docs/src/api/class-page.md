@@ -2369,6 +2369,8 @@ Shortcut for main frame's [`method: Frame.hover`].
 * since: v1.8
 ### option: Page.hover.trial = %%-input-trial-%%
 * since: v1.11
+### option: Page.hover.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.28
 
 ## async method: Page.innerHTML
 * since: v1.8
