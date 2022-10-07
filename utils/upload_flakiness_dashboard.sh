@@ -80,7 +80,7 @@ EMBED_METADATA_SCRIPT=$(cat <<EOF
     commitTitle: process.env.COMMIT_TITLE,
     commitAuthorName: process.env.COMMIT_AUTHOR_NAME,
     commitAuthorEmail: process.env.COMMIT_AUTHOR_EMAIL,
-    gitBranchName: process.env.GITHUB_REF_NAME,
+    branchName: process.env.GITHUB_REF_NAME,
   };
   console.log(JSON.stringify(json));
 EOF
