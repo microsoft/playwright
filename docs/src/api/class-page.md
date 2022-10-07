@@ -3120,7 +3120,7 @@ Defaults to abort.
 * since: v1.23
 - `update` ?<boolean>
 
-If specified, updates the given HAR with the actual network information instead of serving from file.
+If specified, updates the given HAR with the actual network information instead of serving from file. The file is written to disk when [`method: BrowserContext.close`] is called.
 
 ### option: Page.routeFromHAR.url
 * since: v1.23
