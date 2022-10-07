@@ -1074,7 +1074,7 @@ Text to locate the element for.
 * since: v1.27
 - `exact` <[boolean]>
 
-Whether to find an exact match: case-sensitive and whole-string. Default to false.
+Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular expression.
 
 ## locator-get-by-role-role
 * since: v1.27

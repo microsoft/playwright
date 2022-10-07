@@ -2457,7 +2457,8 @@ export interface Page {
    */
   getByAltText(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -2476,7 +2477,8 @@ export interface Page {
    */
   getByLabel(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -2494,7 +2496,8 @@ export interface Page {
    */
   getByPlaceholder(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -2589,7 +2592,8 @@ export interface Page {
    */
   getByText(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -2606,7 +2610,8 @@ export interface Page {
    */
   getByTitle(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -5543,7 +5548,8 @@ export interface Frame {
    */
   getByAltText(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -5562,7 +5568,8 @@ export interface Frame {
    */
   getByLabel(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -5580,7 +5587,8 @@ export interface Frame {
    */
   getByPlaceholder(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -5675,7 +5683,8 @@ export interface Frame {
    */
   getByText(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -5692,7 +5701,8 @@ export interface Frame {
    */
   getByTitle(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -9966,7 +9976,8 @@ export interface Locator {
    */
   getByAltText(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -9985,7 +9996,8 @@ export interface Locator {
    */
   getByLabel(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -10003,7 +10015,8 @@ export interface Locator {
    */
   getByPlaceholder(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -10098,7 +10111,8 @@ export interface Locator {
    */
   getByText(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -10115,7 +10129,8 @@ export interface Locator {
    */
   getByTitle(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -15221,7 +15236,8 @@ export interface FrameLocator {
    */
   getByAltText(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -15240,7 +15256,8 @@ export interface FrameLocator {
    */
   getByLabel(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -15258,7 +15275,8 @@ export interface FrameLocator {
    */
   getByPlaceholder(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -15353,7 +15371,8 @@ export interface FrameLocator {
    */
   getByText(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
@@ -15370,7 +15389,8 @@ export interface FrameLocator {
    */
   getByTitle(text: string|RegExp, options?: {
     /**
-     * Whether to find an exact match: case-sensitive and whole-string. Default to false.
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
+     * expression.
      */
     exact?: boolean;
   }): Locator;
