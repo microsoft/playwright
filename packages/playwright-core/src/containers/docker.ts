@@ -75,12 +75,12 @@ async function deletePlaywrightImage() {
 async function buildPlaywrightImage() {
   await checkDockerEngineIsRunningOrDie();
 
-  const isDevelopmentMode = getPlaywrightVersion().includes('next');
-  let baseImageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
   // 1. Build or pull base image.
-  if (isDevelopmentMode) {
-    // Use our docker build scripts in development mode!
-    if (!process.env.PWTEST_DOCKER_BASE_IMAGE) {
+  let baseImageName = process.env.PWTEST_DOCKER_BASE_IMAGE || '';
+  if (!baseImageName) {
+    const isDevelopmentMode = getPlaywrightVersion().includes('next');
+    if (isDevelopmentMode) {
+      // Use our docker build scripts in development mode!
       const arch = process.arch === 'arm64' ? '--arm64' : '--amd64';
       throw createStacklessError(utils.wrapInASCIIBox([
         `You are in DEVELOPMENT mode!`,
@@ -91,8 +91,7 @@ async function buildPlaywrightImage() {
         `     PWTEST_DOCKER_BASE_IMAGE=playwright:localbuild npx playwright docker build`,
       ].join('\n'), 1));
     }
-    baseImageName = process.env.PWTEST_DOCKER_BASE_IMAGE;
-  } else {
+    baseImageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
     const { code } = await spawnAsync('docker', ['pull', baseImageName], { stdio: 'inherit' });
     if (code !== 0)
       throw new Error('Failed to pull docker image!');
