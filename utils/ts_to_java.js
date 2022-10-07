@@ -75,10 +75,11 @@ void ${name}() {`;
   content = content.replace(/page.evaluate\((\(\) => [^\)]+)\)/g, 'page.evaluate("$1")');
 
   // Remove await/Promise.all
-  content = content.replace(/const \[(.+)\] = await Promise.all\(\[/g, '$1 =');
+  // Match all [^;] inside Promise.all([...]); to overcome greedy match and not include next foo([...]) calls.
+  content = content.replace(/const \[(.+)\] = await Promise.all\(\[([^;]+|)\]\);/g, '$1 = $2');
+  content = content.replace(/await Promise.all\(\[([^;]+|)\]\);/g, '$1');
   content = content.replace(/Promise\.all\(\[/g, '');
   content = content.replace(/await /g, '');
-  content = content.replace(/  \]\);/g, '');
 
   // Rename some methods
   content = content.replace(/context\.tracing/g, 'context.tracing()');
@@ -103,7 +104,8 @@ void ${name}() {`;
   content = content.replace(/expect\((.+\.evaluate.+)\)\.toBe\(true\);/g, 'assertEquals(true, $1);');
   content = content.replace(/expect\((.+)\)\.toBe\(true\);/g, 'assertTrue($1);');
   content = content.replace(/expect\((.+)\)\.toBe\((.+)\);/g, 'assertEquals($2, $1);');
-  content = content.replace(/expect\((.+)\)\.toEqual\(\[(.+)\]\);/g, 'assertEquals(asList($2), $1);');
+  // Match all [^;] inside .toEqual([...]); to overcome greedy match and not include next foo([...]) calls.
+  content = content.replace(/expect\((.+)\)\.toEqual\(\[([^;]+|)\]\);/g, 'assertEquals(asList($2), $1);');
   for (let before = null; before !== content;) {
     before = content;
     content = content.replace(/(asList\([^\)\']*)'/g, '$1"');
