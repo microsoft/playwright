@@ -175,7 +175,7 @@ it('should trigger hover state', async ({ page, server }) => {
 
 it('hover should support noWaitAfter', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  await page.setContent(`<button onmouseover='location.href="${server.PREFIX}/next"'>GO</button>`)
+  await page.setContent(`<button onmouseover='location.href="${server.PREFIX}/next"'>GO</button>`);
   await Promise.all([
     new Promise(fulfill => server.setRoute('/next', fulfill)),
     page.hover('button', { noWaitAfter: true })

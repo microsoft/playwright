@@ -35,7 +35,7 @@ it('should hover when Node is removed', async ({ page, server }) => {
 
 it('hover should support noWaitAfter', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  await page.setContent(`<button onmouseover='location.href="${server.PREFIX}/next"'>GO</button>`)
+  await page.setContent(`<button onmouseover='location.href="${server.PREFIX}/next"'>GO</button>`);
   await Promise.all([
     new Promise(fulfill => server.setRoute('/next', fulfill)),
     page.locator('button').hover({ noWaitAfter: true })
