@@ -717,3 +717,15 @@ test('should serve overridden request', async ({ page, runAndTrace, server }) =>
   expect(color).toBe('rgb(255, 0, 0)');
 });
 
+test('should display waitForLoadState even if did not wait for it', async ({ runAndTrace, server, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.waitForLoadState('load');
+    await page.waitForLoadState('load');
+  });
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.goto/,
+    /page.waitForLoadState/,
+    /page.waitForLoadState/,
+  ]);
+});

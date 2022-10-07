@@ -148,14 +148,16 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   async waitForLoadState(state: LifecycleEvent = 'load', options: { timeout?: number } = {}): Promise<void> {
     state = verifyLoadState('state', state);
-    if (this._loadStates.has(state))
-      return;
     return this._page!._wrapApiCall(async () => {
       const waiter = this._setupNavigationWaiter(options);
-      await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
-        waiter.log(`  "${s}" event fired`);
-        return s === state;
-      });
+      if (this._loadStates.has(state)) {
+        waiter.log(`  not waiting, "${state}" event already fired`);
+      } else {
+        await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
+          waiter.log(`  "${s}" event fired`);
+          return s === state;
+        });
+      }
       waiter.dispose();
     });
   }
