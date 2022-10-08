@@ -24,7 +24,7 @@ import { Serializable, EvaluationArgument, PageFunction0, PageFunction, PageFunc
 type AddInitScriptOptions = {
   path?: string;
   content?: string;
-}
+};
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
@@ -281,7 +281,7 @@ export interface Page {
    * @param script Script to be evaluated in the page.
    * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
-  addInitScript<Arg>(script: PageFunction<Arg, any> | AddInitScriptOptions, arg: Arg): Promise<void>
+  addInitScript<Arg>(script: PageFunction<Arg, any> | AddInitScriptOptions, arg: Arg): Promise<void>;
   /**
    * Adds a script which would be evaluated in one of the following scenarios:
    * - Whenever the page is navigated.
@@ -309,7 +309,7 @@ export interface Page {
    * @param script Script to be evaluated in the page.
    * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
-  addInitScript(script: PageFunction0<any> | AddInitScriptOptions): Promise<void>
+  addInitScript(script: PageFunction0<any> | AddInitScriptOptions): Promise<void>;
 
   /**
    * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
@@ -6854,7 +6854,7 @@ export interface BrowserContext {
    * @param script Script to be evaluated in all pages in the browser context.
    * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
-  addInitScript<Arg>(script: PageFunction<Arg, any> | AddInitScriptOptions, arg: Arg): Promise<void>
+  addInitScript<Arg>(script: PageFunction<Arg, any> | AddInitScriptOptions, arg: Arg): Promise<void>;
   /**
    * Adds a script which would be evaluated in one of the following scenarios:
    * - Whenever a page is created in the browser context or is navigated.
@@ -6884,7 +6884,7 @@ export interface BrowserContext {
    * @param script Script to be evaluated in all pages in the browser context.
    * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
-  addInitScript(script: PageFunction0<any> | AddInitScriptOptions): Promise<void>
+  addInitScript(script: PageFunction0<any> | AddInitScriptOptions): Promise<void>;
   /**
    * > NOTE: Only works with Chromium browser's persistent context.
    *
