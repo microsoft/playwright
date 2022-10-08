@@ -21,7 +21,7 @@ page.getByLabel("User Name").fill("John");
 
 page.getByLabel("Password").fill("secret-password");
 
-page.getByRole("button", new Page.GetByRoleOptions().setName("Sign in")).click();
+page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
 
 assertThat(page.getByText("Welcome, John!")).isVisible();
 ```
@@ -37,7 +37,7 @@ All the same methods are also available on [Locator], [FrameLocator] and [Frame]
 - [`method: LocatorAssertions.toHaveAttribute`] with an empty value does not match missing attribute anymore. For example, the following snippet will succeed when `button` **does not** have a `disabled` attribute.
 
    ```js
-   assertThat(page.getByRole("button")).hasAttribute("disabled", "");
+   assertThat(page.getByRole(AriaRole.BUTTON)).hasAttribute("disabled", "");
    ```
 
 ### Browser Versions
