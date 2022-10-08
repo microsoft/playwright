@@ -110,7 +110,7 @@ import App from './App';
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
-  const component = await mount(<App></App>);
+  const component = await mount(<App />);
   await expect(component).toContainText('Learn React');
 });
 ```
@@ -126,7 +126,7 @@ import App from './App.vue';
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
-  const component = await mount(<App></App>);
+  const component = await mount(<App />);
   await expect(component).toContainText('Vite + Vue');
 });
 ```
@@ -150,6 +150,22 @@ test.use({ viewport: { width: 500, height: 500 } });
 test('should work', async ({ mount }) => {
   const component = await mount(App);
   await expect(component).toContainText('Vite + Svelte');
+});
+```
+
+</TabItem>
+
+<TabItem value="solid">
+
+```js
+import { test, expect } from '@playwright/experimental-ct-solid';
+import App from './App';
+
+test.use({ viewport: { width: 500, height: 500 } });
+
+test('should work', async ({ mount }) => {
+  const component = await mount(<App />);
+  await expect(component).toContainText('Learn Solid');
 });
 ```
 
@@ -362,7 +378,7 @@ Yes. Use a Playwright Config for each and follow their respective guides ([E2E P
 This is a [known issue](https://github.com/microsoft/playwright/issues/14401). The following pattern does not work:
 
 ```js
-const app = <App></App>;
+const app = <App />;
 await mount(app);
 ```
 
@@ -375,7 +391,7 @@ undefined: TypeError: Cannot read properties of undefined (reading 'map')
 while this works:
 
 ```js
-await mount(<App></App>);
+await mount(<App />);
 ```
 
 ### Q) How can I use Vite plugins?
