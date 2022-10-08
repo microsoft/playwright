@@ -155,7 +155,7 @@ test('should work', async ({ mount }) => {
 
 </TabItem>
 
-<TabItem value="react">
+<TabItem value="solid">
 
 ```js
 import { test, expect } from '@playwright/experimental-ct-solid';
