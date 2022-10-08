@@ -588,7 +588,7 @@ playwright.chromium.launch().then(async browser => {
   }
   {
     // @ts-expect-error
-      await page.addInitScript((_expectNoArg: any) => {});
+    await page.addInitScript((_expectNoArg: any) => {});
   }
 
   await browser.close();
