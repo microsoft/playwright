@@ -50,7 +50,7 @@ export interface MountOptions<Props = Record<string, unknown>> {
 
 interface MountResult<Props = Record<string, unknown>> extends Locator {
   unmount(): Promise<void>;
-  rerender(options: { props: Props }): Promise<void>
+  rerender(options: { props: Props } | JSX.Element): Promise<void>
 }
 
 export interface ComponentFixtures {

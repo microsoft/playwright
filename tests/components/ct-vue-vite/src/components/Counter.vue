@@ -7,17 +7,13 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 let remountCount = 0
 </script>
 
-<script setup>
-defineProps({
-  count: {
-    type: Number,
-    required: false
-  }
-})
+<script lang="ts" setup>
+defineProps<{ count?: number }>()
+
 remountCount++
 </script>
 

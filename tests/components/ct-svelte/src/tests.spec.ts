@@ -33,13 +33,13 @@ test('render props', async ({ mount }) => {
 })
 
 test('emit an submit event when the button is clicked', async ({ mount }) => {
-  const messages = []
+  const messages: string[] = []
   const component = await mount(Button, {
     props: {
       title: 'Submit'
     },
     on: {
-      submit: data => messages.push(data)
+      submit: (data: string) => messages.push(data)
     }
   })
   await component.click()
@@ -61,7 +61,7 @@ test('render a component without options', async ({ mount }) => {
 })
 
 test('run hooks', async ({ page, mount }) => {
-  const messages = []
+  const messages: string[] = []
   page.on('console', m => messages.push(m.text()))
   await mount(Button, {
     props: {
