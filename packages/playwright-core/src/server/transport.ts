@@ -18,7 +18,7 @@
 import { ws } from '../utilsBundle';
 import type { WebSocket } from '../utilsBundle';
 import { getProxyForUrl, HttpsProxyAgent } from '../utilsBundle';
-import * as URL from 'url';
+import { URL } from 'url';
 import type { ClientRequest, IncomingMessage, Agent } from 'http';
 import type { Progress } from './progress';
 import { makeWaitForNextTask } from '../utils';
@@ -93,11 +93,11 @@ export class WebSocketTransport implements ConnectionTransport {
   constructor(progress: Progress|undefined, url: string, headers?: { [key: string]: string; }, followRedirects?: boolean) {
     this.wsEndpoint = url;
 
-    const endpointURL = URL.parse(url);
+    const endpointURL = new URL(url);
     const proxyURL = url.startsWith('ws:') ? getProxyForUrl(`http://${endpointURL.hostname}`) : getProxyForUrl(`https://${endpointURL.hostname}`);
     let agent: Agent | undefined = undefined;
     if (proxyURL) {
-      const parsedProxyURL = URL.parse(proxyURL);
+      const parsedProxyURL = new URL(proxyURL);
       (parsedProxyURL as any).secureProxy = parsedProxyURL.protocol === `https:`;
 
       agent = new HttpsProxyAgent(parsedProxyURL);
