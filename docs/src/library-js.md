@@ -44,19 +44,20 @@ import playwright, { devices } from 'playwright';
 ```
 
 ```js tab=js-js
+const assert = require('node:assert');
 const playwright = require('playwright');
 
 (async () => {
   // Setup
   const browser = await playwright.chromium.launch();
-  const context = await browser.newContext(devices['iPhone 11']);
+  const context = await browser.newContext(playwright.devices['iPhone 11']);
   const page = await context.newPage();
 
   // The actual interesting bit
   await context.route('**.jpg', route => route.abort());
   await page.goto('https://example.com/');
 
-  assert(await page.title() === 'Example'); // 👎 not a Web First assertion
+  assert(await page.title() === 'Example Domain'); // 👎 not a Web First assertion
 
   // Teardown
   await context.close();
