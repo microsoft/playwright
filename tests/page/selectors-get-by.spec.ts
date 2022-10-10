@@ -23,6 +23,14 @@ it('getByTestId should work', async ({ page }) => {
   await expect(page.locator('div').getByTestId('Hello')).toHaveText('Hello world');
 });
 
+it('getByTestId with custom testId should work', async ({ page, playwright }) => {
+  await page.setContent('<div><div data-my-custom-testid="Hello">Hello world</div></div>');
+  playwright.selectors.setTestIdAttribute('data-my-custom-testid');
+  await expect(page.getByTestId('Hello')).toHaveText('Hello world');
+  await expect(page.mainFrame().getByTestId('Hello')).toHaveText('Hello world');
+  await expect(page.locator('div').getByTestId('Hello')).toHaveText('Hello world');
+});
+
 it('getByTestId should escape id', async ({ page }) => {
   await page.setContent(`<div><div data-testid='He"llo'>Hello world</div></div>`);
   await expect(page.getByTestId('He"llo')).toHaveText('Hello world');
