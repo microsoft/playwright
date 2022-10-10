@@ -113,7 +113,7 @@ test('should order project according to stage', async ({ runGroups }, testInfo) 
     },
   };
   const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, projectTemplates);
-  const { exitCode, passed, timeline, output } =  await runGroups(configWithFiles);
+  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(0);
   expect(passed).toBe(6);
   expect(projectNames(timeline)).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);

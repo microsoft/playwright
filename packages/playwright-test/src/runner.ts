@@ -72,7 +72,7 @@ class RunPhase {
     const projectNameFilter = (project: FullProjectInternal) => !options.projectFilter || options.projectFilter.indexOf(project.name) !== -1;
     for (const stage of stages) {
       const projects = stageToProjects.get(stage);
-      phases.push(new RunPhase(projects.filter(projectNameFilter).map(({name: projectName}) => ({
+      phases.push(new RunPhase(projects.filter(projectNameFilter).map(({ name: projectName }) => ({
         projectName,
         testFileMatcher,
         testTitleMatcher
