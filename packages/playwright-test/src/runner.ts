@@ -62,14 +62,22 @@ type ProjectConstraints = {
 class RunPhase {
   static collectRunPhases(options: RunOptions, config: FullConfigInternal): RunPhase[] {
     const phases: RunPhase[] = [];
+    const stageToProjects = new MultiMap<number, FullProjectInternal>();
+    for (const p of config.projects)
+      stageToProjects.set(p.stage, p);
+    const stages = Array.from(stageToProjects.keys());
+    stages.sort((a, b) => a - b);
     const testFileMatcher = fileMatcherFrom(options.testFileFilters);
     const testTitleMatcher = options.testTitleMatcher;
-    const projects = options.projectFilter ?? config.projects.map(p => p.name);
-    phases.push(new RunPhase(projects.map(projectName => ({
-      projectName,
-      testFileMatcher,
-      testTitleMatcher
-    }))));
+    const projectNameFilter = (project: FullProjectInternal) => !options.projectFilter || options.projectFilter.indexOf(project.name) !== -1;
+    for (const stage of stages) {
+      const projects = stageToProjects.get(stage);
+      phases.push(new RunPhase(projects.filter(projectNameFilter).map(({name: projectName}) => ({
+        projectName,
+        testFileMatcher,
+        testTitleMatcher
+      }))));
+    }
     return phases;
   }
 
