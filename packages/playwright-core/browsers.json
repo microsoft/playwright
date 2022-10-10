@@ -21,7 +21,7 @@
     },
     {
       "name": "firefox",
-      "revision": "1357",
+      "revision": "1358",
       "installByDefault": true,
       "browserVersion": "105.0.1"
     },
