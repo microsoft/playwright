@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-import { installTransform } from './transform';
-import type { Config, Project, ReporterDescription, FullProjectInternal, FullConfigInternal, Fixtures, FixturesWithLocation } from './types';
-import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
-import { setCurrentlyLoadingFileSuite } from './globals';
-import { Suite, type TestCase } from './test';
-import type { SerializedLoaderData, WorkerIsolation } from './ipc';
-import * as path from 'path';
-import * as url from 'url';
 import * as fs from 'fs';
 import * as os from 'os';
-import type { BuiltInReporter, ConfigCLIOverrides } from './runner';
+import * as path from 'path';
+import { calculateSha1, isRegExp } from 'playwright-core/lib/utils';
+import * as url from 'url';
 import type { Reporter } from '../types/testReporter';
-import { builtInReporters } from './runner';
-import { isRegExp, calculateSha1, isString, isObject } from 'playwright-core/lib/utils';
-import { serializeError } from './util';
 import { FixturePool, isFixtureOption } from './fixtures';
+import { setCurrentlyLoadingFileSuite } from './globals';
+import type { SerializedLoaderData, WorkerIsolation } from './ipc';
+import type { BuiltInReporter, ConfigCLIOverrides } from './runner';
+import { builtInReporters } from './runner';
+import { Suite, type TestCase } from './test';
 import type { TestTypeImpl } from './testType';
+import { installTransform } from './transform';
+import type { Config, Fixtures, FixturesWithLocation, FullConfigInternal, FullProjectInternal, Project, ReporterDescription } from './types';
+import { errorWithFile, getPackageJsonPath, mergeObjects, serializeError } from './util';
 
 export const defaultTimeout = 30000;
 
