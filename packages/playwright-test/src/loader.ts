@@ -165,10 +165,6 @@ export class Loader {
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
     this._assignUniqueProjectIds(this._fullConfig.projects);
-
-    // TODO: restore or remove once groups are decided upon.
-    this._fullConfig.groups = (config as any).groups;
-    validateProjectGroups(this._configFile || '<default config>', this._fullConfig);
   }
 
   private _assignUniqueProjectIds(projects: FullProjectInternal[]) {
@@ -639,87 +635,6 @@ function validateProject(file: string, project: Project, title: string) {
   if ('use' in project && project.use !== undefined) {
     if (!project.use || typeof project.use !== 'object')
       throw errorWithFile(file, `${title}.use must be an object`);
-  }
-}
-
-function validateProjectGroups(file: string, config: FullConfigInternal) {
-  if (config.groups === undefined)
-    return;
-  const projectNames = new Set(config.projects?.filter(p => !!p.name).map(p => p.name));
-  for (const [groupName, group] of Object.entries(config.groups)) {
-    function validateProjectReference(projectName: string) {
-      if (projectName.trim() === '')
-        throw errorWithFile(file, `config.groups.${groupName} refers to an empty project name`);
-      if (!projectNames.has(projectName))
-        throw errorWithFile(file, `config.groups.${groupName} refers to an unknown project '${projectName}'`);
-    }
-    group.forEach((step, stepIndex) => {
-      if (isString(step)) {
-        validateProjectReference(step);
-      } else if (Array.isArray(step)) {
-        const parallelProjectNames = new Set();
-        step.forEach((item, itemIndex) => {
-          let projectName;
-          if (isString(item)) {
-            validateProjectReference(item);
-            projectName = item;
-          } else if (isObject(item)) {
-            const project = item.project;
-            if (isString(project)) {
-              validateProjectReference(project);
-            } else if (Array.isArray(project)) {
-              project.forEach((name, projectIndex) => {
-                if (!isString(name))
-                  throw errorWithFile(file, `config.groups.${groupName}[${stepIndex}][${itemIndex}].project[${projectIndex}] contains non string value.`);
-                validateProjectReference(name);
-              });
-            }
-            projectName = project;
-            if ('grep' in item) {
-              if (Array.isArray(item.grep)) {
-                item.grep.forEach((item, grepIndex) => {
-                  if (!isRegExp(item))
-                    throw errorWithFile(file, `config.groups.${groupName}[${stepIndex}][${itemIndex}].grep[${grepIndex}] must be a RegExp`);
-                });
-              } else if (!isRegExp(item.grep)) {
-                throw errorWithFile(file, `config.groups.${groupName}[${stepIndex}][${itemIndex}].grep must be a RegExp`);
-              }
-            }
-            if ('grepInvert' in item) {
-              if (Array.isArray(item.grepInvert)) {
-                item.grepInvert.forEach((item, index) => {
-                  if (!isRegExp(item))
-                    throw errorWithFile(file, `config.groups.${groupName}[${stepIndex}][${itemIndex}].grepInvert[${index}] must be a RegExp`);
-                });
-              } else if (!isRegExp(item.grepInvert)) {
-                throw errorWithFile(file, `config.groups.${groupName}[${stepIndex}][${itemIndex}].grepInvert must be a RegExp`);
-              }
-            }
-            for (const prop of ['testIgnore', 'testMatch'] as const) {
-              if (prop in item) {
-                const value = item[prop];
-                if (Array.isArray(value)) {
-                  value.forEach((item, index) => {
-                    if (typeof item !== 'string' && !isRegExp(item))
-                      throw errorWithFile(file, `config.groups.${groupName}[${stepIndex}][${itemIndex}].${prop}[${index}] must be a string or a RegExp`);
-                  });
-                } else if (typeof value !== 'string' && !isRegExp(value)) {
-                  throw errorWithFile(file, `config.groups.${groupName}[${stepIndex}][${itemIndex}].${prop} must be a string or a RegExp`);
-                }
-              }
-            }
-          } else {
-            throw errorWithFile(file, `config.groups.${groupName}[${stepIndex}][${itemIndex}] unexpected group entry ${JSON.stringify(step, null, 2)}`);
-          }
-          // We can relax this later.
-          if (parallelProjectNames.has(projectName))
-            throw errorWithFile(file, `config.groups.${groupName}[${stepIndex}][${itemIndex}] group mentions project '${projectName}' twice in one parallel group`);
-          parallelProjectNames.add(projectName);
-        });
-      } else {
-        throw errorWithFile(file, `config.groups.${groupName}[${stepIndex}] unexpected group entry ${JSON.stringify(step, null, 2)}`);
-      }
-    });
   }
 }
 

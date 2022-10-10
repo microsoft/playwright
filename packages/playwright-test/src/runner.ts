@@ -63,66 +63,15 @@ type ProjectConstraints = {
 // Project group is a sequence of run phases.
 class RunPhase {
   static collectRunPhases(options: RunOptions, config: FullConfigInternal): RunPhase[] {
-    let projectGroup = options.projectGroup;
-    if (options.projectFilter) {
-      if (projectGroup)
-        throw new Error('--group option can not be combined with --project');
-    } else {
-      if (!projectGroup && config.groups?.default && !options.testFileFilters?.length)
-        projectGroup = 'default';
-      if (projectGroup) {
-        if (config.shard)
-          throw new Error(`Project group '${projectGroup}' cannot be combined with --shard`);
-      }
-    }
-
     const phases: RunPhase[] = [];
-    if (projectGroup) {
-      const group = config.groups?.[projectGroup];
-      if (!group)
-        throw new Error(`Cannot find project group '${projectGroup}' in the config`);
-      for (const entry of group) {
-        if (isString(entry)) {
-          phases.push(new RunPhase([{
-            projectName: entry,
-            testFileMatcher: () => true,
-            testTitleMatcher: () => true,
-          }]));
-        } else {
-          const phase: ProjectConstraints[] = [];
-          for (const p of entry) {
-            if (isString(p)) {
-              phase.push({
-                projectName: p,
-                testFileMatcher: () => true,
-                testTitleMatcher: () => true,
-              });
-            } else {
-              const testMatch = p.testMatch ? createFileMatcher(p.testMatch) : () => true;
-              const testIgnore = p.testIgnore ? createFileMatcher(p.testIgnore) : () => false;
-              const grep = p.grep ? createTitleMatcher(p.grep) : () => true;
-              const grepInvert = p.grepInvert ? createTitleMatcher(p.grepInvert) : () => false;
-              const projects = isString(p.project) ? [p.project] : p.project;
-              phase.push(...projects.map(projectName => ({
-                projectName,
-                testFileMatcher: (file: string) => !testIgnore(file) && testMatch(file),
-                testTitleMatcher: (title: string) => !grepInvert(title) && grep(title),
-              })));
-            }
-          }
-          phases.push(new RunPhase(phase));
-        }
-      }
-    } else {
-      const testFileMatcher = fileMatcherFrom(options.testFileFilters);
-      const testTitleMatcher = options.testTitleMatcher;
-      const projects = options.projectFilter ?? config.projects.map(p => p.name);
-      phases.push(new RunPhase(projects.map(projectName => ({
-        projectName,
-        testFileMatcher,
-        testTitleMatcher
-      }))));
-    }
+    const testFileMatcher = fileMatcherFrom(options.testFileFilters);
+    const testTitleMatcher = options.testTitleMatcher;
+    const projects = options.projectFilter ?? config.projects.map(p => p.name);
+    phases.push(new RunPhase(projects.map(projectName => ({
+      projectName,
+      testFileMatcher,
+      testTitleMatcher
+    }))));
     return phases;
   }
 
@@ -152,7 +101,6 @@ type RunOptions = {
   testFileFilters: TestFileFilter[];
   testTitleMatcher: Matcher;
   projectFilter?: string[];
-  projectGroup?: string;
   passWithNoTests?: boolean;
 };
 
@@ -455,7 +403,6 @@ export class Runner {
     // Compute shards.
     const shard = config.shard;
     if (shard) {
-      assert(!options.projectGroup);
       assert(concurrentTestGroups.length === 1);
       const shardGroups: TestGroup[] = [];
       const shardTests = new Set<TestCase>();
