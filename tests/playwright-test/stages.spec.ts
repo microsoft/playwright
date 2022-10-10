@@ -78,26 +78,86 @@ function expectRunBefore(timeline: Timeline, before: string[], after: string[]) 
 }
 
 test('should work for two projects', async ({ runGroups }, testInfo) => {
-  const projectTemplates = {
-    'a': {
-      stage: 20
-    },
-    'b': {
-      stage: 10
-    },
-  };
-  const configWithFiles = createConfigWithProjects(['a', 'b'], testInfo, projectTemplates);
-  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
-  expect(exitCode).toBe(0);
-  expect(passed).toBe(1);
-  expect(formatTimeline(timeline)).toEqual(`b > b${path.sep}b.spec.ts > b test [begin]
+  await test.step(`order a then b`, async () => {
+    const projectTemplates = {
+      'a': {
+        stage: 10
+      },
+      'b': {
+        stage: 20
+      },
+    };
+    const configWithFiles = createConfigWithProjects(['a', 'b'], testInfo, projectTemplates);
+    const { exitCode, passed, timeline } = await runGroups(configWithFiles);
+    expect(exitCode).toBe(0);
+    expect(passed).toBe(2);
+    expect(formatTimeline(timeline)).toEqual(`a > a${path.sep}a.spec.ts > a test [begin]
+a > a${path.sep}a.spec.ts > a test [end]
+b > b${path.sep}b.spec.ts > b test [begin]
+b > b${path.sep}b.spec.ts > b test [end]`);
+  });
+  await test.step(`order b then a`, async () => {
+    const projectTemplates = {
+      'a': {
+        stage: 20
+      },
+      'b': {
+        stage: 10
+      },
+    };
+    const configWithFiles = createConfigWithProjects(['a', 'b'], testInfo, projectTemplates);
+    const { exitCode, passed, timeline } = await runGroups(configWithFiles);
+    expect(exitCode).toBe(0);
+    expect(passed).toBe(2);
+    expect(formatTimeline(timeline)).toEqual(`b > b${path.sep}b.spec.ts > b test [begin]
 b > b${path.sep}b.spec.ts > b test [end]
 a > a${path.sep}a.spec.ts > a test [begin]
 a > a${path.sep}a.spec.ts > a test [end]`);
+  });
 });
 
 
-test('should order project according to stage', async ({ runGroups }, testInfo) => {
+test('should order 1-3-1 projects', async ({ runGroups }, testInfo) => {
+  const projectTemplates = {
+    'e': {
+      stage: -100
+    },
+    'a': {
+      stage: 100
+    },
+  };
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e'], testInfo, projectTemplates);
+  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+  expect(exitCode).toBe(0);
+  expectRunBefore(timeline, ['e'], ['d', 'c', 'b']);
+  expectRunBefore(timeline, ['d', 'c', 'b'], ['a']);
+  expect(passed).toBe(5);
+});
+
+test('should order 2-2-2 projects', async ({ runGroups }, testInfo) => {
+  const projectTemplates = {
+    'a': {
+      stage: -30
+    },
+    'b': {
+      stage: -30
+    },
+    'e': {
+      stage: 40
+    },
+    'f': {
+      stage: 40
+    },
+  };
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, projectTemplates);
+  const { exitCode, passed, timeline } =  await runGroups(configWithFiles);
+  expect(exitCode).toBe(0);
+  expectRunBefore(timeline, ['a', 'b'], ['c', 'd']);
+  expectRunBefore(timeline, ['c', 'd'], ['e', 'f']);
+  expect(passed).toBe(6);
+});
+
+test('should order project according to stage 1-1-2-2', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
     'a': {
       stage: 10
@@ -121,4 +181,29 @@ test('should order project according to stage', async ({ runGroups }, testInfo) 
   expectRunBefore(timeline, ['d'], ['a', 'b', 'c', 'f']); // -10
   expectRunBefore(timeline, ['c', 'f'], ['a', 'b']); // 0
   expect(passed).toBe(6);
+});
+
+test('should work with project filter', async ({ runGroups }, testInfo) => {
+  const projectTemplates = {
+    'a': {
+      stage: 10
+    },
+    'b': {
+      stage: 10
+    },
+    'e': {
+      stage: -10
+    },
+    'f': {
+      stage: -10
+    },
+  };
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, projectTemplates);
+  const { exitCode, passed, timeline } =  await runGroups(configWithFiles, { project: ['b', 'c', 'e'] });
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(3);
+  expect(projectNames(timeline)).toEqual(['b', 'c', 'e']);
+  expectRunBefore(timeline, ['e'], ['b', 'c']); // -10 < 0
+  expectRunBefore(timeline, ['c'], ['b']); // 0 < 10
+  expect(passed).toBe(3);
 });
