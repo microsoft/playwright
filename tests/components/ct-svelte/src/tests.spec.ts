@@ -40,7 +40,7 @@ test('renderer updates props without remounting', async ({ mount }) => {
   })
   await expect(component.locator('#props')).toContainText('9001')
 
-  await component.rerender({
+  await component.update({
     props: { count: 1337 }
   })
   await expect(component).not.toContainText('9001')
@@ -53,7 +53,7 @@ test('renderer updates event listeners without remounting', async ({ mount }) =>
   const component = await mount(Counter)
 
   const messages: string[] = []
-  await component.rerender({
+  await component.update({
     on: { 
       submit: (data: string) => messages.push(data)
     }

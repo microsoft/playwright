@@ -51,7 +51,7 @@ export interface MountOptions<Component extends SvelteComponent = SvelteComponen
 
 interface MountResult<Component extends SvelteComponent> extends Locator {
   unmount(): Promise<void>;
-  rerender(options: Omit<MountOptions<Component>, 'hooksConfig'|'slots'>): Promise<void>
+  update(options: Omit<MountOptions<Component>, 'hooksConfig'|'slots'>): Promise<void>
 }
 
 interface ComponentFixtures {

@@ -114,7 +114,7 @@ window.playwrightUnmount = async rootElement => {
   svelteComponent.$destroy();
 };
 
-window.playwrightRerender = async (rootElement, component) => {
+window.playwrightUpdate = async (rootElement, component) => {
   const svelteComponent = /** @type {SvelteComponent} */ (rootElement[svelteComponentKey]);
   if (!svelteComponent)
     throw new Error('Component was not mounted');

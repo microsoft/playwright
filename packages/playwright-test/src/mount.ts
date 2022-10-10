@@ -21,7 +21,7 @@ let boundCallbacksForMount: Function[] = [];
 
 interface MountResult extends Locator {
   unmount(locator: Locator): Promise<void>;
-  rerender(options: Omit<MountOptions, 'hooksConfig'> | string | JsxComponent): Promise<void>;
+  update(options: Omit<MountOptions, 'hooksConfig'> | string | JsxComponent): Promise<void>;
 }
 
 export const fixtures: Fixtures<
@@ -60,9 +60,9 @@ export const fixtures: Fixtures<
               await window.playwrightUnmount(rootElement);
             });
           },
-          rerender: async (options: JsxComponent | Omit<MountOptions, 'hooksConfig'>) => {
-            if (isJsxApi(options)) return await innerRerender(page, options);
-            await innerRerender(page, component, options);
+          update: async (options: JsxComponent | Omit<MountOptions, 'hooksConfig'>) => {
+            if (isJsxApi(options)) return await innerUpdate(page, options);
+            await innerUpdate(page, component, options);
           }
         });
       });
@@ -74,7 +74,7 @@ function isJsxApi(options: Record<string, unknown>): options is JsxComponent {
   return options?.kind === 'jsx';
 }
 
-async function innerRerender(page: Page, jsxOrType: JsxComponent | string, options: Omit<MountOptions, 'hooksConfig'> = {}): Promise<void> {
+async function innerUpdate(page: Page, jsxOrType: JsxComponent | string, options: Omit<MountOptions, 'hooksConfig'> = {}): Promise<void> {
   const component = createComponent(jsxOrType, options);
   wrapFunctions(component, page, boundCallbacksForMount);
 
@@ -94,7 +94,7 @@ async function innerRerender(page: Page, jsxOrType: JsxComponent | string, optio
 
     unwrapFunctions(component);
     const rootElement = document.getElementById('root')!;
-    return await window.playwrightRerender(rootElement, component);
+    return await window.playwrightUpdate(rootElement, component);
   }, { component });
 }
 
