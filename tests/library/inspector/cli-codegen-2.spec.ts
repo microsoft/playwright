@@ -226,41 +226,41 @@ test.describe('cli codegen', () => {
     ]);
     const sources = await recorder.waitForOutput('JavaScript', 'waitForEvent');
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect.soft(sources.get('JavaScript').text).toContain(`
   const context = await browser.newContext();`);
-    expect(sources.get('JavaScript').text).toContain(`
+    expect.soft(sources.get('JavaScript').text).toContain(`
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('link', { name: 'Download' }).click()
   ]);`);
 
-    expect(sources.get('Java').text).toContain(`
+    expect.soft(sources.get('Java').text).toContain(`
       BrowserContext context = browser.newContext();`);
-    expect(sources.get('Java').text).toContain(`
+    expect.soft(sources.get('Java').text).toContain(`
       Download download = page.waitForDownload(() -> {
-        page.getByRole("link", new Page.GetByRoleOptions().setName("Download")).click();
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Download")).click();
       });`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect.soft(sources.get('Python').text).toContain(`
     context = browser.new_context()`);
-    expect(sources.get('Python').text).toContain(`
+    expect.soft(sources.get('Python').text).toContain(`
     with page.expect_download() as download_info:
         page.get_by_role("link", name="Download").click()
     download = download_info.value`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect.soft(sources.get('Python Async').text).toContain(`
     context = await browser.new_context()`);
-    expect(sources.get('Python Async').text).toContain(`
+    expect.soft(sources.get('Python Async').text).toContain(`
     async with page.expect_download() as download_info:
         await page.get_by_role("link", name="Download").click()
     download = await download_info.value`);
 
-    expect(sources.get('C#').text).toContain(`
+    expect.soft(sources.get('C#').text).toContain(`
         var context = await browser.NewContextAsync();`);
-    expect(sources.get('C#').text).toContain(`
+    expect.soft(sources.get('C#').text).toContain(`
         var download1 = await page.RunAndWaitForDownloadAsync(async () =>
         {
-            await page.GetByRole("link", new () { Name = "Download" }).ClickAsync();
+            await page.GetByRole(AriaRole.Link, new () { Name = "Download" }).ClickAsync();
         });`);
   });
 
@@ -278,29 +278,29 @@ test.describe('cli codegen', () => {
 
     const sources = await recorder.waitForOutput('JavaScript', 'once');
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect.soft(sources.get('JavaScript').text).toContain(`
   page.once('dialog', dialog => {
     console.log(\`Dialog message: \${dialog.message()}\`);
     dialog.dismiss().catch(() => {});
   });
   await page.getByRole('button', { name: 'click me' }).click();`);
 
-    expect(sources.get('Java').text).toContain(`
+    expect.soft(sources.get('Java').text).toContain(`
       page.onceDialog(dialog -> {
         System.out.println(String.format("Dialog message: %s", dialog.message()));
         dialog.dismiss();
       });
-      page.getByRole("button", new Page.GetByRoleOptions().setName("click me")).click();`);
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("click me")).click();`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect.soft(sources.get('Python').text).toContain(`
     page.once(\"dialog\", lambda dialog: dialog.dismiss())
     page.get_by_role("button", name="click me").click()`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect.soft(sources.get('Python Async').text).toContain(`
     page.once(\"dialog\", lambda dialog: dialog.dismiss())
     await page.get_by_role("button", name="click me").click()`);
 
-    expect(sources.get('C#').text).toContain(`
+    expect.soft(sources.get('C#').text).toContain(`
         void page_Dialog1_EventHandler(object sender, IDialog dialog)
         {
             Console.WriteLine($\"Dialog message: {dialog.Message}\");
@@ -308,7 +308,7 @@ test.describe('cli codegen', () => {
             page.Dialog -= page_Dialog1_EventHandler;
         }
         page.Dialog += page_Dialog1_EventHandler;
-        await page.GetByRole("button", new () { Name = "click me" }).ClickAsync();`);
+        await page.GetByRole(AriaRole.Button, new () { Name = "click me" }).ClickAsync();`);
 
   });
 

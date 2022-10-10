@@ -234,7 +234,7 @@ export class JavaLocatorFactory implements LocatorFactory {
         for (const [name, value] of Object.entries(options.attrs!))
           attrs.push(`.set${toTitleCase(name)}(${typeof value === 'string' ? this.quote(value) : value})`);
         const attrString = attrs.length ? `, new ${clazz}.GetByRoleOptions()${attrs.join('')}` : '';
-        return `getByRole(${this.quote(body)}${attrString})`;
+        return `getByRole(AriaRole.${toSnakeCase(body).toUpperCase()}${attrString})`;
       case 'has-text':
         return `locator(${this.quote(body)}, new ${clazz}.LocatorOptions().setHasText(${this.quote(options.hasText!)}))`;
       case 'test-id':
@@ -286,7 +286,7 @@ export class CSharpLocatorFactory implements LocatorFactory {
         for (const [name, value] of Object.entries(options.attrs!))
           attrs.push(`${toTitleCase(name)} = ${typeof value === 'string' ? this.quote(value) : value}`);
         const attrString = attrs.length ? `, new () { ${attrs.join(', ')} }` : '';
-        return `GetByRole(${this.quote(body)}${attrString})`;
+        return `GetByRole(AriaRole.${toTitleCase(body)}${attrString})`;
       case 'has-text':
         return `Locator(${this.quote(body)}, new () { HasTextString: ${this.quote(options.hasText!)} })`;
       case 'test-id':

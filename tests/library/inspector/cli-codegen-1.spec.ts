@@ -34,20 +34,20 @@ test.describe('cli codegen', () => {
       page.dispatchEvent('button', 'click', { detail: 1 })
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect.soft(sources.get('JavaScript').text).toContain(`
   await page.getByRole('button', { name: 'Submit' }).click();`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect.soft(sources.get('Python').text).toContain(`
     page.get_by_role("button", name="Submit").click()`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect.soft(sources.get('Python Async').text).toContain(`
     await page.get_by_role("button", name="Submit").click()`);
 
-    expect(sources.get('Java').text).toContain(`
-      page.getByRole("button", new Page.GetByRoleOptions().setName("Submit")).click()`);
+    expect.soft(sources.get('Java').text).toContain(`
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).click()`);
 
-    expect(sources.get('C#').text).toContain(`
-        await page.GetByRole("button", new () { Name = "Submit" }).ClickAsync();`);
+    expect.soft(sources.get('C#').text).toContain(`
+        await page.GetByRole(AriaRole.Button, new () { Name = "Submit" }).ClickAsync();`);
 
     expect(message.text()).toBe('click');
   });
@@ -157,20 +157,20 @@ test.describe('cli codegen', () => {
       page.dispatchEvent('button', 'click', { detail: 1 })
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect.soft(sources.get('JavaScript').text).toContain(`
   await page.getByRole('button', { name: 'Submit' }).click();`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect.soft(sources.get('Python').text).toContain(`
     page.get_by_role("button", name="Submit").click()`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect.soft(sources.get('Python Async').text).toContain(`
     await page.get_by_role("button", name="Submit").click()`);
 
-    expect(sources.get('Java').text).toContain(`
-      page.getByRole("button", new Page.GetByRoleOptions().setName("Submit")).click()`);
+    expect.soft(sources.get('Java').text).toContain(`
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).click()`);
 
-    expect(sources.get('C#').text).toContain(`
-        await page.GetByRole("button", new () { Name = "Submit" }).ClickAsync();`);
+    expect.soft(sources.get('C#').text).toContain(`
+        await page.GetByRole(AriaRole.Button, new () { Name = "Submit" }).ClickAsync();`);
 
     expect(message.text()).toBe('click');
   });
@@ -548,31 +548,31 @@ test.describe('cli codegen', () => {
       page.dispatchEvent('a', 'click', { detail: 1 })
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`
+    expect.soft(sources.get('JavaScript').text).toContain(`
   const [page1] = await Promise.all([
     page.waitForEvent('popup'),
     page.getByRole('link', { name: 'link' }).click()
   ]);`);
 
-    expect(sources.get('Java').text).toContain(`
+    expect.soft(sources.get('Java').text).toContain(`
       Page page1 = page.waitForPopup(() -> {
-        page.getByRole("link", new Page.GetByRoleOptions().setName("link")).click();
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("link")).click();
       });`);
 
-    expect(sources.get('Python').text).toContain(`
+    expect.soft(sources.get('Python').text).toContain(`
     with page.expect_popup() as popup_info:
         page.get_by_role("link", name="link").click()
     page1 = popup_info.value`);
 
-    expect(sources.get('Python Async').text).toContain(`
+    expect.soft(sources.get('Python Async').text).toContain(`
     async with page.expect_popup() as popup_info:
         await page.get_by_role("link", name="link").click()
     page1 = await popup_info.value`);
 
-    expect(sources.get('C#').text).toContain(`
+    expect.soft(sources.get('C#').text).toContain(`
         var page1 = await page.RunAndWaitForPopupAsync(async () =>
         {
-            await page.GetByRole("link", new () { Name = "link" }).ClickAsync();
+            await page.GetByRole(AriaRole.Link, new () { Name = "link" }).ClickAsync();
         });`);
 
     expect(popup.url()).toBe('about:blank');
