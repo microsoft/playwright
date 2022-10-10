@@ -55,14 +55,6 @@ export interface FullConfigInternal extends FullConfigPublic {
 
   // Overrides the public field.
   projects: FullProjectInternal[];
-
-  groups?: { [key: string]: Array<string | Array<string | {
-    project: string | string[],
-    grep?: RegExp | RegExp[],
-    grepInvert?: RegExp | RegExp[],
-    testMatch?: string | RegExp | Array<string | RegExp>,
-    testIgnore?: string | RegExp | Array<string | RegExp>
-  }>> };
 }
 
 /**

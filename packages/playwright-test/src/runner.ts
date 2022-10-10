@@ -15,39 +15,37 @@
  * limitations under the License.
  */
 
-import { rimraf, minimatch } from 'playwright-core/lib/utilsBundle';
 import * as fs from 'fs';
 import * as path from 'path';
+import { assert } from 'playwright-core/lib/utils';
+import { MultiMap } from 'playwright-core/lib/utils/multimap';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
+import { colors, minimatch, rimraf } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
+import type { FullResult, Reporter, TestError } from '../types/testReporter';
 import type { TestGroup } from './dispatcher';
 import { Dispatcher } from './dispatcher';
-import type { Matcher, TestFileFilter } from './util';
-import { createFileMatcher, createTitleMatcher, serializeError } from './util';
-import type { TestCase } from './test';
-import { Suite } from './test';
 import { Loader } from './loader';
-import type { FullResult, Reporter, TestError } from '../types/testReporter';
-import { Multiplexer } from './reporters/multiplexer';
-import { formatError } from './reporters/base';
-import { colors } from 'playwright-core/lib/utilsBundle';
-import DotReporter from './reporters/dot';
-import GitHubReporter from './reporters/github';
-import LineReporter from './reporters/line';
-import ListReporter from './reporters/list';
-import JSONReporter from './reporters/json';
-import JUnitReporter from './reporters/junit';
-import EmptyReporter from './reporters/empty';
-import HtmlReporter from './reporters/html';
-import type { Config, FullProjectInternal, ReporterInternal } from './types';
-import type { FullConfigInternal } from './types';
-import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
-import { SigIntWatcher } from './sigIntWatcher';
 import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
-import { webServerPluginsForConfig } from './plugins/webServerPlugin';
 import { dockerPlugin } from './plugins/dockerPlugin';
-import { MultiMap } from 'playwright-core/lib/utils/multimap';
-import { isString, assert } from 'playwright-core/lib/utils';
+import { webServerPluginsForConfig } from './plugins/webServerPlugin';
+import { formatError } from './reporters/base';
+import DotReporter from './reporters/dot';
+import EmptyReporter from './reporters/empty';
+import GitHubReporter from './reporters/github';
+import HtmlReporter from './reporters/html';
+import JSONReporter from './reporters/json';
+import JUnitReporter from './reporters/junit';
+import LineReporter from './reporters/line';
+import ListReporter from './reporters/list';
+import { Multiplexer } from './reporters/multiplexer';
+import { SigIntWatcher } from './sigIntWatcher';
+import type { TestCase } from './test';
+import { Suite } from './test';
+import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal } from './types';
+import type { Matcher, TestFileFilter } from './util';
+import { createFileMatcher, createTitleMatcher, serializeError } from './util';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -63,66 +61,15 @@ type ProjectConstraints = {
 // Project group is a sequence of run phases.
 class RunPhase {
   static collectRunPhases(options: RunOptions, config: FullConfigInternal): RunPhase[] {
-    let projectGroup = options.projectGroup;
-    if (options.projectFilter) {
-      if (projectGroup)
-        throw new Error('--group option can not be combined with --project');
-    } else {
-      if (!projectGroup && config.groups?.default && !options.testFileFilters?.length)
-        projectGroup = 'default';
-      if (projectGroup) {
-        if (config.shard)
-          throw new Error(`Project group '${projectGroup}' cannot be combined with --shard`);
-      }
-    }
-
     const phases: RunPhase[] = [];
-    if (projectGroup) {
-      const group = config.groups?.[projectGroup];
-      if (!group)
-        throw new Error(`Cannot find project group '${projectGroup}' in the config`);
-      for (const entry of group) {
-        if (isString(entry)) {
-          phases.push(new RunPhase([{
-            projectName: entry,
-            testFileMatcher: () => true,
-            testTitleMatcher: () => true,
-          }]));
-        } else {
-          const phase: ProjectConstraints[] = [];
-          for (const p of entry) {
-            if (isString(p)) {
-              phase.push({
-                projectName: p,
-                testFileMatcher: () => true,
-                testTitleMatcher: () => true,
-              });
-            } else {
-              const testMatch = p.testMatch ? createFileMatcher(p.testMatch) : () => true;
-              const testIgnore = p.testIgnore ? createFileMatcher(p.testIgnore) : () => false;
-              const grep = p.grep ? createTitleMatcher(p.grep) : () => true;
-              const grepInvert = p.grepInvert ? createTitleMatcher(p.grepInvert) : () => false;
-              const projects = isString(p.project) ? [p.project] : p.project;
-              phase.push(...projects.map(projectName => ({
-                projectName,
-                testFileMatcher: (file: string) => !testIgnore(file) && testMatch(file),
-                testTitleMatcher: (title: string) => !grepInvert(title) && grep(title),
-              })));
-            }
-          }
-          phases.push(new RunPhase(phase));
-        }
-      }
-    } else {
-      const testFileMatcher = fileMatcherFrom(options.testFileFilters);
-      const testTitleMatcher = options.testTitleMatcher;
-      const projects = options.projectFilter ?? config.projects.map(p => p.name);
-      phases.push(new RunPhase(projects.map(projectName => ({
-        projectName,
-        testFileMatcher,
-        testTitleMatcher
-      }))));
-    }
+    const testFileMatcher = fileMatcherFrom(options.testFileFilters);
+    const testTitleMatcher = options.testTitleMatcher;
+    const projects = options.projectFilter ?? config.projects.map(p => p.name);
+    phases.push(new RunPhase(projects.map(projectName => ({
+      projectName,
+      testFileMatcher,
+      testTitleMatcher
+    }))));
     return phases;
   }
 
@@ -152,7 +99,6 @@ type RunOptions = {
   testFileFilters: TestFileFilter[];
   testTitleMatcher: Matcher;
   projectFilter?: string[];
-  projectGroup?: string;
   passWithNoTests?: boolean;
 };
 
@@ -455,7 +401,6 @@ export class Runner {
     // Compute shards.
     const shard = config.shard;
     if (shard) {
-      assert(!options.projectGroup);
       assert(concurrentTestGroups.length === 1);
       const shardGroups: TestGroup[] = [];
       const shardTests = new Set<TestCase>();
