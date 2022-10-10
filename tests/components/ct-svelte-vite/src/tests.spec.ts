@@ -17,6 +17,7 @@
 import { test, expect } from '@playwright/experimental-ct-svelte';
 import Button from './components/Button.svelte';
 import DefaultSlot from './components/DefaultSlot.svelte';
+import NamedSlots from './components/NamedSlots.svelte';
 import MultiRoot from './components/MultiRoot.svelte';
 import Empty from './components/Empty.svelte';
 
@@ -52,6 +53,19 @@ test('render a default slot', async ({ mount }) => {
     }
   })
   await expect(component).toContainText('Main Content')
+})
+
+test('render a component with a named slot', async ({ mount }) => {
+  const component = await mount(NamedSlots, {
+    slots: {
+      header: 'Header',
+      main: 'Main Content',
+      footer: 'Footer'
+    }
+  })
+  await expect(component).toContainText('Header')
+  await expect(component).toContainText('Main Content')
+  await expect(component).toContainText('Footer')
 })
 
 test('run hooks', async ({ page, mount }) => {
