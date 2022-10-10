@@ -1,6 +1,6 @@
 async function main() {
   window.ws = new WebSocket('ws://localhost:' + window.location.port + '/ws');
-  window.ws.addEventListener('message', message => {});
+  window.ws.addEventListener('message', message => { }); // NOSONAR
 
   fetch('fetch-request-a.js');
   window.top.fetchSecond = () => {
