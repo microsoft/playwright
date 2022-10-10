@@ -25,7 +25,7 @@ addopts = --headed --browser firefox
 ## CLI arguments
 
 - `--headed`: Run tests in headed mode (default: headless).
-- `--browser`: Run tests in a different browser `chromium`, `firefox`, or `webkit`. It can be specified multiple times (default: all browsers).
+- `--browser`: Run tests in a different browser `chromium`, `firefox`, or `webkit`. It can be specified multiple times (default: `chromium`).
 - `--browser-channel` [Browser channel](./browsers.md) to be used.
 - `--slowmo` Run tests with slow mo.
 - `--device` [Device](./emulation.md) to be emulated.
