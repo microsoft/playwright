@@ -1,8 +1,10 @@
 <template>
-   <div>
-     <span id="remount-count">{{ remountCount }}</span>
-     <span id="rerender-count">{{ count }}</span>
-   </div>
+  <div @click="$emit('submit', 'hello')">
+    <div id="props">{{ count }}</div>
+    <div id="remount-count">{{ remountCount }}</div>
+    <slot name="main" />
+    <slot />
+  </div>
  </template>
 
 <script>
