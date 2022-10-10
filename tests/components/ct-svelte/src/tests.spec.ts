@@ -16,6 +16,7 @@
 
 import { test, expect } from '@playwright/experimental-ct-svelte';
 import Button from './components/Button.svelte';
+import Counter from './components/Counter.svelte';
 import Component from './components/Component.svelte';
 import DefaultSlot from './components/DefaultSlot.svelte';
 import NamedSlots from './components/NamedSlots.svelte'
@@ -31,6 +32,36 @@ test('render props', async ({ mount }) => {
     }
   })
   await expect(component).toContainText('Submit')
+})
+
+test('renderer updates props without remounting', async ({ mount }) => {
+  const component = await mount(Counter, {
+    props: { count: 9001 }
+  })
+  await expect(component.locator('#props')).toContainText('9001')
+
+  await component.rerender({
+    props: { count: 1337 }
+  })
+  await expect(component).not.toContainText('9001')
+  await expect(component.locator('#props')).toContainText('1337')
+
+  await expect(component.locator('#remount-count')).toContainText('1')
+})
+
+test('renderer updates event listeners without remounting', async ({ mount }) => {
+  const component = await mount(Counter)
+
+  const messages: string[] = []
+  await component.rerender({
+    on: { 
+      submit: (data: string) => messages.push(data)
+    }
+  })
+  await component.click();
+  expect(messages).toEqual(['hello'])
+  
+  await expect(component.locator('#remount-count')).toContainText('1')
 })
 
 test('emit an submit event when the button is clicked', async ({ mount }) => {
