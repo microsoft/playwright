@@ -23,7 +23,7 @@ test('renderer updates props without remounting', async ({ mount }) => {
   })
   await expect(component.locator('#props')).toContainText('9001')
 
-  await component.rerender({
+  await component.update({
     props: { count: 1337 }
   })
   await expect(component).not.toContainText('9001')
@@ -36,7 +36,7 @@ test('renderer updates event listeners without remounting', async ({ mount }) =>
   const component = await mount(Counter)
 
   const messages = []
-  await component.rerender({
+  await component.update({
     on: { 
       submit: data => messages.push(data)
     }
@@ -53,13 +53,13 @@ test('renderer updates slots without remounting', async ({ mount }) => {
   })
   await expect(component).toContainText('Default Slot')
 
-  await component.rerender({
+  await component.update({
     slots: { main: 'Test Slot' }
   })
   await expect(component).not.toContainText('Default Slot')
   await expect(component).toContainText('Test Slot')
 
-  await component.rerender({
+  await component.update({
     slots: { default: 'Default Slot' }
   })
   await expect(component).toContainText('Default Slot')

@@ -201,7 +201,7 @@ window.playwrightUnmount = async rootElement => {
   app.unmount();
 };
 
-window.playwrightRerender = async (rootElement, options) => {
+window.playwrightUpdate = async (rootElement, options) => {
   const wrapper = rootElement[wrapperKey];
   if (!wrapper)
     throw new Error('Component was not mounted');
