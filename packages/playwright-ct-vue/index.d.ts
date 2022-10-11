@@ -42,20 +42,20 @@ type JsonObject = { [Key in string]?: JsonValue };
 type Slot = string | string[];
 
 export interface MountOptions<Props = Record<string, unknown>> {
-  props?: Props,
+  props?: Props;
   slots?: Record<string, Slot> & { default?: Slot };
-  on?: Record<string, Function>,
-  hooksConfig?: JsonObject,
+  on?: Record<string, Function>;
+  hooksConfig?: JsonObject;
 }
 
 interface MountResult<Props = Record<string, unknown>> extends Locator {
   unmount(): Promise<void>;
-  rerender(options: Omit<MountOptions<Props>, 'hooksConfig'>): Promise<void>
+  update(options: Omit<MountOptions<Props>, 'hooksConfig'>): Promise<void>
 }
 
 interface MountResultJsx extends Locator {
   unmount(): Promise<void>;
-  rerender(props: JSX.Element): Promise<void>
+  update(component: JSX.Element): Promise<void>
 }
 
 export interface ComponentFixtures {

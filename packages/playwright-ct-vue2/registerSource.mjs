@@ -37,18 +37,16 @@ export function register(components) {
 /**
  * @param {Component | string} child
  * @param {import('vue').CreateElement} h
- * @returns {import('vue').VNode | string}
  */
-function renderChild(child, h) {
-  return typeof child === 'string' ? child : render(child, h);
+function createChild(child, h) {
+  return typeof child === 'string' ? child : createWrapper(child, h);
 }
 
 /**
  * @param {Component} component
  * @param {import('vue').CreateElement} h
- * @returns {import('vue').VNode}
  */
-function render(component, h) {
+function createComponent(component, h) {
   /**
    * @type {import('vue').Component | string | undefined}
    */
@@ -87,9 +85,9 @@ function render(component, h) {
       if (typeof child !== 'string' && child.type === 'template' && child.kind === 'jsx') {
         const slotProperty = Object.keys(child.props).find(k => k.startsWith('v-slot:'));
         const slot = slotProperty ? slotProperty.substring('v-slot:'.length) : 'default';
-        nodeData.scopedSlots[slot] = () => child.children.map(c => renderChild(c, h));
+        nodeData.scopedSlots[slot] = () => child.children.map(c => createChild(c, h));
       } else {
-        children.push(renderChild(child, h));
+        children.push(createChild(child, h));
       }
     }
 
@@ -110,7 +108,7 @@ function render(component, h) {
     // Vue test util syntax.
     const options = component.options || {};
     for (const [key, value] of Object.entries(options.slots || {})) {
-      const list = (Array.isArray(value) ? value : [value]).map(v => renderChild(v, h));
+      const list = (Array.isArray(value) ? value : [value]).map(v => createChild(v, h));
       if (key === 'default')
         children.push(...list);
       else
@@ -130,18 +128,33 @@ function render(component, h) {
     lastArg = children;
   }
 
-  const wrapper = h(componentFunc, nodeData, lastArg);
+  return { Component: componentFunc, nodeData, slots: lastArg };
+}
+
+/**
+ * @param {Component} component
+ * @param {import('vue').CreateElement} h
+ * @returns {import('vue').VNode}
+ */
+function createWrapper(component, h) {
+  const { Component, nodeData, slots } = createComponent(component, h);
+  const wrapper = h(Component, nodeData, slots);
   return wrapper;
 }
 
 const instanceKey = Symbol('instanceKey');
+const wrapperKey = Symbol('wrapperKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
     await hook({ hooksConfig });
 
   const instance = new Vue({
-    render: h => render(component, h),
+    render: h => {
+      const wrapper = createWrapper(component, h);
+      /** @type {any} */ (rootElement)[wrapperKey] = wrapper;
+      return wrapper;
+    },
   }).$mount();
   rootElement.appendChild(instance.$el);
   /** @type {any} */ (rootElement)[instanceKey] = instance;
@@ -158,11 +171,31 @@ window.playwrightUnmount = async rootElement => {
   component.$el.remove();
 };
 
-window.playwrightRerender = async (element, options) => {
-  const component = /** @type {any} */(element)[instanceKey];
-  if (!component)
+window.playwrightUpdate = async (element, options) => {
+  const wrapper = /** @type {any} */(element)[wrapperKey];
+  if (!wrapper)
     throw new Error('Component was not mounted');
 
-  for (const [key, value] of Object.entries(/** @type {any} */(options).props || /** @type {any} */(options).options.props))
-    component.$children[0][key] = value;
+  const component = wrapper.componentInstance;
+  const { nodeData, slots } = createComponent(options, component.$createElement);
+
+
+  for (const [name] of Object.entries(component.$listeners || {})) {
+    component.$off(name);
+    delete component.$listeners[name];
+  }
+
+  for (const [name, value] of Object.entries(nodeData.on || {})) {
+    component.$on(name, value);
+    component.$listeners[name] = value;
+  }
+
+  Object.assign(component.$scopedSlots, nodeData.scopedSlots);
+  component.$slots.default = slots;
+
+  for (const [key, value] of Object.entries(nodeData.props || {}))
+    component[key] = value;
+
+  if (!Object.keys(nodeData.props || {}).length)
+    component.$forceUpdate();
 };

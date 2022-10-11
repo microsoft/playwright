@@ -59,7 +59,6 @@ function addTestCommand(program: Command) {
   command.option('--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`);
   command.option('--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`);
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
-  command.option('--group <project-group-name>', `Only run tests from the specified project group (default: run all projects from the 'default' group or just all projects if 'default' group is not defined).`);
   command.option('--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`);
   command.option('--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
   command.option('-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`);
@@ -173,7 +172,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     testFileFilters,
     testTitleMatcher,
     projectFilter: opts.project || undefined,
-    projectGroup: opts.group,
     passWithNoTests: opts.passWithNoTests,
   });
   await stopProfiling(undefined);
