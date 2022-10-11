@@ -1213,7 +1213,7 @@ Note that many html elements have an implicitly [defined role](https://w3c.githu
 
 ## template-locator-get-by-title
 
-Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+Allows locating elements by their title. For example, this method will find the button by its title "Place the order":
 
 ```html
 <button title='Place the order'>Order Now</button>

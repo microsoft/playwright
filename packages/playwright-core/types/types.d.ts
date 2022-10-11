@@ -2599,7 +2599,7 @@ export interface Page {
   }): Locator;
 
   /**
-   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   * Allows locating elements by their title. For example, this method will find the button by its title "Place the order":
    *
    * ```html
    * <button title='Place the order'>Order Now</button>
@@ -5699,7 +5699,7 @@ export interface Frame {
   }): Locator;
 
   /**
-   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   * Allows locating elements by their title. For example, this method will find the button by its title "Place the order":
    *
    * ```html
    * <button title='Place the order'>Order Now</button>
@@ -10143,7 +10143,7 @@ export interface Locator {
   }): Locator;
 
   /**
-   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   * Allows locating elements by their title. For example, this method will find the button by its title "Place the order":
    *
    * ```html
    * <button title='Place the order'>Order Now</button>
@@ -15410,7 +15410,7 @@ export interface FrameLocator {
   }): Locator;
 
   /**
-   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   * Allows locating elements by their title. For example, this method will find the button by its title "Place the order":
    *
    * ```html
    * <button title='Place the order'>Order Now</button>
