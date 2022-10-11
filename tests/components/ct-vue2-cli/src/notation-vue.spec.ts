@@ -35,10 +35,10 @@ test('renderer updates props without remounting', async ({ mount }) => {
 test('renderer updates event listeners without remounting', async ({ mount }) => {
   const component = await mount(Counter)
 
-  const messages = []
+  const messages: string[] = []
   await component.update({
     on: { 
-      submit: data => messages.push(data)
+      submit: (data: string) => messages.push(data)
     }
   })
   await component.click();

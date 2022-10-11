@@ -24,12 +24,14 @@ test('renderer updates props without remounting', async ({ mount }) => {
 })
 
 test('renderer updates event listeners without remounting', async ({ mount }) => {
-  const messages = []
+  const messages: string[] = []
   const component = await mount(<Counter />)
 
-  await component.update(<Counter v-on:submit={count => { 
-    messages.push(count) 
-  }} />)
+  await component.update(<Counter 
+    v-on:submit={(count: string) => { 
+      messages.push(count) 
+    }}
+  />)
   await component.click();
   expect(messages).toEqual(['hello'])
   
