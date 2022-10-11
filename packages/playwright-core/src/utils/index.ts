@@ -90,8 +90,8 @@ export function isError(obj: any): obj is Error {
   return obj instanceof Error || (obj && Object.getPrototypeOf(obj)?.name === 'Error');
 }
 
-const debugEnv = getFromENV('PWDEBUG') || '';
 export function debugMode() {
+  const debugEnv = getFromENV('PWDEBUG') || '';
   if (debugEnv === 'console')
     return 'console';
   if (debugEnv === '0' || debugEnv === 'false')
