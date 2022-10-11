@@ -15,21 +15,21 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { sanitizeDeviceOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
-import { actionTitle } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import deviceDescriptors from '../deviceDescriptors';
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
+import { asLocator } from '../isomorphic/locatorGenerators';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
   id: string;
   groupName = 'Node.js';
   name: string;
-  highlighter = 'javascript';
+  highlighter = 'javascript' as Language;
   private _isTest: boolean;
 
   constructor(isTest: boolean) {
@@ -46,7 +46,6 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new JavaScriptFormatter(2);
     formatter.newLine();
-    formatter.add('// ' + actionTitle(action));
 
     if (action.name === 'openPage') {
       formatter.add(`const ${pageAlias} = await context.newPage();`);
@@ -59,7 +58,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
     } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
-      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'frameLocator'));
+      const locators = actionInContext.frame.selectorsChain.map(selector => `.frameLocator(${quote(selector)})`);
       subject = `${pageAlias}${locators.join('')}`;
     } else if (actionInContext.frame.name) {
       subject = `${pageAlias}.frame(${formatObject({ name: actionInContext.frame.name })})`;
@@ -133,26 +132,30 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         if (action.position)
           options.position = action.position;
         const optionsString = formatOptions(options, false);
-        return asLocator(action.selector) + `.${method}(${optionsString})`;
+        return this._asLocator(action.selector) + `.${method}(${optionsString})`;
       }
       case 'check':
-        return asLocator(action.selector) + `.check()`;
+        return this._asLocator(action.selector) + `.check()`;
       case 'uncheck':
-        return asLocator(action.selector) + `.uncheck()`;
+        return this._asLocator(action.selector) + `.uncheck()`;
       case 'fill':
-        return asLocator(action.selector) + `.fill(${quote(action.text)})`;
+        return this._asLocator(action.selector) + `.fill(${quote(action.text)})`;
       case 'setInputFiles':
-        return asLocator(action.selector) + `.setInputFiles(${formatObject(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return this._asLocator(action.selector) + `.setInputFiles(${formatObject(action.files.length === 1 ? action.files[0] : action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return asLocator(action.selector) + `.press(${quote(shortcut)})`;
+        return this._asLocator(action.selector) + `.press(${quote(shortcut)})`;
       }
       case 'navigate':
         return `goto(${quote(action.url)})`;
       case 'select':
-        return asLocator(action.selector) + `.selectOption(${formatObject(action.options.length > 1 ? action.options : action.options[0])})`;
+        return this._asLocator(action.selector) + `.selectOption(${formatObject(action.options.length > 1 ? action.options : action.options[0])})`;
     }
+  }
+
+  private _asLocator(selector: string) {
+    return asLocator('javascript', selector);
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
@@ -199,15 +202,6 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
   await browser.close();
 })();`;
   }
-}
-
-function asLocator(selector: string, locatorFn = 'locator') {
-  const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
-  if (!match)
-    return `${locatorFn}(${quote(selector)})`;
-  if (+match[2] === 0)
-    return `${locatorFn}(${quote(match[1])}).first()`;
-  return `${locatorFn}(${quote(match[1])}).nth(${match[2]})`;
 }
 
 function formatOptions(value: any, hasArguments: boolean): string {

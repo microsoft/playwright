@@ -1,15 +1,26 @@
-const { TestServer } = require('../../../utils/testserver/');
-TestServer.create(__dirname, process.argv[2] || 3000).then(server => {
-  console.log('listening on port', server.PORT);
-  let ready = false;
-  setTimeout(() => ready = true, 750);
-  server.setRoute('/ready', (message, response) => {
+const http = require('http');
+
+const port = process.argv[2] || 3000;
+
+let ready = false;
+setTimeout(() => ready = true, 750);
+
+const requestListener = function (req, res) {
+  if (req.url === '/ready') {
     if (ready) {
-      response.statusCode = 200;
-      response.end('hello');
+      res.writeHead(200);
+      res.end('hello');
     } else {
-      response.statusCode = 404;
-      response.end('not-ready');
+      res.writeHead(404);
+      res.end('not-ready');
     }
-  });
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
+};
+
+const server = http.createServer(requestListener);
+server.listen(port, () => {
+  console.log('listening on port', port);
 });

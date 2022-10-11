@@ -45,7 +45,7 @@ import { Frame, verifyLoadState } from './frame';
 import { HarRouter } from './harRouter';
 import { Keyboard, Mouse, Touchscreen } from './input';
 import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
-import type { FrameLocator, Locator, LocatorOptions } from './locator';
+import type { ByRoleOptions, FrameLocator, Locator, LocatorOptions } from './locator';
 import type { RouteHandlerCallback } from './network';
 import { Response, Route, RouteHandler, validateHeaders, WebSocket } from './network';
 import type { Request } from './network';
@@ -562,6 +562,34 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   locator(selector: string, options?: LocatorOptions): Locator {
     return this.mainFrame().locator(selector, options);
+  }
+
+  getByTestId(testId: string): Locator {
+    return this.mainFrame().getByTestId(testId);
+  }
+
+  getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByAltText(text, options);
+  }
+
+  getByLabel(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByLabel(text, options);
+  }
+
+  getByPlaceholder(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByPlaceholder(text, options);
+  }
+
+  getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByText(text, options);
+  }
+
+  getByTitle(text: string | RegExp, options?: { exact?: boolean }): Locator {
+    return this.mainFrame().getByTitle(text, options);
+  }
+
+  getByRole(role: string, options: ByRoleOptions = {}): Locator {
+    return this.mainFrame().getByRole(role, options);
   }
 
   frameLocator(selector: string): FrameLocator {

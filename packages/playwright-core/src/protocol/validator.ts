@@ -245,6 +245,16 @@ scheme.LocalUtilsHarUnzipParams = tObject({
   harFile: tString,
 });
 scheme.LocalUtilsHarUnzipResult = tOptional(tObject({}));
+scheme.LocalUtilsConnectParams = tObject({
+  wsEndpoint: tString,
+  headers: tOptional(tAny),
+  slowMo: tOptional(tNumber),
+  timeout: tOptional(tNumber),
+  socksProxyRedirectPortForTest: tOptional(tNumber),
+});
+scheme.LocalUtilsConnectResult = tObject({
+  pipe: tChannel(['JsonPipe']),
+});
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tString,
@@ -324,6 +334,7 @@ scheme.RecorderSource = tObject({
 scheme.DebugControllerInitializer = tOptional(tObject({}));
 scheme.DebugControllerInspectRequestedEvent = tObject({
   selector: tString,
+  locators: tArray(tType('NameValue')),
 });
 scheme.DebugControllerBrowsersChangedEvent = tObject({
   browsers: tArray(tObject({
@@ -413,16 +424,6 @@ scheme.SelectorsRegisterResult = tOptional(tObject({}));
 scheme.BrowserTypeInitializer = tObject({
   executablePath: tString,
   name: tString,
-});
-scheme.BrowserTypeConnectParams = tObject({
-  wsEndpoint: tString,
-  headers: tOptional(tAny),
-  slowMo: tOptional(tNumber),
-  timeout: tOptional(tNumber),
-  socksProxyRedirectPortForTest: tOptional(tNumber),
-});
-scheme.BrowserTypeConnectResult = tObject({
-  pipe: tChannel(['JsonPipe']),
 });
 scheme.BrowserTypeLaunchParams = tObject({
   channel: tOptional(tString),
@@ -1330,6 +1331,7 @@ scheme.FrameHoverParams = tObject({
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
+  noWaitAfter: tOptional(tBoolean),
 });
 scheme.FrameHoverResult = tOptional(tObject({}));
 scheme.FrameInnerHTMLParams = tObject({
@@ -1716,6 +1718,7 @@ scheme.ElementHandleHoverParams = tObject({
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
+  noWaitAfter: tOptional(tBoolean),
 });
 scheme.ElementHandleHoverResult = tOptional(tObject({}));
 scheme.ElementHandleInnerHTMLParams = tOptional(tObject({}));

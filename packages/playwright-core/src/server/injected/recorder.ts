@@ -94,7 +94,8 @@ class Recorder {
       return;
     }
 
-    const { mode, actionPoint, actionSelector } = state;
+    const { mode, actionPoint, actionSelector, language } = state;
+    this._highlight.setLanguage(language);
     if (mode !== this._mode) {
       this._mode = mode;
       this._clearHighlight();

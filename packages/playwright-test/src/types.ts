@@ -45,7 +45,6 @@ export interface FullConfigInternal extends FullConfigPublic {
   _globalOutputDir: string;
   _configDir: string;
   _maxConcurrentTestGroups: number;
-  _watchMode: boolean;
   _ignoreSnapshots: boolean;
   _workerIsolation: WorkerIsolation;
   /**
@@ -56,14 +55,6 @@ export interface FullConfigInternal extends FullConfigPublic {
 
   // Overrides the public field.
   projects: FullProjectInternal[];
-
-  groups?: { [key: string]: Array<string | Array<string | {
-    project: string | string[],
-    grep?: RegExp | RegExp[],
-    grepInvert?: RegExp | RegExp[],
-    testMatch?: string | RegExp | Array<string | RegExp>,
-    testIgnore?: string | RegExp | Array<string | RegExp>
-  }>> };
 }
 
 /**
@@ -71,6 +62,7 @@ export interface FullConfigInternal extends FullConfigPublic {
  * increasing the surface area of the public API type called FullProject.
  */
 export interface FullProjectInternal extends FullProjectPublic {
+  _id: string;
   _fullConfig: FullConfigInternal;
   _fullyParallel: boolean;
   _expect: Project['expect'];

@@ -41,12 +41,12 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   grep: RegExp | RegExp[];
   grepInvert: RegExp | RegExp[] | null;
   metadata: Metadata;
-  id: string;
   name: string;
   snapshotDir: string;
   outputDir: string;
   repeatEach: number;
   retries: number;
+  stage: number;
   testDir: string;
   testIgnore: string | RegExp | (string | RegExp)[];
   testMatch: string | RegExp | (string | RegExp)[];
@@ -237,6 +237,7 @@ export interface PlaywrightTestOptions {
   actionTimeout: number | undefined;
   navigationTimeout: number | undefined;
   serviceWorkers: ServiceWorkerPolicy | undefined;
+  testIdAttribute: string | undefined;
 }
 
 

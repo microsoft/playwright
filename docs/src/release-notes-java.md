@@ -4,6 +4,55 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.27
+
+### Locators
+
+With these new APIs writing locators is a joy:
+- [`method: Page.getByText`] to locate by text content.
+- [`method: Page.getByRole`] to locate by [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+- [`method: Page.getByLabel`] to locate a form control by associated label's text.
+- [`method: Page.getByTestId`] to locate an element based on its `data-testid` attribute (other attribute can be configured).
+- [`method: Page.getByPlaceholder`] to locate an input by placeholder.
+- [`method: Page.getByAltText`] to locate an element, usually image, by its text alternative.
+- [`method: Page.getByTitle`] to locate an element by its title.
+
+```java
+page.getByLabel("User Name").fill("John");
+
+page.getByLabel("Password").fill("secret-password");
+
+page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
+
+assertThat(page.getByText("Welcome, John!")).isVisible();
+```
+
+All the same methods are also available on [Locator], [FrameLocator] and [Frame] classes.
+
+### Other highlights
+
+- As announced in v1.25, Ubuntu 18 will not be supported as of Dec 2022. In addition to that, there will be no WebKit updates on Ubuntu 18 starting from the next Playwright release.
+
+### Behavior Changes
+
+- [`method: LocatorAssertions.toHaveAttribute`] with an empty value does not match missing attribute anymore. For example, the following snippet will succeed when `button` **does not** have a `disabled` attribute.
+
+   ```js
+   assertThat(page.getByRole(AriaRole.BUTTON)).hasAttribute("disabled", "");
+   ```
+
+### Browser Versions
+
+* Chromium 107.0.5304.18
+* Mozilla Firefox 105.0.1
+* WebKit 16.0
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 106
+* Microsoft Edge 106
+
+
 ## Version 1.26
 
 ### Assertions
@@ -28,7 +77,7 @@ page.navigate("https://playwright.dev", new Page.NavigateOptions().setWaitUntil(
 ```
 
 Prior to 1.26, this would wait for all iframes to fire the `DOMContentLoaded`
-event. 
+event.
 
 To align with web specification, the `WaitUntilState.DOMCONTENTLOADED` value only waits for
 the target frame to fire the `'DOMContentLoaded'` event. Use `setWaitUntil(WaitUntilState.LOAD)` to wait for all iframes.
@@ -80,7 +129,7 @@ if you encounter any issues!
 Linux support looks like this:
 
 |          | Ubuntu 18.04 | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11
-| :--- | :---: | :---: | :---: | :---: | 
+| :--- | :---: | :---: | :---: | :---: |
 | Chromium | ✅ | ✅ | ✅ | ✅ |
 | WebKit | ✅ | ✅ | ✅ | ✅ |
 | Firefox | ✅ | ✅ | ✅ | ✅ |

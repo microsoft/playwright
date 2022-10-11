@@ -176,7 +176,7 @@ steps:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.27.0-focal
+      image: mcr.microsoft.com/playwright:v1.28.0-focal
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v2
@@ -194,7 +194,7 @@ steps:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.27.0-focal
+      image: mcr.microsoft.com/playwright:v1.28.0-focal
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
@@ -218,7 +218,7 @@ steps:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.27.0-focal
+      image: mcr.microsoft.com/playwright:v1.28.0-focal
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
@@ -239,7 +239,7 @@ steps:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.27.0-focal
+      image: mcr.microsoft.com/playwright:v1.28.0-focal
     steps:
       - uses: actions/checkout@v3
       - name: Setup dotnet
@@ -264,7 +264,7 @@ steps:
     name: 'Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shardIndex }} of ${{ matrix.shardTotal }}'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.27.0-focal
+      image: mcr.microsoft.com/playwright:v1.28.0-focal
     strategy:
       fail-fast: false
       matrix:
@@ -299,7 +299,7 @@ jobs:
     - deployment: Run_E2E_Tests
       pool:
         vmImage: ubuntu-20.04
-      container: mcr.microsoft.com/playwright:v1.27.0-focal
+      container: mcr.microsoft.com/playwright:v1.28.0-focal
       environment: testing
       strategy:
         runOnce:
@@ -325,7 +325,7 @@ jobs:
     - deployment: Run_E2E_Tests
       pool:
         vmImage: ubuntu-20.04
-      container: mcr.microsoft.com/playwright:v1.27.0-focal
+      container: mcr.microsoft.com/playwright:v1.28.0-focal
       environment: testing
       strategy:
         runOnce:
@@ -368,7 +368,7 @@ Running Playwright on Circle CI is very similar to running on GitHub Actions. In
    executors:
       pw-focal-development:
         docker:
-          - image: mcr.microsoft.com/playwright:v1.27.0-focal
+          - image: mcr.microsoft.com/playwright:v1.28.0-focal
       environment:
         NODE_ENV: development # Needed if playwright is in `devDependencies`
    ```
@@ -404,7 +404,7 @@ to run tests on Jenkins.
 
 ```groovy
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright:v1.27.0-focal' } }
+   agent { docker { image 'mcr.microsoft.com/playwright:v1.28.0-focal' } }
    stages {
       stage('e2e-tests') {
          steps {
@@ -422,7 +422,7 @@ pipeline {
 Bitbucket Pipelines can use public [Docker images as build environments](https://confluence.atlassian.com/bitbucket/use-docker-images-as-build-environments-792298897.html). To run Playwright tests on Bitbucket, use our public Docker image ([see Dockerfile](./docker.md)).
 
 ```yml
-image: mcr.microsoft.com/playwright:v1.27.0-focal
+image: mcr.microsoft.com/playwright:v1.28.0-focal
 ```
 
 ### GitLab CI
@@ -435,7 +435,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v1.27.0-focal
+  image: mcr.microsoft.com/playwright:v1.28.0-focal
   script:
   ...
 ```
@@ -451,7 +451,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v1.27.0-focal
+  image: mcr.microsoft.com/playwright:v1.28.0-focal
   parallel: 7
   script:
     - npm ci
@@ -466,7 +466,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v1.27.0-focal
+  image: mcr.microsoft.com/playwright:v1.28.0-focal
   parallel:
     matrix:
       - PROJECT: ['chromium', 'webkit']

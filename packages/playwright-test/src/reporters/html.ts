@@ -45,6 +45,8 @@ type HtmlReportOpenOption = 'always' | 'never' | 'on-failure';
 type HtmlReporterOptions = {
   outputFolder?: string,
   open?: HtmlReportOpenOption,
+  host?: string,
+  port?: number,
 };
 
 class HtmlReporter implements ReporterInternal {
@@ -116,7 +118,7 @@ class HtmlReporter implements ReporterInternal {
     const { ok, singleTestId } = this._buildResult!;
     const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
     if (shouldOpen) {
-      await showHTMLReport(this._outputFolder, singleTestId);
+      await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);
     } else {
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       console.log('');
@@ -147,7 +149,7 @@ function standaloneDefaultFolder(): string {
   return reportFolderFromEnv() ?? defaultReportFolder(process.cwd());
 }
 
-export async function showHTMLReport(reportFolder: string | undefined, testId?: string) {
+export async function showHTMLReport(reportFolder: string | undefined, host: string = 'localhost', port?: number, testId?: string) {
   const folder = reportFolder ?? standaloneDefaultFolder();
   try {
     assert(fs.statSync(folder).isDirectory());
@@ -157,7 +159,7 @@ export async function showHTMLReport(reportFolder: string | undefined, testId?: 
     return;
   }
   const server = startHtmlReportServer(folder);
-  let url = await server.start(9323);
+  let url = await server.start({ port, host, preferredPort: port ? undefined : 9223 });
   console.log('');
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
   if (testId)

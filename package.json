@@ -1,7 +1,7 @@
 {
   "name": "playwright-internal",
   "private": true,
-  "version": "1.27.0-next",
+  "version": "1.28.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -13,7 +13,7 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "dtest": "cross-env PLAYWRIGHT_DOCKER=1 playwright docker --config=tests/library/playwright.config.ts --grep '@smoke'",
+    "dtest": "cross-env PLAYWRIGHT_DOCKER=1 playwright test --config=tests/library/playwright.config.ts --grep '@smoke'",
     "ctest": "playwright test --config=tests/library/playwright.config.ts --project=chromium",
     "ftest": "playwright test --config=tests/library/playwright.config.ts --project=firefox",
     "wtest": "playwright test --config=tests/library/playwright.config.ts --project=webkit",
@@ -62,6 +62,7 @@
     "@types/react": "^18.0.12",
     "@types/react-dom": "^18.0.5",
     "@types/resize-observer-browser": "^0.1.7",
+    "@types/ws": "^8.5.3",
     "@types/xml2js": "^0.4.9",
     "@typescript-eslint/eslint-plugin": "^5.10.2",
     "@typescript-eslint/parser": "^5.10.2",

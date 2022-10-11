@@ -50,15 +50,16 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
 
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {
+    const parsedProxyURL = URL.parse(proxyURL);
     if (params.url.startsWith('http:')) {
-      const proxy = URL.parse(proxyURL);
       options = {
         path: parsedUrl.href,
-        host: proxy.hostname,
-        port: proxy.port,
+        host: parsedProxyURL.hostname,
+        port: parsedProxyURL.port,
+        headers: options.headers,
+        method: options.method
       };
     } else {
-      const parsedProxyURL = URL.parse(proxyURL);
       (parsedProxyURL as any).secureProxy = parsedProxyURL.protocol === 'https:';
 
       options.agent = new HttpsProxyAgent(parsedProxyURL);

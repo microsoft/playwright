@@ -566,7 +566,9 @@ function parseCookie(header: string): channels.NetworkCookie | null {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'Lax' // None for non-chromium
+    // From https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+    // The cookie-sending behavior if SameSite is not specified is SameSite=Lax.
+    sameSite: 'Lax'
   };
   for (let i = 1; i < pairs.length; i++) {
     const [name, value] = pairs[i];
@@ -594,6 +596,19 @@ function parseCookie(header: string): channels.NetworkCookie | null {
         break;
       case 'httponly':
         cookie.httpOnly = true;
+        break;
+      case 'samesite':
+        switch (value.toLowerCase()) {
+          case 'none':
+            cookie.sameSite = 'None';
+            break;
+          case 'lax':
+            cookie.sameSite = 'Lax';
+            break;
+          case 'strict':
+            cookie.sameSite = 'Strict';
+            break;
+        }
         break;
     }
   }

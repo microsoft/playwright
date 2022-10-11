@@ -190,33 +190,63 @@ test('worker interrupt should report errors', async ({ runInlineTest }) => {
 test('should not stall when workers are available', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt
-      test('fails-1', async () => {
+      const { test } = pwt;
+      const { writeFile, waitForFile } = require('./utils.js');
+      test('fails-1', async ({}, testInfo) => {
+        await waitForFile(testInfo, 'lockA');
         console.log('\\n%%fails-1-started');
-        await new Promise(f => setTimeout(f, 2000));
+        writeFile(testInfo, 'lockB');
         console.log('\\n%%fails-1-done');
         expect(1).toBe(2);
       });
-      test('passes-1', async () => {
+      test('passes-1', async ({}, testInfo) => {
         console.log('\\n%%passes-1');
+        writeFile(testInfo, 'lockC');
       });
     `,
     'b.spec.js': `
-      const { test } = pwt
-      test('passes-2', async () => {
-        await new Promise(f => setTimeout(f, 1000));
+      const { test } = pwt;
+      const { writeFile, waitForFile } = require('./utils.js');
+      test('passes-2', async ({}, testInfo) => {
         console.log('\\n%%passes-2-started');
-        await new Promise(f => setTimeout(f, 3000));
+        writeFile(testInfo, 'lockA');
+        await waitForFile(testInfo, 'lockB');
+        await waitForFile(testInfo, 'lockC');
         console.log('\\n%%passes-2-done');
       });
+    `,
+    'utils.js': `
+      const fs = require('fs');
+      const path = require('path');
+
+      function fullName(testInfo, file) {
+        return path.join(testInfo.config.projects[0].outputDir, file);
+      }
+
+      async function waitForFile(testInfo, file) {
+        const fn = fullName(testInfo, file);
+        while (true) {
+          if (fs.existsSync(fn))
+            return;
+          await new Promise(f => setTimeout(f, 100));
+        }
+      }
+
+      function writeFile(testInfo, file) {
+        const fn = fullName(testInfo, file);
+        fs.mkdirSync(path.dirname(fn), { recursive: true });
+        fs.writeFileSync(fn, '0');
+      }
+
+      module.exports = { writeFile, waitForFile };
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%fails-1-started',
     '%%passes-2-started',
+    '%%fails-1-started',
     '%%fails-1-done',
     '%%passes-1',
     '%%passes-2-done',

@@ -75,12 +75,12 @@ async function deletePlaywrightImage() {
 async function buildPlaywrightImage() {
   await checkDockerEngineIsRunningOrDie();
 
-  const isDevelopmentMode = getPlaywrightVersion().includes('next');
-  let baseImageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
   // 1. Build or pull base image.
-  if (isDevelopmentMode) {
-    // Use our docker build scripts in development mode!
-    if (!process.env.PWTEST_DOCKER_BASE_IMAGE) {
+  let baseImageName = process.env.PWTEST_DOCKER_BASE_IMAGE || '';
+  if (!baseImageName) {
+    const isDevelopmentMode = getPlaywrightVersion().includes('next');
+    if (isDevelopmentMode) {
+      // Use our docker build scripts in development mode!
       const arch = process.arch === 'arm64' ? '--arm64' : '--amd64';
       throw createStacklessError(utils.wrapInASCIIBox([
         `You are in DEVELOPMENT mode!`,
@@ -91,8 +91,7 @@ async function buildPlaywrightImage() {
         `     PWTEST_DOCKER_BASE_IMAGE=playwright:localbuild npx playwright docker build`,
       ].join('\n'), 1));
     }
-    baseImageName = process.env.PWTEST_DOCKER_BASE_IMAGE;
-  } else {
+    baseImageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
     const { code } = await spawnAsync('docker', ['pull', baseImageName], { stdio: 'inherit' });
     if (code !== 0)
       throw new Error('Failed to pull docker image!');
@@ -276,7 +275,7 @@ function createStacklessError(message: string) {
 }
 
 export function addDockerCLI(program: Command) {
-  const dockerCommand = program.command('docker')
+  const dockerCommand = program.command('docker', { hidden: true })
       .description(`Manage Docker integration (EXPERIMENTAL)`);
 
   dockerCommand.command('build')
@@ -286,6 +285,7 @@ export function addDockerCLI(program: Command) {
           await buildPlaywrightImage();
         } catch (e) {
           console.error(e.stack ? e : e.message);
+          process.exit(1);
         }
       });
 
@@ -296,6 +296,7 @@ export function addDockerCLI(program: Command) {
           await startPlaywrightContainer();
         } catch (e) {
           console.error(e.stack ? e : e.message);
+          process.exit(1);
         }
       });
 
@@ -306,6 +307,7 @@ export function addDockerCLI(program: Command) {
           await stopAllPlaywrightContainers();
         } catch (e) {
           console.error(e.stack ? e : e.message);
+          process.exit(1);
         }
       });
 
@@ -316,11 +318,12 @@ export function addDockerCLI(program: Command) {
           await deletePlaywrightImage();
         } catch (e) {
           console.error(e.stack ? e : e.message);
+          process.exit(1);
         }
       });
 
   dockerCommand.command('install-server-deps', { hidden: true })
-      .description('delete docker image, if any')
+      .description('install run-server dependencies')
       .action(async function() {
         const { code } = await spawnAsync('bash', [path.join(__dirname, '..', '..', 'bin', 'container_install_deps.sh')], { stdio: 'inherit' });
         if (code !== 0)
@@ -328,7 +331,7 @@ export function addDockerCLI(program: Command) {
       });
 
   dockerCommand.command('run-server', { hidden: true })
-      .description('delete docker image, if any')
+      .description('run playwright server')
       .action(async function() {
         await spawnAsync('bash', [path.join(__dirname, '..', '..', 'bin', 'container_run_server.sh')], { stdio: 'inherit' });
       });

@@ -89,5 +89,4 @@ export class Firefox extends BrowserType {
 // Prefs for quick fixes that didn't make it to the build.
 // Should all be moved to `playwright.cfg`.
 const kBandaidFirefoxUserPrefs = {
-  'network.cookie.cookieBehavior': 4,
 };

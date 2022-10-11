@@ -24,6 +24,7 @@ import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
 import type { ConfigCLIOverrides } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import type { TestFileFilter } from './util';
+import { createTitleMatcher } from './util';
 import { showHTMLReport } from './reporters/html';
 import { baseFullConfig, defaultTimeout, fileIsModule } from './loader';
 import type { TraceMode } from './types';
@@ -58,7 +59,6 @@ function addTestCommand(program: Command) {
   command.option('--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`);
   command.option('--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`);
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
-  command.option('--group <project-group-name>', `Only run tests from the specified project group (default: run all projects from the 'default' group or just all projects if 'default' group is not defined).`);
   command.option('--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`);
   command.option('--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
   command.option('-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`);
@@ -163,12 +163,15 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     };
   });
 
+  const grepMatcher = opts.grep ? createTitleMatcher(forceRegExp(opts.grep)) : () => true;
+  const grepInvertMatcher = opts.grepInvert ? createTitleMatcher(forceRegExp(opts.grepInvert)) : () => false;
+  const testTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+
   const result = await runner.runAllTests({
     listOnly: !!opts.list,
     testFileFilters,
+    testTitleMatcher,
     projectFilter: opts.project || undefined,
-    projectGroup: opts.group,
-    watchMode: !!process.env.PW_TEST_WATCH,
     passWithNoTests: opts.passWithNoTests,
   });
   await stopProfiling(undefined);
@@ -209,8 +212,6 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     forbidOnly: options.forbidOnly ? true : undefined,
     fullyParallel: options.fullyParallel ? true : undefined,
     globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,
-    grep: options.grep ? forceRegExp(options.grep) : undefined,
-    grepInvert: options.grepInvert ? forceRegExp(options.grepInvert) : undefined,
     maxFailures: options.x ? 1 : (options.maxFailures ? parseInt(options.maxFailures, 10) : undefined),
     outputDir: options.output ? path.resolve(process.cwd(), options.output) : undefined,
     quiet: options.quiet ? options.quiet : undefined,

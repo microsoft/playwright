@@ -15,29 +15,28 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
-import { actionTitle } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import deviceDescriptors from '../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
+import { asLocator } from '../isomorphic/locatorGenerators';
 
 export class JavaLanguageGenerator implements LanguageGenerator {
   id = 'java';
   groupName = 'Java';
   name = 'Library';
-  highlighter = 'java';
+  highlighter = 'java' as Language;
 
   generateAction(actionInContext: ActionInContext): string {
     const action = actionInContext.action;
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new JavaScriptFormatter(6);
     formatter.newLine();
-    formatter.add('// ' + actionTitle(action));
 
     if (action.name === 'openPage') {
       formatter.add(`Page ${pageAlias} = context.newPage();`);
@@ -47,11 +46,13 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     }
 
     let subject: string;
+    let inFrameLocator = false;
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
     } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
-      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'frameLocator'));
+      const locators = actionInContext.frame.selectorsChain.map(selector => `.frameLocator(${quote(selector)})`);
       subject = `${pageAlias}${locators.join('')}`;
+      inFrameLocator = true;
     } else if (actionInContext.frame.name) {
       subject = `${pageAlias}.frame(${quote(actionInContext.frame.name)})`;
     } else {
@@ -67,7 +68,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       });`);
     }
 
-    const actionCall = this._generateActionCall(action);
+    const actionCall = this._generateActionCall(action, inFrameLocator);
     let code = `${subject}.${actionCall};`;
 
     if (signals.popup) {
@@ -89,7 +90,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  private _generateActionCall(action: Action): string {
+  private _generateActionCall(action: Action, inFrameLocator: boolean): string {
     switch (action.name) {
       case 'openPage':
         throw Error('Not reached');
@@ -110,26 +111,30 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         if (action.position)
           options.position = action.position;
         const optionsText = formatClickOptions(options);
-        return asLocator(action.selector) + `.${method}(${optionsText})`;
+        return this._asLocator(action.selector, inFrameLocator) + `.${method}(${optionsText})`;
       }
       case 'check':
-        return asLocator(action.selector) + `.check()`;
+        return this._asLocator(action.selector, inFrameLocator) + `.check()`;
       case 'uncheck':
-        return asLocator(action.selector) + `.uncheck()`;
+        return this._asLocator(action.selector, inFrameLocator) + `.uncheck()`;
       case 'fill':
-        return asLocator(action.selector) + `.fill(${quote(action.text)})`;
+        return this._asLocator(action.selector, inFrameLocator) + `.fill(${quote(action.text)})`;
       case 'setInputFiles':
-        return asLocator(action.selector) + `.setInputFiles(${formatPath(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return this._asLocator(action.selector, inFrameLocator) + `.setInputFiles(${formatPath(action.files.length === 1 ? action.files[0] : action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return asLocator(action.selector) + `.press(${quote(shortcut)})`;
+        return this._asLocator(action.selector, inFrameLocator) + `.press(${quote(shortcut)})`;
       }
       case 'navigate':
         return `navigate(${quote(action.url)})`;
       case 'select':
-        return asLocator(action.selector) + `.selectOption(${formatSelectOption(action.options.length > 1 ? action.options : action.options[0])})`;
+        return this._asLocator(action.selector, inFrameLocator) + `.selectOption(${formatSelectOption(action.options.length > 1 ? action.options : action.options[0])})`;
     }
+  }
+
+  private _asLocator(selector: string, inFrameLocator: boolean) {
+    return asLocator('java', selector, inFrameLocator);
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
@@ -252,13 +257,4 @@ function formatClickOptions(options: MouseClickOptions) {
 
 function quote(text: string) {
   return escapeWithQuotes(text, '\"');
-}
-
-function asLocator(selector: string, locatorFn = 'locator') {
-  const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
-  if (!match)
-    return `${locatorFn}(${quote(selector)})`;
-  if (+match[2] === 0)
-    return `${locatorFn}(${quote(match[1])}).first()`;
-  return `${locatorFn}(${quote(match[1])}).nth(${match[2]})`;
 }

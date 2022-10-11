@@ -528,6 +528,16 @@ LocalUtils:
         zipFile: string
         harFile: string
 
+    connect:
+      parameters:
+        wsEndpoint: string
+        headers: json?
+        slowMo: number?
+        timeout: number?
+        socksProxyRedirectPortForTest: number?
+      returns:
+        pipe: JsonPipe
+
 Root:
   type: interface
 
@@ -683,6 +693,9 @@ DebugController:
     inspectRequested:
       parameters:
         selector: string
+        locators:
+          type: array
+          items: NameValue
 
     browsersChanged:
       parameters:
@@ -771,16 +784,6 @@ BrowserType:
     name: string
 
   commands:
-
-    connect:
-      parameters:
-        wsEndpoint: string
-        headers: json?
-        slowMo: number?
-        timeout: number?
-        socksProxyRedirectPortForTest: number?
-      returns:
-        pipe: JsonPipe
 
     launch:
       parameters:
@@ -1764,6 +1767,7 @@ Frame:
         position: Point?
         timeout: number?
         trial: boolean?
+        noWaitAfter: boolean?
       tracing:
         snapshot: true
         pausesBeforeInput: true
@@ -2329,6 +2333,7 @@ ElementHandle:
         position: Point?
         timeout: number?
         trial: boolean?
+        noWaitAfter: boolean?
       tracing:
         snapshot: true
         pausesBeforeInput: true

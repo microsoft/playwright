@@ -16,11 +16,11 @@ test('render props', async ({ mount }) => {
 test('renderer and keep the component instance intact', async ({ mount }) => {
   const component = await mount(<Counter count={9001} />);
   await expect(component.locator('#rerender-count')).toContainText('9001')
-
-  await component.rerender({ props: { count: 1337 } })
+  
+  await component.update(<Counter count={1337} />)
   await expect(component.locator('#rerender-count')).toContainText('1337')
-
-  await component.rerender({ props: { count: 42 } })
+  
+  await component.update(<Counter count={42} />)
   await expect(component.locator('#rerender-count')).toContainText('42')
 
   await expect(component.locator('#remount-count')).toContainText('1')
@@ -84,6 +84,13 @@ test('run hooks', async ({ page, mount }) => {
     hooksConfig: { route: 'A' }
   })
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}, app: true', 'After mount el: HTMLButtonElement'])
+})
+
+test('unmount', async ({ page, mount }) => {
+  const component = await mount(<Button title="Submit" />)
+  await expect(page.locator('#root')).toContainText('Submit')
+  await component.unmount();
+  await expect(page.locator('#root')).not.toContainText('Submit');
 })
 
 test('unmount a multi root component', async ({ mount, page }) => {

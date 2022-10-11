@@ -23,7 +23,7 @@ import { transformHook, resolveHook, belongsToNodeModules } from './transform';
 async function resolve(specifier: string, context: { parentURL?: string }, defaultResolve: Function) {
   if (context.parentURL && context.parentURL.startsWith('file://')) {
     const filename = url.fileURLToPath(context.parentURL);
-    const resolved = resolveHook(filename, specifier);
+    const resolved = resolveHook(true, filename, specifier);
     if (resolved !== undefined)
       specifier = url.pathToFileURL(resolved).toString();
   }

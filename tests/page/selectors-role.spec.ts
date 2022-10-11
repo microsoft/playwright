@@ -25,25 +25,27 @@ test('should detect roles', async ({ page }) => {
     <details><summary>Hello</summary></details>
     <div role="dialog">I am a dialog</div>
   `);
-  expect(await page.$$eval(`role=button`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hello</button>`,
   ]);
-  expect(await page.$$eval(`role=listbox`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=listbox`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<select multiple="" size="2"></select>`,
   ]);
-  expect(await page.$$eval(`role=combobox`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=combobox`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<select></select>`,
   ]);
-  expect(await page.$$eval(`role=heading`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=heading`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<h3>Heading</h3>`,
   ]);
-  expect(await page.$$eval(`role=group`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=group`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<details><summary>Hello</summary></details>`,
   ]);
-  expect(await page.$$eval(`role=dialog`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=dialog`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="dialog">I am a dialog</div>`,
   ]);
-  expect(await page.$$eval(`role=menuitem`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=menuitem`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+  ]);
+  expect(await page.getByRole('menuitem').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
   ]);
 });
 
@@ -58,15 +60,25 @@ test('should support selected', async ({ page }) => {
       <div role="option" aria-selected="false">Hello</div>
     </div>
   `);
-  expect(await page.$$eval(`role=option[selected]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=option[selected]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<option selected="">Hello</option>`,
     `<div role="option" aria-selected="true">Hi</div>`,
   ]);
-  expect(await page.$$eval(`role=option[selected=true]`, els => els.map(e => e.outerHTML))).toEqual([
+
+  expect(await page.locator(`role=option[selected=true]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<option selected="">Hello</option>`,
     `<div role="option" aria-selected="true">Hi</div>`,
   ]);
-  expect(await page.$$eval(`role=option[selected=false]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.getByRole('option', { selected: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<option selected="">Hello</option>`,
+    `<div role="option" aria-selected="true">Hi</div>`,
+  ]);
+
+  expect(await page.locator(`role=option[selected=false]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<option>Hi</option>`,
+    `<div role="option" aria-selected="false">Hello</div>`,
+  ]);
+  expect(await page.getByRole('option', { selected: false }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<option>Hi</option>`,
     `<div role="option" aria-selected="false">Hello</div>`,
   ]);
@@ -82,23 +94,35 @@ test('should support checked', async ({ page }) => {
     <div role=checkbox>Unknown</div>
   `);
   await page.$eval('[indeterminate]', input => (input as HTMLInputElement).indeterminate = true);
-  expect(await page.$$eval(`role=checkbox[checked]`, els => els.map(e => e.outerHTML))).toEqual([
+
+  expect(await page.locator(`role=checkbox[checked]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<input type="checkbox" checked="">`,
     `<div role="checkbox" aria-checked="true">Hi</div>`,
   ]);
-  expect(await page.$$eval(`role=checkbox[checked=true]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=checkbox[checked=true]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<input type="checkbox" checked="">`,
     `<div role="checkbox" aria-checked="true">Hi</div>`,
   ]);
-  expect(await page.$$eval(`role=checkbox[checked=false]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.getByRole('checkbox', { checked: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<input type="checkbox" checked="">`,
+    `<div role="checkbox" aria-checked="true">Hi</div>`,
+  ]);
+
+  expect(await page.locator(`role=checkbox[checked=false]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<input type="checkbox">`,
     `<div role="checkbox" aria-checked="false">Hello</div>`,
     `<div role="checkbox">Unknown</div>`,
   ]);
-  expect(await page.$$eval(`role=checkbox[checked="mixed"]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.getByRole('checkbox', { checked: false }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<input type="checkbox">`,
+    `<div role="checkbox" aria-checked="false">Hello</div>`,
+    `<div role="checkbox">Unknown</div>`,
+  ]);
+
+  expect(await page.locator(`role=checkbox[checked="mixed"]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<input type="checkbox" indeterminate="">`,
   ]);
-  expect(await page.$$eval(`role=checkbox`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=checkbox`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<input type="checkbox">`,
     `<input type="checkbox" checked="">`,
     `<input type="checkbox" indeterminate="">`,
@@ -115,20 +139,27 @@ test('should support pressed', async ({ page }) => {
     <button aria-pressed="false">Bye</button>
     <button aria-pressed="mixed">Mixed</button>
   `);
-  expect(await page.$$eval(`role=button[pressed]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button[pressed]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button aria-pressed="true">Hello</button>`,
   ]);
-  expect(await page.$$eval(`role=button[pressed=true]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button[pressed=true]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button aria-pressed="true">Hello</button>`,
   ]);
-  expect(await page.$$eval(`role=button[pressed=false]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.getByRole('button', { pressed: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button aria-pressed="true">Hello</button>`,
+  ]);
+  expect(await page.locator(`role=button[pressed=false]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hi</button>`,
     `<button aria-pressed="false">Bye</button>`,
   ]);
-  expect(await page.$$eval(`role=button[pressed="mixed"]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.getByRole('button', { pressed: false }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Hi</button>`,
+    `<button aria-pressed="false">Bye</button>`,
+  ]);
+  expect(await page.locator(`role=button[pressed="mixed"]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button aria-pressed="mixed">Mixed</button>`,
   ]);
-  expect(await page.$$eval(`role=button`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hi</button>`,
     `<button aria-pressed="true">Hello</button>`,
     `<button aria-pressed="false">Bye</button>`,
@@ -142,13 +173,20 @@ test('should support expanded', async ({ page }) => {
     <button aria-expanded="true">Hello</button>
     <button aria-expanded="false">Bye</button>
   `);
-  expect(await page.$$eval(`role=button[expanded]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button[expanded]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button aria-expanded="true">Hello</button>`,
   ]);
-  expect(await page.$$eval(`role=button[expanded=true]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button[expanded=true]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button aria-expanded="true">Hello</button>`,
   ]);
-  expect(await page.$$eval(`role=button[expanded=false]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.getByRole('button', { expanded: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button aria-expanded="true">Hello</button>`,
+  ]);
+  expect(await page.locator(`role=button[expanded=false]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Hi</button>`,
+    `<button aria-expanded="false">Bye</button>`,
+  ]);
+  expect(await page.getByRole('button', { expanded: false }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hi</button>`,
     `<button aria-expanded="false">Bye</button>`,
   ]);
@@ -164,17 +202,26 @@ test('should support disabled', async ({ page }) => {
       <button>Yay</button>
     </fieldset>
   `);
-  expect(await page.$$eval(`role=button[disabled]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button[disabled]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button disabled="">Bye</button>`,
     `<button aria-disabled="true">Hello</button>`,
     `<button>Yay</button>`,
   ]);
-  expect(await page.$$eval(`role=button[disabled=true]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button[disabled=true]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button disabled="">Bye</button>`,
     `<button aria-disabled="true">Hello</button>`,
     `<button>Yay</button>`,
   ]);
-  expect(await page.$$eval(`role=button[disabled=false]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.getByRole('button', { disabled: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button disabled="">Bye</button>`,
+    `<button aria-disabled="true">Hello</button>`,
+    `<button>Yay</button>`,
+  ]);
+  expect(await page.locator(`role=button[disabled=false]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Hi</button>`,
+    `<button aria-disabled="false">Oh</button>`,
+  ]);
+  expect(await page.getByRole('button', { disabled: false }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hi</button>`,
     `<button aria-disabled="false">Oh</button>`,
   ]);
@@ -186,13 +233,19 @@ test('should support level', async ({ page }) => {
     <h3>Hi</h3>
     <div role="heading" aria-level="5">Bye</div>
   `);
-  expect(await page.$$eval(`role=heading[level=1]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=heading[level=1]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<h1>Hello</h1>`,
   ]);
-  expect(await page.$$eval(`role=heading[level=3]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.getByRole('heading', { level: 1 }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<h1>Hello</h1>`,
+  ]);
+  expect(await page.locator(`role=heading[level=3]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<h3>Hi</h3>`,
   ]);
-  expect(await page.$$eval(`role=heading[level=5]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.getByRole('heading', { level: 3 }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<h3>Hi</h3>`,
+  ]);
+  expect(await page.locator(`role=heading[level=5]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="heading" aria-level="5">Bye</div>`,
   ]);
 });
@@ -224,25 +277,13 @@ test('should filter hidden, unless explicitly asked for', async ({ page }) => {
       addButton(document.getElementById('host2'), 'Shadow2');
     </script>
   `);
-  expect(await page.$$eval(`role=button`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hi</button>`,
     `<button aria-hidden="false">Nay</button>`,
     `<button style="visibility:visible">Still here</button>`,
     `<button>Shadow1</button>`,
   ]);
-  expect(await page.$$eval(`role=button[include-hidden]`, els => els.map(e => e.outerHTML))).toEqual([
-    `<button>Hi</button>`,
-    `<button hidden="">Hello</button>`,
-    `<button aria-hidden="true">Yay</button>`,
-    `<button aria-hidden="false">Nay</button>`,
-    `<button style="visibility:hidden">Bye</button>`,
-    `<button>Oh</button>`,
-    `<button style="visibility:visible">Still here</button>`,
-    `<button style="display:none">Never</button>`,
-    `<button>Shadow1</button>`,
-    `<button>Shadow2</button>`,
-  ]);
-  expect(await page.$$eval(`role=button[include-hidden=true]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button[include-hidden]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hi</button>`,
     `<button hidden="">Hello</button>`,
     `<button aria-hidden="true">Yay</button>`,
@@ -254,7 +295,19 @@ test('should filter hidden, unless explicitly asked for', async ({ page }) => {
     `<button>Shadow1</button>`,
     `<button>Shadow2</button>`,
   ]);
-  expect(await page.$$eval(`role=button[include-hidden=false]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button[include-hidden=true]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Hi</button>`,
+    `<button hidden="">Hello</button>`,
+    `<button aria-hidden="true">Yay</button>`,
+    `<button aria-hidden="false">Nay</button>`,
+    `<button style="visibility:hidden">Bye</button>`,
+    `<button>Oh</button>`,
+    `<button style="visibility:visible">Still here</button>`,
+    `<button style="display:none">Never</button>`,
+    `<button>Shadow1</button>`,
+    `<button>Shadow2</button>`,
+  ]);
+  expect(await page.locator(`role=button[include-hidden=false]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hi</button>`,
     `<button aria-hidden="false">Nay</button>`,
     `<button style="visibility:visible">Still here</button>`,
@@ -268,29 +321,57 @@ test('should support name', async ({ page }) => {
     <div role="button" aria-label="Hallo"></div>
     <div role="button" aria-label="Hello" aria-hidden="true"></div>
     <div role="button" aria-label="123" aria-hidden="true"></div>
+    <div role="button" aria-label='foo"bar' aria-hidden="true"></div>
   `);
-  expect(await page.$$eval(`role=button[name="Hello"]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button[name="Hello"]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="Hello"></div>`,
   ]);
-  expect(await page.$$eval(`role=button[name*="all"]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.getByRole('button', { name: 'Hello' }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-label="Hello"></div>`,
+  ]);
+
+  expect(await page.locator(`role=button[name*="all"]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="Hallo"></div>`,
   ]);
-  expect(await page.$$eval(`role=button[name=/^H[ae]llo$/]`, els => els.map(e => e.outerHTML))).toEqual([
+
+  expect(await page.locator(`role=button[name=/^H[ae]llo$/]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="Hello"></div>`,
     `<div role="button" aria-label="Hallo"></div>`,
   ]);
-  expect(await page.$$eval(`role=button[name=/h.*o/i]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.getByRole('button', { name: /^H[ae]llo$/ }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="Hello"></div>`,
     `<div role="button" aria-label="Hallo"></div>`,
   ]);
-  expect(await page.$$eval(`role=button[name="Hello"][include-hidden]`, els => els.map(e => e.outerHTML))).toEqual([
+
+  expect(await page.locator(`role=button[name=/h.*o/i]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label="Hallo"></div>`,
+  ]);
+  expect(await page.getByRole('button', { name: /h.*o/i }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label="Hallo"></div>`,
+  ]);
+
+  expect(await page.locator(`role=button[name="Hello"][include-hidden]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="Hello"></div>`,
     `<div role="button" aria-label="Hello" aria-hidden="true"></div>`,
   ]);
-  expect(await page.$$eval(`role=button[name=Hello]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.getByRole('button', { name: 'Hello', includeHidden: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label="Hello" aria-hidden="true"></div>`,
+  ]);
+  expect(await page.getByRole('button', { name: 'hello', includeHidden: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label="Hello" aria-hidden="true"></div>`,
+  ]);
+
+  expect(await page.locator(`role=button[name=Hello]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="Hello"></div>`,
   ]);
-  expect(await page.$$eval(`role=button[name=123][include-hidden]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.locator(`role=button[name=123][include-hidden]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-label="123" aria-hidden="true"></div>`,
+  ]);
+  expect(await page.getByRole('button', { name: '123', includeHidden: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="123" aria-hidden="true"></div>`,
   ]);
 });

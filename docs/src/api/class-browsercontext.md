@@ -435,7 +435,7 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
     <button onclick="onClick()">Click me</button>
     <div></div>
   `);
-  await page.locator('button').click();
+  await page.getByRole('button').click();
 })();
 ```
 
@@ -457,7 +457,7 @@ public class Example {
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
         "<div></div>");
-      page.locator("button").click();
+      page.getByRole("button").click();
     }
   }
 }
@@ -482,7 +482,7 @@ async def run(playwright):
     <button onclick="onClick()">Click me</button>
     <div></div>
     """)
-    await page.locator("button").click()
+    await page.get_by_role("button").click()
 
 async def main():
     async with async_playwright() as playwright:
@@ -508,7 +508,7 @@ def run(playwright):
     <button onclick="onClick()">Click me</button>
     <div></div>
     """)
-    page.locator("button").click()
+    page.get_by_role("button").click()
 
 with sync_playwright() as playwright:
     run(playwright)
@@ -530,7 +530,7 @@ await page.SetContentAsync("<script>\n" +
 "</script>\n" +
 "<button onclick=\"onClick()\">Click me</button>\n" +
 "<div></div>");
-await page.Locator("button").ClickAsync();
+await page.GetByRole("button").ClickAsync();
 ```
 
 An example of passing an element handle:
@@ -660,7 +660,7 @@ const crypto = require('crypto');
     <button onclick="onClick()">Click me</button>
     <div></div>
   `);
-  await page.locator('button').click();
+  await page.getByRole('button').click();
 })();
 ```
 
@@ -696,7 +696,7 @@ public class Example {
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
         "<div></div>\n");
-      page.locator("button").click();
+      page.getByRole("button").click();
     }
   }
 }
@@ -728,7 +728,7 @@ async def run(playwright):
         <button onclick="onClick()">Click me</button>
         <div></div>
     """)
-    await page.locator("button").click()
+    await page.get_by_role("button").click()
 
 async def main():
     async with async_playwright() as playwright:
@@ -761,7 +761,7 @@ def run(playwright):
         <button onclick="onClick()">Click me</button>
         <div></div>
     """)
-    page.locator("button").click()
+    page.get_by_role("button").click()
 
 with sync_playwright() as playwright:
     run(playwright)
@@ -796,7 +796,7 @@ class BrowserContextExamples
         "<button onclick=\"onClick()\">Click me</button>\n" +
         "<div></div>");
 
-        await page.Locator("button").ClickAsync();
+        await page.GetByRole("button").ClickAsync();
         Console.WriteLine(await page.TextContentAsync("div"));
     }
 }
@@ -1093,7 +1093,7 @@ Defaults to abort.
 * since: v1.23
 - `update` ?<boolean>
 
-If specified, updates the given HAR with the actual network information instead of serving from file.
+If specified, updates the given HAR with the actual network information instead of serving from file. The file is written to disk when [`method: BrowserContext.close`] is called.
 
 ### option: BrowserContext.routeFromHAR.url
 * since: v1.23
@@ -1300,30 +1300,30 @@ value. Will throw an error if the context closes before the event is fired. Retu
 ```js
 const [page, _] = await Promise.all([
   context.waitForEvent('page'),
-  page.locator('button').click()
+  page.getByRole('button').click()
 ]);
 ```
 
 ```java
-Page newPage = context.waitForPage(() -> page.locator("button").click());
+Page newPage = context.waitForPage(() -> page.getByRole("button").click());
 ```
 
 ```python async
 async with context.expect_event("page") as event_info:
-    await page.locator("button").click()
+    await page.get_by_role("button").click()
 page = await event_info.value
 ```
 
 ```python sync
 with context.expect_event("page") as event_info:
-    page.locator("button").click()
+    page.get_by_role("button").click()
 page = event_info.value
 ```
 
 ```csharp
 var page = await context.RunAndWaitForPageAsync(async () =>
 {
-    await page.Locator("button").ClickAsync();
+    await page.GetByRole("button").ClickAsync();
 });
 ```
 

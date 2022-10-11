@@ -50,11 +50,16 @@ export interface MountOptions<Props = Record<string, unknown>> {
 
 interface MountResult<Props = Record<string, unknown>> extends Locator {
   unmount(): Promise<void>;
-  rerender(options: { props: Props }): Promise<void>
+  update(options: Omit<MountOptions<Props>, 'hooksConfig'>): Promise<void>
+}
+
+interface MountResultJsx extends Locator {
+  unmount(): Promise<void>;
+  update(component: JSX.Element): Promise<void>
 }
 
 export interface ComponentFixtures {
-  mount(component: JSX.Element): Promise<MountResult>;
+  mount(component: JSX.Element): Promise<MountResultJsx>;
   mount(component: any, options?: MountOptions): Promise<MountResult>;
   mount<Props>(component: any, options: MountOptions & { props: Props }): Promise<MountResult<Props>>;
 }

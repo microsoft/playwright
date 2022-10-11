@@ -40,7 +40,7 @@ import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
 import { EventEmitter } from 'events';
 import { raceAgainstTimeout } from '../utils/timeoutRunner';
-import type { LanguageGenerator } from './recorder/language';
+import type { Language, LanguageGenerator } from './recorder/language';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -59,6 +59,7 @@ export class Recorder implements InstrumentationListener {
   private _handleSIGINT: boolean | undefined;
   private _recorderAppFactory: (recorder: Recorder) => Promise<IRecorderApp>;
   private _omitCallTracking = false;
+  private _currentLanguage: Language;
 
   static showInspector(context: BrowserContext) {
     Recorder.show(context, {}).catch(() => {});
@@ -83,6 +84,7 @@ export class Recorder implements InstrumentationListener {
     this._debugger = Debugger.lookup(context)!;
     this._handleSIGINT = params.handleSIGINT;
     context.instrumentation.addListener(this, context);
+    this._currentLanguage = this._contextRecorder.languageName();
   }
 
   private static async defaultRecorderAppFactory(recorder: Recorder) {
@@ -109,6 +111,11 @@ export class Recorder implements InstrumentationListener {
       }
       if (data.event === 'step') {
         this._debugger.resume(true);
+        return;
+      }
+      if (data.event === 'fileChanged') {
+        this._currentLanguage = this._contextRecorder.languageName(data.params.file);
+        this._refreshOverlay();
         return;
       }
       if (data.event === 'resume') {
@@ -155,6 +162,7 @@ export class Recorder implements InstrumentationListener {
         mode: this._mode,
         actionPoint,
         actionSelector,
+        language: this._currentLanguage
       };
       return uiState;
     });
@@ -379,6 +387,14 @@ class ContextRecorder extends EventEmitter {
     this._orderedLanguages = [primaryLanguage, ...languages];
     this._throttledOutputFile = outputFile ? new ThrottledFile(outputFile) : null;
     this._generator?.restart();
+  }
+
+  languageName(id?: string): Language {
+    for (const lang of this._orderedLanguages) {
+      if (!id || lang.id === id)
+        return lang.highlighter;
+    }
+    return 'javascript';
   }
 
   async install() {

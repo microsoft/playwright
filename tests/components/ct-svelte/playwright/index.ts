@@ -1,4 +1,5 @@
 //@ts-check
+import '../src/assets/index.css';
 import { beforeMount, afterMount } from '@playwright/experimental-ct-svelte/hooks';
 
 beforeMount(async ({ hooksConfig }) => {

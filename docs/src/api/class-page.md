@@ -2128,27 +2128,27 @@ in that iframe. Following snippet locates element with text "Submit" in the ifra
 like `<iframe id="my-frame">`:
 
 ```js
-const locator = page.frameLocator('#my-iframe').locator('text=Submit');
+const locator = page.frameLocator('#my-iframe').getByText('Submit');
 await locator.click();
 ```
 
 ```java
-Locator locator = page.frameLocator("#my-iframe").locator("text=Submit");
+Locator locator = page.frameLocator("#my-iframe").getByText("Submit");
 locator.click();
 ```
 
 ```python async
-locator = page.frame_locator("#my-iframe").locator("text=Submit")
+locator = page.frame_locator("#my-iframe").get_by_text("Submit")
 await locator.click()
 ```
 
 ```python sync
-locator = page.frame_locator("#my-iframe").locator("text=Submit")
+locator = page.frame_locator("#my-iframe").get_by_text("Submit")
 locator.click()
 ```
 
 ```csharp
-var locator = page.FrameLocator("#my-iframe").Locator("text=Submit");
+var locator = page.FrameLocator("#my-iframe").GetByText("Submit");
 await locator.ClickAsync();
 ```
 
@@ -2181,6 +2181,78 @@ Attribute name to get the value for.
 * since: v1.14
 ### option: Page.getAttribute.timeout = %%-input-timeout-%%
 * since: v1.8
+
+
+## method: Page.getByAltText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-alt-text-%%
+
+### param: Page.getByAltText.text = %%-locator-get-by-text-text-%%
+### option: Page.getByAltText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Page.getByLabel
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-label-text-%%
+
+### param: Page.getByLabel.text = %%-locator-get-by-text-text-%%
+### option: Page.getByLabel.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Page.getByPlaceholder
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-placeholder-text-%%
+
+### param: Page.getByPlaceholder.text = %%-locator-get-by-text-text-%%
+### option: Page.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Page.getByRole
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-role-%%
+
+### param: Page.getByRole.role = %%-locator-get-by-role-role-%%
+### option: Page.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
+* since: v1.27
+
+
+## method: Page.getByTestId
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-test-id-%%
+
+### param: Page.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
+* since: v1.27
+
+
+## method: Page.getByText
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-text-%%
+
+### param: Page.getByText.text = %%-locator-get-by-text-text-%%
+### option: Page.getByText.exact = %%-locator-get-by-text-exact-%%
+
+
+## method: Page.getByTitle
+* since: v1.27
+- returns: <[Locator]>
+
+%%-template-locator-get-by-title-%%
+
+### param: Page.getByTitle.text = %%-locator-get-by-text-text-%%
+### option: Page.getByTitle.exact = %%-locator-get-by-text-exact-%%
+
 
 ## async method: Page.goBack
 * since: v1.8
@@ -2297,6 +2369,8 @@ Shortcut for main frame's [`method: Frame.hover`].
 * since: v1.8
 ### option: Page.hover.trial = %%-input-trial-%%
 * since: v1.11
+### option: Page.hover.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.28
 
 ## async method: Page.innerHTML
 * since: v1.8
@@ -2447,12 +2521,7 @@ Returns whether the element is [visible](../actionability.md#visible). [`option:
 * since: v1.14
 - returns: <[Locator]>
 
-The method returns an element locator that can be used to perform actions on the page.
-Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
-
-[Learn more about locators](../locators.md).
-
-Shortcut for main frame's [`method: Frame.locator`].
+%%-template-locator-root-locator-%%
 
 ### param: Page.locator.selector = %%-find-selector-%%
 * since: v1.14
@@ -3053,7 +3122,7 @@ Defaults to abort.
 * since: v1.23
 - `update` ?<boolean>
 
-If specified, updates the given HAR with the actual network information instead of serving from file.
+If specified, updates the given HAR with the actual network information instead of serving from file. The file is written to disk when [`method: BrowserContext.close`] is called.
 
 ### option: Page.routeFromHAR.url
 * since: v1.23
@@ -3605,19 +3674,19 @@ const [frame, _] = await Promise.all([
   // It is important to call waitForEvent before click to set up waiting.
   page.waitForEvent('framenavigated'),
   // Triggers the navigation.
-  page.locator('button').click(),
+  page.getByRole('button').click(),
 ]);
 ```
 
 ```python async
 async with page.expect_event("framenavigated") as event_info:
-    await page.click("button")
+    await page.get_by_role("button")
 frame = await event_info.value
 ```
 
 ```python sync
 with page.expect_event("framenavigated") as event_info:
-    page.click("button")
+    page.get_by_role("button")
 frame = event_info.value
 ```
 
@@ -3798,27 +3867,27 @@ This resolves when the page reaches a required load state, `load` by default. Th
 when this method is called. If current document has already reached the required state, resolves immediately.
 
 ```js
-await page.click('button'); // Click triggers navigation.
+await page.getByRole('button').click(); // Click triggers navigation.
 await page.waitForLoadState(); // The promise resolves after 'load' event.
 ```
 
 ```java
-page.click("button"); // Click triggers navigation.
+page.getByRole("button").click(); // Click triggers navigation.
 page.waitForLoadState(); // The promise resolves after "load" event.
 ```
 
 ```python async
-await page.click("button") # click triggers navigation.
+await page.get_by_role("button").click() # click triggers navigation.
 await page.wait_for_load_state() # the promise resolves after "load" event.
 ```
 
 ```python sync
-page.click("button") # click triggers navigation.
+page.get_by_role("button").click() # click triggers navigation.
 page.wait_for_load_state() # the promise resolves after "load" event.
 ```
 
 ```csharp
-await page.ClickAsync("button"); // Click triggers navigation.
+await page.GetByRole("button").ClickAsync(); // Click triggers navigation.
 await page.WaitForLoadStateAsync(); // The promise resolves after 'load' event.
 ```
 
@@ -3827,7 +3896,7 @@ const [popup] = await Promise.all([
   // It is important to call waitForEvent before click to set up waiting.
   page.waitForEvent('popup'),
   // Click triggers a popup.
-  page.locator('button').click(),
+  page.getByRole('button').click(),
 ])
 await popup.waitForLoadState('domcontentloaded'); // The promise resolves after 'domcontentloaded' event.
 console.log(await popup.title()); // Popup is ready to use.
@@ -3835,7 +3904,7 @@ console.log(await popup.title()); // Popup is ready to use.
 
 ```java
 Page popup = page.waitForPopup(() -> {
-  page.click("button"); // Click triggers a popup.
+  page.getByRole("button").click(); // Click triggers a popup.
 });
 popup.waitForLoadState(LoadState.DOMCONTENTLOADED);
 System.out.println(popup.title()); // Popup is ready to use.
@@ -3843,7 +3912,7 @@ System.out.println(popup.title()); // Popup is ready to use.
 
 ```python async
 async with page.expect_popup() as page_info:
-    await page.click("button") # click triggers a popup.
+    await page.get_by_role("button").click() # click triggers a popup.
 popup = await page_info.value
  # Following resolves after "domcontentloaded" event.
 await popup.wait_for_load_state("domcontentloaded")
@@ -3852,7 +3921,7 @@ print(await popup.title()) # popup is ready to use.
 
 ```python sync
 with page.expect_popup() as page_info:
-    page.click("button") # click triggers a popup.
+    page.get_by_role("button").click() # click triggers a popup.
 popup = page_info.value
  # Following resolves after "domcontentloaded" event.
 popup.wait_for_load_state("domcontentloaded")
@@ -3862,7 +3931,7 @@ print(popup.title()) # popup is ready to use.
 ```csharp
 var popup = await page.RunAndWaitForPopupAsync(async () =>
 {
-    await page.ClickAsync("button"); // click triggers the popup/
+    await page.GetByRole("button").ClickAsync(); // click triggers the popup/
 });
 await popup.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 Console.WriteLine(await popup.TitleAsync()); // popup is ready to use.

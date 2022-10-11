@@ -35,7 +35,7 @@ it.describe('selector generator', () => {
 
   it('should prefer role=button over inner span', async ({ page }) => {
     await page.setContent(`<div role=button><span></span></div>`);
-    expect(await generate(page, 'div')).toBe('div[role="button"]');
+    expect(await generate(page, 'div')).toBe('role=button');
   });
 
   it('should generate text and normalize whitespace', async ({ page }) => {
@@ -43,14 +43,14 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'div')).toBe('text=Text some more text');
   });
 
-  it('should not escape spaces inside attribute selectors', async ({ page }) => {
+  it('should not escape spaces inside named attr selectors', async ({ page }) => {
     await page.setContent(`<input placeholder="Foo b ar"/>`);
-    expect(await generate(page, 'input')).toBe('[placeholder="Foo b ar"]');
+    expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"Foo b ar\"]');
   });
 
   it('should generate text for <input type=button>', async ({ page }) => {
     await page.setContent(`<input type=button value="Click me">`);
-    expect(await generate(page, 'input')).toBe('text=Click me');
+    expect(await generate(page, 'input')).toBe('role=button[name=\"Click me\"]');
   });
 
   it('should trim text', async ({ page }) => {
@@ -60,17 +60,17 @@ it.describe('selector generator', () => {
 
   it('should escape text with >>', async ({ page }) => {
     await page.setContent(`<div>text&gt;&gt;text</div>`);
-    expect(await generate(page, 'div')).toBe('text=/.*text\\>\\>text.*/');
+    expect(await generate(page, 'div')).toBe('text=/text\\>\\>text/');
   });
 
   it('should escape text with quote', async ({ page }) => {
     await page.setContent(`<div>text"text</div>`);
-    expect(await generate(page, 'div')).toBe('text=/.*text"text.*/');
+    expect(await generate(page, 'div')).toBe('text=/text"text/');
   });
 
   it('should escape text with slash', async ({ page }) => {
     await page.setContent(`<div>/text</div>`);
-    expect(await generate(page, 'div')).toBe('text=/.*\/text.*/');
+    expect(await generate(page, 'div')).toBe('text=/\/text/');
   });
 
   it('should not use text for select', async ({ page }) => {
@@ -88,7 +88,7 @@ it.describe('selector generator', () => {
 
   it('should prefer data-testid', async ({ page }) => {
     await page.setContent(`<div>Text</div><div>Text</div><div data-testid=a>Text</div><div>Text</div>`);
-    expect(await generate(page, '[data-testid="a"]')).toBe('[data-testid="a"]');
+    expect(await generate(page, '[data-testid="a"]')).toBe('internal:attr=[data-testid=\"a\"]');
   });
 
   it('should handle first non-unique data-testid', async ({ page }) => {
@@ -99,7 +99,7 @@ it.describe('selector generator', () => {
       <div data-testid=a>
         Text
       </div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe('[data-testid="a"] >> nth=0');
+    expect(await generate(page, 'div[mark="1"]')).toBe('internal:attr=[data-testid=\"a\"] >> nth=0');
   });
 
   it('should handle second non-unique data-testid', async ({ page }) => {
@@ -110,7 +110,7 @@ it.describe('selector generator', () => {
       <div data-testid=a mark=1>
         Text
       </div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe(`[data-testid="a"] >> nth=1`);
+    expect(await generate(page, 'div[mark="1"]')).toBe(`internal:attr=[data-testid=\"a\"] >> nth=1`);
   });
 
   it('should use readable id', async ({ page }) => {
@@ -133,16 +133,17 @@ it.describe('selector generator', () => {
     await page.setContent(`
       <div>Hello world</div>
       <a>Hello <span>world</span></a>
+      <a>Goodbye <span>world</span></a>
     `);
-    expect(await generate(page, 'a')).toBe(`a:has-text("Hello world")`);
+    expect(await generate(page, 'a:has-text("Hello")')).toBe(`a:has-text("Hello world")`);
   });
 
   it('should chain text after parent', async ({ page }) => {
     await page.setContent(`
       <div>Hello <span>world</span></div>
-      <a>Hello <span mark=1>world</span></a>
+      <b>Hello <span mark=1>world</span></b>
     `);
-    expect(await generate(page, '[mark="1"]')).toBe(`a >> text=world`);
+    expect(await generate(page, '[mark="1"]')).toBe(`b:has-text(\"Hello world\") span`);
   });
 
   it('should use parent text', async ({ page }) => {
@@ -150,7 +151,7 @@ it.describe('selector generator', () => {
       <div>Hello <span>world</span></div>
       <div>Goodbye <span mark=1>world</span></div>
     `);
-    expect(await generate(page, '[mark="1"]')).toBe(`text=Goodbye world >> span`);
+    expect(await generate(page, '[mark="1"]')).toBe(`div:has-text(\"Goodbye world\") span`);
   });
 
   it('should separate selectors by >>', async ({ page }) => {
@@ -179,8 +180,8 @@ it.describe('selector generator', () => {
 
   it('should use nested ordinals', async ({ page }) => {
     await page.setContent(`
-      <a><c></c><c></c><c></c><c></c><c></c><b></b></a>
-      <a>
+      <div><c></c><c></c><c></c><c></c><c></c><b></b></div>
+      <div>
         <b>
           <c>
           </c>
@@ -188,16 +189,16 @@ it.describe('selector generator', () => {
         <b>
           <c mark=1></c>
         </b>
-      </a>
-      <a><b></b></a>
+      </div>
+      <div><b></b></div>
     `);
     expect(await generate(page, 'c[mark="1"]')).toBe('b:nth-child(2) > c');
   });
 
   it('should properly join child selectors under nested ordinals', async ({ page }) => {
     await page.setContent(`
-      <a><c></c><c></c><c></c><c></c><c></c><b></b></a>
-      <a>
+      <div><c></c><c></c><c></c><c></c><c></c><b></b></div>
+      <div>
         <b>
           <div>
             <c>
@@ -209,8 +210,8 @@ it.describe('selector generator', () => {
             <c mark=1></c>
           </div>
         </b>
-      </a>
-      <a><b></b></a>
+      </div>
+      <div><b></b></div>
     `);
     expect(await generate(page, 'c[mark="1"]')).toBe('b:nth-child(2) > div > c');
   });
@@ -231,7 +232,7 @@ it.describe('selector generator', () => {
     });
     it('placeholder', async ({ page }) => {
       await page.setContent(`<input placeholder="foobar" type="text"/>`);
-      expect(await generate(page, 'input')).toBe('[placeholder="foobar"]');
+      expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"foobar\"]');
     });
     it('type', async ({ page }) => {
       await page.setContent(`<input type="text"/>`);
@@ -316,9 +317,10 @@ it.describe('selector generator', () => {
     await page.setContent(`<ng:switch><span></span></ng:switch>`);
     expect(await generate(page, 'ng\\:switch')).toBe('ng\\:switch');
 
-    await page.setContent(`<div><span></span></div>`);
-    await page.$eval('div', div => div.setAttribute('aria-label', `!#'!?:`));
-    expect(await generate(page, 'div')).toBe("[aria-label=\"\\!\\#\\'\\!\\?\\:\"]");
+    await page.setContent(`<button><span></span></button><button></button>`);
+    await page.$eval('button', button => button.setAttribute('aria-label', `!#'!?:`));
+    expect(await generate(page, 'button')).toBe(`role=button[name="!#'!?:"]`);
+    expect(await page.$(`role=button[name="!#'!?:"]`)).toBeTruthy();
 
     await page.setContent(`<div><span></span></div>`);
     await page.$eval('div', div => div.id = `!#'!?:`);
@@ -341,7 +343,7 @@ it.describe('selector generator', () => {
 
   it('should accept valid aria-label for candidate consideration', async ({ page }) => {
     await page.setContent(`<button aria-label="ariaLabel" id="buttonId"></button>`);
-    expect(await generate(page, 'button')).toBe('[aria-label="ariaLabel"]');
+    expect(await generate(page, 'button')).toBe('role=button[name=\"ariaLabel\"]');
   });
 
   it('should ignore empty role for candidate consideration', async ({ page }) => {
@@ -349,9 +351,9 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'button')).toBe('#buttonId');
   });
 
-  it('should accept valid role for candidate consideration', async ({ page }) => {
+  it('should not accept invalid role for candidate consideration', async ({ page }) => {
     await page.setContent(`<button role="roleDescription" id="buttonId"></button>`);
-    expect(await generate(page, 'button')).toBe('button[role="roleDescription"]');
+    expect(await generate(page, 'button')).toBe('#buttonId');
   });
 
   it('should ignore empty data-test-id for candidate consideration', async ({ page }) => {
@@ -364,4 +366,11 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'button')).toBe('[data-test-id="testId"]');
   });
 
+  it('should generate label selector', async ({ page }) => {
+    await page.setContent(`<label for=target>Country</label><input id=target>`);
+    expect(await generate(page, 'input')).toBe('internal:label=Country');
+
+    await page.setContent(`<label for=target>Coun"try</label><input id=target>`);
+    expect(await generate(page, 'input')).toBe('internal:label=/Coun"try/');
+  });
 });

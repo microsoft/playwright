@@ -202,6 +202,8 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
 });
 
 test('should cache build', async ({ runInlineTest }, testInfo) => {
+  test.slow();
+
   await test.step('original test', async () => {
     const result = await runInlineTest({
       'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,

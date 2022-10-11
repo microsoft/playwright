@@ -101,13 +101,10 @@ test('should save the codegen output to a file if specified', async ({ browserNa
   });
   const context = await browser.newContext();
 
-  // Open new page
   const page = await context.newPage();
 
-  // Go to ${emptyHTML}
   await page.goto('${emptyHTML}');
 
-  // Close page
   await page.close();
 
   // ---------------------

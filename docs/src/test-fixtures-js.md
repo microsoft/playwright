@@ -334,9 +334,9 @@ exports.test = base.test.extend({
     // Create the account with Playwright.
     const page = await browser.newPage();
     await page.goto('/signup');
-    await page.locator('#username').fill(username);
-    await page.locator('#password').fill(password);
-    await page.locator('text=Sign up').click();
+    await page.getByLabel('User Name').fill(username);
+    await page.getByLabel('Password').fill(password);
+    await page.getByText('Sign up').click();
     // Make sure everything is ok.
     await expect(page.locator('#result')).toHaveText('Success');
     // Do not forget to cleanup.
@@ -350,9 +350,9 @@ exports.test = base.test.extend({
     // Sign in with our account.
     const { username, password } = account;
     await page.goto('/signin');
-    await page.locator('#username').fill(username);
-    await page.locator('#password').fill(password);
-    await page.locator('text=Sign in').click();
+    await page.getByLabel('User Name').fill(username);
+    await page.getByLabel('Password').fill(password);
+    await page.getByText('Sign in').click();
     await expect(page.locator('#userinfo')).toHaveText(username);
 
     // Use signed-in page in the test.
@@ -381,9 +381,9 @@ export const test = base.extend<{}, { account: Account }>({
     // Create the account with Playwright.
     const page = await browser.newPage();
     await page.goto('/signup');
-    await page.locator('#username').fill(username);
-    await page.locator('#password').fill(password);
-    await page.locator('text=Sign up').click();
+    await page.getByLabel('User Name').fill(username);
+    await page.getByLabel('Password').fill(password);
+    await page.getByText('Sign up').click();
     // Make sure everything is ok.
     await expect(page.locator('#result')).toHaveText('Success');
     // Do not forget to cleanup.
@@ -397,9 +397,9 @@ export const test = base.extend<{}, { account: Account }>({
     // Sign in with our account.
     const { username, password } = account;
     await page.goto('/signin');
-    await page.locator('#username').fill(username);
-    await page.locator('#password').fill(password);
-    await page.locator('text=Sign in').click();
+    await page.getByLabel('User Name').fill(username);
+    await page.getByLabel('Password').fill(password);
+    await page.getByText('Sign in').click();
     await expect(page.locator('#userinfo')).toHaveText(username);
 
     // Use signed-in page in the test.

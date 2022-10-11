@@ -156,17 +156,23 @@ it('should wait for networkidle from the popup', async ({ page, server }) => {
   }
 });
 
-it('should wait for networkidle when iframe attaches and detaches', async ({ page }) => {
-  await page.setContent(`
+it('should wait for networkidle when iframe attaches and detaches', async ({ page, server }) => {
+  server.setRoute('/empty.html', () => {});
+  let done = false;
+  const promise = page.setContent(`
     <body>
       <script>
-        setTimeout(() => {
-          const iframe = document.createElement('iframe');
-          document.body.appendChild(iframe);
-          setTimeout(() => iframe.remove(), 400);
-        }, 400);
+        const iframe = document.createElement('iframe');
+        iframe.src = ${JSON.stringify(server.EMPTY_PAGE)};
+        document.body.appendChild(iframe);
       </script>
     </body>
-  `, { waitUntil: 'networkidle' });
-  expect(await page.$('iframe')).toBe(null);
+  `, { waitUntil: 'networkidle' }).then(() => done = true);
+  await page.waitForTimeout(600);
+  expect(done).toBe(false);
+  await page.evaluate(() => {
+    document.querySelector('iframe').remove();
+  });
+  await promise;
+  expect(done).toBe(true);
 });

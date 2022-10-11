@@ -97,7 +97,7 @@ with sync_playwright() as playwright:
 
 ## Testing
 
-To have the extension loaded when running tests you can use a test fixture to set the context. You can also dynamically retrieve the extension id and use it that to load and test the popup page for example.
+To have the extension loaded when running tests you can use a test fixture to set the context. You can also dynamically retrieve the extension id and use it to load and test the popup page for example.
 
 ```ts
 import { test as base, expect, BrowserContext } from "@playwright/test";

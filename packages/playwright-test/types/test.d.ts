@@ -199,10 +199,6 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   metadata: Metadata;
   /**
-   * Unique project id within this config.
-   */
-  id: string;
-  /**
    * Project name is visible in the report and during test execution.
    */
   name: string;
@@ -260,6 +256,12 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * all projects.
    */
   retries: number;
+  /**
+   * An integer number that defines when the project should run relative to other projects. Each project runs in exactly one
+   * stage. By default all projects run in stage 0. Stages with lower number run first. Several projects can run in each
+   * stage. Exeution order between projecs in the same stage is undefined.
+   */
+  stage: number;
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
@@ -583,11 +585,6 @@ interface TestConfig {
   };
 
   /**
-   * Path to config file, if any.
-   */
-  configFile?: string;
-
-  /**
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
    * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
@@ -686,16 +683,6 @@ interface TestConfig {
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
   grepInvert?: RegExp|Array<RegExp>;
-
-  /**
-   * Project groups that control project execution order.
-   */
-  groups?: { [key: string]: Array<string|Array<string|{
-    /**
-     * Project name(s).
-     */
-    project: string|Array<string>;
-  }>>; };
 
   /**
    * Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await
@@ -1319,9 +1306,6 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   webServer: TestConfigWebServer | null;
-  /**
-   * Path to config file, if any.
-   */
   configFile?: string;
 }
 
@@ -2969,6 +2953,12 @@ export interface PlaywrightTestOptions {
    * - `'block'`: Playwright will block all registration of Service Workers.
    */
   serviceWorkers: ServiceWorkerPolicy | undefined;
+  /**
+   * Custom attribute to be used in
+   * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used by
+   * default.
+   */
+  testIdAttribute: string | undefined;
 }
 
 
@@ -3054,9 +3044,9 @@ export interface PlaywrightTestArgs {
    *
    * test('basic test', async ({ page }) => {
    *   await page.goto('/signin');
-   *   await page.locator('#username').fill('User');
-   *   await page.locator('#password').fill('pwd');
-   *   await page.locator('text=Sign in').click();
+   *   await page.getByLabel('User Name').fill('user');
+   *   await page.getByLabel('Password').fill('password');
+   *   await page.getByText('Sign in').click();
    *   // ...
    * });
    * ```
@@ -3231,7 +3221,7 @@ interface APIResponseAssertions {
  *
  * test('status becomes submitted', async ({ page }) => {
  *   // ...
- *   await page.locator('#submit-button').click();
+ *   await page.getByRole('button').click();
  *   await expect(page.locator('.status')).toHaveText('Submitted');
  * });
  * ```
@@ -3253,7 +3243,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to a checked input.
    *
    * ```js
-   * const locator = page.locator('.subscribe');
+   * const locator = page.getByLabel('Subscribe to newsletter');
    * await expect(locator).toBeChecked();
    * ```
    *
@@ -3292,7 +3282,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to an editable element.
    *
    * ```js
-   * const locator = page.locator('input');
+   * const locator = page.getByRole('textbox');
    * await expect(locator).toBeEditable();
    * ```
    *
@@ -3347,7 +3337,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to a focused DOM node.
    *
    * ```js
-   * const locator = page.locator('input');
+   * const locator = page.getByRole('textbox');
    * await expect(locator).toBeFocused();
    * ```
    *
@@ -3379,8 +3369,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/api/actionability#visible) and [visible](https://playwright.dev/docs/api/actionability#visible) DOM
-   * node.
+   * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/api/actionability#attached) and [visible](https://playwright.dev/docs/api/actionability#visible)
+   * DOM node.
    *
    * ```js
    * const locator = page.locator('.my-element');
@@ -3533,7 +3523,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] resolves to an element with the given computed CSS style.
    *
    * ```js
-   * const locator = page.locator('button');
+   * const locator = page.getByRole('button');
    * await expect(locator).toHaveCSS('display', 'flex');
    * ```
    *
@@ -3552,7 +3542,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to an element with the given DOM Node ID.
    *
    * ```js
-   * const locator = page.locator('input');
+   * const locator = page.getByRole('textbox');
    * await expect(locator).toHaveId('lastname');
    * ```
    *
@@ -3591,7 +3581,7 @@ interface LocatorAssertions {
    * screenshot with the expectation.
    *
    * ```js
-   * const locator = page.locator('button');
+   * const locator = page.getByRole('button');
    * await expect(locator).toHaveScreenshot('image.png');
    * ```
    *
@@ -3666,7 +3656,7 @@ interface LocatorAssertions {
    * screenshot with the expectation.
    *
    * ```js
-   * const locator = page.locator('button');
+   * const locator = page.getByRole('button');
    * await expect(locator).toHaveScreenshot();
    * ```
    *
@@ -3856,7 +3846,7 @@ interface LocatorAssertions {
  *
  * test('navigates to login', async ({ page }) => {
  *   // ...
- *   await page.locator('#login').click();
+ *   await page.getByText('Sign in').click();
  *   await expect(page).toHaveURL(/.*\/login/);
  * });
  * ```
@@ -4407,11 +4397,6 @@ interface TestProject {
   grepInvert?: RegExp|Array<RegExp>;
 
   /**
-   * Unique project id within this config.
-   */
-  id?: string;
-
-  /**
    * Metadata that will be put directly to the test report serialized as JSON.
    */
   metadata?: Metadata;
@@ -4478,6 +4463,13 @@ interface TestProject {
    * all projects.
    */
   retries?: number;
+
+  /**
+   * An integer number that defines when the project should run relative to other projects. Each project runs in exactly one
+   * stage. By default all projects run in stage 0. Stages with lower number run first. Several projects can run in each
+   * stage. Exeution order between projecs in the same stage is undefined.
+   */
+  stage?: number;
 
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.

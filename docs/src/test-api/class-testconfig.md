@@ -84,12 +84,6 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-## property: TestConfig.configFile
-* since: v1.27
-- type: ?<[string]>
-
-Path to config file, if any.
-
 ## property: TestConfig.forbidOnly
 * since: v1.10
 - type: ?<[boolean]>
@@ -119,7 +113,7 @@ export default config;
 ```
 
 ## property: TestConfig.fullyParallel
-* since: v1.10
+* since: v1.20
 - type: ?<[boolean]>
 
 Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time.
@@ -231,13 +225,6 @@ Filter to only run tests with a title matching one of the patterns. For example,
 Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestConfig.grep`]. Also available in the [command line](../test-cli.md) with the `--grep-invert` option.
 
 `grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
-
-## property: TestConfig.groups
-* since: v1.27
-- type: ?<[Object]<[string],[Array]<[string]|[Array]<[string]|[Object]>>>>
-  - `project` <[string]|[Array]<[string]>> Project name(s).
-
-Project groups that control project execution order.
 
 ## property: TestConfig.ignoreSnapshots
 * since: v1.26

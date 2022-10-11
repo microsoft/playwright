@@ -150,13 +150,6 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 
 `grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
-## property: TestProject.id
-* since: v1.27
-- type: ?<[string]>
-
-Unique project id within this config.
-
-
 ## property: TestProject.metadata
 * since: v1.10
 - type: ?<[Metadata]>
@@ -265,6 +258,14 @@ Use [`property: TestConfig.repeatEach`] to change this option for all projects.
 The maximum number of retry attempts given to failed tests. Learn more about [test retries](../test-retries.md#retries).
 
 Use [`property: TestConfig.retries`] to change this option for all projects.
+
+## property: TestProject.stage
+* since: v1.28
+- type: ?<[int]>
+
+An integer number that defines when the project should run relative to other projects. Each project runs in exactly
+one stage. By default all projects run in stage 0. Stages with lower number run first. Several projects can run in
+each stage. Exeution order between projecs in the same stage is undefined.
 
 ## property: TestProject.testDir
 * since: v1.10

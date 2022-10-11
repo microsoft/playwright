@@ -17,14 +17,52 @@
 // @ts-check
 
 /** @typedef {{
- *    type: 'text' | 'li' | 'code' | 'properties' | 'h0' | 'h1' | 'h2' | 'h3' | 'h4' | 'note' | 'null',
+ *    type: string,
  *    text?: string,
+ *    children?: MarkdownNode[],
  *    codeLang?: string,
- *    noteType?: string,
- *    lines?: string[],
- *    liType?: 'default' | 'bullet' | 'ordinal',
- *    children?: MarkdownNode[]
- *  }} MarkdownNode */
+ *  }} MarkdownBaseNode */
+
+/** @typedef {MarkdownBaseNode & {
+ *    type: 'text',
+ *    text: string,
+ *  }} MarkdownTextNode */
+
+/** @typedef {MarkdownBaseNode & {
+ *    type: 'h0' | 'h1' | 'h2' | 'h3' | 'h4',
+ *    text: string,
+ *    children: MarkdownNode[]
+ *  }} MarkdownHeaderNode */
+
+/** @typedef {MarkdownBaseNode & {
+ *    type: 'li',
+ *    text: string,
+ *    liType: 'default' | 'bullet' | 'ordinal',
+ *    children: MarkdownNode[]
+ *  }} MarkdownLiNode */
+
+/** @typedef {MarkdownBaseNode & {
+ *    type: 'code',
+ *    lines: string[],
+ *    codeLang: string,
+ *  }} MarkdownCodeNode */
+
+/** @typedef {MarkdownBaseNode & {
+ *    type: 'note',
+ *    text: string,          
+ *    noteType: string,
+ *  }} MarkdownNoteNode */
+
+/** @typedef {MarkdownBaseNode & {
+ *    type: 'null',
+ *  }} MarkdownNullNode */
+
+/** @typedef {MarkdownBaseNode & {
+ *    type: 'properties',
+ *    lines: string[],
+ *  }} MarkdownPropsNode */
+
+/** @typedef {MarkdownTextNode | MarkdownLiNode | MarkdownCodeNode | MarkdownNoteNode | MarkdownHeaderNode | MarkdownNullNode | MarkdownPropsNode } MarkdownNode */
 
 function flattenWrappedLines(content) {
   const inLines = content.replace(/\r\n/g, '\n').split('\n');
@@ -110,13 +148,13 @@ function buildTree(lines) {
         else
           break;
       }
-      headerStack[0].children.push(node);
+      /** @type {MarkdownNode[]}*/(headerStack[0].children).push(node);
       headerStack.unshift(node);
       continue;
     }
 
     // Remaining items respect indent-based nesting.
-    const [, indent, content] = line.match('^([ ]*)(.*)');
+    const [, indent, content] = /** @type {string[]} */ (line.match('^([ ]*)(.*)'));
     if (content.startsWith('```')) {
       /** @type {MarkdownNode} */
       const node = {
@@ -143,10 +181,10 @@ function buildTree(lines) {
 
     if (content.startsWith(':::')) {
       /** @type {MarkdownNode} */
-      const node = {
+      const node = /** @type {MarkdownNoteNode} */ ({
         type: 'note',
         noteType: content.substring(3)
-      };
+      });
       line = lines[++i];
       const tokens = [];
       while (!line.trim().startsWith(':::')) {
@@ -184,16 +222,17 @@ function buildTree(lines) {
     const liType = content.match(/^(-|1.|\*) /);
     const node = /** @type {MarkdownNode} */({ type: 'text', text: content });
     if (liType) {
-      node.type = 'li';
-      node.text = content.substring(liType[0].length);
+      const liNode = /** @type {MarkdownLiNode} */(node);
+      liNode.type = 'li';
+      liNode.text = content.substring(liType[0].length);
       if (content.startsWith('1.'))
-        node.liType = 'ordinal';
+        liNode.liType = 'ordinal';
       else if (content.startsWith('*'))
-        node.liType = 'bullet';
+        liNode.liType = 'bullet';
       else
-        node.liType = 'default';
+        liNode.liType = 'default';
     }
-    const match = node.text.match(/\*\*langs: (.*)\*\*(.*)/);
+    const match = node.text?.match(/\*\*langs: (.*)\*\*(.*)/);
     if (match) {
       node.codeLang = match[1];
       node.text = match[2];
@@ -220,7 +259,7 @@ function render(nodes, maxColumns) {
   for (let node of nodes) {
     if (node.type === 'null')
       continue;
-    innerRenderMdNode('', node, lastNode, result, maxColumns);
+    innerRenderMdNode('', node, /** @type {MarkdownNode} */ (lastNode), result, maxColumns);
     lastNode = node;
   }
   return result.join('\n');
@@ -240,9 +279,10 @@ function innerRenderMdNode(indent, node, lastNode, result, maxColumns) {
   };
 
   if (node.type.startsWith('h')) {
+    const headerNode = /** @type {MarkdownHeaderNode} */ (node);
     newLine();
     const depth = +node.type.substring(1);
-    result.push(`${'#'.repeat(depth)} ${node.text}`);
+    result.push(`${'#'.repeat(depth)} ${headerNode.text}`);
     let lastNode = node;
     for (const child of node.children || []) {
       innerRenderMdNode('', child, lastNode, result, maxColumns);

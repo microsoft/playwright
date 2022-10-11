@@ -42,22 +42,23 @@ type JsonObject = { [Key in string]?: JsonValue };
 
 type Slot = string | string[];
 
-export interface MountOptions<Component extends SvelteComponent> {
+export interface MountOptions<Component extends SvelteComponent = SvelteComponent> {
   props?: ComponentProps<Component>;
   slots?: Record<string, Slot> & { default?: Slot };
   on?: Record<string, Function>;
   hooksConfig?: JsonObject;
 }
 
-interface MountResult extends Locator {
+interface MountResult<Component extends SvelteComponent> extends Locator {
   unmount(): Promise<void>;
+  update(options: Omit<MountOptions<Component>, 'hooksConfig'|'slots'>): Promise<void>
 }
 
 interface ComponentFixtures {
   mount<Component extends SvelteComponent>(
     component: new (...args: any[]) => Component,
     options?: MountOptions<Component>
-  ): Promise<MountResult>;
+  ): Promise<MountResult<Component>>;
 }
 
 export const test: TestType<

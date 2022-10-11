@@ -63,16 +63,13 @@ export class TestInfoImpl implements TestInfo {
   currentStep: TestStepInternal | undefined;
 
   get error(): TestError | undefined {
-    return this.errors.length > 0 ? this.errors[0] : undefined;
+    return this.errors[0];
   }
 
   set error(e: TestError | undefined) {
     if (e === undefined)
       throw new Error('Cannot assign testInfo.error undefined value!');
-    if (!this.errors.length)
-      this.errors.push(e);
-    else
-      this.errors[0] = e;
+    this.errors[0] = e;
   }
 
   get timeout(): number {
@@ -118,8 +115,8 @@ export class TestInfoImpl implements TestInfo {
       const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ');
 
       let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
-      if (project.id)
-        testOutputDir += '-' + sanitizeForFilePath(project.id);
+      if (project._id)
+        testOutputDir += '-' + sanitizeForFilePath(project._id);
       if (this.retry)
         testOutputDir += '-retry' + this.retry;
       if (this.repeatEachIndex)

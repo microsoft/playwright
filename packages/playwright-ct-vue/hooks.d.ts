@@ -16,5 +16,9 @@
 
 import { App, ComponentPublicInstance } from 'vue';
 
-export declare function beforeMount(callback: (params: { app: App, hooksConfig: any }) => Promise<void>): void;
-export declare function afterMount(callback: (params: { app: App, hooksConfig: any, instance: ComponentPublicInstance }) => Promise<void>): void;
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+type JsonArray = JsonValue[];
+type JsonObject = { [Key in string]?: JsonValue };
+export declare function beforeMount(callback: (params: { app: App, hooksConfig: JsonObject }) => Promise<void>): void;
+export declare function afterMount(callback: (params: { app: App, hooksConfig: JsonObject, instance: ComponentPublicInstance }) => Promise<void>): void;

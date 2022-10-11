@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-import { installTransform } from './transform';
-import type { Config, Project, ReporterDescription, FullProjectInternal, FullConfigInternal, Fixtures, FixturesWithLocation } from './types';
-import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
-import { setCurrentlyLoadingFileSuite } from './globals';
-import { Suite, type TestCase } from './test';
-import type { SerializedLoaderData, WorkerIsolation } from './ipc';
-import * as path from 'path';
-import * as url from 'url';
 import * as fs from 'fs';
 import * as os from 'os';
-import type { BuiltInReporter, ConfigCLIOverrides } from './runner';
+import * as path from 'path';
+import { calculateSha1, isRegExp } from 'playwright-core/lib/utils';
+import * as url from 'url';
 import type { Reporter } from '../types/testReporter';
-import { builtInReporters } from './runner';
-import { isRegExp, calculateSha1, isString, isObject } from 'playwright-core/lib/utils';
-import { serializeError } from './util';
 import { FixturePool, isFixtureOption } from './fixtures';
+import { setCurrentlyLoadingFileSuite } from './globals';
+import type { SerializedLoaderData, WorkerIsolation } from './ipc';
+import type { BuiltInReporter, ConfigCLIOverrides } from './runner';
+import { builtInReporters } from './runner';
+import { Suite, type TestCase } from './test';
 import type { TestTypeImpl } from './testType';
+import { installTransform } from './transform';
+import type { Config, Fixtures, FixturesWithLocation, FullConfigInternal, FullProjectInternal, Project, ReporterDescription } from './types';
+import { errorWithFile, getPackageJsonPath, mergeObjects, serializeError } from './util';
 
 export const defaultTimeout = 30000;
 
@@ -81,8 +80,6 @@ export class Loader {
     config.forbidOnly = takeFirst(this._configCLIOverrides.forbidOnly, config.forbidOnly);
     config.fullyParallel = takeFirst(this._configCLIOverrides.fullyParallel, config.fullyParallel);
     config.globalTimeout = takeFirst(this._configCLIOverrides.globalTimeout, config.globalTimeout);
-    config.grep = takeFirst(this._configCLIOverrides.grep, config.grep);
-    config.grepInvert = takeFirst(this._configCLIOverrides.grepInvert, config.grepInvert);
     config.maxFailures = takeFirst(this._configCLIOverrides.maxFailures, config.maxFailures);
     config.outputDir = takeFirst(this._configCLIOverrides.outputDir, config.outputDir);
     config.quiet = takeFirst(this._configCLIOverrides.quiet, config.quiet);
@@ -167,7 +164,6 @@ export class Loader {
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
     this._assignUniqueProjectIds(this._fullConfig.projects);
-    this._fullConfig.groups = config.groups;
   }
 
   private _assignUniqueProjectIds(projects: FullProjectInternal[]) {
@@ -178,7 +174,7 @@ export class Loader {
         const candidate = name + (i ? i : '');
         if (usedNames.has(candidate))
           continue;
-        p.id = candidate;
+        p._id = candidate;
         usedNames.add(candidate);
         break;
       }
@@ -257,8 +253,6 @@ export class Loader {
 
   private _applyCLIOverridesToProject(projectConfig: Project) {
     projectConfig.fullyParallel = takeFirst(this._configCLIOverrides.fullyParallel, projectConfig.fullyParallel);
-    projectConfig.grep = takeFirst(this._configCLIOverrides.grep, projectConfig.grep);
-    projectConfig.grepInvert = takeFirst(this._configCLIOverrides.grepInvert, projectConfig.grepInvert);
     projectConfig.outputDir = takeFirst(this._configCLIOverrides.outputDir, projectConfig.outputDir);
     projectConfig.repeatEach = takeFirst(this._configCLIOverrides.repeatEach, projectConfig.repeatEach);
     projectConfig.retries = takeFirst(this._configCLIOverrides.retries, projectConfig.retries);
@@ -283,6 +277,7 @@ export class Loader {
     const outputDir = takeFirst(projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
     const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
     const name = takeFirst(projectConfig.name, config.name, '');
+    const stage =  takeFirst(projectConfig.stage, 0);
 
     let screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
     if (process.env.PLAYWRIGHT_DOCKER) {
@@ -290,7 +285,7 @@ export class Loader {
       process.env.PWTEST_USE_SCREENSHOTS_DIR = '1';
     }
     return {
-      id: '',
+      _id: '',
       _fullConfig: fullConfig,
       _fullyParallel: takeFirst(projectConfig.fullyParallel, config.fullyParallel, undefined),
       _expect: takeFirst(projectConfig.expect, config.expect, {}),
@@ -302,6 +297,7 @@ export class Loader {
       metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
       name,
       testDir,
+      stage,
       _respectGitIgnore: respectGitIgnore,
       snapshotDir,
       _screenshotsDir: screenshotsDir,
@@ -313,8 +309,6 @@ export class Loader {
   }
 
   private async _requireOrImport(file: string) {
-    if (process.platform === 'win32')
-      file = await fixWin32FilepathCapitalization(file);
     const revertBabelRequire = installTransform();
     const isModule = fileIsModule(file);
     try {
@@ -404,20 +398,20 @@ class ProjectSuiteBuilder {
         test.retries = this._project.retries;
         const repeatEachIndexSuffix = repeatEachIndex ? ` (repeat:${repeatEachIndex})` : '';
         // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
-        const testIdExpression = `[project=${this._project.id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
+        const testIdExpression = `[project=${this._project._id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
         const testId = to._fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
         test.id = testId;
         test.repeatEachIndex = repeatEachIndex;
-        test._projectId = this._project.id;
+        test._projectId = this._project._id;
         if (!filter(test)) {
           to._entries.pop();
           to.tests.pop();
         } else {
           const pool = this._buildPool(entry);
           if (this._project._fullConfig._workerIsolation === 'isolate-pools')
-            test._workerHash = `run${this._project.id}-${pool.digest}-repeat${repeatEachIndex}`;
+            test._workerHash = `run${this._project._id}-${pool.digest}-repeat${repeatEachIndex}`;
           else
-            test._workerHash = `run${this._project.id}-repeat${repeatEachIndex}`;
+            test._workerHash = `run${this._project._id}-repeat${repeatEachIndex}`;
           test._pool = pool;
         }
       }
@@ -449,7 +443,7 @@ class ProjectSuiteBuilder {
           (originalFixtures as any)[key] = value;
       }
       if (Object.entries(optionsFromConfig).length)
-        result.push({ fixtures: optionsFromConfig, location: { file: `project#${this._project.id}`, line: 1, column: 1 } });
+        result.push({ fixtures: optionsFromConfig, location: { file: `project#${this._project._id}`, line: 1, column: 1 } });
       if (Object.entries(originalFixtures).length)
         result.push({ fixtures: originalFixtures, location: f.location });
     }
@@ -517,7 +511,7 @@ function validateConfig(file: string, config: Config) {
           throw errorWithFile(file, `config.grepInvert[${index}] must be a RegExp`);
       });
     } else if (!isRegExp(config.grepInvert)) {
-      throw errorWithFile(file, `config.grep must be a RegExp`);
+      throw errorWithFile(file, `config.grepInvert must be a RegExp`);
     }
   }
 
@@ -538,8 +532,6 @@ function validateConfig(file: string, config: Config) {
       validateProject(file, project, `config.projects[${index}]`);
     });
   }
-
-  validateProjectGroups(file, config);
 
   if ('quiet' in config && config.quiet !== undefined) {
     if (typeof config.quiet !== 'boolean')
@@ -647,54 +639,6 @@ function validateProject(file: string, project: Project, title: string) {
   }
 }
 
-function validateProjectGroups(file: string, config: Config) {
-  if (config.groups === undefined)
-    return;
-  const projectNames = new Set(config.projects?.filter(p => !!p.name).map(p => p.name));
-  for (const [groupName, group] of Object.entries(config.groups)) {
-    function validateProjectReference(projectName: string) {
-      if (projectName.trim() === '')
-        throw errorWithFile(file, `config.groups.${groupName} refers to an empty project name`);
-      if (!projectNames.has(projectName))
-        throw errorWithFile(file, `config.groups.${groupName} refers to an unknown project '${projectName}'`);
-    }
-    for (const step of group) {
-      if (isString(step)) {
-        validateProjectReference(step);
-      } else if (Array.isArray(step)) {
-        const parallelProjectNames = new Set();
-        for (const item of step) {
-          let projectName;
-          if (isString(item)) {
-            validateProjectReference(item);
-            projectName = item;
-          } else if (isObject(item)) {
-            const project = (item as any).project;
-            if (isString(project)) {
-              validateProjectReference(project);
-            } else if (Array.isArray(project)) {
-              project.forEach(name => {
-                if (!isString(name))
-                  throw errorWithFile(file, `config.groups.${groupName}[*].project contains non string value.`);
-                validateProjectReference(name);
-              });
-            }
-            projectName = project;
-          } else {
-            throw errorWithFile(file, `config.groups.${groupName} unexpected group entry ${JSON.stringify(step, null, 2)}`);
-          }
-          // We can relax this later.
-          if (parallelProjectNames.has(projectName))
-            throw errorWithFile(file, `config.groups.${groupName} group mentions project '${projectName}' twice in one parallel group`);
-          parallelProjectNames.add(projectName);
-        }
-      } else {
-        throw errorWithFile(file, `config.groups.${groupName} unexpected group entry ${JSON.stringify(step, null, 2)}`);
-      }
-    }
-  }
-}
-
 export const baseFullConfig: FullConfigInternal = {
   forbidOnly: false,
   fullyParallel: false,
@@ -717,7 +661,6 @@ export const baseFullConfig: FullConfigInternal = {
   version: require('../package.json').version,
   workers: 0,
   webServer: null,
-  _watchMode: false,
   _webServers: [],
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
@@ -755,24 +698,4 @@ export function folderIsModule(folder: string): boolean {
     return false;
   // Rely on `require` internal caching logic.
   return require(packageJsonPath).type === 'module';
-}
-
-async function fixWin32FilepathCapitalization(file: string): Promise<string> {
-  /**
-   * On Windows with PowerShell <= 6 it is possible to have a CWD with different
-   * casing than what the actual directory on the filesystem is. This can cause
-   * that we require the file multiple times with different casing. To mitigate
-   * this we get the actual underlying filesystem path and use that.
-   * https://github.com/microsoft/playwright/issues/9193#issuecomment-1219362150
-   */
-  const realFile = await new Promise<string>((resolve, reject) => fs.realpath.native(file, (error, realFile) => {
-    if (error)
-      return reject(error);
-    resolve(realFile);
-  }));
-  // We do not want to resolve them (e.g. 8.3 filenames), so we do a best effort
-  // approach by only using it if the actual lowercase characters are the same:
-  if (realFile.toLowerCase() === file.toLowerCase())
-    return realFile;
-  return file;
 }

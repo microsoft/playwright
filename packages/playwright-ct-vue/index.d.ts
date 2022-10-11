@@ -49,15 +49,18 @@ type ComponentProps<Component extends VueComponent | any> = Component extends Vu
 export interface MountOptions<Component extends VueComponent | any> {
   props?: ComponentProps<Component>;
   slots?: Record<string, Slot> & { default?: Slot };
-  on?: Record<string, Function>,
-  hooksConfig?: JsonObject,
+  on?: Record<string, Function>;
+  hooksConfig?: JsonObject;
 }
 
 interface MountResult<Component = VueComponent | any> extends Locator {
   unmount(): Promise<void>;
-  rerender(options: {
-    props: ComponentProps<Component>;
-  }): Promise<void>;
+   update(options: Omit<MountOptions<Component>, 'hooksConfig'>): Promise<void>
+}
+
+interface MountResultJsx extends Locator {
+  unmount(): Promise<void>;
+  update(component: JSX.Element): Promise<void>
 }
 
 export interface ComponentFixtures {
