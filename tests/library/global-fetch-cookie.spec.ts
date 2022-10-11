@@ -235,13 +235,17 @@ it('should override cookie from Set-Cookie header', async ({ request, server }) 
 });
 
 it('should override cookie from Set-Cookie header even if it expired', async ({ request, server }) => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
   server.setRoute('/setcookie.html', (req, res) => {
-    res.setHeader('Set-Cookie', [`a=ok`]);
+    res.setHeader('Set-Cookie', [`a=ok`, `b=ok; expires=${tomorrow.toUTCString()}`]);
     res.end();
   });
 
   server.setRoute('/unsetsetcookie.html', (req, res) => {
-    res.setHeader('Set-Cookie', [`a=; expires=${new Date(1970, 0, 1, 0, 0, 0, 0).toUTCString()}`]);
+    const pastDateString = new Date(1970, 0, 1, 0, 0, 0, 0).toUTCString();
+    res.setHeader('Set-Cookie', [`a=; expires=${pastDateString}`, `b=; expires=${pastDateString}`]);
     res.end();
   });
 
