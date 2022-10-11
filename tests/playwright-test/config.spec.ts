@@ -480,3 +480,60 @@ test('should have correct types for the config', async ({ runTSC }) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should throw when project.stage is not a number', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          projects: [
+            { name: 'a', stage: 'foo' },
+          ],
+        };
+    `,
+    'a.test.ts': `
+        const { test } = pwt;
+        test('pass', async () => {});
+      `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`config.projects[0].stage must be an integer`);
+});
+
+test('should throw when project.stage is not an integer', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          projects: [
+            { name: 'a', stage: 3.14 },
+          ],
+        };
+    `,
+    'a.test.ts': `
+        const { test } = pwt;
+        test('pass', async () => {});
+      `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`config.projects[0].stage must be an integer`);
+});
+
+test('should throw when project.stopOnFailure is not a boolean', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          projects: [
+            { name: 'a', stopOnFailure: 'yes' },
+          ],
+        };
+    `,
+    'a.test.ts': `
+        const { test } = pwt;
+        test('pass', async () => {});
+      `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`config.projects[0].stopOnFailure must be a boolean`);
+});
