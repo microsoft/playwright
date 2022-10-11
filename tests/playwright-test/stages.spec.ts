@@ -207,3 +207,81 @@ test('should work with project filter', async ({ runGroups }, testInfo) => {
   expectRunBefore(timeline, ['c'], ['b']); // 0 < 10
   expect(passed).toBe(3);
 });
+
+test('should continue after failures', async ({ runGroups }, testInfo) => {
+  const projectTemplates = {
+    'a': {
+      stage: 1
+    },
+    'b': {
+      stage: 2
+    },
+    'c': {
+      stage: 2
+    },
+    'd': {
+      stage: 4
+    },
+    'e': {
+      stage: 4
+    },
+  };
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e'], testInfo, projectTemplates);
+  configWithFiles[`b/b.spec.ts`] = `
+    const { test } = pwt;
+    test('b test', async () => {
+      expect(1).toBe(2);
+    });`;
+  configWithFiles[`d/d.spec.ts`] = `
+    const { test } = pwt;
+    test('d test', async () => {
+      expect(1).toBe(2);
+    });`;
+  const { exitCode, passed, failed, timeline } =  await runGroups(configWithFiles);
+  expect(exitCode).toBe(1);
+  expect(failed).toBe(2);
+  expect(passed).toBe(3);
+  expect(projectNames(timeline)).toEqual(['a', 'b', 'c', 'd', 'e']);
+  expectRunBefore(timeline, ['a'], ['b', 'c', 'd', 'e']); // 1 < 2
+  expectRunBefore(timeline, ['b', 'c'], ['d', 'e']); // 2 < 4
+});
+
+test('should support stopOnFailire', async ({ runGroups }, testInfo) => {
+  const projectTemplates = {
+    'a': {
+      stage: 1
+    },
+    'b': {
+      stage: 2,
+      stopOnFailure: true
+    },
+    'c': {
+      stage: 2
+    },
+    'd': {
+      stage: 4,
+      stopOnFailure: true // this is not important as the test is skipped
+    },
+    'e': {
+      stage: 4
+    },
+  };
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e'], testInfo, projectTemplates);
+  configWithFiles[`b/b.spec.ts`] = `
+    const { test } = pwt;
+    test('b test', async () => {
+      expect(1).toBe(2);
+    });`;
+  configWithFiles[`d/d.spec.ts`] = `
+    const { test } = pwt;
+    test('d test', async () => {
+      expect(1).toBe(2);
+    });`;
+  const { exitCode, passed, failed, skipped, timeline } =  await runGroups(configWithFiles);
+  expect(exitCode).toBe(1);
+  expect(failed).toBe(1);
+  expect(passed).toBeLessThanOrEqual(2); // 'c' may either pass or be skipped.
+  expect(passed + skipped).toBe(4);
+  expect(projectNames(timeline)).not.toContainEqual(['d', 'e']);
+});
+

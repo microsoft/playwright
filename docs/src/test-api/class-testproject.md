@@ -267,6 +267,13 @@ An integer number that defines when the project should run relative to other pro
 one stage. By default all projects run in stage 0. Stages with lower number run first. Several projects can run in
 each stage. Exeution order between projecs in the same stage is undefined.
 
+## property: TestProject.stopOnFailure
+* since: v1.28
+- type: ?<[boolean]>
+
+If set to true and the any test in the project fails all subsequent projects in the same playwright test run will
+be skipped.
+
 ## property: TestProject.testDir
 * since: v1.10
 - type: ?<[string]>
