@@ -179,12 +179,6 @@ window.playwrightUpdate = async (element, options) => {
   const component = wrapper.componentInstance;
   const { nodeData, slots } = createComponent(options, component.$createElement);
 
-
-  for (const [name] of Object.entries(component.$listeners || {})) {
-    component.$off(name);
-    delete component.$listeners[name];
-  }
-
   for (const [name, value] of Object.entries(nodeData.on || {})) {
     component.$on(name, value);
     component.$listeners[name] = value;
