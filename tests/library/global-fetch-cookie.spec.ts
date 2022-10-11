@@ -206,6 +206,28 @@ it('should store cookie from Set-Cookie header even if it contains equal signs',
   });
 });
 
+it('should override cookie from Set-Cookie header even if it expired', async ({ request, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', [`a=ok`]);
+    res.end();
+  });
+
+  server.setRoute('/unsetsetcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', [`a=; expires=${new Date(1970, 0, 1, 0, 0, 0, 0).toUTCString()}`]);
+    res.end();
+  });
+
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  await request.get(`${server.PREFIX}/unsetsetcookie.html`);
+
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE)
+  ]);
+
+  expect(serverRequest.headers.cookie).toBeFalsy();
+});
+
 it('should export cookies to storage state', async ({ request, server }) => {
   const expires = new Date('12/31/2100 PST');
   server.setRoute('/setcookie.html', (req, res) => {

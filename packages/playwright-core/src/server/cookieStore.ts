@@ -83,8 +83,6 @@ export class CookieStore {
   }
 
   private _addCookie(cookie: Cookie) {
-    if (cookie.expired())
-      return;
     let set = this._nameToCookies.get(cookie.name());
     if (!set) {
       set = new Set();
@@ -93,12 +91,11 @@ export class CookieStore {
     CookieStore.pruneExpired(set);
     // https://datatracker.ietf.org/doc/html/rfc6265#section-5.3
     for (const other of set) {
-      if (other.equals(cookie)) {
-        cookie.updateExpiresFrom(other);
+      if (other.equals(cookie))
         set.delete(other);
-      }
     }
     set.add(cookie);
+    CookieStore.pruneExpired(set);
   }
 
   private *_cookiesIterator(): IterableIterator<Cookie> {
