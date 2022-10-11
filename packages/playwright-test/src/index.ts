@@ -579,7 +579,9 @@ type ParsedStackTrace = {
   apiName: string;
 };
 
-export function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode }) {
+export function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode } | undefined): VideoMode {
+  if (!video)
+    return 'off';
   let videoMode = typeof video === 'string' ? video : video.mode;
   if (videoMode === 'retry-with-video')
     videoMode = 'on-first-retry';
@@ -590,7 +592,9 @@ export function shouldCaptureVideo(videoMode: VideoMode, testInfo: TestInfo) {
   return (videoMode === 'on' || videoMode === 'retain-on-failure' || (videoMode === 'on-first-retry' && testInfo.retry === 1));
 }
 
-export function normalizeTraceMode(trace: TraceMode | 'retry-with-trace' | { mode: TraceMode }) {
+export function normalizeTraceMode(trace: TraceMode | 'retry-with-trace' | { mode: TraceMode } | undefined): TraceMode {
+  if (!trace)
+    return 'off';
   let traceMode = typeof trace === 'string' ? trace : trace.mode;
   if (traceMode === 'retry-with-trace')
     traceMode = 'on-first-retry';
