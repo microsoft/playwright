@@ -88,7 +88,6 @@ export class CookieStore {
       set = new Set();
       this._nameToCookies.set(cookie.name(), set);
     }
-    CookieStore.pruneExpired(set);
     // https://datatracker.ietf.org/doc/html/rfc6265#section-5.3
     for (const other of set) {
       if (other.equals(cookie))
