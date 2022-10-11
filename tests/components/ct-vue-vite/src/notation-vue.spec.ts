@@ -7,6 +7,7 @@ import NamedSlots from './components/NamedSlots.vue'
 import MultiRoot from './components/MultiRoot.vue'
 import Component from './components/Component.vue'
 import EmptyTemplate from './components/EmptyTemplate.vue'
+import type { HooksConfig } from '../playwright'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -118,7 +119,7 @@ test('render a component without options', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages = []
   page.on('console', m => messages.push(m.text()))
-  await mount(Button, {
+  await mount<HooksConfig>(Button, {
     props: {
       title: 'Submit'
     },
