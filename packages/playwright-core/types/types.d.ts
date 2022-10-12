@@ -2465,7 +2465,7 @@ export interface Page {
 
   /**
    * Allows locating input elements by the text of the associated label. For example, this method will find the input by
-   * label text Password in the following DOM:
+   * label text "Password" in the following DOM:
    *
    * ```html
    * <label for="password-input">Password:</label>
@@ -2599,7 +2599,7 @@ export interface Page {
   }): Locator;
 
   /**
-   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   * Allows locating elements by their title. For example, this method will find the button by its title "Place the order":
    *
    * ```html
    * <button title='Place the order'>Order Now</button>
@@ -5565,7 +5565,7 @@ export interface Frame {
 
   /**
    * Allows locating input elements by the text of the associated label. For example, this method will find the input by
-   * label text Password in the following DOM:
+   * label text "Password" in the following DOM:
    *
    * ```html
    * <label for="password-input">Password:</label>
@@ -5699,7 +5699,7 @@ export interface Frame {
   }): Locator;
 
   /**
-   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   * Allows locating elements by their title. For example, this method will find the button by its title "Place the order":
    *
    * ```html
    * <button title='Place the order'>Order Now</button>
@@ -10009,7 +10009,7 @@ export interface Locator {
 
   /**
    * Allows locating input elements by the text of the associated label. For example, this method will find the input by
-   * label text Password in the following DOM:
+   * label text "Password" in the following DOM:
    *
    * ```html
    * <label for="password-input">Password:</label>
@@ -10143,7 +10143,7 @@ export interface Locator {
   }): Locator;
 
   /**
-   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   * Allows locating elements by their title. For example, this method will find the button by its title "Place the order":
    *
    * ```html
    * <button title='Place the order'>Order Now</button>
@@ -15276,7 +15276,7 @@ export interface FrameLocator {
 
   /**
    * Allows locating input elements by the text of the associated label. For example, this method will find the input by
-   * label text Password in the following DOM:
+   * label text "Password" in the following DOM:
    *
    * ```html
    * <label for="password-input">Password:</label>
@@ -15410,7 +15410,7 @@ export interface FrameLocator {
   }): Locator;
 
   /**
-   * Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+   * Allows locating elements by their title. For example, this method will find the button by its title "Place the order":
    *
    * ```html
    * <button title='Place the order'>Order Now</button>

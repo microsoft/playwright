@@ -1190,7 +1190,7 @@ Allows locating elements by their alt text. For example, this method will find t
 
 ## template-locator-get-by-label-text
 
-Allows locating input elements by the text of the associated label. For example, this method will find the input by label text Password in the following DOM:
+Allows locating input elements by the text of the associated label. For example, this method will find the input by label text "Password" in the following DOM:
 
 ```html
 <label for="password-input">Password:</label>
@@ -1213,7 +1213,7 @@ Note that many html elements have an implicitly [defined role](https://w3c.githu
 
 ## template-locator-get-by-title
 
-Allows locating elements by their title. For example, this method will find the button by its title "Submit":
+Allows locating elements by their title. For example, this method will find the button by its title "Place the order":
 
 ```html
 <button title='Place the order'>Order Now</button>
