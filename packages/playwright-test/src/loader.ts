@@ -279,6 +279,7 @@ export class Loader {
     const name = takeFirst(projectConfig.name, config.name, '');
     const stage =  takeFirst(projectConfig.stage, 0);
     const stopOnFailure = takeFirst(projectConfig.stopOnFailure, false);
+    const canShard = takeFirst(projectConfig.canShard, true);
 
     let screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
     if (process.env.PLAYWRIGHT_DOCKER) {
@@ -300,6 +301,7 @@ export class Loader {
       testDir,
       stage,
       stopOnFailure,
+      canShard,
       _respectGitIgnore: respectGitIgnore,
       snapshotDir,
       _screenshotsDir: screenshotsDir,

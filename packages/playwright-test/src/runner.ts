@@ -44,8 +44,8 @@ import { SigIntWatcher } from './sigIntWatcher';
 import type { TestCase } from './test';
 import { Suite } from './test';
 import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal } from './types';
-import type { Matcher, TestFileFilter } from './util';
 import { createFileMatcher, createTitleMatcher, serializeError } from './util';
+import type { Matcher, TestFileFilter } from './util';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -341,6 +341,60 @@ export class Runner {
     return { rootSuite, concurrentTestGroups };
   }
 
+  private _filterForCurrentShard(rootSuite: Suite, concurrentTestGroups: TestGroup[][]) {
+    const shard = this._loader.fullConfig().shard;
+    if (!shard)
+      return;
+
+    // Each shard includes:
+    // - all non shardale tests and
+    // - its portion of the shardable ones.
+    let shardableTotal = 0;
+    for (const projectSuite of rootSuite.suites) {
+      if (projectSuite.project()!.canShard)
+        shardableTotal += projectSuite.allTests().length;
+    }
+
+    const shardTests = new Set<TestCase>();
+
+    // Each shard gets some tests.
+    const shardSize = Math.floor(shardableTotal / shard.total);
+    // First few shards get one more test each.
+    const extraOne = shardableTotal - shardSize * shard.total;
+
+    const currentShard = shard.current - 1; // Make it zero-based for calculations.
+    const from = shardSize * currentShard + Math.min(extraOne, currentShard);
+    const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
+    let current = 0;
+    const shardConcurrentTestGroups = [];
+    for (const stage of concurrentTestGroups) {
+      const shardedStage: TestGroup[] = [];
+      for (const group of stage) {
+        let includeGroupInShard = false;
+        if (group.canShard) {
+          // Any test group goes to the shard that contains the first test of this group.
+          // So, this shard gets any group that starts at [from; to)
+          if (current >= from && current < to)
+            includeGroupInShard = true;
+          current += group.tests.length;
+        } else {
+          includeGroupInShard = true;
+        }
+        if (includeGroupInShard) {
+          shardedStage.push(group);
+          for (const test of group.tests)
+            shardTests.add(test);
+        }
+      }
+      if (shardedStage.length)
+        shardConcurrentTestGroups.push(shardedStage);
+    }
+    concurrentTestGroups.length = 0;
+    concurrentTestGroups.push(...shardConcurrentTestGroups);
+
+    filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
+  }
+
   private async _run(options: RunOptions): Promise<FullResult> {
     const config = this._loader.fullConfig();
     const fatalErrors: TestError[] = [];
@@ -349,41 +403,10 @@ export class Runner {
     const { rootSuite, concurrentTestGroups } = await this._collectTestGroups(options, fatalErrors);
 
     // Fail when no tests.
-    let total = rootSuite.allTests().length;
-    if (!total && !options.passWithNoTests)
+    if (!rootSuite.allTests().length && !options.passWithNoTests)
       fatalErrors.push(createNoTestsError());
 
-    // Compute shards.
-    const shard = config.shard;
-    if (shard) {
-      assert(concurrentTestGroups.length === 1);
-      const shardGroups: TestGroup[] = [];
-      const shardTests = new Set<TestCase>();
-
-      // Each shard gets some tests.
-      const shardSize = Math.floor(total / shard.total);
-      // First few shards get one more test each.
-      const extraOne = total - shardSize * shard.total;
-
-      const currentShard = shard.current - 1; // Make it zero-based for calculations.
-      const from = shardSize * currentShard + Math.min(extraOne, currentShard);
-      const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
-      let current = 0;
-      for (const group of concurrentTestGroups[0]) {
-        // Any test group goes to the shard that contains the first test of this group.
-        // So, this shard gets any group that starts at [from; to)
-        if (current >= from && current < to) {
-          shardGroups.push(group);
-          for (const test of group.tests)
-            shardTests.add(test);
-        }
-        current += group.tests.length;
-      }
-
-      concurrentTestGroups[0] = shardGroups;
-      filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
-      total = rootSuite.allTests().length;
-    }
+    this._filterForCurrentShard(rootSuite, concurrentTestGroups);
 
     config._maxConcurrentTestGroups = Math.max(...concurrentTestGroups.map(g => g.length));
 
@@ -749,6 +772,7 @@ function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] 
       repeatEachIndex: test.repeatEachIndex,
       projectId: test._projectId,
       stopOnFailure: test.parent.project()!.stopOnFailure,
+      canShard: test.parent.project()!.canShard,
       tests: [],
       watchMode: false,
     };

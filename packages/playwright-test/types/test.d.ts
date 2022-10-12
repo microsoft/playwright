@@ -268,6 +268,11 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   stopOnFailure: boolean;
   /**
+   * If set to false and the tests run with --shard command line option, all tests from this project will run in every shard.
+   * If not specified, the project can be split between several shards.
+   */
+  canShard: boolean;
+  /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
    * Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all other
@@ -4298,6 +4303,12 @@ export interface TestError {
  *
  */
 interface TestProject {
+  /**
+   * If set to false and the tests run with --shard command line option, all tests from this project will run in every shard.
+   * If not specified, the project can be split between several shards.
+   */
+  canShard?: boolean;
+
   /**
    * Configuration for the `expect` assertion library.
    *
