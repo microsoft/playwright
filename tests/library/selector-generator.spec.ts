@@ -45,7 +45,7 @@ it.describe('selector generator', () => {
 
   it('should not escape spaces inside named attr selectors', async ({ page }) => {
     await page.setContent(`<input placeholder="Foo b ar"/>`);
-    expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"Foo b ar\"]');
+    expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"Foo b ar\"i]');
   });
 
   it('should generate text for <input type=button>', async ({ page }) => {
@@ -232,7 +232,7 @@ it.describe('selector generator', () => {
     });
     it('placeholder', async ({ page }) => {
       await page.setContent(`<input placeholder="foobar" type="text"/>`);
-      expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"foobar\"]');
+      expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"foobar\"i]');
     });
     it('type', async ({ page }) => {
       await page.setContent(`<input type="text"/>`);
