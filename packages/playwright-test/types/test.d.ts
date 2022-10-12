@@ -263,6 +263,11 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   stage: number;
   /**
+   * If set to true and the any test in the project fails all subsequent projects in the same playwright test run will be
+   * skipped.
+   */
+  stopOnFailure: boolean;
+  /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
    * Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all other
@@ -4470,6 +4475,12 @@ interface TestProject {
    * stage. Exeution order between projecs in the same stage is undefined.
    */
   stage?: number;
+
+  /**
+   * If set to true and the any test in the project fails all subsequent projects in the same playwright test run will be
+   * skipped.
+   */
+  stopOnFailure?: boolean;
 
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.

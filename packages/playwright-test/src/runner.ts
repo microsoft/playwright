@@ -426,7 +426,7 @@ export class Runner {
 
       let hasWorkerErrors = false;
       for (const testGroups of concurrentTestGroups) {
-        const dispatcher = new Dispatcher(this._loader, testGroups, this._reporter);
+        const dispatcher = new Dispatcher(this._loader, [...testGroups], this._reporter);
         sigintWatcher = new SigIntWatcher();
         await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
         if (!sigintWatcher.hadSignal()) {
@@ -438,7 +438,8 @@ export class Runner {
         hasWorkerErrors = dispatcher.hasWorkerErrors();
         if (hasWorkerErrors)
           break;
-        if (testGroups.some(testGroup => testGroup.tests.some(test => !test.ok())))
+        const stopOnFailureGroups = testGroups.filter(group => group.stopOnFailure);
+        if (stopOnFailureGroups.some(testGroup => testGroup.tests.some(test => !test.ok())))
           break;
         if (sigintWatcher.hadSignal())
           break;
@@ -747,6 +748,7 @@ function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] 
       requireFile: test._requireFile,
       repeatEachIndex: test.repeatEachIndex,
       projectId: test._projectId,
+      stopOnFailure: test.parent.project()!.stopOnFailure,
       tests: [],
       watchMode: false,
     };

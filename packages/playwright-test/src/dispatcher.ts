@@ -30,6 +30,7 @@ export type TestGroup = {
   requireFile: string;
   repeatEachIndex: number;
   projectId: string;
+  stopOnFailure: boolean;
   tests: TestCase[];
   watchMode: boolean;
 };
