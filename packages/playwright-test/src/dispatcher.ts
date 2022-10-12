@@ -31,6 +31,7 @@ export type TestGroup = {
   repeatEachIndex: number;
   projectId: string;
   stopOnFailure: boolean;
+  canShard: boolean;
   tests: TestCase[];
   watchMode: boolean;
 };

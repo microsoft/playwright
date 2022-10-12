@@ -48,6 +48,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   retries: number;
   stage: number;
   stopOnFailure: boolean;
+  canShard: boolean;
   testDir: string;
   testIgnore: string | RegExp | (string | RegExp)[];
   testMatch: string | RegExp | (string | RegExp)[];

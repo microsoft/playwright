@@ -105,6 +105,12 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+## property: TestProject.canShard
+* since: v1.28
+- type: ?<[boolean]>
+
+If set to false and the tests run with --shard command line option, all tests from this project will run in every shard. If not specified, the project can be split between several shards.
+
 ## property: TestProject.expect
 * since: v1.10
 - type: ?<[Object]>

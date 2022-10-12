@@ -285,3 +285,133 @@ test('should support stopOnFailire', async ({ runGroups }, testInfo) => {
   expect(projectNames(timeline)).not.toContainEqual(['d', 'e']);
 });
 
+test('should split project if no canShard', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            stage: 10,
+            name: 'proj-1',
+            testMatch: /.*(a|b).test.ts/,
+          },
+          {
+            stage: 20,
+            name: 'proj-2',
+            testMatch: /.*c.test.ts/,
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+      test('test3', async () => { });
+      test('test4', async () => { });
+    `,
+    'b.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+    `,
+    'c.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+    `,
+  };
+
+  { // Shard 1/2
+    const { exitCode, passed, output } =  await runGroups(files, { shard: '1/2' });
+    expect(output).toContain('Running 4 tests using 1 worker, shard 1 of 2');
+    expect(output).toContain('[proj-1] › a.test.ts:6:7 › test1');
+    expect(output).toContain('[proj-1] › a.test.ts:7:7 › test2');
+    expect(output).toContain('[proj-1] › a.test.ts:8:7 › test3');
+    expect(output).toContain('[proj-1] › a.test.ts:9:7 › test4');
+    expect(output).not.toContain('[proj-2]');
+    expect(output).not.toContain('b.test.ts');
+    expect(output).not.toContain('c.test.ts');
+    expect(exitCode).toBe(0);
+    expect(passed).toBe(4);
+  }
+  { // Shard 2/2
+    const { exitCode, passed, output } =  await runGroups(files, { shard: '2/2' });
+    expect(output).toContain('Running 4 tests using 1 worker, shard 2 of 2');
+    expect(output).toContain('[proj-1] › b.test.ts:6:7 › test1');
+    expect(output).toContain('[proj-1] › b.test.ts:7:7 › test2');
+    expect(output).toContain('[proj-2] › c.test.ts:6:7 › test1');
+    expect(output).toContain('[proj-2] › c.test.ts:7:7 › test2');
+    expect(output).not.toContain('a.test.ts');
+    expect(exitCode).toBe(0);
+    expect(passed).toBe(4);
+  }
+});
+
+test('should not split project with canShard=false', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            stage: 10,
+            name: 'proj-1',
+            testMatch: /.*(a|b).test.ts/,
+            canShard: false,
+          },
+          {
+            stage: 20,
+            name: 'proj-2',
+            testMatch: /.*(c|d).test.ts/,
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+    `,
+    'b.test.ts': `
+      const { test } = pwt;
+      test('test2', async () => { });
+    `,
+    'c.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+      test('test3', async () => { });
+    `,
+    'd.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+    `,
+  };
+
+  { // Shard 1/2
+    const { exitCode, passed, output } =  await runGroups(files, { shard: '1/2' });
+    expect(output).toContain('Running 6 tests using 2 workers, shard 1 of 2');
+    //  proj-1 is non shardable => a.test.ts and b.test.ts should run in both shards.
+    expect(output).toContain('[proj-1] › b.test.ts:6:7 › test2');
+    expect(output).toContain('[proj-1] › a.test.ts:6:7 › test1');
+    expect(output).toContain('[proj-1] › a.test.ts:7:7 › test2');
+    expect(output).toContain('[proj-2] › c.test.ts:6:7 › test1');
+    expect(output).toContain('[proj-2] › c.test.ts:7:7 › test2');
+    expect(output).not.toContain('d.test.ts');
+    expect(exitCode).toBe(0);
+    expect(passed).toBe(6);
+  }
+  { // Shard 1/2
+    const { exitCode, passed, output } =  await runGroups(files, { shard: '2/2' });
+    expect(output).toContain('Running 5 tests using 2 workers, shard 2 of 2');
+    // proj-1 is non shardable => a.test.ts and b.test.ts should run in both shards.
+    expect(output).toContain('[proj-1] › b.test.ts:6:7 › test2');
+    expect(output).toContain('[proj-1] › a.test.ts:6:7 › test1');
+    expect(output).toContain('[proj-1] › a.test.ts:7:7 › test2');
+    expect(output).toContain('[proj-2] › d.test.ts:6:7 › test1');
+    expect(output).toContain('[proj-2] › d.test.ts:7:7 › test2');
+    expect(output).not.toContain('ctest.ts');
+    expect(exitCode).toBe(0);
+    expect(passed).toBe(5);
+  }
+});
+
