@@ -44,7 +44,8 @@ import { SigIntWatcher } from './sigIntWatcher';
 import type { TestCase } from './test';
 import { Suite } from './test';
 import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal } from './types';
-import { createFileMatcher, createTitleMatcher, Matcher, serializeError, TestFileFilter } from './util';
+import { createFileMatcher, createTitleMatcher, serializeError } from './util';
+import type { Matcher, TestFileFilter } from './util';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -369,17 +370,17 @@ export class Runner {
     for (const stage of concurrentTestGroups) {
       const shardedStage: TestGroup[] = [];
       for (const group of stage) {
-        let inlcudeGroupInShard = false;
+        let includeGroupInShard = false;
         if (group.canShard) {
           // Any test group goes to the shard that contains the first test of this group.
           // So, this shard gets any group that starts at [from; to)
           if (current >= from && current < to)
-            inlcudeGroupInShard = true;
+            includeGroupInShard = true;
           current += group.tests.length;
         } else {
-          inlcudeGroupInShard = true;
+          includeGroupInShard = true;
         }
-        if (inlcudeGroupInShard) {
+        if (includeGroupInShard) {
           shardedStage.push(group);
           for (const test of group.tests)
             shardTests.add(test);
