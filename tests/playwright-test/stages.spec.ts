@@ -409,7 +409,7 @@ test('should not split project with canShard=false', async ({ runGroups }, testI
     expect(output).toContain('[proj-1] › a.test.ts:7:7 › test2');
     expect(output).toContain('[proj-2] › d.test.ts:6:7 › test1');
     expect(output).toContain('[proj-2] › d.test.ts:7:7 › test2');
-    expect(output).not.toContain('ctest.ts');
+    expect(output).not.toContain('c.test.ts');
     expect(exitCode).toBe(0);
     expect(passed).toBe(5);
   }
