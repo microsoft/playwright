@@ -45,6 +45,7 @@ export interface MountOptions {
 
 interface MountResult extends Locator {
   unmount(): Promise<void>;
+  update(component: JSX.Element): Promise<void>;
 }
 
 export interface ComponentFixtures {
