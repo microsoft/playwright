@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { rimraf } from '../utilsBundle';
+import rimraf from './rimraf';
 
 export const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
