@@ -22,7 +22,7 @@ await page.GetByLabel("User Name").FillAsync("John");
 
 await page.GetByLabel("Password").FillAsync("secret-password");
 
-await page.GetByRole("button", new() { Name = "Sign in" }).ClickAsync();
+await page.GetByRole("button", new() { NameString = "Sign in" }).ClickAsync();
 
 await Expect(page.GetByText("Welcome, John!")).ToBeVisibleAsync();
 ```
