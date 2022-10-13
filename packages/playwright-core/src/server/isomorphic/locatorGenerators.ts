@@ -285,12 +285,14 @@ export class CSharpLocatorFactory implements LocatorFactory {
         return `Last`;
       case 'role':
         const attrs: string[] = [];
-        for (const [name, value] of Object.entries(options.attrs!))
-          attrs.push(`${toTitleCase(name)} = ${typeof value === 'string' ? this.quote(value) : value}`);
-        const attrString = attrs.length ? `, new () { ${attrs.join(', ')} }` : '';
+        for (const [name, value] of Object.entries(options.attrs!)) {
+          const optionKey = name === 'name' ? 'NameString' : toTitleCase(name);
+          attrs.push(`${optionKey} = ${typeof value === 'string' ? this.quote(value) : value}`);
+        }
+        const attrString = attrs.length ? `, new() { ${attrs.join(', ')} }` : '';
         return `GetByRole(AriaRole.${toTitleCase(body as string)}${attrString})`;
       case 'has-text':
-        return `Locator(${this.quote(body as string)}, new () { HasTextString: ${this.quote(options.hasText!)} })`;
+        return `Locator(${this.quote(body as string)}, new() { HasTextString: ${this.quote(options.hasText!)} })`;
       case 'test-id':
         return `GetByTestId(${this.quote(body as string)})`;
       case 'text':
@@ -314,7 +316,7 @@ export class CSharpLocatorFactory implements LocatorFactory {
       return `${method}(new Regex(${this.quote(body.source)}${suffix}))`;
     }
     if (exact)
-      return `${method}(${this.quote(body)}, new () { Exact: true })`;
+      return `${method}(${this.quote(body)}, new() { Exact: true })`;
     return `${method}(${this.quote(body)})`;
   }
 
