@@ -102,7 +102,7 @@ await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
 [Locators](./locators.md) are the central piece of Playwright's auto-waiting and retry-ability. Locators represent a way to find element(s) on the page at any moment and are used to perform actions on elements such as `.ClickAsync` `.FillAsync` etc. Custom locators can be created with the [`method: Page.locator`] method.
 
 ```csharp
-var getStarted = Page.GetByRole(AriaRole.Link, new () { Name = "Get started" });
+var getStarted = Page.GetByRole(AriaRole.Link, new() { NameString = "Get started" });
 
 await Expect(getStarted).ToHaveAttributeAsync("href", "/docs/installation");
 await getStarted.ClickAsync();
