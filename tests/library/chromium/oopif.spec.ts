@@ -326,6 +326,16 @@ it('should emit filechooser event for iframe', async ({ page, server, browser })
   expect(chooser).toBeTruthy();
 });
 
+it('should not throw on exposeFunction when oopif detaches', async ({ page, browser, server }) => {
+  await page.goto(server.PREFIX + '/dynamic-oopif.html');
+  expect(await countOOPIFs(browser)).toBe(1);
+  await Promise.all([
+    page.exposeFunction('myFunc', () => 2022),
+    page.evaluate(() => document.querySelector('iframe').remove()),
+  ]);
+  expect(await page.evaluate(() => (window as any).myFunc())).toBe(2022);
+});
+
 async function countOOPIFs(browser) {
   const browserSession = await browser.newBrowserCDPSession();
   const oopifs = [];
