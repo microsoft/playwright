@@ -73,6 +73,13 @@ test('render a default child', async ({ mount }) => {
   await expect(component).toContainText('Main Content')
 })
 
+test('render a component as slot', async ({ mount }) => {
+  const component = await mount(<DefaultChildren>
+    <Button title="Submit" />
+  </DefaultChildren>)
+  await expect(component).toContainText('Submit')
+})
+
 test('render multiple children', async ({ mount }) => {
   const component = await mount(<DefaultChildren>
     <div id="one">One</div>

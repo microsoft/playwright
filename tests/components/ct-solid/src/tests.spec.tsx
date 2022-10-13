@@ -98,6 +98,14 @@ test('render multiple children', async ({ mount }) => {
   await expect(component.locator('#two')).toContainText('Two');
 });
 
+
+test('render a component as slot', async ({ mount }) => {
+  const component = await mount(<DefaultChildren>
+    <Button title="Submit" />
+  </DefaultChildren>)
+  await expect(component).toContainText('Submit')
+});
+
 test('render named children', async ({ mount }) => {
   const component = await mount(
     <MultipleChildren>
