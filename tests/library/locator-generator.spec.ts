@@ -41,7 +41,7 @@ it('reverse engineer locators', async ({ page }) => {
   });
 
   expect.soft(generate(page.getByText('Hello', { exact: true }))).toEqual({
-    csharp: 'GetByText("Hello", new () { Exact: true })',
+    csharp: 'GetByText("Hello", new() { Exact: true })',
     java: 'getByText("Hello", new Page.GetByTextOptions().setExact(exact))',
     javascript: 'getByText(\'Hello\', { exact: true })',
     python: 'get_by_text("Hello", exact=true)',
@@ -66,7 +66,7 @@ it('reverse engineer locators', async ({ page }) => {
     python: 'get_by_label("Name")',
   });
   expect.soft(generate(page.getByLabel('Last Name', { exact: true }))).toEqual({
-    csharp: 'GetByLabel("Last Name", new () { Exact: true })',
+    csharp: 'GetByLabel("Last Name", new() { Exact: true })',
     java: 'getByLabel("Last Name", new Page.GetByLabelOptions().setExact(exact))',
     javascript: 'getByLabel(\'Last Name\', { exact: true })',
     python: 'get_by_label("Last Name", exact=true)',
@@ -85,7 +85,7 @@ it('reverse engineer locators', async ({ page }) => {
     python: 'get_by_placeholder("hello")',
   });
   expect.soft(generate(page.getByPlaceholder('Hello', { exact: true }))).toEqual({
-    csharp: 'GetByPlaceholder("Hello", new () { Exact: true })',
+    csharp: 'GetByPlaceholder("Hello", new() { Exact: true })',
     java: 'getByPlaceholder("Hello", new Page.GetByPlaceholderOptions().setExact(exact))',
     javascript: 'getByPlaceholder(\'Hello\', { exact: true })',
     python: 'get_by_placeholder("Hello", exact=true)',
@@ -104,7 +104,7 @@ it('reverse engineer locators', async ({ page }) => {
     python: 'get_by_alt_text("hello")',
   });
   expect.soft(generate(page.getByAltText('Hello', { exact: true }))).toEqual({
-    csharp: 'GetByAltText("Hello", new () { Exact: true })',
+    csharp: 'GetByAltText("Hello", new() { Exact: true })',
     java: 'getByAltText("Hello", new Page.GetByAltTextOptions().setExact(exact))',
     javascript: 'getByAltText(\'Hello\', { exact: true })',
     python: 'get_by_alt_text("Hello", exact=true)',
@@ -123,7 +123,7 @@ it('reverse engineer locators', async ({ page }) => {
     python: 'get_by_title("hello")',
   });
   expect.soft(generate(page.getByTitle('Hello', { exact: true }))).toEqual({
-    csharp: 'GetByTitle("Hello", new () { Exact: true })',
+    csharp: 'GetByTitle("Hello", new() { Exact: true })',
     java: 'getByTitle("Hello", new Page.GetByTitleOptions().setExact(exact))',
     javascript: 'getByTitle(\'Hello\', { exact: true })',
     python: 'get_by_title("Hello", exact=true)',
