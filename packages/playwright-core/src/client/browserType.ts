@@ -89,7 +89,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
   private async _connectInsteadOfLaunching(): Promise<Browser> {
     const connectOptions = this._defaultConnectOptions!;
-    return this._connect(connectOptions.wsEndpoint, {
+    return this[connectOptions.connectOverCDP ? '_connectOverCDP' : '_connect'](connectOptions.wsEndpoint, {
       headers: {
         'x-playwright-browser': this.name(),
         'x-playwright-launch-options': JSON.stringify(this._defaultLaunchOptions || {}),

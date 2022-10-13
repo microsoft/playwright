@@ -2660,6 +2660,11 @@ type ConnectOptions = {
   wsEndpoint: string;
 
   /**
+   * Connect using the Chrome DevTools Protocol.
+   */
+   connectOverCDP?: boolean;
+
+  /**
    * Additional HTTP headers to be sent with web socket connect request.
    */
   headers?: { [key: string]: string; };

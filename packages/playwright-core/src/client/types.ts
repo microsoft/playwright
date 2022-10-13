@@ -82,6 +82,7 @@ export type LaunchPersistentContextOptions = Omit<LaunchOptionsBase & BrowserCon
 
 export type ConnectOptions = {
   wsEndpoint: string,
+  connectOverCDP?: boolean,
   headers?: { [key: string]: string; };
   slowMo?: number,
   timeout?: number,
