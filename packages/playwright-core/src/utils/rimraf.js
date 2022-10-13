@@ -79,8 +79,8 @@ const rimraf = (p, options, cb) => {
 
     results.forEach(p => {
       const CB = (er) => {
-        console.error("GOT ERROR", er);
         if (er) {
+          console.error("GOT ERROR", er);
           if ((er.code === "EBUSY" || er.code === "ENOTEMPTY" || er.code === "EPERM") &&
               busyTries < options.maxBusyTries) {
             busyTries ++
