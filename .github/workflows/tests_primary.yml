@@ -46,7 +46,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
-    - run: npm run test -- --headed --project=${{ matrix.browser }}
+    - run: npm run test -- --headed --project=${{ matrix.browser }} defaultbrowsercontext
     - uses: actions/upload-artifact@v3
       if: always()
       with:
