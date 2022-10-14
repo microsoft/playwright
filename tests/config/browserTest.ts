@@ -100,7 +100,9 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       dirs.push(dir);
       return dir;
     });
+    console.log('starting teardown of createUserDataDir');
     await removeFolders(dirs);
+    console.log('finished teardown of createUserDataDir');
   },
 
   launchPersistent: async ({ createUserDataDir, browserType }, run) => {
