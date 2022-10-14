@@ -36,7 +36,7 @@ public class Tests : PageTest
         await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
 
         // create a locator
-        var getStarted = Page.Locator("text=Get Started");
+        var getStarted = Page.GetByRole(AriaRole.Link, new() { NameString = "Get started" });
 
         // Expect an attribute "to be strictly equal" to the value.
         await Expect(getStarted).ToHaveAttributeAsync("href", "/docs/intro");
@@ -71,7 +71,7 @@ public class UnitTest1 : PageTest
         await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
 
         // create a locator
-        var getStarted = Page.Locator("text=Get Started");
+        var getStarted = Page.GetByRole(AriaRole.Link, new() { NameString = "Get started" });
 
         // Expect an attribute "to be strictly equal" to the value.
         await Expect(getStarted).ToHaveAttributeAsync("href", "/docs/intro");
@@ -102,7 +102,7 @@ await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
 [Locators](./locators.md) are the central piece of Playwright's auto-waiting and retry-ability. Locators represent a way to find element(s) on the page at any moment and are used to perform actions on elements such as `.ClickAsync` `.FillAsync` etc. Custom locators can be created with the [`method: Page.locator`] method.
 
 ```csharp
-var getStarted = Page.Locator("text=Get Started");
+var getStarted = Page.GetByRole(AriaRole.Link, new() { NameString = "Get started" });
 
 await Expect(getStarted).ToHaveAttributeAsync("href", "/docs/installation");
 await getStarted.ClickAsync();
@@ -111,7 +111,7 @@ await getStarted.ClickAsync();
 [Selectors](./selectors.md) are strings that are used to create Locators. Playwright supports many different selectors like [Text](./selectors.md#text-selector), [CSS](./selectors.md#css-selector), [XPath](./selectors.md#xpath-selectors) and many more. Learn more about available selectors and how to pick one in this [in-depth guide](./selectors.md).
 
 ```csharp
-await Expect(Page.Locator("text=Installation")).ToBeVisibleAsync();
+await Expect(Page.GetByRole(AriaRole.Heading, new() { NameString = "Installation" })).ToBeVisibleAsync();
 ```
 
 
