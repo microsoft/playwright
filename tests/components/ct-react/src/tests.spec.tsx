@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/experimental-ct-react'
 import { serverFixtures } from '../../../../tests/config/serverFixtures';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
 import Fetch from './components/Fetch';
 import DelayedData from './components/DelayedData';
 import Button from './components/Button';
@@ -159,4 +161,20 @@ testWithServer('components routing should go through context', async ({ mount, c
   const component = await mount(<Fetch url={server.PREFIX + '/hello'} />);
   await expect.soft(whoServedTheRequest).resolves.toMatch(/served via context: GET.*\/hello.*/i);
   await expect.soft(component).toHaveText('intercepted');
+});
+
+test('navigate to a page by clicking a link', async ({ mount }) => {
+  const component = await mount(<BrowserRouter><App /></BrowserRouter>);
+  await expect(component.getByRole('main')).toHaveText('Login');
+  await component.getByRole('link', { name: 'Dashboard' }).click();
+  await expect(component.getByRole('main')).toHaveText('Dashboard');
+});
+
+test('navigate to a page with page.goto', async ({ page, mount }) => {
+  const component = await mount(<BrowserRouter><App /></BrowserRouter>);
+  await expect(component.getByRole('main')).toHaveText('Login');
+  await expect(page).toHaveURL('/');
+  await page.goto('/dashboard');
+  await expect(component.getByRole('main')).toHaveText('Dashboard');
+  await expect(page).toHaveURL('/dashboard');
 });
