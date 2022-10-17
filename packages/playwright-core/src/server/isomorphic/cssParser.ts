@@ -111,7 +111,7 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
   }
 
   function isClauseCombinator(p = pos) {
-    return (tokens[p] instanceof css.DelimToken) && (['>', '+', '~'].includes(tokens[p].value));
+    return (tokens[p] instanceof css.DelimToken) && (['>', '+', '~'].includes(tokens[p].value as string));
   }
 
   function isSelectorClauseEnd(p = pos) {
@@ -133,9 +133,9 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
   function consumeArgument(): CSSFunctionArgument {
     skipWhitespace();
     if (isNumber())
-      return tokens[pos++].value;
+      return tokens[pos++].value!;
     if (isString())
-      return tokens[pos++].value;
+      return tokens[pos++].value!;
     return consumeComplexSelector();
   }
 
@@ -179,15 +179,15 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
       } else if (tokens[pos] instanceof css.ColonToken) {
         pos++;
         if (isIdent()) {
-          if (!customNames.has(tokens[pos].value.toLowerCase())) {
+          if (!customNames.has((tokens[pos].value as string).toLowerCase())) {
             rawCSSString += ':' + tokens[pos++].toSource();
           } else {
-            const name = tokens[pos++].value.toLowerCase();
+            const name = (tokens[pos++].value as string).toLowerCase();
             functions.push({ name, args: [] });
             names.add(name);
           }
         } else if (tokens[pos] instanceof css.FunctionToken) {
-          const name = tokens[pos++].value.toLowerCase();
+          const name = (tokens[pos++].value as string).toLowerCase();
           if (!customNames.has(name)) {
             rawCSSString += `:${name}(${consumeBuiltinFunctionArguments()})`;
           } else {
