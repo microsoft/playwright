@@ -111,7 +111,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.ElectronApplication.Close)
-        waiter.rejectOnEvent(this, Events.ElectronApplication.Close, new Error('Electron application closed'));
+        waiter.rejectOnEvent(this, Events.ElectronApplication.Close, new Error('pw8002: Electron application closed'));
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;

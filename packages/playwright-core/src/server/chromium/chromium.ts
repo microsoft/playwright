@@ -277,11 +277,11 @@ export class Chromium extends BrowserType {
     const { args = [], proxy } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
-      throw new Error('Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --user-data-dir argument');
+      throw new Error('pw3001: Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --user-data-dir argument');
     if (args.find(arg => arg.startsWith('--remote-debugging-pipe')))
-      throw new Error('Playwright manages remote debugging connection itself.');
+      throw new Error('pw3001: Playwright manages remote debugging connection itself.');
     if (args.find(arg => !arg.startsWith('-')))
-      throw new Error('Arguments can not specify page to be opened');
+      throw new Error('pw3001: Arguments can not specify page to be opened');
     const chromeArguments = [...DEFAULT_ARGS];
 
     // See https://github.com/microsoft/playwright/issues/7362
@@ -370,7 +370,7 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string) {
       timeout: NET_DEFAULT_TIMEOUT,
     }, resp => {
       if (resp.statusCode! < 200 || resp.statusCode! >= 400) {
-        reject(new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +
+        reject(new Error(`pw1003: Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +
         `This does not look like a DevTools server, try connecting via ws://.`));
       }
       let data = '';
@@ -389,7 +389,7 @@ async function seleniumErrorHandler(params: HTTPRequestParams, response: http.In
     message = json.value.localizedMessage || json.value.message;
   } catch (e) {
   }
-  return new Error(`Error connecting to Selenium at ${params.url}: ${message}`);
+  return new Error(`pw1003: Error connecting to Selenium at ${params.url}: ${message}`);
 }
 
 function addProtocol(url: string) {

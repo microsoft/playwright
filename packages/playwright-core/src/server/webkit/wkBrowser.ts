@@ -125,7 +125,7 @@ export class WKBrowser extends Browser {
     if (!originPage) {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
-      page._firstNonInitialNavigationCommittedReject(new Error('Starting new page download'));
+      page._firstNonInitialNavigationCommittedReject(new Error('pw3000: Starting new page download'));
       if (page._opener)
         originPage = page._opener._initializedPage;
     }

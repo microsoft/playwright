@@ -28,7 +28,7 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
 
   async pathAfterFinished(): Promise<string | null> {
     if (this._connection.isRemote())
-      throw new Error(`Path is not available when connecting remotely. Use saveAs() to save a local copy.`);
+      throw new Error(`pw1002: Path is not available when connecting remotely. Use saveAs() to save a local copy.`);
     return (await this._channel.pathAfterFinished()).value || null;
   }
 

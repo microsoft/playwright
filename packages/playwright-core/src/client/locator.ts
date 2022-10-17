@@ -58,7 +58,7 @@ export class Locator implements api.Locator {
     if (options?.has) {
       const locator = options.has;
       if (locator._frame !== frame)
-        throw new Error(`Inner "has" locator must belong to the same frame.`);
+        throw new Error(`pw3001: Inner "has" locator must belong to the same frame.`);
       this._selector += ` >> internal:has=` + JSON.stringify(locator._selector);
     }
   }
@@ -71,7 +71,7 @@ export class Locator implements api.Locator {
       const result = await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, state: 'attached', timeout });
       const handle = ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
       if (!handle)
-        throw new Error(`Could not resolve ${this._selector} to DOM Element`);
+        throw new Error(`pw2007: Could not resolve ${this._selector} to DOM Element`);
       try {
         return await task(handle, deadline ? deadline - monotonicTime() : 0);
       } finally {

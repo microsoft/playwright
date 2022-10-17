@@ -233,7 +233,7 @@ export const registryDirectory = (() => {
     else if (process.platform === 'win32')
       cacheDirectory = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
     else
-      throw new Error('Unsupported platform: ' + process.platform);
+      throw new Error('pw1001: Unsupported platform: ' + process.platform);
     result = path.join(cacheDirectory, 'ms-playwright');
   }
 
@@ -340,7 +340,7 @@ export class Registry {
     };
     const executablePathOrDie = (name: string, e: string | undefined, installByDefault: boolean, sdkLanguage: string) => {
       if (!e)
-        throw new Error(`${name} is not supported on ${hostPlatform}`);
+        throw new Error(`pw1001: ${name} is not supported on ${hostPlatform}`);
       const installCommand = buildPlaywrightCLICommand(sdkLanguage, `install${installByDefault ? '' : ' ' + name}`);
       if (!canAccessFile(e)) {
         const currentDockerVersion = readDockerVersionSync();
@@ -361,7 +361,7 @@ export class Registry {
           ``,
           `<3 Playwright Team`,
         ].join('\n');
-        throw new Error(`Executable doesn't exist at ${e}\n${wrapInASCIIBox(prettyMessage, 1)}`);
+        throw new Error(`pw1009: Executable doesn't exist at ${e}\n${wrapInASCIIBox(prettyMessage, 1)}`);
       }
       return e;
     };
@@ -576,7 +576,7 @@ export class Registry {
       const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
       if (!suffix) {
         if (shouldThrow)
-          throw new Error(`Chromium distribution '${name}' is not supported on ${process.platform}`);
+          throw new Error(`pw1001: Chromium distribution '${name}' is not supported on ${process.platform}`);
         return undefined;
       }
       const prefixes = (process.platform === 'win32' ? [
@@ -592,9 +592,8 @@ export class Registry {
         return undefined;
 
       const location = prefixes.length ? ` at ${path.join(prefixes[0], suffix)}` : ``;
-      // TODO: language-specific error message
       const installation = install ? `\nRun "${buildPlaywrightCLICommand(sdkLanguage, 'install ' + name)}"` : '';
-      throw new Error(`Chromium distribution '${name}' is not found${location}${installation}`);
+      throw new Error(`pw1001: Chromium distribution '${name}' is not found${location}${installation}`);
     };
     return {
       type: 'channel',
@@ -641,7 +640,7 @@ export class Registry {
     }
     const distributionInfo = await getLinuxDistributionInfo();
     if (browserName === 'firefox' && distributionInfo?.id === 'ubuntu' && distributionInfo?.version === '16.04')
-      throw new Error(`Cannot launch Firefox on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 18.04`);
+      throw new Error(`pw1001: Cannot launch Firefox on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 18.04`);
 
     if (os.platform() === 'linux')
       return await validateDependenciesLinux(sdkLanguage, linuxLddDirectories.map(d => path.join(browserDirectory, d)), dlOpenLibraries);
@@ -680,7 +679,7 @@ export class Registry {
           factor: 1.27579,
         },
         onCompromised: (err: Error) => {
-          throw new Error(`${err.message} Path: ${lockfilePath}`);
+          throw new Error(`pw1006: ${err.message} Path: ${lockfilePath}`);
         },
         lockfilePath,
       });
@@ -694,13 +693,13 @@ export class Registry {
       // Install browsers for this package.
       for (const executable of executables) {
         if (!executable._install)
-          throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
+          throw new Error(`pw1001: Playwright does not support installing ${executable.name}`);
 
         const { langName } = getClientLanguage();
         if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !forceReinstall && executable.executablePath(langName)) {
           const command = buildPlaywrightCLICommand(langName, 'install --force ' + executable.name);
           throw new Error('\n' + wrapInASCIIBox([
-            `ATTENTION: "${executable.name}" is already installed on the system!`,
+            `ATTENTION: pw1006: "${executable.name}" is already installed on the system!`,
             ``,
             `"${executable.name}" installation is not hermetic; installing newer version`,
             `requires *removal* of a current installation first.`,
@@ -721,7 +720,7 @@ export class Registry {
       if (e.code === 'ELOCKED') {
         const rmCommand = process.platform === 'win32' ? 'rm -R' : 'rm -rf';
         throw new Error('\n' + wrapInASCIIBox([
-          `An active lockfile is found at:`,
+          `pw1006: An active lockfile is found at:`,
           ``,
           `  ${lockfilePath}`,
           ``,
@@ -766,7 +765,7 @@ export class Registry {
   private async _downloadExecutable(descriptor: BrowsersJSONDescriptor, executablePath: string | undefined) {
     const downloadURLs = this._downloadURLs(descriptor);
     if (!downloadURLs.length || !executablePath)
-      throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
+      throw new Error(`pw1001: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
     if (hostPlatform === 'generic-linux' || hostPlatform === 'generic-linux-arm64')
       logPolitely('BEWARE: your OS is not officially supported by Playwright; downloading fallback build.');
 
@@ -779,7 +778,7 @@ export class Registry {
 
     const downloadFileName = `playwright-download-${descriptor.name}-${hostPlatform}-${descriptor.revision}.zip`;
     await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURLs, downloadFileName).catch(e => {
-      throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
+      throw new Error(`pw1006: Failed to download ${title}, caused by\n${e.stack}`);
     });
     await fs.promises.writeFile(markerFilePath(descriptor.dir), '');
   }
@@ -804,7 +803,7 @@ export class Registry {
       if (artifact)
         scriptArgs.push(artifact.location /* url */);
       else
-        throw new Error(`Cannot install ${channel} on ${process.platform}`);
+        throw new Error(`pw1001: Cannot install ${channel} on ${process.platform}`);
     }
     await this._installChromiumChannel(channel, scripts, scriptArgs);
   }
@@ -812,7 +811,7 @@ export class Registry {
   private async _installChromiumChannel(channel: string, scripts: Record<'linux' | 'darwin' | 'win32', string>, scriptArgs: string[] = []) {
     const scriptName = scripts[process.platform as 'linux' | 'darwin' | 'win32'];
     if (!scriptName)
-      throw new Error(`Cannot install ${channel} on ${process.platform}`);
+      throw new Error(`pw1001: Cannot install ${channel} on ${process.platform}`);
     const cwd = BIN_PATH;
     const isPowerShell = scriptName.endsWith('.ps1');
     if (isPowerShell) {
@@ -823,14 +822,14 @@ export class Registry {
       ];
       const { code } = await spawnAsync('powershell.exe', args, { cwd, stdio: 'inherit' });
       if (code !== 0)
-        throw new Error(`Failed to install ${channel}`);
+        throw new Error(`pw1006: Failed to install ${channel}`);
     } else {
       const { command, args, elevatedPermissions } = await transformCommandsForRoot([`bash "${path.join(BIN_PATH, scriptName)}" ${scriptArgs.join('')}`]);
       if (elevatedPermissions)
         console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
       const { code } = await spawnAsync(command, args, { cwd, stdio: 'inherit' });
       if (code !== 0)
-        throw new Error(`Failed to install ${channel}`);
+        throw new Error(`pw1006: Failed to install ${channel}`);
     }
   }
 
@@ -915,7 +914,7 @@ export async function installBrowsersForNpmInstall(browsers: string[]) {
   for (const browserName of browsers) {
     const executable = registry.findExecutable(browserName);
     if (!executable || executable.installType === 'none')
-      throw new Error(`Cannot install ${browserName}`);
+      throw new Error(`pw1001: Cannot install ${browserName}`);
     executables.push(executable);
   }
 
@@ -938,7 +937,7 @@ export function findChromiumChannel(sdkLanguage: string): string | undefined {
   if (channel === null) {
     const installCommand = buildPlaywrightCLICommand(sdkLanguage, `install chromium`);
     const prettyMessage = [
-      `No chromium-based browser found on the system.`,
+      `pw1006: No chromium-based browser found on the system.`,
       `Please run the following command to download one:`,
       ``,
       `    ${installCommand}`,

@@ -149,7 +149,7 @@ export class Electron extends SdkObject {
         } catch (error: any) {
           if ((error as NodeJS.ErrnoException)?.code === 'MODULE_NOT_FOUND') {
             throw new Error('\n' + wrapInASCIIBox([
-              'Electron executablePath not found!',
+              'pw1001: Electron executablePath not found!',
               'Please install it using `npm install -D electron` or set the executablePath to your Electron executable.',
             ].join('\n'), 1));
           }
@@ -181,7 +181,7 @@ export class Electron extends SdkObject {
 
       const waitForXserverError = new Promise(async (resolve, reject) => {
         waitForLine(progress, launchedProcess, /Unable to open X display/).then(() => reject(new Error([
-          'Unable to open X display!',
+          'pw1010: Unable to open X display!',
           `================================`,
           'Most likely this is because there is no X server available.',
           "Use 'xvfb-run' on Linux to launch your tests with an emulated display server.",
@@ -239,7 +239,7 @@ export class Electron extends SdkObject {
 function waitForLine(progress: Progress, process: childProcess.ChildProcess, regex: RegExp): Promise<RegExpMatchArray> {
   return new Promise((resolve, reject) => {
     const rl = readline.createInterface({ input: process.stderr! });
-    const failError = new Error('Process failed to launch!');
+    const failError = new Error('pw1009: Process failed to launch!');
     const listeners = [
       eventsHelper.addEventListener(rl, 'line', onLine),
       eventsHelper.addEventListener(rl, 'close', reject.bind(null, failError)),

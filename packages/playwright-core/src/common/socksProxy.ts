@@ -281,7 +281,7 @@ class SocksConnection {
 
 function parseIP(address: string): number[] {
   if (!net.isIPv4(address))
-    throw new Error('IPv6 is not supported');
+    throw new Error('pw1005: IPv6 is not supported');
   return address.split('.', 4).map(t => +t);
 }
 

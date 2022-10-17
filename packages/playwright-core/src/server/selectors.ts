@@ -56,12 +56,12 @@ export class Selectors {
 
   async register(name: string, source: string, contentScript: boolean = false): Promise<void> {
     if (!name.match(/^[a-zA-Z_0-9-]+$/))
-      throw new Error('Selector engine name may only contain [a-zA-Z0-9_] characters');
+      throw new Error('pw3001: Selector engine name may only contain [a-zA-Z0-9_] characters');
     // Note: we keep 'zs' for future use.
     if (this._builtinEngines.has(name) || name === 'zs' || name === 'zs:light')
-      throw new Error(`"${name}" is a predefined selector engine`);
+      throw new Error(`pw3001: "${name}" is a predefined selector engine`);
     if (this._engines.has(name))
-      throw new Error(`"${name}" selector engine has been already registered`);
+      throw new Error(`pw3001: "${name}" selector engine has been already registered`);
     this._engines.set(name, { source, contentScript });
   }
 

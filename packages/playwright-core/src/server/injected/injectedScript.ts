@@ -129,7 +129,7 @@ export class InjectedScript {
     const result = parseSelector(selector);
     for (const name of allEngineNames(result)) {
       if (!this._engines.has(name))
-        throw this.createStacklessError(`Unknown engine "${name}" while parsing selector ${selector}`);
+        throw this.createStacklessError(`pw3003: Unknown engine "${name}" while parsing selector ${selector}`);
     }
     return result;
   }
@@ -170,7 +170,7 @@ export class InjectedScript {
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
     if (selector.capture !== undefined) {
       if (selector.parts.some(part => part.name === 'nth'))
-        throw this.createStacklessError(`Can't query n-th element in a request with the capture.`);
+        throw this.createStacklessError(`pw3003: Can't query n-th element in a request with the capture.`);
       const withHas: ParsedSelector = { parts: selector.parts.slice(0, selector.capture + 1) };
       if (selector.capture < selector.parts.length - 1) {
         const parsed: ParsedSelector = { parts: selector.parts.slice(selector.capture + 1) };
@@ -181,7 +181,7 @@ export class InjectedScript {
     }
 
     if (!(root as any)['querySelectorAll'])
-      throw this.createStacklessError('Node is not queryable.');
+      throw this.createStacklessError('pw2000: Node is not queryable.');
 
     if (selector.capture !== undefined) {
       // We should have handled the capture above.
@@ -216,7 +216,7 @@ export class InjectedScript {
     const result = this._engines.get(part.name)!.queryAll(root, part.body);
     for (const element of result) {
       if (!('nodeName' in element))
-        throw this.createStacklessError(`Expected a Node but got ${Object.prototype.toString.call(element)}`);
+        throw this.createStacklessError(`pw2000: Expected a Node but got ${Object.prototype.toString.call(element)}`);
     }
     return result;
   }
@@ -295,7 +295,7 @@ export class InjectedScript {
     const queryList = (root: SelectorRoot, selector: string): Element[] => {
       const parsed = parseAttributeSelector(selector, true);
       if (parsed.name || parsed.attributes.length !== 1)
-        throw new Error('Malformed attribute selector: ' + selector);
+        throw new Error('pw3003: Malformed attribute selector: ' + selector);
       const { name, value, caseSensitive } = parsed.attributes[0];
       const lowerCaseValue = caseSensitive ? null : value.toLowerCase();
       let matcher: (s: string) => boolean;
@@ -593,13 +593,13 @@ export class InjectedScript {
         return state === 'checked' ? result : !result;
       }
       if (element.nodeName !== 'INPUT')
-        throw this.createStacklessError('Not a checkbox or radio button');
+        throw this.createStacklessError('pw2000: Not a checkbox or radio button');
       if (!['radio', 'checkbox'].includes((element as HTMLInputElement).type.toLowerCase()))
-        throw this.createStacklessError('Not a checkbox or radio button');
+        throw this.createStacklessError('pw2000: Not a checkbox or radio button');
       const result = (element as HTMLInputElement).checked;
       return state === 'checked' ? result : !result;
     }
-    throw this.createStacklessError(`Unexpected element state "${state}"`);
+    throw this.createStacklessError(`pw3001: Unexpected element state "${state}"`);
   }
 
   selectOptions(optionsToSelect: (Node | { value?: string, label?: string, index?: number })[],
@@ -608,7 +608,7 @@ export class InjectedScript {
     if (!element)
       return 'error:notconnected';
     if (element.nodeName.toLowerCase() !== 'select')
-      throw this.createStacklessError('Element is not a <select> element');
+      throw this.createStacklessError('pw2000: Element is not a <select> element');
     const select = element as HTMLSelectElement;
     const options = [...select.options];
     const selectedOptions = [];
@@ -660,19 +660,19 @@ export class InjectedScript {
       const kInputTypesToTypeInto = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
       if (!kInputTypesToTypeInto.has(type) && !kInputTypesToSetValue.has(type)) {
         progress.log(`    input of type "${type}" cannot be filled`);
-        throw this.createStacklessError(`Input of type "${type}" cannot be filled`);
+        throw this.createStacklessError(`pw2000: Input of type "${type}" cannot be filled`);
       }
       if (type === 'number') {
         value = value.trim();
         if (isNaN(Number(value)))
-          throw this.createStacklessError('Cannot type text into input[type=number]');
+          throw this.createStacklessError('pw2000: Cannot type text into input[type=number]');
       }
       if (kInputTypesToSetValue.has(type)) {
         value = value.trim();
         input.focus();
         input.value = value;
         if (input.value !== value)
-          throw this.createStacklessError('Malformed value');
+          throw this.createStacklessError('pw3001: Malformed value');
         element.dispatchEvent(new Event('input', { 'bubbles': true }));
         element.dispatchEvent(new Event('change', { 'bubbles': true }));
         return 'done';  // We have already changed the value, no need to input it.
@@ -680,7 +680,7 @@ export class InjectedScript {
     } else if (element.nodeName.toLowerCase() === 'textarea') {
       // Nothing to check here.
     } else if (!(element as HTMLElement).isContentEditable) {
-      throw this.createStacklessError('Element is not an <input>, <textarea> or [contenteditable] element');
+      throw this.createStacklessError('pw2000: Element is not an <input>, <textarea> or [contenteditable] element');
     }
     this.selectText(element);
     return 'needsinput';  // Still need to input the value.
@@ -724,7 +724,7 @@ export class InjectedScript {
     if (!node.isConnected)
       return 'error:notconnected';
     if (node.nodeType !== Node.ELEMENT_NODE)
-      throw this.createStacklessError('Node is not an element');
+      throw this.createStacklessError('pw2000: Node is not an element');
 
     const { activeElement, isFocused: wasFocused } = this._activelyFocused(node);
     if ((node as HTMLElement).isContentEditable && !wasFocused && activeElement && (activeElement as HTMLElement | SVGElement).blur) {
@@ -996,7 +996,7 @@ export class InjectedScript {
     const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka playwright.$("${info.selector}")`);
     if (infos.length < matches.length)
       lines.push('\n    ...');
-    return this.createStacklessError(`strict mode violation: "${stringifySelector(selector)}" resolved to ${matches.length} elements:${lines.join('')}\n`);
+    return this.createStacklessError(`pw2001: strict mode violation: "${stringifySelector(selector)}" resolved to ${matches.length} elements:${lines.join('')}\n`);
   }
 
   createStacklessError(message: string): Error {
@@ -1107,9 +1107,9 @@ export class InjectedScript {
 
       if (elementState !== undefined) {
         if (elementState === 'error:notcheckbox')
-          throw injected.createStacklessError('Element is not a checkbox');
+          throw injected.createStacklessError('pw2000: Element is not a checkbox');
         if (elementState === 'error:notconnected')
-          throw injected.createStacklessError('Element is not connected');
+          throw injected.createStacklessError('pw2000: Element is not connected');
         return { received: elementState, matches: elementState };
       }
     }
@@ -1128,7 +1128,7 @@ export class InjectedScript {
       if (expression === 'to.have.values') {
         element = this.retarget(element, 'follow-label')!;
         if (element.nodeName !== 'SELECT' || !(element as HTMLSelectElement).multiple)
-          throw this.createStacklessError('Not a select element with a multiple attribute');
+          throw this.createStacklessError('pw2000: Not a select element with a multiple attribute');
 
         const received = [...(element as HTMLSelectElement).selectedOptions].map(o => o.value);
         if (received.length !== options.expectedText!.length)
@@ -1160,7 +1160,7 @@ export class InjectedScript {
       } else if (expression === 'to.have.value') {
         element = this.retarget(element, 'follow-label')!;
         if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
-          throw this.createStacklessError('Not an input element');
+          throw this.createStacklessError('pw2000: Not an input element');
         received = (element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
       }
 

@@ -77,7 +77,7 @@ export class FFNetworkManager {
         requestId: request._id
       });
       if (response.evicted)
-        throw new Error(`Response body for ${request.request.method()} ${request.request.url()} was evicted!`);
+        throw new Error(`pw3002: Response body for ${request.request.method()} ${request.request.url()} was evicted!`);
       return Buffer.from(response.base64body, 'base64');
     };
 

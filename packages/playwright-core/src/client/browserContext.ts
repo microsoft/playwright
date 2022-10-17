@@ -192,7 +192,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async newPage(): Promise<Page> {
     if (this._ownerPage)
-      throw new Error('Please use browser.newContext()');
+      throw new Error('pw2002: Please use browser.newContext()');
     return Page.from((await this._channel.newPage()).page);
   }
 
@@ -298,7 +298,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.BrowserContext.Close)
-        waiter.rejectOnEvent(this, Events.BrowserContext.Close, new Error('Context closed'));
+        waiter.rejectOnEvent(this, Events.BrowserContext.Close, new Error('pw3002: Context closed'));
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;
@@ -325,7 +325,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async newCDPSession(page: Page | Frame): Promise<api.CDPSession> {
     // channelOwner.ts's validation messages don't handle the pseudo-union type, so we're explicit here
     if (!(page instanceof Page) && !(page instanceof Frame))
-      throw new Error('page: expected Page or Frame');
+      throw new Error('pw3001: page: expected Page or Frame');
     const result = await this._channel.newCDPSession(page instanceof Page ? { page: page._channel } : { frame: page._channel });
     return CDPSession.from(result.session);
   }
@@ -405,7 +405,7 @@ function prepareRecordHarOptions(options: BrowserContextOptions['recordHar']): c
 
 export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)
-    throw new Error(`"videoSize" option requires "videosPath" to be specified`);
+    throw new Error(`pw3001: "videoSize" option requires "videosPath" to be specified`);
   if (options.extraHTTPHeaders)
     network.validateHeaders(options.extraHTTPHeaders);
   const contextParams: channels.BrowserNewContextParams = {

@@ -80,7 +80,7 @@ export class FFBrowser extends Browser {
 
   async doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext> {
     if (options.isMobile)
-      throw new Error('options.isMobile is not supported in Firefox');
+      throw new Error('pw3001: options.isMobile is not supported in Firefox');
     const { browserContextId } = await this._connection.send('Browser.createBrowserContext', { removeOnDetach: true });
     const context = new FFBrowserContext(this, browserContextId, options);
     await context._initialize();
@@ -131,7 +131,7 @@ export class FFBrowser extends Browser {
     if (!originPage) {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
-      ffPage._markAsError(new Error('Starting new page download'));
+      ffPage._markAsError(new Error('pw3000: Starting new page download'));
       if (ffPage._opener)
         originPage = ffPage._opener._initializedPage;
     }
@@ -252,7 +252,7 @@ export class FFBrowserContext extends BrowserContext {
       browserContextId: this._browserContextId
     }).catch(e =>  {
       if (e.message.includes('Failed to override timezone'))
-        throw new Error(`Invalid timezone ID: ${this._options.timezoneId}`);
+        throw new Error(`pw3001: Invalid timezone ID: ${this._options.timezoneId}`);
       throw e;
     });
     return this._browser._ffPages.get(targetId)!;
@@ -290,7 +290,7 @@ export class FFBrowserContext extends BrowserContext {
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
       if (!protocolPermission)
-        throw new Error('Unknown permission: ' + permission);
+        throw new Error('pw3001: Unknown permission: ' + permission);
       return protocolPermission;
     });
     await this._browser._connection.send('Browser.grantPermissions', { origin: origin, browserContextId: this._browserContextId, permissions: filtered });

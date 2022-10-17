@@ -102,10 +102,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   private _setupNavigationWaiter(options: { timeout?: number }): Waiter {
     const waiter = new Waiter(this._page!, '');
     if (this._page!.isClosed())
-      waiter.rejectImmediately(new Error('Navigation failed because page was closed!'));
-    waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('Navigation failed because page was closed!'));
-    waiter.rejectOnEvent(this._page!, Events.Page.Crash, new Error('Navigation failed because page crashed!'));
-    waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('Navigating frame was detached!'), frame => frame === this);
+      waiter.rejectImmediately(new Error('pw3002: Navigation failed because page was closed!'));
+    waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('pw3002: Navigation failed because page was closed!'));
+    waiter.rejectOnEvent(this._page!, Events.Page.Crash, new Error('pw3002: Navigation failed because page crashed!'));
+    waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('pw3002: Navigating frame was detached!'), frame => frame === this);
     const timeout = this._page!._timeoutSettings.navigationTimeout(options);
     waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded.`);
     return waiter;
@@ -192,9 +192,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   waitForSelector(selector: string, options?: channels.FrameWaitForSelectorOptions): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
   async waitForSelector(selector: string, options: channels.FrameWaitForSelectorOptions = {}): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
     if ((options as any).visibility)
-      throw new Error('options.visibility is not supported, did you mean options.state?');
+      throw new Error('pw3001: options.visibility is not supported, did you mean options.state?');
     if ((options as any).waitFor && (options as any).waitFor !== 'visible')
-      throw new Error('options.waitFor is not supported, did you mean options.state?');
+      throw new Error('pw3001: options.waitFor is not supported, did you mean options.state?');
     const result = await this._channel.waitForSelector({ selector, ...options });
     return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
   }
@@ -448,6 +448,6 @@ export function verifyLoadState(name: string, waitUntil: LifecycleEvent): Lifecy
   if (waitUntil as unknown === 'networkidle0')
     waitUntil = 'networkidle';
   if (!kLifecycleEvents.has(waitUntil))
-    throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
+    throw new Error(`pw3001: ${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
   return waitUntil;
 }

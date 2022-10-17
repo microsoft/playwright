@@ -94,5 +94,5 @@ export function parseResult(value: channels.SerializedValue): any {
 
 export function assertMaxArguments(count: number, max: number): asserts count {
   if (count > max)
-    throw new Error('Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.');
+    throw new Error('pw3001: Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.');
 }

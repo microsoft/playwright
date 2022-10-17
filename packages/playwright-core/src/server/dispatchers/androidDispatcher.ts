@@ -111,7 +111,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     for (let i = 0; i < text.length; ++i) {
       const code = keyMap.get(text[i].toUpperCase());
       if (code === undefined)
-        throw new Error('No mapping for ' + text[i] + ' found');
+        throw new Error('pw3001: No mapping for ' + text[i] + ' found');
       keyCodes.push(code);
     }
     await Promise.all(keyCodes.map(keyCode => this._object.send('inputPress', { keyCode })));
@@ -119,7 +119,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
 
   async inputPress(params: channels.AndroidDeviceInputPressParams) {
     if (!keyMap.has(params.key))
-      throw new Error('Unknown key: ' + params.key);
+      throw new Error('pw3001: Unknown key: ' + params.key);
     await this._object.send('inputPress', { keyCode: keyMap.get(params.key) });
   }
 

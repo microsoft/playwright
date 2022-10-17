@@ -35,7 +35,7 @@ export async function evaluationScript(fun: Function | string | { path?: string,
     return `(${source})(${argString})`;
   }
   if (arg !== undefined)
-    throw new Error('Cannot evaluate a string with arguments');
+    throw new Error('pw3000: Cannot evaluate a string with arguments');
   if (isString(fun))
     return fun;
   if (fun.content !== undefined)
@@ -46,5 +46,5 @@ export async function evaluationScript(fun: Function | string | { path?: string,
       source += '\n//# sourceURL=' + fun.path.replace(/\n/g, '');
     return source;
   }
-  throw new Error('Either path or content property must be present');
+  throw new Error('pw3001: Either path or content property must be present');
 }

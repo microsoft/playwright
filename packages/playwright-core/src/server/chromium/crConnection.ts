@@ -204,10 +204,10 @@ export class CRSession extends EventEmitter {
 
   async detach() {
     if (!this._connection)
-      throw new Error(`Session already detached. Most likely the ${this._targetType} has been closed.`);
+      throw new Error(`pw3002: Session already detached. Most likely the ${this._targetType} has been closed.`);
     const rootSession = this._connection.session(this._rootSessionId);
     if (!rootSession)
-      throw new Error('Root session has been closed');
+      throw new Error('pw3002: Root session has been closed');
     await rootSession.send('Target.detachFromTarget', { sessionId: this._sessionId });
   }
 

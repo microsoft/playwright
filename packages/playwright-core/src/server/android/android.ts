@@ -264,7 +264,7 @@ export class AndroidDevice extends SdkObject {
   async connectToWebView(socketName: string): Promise<BrowserContext> {
     const webView = this._webViews.get(socketName);
     if (!webView)
-      throw new Error('WebView has been closed');
+      throw new Error('pw3002: WebView has been closed');
     return await this._connectToBrowser(socketName);
   }
 
@@ -346,7 +346,7 @@ export class AndroidDevice extends SdkObject {
     const result = await new Promise<Buffer>(f => socket.once('data', f));
     const code = result.slice(0, 4).toString();
     if (code !== 'OKAY')
-      throw new Error('Could not push: ' + code);
+      throw new Error('pw3000: Could not push: ' + code);
     socket.close();
   }
 

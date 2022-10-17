@@ -51,7 +51,7 @@ function downloadFile(url: string, destinationPath: string, options: DownloadFil
     if (response.statusCode !== 200) {
       let content = '';
       const handleError = () => {
-        const error = new Error(`Download failed: server returned code ${response.statusCode} body '${content}'. URL: ${url}`);
+        const error = new Error(`pw1006: Download failed: server returned code ${response.statusCode} body '${content}'. URL: ${url}`);
         // consume response data to free up memory
         response.resume();
         promise.reject(error);

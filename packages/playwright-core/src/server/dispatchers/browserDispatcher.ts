@@ -61,21 +61,21 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 
   async newBrowserCDPSession(): Promise<channels.BrowserNewBrowserCDPSessionResult> {
     if (!this._object.options.isChromium)
-      throw new Error(`CDP session is only available in Chromium`);
+      throw new Error(`pw1004: CDP session is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     return { session: new CDPSessionDispatcher(this, await crBrowser.newBrowserCDPSession()) };
   }
 
   async startTracing(params: channels.BrowserStartTracingParams): Promise<void> {
     if (!this._object.options.isChromium)
-      throw new Error(`Tracing is only available in Chromium`);
+      throw new Error(`pw1004: Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     await crBrowser.startTracing(params.page ? (params.page as PageDispatcher)._object : undefined, params);
   }
 
   async stopTracing(): Promise<channels.BrowserStopTracingResult> {
     if (!this._object.options.isChromium)
-      throw new Error(`Tracing is only available in Chromium`);
+      throw new Error(`pw1004: Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     return { binary: await crBrowser.stopTracing() };
   }
@@ -118,21 +118,21 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
 
   async newBrowserCDPSession(): Promise<channels.BrowserNewBrowserCDPSessionResult> {
     if (!this._object.options.isChromium)
-      throw new Error(`CDP session is only available in Chromium`);
+      throw new Error(`pw1004: CDP session is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     return { session: new CDPSessionDispatcher(this as any as BrowserDispatcher, await crBrowser.newBrowserCDPSession()) };
   }
 
   async startTracing(params: channels.BrowserStartTracingParams): Promise<void> {
     if (!this._object.options.isChromium)
-      throw new Error(`Tracing is only available in Chromium`);
+      throw new Error(`pw1004: Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     await crBrowser.startTracing(params.page ? (params.page as PageDispatcher)._object : undefined, params);
   }
 
   async stopTracing(): Promise<channels.BrowserStopTracingResult> {
     if (!this._object.options.isChromium)
-      throw new Error(`Tracing is only available in Chromium`);
+      throw new Error(`pw1004: Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     return { binary: await crBrowser.stopTracing() };
   }

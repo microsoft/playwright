@@ -40,11 +40,11 @@ function downloadFileOutOfProcess(url: string, destinationPath: string, options:
   });
   cp.on('exit', code => {
     if (code !== 0) {
-      promise.resolve({ error: new Error(`Download failure, code=${code}`) });
+      promise.resolve({ error: new Error(`pw1006: Download failure, code=${code}`) });
       return;
     }
     if (!fs.existsSync(destinationPath))
-      promise.resolve({ error: new Error(`Download failure, ${destinationPath} does not exist`) });
+      promise.resolve({ error: new Error(`pw1006: Download failure, ${destinationPath} does not exist`) });
     else
       promise.resolve({ error: null });
   });

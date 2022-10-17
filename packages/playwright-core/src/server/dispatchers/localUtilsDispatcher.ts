@@ -291,7 +291,7 @@ class HarBackend {
       }
 
       if (visited.has(entry))
-        throw new Error(`Found redirect cycle for ${url}`);
+        throw new Error(`pw3000: Found redirect cycle for ${url}`);
 
       visited.add(entry);
 
@@ -402,7 +402,7 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string): Promise
     timeout: progress.timeUntilDeadline(),
     headers: { 'User-Agent': getUserAgent() },
   }, async (params: HTTPRequestParams, response: http.IncomingMessage) => {
-    return new Error(`Unexpected status ${response.statusCode} when connecting to ${fetchUrl.toString()}.\n` +
+    return new Error(`pw1003: Unexpected status ${response.statusCode} when connecting to ${fetchUrl.toString()}.\n` +
         `This does not look like a Playwright server, try connecting via ws://.`);
   });
   progress.throwIfAborted();

@@ -24,17 +24,17 @@ kSupportedAttributes.sort();
 
 function validateSupportedRole(attr: string, roles: string[], role: string) {
   if (!roles.includes(role))
-    throw new Error(`"${attr}" attribute is only supported for roles: ${roles.slice().sort().map(role => `"${role}"`).join(', ')}`);
+    throw new Error(`pw3003: "${attr}" attribute is only supported for roles: ${roles.slice().sort().map(role => `"${role}"`).join(', ')}`);
 }
 
 function validateSupportedValues(attr: AttributeSelectorPart, values: any[]) {
   if (attr.op !== '<truthy>' && !values.includes(attr.value))
-    throw new Error(`"${attr.name}" must be one of ${values.map(v => JSON.stringify(v)).join(', ')}`);
+    throw new Error(`pw3003: "${attr.name}" must be one of ${values.map(v => JSON.stringify(v)).join(', ')}`);
 }
 
 function validateSupportedOp(attr: AttributeSelectorPart, ops: AttributeSelectorOperator[]) {
   if (!ops.includes(attr.op))
-    throw new Error(`"${attr.name}" does not support "${attr.op}" matcher`);
+    throw new Error(`pw3003: "${attr.name}" does not support "${attr.op}" matcher`);
 }
 
 function validateAttributes(attrs: AttributeSelectorPart[], role: string) {
@@ -80,7 +80,7 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string) {
         if (typeof attr.value === 'string')
           attr.value = +attr.value;
         if (attr.op !== '=' || typeof attr.value !== 'number' || Number.isNaN(attr.value))
-          throw new Error(`"level" attribute must be compared to a number`);
+          throw new Error(`pw3003: "level" attribute must be compared to a number`);
         break;
       }
       case 'disabled': {
@@ -90,9 +90,9 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string) {
       }
       case 'name': {
         if (attr.op === '<truthy>')
-          throw new Error(`"name" attribute must have a value`);
+          throw new Error(`pw3003: "name" attribute must have a value`);
         if (typeof attr.value !== 'string' && !(attr.value instanceof RegExp))
-          throw new Error(`"name" attribute must be a string or a regular expression`);
+          throw new Error(`pw3003: "name" attribute must be a string or a regular expression`);
         break;
       }
       case 'include-hidden': {
@@ -101,7 +101,7 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string) {
         break;
       }
       default: {
-        throw new Error(`Unknown attribute "${attr.name}", must be one of ${kSupportedAttributes.map(a => `"${a}"`).join(', ')}.`);
+        throw new Error(`pw3003: Unknown attribute "${attr.name}", must be one of ${kSupportedAttributes.map(a => `"${a}"`).join(', ')}.`);
       }
     }
   }
@@ -112,7 +112,7 @@ export const RoleEngine: SelectorEngine = {
     const parsed = parseAttributeSelector(selector, true);
     const role = parsed.name.toLowerCase();
     if (!role)
-      throw new Error(`Role must not be empty`);
+      throw new Error(`pw3003: Role must not be empty`);
     validateAttributes(parsed.attributes, role);
 
     const hiddenCache = new Map<Element, boolean>();

@@ -403,9 +403,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         waiter.log(logLine);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.Page.Crash)
-        waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
+        waiter.rejectOnEvent(this, Events.Page.Crash, new Error('pw3002: Page crashed'));
       if (event !== Events.Page.Close)
-        waiter.rejectOnEvent(this, Events.Page.Close, new Error('Page closed'));
+        waiter.rejectOnEvent(this, Events.Page.Close, new Error('pw3002: Page closed'));
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;

@@ -59,7 +59,7 @@ export class PipeTransport {
 
   send(message: string) {
     if (this._closed)
-      throw new Error('Pipe has been closed');
+      throw new Error('pw3002: Pipe has been closed');
     const data = Buffer.from(message, 'utf-8');
     const dataLength = Buffer.alloc(4);
     if (this._endian === 'be')

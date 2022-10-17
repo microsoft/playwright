@@ -20,11 +20,11 @@ import { debug } from '../utilsBundle';
 
 const repoName = process.env.GITHUB_AGENT_REPO;
 if (!repoName)
-  throw new Error('GITHUB_AGENT_REPO is not specified.');
+  throw new Error('pw3000: GITHUB_AGENT_REPO is not specified.');
 
 const repoAccessToken = process.env.GITHUB_AGENT_REPO_ACCESS_TOKEN;
 if (!repoAccessToken)
-  throw new Error('GITHUB_AGENT_REPO_ACCESS_TOKEN is not specified.');
+  throw new Error('pw3000: GITHUB_AGENT_REPO_ACCESS_TOKEN is not specified.');
 
 const log = debug(`pw:grid:server`);
 

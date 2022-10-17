@@ -135,7 +135,7 @@ export class Keyboard {
   async _ensureModifiers(modifiers: types.KeyboardModifier[]): Promise<types.KeyboardModifier[]> {
     for (const modifier of modifiers) {
       if (!kModifiers.includes(modifier))
-        throw new Error('Unknown modifier ' + modifier);
+        throw new Error('pw3001: Unknown modifier ' + modifier);
     }
     const restore: types.KeyboardModifier[] = Array.from(this._pressedModifiers);
     const promises: Promise<void>[] = [];
@@ -315,7 +315,7 @@ export class Touchscreen {
 
   async tap(x: number, y: number) {
     if (!this._page._browserContext._options.hasTouch)
-      throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
+      throw new Error('pw2010: hasTouch must be enabled on the browser context before using the touchscreen.');
     await this._raw.tap(x, y, this._page.keyboard._modifiers());
     await this._page._doSlowMo();
   }

@@ -55,7 +55,7 @@ export class PipeTransport implements ConnectionTransport {
 
   send(message: ProtocolRequest) {
     if (this._closed)
-      throw new Error('Pipe has been closed');
+      throw new Error('pw3002: Pipe has been closed');
     this._pipeWrite.write(JSON.stringify(message));
     this._pipeWrite.write('\0');
   }

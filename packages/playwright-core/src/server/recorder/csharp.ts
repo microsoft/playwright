@@ -45,7 +45,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       this.name = 'NUnit';
       this.id = 'csharp-nunit';
     } else {
-      throw new Error(`Unknown C# language mode: ${mode}`);
+      throw new Error(`pw3001: Unknown C# language mode: ${mode}`);
     }
     this._mode = mode;
   }

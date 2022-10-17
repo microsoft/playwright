@@ -53,9 +53,9 @@ export class WebKit extends BrowserType {
     const { args = [], proxy, headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
-      throw new Error('Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --user-data-dir argument');
+      throw new Error('pw3001: Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --user-data-dir argument');
     if (args.find(arg => !arg.startsWith('-')))
-      throw new Error('Arguments can not specify page to be opened');
+      throw new Error('pw3001: Arguments can not specify page to be opened');
     const webkitArguments = ['--inspector-pipe'];
     if (process.platform === 'win32')
       webkitArguments.push('--disable-accelerated-compositing');

@@ -79,7 +79,7 @@ export async function installDependenciesWindows(targets: Set<DependencyGroup>, 
     }
     const { code } = await spawnAsync(command, args, { cwd: BIN_DIRECTORY, stdio: 'inherit' });
     if (code !== 0)
-      throw new Error('Failed to install windows dependencies!');
+      throw new Error('pw1006: Failed to install windows dependencies!');
   }
 }
 
@@ -115,7 +115,7 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
     console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
   const child = childProcess.spawn(command, args, { stdio: 'inherit' });
   await new Promise<void>((resolve, reject) => {
-    child.on('exit', (code: number) => code === 0 ? resolve() : reject(new Error(`Installation process exited with code: ${code}`)));
+    child.on('exit', (code: number) => code === 0 ? resolve() : reject(new Error(`pw1006: Installation process exited with code: ${code}`)));
     child.on('error', reject);
   });
 }
@@ -172,12 +172,12 @@ export async function validateDependenciesWindows(windowsExeAndDllDirectories: s
       `    ${[...missingDeps].join('\n    ')}`,
       ``);
 
-  const message = `Host system is missing dependencies!\n\n${details.join('\n')}`;
+  const message = `pw1011: Host system is missing dependencies!\n\n${details.join('\n')}`;
   if (isSupportedWindowsVersion()) {
     throw new Error(message);
   } else {
     // eslint-disable-next-line no-console
-    console.warn(`WARNING: running on unsupported windows version!`);
+    console.warn(`WARNING: pw1001: running on unsupported windows version!`);
     // eslint-disable-next-line no-console
     console.warn(message);
   }
@@ -218,7 +218,7 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   const maybeSudo = (process.getuid() !== 0) && os.platform() !== 'win32' ? 'sudo ' : '';
   const dockerInfo = readDockerVersionSync();
   const errorLines = [
-    `Host system is missing dependencies to run browsers.`,
+    `pw1011: Host system is missing dependencies to run browsers.`,
   ];
   // Ignore patch versions when comparing docker container version and Playwright version:
   // we **NEVER** roll browsers in patch releases, so native dependencies do not change.

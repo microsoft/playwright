@@ -129,7 +129,7 @@ export class WKRouteImpl implements network.RouteDelegate {
 
   async fulfill(response: types.NormalizedFulfillResponse) {
     if (300 <= response.status && response.status < 400)
-      throw new Error('Cannot fulfill with redirect status: ' + response.status);
+      throw new Error('pw3001: Cannot fulfill with redirect status: ' + response.status);
 
     await this._requestInterceptedPromise;
     // In certain cases, protocol will return error if the request was already canceled

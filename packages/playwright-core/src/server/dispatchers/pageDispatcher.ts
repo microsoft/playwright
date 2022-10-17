@@ -252,7 +252,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async pdf(params: channels.PagePdfParams, metadata: CallMetadata): Promise<channels.PagePdfResult> {
     if (!this._page.pdf)
-      throw new Error('PDF generation is only supported for Headless Chromium');
+      throw new Error('pw1004: PDF generation is only supported for Headless Chromium');
     const buffer = await this._page.pdf(params);
     return { pdf: buffer };
   }

@@ -114,7 +114,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     const wellFormed = typeof s === 'object' && s &&
       (Array.isArray(s) || ('simples' in s) && (s.simples.length));
     if (!wellFormed)
-      throw new Error(`Malformed selector "${s}"`);
+      throw new Error(`pw3003: Malformed selector "${s}"`);
     return s as CSSComplexSelector | CSSComplexSelectorList;
   }
 
@@ -288,7 +288,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
         }
         return false;
       }
-      throw new Error(`Unsupported combinator "${combinator}"`);
+      throw new Error(`pw3003: Unsupported combinator "${combinator}"`);
     });
   }
 
@@ -297,7 +297,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
       return this._callMatches(engine, element, args, context);
     if (engine.query)
       return this._callQuery(engine, args, context).includes(element);
-    throw new Error(`Selector engine should implement "matches" or "query"`);
+    throw new Error(`pw3000: Selector engine should implement "matches" or "query"`);
   }
 
   private _queryEngine(engine: SelectorEngine, context: QueryContext, args: CSSFunctionArgument[]): Element[] {
@@ -305,7 +305,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
       return this._callQuery(engine, args, context);
     if (engine.matches)
       return this._queryCSS(context, '*').filter(element => this._callMatches(engine, element, args, context));
-    throw new Error(`Selector engine should implement "matches" or "query"`);
+    throw new Error(`pw3000: Selector engine should implement "matches" or "query"`);
   }
 
   private _callMatches(engine: SelectorEngine, element: Element, args: CSSFunctionArgument[], context: QueryContext): boolean {
@@ -346,7 +346,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   private _getEngine(name: string): SelectorEngine {
     const engine = this._engines.get(name);
     if (!engine)
-      throw new Error(`Unknown selector engine "${name}"`);
+      throw new Error(`pw3003: Unknown selector engine "${name}"`);
     return engine;
   }
 }
@@ -354,13 +354,13 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
 const isEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length === 0)
-      throw new Error(`"is" engine expects non-empty selector list`);
+      throw new Error(`pw3003: "is" engine expects non-empty selector list`);
     return args.some(selector => evaluator.matches(element, selector, context));
   },
 
   query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
     if (args.length === 0)
-      throw new Error(`"is" engine expects non-empty selector list`);
+      throw new Error(`pw3003: "is" engine expects non-empty selector list`);
     let elements: Element[] = [];
     for (const arg of args)
       elements = elements.concat(evaluator.query(context, arg));
@@ -371,7 +371,7 @@ const isEngine: SelectorEngine = {
 const hasEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length === 0)
-      throw new Error(`"has" engine expects non-empty selector list`);
+      throw new Error(`pw3003: "has" engine expects non-empty selector list`);
     return evaluator.query({ ...context, scope: element }, args).length > 0;
   },
 
@@ -382,7 +382,7 @@ const hasEngine: SelectorEngine = {
 const scopeEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 0)
-      throw new Error(`"scope" engine expects no arguments`);
+      throw new Error(`pw3003: "scope" engine expects no arguments`);
     if (context.scope.nodeType === 9 /* Node.DOCUMENT_NODE */)
       return element === (context.scope as Document).documentElement;
     return element === context.scope;
@@ -390,7 +390,7 @@ const scopeEngine: SelectorEngine = {
 
   query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
     if (args.length !== 0)
-      throw new Error(`"scope" engine expects no arguments`);
+      throw new Error(`pw3003: "scope" engine expects no arguments`);
     if (context.scope.nodeType === 9 /* Node.DOCUMENT_NODE */) {
       const root = (context.scope as Document).documentElement;
       return root ? [root] : [];
@@ -404,7 +404,7 @@ const scopeEngine: SelectorEngine = {
 const notEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length === 0)
-      throw new Error(`"not" engine expects non-empty selector list`);
+      throw new Error(`pw3003: "not" engine expects non-empty selector list`);
     return !evaluator.matches(element, args, context);
   },
 };
@@ -422,7 +422,7 @@ const lightEngine: SelectorEngine = {
 const visibleEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length)
-      throw new Error(`"visible" engine expects no arguments`);
+      throw new Error(`pw3003: "visible" engine expects no arguments`);
     return isElementVisible(element);
   }
 };
@@ -430,7 +430,7 @@ const visibleEngine: SelectorEngine = {
 const textEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 1 || typeof args[0] !== 'string')
-      throw new Error(`"text" engine expects a single string`);
+      throw new Error(`pw3003: "text" engine expects a single string`);
     const matcher = createLaxTextMatcher(args[0]);
     return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) === 'self';
   },
@@ -439,7 +439,7 @@ const textEngine: SelectorEngine = {
 const textIsEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 1 || typeof args[0] !== 'string')
-      throw new Error(`"text-is" engine expects a single string`);
+      throw new Error(`pw3003: "text-is" engine expects a single string`);
     const matcher = createStrictTextMatcher(args[0]);
     return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) !== 'none';
   },
@@ -448,7 +448,7 @@ const textIsEngine: SelectorEngine = {
 const textMatchesEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
-      throw new Error(`"text-matches" engine expects a regexp body and optional regexp flags`);
+      throw new Error(`pw3003: "text-matches" engine expects a regexp body and optional regexp flags`);
     const matcher = createRegexTextMatcher(args[0], args.length === 2 ? args[1] : undefined);
     return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) === 'self';
   },
@@ -457,7 +457,7 @@ const textMatchesEngine: SelectorEngine = {
 const hasTextEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 1 || typeof args[0] !== 'string')
-      throw new Error(`"has-text" engine expects a single string`);
+      throw new Error(`pw3003: "has-text" engine expects a single string`);
     if (shouldSkipForTextMatching(element))
       return false;
     const matcher = createLaxTextMatcher(args[0]);
@@ -471,7 +471,7 @@ function createLayoutEngine(name: LayoutSelectorName): SelectorEngine {
       const maxDistance = args.length && typeof args[args.length - 1] === 'number' ? args[args.length - 1] : undefined;
       const queryArgs = maxDistance === undefined ? args : args.slice(0, args.length - 1);
       if (args.length < 1 + (maxDistance === undefined ? 0 : 1))
-        throw new Error(`"${name}" engine expects a selector list and optional maximum distance in pixels`);
+        throw new Error(`pw3003: "${name}" engine expects a selector list and optional maximum distance in pixels`);
       const inner = evaluator.query(context, queryArgs);
       const score = layoutSelectorScore(name, element, inner, maxDistance);
       if (score === undefined)
@@ -486,9 +486,9 @@ const nthMatchEngine: SelectorEngine = {
   query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
     let index = args[args.length - 1];
     if (args.length < 2)
-      throw new Error(`"nth-match" engine expects non-empty selector list and an index argument`);
+      throw new Error(`pw3003: "nth-match" engine expects non-empty selector list and an index argument`);
     if (typeof index !== 'number' || index < 1)
-      throw new Error(`"nth-match" engine expects a one-based index as the last argument`);
+      throw new Error(`pw3003: "nth-match" engine expects a one-based index as the last argument`);
     const elements = isEngine.query!(context, args.slice(0, args.length - 1), evaluator);
     index--;  // one-based
     return index < elements.length ? [elements[index]] : [];

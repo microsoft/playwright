@@ -178,12 +178,12 @@ export abstract class BrowserType extends SdkObject {
     let executable: string;
     if (executablePath) {
       if (!(await existsAsync(executablePath)))
-        throw new Error(`Failed to launch ${this._name} because executable doesn't exist at ${executablePath}`);
+        throw new Error(`pw1009: Failed to launch ${this._name} because executable doesn't exist at ${executablePath}`);
       executable = executablePath;
     } else {
       const registryExecutable = registry.findExecutable(options.channel || this._name);
       if (!registryExecutable || registryExecutable.browserName !== this._name)
-        throw new Error(`Unsupported ${this._name} channel "${options.channel}"`);
+        throw new Error(`pw3001: Unsupported ${this._name} channel "${options.channel}"`);
       executable = registryExecutable.executablePathOrDie(this._playwrightOptions.sdkLanguage);
       await registryExecutable.validateHostRequirements(this._playwrightOptions.sdkLanguage);
     }
@@ -261,11 +261,11 @@ export abstract class BrowserType extends SdkObject {
   }
 
   async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number }, timeout?: number): Promise<Browser> {
-    throw new Error('CDP connections are only supported by Chromium');
+    throw new Error('pw1004: CDP connections are only supported by Chromium');
   }
 
   async _launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<Browser> {
-    throw new Error('Connecting to SELENIUM_REMOTE_URL is only supported by Chromium');
+    throw new Error('pw1004: Connecting to SELENIUM_REMOTE_URL is only supported by Chromium');
   }
 
   private _validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {

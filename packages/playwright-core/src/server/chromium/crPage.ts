@@ -145,7 +145,7 @@ export class CRPage implements PageDelegate {
     while (!this._sessions.has(frame._id)) {
       const parent = frame.parentFrame();
       if (!parent)
-        throw new Error(`Frame has been detached.`);
+        throw new Error(`pw3002: Frame has been detached.`);
       frame = parent;
     }
     return this._sessions.get(frame._id)!;
@@ -336,7 +336,7 @@ export class CRPage implements PageDelegate {
   async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
     const frame = await handle.ownerFrame();
     if (!frame)
-      throw new Error('Cannot set input files to detached input element');
+      throw new Error('pw2004: Cannot set input files to detached input element');
     const parentSession = this._sessionForFrame(frame);
     await parentSession._client.send('DOM.setFileInputFiles', {
       objectId: handle._objectId,
@@ -367,7 +367,7 @@ export class CRPage implements PageDelegate {
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
     let parent = frame.parentFrame();
     if (!parent)
-      throw new Error('Frame has been detached.');
+      throw new Error('pw3002: Frame has been detached.');
     const parentSession = this._sessionForFrame(parent);
     const { backendNodeId } = await parentSession._client.send('DOM.getFrameOwner', { frameId: frame._id }).catch(e => {
       if (e instanceof Error && e.message.includes('Frame with the given id was not found.'))
@@ -376,7 +376,7 @@ export class CRPage implements PageDelegate {
     });
     parent = frame.parentFrame();
     if (!parent)
-      throw new Error('Frame has been detached.');
+      throw new Error('pw3002: Frame has been detached.');
     return parentSession._adoptBackendNodeId(backendNodeId, await parent._mainContext());
   }
 }
@@ -419,7 +419,7 @@ class FrameSession {
       this._firstNonInitialNavigationCommittedReject = r;
     });
     client.once(CRSessionEvents.Disconnected, () => {
-      this._firstNonInitialNavigationCommittedReject(new Error('Page closed'));
+      this._firstNonInitialNavigationCommittedReject(new Error('pw3002: Page closed'));
     });
   }
 
@@ -900,7 +900,7 @@ class FrameSession {
     if (!originPage) {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
-      this._firstNonInitialNavigationCommittedReject(new Error('Starting new page download'));
+      this._firstNonInitialNavigationCommittedReject(new Error('pw3000: Starting new page download'));
     }
   }
 
@@ -1235,7 +1235,7 @@ async function emulateTimezone(session: CRSession, timezoneId: string) {
     if (exception.message.includes('Timezone override is already in effect'))
       return;
     if (exception.message.includes('Invalid timezone'))
-      throw new Error(`Invalid timezone ID: ${timezoneId}`);
+      throw new Error(`pw3001: Invalid timezone ID: ${timezoneId}`);
     throw exception;
   }
 }

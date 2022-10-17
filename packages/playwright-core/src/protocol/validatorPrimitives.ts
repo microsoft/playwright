@@ -16,7 +16,11 @@
 
 import { isUnderTest } from '../utils';
 
-export class ValidationError extends Error {}
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(`pw3001: ` + message);
+  }
+}
 export type Validator = (arg: any, path: string, context: ValidatorContext) => any;
 export type ValidatorContext = {
   tChannelImpl: (names: '*' | string[], arg: any, path: string, context: ValidatorContext) => any,

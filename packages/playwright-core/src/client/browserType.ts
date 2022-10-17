@@ -25,7 +25,7 @@ import type { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
 import { assert, headersObjectToArray, monotonicTime } from '../utils';
 import type * as api from '../../types/types';
-import { kBrowserClosedError } from '../common/errors';
+import { kBrowserClosedError, TimeoutError } from '../common/errors';
 import { raceAgainstTimeout } from '../utils/timeoutRunner';
 import type { Playwright } from './playwright';
 
@@ -59,7 +59,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
   executablePath(): string {
     if (!this._initializer.executablePath)
-      throw new Error('Browser is not supported on current platform');
+      throw new Error('pw1001: Browser is not supported on current platform');
     return this._initializer.executablePath;
   }
 
@@ -184,7 +184,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         const playwright = await connection!.initializePlaywright();
         if (!playwright._initializer.preLaunchedBrowser) {
           closePipe();
-          throw new Error('Malformed endpoint. Did you use launchServer method?');
+          throw new Error('pw1003: Malformed endpoint. Did you use launchServer method?');
         }
         playwright._setSelectors(this._playwright.selectors);
         browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
@@ -198,7 +198,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         return result.result;
       } else {
         closePipe();
-        throw new Error(`Timeout ${params.timeout}ms exceeded`);
+        throw new TimeoutError(`Timeout ${params.timeout}ms exceeded`);
       }
     });
   }
@@ -215,7 +215,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
   async _connectOverCDP(endpointURL: string, params: api.ConnectOverCDPOptions = {}): Promise<Browser>  {
     if (this.name() !== 'chromium')
-      throw new Error('Connecting over CDP is only supported in Chromium.');
+      throw new Error('pw1004: Connecting over CDP is only supported in Chromium.');
     const headers = params.headers ? headersObjectToArray(params.headers) : undefined;
     const result = await this._channel.connectOverCDP({
       endpointURL,

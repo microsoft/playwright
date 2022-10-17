@@ -22,6 +22,7 @@ import { HttpsProxyAgent } from '../utilsBundle';
 import * as URL from 'url';
 import type { URLMatch } from './types';
 import { isString, constructURLBasedOnBaseURL, isRegExp } from '../utils';
+import { TimeoutError } from './errors';
 
 export async function createSocket(host: string, port: number): Promise<net.Socket> {
   return new Promise((resolve, reject) => {
@@ -80,7 +81,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   request.on('error', onError);
   if (timeout !== undefined) {
     const rejectOnTimeout = () =>  {
-      onError(new Error(`Request to ${params.url} timed out after ${timeout}ms`));
+      onError(new TimeoutError(`Request to ${params.url} timed out after ${timeout}ms`));
       request.abort();
     };
     if (timeout <= 0) {
@@ -96,7 +97,7 @@ export function fetchData(params: HTTPRequestParams, onError?: (params: HTTPRequ
   return new Promise((resolve, reject) => {
     httpRequest(params, async response => {
       if (response.statusCode !== 200) {
-        const error = onError ? await onError(params, response) : new Error(`fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`);
+        const error = onError ? await onError(params, response) : new Error(`pw3000: fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`);
         reject(error);
         return;
       }
@@ -125,7 +126,7 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
   if (typeof match === 'string')
     return url.pathname === match;
   if (typeof match !== 'function')
-    throw new Error('url parameter should be string, RegExp or function');
+    throw new Error('pw3001: url parameter should be string, RegExp or function');
   return match(url);
 }
 

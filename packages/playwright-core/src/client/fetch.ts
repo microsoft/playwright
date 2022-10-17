@@ -169,7 +169,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         } else if (typeof options.data === 'object' || typeof options.data === 'number' || typeof options.data === 'boolean') {
           jsonData = options.data;
         } else {
-          throw new Error(`Unexpected 'data' type`);
+          throw new Error(`pw3001: Unexpected 'data' type`);
         }
       } else if (options.form) {
         formData = objectToArray(options.form);
@@ -180,7 +180,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
           if (isFilePayload(value)) {
             const payload = value as FilePayload;
             if (!Buffer.isBuffer(payload.buffer))
-              throw new Error(`Unexpected buffer type of 'data.${name}'`);
+              throw new Error(`pw3001: Unexpected buffer type of 'data.${name}'`);
             multipartData.push({ name, file: filePayloadToJson(payload) });
           } else if (value instanceof fs.ReadStream) {
             multipartData.push({ name, file: await readStreamToJson(value as fs.ReadStream) });
@@ -258,11 +258,11 @@ export class APIResponse implements api.APIResponse {
     try {
       const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() });
       if (result.binary === undefined)
-        throw new Error('Response has been disposed');
+        throw new Error('pw3002: Response has been disposed');
       return result.binary;
     } catch (e) {
       if (e.message.includes(kBrowserOrContextClosedError))
-        throw new Error('Response has been disposed');
+        throw new Error('pw3002: Response has been disposed');
       throw e;
     }
   }

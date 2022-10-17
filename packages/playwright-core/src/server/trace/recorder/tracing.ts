@@ -111,11 +111,11 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   async start(options: TracerOptions) {
     if (this._isStopping)
-      throw new Error('Cannot start tracing while stopping');
+      throw new Error('pw3001: Cannot start tracing while stopping');
     if (this._state) {
       const o = this._state.options;
       if (o.name !== options.name || !o.screenshots !== !options.screenshots || !o.snapshots !== !options.snapshots)
-        throw new Error('Tracing has been already started with different options');
+        throw new Error('pw3001: Tracing has been already started with different options');
       return;
     }
     // TODO: passing the same name for two contexts makes them write into a single file
@@ -139,9 +139,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       await this.stopChunk({ mode: 'doNotSave' });
 
     if (!this._state)
-      throw new Error('Must start tracing before starting a new chunk');
+      throw new Error('pw3001: Must start tracing before starting a new chunk');
     if (this._isStopping)
-      throw new Error('Cannot start a trace chunk while stopping');
+      throw new Error('pw3001: Cannot start a trace chunk while stopping');
 
     const state = this._state;
     const suffix = state.filesCount ? `-${state.filesCount}` : ``;
@@ -183,9 +183,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (!this._state)
       return;
     if (this._isStopping)
-      throw new Error(`Tracing is already stopping`);
+      throw new Error(`pw3001: Tracing is already stopping`);
     if (this._state.recording)
-      throw new Error(`Must stop trace file before stopping tracing`);
+      throw new Error(`pw3001: Must stop trace file before stopping tracing`);
     this._harTracer.stop();
     await this._writeChain;
     this._state = undefined;
@@ -211,13 +211,13 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] | undefined }> {
     if (this._isStopping)
-      throw new Error(`Tracing is already stopping`);
+      throw new Error(`pw3001: Tracing is already stopping`);
     this._isStopping = true;
 
     if (!this._state || !this._state.recording) {
       this._isStopping = false;
       if (params.mode !== 'doNotSave')
-        throw new Error(`Must start tracing before stopping`);
+        throw new Error(`pw3001: Must start tracing before stopping`);
       return { artifact: null, sourceEntries: [] };
     }
 

@@ -149,7 +149,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
   async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions = {}) {
     const frame = await this.ownerFrame();
     if (!frame)
-      throw new Error('Cannot set input files to detached element');
+      throw new Error('pw2004: Cannot set input files to detached element');
     const converted = await convertInputFiles(files, frame.page().context());
     if (converted.files) {
       await this._elementChannel.setInputFiles({ files: converted.files, ...options });
@@ -268,7 +268,7 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
   const sizeLimit = 50 * 1024 * 1024;
   const hasLargeBuffer = items.find(item => typeof item === 'object' && item.buffer && item.buffer.byteLength > sizeLimit);
   if (hasLargeBuffer)
-    throw new Error('Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
+    throw new Error('pw2005: Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
 
   const stats = await Promise.all(items.filter(isString).map(item => fs.promises.stat(item as string)));
   const hasLargeFile = !!stats.find(s => s.size > sizeLimit);
@@ -310,7 +310,7 @@ export function determineScreenshotType(options: { path?: string, type?: 'png' |
       return 'png';
     else if (mimeType === 'image/jpeg')
       return 'jpeg';
-    throw new Error(`path: unsupported mime type "${mimeType}"`);
+    throw new Error(`pw2006: path: unsupported mime type "${mimeType}"`);
   }
   return options.type;
 }

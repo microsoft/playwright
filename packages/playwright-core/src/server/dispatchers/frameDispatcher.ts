@@ -216,7 +216,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Pa
     let { localPaths } = params;
     if (!localPaths) {
       if (!params.streams)
-        throw new Error('Neither localPaths nor streams is specified');
+        throw new Error('pw3001: Neither localPaths nor streams is specified');
       localPaths = params.streams.map(c => (c as WritableStreamDispatcher).path());
     }
     for (const p of localPaths)

@@ -84,7 +84,7 @@ export class PlaywrightServer {
       server.listen(port, () => {
         const address = server.address();
         if (!address) {
-          reject(new Error('Could not bind server socket'));
+          reject(new Error('pw1007: Could not bind server socket'));
           return;
         }
         const wsEndpoint = typeof address === 'string' ? `${address}${this._options.path}` : `ws://127.0.0.1:${address.port}${this._options.path}`;

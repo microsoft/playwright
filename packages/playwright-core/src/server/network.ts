@@ -316,7 +316,7 @@ export class Route extends SdkObject {
       const newUrl = new URL(overrides.url);
       const oldUrl = new URL(this._request.url());
       if (oldUrl.protocol !== newUrl.protocol)
-        throw new Error('New URL must have same protocol as overridden URL');
+        throw new Error('pw3001: New URL must have same protocol as overridden URL');
     }
     this._request._setOverrides(overrides);
     await this._delegate.continue(this._request, overrides);
@@ -483,7 +483,7 @@ export class Response extends SdkObject {
     if (!this._contentPromise) {
       this._contentPromise = this._finishedPromise.then(async () => {
         if (this._status >= 300 && this._status <= 399)
-          throw new Error('Response body is unavailable for redirect responses');
+          throw new Error('pw3000: Response body is unavailable for redirect responses');
         return this._getResponseBodyCallback();
       });
     }

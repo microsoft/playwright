@@ -775,7 +775,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     // If we end up in the same frame => use the scope again, line above was noop.
     const handle = pair ? await this._page.selectors.query(pair.frame, pair.info, this._frame === pair.frame ? this : undefined) : null;
     if (!handle)
-      throw new Error(`Error: failed to find element matching selector "${selector}"`);
+      throw new Error(`pw2003: failed to find element matching selector "${selector}"`);
     const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     handle.dispose();
     return result;
@@ -784,7 +784,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async evalOnSelectorAllAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const pair = await this._frame.resolveFrameForSelectorNoWait(selector, {}, this);
     if (!pair)
-      throw new Error(`Error: failed to find frame for selector "${selector}"`);
+      throw new Error(`pw2003: failed to find frame for selector "${selector}"`);
     const { frame, info } = pair;
     // If we end up in the same frame => use the scope again, line above was noop.
     const arrayHandle = await this._page.selectors._queryArrayInMainWorld(frame, info, this._frame === frame ? this : undefined);
@@ -959,7 +959,7 @@ export class InjectedScriptPollHandler<T> {
 
 export function throwRetargetableDOMError<T>(result: T | 'error:notconnected'): T {
   if (result === 'error:notconnected')
-    throw new Error('Element is not attached to the DOM');
+    throw new Error('pw2004: Element is not attached to the DOM');
   return result;
 }
 
@@ -1043,4 +1043,4 @@ function joinWithAnd(strings: string[]): string {
   return strings.slice(0, strings.length - 1).join(', ') + ' and ' + strings[strings.length - 1];
 }
 
-export const kUnableToAdoptErrorMessage = 'Unable to adopt element handle from a different document';
+export const kUnableToAdoptErrorMessage = 'pw3000: Unable to adopt element handle from a different document';

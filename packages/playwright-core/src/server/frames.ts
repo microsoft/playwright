@@ -621,9 +621,9 @@ export class Frame extends SdkObject {
 
   async raceNavigationAction(progress: Progress, options: types.GotoOptions, action: () => Promise<network.Response | null>): Promise<network.Response | null> {
     return Promise.race([
-      this._page._disconnectedPromise.then(() => { throw new Error('Navigation failed because page was closed!'); }),
-      this._page._crashedPromise.then(() => { throw new Error('Navigation failed because page crashed!'); }),
-      this._detachedPromise.then(() => { throw new Error('Navigating frame was detached!'); }),
+      this._page._disconnectedPromise.then(() => { throw new Error('pw3002: Navigation failed because page was closed!'); }),
+      this._page._crashedPromise.then(() => { throw new Error('pw3002: Navigation failed because page crashed!'); }),
+      this._detachedPromise.then(() => { throw new Error('pw3002: Navigating frame was detached!'); }),
       action().catch(e => {
         if (e instanceof NavigationAbortedError && e.documentId) {
           const data = this._redirectedNavigations.get(e.documentId);
@@ -665,7 +665,7 @@ export class Frame extends SdkObject {
     let referer = refererHeader ? refererHeader.value : undefined;
     if (options.referer !== undefined) {
       if (referer !== undefined && referer !== options.referer)
-        throw new Error('"referer" is already specified as extra HTTP header');
+        throw new Error('pw3001: "referer" is already specified as extra HTTP header');
       referer = options.referer;
     }
     url = helper.completeUserURL(url);
@@ -790,12 +790,12 @@ export class Frame extends SdkObject {
   async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions & { omitReturnValue?: boolean }, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
     const controller = new ProgressController(metadata, this);
     if ((options as any).visibility)
-      throw new Error('options.visibility is not supported, did you mean options.state?');
+      throw new Error('pw3001: options.visibility is not supported, did you mean options.state?');
     if ((options as any).waitFor && (options as any).waitFor !== 'visible')
-      throw new Error('options.waitFor is not supported, did you mean options.state?');
+      throw new Error('pw3001: options.waitFor is not supported, did you mean options.state?');
     const { state = 'visible' } = options;
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
-      throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
+      throw new Error(`pw3001: state: expected one of (attached|detached|visible|hidden)`);
     return controller.run(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
       return this.retryWithProgress(progress, selector, options, async (selectorInFrame, continuePolling) => {
@@ -833,7 +833,7 @@ export class Frame extends SdkObject {
     const pair = await this.resolveFrameForSelectorNoWait(selector, { strict });
     const handle = pair ? await this._page.selectors.query(pair.frame, pair.info) : null;
     if (!handle)
-      throw new Error(`Error: failed to find element matching selector "${selector}"`);
+      throw new Error(`pw2003: failed to find element matching selector "${selector}"`);
     const result = await handle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     handle.dispose();
     return result;
@@ -842,7 +842,7 @@ export class Frame extends SdkObject {
   async evalOnSelectorAllAndWaitForSignals(selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     const pair = await this.resolveFrameForSelectorNoWait(selector, {});
     if (!pair)
-      throw new Error(`Error: failed to find frame for selector "${selector}"`);
+      throw new Error(`pw2003: failed to find frame for selector "${selector}"`);
     const arrayHandle = await this._page.selectors._queryArrayInMainWorld(pair.frame, pair.info);
     const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     arrayHandle.dispose();
@@ -867,7 +867,7 @@ export class Frame extends SdkObject {
   async queryCount(selector: string): Promise<number> {
     const pair = await this.resolveFrameForSelectorNoWait(selector);
     if (!pair)
-      throw new Error(`Error: failed to find frame for selector "${selector}"`);
+      throw new Error(`pw2003: failed to find frame for selector "${selector}"`);
     return await this._page.selectors._queryCount(pair.frame, pair.info);
   }
 
@@ -885,7 +885,7 @@ export class Frame extends SdkObject {
     } catch (e) {
       if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
         throw e;
-      throw new Error(`Unable to retrieve content because the page is navigating and changing the content.`);
+      throw new Error(`pw3000: Unable to retrieve content because the page is navigating and changing the content.`);
     }
   }
 
@@ -945,7 +945,7 @@ export class Frame extends SdkObject {
       type = ''
     } = params;
     if (!url && !content)
-      throw new Error('Provide an object with a `url`, `path` or `content` property');
+      throw new Error('pw3001: Provide an object with a `url`, `path` or `content` property');
 
     const context = await this._mainContext();
     return this._raceWithCSPError(async () => {
@@ -966,7 +966,7 @@ export class Frame extends SdkObject {
         script.type = params.type;
       const promise = new Promise((res, rej) => {
         script.onload = res;
-        script.onerror = e => rej(typeof e === 'string' ? new Error(e) : new Error(`Failed to load script at ${script.src}`));
+        script.onerror = e => rej(typeof e === 'string' ? new Error(e) : new Error(`pw3000: Failed to load script at ${script.src}`));
       });
       document.head.appendChild(script);
       await promise;
@@ -992,7 +992,7 @@ export class Frame extends SdkObject {
       content = null
     } = params;
     if (!url && !content)
-      throw new Error('Provide an object with a `url`, `path` or `content` property');
+      throw new Error('pw3001: Provide an object with a `url`, `path` or `content` property');
 
     const context = await this._mainContext();
     return this._raceWithCSPError(async () => {
@@ -1470,7 +1470,7 @@ export class Frame extends SdkObject {
     this._stopNetworkIdleTimer();
     this._detached = true;
     this._detachedCallback();
-    const error = new Error('Frame was detached');
+    const error = new Error('pw3002: Frame was detached');
     for (const data of this._contextData.values()) {
       if (data.context)
         data.context.contextDestroyed(error);
@@ -1556,7 +1556,7 @@ export class Frame extends SdkObject {
         }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached, snapshotName: progress.metadata.afterSnapshot });
       }, true);
       if (this._detached)
-        rerunnableTask.terminate(new Error('Frame got detached.'));
+        rerunnableTask.terminate(new Error('pw3002: Frame got detached.'));
       if (data.context)
         rerunnableTask.rerun(data.context);
       return await rerunnableTask.promise!;
@@ -1567,7 +1567,7 @@ export class Frame extends SdkObject {
     const data = this._contextData.get(world)!;
     const rerunnableTask = new RerunnableTask<T>(data, progress, task, false /* returnByValue */);
     if (this._detached)
-      rerunnableTask.terminate(new Error('waitForFunction failed: frame got detached.'));
+      rerunnableTask.terminate(new Error('pw3002: waitForFunction failed: frame got detached.'));
     if (data.context)
       rerunnableTask.rerun(data.context);
     return rerunnableTask.handlePromise!;
@@ -1591,7 +1591,7 @@ export class Frame extends SdkObject {
     // connections so we might end up creating multiple isolated worlds.
     // We can use either.
     if (data.context) {
-      data.context.contextDestroyed(new Error('Execution context was destroyed, most likely because of a navigation'));
+      data.context.contextDestroyed(new Error('pw3002: Execution context was destroyed, most likely because of a navigation'));
       this._setContext(world, null);
     }
     this._setContext(world, context);
@@ -1602,7 +1602,7 @@ export class Frame extends SdkObject {
     // our already destroyed contexts to something that will never resolve.
     if (this._detached)
       return;
-    context.contextDestroyed(new Error('Execution context was destroyed, most likely because of a navigation'));
+    context.contextDestroyed(new Error('pw3002: Execution context was destroyed, most likely because of a navigation'));
     for (const [world, data] of this._contextData) {
       if (data.context === context)
         this._setContext(world, null);
@@ -1659,7 +1659,7 @@ export class Frame extends SdkObject {
       if (isIframe === 'error:notconnected')
         return null;  // retry
       if (!isIframe)
-        throw new Error(`Selector "${stringifySelector(info.parsed)}" resolved to ${element.preview()}, <iframe> was expected`);
+        throw new Error(`pw2008: Selector "${stringifySelector(info.parsed)}" resolved to ${element.preview()}, <iframe> was expected`);
       frame = await element.contentFrame();
       element.dispose();
       if (!frame)
@@ -1680,7 +1680,7 @@ export class Frame extends SdkObject {
       frame = await element.contentFrame();
       element.dispose();
       if (!frame)
-        throw new Error(`Selector "${stringifySelector(info.parsed)}" resolved to ${element.preview()}, <iframe> was expected`);
+        throw new Error(`pw2008: Selector "${stringifySelector(info.parsed)}" resolved to ${element.preview()}, <iframe> was expected`);
     }
     return { frame, info: this._page.parseSelector(frameChunks[frameChunks.length - 1], options) };
   }
@@ -1694,7 +1694,7 @@ export class Frame extends SdkObject {
       progress.cleanupWhenAborted(() => result.dispose());
       return result;
     } catch (e) {
-      throw new Error(`Error: frame navigated while waiting for selector "${selector}"`);
+      throw new Error(`pw3002: frame navigated while waiting for selector "${selector}"`);
     }
   }
 
@@ -1835,6 +1835,6 @@ function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.L
   if (waitUntil as unknown === 'networkidle0')
     waitUntil = 'networkidle';
   if (!types.kLifecycleEvents.has(waitUntil))
-    throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
+    throw new Error(`pw3001: ${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
   return waitUntil;
 }

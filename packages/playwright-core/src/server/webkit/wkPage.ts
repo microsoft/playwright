@@ -218,7 +218,7 @@ export class WKPage implements PageDelegate {
     promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: !!contextOptions.hasTouch }));
     if (contextOptions.timezoneId) {
       promises.push(session.send('Page.setTimeZone', { timeZone: contextOptions.timezoneId }).
-          catch(e => { throw new Error(`Invalid timezone ID: ${contextOptions.timezoneId}`); }));
+          catch(e => { throw new Error(`pw3001: Invalid timezone ID: ${contextOptions.timezoneId}`); }));
     }
     if (this._page.fileChooserIntercepted())
       promises.push(session.send('Page.setInterceptFileChooserDialog', { enabled: true }));
@@ -275,7 +275,7 @@ export class WKPage implements PageDelegate {
       this._provisionalPage = null;
     }
     this._page._didDisconnect();
-    this._firstNonInitialNavigationCommittedReject(new Error('Page closed'));
+    this._firstNonInitialNavigationCommittedReject(new Error('pw3002: Page closed'));
   }
 
   dispatchMessageToSession(message: any) {
@@ -284,7 +284,7 @@ export class WKPage implements PageDelegate {
 
   handleProvisionalLoadFailed(event: Protocol.Playwright.provisionalLoadFailedPayload) {
     if (!this._initializedPage) {
-      this._firstNonInitialNavigationCommittedReject(new Error('Initial load failed'));
+      this._firstNonInitialNavigationCommittedReject(new Error('pw3002: Initial load failed'));
       return;
     }
     if (!this._provisionalPage)
@@ -526,7 +526,7 @@ export class WKPage implements PageDelegate {
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
     if (this._pageProxySession.isDisposed())
-      throw new Error('Target closed');
+      throw new Error('pw3002: Target closed');
     const pageProxyId = this._pageProxySession.sessionId;
     const result = await this._pageProxySession.connection.browserSession.send('Playwright.navigate', { url, pageProxyId, frameId: frame._id, referrer });
     return { newDocumentId: result.loaderId };
@@ -837,7 +837,7 @@ export class WKPage implements PageDelegate {
     if (!omitDeviceScaleFactor && this._page._browserContext._options.deviceScaleFactor)
       side = Math.ceil(side * this._page._browserContext._options.deviceScaleFactor);
     if (side > 32767)
-      throw new Error('Cannot take screenshot larger than 32767 pixels on any dimension');
+      throw new Error('pw3001: Cannot take screenshot larger than 32767 pixels on any dimension');
   }
 
   async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
@@ -987,14 +987,14 @@ export class WKPage implements PageDelegate {
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
     const parent = frame.parentFrame();
     if (!parent)
-      throw new Error('Frame has been detached.');
+      throw new Error('pw3002: Frame has been detached.');
     const context = await parent._mainContext();
     const result = await this._session.send('DOM.resolveNode', {
       frameId: frame._id,
       executionContextId: ((context as any)[contextDelegateSymbol] as WKExecutionContext)._contextId
     });
     if (!result || result.object.subtype === 'null')
-      throw new Error('Frame has been detached.');
+      throw new Error('pw3002: Frame has been detached.');
     return context.createHandle(result.object) as dom.ElementHandle;
   }
 
@@ -1141,7 +1141,7 @@ export class WKPage implements PageDelegate {
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
       if (!protocolPermission)
-        throw new Error('Unknown permission: ' + permission);
+        throw new Error('pw3001: Unknown permission: ' + permission);
       return protocolPermission;
     });
     await this._pageProxySession.send('Emulation.grantPermissions', { origin, permissions: filtered });

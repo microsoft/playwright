@@ -69,7 +69,7 @@ export class WebSocketTransport implements ConnectionTransport {
       });
       transport._ws.on('error', event => {
         progress.log(`<ws connect error> ${url} ${event.message}`);
-        reject(new Error('WebSocket error: ' + event.message));
+        reject(new Error('pw1003: WebSocket error: ' + event.message));
         transport._ws.close();
       });
       transport._ws.on('unexpected-response', (request: ClientRequest, response: IncomingMessage) => {
@@ -79,7 +79,7 @@ export class WebSocketTransport implements ConnectionTransport {
         response.on('close', () => {
           const error = chunks.length ? `${errorPrefix}\n${Buffer.concat(chunks)}` : errorPrefix;
           progress.log(`<ws unexpected response> ${error}`);
-          reject(new Error('WebSocket error: ' + error));
+          reject(new Error('pw1003: WebSocket error: ' + error));
           transport._ws.close();
         });
       });

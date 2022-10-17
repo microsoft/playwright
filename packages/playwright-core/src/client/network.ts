@@ -145,7 +145,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     try {
       return JSON.parse(postData);
     } catch (e) {
-      throw new Error('POST data is not a valid JSON object: ' + postData);
+      throw new Error('pw3000: POST data is not a valid JSON object: ' + postData);
     }
   }
 
@@ -200,7 +200,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   frame(): Frame {
     if (!this._initializer.frame) {
       assert(this.serviceWorker());
-      throw new Error('Service Worker requests do not have an associated frame.');
+      throw new Error('pw2009: Service Worker requests do not have an associated frame.');
     }
     return Frame.from(this._initializer.frame);
   }
@@ -236,7 +236,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   async sizes(): Promise<RequestSizes> {
     const response = await this.response();
     if (!response)
-      throw new Error('Unable to fetch sizes for failed request');
+      throw new Error('pw3000: Unable to fetch sizes for failed request');
     return (await response._channel.sizes()).sizes;
   }
 
@@ -374,7 +374,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   _checkNotHandled() {
     if (!this._handlingPromise)
-      throw new Error('Route is already handled!');
+      throw new Error('pw2011: Route is already handled!');
   }
 
   _reportHandled(done: boolean) {
@@ -573,10 +573,10 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.WebSocket.Error)
-        waiter.rejectOnEvent(this, Events.WebSocket.Error, new Error('Socket error'));
+        waiter.rejectOnEvent(this, Events.WebSocket.Error, new Error('pw3002: Socket error'));
       if (event !== Events.WebSocket.Close)
-        waiter.rejectOnEvent(this, Events.WebSocket.Close, new Error('Socket closed'));
-      waiter.rejectOnEvent(this._page, Events.Page.Close, new Error('Page closed'));
+        waiter.rejectOnEvent(this, Events.WebSocket.Close, new Error('pw3002: Socket closed'));
+      waiter.rejectOnEvent(this._page, Events.Page.Close, new Error('pw3002: Page closed'));
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;
@@ -588,7 +588,7 @@ export function validateHeaders(headers: Headers) {
   for (const key of Object.keys(headers)) {
     const value = headers[key];
     if (!Object.is(value, undefined) && !isString(value))
-      throw new Error(`Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
+      throw new Error(`pw3001: Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
   }
 }
 

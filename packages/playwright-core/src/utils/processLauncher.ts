@@ -94,7 +94,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     let failed: (e: Error) => void;
     const failedPromise = new Promise<Error>((f, r) => failed = f);
     spawnedProcess.once('error', error => {
-      failed(new Error('Failed to launch: ' + error));
+      failed(new Error('pw1009: Failed to launch: ' + error));
     });
     return cleanup().then(() => failedPromise).then(e => Promise.reject(e));
   }

@@ -45,7 +45,7 @@ export class Firefox extends BrowserType {
 
   _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
     if (!path.isAbsolute(os.homedir()))
-      throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
+      throw new Error(`pw3000: Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
     return env;
   }
 
@@ -58,9 +58,9 @@ export class Firefox extends BrowserType {
     const { args = [], headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
     if (userDataDirArg)
-      throw new Error('Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --profile argument');
+      throw new Error('pw3001: Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
-      throw new Error('Use the port parameter instead of -juggler argument');
+      throw new Error('pw3001: Use the port parameter instead of -juggler argument');
     const firefoxUserPrefs = isPersistent ? undefined : { ...kBandaidFirefoxUserPrefs, ...options.firefoxUserPrefs };
     if (firefoxUserPrefs) {
       const lines: string[] = [];

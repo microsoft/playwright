@@ -244,7 +244,7 @@ export async function evaluateExpression(context: ExecutionContext, returnByValu
       if (!handle._objectId)
         return { fallThrough: handle._value };
       if (handle._disposed)
-        throw new Error('JSHandle is disposed!');
+        throw new Error('pw3002: JSHandle is disposed!');
       const adopted = context.adoptIfNeeded(handle);
       if (adopted === null)
         return { h: pushHandle(Promise.resolve(handle)) };
@@ -257,7 +257,7 @@ export async function evaluateExpression(context: ExecutionContext, returnByValu
   const utilityScriptObjectIds: ObjectId[] = [];
   for (const handle of await Promise.all(handles)) {
     if (handle._context !== context)
-      throw new Error('JSHandles can be evaluated only in the context they were created!');
+      throw new Error('pw3000: JSHandles can be evaluated only in the context they were created!');
     utilityScriptObjectIds.push(handle._objectId!);
   }
 
@@ -304,7 +304,7 @@ export function normalizeEvaluationExpression(expression: string, isFunction: bo
         new Function('(' + expression  + ')');
       } catch (e2) {
         // We tried hard to serialize, but there's a weird beast here.
-        throw new Error('Passed function is not well-serializable!');
+        throw new Error('pw3000: Passed function is not well-serializable!');
       }
     }
   }

@@ -99,7 +99,7 @@ export class FFPage implements PageDelegate {
 
     ];
     session.once(FFSessionEvents.Disconnected, () => {
-      this._markAsError(new Error('Page closed'));
+      this._markAsError(new Error('pw3002: Page closed'));
       this._page._didDisconnect();
     });
     this._session.once('Page.ready', async () => {
@@ -416,7 +416,7 @@ export class FFPage implements PageDelegate {
 
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
     if (color)
-      throw new Error('Not implemented');
+      throw new Error('pw3001: screenshot background color is not supported in Firefox');
   }
 
   async takeScreenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
@@ -570,14 +570,14 @@ export class FFPage implements PageDelegate {
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
     const parent = frame.parentFrame();
     if (!parent)
-      throw new Error('Frame has been detached.');
+      throw new Error('pw3002: Frame has been detached.');
     const context = await parent._mainContext();
     const result = await this._session.send('Page.adoptNode', {
       frameId: frame._id,
       executionContextId: ((context as any)[contextDelegateSymbol] as FFExecutionContext)._executionContextId
     });
     if (!result.remoteObject)
-      throw new Error('Frame has been detached.');
+      throw new Error('pw3002: Frame has been detached.');
     return context.createHandle(result.remoteObject) as dom.ElementHandle;
   }
 }

@@ -202,7 +202,7 @@ function callDockerAPI(method: 'post'|'get'|'delete', url: string, body: Buffer|
       });
       response.on('end', function(){
         if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300)
-          reject(new Error(`${method} ${url} FAILED with statusCode ${response.statusCode} and body\n${body}`));
+          reject(new Error(`pw8004: ${method} ${url} FAILED with statusCode ${response.statusCode} and body\n${body}`));
         else
           resolve(body);
       });

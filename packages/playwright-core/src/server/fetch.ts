@@ -37,6 +37,7 @@ import { Tracing } from './trace/recorder/tracing';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
+import { TimeoutError } from '../common/errors';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -270,7 +271,7 @@ export abstract class APIRequestContext extends SdkObject {
 
         if (redirectStatus.includes(response.statusCode!) && options.maxRedirects >= 0) {
           if (!options.maxRedirects) {
-            reject(new Error('Max redirect count exceeded'));
+            reject(new Error('pw3000: Max redirect count exceeded'));
             request.destroy();
             return;
           }
@@ -358,7 +359,7 @@ export abstract class APIRequestContext extends SdkObject {
           const emptyStreamTransform = new SafeEmptyStreamTransform(notifyBodyFinished);
           body = pipeline(response, emptyStreamTransform, transform, e => {
             if (e)
-              reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`));
+              reject(new Error(`pw3000: failed to decompress '${encoding}' encoding: ${e}`));
           });
         } else {
           body.on('error', reject);
@@ -370,7 +371,7 @@ export abstract class APIRequestContext extends SdkObject {
       request.on('error', reject);
 
       const disposeListener = () => {
-        reject(new Error('Request context disposed.'));
+        reject(new Error('pw3002: Request context disposed.'));
         request.destroy();
       };
       this.on(APIRequestContext.Events.Dispose, disposeListener);
@@ -384,7 +385,7 @@ export abstract class APIRequestContext extends SdkObject {
 
       if (options.deadline) {
         const rejectOnTimeout = () =>  {
-          reject(new Error(`Request timed out after ${options.timeout}ms`));
+          reject(new TimeoutError(`Request timed out after ${options.timeout}ms`));
           request.destroy();
         };
         const remaining = options.deadline - monotonicTime();

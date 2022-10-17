@@ -126,7 +126,7 @@ function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObj
 
 function rewriteError(error: Error): Error {
   if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error))
-    return new Error('Execution context was destroyed, most likely because of a navigation.');
+    return new Error('pw3002: Execution context was destroyed, most likely because of a navigation.');
   return error;
 }
 

@@ -219,7 +219,7 @@ export abstract class BrowserContext extends SdkObject {
     this.tracing.dispose().catch(() => {});
     if (this._isPersistentContext)
       this.onClosePersistent();
-    this._closePromiseFulfill!(new Error('Context closed'));
+    this._closePromiseFulfill!(new Error('pw3002: Context closed'));
     this.emit(BrowserContext.Events.Close);
   }
 
@@ -257,10 +257,10 @@ export abstract class BrowserContext extends SdkObject {
 
   async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
     if (this._pageBindings.has(name))
-      throw new Error(`Function "${name}" has been already registered`);
+      throw new Error(`pw3000: Function "${name}" has been already registered`);
     for (const page of this.pages()) {
       if (page.getBinding(name))
-        throw new Error(`Function "${name}" has been already registered in one of the pages`);
+        throw new Error(`pw3000: Function "${name}" has been already registered in one of the pages`);
     }
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
@@ -437,7 +437,7 @@ export abstract class BrowserContext extends SdkObject {
     const pageOrError = await pageDelegate.pageOrError();
     if (pageOrError instanceof Page) {
       if (pageOrError.isClosed())
-        throw new Error('Page has been closed.');
+        throw new Error('pw3002: Page has been closed.');
       return pageOrError;
     }
     throw pageOrError;
@@ -574,15 +574,15 @@ export abstract class BrowserContext extends SdkObject {
 export function assertBrowserContextIsNotOwned(context: BrowserContext) {
   for (const page of context.pages()) {
     if (page._ownedContext)
-      throw new Error('Please use browser.newContext() for multi-page scripts that share the context.');
+      throw new Error('pw2002: Please use browser.newContext() for multi-page scripts that share the context.');
   }
 }
 
 export function validateBrowserContextOptions(options: channels.BrowserNewContextParams, browserOptions: BrowserOptions) {
   if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
-    throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
+    throw new Error(`pw3001: "deviceScaleFactor" option is not supported with null "viewport"`);
   if (options.noDefaultViewport && options.isMobile !== undefined)
-    throw new Error(`"isMobile" option is not supported with null "viewport"`);
+    throw new Error(`pw3001: "isMobile" option is not supported with null "viewport"`);
   if (options.acceptDownloads === undefined)
     options.acceptDownloads = true;
   if (!options.viewport && !options.noDefaultViewport)
@@ -606,7 +606,7 @@ export function validateBrowserContextOptions(options: channels.BrowserNewContex
   }
   if (options.proxy) {
     if (!browserOptions.proxy && browserOptions.isChromium && os.platform() === 'win32')
-      throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'http://per-context' } })"`);
+      throw new Error(`pw1008: Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'http://per-context' } })"`);
     options.proxy = normalizeProxySettings(options.proxy);
   }
   if (debugMode() === 'inspector')
@@ -620,11 +620,11 @@ export function verifyGeolocation(geolocation?: types.Geolocation) {
   geolocation.accuracy = geolocation.accuracy || 0;
   const { longitude, latitude, accuracy } = geolocation;
   if (longitude < -180 || longitude > 180)
-    throw new Error(`geolocation.longitude: precondition -180 <= LONGITUDE <= 180 failed.`);
+    throw new Error(`pw3001: geolocation.longitude: precondition -180 <= LONGITUDE <= 180 failed.`);
   if (latitude < -90 || latitude > 90)
-    throw new Error(`geolocation.latitude: precondition -90 <= LATITUDE <= 90 failed.`);
+    throw new Error(`pw3001: geolocation.latitude: precondition -90 <= LATITUDE <= 90 failed.`);
   if (accuracy < 0)
-    throw new Error(`geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
+    throw new Error(`pw3001: geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
 }
 
 export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxySettings {
@@ -641,9 +641,9 @@ export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxyS
     url = new URL('http://' + server);
   }
   if (url.protocol === 'socks4:' && (proxy.username || proxy.password))
-    throw new Error(`Socks4 proxy protocol does not support authentication`);
+    throw new Error(`pw3001: Socks4 proxy protocol does not support authentication`);
   if (url.protocol === 'socks5:' && (proxy.username || proxy.password))
-    throw new Error(`Browser does not support socks5 proxy authentication`);
+    throw new Error(`pw3001: Browser does not support socks5 proxy authentication`);
   server = url.protocol + '//' + url.host;
   if (bypass)
     bypass = bypass.split(',').map(t => t.trim()).join(',');

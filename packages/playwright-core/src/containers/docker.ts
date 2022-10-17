@@ -94,12 +94,12 @@ async function buildPlaywrightImage() {
     baseImageName = `mcr.microsoft.com/playwright:v${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
     const { code } = await spawnAsync('docker', ['pull', baseImageName], { stdio: 'inherit' });
     if (code !== 0)
-      throw new Error('Failed to pull docker image!');
+      throw new Error(`pw8003: Failed to pull ${baseImageName}`);
   }
   // 2. Find pulled docker image
   const dockerImage = await findDockerImage(baseImageName);
   if (!dockerImage)
-    throw new Error(`Failed to pull ${baseImageName}`);
+    throw new Error(`pw8003: Failed to pull ${baseImageName}`);
   // 3. Delete previous build of the playwright image to avoid untagged images.
   await deletePlaywrightImage();
   // 4. Launch container and install VNC in it
@@ -247,7 +247,7 @@ export async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
   } while (!info && Date.now() < startTime + 60000);
 
   if (!info)
-    throw new Error('Failed to launch docker container!');
+    throw new Error('pw8004: Failed to launch docker container');
   return info;
 }
 
@@ -327,7 +327,7 @@ export function addDockerCLI(program: Command) {
       .action(async function() {
         const { code } = await spawnAsync('bash', [path.join(__dirname, '..', '..', 'bin', 'container_install_deps.sh')], { stdio: 'inherit' });
         if (code !== 0)
-          throw new Error('Failed to install server dependencies!');
+          throw new Error('pw1006: Failed to install server dependencies!');
       });
 
   dockerCommand.command('run-server', { hidden: true })

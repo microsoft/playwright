@@ -60,9 +60,9 @@ export class Artifact extends SdkObject {
     if (this._unaccessibleErrorMessage)
       throw new Error(this._unaccessibleErrorMessage);
     if (this._deleted)
-      throw new Error(`File already deleted. Save before deleting.`);
+      throw new Error(`pw3000: File already deleted. Save before deleting.`);
     if (this._failureError)
-      throw new Error(`File not found on disk. Check download.failure() for details.`);
+      throw new Error(`pw3000: File not found on disk. Check download.failure() for details.`);
 
     if (this._finished) {
       saveCallback(this._localPath).catch(e => {});

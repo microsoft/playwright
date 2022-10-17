@@ -53,7 +53,7 @@ export class ZipFile {
     await this._openedPromise;
     const entry = this._entries.get(entryPath)!;
     if (!entry)
-      throw new Error(`${entryPath} not found in file ${this._fileName}`);
+      throw new Error(`pw3000: ${entryPath} not found in file ${this._fileName}`);
 
     return new Promise((resolve, reject) => {
       this._zipFile!.openReadStream(entry, (error, readStream) => {

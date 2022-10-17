@@ -272,7 +272,7 @@ export class Page extends SdkObject {
     this._frameManager.dispose();
     this._frameThrottler.setEnabled(false);
     this.emit(Page.Events.Crash);
-    this._crashedPromise.resolve(new Error('Page crashed'));
+    this._crashedPromise.resolve(new Error('pw3002: Page crashed'));
   }
 
   _didDisconnect() {
@@ -281,7 +281,7 @@ export class Page extends SdkObject {
     this._frameThrottler.setEnabled(false);
     assert(!this._disconnected, 'Page disconnected twice');
     this._disconnected = true;
-    this._disconnectedPromise.resolve(new Error('Page closed'));
+    this._disconnectedPromise.resolve(new Error('pw3002: Page closed'));
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
@@ -326,9 +326,9 @@ export class Page extends SdkObject {
 
   async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource) {
     if (this._pageBindings.has(name))
-      throw new Error(`Function "${name}" has been already registered`);
+      throw new Error(`pw3001: Function "${name}" has been already registered`);
     if (this._browserContext._pageBindings.has(name))
-      throw new Error(`Function "${name}" has been already registered in the browser context`);
+      throw new Error(`pw3001: Function "${name}" has been already registered in the browser context`);
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
     await this._delegate.exposeBinding(binding);
@@ -508,7 +508,7 @@ export class Page extends SdkObject {
     try {
       const format = validateScreenshotOptions(options.screenshotOptions || {});
       if (format !== 'png')
-        throw new Error('Only PNG screenshots are supported');
+        throw new Error('pw3001: Only PNG screenshots are supported');
     } catch (error) {
       return { errorMessage: error.message };
     }
@@ -540,7 +540,7 @@ export class Page extends SdkObject {
       while (true) {
         progress.throwIfAborted();
         if (this.isClosed())
-          throw new Error('The page has closed');
+          throw new Error('pw3002: page has been closed');
         const screenshotTimeout = pollIntervals.shift() ?? 1000;
         if (screenshotTimeout)
           progress.log(`waiting ${screenshotTimeout}ms before taking screenshot`);
@@ -729,7 +729,7 @@ export class Worker extends SdkObject {
 
   didClose() {
     if (this._existingExecutionContext)
-      this._existingExecutionContext.contextDestroyed(new Error('Worker was closed'));
+      this._existingExecutionContext.contextDestroyed(new Error('pw3002: Worker was closed'));
     this.emit(Worker.Events.Close, this);
   }
 
@@ -814,7 +814,7 @@ function addPageBinding(bindingName: string, needsHandle: boolean, utilityScript
   (globalThis as any)[bindingName] = (...args: any[]) => {
     const me = (globalThis as any)[bindingName];
     if (needsHandle && args.slice(1).some(arg => arg !== undefined))
-      throw new Error(`exposeBindingHandle supports a single argument, ${args.length} received`);
+      throw new Error(`pw3001: exposeBindingHandle supports a single argument, ${args.length} received`);
     let callbacks = me['callbacks'];
     if (!callbacks) {
       callbacks = new Map();
