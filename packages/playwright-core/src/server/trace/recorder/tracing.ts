@@ -367,8 +367,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   onEntryFinished(entry: har.Entry) {
     const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
     this._appendTraceOperation(async () => {
-      visitSha1s(event, this._state!.networkSha1s);
-      await fs.promises.appendFile(this._state!.networkFile, JSON.stringify(event) + '\n');
+      const visited = visitTraceEvent(event, this._state!.networkSha1s);
+      await fs.promises.appendFile(this._state!.networkFile, JSON.stringify(visited) + '\n');
     });
   }
 
@@ -408,8 +408,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   private _appendTraceEvent(event: trace.TraceEvent) {
     this._appendTraceOperation(async () => {
-      visitSha1s(event, this._state!.traceSha1s);
-      await fs.promises.appendFile(this._state!.traceFile, JSON.stringify(event) + '\n');
+      const visited = visitTraceEvent(event, this._state!.traceSha1s);
+      await fs.promises.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n');
     });
   }
 
@@ -452,22 +452,24 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 }
 
-function visitSha1s(object: any, sha1s: Set<string>) {
-  if (Array.isArray(object)) {
-    object.forEach(o => visitSha1s(o, sha1s));
-    return;
-  }
+function visitTraceEvent(object: any, sha1s: Set<string>): any {
+  if (Array.isArray(object))
+    return object.map(o => visitTraceEvent(o, sha1s));
+  if (object instanceof Buffer)
+    return undefined;
   if (typeof object === 'object') {
+    const result: any = {};
     for (const key in object) {
       if (key === 'sha1' || key === '_sha1' || key.endsWith('Sha1')) {
         const sha1 = object[key];
         if (sha1)
           sha1s.add(sha1);
       }
-      visitSha1s(object[key], sha1s);
+      result[key] = visitTraceEvent(object[key], sha1s);
     }
-    return;
+    return result;
   }
+  return object;
 }
 
 export function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
