@@ -450,3 +450,24 @@ test('should load web server w/o esm loader in ems module', async ({ runInlineTe
   expect(result.passed).toBe(0);
   expect(result.output).toContain('NODE_OPTIONS undefined');
 });
+
+test('should load a jsx/tsx files', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    'a.spec.tsx': `
+      const { test } = pwt;
+      const component = () => <div></div>;
+      test('succeeds', () => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+    'b.spec.jsx': `
+      const { test } = pwt;
+      const component = () => <div></div>;
+      test('succeeds', () => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  });
+  expect(passed).toBe(2);
+  expect(exitCode).toBe(0);
+});
