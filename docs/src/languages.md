@@ -3,7 +3,7 @@ id: languages
 title: "Supported languages"
 ---
 
-Playwright is available in multiple languages listed below. All core features are supported in all languages. Pick the language based on your experience, project constraints and familiarity with its testing ecosystem. See below for test runner recommendations based on the language.
+Playwright is available in multiple languages that share the same underlying implementation. All core features are supported in all languages. Pick the language based on your experience, familiarity with its testing ecosystem and your project constraints. For the best experience pick the test runner that we recommend for each language.
 
 ## JavaScript and TypeScript
 
