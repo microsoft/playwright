@@ -3,42 +3,34 @@ id: languages
 title: "Supported languages"
 ---
 
-The Playwright API is available in multiple languages.
+Playwright Library API is available in multiple languages listed below. All core features are supported in all language
+port. There are some slight differences when it comes to browser specific APIs, e.g. Chromium extension debugging or CDP
+session are currently not available in Java but apart from that we maintain feature partity in language ports with
+Playwright for Node.js.
+
+Playwright for Node.js comes with it's own test runner that provides great parallelization mechanism, screenshot
+assertions, html reporter, automatic tracing etc. Playwright Test runner is only available in Node.js version. In other
+languages Playwright supports integration with existing test runner frameworks (e.g. pytest in Python, JUnit or TestNG
+in Java, NTest or MSTest in .NET).
 
 <!-- TOC -->
 
 ## JavaScript and TypeScript
 
-[Playwright for Node.js](https://playwright.dev/docs/intro) is available.
-
-* [NPM](https://www.npmjs.com/package/playwright)
 * [Documentation](https://playwright.dev/docs/intro)
-* [API](https://playwright.dev/docs/api/class-playwright)
 * [GitHub repo](https://github.com/microsoft/playwright)
 
 ## Python
 
-[Playwright for Python](https://playwright.dev/python/docs/intro) is available.
-
 * [Documentation](https://playwright.dev/python/docs/intro)
-* [API](https://playwright.dev/python/docs/api/class-playwright)
-* [Playwright on PyPI](https://pypi.org/project/playwright/)
 * [GitHub repo](https://github.com/microsoft/playwright-python)
-* [Pytest integration](https://github.com/microsoft/playwright-pytest)
 
 ## Java
 
-[Playwright for Java](https://playwright.dev/java/docs/intro) is available.
-
 * [Documentation](https://playwright.dev/java/docs/intro)
-* [API](https://playwright.dev/java/docs/api/class-playwright)
 * [GitHub repo](https://github.com/microsoft/playwright-java)
 
 ## .NET
 
-[Playwright for .NET](https://playwright.dev/dotnet/docs/intro) is available.
-
 * [Documentation](https://playwright.dev/dotnet/docs/intro)
-* [API](https://playwright.dev/dotnet/docs/api/class-playwright)
 * [GitHub repo](https://github.com/microsoft/playwright-dotnet)
-* [Playwright on NuGet](https://www.nuget.org/packages/Microsoft.Playwright)
