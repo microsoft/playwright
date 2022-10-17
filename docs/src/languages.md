@@ -3,34 +3,32 @@ id: languages
 title: "Supported languages"
 ---
 
-Playwright Library API is available in multiple languages listed below. All core features are supported in all language
-port. There are some slight differences when it comes to browser specific APIs, e.g. Chromium extension debugging or CDP
-session are currently not available in Java but apart from that we maintain feature partity in language ports with
-Playwright for Node.js.
-
-Playwright for Node.js comes with it's own test runner that provides great parallelization mechanism, screenshot
-assertions, html reporter, automatic tracing etc. Playwright Test runner is only available in Node.js version. In other
-languages Playwright supports integration with existing test runner frameworks (e.g. pytest in Python, JUnit or TestNG
-in Java, NTest or MSTest in .NET).
-
-<!-- TOC -->
+Playwright is available in multiple languages listed below. All core features are supported in all languages. Pick the language based on your experience, project constraints and familiarity with its testing ecosystem. See below for test runner recommendations based on the language.
 
 ## JavaScript and TypeScript
+
+Playwright for Node.js comes with its own [test runner](https://playwright.dev/docs/running-tests) that provides great parallelization mechanism, screenshot assertions, html reporter, automatic tracing etc.
 
 * [Documentation](https://playwright.dev/docs/intro)
 * [GitHub repo](https://github.com/microsoft/playwright)
 
 ## Python
 
+Playwright [Pytest plugin](https://playwright.dev/python/docs/test-runners) is the recommended way to run end-to-end tests. It provides context isolation, running it on multiple browser configurations and more out of the box.
+
 * [Documentation](https://playwright.dev/python/docs/intro)
 * [GitHub repo](https://github.com/microsoft/playwright-python)
 
 ## Java
 
+You can choose any testing framework such as JUnit or TestNG based on your project requirements.
+
 * [Documentation](https://playwright.dev/java/docs/intro)
 * [GitHub repo](https://github.com/microsoft/playwright-java)
 
 ## .NET
+
+Playwright for .NET comes with [NUnit base classes](./test-runners.md#nunit) and [MSTest base classes](./test-runners.md#nunit) for writing end-to-end tests.
 
 * [Documentation](https://playwright.dev/dotnet/docs/intro)
 * [GitHub repo](https://github.com/microsoft/playwright-dotnet)
