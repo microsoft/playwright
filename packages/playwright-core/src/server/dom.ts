@@ -98,12 +98,14 @@ export class FrameExecutionContext extends js.ExecutionContext {
       const custom: string[] = [];
       for (const [name, { source }] of this.frame._page.selectors._engines)
         custom.push(`{ name: '${name}', engine: (${source}) }`);
+      const sdkLanguage = this.frame._page.context()._browser.options.sdkLanguage;
       const source = `
         (() => {
         const module = {};
         ${injectedScriptSource.source}
         return new module.exports(
           ${isUnderTest()},
+          "${sdkLanguage}",
           ${this.frame._page._delegate.rafCountForStablePosition()},
           "${this.frame._page._browserContext._browser.options.name}",
           [${custom.join(',\n')}]

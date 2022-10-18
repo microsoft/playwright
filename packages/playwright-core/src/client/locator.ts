@@ -51,7 +51,7 @@ export class Locator implements api.Locator {
     this._selector = selector;
 
     if (options?.hasText) {
-      const textSelector = 'text=' + escapeForTextSelector(options.hasText, false);
+      const textSelector = 'internal:text=' + escapeForTextSelector(options.hasText, false);
       this._selector += ` >> internal:has=${JSON.stringify(textSelector)}`;
     }
 
@@ -421,7 +421,7 @@ export function getByPlaceholderSelector(text: string | RegExp, options?: { exac
 }
 
 export function getByTextSelector(text: string | RegExp, options?: { exact?: boolean }): string {
-  return 'text=' + escapeForTextSelector(text, !!options?.exact);
+  return 'internal:text=' + escapeForTextSelector(text, !!options?.exact);
 }
 
 export function getByRoleSelector(role: string, options: ByRoleOptions = {}): string {

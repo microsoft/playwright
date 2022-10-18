@@ -5,12 +5,18 @@ import DefaultChildren from './components/DefaultChildren';
 import MultipleChildren from './components/MultipleChildren';
 import MultiRoot from './components/MultiRoot';
 import EmptyFragment from './components/EmptyFragment';
+import type { HooksConfig } from '../playwright';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('render props', async ({ mount }) => {
   const component = await mount(<Button title="Submit" />);
   await expect(component).toContainText('Submit');
+});
+
+test('render attributes', async ({ mount }) => {
+  const component = await mount(<Button className="primary" title="Submit" />)
+  await expect(component).toHaveClass('primary');
 });
 
 test('renderer updates props without remounting', async ({ mount }) => {
@@ -26,7 +32,7 @@ test('renderer updates props without remounting', async ({ mount }) => {
    * However it seems impossible to update the props, slots or events of a rendered component
    */
   await expect(component.getByTestId('remount-count')).toContainText('2') 
-})
+});
 
 test('renderer updates slots without remounting', async ({ mount }) => {
   const component = await mount(<Counter>Default Slot</Counter>)
@@ -58,7 +64,7 @@ test('renderer updates callbacks without remounting', async ({ mount }) => {
    * However it seems impossible to update the props, slots or events of a rendered component
    */
   await expect(component.getByTestId('remount-count')).toContainText('2')
-})
+});
 
 test('execute callback when the button is clicked', async ({ mount }) => {
   const messages: string[] = [];
@@ -119,7 +125,7 @@ test('execute callback when a child node is clicked', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages: string[] = [];
   page.on('console', (m) => messages.push(m.text()));
-  await mount(<Button title="Submit" />, {
+  await mount<HooksConfig>(<Button title="Submit" />, {
     hooksConfig: {
       route: 'A',
     },

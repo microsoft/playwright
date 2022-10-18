@@ -40,7 +40,7 @@ test('renderer updates event listeners without remounting', async ({ mount }) =>
   const messages = []
   await component.update({
     on: { 
-      submit: count => messages.push(count)
+      submit: (count) => messages.push(count)
     }
   })
   await component.click();
@@ -71,7 +71,7 @@ test('emit an submit event when the button is clicked', async ({ mount }) => {
       title: 'Submit'
     },
     on: {
-      submit: data => messages.push(data)
+      submit: (data) => messages.push(data)
     }
   })
   await component.click()
@@ -81,20 +81,23 @@ test('emit an submit event when the button is clicked', async ({ mount }) => {
 test('render a default slot', async ({ mount }) => {
   const component = await mount(DefaultSlot, {
     slots: {
-      default: 'Main Content'
+      default: '<strong>Main Content</strong>'
     }
   })
-  await expect(component).toContainText('Main Content')
+  await expect(component.getByRole('strong')).toContainText('Main Content')
 })
 
 test('render a component with multiple slots', async ({ mount }) => {
   const component = await mount(DefaultSlot, {
     slots: {
-      default: ['one', 'two']
+      default: [
+        '<div data-testid="one">One</div>',
+        '<div data-testid="two">Two</div>'
+      ]
     }
   })
-  await expect(component).toContainText('one')
-  await expect(component).toContainText('two')
+  await expect(component.getByTestId('one')).toContainText('One')
+  await expect(component.getByTestId('two')).toContainText('Two')
 })
 
 test('render a component with a named slot', async ({ mount }) => {

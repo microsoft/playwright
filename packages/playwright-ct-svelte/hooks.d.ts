@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-import type { SvelteComponent } from "svelte";
+import type { SvelteComponent } from 'svelte';
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 type JsonArray = JsonValue[];
 type JsonObject = { [Key in string]?: JsonValue };
-export declare function beforeMount(callback: (params: { hooksConfig: JsonObject }) => Promise<void>): void;
-export declare function afterMount(callback: (params: { hooksConfig: JsonObject, svelteComponent: SvelteComponent }) => Promise<void>): void;
+export declare function beforeMount<HooksConfig extends JsonObject>(
+  callback: (params: { hooksConfig: HooksConfig }) => Promise<void>
+): void;
+export declare function afterMount<HooksConfig extends JsonObject>(
+  callback: (params: {
+    hooksConfig: HooksConfig;
+    svelteComponent: SvelteComponent;
+  }) => Promise<void>
+): void;

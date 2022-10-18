@@ -2,7 +2,7 @@
   <button @click="$emit('submit', 'hello')">{{ title }}</button>
 </template>
 
-<script>
+<script lang="ts">
 export default {
   name: 'ButtonButton',
   props: ['title']
