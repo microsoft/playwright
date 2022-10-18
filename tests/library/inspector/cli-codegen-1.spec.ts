@@ -192,7 +192,7 @@ test.describe('cli codegen', () => {
     });
 
     const selector = await recorder.hoverOverElement('div');
-    expect(selector).toBe('text=Some long text here');
+    expect(selector).toBe('internal:text="Some long text here"i');
 
     // Sanity check that selector does not match our highlight.
     const divContents = await page.$eval(selector, div => div.outerHTML);
@@ -584,7 +584,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<a onclick="window.location.href='about:blank#foo'">link</a>`);
 
     const selector = await recorder.hoverOverElement('a');
-    expect(selector).toBe('text=link');
+    expect(selector).toBe('internal:text="link"i');
     const [, sources] = await Promise.all([
       page.waitForNavigation(),
       recorder.waitForOutput('JavaScript', 'waitForURL'),
@@ -629,7 +629,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<a onclick="setTimeout(() => window.location.href='about:blank#foo', 1000)">link</a>`);
 
     const selector = await recorder.hoverOverElement('a');
-    expect(selector).toBe('text=link');
+    expect(selector).toBe('internal:text="link"i');
 
     const [, sources] = await Promise.all([
       page.waitForNavigation(),
