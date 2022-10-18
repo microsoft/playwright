@@ -41,9 +41,10 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
         [require('@babel/plugin-syntax-object-rest-spread')],
         [require('@babel/plugin-proposal-export-namespace-from')]
     );
-  } else {
-    plugins.push([require('@babel/plugin-syntax-jsx')]);
   }
+
+  // Support JSX/TSX at all times, regardless of the file extension.
+  plugins.push([require('@babel/plugin-syntax-jsx')]);
 
   if (!isModule) {
     plugins.push([require('@babel/plugin-transform-modules-commonjs')]);
