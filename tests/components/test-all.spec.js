@@ -14,11 +14,15 @@ for (const dir of fs.readdirSync(__dirname)) {
       await run('npm', ['i'], folder);
     });
 
+    test('typecheck', async () => {
+      await run('npm', ['run', 'typecheck'], folder);
+    });
+
     for (const project of ['chromium', 'firefox', 'webkit']) {
       test(project, async () => {
         await run('npx', ['playwright', 'test', '--project=' + project, '--reporter=list'], folder);
       });
-    }
+    } 
   });
 }
 

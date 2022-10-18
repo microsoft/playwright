@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/experimental-ct-react'
-import { serverFixtures } from '../../../../tests/config/serverFixtures';
+import { test, expect } from '@playwright/experimental-ct-react';
+const { serverFixtures } = require('../../../../tests/config/serverFixtures');
 import Fetch from './components/Fetch';
 import DelayedData from './components/DelayedData';
 import Button from './components/Button';
@@ -8,6 +8,7 @@ import MultipleChildren from './components/MultipleChildren';
 import MultiRoot from './components/MultiRoot';
 import Counter from './components/Counter';
 import EmptyFragment from './components/EmptyFragment';
+import type { HooksConfig } from '../playwright';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
@@ -15,6 +16,11 @@ test('render props', async ({ mount }) => {
   const component = await mount(<Button title="Submit" />);
   await expect(component).toContainText('Submit');
 });
+
+test('render attributes', async ({ mount }) => {
+  const component = await mount(<Button className="primary" title="Submit" />)
+  await expect(component).toHaveClass('primary');
+})
 
 test('renderer updates props without remounting', async ({ mount }) => {
   const component = await mount(<Counter count={9001} />)
@@ -99,7 +105,7 @@ test('execute callback when a child node is clicked', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages: string[] = [];
   page.on('console', m => messages.push(m.text()));
-  await mount(<Button title="Submit" />, {
+  await mount<HooksConfig>(<Button title="Submit" />, {
     hooksConfig: {
       route: 'A'
     }
@@ -137,7 +143,7 @@ test('get textContent of the empty fragment', async ({ mount }) => {
 
 const testWithServer = test.extend(serverFixtures);
 testWithServer('components routing should go through context', async ({ mount, context, server }) => {
-  server.setRoute('/hello', (req, res) => {
+  server.setRoute('/hello', (req: any, res: any) => {
     res.write('served via server');
     res.end();
   });
@@ -152,7 +158,7 @@ testWithServer('components routing should go through context', async ({ mount, c
   });
 
   const whoServedTheRequest = Promise.race([
-    server.waitForRequest('/hello').then((req) => `served via server: ${req.method} ${req.url}`),
+    server.waitForRequest('/hello').then((req: any) => `served via server: ${req.method} ${req.url}`),
     routedViaContext.then(req => `served via context: ${req}`),
   ]);
 
