@@ -466,7 +466,7 @@ export class Runner {
           }
           testGroups = runAlwaysGroups;
         }
-       if (!testGroups.length)
+        if (!testGroups.length)
           continue;
         const dispatcher = new Dispatcher(this._loader, [...testGroups], this._reporter);
         sigintWatcher = new SigIntWatcher();
