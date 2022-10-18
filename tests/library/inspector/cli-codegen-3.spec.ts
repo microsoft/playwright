@@ -325,7 +325,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<label for=target>Country</label><input id=target>`);
 
     const selector = await recorder.hoverOverElement('input');
-    expect(selector).toBe('internal:label=Country');
+    expect(selector).toBe('internal:label="Country"i');
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -348,13 +348,13 @@ test.describe('cli codegen', () => {
         await page.GetByLabel("Country").ClickAsync();`);
   });
 
-  test('should generate getByLabel with regex', async ({ page, openRecorder }) => {
+  test('should generate getByLabel without regex', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 
     await recorder.setContentAndWait(`<label for=target>Coun"try</label><input id=target>`);
 
     const selector = await recorder.hoverOverElement('input');
-    expect(selector).toBe('internal:label=/Coun"try/');
+    expect(selector).toBe('internal:label="Coun\\\"try"i');
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -362,18 +362,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
-  await page.getByLabel(/Coun"try/).click();`);
+  await page.getByLabel('Coun\"try').click();`);
 
     expect.soft(sources.get('Python').text).toContain(`
-    page.get_by_label(re.compile(r"Coun\\\"try")).click()`);
+    page.get_by_label("Coun\\"try").click()`);
 
     expect.soft(sources.get('Python Async').text).toContain(`
-    await page.get_by_label(re.compile(r"Coun\\\"try")).click()`);
+    await page.get_by_label("Coun\\"try").click()`);
 
     expect.soft(sources.get('Java').text).toContain(`
-      page.getByLabel(Pattern.compile("Coun\\\"try")).click()`);
+      page.getByLabel("Coun\\"try").click()`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.GetByLabel(new Regex("Coun\\\"try")).ClickAsync();`);
+        await page.GetByLabel("Coun\\"try").ClickAsync();`);
   });
 });
