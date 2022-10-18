@@ -3223,6 +3223,14 @@ might return multiple quads for inline nodes.
        */
       eventName?: string;
       /**
+       * If true, eventName is case sensitive. Defaults to true.
+       */
+      caseSensitive?: boolean;
+      /**
+       * If true, treats eventName as a regex. Defaults to false.
+       */
+      isRegex?: boolean;
+      /**
        * Options to apply to this breakpoint to modify its behavior.
        */
       options?: Debugger.BreakpointOptions;
@@ -3238,6 +3246,14 @@ might return multiple quads for inline nodes.
        * The name of the specific event to stop on.
        */
       eventName?: string;
+      /**
+       * If true, eventName is case sensitive. Defaults to true.
+       */
+      caseSensitive?: boolean;
+      /**
+       * If true, treats eventName as a regex. Defaults to false.
+       */
+      isRegex?: boolean;
     }
     export type removeEventBreakpointReturnValue = {
     }
