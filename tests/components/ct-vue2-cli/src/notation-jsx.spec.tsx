@@ -12,6 +12,11 @@ test('render props', async ({ mount }) => {
   await expect(component).toContainText('Submit')
 })
 
+test('render attributes', async ({ mount }) => {
+  const component = await mount(<Button class="primary" title="Submit" />)
+  await expect(component).toHaveClass('primary');
+});
+
 test('renderer updates props without remounting', async ({ mount }) => {
   const component = await mount(<Counter count={9001} />)
   await expect(component.locator('#props')).toContainText('9001')

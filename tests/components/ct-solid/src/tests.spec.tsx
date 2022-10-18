@@ -12,6 +12,11 @@ test('render props', async ({ mount }) => {
   await expect(component).toContainText('Submit');
 });
 
+test('render attributes', async ({ mount }) => {
+  const component = await mount(<Button className="primary" title="Submit" />)
+  await expect(component).toHaveClass('primary');
+})
+
 test('execute callback when the button is clicked', async ({ mount }) => {
   const messages: string[] = [];
   const component = await mount(
