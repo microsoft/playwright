@@ -105,12 +105,6 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-## property: TestProject.canShard
-* since: v1.28
-- type: ?<[boolean]>
-
-If set to false and the tests run with --shard command line option, all tests from this project will run in every shard. If not specified, the project can be split between several shards.
-
 ## property: TestProject.expect
 * since: v1.10
 - type: ?<[Object]>
@@ -269,7 +263,7 @@ Use [`property: TestConfig.retries`] to change this option for all projects.
 * since: v1.28
 - type: ?<[RunMode]<"default"|"always">>
 
-If set to 'always' the project will always be executed regardless of previous failures in the same test run. If omitted or set to 'default' the project will be skipped if there are test failures in the projects from the prior [`property: TestProject.stage`]'s.
+If set to 'always' the project will always be executed regardless of previous failures in the same test run. If set to 'always' all tests from the project will run in each shard and won't be split.  If omitted or set to 'default' the project will be skipped if there are test failures in the projects from the prior [`property: TestProject.stage`]'s.
 
 ## property: TestProject.stage
 * since: v1.28

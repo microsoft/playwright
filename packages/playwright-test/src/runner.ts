@@ -450,22 +450,8 @@ export class Runner {
       let hasWorkerErrors = false;
       let previousStageFailed = false;
       for (let testGroups of concurrentTestGroups) {
-        if (previousStageFailed) {
-          const runAlwaysGroups = [];
-          for (const group of testGroups) {
-            if (group.run === 'always') {
-              runAlwaysGroups.push(group);
-            } else {
-              for (const test of group.tests) {
-                const result = test._appendTestResult();
-                this._reporter.onTestBegin?.(test, result);
-                result.status = 'skipped';
-                this._reporter.onTestEnd?.(test, result);
-              }
-            }
-          }
-          testGroups = runAlwaysGroups;
-        }
+        if (previousStageFailed)
+          testGroups = this._skipTestsNotMarkedAsRunAlways(testGroups);
         if (!testGroups.length)
           continue;
         const dispatcher = new Dispatcher(this._loader, [...testGroups], this._reporter);
@@ -497,6 +483,23 @@ export class Runner {
       await globalTearDown?.();
     }
     return result;
+  }
+
+  private _skipTestsNotMarkedAsRunAlways(testGroups: TestGroup[]): TestGroup[] {
+    const runAlwaysGroups = [];
+    for (const group of testGroups) {
+      if (group.run === 'always') {
+        runAlwaysGroups.push(group);
+      } else {
+        for (const test of group.tests) {
+          const result = test._appendTestResult();
+          this._reporter.onTestBegin?.(test, result);
+          result.status = 'skipped';
+          this._reporter.onTestEnd?.(test, result);
+        }
+      }
+    }
+    return runAlwaysGroups;
   }
 
   private async _removeOutputDirs(options: RunOptions): Promise<boolean> {

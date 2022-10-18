@@ -265,8 +265,9 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   stage: number;
   /**
-   * If set to 'always' the project will always be executed regardless of previous failures in the same test run. If omitted
-   * or set to 'default' the project will be skipped if there are test failures in the projects from the prior
+   * If set to 'always' the project will always be executed regardless of previous failures in the same test run. If set to
+   * 'always' all tests from the project will run in each shard and won't be split.  If omitted or set to 'default' the
+   * project will be skipped if there are test failures in the projects from the prior
    * [testProject.stage](https://playwright.dev/docs/api/class-testproject#test-project-stage)'s.
    */
   run: 'default'|'always';
@@ -4302,12 +4303,6 @@ export interface TestError {
  */
 interface TestProject {
   /**
-   * If set to false and the tests run with --shard command line option, all tests from this project will run in every shard.
-   * If not specified, the project can be split between several shards.
-   */
-  canShard?: boolean;
-
-  /**
    * Configuration for the `expect` assertion library.
    *
    * Use [testConfig.expect](https://playwright.dev/docs/api/class-testconfig#test-config-expect) to change this option for
@@ -4479,8 +4474,9 @@ interface TestProject {
   retries?: number;
 
   /**
-   * If set to 'always' the project will always be executed regardless of previous failures in the same test run. If omitted
-   * or set to 'default' the project will be skipped if there are test failures in the projects from the prior
+   * If set to 'always' the project will always be executed regardless of previous failures in the same test run. If set to
+   * 'always' all tests from the project will run in each shard and won't be split.  If omitted or set to 'default' the
+   * project will be skipped if there are test failures in the projects from the prior
    * [testProject.stage](https://playwright.dev/docs/api/class-testproject#test-project-stage)'s.
    */
   run?: "default"|"always";
