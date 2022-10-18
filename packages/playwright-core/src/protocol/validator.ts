@@ -257,7 +257,7 @@ scheme.LocalUtilsConnectResult = tObject({
 });
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
-  sdkLanguage: tString,
+  sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),
 });
 scheme.RootInitializeResult = tObject({
   playwright: tChannel(['Playwright']),

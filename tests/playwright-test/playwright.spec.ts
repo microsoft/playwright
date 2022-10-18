@@ -329,8 +329,8 @@ test('should report error and pending operations on timeout', async ({ runInline
       test('timedout', async ({ page }) => {
         await page.setContent('<div>Click me</div>');
         await Promise.all([
-          page.click('text=Missing'),
-          page.textContent('text=More missing'),
+          page.getByText('Missing').click(),
+          page.getByText('More missing').textContent(),
         ]);
       });
     `,
@@ -340,10 +340,10 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Pending operations:');
-  expect(result.output).toContain('- page.click at a.test.ts:9:16');
-  expect(result.output).toContain('- page.textContent at a.test.ts:10:16');
-  expect(result.output).toContain('waiting for selector');
-  expect(stripAnsi(result.output)).toContain(`10 |           page.textContent('text=More missing'),`);
+  expect(result.output).toContain('- locator.click at a.test.ts:9:37');
+  expect(result.output).toContain('- locator.textContent at a.test.ts:10:42');
+  expect(result.output).toContain('waiting for');
+  expect(stripAnsi(result.output)).toContain(`10 |           page.getByText('More missing').textContent(),`);
 });
 
 test('should report error on timeout with shared page', async ({ runInlineTest }, testInfo) => {
@@ -358,7 +358,7 @@ test('should report error on timeout with shared page', async ({ runInlineTest }
         await page.setContent('<div>Click me</div>');
       });
       test('timedout', async () => {
-        await page.click('text=Missing');
+        await page.getByText('Missing').click();
       });
     `,
   }, { workers: 1, timeout: 2000 });
@@ -366,8 +366,8 @@ test('should report error on timeout with shared page', async ({ runInlineTest }
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('waiting for selector "text=Missing"');
-  expect(stripAnsi(result.output)).toContain(`14 |         await page.click('text=Missing');`);
+  expect(result.output).toContain('waiting for "getByText(\'Missing\')"');
+  expect(stripAnsi(result.output)).toContain(`14 |         await page.getByText('Missing').click();`);
 });
 
 test('should report error from beforeAll timeout', async ({ runInlineTest }, testInfo) => {
@@ -378,8 +378,8 @@ test('should report error from beforeAll timeout', async ({ runInlineTest }, tes
         const page = await browser.newPage();
         await page.setContent('<div>Click me</div>');
         await Promise.all([
-          page.click('text=Missing'),
-          page.textContent('text=More missing'),
+          page.getByText('Missing').click(),
+          page.getByText('More missing').textContent(),
         ]);
       });
       test('ignored', () => {});
@@ -390,8 +390,8 @@ test('should report error from beforeAll timeout', async ({ runInlineTest }, tes
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('"beforeAll" hook timeout of 2000ms exceeded.');
-  expect(result.output).toContain('waiting for selector');
-  expect(stripAnsi(result.output)).toContain(`11 |           page.textContent('text=More missing'),`);
+  expect(result.output).toContain('waiting for');
+  expect(stripAnsi(result.output)).toContain(`11 |           page.getByText('More missing').textContent(),`);
 });
 
 test('should not report waitForEventInfo as pending', async ({ runInlineTest }, testInfo) => {

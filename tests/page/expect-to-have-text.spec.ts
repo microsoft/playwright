@@ -152,7 +152,7 @@ test.describe('not.toHaveText', () => {
     const error = await expect(page.locator('span')).not.toHaveText('hello', { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain('Expected string: not "hello"');
     expect(stripAnsi(error.message)).toContain('Received string: ""');
-    expect(stripAnsi(error.message)).toContain('waiting for selector "span"');
+    expect(stripAnsi(error.message)).toContain('waiting for "locator(\'span\')"');
   });
 });
 
@@ -217,7 +217,7 @@ test.describe('toHaveText with array', () => {
     const error = await expect(locator).toHaveText(['Text 1', /Text \d/, 'Extra'], { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain('-   "Extra"');
     expect(error.message).toContain('expect.toHaveText with timeout 1000ms');
-    expect(error.message).toContain('waiting for selector "div"');
+    expect(error.message).toContain('waiting for "locator(\'div\')"');
     expect(error.message).toContain('selector resolved to 2 elements');
   });
 

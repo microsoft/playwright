@@ -42,6 +42,7 @@ import { isInvalidSelectorError, splitSelectorByFrame, stringifySelector } from 
 import type { SelectorInfo } from './selectors';
 import type { ScreenshotOptions } from './screenshotter';
 import type { InputFilesItems } from './dom';
+import { asLocator } from './isomorphic/locatorGenerators';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;
@@ -797,7 +798,7 @@ export class Frame extends SdkObject {
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
     return controller.run(async progress => {
-      progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
+      progress.log(`waiting for "${this._asLocator(selector)}"${state === 'attached' ? '' : ' to be ' + state}`);
       return this.retryWithProgress(progress, selector, options, async (selectorInFrame, continuePolling) => {
         // Be careful, |this| can be different from |frame|.
         // We did not pass omitAttached, so it is non-null.
@@ -1107,7 +1108,7 @@ export class Frame extends SdkObject {
       const { frame, info } = selectorInFrame!;
       // Be careful, |this| can be different from |frame|.
       const task = dom.waitForSelectorTask(info, 'attached');
-      progress.log(`waiting for selector "${selector}"`);
+      progress.log(`waiting for "${this._asLocator(selector)}"`);
       const handle = await frame._scheduleRerunnableHandleTask(progress, info.world, task);
       const element = handle.asElement() as dom.ElementHandle<Element>;
       try {
@@ -1500,7 +1501,7 @@ export class Frame extends SdkObject {
     const callbackText = body.toString();
     return this.retryWithProgress(progress, selector, options, async selectorInFrame => {
       // Be careful, |this| can be different from |frame|.
-      progress.log(`waiting for selector "${selector}"`);
+      progress.log(`waiting for "${this._asLocator(selector)}"`);
       const { frame, info } = selectorInFrame || { frame: this, info: { parsed: { parts: [{ name: 'internal:control', body: 'return-empty', source: 'internal:control=return-empty' }] }, world: 'utility', strict: !!options.strict } };
       return await frame._scheduleRerunnableTaskInFrame(progress, info, callbackText, taskData, options);
     });
@@ -1694,7 +1695,7 @@ export class Frame extends SdkObject {
       progress.cleanupWhenAborted(() => result.dispose());
       return result;
     } catch (e) {
-      throw new Error(`Error: frame navigated while waiting for selector "${selector}"`);
+      throw new Error(`Error: frame navigated while waiting for "${this._asLocator(selector)}"`);
     }
   }
 
@@ -1720,6 +1721,10 @@ export class Frame extends SdkObject {
           indexedDB.deleteDatabase(db.name!);
       }
     }, { ls: newStorage?.localStorage }).catch(() => {});
+  }
+
+  private _asLocator(selector: string) {
+    return asLocator(this._page.context()._browser.options.sdkLanguage, selector);
   }
 }
 

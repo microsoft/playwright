@@ -73,7 +73,7 @@ The error would look like this:
 
     Call log:
       - expect.toBeVisible with timeout 5000ms
-      - waiting for selector "text=Name"
+      - waiting for "getByText('Name')"
 
 
       2 |
