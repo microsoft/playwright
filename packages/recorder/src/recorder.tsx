@@ -153,7 +153,7 @@ export const Recorder: React.FC<RecorderProps> = ({
             copy(selectorInputRef.current?.value || '');
           }}></ToolbarButton>
         </Toolbar>
-        <CallLogView log={Array.from(log.values())}/>
+        <CallLogView language={source.language} log={Array.from(log.values())}/>
       </div>
     </SplitView>
   </div>;

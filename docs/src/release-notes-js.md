@@ -637,7 +637,7 @@ This version was also tested against the following stable channels:
 
       Call log:
         - expect.toBeVisible with timeout 5000ms
-        - waiting for selector "text=Name"
+        - waiting for "getByText('Name')"
 
 
         2 |

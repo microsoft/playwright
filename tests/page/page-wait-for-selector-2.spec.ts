@@ -131,7 +131,7 @@ it('should respect timeout', async ({ page, playwright }) => {
   await page.waitForSelector('div', { timeout: 3000, state: 'attached' }).catch(e => error = e);
   expect(error).toBeTruthy();
   expect(error.message).toContain('page.waitForSelector: Timeout 3000ms exceeded');
-  expect(error.message).toContain('waiting for selector "div"');
+  expect(error.message).toContain('waiting for "locator(\'div\')"');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
@@ -141,7 +141,7 @@ it('should have an error message specifically for awaiting an element to be hidd
   await page.waitForSelector('div', { state: 'hidden', timeout: 1000 }).catch(e => error = e);
   expect(error).toBeTruthy();
   expect(error.message).toContain('page.waitForSelector: Timeout 1000ms exceeded');
-  expect(error.message).toContain('waiting for selector "div" to be hidden');
+  expect(error.message).toContain('waiting for "locator(\'div\')" to be hidden');
 });
 
 it('should respond to node attribute mutation', async ({ page, server }) => {
@@ -233,7 +233,7 @@ it('should respect timeout xpath', async ({ page, playwright }) => {
   await page.waitForSelector('//div', { state: 'attached', timeout: 3000 }).catch(e => error = e);
   expect(error).toBeTruthy();
   expect(error.message).toContain('page.waitForSelector: Timeout 3000ms exceeded');
-  expect(error.message).toContain('waiting for selector "//div"');
+  expect(error.message).toContain('waiting for "locator(\'xpath=//div\')"');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
@@ -326,6 +326,6 @@ it('should fail when navigating while on handle', async ({ page, mode, server })
 
   const body = await page.waitForSelector('body');
   const error = await body.waitForSelector('div', { __testHookBeforeAdoptNode } as any).catch(e => e);
-  expect(error.message).toContain('Error: frame navigated while waiting for selector');
-  expect(error.message).toContain('"div"');
+  expect(error.message).toContain('Error: frame navigated while waiting for');
+  expect(error.message).toContain('"locator(\'div\')"');
 });

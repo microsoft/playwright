@@ -146,7 +146,7 @@ Expected string: "my text"
 Received string: ""
 Call log:
   - expect.toHaveText with timeout 5000ms
-  - waiting for selector "button"
+  - waiting for "locator('button')"
 ```
 
 ### Set expect timeout in the config
@@ -206,7 +206,7 @@ example.spec.ts:3:1 › basic test ===========================
 
 locator.click: Timeout 1000ms exceeded.
 =========================== logs ===========================
-waiting for selector "button"
+waiting for "locator('button')"
 ============================================================
 ```
 

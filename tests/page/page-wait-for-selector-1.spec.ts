@@ -81,8 +81,8 @@ it('elementHandle.waitForSelector should throw on navigation', async ({ page, se
     await page.evaluate(() => 1);
   await page.goto(server.EMPTY_PAGE);
   const error = await promise;
-  expect(error.message).toContain('Error: frame navigated while waiting for selector');
-  expect(error.message).toContain('span');
+  expect(error.message).toContain('Error: frame navigated while waiting for');
+  expect(error.message).toContain('"locator(\'span\')"');
 });
 
 it('should work with removed MutationObserver', async ({ page, server }) => {
@@ -134,7 +134,7 @@ it('should report logs while waiting for visible', async ({ page, server }) => {
 
   const error = await watchdog.catch(e => e);
   expect(error.message).toContain(`frame.waitForSelector: Timeout 5000ms exceeded.`);
-  expect(error.message).toContain(`waiting for selector "div" to be visible`);
+  expect(error.message).toContain(`waiting for "locator(\'div\')" to be visible`);
   expect(error.message).toContain(`selector resolved to hidden <div id="mydiv" class="foo bar" foo="1234567890123456…>abcdefghijklmnopqrstuvwyxzabcdefghijklmnopqrstuvw…</div>`);
   expect(error.message).toContain(`selector did not resolve to any element`);
   expect(error.message).toContain(`selector resolved to hidden <div class="another"></div>`);
@@ -165,7 +165,7 @@ it('should report logs while waiting for hidden', async ({ page, server }) => {
 
   const error = await watchdog.catch(e => e);
   expect(error.message).toContain(`frame.waitForSelector: Timeout 5000ms exceeded.`);
-  expect(error.message).toContain(`waiting for selector "div" to be hidden`);
+  expect(error.message).toContain(`waiting for "locator(\'div\')" to be hidden`);
   expect(error.message).toContain(`selector resolved to visible <div id="mydiv" class="foo bar">hello</div>`);
   expect(error.message).toContain(`selector resolved to visible <div class="another">hello</div>`);
 });
