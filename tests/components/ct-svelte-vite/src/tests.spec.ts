@@ -21,6 +21,7 @@ import DefaultSlot from './components/DefaultSlot.svelte';
 import NamedSlots from './components/NamedSlots.svelte';
 import MultiRoot from './components/MultiRoot.svelte';
 import Empty from './components/Empty.svelte';
+import type { HooksConfig } from '../playwright';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
@@ -102,7 +103,7 @@ test('render a component with a named slot', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages: string[] = []
   page.on('console', m => messages.push(m.text()))
-  await mount(Button, {
+  await mount<HooksConfig>(Button, {
     props: {
       title: 'Submit'
     },

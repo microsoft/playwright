@@ -5,6 +5,7 @@ import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
 import MultiRoot from './components/MultiRoot.vue'
 import EmptyTemplate from './components/EmptyTemplate.vue'
+import type { HooksConfig } from '../playwright'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -113,7 +114,7 @@ test('emit a event when a slot is clicked', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages: string[] = []
   page.on('console', m => messages.push(m.text()))
-  await mount(<Button title="Submit" />, {
+  await mount<HooksConfig>(<Button title="Submit" />, {
     hooksConfig: { route: 'A' }
   })
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}, app: true', 'After mount el: HTMLButtonElement'])

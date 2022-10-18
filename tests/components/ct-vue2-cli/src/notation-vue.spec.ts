@@ -5,6 +5,7 @@ import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
 import Component from './components/Component.vue'
 import EmptyTemplate from './components/EmptyTemplate.vue'
+import type { hooksConfig } from '../playwright'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -122,7 +123,7 @@ test('render a component without options', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages: string[] = []
   page.on('console', m => messages.push(m.text()))
-  await mount(Button, {
+  await mount<hooksConfig>(Button, {
     props: {
       title: 'Submit'
     },
