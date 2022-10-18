@@ -85,8 +85,6 @@ export class JavaLanguageGenerator implements LanguageGenerator {
 
     formatter.add(code);
 
-    if (signals.assertNavigation)
-      formatter.add(`assertThat(${pageAlias}).hasURL(${quote(signals.assertNavigation.url)});`);
     return formatter.format();
   }
 

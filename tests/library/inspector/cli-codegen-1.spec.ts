@@ -587,75 +587,30 @@ test.describe('cli codegen', () => {
     expect(selector).toBe('internal:text="link"i');
     const [, sources] = await Promise.all([
       page.waitForNavigation(),
-      recorder.waitForOutput('JavaScript', 'waitForURL'),
+      recorder.waitForOutput('JavaScript', '.click()'),
       page.dispatchEvent('a', 'click', { detail: 1 })
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
-  await page.getByText('link').click();
-  await page.waitForURL('about:blank#foo');`);
+  await page.getByText('link').click();`);
 
     expect.soft(sources.get('Playwright Test').text).toContain(`
-  await page.getByText('link').click();
-  await expect(page).toHaveURL('about:blank#foo');`);
+  await page.getByText('link').click();`);
 
     expect.soft(sources.get('Java').text).toContain(`
-      page.getByText("link").click();
-      assertThat(page).hasURL("about:blank#foo");`);
+      page.getByText("link").click();`);
 
     expect.soft(sources.get('Python').text).toContain(`
-    page.get_by_text("link").click()
-    page.wait_for_url("about:blank#foo")`);
+    page.get_by_text("link").click()`);
 
     expect.soft(sources.get('Python Async').text).toContain(`
-    await page.get_by_text("link").click()
-    await page.wait_for_url("about:blank#foo")`);
+    await page.get_by_text("link").click()`);
 
     expect.soft(sources.get('Pytest').text).toContain(`
-    page.get_by_text("link").click()
-    expect(page).to_have_url("about:blank#foo")`);
+    page.get_by_text("link").click()`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.GetByText("link").ClickAsync();
-        await page.WaitForURLAsync("about:blank#foo");`);
-
-    expect(page.url()).toContain('about:blank#foo');
-  });
-
-
-  test('should await navigation', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
-
-    await recorder.setContentAndWait(`<a onclick="setTimeout(() => window.location.href='about:blank#foo', 1000)">link</a>`);
-
-    const selector = await recorder.hoverOverElement('a');
-    expect(selector).toBe('internal:text="link"i');
-
-    const [, sources] = await Promise.all([
-      page.waitForNavigation(),
-      recorder.waitForOutput('JavaScript', 'waitForURL'),
-      page.dispatchEvent('a', 'click', { detail: 1 })
-    ]);
-
-    expect.soft(sources.get('JavaScript').text).toContain(`
-  await page.getByText('link').click();
-  await page.waitForURL('about:blank#foo');`);
-
-    expect.soft(sources.get('Java').text).toContain(`
-      page.getByText("link").click();
-      assertThat(page).hasURL("about:blank#foo");`);
-
-    expect.soft(sources.get('Python').text).toContain(`
-    page.get_by_text("link").click()
-    page.wait_for_url("about:blank#foo")`);
-
-    expect.soft(sources.get('Python Async').text).toContain(`
-    await page.get_by_text("link").click()
-    await page.wait_for_url("about:blank#foo")`);
-
-    expect.soft(sources.get('C#').text).toContain(`
-        await page.GetByText("link").ClickAsync();
-        await page.WaitForURLAsync(\"about:blank#foo\");`);
+        await page.GetByText("link").ClickAsync();`);
 
     expect(page.url()).toContain('about:blank#foo');
   });
