@@ -100,6 +100,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       options: {},
       platform: process.platform,
       wallTime: 0,
+      sdkLanguage: (context as BrowserContext)?._browser?.options?.sdkLanguage,
     };
     if (context instanceof BrowserContext) {
       this._snapshotter = new Snapshotter(context, this);
@@ -112,6 +113,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   async start(options: TracerOptions) {
     if (this._isStopping)
       throw new Error('Cannot start tracing while stopping');
+
+    // Re-write for testing.
+    this._contextCreatedEvent.sdkLanguage = (this._context as BrowserContext)?._browser?.options?.sdkLanguage;
+
     if (this._state) {
       const o = this._state.options;
       if (o.name !== options.name || !o.screenshots !== !options.screenshots || !o.snapshots !== !options.snapshots)
