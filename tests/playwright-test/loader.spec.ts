@@ -471,3 +471,20 @@ test('should load a jsx/tsx files', async ({ runInlineTest }) => {
   expect(passed).toBe(2);
   expect(exitCode).toBe(0);
 });
+
+test('should remove type imports from ts', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { Point } from 'helper';
+      const p: Point = {};
+
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'node_modules/helper/index.d.ts': `
+      export type Point = {};
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});

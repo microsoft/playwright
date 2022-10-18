@@ -65,7 +65,7 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
       setPublicClassFields: true,
     },
     presets: [
-      [require('@babel/preset-typescript'), { onlyRemoveTypeImports: true }],
+      [require('@babel/preset-typescript'), { onlyRemoveTypeImports: false }],
     ],
     plugins,
     sourceMaps: 'both',

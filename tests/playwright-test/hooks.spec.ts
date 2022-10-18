@@ -185,6 +185,7 @@ test('beforeAll from a helper file should throw', async ({ runInlineTest }) => {
     `,
     'playwright.config.ts': `
       import { test } from './my-test';
+      test.extend({});
     `,
     'a.test.ts': `
       import { test } from './my-test';
