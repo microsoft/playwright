@@ -3,6 +3,7 @@
     <header>
       <slot name="header" />
     </header>
+
     <main>
       <slot name="main" />
     </main>

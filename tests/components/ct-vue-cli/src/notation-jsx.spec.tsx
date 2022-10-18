@@ -28,13 +28,10 @@ test('renderer and keep the component instance intact', async ({ mount }) => {
 })
 
 test('emit an submit event when the button is clicked', async ({ mount }) => {
-  const messages: string[] = []
-  const component = await mount(<Button 
-    title="Submit"
-    v-on:submit={(data: string) => {
-      messages.push(data)
-    }}
-  />)
+  const messages = []
+  const component = await mount(<Button title='Submit' v-on:submit={data => {
+    messages.push(data)
+  }}></Button>)
   await component.click()
   expect(messages).toEqual(['hello'])
 })
@@ -82,7 +79,7 @@ test('emit a event when a slot is clicked', async ({ mount }) => {
 })
 
 test('run hooks', async ({ page, mount }) => {
-  const messages: string[] = []
+  const messages = []
   page.on('console', m => messages.push(m.text()))
   await mount<HooksConfig>(<Button title="Submit" />, {
     hooksConfig: { route: 'A' }

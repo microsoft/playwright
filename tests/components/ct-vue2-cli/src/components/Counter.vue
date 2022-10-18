@@ -7,7 +7,7 @@
   </div>
  </template>
 
-<script lang="ts">
+<script>
   let remountCount = 0;
   
   export default {

@@ -1,7 +1,7 @@
 <script lang="ts">
 import { update, remountCount } from '../store'
 import { createEventDispatcher } from "svelte";
-export let count: number;
+export let count;
 const dispatch = createEventDispatcher();
 update();
 </script>

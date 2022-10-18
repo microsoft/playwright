@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/experimental-ct-react';
-const { serverFixtures } = require('../../../../tests/config/serverFixtures');
+import { test, expect } from '@playwright/experimental-ct-react'
+import { serverFixtures } from '../../../../tests/config/serverFixtures';
 import Fetch from './components/Fetch';
 import DelayedData from './components/DelayedData';
 import Button from './components/Button';
@@ -143,7 +143,7 @@ test('get textContent of the empty fragment', async ({ mount }) => {
 
 const testWithServer = test.extend(serverFixtures);
 testWithServer('components routing should go through context', async ({ mount, context, server }) => {
-  server.setRoute('/hello', (req: any, res: any) => {
+  server.setRoute('/hello', (req, res) => {
     res.write('served via server');
     res.end();
   });
@@ -158,7 +158,7 @@ testWithServer('components routing should go through context', async ({ mount, c
   });
 
   const whoServedTheRequest = Promise.race([
-    server.waitForRequest('/hello').then((req: any) => `served via server: ${req.method} ${req.url}`),
+    server.waitForRequest('/hello').then((req) => `served via server: ${req.method} ${req.url}`),
     routedViaContext.then(req => `served via context: ${req}`),
   ]);
 
