@@ -408,7 +408,12 @@ export class Runner {
 
     this._filterForCurrentShard(rootSuite, concurrentTestGroups);
 
-    config._maxConcurrentTestGroups = Math.max(...concurrentTestGroups.map(g => g.length));
+    const projectToWorkerLimit = new Map<string, number>();
+    for (const p of config.projects) {
+      if (p._workers)
+        projectToWorkerLimit.set(p._id, p._workers);
+    }
+    this._computeMaxParallelism(concurrentTestGroups);
 
     // Report begin
     this._reporter.onBegin?.(config, rootSuite);
@@ -454,7 +459,7 @@ export class Runner {
           testGroups = this._skipTestsNotMarkedAsRunAlways(testGroups);
         if (!testGroups.length)
           continue;
-        const dispatcher = new Dispatcher(this._loader, [...testGroups], this._reporter);
+        const dispatcher = new Dispatcher(this._loader, [...testGroups], projectToWorkerLimit, this._reporter);
         sigintWatcher = new SigIntWatcher();
         await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
         if (!sigintWatcher.hadSignal()) {
@@ -483,6 +488,29 @@ export class Runner {
       await globalTearDown?.();
     }
     return result;
+  }
+
+  private _computeMaxParallelism(concurrentTestGroups: TestGroup[][]) {
+    const config = this._loader.fullConfig();
+    const projectToWorkerLimit = new Map<string, number>();
+    for (const p of config.projects) {
+      if (p._workers)
+        projectToWorkerLimit.set(p._id, p._workers);
+    }
+    const maxPerStage = concurrentTestGroups.map(stage => {
+      const numGroupsPerProject = new Map<string, number>();
+      for (const group of stage) {
+        const numGroups = numGroupsPerProject.get(group.projectId) || 0;
+        numGroupsPerProject.set(group.projectId, numGroups + 1);
+      }
+      let result = 0;
+      for (const [projectId, groupCount] of numGroupsPerProject) {
+        const limit = projectToWorkerLimit.get(projectId) || Number.MAX_SAFE_INTEGER;
+        result += Math.min(groupCount, limit);
+      }
+      return result;
+    });
+    config._maxConcurrentTestGroups = Math.max(...maxPerStage);
   }
 
   private _skipTestsNotMarkedAsRunAlways(testGroups: TestGroup[]): TestGroup[] {

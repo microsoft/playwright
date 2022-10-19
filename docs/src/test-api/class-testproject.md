@@ -439,3 +439,9 @@ export default config;
 ```
 
 Use [`property: TestConfig.use`] to change this option for all projects.
+
+## property: TestProject.workers
+* since: v1.28
+- type: ?<[int]>
+
+Maximum number of workers that can run tests in this project in parallel. If the value is not specified or greater than [`property: TestConfig.workers`] then the number of workers running this project will be limited by [`property: TestConfig.workers`].

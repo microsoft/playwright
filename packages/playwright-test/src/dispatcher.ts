@@ -24,6 +24,7 @@ import type { Loader } from './loader';
 import { TestCase } from './test';
 import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
 import { TestTypeImpl } from './testType';
+import { assert } from 'playwright-core/lib/utils';
 
 export type TestGroup = {
   workerHash: string;
@@ -34,6 +35,8 @@ export type TestGroup = {
   tests: TestCase[];
   watchMode: boolean;
 };
+
+export type WorkerGroups = Map<string, number>;
 
 type TestResultData = {
   result: TestResult;
@@ -51,6 +54,11 @@ type WorkerExitData = {
   signal: NodeJS.Signals | null;
 };
 
+type ProjectWorkers = {
+  limit: number,
+  current: number
+};
+
 export class Dispatcher {
   private _workerSlots: { busy: boolean, worker?: Worker }[] = [];
   private _queue: TestGroup[] = [];
@@ -58,17 +66,22 @@ export class Dispatcher {
   private _finished = new ManualPromise<void>();
   private _isStopped = false;
 
+  private _projectToWorkers: Map<string, ProjectWorkers> = new Map();
   private _testById = new Map<string, TestData>();
   private _loader: Loader;
   private _reporter: Reporter;
   private _hasWorkerErrors = false;
   private _failureCount = 0;
 
-  constructor(loader: Loader, testGroups: TestGroup[], reporter: Reporter) {
+  constructor(loader: Loader, testGroups: TestGroup[], projectToWorkerLimit: Map<string, number>, reporter: Reporter) {
     this._loader = loader;
     this._reporter = reporter;
     this._queue = testGroups;
     for (const group of testGroups) {
+      if (!this._projectToWorkers.has(group.projectId)) {
+        const limit = projectToWorkerLimit.get(group.projectId) || Number.MAX_SAFE_INTEGER;
+        this._projectToWorkers.set(group.projectId, { limit, current: 0 });
+      }
       this._queuedOrRunningHashCount.set(group.workerHash, 1 + (this._queuedOrRunningHashCount.get(group.workerHash) || 0));
       for (const test of group.tests)
         this._testById.set(test.id, { test, resultByWorkerIndex: new Map() });
@@ -76,12 +89,26 @@ export class Dispatcher {
   }
 
   private async _scheduleJob() {
-    // 1. Find a job to run.
+    // Find a job to run.
     if (this._isStopped || !this._queue.length)
       return;
-    const job = this._queue[0];
 
-    // 2. Find a worker with the same hash, or just some free worker.
+    // Find a job that didn't reach per project worker limit.
+    let job!: TestGroup;
+    let jobIndex;
+    let projectWorkers!: ProjectWorkers;
+    for (jobIndex = 0; jobIndex < this._queue.length; jobIndex++) {
+      const candidate = this._queue[jobIndex];
+      projectWorkers = this._projectToWorkers.get(candidate.projectId)!;
+      if (projectWorkers.current < projectWorkers.limit) {
+        job = candidate;
+        break;
+      }
+    }
+    if (!job)
+      return;
+
+    // Find a worker with the same hash, or just some free worker.
     let index = this._workerSlots.findIndex(w => !w.busy && w.worker && w.worker.hash() === job.workerHash && !w.worker.didSendStop());
     if (index === -1)
       index = this._workerSlots.findIndex(w => !w.busy);
@@ -89,16 +116,18 @@ export class Dispatcher {
     if (index === -1)
       return;
 
-    // 3. Claim both the job and the worker, run the job and release the worker.
-    this._queue.shift();
+    // Claim both the job and the worker, run the job and release the worker.
+    this._queue.splice(jobIndex, 1);
     this._workerSlots[index].busy = true;
+    ++projectWorkers.current;
     await this._startJobInWorker(index, job);
+    --projectWorkers.current;
     this._workerSlots[index].busy = false;
 
-    // 4. Check the "finished" condition.
+    // Check the "finished" condition.
     this._checkFinished();
 
-    // 5. We got a free worker - perhaps we can immediately start another job?
+    // We got a free worker - perhaps we can immediately start another job?
     this._scheduleJob();
   }
 

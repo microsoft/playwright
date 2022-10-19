@@ -162,7 +162,7 @@ export class Loader {
       this._fullConfig._webServers = [webServers];
     }
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
-    this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
+    this._fullConfig.projects = (config.projects || [{ ...config, workers: undefined }]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
     this._assignUniqueProjectIds(this._fullConfig.projects);
   }
 
@@ -300,6 +300,7 @@ export class Loader {
       testDir,
       run,
       stage,
+      _workers: projectConfig.workers,
       _respectGitIgnore: respectGitIgnore,
       snapshotDir,
       _screenshotsDir: screenshotsDir,
@@ -473,7 +474,7 @@ function validateConfig(file: string, config: Config) {
   if (typeof config !== 'object' || !config)
     throw errorWithFile(file, `Configuration file must export a single object`);
 
-  validateProject(file, config, 'config');
+  validateProject(file, { ...config, workers: undefined }, 'config');
 
   if ('forbidOnly' in config && config.forbidOnly !== undefined) {
     if (typeof config.forbidOnly !== 'boolean')

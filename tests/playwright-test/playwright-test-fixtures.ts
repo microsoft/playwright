@@ -286,7 +286,7 @@ export const test = base
               }
               export default TimelineReporter;
             `
-          }, { ...params, reporter: 'list,json,./reporter.ts', workers: 2 }, env, options);
+          }, { workers: 2, reporter: 'list,json,./reporter.ts', ...params }, env, options);
 
           let timeline;
           try {

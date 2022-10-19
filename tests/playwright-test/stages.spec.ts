@@ -54,6 +54,10 @@ function projectNames(timeline: Timeline) {
   return projectNames;
 }
 
+function fileNames(timeline: Timeline) {
+  return timeline.map(({ titlePath }) => titlePath[2]);
+}
+
 function expectRunBefore(timeline: Timeline, before: string[], after: string[]) {
   const begin = new Map<string, number>();
   const end = new Map<string, number>();
@@ -420,3 +424,73 @@ test('should not split project with run: awlays', async ({ runGroups }, testInfo
   }
 });
 
+test('should use all workers by default', async ({ runGroups }, testInfo) => {
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f', 'g'], testInfo);
+  const { exitCode, passed, output } =  await runGroups(configWithFiles, { workers: 4 });
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(7);
+  expect(output).toContain('Running 7 tests using 4 workers');
+});
+
+test('should support TestProject.workers', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            stage: 10,
+            name: 'proj-1',
+            testMatch: /.*(a|b).test.ts/,
+            workers: 1
+          },
+          {
+            stage: 10,
+            name: 'proj-2',
+            testMatch: /.*(c|d).test.ts/,
+            workers: 1
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+      test('test3', async () => { });
+      test('test4', async () => { });
+    `,
+    'b.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+      test('test3', async () => { });
+    `,
+    'c.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+    `,
+    'd.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+    `,
+  };
+
+  const { exitCode, passed, output, timeline } =  await runGroups(files, { workers: 4 });
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(10);
+  expect(output).toContain('Running 10 tests using 2 workers');
+
+  const fileOrder = fileNames(timeline);
+
+  const aStart = fileOrder.indexOf('a.test.ts');
+  const aEnd = fileOrder.lastIndexOf('a.test.ts');
+  const bStart = fileOrder.lastIndexOf('b.test.ts');
+  const bEnd = fileOrder.lastIndexOf('b.test.ts');
+  expect(aEnd < bStart || bEnd < aStart, formatTimeline(timeline)).toBeTruthy();
+
+  const cStart = fileOrder.indexOf('c.test.ts');
+  const cEnd = fileOrder.lastIndexOf('c.test.ts');
+  const dStart = fileOrder.lastIndexOf('d.test.ts');
+  const dEnd = fileOrder.lastIndexOf('d.test.ts');
+  expect(cEnd < dStart || dEnd < cStart, formatTimeline(timeline)).toBeTruthy();
+});

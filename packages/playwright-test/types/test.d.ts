@@ -4573,6 +4573,14 @@ interface TestProject {
    * all projects.
    */
   timeout?: number;
+
+  /**
+   * Maximum number of workers that can run tests in this project in parallel. If the value is not specified or greater than
+   * [testConfig.workers](https://playwright.dev/docs/api/class-testconfig#test-config-workers) then the number of workers
+   * running this project will be limited by
+   * [testConfig.workers](https://playwright.dev/docs/api/class-testconfig#test-config-workers).
+   */
+  workers?: number;
 }
 
 interface TestConfigWebServer {
