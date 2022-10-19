@@ -165,7 +165,6 @@ it('should support httpCredentials option', async ({ server, launchPersistent })
 });
 
 it('should support offline option', async ({ server, launchPersistent }) => {
-  it.skip();
   const { page } = await launchPersistent({ offline: true });
   const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
   expect(error).toBeTruthy();
