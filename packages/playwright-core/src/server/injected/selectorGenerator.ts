@@ -76,7 +76,7 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
   const calculate = (element: Element, allowText: boolean): SelectorToken[] | null => {
     const allowNthMatch = element === targetElement;
 
-    let textCandidates = allowText ? buildTextCandidates(injectedScript, element, element === targetElement).map(token => [token]) : [];
+    let textCandidates = allowText ? buildTextCandidates(injectedScript, element, element === targetElement, accessibleNameCache) : [];
     if (element !== targetElement) {
       // Do not use regex for parent elements (for performance).
       textCandidates = filterRegexTokens(textCandidates);
@@ -162,7 +162,7 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, acces
     const label = input.labels?.[0];
     if (label) {
       const labelText = elementText(injectedScript._evaluator._cacheText, label).full.trim();
-      candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, false, true), score: 3 });
+      candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, false), score: 3 });
     }
   }
 
@@ -197,25 +197,32 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, acces
   return candidates;
 }
 
-function buildTextCandidates(injectedScript: InjectedScript, element: Element, isTargetNode: boolean): SelectorToken[] {
+function buildTextCandidates(injectedScript: InjectedScript, element: Element, isTargetNode: boolean, accessibleNameCache: Map<Element, boolean>): SelectorToken[][] {
   if (element.nodeName === 'SELECT')
     return [];
   const text = elementText(injectedScript._evaluator._cacheText, element).full.trim().replace(/\s+/g, ' ').substring(0, 80);
   if (!text)
     return [];
-  const candidates: SelectorToken[] = [];
+  const candidates: SelectorToken[][] = [];
 
-  const escaped = escapeForTextSelector(text, false, true);
+  const escaped = escapeForTextSelector(text, false);
 
   if (isTargetNode)
-    candidates.push({ engine: 'text', selector: escaped, score: 10 });
+    candidates.push([{ engine: 'internal:text', selector: escaped, score: 10 }]);
 
-  if (escaped === text) {
-    let prefix = element.nodeName.toLowerCase();
-    if (element.hasAttribute('role'))
-      prefix += `[role=${quoteAttributeValue(element.getAttribute('role')!)}]`;
-    candidates.push({ engine: 'css', selector: `${prefix}:has-text("${text}")`, score: 10 });
+  const ariaRole = getAriaRole(element);
+  const candidate: SelectorToken[] = [];
+  if (ariaRole) {
+    const ariaName = getElementAccessibleName(element, false, accessibleNameCache);
+    if (ariaName)
+      candidate.push({ engine: 'role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: 10 });
+    else
+      candidate.push({ engine: 'role', selector: ariaRole, score: 10 });
+  } else {
+    candidate.push({ engine: 'css', selector: element.nodeName.toLowerCase(), score: 10 });
   }
+  candidate.push({ engine: 'internal:has', selector: JSON.stringify('internal:text=' + escaped), score: 0 });
+  candidates.push(candidate);
   return candidates;
 }
 

@@ -8,6 +8,7 @@ import MultipleChildren from './components/MultipleChildren';
 import MultiRoot from './components/MultiRoot';
 import Counter from './components/Counter';
 import EmptyFragment from './components/EmptyFragment';
+import type { HooksConfig } from '../playwright';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
@@ -15,6 +16,11 @@ test('render props', async ({ mount }) => {
   const component = await mount(<Button title="Submit" />);
   await expect(component).toContainText('Submit');
 });
+
+test('render attributes', async ({ mount }) => {
+  const component = await mount(<Button className="primary" title="Submit" />)
+  await expect(component).toHaveClass('primary');
+})
 
 test('renderer updates props without remounting', async ({ mount }) => {
   const component = await mount(<Counter count={9001} />)
@@ -99,7 +105,7 @@ test('execute callback when a child node is clicked', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages: string[] = [];
   page.on('console', m => messages.push(m.text()));
-  await mount(<Button title="Submit" />, {
+  await mount<HooksConfig>(<Button title="Submit" />, {
     hooksConfig: {
       route: 'A'
     }

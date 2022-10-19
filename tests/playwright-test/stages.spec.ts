@@ -208,59 +208,21 @@ test('should work with project filter', async ({ runGroups }, testInfo) => {
   expect(passed).toBe(3);
 });
 
-test('should continue after failures', async ({ runGroups }, testInfo) => {
-  const projectTemplates = {
-    'a': {
-      stage: 1
-    },
-    'b': {
-      stage: 2
-    },
-    'c': {
-      stage: 2
-    },
-    'd': {
-      stage: 4
-    },
-    'e': {
-      stage: 4
-    },
-  };
-  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e'], testInfo, projectTemplates);
-  configWithFiles[`b/b.spec.ts`] = `
-    const { test } = pwt;
-    test('b test', async () => {
-      expect(1).toBe(2);
-    });`;
-  configWithFiles[`d/d.spec.ts`] = `
-    const { test } = pwt;
-    test('d test', async () => {
-      expect(1).toBe(2);
-    });`;
-  const { exitCode, passed, failed, timeline } =  await runGroups(configWithFiles);
-  expect(exitCode).toBe(1);
-  expect(failed).toBe(2);
-  expect(passed).toBe(3);
-  expect(projectNames(timeline)).toEqual(['a', 'b', 'c', 'd', 'e']);
-  expectRunBefore(timeline, ['a'], ['b', 'c', 'd', 'e']); // 1 < 2
-  expectRunBefore(timeline, ['b', 'c'], ['d', 'e']); // 2 < 4
-});
-
-test('should support stopOnFailire', async ({ runGroups }, testInfo) => {
+test('should skip after failire by default', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
     'a': {
       stage: 1
     },
     'b': {
       stage: 2,
-      stopOnFailure: true
+      run: 'default'
     },
     'c': {
       stage: 2
     },
     'd': {
       stage: 4,
-      stopOnFailure: true // this is not important as the test is skipped
+      run: 'default' // this is not important as the test is skipped
     },
     'e': {
       stage: 4
@@ -280,12 +242,55 @@ test('should support stopOnFailire', async ({ runGroups }, testInfo) => {
   const { exitCode, passed, failed, skipped, timeline } =  await runGroups(configWithFiles);
   expect(exitCode).toBe(1);
   expect(failed).toBe(1);
-  expect(passed).toBeLessThanOrEqual(2); // 'c' may either pass or be skipped.
-  expect(passed + skipped).toBe(4);
-  expect(projectNames(timeline)).not.toContainEqual(['d', 'e']);
+  expect(passed).toBe(2); // 'c' may either pass or be skipped.
+  expect(skipped).toBe(2);
+  expect(projectNames(timeline)).toEqual(['a', 'b', 'c', 'd', 'e']);
+  expectRunBefore(timeline, ['a'], ['b', 'c']); // 1 < 2
+  expectRunBefore(timeline, ['b', 'c'], ['d', 'e']); // 2 < 4
 });
 
-test('should split project if no canShard', async ({ runGroups }, testInfo) => {
+test('should run after failire if run:always', async ({ runGroups }, testInfo) => {
+  const projectTemplates = {
+    'a': {
+      stage: 1
+    },
+    'b': {
+      stage: 2,
+      run: 'default'
+    },
+    'c': {
+      stage: 2
+    },
+    'd': {
+      stage: 4,
+      run: 'always'
+    },
+    'e': {
+      stage: 4
+    },
+    'f': {
+      stage: 10,
+      run: 'always'
+    },
+  };
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c', 'd', 'e', 'f'], testInfo, projectTemplates);
+  configWithFiles[`b/b.spec.ts`] = `
+    const { test } = pwt;
+    test('b test', async () => {
+      expect(1).toBe(2);
+    });`;
+  const { exitCode, passed, failed, skipped, timeline } =  await runGroups(configWithFiles);
+  expect(exitCode).toBe(1);
+  expect(passed).toBe(4);
+  expect(failed).toBe(1);
+  expect(skipped).toBe(1);
+  expect(projectNames(timeline)).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
+  expectRunBefore(timeline, ['a'], ['b', 'c']); // 1 < 2
+  expectRunBefore(timeline, ['b', 'c'], ['d', 'e']); // 2 < 4
+  expectRunBefore(timeline, ['d', 'e'], ['f']); // 4 < 10
+});
+
+test('should split project if no run: always', async ({ runGroups }, testInfo) => {
   const files = {
     'playwright.config.ts': `
       module.exports = {
@@ -347,7 +352,7 @@ test('should split project if no canShard', async ({ runGroups }, testInfo) => {
   }
 });
 
-test('should not split project with canShard=false', async ({ runGroups }, testInfo) => {
+test('should not split project with run: awlays', async ({ runGroups }, testInfo) => {
   const files = {
     'playwright.config.ts': `
       module.exports = {
@@ -356,7 +361,7 @@ test('should not split project with canShard=false', async ({ runGroups }, testI
             stage: 10,
             name: 'proj-1',
             testMatch: /.*(a|b).test.ts/,
-            canShard: false,
+            run: 'always',
           },
           {
             stage: 20,

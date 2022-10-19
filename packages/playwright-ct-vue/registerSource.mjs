@@ -18,6 +18,8 @@
 // This file is injected into the registry as text, no dependencies are allowed.
 
 import { createApp, setDevtoolsHook, h } from 'vue';
+import { compile } from '@vue/compiler-dom';
+import * as Vue from 'vue';
 
 /** @typedef {import('@playwright/test/types/component').Component} Component */
 /** @typedef {import('vue').Component} FrameworkComponent */
@@ -41,6 +43,49 @@ const allListeners = new Map();
  */
 function createChild(child) {
   return typeof child === 'string' ? child : createWrapper(child);
+}
+
+/**
+ * Copied from: https://github.com/vuejs/test-utils/blob/main/src/utils/compileSlots.ts
+ * Vue does not provide an easy way to compile template in "slot" mode
+ * Since we do not want to rely on compiler internals and specify
+ * transforms manually we create fake component invocation with the slot we
+ * need and pick slots param from render function later. Fake component will
+ * never be instantiated but it requires to be a component so compile
+ * properly generate invocation. Since we do not want to monkey-patch
+ * `resolveComponent` function we are just using one of built-in components.
+ *
+ * @param {string} html
+ */
+function createSlot(html) {
+  let template = html.trim();
+  const hasWrappingTemplate = template && template.startsWith('<template');
+
+  // allow content without `template` tag, for easier testing
+  if (!hasWrappingTemplate)
+    template = `<template #default="params">${template}</template>`;
+
+  const { code } = compile(`<transition>${template}</transition>`, {
+    mode: 'function',
+    prefixIdentifiers: false
+  });
+  const createRenderFunction = new Function('Vue', code);
+  const renderFn = createRenderFunction(Vue);
+  return (ctx = {}) => {
+    const result = renderFn(ctx);
+    const slotName = Object.keys(result.children)[0];
+    return result.children[slotName](ctx);
+  };
+}
+
+function slotToFunction(slot) {
+  if (typeof slot === 'string')
+    return createSlot(slot)();
+
+  if (Array.isArray(slot))
+    return slot.map(slot => createSlot(slot)());
+
+  throw Error(`Invalid slot received.`);
 }
 
 /**
@@ -109,9 +154,9 @@ function createComponent(component) {
     // Vue test util syntax.
     for (const [key, value] of Object.entries(component.options?.slots || {})) {
       if (key === 'default')
-        children.push(value);
+        children.push(slotToFunction(value));
       else
-        slots[key] = value;
+        slots[key] = slotToFunction(value);
     }
     props = component.options?.props || {};
     for (const [key, value] of Object.entries(component.options?.on || {}))

@@ -347,11 +347,11 @@ export class Runner {
       return;
 
     // Each shard includes:
-    // - all non shardale tests and
+    // - all tests from `run: 'always'` projects (non shardale) and
     // - its portion of the shardable ones.
     let shardableTotal = 0;
     for (const projectSuite of rootSuite.suites) {
-      if (projectSuite.project()!.canShard)
+      if (projectSuite.project()!.run !== 'always')
         shardableTotal += projectSuite.allTests().length;
     }
 
@@ -371,14 +371,14 @@ export class Runner {
       const shardedStage: TestGroup[] = [];
       for (const group of stage) {
         let includeGroupInShard = false;
-        if (group.canShard) {
+        if (group.run === 'always') {
+          includeGroupInShard = true;
+        } else {
           // Any test group goes to the shard that contains the first test of this group.
           // So, this shard gets any group that starts at [from; to)
           if (current >= from && current < to)
             includeGroupInShard = true;
           current += group.tests.length;
-        } else {
-          includeGroupInShard = true;
         }
         if (includeGroupInShard) {
           shardedStage.push(group);
@@ -448,7 +448,12 @@ export class Runner {
       let sigintWatcher;
 
       let hasWorkerErrors = false;
-      for (const testGroups of concurrentTestGroups) {
+      let previousStageFailed = false;
+      for (let testGroups of concurrentTestGroups) {
+        if (previousStageFailed)
+          testGroups = this._skipTestsNotMarkedAsRunAlways(testGroups);
+        if (!testGroups.length)
+          continue;
         const dispatcher = new Dispatcher(this._loader, [...testGroups], this._reporter);
         sigintWatcher = new SigIntWatcher();
         await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
@@ -461,11 +466,9 @@ export class Runner {
         hasWorkerErrors = dispatcher.hasWorkerErrors();
         if (hasWorkerErrors)
           break;
-        const stopOnFailureGroups = testGroups.filter(group => group.stopOnFailure);
-        if (stopOnFailureGroups.some(testGroup => testGroup.tests.some(test => !test.ok())))
-          break;
         if (sigintWatcher.hadSignal())
           break;
+        previousStageFailed ||= testGroups.some(testGroup => testGroup.tests.some(test => !test.ok()));
       }
       if (sigintWatcher?.hadSignal()) {
         result.status = 'interrupted';
@@ -480,6 +483,23 @@ export class Runner {
       await globalTearDown?.();
     }
     return result;
+  }
+
+  private _skipTestsNotMarkedAsRunAlways(testGroups: TestGroup[]): TestGroup[] {
+    const runAlwaysGroups = [];
+    for (const group of testGroups) {
+      if (group.run === 'always') {
+        runAlwaysGroups.push(group);
+      } else {
+        for (const test of group.tests) {
+          const result = test._appendTestResult();
+          this._reporter.onTestBegin?.(test, result);
+          result.status = 'skipped';
+          this._reporter.onTestEnd?.(test, result);
+        }
+      }
+    }
+    return runAlwaysGroups;
   }
 
   private async _removeOutputDirs(options: RunOptions): Promise<boolean> {
@@ -771,8 +791,7 @@ function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] 
       requireFile: test._requireFile,
       repeatEachIndex: test.repeatEachIndex,
       projectId: test._projectId,
-      stopOnFailure: test.parent.project()!.stopOnFailure,
-      canShard: test.parent.project()!.canShard,
+      run: test.parent.project()!.run,
       tests: [],
       watchMode: false,
     };

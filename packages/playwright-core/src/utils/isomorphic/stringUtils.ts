@@ -58,18 +58,10 @@ function cssEscapeOne(s: string, i: number): string {
   return '\\' + s.charAt(i);
 }
 
-function escapeForRegex(text: string): string {
-  return text.replace(/[.*+?^>${}()|[\]\\]/g, '\\$&');
-}
-
-export function escapeForTextSelector(text: string | RegExp, exact: boolean, caseSensitive = false): string {
+export function escapeForTextSelector(text: string | RegExp, exact: boolean): string {
   if (typeof text !== 'string')
     return String(text);
-  if (exact)
-    return '"' + text.replace(/["]/g, '\\"') + '"';
-  if (text.includes('"') || text.includes('>>') || text[0] === '/')
-    return `/${escapeForRegex(text).replace(/\s+/g, '\\s+')}/` + (caseSensitive ? '' : 'i');
-  return text;
+  return `${JSON.stringify(text)}${exact ? '' : 'i'}`;
 }
 
 export function escapeForAttributeSelector(value: string, exact: boolean): string {

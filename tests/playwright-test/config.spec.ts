@@ -519,12 +519,12 @@ test('should throw when project.stage is not an integer', async ({ runInlineTest
   expect(result.output).toContain(`config.projects[0].stage must be an integer`);
 });
 
-test('should throw when project.stopOnFailure is not a boolean', async ({ runInlineTest }) => {
+test('should throw when project.run is not an expected string', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
         module.exports = {
           projects: [
-            { name: 'a', stopOnFailure: 'yes' },
+            { name: 'a', run: 'yes' },
           ],
         };
     `,
@@ -535,5 +535,5 @@ test('should throw when project.stopOnFailure is not a boolean', async ({ runInl
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`config.projects[0].stopOnFailure must be a boolean`);
+  expect(result.output).toContain(`config.projects[0].run must be one of 'default', 'always'.`);
 });

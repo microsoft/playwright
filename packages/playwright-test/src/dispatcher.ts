@@ -30,8 +30,7 @@ export type TestGroup = {
   requireFile: string;
   repeatEachIndex: number;
   projectId: string;
-  stopOnFailure: boolean;
-  canShard: boolean;
+  run: 'default'|'always';
   tests: TestCase[];
   watchMode: boolean;
 };

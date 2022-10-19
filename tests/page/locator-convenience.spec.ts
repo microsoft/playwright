@@ -85,7 +85,7 @@ it('innerText should produce log', async ({ page, server }) => {
   await page.setContent(`<div>Hello</div>`);
   const locator = page.locator('span');
   const error = await locator.innerText({ timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain('waiting for selector "span"');
+  expect(error.message).toContain('waiting for "locator(\'span\')"');
 });
 
 it('textContent should work', async ({ page, server }) => {

@@ -27,7 +27,7 @@ function createLocator(injectedScript: InjectedScript, initial: string, options?
     constructor(selector: string, options?: { hasText?: string | RegExp, has?: Locator }) {
       this.selector = selector;
       if (options?.hasText) {
-        const textSelector = 'text=' + escapeForTextSelector(options.hasText, false);
+        const textSelector = 'internal:text=' + escapeForTextSelector(options.hasText, false);
         this.selector += ` >> internal:has=${JSON.stringify(textSelector)}`;
       }
       if (options?.has)

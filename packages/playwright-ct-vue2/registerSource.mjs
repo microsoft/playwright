@@ -43,6 +43,20 @@ function createChild(child, h) {
 }
 
 /**
+ * Exists to support fallthrough attributes:
+ * https://vuejs.org/guide/components/attrs.html#fallthrough-attributes
+ * @param {any} Component
+ * @param {string} key
+ * @return {boolean}
+ */
+function componentHasKeyInProps(Component, key) {
+  if (Array.isArray(Component.props))
+    return Component.props.includes(key);
+
+  return Object.entries(Component.props).flat().includes(key);
+}
+
+/**
  * @param {Component} component
  * @param {import('vue').CreateElement} h
  */
@@ -96,7 +110,7 @@ function createComponent(component, h) {
         const event = key.substring('v-on:'.length);
         nodeData.on[event] = value;
       } else {
-        if (isVueComponent)
+        if (isVueComponent && componentHasKeyInProps(componentFunc, key))
           nodeData.props[key] = value;
         else
           nodeData.attrs[key] = value;
@@ -178,12 +192,6 @@ window.playwrightUpdate = async (element, options) => {
 
   const component = wrapper.componentInstance;
   const { nodeData, slots } = createComponent(options, component.$createElement);
-
-
-  for (const [name] of Object.entries(component.$listeners || {})) {
-    component.$off(name);
-    delete component.$listeners[name];
-  }
 
   for (const [name, value] of Object.entries(nodeData.on || {})) {
     component.$on(name, value);
