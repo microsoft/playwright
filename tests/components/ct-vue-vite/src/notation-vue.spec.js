@@ -40,7 +40,7 @@ test('renderer updates event listeners without remounting', async ({ mount }) =>
   const messages = []
   await component.update({
     on: { 
-      submit: (count) => messages.push(count)
+      submit: count => messages.push(count)
     }
   })
   await component.click();
@@ -71,7 +71,7 @@ test('emit an submit event when the button is clicked', async ({ mount }) => {
       title: 'Submit'
     },
     on: {
-      submit: (data) => messages.push(data)
+      submit: data => messages.push(data)
     }
   })
   await component.click()

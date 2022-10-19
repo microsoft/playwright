@@ -36,10 +36,10 @@ test('renderer updates props without remounting', async ({ mount }) => {
 test('renderer updates event listeners without remounting', async ({ mount }) => {
   const component = await mount(Counter)
 
-  const messages: string[] = []
+  const messages = []
   await component.update({
     on: { 
-      submit: (data: string) => messages.push(data)
+      submit: data => messages.push(data)
     }
   })
   await component.click();
@@ -70,13 +70,13 @@ test('renderer updates slots without remounting', async ({ mount }) => {
 })
 
 test('emit an submit event when the button is clicked', async ({ mount }) => {
-  const messages: string[] = []
+  const messages = []
   const component = await mount(Button, {
     props: {
       title: 'Submit'
     },
     on: {
-      submit: (data: string) => messages.push(data)
+      submit: data => messages.push(data)
     }
   })
   await component.click()
@@ -121,7 +121,7 @@ test('render a component without options', async ({ mount }) => {
 })
 
 test('run hooks', async ({ page, mount }) => {
-  const messages: string[] = []
+  const messages = []
   page.on('console', m => messages.push(m.text()))
   await mount<hooksConfig>(Button, {
     props: {

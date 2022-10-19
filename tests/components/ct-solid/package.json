@@ -6,8 +6,7 @@
     "start": "vite",
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "serve": "vite preview"
   },
   "license": "MIT",
   "devDependencies": {
