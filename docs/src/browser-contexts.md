@@ -9,12 +9,6 @@ Tests written with Playwright execute in isolated clean-slate environments calle
 
 Test Isolation is when each test is completely isolated from another test meaning each test has it's own local storage, session storage, cookies etc. Playwright achieves this using [BrowserContext]s which are equivalent to incognito-like profiles. They are fast and cheap to create and are completely isolated, even when running in a single browser. Playwright creates a context for each test, and provides a default [Page] in that context.
 
-<video width="100%" height="100%" controls>
-  <source src="https://user-images.githubusercontent.com/13063165/192248591-3f46e5f4-55ec-45c8-8fe0-638ebdfd1103.mp4
-" type="video/mp4" />
-Your browser does not support the video tag.
-</video>
-
 ## Why is Test Isolation Important? 
 
 - No failure carry-over. If one test fails it doesn't affect the other test.
