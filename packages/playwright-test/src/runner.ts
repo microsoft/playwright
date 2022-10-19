@@ -44,7 +44,7 @@ import { SigIntWatcher } from './sigIntWatcher';
 import type { TestCase } from './test';
 import { Suite } from './test';
 import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal } from './types';
-import { createFileMatcher, createTitleMatcher, serializeError } from './util';
+import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher, serializeError } from './util';
 import type { Matcher, TestFileFilter } from './util';
 
 const removeFolderAsync = promisify(rimraf);
@@ -619,15 +619,11 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[
   if (!filterWithLine)
     return;
 
-  const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => focusedTestFileLines.some(({ re, exact, line, column }) => {
-    const lineColumnOk = (line === testLine || line === null) && (column === testColumn || column === null);
+  const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => focusedTestFileLines.some(filter => {
+    const lineColumnOk = (filter.line === testLine || filter.line === null) && (filter.column === testColumn || filter.column === null);
     if (!lineColumnOk)
       return false;
-    if (re) {
-      re.lastIndex = 0;
-      return re.test(testFileName);
-    }
-    return testFileName === exact;
+    return createFileMatcherFromFilters([filter])(testFileName);
   });
   const suiteFilter = (suite: Suite) => {
     return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
@@ -898,7 +894,7 @@ class ListModeReporter implements Reporter {
 
 function fileMatcherFrom(testFileFilters?: TestFileFilter[]): Matcher {
   if (testFileFilters?.length)
-    return createFileMatcher(testFileFilters.map(e => e.re || e.exact || ''));
+    return createFileMatcherFromFilters(testFileFilters);
   return () => true;
 }
 
