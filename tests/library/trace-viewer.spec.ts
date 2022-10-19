@@ -51,7 +51,7 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   await page.evaluate(() => 1 + 1, null);
 
   async function doClick() {
-    await page.click('"Click"');
+    await page.getByText('Click').click();
   }
   await doClick();
 
@@ -92,10 +92,10 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /browserContext.newPage/,
     /page.gotodata:text\/html,<html>Hello world<\/html>/,
     /page.setContent/,
-    /expect.toHaveTextbutton/,
+    /expect.toHaveTextlocator\('button'\)/,
     /page.evaluate/,
     /page.evaluate/,
-    /page.click"Click"/,
+    /locator.clickgetByText\('Click'\)/,
     /page.waitForNavigation/,
     /page.waitForResponse/,
     /page.waitForTimeout/,
@@ -106,7 +106,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
 
 test('should contain action info', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  await traceViewer.selectAction('page.click');
+  await traceViewer.selectAction('locator.click');
   const logLines = await traceViewer.callLines.allTextContents();
   expect(logLines.length).toBeGreaterThan(10);
   expect(logLines).toContain('attempting click action');
@@ -181,7 +181,7 @@ test('should have correct snapshot size', async ({ showTraceViewer }, testInfo) 
 test('should have correct stack trace', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
 
-  await traceViewer.selectAction('page.click');
+  await traceViewer.selectAction('locator.click');
   await traceViewer.showSourceTab();
   await expect(traceViewer.stackFrames).toContainText([
     /doClick\s+trace-viewer.spec.ts\s+:\d+/,
@@ -538,7 +538,7 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
 
 test('should show action source', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  await traceViewer.selectAction('page.click');
+  await traceViewer.selectAction('locator.click');
   const page = traceViewer.page;
 
   await page.click('text=Source');
@@ -546,7 +546,7 @@ test('should show action source', async ({ showTraceViewer }) => {
     /async.*function.*doClick/,
     /page\.click/
   ]);
-  await expect(page.locator('.source-line-running')).toContainText('page.click');
+  await expect(page.locator('.source-line-running')).toContainText('await page.getByText(\'Click\').click()');
   await expect(page.locator('.stack-trace-frame.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
 });
 
@@ -603,8 +603,8 @@ test('should open two trace files', async ({ context, page, request, server, sho
     const response = await request.head(server.PREFIX + '/simplezip.json');
     await expect(response).toBeOK();
   }
-  await page.click('button');
-  await page.click('button');
+  await page.locator('button').click();
+  await page.locator('button').click();
   {
     const response = await request.post(server.PREFIX + '/one-style.css');
     expect(response).toBeOK();
@@ -623,8 +623,8 @@ test('should open two trace files', async ({ context, page, request, server, sho
     `apiRequestContext.get`,
     `page.gotohttp://localhost:${server.PORT}/input/button.html`,
     `apiRequestContext.head`,
-    `page.clickbutton`,
-    `page.clickbutton`,
+    `locator.clicklocator('button')`,
+    `locator.clicklocator('button')`,
     `apiRequestContext.post`,
   ]);
 
@@ -727,5 +727,17 @@ test('should display waitForLoadState even if did not wait for it', async ({ run
     /page.goto/,
     /page.waitForLoadState/,
     /page.waitForLoadState/,
+  ]);
+});
+
+test('should display language-specific locators', async ({ runAndTrace, server, page, toImpl }) => {
+  toImpl(page.context())._browser.options.sdkLanguage = 'python';
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<button>Submit</button>');
+    await page.getByRole('button', { name: 'Submit' }).click();
+  });
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.setContent/,
+    /locator.clickget_by_role\("button", name="Submit"\)/,
   ]);
 });

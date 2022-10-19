@@ -130,6 +130,7 @@ export class TraceModel {
         this.contextEntry.title = event.title;
         this.contextEntry.platform = event.platform;
         this.contextEntry.wallTime = event.wallTime;
+        this.contextEntry.sdkLanguage = event.sdkLanguage;
         this.contextEntry.options = event.options;
         break;
       }
