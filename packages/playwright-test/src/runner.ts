@@ -44,7 +44,7 @@ import { SigIntWatcher } from './sigIntWatcher';
 import type { TestCase } from './test';
 import { Suite } from './test';
 import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal } from './types';
-import { createFileMatcher, createTitleMatcher, serializeError } from './util';
+import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher, serializeError } from './util';
 import type { Matcher, TestFileFilter } from './util';
 
 const removeFolderAsync = promisify(rimraf);
@@ -623,7 +623,7 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[
     const lineColumnOk = (filter.line === testLine || filter.line === null) && (filter.column === testColumn || filter.column === null);
     if (!lineColumnOk)
       return false;
-    return createFileMatcher(normalizeFilter(filter))(testFileName);
+    return createFileMatcherFromFilters([filter])(testFileName);
   });
   const suiteFilter = (suite: Suite) => {
     return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
@@ -894,12 +894,8 @@ class ListModeReporter implements Reporter {
 
 function fileMatcherFrom(testFileFilters?: TestFileFilter[]): Matcher {
   if (testFileFilters?.length)
-    return createFileMatcher(testFileFilters.map(filter => normalizeFilter(filter)));
+    return createFileMatcherFromFilters(testFileFilters);
   return () => true;
-}
-
-function normalizeFilter(filter: TestFileFilter): string | RegExp {
-  return filter.re || filter.exact || '';
 }
 
 function createForbidOnlyError(config: FullConfigInternal, onlyTestsAndSuites: (TestCase | Suite)[]): TestError {
