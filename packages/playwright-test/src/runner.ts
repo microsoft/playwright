@@ -619,15 +619,11 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[
   if (!filterWithLine)
     return;
 
-  const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => focusedTestFileLines.some(({ re, exact, line, column }) => {
-    const lineColumnOk = (line === testLine || line === null) && (column === testColumn || column === null);
+  const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => focusedTestFileLines.some(filter => {
+    const lineColumnOk = (filter.line === testLine || filter.line === null) && (filter.column === testColumn || filter.column === null);
     if (!lineColumnOk)
       return false;
-    if (re) {
-      re.lastIndex = 0;
-      return re.test(testFileName);
-    }
-    return testFileName === exact;
+    return createFileMatcher(normalizeFilter(filter))(testFileName);
   });
   const suiteFilter = (suite: Suite) => {
     return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
@@ -898,8 +894,12 @@ class ListModeReporter implements Reporter {
 
 function fileMatcherFrom(testFileFilters?: TestFileFilter[]): Matcher {
   if (testFileFilters?.length)
-    return createFileMatcher(testFileFilters.map(e => e.re || e.exact || ''));
+    return createFileMatcher(testFileFilters.map(filter => normalizeFilter(filter)));
   return () => true;
+}
+
+function normalizeFilter(filter: TestFileFilter): string | RegExp {
+  return filter.re || filter.exact || '';
 }
 
 function createForbidOnlyError(config: FullConfigInternal, onlyTestsAndSuites: (TestCase | Suite)[]): TestError {
