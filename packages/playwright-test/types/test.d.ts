@@ -259,19 +259,18 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * An integer number that defines when the project should run relative to other projects. Each project runs in exactly one
    * stage. By default all projects run in stage 0. Stages with lower number run first. Several projects can run in each
-   * stage. Exeution order between projecs in the same stage is undefined.
+   * stage. Execution order between projecs in the same stage is undefined. If any test from a stage fails all tests from
+   * susequent stages are skipped, use [testProject.run](https://playwright.dev/docs/api/class-testproject#test-project-run)
+   * to change this behavior.
    */
   stage: number;
   /**
-   * If set to true and the any test in the project fails all subsequent projects in the same playwright test run will be
-   * skipped.
+   * If set to 'always' the project will always be executed regardless of previous failures in the same test run. If set to
+   * 'always' all tests from the project will run in each shard and won't be split.  If omitted or set to 'default' the
+   * project will be skipped if there are test failures in the projects from the prior
+   * [testProject.stage](https://playwright.dev/docs/api/class-testproject#test-project-stage)'s.
    */
-  stopOnFailure: boolean;
-  /**
-   * If set to false and the tests run with --shard command line option, all tests from this project will run in every shard.
-   * If not specified, the project can be split between several shards.
-   */
-  canShard: boolean;
+  run: 'default'|'always';
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
@@ -4304,12 +4303,6 @@ export interface TestError {
  */
 interface TestProject {
   /**
-   * If set to false and the tests run with --shard command line option, all tests from this project will run in every shard.
-   * If not specified, the project can be split between several shards.
-   */
-  canShard?: boolean;
-
-  /**
    * Configuration for the `expect` assertion library.
    *
    * Use [testConfig.expect](https://playwright.dev/docs/api/class-testconfig#test-config-expect) to change this option for
@@ -4481,17 +4474,21 @@ interface TestProject {
   retries?: number;
 
   /**
-   * An integer number that defines when the project should run relative to other projects. Each project runs in exactly one
-   * stage. By default all projects run in stage 0. Stages with lower number run first. Several projects can run in each
-   * stage. Exeution order between projecs in the same stage is undefined.
+   * If set to 'always' the project will always be executed regardless of previous failures in the same test run. If set to
+   * 'always' all tests from the project will run in each shard and won't be split.  If omitted or set to 'default' the
+   * project will be skipped if there are test failures in the projects from the prior
+   * [testProject.stage](https://playwright.dev/docs/api/class-testproject#test-project-stage)'s.
    */
-  stage?: number;
+  run?: "default"|"always";
 
   /**
-   * If set to true and the any test in the project fails all subsequent projects in the same playwright test run will be
-   * skipped.
+   * An integer number that defines when the project should run relative to other projects. Each project runs in exactly one
+   * stage. By default all projects run in stage 0. Stages with lower number run first. Several projects can run in each
+   * stage. Execution order between projecs in the same stage is undefined. If any test from a stage fails all tests from
+   * susequent stages are skipped, use [testProject.run](https://playwright.dev/docs/api/class-testproject#test-project-run)
+   * to change this behavior.
    */
-  stopOnFailure?: boolean;
+  stage?: number;
 
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.

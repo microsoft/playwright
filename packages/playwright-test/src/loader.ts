@@ -278,8 +278,7 @@ export class Loader {
     const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
     const name = takeFirst(projectConfig.name, config.name, '');
     const stage =  takeFirst(projectConfig.stage, 0);
-    const stopOnFailure = takeFirst(projectConfig.stopOnFailure, false);
-    const canShard = takeFirst(projectConfig.canShard, true);
+    const run =  takeFirst(projectConfig.run, 'default');
 
     let screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
     if (process.env.PLAYWRIGHT_DOCKER) {
@@ -299,9 +298,8 @@ export class Loader {
       metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
       name,
       testDir,
+      run,
       stage,
-      stopOnFailure,
-      canShard,
       _respectGitIgnore: respectGitIgnore,
       snapshotDir,
       _screenshotsDir: screenshotsDir,
@@ -618,9 +616,9 @@ function validateProject(file: string, project: Project, title: string) {
       throw errorWithFile(file, `${title}.stage must be an integer`);
   }
 
-  if ('stopOnFailure' in project && project.stopOnFailure !== undefined) {
-    if (typeof project.stopOnFailure !== 'boolean')
-      throw errorWithFile(file, `${title}.stopOnFailure must be a boolean`);
+  if ('run' in project && project.run !== undefined) {
+    if (project.run !== 'default' && project.run !== 'always')
+      throw errorWithFile(file, `${title}.run must be one of 'default', 'always'.`);
   }
 
   if ('testDir' in project && project.testDir !== undefined) {
