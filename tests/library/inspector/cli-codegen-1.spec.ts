@@ -26,7 +26,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`);
 
     const selector = await recorder.hoverOverElement('button');
-    expect(selector).toBe('role=button[name=\"Submit\"]');
+    expect(selector).toBe('internal:role=button[name=\"Submit\"]');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -69,7 +69,7 @@ test.describe('cli codegen', () => {
     await page.waitForTimeout(1000);
 
     const selector = await recorder.hoverOverElement('button');
-    expect(selector).toBe('role=button[name=\"Submit\"]');
+    expect(selector).toBe('internal:role=button[name=\"Submit\"]');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -149,7 +149,7 @@ test.describe('cli codegen', () => {
     </body>`);
 
     const selector = await recorder.hoverOverElement('button');
-    expect(selector).toBe('role=button[name=\"Submit\"]');
+    expect(selector).toBe('internal:role=button[name=\"Submit\"]');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -540,7 +540,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait('<a target=_blank rel=noopener href="about:blank">link</a>');
 
     const selector = await recorder.hoverOverElement('a');
-    expect(selector).toBe('role=link[name=\"link\"]');
+    expect(selector).toBe('internal:role=link[name=\"link\"]');
 
     const [popup, sources] = await Promise.all([
       page.context().waitForEvent('page'),

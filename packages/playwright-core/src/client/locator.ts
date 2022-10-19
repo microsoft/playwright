@@ -442,5 +442,5 @@ export function getByRoleSelector(role: string, options: ByRoleOptions = {}): st
     props.push(['name', isString(options.name) ? escapeForAttributeSelector(options.name, false) : String(options.name)]);
   if (options.pressed !== undefined)
     props.push(['pressed', String(options.pressed)]);
-  return `role=${role}${props.map(([n, v]) => `[${n}=${v}]`).join('')}`;
+  return `internal:role=${role}${props.map(([n, v]) => `[${n}=${v}]`).join('')}`;
 }

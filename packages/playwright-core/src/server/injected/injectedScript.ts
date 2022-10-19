@@ -112,6 +112,7 @@ export class InjectedScript {
     this._engines.set('internal:label', this._createInternalLabelEngine());
     this._engines.set('internal:text', this._createTextEngine(true, true));
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
+    this._engines.set('internal:role', RoleEngine);
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);

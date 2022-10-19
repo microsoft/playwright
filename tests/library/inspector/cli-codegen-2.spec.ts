@@ -333,7 +333,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<a href="about:blank?foo">link</a>`);
 
     const selector = await recorder.hoverOverElement('a');
-    expect(selector).toBe('role=link[name=\"link\"]');
+    expect(selector).toBe('internal:role=link[name=\"link\"]');
 
     await page.click('a', { modifiers: [platform === 'darwin' ? 'Meta' : 'Control'] });
     const sources = await recorder.waitForOutput('JavaScript', 'page1');

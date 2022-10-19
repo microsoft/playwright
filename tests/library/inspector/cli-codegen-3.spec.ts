@@ -28,7 +28,7 @@ test.describe('cli codegen', () => {
     `);
 
     const selector = await recorder.hoverOverElement('button');
-    expect(selector).toBe('role=button[name=\"Submit\"] >> nth=0');
+    expect(selector).toBe('internal:role=button[name=\"Submit\"] >> nth=0');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -63,7 +63,7 @@ test.describe('cli codegen', () => {
     `);
 
     const selector = await recorder.hoverOverElement('button >> nth=1');
-    expect(selector).toBe('role=button[name=\"Submit\"] >> nth=1');
+    expect(selector).toBe('internal:role=button[name=\"Submit\"] >> nth=1');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
