@@ -188,24 +188,15 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     }
   }
 
-  function sendSigTERM() {
+  function sendPosixSIGTERM() {
     if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
       options.log(`[pid=${spawnedProcess.pid}] <will sigterm>`);
-      // Request process to terminate.
       try {
-        if (process.platform === 'win32') {
-          const taskkillProcess = childProcess.spawnSync(`taskkill /pid ${spawnedProcess.pid} /T`, { shell: true });
-          const [stdout, stderr] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
-          if (stdout)
-            options.log(`[pid=${spawnedProcess.pid}] taskkill stdout: ${stdout}`);
-          if (stderr)
-            options.log(`[pid=${spawnedProcess.pid}] taskkill stderr: ${stderr}`);
-        } else {
-          process.kill(-spawnedProcess.pid, 'SIGTERM');
-        }
+        // Send SIGTERM to process tree.
+        process.kill(-spawnedProcess.pid, 'SIGTERM');
       } catch (e) {
+        // The process might have already stopped.
         options.log(`[pid=${spawnedProcess.pid}] exception while trying to SIGTERM process: ${e}`);
-        // the process might have already stopped
       }
     } else {
       options.log(`[pid=${spawnedProcess.pid}] <skipped sigterm spawnedProcess=${spawnedProcess.killed} processClosed=${processClosed}>`);
@@ -227,8 +218,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   }
 
   async function killAndWait(sendSigtermBeforeSigkillTimeout?: number) {
-    if (sendSigtermBeforeSigkillTimeout) {
-      sendSigTERM();
+    if (process.platform !== 'win32' && sendSigtermBeforeSigkillTimeout) {
+      sendPosixSIGTERM();
       const sigtermTimeoutId = setTimeout(killProcess, sendSigtermBeforeSigkillTimeout);
       await waitForCleanup;
       clearTimeout(sigtermTimeoutId);

@@ -604,6 +604,7 @@ test('should treat 3XX as available server', async ({ runInlineTest }, { workerI
 });
 
 test('should be able to kill process that ignores SIGTERM', async ({ runInlineTest }, { workerIndex }) => {
+  test.skip(process.platform === 'win32', 'there is no SIGTERM on Windows');
   const port = workerIndex + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
