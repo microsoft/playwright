@@ -95,3 +95,8 @@ window.playwrightUnmount = async rootElement => {
 
   unmount();
 };
+
+window.playwrightUpdate = async (rootElement, component) => {
+  window.playwrightUnmount(rootElement);
+  window.playwrightMount(component, rootElement, {});
+};
