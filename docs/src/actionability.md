@@ -7,7 +7,6 @@ Playwright performs a range of actionability checks on the elements before makin
 behave as expected. It auto-waits for all the relevant checks to pass and only then performs the requested action. If the required checks do not pass within the given `timeout`, action fails with the `TimeoutError`.
 
 For example, for [`method: Page.click`], Playwright will ensure that:
-
 - element is [Attached] to the DOM
 - element is [Visible]
 - element is [Stable], as in not animating or completed animation
