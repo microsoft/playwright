@@ -5,6 +5,7 @@ import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
 import MultiRoot from './components/MultiRoot.vue'
 import EmptyTemplate from './components/EmptyTemplate.vue'
+import type { HooksConfig } from '../playwright'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -17,10 +18,10 @@ test('renderer and keep the component instance intact', async ({ mount }) => {
   const component = await mount(<Counter count={9001} />);
   await expect(component.locator('#rerender-count')).toContainText('9001')
   
-  await component.rerender(<Counter count={1337} />)
+  await component.update(<Counter count={1337} />)
   await expect(component.locator('#rerender-count')).toContainText('1337')
   
-  await component.rerender(<Counter count={42} />)
+  await component.update(<Counter count={42} />)
   await expect(component.locator('#rerender-count')).toContainText('42')
 
   await expect(component.locator('#remount-count')).toContainText('1')
@@ -80,7 +81,7 @@ test('emit a event when a slot is clicked', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages = []
   page.on('console', m => messages.push(m.text()))
-  await mount(<Button title="Submit" />, {
+  await mount<HooksConfig>(<Button title="Submit" />, {
     hooksConfig: { route: 'A' }
   })
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}, app: true', 'After mount el: HTMLButtonElement'])

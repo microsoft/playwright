@@ -12,6 +12,7 @@ With these new APIs writing locators is a joy:
 - [`method: Page.getByText`] to locate by text content.
 - [`method: Page.getByRole`] to locate by [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
 - [`method: Page.getByLabel`] to locate a form control by associated label's text.
+- [`method: Page.getByTestId`] to locate an element based on its `data-testid` attribute (other attribute can be configured).
 - [`method: Page.getByPlaceholder`] to locate an input by placeholder.
 - [`method: Page.getByAltText`] to locate an element, usually image, by its text alternative.
 - [`method: Page.getByTitle`] to locate an element by its title.
@@ -21,7 +22,7 @@ page.getByLabel("User Name").fill("John");
 
 page.getByLabel("Password").fill("secret-password");
 
-page.getByRole("button", new Page.GetByRoleOptions().setName("Sign in")).click();
+page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
 
 assertThat(page.getByText("Welcome, John!")).isVisible();
 ```
@@ -37,7 +38,7 @@ All the same methods are also available on [Locator], [FrameLocator] and [Frame]
 - [`method: LocatorAssertions.toHaveAttribute`] with an empty value does not match missing attribute anymore. For example, the following snippet will succeed when `button` **does not** have a `disabled` attribute.
 
    ```js
-   assertThat(page.getByRole("button")).hasAttribute("disabled", "");
+   assertThat(page.getByRole(AriaRole.BUTTON)).hasAttribute("disabled", "");
    ```
 
 ### Browser Versions

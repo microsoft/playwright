@@ -24,15 +24,15 @@ import type {
   Locator,
 } from '@playwright/test';
 import type { InlineConfig } from 'vite';
-import type { SvelteComponent, ComponentProps } from 'svelte/types/runtime'
+import type { SvelteComponent, ComponentProps } from 'svelte/types/runtime';
 
 export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   use?: BasePlaywrightTestConfig['use'] & {
-    ctPort?: number,
-    ctTemplateDir?: string,
-    ctCacheDir?: string,
-    ctViteConfig?: InlineConfig
-  }
+    ctPort?: number;
+    ctTemplateDir?: string;
+    ctCacheDir?: string;
+    ctViteConfig?: InlineConfig;
+  };
 };
 
 type JsonPrimitive = string | number | boolean | null;
@@ -42,26 +42,36 @@ type JsonObject = { [Key in string]?: JsonValue };
 
 type Slot = string | string[];
 
-export interface MountOptions<Component extends SvelteComponent> {
+export interface MountOptions<
+  HooksConfig extends JsonObject,
+  Component extends SvelteComponent
+> {
   props?: ComponentProps<Component>;
   slots?: Record<string, Slot> & { default?: Slot };
   on?: Record<string, Function>;
-  hooksConfig?: JsonObject;
+  hooksConfig?: HooksConfig;
 }
 
-interface MountResult extends Locator {
+interface MountResult<Component extends SvelteComponent> extends Locator {
   unmount(): Promise<void>;
+  update(
+    options: Omit<MountOptions<never, Component>, 'hooksConfig' | 'slots'>
+  ): Promise<void>;
 }
 
 interface ComponentFixtures {
-  mount<Component extends SvelteComponent>(
+  mount<
+    HooksConfig extends JsonObject,
+    Component extends SvelteComponent = SvelteComponent
+  >(
     component: new (...args: any[]) => Component,
-    options?: MountOptions<Component>
-  ): Promise<MountResult>;
+    options?: MountOptions<HooksConfig, Component>
+  ): Promise<MountResult<Component>>;
 }
 
 export const test: TestType<
   PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
-  PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions
+>;
 
 export { expect, devices } from '@playwright/test';

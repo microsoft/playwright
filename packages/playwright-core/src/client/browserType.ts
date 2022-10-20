@@ -81,10 +81,12 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
     };
-    const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
-    browser._logger = logger;
-    browser._setBrowserType(this);
-    return browser;
+    return await this._wrapApiCall(async () => {
+      const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
+      browser._logger = logger;
+      browser._setBrowserType(this);
+      return browser;
+    });
   }
 
   private async _connectInsteadOfLaunching(): Promise<Browser> {
@@ -119,13 +121,15 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       channel: options.channel,
       userDataDir,
     };
-    const result = await this._channel.launchPersistentContext(persistentParams);
-    const context = BrowserContext.from(result.context);
-    context._options = contextParams;
-    context._logger = logger;
-    context._setBrowserType(this);
-    await this._onDidCreateContext?.(context);
-    return context;
+    return await this._wrapApiCall(async () => {
+      const result = await this._channel.launchPersistentContext(persistentParams);
+      const context = BrowserContext.from(result.context);
+      context._options = contextParams;
+      context._logger = logger;
+      context._setBrowserType(this);
+      await this._onDidCreateContext?.(context);
+      return context;
+    });
   }
 
   connect(options: api.ConnectOptions & { wsEndpoint?: string }): Promise<api.Browser>;

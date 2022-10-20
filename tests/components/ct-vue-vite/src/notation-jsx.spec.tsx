@@ -5,6 +5,7 @@ import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
 import MultiRoot from './components/MultiRoot.vue'
 import EmptyTemplate from './components/EmptyTemplate.vue'
+import type { HooksConfig } from '../playwright'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -13,11 +14,16 @@ test('render props', async ({ mount }) => {
   await expect(component).toContainText('Submit')
 })
 
+test('render attributes', async ({ mount }) => {
+  const component = await mount(<Button class="primary" title="Submit" />)
+  await expect(component).toHaveClass('primary');
+});
+
 test('renderer updates props without remounting', async ({ mount }) => {
   const component = await mount(<Counter count={9001} />)
   await expect(component.locator('#props')).toContainText('9001')
 
-  await component.rerender(<Counter count={1337} />)
+  await component.update(<Counter count={1337} />)
   await expect(component).not.toContainText('9001')
   await expect(component.locator('#props')).toContainText('1337')
 
@@ -28,7 +34,7 @@ test('renderer updates event listeners without remounting', async ({ mount }) =>
   const component = await mount(<Counter />)
 
   const messages = []
-  await component.rerender(<Counter v-on:submit={count => { 
+  await component.update(<Counter v-on:submit={count => { 
     messages.push(count) 
   }} />)
   await component.click();
@@ -41,7 +47,7 @@ test('renderer updates slots without remounting', async ({ mount }) => {
   const component = await mount(<Counter>Default Slot</Counter>)
   await expect(component).toContainText('Default Slot')
 
-  await component.rerender(<Counter>
+  await component.update(<Counter>
     <template v-slot:main>Test Slot</template>
   </Counter>)
   await expect(component).not.toContainText('Default Slot')
@@ -61,18 +67,18 @@ test('emit an submit event when the button is clicked', async ({ mount }) => {
 
 test('render a default slot', async ({ mount }) => {
   const component = await mount(<DefaultSlot>
-    Main Content
+    <strong>Main Content</strong>
   </DefaultSlot>)
-  await expect(component).toContainText('Main Content')
+  await expect(component.getByRole('strong')).toContainText('Main Content')
 })
 
 test('render a component with multiple slots', async ({ mount }) => {
   const component = await mount(<DefaultSlot>
-    <div id="one">One</div>
-    <div id="two">Two</div>
+    <div data-testid="one">One</div>
+    <div data-testid="two">Two</div>
   </DefaultSlot>)
-  await expect(component.locator('#one')).toContainText('One')
-  await expect(component.locator('#two')).toContainText('Two')
+  await expect(component.getByTestId('one')).toContainText('One')
+  await expect(component.getByTestId('two')).toContainText('Two')
 })
 
 test('render a component with a named slot', async ({ mount }) => {
@@ -104,7 +110,7 @@ test('emit a event when a slot is clicked', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages = []
   page.on('console', m => messages.push(m.text()))
-  await mount(<Button title="Submit" />, {
+  await mount<HooksConfig>(<Button title="Submit" />, {
     hooksConfig: { route: 'A' }
   })
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}, app: true', 'After mount el: HTMLButtonElement'])

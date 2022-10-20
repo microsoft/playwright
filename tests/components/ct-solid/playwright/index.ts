@@ -1,10 +1,14 @@
 import '../src/assets/index.css';
 import { beforeMount, afterMount } from '@playwright/experimental-ct-solid/hooks';
 
-beforeMount(async ({ hooksConfig }) => {
+export type HooksConfig = {
+  route: string;
+}
+
+beforeMount<HooksConfig>(async ({ hooksConfig }) => {
   console.log(`Before mount: ${JSON.stringify(hooksConfig)}`);
 });
 
-afterMount(async ({}) => {
+afterMount<HooksConfig>(async () => {
   console.log(`After mount`);
 });

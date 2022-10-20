@@ -108,6 +108,10 @@ export type TestFileFilter = {
   column: number | null;
 };
 
+export function createFileMatcherFromFilters(filters: TestFileFilter[]): Matcher {
+  return createFileMatcher(filters.map(filter => filter.re || filter.exact || ''));
+}
+
 export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[]): Matcher {
   const reList: RegExp[] = [];
   const filePatterns: string[] = [];

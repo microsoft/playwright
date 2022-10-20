@@ -93,6 +93,9 @@ class ProtocolHandler {
     this._controller.on(DebugController.Events.InspectRequested, ({ selector, locators }) => {
       process.send!({ method: 'inspectRequested', params: { selector, locators } });
     });
+    this._controller.on(DebugController.Events.SourcesChanged, sources => {
+      process.send!({ method: 'sourcesChanged', params: { sources } });
+    });
   }
 
   async resetForReuse() {

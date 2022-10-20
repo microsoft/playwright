@@ -18,13 +18,14 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import childProcess from 'child_process';
 import { getUserAgent } from '../../common/userAgent';
 import { existsAsync } from '../../utils/fileUtils';
 import { debugLogger } from '../../common/debugLogger';
-import { download } from './download';
 import { extract } from '../../zipBundle';
+import { ManualPromise } from '../../utils/manualPromise';
 
-export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURLs: string[], downloadFileName: string): Promise<boolean> {
+export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURLs: string[], downloadFileName: string, downloadConnectionTimeout: number): Promise<boolean> {
   if (await existsAsync(browserDirectory)) {
     // Already downloaded.
     debugLogger.log('install', `${title} is already downloaded.`);
@@ -33,11 +34,20 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
 
   const zipPath = path.join(os.tmpdir(), downloadFileName);
   try {
-    await download(downloadURLs, zipPath, {
-      progressBarName: title,
-      log: debugLogger.log.bind(debugLogger, 'install'),
-      userAgent: getUserAgent(),
-    });
+    const retryCount = 3;
+    for (let attempt = 1; attempt <= retryCount; ++attempt) {
+      debugLogger.log('install', `downloading ${title} - attempt #${attempt}`);
+      const url = downloadURLs[(attempt - 1) % downloadURLs.length];
+      const { error } = await downloadFileOutOfProcess(url, zipPath, title, getUserAgent(), downloadConnectionTimeout);
+      if (!error) {
+        debugLogger.log('install', `SUCCESS downloading ${title}`);
+        break;
+      }
+      const errorMessage = error?.message || '';
+      debugLogger.log('install', `attempt #${attempt} - ERROR: ${errorMessage}`);
+      if (attempt >= retryCount)
+        throw error;
+    }
     debugLogger.log('install', `extracting archive`);
     debugLogger.log('install', `-- zip: ${zipPath}`);
     debugLogger.log('install', `-- location: ${browserDirectory}`);
@@ -56,6 +66,33 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
   return true;
 }
 
+/**
+ * Node.js has a bug where the process can exit with 0 code even though there was an uncaught exception.
+ * Thats why we execute it in a separate process and check manually if the destination file exists.
+ * https://github.com/microsoft/playwright/issues/17394
+ */
+function downloadFileOutOfProcess(url: string, destinationPath: string, progressBarName: string, userAgent: string, downloadConnectionTimeout: number): Promise<{ error: Error | null }> {
+  const cp = childProcess.fork(path.join(__dirname, 'oopDownloadMain.js'), [url, destinationPath, progressBarName, userAgent, String(downloadConnectionTimeout)]);
+  const promise = new ManualPromise<{ error: Error | null }>();
+  cp.on('message', (message: any) => {
+    if (message?.method === 'log')
+      debugLogger.log('install', message.params.message);
+  });
+  cp.on('exit', code => {
+    if (code !== 0) {
+      promise.resolve({ error: new Error(`Download failure, code=${code}`) });
+      return;
+    }
+    if (!fs.existsSync(destinationPath))
+      promise.resolve({ error: new Error(`Download failure, ${destinationPath} does not exist`) });
+    else
+      promise.resolve({ error: null });
+  });
+  cp.on('error', error => {
+    promise.resolve({ error });
+  });
+  return promise;
+}
 
 export function logPolitely(toBeLogged: string) {
   const logLevel = process.env.npm_config_loglevel;

@@ -18,12 +18,18 @@ import type { AddressInfo } from 'net';
 import { test, expect } from './npmTest';
 
 test(`playwright cdn should race with a timeout`, async ({ exec }) => {
-  test.slow(); // This test will timeout on all the 3 fallback CDNs -> 30 seconds duration.
   const server = http.createServer(() => {});
   await new Promise<void>(resolve => server.listen(0, resolve));
   try {
-    const result = await exec('npm i --foreground-scripts playwright', { env: { PLAYWRIGHT_DOWNLOAD_HOST: `http://127.0.0.1:${(server.address() as AddressInfo).port}`, DEBUG: 'pw:install' }, expectToExitWithError: true });
-    expect(result).toContain(`timed out after 10000ms`);
+    const result = await exec('npm i --foreground-scripts playwright', {
+      env: {
+        PLAYWRIGHT_DOWNLOAD_HOST: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+        DEBUG: 'pw:install',
+        PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '1000',
+      },
+      expectToExitWithError: true
+    });
+    expect(result).toContain(`timed out after 1000ms`);
   } finally {
     await new Promise(resolve => server.close(resolve));
   }

@@ -7,6 +7,7 @@ import NamedSlots from './components/NamedSlots.vue'
 import MultiRoot from './components/MultiRoot.vue'
 import Component from './components/Component.vue'
 import EmptyTemplate from './components/EmptyTemplate.vue'
+import type { HooksConfig } from '../playwright'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -25,7 +26,7 @@ test('renderer updates props without remounting', async ({ mount }) => {
   })
   await expect(component.locator('#props')).toContainText('9001')
 
-  await component.rerender({
+  await component.update({
     props: { count: 1337 }
   })
   await expect(component).not.toContainText('9001')
@@ -38,7 +39,7 @@ test('renderer updates event listeners without remounting', async ({ mount }) =>
   const component = await mount(Counter)
 
   const messages = []
-  await component.rerender({
+  await component.update({
     on: { 
       submit: data => messages.push(data)
     }
@@ -55,7 +56,7 @@ test('renderer updates slots without remounting', async ({ mount }) => {
   })
   await expect(component).toContainText('Default Slot')
 
-  await component.rerender({
+  await component.update({
     slots: { main: 'Test Slot' }
   })
   await expect(component).not.toContainText('Default Slot')
@@ -81,20 +82,23 @@ test('emit an submit event when the button is clicked', async ({ mount }) => {
 test('render a default slot', async ({ mount }) => {
   const component = await mount(DefaultSlot, {
     slots: {
-      default: 'Main Content'
+      default: '<strong>Main Content</strong>'
     }
   })
-  await expect(component).toContainText('Main Content')
+  await expect(component.getByRole('strong')).toContainText('Main Content')
 })
 
 test('render a component with multiple slots', async ({ mount }) => {
   const component = await mount(DefaultSlot, {
     slots: {
-      default: ['one', 'two']
+      default: [
+        '<div data-testid="one">One</div>',
+        '<div data-testid="two">Two</div>'
+      ]
     }
   })
-  await expect(component).toContainText('one')
-  await expect(component).toContainText('two')
+  await expect(component.getByTestId('one')).toContainText('One')
+  await expect(component.getByTestId('two')).toContainText('Two')
 })
 
 test('render a component with a named slot', async ({ mount }) => {
@@ -118,7 +122,7 @@ test('render a component without options', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages = []
   page.on('console', m => messages.push(m.text()))
-  await mount(Button, {
+  await mount<HooksConfig>(Button, {
     props: {
       title: 'Submit'
     },

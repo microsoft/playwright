@@ -15,144 +15,51 @@
  * limitations under the License.
  */
 
-import { rimraf, minimatch } from 'playwright-core/lib/utilsBundle';
 import * as fs from 'fs';
 import * as path from 'path';
+import { assert } from 'playwright-core/lib/utils';
+import { MultiMap } from 'playwright-core/lib/utils/multimap';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
+import { colors, minimatch, rimraf } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
+import type { FullResult, Reporter, TestError } from '../types/testReporter';
 import type { TestGroup } from './dispatcher';
 import { Dispatcher } from './dispatcher';
-import type { Matcher, TestFileFilter } from './util';
-import { createFileMatcher, createTitleMatcher, serializeError } from './util';
-import type { TestCase } from './test';
-import { Suite } from './test';
 import { Loader } from './loader';
-import type { FullResult, Reporter, TestError } from '../types/testReporter';
-import { Multiplexer } from './reporters/multiplexer';
-import { formatError } from './reporters/base';
-import { colors } from 'playwright-core/lib/utilsBundle';
-import DotReporter from './reporters/dot';
-import GitHubReporter from './reporters/github';
-import LineReporter from './reporters/line';
-import ListReporter from './reporters/list';
-import JSONReporter from './reporters/json';
-import JUnitReporter from './reporters/junit';
-import EmptyReporter from './reporters/empty';
-import HtmlReporter from './reporters/html';
-import type { Config, FullProjectInternal, ReporterInternal } from './types';
-import type { FullConfigInternal } from './types';
-import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
-import { SigIntWatcher } from './sigIntWatcher';
 import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
-import { webServerPluginsForConfig } from './plugins/webServerPlugin';
 import { dockerPlugin } from './plugins/dockerPlugin';
-import { MultiMap } from 'playwright-core/lib/utils/multimap';
-import { isString, assert } from 'playwright-core/lib/utils';
+import { webServerPluginsForConfig } from './plugins/webServerPlugin';
+import { formatError } from './reporters/base';
+import DotReporter from './reporters/dot';
+import EmptyReporter from './reporters/empty';
+import GitHubReporter from './reporters/github';
+import HtmlReporter from './reporters/html';
+import JSONReporter from './reporters/json';
+import JUnitReporter from './reporters/junit';
+import LineReporter from './reporters/line';
+import ListReporter from './reporters/list';
+import { Multiplexer } from './reporters/multiplexer';
+import { SigIntWatcher } from './sigIntWatcher';
+import type { TestCase } from './test';
+import { Suite } from './test';
+import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal } from './types';
+import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher, serializeError } from './util';
+import type { Matcher, TestFileFilter } from './util';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.js', 'playwright.config.mjs'];
 
-type ProjectConstraints = {
-  projectName: string;
-  testFileMatcher: Matcher;
-  testTitleMatcher: Matcher;
-};
-
-// Project group is a sequence of run phases.
-class RunPhase {
-  static collectRunPhases(options: RunOptions, config: FullConfigInternal): RunPhase[] {
-    let projectGroup = options.projectGroup;
-    if (options.projectFilter) {
-      if (projectGroup)
-        throw new Error('--group option can not be combined with --project');
-    } else {
-      if (!projectGroup && config.groups?.default && !options.testFileFilters?.length)
-        projectGroup = 'default';
-      if (projectGroup) {
-        if (config.shard)
-          throw new Error(`Project group '${projectGroup}' cannot be combined with --shard`);
-      }
-    }
-
-    const phases: RunPhase[] = [];
-    if (projectGroup) {
-      const group = config.groups?.[projectGroup];
-      if (!group)
-        throw new Error(`Cannot find project group '${projectGroup}' in the config`);
-      for (const entry of group) {
-        if (isString(entry)) {
-          phases.push(new RunPhase([{
-            projectName: entry,
-            testFileMatcher: () => true,
-            testTitleMatcher: () => true,
-          }]));
-        } else {
-          const phase: ProjectConstraints[] = [];
-          for (const p of entry) {
-            if (isString(p)) {
-              phase.push({
-                projectName: p,
-                testFileMatcher: () => true,
-                testTitleMatcher: () => true,
-              });
-            } else {
-              const testMatch = p.testMatch ? createFileMatcher(p.testMatch) : () => true;
-              const testIgnore = p.testIgnore ? createFileMatcher(p.testIgnore) : () => false;
-              const grep = p.grep ? createTitleMatcher(p.grep) : () => true;
-              const grepInvert = p.grepInvert ? createTitleMatcher(p.grepInvert) : () => false;
-              const projects = isString(p.project) ? [p.project] : p.project;
-              phase.push(...projects.map(projectName => ({
-                projectName,
-                testFileMatcher: (file: string) => !testIgnore(file) && testMatch(file),
-                testTitleMatcher: (title: string) => !grepInvert(title) && grep(title),
-              })));
-            }
-          }
-          phases.push(new RunPhase(phase));
-        }
-      }
-    } else {
-      const testFileMatcher = fileMatcherFrom(options.testFileFilters);
-      const testTitleMatcher = options.testTitleMatcher;
-      const projects = options.projectFilter ?? config.projects.map(p => p.name);
-      phases.push(new RunPhase(projects.map(projectName => ({
-        projectName,
-        testFileMatcher,
-        testTitleMatcher
-      }))));
-    }
-    return phases;
-  }
-
-  constructor(private _projectWithConstraints: ProjectConstraints[]) {
-  }
-
-  projectNames(): string[] {
-    return this._projectWithConstraints.map(p => p.projectName);
-  }
-
-  testFileMatcher(projectName: string) {
-    return this._projectEntry(projectName).testFileMatcher;
-  }
-
-  testTitleMatcher(projectName: string) {
-    return this._projectEntry(projectName).testTitleMatcher;
-  }
-
-  private _projectEntry(projectName: string) {
-    projectName = projectName.toLocaleLowerCase();
-    return this._projectWithConstraints.find(p => p.projectName.toLocaleLowerCase() === projectName)!;
-  }
-}
+// Test run is a sequence of run phases aka stages.
+type RunStage = FullProjectInternal[];
 
 type RunOptions = {
   listOnly?: boolean;
   testFileFilters: TestFileFilter[];
   testTitleMatcher: Matcher;
   projectFilter?: string[];
-  projectGroup?: string;
   passWithNoTests?: boolean;
 };
 
@@ -292,13 +199,8 @@ export class Runner {
   }
 
   async listTestFiles(configFile: string, projectNames: string[] | undefined): Promise<any> {
-    const projects = projectNames ?? this._loader.fullConfig().projects.map(p => p.name);
-    const phase = new RunPhase(projects.map(projectName => ({
-      projectName,
-      testFileMatcher: () => true,
-      testTitleMatcher: () => true,
-    })));
-    const filesByProject = await this._collectFiles(phase);
+    const projects = this._collectProjects(projectNames);
+    const filesByProject = await this._collectFiles(projects, () => true);
     const report: any = {
       projects: []
     };
@@ -313,7 +215,10 @@ export class Runner {
     return report;
   }
 
-  private _collectProjects(projectNames: string[]): FullProjectInternal[] {
+  private _collectProjects(projectNames?: string[]): FullProjectInternal[] {
+    const fullConfig = this._loader.fullConfig();
+    if (!projectNames)
+      return [...fullConfig.projects];
     const projectsToFind = new Set<string>();
     const unknownProjects = new Map<string, string>();
     projectNames.forEach(n => {
@@ -321,7 +226,6 @@ export class Runner {
       projectsToFind.add(name);
       unknownProjects.set(name, n);
     });
-    const fullConfig = this._loader.fullConfig();
     const projects = fullConfig.projects.filter(project => {
       const name = project.name.toLocaleLowerCase();
       unknownProjects.delete(name);
@@ -337,8 +241,7 @@ export class Runner {
     return projects;
   }
 
-  private async _collectFiles(runPhase: RunPhase): Promise<Map<FullProjectInternal, string[]>> {
-    const projects = this._collectProjects(runPhase.projectNames());
+  private async _collectFiles(projects: FullProjectInternal[], testFileFilter: Matcher): Promise<Map<FullProjectInternal, string[]>> {
     const files = new Map<FullProjectInternal, string[]>();
     for (const project of projects) {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
@@ -346,7 +249,6 @@ export class Runner {
       const testIgnore = createFileMatcher(project.testIgnore);
       const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
       const testFileExtension = (file: string) => extensions.includes(path.extname(file));
-      const testFileFilter = runPhase.testFileMatcher(project.name);
       const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
       files.set(project, testFiles);
     }
@@ -359,11 +261,12 @@ export class Runner {
     // test groups from the previos entries must finish before entry starts.
     const concurrentTestGroups = [];
     const rootSuite = new Suite('', 'root');
-    const runPhases = RunPhase.collectRunPhases(options, config);
-    assert(runPhases.length > 0);
-    for (const phase of runPhases) {
+    const projects = this._collectProjects(options.projectFilter);
+    const runStages = collectRunStages(projects);
+    assert(runStages.length > 0);
+    for (const stage of runStages) {
       // TODO: do not collect files for each project multiple times.
-      const filesByProject = await this._collectFiles(phase);
+      const filesByProject = await this._collectFiles(stage, fileMatcherFrom(options.testFileFilters));
 
       const allTestFiles = new Set<string>();
       for (const files of filesByProject.values())
@@ -408,8 +311,6 @@ export class Runner {
       for (const [project, files] of filesByProject) {
         const grepMatcher = createTitleMatcher(project.grep);
         const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
-        // TODO: also apply title matcher from options.
-        const groupTitleMatcher = phase.testTitleMatcher(project.name);
 
         const projectSuite = new Suite(project.name, 'project');
         projectSuite._projectConfig = project;
@@ -425,7 +326,7 @@ export class Runner {
               const grepTitle = test.titlePath().join(' ');
               if (grepInvertMatcher?.(grepTitle))
                 return false;
-              return grepMatcher(grepTitle) && groupTitleMatcher(grepTitle);
+              return grepMatcher(grepTitle) && options.testTitleMatcher(grepTitle);
             });
             if (builtSuite)
               projectSuite._addSuite(builtSuite);
@@ -440,6 +341,60 @@ export class Runner {
     return { rootSuite, concurrentTestGroups };
   }
 
+  private _filterForCurrentShard(rootSuite: Suite, concurrentTestGroups: TestGroup[][]) {
+    const shard = this._loader.fullConfig().shard;
+    if (!shard)
+      return;
+
+    // Each shard includes:
+    // - all tests from `run: 'always'` projects (non shardale) and
+    // - its portion of the shardable ones.
+    let shardableTotal = 0;
+    for (const projectSuite of rootSuite.suites) {
+      if (projectSuite.project()!.run !== 'always')
+        shardableTotal += projectSuite.allTests().length;
+    }
+
+    const shardTests = new Set<TestCase>();
+
+    // Each shard gets some tests.
+    const shardSize = Math.floor(shardableTotal / shard.total);
+    // First few shards get one more test each.
+    const extraOne = shardableTotal - shardSize * shard.total;
+
+    const currentShard = shard.current - 1; // Make it zero-based for calculations.
+    const from = shardSize * currentShard + Math.min(extraOne, currentShard);
+    const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
+    let current = 0;
+    const shardConcurrentTestGroups = [];
+    for (const stage of concurrentTestGroups) {
+      const shardedStage: TestGroup[] = [];
+      for (const group of stage) {
+        let includeGroupInShard = false;
+        if (group.run === 'always') {
+          includeGroupInShard = true;
+        } else {
+          // Any test group goes to the shard that contains the first test of this group.
+          // So, this shard gets any group that starts at [from; to)
+          if (current >= from && current < to)
+            includeGroupInShard = true;
+          current += group.tests.length;
+        }
+        if (includeGroupInShard) {
+          shardedStage.push(group);
+          for (const test of group.tests)
+            shardTests.add(test);
+        }
+      }
+      if (shardedStage.length)
+        shardConcurrentTestGroups.push(shardedStage);
+    }
+    concurrentTestGroups.length = 0;
+    concurrentTestGroups.push(...shardConcurrentTestGroups);
+
+    filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
+  }
+
   private async _run(options: RunOptions): Promise<FullResult> {
     const config = this._loader.fullConfig();
     const fatalErrors: TestError[] = [];
@@ -448,42 +403,10 @@ export class Runner {
     const { rootSuite, concurrentTestGroups } = await this._collectTestGroups(options, fatalErrors);
 
     // Fail when no tests.
-    let total = rootSuite.allTests().length;
-    if (!total && !options.passWithNoTests)
+    if (!rootSuite.allTests().length && !options.passWithNoTests)
       fatalErrors.push(createNoTestsError());
 
-    // Compute shards.
-    const shard = config.shard;
-    if (shard) {
-      assert(!options.projectGroup);
-      assert(concurrentTestGroups.length === 1);
-      const shardGroups: TestGroup[] = [];
-      const shardTests = new Set<TestCase>();
-
-      // Each shard gets some tests.
-      const shardSize = Math.floor(total / shard.total);
-      // First few shards get one more test each.
-      const extraOne = total - shardSize * shard.total;
-
-      const currentShard = shard.current - 1; // Make it zero-based for calculations.
-      const from = shardSize * currentShard + Math.min(extraOne, currentShard);
-      const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
-      let current = 0;
-      for (const group of concurrentTestGroups[0]) {
-        // Any test group goes to the shard that contains the first test of this group.
-        // So, this shard gets any group that starts at [from; to)
-        if (current >= from && current < to) {
-          shardGroups.push(group);
-          for (const test of group.tests)
-            shardTests.add(test);
-        }
-        current += group.tests.length;
-      }
-
-      concurrentTestGroups[0] = shardGroups;
-      filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
-      total = rootSuite.allTests().length;
-    }
+    this._filterForCurrentShard(rootSuite, concurrentTestGroups);
 
     config._maxConcurrentTestGroups = Math.max(...concurrentTestGroups.map(g => g.length));
 
@@ -525,8 +448,13 @@ export class Runner {
       let sigintWatcher;
 
       let hasWorkerErrors = false;
-      for (const testGroups of concurrentTestGroups) {
-        const dispatcher = new Dispatcher(this._loader, testGroups, this._reporter);
+      let previousStageFailed = false;
+      for (let testGroups of concurrentTestGroups) {
+        if (previousStageFailed)
+          testGroups = this._skipTestsNotMarkedAsRunAlways(testGroups);
+        if (!testGroups.length)
+          continue;
+        const dispatcher = new Dispatcher(this._loader, [...testGroups], this._reporter);
         sigintWatcher = new SigIntWatcher();
         await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
         if (!sigintWatcher.hadSignal()) {
@@ -538,10 +466,9 @@ export class Runner {
         hasWorkerErrors = dispatcher.hasWorkerErrors();
         if (hasWorkerErrors)
           break;
-        if (testGroups.some(testGroup => testGroup.tests.some(test => !test.ok())))
-          break;
         if (sigintWatcher.hadSignal())
           break;
+        previousStageFailed ||= testGroups.some(testGroup => testGroup.tests.some(test => !test.ok()));
       }
       if (sigintWatcher?.hadSignal()) {
         result.status = 'interrupted';
@@ -556,6 +483,23 @@ export class Runner {
       await globalTearDown?.();
     }
     return result;
+  }
+
+  private _skipTestsNotMarkedAsRunAlways(testGroups: TestGroup[]): TestGroup[] {
+    const runAlwaysGroups = [];
+    for (const group of testGroups) {
+      if (group.run === 'always') {
+        runAlwaysGroups.push(group);
+      } else {
+        for (const test of group.tests) {
+          const result = test._appendTestResult();
+          this._reporter.onTestBegin?.(test, result);
+          result.status = 'skipped';
+          this._reporter.onTestEnd?.(test, result);
+        }
+      }
+    }
+    return runAlwaysGroups;
   }
 
   private async _removeOutputDirs(options: RunOptions): Promise<boolean> {
@@ -675,15 +619,11 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[
   if (!filterWithLine)
     return;
 
-  const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => focusedTestFileLines.some(({ re, exact, line, column }) => {
-    const lineColumnOk = (line === testLine || line === null) && (column === testColumn || column === null);
+  const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => focusedTestFileLines.some(filter => {
+    const lineColumnOk = (filter.line === testLine || filter.line === null) && (filter.column === testColumn || filter.column === null);
     if (!lineColumnOk)
       return false;
-    if (re) {
-      re.lastIndex = 0;
-      return re.test(testFileName);
-    }
-    return testFileName === exact;
+    return createFileMatcherFromFilters([filter])(testFileName);
   });
   const suiteFilter = (suite: Suite) => {
     return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
@@ -800,6 +740,20 @@ function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
   return `${path.relative(rootDir, testOrSuite.location.file)}:${testOrSuite.location.line}`;
 }
 
+function collectRunStages(projects: FullProjectInternal[]): RunStage[] {
+  const stages: RunStage[] = [];
+  const stageToProjects = new MultiMap<number, FullProjectInternal>();
+  for (const p of projects)
+    stageToProjects.set(p.stage, p);
+  const stageIds = Array.from(stageToProjects.keys());
+  stageIds.sort((a, b) => a - b);
+  for (const stage of stageIds) {
+    const projects = stageToProjects.get(stage);
+    stages.push(projects);
+  }
+  return stages;
+}
+
 function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] {
   // This function groups tests that can be run together.
   // Tests cannot be run together when:
@@ -833,6 +787,7 @@ function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] 
       requireFile: test._requireFile,
       repeatEachIndex: test.repeatEachIndex,
       projectId: test._projectId,
+      run: test.parent.project()!.run,
       tests: [],
       watchMode: false,
     };
@@ -939,7 +894,7 @@ class ListModeReporter implements Reporter {
 
 function fileMatcherFrom(testFileFilters?: TestFileFilter[]): Matcher {
   if (testFileFilters?.length)
-    return createFileMatcher(testFileFilters.map(e => e.re || e.exact || ''));
+    return createFileMatcherFromFilters(testFileFilters);
   return () => true;
 }
 

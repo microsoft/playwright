@@ -450,3 +450,60 @@ test('should load web server w/o esm loader in ems module', async ({ runInlineTe
   expect(result.passed).toBe(0);
   expect(result.output).toContain('NODE_OPTIONS undefined');
 });
+
+test('should load a jsx/tsx files', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    'a.spec.tsx': `
+      const { test } = pwt;
+      const component = () => <div></div>;
+      test('succeeds', () => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+    'b.spec.jsx': `
+      const { test } = pwt;
+      const component = () => <div></div>;
+      test('succeeds', () => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  });
+  expect(passed).toBe(2);
+  expect(exitCode).toBe(0);
+});
+
+test('should remove type imports from ts', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { Point } from 'helper';
+      const p: Point = {};
+
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'node_modules/helper/index.d.ts': `
+      export type Point = {};
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve .js import to .ts file in non-ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      import { gimmeAOne } from './playwright-utils.js';
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.ts': `
+      export function gimmeAOne() {
+        return 1;
+      }
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});

@@ -15,8 +15,8 @@
  */
 
 import { escapeWithQuotes, toSnakeCase, toTitleCase } from '../../utils/isomorphic/stringUtils';
-import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
 import { parseAttributeSelector, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
+import type { NestedSelectorBody } from '../isomorphic/selectorParser';
 import type { ParsedSelector } from '../isomorphic/selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp';
@@ -24,7 +24,7 @@ export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' 
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 
 export interface LocatorFactory {
-  generateLocator(base: LocatorBase, kind: LocatorType, body: string, options?: { attrs?: Record<string, string | boolean>, hasText?: string, exact?: boolean }): string;
+  generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options?: { attrs?: Record<string, string | boolean>, exact?: boolean }): string;
 }
 
 export function asLocator(lang: Language, selector: string, isFrameLocator: boolean = false): string {
@@ -45,7 +45,7 @@ function innerAsLocator(factory: LocatorFactory, selector: string, isFrameLocato
         tokens.push(factory.generateLocator(base, 'nth', part.body as string));
       continue;
     }
-    if (part.name === 'text') {
+    if (part.name === 'internal:text') {
       const { exact, text } = detectExact(part.body as string);
       tokens.push(factory.generateLocator(base, 'text', text, { exact }));
       continue;
@@ -55,7 +55,7 @@ function innerAsLocator(factory: LocatorFactory, selector: string, isFrameLocato
       tokens.push(factory.generateLocator(base, 'label', text, { exact }));
       continue;
     }
-    if (part.name === 'role') {
+    if (part.name === 'internal:role') {
       const attrSelector = parseAttributeSelector(part.body as string, true);
       const attrs: Record<string, boolean | string> = {};
       for (const attr of attrSelector.attributes!)
@@ -63,24 +63,25 @@ function innerAsLocator(factory: LocatorFactory, selector: string, isFrameLocato
       tokens.push(factory.generateLocator(base, 'role', attrSelector.name, { attrs }));
       continue;
     }
-    if (part.name === 'css') {
-      const parsed = part.body as CSSComplexSelectorList;
-      if (parsed[0].simples.length === 1 && parsed[0].simples[0].selector.functions.length === 1 && parsed[0].simples[0].selector.functions[0].name === 'hasText') {
-        const hasText = parsed[0].simples[0].selector.functions[0].args[0] as string;
-        tokens.push(factory.generateLocator(base, 'has-text', parsed[0].simples[0].selector.css!, { hasText }));
+    if (part.name === 'internal:has') {
+      const nested = (part.body as NestedSelectorBody).parsed;
+      if (nested?.parts?.[0]?.name === 'internal:text') {
+        const result = detectExact(nested.parts[0].body as string);
+        tokens.push(factory.generateLocator(base, 'has-text', result.text, { exact: result.exact }));
         continue;
       }
     }
 
     if (part.name === 'internal:attr') {
       const attrSelector = parseAttributeSelector(part.body as string, true);
-      const { name, value } = attrSelector.attributes[0];
+      const { name, value, caseSensitive } = attrSelector.attributes[0];
       if (name === 'data-testid') {
         tokens.push(factory.generateLocator(base, 'test-id', value));
         continue;
       }
 
-      const { exact, text } = detectExact(value);
+      const text = value as string | RegExp;
+      const exact = !!caseSensitive;
       if (name === 'placeholder') {
         tokens.push(factory.generateLocator(base, 'placeholder', text, { exact }));
         continue;
@@ -93,10 +94,6 @@ function innerAsLocator(factory: LocatorFactory, selector: string, isFrameLocato
         tokens.push(factory.generateLocator(base, 'title', text, { exact }));
         continue;
       }
-      if (name === 'label') {
-        tokens.push(factory.generateLocator(base, 'label', text, { exact }));
-        continue;
-      }
     }
     const p: ParsedSelector = { parts: [part] };
     tokens.push(factory.generateLocator(base, 'default', stringifySelector(p)));
@@ -104,20 +101,29 @@ function innerAsLocator(factory: LocatorFactory, selector: string, isFrameLocato
   return tokens.join('.');
 }
 
-function detectExact(text: string): { exact: boolean, text: string } {
+function detectExact(text: string): { exact?: boolean, text: string | RegExp } {
   let exact = false;
-  if (text.startsWith('"') && text.endsWith('"')) {
+  const match = text.match(/^\/(.*)\/([igm]*)$/);
+  if (match)
+    return { text: new RegExp(match[1], match[2]) };
+  if (text.endsWith('"')) {
     text = JSON.parse(text);
     exact = true;
+  } else if (text.endsWith('"s')) {
+    text = JSON.parse(text.substring(0, text.length - 1));
+    exact = true;
+  } else if (text.endsWith('"i')) {
+    text = JSON.parse(text.substring(0, text.length - 1));
+    exact = false;
   }
   return { exact, text };
 }
 
 export class JavaScriptLocatorFactory implements LocatorFactory {
-  generateLocator(base: LocatorBase, kind: LocatorType, body: string, options: { attrs?: Record<string, string | boolean>, hasText?: string, exact?: boolean } = {}): string {
+  generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options: { attrs?: Record<string, string | boolean>, exact?: boolean } = {}): string {
     switch (kind) {
       case 'default':
-        return `locator(${this.quote(body)})`;
+        return `locator(${this.quote(body as string)})`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -129,11 +135,11 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         for (const [name, value] of Object.entries(options.attrs!))
           attrs.push(`${name}: ${typeof value === 'string' ? this.quote(value) : value}`);
         const attrString = attrs.length ? `, { ${attrs.join(', ')} }` : '';
-        return `getByRole(${this.quote(body)}${attrString})`;
+        return `getByRole(${this.quote(body as string)}${attrString})`;
       case 'has-text':
-        return `locator(${this.quote(body)}, { hasText: ${this.quote(options.hasText!)} })`;
+        return `filter({ hasText: ${this.toHasText(body as string)} })`;
       case 'test-id':
-        return `getByTestId(${this.quote(body)})`;
+        return `getByTestId(${this.quote(body as string)})`;
       case 'text':
         return this.toCallWithExact('getByText', body, !!options.exact);
       case 'alt':
@@ -149,10 +155,16 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
     }
   }
 
-  private toCallWithExact(method: string, body: string, exact: boolean) {
-    if (body.startsWith('/') && (body.endsWith('/') || body.endsWith('/i')))
+  private toCallWithExact(method: string, body: string | RegExp, exact?: boolean) {
+    if (isRegExp(body))
       return `${method}(${body})`;
     return exact ? `${method}(${this.quote(body)}, { exact: true })` : `${method}(${this.quote(body)})`;
+  }
+
+  private toHasText(body: string | RegExp) {
+    if (isRegExp(body))
+      return String(body);
+    return this.quote(body);
   }
 
   private quote(text: string) {
@@ -161,10 +173,10 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
 }
 
 export class PythonLocatorFactory implements LocatorFactory {
-  generateLocator(base: LocatorBase, kind: LocatorType, body: string, options: { attrs?: Record<string, string | boolean>, hasText?: string, exact?: boolean } = {}): string {
+  generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options: { attrs?: Record<string, string | boolean>, exact?: boolean } = {}): string {
     switch (kind) {
       case 'default':
-        return `locator(${this.quote(body)})`;
+        return `locator(${this.quote(body as string)})`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -176,11 +188,11 @@ export class PythonLocatorFactory implements LocatorFactory {
         for (const [name, value] of Object.entries(options.attrs!))
           attrs.push(`${toSnakeCase(name)}=${typeof value === 'string' ? this.quote(value) : value}`);
         const attrString = attrs.length ? `, ${attrs.join(', ')}` : '';
-        return `get_by_role(${this.quote(body)}${attrString})`;
+        return `get_by_role(${this.quote(body as string)}${attrString})`;
       case 'has-text':
-        return `locator(${this.quote(body)}, has_text=${this.quote(options.hasText!)})`;
+        return `filter(has_text=${this.toHasText(body as string)})`;
       case 'test-id':
-        return `get_by_test_id(${this.quote(body)})`;
+        return `get_by_test_id(${this.quote(body as string)})`;
       case 'text':
         return this.toCallWithExact('get_by_text', body, !!options.exact);
       case 'alt':
@@ -196,15 +208,22 @@ export class PythonLocatorFactory implements LocatorFactory {
     }
   }
 
-  private toCallWithExact(method: string, body: string, exact: boolean) {
-    if (body.startsWith('/') && (body.endsWith('/') || body.endsWith('/i'))) {
-      const regex = body.substring(1, body.lastIndexOf('/'));
-      const suffix = body.endsWith('i') ? ', re.IGNORECASE' : '';
-      return `${method}(re.compile(r${this.quote(regex)}${suffix}))`;
+  private toCallWithExact(method: string, body: string | RegExp, exact: boolean) {
+    if (isRegExp(body)) {
+      const suffix = body.flags.includes('i') ? ', re.IGNORECASE' : '';
+      return `${method}(re.compile(r${this.quote(body.source)}${suffix}))`;
     }
     if (exact)
       return `${method}(${this.quote(body)}, exact=true)`;
     return `${method}(${this.quote(body)})`;
+  }
+
+  private toHasText(body: string | RegExp) {
+    if (isRegExp(body)) {
+      const suffix = body.flags.includes('i') ? ', re.IGNORECASE' : '';
+      return `re.compile(r${this.quote(body.source)}${suffix})`;
+    }
+    return `${this.quote(body)}`;
   }
 
   private quote(text: string) {
@@ -213,7 +232,7 @@ export class PythonLocatorFactory implements LocatorFactory {
 }
 
 export class JavaLocatorFactory implements LocatorFactory {
-  generateLocator(base: LocatorBase, kind: LocatorType, body: string, options: { attrs?: Record<string, string | boolean>, hasText?: string, exact?: boolean } = {}): string {
+  generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options: { attrs?: Record<string, string | boolean>, exact?: boolean } = {}): string {
     let clazz: string;
     switch (base) {
       case 'page': clazz = 'Page'; break;
@@ -222,7 +241,7 @@ export class JavaLocatorFactory implements LocatorFactory {
     }
     switch (kind) {
       case 'default':
-        return `locator(${this.quote(body)})`;
+        return `locator(${this.quote(body as string)})`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -234,11 +253,11 @@ export class JavaLocatorFactory implements LocatorFactory {
         for (const [name, value] of Object.entries(options.attrs!))
           attrs.push(`.set${toTitleCase(name)}(${typeof value === 'string' ? this.quote(value) : value})`);
         const attrString = attrs.length ? `, new ${clazz}.GetByRoleOptions()${attrs.join('')}` : '';
-        return `getByRole(${this.quote(body)}${attrString})`;
+        return `getByRole(AriaRole.${toSnakeCase(body as string).toUpperCase()}${attrString})`;
       case 'has-text':
-        return `locator(${this.quote(body)}, new ${clazz}.LocatorOptions().setHasText(${this.quote(options.hasText!)}))`;
+        return `filter(new ${clazz}.LocatorOptions().setHasText(${this.toHasText(body)}))`;
       case 'test-id':
-        return `getByTestId(${this.quote(body)})`;
+        return `getByTestId(${this.quote(body as string)})`;
       case 'text':
         return this.toCallWithExact(clazz, 'getByText', body, !!options.exact);
       case 'alt':
@@ -254,15 +273,22 @@ export class JavaLocatorFactory implements LocatorFactory {
     }
   }
 
-  private toCallWithExact(clazz: string, method: string, body: string, exact: boolean) {
-    if (body.startsWith('/') && (body.endsWith('/') || body.endsWith('/i'))) {
-      const regex = body.substring(1, body.lastIndexOf('/'));
-      const suffix = body.endsWith('i') ? ', Pattern.CASE_INSENSITIVE' : '';
-      return `${method}(Pattern.compile(${this.quote(regex)}${suffix}))`;
+  private toCallWithExact(clazz: string, method: string, body: string | RegExp, exact: boolean) {
+    if (isRegExp(body)) {
+      const suffix = body.flags.includes('i') ? ', Pattern.CASE_INSENSITIVE' : '';
+      return `${method}(Pattern.compile(${this.quote(body.source)}${suffix}))`;
     }
     if (exact)
       return `${method}(${this.quote(body)}, new ${clazz}.${toTitleCase(method)}Options().setExact(exact))`;
     return `${method}(${this.quote(body)})`;
+  }
+
+  private toHasText(body: string | RegExp) {
+    if (isRegExp(body)) {
+      const suffix = body.flags.includes('i') ? ', Pattern.CASE_INSENSITIVE' : '';
+      return `Pattern.compile(${this.quote(body.source)}${suffix})`;
+    }
+    return this.quote(body);
   }
 
   private quote(text: string) {
@@ -271,10 +297,10 @@ export class JavaLocatorFactory implements LocatorFactory {
 }
 
 export class CSharpLocatorFactory implements LocatorFactory {
-  generateLocator(base: LocatorBase, kind: LocatorType, body: string, options: { attrs?: Record<string, string | boolean>, hasText?: string, exact?: boolean } = {}): string {
+  generateLocator(base: LocatorBase, kind: LocatorType, body: string | RegExp, options: { attrs?: Record<string, string | boolean>, exact?: boolean } = {}): string {
     switch (kind) {
       case 'default':
-        return `Locator(${this.quote(body)})`;
+        return `Locator(${this.quote(body as string)})`;
       case 'nth':
         return `Nth(${body})`;
       case 'first':
@@ -283,14 +309,16 @@ export class CSharpLocatorFactory implements LocatorFactory {
         return `Last`;
       case 'role':
         const attrs: string[] = [];
-        for (const [name, value] of Object.entries(options.attrs!))
-          attrs.push(`${toTitleCase(name)} = ${typeof value === 'string' ? this.quote(value) : value}`);
-        const attrString = attrs.length ? `, new () { ${attrs.join(', ')} }` : '';
-        return `GetByRole(${this.quote(body)}${attrString})`;
+        for (const [name, value] of Object.entries(options.attrs!)) {
+          const optionKey = name === 'name' ? 'NameString' : toTitleCase(name);
+          attrs.push(`${optionKey} = ${typeof value === 'string' ? this.quote(value) : value}`);
+        }
+        const attrString = attrs.length ? `, new() { ${attrs.join(', ')} }` : '';
+        return `GetByRole(AriaRole.${toTitleCase(body as string)}${attrString})`;
       case 'has-text':
-        return `Locator(${this.quote(body)}, new () { HasTextString: ${this.quote(options.hasText!)} })`;
+        return `Filter(new() { HasTextString: ${this.toHasText(body)} })`;
       case 'test-id':
-        return `GetByTestId(${this.quote(body)})`;
+        return `GetByTestId(${this.quote(body as string)})`;
       case 'text':
         return this.toCallWithExact('GetByText', body, !!options.exact);
       case 'alt':
@@ -306,15 +334,22 @@ export class CSharpLocatorFactory implements LocatorFactory {
     }
   }
 
-  private toCallWithExact(method: string, body: string, exact: boolean) {
-    if (body.startsWith('/') && (body.endsWith('/') || body.endsWith('/i'))) {
-      const regex = body.substring(1, body.lastIndexOf('/'));
-      const suffix = body.endsWith('i') ? ', RegexOptions.IgnoreCase' : '';
-      return `${method}(new Regex(${this.quote(regex)}${suffix}))`;
+  private toCallWithExact(method: string, body: string | RegExp, exact: boolean) {
+    if (isRegExp(body)) {
+      const suffix = body.flags.includes('i') ? ', RegexOptions.IgnoreCase' : '';
+      return `${method}(new Regex(${this.quote(body.source)}${suffix}))`;
     }
     if (exact)
-      return `${method}(${this.quote(body)}, new () { Exact: true })`;
+      return `${method}(${this.quote(body)}, new() { Exact: true })`;
     return `${method}(${this.quote(body)})`;
+  }
+
+  private toHasText(body: string | RegExp) {
+    if (isRegExp(body)) {
+      const suffix = body.flags.includes('i') ? ', RegexOptions.IgnoreCase' : '';
+      return `new Regex(${this.quote(body.source)}${suffix})`;
+    }
+    return this.quote(body);
   }
 
   private quote(text: string) {
@@ -328,3 +363,7 @@ const generators: Record<Language, LocatorFactory> = {
   java: new JavaLocatorFactory(),
   csharp: new CSharpLocatorFactory(),
 };
+
+export function isRegExp(obj: any): obj is RegExp {
+  return obj instanceof RegExp;
+}

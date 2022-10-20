@@ -60,12 +60,13 @@ test('should filter by line and column', async ({ runInlineTest }) => {
           pwt.test('no-wrong-column', () => { expect(1).toBe(2); });
   pwt.test('yes-no-column-specified', () => { expect(1).toBe(1); });
   pwt.test('no-match', () => { expect(1).toBe(1); });
+      pwt.test('yes-full-match-with-dirname', () => { expect(1).toBe(1); });
       `,
-  }, undefined, undefined, { additionalArgs: ['x.spec.js:5:11', 'x.spec.js:6:99999', 'x.spec.js:7'] });
+  }, undefined, undefined, { additionalArgs: ['x.spec.js:5:11', 'x.spec.js:6:99999', 'x.spec.js:7', 'foo/x.spec.js:9:11'] });
   expect(result.exitCode).toBe(0);
   expect(result.skipped).toBe(0);
-  expect(result.passed).toBe(2);
-  expect(result.report.suites[0].specs.map(spec => spec.title)).toEqual(['yes-full-match', 'yes-no-column-specified']);
+  expect(result.passed).toBe(3);
+  expect(result.report.suites[0].specs.map(spec => spec.title)).toEqual(['yes-full-match', 'yes-no-column-specified', 'yes-full-match-with-dirname']);
 });
 
 test('line should override focused test', async ({ runInlineTest }) => {

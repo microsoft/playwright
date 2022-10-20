@@ -507,7 +507,7 @@ test('should print pending operations for toHaveText', async ({ runInlineTest })
   expect(output).toContain('Error: expect(received).toHaveText(expected)');
   expect(output).toContain('Expected string: "Text"');
   expect(output).toContain('Received string: ""');
-  expect(output).toContain('waiting for selector "no-such-thing"');
+  expect(output).toContain('waiting for "locator(\'no-such-thing\')"');
 });
 
 test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {

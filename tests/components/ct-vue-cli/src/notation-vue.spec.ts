@@ -7,6 +7,7 @@ import NamedSlots from './components/NamedSlots.vue'
 import MultiRoot from './components/MultiRoot.vue'
 import Component from './components/Component.vue'
 import EmptyTemplate from './components/EmptyTemplate.vue'
+import type { HooksConfig } from '../playwright'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -27,10 +28,10 @@ test('renderer and keep the component instance intact', async ({ mount }) => {
   });
   await expect(component.locator('#rerender-count')).toContainText('9001')
 
-  await component.rerender({ props: { count: 1337 } })
+  await component.update({ props: { count: 1337 } })
   await expect(component.locator('#rerender-count')).toContainText('1337')
 
-  await component.rerender({ props: { count: 42 } })
+  await component.update({ props: { count: 42 } })
   await expect(component.locator('#rerender-count')).toContainText('42')
 
   await expect(component.locator('#remount-count')).toContainText('1')
@@ -90,7 +91,7 @@ test('render a component without options', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages = []
   page.on('console', m => messages.push(m.text()))
-  await mount(Button, {
+  await mount<HooksConfig>(Button, {
     props: {
       title: 'Submit'
     },

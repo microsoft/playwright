@@ -22,6 +22,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import * as React from 'react';
 import { CallLogView } from './callLog';
 import './recorder.css';
+import { asLocator } from '@isomorphic/locatorGenerators';
 
 declare global {
   interface Window {
@@ -36,7 +37,6 @@ export interface RecorderProps {
   paused: boolean,
   log: Map<string, CallLog>,
   mode: Mode,
-  initialSelector?: string,
 }
 
 export const Recorder: React.FC<RecorderProps> = ({
@@ -44,12 +44,12 @@ export const Recorder: React.FC<RecorderProps> = ({
   paused,
   log,
   mode,
-  initialSelector,
 }) => {
-  const [selector, setSelector] = React.useState(initialSelector || '');
+  const [locator, setLocator] = React.useState('');
   const [focusSelectorInput, setFocusSelectorInput] = React.useState(false);
   window.playwrightSetSelector = (selector: string, focus?: boolean) => {
-    setSelector(selector);
+    const language = sources[0]?.language || 'javascript';
+    setLocator(asLocator(language, selector));
     setFocusSelectorInput(!!focus);
   };
 
@@ -145,15 +145,15 @@ export const Recorder: React.FC<RecorderProps> = ({
           <ToolbarButton icon='microscope' title='Explore' toggled={mode === 'inspecting'} onClick={() => {
             window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' } }).catch(() => { });
           }}>Explore</ToolbarButton>
-          <input ref={selectorInputRef} className='selector-input' placeholder='Playwright Selector' value={selector} disabled={mode !== 'none'} onChange={event => {
-            setSelector(event.target.value);
+          <input ref={selectorInputRef} className='selector-input' placeholder='Playwright Selector' spellCheck='false' value={locator} disabled={mode !== 'none'} onChange={event => {
+            setLocator(asLocator(source.language, event.target.value));
             window.dispatch({ event: 'selectorUpdated', params: { selector: event.target.value } });
           }} />
           <ToolbarButton icon='files' title='Copy' onClick={() => {
             copy(selectorInputRef.current?.value || '');
           }}></ToolbarButton>
         </Toolbar>
-        <CallLogView log={Array.from(log.values())}/>
+        <CallLogView language={source.language} log={Array.from(log.values())}/>
       </div>
     </SplitView>
   </div>;

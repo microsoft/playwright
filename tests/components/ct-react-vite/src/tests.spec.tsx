@@ -5,6 +5,7 @@ import MultipleChildren from './components/MultipleChildren';
 import MultiRoot from './components/MultiRoot';
 import Counter from './components/Counter';
 import EmptyFragment from './components/EmptyFragment';
+import type { HooksConfig } from '../playwright';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
@@ -13,11 +14,16 @@ test('render props', async ({ mount }) => {
   await expect(component).toContainText('Submit');
 });
 
+test('render attributes', async ({ mount }) => {
+  const component = await mount(<Button className="primary" title="Submit" />)
+  await expect(component).toHaveClass('primary');
+});
+
 test('renderer updates props without remounting', async ({ mount }) => {
   const component = await mount(<Counter count={9001} />)
   await expect(component.locator('#props')).toContainText('9001')
 
-  await component.rerender(<Counter count={1337} />)
+  await component.update(<Counter count={1337} />)
   await expect(component).not.toContainText('9001')
   await expect(component.locator('#props')).toContainText('1337')
 
@@ -28,7 +34,7 @@ test('renderer updates callbacks without remounting', async ({ mount }) => {
   const component = await mount(<Counter />)
 
   const messages: string[] = []
-  await component.rerender(<Counter onClick={message => {
+  await component.update(<Counter onClick={message => {
     messages.push(message)
   }} />)
   await component.click();
@@ -41,7 +47,7 @@ test('renderer updates slots without remounting', async ({ mount }) => {
   const component = await mount(<Counter>Default Slot</Counter>)
   await expect(component).toContainText('Default Slot')
 
-  await component.rerender(<Counter>Test Slot</Counter>)
+  await component.update(<Counter>Test Slot</Counter>)
   await expect(component).not.toContainText('Default Slot')
   await expect(component).toContainText('Test Slot')
 
@@ -96,7 +102,7 @@ test('execute callback when a child node is clicked', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages: string[] = [];
   page.on('console', m => messages.push(m.text()));
-  await mount(<Button title="Submit" />, {
+  await mount<HooksConfig>(<Button title="Submit" />, {
     hooksConfig: {
       route: 'A'
     }

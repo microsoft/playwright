@@ -27,11 +27,11 @@ import type { InlineConfig } from 'vite';
 
 export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   use?: BasePlaywrightTestConfig['use'] & {
-    ctPort?: number,
-    ctTemplateDir?: string,
-    ctCacheDir?: string,
-    ctViteConfig?: InlineConfig
-  }
+    ctPort?: number;
+    ctTemplateDir?: string;
+    ctCacheDir?: string;
+    ctViteConfig?: InlineConfig;
+  };
 };
 
 type JsonPrimitive = string | number | boolean | null;
@@ -41,26 +41,49 @@ type JsonObject = { [Key in string]?: JsonValue };
 
 type Slot = string | string[];
 
-export interface MountOptions<Props = Record<string, unknown>> {
+export interface MountOptions<
+  HooksConfig extends JsonObject,
+  Props extends Record<string, unknown>
+> {
   props?: Props;
   slots?: Record<string, Slot> & { default?: Slot };
   on?: Record<string, Function>;
   hooksConfig?: JsonObject;
 }
 
-interface MountResult<Props = Record<string, unknown>> extends Locator {
+interface MountResult<
+  HooksConfig extends JsonObject,
+  Props extends Record<string, unknown>
+> extends Locator {
   unmount(): Promise<void>;
-  rerender(options: { props: Props }): Promise<void>
+  update(
+    options: Omit<MountOptions<HooksConfig, Props>, 'hooksConfig'>
+  ): Promise<void>;
+}
+
+interface MountResultJsx extends Locator {
+  unmount(): Promise<void>;
+  update(component: JSX.Element): Promise<void>;
 }
 
 export interface ComponentFixtures {
-  mount(component: JSX.Element): Promise<MountResult>;
-  mount(component: any, options?: MountOptions): Promise<MountResult>;
-  mount<Props>(component: any, options: MountOptions & { props: Props }): Promise<MountResult<Props>>;
+  mount(component: JSX.Element): Promise<MountResultJsx>;
+  mount<HooksConfig extends JsonObject>(
+    component: any,
+    options?: MountOptions<HooksConfig, any>
+  ): Promise<MountResult<HooksConfig, any>>;
+  mount<
+    HooksConfig extends JsonObject,
+    Props extends Record<string, unknown> = Record<string, unknown>
+  >(
+    component: any,
+    options: MountOptions<HooksConfig, any> & { props: Props }
+  ): Promise<MountResult<HooksConfig, Props>>;
 }
 
 export const test: TestType<
   PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
-  PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions
+>;
 
 export { expect, devices } from '@playwright/test';

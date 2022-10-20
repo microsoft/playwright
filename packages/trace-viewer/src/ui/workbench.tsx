@@ -175,6 +175,7 @@ export const Workbench: React.FunctionComponent<{
       <TabbedPane tabs={
         [
           { id: 'actions', title: 'Actions', count: 0, render: () => <ActionList
+            sdkLanguage={model.sdkLanguage}
             actions={model.actions}
             selectedAction={selectedAction}
             highlightedAction={highlightedAction}

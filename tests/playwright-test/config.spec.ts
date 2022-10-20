@@ -481,18 +481,13 @@ test('should have correct types for the config', async ({ runTSC }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should throw when group has duplicate project references', async ({ runInlineTest }) => {
+test('should throw when project.stage is not a number', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
         module.exports = {
           projects: [
-            { name: 'a' },
+            { name: 'a', stage: 'foo' },
           ],
-          groups: {
-            default: [
-              ['a', 'a']
-            ]
-          }
         };
     `,
     'a.test.ts': `
@@ -502,21 +497,16 @@ test('should throw when group has duplicate project references', async ({ runInl
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`config.groups.default[0][1] group mentions project 'a' twice in one parallel group`);
+  expect(result.output).toContain(`config.projects[0].stage must be an integer`);
 });
 
-test('should throw when group grep has invalid type', async ({ runInlineTest }) => {
+test('should throw when project.stage is not an integer', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
         module.exports = {
           projects: [
-            { name: 'a' },
+            { name: 'a', stage: 3.14 },
           ],
-          groups: {
-            default: [
-              [{ project: 'a', grep: 2022 }]
-            ]
-          }
         };
     `,
     'a.test.ts': `
@@ -526,21 +516,16 @@ test('should throw when group grep has invalid type', async ({ runInlineTest }) 
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`config.groups.default[0][0].grep must be a RegExp`);
+  expect(result.output).toContain(`config.projects[0].stage must be an integer`);
 });
 
-test('should throw when group grepInvert has invalid type', async ({ runInlineTest }) => {
+test('should throw when project.run is not an expected string', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
         module.exports = {
           projects: [
-            { name: 'a' },
+            { name: 'a', run: 'yes' },
           ],
-          groups: {
-            default: [
-              [{ project: 'a', grepInvert: [{}] }]
-            ]
-          }
         };
     `,
     'a.test.ts': `
@@ -550,77 +535,5 @@ test('should throw when group grepInvert has invalid type', async ({ runInlineTe
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`config.groups.default[0][0].grepInvert[0] must be a RegExp`);
-});
-
-test('should throw when group testMatch has invalid type', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-        module.exports = {
-          projects: [
-            { name: 'a' },
-          ],
-          groups: {
-            all: [
-              [{ project: 'a', testMatch: [{}] }]
-            ]
-          }
-        };
-    `,
-    'a.test.ts': `
-        const { test } = pwt;
-        test('pass', async () => {});
-      `
-  });
-
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`config.groups.all[0][0].testMatch[0] must be a string or a RegEx`);
-});
-
-test('should throw when group testIgnore has invalid type', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-        module.exports = {
-          projects: [
-            { name: 'a' },
-          ],
-          groups: {
-            all: [
-              [{ project: 'a', testIgnore: [2022] }]
-            ]
-          }
-        };
-    `,
-    'a.test.ts': `
-        const { test } = pwt;
-        test('pass', async () => {});
-      `
-  });
-
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`config.groups.all[0][0].testIgnore[0] must be a string or a RegEx`);
-});
-
-test('should throw when group has unknown project reference', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-        module.exports = {
-          projects: [
-            { name: 'a' },
-          ],
-          groups: {
-            default: [
-              [{project: 'b'}]
-            ]
-          }
-        };
-    `,
-    'a.test.ts': `
-        const { test } = pwt;
-        test('pass', async () => {});
-      `
-  });
-
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`config.groups.default refers to an unknown project 'b'`);
+  expect(result.output).toContain(`config.projects[0].run must be one of 'default', 'always'.`);
 });

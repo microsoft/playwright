@@ -35,42 +35,42 @@ it.describe('selector generator', () => {
 
   it('should prefer role=button over inner span', async ({ page }) => {
     await page.setContent(`<div role=button><span></span></div>`);
-    expect(await generate(page, 'div')).toBe('role=button');
+    expect(await generate(page, 'div')).toBe('internal:role=button');
   });
 
   it('should generate text and normalize whitespace', async ({ page }) => {
     await page.setContent(`<div>Text  some\n\n\n more \t text   </div>`);
-    expect(await generate(page, 'div')).toBe('text=Text some more text');
+    expect(await generate(page, 'div')).toBe('internal:text="Text some more text"i');
   });
 
   it('should not escape spaces inside named attr selectors', async ({ page }) => {
     await page.setContent(`<input placeholder="Foo b ar"/>`);
-    expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"Foo b ar\"]');
+    expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"Foo b ar\"i]');
   });
 
   it('should generate text for <input type=button>', async ({ page }) => {
     await page.setContent(`<input type=button value="Click me">`);
-    expect(await generate(page, 'input')).toBe('role=button[name=\"Click me\"]');
+    expect(await generate(page, 'input')).toBe('internal:role=button[name=\"Click me\"]');
   });
 
   it('should trim text', async ({ page }) => {
     await page.setContent(`<div>Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789</div>`);
-    expect(await generate(page, 'div')).toBe('text=Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text012345');
+    expect(await generate(page, 'div')).toBe('internal:text="Text0123456789Text0123456789Text0123456789Text0123456789Text0123456789Text012345"i');
   });
 
-  it('should escape text with >>', async ({ page }) => {
+  it('should not escape text with >>', async ({ page }) => {
     await page.setContent(`<div>text&gt;&gt;text</div>`);
-    expect(await generate(page, 'div')).toBe('text=/text\\>\\>text/');
+    expect(await generate(page, 'div')).toBe('internal:text="text>>text"i');
   });
 
   it('should escape text with quote', async ({ page }) => {
     await page.setContent(`<div>text"text</div>`);
-    expect(await generate(page, 'div')).toBe('text=/text"text/');
+    expect(await generate(page, 'div')).toBe('internal:text="text\\\"text"i');
   });
 
   it('should escape text with slash', async ({ page }) => {
     await page.setContent(`<div>/text</div>`);
-    expect(await generate(page, 'div')).toBe('text=/\/text/');
+    expect(await generate(page, 'div')).toBe('internal:text="\/text"i');
   });
 
   it('should not use text for select', async ({ page }) => {
@@ -83,7 +83,7 @@ it.describe('selector generator', () => {
 
   it('should use ordinal for identical nodes', async ({ page }) => {
     await page.setContent(`<div>Text</div><div>Text</div><div mark=1>Text</div><div>Text</div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe(`text=Text >> nth=2`);
+    expect(await generate(page, 'div[mark="1"]')).toBe(`internal:text="Text"i >> nth=2`);
   });
 
   it('should prefer data-testid', async ({ page }) => {
@@ -129,13 +129,13 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'div[mark="1"]')).toBe(`div >> nth=1`);
   });
 
-  it('should use has-text', async ({ page }) => {
+  it('should use internal:has', async ({ page }) => {
     await page.setContent(`
       <div>Hello world</div>
       <a>Hello <span>world</span></a>
       <a>Goodbye <span>world</span></a>
     `);
-    expect(await generate(page, 'a:has-text("Hello")')).toBe(`a:has-text("Hello world")`);
+    expect(await generate(page, 'a:has-text("Hello")')).toBe(`a >> internal:has=\"internal:text=\\\"Hello world\\\"i\"`);
   });
 
   it('should chain text after parent', async ({ page }) => {
@@ -143,7 +143,7 @@ it.describe('selector generator', () => {
       <div>Hello <span>world</span></div>
       <b>Hello <span mark=1>world</span></b>
     `);
-    expect(await generate(page, '[mark="1"]')).toBe(`b:has-text(\"Hello world\") span`);
+    expect(await generate(page, '[mark="1"]')).toBe(`b >> internal:has=\"internal:text=\\\"Hello world\\\"i\" >> span`);
   });
 
   it('should use parent text', async ({ page }) => {
@@ -151,7 +151,7 @@ it.describe('selector generator', () => {
       <div>Hello <span>world</span></div>
       <div>Goodbye <span mark=1>world</span></div>
     `);
-    expect(await generate(page, '[mark="1"]')).toBe(`div:has-text(\"Goodbye world\") span`);
+    expect(await generate(page, '[mark="1"]')).toBe(`div >> internal:has=\"internal:text=\\\"Goodbye world\\\"i\" >> span`);
   });
 
   it('should separate selectors by >>', async ({ page }) => {
@@ -163,7 +163,7 @@ it.describe('selector generator', () => {
         <div>Text</div>
       </div>
     `);
-    expect(await generate(page, '#id > div')).toBe('#id >> text=Text');
+    expect(await generate(page, '#id > div')).toBe('#id >> internal:text="Text"i');
   });
 
   it('should trim long text', async ({ page }) => {
@@ -175,7 +175,7 @@ it.describe('selector generator', () => {
       <div>Text that goes on and on and on and on and on and on and on and on and on and on and on and on and on and on and on</div>
       </div>
     `);
-    expect(await generate(page, '#id > div')).toBe(`#id >> text=Text that goes on and on and on and on and on and on and on and on and on and on`);
+    expect(await generate(page, '#id > div')).toBe(`#id >> internal:text="Text that goes on and on and on and on and on and on and on and on and on and on"i`);
   });
 
   it('should use nested ordinals', async ({ page }) => {
@@ -232,7 +232,7 @@ it.describe('selector generator', () => {
     });
     it('placeholder', async ({ page }) => {
       await page.setContent(`<input placeholder="foobar" type="text"/>`);
-      expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"foobar\"]');
+      expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"foobar\"i]');
     });
     it('type', async ({ page }) => {
       await page.setContent(`<input type="text"/>`);
@@ -248,7 +248,7 @@ it.describe('selector generator', () => {
       span.textContent = 'Target';
       shadowRoot.appendChild(span);
     });
-    expect(await generate(page, 'span')).toBe('text=Target');
+    expect(await generate(page, 'span')).toBe('internal:text="Target"i');
   });
 
   it('should match in shadow dom', async ({ page }) => {
@@ -294,7 +294,7 @@ it.describe('selector generator', () => {
         });
       }),
     ]);
-    expect(await generate(frame, 'div')).toBe('text=Target');
+    expect(await generate(frame, 'div')).toBe('internal:text="Target"i');
   });
 
   it('should use the name attributes for elements that can have it', async ({ page }) => {
@@ -319,7 +319,7 @@ it.describe('selector generator', () => {
 
     await page.setContent(`<button><span></span></button><button></button>`);
     await page.$eval('button', button => button.setAttribute('aria-label', `!#'!?:`));
-    expect(await generate(page, 'button')).toBe(`role=button[name="!#'!?:"]`);
+    expect(await generate(page, 'button')).toBe(`internal:role=button[name="!#'!?:"]`);
     expect(await page.$(`role=button[name="!#'!?:"]`)).toBeTruthy();
 
     await page.setContent(`<div><span></span></div>`);
@@ -343,7 +343,7 @@ it.describe('selector generator', () => {
 
   it('should accept valid aria-label for candidate consideration', async ({ page }) => {
     await page.setContent(`<button aria-label="ariaLabel" id="buttonId"></button>`);
-    expect(await generate(page, 'button')).toBe('role=button[name=\"ariaLabel\"]');
+    expect(await generate(page, 'button')).toBe('internal:role=button[name=\"ariaLabel\"]');
   });
 
   it('should ignore empty role for candidate consideration', async ({ page }) => {
@@ -368,9 +368,9 @@ it.describe('selector generator', () => {
 
   it('should generate label selector', async ({ page }) => {
     await page.setContent(`<label for=target>Country</label><input id=target>`);
-    expect(await generate(page, 'input')).toBe('internal:label=Country');
+    expect(await generate(page, 'input')).toBe('internal:label="Country"i');
 
     await page.setContent(`<label for=target>Coun"try</label><input id=target>`);
-    expect(await generate(page, 'input')).toBe('internal:label=/Coun"try/');
+    expect(await generate(page, 'input')).toBe('internal:label="Coun\\\"try"i');
   });
 });

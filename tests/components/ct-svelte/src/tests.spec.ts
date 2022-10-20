@@ -16,10 +16,13 @@
 
 import { test, expect } from '@playwright/experimental-ct-svelte';
 import Button from './components/Button.svelte';
+import Counter from './components/Counter.svelte';
 import Component from './components/Component.svelte';
 import DefaultSlot from './components/DefaultSlot.svelte';
+import NamedSlots from './components/NamedSlots.svelte'
 import MultiRoot from './components/MultiRoot.svelte';
 import Empty from './components/Empty.svelte';
+import type { HooksConfig } from '../playwright';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
@@ -30,6 +33,36 @@ test('render props', async ({ mount }) => {
     }
   })
   await expect(component).toContainText('Submit')
+})
+
+test('renderer updates props without remounting', async ({ mount }) => {
+  const component = await mount(Counter, {
+    props: { count: 9001 }
+  })
+  await expect(component.locator('#props')).toContainText('9001')
+
+  await component.update({
+    props: { count: 1337 }
+  })
+  await expect(component).not.toContainText('9001')
+  await expect(component.locator('#props')).toContainText('1337')
+
+  await expect(component.locator('#remount-count')).toContainText('1')
+})
+
+test('renderer updates event listeners without remounting', async ({ mount }) => {
+  const component = await mount(Counter)
+
+  const messages: string[] = []
+  await component.update({
+    on: { 
+      submit: (data: string) => messages.push(data)
+    }
+  })
+  await component.click();
+  expect(messages).toEqual(['hello'])
+  
+  await expect(component.locator('#remount-count')).toContainText('1')
 })
 
 test('emit an submit event when the button is clicked', async ({ mount }) => {
@@ -55,6 +88,19 @@ test('render a default slot', async ({ mount }) => {
   await expect(component).toContainText('Main Content')
 })
 
+test('render a component with a named slot', async ({ mount }) => {
+  const component = await mount(NamedSlots, {
+    slots: {
+      header: 'Header',
+      main: 'Main Content',
+      footer: 'Footer'
+    }
+  })
+  await expect(component).toContainText('Header')
+  await expect(component).toContainText('Main Content')
+  await expect(component).toContainText('Footer')
+})
+
 test('render a component without options', async ({ mount }) => {
   const component = await mount(Component);
   await expect(component).toContainText('test');
@@ -63,7 +109,7 @@ test('render a component without options', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages = []
   page.on('console', m => messages.push(m.text()))
-  await mount(Button, {
+  await mount<HooksConfig>(Button, {
     props: {
       title: 'Submit'
     },

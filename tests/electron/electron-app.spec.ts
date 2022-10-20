@@ -181,6 +181,19 @@ test('should record video', async ({ playwright }, testInfo) => {
   expect(fs.statSync(videoPath).size).toBeGreaterThan(0);
 });
 
+test('should be able to get the first window when with a delayed navigation', async ({ playwright }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17765' });
+  test.fixme();
+
+  const app = await playwright._electron.launch({
+    args: [path.join(__dirname, 'electron-window-app-delayed-loadURL.js')],
+  });
+  const page = await app.firstWindow();
+  await expect(page).toHaveURL('data:text/html,<h1>Foobar</h1>');
+  await expect(page.locator('h1')).toHaveText('Foobar');
+  await app.close();
+});
+
 test('should detach debugger on app-initiated exit', async ({ playwright }) => {
   const electronApp = await playwright._electron.launch({
     args: [path.join(__dirname, 'electron-app.js')],

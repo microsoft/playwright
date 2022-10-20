@@ -3,41 +3,42 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1028",
+      "revision": "1030",
       "installByDefault": true,
-      "browserVersion": "107.0.5304.18"
+      "browserVersion": "107.0.5304.36"
     },
     {
       "name": "chromium-with-symbols",
-      "revision": "1028",
+      "revision": "1030",
       "installByDefault": false,
-      "browserVersion": "107.0.5304.18"
+      "browserVersion": "107.0.5304.36"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1046",
+      "revision": "1052",
       "installByDefault": false,
-      "browserVersion": "108.0.5325.0"
+      "browserVersion": "109.0.5366.0"
     },
     {
       "name": "firefox",
-      "revision": "1357",
+      "revision": "1360",
       "installByDefault": true,
-      "browserVersion": "105.0.1"
+      "browserVersion": "106.0"
     },
     {
       "name": "firefox-beta",
-      "revision": "1360",
+      "revision": "1363",
       "installByDefault": false,
-      "browserVersion": "106.0b5"
+      "browserVersion": "107.0b2"
     },
     {
       "name": "webkit",
-      "revision": "1724",
+      "revision": "1728",
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1446",
-        "mac10.15": "1616"
+        "mac10.15": "1616",
+        "ubuntu18.04": "1728"
       },
       "browserVersion": "16.0"
     },

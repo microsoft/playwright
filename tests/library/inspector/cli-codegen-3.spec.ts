@@ -28,7 +28,7 @@ test.describe('cli codegen', () => {
     `);
 
     const selector = await recorder.hoverOverElement('button');
-    expect(selector).toBe('role=button[name=\"Submit\"] >> nth=0');
+    expect(selector).toBe('internal:role=button[name=\"Submit\"] >> nth=0');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -46,10 +46,10 @@ test.describe('cli codegen', () => {
     await page.get_by_role("button", name="Submit").first.click()`);
 
     expect.soft(sources.get('Java').text).toContain(`
-      page.getByRole("button", new Page.GetByRoleOptions().setName("Submit")).first().click();`);
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).first().click();`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.GetByRole("button", new () { Name = "Submit" }).First.ClickAsync();`);
+        await page.GetByRole(AriaRole.Button, new() { NameString = "Submit" }).First.ClickAsync();`);
 
     expect(message.text()).toBe('click1');
   });
@@ -63,7 +63,7 @@ test.describe('cli codegen', () => {
     `);
 
     const selector = await recorder.hoverOverElement('button >> nth=1');
-    expect(selector).toBe('role=button[name=\"Submit\"] >> nth=1');
+    expect(selector).toBe('internal:role=button[name=\"Submit\"] >> nth=1');
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -81,10 +81,10 @@ test.describe('cli codegen', () => {
     await page.get_by_role("button", name="Submit").nth(1).click()`);
 
     expect.soft(sources.get('Java').text).toContain(`
-      page.getByRole("button", new Page.GetByRoleOptions().setName("Submit")).nth(1).click();`);
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).nth(1).click();`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.GetByRole("button", new () { Name = "Submit" }).Nth(1).ClickAsync();`);
+        await page.GetByRole(AriaRole.Button, new() { NameString = "Submit" }).Nth(1).ClickAsync();`);
 
     expect(message.text()).toBe('click2');
   });
@@ -217,7 +217,7 @@ test.describe('cli codegen', () => {
   await page.frameLocator('#frame1').getByRole('button', { name: 'Submit' }).click();`);
 
     expect.soft(sources.get('Java').text).toContain(`
-      page.frameLocator("#frame1").getByRole("button", new FrameLocator.GetByRoleOptions().setName("Submit")).click();`);
+      page.frameLocator("#frame1").getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName("Submit")).click();`);
 
     expect.soft(sources.get('Python').text).toContain(`
     page.frame_locator("#frame1").get_by_role("button", name="Submit").click()`);
@@ -226,7 +226,7 @@ test.describe('cli codegen', () => {
     await page.frame_locator("#frame1").get_by_role("button", name="Submit").click()`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.FrameLocator("#frame1").GetByRole("button", new () { Name = "Submit" }).ClickAsync();`);
+        await page.FrameLocator("#frame1").GetByRole(AriaRole.Button, new() { NameString = "Submit" }).ClickAsync();`);
   });
 
   test('should generate getByTestId', async ({ page, openRecorder }) => {
@@ -267,7 +267,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<input placeholder="Country"></input>`);
 
     const selector = await recorder.hoverOverElement('input');
-    expect(selector).toBe('internal:attr=[placeholder="Country"]');
+    expect(selector).toBe('internal:attr=[placeholder="Country"i]');
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -296,7 +296,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<input alt="Country"></input>`);
 
     const selector = await recorder.hoverOverElement('input');
-    expect(selector).toBe('internal:attr=[alt="Country"]');
+    expect(selector).toBe('internal:attr=[alt="Country"i]');
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -325,7 +325,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<label for=target>Country</label><input id=target>`);
 
     const selector = await recorder.hoverOverElement('input');
-    expect(selector).toBe('internal:label=Country');
+    expect(selector).toBe('internal:label="Country"i');
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -348,13 +348,13 @@ test.describe('cli codegen', () => {
         await page.GetByLabel("Country").ClickAsync();`);
   });
 
-  test('should generate getByLabel with regex', async ({ page, openRecorder }) => {
+  test('should generate getByLabel without regex', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 
     await recorder.setContentAndWait(`<label for=target>Coun"try</label><input id=target>`);
 
     const selector = await recorder.hoverOverElement('input');
-    expect(selector).toBe('internal:label=/Coun"try/');
+    expect(selector).toBe('internal:label="Coun\\\"try"i');
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -362,18 +362,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
-  await page.getByLabel(/Coun"try/).click();`);
+  await page.getByLabel('Coun\"try').click();`);
 
     expect.soft(sources.get('Python').text).toContain(`
-    page.get_by_label(re.compile(r"Coun\\\"try")).click()`);
+    page.get_by_label("Coun\\"try").click()`);
 
     expect.soft(sources.get('Python Async').text).toContain(`
-    await page.get_by_label(re.compile(r"Coun\\\"try")).click()`);
+    await page.get_by_label("Coun\\"try").click()`);
 
     expect.soft(sources.get('Java').text).toContain(`
-      page.getByLabel(Pattern.compile("Coun\\\"try")).click()`);
+      page.getByLabel("Coun\\"try").click()`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.GetByLabel(new Regex("Coun\\\"try")).ClickAsync();`);
+        await page.GetByLabel("Coun\\"try").ClickAsync();`);
   });
 });
