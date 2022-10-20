@@ -98,7 +98,7 @@ const scriptPreprocessor = process.env.PW_TEST_SOURCE_TRANSFORM ?
 const builtins = new Set(Module.builtinModules);
 
 export function resolveHook(filename: string, specifier: string): string | undefined {
-  if (builtins.has(specifier))
+  if (specifier.startsWith('node:') || builtins.has(specifier))
     return;
   if (belongsToNodeModules(filename))
     return;
@@ -154,7 +154,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
           for (const ext of ['', '.js', '.ts', '.mjs', '.cjs', '.jsx', '.tsx', '.cjs', '.mts', '.cts']) {
             if (fs.existsSync(candidate + ext)) {
               longestPrefixLength = keyPrefix.length;
-              pathMatchedByLongestPrefix = candidate;
+              pathMatchedByLongestPrefix = candidate + ext;
             }
           }
         }
