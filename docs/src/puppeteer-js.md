@@ -24,7 +24,7 @@ This guide describes migration to [Playwright Library](./library) and [Playwrigh
 | `await browser.createIncognitoBrowserContext(...)` | `await browser.newContext(...)`             |
 | `await page.setViewport(...)`                      | `await page.setViewportSize(...)`           |
 | `await page.waitForXPath(XPathSelector)`           | `await page.waitForSelector(XPathSelector)` |
-| `await page.waitForNetworkIdle(...)`               | `await page.waitForLoadState({ state: 'networkidle' })` |
+| `await page.waitForNetworkIdle(...)`               | `await page.waitForLoadState('networkidle')` |
 | `await page.$eval(...)`                            | [Assertions](./test-assertions) can often be used instead to verify text, attribute, class... |
 | `await page.$(...)`                                | Discouraged, use [Locators](./api/class-locator) instead |
 | `await page.$x(xpath_selector)`                    | Discouraged, use [Locators](./api/class-locator) instead |
