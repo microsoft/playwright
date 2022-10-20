@@ -37,7 +37,8 @@
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1446",
-        "mac10.15": "1616"
+        "mac10.15": "1616",
+        "ubuntu18.04": "1728"
       },
       "browserVersion": "16.0"
     },
