@@ -2,7 +2,7 @@
 * since: v1.8
 
 Keyboard provides an api for managing a virtual keyboard. The high level api is [`method: Keyboard.type`], which takes
-raw characters and generates proper keydown, keypress/input, and keyup events on your page.
+raw characters and generates proper `keydown`, `keypress`/`input`, and `keyup` events on your page.
 
 For finer control, you can use [`method: Keyboard.down`], [`method: Keyboard.up`], and [`method: Keyboard.insertText`]
 to manually fire events as if they were generated from a real keyboard.
@@ -97,7 +97,7 @@ page.keyboard.press("Shift+A")
 
 ```csharp
 await page.Keyboard.PressAsync("Shift+KeyA");
-// or 
+// or
 await page.Keyboard.PressAsync("Shift+A");
 ```
 
