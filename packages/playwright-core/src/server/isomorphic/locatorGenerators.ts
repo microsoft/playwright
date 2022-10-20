@@ -55,7 +55,7 @@ function innerAsLocator(factory: LocatorFactory, selector: string, isFrameLocato
       tokens.push(factory.generateLocator(base, 'label', text, { exact }));
       continue;
     }
-    if (part.name === 'role') {
+    if (part.name === 'internal:role') {
       const attrSelector = parseAttributeSelector(part.body as string, true);
       const attrs: Record<string, boolean | string> = {};
       for (const attr of attrSelector.attributes!)

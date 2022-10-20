@@ -170,9 +170,9 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, acces
   if (ariaRole) {
     const ariaName = getElementAccessibleName(element, false, accessibleNameCache);
     if (ariaName)
-      candidates.push({ engine: 'role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: 3 });
+      candidates.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: 3 });
     else
-      candidates.push({ engine: 'role', selector: ariaRole, score: 150 });
+      candidates.push({ engine: 'internal:role', selector: ariaRole, score: 150 });
   }
 
   if (element.getAttribute('alt') && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName))
