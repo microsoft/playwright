@@ -71,7 +71,7 @@ test('execute callback when the button is clicked', async ({ mount }) => {
   const component = await mount(
     <Button
       title="Submit"
-      onClick={(data) => {
+      onClick={data => {
         messages.push(data);
       }}
     />
