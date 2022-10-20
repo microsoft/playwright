@@ -488,3 +488,22 @@ test('should remove type imports from ts', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });
+
+test('should resolve .js import to .ts file in non-ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      import { gimmeAOne } from './playwright-utils.js';
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.ts': `
+      export function gimmeAOne() {
+        return 1;
+      }
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});

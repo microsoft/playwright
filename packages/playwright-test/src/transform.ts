@@ -97,15 +97,14 @@ const scriptPreprocessor = process.env.PW_TEST_SOURCE_TRANSFORM ?
   require(process.env.PW_TEST_SOURCE_TRANSFORM) : undefined;
 const builtins = new Set(Module.builtinModules);
 
-export function resolveHook(isModule: boolean, filename: string, specifier: string): string | undefined {
+export function resolveHook(filename: string, specifier: string): string | undefined {
   if (builtins.has(specifier))
     return;
-  // In real life, playwright-test is under node_modules, but in the tests it isn't.
-  if (filename.startsWith(kPlaywrightInternalPrefix))
+  if (belongsToNodeModules(filename))
     return;
 
   if (isRelativeSpecifier(specifier))
-    return isModule ? js2ts(path.resolve(path.dirname(filename), specifier)) : undefined;
+    return js2ts(path.resolve(path.dirname(filename), specifier));
 
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const tsconfig = loadAndValidateTsconfigForFile(filename);
@@ -138,27 +137,24 @@ export function resolveHook(isModule: boolean, filename: string, specifier: stri
         matchedPartOfSpecifier = specifier;
       }
 
+      if (keyPrefix.length <= longestPrefixLength)
+        continue;
+
       for (const value of values) {
         let candidate: string = value;
 
         if (value.includes('*'))
           candidate = candidate.replace('*', matchedPartOfSpecifier);
         candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate.replace(/\//g, path.sep));
-        if (isModule) {
-          const transformed = js2ts(candidate);
-          if (transformed || fs.existsSync(candidate)) {
-            if (keyPrefix.length > longestPrefixLength) {
-              longestPrefixLength = keyPrefix.length;
-              pathMatchedByLongestPrefix = transformed || candidate;
-            }
-          }
+        const ts = js2ts(candidate);
+        if (ts) {
+          longestPrefixLength = keyPrefix.length;
+          pathMatchedByLongestPrefix = ts;
         } else {
           for (const ext of ['', '.js', '.ts', '.mjs', '.cjs', '.jsx', '.tsx', '.cjs', '.mts', '.cts']) {
             if (fs.existsSync(candidate + ext)) {
-              if (keyPrefix.length > longestPrefixLength) {
-                longestPrefixLength = keyPrefix.length;
-                pathMatchedByLongestPrefix = candidate;
-              }
+              longestPrefixLength = keyPrefix.length;
+              pathMatchedByLongestPrefix = candidate;
             }
           }
         }
@@ -168,8 +164,7 @@ export function resolveHook(isModule: boolean, filename: string, specifier: stri
       return pathMatchedByLongestPrefix;
   }
 
-  if (isModule)
-    return js2ts(path.resolve(path.dirname(filename), specifier));
+  return js2ts(path.resolve(path.dirname(filename), specifier));
 }
 
 export function js2ts(resolved: string): string | undefined {
@@ -223,7 +218,7 @@ export function installTransform(): () => void {
   const originalResolveFilename = (Module as any)._resolveFilename;
   function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
     if (!reverted && parent) {
-      const resolved = resolveHook(false, parent.filename, specifier);
+      const resolved = resolveHook(parent.filename, specifier);
       if (resolved !== undefined)
         specifier = resolved;
     }
