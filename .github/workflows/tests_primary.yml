@@ -13,12 +13,6 @@ on:
       - main
       - release-*
 
-concurrency:
-  # For pull requests, cancel all currently-running jobs for this workflow
-  # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
-
 env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
   FORCE_COLOR: 1
@@ -46,6 +40,8 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - run: npm run test -- --headed --project=${{ matrix.browser }} --reporter list defaultbrowsercontext
       env:
         DEBUG: pw:test,pw:browser
