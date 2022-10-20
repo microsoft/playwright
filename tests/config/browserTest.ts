@@ -115,8 +115,11 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       const page = persistentContext.pages()[0];
       return { context: persistentContext, page };
     });
-    if (persistentContext)
+    if (persistentContext) {
+      console.log('CLOSING persistentContext START');
       await persistentContext.close();
+      console.log('CLOSING persistentContext END');
+    }
   },
 
   startRemoteServer: async ({ childProcess, browserType }, run) => {
