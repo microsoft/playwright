@@ -58,7 +58,7 @@ namespace PlaywrightTests;
 [TestFixture]
 public class ExampleTests : PageTest
 {
-    [Test]
+    [PlaywrightTest]
     public async Task StatusBecomesSubmitted()
     {
         await Page.Locator("#submit-button").ClickAsync();

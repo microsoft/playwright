@@ -194,7 +194,7 @@ it.describe('pause', () => {
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
       'page.pause- XXms',
-      'page.click(page.locator(\'button\'))- XXms',
+      'page.click(button)- XXms',
       'page.pause',
     ]);
     await recorderPage.click('[title="Resume (F8)"]');
@@ -237,7 +237,7 @@ it.describe('pause', () => {
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause();  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
       'page.pause- XXms',
-      'expect(page.locator(\'button\')).toHaveText()- XXms',
+      'expect.toHaveText(button)- XXms',
       'page.pause',
     ]);
     await recorderPage.click('[title="Resume (F8)"]');
@@ -267,7 +267,7 @@ it.describe('pause', () => {
       await page.pause();
       await Promise.all([
         page.waitForEvent('console'),
-        page.getByRole('button', { name: 'Submit' }).click(),
+        page.click('button'),
       ]);
       await page.pause();  // 2
     })();
@@ -277,7 +277,7 @@ it.describe('pause', () => {
     expect(await sanitizeLog(recorderPage)).toEqual([
       'page.pause- XXms',
       'page.waitForEvent(console)',
-      'page.getByRole(\'button\', { name: \'Submit\' }).click()- XXms',
+      'page.click(button)- XXms',
       'page.pause',
     ]);
     await recorderPage.click('[title="Resume (F8)"]');
@@ -288,15 +288,15 @@ it.describe('pause', () => {
     await page.setContent('<button onclick="console.log(1)">Submit</button>');
     const scriptPromise = (async () => {
       await page.pause();
-      await page.getByRole('button').isChecked();
+      await page.isChecked('button');
     })().catch(e => e);
     const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Resume (F8)"]');
     await recorderPage.waitForSelector('.source-line-error');
     expect(await sanitizeLog(recorderPage)).toEqual([
       'page.pause- XXms',
-      'page.getByRole(\'button\').isChecked()- XXms',
-      'waiting for \"getByRole(\'button\')"',
+      'page.isChecked(button)- XXms',
+      'waiting for selector "button"',
       'selector resolved to <button onclick=\"console.log(1)\">Submit</button>',
       'error: Error: Not a checkbox or radio button',
     ]);

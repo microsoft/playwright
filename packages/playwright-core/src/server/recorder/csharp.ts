@@ -15,15 +15,15 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
+import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { sanitizeDeviceOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
+import { actionTitle } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 import deviceDescriptors from '../deviceDescriptors';
-import { asLocator } from '../isomorphic/locatorGenerators';
 
 type CSharpLanguageMode = 'library' | 'mstest' | 'nunit';
 
@@ -31,7 +31,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   id: string;
   groupName = '.NET C#';
   name: string;
-  highlighter = 'csharp' as Language;
+  highlighter = 'csharp';
   _mode: CSharpLanguageMode;
 
   constructor(mode: CSharpLanguageMode) {
@@ -65,6 +65,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     if (this._mode !== 'library')
       pageAlias = pageAlias.replace('page', 'Page');
     const formatter = new CSharpFormatter(8);
+    formatter.add('// ' + actionTitle(action));
 
     if (action.name === 'openPage') {
       formatter.add(`var ${pageAlias} = await context.NewPageAsync();`);
@@ -77,7 +78,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
     } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
-      const locators = actionInContext.frame.selectorsChain.map(selector => `.FrameLocator(${quote(selector)})`);
+      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'FrameLocator'));
       subject = `${pageAlias}${locators.join('')}`;
     } else if (actionInContext.frame.name) {
       subject = `${pageAlias}.Frame(${quote(actionInContext.frame.name)})`;
@@ -114,6 +115,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     for (const line of lines)
       formatter.add(line);
 
+    if (signals.assertNavigation)
+      formatter.add(`await ${pageAlias}.WaitForURLAsync(${quote(signals.assertNavigation.url)});`);
     return formatter.format();
   }
 
@@ -138,32 +141,28 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         if (action.position)
           options.position = action.position;
         if (!Object.entries(options).length)
-          return this._asLocator(action.selector) + `.${method}Async()`;
+          return asLocator(action.selector) + `.${method}Async()`;
         const optionsString = formatObject(options, '    ', 'Locator' + method + 'Options');
-        return this._asLocator(action.selector) + `.${method}Async(${optionsString})`;
+        return asLocator(action.selector) + `.${method}Async(${optionsString})`;
       }
       case 'check':
-        return this._asLocator(action.selector) + `.CheckAsync()`;
+        return asLocator(action.selector) + `.CheckAsync()`;
       case 'uncheck':
-        return this._asLocator(action.selector) + `.UncheckAsync()`;
+        return asLocator(action.selector) + `.UncheckAsync()`;
       case 'fill':
-        return this._asLocator(action.selector) + `.FillAsync(${quote(action.text)})`;
+        return asLocator(action.selector) + `.FillAsync(${quote(action.text)})`;
       case 'setInputFiles':
-        return this._asLocator(action.selector) + `.SetInputFilesAsync(${formatObject(action.files)})`;
+        return asLocator(action.selector) + `.SetInputFilesAsync(${formatObject(action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return this._asLocator(action.selector) + `.PressAsync(${quote(shortcut)})`;
+        return asLocator(action.selector) + `.PressAsync(${quote(shortcut)})`;
       }
       case 'navigate':
         return `GotoAsync(${quote(action.url)})`;
       case 'select':
-        return this._asLocator(action.selector) + `.SelectOptionAsync(${formatObject(action.options)})`;
+        return asLocator(action.selector) + `.SelectOptionAsync(${formatObject(action.options)})`;
     }
-  }
-
-  private _asLocator(selector: string) {
-    return asLocator('csharp', selector);
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
@@ -208,7 +207,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       }`);
       formatter.newLine();
     }
-    formatter.add(`    [${this._mode === 'nunit' ? 'Test' : 'TestMethod'}]
+    formatter.add(`    [${this._mode === 'nunit' ? 'PlaywrightTest' : 'PlaywrightTestMethod'}]
     public async Task MyTest()
     {`);
     return formatter.format();
@@ -349,4 +348,13 @@ class CSharpFormatter {
 
 function quote(text: string) {
   return escapeWithQuotes(text, '\"');
+}
+
+function asLocator(selector: string, locatorFn = 'Locator') {
+  const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
+  if (!match)
+    return `${locatorFn}(${quote(selector)})`;
+  if (+match[2] === 0)
+    return `${locatorFn}(${quote(match[1])}).First`;
+  return `${locatorFn}(${quote(match[1])}).Nth(${match[2]})`;
 }

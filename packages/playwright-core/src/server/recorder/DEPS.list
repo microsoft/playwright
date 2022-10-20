@@ -1,6 +1,5 @@
 [*]
 ../
-../isomorphic/**
 ../registry/**
 ../../common/
 ../../protocol/

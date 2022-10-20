@@ -881,14 +881,6 @@ export module Protocol {
        * The variation axes defined by the font.
        */
       variationAxes: FontVariationAxis[];
-      /**
-       * Whether the font has synthesized its boldness or not.
-       */
-      synthesizedBold?: boolean;
-      /**
-       * Whether the font has synthesized its obliqueness or not
-       */
-      synthesizedOblique?: boolean;
     }
     /**
      * A single variation axis associated with a Font.
@@ -3223,14 +3215,6 @@ might return multiple quads for inline nodes.
        */
       eventName?: string;
       /**
-       * If true, eventName is case sensitive. Defaults to true.
-       */
-      caseSensitive?: boolean;
-      /**
-       * If true, treats eventName as a regex. Defaults to false.
-       */
-      isRegex?: boolean;
-      /**
        * Options to apply to this breakpoint to modify its behavior.
        */
       options?: Debugger.BreakpointOptions;
@@ -3246,14 +3230,6 @@ might return multiple quads for inline nodes.
        * The name of the specific event to stop on.
        */
       eventName?: string;
-      /**
-       * If true, eventName is case sensitive. Defaults to true.
-       */
-      caseSensitive?: boolean;
-      /**
-       * If true, treats eventName as a regex. Defaults to false.
-       */
-      isRegex?: boolean;
     }
     export type removeEventBreakpointReturnValue = {
     }
@@ -3754,7 +3730,7 @@ might return multiple quads for inline nodes.
       /**
        * Pause reason.
        */
-      reason: "URL"|"DOM"|"AnimationFrame"|"Interval"|"Listener"|"Timeout"|"exception"|"assert"|"CSPViolation"|"DebuggerStatement"|"Breakpoint"|"PauseOnNextStatement"|"Microtask"|"FunctionCall"|"BlackboxedScript"|"other";
+      reason: "XHR"|"Fetch"|"DOM"|"AnimationFrame"|"Interval"|"Listener"|"Timeout"|"exception"|"assert"|"CSPViolation"|"DebuggerStatement"|"Breakpoint"|"PauseOnNextStatement"|"Microtask"|"FunctionCall"|"BlackboxedScript"|"other";
       /**
        * Object containing break-specific auxiliary properties.
        */

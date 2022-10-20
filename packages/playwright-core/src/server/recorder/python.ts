@@ -15,21 +15,21 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './language';
+import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { sanitizeDeviceOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
+import { actionTitle } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
-import { escapeWithQuotes, toSnakeCase } from '../../utils/isomorphic/stringUtils';
+import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 import deviceDescriptors from '../deviceDescriptors';
-import { asLocator } from '../isomorphic/locatorGenerators';
 
 export class PythonLanguageGenerator implements LanguageGenerator {
   id: string;
   groupName = 'Python';
   name: string;
-  highlighter = 'python' as Language;
+  highlighter = 'python';
 
   private _awaitPrefix: '' | 'await ';
   private _asyncPrefix: '' | 'async ';
@@ -53,6 +53,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new PythonFormatter(4);
     formatter.newLine();
+    formatter.add('# ' + actionTitle(action));
 
     if (action.name === 'openPage') {
       formatter.add(`${pageAlias} = ${this._awaitPrefix}context.new_page()`);
@@ -65,7 +66,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
     } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
-      const locators = actionInContext.frame.selectorsChain.map(selector => `.frame_locator(${quote(selector)})`);
+      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'frame_locator'));
       subject = `${pageAlias}${locators.join('')}`;
     } else if (actionInContext.frame.name) {
       subject = `${pageAlias}.frame(${formatOptions({ name: actionInContext.frame.name }, false)})`;
@@ -97,6 +98,12 @@ export class PythonLanguageGenerator implements LanguageGenerator {
 
     formatter.add(code);
 
+    if (signals.assertNavigation) {
+      if (this._isPyTest)
+        formatter.add(`${this._awaitPrefix}expect(${pageAlias}).to_have_url(${quote(signals.assertNavigation.url)})`);
+      else
+        formatter.add(`${this._awaitPrefix}${pageAlias}.wait_for_url(${quote(signals.assertNavigation.url)})`);
+    }
     return formatter.format();
   }
 
@@ -121,30 +128,26 @@ export class PythonLanguageGenerator implements LanguageGenerator {
         if (action.position)
           options.position = action.position;
         const optionsString = formatOptions(options, false);
-        return this._asLocator(action.selector) + `.${method}(${optionsString})`;
+        return asLocator(action.selector) + `.${method}(${optionsString})`;
       }
       case 'check':
-        return this._asLocator(action.selector) + `.check()`;
+        return asLocator(action.selector) + `.check()`;
       case 'uncheck':
-        return this._asLocator(action.selector) + `.uncheck()`;
+        return asLocator(action.selector) + `.uncheck()`;
       case 'fill':
-        return this._asLocator(action.selector) + `.fill(${quote(action.text)})`;
+        return asLocator(action.selector) + `.fill(${quote(action.text)})`;
       case 'setInputFiles':
-        return this._asLocator(action.selector) + `.set_input_files(${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return asLocator(action.selector) + `.set_input_files(${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return this._asLocator(action.selector) + `.press(${quote(shortcut)})`;
+        return asLocator(action.selector) + `.press(${quote(shortcut)})`;
       }
       case 'navigate':
         return `goto(${quote(action.url)})`;
       case 'select':
-        return this._asLocator(action.selector) + `.select_option(${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
+        return asLocator(action.selector) + `.select_option(${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
     }
-  }
-
-  private _asLocator(selector: string) {
-    return asLocator('python', selector);
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
@@ -232,6 +235,11 @@ function formatValue(value: any): string {
   return String(value);
 }
 
+function toSnakeCase(name: string): string {
+  const toSnakeCaseRegex = /((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))/g;
+  return name.replace(toSnakeCaseRegex, `_$1`).toLowerCase();
+}
+
 function formatOptions(value: any, hasArguments: boolean, asDict?: boolean): string {
   const keys = Object.keys(value).filter(key => value[key] !== undefined).sort();
   if (!keys.length)
@@ -309,4 +317,13 @@ class PythonFormatter {
 
 function quote(text: string) {
   return escapeWithQuotes(text, '\"');
+}
+
+function asLocator(selector: string, locatorFn = 'locator') {
+  const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
+  if (!match)
+    return `${locatorFn}(${quote(selector)})`;
+  if (+match[2] === 0)
+    return `${locatorFn}(${quote(match[1])}).first`;
+  return `${locatorFn}(${quote(match[1])}).nth(${match[2]})`;
 }

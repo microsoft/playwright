@@ -6,12 +6,10 @@ import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
 import MultiRoot from './components/MultiRoot.vue'
 import Component from './components/Component.vue'
-import EmptyTemplate from './components/EmptyTemplate.vue'
-import type { HooksConfig } from '../playwright'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
-test('render props', async ({ mount }) => {
+test('props should work', async ({ mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit'
@@ -22,22 +20,22 @@ test('render props', async ({ mount }) => {
 
 test('renderer and keep the component instance intact', async ({ mount }) => {
   const component = await mount<{ count: number }>(Counter, {
-    props: {
+    props: { 
       count: 9001
     }
   });
   await expect(component.locator('#rerender-count')).toContainText('9001')
-
-  await component.update({ props: { count: 1337 } })
+  
+  await component.rerender({ props: { count: 1337 } })
   await expect(component.locator('#rerender-count')).toContainText('1337')
-
-  await component.update({ props: { count: 42 } })
+  
+  await component.rerender({ props: { count: 42 } })
   await expect(component.locator('#rerender-count')).toContainText('42')
 
   await expect(component.locator('#remount-count')).toContainText('1')
 })
 
-test('emit an submit event when the button is clicked', async ({ mount }) => {
+test('event should work', async ({ mount }) => {
   const messages = []
   const component = await mount(Button, {
     props: {
@@ -51,7 +49,7 @@ test('emit an submit event when the button is clicked', async ({ mount }) => {
   expect(messages).toEqual(['hello'])
 })
 
-test('render a default slot', async ({ mount }) => {
+test('default slot should work', async ({ mount }) => {
   const component = await mount(DefaultSlot, {
     slots: {
       default: 'Main Content'
@@ -60,7 +58,7 @@ test('render a default slot', async ({ mount }) => {
   await expect(component).toContainText('Main Content')
 })
 
-test('render a component with multiple slots', async ({ mount }) => {
+test('multiple slots should work', async ({ mount }) => {
   const component = await mount(DefaultSlot, {
     slots: {
       default: ['one', 'two']
@@ -70,7 +68,7 @@ test('render a component with multiple slots', async ({ mount }) => {
   await expect(component).toContainText('two')
 })
 
-test('render a component with a named slot', async ({ mount }) => {
+test('named slots should work', async ({ mount }) => {
   const component = await mount(NamedSlots, {
     slots: {
       header: 'Header',
@@ -83,15 +81,15 @@ test('render a component with a named slot', async ({ mount }) => {
   await expect(component).toContainText('Footer')
 })
 
-test('render a component without options', async ({ mount }) => {
+test('optionless should work', async ({ mount }) => {
   const component = await mount(Component)
   await expect(component).toContainText('test')
 })
 
-test('run hooks', async ({ page, mount }) => {
+test('should run hooks', async ({ page, mount }) => {
   const messages = []
   page.on('console', m => messages.push(m.text()))
-  await mount<HooksConfig>(Button, {
+  await mount(Button, {
     props: {
       title: 'Submit'
     },
@@ -100,7 +98,7 @@ test('run hooks', async ({ page, mount }) => {
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}, app: true', 'After mount el: HTMLButtonElement'])
 })
 
-test('unmount', async ({ page, mount }) => {
+test('should unmount', async ({ page, mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit'
@@ -111,7 +109,7 @@ test('unmount', async ({ page, mount }) => {
   await expect(page.locator('#root')).not.toContainText('Submit');
 });
 
-test('unmount a multi root component', async ({ mount, page }) => {
+test('unmount a multi root component should work', async ({ mount, page }) => {
   const component = await mount(MultiRoot)
   await expect(page.locator('#root')).toContainText('root 1')
   await expect(page.locator('#root')).toContainText('root 2')
@@ -119,10 +117,3 @@ test('unmount a multi root component', async ({ mount, page }) => {
   await expect(page.locator('#root')).not.toContainText('root 1')
   await expect(page.locator('#root')).not.toContainText('root 2')
 })
-
-test('get textContent of the empty template', async ({ mount }) => {
-  const component = await mount(EmptyTemplate);
-  expect(await component.allTextContents()).toEqual(['']);
-  expect(await component.textContent()).toBe('');
-  await expect(component).toHaveText('');
-});

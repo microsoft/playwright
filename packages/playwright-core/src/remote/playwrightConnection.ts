@@ -15,7 +15,7 @@
  */
 
 import type { WebSocket } from '../utilsBundle';
-import type { DispatcherScope, Playwright } from '../server';
+import type { Playwright } from '../server';
 import { createPlaywright, DispatcherConnection, RootDispatcher, PlaywrightDispatcher } from '../server';
 import { Browser } from '../server/browser';
 import { serverSideCallMetadata } from '../server/instrumentation';
@@ -24,7 +24,6 @@ import { SocksProxy } from '../common/socksProxy';
 import type { Mode } from './playwrightServer';
 import { assert } from '../utils';
 import type { LaunchOptions } from '../server/types';
-import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
 
 type Options = {
   enableSocksProxy: boolean,
@@ -46,9 +45,9 @@ export class PlaywrightConnection {
   private _disconnected = false;
   private _preLaunched: PreLaunched;
   private _options: Options;
-  private _root: DispatcherScope;
+  private _root: RootDispatcher;
 
-  constructor(lock: Promise<void>, mode: Mode, ws: WebSocket, isDebugControllerClient: boolean, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
+  constructor(lock: Promise<void>, mode: Mode, ws: WebSocket, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
     this._ws = ws;
     this._preLaunched = preLaunched;
     this._options = options;
@@ -72,11 +71,6 @@ export class PlaywrightConnection {
 
     ws.on('close', () => this._onDisconnect());
     ws.on('error', error => this._onDisconnect(error));
-
-    if (isDebugControllerClient) {
-      this._root = this._initDebugControllerMode();
-      return;
-    }
 
     this._root = new RootDispatcher(this._dispatcherConnection, async scope => {
       if (mode === 'reuse-browser')
@@ -136,14 +130,6 @@ export class PlaywrightConnection {
     return playwrightDispatcher;
   }
 
-  private _initDebugControllerMode(): DebugControllerDispatcher {
-    this._debugLog(`engaged reuse controller mode`);
-    const playwright = this._preLaunched.playwright!;
-    this._cleanups.push(() => gracefullyCloseAll());
-    // Always create new instance based on the reused Playwright instance.
-    return new DebugControllerDispatcher(this._dispatcherConnection, playwright.debugController);
-  }
-
   private async _initReuseBrowsersMode(scope: RootDispatcher) {
     this._debugLog(`engaged reuse browsers mode for ${this._options.browserName}`);
     const playwright = this._preLaunched.playwright!;
@@ -164,7 +150,7 @@ export class PlaywrightConnection {
     }
 
     if (!browser) {
-      browser = await playwright[(this._options.browserName || 'chromium') as 'chromium'].launch(serverSideCallMetadata(), {
+      browser = await playwright[this._options.browserName as 'chromium'].launch(serverSideCallMetadata(), {
         ...this._options.launchOptions,
         headless: false,
       });

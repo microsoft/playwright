@@ -19,8 +19,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import type { NameValue } from '../../../common/types';
-import type { TracingTracingStopChunkParams } from '@protocol/channels';
-import { commandsWithTracingSnapshots } from '../../../protocol/debug';
+import type { TracingTracingStopChunkParams } from '../../../protocol/channels';
+import { commandsWithTracingSnapshots } from '../../../protocol/channels';
 import { ManualPromise } from '../../../utils/manualPromise';
 import type { RegisteredListener } from '../../../utils/eventsHelper';
 import { eventsHelper } from '../../../utils/eventsHelper';
@@ -33,17 +33,15 @@ import type { APIRequestContext } from '../../fetch';
 import type { CallMetadata, InstrumentationListener } from '../../instrumentation';
 import { SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
-import type * as har from '@trace/har';
+import type * as har from '../../har/har';
 import type { HarTracerDelegate } from '../../har/harTracer';
 import { HarTracer } from '../../har/harTracer';
-import type { FrameSnapshot } from '@trace/snapshot';
-import type * as trace from '@trace/trace';
-import type { VERSION } from '@trace/trace';
+import type { FrameSnapshot } from '../common/snapshotTypes';
+import type * as trace from '../common/traceEvents';
+import { VERSION } from '../common/traceEvents';
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { Snapshotter } from './snapshotter';
 import { yazl } from '../../../zipBundle';
-
-const version: VERSION = 3;
 
 export type TracerOptions = {
   name?: string;
@@ -94,13 +92,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       skipScripts: true,
     });
     this._contextCreatedEvent = {
-      version,
+      version: VERSION,
       type: 'context-options',
       browserName: '',
       options: {},
       platform: process.platform,
       wallTime: 0,
-      sdkLanguage: (context as BrowserContext)?._browser?.options?.sdkLanguage,
     };
     if (context instanceof BrowserContext) {
       this._snapshotter = new Snapshotter(context, this);
@@ -113,10 +110,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   async start(options: TracerOptions) {
     if (this._isStopping)
       throw new Error('Cannot start tracing while stopping');
-
-    // Re-write for testing.
-    this._contextCreatedEvent.sdkLanguage = (this._context as BrowserContext)?._browser?.options?.sdkLanguage;
-
     if (this._state) {
       const o = this._state.options;
       if (o.name !== options.name || !o.screenshots !== !options.screenshots || !o.snapshots !== !options.snapshots)
@@ -372,8 +365,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   onEntryFinished(entry: har.Entry) {
     const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
     this._appendTraceOperation(async () => {
-      const visited = visitTraceEvent(event, this._state!.networkSha1s);
-      await fs.promises.appendFile(this._state!.networkFile, JSON.stringify(visited) + '\n');
+      visitSha1s(event, this._state!.networkSha1s);
+      await fs.promises.appendFile(this._state!.networkFile, JSON.stringify(event) + '\n');
     });
   }
 
@@ -413,8 +406,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   private _appendTraceEvent(event: trace.TraceEvent) {
     this._appendTraceOperation(async () => {
-      const visited = visitTraceEvent(event, this._state!.traceSha1s);
-      await fs.promises.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n');
+      visitSha1s(event, this._state!.traceSha1s);
+      await fs.promises.appendFile(this._state!.traceFile, JSON.stringify(event) + '\n');
     });
   }
 
@@ -457,24 +450,22 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 }
 
-function visitTraceEvent(object: any, sha1s: Set<string>): any {
-  if (Array.isArray(object))
-    return object.map(o => visitTraceEvent(o, sha1s));
-  if (object instanceof Buffer)
-    return undefined;
+function visitSha1s(object: any, sha1s: Set<string>) {
+  if (Array.isArray(object)) {
+    object.forEach(o => visitSha1s(o, sha1s));
+    return;
+  }
   if (typeof object === 'object') {
-    const result: any = {};
     for (const key in object) {
       if (key === 'sha1' || key === '_sha1' || key.endsWith('Sha1')) {
         const sha1 = object[key];
         if (sha1)
           sha1s.add(sha1);
       }
-      result[key] = visitTraceEvent(object[key], sha1s);
+      visitSha1s(object[key], sha1s);
     }
-    return result;
+    return;
   }
-  return object;
 }
 
 export function shouldCaptureSnapshot(metadata: CallMetadata): boolean {

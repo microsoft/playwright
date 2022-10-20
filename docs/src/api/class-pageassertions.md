@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 
 test('navigates to login', async ({ page }) => {
   // ...
-  await page.getByText('Sign in').click();
+  await page.locator('#login').click();
   await expect(page).toHaveURL(/.*\/login/);
 });
 ```
@@ -22,7 +22,7 @@ public class TestPage {
   @Test
   void navigatesToLoginPage() {
     ...
-    page.getByText("Sign in").click();
+    page.locator("#login").click();
     assertThat(page).hasURL(Pattern.compile(".*/login"));
   }
 }
@@ -34,7 +34,7 @@ from playwright.async_api import Page, expect
 
 async def test_navigates_to_login_page(page: Page) -> None:
     # ..
-    await page.get_by_text("Sign in").click()
+    await page.locator("#login").click()
     await expect(page).to_have_url(re.compile(r".*/login"))
 ```
 
@@ -44,7 +44,7 @@ from playwright.sync_api import Page, expect
 
 def test_navigates_to_login_page(page: Page) -> None:
     # ..
-    page.get_by_text("Sign in").click()
+    page.locator("#login").click()
     expect(page).to_have_url(re.compile(r".*/login"))
 ```
 
@@ -59,11 +59,11 @@ namespace PlaywrightTests;
 [TestFixture]
 public class ExampleTests : PageTest
 {
-    [Test]
+    [PlaywrightTest]
     public async Task NavigatetoLoginPage()
     {
         // ..
-        await Page.GetByText("Sing in").ClickAsync();
+        await Page.Locator("#login").ClickAsync();
         await Expect(Page.Locator("div#foobar")).ToHaveURL(new Regex(".*/login"));
     }
 }

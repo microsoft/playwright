@@ -51,7 +51,7 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   await page.evaluate(() => 1 + 1, null);
 
   async function doClick() {
-    await page.getByText('Click').click();
+    await page.click('"Click"');
   }
   await doClick();
 
@@ -78,24 +78,16 @@ test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => 
   await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
 });
 
-test('should open two trace viewers', async ({ showTraceViewer }, testInfo) => {
-  const preferredPort = testInfo.workerIndex + 48321;
-  const traceViewer1 = await showTraceViewer([testInfo.outputPath()], preferredPort);
-  await expect(traceViewer1.page).toHaveTitle('Playwright Trace Viewer');
-  const traceViewer2 = await showTraceViewer([testInfo.outputPath()], preferredPort);
-  await expect(traceViewer2.page).toHaveTitle('Playwright Trace Viewer');
-});
-
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await expect(traceViewer.actionTitles).toHaveText([
     /browserContext.newPage/,
     /page.gotodata:text\/html,<html>Hello world<\/html>/,
     /page.setContent/,
-    /expect.toHaveTextlocator\('button'\)/,
+    /expect.toHaveTextbutton/,
     /page.evaluate/,
     /page.evaluate/,
-    /locator.clickgetByText\('Click'\)/,
+    /page.click"Click"/,
     /page.waitForNavigation/,
     /page.waitForResponse/,
     /page.waitForTimeout/,
@@ -106,7 +98,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
 
 test('should contain action info', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  await traceViewer.selectAction('locator.click');
+  await traceViewer.selectAction('page.click');
   const logLines = await traceViewer.callLines.allTextContents();
   expect(logLines.length).toBeGreaterThan(10);
   expect(logLines).toContain('attempting click action');
@@ -181,7 +173,7 @@ test('should have correct snapshot size', async ({ showTraceViewer }, testInfo) 
 test('should have correct stack trace', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
 
-  await traceViewer.selectAction('locator.click');
+  await traceViewer.selectAction('page.click');
   await traceViewer.showSourceTab();
   await expect(traceViewer.stackFrames).toContainText([
     /doClick\s+trace-viewer.spec.ts\s+:\d+/,
@@ -538,7 +530,7 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
 
 test('should show action source', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
-  await traceViewer.selectAction('locator.click');
+  await traceViewer.selectAction('page.click');
   const page = traceViewer.page;
 
   await page.click('text=Source');
@@ -546,7 +538,7 @@ test('should show action source', async ({ showTraceViewer }) => {
     /async.*function.*doClick/,
     /page\.click/
   ]);
-  await expect(page.locator('.source-line-running')).toContainText('await page.getByText(\'Click\').click()');
+  await expect(page.locator('.source-line-running')).toContainText('page.click');
   await expect(page.locator('.stack-trace-frame.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
 });
 
@@ -580,15 +572,15 @@ test('should include metainfo', async ({ showTraceViewer, browserName }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.page.locator('text=Metadata').click();
   const callLine = traceViewer.page.locator('.call-line');
-  await expect(callLine.getByText('start time')).toHaveText(/start time: [\d/,: ]+/);
-  await expect(callLine.getByText('duration')).toHaveText(/duration: [\dms]+/);
-  await expect(callLine.getByText('engine')).toHaveText(/engine: [\w]+/);
-  await expect(callLine.getByText('platform')).toHaveText(/platform: [\w]+/);
-  await expect(callLine.getByText('width')).toHaveText(/width: [\d]+/);
-  await expect(callLine.getByText('height')).toHaveText(/height: [\d]+/);
-  await expect(callLine.getByText('pages')).toHaveText(/pages: 1/);
-  await expect(callLine.getByText('actions')).toHaveText(/actions: [\d]+/);
-  await expect(callLine.getByText('events')).toHaveText(/events: [\d]+/);
+  await expect(callLine.locator('text=start time')).toHaveText(/start time: [\d/,: ]+/);
+  await expect(callLine.locator('text=duration')).toHaveText(/duration: [\dms]+/);
+  await expect(callLine.locator('text=engine')).toHaveText(/engine: [\w]+/);
+  await expect(callLine.locator('text=platform')).toHaveText(/platform: [\w]+/);
+  await expect(callLine.locator('text=width')).toHaveText(/width: [\d]+/);
+  await expect(callLine.locator('text=height')).toHaveText(/height: [\d]+/);
+  await expect(callLine.locator('text=pages')).toHaveText(/pages: 1/);
+  await expect(callLine.locator('text=actions')).toHaveText(/actions: [\d]+/);
+  await expect(callLine.locator('text=events')).toHaveText(/events: [\d]+/);
 });
 
 test('should open two trace files', async ({ context, page, request, server, showTraceViewer }, testInfo) => {
@@ -603,8 +595,8 @@ test('should open two trace files', async ({ context, page, request, server, sho
     const response = await request.head(server.PREFIX + '/simplezip.json');
     await expect(response).toBeOK();
   }
-  await page.locator('button').click();
-  await page.locator('button').click();
+  await page.click('button');
+  await page.click('button');
   {
     const response = await request.post(server.PREFIX + '/one-style.css');
     expect(response).toBeOK();
@@ -623,24 +615,24 @@ test('should open two trace files', async ({ context, page, request, server, sho
     `apiRequestContext.get`,
     `page.gotohttp://localhost:${server.PORT}/input/button.html`,
     `apiRequestContext.head`,
-    `locator.clicklocator('button')`,
-    `locator.clicklocator('button')`,
+    `page.clickbutton`,
+    `page.clickbutton`,
     `apiRequestContext.post`,
   ]);
 
   await traceViewer.page.locator('text=Metadata').click();
   const callLine = traceViewer.page.locator('.call-line');
   // Should get metadata from the context trace
-  await expect(callLine.getByText('start time')).toHaveText(/start time: [\d/,: ]+/);
+  await expect(callLine.locator('text=start time')).toHaveText(/start time: [\d/,: ]+/);
   // duration in the metatadata section
-  await expect(callLine.getByText('duration').first()).toHaveText(/duration: [\dms]+/);
-  await expect(callLine.getByText('engine')).toHaveText(/engine: [\w]+/);
-  await expect(callLine.getByText('platform')).toHaveText(/platform: [\w]+/);
-  await expect(callLine.getByText('width')).toHaveText(/width: [\d]+/);
-  await expect(callLine.getByText('height')).toHaveText(/height: [\d]+/);
-  await expect(callLine.getByText('pages')).toHaveText(/pages: 1/);
-  await expect(callLine.getByText('actions')).toHaveText(/actions: 6/);
-  await expect(callLine.getByText('events')).toHaveText(/events: [\d]+/);
+  await expect(callLine.locator('text=duration').first()).toHaveText(/duration: [\dms]+/);
+  await expect(callLine.locator('text=engine')).toHaveText(/engine: [\w]+/);
+  await expect(callLine.locator('text=platform')).toHaveText(/platform: [\w]+/);
+  await expect(callLine.locator('text=width')).toHaveText(/width: [\d]+/);
+  await expect(callLine.locator('text=height')).toHaveText(/height: [\d]+/);
+  await expect(callLine.locator('text=pages')).toHaveText(/pages: 1/);
+  await expect(callLine.locator('text=actions')).toHaveText(/actions: 6/);
+  await expect(callLine.locator('text=events')).toHaveText(/events: [\d]+/);
 });
 
 test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, browserName }) => {
@@ -661,8 +653,8 @@ test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, b
   await traceViewer.selectAction('route.fulfill');
   await traceViewer.page.locator('.tab-label', { hasText: 'Call' }).click();
   const callLine = traceViewer.page.locator('.call-line');
-  await expect(callLine.getByText('status')).toContainText('200');
-  await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
+  await expect(callLine.locator('text=status')).toContainText('200');
+  await expect(callLine.locator('text=requestUrl')).toContainText('http://test.com');
 });
 
 test('should include requestUrl in route.continue', async ({ page, runAndTrace, server }) => {
@@ -677,8 +669,8 @@ test('should include requestUrl in route.continue', async ({ page, runAndTrace, 
   await traceViewer.selectAction('route.continue');
   await traceViewer.page.locator('.tab-label', { hasText: 'Call' }).click();
   const callLine = traceViewer.page.locator('.call-line');
-  await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
-  await expect(callLine.getByText(/^url: .*/)).toContainText(server.EMPTY_PAGE);
+  await expect(callLine.locator('text=requestUrl')).toContainText('http://test.com');
+  await expect(callLine.locator('text=/^url: .*/')).toContainText(server.EMPTY_PAGE);
 });
 
 test('should include requestUrl in route.abort', async ({ page, runAndTrace, server }) => {
@@ -693,7 +685,7 @@ test('should include requestUrl in route.abort', async ({ page, runAndTrace, ser
   await traceViewer.selectAction('route.abort');
   await traceViewer.page.locator('.tab-label', { hasText: 'Call' }).click();
   const callLine = traceViewer.page.locator('.call-line');
-  await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
+  await expect(callLine.locator('text=requestUrl')).toContainText('http://test.com');
 });
 
 test('should serve overridden request', async ({ page, runAndTrace, server }) => {
@@ -717,27 +709,3 @@ test('should serve overridden request', async ({ page, runAndTrace, server }) =>
   expect(color).toBe('rgb(255, 0, 0)');
 });
 
-test('should display waitForLoadState even if did not wait for it', async ({ runAndTrace, server, page }) => {
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto(server.EMPTY_PAGE);
-    await page.waitForLoadState('load');
-    await page.waitForLoadState('load');
-  });
-  await expect(traceViewer.actionTitles).toHaveText([
-    /page.goto/,
-    /page.waitForLoadState/,
-    /page.waitForLoadState/,
-  ]);
-});
-
-test('should display language-specific locators', async ({ runAndTrace, server, page, toImpl }) => {
-  toImpl(page.context())._browser.options.sdkLanguage = 'python';
-  const traceViewer = await runAndTrace(async () => {
-    await page.setContent('<button>Submit</button>');
-    await page.getByRole('button', { name: 'Submit' }).click();
-  });
-  await expect(traceViewer.actionTitles).toHaveText([
-    /page.setContent/,
-    /locator.clickget_by_role\("button", name="Submit"\)/,
-  ]);
-});

@@ -100,17 +100,17 @@ Generates selector for the given element.
 Playwright supports verbose logging with the `DEBUG` environment variable.
 
 ```bash tab=bash-bash lang=js
-DEBUG=pw:api npx playwright test
+DEBUG=pw:api npm run test
 ```
 
 ```batch tab=bash-batch lang=js
 set DEBUG=pw:api
-npx playwright test
+npm run test
 ```
 
 ```powershell tab=bash-powershell lang=js
 $env:DEBUG="pw:api"
-npx playwright test
+npm run test
 ```
 
 ```bash tab=bash-bash lang=java

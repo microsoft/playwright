@@ -49,6 +49,7 @@ def browser_context_args(browser_context_args, playwright):
 
 def test_example(page: Page) -> None:
 
+    # Go to ${emptyHTML}
     page.goto("${emptyHTML}")
 `);
 });
@@ -63,6 +64,7 @@ test('should save the codegen output to a file if specified', async ({ runCLI },
 
 def test_example(page: Page) -> None:
 
+    # Go to ${emptyHTML}
     page.goto("${emptyHTML}")
 `);
 });

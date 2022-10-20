@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import type { Language } from '../../playwright-core/src/server/isomorphic/locatorGenerators';
-import type { ResourceSnapshot } from '@trace/snapshot';
-import type * as trace from '@trace/trace';
+import type { ResourceSnapshot } from '@playwright-core/server/trace/common/snapshotTypes';
+import type * as trace from '@playwright-core/server/trace/common/traceEvents';
 
 export type ContextEntry = {
   traceUrl: string;
@@ -25,7 +24,6 @@ export type ContextEntry = {
   browserName: string;
   platform?: string;
   wallTime?: number;
-  sdkLanguage?: Language;
   title?: string;
   options: trace.BrowserContextEventOptions;
   pages: PageEntry[];

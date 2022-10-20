@@ -23,12 +23,7 @@ const ts = require('typescript');
 const path = require('path');
 
 const packagesDir = path.normalize(path.join(__dirname, '..', 'packages'));
-
-const packages = new Map();
-for (const package of fs.readdirSync(packagesDir))
-  packages.set(package, packagesDir + '/' + package + '/src/');
-packages.set('isomorphic', packagesDir + '/playwright-core/src/server/isomorphic/');
-
+const packages = fs.readdirSync(packagesDir);
 const peerDependencies = ['electron', 'react', 'react-dom', '@zip.js/zip.js'];
 
 const depsCache = {};
@@ -111,8 +106,8 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
       } else if (importName.startsWith('@')) {
         const tokens = importName.substring(1).split('/');
         const package = tokens[0];
-        if (packages.has(package))
-          importPath = packages.get(package) + tokens.slice(1).join('/');
+        if (packages.includes(package))
+          importPath = packagesDir + '/' + tokens[0] + '/src/' + tokens.slice(1).join('/');
       }
 
       if (importPath) {
@@ -166,7 +161,7 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
           continue;
         }
         if (line.startsWith('@'))
-          group.push(line.replace(/@([\w-]+)\/(.*)/, (_, arg1, arg2) => packages.get(arg1) + arg2));
+          group.push(line.replace(/@([\w-]+)\/(.*)/, path.join(packagesDir, '$1', 'src', '$2')));
         else
           group.push(path.resolve(depsDirectory, line));
       }

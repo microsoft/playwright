@@ -15,7 +15,7 @@
  */
 
 import type * as types from './types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../protocol/channels';
 import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { Download } from './download';
@@ -26,7 +26,6 @@ import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
 import type { Selectors } from './selectors';
-import type { Language } from './isomorphic/locatorGenerators';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
@@ -39,7 +38,7 @@ export type PlaywrightOptions = {
   rootSdkObject: SdkObject;
   selectors: Selectors;
   socksProxyPort?: number;
-  sdkLanguage: Language,
+  sdkLanguage: string,
 };
 
 export type BrowserOptions = PlaywrightOptions & {

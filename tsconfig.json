@@ -7,13 +7,10 @@
     "paths": {
       /*
         The following two serve different purposes:
-         - @foo is for importing types only,
-         - foo/lib means require dependency
+         - @playwright-core is for importing types only,
+         - playwright-core/lib means require dependency
       */
-      "@html-reporter/*": ["./packages/html-reporter/src/*"],
-      "@protocol/*": ["./packages/protocol/src/*"],
-      "@recorder/*": ["./packages/recorder/src/*"],
-      "@trace/*": ["./packages/trace/src/*"],
+      "@playwright-core/*": ["./packages/playwright-core/src/*"],
       "playwright-core/lib/*": ["./packages/playwright-core/src/*"]
     },
     "esModuleInterop": true,

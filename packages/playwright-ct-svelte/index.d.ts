@@ -24,54 +24,36 @@ import type {
   Locator,
 } from '@playwright/test';
 import type { InlineConfig } from 'vite';
-import type { SvelteComponent, ComponentProps } from 'svelte/types/runtime';
 
 export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   use?: BasePlaywrightTestConfig['use'] & {
-    ctPort?: number;
-    ctTemplateDir?: string;
-    ctCacheDir?: string;
-    ctViteConfig?: InlineConfig;
-  };
+    ctPort?: number,
+    ctTemplateDir?: string,
+    ctCacheDir?: string,
+    ctViteConfig?: InlineConfig
+  }
 };
-
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonObject | JsonArray;
-type JsonArray = JsonValue[];
-type JsonObject = { [Key in string]?: JsonValue };
 
 type Slot = string | string[];
 
-export interface MountOptions<
-  HooksConfig extends JsonObject,
-  Component extends SvelteComponent
-> {
-  props?: ComponentProps<Component>;
+export interface MountOptions<Props = Record<string, unknown>> {
+  props?: Props;
   slots?: Record<string, Slot> & { default?: Slot };
   on?: Record<string, Function>;
-  hooksConfig?: HooksConfig;
+  hooksConfig?: any;
 }
 
-interface MountResult<Component extends SvelteComponent> extends Locator {
+interface MountResult extends Locator {
   unmount(): Promise<void>;
-  update(
-    options: Omit<MountOptions<never, Component>, 'hooksConfig' | 'slots'>
-  ): Promise<void>;
 }
 
 interface ComponentFixtures {
-  mount<
-    HooksConfig extends JsonObject,
-    Component extends SvelteComponent = SvelteComponent
-  >(
-    component: new (...args: any[]) => Component,
-    options?: MountOptions<HooksConfig, Component>
-  ): Promise<MountResult<Component>>;
+  mount(component: any, options?: MountOptions): Promise<MountResult>;
+  mount<Props>(component: any, options: MountOptions & { props: Props }): Promise<MountResult>;
 }
 
 export const test: TestType<
   PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
-  PlaywrightWorkerArgs & PlaywrightWorkerOptions
->;
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
 
 export { expect, devices } from '@playwright/test';

@@ -36,7 +36,7 @@ export default config;
 
 ### Multiple reporters
 
-You can use multiple reporters at the same time. For example  you can use `'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
+You can use multiple reporters at the same time. For example  you can use`'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
 
 ```js tab=js-js
 // playwright.config.js
@@ -238,19 +238,13 @@ By default, HTML report is opened automatically if some of the tests failed. You
 `open` property in the Playwright config. The possible values for that property are `always`, `never` and `on-failure`
 (default).
 
-You can also configure `host` and `port` that are used to serve the HTML report.
-
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [ ['html', {
-    open: 'never',
-    host: '0.0.0.0',
-    port: 9223,
-  }] ],
+  reporter: [ ['html', { open: 'never' }] ],
 };
 
 module.exports = config;
@@ -654,5 +648,3 @@ export default config;
 * [Allure](https://www.npmjs.com/package/allure-playwright)
 * [Monocart](https://github.com/cenfun/monocart-reporter)
 * [Tesults](https://www.tesults.com/docs/playwright)
-* [ReportPortal](https://github.com/reportportal/agent-js-playwright)
-

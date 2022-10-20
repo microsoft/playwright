@@ -27,37 +27,28 @@ import type { InlineConfig } from 'vite';
 
 export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   use?: BasePlaywrightTestConfig['use'] & {
-    ctPort?: number;
-    ctTemplateDir?: string;
-    ctCacheDir?: string;
-    ctViteConfig?: InlineConfig;
-  };
+    ctPort?: number,
+    ctTemplateDir?: string,
+    ctCacheDir?: string,
+    ctViteConfig?: InlineConfig
+  }
 };
 
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonObject | JsonArray;
-type JsonArray = JsonValue[];
-type JsonObject = { [Key in string]?: JsonValue };
-
-export interface MountOptions<HooksConfig extends JsonObject> {
-  hooksConfig?: HooksConfig;
+export interface MountOptions {
+  hooksConfig?: any;
 }
 
 interface MountResult extends Locator {
   unmount(): Promise<void>;
-  update(component: JSX.Element): Promise<void>;
+  rerender(component: JSX.Element): Promise<void>;
 }
 
 export interface ComponentFixtures {
-  mount<HooksConfig extends JsonObject>(
-    component: JSX.Element,
-    options?: MountOptions<HooksConfig>
-  ): Promise<MountResult>;
+  mount(component: JSX.Element, options?: MountOptions): Promise<MountResult>;
 }
 
 export const test: TestType<
   PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
-  PlaywrightWorkerArgs & PlaywrightWorkerOptions
->;
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
 
 export { expect, devices } from '@playwright/test';

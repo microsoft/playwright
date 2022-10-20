@@ -232,9 +232,10 @@ public class Tests : PageTest
         };
     }
 
-    [TestMethod]
+    [PlaywrightTestMethod]
     public async Task MyTest()
     {
+        // Go to ${emptyHTML}
         await Page.GotoAsync("${emptyHTML}");
 
     }
@@ -260,9 +261,10 @@ public class Tests : PageTest
         };
     }
 
-    [Test]
+    [PlaywrightTest]
     public async Task MyTest()
     {
+        // Go to ${emptyHTML}
         await Page.GotoAsync("${emptyHTML}");
 
     }

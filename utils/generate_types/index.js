@@ -573,7 +573,6 @@ class TypesGenerator {
         ['PlaywrightTestArgs', 'Fixtures'],
       ]),
       ignoreMissing: new Set([
-        'FullConfig.configFile',
         'FullConfig.version',
         'FullConfig.rootDir',
         'SuiteFunction',
@@ -603,7 +602,6 @@ class TypesGenerator {
       ignoreMissing: new Set([
         'FullResult',
         'JSONReport',
-        'JSONReportError',
         'JSONReportSuite',
         'JSONReportSpec',
         'JSONReportTest',

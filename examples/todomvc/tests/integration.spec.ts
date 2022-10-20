@@ -242,7 +242,6 @@ test.describe('Editing', () => {
   test('should cancel edits on escape', async ({ page }) => {
     const todoItems = page.locator('.todo-list li');
     await todoItems.nth(1).dblclick();
-    await todoItems.nth(1).locator('.edit').fill('buy some sausages');
     await todoItems.nth(1).locator('.edit').press('Escape');
     await expect(todoItems).toHaveText(TODO_ITEMS);
   });
@@ -300,7 +299,7 @@ test.describe('Persistence', () => {
     await expect(todoItems).toHaveClass(['completed', '']);
 
     // Ensure there is 1 completed item.
-    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+    checkNumberOfCompletedTodosInLocalStorage(page, 1);
 
     // Now reload.
     await page.reload();

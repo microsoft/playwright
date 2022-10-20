@@ -68,13 +68,6 @@ export function createStrictTextMatcher(text: string): TextMatcher {
   };
 }
 
-export function createStrictFullTextMatcher(text: string): TextMatcher {
-  text = text.trim().replace(/\s+/g, ' ');
-  return (elementText: ElementText) => {
-    return elementText.full.trim().replace(/\s+/g, ' ') === text;
-  };
-}
-
 export function createRegexTextMatcher(source: string, flags?: string): TextMatcher {
   const re = new RegExp(source, flags);
   return (elementText: ElementText) => {

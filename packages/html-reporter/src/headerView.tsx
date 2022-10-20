@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { Stats } from './types';
+import type { Stats } from '@playwright-test/reporters/html';
 import * as React from 'react';
 import './colors.css';
 import './common.css';

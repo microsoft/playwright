@@ -107,12 +107,8 @@ export class BaseReporter implements ReporterInternal  {
     this.result = result;
   }
 
-  protected ttyWidth() {
-    return this._ttyWidthForTest || process.stdout.columns || 0;
-  }
-
   protected fitToScreen(line: string, prefix?: string): string {
-    const ttyWidth = this.ttyWidth();
+    const ttyWidth = this._ttyWidthForTest || process.stdout.columns || 0;
     if (!ttyWidth) {
       // Guard against the case where we cannot determine available width.
       return line;
@@ -121,9 +117,12 @@ export class BaseReporter implements ReporterInternal  {
   }
 
   protected generateStartingMessage() {
-    const jobs = Math.min(this.config.workers, this.config._maxConcurrentTestGroups);
+    const jobs = Math.min(this.config.workers, this.config._testGroupsCount);
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
-    return `\nRunning ${this.totalTestCount} test${this.totalTestCount !== 1 ? 's' : ''} using ${jobs} worker${jobs !== 1 ? 's' : ''}${shardDetails}`;
+    if (this.config._watchMode)
+      return `\nRunning tests in the --watch mode`;
+    else
+      return `\nRunning ${this.totalTestCount} test${this.totalTestCount !== 1 ? 's' : ''} using ${jobs} worker${jobs !== 1 ? 's' : ''}${shardDetails}`;
   }
 
   protected getSlowTests(): [string, number][] {

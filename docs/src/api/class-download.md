@@ -15,7 +15,7 @@ const [ download ] = await Promise.all([
   // It is important to call waitForEvent before click to set up waiting.
   page.waitForEvent('download'),
   // Triggers the download.
-  page.getByText('Download file').click(),
+  page.locator('text=Download file').click(),
 ]);
 // wait for download to complete
 const path = await download.path();
@@ -23,8 +23,15 @@ const path = await download.path();
 
 ```java
 // wait for download to start
+Download download  = page.waitForDownload(() -> page.locator("a").click());
+// wait for download to complete
+Path path = download.path();
+```
+
+```java
+// wait for download to start
 Download download = page.waitForDownload(() -> {
-  page.getByText("Download file").click();
+  page.locator("a").click();
 });
 // wait for download to complete
 Path path = download.path();
@@ -32,7 +39,7 @@ Path path = download.path();
 
 ```python async
 async with page.expect_download() as download_info:
-    await page.get_by_text("Download file").click()
+    await page.locator("a").click()
 download = await download_info.value
 # waits for download to complete
 path = await download.path()
@@ -40,7 +47,7 @@ path = await download.path()
 
 ```python sync
 with page.expect_download() as download_info:
-    page.get_by_text("Download file").click()
+    page.locator("a").click()
 download = download_info.value
 # wait for download to complete
 path = download.path()
@@ -49,7 +56,7 @@ path = download.path()
 ```csharp
 var download = await page.RunAndWaitForDownloadAsync(async () =>
 {
-    await page.GetByText("Download file").ClickAsync();
+    await page.Locator("#downloadButton").ClickAsync();
 });
 Console.WriteLine(await download.PathAsync());
 ```

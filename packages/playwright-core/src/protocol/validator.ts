@@ -245,19 +245,9 @@ scheme.LocalUtilsHarUnzipParams = tObject({
   harFile: tString,
 });
 scheme.LocalUtilsHarUnzipResult = tOptional(tObject({}));
-scheme.LocalUtilsConnectParams = tObject({
-  wsEndpoint: tString,
-  headers: tOptional(tAny),
-  slowMo: tOptional(tNumber),
-  timeout: tOptional(tNumber),
-  socksProxyRedirectPortForTest: tOptional(tNumber),
-});
-scheme.LocalUtilsConnectResult = tObject({
-  pipe: tChannel(['JsonPipe']),
-});
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
-  sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),
+  sdkLanguage: tString,
 });
 scheme.RootInitializeResult = tObject({
   playwright: tChannel(['Playwright']),
@@ -318,64 +308,6 @@ scheme.PlaywrightNewRequestResult = tObject({
 });
 scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
 scheme.PlaywrightHideHighlightResult = tOptional(tObject({}));
-scheme.RecorderSource = tObject({
-  isRecorded: tBoolean,
-  id: tString,
-  label: tString,
-  text: tString,
-  language: tString,
-  highlight: tArray(tObject({
-    line: tNumber,
-    type: tString,
-  })),
-  revealLine: tOptional(tNumber),
-  group: tOptional(tString),
-});
-scheme.DebugControllerInitializer = tOptional(tObject({}));
-scheme.DebugControllerInspectRequestedEvent = tObject({
-  selector: tString,
-  locators: tArray(tType('NameValue')),
-});
-scheme.DebugControllerBrowsersChangedEvent = tObject({
-  browsers: tArray(tObject({
-    contexts: tArray(tObject({
-      pages: tArray(tString),
-    })),
-  })),
-});
-scheme.DebugControllerSourcesChangedEvent = tObject({
-  sources: tArray(tType('RecorderSource')),
-});
-scheme.DebugControllerSetTrackHierarchyParams = tObject({
-  enabled: tBoolean,
-});
-scheme.DebugControllerSetTrackHierarchyResult = tOptional(tObject({}));
-scheme.DebugControllerSetReuseBrowserParams = tObject({
-  enabled: tBoolean,
-});
-scheme.DebugControllerSetReuseBrowserResult = tOptional(tObject({}));
-scheme.DebugControllerResetForReuseParams = tOptional(tObject({}));
-scheme.DebugControllerResetForReuseResult = tOptional(tObject({}));
-scheme.DebugControllerNavigateAllParams = tObject({
-  url: tString,
-});
-scheme.DebugControllerNavigateAllResult = tOptional(tObject({}));
-scheme.DebugControllerSetRecorderModeParams = tObject({
-  mode: tEnum(['inspecting', 'recording', 'none']),
-  language: tOptional(tString),
-  file: tOptional(tString),
-});
-scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
-scheme.DebugControllerHighlightAllParams = tObject({
-  selector: tString,
-});
-scheme.DebugControllerHighlightAllResult = tOptional(tObject({}));
-scheme.DebugControllerHideHighlightAllParams = tOptional(tObject({}));
-scheme.DebugControllerHideHighlightAllResult = tOptional(tObject({}));
-scheme.DebugControllerKillParams = tOptional(tObject({}));
-scheme.DebugControllerKillResult = tOptional(tObject({}));
-scheme.DebugControllerCloseAllBrowsersParams = tOptional(tObject({}));
-scheme.DebugControllerCloseAllBrowsersResult = tOptional(tObject({}));
 scheme.SocksSupportInitializer = tOptional(tObject({}));
 scheme.SocksSupportSocksRequestedEvent = tObject({
   uid: tString,
@@ -424,6 +356,16 @@ scheme.SelectorsRegisterResult = tOptional(tObject({}));
 scheme.BrowserTypeInitializer = tObject({
   executablePath: tString,
   name: tString,
+});
+scheme.BrowserTypeConnectParams = tObject({
+  wsEndpoint: tString,
+  headers: tOptional(tAny),
+  slowMo: tOptional(tNumber),
+  timeout: tOptional(tNumber),
+  socksProxyRedirectPortForTest: tOptional(tNumber),
+});
+scheme.BrowserTypeConnectResult = tObject({
+  pipe: tChannel(['JsonPipe']),
 });
 scheme.BrowserTypeLaunchParams = tObject({
   channel: tOptional(tString),
@@ -1331,7 +1273,6 @@ scheme.FrameHoverParams = tObject({
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
 });
 scheme.FrameHoverResult = tOptional(tObject({}));
 scheme.FrameInnerHTMLParams = tObject({
@@ -1718,7 +1659,6 @@ scheme.ElementHandleHoverParams = tObject({
   position: tOptional(tType('Point')),
   timeout: tOptional(tNumber),
   trial: tOptional(tBoolean),
-  noWaitAfter: tOptional(tBoolean),
 });
 scheme.ElementHandleHoverResult = tOptional(tObject({}));
 scheme.ElementHandleInnerHTMLParams = tOptional(tObject({}));

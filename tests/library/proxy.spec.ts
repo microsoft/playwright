@@ -28,8 +28,7 @@ it('should throw for bad server value', async ({ browserType }) => {
   expect(error.message).toContain('proxy.server: expected string, got number');
 });
 
-it('should use proxy @smoke', async ({ browserType, server, mode }) => {
-  it.skip(mode === 'docker', 'proxy is not supported for remote connection');
+it('should use proxy @smoke', async ({ browserType, server }) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });

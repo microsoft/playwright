@@ -185,7 +185,6 @@ test('beforeAll from a helper file should throw', async ({ runInlineTest }) => {
     `,
     'playwright.config.ts': `
       import { test } from './my-test';
-      test.extend({});
     `,
     'a.test.ts': `
       import { test } from './my-test';
@@ -250,7 +249,7 @@ test('beforeAll/afterAll hooks are skipped when no tests in the suite are run 2'
   expect(result.output).not.toContain('%%afterAll');
 });
 
-test('run hooks after failure', async ({ runInlineTest }) => {
+test('should run hooks after failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
@@ -741,11 +740,11 @@ test('test.setTimeout should work separately in afterAll', async ({ runInlineTes
       });
       test.afterAll(async () => {
         console.log('\\n%%afterAll');
-        test.setTimeout(3000);
-        await new Promise(f => setTimeout(f, 2000));
+        test.setTimeout(1000);
+        await new Promise(f => setTimeout(f, 800));
       });
     `,
-  }, { timeout: '1000' });
+  }, { timeout: '100' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([

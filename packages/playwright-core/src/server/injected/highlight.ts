@@ -17,8 +17,6 @@
 import { stringifySelector } from '../isomorphic/selectorParser';
 import type { ParsedSelector } from '../isomorphic/selectorParser';
 import type { InjectedScript } from './injectedScript';
-import { asLocator } from '../isomorphic/locatorGenerators';
-import type { Language } from '../isomorphic/locatorGenerators';
 
 type HighlightEntry = {
   targetElement: Element,
@@ -37,7 +35,6 @@ export class Highlight {
   private _isUnderTest: boolean;
   private _injectedScript: InjectedScript;
   private _rafRequest: number | undefined;
-  private _language: Language = 'javascript';
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
@@ -105,10 +102,6 @@ export class Highlight {
     document.documentElement.appendChild(this._glassPaneElement);
   }
 
-  setLanguage(language: Language) {
-    this._language = language;
-  }
-
   runHighlightOnRaf(selector: ParsedSelector) {
     if (this._rafRequest)
       cancelAnimationFrame(this._rafRequest);
@@ -152,7 +145,7 @@ export class Highlight {
       color = '#dc6f6f7f';
     else
       color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
-    this._innerUpdateHighlight(elements, { color, tooltipText: selector ? asLocator(this._language, selector) : '' });
+    this._innerUpdateHighlight(elements, { color, tooltipText: selector });
   }
 
   maskElements(elements: Element[]) {

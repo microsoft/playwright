@@ -15,10 +15,9 @@
  */
 
 import type { SnapshotStorage } from './snapshotStorage';
+import type { Point } from '@playwright-core/common/types';
 import type { URLSearchParams } from 'url';
 import type { SnapshotRenderer } from './snapshotRenderer';
-
-type Point = { x: number, y: number };
 
 export class SnapshotServer {
   private _snapshotStorage: SnapshotStorage;

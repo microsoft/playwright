@@ -87,10 +87,13 @@ def run(playwright: Playwright) -> None:
     browser = playwright.${browserName}.launch(${launchOptions(channel)})
     context = browser.new_context()
 
+    # Open new page
     page = context.new_page()
 
+    # Go to ${emptyHTML}
     page.goto("${emptyHTML}")
 
+    # Close page
     page.close()
 
     # ---------------------

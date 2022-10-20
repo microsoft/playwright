@@ -27,60 +27,35 @@ import type { InlineConfig } from 'vite';
 
 export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   use?: BasePlaywrightTestConfig['use'] & {
-    ctPort?: number;
-    ctTemplateDir?: string;
-    ctCacheDir?: string;
-    ctViteConfig?: InlineConfig;
-  };
+    ctPort?: number,
+    ctTemplateDir?: string,
+    ctCacheDir?: string,
+    ctViteConfig?: InlineConfig
+  }
 };
-
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonObject | JsonArray;
-type JsonArray = JsonValue[];
-type JsonObject = { [Key in string]?: JsonValue };
 
 type Slot = string | string[];
 
-export interface MountOptions<
-HooksConfig extends JsonObject,
-Props extends Record<string, unknown>
-> {
-  props?: Props;
+export interface MountOptions<Props = Record<string, unknown>> {
+  props?: Props,
   slots?: Record<string, Slot> & { default?: Slot };
-  on?: Record<string, Function>;
-  hooksConfig?: HooksConfig;
+  on?: Record<string, Function>,
+  hooksConfig?: any,
 }
 
-interface MountResult<
-  Props extends Record<string, unknown>
-> extends Locator {
+interface MountResult<Props = Record<string, unknown>> extends Locator {
   unmount(): Promise<void>;
-  update(options: Omit<MountOptions<never, Props>, 'hooksConfig'>): Promise<void>;
-}
-
-interface MountResultJsx extends Locator {
-  unmount(): Promise<void>;
-  update(component: JSX.Element): Promise<void>;
+  rerender(options: { props: Props }): Promise<void>
 }
 
 export interface ComponentFixtures {
-  mount(component: JSX.Element): Promise<MountResultJsx>;
-  mount<HooksConfig extends JsonObject>(
-    component: any,
-    options?: MountOptions<HooksConfig, Record<string, unknown>>
-  ): Promise<MountResult<Record<string, unknown>>>;
-  mount<
-    HooksConfig extends JsonObject,
-    Props extends Record<string, unknown> = Record<string, unknown>
-  >(
-    component: any,
-    options: MountOptions<HooksConfig, never> & { props: Props }
-  ): Promise<MountResult<Props>>;
+  mount(component: JSX.Element): Promise<MountResult>;
+  mount(component: any, options?: MountOptions): Promise<MountResult>;
+  mount<Props>(component: any, options: MountOptions & { props: Props }): Promise<MountResult<Props>>;
 }
 
 export const test: TestType<
   PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
-  PlaywrightWorkerArgs & PlaywrightWorkerOptions
->;
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
 
 export { expect, devices } from '@playwright/test';

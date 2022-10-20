@@ -11,27 +11,27 @@ By default, dialogs are auto-dismissed by Playwright, so you don't have to handl
 
 ```js
 page.on('dialog', dialog => dialog.accept());
-await page.getByRole('button').click();
+await page.locator('button').click();
 ```
 
 ```java
 page.onDialog(dialog -> dialog.accept());
-page.getByRole("button").click();
+page.locator("button").click();
 ```
 
 ```python async
 page.on("dialog", lambda dialog: dialog.accept())
-await page.get_by_role("button".click())
+await page.locator("button".click())
 ```
 
 ```python sync
 page.on("dialog", lambda dialog: dialog.accept())
-page.get_by_role("button").click()
+page.locator("button").click()
 ```
 
 ```csharp
 page.Dialog += (_, dialog) => dialog.AcceptAsync();
-await page.GetByRole("button").ClickAsync();
+await page.Locator("button").ClickAsync();
 ```
 
 :::note
@@ -46,27 +46,27 @@ WRONG!
 
 ```js
 page.on('dialog', dialog => console.log(dialog.message()));
-await page.getByRole('button').click(); // Will hang here
+await page.locator('button').click(); // Will hang here
 ```
 
 ```java
 page.onDialog(dialog -> System.out.println(dialog.message()));
-page.getByRole("button").click(); // Will hang here
+page.locator("button").click(); // Will hang here
 ```
 
 ```python async
 page.on("dialog", lambda dialog: print(dialog.message))
-await page.get_by_role("button").click() # Will hang here
+await page.locator("button").click() # Will hang here
 ```
 
 ```python sync
 page.on("dialog", lambda dialog: print(dialog.message))
-page.get_by_role("button").click() # Will hang here
+page.locator("button").click() # Will hang here
 ```
 
 ```csharp
 page.Dialog += (_, dialog) => Console.WriteLine(dialog.Message);
-await page.GetByRole("button").ClickAsync(); // Will hang here
+await page.Locator("button").ClickAsync(); // Will hang here
 ```
 
 :::note

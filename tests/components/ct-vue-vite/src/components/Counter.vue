@@ -1,9 +1,7 @@
 <template>
-  <div @click="$emit('submit', 'hello')">
-    <div id="props">{{ count }}</div>
-    <div id="remount-count">{{ remountCount }}</div>
-    <slot name="main" />
-    <slot />
+  <div>
+    <span id="remount-count">{{ remountCount }}</span>
+    <span id="rerender-count">{{ count }}</span>
   </div>
 </template>
 
@@ -15,7 +13,7 @@ let remountCount = 0
 defineProps({
   count: {
     type: Number,
-    required: false
+    required: true
   }
 })
 remountCount++

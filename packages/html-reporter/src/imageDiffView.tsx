@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestAttachment } from './types';
+import type { TestAttachment } from '@playwright-test/reporters/html';
 import * as React from 'react';
 import { AttachmentLink } from './links';
 import type { TabbedPaneTab } from './tabbedPane';

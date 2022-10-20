@@ -11,32 +11,32 @@ inside the frame.
 
 ```js
 // Locate element inside frame
-const username = await page.frameLocator('.frame-class').getByLabel('User Name');
+const username = await page.frameLocator('.frame-class').locator('#username-input');
 await username.fill('John');
 ```
 
 ```java
 // Locate element inside frame
-Locator username = page.frameLocator(".frame-class").getByLabel("User Name");
+Locator username = page.frameLocator(".frame-class").locator("#username-input");
 username.fill("John");
 ```
 
 ```python async
 # Locate element inside frame
-username = await page.frame_locator('.frame-class').get_by_label('User Name')
+username = await page.frame_locator('.frame-class').locator('#username-input')
 await username.fill('John')
 ```
 
 ```python sync
 # Locate element inside frame
 # Get frame using any other selector
-username = page.frame_locator('.frame-class').get_by_label('User Name')
+username = page.frame_locator('.frame-class').locator('#username-input')
 username.fill('John')
 ```
 
 ```csharp
 // Locate element inside frame
-var username = await page.FrameLocator(".frame-class").GetByLabel("User Name");
+var username = await page.FrameLocator(".frame-class").Locator("#username-input");
 await username.FillAsync("John");
 ```
 

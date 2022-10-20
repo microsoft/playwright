@@ -26,10 +26,9 @@ import { collectComponentUsages, componentInfo } from '../tsxTransform';
 import type { FullConfig } from '../types';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import type { AddressInfo } from 'net';
-import { getPlaywrightVersion } from 'playwright-core/lib/common/userAgent';
 
 let stoppableServer: any;
-const playwrightVersion = getPlaywrightVersion();
+const VERSION = 6;
 
 type CtConfig = {
   ctPort?: number;
@@ -66,17 +65,14 @@ export function createPlugin(
       const registerSource = await fs.promises.readFile(registerSourceFile, 'utf-8');
       const registerSourceHash = calculateSha1(registerSource);
 
-      const { version: viteVersion } = require('vite/package.json');
       try {
         buildInfo = JSON.parse(await fs.promises.readFile(buildInfoFile, 'utf-8')) as BuildInfo;
-        assert(buildInfo.version === playwrightVersion);
-        assert(buildInfo.viteVersion === viteVersion);
+        assert(buildInfo.version === VERSION);
         assert(buildInfo.registerSourceHash === registerSourceHash);
         buildExists = true;
       } catch (e) {
         buildInfo = {
-          version: playwrightVersion,
-          viteVersion,
+          version: VERSION,
           registerSourceHash,
           components: [],
           tests: {},
@@ -160,8 +156,7 @@ export function createPlugin(
 }
 
 type BuildInfo = {
-  version: string,
-  viteVersion: string,
+  version: number,
   registerSourceHash: string,
   sources: {
     [key: string]: {

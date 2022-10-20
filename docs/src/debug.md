@@ -34,17 +34,17 @@ Set the `PWDEBUG` environment variable to run your scripts in debug mode. This
 configures Playwright for debugging and opens the inspector.
 
 ```bash tab=bash-bash lang=js
-PWDEBUG=1 npx playwright test
+PWDEBUG=1 npm run test
 ```
 
 ```batch tab=bash-batch lang=js
 set PWDEBUG=1
-npx playwright test
+npm run test
 ```
 
 ```powershell tab=bash-powershell lang=js
 $env:PWDEBUG=1
-npx playwright test
+npm run test
 ```
 
 ```bash tab=bash-bash lang=java
@@ -108,17 +108,17 @@ Using `PWDEBUG=console` will configure the browser for debugging in Developer to
   composite selectors.
 
 ```bash tab=bash-bash lang=js
-PWDEBUG=console npx playwright test
+PWDEBUG=console npm run test
 ```
 
 ```batch tab=bash-batch lang=js
 set PWDEBUG=console
-npx playwright test
+npm run test
 ```
 
 ```powershell tab=bash-powershell lang=js
 $env:PWDEBUG="console"
-npx playwright test
+npm run test
 ```
 
 ```bash tab=bash-bash lang=java

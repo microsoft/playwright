@@ -859,27 +859,27 @@ in that iframe. Following snippet locates element with text "Submit" in the ifra
 like `<iframe id="my-frame">`:
 
 ```js
-const locator = frame.frameLocator('#my-iframe').getByText('Submit');
+const locator = frame.frameLocator('#my-iframe').locator('text=Submit');
 await locator.click();
 ```
 
 ```java
-Locator locator = frame.frameLocator("#my-iframe").getByText("Submit");
+Locator locator = frame.frameLocator("#my-iframe").locator("text=Submit");
 locator.click();
 ```
 
 ```python async
-locator = frame.frame_locator("#my-iframe").get_by_text("Submit")
+locator = frame.frame_locator("#my-iframe").locator("text=Submit")
 await locator.click()
 ```
 
 ```python sync
-locator = frame.frame_locator("#my-iframe").get_by_text("Submit")
+locator = frame.frame_locator("#my-iframe").locator("text=Submit")
 locator.click()
 ```
 
 ```csharp
-var locator = frame.FrameLocator("#my-iframe").GetByText("Submit");
+var locator = frame.FrameLocator("#my-iframe").Locator("text=Submit");
 await locator.ClickAsync();
 ```
 
@@ -906,79 +906,6 @@ Attribute name to get the value for.
 * since: v1.14
 ### option: Frame.getAttribute.timeout = %%-input-timeout-%%
 * since: v1.8
-
-
-## method: Frame.getByAltText
-* since: v1.27
-- returns: <[Locator]>
-
-%%-template-locator-get-by-alt-text-%%
-
-### param: Frame.getByAltText.text = %%-locator-get-by-text-text-%%
-### option: Frame.getByAltText.exact = %%-locator-get-by-text-exact-%%
-
-
-## method: Frame.getByLabel
-* since: v1.27
-- returns: <[Locator]>
-
-%%-template-locator-get-by-label-text-%%
-
-### param: Frame.getByLabel.text = %%-locator-get-by-text-text-%%
-### option: Frame.getByLabel.exact = %%-locator-get-by-text-exact-%%
-
-
-## method: Frame.getByPlaceholder
-* since: v1.27
-- returns: <[Locator]>
-
-%%-template-locator-get-by-placeholder-text-%%
-
-### param: Frame.getByPlaceholder.text = %%-locator-get-by-text-text-%%
-### option: Frame.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
-
-
-## method: Frame.getByRole
-* since: v1.27
-- returns: <[Locator]>
-
-%%-template-locator-get-by-role-%%
-
-
-### param: Frame.getByRole.role = %%-locator-get-by-role-role-%%
-### option: Frame.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
-* since: v1.27
-
-
-## method: Frame.getByTestId
-* since: v1.27
-- returns: <[Locator]>
-
-%%-template-locator-get-by-test-id-%%
-
-### param: Frame.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
-* since: v1.27
-
-
-## method: Frame.getByText
-* since: v1.27
-- returns: <[Locator]>
-
-%%-template-locator-get-by-text-%%
-
-### param: Frame.getByText.text = %%-locator-get-by-text-text-%%
-### option: Frame.getByText.exact = %%-locator-get-by-text-exact-%%
-
-
-## method: Frame.getByTitle
-* since: v1.27
-- returns: <[Locator]>
-
-%%-template-locator-get-by-title-%%
-
-### param: Frame.getByTitle.text = %%-locator-get-by-text-text-%%
-### option: Frame.getByTitle.exact = %%-locator-get-by-text-exact-%%
-
 
 ## async method: Frame.goto
 * since: v1.8
@@ -1059,8 +986,6 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.8
 ### option: Frame.hover.trial = %%-input-trial-%%
 * since: v1.11
-### option: Frame.hover.noWaitAfter = %%-input-no-wait-after-%%
-* since: v1.28
 
 ## async method: Frame.innerHTML
 * since: v1.8
@@ -1206,7 +1131,8 @@ Returns whether the element is [visible](../actionability.md#visible). [`option:
 * since: v1.14
 - returns: <[Locator]>
 
-%%-template-locator-root-locator-%%
+The method returns an element locator that can be used to perform actions in the frame.
+Locator is resolved to the element immediately before performing an action, so a series of actions on the same locator can in fact be performed on different DOM elements. That would happen if the DOM structure between those actions has changed.
 
 [Learn more about locators](../locators.md).
 

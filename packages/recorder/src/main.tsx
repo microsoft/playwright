@@ -14,10 +14,20 @@
   limitations under the License.
 */
 
-import type { CallLog, Mode, Source } from './recorderTypes';
+import type { CallLog, Mode, Source } from '@playwright-core/server/recorder/recorderTypes';
 import * as React from 'react';
 import { Recorder } from './recorder';
 import './recorder.css';
+
+declare global {
+  interface Window {
+    playwrightSetMode: (mode: Mode) => void;
+    playwrightSetPaused: (paused: boolean) => void;
+    playwrightSetSources: (sources: Source[]) => void;
+    playwrightUpdateLogs: (callLogs: CallLog[]) => void;
+    playwrightSourcesEchoForTest: Source[];
+  }
+}
 
 export const Main: React.FC = ({
 }) => {

@@ -33,16 +33,6 @@ it('should hover when Node is removed', async ({ page, server }) => {
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
 });
 
-it('hover should support noWaitAfter', async ({ page, server }) => {
-  await page.goto(server.EMPTY_PAGE);
-  await page.setContent(`<button onmouseover='location.href="${server.PREFIX}/next"'>GO</button>`);
-  await Promise.all([
-    new Promise(fulfill => server.setRoute('/next', fulfill)),
-    page.locator('button').hover({ noWaitAfter: true })
-  ]);
-  expect(page.url()).toBe(server.EMPTY_PAGE);
-});
-
 it('should fill input', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const handle = page.locator('input');

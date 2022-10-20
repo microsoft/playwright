@@ -303,7 +303,7 @@ export class CRNetworkManager {
     };
     const timingPayload = responsePayload.timing!;
     let timing: network.ResourceTiming;
-    if (timingPayload && !this._responseExtraInfoTracker.servedFromCache(request._requestId)) {
+    if (timingPayload) {
       timing = {
         startTime: (timingPayload.requestTime - request._timestamp + request._wallTime) * 1000,
         domainLookupStart: timingPayload.dnsStart,
@@ -636,11 +636,6 @@ class ResponseExtraInfoTracker {
   requestServedFromCache(event: Protocol.Network.requestServedFromCachePayload) {
     const info = this._getOrCreateEntry(event.requestId);
     info.servedFromCache = true;
-  }
-
-  servedFromCache(requestId: string): boolean {
-    const info = this._requests.get(requestId);
-    return !!info?.servedFromCache;
   }
 
   responseReceivedExtraInfo(event: Protocol.Network.responseReceivedExtraInfoPayload) {

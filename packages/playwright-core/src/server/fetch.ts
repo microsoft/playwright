@@ -21,7 +21,7 @@ import { pipeline, Transform } from 'stream';
 import url from 'url';
 import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../common/userAgent';
 import { assert, createGuid, monotonicTime } from '../utils';
@@ -566,9 +566,7 @@ function parseCookie(header: string): channels.NetworkCookie | null {
     expires: -1,
     httpOnly: false,
     secure: false,
-    // From https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
-    // The cookie-sending behavior if SameSite is not specified is SameSite=Lax.
-    sameSite: 'Lax'
+    sameSite: 'Lax' // None for non-chromium
   };
   for (let i = 1; i < pairs.length; i++) {
     const [name, value] = pairs[i];
@@ -596,19 +594,6 @@ function parseCookie(header: string): channels.NetworkCookie | null {
         break;
       case 'httponly':
         cookie.httpOnly = true;
-        break;
-      case 'samesite':
-        switch (value.toLowerCase()) {
-          case 'none':
-            cookie.sameSite = 'None';
-            break;
-          case 'lax':
-            cookie.sameSite = 'Lax';
-            break;
-          case 'strict':
-            cookie.sameSite = 'Strict';
-            break;
-        }
         break;
     }
   }

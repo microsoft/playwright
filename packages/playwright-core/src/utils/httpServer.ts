@@ -20,7 +20,6 @@ import path from 'path';
 import { mime, wsServer } from '../utilsBundle';
 import type { WebSocketServer } from '../utilsBundle';
 import { assert } from './';
-import { ManualPromise } from './manualPromise';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 
@@ -52,43 +51,15 @@ export class HttpServer {
     return this._port;
   }
 
-  private async _tryStart(port: number | undefined, host: string) {
-    const errorPromise = new ManualPromise();
-    const errorListener = (error: Error) => errorPromise.reject(error);
-    this._server.on('error', errorListener);
-
-    try {
-      this._server.listen(port, host);
-      await Promise.race([
-        new Promise(cb => this._server!.once('listening', cb)),
-        errorPromise,
-      ]);
-    } finally {
-      this._server.removeListener('error', errorListener);
-    }
-  }
-
-  async start(options: { port?: number, preferredPort?: number, host?: string } = {}): Promise<string> {
+  async start(port?: number): Promise<string> {
     assert(!this._started, 'server already started');
     this._started = true;
     this._server.on('connection', socket => {
       this._activeSockets.add(socket);
       socket.once('close', () => this._activeSockets.delete(socket));
     });
-
-    const host = options.host || 'localhost';
-    if (options.preferredPort) {
-      try {
-        await this._tryStart(options.preferredPort, host);
-      } catch (e) {
-        if (!e || !e.message || !e.message.includes('EADDRINUSE'))
-          throw e;
-        await this._tryStart(undefined, host);
-      }
-    } else {
-      await this._tryStart(options.port, host);
-    }
-
+    this._server.listen(port, 'localhost');
+    await new Promise(cb => this._server!.once('listening', cb));
     const address = this._server.address();
     assert(address, 'Could not bind server socket');
     if (!this._urlPrefix) {
@@ -96,7 +67,7 @@ export class HttpServer {
         this._urlPrefix = address;
       } else {
         this._port = address.port;
-        this._urlPrefix = `http://${host}:${address.port}`;
+        this._urlPrefix = `http://localhost:${address.port}`;
       }
     }
     return this._urlPrefix;

@@ -63,13 +63,16 @@ export class TestInfoImpl implements TestInfo {
   currentStep: TestStepInternal | undefined;
 
   get error(): TestError | undefined {
-    return this.errors[0];
+    return this.errors.length > 0 ? this.errors[0] : undefined;
   }
 
   set error(e: TestError | undefined) {
     if (e === undefined)
       throw new Error('Cannot assign testInfo.error undefined value!');
-    this.errors[0] = e;
+    if (!this.errors.length)
+      this.errors.push(e);
+    else
+      this.errors[0] = e;
   }
 
   get timeout(): number {

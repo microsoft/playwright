@@ -15,7 +15,7 @@
  */
 
 import { TimeoutError } from '../common/errors';
-import type { SerializedError, SerializedValue } from '@protocol/channels';
+import type { SerializedError, SerializedValue } from './channels';
 
 export function serializeError(e: any): SerializedError {
   if (isError(e))
@@ -184,6 +184,5 @@ function isURL(obj: any): obj is URL {
 }
 
 function isError(obj: any): obj is Error {
-  const proto = obj ? Object.getPrototypeOf(obj) : null;
-  return obj instanceof Error || proto?.name === 'Error' || (proto && isError(proto));
+  return obj instanceof Error || obj?.__proto__?.name === 'Error' || (obj?.__proto__ && isError(obj.__proto__));
 }

@@ -1,14 +1,11 @@
-import '../src/assets/index.css';
+//@ts-check
+
 import { beforeMount, afterMount } from '@playwright/experimental-ct-svelte/hooks';
 
-export type HooksConfig = {
-  route: string;
-}
-
-beforeMount<HooksConfig>(async ({ hooksConfig }) => {
+beforeMount(async ({ hooksConfig }) => {
   console.log(`Before mount: ${JSON.stringify(hooksConfig)}`);
 });
 
-afterMount<HooksConfig>(async () => {
+afterMount(async ({}) => {
   console.log(`After mount`);
 });

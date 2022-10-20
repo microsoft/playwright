@@ -28,6 +28,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@web': path.resolve(__dirname, '../web/src'),
+      '@playwright-core': path.resolve(__dirname, '../playwright-core/src'),
     },
   },
   build: {

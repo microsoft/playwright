@@ -409,83 +409,20 @@ it('should return error with wrong credentials', async ({ context, server }) => 
   expect(response2.status()).toBe(401);
 });
 
-it('delete should support post data', async ({ context, server }) => {
-  const [request, response] = await Promise.all([
-    server.waitForRequest('/simple.json'),
-    context.request.delete(`${server.PREFIX}/simple.json`, {
-      data: 'My request'
-    })
-  ]);
-  expect(request.method).toBe('DELETE');
-  expect((await request.postBody).toString()).toBe('My request');
-  expect(response.status()).toBe(200);
-  expect(request.url).toBe('/simple.json');
-});
-
-it('get should support post data', async ({ context, server }) => {
-  const [request, response] = await Promise.all([
-    server.waitForRequest('/simple.json'),
-    context.request.get(`${server.PREFIX}/simple.json`, {
-      data: 'My request'
-    })
-  ]);
-  expect(request.method).toBe('GET');
-  expect((await request.postBody).toString()).toBe('My request');
-  expect(response.status()).toBe(200);
-  expect(request.url).toBe('/simple.json');
-});
-
-it('head should support post data', async ({ context, server }) => {
-  const [request, response] = await Promise.all([
-    server.waitForRequest('/simple.json'),
-    context.request.head(`${server.PREFIX}/simple.json`, {
-      data: 'My request'
-    })
-  ]);
-  expect(request.method).toBe('HEAD');
-  expect((await request.postBody).toString()).toBe('My request');
-  expect(response.status()).toBe(200);
-  expect(request.url).toBe('/simple.json');
-});
-
-it('patch should support post data', async ({ context, server }) => {
-  const [request, response] = await Promise.all([
-    server.waitForRequest('/simple.json'),
-    context.request.patch(`${server.PREFIX}/simple.json`, {
-      data: 'My request'
-    })
-  ]);
-  expect(request.method).toBe('PATCH');
-  expect((await request.postBody).toString()).toBe('My request');
-  expect(response.status()).toBe(200);
-  expect(request.url).toBe('/simple.json');
-});
-
-it('post should support post data', async ({ context, server }) => {
-  const [request, response] = await Promise.all([
-    server.waitForRequest('/simple.json'),
-    context.request.post(`${server.PREFIX}/simple.json`, {
-      data: 'My request'
-    })
-  ]);
-  expect(request.method).toBe('POST');
-  expect((await request.postBody).toString()).toBe('My request');
-  expect(response.status()).toBe(200);
-  expect(request.url).toBe('/simple.json');
-});
-
-it('put should support post data', async ({ context, server }) => {
-  const [request, response] = await Promise.all([
-    server.waitForRequest('/simple.json'),
-    context.request.put(`${server.PREFIX}/simple.json`, {
-      data: 'My request'
-    })
-  ]);
-  expect(request.method).toBe('PUT');
-  expect((await request.postBody).toString()).toBe('My request');
-  expect(response.status()).toBe(200);
-  expect(request.url).toBe('/simple.json');
-});
+for (const method of ['delete', 'get', 'head', 'patch', 'post', 'put']) {
+  it(`${method} should support post data`, async ({ context, server }) => {
+    const [request, response] = await Promise.all([
+      server.waitForRequest('/simple.json'),
+      context.request[method](`${server.PREFIX}/simple.json`, {
+        data: 'My request'
+      })
+    ]);
+    expect(request.method).toBe(method.toUpperCase());
+    expect((await request.postBody).toString()).toBe('My request');
+    expect(response.status()).toBe(200);
+    expect(request.url).toBe('/simple.json');
+  });
+}
 
 it('should add default headers', async ({ context, server, page }) => {
   const [request] = await Promise.all([
@@ -1024,46 +961,5 @@ it('should work with connectOverCDP', async ({ browserName, browserType, server 
     expect(await response.text()).toBe('{"foo": "bar"}\n');
   } finally {
     await browserServer.close();
-  }
-});
-
-it('should support SameSite cookie attribute over https', async ({ contextFactory, httpsServer, browserName, isWindows }) => {
-  // Cookies with SameSite=None must also specify the Secure attribute. WebKit navigation
-  // to HTTP url will fail if the response contains a cookie with Secure attribute, so
-  // we do HTTPS navigation.
-  const context = await contextFactory({ ignoreHTTPSErrors: true });
-  const page = await context.newPage();
-  for (const value of ['None', 'Lax', 'Strict']) {
-    await it.step(`SameSite=${value}`, async () => {
-      httpsServer.setRoute('/empty.html', (req, res) => {
-        res.setHeader('Set-Cookie', `SID=2022; Path=/; Secure; SameSite=${value}`);
-        res.end();
-      });
-      await page.request.get(httpsServer.EMPTY_PAGE);
-      const [cookie] = await page.context().cookies();
-      if (browserName === 'webkit' && isWindows)
-        expect(cookie.sameSite).toBe('None');
-      else
-        expect(cookie.sameSite).toBe(value);
-    });
-  }
-});
-
-it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows }) => {
-  for (const value of ['None', 'Lax', 'Strict']) {
-    await it.step(`SameSite=${value}`, async () => {
-      server.setRoute('/empty.html', (req, res) => {
-        res.setHeader('Set-Cookie', `SID=2022; Path=/; SameSite=${value}`);
-        res.end();
-      });
-      await page.request.get(server.EMPTY_PAGE);
-      const [cookie] = await page.context().cookies();
-      if (browserName === 'chromium' && value === 'None')
-        expect(cookie).toBeFalsy();
-      else if (browserName === 'webkit' && isWindows)
-        expect(cookie.sameSite).toBe('None');
-      else
-        expect(cookie.sameSite).toBe(value);
-    });
   }
 });

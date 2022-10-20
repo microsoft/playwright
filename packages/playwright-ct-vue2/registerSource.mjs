@@ -37,30 +37,18 @@ export function register(components) {
 /**
  * @param {Component | string} child
  * @param {import('vue').CreateElement} h
+ * @returns {import('vue').VNode | string}
  */
-function createChild(child, h) {
-  return typeof child === 'string' ? child : createWrapper(child, h);
-}
-
-/**
- * Exists to support fallthrough attributes:
- * https://vuejs.org/guide/components/attrs.html#fallthrough-attributes
- * @param {any} Component
- * @param {string} key
- * @return {boolean}
- */
-function componentHasKeyInProps(Component, key) {
-  if (Array.isArray(Component.props))
-    return Component.props.includes(key);
-
-  return Object.entries(Component.props).flat().includes(key);
+function renderChild(child, h) {
+  return typeof child === 'string' ? child : render(child, h);
 }
 
 /**
  * @param {Component} component
  * @param {import('vue').CreateElement} h
+ * @returns {import('vue').VNode}
  */
-function createComponent(component, h) {
+function render(component, h) {
   /**
    * @type {import('vue').Component | string | undefined}
    */
@@ -99,9 +87,9 @@ function createComponent(component, h) {
       if (typeof child !== 'string' && child.type === 'template' && child.kind === 'jsx') {
         const slotProperty = Object.keys(child.props).find(k => k.startsWith('v-slot:'));
         const slot = slotProperty ? slotProperty.substring('v-slot:'.length) : 'default';
-        nodeData.scopedSlots[slot] = () => child.children.map(c => createChild(c, h));
+        nodeData.scopedSlots[slot] = () => child.children.map(c => renderChild(c, h));
       } else {
-        children.push(createChild(child, h));
+        children.push(renderChild(child, h));
       }
     }
 
@@ -110,7 +98,7 @@ function createComponent(component, h) {
         const event = key.substring('v-on:'.length);
         nodeData.on[event] = value;
       } else {
-        if (isVueComponent && componentHasKeyInProps(componentFunc, key))
+        if (isVueComponent)
           nodeData.props[key] = value;
         else
           nodeData.attrs[key] = value;
@@ -122,7 +110,7 @@ function createComponent(component, h) {
     // Vue test util syntax.
     const options = component.options || {};
     for (const [key, value] of Object.entries(options.slots || {})) {
-      const list = (Array.isArray(value) ? value : [value]).map(v => createChild(v, h));
+      const list = (Array.isArray(value) ? value : [value]).map(v => renderChild(v, h));
       if (key === 'default')
         children.push(...list);
       else
@@ -142,33 +130,18 @@ function createComponent(component, h) {
     lastArg = children;
   }
 
-  return { Component: componentFunc, nodeData, slots: lastArg };
-}
-
-/**
- * @param {Component} component
- * @param {import('vue').CreateElement} h
- * @returns {import('vue').VNode}
- */
-function createWrapper(component, h) {
-  const { Component, nodeData, slots } = createComponent(component, h);
-  const wrapper = h(Component, nodeData, slots);
+  const wrapper = h(componentFunc, nodeData, lastArg);
   return wrapper;
 }
 
 const instanceKey = Symbol('instanceKey');
-const wrapperKey = Symbol('wrapperKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
     await hook({ hooksConfig });
 
   const instance = new Vue({
-    render: h => {
-      const wrapper = createWrapper(component, h);
-      /** @type {any} */ (rootElement)[wrapperKey] = wrapper;
-      return wrapper;
-    },
+    render: h => render(component, h),
   }).$mount();
   rootElement.appendChild(instance.$el);
   /** @type {any} */ (rootElement)[instanceKey] = instance;
@@ -185,25 +158,11 @@ window.playwrightUnmount = async rootElement => {
   component.$el.remove();
 };
 
-window.playwrightUpdate = async (element, options) => {
-  const wrapper = /** @type {any} */(element)[wrapperKey];
-  if (!wrapper)
+window.playwrightRerender = async (element, options) => {
+  const component = /** @type {any} */(element)[instanceKey];
+  if (!component)
     throw new Error('Component was not mounted');
 
-  const component = wrapper.componentInstance;
-  const { nodeData, slots } = createComponent(options, component.$createElement);
-
-  for (const [name, value] of Object.entries(nodeData.on || {})) {
-    component.$on(name, value);
-    component.$listeners[name] = value;
-  }
-
-  Object.assign(component.$scopedSlots, nodeData.scopedSlots);
-  component.$slots.default = slots;
-
-  for (const [key, value] of Object.entries(nodeData.props || {}))
-    component[key] = value;
-
-  if (!Object.keys(nodeData.props || {}).length)
-    component.$forceUpdate();
+  for (const [key, value] of Object.entries(/** @type {any} */(options).props))
+    component.$children[0][key] = value;
 };

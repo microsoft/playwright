@@ -15,6 +15,7 @@
  */
 import { test, expect } from './npmTest';
 import * as path from 'path';
+import * as fs from 'fs';
 import { TestServer } from '../../utils/testserver';
 
 // Skipping docker tests on CI on non-linux since GHA does not have
@@ -30,9 +31,8 @@ test.beforeAll(async ({ exec }) => {
 
 test('make sure it tells to run `npx playwright docker build` when image is not instaleld', async ({ exec }) => {
   await exec('npm i --foreground-scripts @playwright/test');
-  const result = await exec('npx playwright test docker.spec.js', {
+  const result = await exec('npx playwright docker test docker.spec.js', {
     expectToExitWithError: true,
-    env: { PLAYWRIGHT_DOCKER: '1' },
   });
   expect(result).toContain('npx playwright docker build');
 });
@@ -53,9 +53,7 @@ test.describe('installed image', () => {
   test('make sure it auto-starts container', async ({ exec }) => {
     await exec('npm i --foreground-scripts @playwright/test');
     await exec('npx playwright docker stop');
-    const result = await exec('npx playwright test docker.spec.js --grep platform', {
-      env: { PLAYWRIGHT_DOCKER: '1' },
-    });
+    const result = await exec('npx playwright docker test docker.spec.js --grep platform');
     expect(result).toContain('@chromium Linux');
   });
 
@@ -74,21 +72,7 @@ test.describe('installed image', () => {
 
     test('all browsers work headless', async ({ exec }) => {
       await exec('npm i --foreground-scripts @playwright/test');
-      const result = await exec('npx playwright test docker.spec.js --grep platform --browser all', {
-        env: { PLAYWRIGHT_DOCKER: '1' },
-      });
-      expect(result).toContain('@chromium Linux');
-      expect(result).toContain('@webkit Linux');
-      expect(result).toContain('@firefox Linux');
-    });
-
-    test('supports PLAYWRIGHT_DOCKER env variable', async ({ exec }) => {
-      await exec('npm i --foreground-scripts @playwright/test');
-      const result = await exec('npx playwright test docker.spec.js --grep platform --browser all', {
-        env: {
-          PLAYWRIGHT_DOCKER: '1',
-        },
-      });
+      const result = await exec('npx playwright docker test docker.spec.js --grep platform --browser all');
       expect(result).toContain('@chromium Linux');
       expect(result).toContain('@webkit Linux');
       expect(result).toContain('@firefox Linux');
@@ -97,38 +81,32 @@ test.describe('installed image', () => {
     test('all browsers work headed', async ({ exec }) => {
       await exec('npm i --foreground-scripts @playwright/test');
       {
-        const result = await exec(`npx playwright test docker.spec.js --headed --grep userAgent --browser chromium`, {
-          env: { PLAYWRIGHT_DOCKER: '1' },
-        });
+        const result = await exec(`npx playwright docker test docker.spec.js --headed --grep userAgent --browser chromium`);
         expect(result).toContain('@chromium');
         expect(result).not.toContain('Headless');
         expect(result).toContain(' Chrome/');
       }
       {
-        const result = await exec(`npx playwright test docker.spec.js --headed --grep userAgent --browser webkit`, {
-          env: { PLAYWRIGHT_DOCKER: '1' },
-        });
+        const result = await exec(`npx playwright docker test docker.spec.js --headed --grep userAgent --browser webkit`);
         expect(result).toContain('@webkit');
         expect(result).toContain(' Version/');
       }
       {
-        const result = await exec(`npx playwright test docker.spec.js --headed --grep userAgent --browser firefox`, {
-          env: { PLAYWRIGHT_DOCKER: '1' },
-        });
+        const result = await exec(`npx playwright docker test docker.spec.js --headed --grep userAgent --browser firefox`);
         expect(result).toContain('@firefox');
         expect(result).toContain(' Firefox/');
       }
     });
 
-    test('screenshots should use __screenshots__ folder', async ({ exec, tmpWorkspace }) => {
+    test('screenshots have docker suffix', async ({ exec, tmpWorkspace }) => {
       await exec('npm i --foreground-scripts @playwright/test');
-      await exec('npx playwright test docker.spec.js --grep screenshot --browser all', {
+      await exec('npx playwright docker test docker.spec.js --grep screenshot --browser all', {
         expectToExitWithError: true,
-        env: { PLAYWRIGHT_DOCKER: '1' },
       });
-      await expect(path.join(tmpWorkspace, '__screenshots__', 'firefox', 'docker.spec.js', 'img.png')).toExistOnFS();
-      await expect(path.join(tmpWorkspace, '__screenshots__', 'chromium', 'docker.spec.js', 'img.png')).toExistOnFS();
-      await expect(path.join(tmpWorkspace, '__screenshots__', 'webkit', 'docker.spec.js', 'img.png')).toExistOnFS();
+      const files = await fs.promises.readdir(path.join(tmpWorkspace, 'docker.spec.js-snapshots'));
+      expect(files).toContain('img-chromium-docker.png');
+      expect(files).toContain('img-firefox-docker.png');
+      expect(files).toContain('img-webkit-docker.png');
     });
 
     test('port forwarding works', async ({ exec, tmpWorkspace }) => {
@@ -138,9 +116,8 @@ test.describe('installed image', () => {
       server.setRoute('/', (request, response) => {
         response.end('Hello from host');
       });
-      const result = await exec('npx playwright test docker.spec.js --grep localhost --browser all', {
+      const result = await exec('npx playwright docker test docker.spec.js --grep localhost --browser all', {
         env: {
-          PLAYWRIGHT_DOCKER: '1',
           TEST_PORT: TEST_PORT + '',
         },
       });
