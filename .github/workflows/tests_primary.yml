@@ -47,6 +47,8 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: npm run test -- --headed --project=${{ matrix.browser }} --reporter list defaultbrowsercontext
+      env:
+        DEBUG: pw:test,pw:browser
     - uses: actions/upload-artifact@v3
       if: always()
       with:
