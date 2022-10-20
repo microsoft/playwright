@@ -2581,6 +2581,14 @@ export interface Page {
    * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
    * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
    * to configure a different test id attribute if necessary.
+   *
+   * ```js
+   * // Set custom test id attribute from @playwright/test config:
+   * use: {
+   *   testIdAttribute: 'data-pw'
+   * }
+   * ```
+   *
    * @param testId Id to locate the element by.
    */
   getByTestId(testId: string): Locator;
@@ -5681,6 +5689,14 @@ export interface Frame {
    * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
    * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
    * to configure a different test id attribute if necessary.
+   *
+   * ```js
+   * // Set custom test id attribute from @playwright/test config:
+   * use: {
+   *   testIdAttribute: 'data-pw'
+   * }
+   * ```
+   *
    * @param testId Id to locate the element by.
    */
   getByTestId(testId: string): Locator;
@@ -10125,6 +10141,14 @@ export interface Locator {
    * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
    * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
    * to configure a different test id attribute if necessary.
+   *
+   * ```js
+   * // Set custom test id attribute from @playwright/test config:
+   * use: {
+   *   testIdAttribute: 'data-pw'
+   * }
+   * ```
+   *
    * @param testId Id to locate the element by.
    */
   getByTestId(testId: string): Locator;
@@ -15392,6 +15416,14 @@ export interface FrameLocator {
    * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
    * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
    * to configure a different test id attribute if necessary.
+   *
+   * ```js
+   * // Set custom test id attribute from @playwright/test config:
+   * use: {
+   *   testIdAttribute: 'data-pw'
+   * }
+   * ```
+   *
    * @param testId Id to locate the element by.
    */
   getByTestId(testId: string): Locator;

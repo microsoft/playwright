@@ -1176,6 +1176,13 @@ Locator is resolved to the element immediately before performing an action, so a
 
 Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use [`method: Selectors.setTestIdAttribute`] to configure a different test id attribute if necessary.
 
+```js
+// Set custom test id attribute from @playwright/test config:
+use: {
+  testIdAttribute: 'data-pw'
+}
+```
+
 ## template-locator-get-by-text
 
 Allows locating elements that contain given text.
