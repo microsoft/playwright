@@ -24,7 +24,7 @@ const config: PlaywrightTestConfig = {
   use: {
     ctTemplateDir: 'playwright',
     trace: 'on-first-retry',
-    baseURL: 'http://localhost:3100'
+    baseURL: 'http://localhost:3100',
   },
   projects: [
     {

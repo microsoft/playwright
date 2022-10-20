@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.app.json",
-  "include": ["playwright"],
-  "exclude": [],
+  "include": ["playwright", "env.d.ts", "src/**/*"],
   "compilerOptions": {
     "composite": true,
     "lib": [],
