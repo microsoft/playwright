@@ -33,6 +33,7 @@ const sourceMaps: Map<string, string> = new Map();
 type ParsedTsConfigData = {
   absoluteBaseUrl: string;
   paths: { key: string, values: string[] }[];
+  allowJs: boolean;
 };
 const cachedTSConfigs = new Map<string, ParsedTsConfigData | undefined>();
 
@@ -73,7 +74,11 @@ function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | 
   // Make 'baseUrl' absolute, because it is relative to the tsconfig.json, not to cwd.
   const absoluteBaseUrl = path.resolve(path.dirname(tsconfig.tsConfigPath), tsconfig.baseUrl);
   const paths = tsconfig.paths || { '*': ['*'] };
-  return { absoluteBaseUrl, paths: Object.entries(paths).map(([key, values]) => ({ key, values })) };
+  return {
+    allowJs: tsconfig.allowJs,
+    absoluteBaseUrl,
+    paths: Object.entries(paths).map(([key, values]) => ({ key, values }))
+  };
 }
 
 function loadAndValidateTsconfigForFile(file: string): ParsedTsConfigData | undefined {
@@ -95,9 +100,16 @@ const builtins = new Set(Module.builtinModules);
 export function resolveHook(isModule: boolean, filename: string, specifier: string): string | undefined {
   if (builtins.has(specifier))
     return;
+  // In real life, playwright-test is under node_modules, but in the tests it isn't.
+  if (filename.startsWith(kPlaywrightInternalPrefix))
+    return;
+
+  if (isRelativeSpecifier(specifier))
+    return isModule ? js2ts(path.resolve(path.dirname(filename), specifier)) : undefined;
+
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
-  const tsconfig = isTypeScript ? loadAndValidateTsconfigForFile(filename) : undefined;
-  if (tsconfig && !isRelativeSpecifier(specifier)) {
+  const tsconfig = loadAndValidateTsconfigForFile(filename);
+  if (tsconfig && (isTypeScript || tsconfig.allowJs)) {
     let longestPrefixLength = -1;
     let pathMatchedByLongestPrefix: string | undefined;
 

@@ -37,6 +37,7 @@ interface Tsconfig {
     baseUrl?: string;
     paths?: { [key: string]: Array<string> };
     strict?: boolean;
+    allowJs?: boolean;
   };
 }
 
@@ -45,6 +46,7 @@ export interface TsConfigLoaderResult {
   baseUrl: string | undefined;
   paths: { [key: string]: Array<string> } | undefined;
   serialized: string | undefined;
+  allowJs: boolean;
 }
 
 export interface TsConfigLoaderParams {
@@ -72,6 +74,7 @@ function loadSyncDefault(
       baseUrl: undefined,
       paths: undefined,
       serialized: undefined,
+      allowJs: false,
     };
   }
   const config = loadTsconfig(configPath);
@@ -82,6 +85,7 @@ function loadSyncDefault(
       (config && config.compilerOptions && config.compilerOptions.baseUrl),
     paths: config && config.compilerOptions && config.compilerOptions.paths,
     serialized: undefined,
+    allowJs: !!config?.compilerOptions?.allowJs,
   };
 }
 
