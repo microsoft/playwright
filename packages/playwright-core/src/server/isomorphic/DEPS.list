@@ -1,2 +1,3 @@
 # Files in this folder are used both in Node.js and injected environments, they are isomorphic and can't have dependencies.
 [*]
+../../utils/isomorphic

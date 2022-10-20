@@ -392,6 +392,16 @@ it('should work with :scope', async ({ page, server }) => {
   expect(await page.$eval(`html:scope`, e => e.nodeName)).toBe('HTML');
 });
 
+it('should work with :scope and class', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17824' });
+  it.fixme();
+  await page.setContent(`<div class="apple"></div>
+                         <div class="apple selected"></div>`);
+  const apples = page.locator('.apple');
+  const selectedApples = apples.locator(':scope.selected');
+  await expect(selectedApples).toHaveCount(1);
+});
+
 it('should absolutize relative selectors', async ({ page, server }) => {
   await page.setContent(`<div><span>Hi</span></div>`);
   expect(await page.$eval('div >> >span', e => e.textContent)).toBe('Hi');

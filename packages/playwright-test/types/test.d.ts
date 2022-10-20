@@ -257,6 +257,21 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   retries: number;
   /**
+   * An integer number that defines when the project should run relative to other projects. Each project runs in exactly one
+   * stage. By default all projects run in stage 0. Stages with lower number run first. Several projects can run in each
+   * stage. Execution order between projecs in the same stage is undefined. If any test from a stage fails all tests from
+   * susequent stages are skipped, use [testProject.run](https://playwright.dev/docs/api/class-testproject#test-project-run)
+   * to change this behavior.
+   */
+  stage: number;
+  /**
+   * If set to 'always' the project will always be executed regardless of previous failures in the same test run. If set to
+   * 'always' all tests from the project will run in each shard and won't be split.  If omitted or set to 'default' the
+   * project will be skipped if there are test failures in the projects from the prior
+   * [testProject.stage](https://playwright.dev/docs/api/class-testproject#test-project-stage)'s.
+   */
+  run: 'default'|'always';
+  /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
    * Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all other
@@ -927,13 +942,14 @@ interface TestConfig {
   updateSnapshots?: "all"|"none"|"missing";
 
   /**
-   * The maximum number of concurrent worker processes to use for parallelizing tests.
+   * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
+   * logical CPU cores, e.g. `'50%'.`
    *
    * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
    * speed up test execution.
    *
-   * Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
-   * Playwright Test.
+   * Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
+   * with Playwright Test.
    *
    * ```js
    * // playwright.config.ts
@@ -946,7 +962,7 @@ interface TestConfig {
    * ```
    *
    */
-  workers?: number;}
+  workers?: number|string;}
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
@@ -1201,13 +1217,14 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   updateSnapshots: 'all' | 'none' | 'missing';
   /**
-   * The maximum number of concurrent worker processes to use for parallelizing tests.
+   * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
+   * logical CPU cores, e.g. `'50%'.`
    *
    * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
    * speed up test execution.
    *
-   * Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
-   * Playwright Test.
+   * Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
+   * with Playwright Test.
    *
    * ```js
    * // playwright.config.ts
@@ -1298,6 +1315,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   webServer: TestConfigWebServer | null;
+  configFile?: string;
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
@@ -2944,6 +2962,12 @@ export interface PlaywrightTestOptions {
    * - `'block'`: Playwright will block all registration of Service Workers.
    */
   serviceWorkers: ServiceWorkerPolicy | undefined;
+  /**
+   * Custom attribute to be used in
+   * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used by
+   * default.
+   */
+  testIdAttribute: string | undefined;
 }
 
 
@@ -3029,9 +3053,9 @@ export interface PlaywrightTestArgs {
    *
    * test('basic test', async ({ page }) => {
    *   await page.goto('/signin');
-   *   await page.locator('#username').fill('User');
-   *   await page.locator('#password').fill('pwd');
-   *   await page.locator('text=Sign in').click();
+   *   await page.getByLabel('User Name').fill('user');
+   *   await page.getByLabel('Password').fill('password');
+   *   await page.getByText('Sign in').click();
    *   // ...
    * });
    * ```
@@ -3206,7 +3230,7 @@ interface APIResponseAssertions {
  *
  * test('status becomes submitted', async ({ page }) => {
  *   // ...
- *   await page.locator('#submit-button').click();
+ *   await page.getByRole('button').click();
  *   await expect(page.locator('.status')).toHaveText('Submitted');
  * });
  * ```
@@ -3228,7 +3252,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to a checked input.
    *
    * ```js
-   * const locator = page.locator('.subscribe');
+   * const locator = page.getByLabel('Subscribe to newsletter');
    * await expect(locator).toBeChecked();
    * ```
    *
@@ -3267,7 +3291,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to an editable element.
    *
    * ```js
-   * const locator = page.locator('input');
+   * const locator = page.getByRole('textbox');
    * await expect(locator).toBeEditable();
    * ```
    *
@@ -3322,7 +3346,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to a focused DOM node.
    *
    * ```js
-   * const locator = page.locator('input');
+   * const locator = page.getByRole('textbox');
    * await expect(locator).toBeFocused();
    * ```
    *
@@ -3354,8 +3378,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/api/actionability#visible) and [visible](https://playwright.dev/docs/api/actionability#visible) DOM
-   * node.
+   * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/api/actionability#attached) and [visible](https://playwright.dev/docs/api/actionability#visible)
+   * DOM node.
    *
    * ```js
    * const locator = page.locator('.my-element');
@@ -3437,11 +3461,10 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element with given attribute value.
+   * Ensures the [Locator] points to an element with given attribute.
    *
    * ```js
    * const locator = page.locator('input');
-   * // Assert attribute with given value.
    * await expect(locator).toHaveAttribute('type', 'text');
    * ```
    *
@@ -3450,26 +3473,6 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveAttribute(name: string, value: string|RegExp, options?: {
-    /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Ensures the [Locator] points to an element with given attribute. The method will assert attribute presence.
-   *
-   * ```js
-   * const locator = page.locator('input');
-   * // Assert attribute existance.
-   * await expect(locator).toHaveAttribute('disabled');
-   * await expect(locator).not.toHaveAttribute('open');
-   * ```
-   *
-   * @param name Attribute name.
-   * @param options
-   */
-  toHaveAttribute(name: string, options?: {
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -3529,7 +3532,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] resolves to an element with the given computed CSS style.
    *
    * ```js
-   * const locator = page.locator('button');
+   * const locator = page.getByRole('button');
    * await expect(locator).toHaveCSS('display', 'flex');
    * ```
    *
@@ -3548,7 +3551,7 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to an element with the given DOM Node ID.
    *
    * ```js
-   * const locator = page.locator('input');
+   * const locator = page.getByRole('textbox');
    * await expect(locator).toHaveId('lastname');
    * ```
    *
@@ -3587,7 +3590,7 @@ interface LocatorAssertions {
    * screenshot with the expectation.
    *
    * ```js
-   * const locator = page.locator('button');
+   * const locator = page.getByRole('button');
    * await expect(locator).toHaveScreenshot('image.png');
    * ```
    *
@@ -3662,7 +3665,7 @@ interface LocatorAssertions {
    * screenshot with the expectation.
    *
    * ```js
-   * const locator = page.locator('button');
+   * const locator = page.getByRole('button');
    * await expect(locator).toHaveScreenshot();
    * ```
    *
@@ -3852,7 +3855,7 @@ interface LocatorAssertions {
  *
  * test('navigates to login', async ({ page }) => {
  *   // ...
- *   await page.locator('#login').click();
+ *   await page.getByText('Sign in').click();
  *   await expect(page).toHaveURL(/.*\/login/);
  * });
  * ```
@@ -4469,6 +4472,23 @@ interface TestProject {
    * all projects.
    */
   retries?: number;
+
+  /**
+   * If set to 'always' the project will always be executed regardless of previous failures in the same test run. If set to
+   * 'always' all tests from the project will run in each shard and won't be split.  If omitted or set to 'default' the
+   * project will be skipped if there are test failures in the projects from the prior
+   * [testProject.stage](https://playwright.dev/docs/api/class-testproject#test-project-stage)'s.
+   */
+  run?: "default"|"always";
+
+  /**
+   * An integer number that defines when the project should run relative to other projects. Each project runs in exactly one
+   * stage. By default all projects run in stage 0. Stages with lower number run first. Several projects can run in each
+   * stage. Execution order between projecs in the same stage is undefined. If any test from a stage fails all tests from
+   * susequent stages are skipped, use [testProject.run](https://playwright.dev/docs/api/class-testproject#test-project-run)
+   * to change this behavior.
+   */
+  stage?: number;
 
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.

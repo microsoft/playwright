@@ -74,7 +74,7 @@ test.describe('toBeChecked', () => {
     const locator2 = page.locator('input2');
     const error = await expect(locator2).not.toBeChecked({ timeout: 1000 }).catch(e => e);
     expect(error.message).toContain(`expect.toBeChecked with timeout 1000ms`);
-    expect(error.message).toContain('waiting for selector "input2"');
+    expect(error.message).toContain('waiting for "locator(\'input2\')"');
   });
 });
 

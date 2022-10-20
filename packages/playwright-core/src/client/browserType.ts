@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { Browser } from './browser';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
@@ -81,10 +81,12 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
     };
-    const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
-    browser._logger = logger;
-    browser._setBrowserType(this);
-    return browser;
+    return await this._wrapApiCall(async () => {
+      const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
+      browser._logger = logger;
+      browser._setBrowserType(this);
+      return browser;
+    });
   }
 
   private async _connectInsteadOfLaunching(): Promise<Browser> {
@@ -119,13 +121,15 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       channel: options.channel,
       userDataDir,
     };
-    const result = await this._channel.launchPersistentContext(persistentParams);
-    const context = BrowserContext.from(result.context);
-    context._options = contextParams;
-    context._logger = logger;
-    context._setBrowserType(this);
-    await this._onDidCreateContext?.(context);
-    return context;
+    return await this._wrapApiCall(async () => {
+      const result = await this._channel.launchPersistentContext(persistentParams);
+      const context = BrowserContext.from(result.context);
+      context._options = contextParams;
+      context._logger = logger;
+      context._setBrowserType(this);
+      await this._onDidCreateContext?.(context);
+      return context;
+    });
   }
 
   connect(options: api.ConnectOptions & { wsEndpoint?: string }): Promise<api.Browser>;
@@ -143,10 +147,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
       let browser: Browser;
       const headers = { 'x-playwright-browser': this.name(), ...params.headers };
-      const connectParams: channels.BrowserTypeConnectParams = { wsEndpoint, headers, slowMo: params.slowMo, timeout: params.timeout };
+      const localUtils = this._connection.localUtils();
+      const connectParams: channels.LocalUtilsConnectParams = { wsEndpoint, headers, slowMo: params.slowMo, timeout: params.timeout };
       if ((params as any).__testHookRedirectPortForwarding)
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
-      const { pipe } = await this._channel.connect(connectParams);
+      const { pipe } = await localUtils._channel.connect(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
       const connection = new Connection(this._connection.localUtils());
       connection.markAsRemote();

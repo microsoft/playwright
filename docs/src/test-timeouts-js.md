@@ -146,7 +146,7 @@ Expected string: "my text"
 Received string: ""
 Call log:
   - expect.toHaveText with timeout 5000ms
-  - waiting for selector "button"
+  - waiting for "locator('button')"
 ```
 
 ### Set expect timeout in the config
@@ -185,7 +185,7 @@ API reference: [`property: TestConfig.expect`].
 const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
-  await expect(page.locator('button')).toHaveText('Sign in', { timeout: 10000 });
+  await expect(page.getByRole('button')).toHaveText('Sign in', { timeout: 10000 });
 });
 ```
 
@@ -193,7 +193,7 @@ test('basic test', async ({ page }) => {
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
-  await expect(page.locator('button')).toHaveText('Sign in', { timeout: 10000 });
+  await expect(page.getByRole('button')).toHaveText('Sign in', { timeout: 10000 });
 });
 ```
 
@@ -206,7 +206,7 @@ example.spec.ts:3:1 › basic test ===========================
 
 locator.click: Timeout 1000ms exceeded.
 =========================== logs ===========================
-waiting for selector "button"
+waiting for "locator('button')"
 ============================================================
 ```
 
@@ -251,7 +251,7 @@ const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev', { timeout: 30000 });
-  await page.locator('text=Get Started').click({ timeout: 10000 });
+  await page.getByText('Get Started').click({ timeout: 10000 });
 });
 ```
 
@@ -260,7 +260,7 @@ import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev', { timeout: 30000 });
-  await page.locator('text=Get Started').click({ timeout: 10000 });
+  await page.getByText('Get Started').click({ timeout: 10000 });
 });
 ```
 

@@ -249,7 +249,7 @@ onChanges.push({
 onChanges.push({
   committed: false,
   inputs: [
-    'packages/playwright-core/src/protocol/protocol.yml'
+    'packages/protocol/src/protocol.yml'
   ],
   script: 'utils/generate_channels.js',
 });
@@ -286,7 +286,7 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
       `packages/web/src/`,
     ],
     command: 'npx',
-    args: ['vite', 'build'],
+    args: ['vite', 'build', ...(watchMode ? ['--sourcemap'] : [])],
     cwd: path.join(__dirname, '..', '..', 'packages', webPackage),
   });
 }
@@ -308,7 +308,7 @@ copyFiles.push({
 });
 
 copyFiles.push({
-  files: 'packages/playwright-test/src/**/*.(js|sh)',
+  files: 'packages/playwright-test/src/**/*.sh',
   from: 'packages/playwright-test/src',
   to: 'packages/playwright-test/lib',
   ignored: ['**/.eslintrc.js']
@@ -335,7 +335,7 @@ if (lintMode) {
       command: 'npx',
       args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath(`packages/${webPackage}`))],
       shell: true,
-    });  
+    });
   }
 }
 

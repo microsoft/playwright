@@ -96,6 +96,34 @@ it('should work for redirect', async ({ contextFactory, browserName, server }) =
   await context.close();
 });
 
+it('should work when serving from memory cache', async ({ contextFactory, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright-java/issues/1080' });
+  it.fixme(browserName === 'firefox', 'Response event is not fired in Firefox');
+  server.setRoute('/one-style.css', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/css',
+      'Cache-Control': 'public, max-age=10031518'
+    });
+    res.end(`body { background: red }`);
+  });
+
+  const context = await contextFactory();
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/one-style.html');
+  const [response] = await Promise.all([
+    page.waitForResponse('**/one-style.css'),
+    page.reload()
+  ]);
+  await response.finished();
+
+  const timing = response.request().timing();
+  verifyConnectionTimingConsistency(timing);
+
+  expect(timing.responseStart).toBe(timing.responseEnd);
+  expect(timing.responseEnd).toBeLessThan(1000);
+  await context.close();
+});
+
 function verifyTimingValue(value: number, previous: number) {
   expect(value === -1 || value > 0 && value >= previous);
 }

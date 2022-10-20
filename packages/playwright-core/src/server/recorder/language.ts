@@ -15,8 +15,10 @@
  */
 
 import type { BrowserContextOptions, LaunchOptions } from '../../..';
+import type { Language } from '../isomorphic/locatorGenerators';
 import type { ActionInContext } from './codeGenerator';
-import type { Action, DialogSignal, DownloadSignal, NavigationSignal, PopupSignal } from './recorderActions';
+import type { Action, DialogSignal, DownloadSignal, PopupSignal } from './recorderActions';
+export type { Language } from '../isomorphic/locatorGenerators';
 
 export type LanguageGeneratorOptions = {
   browserName: string;
@@ -26,11 +28,14 @@ export type LanguageGeneratorOptions = {
   saveStorage?: string;
 };
 
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text';
+export type LocatorBase = 'page' | 'locator' | 'frame-locator';
+
 export interface LanguageGenerator {
   id: string;
   groupName: string;
   name: string;
-  highlighter: string;
+  highlighter: Language;
   generateHeader(options: LanguageGeneratorOptions): string;
   generateAction(actionInContext: ActionInContext): string;
   generateFooter(saveStorage: string | undefined): string;
@@ -47,14 +52,11 @@ export function sanitizeDeviceOptions(device: any, options: BrowserContextOption
 }
 
 export function toSignalMap(action: Action) {
-  let assertNavigation: NavigationSignal | undefined;
   let popup: PopupSignal | undefined;
   let download: DownloadSignal | undefined;
   let dialog: DialogSignal | undefined;
   for (const signal of action.signals) {
-    if (signal.name === 'navigation')
-      assertNavigation = signal;
-    else if (signal.name === 'popup')
+    if (signal.name === 'popup')
       popup = signal;
     else if (signal.name === 'download')
       download = signal;
@@ -62,7 +64,6 @@ export function toSignalMap(action: Action) {
       dialog = signal;
   }
   return {
-    assertNavigation,
     popup,
     download,
     dialog,

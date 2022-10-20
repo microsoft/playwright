@@ -113,7 +113,7 @@ export default config;
 ```
 
 ## property: TestConfig.fullyParallel
-* since: v1.10
+* since: v1.20
 - type: ?<[boolean]>
 
 Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time.
@@ -785,13 +785,13 @@ module.exports = config;
 
 ## property: TestConfig.workers
 * since: v1.10
-- type: ?<[int]>
+- type: ?<[int]|[string]>
 
-The maximum number of concurrent worker processes to use for parallelizing tests.
+The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of logical CPU cores, e.g. `'50%'.`
 
 Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to speed up test execution.
 
-Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
+Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
 
 ```js tab=js-js
 // playwright.config.js

@@ -15,48 +15,52 @@
  * limitations under the License.
  */
 
-import { rimraf, minimatch } from 'playwright-core/lib/utilsBundle';
 import * as fs from 'fs';
 import * as path from 'path';
+import { assert } from 'playwright-core/lib/utils';
+import { MultiMap } from 'playwright-core/lib/utils/multimap';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
+import { colors, minimatch, rimraf } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
+import type { FullResult, Reporter, TestError } from '../types/testReporter';
 import type { TestGroup } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { forceRegExp } from './util';
-import type { TestFileFilter } from './util';
-import { createFileMatcher, createTitleMatcher, serializeError } from './util';
-import type { TestCase } from './test';
-import { Suite } from './test';
 import { Loader } from './loader';
-import type { FullResult, Reporter, TestError } from '../types/testReporter';
-import { Multiplexer } from './reporters/multiplexer';
-import { formatError } from './reporters/base';
-import DotReporter from './reporters/dot';
-import GitHubReporter from './reporters/github';
-import LineReporter from './reporters/line';
-import ListReporter from './reporters/list';
-import JSONReporter from './reporters/json';
-import JUnitReporter from './reporters/junit';
-import EmptyReporter from './reporters/empty';
-import HtmlReporter from './reporters/html';
-import type { Config, FullProjectInternal, ReporterInternal } from './types';
-import type { FullConfigInternal } from './types';
-import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
-import { SigIntWatcher } from './sigIntWatcher';
 import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
+import { dockerPlugin } from './plugins/dockerPlugin';
 import { webServerPluginsForConfig } from './plugins/webServerPlugin';
-import { MultiMap } from 'playwright-core/lib/utils/multimap';
+import { formatError } from './reporters/base';
+import DotReporter from './reporters/dot';
+import EmptyReporter from './reporters/empty';
+import GitHubReporter from './reporters/github';
+import HtmlReporter from './reporters/html';
+import JSONReporter from './reporters/json';
+import JUnitReporter from './reporters/junit';
+import LineReporter from './reporters/line';
+import ListReporter from './reporters/list';
+import { Multiplexer } from './reporters/multiplexer';
+import { SigIntWatcher } from './sigIntWatcher';
+import type { TestCase } from './test';
+import { Suite } from './test';
+import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal } from './types';
+import { createFileMatcher, createTitleMatcher, serializeError } from './util';
+import type { Matcher, TestFileFilter } from './util';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.js', 'playwright.config.mjs'];
 
+// Test run is a sequence of run phases aka stages.
+type RunStage = FullProjectInternal[];
+
 type RunOptions = {
   listOnly?: boolean;
-  testFileFilters?: TestFileFilter[];
+  testFileFilters: TestFileFilter[];
+  testTitleMatcher: Matcher;
   projectFilter?: string[];
-  watchMode?: boolean;
   passWithNoTests?: boolean;
 };
 
@@ -64,8 +68,6 @@ export type ConfigCLIOverrides = {
   forbidOnly?: boolean;
   fullyParallel?: boolean;
   globalTimeout?: number;
-  grep?: RegExp;
-  grepInvert?: RegExp;
   maxFailures?: number;
   outputDir?: string;
   quiet?: boolean;
@@ -81,17 +83,10 @@ export type ConfigCLIOverrides = {
   use?: any;
 };
 
-type WatchProgress = {
-  canceled: boolean;
-  dispatcher: Dispatcher | undefined;
-};
-
 export class Runner {
   private _loader: Loader;
   private _reporter!: ReporterInternal;
   private _plugins: TestRunnerPlugin[] = [];
-  private _watchRepeatEachIndex = 0;
-  private _watchJobsQueue = Promise.resolve();
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
     this._loader = new Loader(configCLIOverrides);
@@ -181,15 +176,9 @@ export class Runner {
     return new Multiplexer(reporters);
   }
 
-  async runAllTests(options: RunOptions = {}): Promise<FullResult> {
+  async runAllTests(options: RunOptions): Promise<FullResult> {
     this._reporter = await this._createReporter(!!options.listOnly);
     const config = this._loader.fullConfig();
-    if (options.watchMode) {
-      config._watchMode = true;
-      config._workerIsolation = 'isolate-projects';
-      return await this._watch(options);
-    }
-
     const result = await raceAgainstTimeout(() => this._run(options), config.globalTimeout);
     let fullResult: FullResult;
     if (result.timedOut) {
@@ -211,12 +200,14 @@ export class Runner {
   }
 
   async listTestFiles(configFile: string, projectNames: string[] | undefined): Promise<any> {
-    const filesByProject = await this._collectFiles([], projectNames);
+    const projects = this._collectProjects(projectNames);
+    const filesByProject = await this._collectFiles(projects, () => true);
     const report: any = {
       projects: []
     };
     for (const [project, files] of filesByProject) {
       report.projects.push({
+        docker: process.env.PLAYWRIGHT_DOCKER,
         name: project.name,
         testDir: path.resolve(configFile, project.testDir),
         files: files
@@ -225,19 +216,12 @@ export class Runner {
     return report;
   }
 
-  private async _collectFiles(testFileFilters: TestFileFilter[], projectNames?: string[]): Promise<Map<FullProjectInternal, string[]>> {
-    const testFileFilter = testFileFilters.length ? createFileMatcher(testFileFilters.map(e => e.re || e.exact || '')) : () => true;
-    let unmatchedProjectFilters: Map<string, string> | undefined;
-    if (projectNames) {
-      unmatchedProjectFilters = new Map();
-      projectNames.forEach(n => {
-        unmatchedProjectFilters!.set(n, n);
-      });
-    }
+  private _collectProjects(projectNames?: string[]): FullProjectInternal[] {
     const fullConfig = this._loader.fullConfig();
+    if (!projectNames)
+      return [...fullConfig.projects];
+    const unmatchedProjectFilters = new Map<string, string>();
     const projects = fullConfig.projects.filter(project => {
-      if (!projectNames)
-        return true;
       for (const value of projectNames!) {
         const match = forceRegExp('/^' + value + '$/i');
         if (match.test(project.name)) {
@@ -246,14 +230,17 @@ export class Runner {
         }
       }
     });
-    if (unmatchedProjectFilters && unmatchedProjectFilters.size) {
+    if (unmatchedProjectFilters.size) {
       const names = fullConfig.projects.map(p => p.name).filter(name => !!name);
       if (!names.length)
         throw new Error(`No named projects are specified in the configuration file`);
       const unknownProjectNames = Array.from(unmatchedProjectFilters.values()).map(n => `"${n}"`).join(', ');
       throw new Error(`Project(s) ${unknownProjectNames} not found. Available named projects: ${names.map(name => `"${name}"`).join(', ')}`);
     }
+    return projects;
+  }
 
+  private async _collectFiles(projects: FullProjectInternal[], testFileFilter: Matcher): Promise<Map<FullProjectInternal, string[]>> {
     const files = new Map<FullProjectInternal, string[]>();
     for (const project of projects) {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
@@ -267,160 +254,226 @@ export class Runner {
     return files;
   }
 
-  private async _run(options: RunOptions): Promise<FullResult> {
-    const testFileFilters = options.testFileFilters || [];
-    const filesByProject = await this._collectFiles(testFileFilters, options.projectFilter);
-
-    const allTestFiles = new Set<string>();
-    for (const files of filesByProject.values())
-      files.forEach(file => allTestFiles.add(file));
-
+  private async _collectTestGroups(options: RunOptions, fatalErrors: TestError[]): Promise<{ rootSuite: Suite, concurrentTestGroups: TestGroup[][] }> {
     const config = this._loader.fullConfig();
-
-    const fatalErrors: TestError[] = [];
-
-    // 1. Add all tests.
-    const preprocessRoot = new Suite('', 'root');
-    for (const file of allTestFiles) {
-      const fileSuite = await this._loader.loadTestFile(file, 'runner');
-      if (fileSuite._loadError)
-        fatalErrors.push(fileSuite._loadError);
-      preprocessRoot._addSuite(fileSuite);
-    }
-
-    // 2. Complain about duplicate titles.
-    const duplicateTitlesError = createDuplicateTitlesError(config, preprocessRoot);
-    if (duplicateTitlesError)
-      fatalErrors.push(duplicateTitlesError);
-
-    // 3. Filter tests to respect line/column filter.
-    filterByFocusedLine(preprocessRoot, testFileFilters);
-
-    // 4. Complain about only.
-    if (config.forbidOnly) {
-      const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
-      if (onlyTestsAndSuites.length > 0)
-        fatalErrors.push(createForbidOnlyError(config, onlyTestsAndSuites));
-    }
-
-    // 5. Filter only.
-    if (!options.listOnly)
-      filterOnly(preprocessRoot);
-
-    // 6. Generate projects.
-    const fileSuites = new Map<string, Suite>();
-    for (const fileSuite of preprocessRoot.suites)
-      fileSuites.set(fileSuite._requireFile, fileSuite);
-
+    // Each entry is an array of test groups that can run concurrently. All
+    // test groups from the previos entries must finish before entry starts.
+    const concurrentTestGroups = [];
     const rootSuite = new Suite('', 'root');
-    for (const [project, files] of filesByProject) {
-      const grepMatcher = createTitleMatcher(project.grep);
-      const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
-      const projectSuite = new Suite(project.name, 'project');
-      projectSuite._projectConfig = project;
-      if (project._fullyParallel)
-        projectSuite._parallelMode = 'parallel';
-      rootSuite._addSuite(projectSuite);
-      for (const file of files) {
-        const fileSuite = fileSuites.get(file);
-        if (!fileSuite)
-          continue;
-        for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
-          const builtSuite = this._loader.buildFileSuiteForProject(project, fileSuite, repeatEachIndex, test => {
-            const grepTitle = test.titlePath().join(' ');
-            if (grepInvertMatcher?.(grepTitle))
-              return false;
-            return grepMatcher(grepTitle);
-          });
-          if (builtSuite)
-            projectSuite._addSuite(builtSuite);
+    const projects = this._collectProjects(options.projectFilter);
+    const runStages = collectRunStages(projects);
+    assert(runStages.length > 0);
+    for (const stage of runStages) {
+      // TODO: do not collect files for each project multiple times.
+      const filesByProject = await this._collectFiles(stage, fileMatcherFrom(options.testFileFilters));
+
+      const allTestFiles = new Set<string>();
+      for (const files of filesByProject.values())
+        files.forEach(file => allTestFiles.add(file));
+
+      // Add all tests.
+      const preprocessRoot = new Suite('', 'root');
+      for (const file of allTestFiles) {
+        const fileSuite = await this._loader.loadTestFile(file, 'runner');
+        if (fileSuite._loadError)
+          fatalErrors.push(fileSuite._loadError);
+        preprocessRoot._addSuite(fileSuite);
+      }
+
+      // Complain about duplicate titles.
+      const duplicateTitlesError = createDuplicateTitlesError(config, preprocessRoot);
+      if (duplicateTitlesError)
+        fatalErrors.push(duplicateTitlesError);
+
+      // Filter tests to respect line/column filter.
+      // TODO: figure out how this is supposed to work with groups.
+      if (options.testFileFilters.length)
+        filterByFocusedLine(preprocessRoot, options.testFileFilters);
+
+      // Complain about only.
+      if (config.forbidOnly) {
+        const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
+        if (onlyTestsAndSuites.length > 0)
+          fatalErrors.push(createForbidOnlyError(config, onlyTestsAndSuites));
+      }
+
+      // Filter only.
+      if (!options.listOnly)
+        filterOnly(preprocessRoot);
+
+      // Generate projects.
+      const fileSuites = new Map<string, Suite>();
+      for (const fileSuite of preprocessRoot.suites)
+        fileSuites.set(fileSuite._requireFile, fileSuite);
+
+      const firstProjectSuiteIndex = rootSuite.suites.length;
+      for (const [project, files] of filesByProject) {
+        const grepMatcher = createTitleMatcher(project.grep);
+        const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
+
+        const projectSuite = new Suite(project.name, 'project');
+        projectSuite._projectConfig = project;
+        if (project._fullyParallel)
+          projectSuite._parallelMode = 'parallel';
+        rootSuite._addSuite(projectSuite);
+        for (const file of files) {
+          const fileSuite = fileSuites.get(file);
+          if (!fileSuite)
+            continue;
+          for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
+            const builtSuite = this._loader.buildFileSuiteForProject(project, fileSuite, repeatEachIndex, test => {
+              const grepTitle = test.titlePath().join(' ');
+              if (grepInvertMatcher?.(grepTitle))
+                return false;
+              return grepMatcher(grepTitle) && options.testTitleMatcher(grepTitle);
+            });
+            if (builtSuite)
+              projectSuite._addSuite(builtSuite);
+          }
         }
       }
+
+      const projectSuites = rootSuite.suites.slice(firstProjectSuiteIndex);
+      const testGroups = createTestGroups(projectSuites, config.workers);
+      concurrentTestGroups.push(testGroups);
+    }
+    return { rootSuite, concurrentTestGroups };
+  }
+
+  private _filterForCurrentShard(rootSuite: Suite, concurrentTestGroups: TestGroup[][]) {
+    const shard = this._loader.fullConfig().shard;
+    if (!shard)
+      return;
+
+    // Each shard includes:
+    // - all tests from `run: 'always'` projects (non shardale) and
+    // - its portion of the shardable ones.
+    let shardableTotal = 0;
+    for (const projectSuite of rootSuite.suites) {
+      if (projectSuite.project()!.run !== 'always')
+        shardableTotal += projectSuite.allTests().length;
     }
 
-    // 7. Fail when no tests.
-    let total = rootSuite.allTests().length;
-    if (!total && !options.passWithNoTests)
-      fatalErrors.push(createNoTestsError());
+    const shardTests = new Set<TestCase>();
 
-    // 8. Compute shards.
-    let testGroups = createTestGroups(rootSuite, config.workers);
+    // Each shard gets some tests.
+    const shardSize = Math.floor(shardableTotal / shard.total);
+    // First few shards get one more test each.
+    const extraOne = shardableTotal - shardSize * shard.total;
 
-    const shard = config.shard;
-    if (shard) {
-      const shardGroups: TestGroup[] = [];
-      const shardTests = new Set<TestCase>();
-
-      // Each shard gets some tests.
-      const shardSize = Math.floor(total / shard.total);
-      // First few shards get one more test each.
-      const extraOne = total - shardSize * shard.total;
-
-      const currentShard = shard.current - 1; // Make it zero-based for calculations.
-      const from = shardSize * currentShard + Math.min(extraOne, currentShard);
-      const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
-      let current = 0;
-      for (const group of testGroups) {
-        // Any test group goes to the shard that contains the first test of this group.
-        // So, this shard gets any group that starts at [from; to)
-        if (current >= from && current < to) {
-          shardGroups.push(group);
+    const currentShard = shard.current - 1; // Make it zero-based for calculations.
+    const from = shardSize * currentShard + Math.min(extraOne, currentShard);
+    const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
+    let current = 0;
+    const shardConcurrentTestGroups = [];
+    for (const stage of concurrentTestGroups) {
+      const shardedStage: TestGroup[] = [];
+      for (const group of stage) {
+        let includeGroupInShard = false;
+        if (group.run === 'always') {
+          includeGroupInShard = true;
+        } else {
+          // Any test group goes to the shard that contains the first test of this group.
+          // So, this shard gets any group that starts at [from; to)
+          if (current >= from && current < to)
+            includeGroupInShard = true;
+          current += group.tests.length;
+        }
+        if (includeGroupInShard) {
+          shardedStage.push(group);
           for (const test of group.tests)
             shardTests.add(test);
         }
-        current += group.tests.length;
       }
-
-      testGroups = shardGroups;
-      filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
-      total = rootSuite.allTests().length;
+      if (shardedStage.length)
+        shardConcurrentTestGroups.push(shardedStage);
     }
-    config._testGroupsCount = testGroups.length;
+    concurrentTestGroups.length = 0;
+    concurrentTestGroups.push(...shardConcurrentTestGroups);
 
-    // 9. Report begin
+    filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
+  }
+
+  private async _run(options: RunOptions): Promise<FullResult> {
+    const config = this._loader.fullConfig();
+    const fatalErrors: TestError[] = [];
+    // Each entry is an array of test groups that can be run concurrently. All
+    // test groups from the previos entries must finish before entry starts.
+    const { rootSuite, concurrentTestGroups } = await this._collectTestGroups(options, fatalErrors);
+
+    // Fail when no tests.
+    if (!rootSuite.allTests().length && !options.passWithNoTests)
+      fatalErrors.push(createNoTestsError());
+
+    this._filterForCurrentShard(rootSuite, concurrentTestGroups);
+
+    config._maxConcurrentTestGroups = Math.max(...concurrentTestGroups.map(g => g.length));
+
+    // Report begin
     this._reporter.onBegin?.(config, rootSuite);
 
-    // 10. Bail out on errors prior to running global setup.
+    // Bail out on errors prior to running global setup.
     if (fatalErrors.length) {
       for (const error of fatalErrors)
         this._reporter.onError?.(error);
       return { status: 'failed' };
     }
 
-    // 11. Bail out if list mode only, don't do any work.
+    // Bail out if list mode only, don't do any work.
     if (options.listOnly)
       return { status: 'passed' };
 
-    // 12. Remove output directores.
+    // Remove output directores.
     if (!this._removeOutputDirs(options))
       return { status: 'failed' };
 
-    // 13. Run Global setup.
+    // Run Global setup.
     const result: FullResult = { status: 'passed' };
-    const globalTearDown = await this._performGlobalSetup(config, rootSuite, [...filesByProject.keys()], result);
+    const globalTearDown = await this._performGlobalSetup(config, rootSuite, result);
     if (result.status !== 'passed')
       return result;
 
-    // 14. Run tests.
+    if (config._ignoreSnapshots) {
+      this._reporter.onStdOut?.(colors.dim([
+        'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
+        '- expect().toMatchSnapshot()',
+        '- expect().toHaveScreenshot()',
+        '',
+      ].join('\n')));
+    }
+
+    // Run tests.
     try {
-      const sigintWatcher = new SigIntWatcher();
+      let sigintWatcher;
 
       let hasWorkerErrors = false;
-      const dispatcher = new Dispatcher(this._loader, testGroups, this._reporter);
-      await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
-      if (!sigintWatcher.hadSignal()) {
-        // We know for sure there was no Ctrl+C, so we remove custom SIGINT handler
-        // as soon as we can.
-        sigintWatcher.disarm();
+      let previousStageFailed = false;
+      for (let testGroups of concurrentTestGroups) {
+        if (previousStageFailed)
+          testGroups = this._skipTestsNotMarkedAsRunAlways(testGroups);
+        if (!testGroups.length)
+          continue;
+        const dispatcher = new Dispatcher(this._loader, [...testGroups], this._reporter);
+        sigintWatcher = new SigIntWatcher();
+        await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
+        if (!sigintWatcher.hadSignal()) {
+          // We know for sure there was no Ctrl+C, so we remove custom SIGINT handler
+          // as soon as we can.
+          sigintWatcher.disarm();
+        }
+        await dispatcher.stop();
+        hasWorkerErrors = dispatcher.hasWorkerErrors();
+        if (hasWorkerErrors)
+          break;
+        if (sigintWatcher.hadSignal())
+          break;
+        previousStageFailed ||= testGroups.some(testGroup => testGroup.tests.some(test => !test.ok()));
       }
-      await dispatcher.stop();
-      hasWorkerErrors = dispatcher.hasWorkerErrors();
-
-      if (!sigintWatcher.hadSignal()) {
+      if (sigintWatcher?.hadSignal()) {
+        result.status = 'interrupted';
+      } else {
         const failed = hasWorkerErrors || rootSuite.allTests().some(test => !test.ok());
         result.status = failed ? 'failed' : 'passed';
-      } else {
-        result.status = 'interrupted';
       }
     } catch (e) {
       this._reporter.onError?.(serializeError(e));
@@ -431,125 +484,21 @@ export class Runner {
     return result;
   }
 
-  private async _watch(options: RunOptions): Promise<FullResult> {
-    const config = this._loader.fullConfig();
-
-    // 1. Create empty suite.
-    const rootSuite = new Suite('', 'root');
-
-    // 2. Report begin.
-    this._reporter.onBegin?.(config, rootSuite);
-
-    // 3. Remove output directores.
-    if (!this._removeOutputDirs(options))
-      return { status: 'failed' };
-
-    // 4. Run Global setup.
-    const result: FullResult = { status: 'passed' };
-    const globalTearDown = await this._performGlobalSetup(config, rootSuite, config.projects.filter(p => !options.projectFilter || options.projectFilter.includes(p.name)), result);
-    if (result.status !== 'passed')
-      return result;
-
-    const progress: WatchProgress = { canceled: false, dispatcher: undefined };
-
-    const runAndWatch = async () => {
-      // 5. Collect all files.
-      const testFileFilters = options.testFileFilters || [];
-      const filesByProject = await this._collectFiles(testFileFilters, options.projectFilter);
-
-      const allTestFiles = new Set<string>();
-      for (const files of filesByProject.values())
-        files.forEach(file => allTestFiles.add(file));
-
-      // 6. Trigger 'all files changed'.
-      await this._runAndReportError(async () => {
-        await this._runModifiedTestFilesForWatch(progress, options, allTestFiles);
-      }, result);
-
-      // 7. Start watching the filesystem for modifications.
-      await this._watchTestFiles(progress, options);
-    };
-
-    try {
-      const sigintWatcher = new SigIntWatcher();
-      await Promise.race([runAndWatch(), sigintWatcher.promise()]);
-      if (!sigintWatcher.hadSignal())
-        sigintWatcher.disarm();
-      progress.canceled = true;
-      await progress.dispatcher?.stop();
-    } finally {
-      await globalTearDown?.();
-    }
-    return result;
-  }
-
-  private async _runModifiedTestFilesForWatch(progress: WatchProgress, options: RunOptions, testFiles: Set<string>): Promise<void> {
-    if (progress.canceled)
-      return;
-
-    const testFileFilters: TestFileFilter[] = [...testFiles].map(f => ({
-      exact: f,
-      line: null,
-      column: null,
-    }));
-    const filesByProject = await this._collectFiles(testFileFilters, options.projectFilter);
-
-    if (progress.canceled)
-      return;
-
-    const testGroups: TestGroup[] = [];
-    const repeatEachIndex = ++this._watchRepeatEachIndex;
-    for (const [project, files] of filesByProject) {
-      for (const file of files) {
-        const group: TestGroup = {
-          workerHash: `run${project._id}-repeat${repeatEachIndex}`,
-          requireFile: file,
-          repeatEachIndex,
-          projectId: project._id,
-          tests: [],
-          watchMode: true,
-        };
-        testGroups.push(group);
+  private _skipTestsNotMarkedAsRunAlways(testGroups: TestGroup[]): TestGroup[] {
+    const runAlwaysGroups = [];
+    for (const group of testGroups) {
+      if (group.run === 'always') {
+        runAlwaysGroups.push(group);
+      } else {
+        for (const test of group.tests) {
+          const result = test._appendTestResult();
+          this._reporter.onTestBegin?.(test, result);
+          result.status = 'skipped';
+          this._reporter.onTestEnd?.(test, result);
+        }
       }
     }
-
-    const dispatcher = new Dispatcher(this._loader, testGroups, this._reporter);
-    progress.dispatcher = dispatcher;
-    await dispatcher.run();
-    await dispatcher.stop();
-    progress.dispatcher = undefined;
-  }
-
-  private async _watchTestFiles(progress: WatchProgress, options: RunOptions): Promise<void> {
-    const folders = new Set<string>();
-    const config = this._loader.fullConfig();
-    for (const project of config.projects) {
-      if (options.projectFilter && !options.projectFilter.includes(project.name))
-        continue;
-      folders.add(project.testDir);
-    }
-
-    for (const folder of folders) {
-      const changedFiles = new Set<string>();
-      let throttleTimer: NodeJS.Timeout | undefined;
-      fs.watch(folder, (event, filename) => {
-        if (event !== 'change')
-          return;
-
-        const fullName = path.join(folder, filename);
-        changedFiles.add(fullName);
-        if (throttleTimer)
-          clearTimeout(throttleTimer);
-
-        throttleTimer = setTimeout(() => {
-          const copy = new Set(changedFiles);
-          changedFiles.clear();
-          this._watchJobsQueue = this._watchJobsQueue.then(() => this._runModifiedTestFilesForWatch(progress, options, copy));
-        }, 250);
-      });
-    }
-
-    await new Promise(() => {});
+    return runAlwaysGroups;
   }
 
   private async _removeOutputDirs(options: RunOptions): Promise<boolean> {
@@ -579,7 +528,7 @@ export class Runner {
     return true;
   }
 
-  private async _performGlobalSetup(config: FullConfigInternal, rootSuite: Suite, projects: FullProjectInternal[], result: FullResult): Promise<(() => Promise<void>) | undefined> {
+  private async _performGlobalSetup(config: FullConfigInternal, rootSuite: Suite, result: FullResult): Promise<(() => Promise<void>) | undefined> {
     let globalSetupResult: any = undefined;
 
     const pluginsThatWereSetUp: TestRunnerPlugin[] = [];
@@ -604,14 +553,17 @@ export class Runner {
     };
 
     // Legacy webServer support.
-    this._plugins.push(...webServerPluginsForConfig(config, this._reporter));
+    this._plugins.push(...webServerPluginsForConfig(config));
+
+    // Docker support.
+    this._plugins.push(dockerPlugin);
 
     await this._runAndReportError(async () => {
       // First run the plugins, if plugin is a web server we want it to run before the
       // config's global setup.
       for (const plugin of this._plugins) {
         await Promise.race([
-          plugin.setup?.(config, config._configDir, rootSuite),
+          plugin.setup?.(config, config._configDir, rootSuite, this._reporter),
           sigintWatcher.promise(),
         ]);
         if (sigintWatcher.hadSignal())
@@ -791,7 +743,21 @@ function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
   return `${path.relative(rootDir, testOrSuite.location.file)}:${testOrSuite.location.line}`;
 }
 
-function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
+function collectRunStages(projects: FullProjectInternal[]): RunStage[] {
+  const stages: RunStage[] = [];
+  const stageToProjects = new MultiMap<number, FullProjectInternal>();
+  for (const p of projects)
+    stageToProjects.set(p.stage, p);
+  const stageIds = Array.from(stageToProjects.keys());
+  stageIds.sort((a, b) => a - b);
+  for (const stage of stageIds) {
+    const projects = stageToProjects.get(stage);
+    stages.push(projects);
+  }
+  return stages;
+}
+
+function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] {
   // This function groups tests that can be run together.
   // Tests cannot be run together when:
   // - They belong to different projects - requires different workers.
@@ -824,12 +790,13 @@ function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
       requireFile: test._requireFile,
       repeatEachIndex: test.repeatEachIndex,
       projectId: test._projectId,
+      run: test.parent.project()!.run,
       tests: [],
       watchMode: false,
     };
   };
 
-  for (const projectSuite of rootSuite.suites) {
+  for (const projectSuite of projectSuites) {
     for (const test of projectSuite.allTests()) {
       let withWorkerHash = groups.get(test._workerHash);
       if (!withWorkerHash) {
@@ -926,6 +893,12 @@ class ListModeReporter implements Reporter {
     // eslint-disable-next-line no-console
     console.error('\n' + formatError(this.config, error, false).message);
   }
+}
+
+function fileMatcherFrom(testFileFilters?: TestFileFilter[]): Matcher {
+  if (testFileFilters?.length)
+    return createFileMatcher(testFileFilters.map(e => e.re || e.exact || ''));
+  return () => true;
 }
 
 function createForbidOnlyError(config: FullConfigInternal, onlyTestsAndSuites: (TestCase | Suite)[]): TestError {

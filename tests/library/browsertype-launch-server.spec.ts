@@ -57,7 +57,7 @@ it.describe('launch server', () => {
     const browserServer = await browserType.launchServer();
     const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() + '-foo' }).catch(e => e);
     await browserServer.close();
-    expect(error.message).toContain('Unexpected server response: 400');
+    expect(error.message).toContain('400 Bad Request');
   });
 
   it('should fire "close" event during kill', async ({ browserType }) => {

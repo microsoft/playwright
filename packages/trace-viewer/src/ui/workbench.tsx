@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent } from '@playwright-core/server/trace/common/traceEvents';
+import type { ActionTraceEvent } from '@trace/trace';
 import { SplitView } from '@web/components/splitView';
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
@@ -175,6 +175,7 @@ export const Workbench: React.FunctionComponent<{
       <TabbedPane tabs={
         [
           { id: 'actions', title: 'Actions', count: 0, render: () => <ActionList
+            sdkLanguage={model.sdkLanguage}
             actions={model.actions}
             selectedAction={selectedAction}
             highlightedAction={highlightedAction}

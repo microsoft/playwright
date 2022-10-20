@@ -12,21 +12,18 @@ A few examples of problems this can catch include:
 
 The following examples rely on the [`@axe-core/playwright`](https://npmjs.org/@axe-core/playwright) package which adds support for running the [axe accessibility testing engine](https://www.deque.com/axe/) as part of your Playwright tests.
 
-<!-- TOC -->
-
-## Disclaimer
-
+:::note Disclaimer
 Automated accessibility tests can detect some common accessibility problems such as missing or invalid properties. But many accessibility problems can only be discovered through manual testing. We recommend using a combination of automated testing, manual accessibility assessments, and inclusive user testing.
 
 For manual assessments, we recommend [Accessibility Insights for Web](https://accessibilityinsights.io/docs/web/overview/?referrer=playwright-accessibility-testing-js), a free and open source dev tool that walks you through assessing a website for [WCAG 2.1 AA](https://www.w3.org/WAI/WCAG21/quickref/?currentsidebar=%23col_customize&levels=aaa) coverage.
-
+:::
 ## Example accessibility tests
 
 Accessibility tests work just like any other Playwright test. You can either create separate test cases for them, or integrate accessibility scans and assertions into your existing test cases.
 
 The following examples demonstrate a few basic accessibility testing scenarios.
 
-### Example 1: Scanning an entire page
+### Scanning an entire page
 
 This example demonstrates how to test an entire page for automatically detectable accessibility violations. The test:
 1. Imports the `@axe-core/playwright` package
@@ -65,7 +62,7 @@ test.describe('homepage', () => { // 2
 });
 ```
 
-### Example 2: Configuring axe to scan a specific part of a page
+### Configuring axe to scan a specific part of a page
 
 `@axe-core/playwright` supports many configuration options for axe. You can specify these options by using a Builder pattern with the `AxeBuilder` class.
 
@@ -77,7 +74,7 @@ For example, you can use [`AxeBuilder.include()`](https://github.com/dequelabs/a
 test('navigation menu flyout should not have automatically detectable accessibility violations', async ({ page }) => {
   await page.goto('https://your-site.com/');
 
-  await page.locator('button[aria-label="Navigation Menu"]').click();
+  await page.getByRole('button', { name: 'Navigation Menu' }).click();
 
   // It is important to waitFor() the page to be in the desired
   // state *before* running analyze(). Otherwise, axe might not
@@ -92,7 +89,7 @@ test('navigation menu flyout should not have automatically detectable accessibil
 });
 ```
 
-### Example 3: Scanning for WCAG violations
+### Scanning for WCAG violations
 
 By default, axe checks against a wide variety of accessibility rules. Some of these rules correspond to specific success criteria from the [Web Content Accessibility Guidelines (WCAG)](https://www.w3.org/TR/WCAG21/), and others are "best practice" rules that are not specifically required by any WCAG criteron.
 

@@ -144,14 +144,15 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: npx playwright install --with-deps
-    - run: npm run test-html-reporter
-      if: always() && matrix.os != 'ubuntu-latest'
-    - run: xvfb-run npm run test-html-reporter
-      if: always() && matrix.os == 'ubuntu-latest'
-    - run: npm run test-web
-      if: always() && matrix.os != 'ubuntu-latest'
+    - run: |
+        ./utils/docker/build.sh --amd64 focal $PWTEST_DOCKER_BASE_IMAGE
+        npx playwright docker build
+        xvfb-run npm run test-html-reporter
+      env:
+        PLAYWRIGHT_DOCKER: 1
+        PWTEST_DOCKER_BASE_IMAGE: playwright:localbuild
     - run: xvfb-run npm run test-web
-      if: always() && matrix.os == 'ubuntu-latest'
+      if: always()
 
   test-package-installations:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
@@ -184,3 +185,4 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
+

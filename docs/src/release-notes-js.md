@@ -4,6 +4,112 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.27
+
+### Locators
+
+With these new APIs writing locators is a joy:
+- [`method: Page.getByText`] to locate by text content.
+- [`method: Page.getByRole`] to locate by [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+- [`method: Page.getByLabel`] to locate a form control by associated label's text.
+- [`method: Page.getByTestId`] to locate an element based on its `data-testid` attribute (other attribute can be configured).
+- [`method: Page.getByPlaceholder`] to locate an input by placeholder.
+- [`method: Page.getByAltText`] to locate an element, usually image, by its text alternative.
+- [`method: Page.getByTitle`] to locate an element by its title.
+
+```js
+await page.getByLabel('User Name').fill('John');
+
+await page.getByLabel('Password').fill('secret-password');
+
+await page.getByRole('button', { name: 'Sign in' }).click();
+
+await expect(page.getByText('Welcome, John!')).toBeVisible();
+```
+
+All the same methods are also available on [Locator], [FrameLocator] and [Frame] classes.
+
+### Other highlights
+
+- `workers` option in the `playwright.config.ts` now accepts a percentage string to use some of the available CPUs. You can also pass it in the command line:
+  ```bash
+  npx playwright test --workers=20%
+  ```
+
+- New options `host` and `port` for the html reporter.
+  ```js
+  reporters: [['html', { host: 'localhost', port: '9223' }]]
+  ```
+
+- New field `FullConfig.configFile` is available to test reporters, specifying the path to the config file if any.
+
+- As announced in v1.25, Ubuntu 18 will not be supported as of Dec 2022. In addition to that, there will be no WebKit updates on Ubuntu 18 starting from the next Playwright release.
+
+### Behavior Changes
+
+- [`method: LocatorAssertions.toHaveAttribute`] with an empty value does not match missing attribute anymore. For example, the following snippet will succeed when `button` **does not** have a `disabled` attribute.
+
+   ```js
+   await expect(page.getByRole('button')).toHaveAttribute('disabled', '');
+   ```
+
+- Command line options `--grep` and `--grep-invert` previously incorrectly ignored `grep` and `grepInvert` options specified in the config. Now all of them are applied together.
+
+### Browser Versions
+
+* Chromium 107.0.5304.18
+* Mozilla Firefox 105.0.1
+* WebKit 16.0
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 106
+* Microsoft Edge 106
+
+
+## Version 1.26
+
+### Assertions
+
+- New option `enabled` for [`method: LocatorAssertions.toBeEnabled`].
+- [`method: LocatorAssertions.toHaveText`] now pierces open shadow roots.
+- New option `editable` for [`method: LocatorAssertions.toBeEditable`].
+- New option `visible` for [`method: LocatorAssertions.toBeVisible`].
+
+### Other highlights
+
+- New option `maxRedirects` for [`method: APIRequestContext.get`] and others to limit redirect count.
+- New command-line flag `--pass-with-no-tests` that allows the test suite to pass when no files are found.
+- New command-line flag `--ignore-snapshots` to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `expect(page).toHaveScreenshot()`.
+
+### Behavior Change
+
+A bunch of Playwright APIs already support the `waitUntil: 'domcontentloaded'` option.
+For example:
+
+```js
+await page.goto('https://playwright.dev', {
+  waitUntil: 'domcontentloaded',
+});
+```
+
+Prior to 1.26, this would wait for all iframes to fire the `DOMContentLoaded`
+event.
+
+To align with web specification, the `'domcontentloaded'` value only waits for
+the target frame to fire the `'DOMContentLoaded'` event. Use `waitUntil: 'load'` to wait for all iframes.
+
+### Browser Versions
+
+* Chromium 106.0.5249.30
+* Mozilla Firefox 104.0
+* WebKit 16.0
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 105
+* Microsoft Edge 105
+
 ## Version 1.25
 
 <div className="embed-youtube">
@@ -38,7 +144,7 @@ toc_max_heading_level: 2
 
 ### Announcements
 
-* 🎁 We now ship Ubuntu 22.04 Jammy Jellyfish docker image: `mcr.microsoft.com/playwright:v1.26.0-jammy`.
+* 🎁 We now ship Ubuntu 22.04 Jammy Jellyfish docker image: `mcr.microsoft.com/playwright:v1.28.0-jammy`.
 * 🪦 This is the last release with macOS 10.15 support (deprecated as of 1.21).
 * 🪦 This is the last release with Node.js 12 support, we recommend upgrading to Node.js LTS (16).
 * ⚠️ Ubuntu 18 is now deprecated and will not be supported as of Dec 2022.
@@ -98,7 +204,7 @@ if you encounter any issues!
 Linux support looks like this:
 
 |          | Ubuntu 18.04 | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11
-| :--- | :---: | :---: | :---: | :---: | 
+| :--- | :---: | :---: | :---: | :---: |
 | Chromium | ✅ | ✅ | ✅ | ✅ |
 | WebKit | ✅ | ✅ | ✅ | ✅ |
 | Firefox | ✅ | ✅ | ✅ | ✅ |
@@ -121,7 +227,7 @@ test.describe(() => {
 });
 ```
 
-### 🧩 Component Tests Update 
+### 🧩 Component Tests Update
 
 Playwright 1.24 Component Tests introduce `beforeMount` and `afterMount` hooks.
 Use these to configure your app for tests.
@@ -288,7 +394,7 @@ Read more about [component testing with Playwright](./test-components).
     }
   });
   ```
-* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright:v1.26.0-jammy`.
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright:v1.28.0-jammy`.
 
 ### ⚠️ Breaking Changes ⚠️
 
@@ -531,7 +637,7 @@ This version was also tested against the following stable channels:
 
       Call log:
         - expect.toBeVisible with timeout 5000ms
-        - waiting for selector "text=Name"
+        - waiting for "getByText('Name')"
 
 
         2 |

@@ -21,7 +21,7 @@ test.describe.configure({ mode: 'parallel' });
 
 test('should work with the empty component list', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': ``,
 
     'a.test.ts': `
@@ -37,14 +37,15 @@ test('should work with the empty component list', async ({ runInlineTest }, test
   expect(output.replace(/\\+/g, '/')).toContain('playwright/.cache/playwright/index.html');
 
   const metainfo = JSON.parse(fs.readFileSync(testInfo.outputPath('playwright/.cache/metainfo.json'), 'utf-8'));
-  expect(metainfo.version).toEqual(expect.any(Number));
+  expect(metainfo.version).toEqual(require('playwright-core/package.json').version);
+  expect(metainfo.viteVersion).toEqual(require('vite/package.json').version);
   expect(Object.entries(metainfo.tests)).toHaveLength(1);
   expect(Object.entries(metainfo.sources)).toHaveLength(8);
 });
 
 test('should extract component list', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': ``,
 
     'src/button.tsx': `
@@ -201,9 +202,11 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
 });
 
 test('should cache build', async ({ runInlineTest }, testInfo) => {
+  test.slow();
+
   await test.step('original test', async () => {
     const result = await runInlineTest({
-      'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
+      'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
       'playwright/index.ts': ``,
 
       'src/button.tsx': `
@@ -270,7 +273,7 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
 
 test('should not use global config for preview', async ({ runInlineTest }) => {
   const result1 = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': ``,
     'vite.config.js': `
       export default {

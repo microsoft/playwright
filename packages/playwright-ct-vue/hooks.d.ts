@@ -14,7 +14,19 @@
  * limitations under the License.
  */
 
-import { App, ComponentPublicInstance } from 'vue';
+import type { App, ComponentPublicInstance } from 'vue';
 
-export declare function beforeMount(callback: (params: { app: App, hooksConfig: any }) => Promise<void>): void;
-export declare function afterMount(callback: (params: { app: App, hooksConfig: any, instance: ComponentPublicInstance }) => Promise<void>): void;
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+type JsonArray = JsonValue[];
+type JsonObject = { [Key in string]?: JsonValue };
+export declare function beforeMount<HooksConfig extends JsonObject>(
+  callback: (params: { app: App; hooksConfig: HooksConfig }) => Promise<void>
+): void;
+export declare function afterMount<HooksConfig extends JsonObject>(
+  callback: (params: {
+    app: App;
+    hooksConfig: HooksConfig;
+    instance: ComponentPublicInstance;
+  }) => Promise<void>
+): void;

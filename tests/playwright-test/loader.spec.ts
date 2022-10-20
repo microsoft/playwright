@@ -245,6 +245,7 @@ test('should load ts from esm when package.json has type module', async ({ runIn
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+  expect(result.output).not.toContain(`is an experimental feature`);
 });
 
 test('should filter stack trace for simple expect', async ({ runInlineTest }) => {
@@ -429,7 +430,7 @@ test('should load web server w/o esm loader in ems module', async ({ runInlineTe
         webServer: {
           command: 'node ws.js',
           port: 9876,
-          timeout: 100,
+          timeout: 5000,
         },
         projects: [{name: 'foo'}]
       }`,
@@ -448,4 +449,42 @@ test('should load web server w/o esm loader in ems module', async ({ runInlineTe
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.output).toContain('NODE_OPTIONS undefined');
+});
+
+test('should load a jsx/tsx files', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    'a.spec.tsx': `
+      const { test } = pwt;
+      const component = () => <div></div>;
+      test('succeeds', () => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+    'b.spec.jsx': `
+      const { test } = pwt;
+      const component = () => <div></div>;
+      test('succeeds', () => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  });
+  expect(passed).toBe(2);
+  expect(exitCode).toBe(0);
+});
+
+test('should remove type imports from ts', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { Point } from 'helper';
+      const p: Point = {};
+
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'node_modules/helper/index.d.ts': `
+      export type Point = {};
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
 });

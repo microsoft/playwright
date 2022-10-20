@@ -30,11 +30,12 @@ async function routeIframe(page: Page) {
       body: `
         <html>
           <div>
-            <button>Hello iframe</button>
+            <button data-testid="buttonId">Hello iframe</button>
             <iframe src="iframe-2.html"></iframe>
           </div>
           <span>1</span>
           <span>2</span>
+          <label for=target>Name</label><input id=target type=text placeholder=Placeholder title=Title alt=Alternative>
         </html>`,
       contentType: 'text/html'
     }).catch(() => {});
@@ -236,4 +237,23 @@ it('locator.frameLocator should not throw on first/last/nth', async ({ page, ser
   await expect(button2).toHaveText('Hello from iframe-2.html');
   const button3 = page.locator('body').frameLocator('iframe').last().locator('button');
   await expect(button3).toHaveText('Hello from iframe-3.html');
+});
+
+it('getBy coverage', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const button1 = page.frameLocator('iframe').getByRole('button');
+  const button2 = page.frameLocator('iframe').getByText('Hello');
+  const button3 = page.frameLocator('iframe').getByTestId('buttonId');
+  await expect(button1).toHaveText('Hello iframe');
+  await expect(button2).toHaveText('Hello iframe');
+  await expect(button3).toHaveText('Hello iframe');
+  const input1 = page.frameLocator('iframe').getByLabel('Name');
+  await expect(input1).toHaveValue('');
+  const input2 = page.frameLocator('iframe').getByPlaceholder('Placeholder');
+  await expect(input2).toHaveValue('');
+  const input3 = page.frameLocator('iframe').getByAltText('Alternative');
+  await expect(input3).toHaveValue('');
+  const input4 = page.frameLocator('iframe').getByTitle('Title');
+  await expect(input4).toHaveValue('');
 });

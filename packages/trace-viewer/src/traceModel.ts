@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { CallMetadata } from '@playwright-core/protocol/callMetadata';
-import type * as trace from '@playwright-core/server/trace/common/traceEvents';
+import type { CallMetadata } from '@protocol/callMetadata';
+import type * as trace from '@trace/trace';
 import type zip from '@zip.js/zip.js';
 // @ts-ignore
 import zipImport from '@zip.js/zip.js/dist/zip-no-worker-inflate.min.js';
@@ -31,6 +31,7 @@ export class TraceModel {
   private _snapshotStorage: PersistentSnapshotStorage | undefined;
   private _entries = new Map<string, zip.Entry>();
   private _version: number | undefined;
+  private _zipReader: zip.ZipReader | undefined;
 
   constructor() {
     this.contextEntry = createEmptyContext();
@@ -46,12 +47,12 @@ export class TraceModel {
 
   async load(traceURL: string, progress: (done: number, total: number) => void) {
     this.contextEntry.traceUrl = traceURL;
-    const zipReader = new zipjs.ZipReader( // @ts-ignore
+    this._zipReader = new zipjs.ZipReader( // @ts-ignore
         new zipjs.HttpReader(this._formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true }),
         { useWebWorkers: false }) as zip.ZipReader;
     let traceEntry: zip.Entry | undefined;
     let networkEntry: zip.Entry | undefined;
-    for (const entry of await zipReader.getEntries({ onprogress: progress })) {
+    for (const entry of await this._zipReader.getEntries({ onprogress: progress })) {
       if (entry.filename.endsWith('.trace'))
         traceEntry = entry;
       if (entry.filename.endsWith('.network'))
@@ -60,10 +61,13 @@ export class TraceModel {
         this.contextEntry.hasSource = true;
       this._entries.set(entry.filename, entry);
     }
+    if (!traceEntry)
+      throw new Error('Cannot find .trace file');
+
     this._snapshotStorage = new PersistentSnapshotStorage(this._entries);
 
     const traceWriter = new zipjs.TextWriter() as zip.TextWriter;
-    await traceEntry!.getData!(traceWriter);
+    await traceEntry.getData!(traceWriter);
     for (const line of (await traceWriter.getData()).split('\n'))
       this.appendEvent(line);
 
@@ -74,6 +78,16 @@ export class TraceModel {
         this.appendEvent(line);
     }
     this._build();
+  }
+
+  async hasEntry(filename: string): Promise<boolean> {
+    if (!this._zipReader)
+      return false;
+    for (const entry of await this._zipReader.getEntries()) {
+      if (entry.filename === filename)
+        return true;
+    }
+    return false;
   }
 
   async resourceForSha1(sha1: string): Promise<Blob | undefined> {
@@ -116,6 +130,7 @@ export class TraceModel {
         this.contextEntry.title = event.title;
         this.contextEntry.platform = event.platform;
         this.contextEntry.wallTime = event.wallTime;
+        this.contextEntry.sdkLanguage = event.sdkLanguage;
         this.contextEntry.options = event.options;
         break;
       }

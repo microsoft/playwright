@@ -40,6 +40,6 @@ declare global {
   interface Window {
     playwrightMount(component: Component, rootElement: Element, hooksConfig: any): Promise<void>;
     playwrightUnmount(rootElement: Element): Promise<void>;
-    playwrightRerender(rootElement: Element, optionsOrComponent: Omit<MountOptions, 'hooksConfig'> | Component): Promise<void>;
+    playwrightUpdate(rootElement: Element, component: Component): Promise<void>;
   }
 }

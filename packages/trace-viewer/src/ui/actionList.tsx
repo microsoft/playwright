@@ -14,17 +14,20 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent } from '@playwright-core/server/trace/common/traceEvents';
+import type { ActionTraceEvent } from '@trace/trace';
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
 import * as modelUtil from './modelUtil';
 import './tabbedPane.css';
+import { asLocator } from '@isomorphic/locatorGenerators';
+import type { Language } from '@isomorphic/locatorGenerators';
 
 export interface ActionListProps {
   actions: ActionTraceEvent[],
   selectedAction: ActionTraceEvent | undefined,
   highlightedAction: ActionTraceEvent | undefined,
+  sdkLanguage: Language | undefined;
   onSelected: (action: ActionTraceEvent) => void,
   onHighlighted: (action: ActionTraceEvent | undefined) => void,
   setSelectedTab: (tab: string) => void,
@@ -32,8 +35,9 @@ export interface ActionListProps {
 
 export const ActionList: React.FC<ActionListProps> = ({
   actions = [],
-  selectedAction = undefined,
-  highlightedAction = undefined,
+  selectedAction,
+  highlightedAction,
+  sdkLanguage,
   onSelected = () => {},
   onHighlighted = () => {},
   setSelectedTab = () => {},
@@ -83,6 +87,7 @@ export const ActionList: React.FC<ActionListProps> = ({
         const highlightedSuffix = action === highlightedAction ? ' highlighted' : '';
         const error = metadata.error?.error?.message;
         const { errors, warnings } = modelUtil.stats(action);
+        const locator = metadata.params.selector ? asLocator(sdkLanguage || 'javascript', metadata.params.selector) : undefined;
         return <div
           className={'action-entry' + selectedSuffix + highlightedSuffix}
           key={metadata.id}
@@ -92,7 +97,7 @@ export const ActionList: React.FC<ActionListProps> = ({
         >
           <div className='action-title'>
             <span>{metadata.apiName}</span>
-            {metadata.params.selector && <div className='action-selector' title={metadata.params.selector}>{metadata.params.selector}</div>}
+            {locator && <div className='action-selector' title={locator}>{locator}</div>}
             {metadata.method === 'goto' && metadata.params.url && <div className='action-url' title={metadata.params.url}>{metadata.params.url}</div>}
           </div>
           <div className='action-duration' style={{ flex: 'none' }}>{metadata.endTime ? msToString(metadata.endTime - metadata.startTime) : 'Timed Out'}</div>

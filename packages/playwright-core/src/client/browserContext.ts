@@ -18,7 +18,7 @@
 import { Page, BindingCall } from './page';
 import { Frame } from './frame';
 import * as network from './network';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import fs from 'fs';
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
@@ -126,8 +126,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   private _onRequestFailed(request: network.Request, responseEndTiming: number, failureText: string | undefined, page: Page | null) {
     request._failureText = failureText || null;
-    if (request._timing)
-      request._timing.responseEnd = responseEndTiming;
+    request._setResponseEndTiming(responseEndTiming);
     this.emit(Events.BrowserContext.RequestFailed, request);
     if (page)
       page.emit(Events.Page.RequestFailed, request);
@@ -138,8 +137,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     const request = network.Request.from(params.request);
     const response = network.Response.fromNullable(params.response);
     const page = Page.fromNullable(params.page);
-    if (request._timing)
-      request._timing.responseEnd = responseEndTiming;
+    request._setResponseEndTiming(responseEndTiming);
     this.emit(Events.BrowserContext.RequestFinished, request);
     if (page)
       page.emit(Events.Page.RequestFinished, request);

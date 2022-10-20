@@ -30,7 +30,7 @@ import { CRDevTools } from './crDevTools';
 import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import { Browser } from '../browser';
 import type * as types from '../types';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import type { HTTPRequestParams } from '../../common/netUtils';
 import { NET_DEFAULT_TIMEOUT } from '../../common/netUtils';
 import { fetchData } from '../../common/netUtils';

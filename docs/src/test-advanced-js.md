@@ -224,9 +224,9 @@ module.exports = async config => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto(baseURL);
-  await page.locator('input[name="user"]').fill('user');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Sign in').click();
   await page.context().storageState({ path: storageState });
   await browser.close();
 };
@@ -241,9 +241,9 @@ async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto(baseURL!);
-  await page.locator('input[name="user"]').fill('user');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Sign in').click();
   await page.context().storageState({ path: storageState as string });
   await browser.close();
 }
@@ -373,9 +373,9 @@ module.exports = async config => {
   try {
     await context.tracing.start({ screenshots: true, snapshots: true });
     await page.goto(baseURL);
-    await page.locator('input[name="user"]').fill('user');
-    await page.locator('input[name="password"]').fill('password');
-    await page.locator('text=Sign in').click();
+    await page.getByLabel('User Name').fill('user');
+    await page.getByLabel('Password').fill('password');
+    await page.getByText('Sign in').click();
     await context.storageState({ path: storageState });
     await context.tracing.stop({
       path: './test-results/setup-trace.zip',
@@ -403,9 +403,9 @@ async function globalSetup(config: FullConfig) {
   try {
     await context.tracing.start({ screenshots: true, snapshots: true });
     await page.goto(baseURL!);
-    await page.locator('input[name="user"]').fill('user');
-    await page.locator('input[name="password"]').fill('password');
-    await page.locator('text=Sign in').click();
+    await page.getByLabel('User Name').fill('user');
+    await page.getByLabel('Password').fill('password');
+    await page.getByText('Sign in').click();
     await context.storageState({ path: storageState as string });
     await context.tracing.stop({
       path: './test-results/setup-trace.zip',

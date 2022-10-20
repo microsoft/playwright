@@ -32,91 +32,7 @@ import type { FullConfigInternal, Metadata, ReporterInternal } from '../types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
-
-export type Stats = {
-  total: number;
-  expected: number;
-  unexpected: number;
-  flaky: number;
-  skipped: number;
-  ok: boolean;
-  duration: number;
-};
-
-export type Location = {
-  file: string;
-  line: number;
-  column: number;
-};
-
-export type HTMLReport = {
-  metadata: Metadata;
-  files: TestFileSummary[];
-  stats: Stats;
-  projectNames: string[];
-};
-
-export type TestFile = {
-  fileId: string;
-  fileName: string;
-  tests: TestCase[];
-};
-
-export type TestFileSummary = {
-  fileId: string;
-  fileName: string;
-  tests: TestCaseSummary[];
-  stats: Stats;
-};
-
-export type TestCaseSummary = {
-  testId: string,
-  title: string;
-  path: string[];
-  projectName: string;
-  location: Location;
-  annotations: { type: string, description?: string }[];
-  outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
-  duration: number;
-  ok: boolean;
-  results: TestResultSummary[];
-};
-
-export type TestResultSummary = {
-  attachments: { name: string, contentType: string, path?: string }[];
-};
-
-export type TestCase = Omit<TestCaseSummary, 'results'> & {
-  results: TestResult[];
-};
-
-export type TestAttachment = {
-  name: string;
-  body?: string;
-  path?: string;
-  contentType: string;
-};
-
-export type TestResult = {
-  retry: number;
-  startTime: string;
-  duration: number;
-  steps: TestStep[];
-  errors: string[];
-  attachments: TestAttachment[];
-  status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
-};
-
-export type TestStep = {
-  title: string;
-  startTime: string;
-  duration: number;
-  location?: Location;
-  snippet?: string;
-  error?: string;
-  steps: TestStep[];
-  count: number;
-};
+import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 
 type TestEntry = {
   testCase: TestCase;
@@ -129,6 +45,8 @@ type HtmlReportOpenOption = 'always' | 'never' | 'on-failure';
 type HtmlReporterOptions = {
   outputFolder?: string,
   open?: HtmlReportOpenOption,
+  host?: string,
+  port?: number,
 };
 
 class HtmlReporter implements ReporterInternal {
@@ -200,7 +118,7 @@ class HtmlReporter implements ReporterInternal {
     const { ok, singleTestId } = this._buildResult!;
     const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
     if (shouldOpen) {
-      await showHTMLReport(this._outputFolder, singleTestId);
+      await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);
     } else {
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       console.log('');
@@ -231,7 +149,7 @@ function standaloneDefaultFolder(): string {
   return reportFolderFromEnv() ?? defaultReportFolder(process.cwd());
 }
 
-export async function showHTMLReport(reportFolder: string | undefined, testId?: string) {
+export async function showHTMLReport(reportFolder: string | undefined, host: string = 'localhost', port?: number, testId?: string) {
   const folder = reportFolder ?? standaloneDefaultFolder();
   try {
     assert(fs.statSync(folder).isDirectory());
@@ -241,7 +159,7 @@ export async function showHTMLReport(reportFolder: string | undefined, testId?: 
     return;
   }
   const server = startHtmlReportServer(folder);
-  let url = await server.start(9323);
+  let url = await server.start({ port, host, preferredPort: port ? undefined : 9223 });
   console.log('');
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
   if (testId)

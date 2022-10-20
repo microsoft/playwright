@@ -15,10 +15,11 @@
  */
 
 import { evaluationScript } from './clientHelper';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
+import { setTestIdAttribute } from './locator';
 
 export class Selectors implements api.Selectors {
   private _channels = new Set<SelectorsOwner>();
@@ -30,6 +31,10 @@ export class Selectors implements api.Selectors {
     for (const channel of this._channels)
       await channel._channel.register(params);
     this._registrations.push(params);
+  }
+
+  setTestIdAttribute(attributeName: string) {
+    setTestIdAttribute(attributeName);
   }
 
   _addChannel(channel: SelectorsOwner) {

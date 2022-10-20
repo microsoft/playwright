@@ -38,6 +38,7 @@ import type { GridFactory } from '../grid/gridServer';
 import { GridServer } from '../grid/gridServer';
 import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
+import { addDockerCLI } from '../containers/docker';
 
 const packageJSON = require('../../package.json');
 
@@ -113,6 +114,7 @@ function checkBrowsersToInstall(args: string[]): Executable[] {
   }
   return executables;
 }
+
 
 program
     .command('install [browser...]')
@@ -305,6 +307,8 @@ Examples:
 
   $ show-trace https://example.com/trace.zip`);
 
+addDockerCLI(program);
+
 if (!process.env.PW_LANG_NAME) {
   let playwrightTestPackagePath = null;
   const resolvePwTestPaths = [__dirname, process.cwd()];
@@ -325,11 +329,11 @@ if (!process.env.PW_LANG_NAME) {
         require('playwright');
         hasPlaywrightPackage = true;
       } catch {}
+      const strayPackage = hasPlaywrightPackage ? 'playwright' : 'playwright-core';
       console.error(wrapInASCIIBox([
-        `Playwright Test compatibility check failed:`,
-        `@playwright/test version '${pwTestVersion}' does not match ${hasPlaywrightPackage ? 'playwright' : 'playwright-core'} version '${pwCoreVersion}'!`,
-        `To fix this either align the versions or only keep @playwright/test since it depends on playwright-core.`,
-        `If you still receive this error, execute 'npm ci' or delete 'node_modules' and do 'npm install' again.`,
+        `Playwright Test integrity check failed:`,
+        `You have @playwright/test version '${pwTestVersion}' and '${strayPackage}' version '${pwCoreVersion}' installed!`,
+        `You probably added '${strayPackage}' into your package.json by accident, remove it and re-run 'npm install'`,
       ].join('\n'), 1));
       process.exit(1);
     }

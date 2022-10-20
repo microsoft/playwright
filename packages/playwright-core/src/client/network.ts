@@ -15,7 +15,7 @@
  */
 
 import { URLSearchParams } from 'url';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { Worker } from './worker';
@@ -238,6 +238,12 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     if (!response)
       throw new Error('Unable to fetch sizes for failed request');
     return (await response._channel.sizes()).sizes;
+  }
+
+  _setResponseEndTiming(responseEndTiming: number) {
+    this._timing.responseEnd = responseEndTiming;
+    if (this._timing.responseStart === -1)
+      this._timing.responseStart = responseEndTiming;
   }
 
   _finalRequest(): Request {

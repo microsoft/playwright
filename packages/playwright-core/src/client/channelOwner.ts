@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { maybeFindValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { debugLogger } from '../common/debugLogger';
 import type { ParsedStackTrace } from '../utils/stackTrace';
@@ -132,8 +132,13 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       return result;
     } catch (e) {
       const innerError = ((process.env.PWDEBUGIMPL || isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
-      e.message = apiName + ': ' + e.message;
-      e.stack = e.message + '\n' + frameTexts.join('\n') + innerError;
+      if (apiName && !apiName.includes('<anonymous>'))
+        e.message = apiName + ': ' + e.message;
+      const stackFrames = '\n' + frameTexts.join('\n') + innerError;
+      if (stackFrames.trim())
+        e.stack = e.message + stackFrames;
+      else
+        e.stack = '';
       csi?.onApiCallEnd(callCookie, e);
       logApiCall(logger, `<= ${apiName} failed`, isInternal);
       throw e;

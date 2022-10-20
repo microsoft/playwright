@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { MultiMap } from '@playwright-core/utils/multimap';
+import { MultiMap } from './multimap';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
 
@@ -35,15 +35,27 @@ const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: S
 
 const clientIdToTraceUrls = new MultiMap<string, string>();
 
-async function loadTrace(trace: string, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
-  const entry = loadedTraces.get(trace);
-  clientIdToTraceUrls.set(clientId, trace);
+async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
+  const entry = loadedTraces.get(traceUrl);
+  clientIdToTraceUrls.set(clientId, traceUrl);
   if (entry)
     return entry.traceModel;
   const traceModel = new TraceModel();
-  await traceModel.load(trace, progress);
+  try {
+    await traceModel.load(traceUrl, progress);
+  } catch (error: any) {
+    // eslint-disable-next-line no-console
+    console.error(error);
+
+    if (error?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
+      throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
+    else if (traceFileName)
+      throw new Error(`Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.`);
+    else
+      throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
+  }
   const snapshotServer = new SnapshotServer(traceModel.storage());
-  loadedTraces.set(trace, { traceModel, snapshotServer });
+  loadedTraces.set(traceUrl, { traceModel, snapshotServer });
   return traceModel;
 }
 
@@ -65,21 +77,15 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
     if (relativePath === '/context') {
       try {
-        const traceModel = await loadTrace(traceUrl, event.clientId, (done: number, total: number) => {
+        const traceModel = await loadTrace(traceUrl, url.searchParams.get('traceFileName'), event.clientId, (done: number, total: number) => {
           client.postMessage({ method: 'progress', params: { done, total } });
         });
         return new Response(JSON.stringify(traceModel!.contextEntry), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
-      } catch (error: unknown) {
-        // eslint-disable-next-line no-console
-        console.error(error);
-        const traceFileName = url.searchParams.get('traceFileName')!;
-        return new Response(JSON.stringify({
-          error: traceFileName ? `Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.` :
-            `Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`,
-        }), {
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error?.message }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' }
         });

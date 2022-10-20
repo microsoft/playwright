@@ -20,6 +20,7 @@ loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
 import * as path from 'path';
 import type { TestModeWorkerOptions } from '../config/testModeFixtures';
+import type { TestModeName } from '../config/testMode';
 import type { CoverageWorkerOptions } from '../config/coverageFixtures';
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
@@ -33,9 +34,13 @@ const getExecutablePath = (browserName: BrowserName) => {
     return process.env.WKPATH;
 };
 
-const mode = process.env.PW_OUT_OF_PROCESS_DRIVER ?
-  'driver' :
-  (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | 'service' | 'service2');
+let mode: TestModeName = 'default';
+if (process.env.PW_OUT_OF_PROCESS_DRIVER)
+  mode = 'driver';
+else if (process.env.PLAYWRIGHT_DOCKER)
+  mode = 'docker';
+else
+  mode = (process.env.PWTEST_MODE ?? 'default') as ('default' | 'driver' | 'service' | 'service2');
 const headed = process.argv.includes('--headed');
 const channel = process.env.PWTEST_CHANNEL as any;
 const video = !!process.env.PWTEST_VIDEO;
@@ -129,6 +134,7 @@ for (const browserName of browserNames) {
       metadata: {
         platform: process.platform,
         docker: !!process.env.INSIDE_DOCKER,
+        dockerIntegration: !!process.env.PLAYWRIGHT_DOCKER,
         headful: !!headed,
         browserName,
         channel,

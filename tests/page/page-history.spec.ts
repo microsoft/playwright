@@ -53,7 +53,6 @@ it('page.goBack should work with HistoryAPI', async ({ page, server }) => {
 });
 
 it('page.goBack should work for file urls', async ({ page, server, asset, browserName, platform, isAndroid }) => {
-  it.fixme(browserName === 'firefox', 'Firefox pretends, but does not complete goBack to the file url');
   it.fail(browserName === 'webkit' && platform === 'darwin', 'WebKit embedder fails to go back/forward to the file url.');
   it.skip(isAndroid, 'No files on Android');
 
@@ -90,6 +89,18 @@ it('page.goBack should work for file urls', async ({ page, server, asset, browse
   expect(page.url()).toBe(url2);
   expect(await page.evaluate(() => window.scrollX)).toBe(0);
   await page.screenshot();
+});
+
+it('goBack/goForward should work with bfcache-able pages', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/cached/one-style.html');
+  await page.setContent(`<a href=${JSON.stringify(server.PREFIX + '/cached/one-style.html?foo')}>click me</a>`);
+  await page.click('a');
+
+  let response = await page.goBack();
+  expect(response.url()).toBe(server.PREFIX + '/cached/one-style.html');
+
+  response = await page.goForward();
+  expect(response.url()).toBe(server.PREFIX + '/cached/one-style.html?foo');
 });
 
 it('page.reload should work', async ({ page, server }) => {

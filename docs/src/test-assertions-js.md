@@ -63,7 +63,7 @@ expect(test.info().errors).toHaveLength(0);
 You can specify a custom error message as a second argument to the `expect` function, for example:
 
 ```js
-await expect(page.locator('text=Name'), 'should be logged in').toBeVisible();
+await expect(page.getByText('Name'), 'should be logged in').toBeVisible();
 ```
 
 The error would look like this:
@@ -73,12 +73,12 @@ The error would look like this:
 
     Call log:
       - expect.toBeVisible with timeout 5000ms
-      - waiting for selector "text=Name"
+      - waiting for "getByText('Name')"
 
 
       2 |
       3 | test('example test', async({ page }) => {
-    > 4 |   await expect(page.locator('text=Name'), 'should be logged in').toBeVisible();
+    > 4 |   await expect(page.getByText('Name'), 'should be logged in').toBeVisible();
         |                                                                  ^
       5 | });
       6 |

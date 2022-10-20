@@ -104,5 +104,5 @@ You can click on each test and explore the tests errors as well as each step of 
 
 ## What's Next
 
-- [Generate tests with Codegen](./codegen.md)
+- [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)

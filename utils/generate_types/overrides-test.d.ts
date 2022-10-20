@@ -46,6 +46,8 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   outputDir: string;
   repeatEach: number;
   retries: number;
+  stage: number;
+  run: 'default'|'always';
   testDir: string;
   testIgnore: string | RegExp | (string | RegExp)[];
   testMatch: string | RegExp | (string | RegExp)[];
@@ -92,6 +94,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   updateSnapshots: 'all' | 'none' | 'missing';
   workers: number;
   webServer: TestConfigWebServer | null;
+  configFile?: string;
   // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 
@@ -235,6 +238,7 @@ export interface PlaywrightTestOptions {
   actionTimeout: number | undefined;
   navigationTimeout: number | undefined;
   serviceWorkers: ServiceWorkerPolicy | undefined;
+  testIdAttribute: string | undefined;
 }
 
 

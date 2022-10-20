@@ -91,7 +91,7 @@ function inlineType(type, indent = '', name, level) {
     if (['string', 'boolean', 'number', 'undefined'].includes(type))
       return { ts: mapType(type), scheme: `t${titleCase(type)}`, optional };
     if (channels.has(type))
-      return { ts: `Core.${type}`, scheme: `tChannel('${type}')` , optional };
+      return { ts: `Core.${type}`, scheme: `tChannel('${type}')`, optional };
     if (type === 'Channel')
       return { ts: `Channel`, scheme: `tChannel('*')`, optional };
     return { ts: mapType(type), scheme: `tType('${type}')`, optional };
@@ -160,7 +160,7 @@ function objectType(props, indent, onlyOptional = false, parentName = '') {
   return { ts: `${indent}{${inner.ts}\n${indent}}`, scheme: `tObject({\n${inner.scheme}\n${indent}})` };
 }
 
-const yml = fs.readFileSync(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'protocol', 'protocol.yml'), 'utf-8');
+const yml = fs.readFileSync(path.join(__dirname, '..', 'packages', 'protocol', 'src', 'protocol.yml'), 'utf-8');
 const protocol = yaml.parse(yml);
 
 for (const [name, value] of Object.entries(protocol)) {
@@ -183,14 +183,14 @@ fs.mkdirSync(dir, { recursive: true });
 
 for (const [name, item] of Object.entries(protocol)) {
   if (item.type === 'interface') {
-    const init = objectType(item.initializer || {}, '    ');
+    const init = objectType(item.initializer || {}, '');
     const initializerName = name + 'Initializer';
     const superName = inherits.has(name) ? inherits.get(name) + 'Initializer' : null;
     writeCSharpClass(initializerName, superName, init.ts);
   } else if (item.type === 'object') {
     if (Object.keys(item.properties).length === 0)
       continue;
-    const init = objectType(item.properties, '    ', false, name);
+    const init = objectType(item.properties, '', false, name);
     writeCSharpClass(name, null, init.ts);
   }
 }
@@ -198,7 +198,7 @@ for (const [name, item] of Object.entries(protocol)) {
 /**
  *
  * @param {string} className
- * @param {string|undefined} inheritFrom
+ * @param {string|null} inheritFrom
  * @param {any} serializedProperties
  */
 function writeCSharpClass(className, inheritFrom, serializedProperties) {
@@ -209,11 +209,10 @@ function writeCSharpClass(className, inheritFrom, serializedProperties) {
   channels_ts.push('using System.Collections.Generic;');
   channels_ts.push('using System.Text.Json.Serialization;');
   channels_ts.push(``);
-  channels_ts.push(`namespace Microsoft.Playwright.Transport.Protocol`);
-  channels_ts.push(`{`);
-  channels_ts.push(`    internal class ${className}${inheritFrom ? ' : ' + inheritFrom : ''}`);
+  channels_ts.push(`namespace Microsoft.Playwright.Transport.Protocol;`);
+  channels_ts.push(``);
+  channels_ts.push(`internal class ${className}${inheritFrom ? ' : ' + inheritFrom : ''}`);
   channels_ts.push(serializedProperties);
-  channels_ts.push(`}`);
   channels_ts.push(``);
   writeFile(`${className}.cs`, channels_ts.join('\n'));
 }

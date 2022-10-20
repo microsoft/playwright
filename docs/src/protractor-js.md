@@ -71,7 +71,7 @@ test.describe('angularjs homepage todo list', function() {
     });
 
     // You wrote your first test, cross it off the list
-    await todoList.nth(2).locator('input').click();
+    await todoList.nth(2).getByRole('textbox').click();
     var completedAmount = page.locator('.done-true');
     await expect(completedAmount).toHaveCount(2);
   });
@@ -140,18 +140,18 @@ Here's how to polyfill `waitForAngular` function in Playwright Test:
     await page.goto('https://example.org');
     await waitForAngular(page);
     ```
- 
+
 ## Playwright Test Super Powers
 
 Once you're on Playwright Test, you get a lot!
 
 - Full zero-configuration TypeScript support
-- Run tests across **all web engines** (Chrome, Firefox, Safari) on **any popular operating system** (Windows, MacOS, Ubuntu)
+- Run tests across **all web engines** (Chrome, Firefox, Safari) on **any popular operating system** (Windows, macOS, Ubuntu)
 - Full support for multiple origins, [(i)frames](./api/class-frame), [tabs and contexts](./pages)
 - Run tests in parallel across multiple browsers
 - Built-in test artifact collection: [video recording](./test-configuration#record-video), [screenshots](./test-configuration#automatic-screenshots) and [playwright traces](./test-configuration#record-test-trace)
 
-Also you get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
+You also get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
 - [Playwright Inspector](./debug.md)
 - [Playwright Test Code generation](./auth#code-generation)
 - [Playwright Tracing](./trace-viewer) for post-mortem debugging

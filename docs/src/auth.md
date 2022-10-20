@@ -22,10 +22,10 @@ import { test } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
   // Runs before each test and signs in each page.
   await page.goto('https://github.com/login');
-  await page.locator('text=Login').click();
-  await page.locator('input[name="login"]').fill('username');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Submit').click();
+  await page.getByText('Login').click();
+  await page.getByLabel('User Name').fill('username');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Submit').click();
 });
 
 test('first', async ({ page }) => {
@@ -43,10 +43,10 @@ const { test } = require('@playwright/test');
 test.beforeEach(async ({ page }) => {
   // Runs before each test and signs in each page.
   await page.goto('https://github.com/login');
-  await page.locator('text=Login').click();
-  await page.locator('input[name="login"]').fill('username');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Submit').click();
+  await page.getByText('Login').click();
+  await page.getByLabel('User name').fill('username');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Submit').click();
 });
 
 test('first', async ({ page }) => {
@@ -63,10 +63,10 @@ const page = await context.newPage();
 await page.goto('https://github.com/login');
 
 // Interact with login form
-await page.locator('text=Login').click();
-await page.locator('input[name="login"]').fill(USERNAME);
-await page.locator('input[name="password"]').fill(PASSWORD);
-await page.locator('text=Submit').click();
+await page.getByText('Login').click();
+await page.getByLabel('User Name').fill(USERNAME);
+await page.getByLabel('Password').fill(PASSWORD);
+await page.getByText('Submit').click();
 // Continue with the test
 ```
 
@@ -74,9 +74,9 @@ await page.locator('text=Submit').click();
 Page page = context.newPage();
 page.navigate("https://github.com/login");
 // Interact with login form
-page.locator("text=Login").click();
-page.locator("input[name='login']").fill(USERNAME);
-page.locator("input[name='password']").fill(PASSWORD);
+page.getByText("Login").click();
+page.getByLabel("User Name").fill(USERNAME);
+page.getByLabel("Password").fill(PASSWORD);
 page.locator("text=Submit").click();
 // Continue with the test
 ```
@@ -86,10 +86,10 @@ page = await context.new_page()
 await page.goto('https://github.com/login')
 
 # Interact with login form
-await page.locator('text=Login').click()
-await page.locator('input[name="login"]').fill(USERNAME)
-await page.locator('input[name="password"]').fill(PASSWORD)
-await page.locator('text=Submit').click()
+await page.get_by_text("Login").click()
+await page.get_by_label("User Name").fill(USERNAME)
+await page.get_by_label("Password").fill(PASSWORD)
+await page.get_by_text('Submit').click()
 # Continue with the test
 ```
 
@@ -98,10 +98,10 @@ page = context.new_page()
 page.goto('https://github.com/login')
 
 # Interact with login form
-page.locator('text=Login').click()
-page.locator('input[name="login"]').fill(USERNAME)
-page.locator('input[name="password"]').fill(PASSWORD)
-page.locator('text=Submit').click()
+page.get_by_text("Login").click()
+page.get_by_label("User Name").fill(USERNAME)
+page.get_by_label("Password").fill(PASSWORD)
+page.get_by_text('Submit').click()
 # Continue with the test
 ```
 
@@ -109,10 +109,10 @@ page.locator('text=Submit').click()
 var page = await context.NewPageAsync();
 await page.GotoAsync("https://github.com/login");
 // Interact with login form
-await page.Locator("text=Login").ClickAsync();
-await page.Locator("input[name='login']").FillAsync(USERNAME);
-await page.Locator("input[name='password']").FillAsync(PASSWORD);
-await page.Locator("text=Submit").ClickAsync();
+await page.GetByText("Login").ClickAsync();
+await page.GetByLabel("User Name").FillAsync(USERNAME);
+await page.GetByLabel("Password").FillAsync(PASSWORD);
+await page.GetByText("Submit").ClickAsync();
 // Continue with the test
 ```
 
@@ -189,9 +189,9 @@ module.exports = async config => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.locator('input[name="login"]').fill('user');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Sign in').click();
   // Save signed-in state to 'storageState.json'.
   await page.context().storageState({ path: 'storageState.json' });
   await browser.close();
@@ -206,9 +206,9 @@ async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.locator('input[name="login"]').fill('user');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Sign in').click();
   // Save signed-in state to 'storageState.json'.
   await page.context().storageState({ path: 'storageState.json' });
   await browser.close();
@@ -339,9 +339,9 @@ exports.test = base.extend({
       // Make sure we are not using any other storage state.
       const page = await browser.newPage({ storageState: undefined });
       await page.goto('https://github.com/login');
-      await page.locator('input[name="login"]').fill(users[testInfo.workerIndex].username);
-      await page.locator('input[name="password"]').fill(users[testInfo.workerIndex].password);
-      await page.locator('text=Sign in').click();
+      await page.getByLabel('User Name').fill(users[testInfo.workerIndex].username);
+      await page.getByLabel('Password').fill(users[testInfo.workerIndex].password);
+      await page.getByText('Sign in').click();
       await page.context().storageState({ path: fileName });
       await page.close();
     }
@@ -378,9 +378,9 @@ export const test = baseTest.extend({
       const page = await browser.newPage({ storageState: undefined });
       await page.goto('https://github.com/login');
       // Create a unique username for each worker.
-      await page.locator('input[name="login"]').fill(users[testInfo.workerIndex].username);
-      await page.locator('input[name="password"]').fill(users[testInfo.workerIndex].password);
-      await page.locator('text=Sign in').click();
+      await page.getByLabel('User Name').fill(users[testInfo.workerIndex].username);
+      await page.getByLabel('Password').fill(users[testInfo.workerIndex].password);
+      await page.getByText('Sign in').click();
       await page.context().storageState({ path: fileName });
       await page.close();
     }
@@ -675,9 +675,9 @@ test.beforeAll(async ({ browser }) => {
   // Create page yourself and sign in.
   page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.locator('input[name="user"]').fill('user');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Sign in').click();
 });
 
 test.afterAll(async () => {
@@ -706,9 +706,9 @@ test.beforeAll(async ({ browser }) => {
   // Create page once and sign in.
   page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.locator('input[name="user"]').fill('user');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Sign in').click();
 });
 
 test.afterAll(async () => {
@@ -909,7 +909,7 @@ class Program
 
 The following code snippet retrieves state from an authenticated context and creates a new context with that state.
 
-```js 
+```js
 // Save storage state into the file.
 await context.storageState({ path: 'state.json' });
 

@@ -17,8 +17,9 @@
     "baseUrl": ".",
     "useUnknownInCatchVariables": false,
     "paths": {
+      "@isomorphic/*": ["../playwright-core/src/server/isomorphic/*"],
+      "@protocol/*": ["../protocol/src/*"],
       "@web/*": ["../web/src/*"],
-      "@playwright-core/*": ["../playwright-core/src/*"],
     }
   },
   "include": ["src"],

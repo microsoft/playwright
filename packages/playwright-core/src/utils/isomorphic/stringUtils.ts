@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// NOTE: this function should not be used to escape any selectors.
 export function escapeWithQuotes(text: string, char: string = '\'') {
   const stringified = JSON.stringify(text);
   const escapedText = stringified.substring(1, stringified.length - 1).replace(/\\"/g, '"');
@@ -24,4 +25,49 @@ export function escapeWithQuotes(text: string, char: string = '\'') {
   if (char === '`')
     return char + escapedText.replace(/[`]/g, '`') + char;
   throw new Error('Invalid escape char');
+}
+
+export function toTitleCase(name: string) {
+  return name.charAt(0).toUpperCase() + name.substring(1);
+}
+
+export function toSnakeCase(name: string): string {
+  return name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+}
+
+export function cssEscape(s: string): string {
+  let result = '';
+  for (let i = 0; i < s.length; i++)
+    result += cssEscapeOne(s, i);
+  return result;
+}
+
+function cssEscapeOne(s: string, i: number): string {
+  // https://drafts.csswg.org/cssom/#serialize-an-identifier
+  const c = s.charCodeAt(i);
+  if (c === 0x0000)
+    return '\uFFFD';
+  if ((c >= 0x0001 && c <= 0x001f) ||
+      (c >= 0x0030 && c <= 0x0039 && (i === 0 || (i === 1 && s.charCodeAt(0) === 0x002d))))
+    return '\\' + c.toString(16) + ' ';
+  if (i === 0 && c === 0x002d && s.length === 1)
+    return '\\' + s.charAt(i);
+  if (c >= 0x0080 || c === 0x002d || c === 0x005f || (c >= 0x0030 && c <= 0x0039) ||
+      (c >= 0x0041 && c <= 0x005a) || (c >= 0x0061 && c <= 0x007a))
+    return s.charAt(i);
+  return '\\' + s.charAt(i);
+}
+
+export function escapeForTextSelector(text: string | RegExp, exact: boolean): string {
+  if (typeof text !== 'string')
+    return String(text);
+  return `${JSON.stringify(text)}${exact ? '' : 'i'}`;
+}
+
+export function escapeForAttributeSelector(value: string, exact: boolean): string {
+  // TODO: this should actually be
+  //   cssEscape(value).replace(/\\ /g, ' ')
+  // However, our attribute selectors do not conform to CSS parsing spec,
+  // so we escape them differently.
+  return `"${value.replace(/["]/g, '\\"')}"${exact ? '' : 'i'}`;
 }

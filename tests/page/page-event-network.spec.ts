@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { ServerResponse } from '../../utils/testserver';
+import type { ServerResponse } from 'http';
 import { test as it, expect } from './pageTest';
 
 it('Page.Events.Request @smoke', async ({ page, server }) => {
@@ -42,7 +42,7 @@ it('Page.Events.Response @smoke', async ({ page, server }) => {
   expect(responses[0].request()).toBeTruthy();
 });
 
-it('Page.Events.RequestFailed @smoke', async ({ page, server, browserName, isMac, isWindows }) => {
+it('Page.Events.RequestFailed @smoke', async ({ page, server, browserName, platform }) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
@@ -57,12 +57,12 @@ it('Page.Events.RequestFailed @smoke', async ({ page, server, browserName, isMac
   if (browserName === 'chromium') {
     expect(failedRequests[0].failure().errorText).toBe('net::ERR_EMPTY_RESPONSE');
   } else if (browserName === 'webkit') {
-    if (isMac)
-      expect(failedRequests[0].failure().errorText).toBe('The network connection was lost.');
-    else if (isWindows)
-      expect(failedRequests[0].failure().errorText).toBe('Server returned nothing (no headers, no data)');
-    else
+    if (platform === 'linux')
       expect(failedRequests[0].failure().errorText).toBe('Message Corrupt');
+    else if (platform === 'darwin')
+      expect(failedRequests[0].failure().errorText).toBe('The network connection was lost.');
+    else if (platform === 'win32')
+      expect(failedRequests[0].failure().errorText).toBe('Server returned nothing (no headers, no data)');
   } else {
     expect(failedRequests[0].failure().errorText).toBe('NS_ERROR_NET_RESET');
   }

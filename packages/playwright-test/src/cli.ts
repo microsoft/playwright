@@ -17,84 +17,30 @@
 /* eslint-disable no-console */
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
-import * as docker from './docker/docker';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
-import { colors } from 'playwright-core/lib/utilsBundle';
 import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
 import type { ConfigCLIOverrides } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import type { TestFileFilter } from './util';
+import { createTitleMatcher } from './util';
 import { showHTMLReport } from './reporters/html';
 import { baseFullConfig, defaultTimeout, fileIsModule } from './loader';
 import type { TraceMode } from './types';
 
 export function addTestCommands(program: Command) {
-  addTestCommand(program, false /* isDocker */);
+  addTestCommand(program);
   addShowReportCommand(program);
   addListFilesCommand(program);
-  addDockerCommand(program);
 }
 
-function addDockerCommand(program: Command) {
-  const dockerCommand = program.command('docker')
-      .description(`run tests in Docker (EXPERIMENTAL)`);
-
-  dockerCommand.command('build')
-      .description('build local docker image')
-      .action(async function(options) {
-        await docker.ensureDockerEngineIsRunningOrDie();
-        await docker.buildImage();
-      });
-
-  dockerCommand.command('start')
-      .description('start docker container')
-      .action(async function(options) {
-        await docker.ensureDockerEngineIsRunningOrDie();
-        let info = await docker.containerInfo();
-        if (!info) {
-          process.stdout.write(`Starting docker container... `);
-          const time = Date.now();
-          info = await docker.ensureContainerOrDie();
-          const deltaMs = (Date.now() - time);
-          console.log('Done in ' + (deltaMs / 1000).toFixed(1) + 's');
-        }
-        console.log([
-          `- VNC session: ${info.vncSession}`,
-          `- Run tests with browsers inside container:`,
-          `      npx playwright docker test`,
-          `- Stop container *manually* when it is no longer needed:`,
-          `      npx playwright docker stop`,
-        ].join('\n'));
-      });
-
-  dockerCommand.command('delete-image', { hidden: true })
-      .description('delete docker image, if any')
-      .action(async function(options) {
-        await docker.ensureDockerEngineIsRunningOrDie();
-        await docker.deleteImage();
-      });
-
-  dockerCommand.command('stop')
-      .description('stop docker container')
-      .action(async function(options) {
-        await docker.ensureDockerEngineIsRunningOrDie();
-        await docker.stopContainer();
-      });
-
-  addTestCommand(dockerCommand, true /* isDocker */);
-}
-
-function addTestCommand(program: Command, isDocker: boolean) {
+function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
-  if (isDocker)
-    command.description('run tests with Playwright Test and browsers inside docker container');
-  else
-    command.description('run tests with Playwright Test');
+  command.description('run tests with Playwright Test');
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
   command.option('--headed', `Run tests in headed browsers (default: headless)`);
-  command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --maxFailures=1 --headed --workers=1" options`);
+  command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`);
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`);
   command.option('--forbid-only', `Fail if test.only is called (default: false)`);
   command.option('--fully-parallel', `Run all tests in parallel (default: false)`);
@@ -102,7 +48,7 @@ function addTestCommand(program: Command, isDocker: boolean) {
   command.option('-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`);
   command.option('--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`);
   command.option('--ignore-snapshots', `Ignore screenshot and snapshot expectations`);
-  command.option('-j, --workers <workers>', `Number of concurrent workers, use 1 to run in a single worker (default: number of CPU cores / 2)`);
+  command.option('-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`);
   command.option('--list', `Collect all the tests and report them, but do not run`);
   command.option('--max-failures <N>', `Stop after the first N failures`);
   command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
@@ -119,27 +65,6 @@ function addTestCommand(program: Command, isDocker: boolean) {
   command.option('-x', `Stop after the first failure`);
   command.action(async (args, opts) => {
     try {
-      if (isDocker && !process.env.PW_TS_ESM_ON) {
-        console.log(colors.dim('Using docker container to run browsers.'));
-        await docker.ensureDockerEngineIsRunningOrDie();
-        let info = await docker.containerInfo();
-        if (!info) {
-          process.stdout.write(colors.dim(`Starting docker container... `));
-          const time = Date.now();
-          info = await docker.ensureContainerOrDie();
-          const deltaMs = (Date.now() - time);
-          console.log(colors.dim('Done in ' + (deltaMs / 1000).toFixed(1) + 's'));
-          console.log(colors.dim('The Docker container will keep running after tests finished.'));
-          console.log(colors.dim('Stop manually using:'));
-          console.log(colors.dim('    npx playwright docker stop'));
-        }
-        console.log(colors.dim(`View screen: ${info.vncSession}`));
-        process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.wsEndpoint;
-        process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
-          'x-playwright-proxy': '*',
-        });
-        process.env.PW_TEST_SNAPSHOT_SUFFIX = 'docker';
-      }
       await runTests(args, opts);
     } catch (e) {
       console.error(e);
@@ -151,10 +76,10 @@ Arguments [test-filter...]:
   Pass arguments to filter test files. Each argument is treated as a regular expression.
 
 Examples:
-  $ npx playwright${isDocker ? ' docker ' : ' '}test my.spec.ts
-  $ npx playwright${isDocker ? ' docker ' : ' '}test some.spec.ts:42
-  $ npx playwright${isDocker ? ' docker ' : ' '}test --headed
-  $ npx playwright${isDocker ? ' docker ' : ' '}test --browser=webkit`);
+  $ npx playwright test my.spec.ts
+  $ npx playwright test some.spec.ts:42
+  $ npx playwright test --headed
+  $ npx playwright test --browser=webkit`);
 }
 
 function addListFilesCommand(program: Command) {
@@ -238,11 +163,15 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     };
   });
 
+  const grepMatcher = opts.grep ? createTitleMatcher(forceRegExp(opts.grep)) : () => true;
+  const grepInvertMatcher = opts.grepInvert ? createTitleMatcher(forceRegExp(opts.grepInvert)) : () => false;
+  const testTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+
   const result = await runner.runAllTests({
     listOnly: !!opts.list,
     testFileFilters,
+    testTitleMatcher,
     projectFilter: opts.project || undefined,
-    watchMode: !!process.env.PW_TEST_WATCH,
     passWithNoTests: opts.passWithNoTests,
   });
   await stopProfiling(undefined);
@@ -283,8 +212,6 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     forbidOnly: options.forbidOnly ? true : undefined,
     fullyParallel: options.fullyParallel ? true : undefined,
     globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,
-    grep: options.grep ? forceRegExp(options.grep) : undefined,
-    grepInvert: options.grepInvert ? forceRegExp(options.grepInvert) : undefined,
     maxFailures: options.x ? 1 : (options.maxFailures ? parseInt(options.maxFailures, 10) : undefined),
     outputDir: options.output ? path.resolve(process.cwd(), options.output) : undefined,
     quiet: options.quiet ? options.quiet : undefined,
@@ -295,7 +222,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
-    workers: options.workers ? parseInt(options.workers, 10) : undefined,
+    workers: options.workers,
   };
 }
 
@@ -338,7 +265,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
 }
 
 export function experimentalLoaderOption() {
-  return ` --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
+  return ` --no-warnings --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
 }
 
 export function envWithoutExperimentalLoaderOptions(): NodeJS.ProcessEnv {

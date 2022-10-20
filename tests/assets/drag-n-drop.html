@@ -1,14 +1,31 @@
 <style>
+* {
+  box-sizing: border-box;
+}
+body, html {
+  margin: 0;
+  padding: 0;
+}
 div:not(.mouse-helper) {
-  margin: 0em;
-  padding: 2em;
+  margin: 0;
+  padding: 0;
 }
 #source {
   color: blue;
   border: 1px solid black;
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  width: 200px;
+  height: 100px;
 }
 #target {
   border: 1px solid black;
+  position: absolute;
+  left: 40px;
+  top: 200px;
+  width: 400px;
+  height: 300px;
 }
 </style>
 

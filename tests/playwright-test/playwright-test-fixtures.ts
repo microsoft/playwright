@@ -88,7 +88,7 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
     const header = isTypeScriptSourceFile ? headerTS : (isJSModule ? headerESM : headerJS);
     if (typeof files[name] === 'string' && files[name].includes('//@no-header')) {
       await fs.promises.writeFile(fullName, files[name]);
-    } else if (/(spec|test)\.(js|ts|mjs)$/.test(name)) {
+    } else if (/(spec|test)\.(js|ts|jsx|tsx|mjs)$/.test(name)) {
       const fileHeader = header + 'const { expect } = pwt;\n';
       await fs.promises.writeFile(fullName, fileHeader + files[name]);
     } else if (/\.(js|ts)$/.test(name) && !name.endsWith('d.ts')) {
@@ -224,7 +224,8 @@ type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
   runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => Promise<RunResult>;
   runTSC: (files: Files) => Promise<TSCResult>;
-  nodeVersion: { major: number, minor: number, patch: number },
+  nodeVersion: { major: number, minor: number, patch: number };
+  runGroups: (files: Files, params?: Params, env?: Env, options?: RunOptions) => Promise<{ timeline: { titlePath: string[], event: 'begin' | 'end' }[] } & RunResult>;
 };
 
 export const test = base
@@ -260,6 +261,43 @@ export const test = base
       nodeVersion: async ({}, use) => {
         const [major, minor, patch] = process.versions.node.split('.');
         await use({ major: +major, minor: +minor, patch: +patch });
+      },
+
+      runGroups: async ({ runInlineTest }, use, testInfo) => {
+        const timelinePath = testInfo.outputPath('timeline.json');
+        await use(async (files, params, env, options) => {
+          const result = await runInlineTest({
+            ...files,
+            'reporter.ts': `
+              import { Reporter, TestCase } from '@playwright/test/reporter';
+              import fs from 'fs';
+              import path from 'path';
+              class TimelineReporter implements Reporter {
+                private _timeline: {titlePath: string, event: 'begin' | 'end'}[] = [];
+                onTestBegin(test: TestCase) {
+                  this._timeline.push({ titlePath: test.titlePath(), event: 'begin' });
+                }
+                onTestEnd(test: TestCase) {
+                  this._timeline.push({ titlePath: test.titlePath(), event: 'end' });
+                }
+                onEnd() {
+                  fs.writeFileSync(path.join(${JSON.stringify(timelinePath)}), JSON.stringify(this._timeline, null, 2));
+                }
+              }
+              export default TimelineReporter;
+            `
+          }, { ...params, reporter: 'list,json,./reporter.ts', workers: 2 }, env, options);
+
+          let timeline;
+          try {
+            timeline = JSON.parse((await fs.promises.readFile(timelinePath, 'utf8')).toString('utf8'));
+          } catch (e) {
+          }
+          return {
+            ...result,
+            timeline
+          };
+        });
       },
     });
 

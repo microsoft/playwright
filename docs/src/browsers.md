@@ -7,8 +7,6 @@ Each version of Playwright needs specific versions of browser binaries to operat
 
 With every release, Playwright updates the versions of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment. It means that every time you update playwright, you might need to re-run the `install` CLI command.
 
-<!-- TOC -->
-
 ## Chromium
 
 For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds.
@@ -127,8 +125,6 @@ organization that uses such policies, it is the easiest to use bundled Chromium 
 you can still opt into stable channels on the bots that are typically free of such restrictions.
 
 ## Installing browsers
-
-### Prerequisites for .NET
 * langs: csharp
 
 To invoke Playwright CLI commands, you need to invoke a PowerShell script:
@@ -221,17 +217,17 @@ playwright install
 ```
 
 ```bash tab=bash-bash lang=java
-PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers mvn test
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```batch tab=bash-batch lang=java
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
-mvn test
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```powershell tab=bash-powershell lang=java
 $env:PLAYWRIGHT_BROWSERS_PATH="$env:USERPROFILE\pw-browsers"
-mvn test
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```bash tab=bash-bash lang=csharp
@@ -315,7 +311,7 @@ Playwright keeps track of packages that need those browsers and will garbage col
 Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers` in their `.bashrc`.
 :::
 
-### Managing browser binaries
+### Hermetic install
 * langs: js
 
 You can opt into the hermetic install and place binaries in the local folder:
@@ -391,17 +387,17 @@ playwright install
 ```
 
 ```bash tab=bash-bash lang=java
-HTTPS_PROXY=https://192.0.2.1 mvn test
+HTTPS_PROXY=https://192.0.2.1 mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```batch tab=bash-batch lang=java
 set HTTPS_PROXY=https://192.0.2.1
-mvn test
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```powershell tab=bash-powershell lang=java
 $env:HTTPS_PROXY="https://192.0.2.1"
-mvn test
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```bash tab=bash-bash lang=csharp
@@ -430,6 +426,67 @@ set NODE_EXTRA_CA_CERTS="C:\certs\root.crt"
 
 ```powershell tab=bash-powershell
 $env:NODE_EXTRA_CA_CERTS="C:\certs\root.crt"
+```
+
+If your network is slow to connect to Playwright browser archive, you can increase the connection timeout in milliseconds with `PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT` environment variable:
+
+```bash tab=bash-bash lang=js
+PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000 npx playwright install
+```
+
+```batch tab=bash-batch lang=js
+set PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000
+npx playwright install
+```
+
+```powershell tab=bash-powershell lang=js
+$env:PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT="120000"
+npx playwright install
+```
+
+```bash tab=bash-bash lang=python
+pip install playwright
+PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000 playwright install
+```
+
+```batch tab=bash-batch lang=python
+set PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000
+pip install playwright
+playwright install
+```
+
+```powershell tab=bash-powershell lang=python
+$env:PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT="120000"
+pip install playwright
+playwright install
+```
+
+```bash tab=bash-bash lang=java
+PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000 mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
+```
+
+```batch tab=bash-batch lang=java
+set PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
+```
+
+```powershell tab=bash-powershell lang=java
+$env:PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT="120000"
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
+```
+
+```bash tab=bash-bash lang=csharp
+PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000 pwsh bin/Debug/netX/playwright.ps1 install
+```
+
+```batch tab=bash-batch lang=csharp
+set PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000
+pwsh bin/Debug/netX/playwright.ps1 install
+```
+
+```powershell tab=bash-powershell lang=csharp
+$env:PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT="120000"
+pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
 ## Download from artifact repository
@@ -486,17 +543,17 @@ playwright install
 ```
 
 ```bash tab=bash-bash lang=java
-PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn test
+PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```batch tab=bash-batch lang=java
 set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
-mvn test
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```powershell tab=bash-powershell lang=java
 $env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
-mvn test
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```bash tab=bash-bash lang=csharp
@@ -568,19 +625,19 @@ playwright install
 ```
 
 ```bash tab=bash-bash lang=java
-PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn test
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1 mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```batch tab=bash-batch lang=java
 set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=203.0.113.3
 set PLAYWRIGHT_DOWNLOAD_HOST=192.0.2.1
-mvn test
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```powershell tab=bash-powershell lang=java
 $env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="203.0.113.3"
 $env:PLAYWRIGHT_DOWNLOAD_HOST="192.0.2.1"
-mvn test
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```bash tab=bash-bash lang=csharp

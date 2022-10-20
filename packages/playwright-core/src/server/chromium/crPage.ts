@@ -30,7 +30,7 @@ import type { PageBinding, PageDelegate } from '../page';
 import { Page, Worker } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
@@ -133,7 +133,7 @@ export class CRPage implements PageDelegate {
         return cb(frameSession);
       return cb(frameSession).catch(e => {
         // Broadcasting a message to the closed iframe shoule be a noop.
-        if (e.message && (e.message.includes('Target closed.') || e.message.includes('Session closed.')))
+        if (e.message && e.message.includes('Target closed'))
           return;
         throw e;
       });

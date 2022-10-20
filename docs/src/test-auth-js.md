@@ -23,10 +23,10 @@ import { test } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
   // Runs before each test and signs in each page.
   await page.goto('https://github.com/login');
-  await page.locator('text=Login').click();
-  await page.locator('input[name="login"]').fill('username');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Submit').click();
+  await page.getByText('Login').click();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Submit').click();
 });
 
 test('first', async ({ page }) => {
@@ -44,10 +44,10 @@ const { test } = require('@playwright/test');
 test.beforeEach(async ({ page }) => {
   // Runs before each test and signs in each page.
   await page.goto('https://github.com/login');
-  await page.locator('text=Login').click();
-  await page.locator('input[name="login"]').fill('username');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Submit').click();
+  await page.getByText('Login').click();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Sign in').click();
 });
 
 test('first', async ({ page }) => {
@@ -77,9 +77,9 @@ module.exports = async config => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.locator('input[name="login"]').fill('user');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Sign in').click();
   // Save signed-in state to 'storageState.json'.
   await page.context().storageState({ path: 'storageState.json' });
   await browser.close();
@@ -94,9 +94,9 @@ async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.locator('input[name="login"]').fill('user');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Sign in').click();
   // Save signed-in state to 'storageState.json'.
   await page.context().storageState({ path: 'storageState.json' });
   await browser.close();
@@ -226,9 +226,9 @@ exports.test = base.extend({
       // Make sure we are not using any other storage state.
       const page = await browser.newPage({ storageState: undefined });
       await page.goto('https://github.com/login');
-      await page.locator('input[name="login"]').fill(users[testInfo.workerIndex].username);
-      await page.locator('input[name="password"]').fill(users[testInfo.workerIndex].password);
-      await page.locator('text=Sign in').click();
+      await page.getByLabel('User Name').fill(users[testInfo.workerIndex].username);
+      await page.getByLabel('Password').fill(users[testInfo.workerIndex].password);
+      await page.getByText('Sign in').click();
       await page.context().storageState({ path: fileName });
       await page.close();
     }
@@ -265,9 +265,9 @@ export const test = baseTest.extend({
       const page = await browser.newPage({ storageState: undefined });
       await page.goto('https://github.com/login');
       // Create a unique username for each worker.
-      await page.locator('input[name="login"]').fill(users[testInfo.workerIndex].username);
-      await page.locator('input[name="password"]').fill(users[testInfo.workerIndex].password);
-      await page.locator('text=Sign in').click();
+      await page.getByLabel('User Name').fill(users[testInfo.workerIndex].username);
+      await page.getByLabel('Password').fill(users[testInfo.workerIndex].password);
+      await page.getByText('Sign in').click();
       await page.context().storageState({ path: fileName });
       await page.close();
     }
@@ -558,9 +558,9 @@ test.beforeAll(async ({ browser }) => {
   // Create page yourself and sign in.
   page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.locator('input[name="user"]').fill('user');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Sign in').click();
 });
 
 test.afterAll(async () => {
@@ -589,9 +589,9 @@ test.beforeAll(async ({ browser }) => {
   // Create page once and sign in.
   page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.locator('input[name="user"]').fill('user');
-  await page.locator('input[name="password"]').fill('password');
-  await page.locator('text=Sign in').click();
+  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByText('Sign in').click();
 });
 
 test.afterAll(async () => {

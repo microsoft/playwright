@@ -18,7 +18,7 @@ import type * as actions from '../recorder/recorderActions';
 import { type InjectedScript } from '../injected/injectedScript';
 import { generateSelector, querySelector } from '../injected/selectorGenerator';
 import type { Point } from '../../common/types';
-import type { UIState } from '../recorder/recorderTypes';
+import type { UIState } from '@recorder/recorderTypes';
 import { Highlight } from '../injected/highlight';
 
 
@@ -94,7 +94,8 @@ class Recorder {
       return;
     }
 
-    const { mode, actionPoint, actionSelector } = state;
+    const { mode, actionPoint, actionSelector, language } = state;
+    this._highlight.setLanguage(language);
     if (mode !== this._mode) {
       this._mode = mode;
       this._clearHighlight();

@@ -23,7 +23,7 @@ import { removeFolders } from '../../packages/playwright-core/lib/utils/fileUtil
 import { baseTest } from './baseTest';
 import type { RemoteServerOptions } from './remoteServer';
 import { RemoteServer } from './remoteServer';
-import type { Log } from '../../packages/playwright-core/src/server/har/har';
+import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
 
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {

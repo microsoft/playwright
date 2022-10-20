@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import type { Browser } from '../browser';
 import { GlobalAPIRequestContext } from '../fetch';
 import type { Playwright } from '../playwright';
@@ -47,7 +47,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit),
       android: new AndroidDispatcher(scope, playwright.android),
       electron: new ElectronDispatcher(scope, playwright.electron),
-      utils: new LocalUtilsDispatcher(scope),
+      utils: new LocalUtilsDispatcher(scope, playwright),
       deviceDescriptors,
       selectors: new SelectorsDispatcher(scope, browserDispatcher?.selectors || playwright.selectors),
       preLaunchedBrowser: browserDispatcher,

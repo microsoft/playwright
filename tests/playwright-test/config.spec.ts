@@ -393,6 +393,41 @@ test('should support ignoreSnapshots config option', async ({ runInlineTest }) =
   expect(result.passed).toBe(1);
 });
 
+test('should validate workers option set to percent', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        workers: '50%'
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async () => {
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should throw when workers option is invalid', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          workers: ''
+        };
+      `,
+    'a.test.ts': `
+        const { test } = pwt;
+        test('pass', async () => {
+        });
+      `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('config.workers must be a number or percentage');
+});
+
 test('should work with undefined values and base', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -444,4 +479,61 @@ test('should have correct types for the config', async ({ runTSC }) => {
   `
   });
   expect(result.exitCode).toBe(0);
+});
+
+test('should throw when project.stage is not a number', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          projects: [
+            { name: 'a', stage: 'foo' },
+          ],
+        };
+    `,
+    'a.test.ts': `
+        const { test } = pwt;
+        test('pass', async () => {});
+      `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`config.projects[0].stage must be an integer`);
+});
+
+test('should throw when project.stage is not an integer', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          projects: [
+            { name: 'a', stage: 3.14 },
+          ],
+        };
+    `,
+    'a.test.ts': `
+        const { test } = pwt;
+        test('pass', async () => {});
+      `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`config.projects[0].stage must be an integer`);
+});
+
+test('should throw when project.run is not an expected string', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          projects: [
+            { name: 'a', run: 'yes' },
+          ],
+        };
+    `,
+    'a.test.ts': `
+        const { test } = pwt;
+        test('pass', async () => {});
+      `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`config.projects[0].run must be one of 'default', 'always'.`);
 });

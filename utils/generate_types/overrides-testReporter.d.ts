@@ -55,6 +55,7 @@ export interface JSONReport {
       repeatEach: number,
       retries: number,
       metadata: Metadata,
+      id: string,
       name: string,
       testDir: string,
       testIgnore: string[],
@@ -91,8 +92,14 @@ export interface JSONReportTest {
   annotations: { type: string, description?: string }[],
   expectedStatus: TestStatus;
   projectName: string;
+  projectId: string;
   results: JSONReportTestResult[];
   status: 'skipped' | 'expected' | 'unexpected' | 'flaky';
+}
+
+export interface JSONReportError {
+  message: string;
+  location?: Location;
 }
 
 export interface JSONReportTestResult {
@@ -100,6 +107,7 @@ export interface JSONReportTestResult {
   status: TestStatus | undefined;
   duration: number;
   error: TestError | undefined;
+  errors: JSONReportError[];
   stdout: JSONReportSTDIOEntry[];
   stderr: JSONReportSTDIOEntry[];
   retry: number;

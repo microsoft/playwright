@@ -26,6 +26,8 @@ import type { CallMetadata } from './instrumentation';
 import { createInstrumentation, SdkObject } from './instrumentation';
 import { debugLogger } from '../common/debugLogger';
 import type { Page } from './page';
+import { DebugController } from './debugController';
+import type { Language } from './isomorphic/locatorGenerators';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -35,10 +37,11 @@ export class Playwright extends SdkObject {
   readonly firefox: Firefox;
   readonly webkit: WebKit;
   readonly options: PlaywrightOptions;
+  readonly debugController: DebugController;
   private _allPages = new Set<Page>();
   private _allBrowsers = new Set<Browser>();
 
-  constructor(sdkLanguage: string, isInternalPlaywright: boolean) {
+  constructor(sdkLanguage: Language, isInternalPlaywright: boolean) {
     super({ attribution: { isInternalPlaywright }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
     this.instrumentation.addListener({
       onBrowserOpen: browser => this._allBrowsers.add(browser),
@@ -60,6 +63,7 @@ export class Playwright extends SdkObject {
     this.electron = new Electron(this.options);
     this.android = new Android(new AdbBackend(), this.options);
     this.selectors = this.options.selectors;
+    this.debugController = new DebugController(this);
   }
 
   async hideHighlight() {
@@ -75,6 +79,6 @@ export class Playwright extends SdkObject {
   }
 }
 
-export function createPlaywright(sdkLanguage: string, isInternalPlaywright: boolean = false) {
+export function createPlaywright(sdkLanguage: Language, isInternalPlaywright: boolean = false) {
   return new Playwright(sdkLanguage, isInternalPlaywright);
 }

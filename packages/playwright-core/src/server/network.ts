@@ -18,7 +18,7 @@ import type * as contexts from './browserContext';
 import type * as pages from './page';
 import type * as frames from './frames';
 import type * as types from './types';
-import type * as channels from '../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { assert } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { SdkObject } from './instrumentation';
@@ -415,6 +415,9 @@ export class Response extends SdkObject {
 
   _requestFinished(responseEndTiming: number) {
     this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
+    // Set start time equal to end when request is served from memory cache.
+    if (this._timing.requestStart === -1)
+      this._timing.requestStart = this._request._responseEndTiming;
     this._finishedPromise.resolve();
   }
 

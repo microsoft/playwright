@@ -20,8 +20,8 @@ import type { APIRequestContext } from 'playwright-core';
 import { expect, playwrightTest } from '../config/browserTest';
 
 export type GlobalFetchFixtures = {
-   request: APIRequestContext;
- };
+  request: APIRequestContext;
+};
 
 const it = playwrightTest.extend<GlobalFetchFixtures>({
   request: async ({ playwright }, use) => {
@@ -204,6 +204,60 @@ it('should store cookie from Set-Cookie header even if it contains equal signs',
     ],
     'origins': []
   });
+});
+
+it('should override cookie from Set-Cookie header', async ({ request, server }) => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', [`a=old; expires=${tomorrow.toUTCString()}`]);
+    res.end();
+  });
+
+  const dayAfterTomorrow = new Date(tomorrow);
+  dayAfterTomorrow.setDate(tomorrow.getDate() + 1);
+  const dayAfterTomorrowInSeconds = Math.floor(dayAfterTomorrow.valueOf() / 1000);
+  server.setRoute('/updatecookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', [`a=new; expires=${dayAfterTomorrow.toUTCString()}`]);
+    res.end();
+  });
+
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  await request.get(`${server.PREFIX}/updatecookie.html`);
+
+  const state = await request.storageState();
+
+  expect(state.cookies).toHaveLength(1);
+  expect(state.cookies[0].name).toBe(`a`);
+  expect(state.cookies[0].value).toBe(`new`);
+  expect(state.cookies[0].expires).toBe(dayAfterTomorrowInSeconds);
+});
+
+it('should override cookie from Set-Cookie header even if it expired', async ({ request, server }) => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', [`a=ok`, `b=ok; expires=${tomorrow.toUTCString()}`]);
+    res.end();
+  });
+
+  server.setRoute('/unsetsetcookie.html', (req, res) => {
+    const pastDateString = new Date(1970, 0, 1, 0, 0, 0, 0).toUTCString();
+    res.setHeader('Set-Cookie', [`a=; expires=${pastDateString}`, `b=; expires=${pastDateString}`]);
+    res.end();
+  });
+
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  await request.get(`${server.PREFIX}/unsetsetcookie.html`);
+
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE)
+  ]);
+
+  expect(serverRequest.headers.cookie).toBeFalsy();
 });
 
 it('should export cookies to storage state', async ({ request, server }) => {

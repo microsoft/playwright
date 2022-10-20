@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import type * as channels from '../../protocol/channels';
+import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
 import { createGuid } from '../../utils';
 import { serializeError } from '../../protocol/serializers';
-import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
+import type { LocalUtilsDispatcher } from './localUtilsDispatcher';
 
-export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeChannel, BrowserTypeDispatcher> implements channels.JsonPipeChannel {
+export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.JsonPipeChannel, LocalUtilsDispatcher> implements channels.JsonPipeChannel {
   _type_JsonPipe = true;
-  constructor(scope: BrowserTypeDispatcher) {
+  constructor(scope: LocalUtilsDispatcher) {
     super(scope, { guid: 'jsonPipe@' + createGuid() }, 'JsonPipe', {});
   }
 
