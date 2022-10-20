@@ -125,32 +125,33 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   if (options.additionalArgs)
     args.push(...options.additionalArgs);
   const cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-test-cache-'));
+  const fullEnv = {
+    ...process.env,
+    PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
+    PWTEST_CACHE_DIR: cacheDir,
+    // BEGIN: Reserved CI
+    CI: undefined,
+    BUILD_URL: undefined,
+    CI_COMMIT_SHA: undefined,
+    CI_JOB_URL: undefined,
+    CI_PROJECT_URL: undefined,
+    GITHUB_REPOSITORY: undefined,
+    GITHUB_RUN_ID: undefined,
+    GITHUB_SERVER_URL: undefined,
+    GITHUB_SHA: undefined,
+    // END: Reserved CI
+    PW_TEST_HTML_REPORT_OPEN: undefined,
+    PW_TEST_REPORTER: undefined,
+    PW_TEST_REPORTER_WS_ENDPOINT: undefined,
+    PW_TEST_SOURCE_TRANSFORM: undefined,
+    PW_TEST_SOURCE_TRANSFORM_SCOPE: undefined,
+    PW_OUT_OF_PROCESS_DRIVER: undefined,
+    NODE_OPTIONS: undefined,
+    ...env,
+  };
   const testProcess = childProcess({
     command: args,
-    env: {
-      ...process.env,
-      PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
-      PWTEST_CACHE_DIR: cacheDir,
-      // BEGIN: Reserved CI
-      CI: undefined,
-      BUILD_URL: undefined,
-      CI_COMMIT_SHA: undefined,
-      CI_JOB_URL: undefined,
-      CI_PROJECT_URL: undefined,
-      GITHUB_REPOSITORY: undefined,
-      GITHUB_RUN_ID: undefined,
-      GITHUB_SERVER_URL: undefined,
-      GITHUB_SHA: undefined,
-      // END: Reserved CI
-      PW_TEST_HTML_REPORT_OPEN: undefined,
-      PW_TEST_REPORTER: undefined,
-      PW_TEST_REPORTER_WS_ENDPOINT: undefined,
-      PW_TEST_SOURCE_TRANSFORM: undefined,
-      PW_TEST_SOURCE_TRANSFORM_SCOPE: undefined,
-      PW_OUT_OF_PROCESS_DRIVER: undefined,
-      NODE_OPTIONS: undefined,
-      ...env,
-    },
+    env: fullEnv,
     cwd: options.cwd ? path.resolve(baseDir, options.cwd) : baseDir,
   });
   let didSendSigint = false;
@@ -180,7 +181,8 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   const interrupted = summary(/(\d+) interrupted/g);
   let report;
   try {
-    report = JSON.parse(fs.readFileSync(reportFile).toString());
+    if (fullEnv.PLAYWRIGHT_JSON_OUTPUT_NAME === reportFile)
+      report = JSON.parse(fs.readFileSync(reportFile).toString());
   } catch (e) {
     testProcess.output += '\n' + e.toString();
   }

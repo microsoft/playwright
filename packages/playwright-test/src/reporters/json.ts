@@ -217,14 +217,14 @@ class JSONReporter implements Reporter {
 }
 
 function outputReport(report: JSONReport, config: FullConfig, outputFile: string | undefined) {
-  const reportString = JSON.stringify(report, undefined, 2);
+  const reportString = JSON.stringify(report);
   if (outputFile) {
     assert(config.configFile || path.isAbsolute(outputFile), 'Expected fully resolved path if not using config file.');
     outputFile = config.configFile ? path.resolve(path.dirname(config.configFile), outputFile) : outputFile;
     fs.mkdirSync(path.dirname(outputFile), { recursive: true });
     fs.writeFileSync(outputFile, reportString);
   } else {
-    console.log(reportString);
+    console.log('\n' + reportString);
   }
 }
 

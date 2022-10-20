@@ -241,6 +241,31 @@ test('should add line in addition to file json without CI', async ({ runInlineTe
   expect(stripAnsi(result.output)).toContain('[1/1] a.test.js:6:7 › one');
   expect(fs.existsSync(testInfo.outputPath('a.json'))).toBeTruthy();
 });
+
+test('should output valid JSON on a single very last line of output', async ({ runInlineTest }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18143' });
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      // Try to mess up stdout!
+      console.log('foo');
+      export default {
+        reporter: 'json'
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('math works!', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  }, { reporter: '' }, {
+    PLAYWRIGHT_JSON_OUTPUT_NAME: undefined,
+  });
+  expect(result.exitCode).toBe(0);
+  const report = JSON.parse(result.output.trim().split('\n').pop());
+  expect(report.suites[0].specs[0].title).toBe('math works!');
+});
+
 test('should have starting time in results', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.js': `
