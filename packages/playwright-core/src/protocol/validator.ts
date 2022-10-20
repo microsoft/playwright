@@ -350,10 +350,6 @@ scheme.DebugControllerSetTrackHierarchyParams = tObject({
   enabled: tBoolean,
 });
 scheme.DebugControllerSetTrackHierarchyResult = tOptional(tObject({}));
-scheme.DebugControllerSetReuseBrowserParams = tObject({
-  enabled: tBoolean,
-});
-scheme.DebugControllerSetReuseBrowserResult = tOptional(tObject({}));
 scheme.DebugControllerResetForReuseParams = tOptional(tObject({}));
 scheme.DebugControllerResetForReuseResult = tOptional(tObject({}));
 scheme.DebugControllerNavigateAllParams = tObject({

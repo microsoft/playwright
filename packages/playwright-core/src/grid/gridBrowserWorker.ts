@@ -23,7 +23,7 @@ function launchGridBrowserWorker(gridURL: string, agentId: string, workerId: str
   const log = debug(`pw:grid:worker:${workerId}`);
   log('created');
   const ws = new WebSocket(gridURL.replace('http://', 'ws://') + `/registerWorker?agentId=${agentId}&workerId=${workerId}`);
-  new PlaywrightConnection(Promise.resolve(), 'auto', ws, false, { enableSocksProxy: true, browserName, launchOptions: {} }, { playwright: null, browser: null }, log, async () => {
+  new PlaywrightConnection(Promise.resolve(), 'launch-browser', ws, { enableSocksProxy: true, browserName, launchOptions: {} }, { playwright: null, browser: null }, log, async () => {
     log('exiting process');
     setTimeout(() => process.exit(0), 30000);
     // Meanwhile, try to gracefully close all browsers.

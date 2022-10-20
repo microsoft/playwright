@@ -55,7 +55,6 @@ export class DebugController extends SdkObject {
   dispose() {
     this.setTrackHierarcy(false);
     this.setAutoCloseAllowed(false);
-    this.setReuseBrowser(false);
   }
 
   setTrackHierarcy(enabled: boolean) {
@@ -70,14 +69,6 @@ export class DebugController extends SdkObject {
       this._playwright.instrumentation.removeListener(this._trackHierarchyListener);
       this._trackHierarchyListener = undefined;
     }
-  }
-
-  reuseBrowser(): boolean {
-    return this._reuseBrowser;
-  }
-
-  setReuseBrowser(enabled: boolean) {
-    this._reuseBrowser = enabled;
   }
 
   async resetForReuse() {

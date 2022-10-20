@@ -21,10 +21,11 @@ import { Browser } from '../server/browser';
 import { serverSideCallMetadata } from '../server/instrumentation';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 import { SocksProxy } from '../common/socksProxy';
-import type { Mode } from './playwrightServer';
 import { assert } from '../utils';
 import type { LaunchOptions } from '../server/types';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
+
+export type ClientType = 'controller' | 'playwright' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser';
 
 type Options = {
   enableSocksProxy: boolean,
@@ -48,13 +49,13 @@ export class PlaywrightConnection {
   private _options: Options;
   private _root: DispatcherScope;
 
-  constructor(lock: Promise<void>, mode: Mode, ws: WebSocket, isDebugControllerClient: boolean, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
+  constructor(lock: Promise<void>, clientType: ClientType, ws: WebSocket, options: Options, preLaunched: PreLaunched, log: (m: string) => void, onClose: () => void) {
     this._ws = ws;
     this._preLaunched = preLaunched;
     this._options = options;
-    if (mode === 'reuse-browser' || mode === 'use-pre-launched-browser')
+    if (clientType === 'reuse-browser' || clientType === 'pre-launched-browser')
       assert(preLaunched.playwright);
-    if (mode === 'use-pre-launched-browser')
+    if (clientType === 'pre-launched-browser')
       assert(preLaunched.browser);
     this._onClose = onClose;
     this._debugLog = log;
@@ -73,19 +74,21 @@ export class PlaywrightConnection {
     ws.on('close', () => this._onDisconnect());
     ws.on('error', error => this._onDisconnect(error));
 
-    if (isDebugControllerClient) {
+    if (clientType === 'controller') {
       this._root = this._initDebugControllerMode();
       return;
     }
 
     this._root = new RootDispatcher(this._dispatcherConnection, async scope => {
-      if (mode === 'reuse-browser')
+      if (clientType === 'reuse-browser')
         return await this._initReuseBrowsersMode(scope);
-      if (mode === 'use-pre-launched-browser')
+      if (clientType === 'pre-launched-browser')
         return await this._initPreLaunchedBrowserMode(scope);
-      if (!options.browserName)
+      if (clientType === 'launch-browser')
+        return await this._initLaunchBrowserMode(scope);
+      if (clientType === 'playwright')
         return await this._initPlaywrightConnectMode(scope);
-      return await this._initLaunchBrowserMode(scope);
+      throw new Error('Unsupported client type: ' + clientType);
     });
   }
 
