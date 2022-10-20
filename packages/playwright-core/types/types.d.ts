@@ -15499,7 +15499,7 @@ export interface FrameLocator {
 /**
  * Keyboard provides an api for managing a virtual keyboard. The high level api is
  * [keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type), which takes raw
- * characters and generates proper keydown, keypress/input, and keyup events on your page.
+ * characters and generates proper `keydown`, `keypress`/`input`, and `keyup` events on your page.
  *
  * For finer control, you can use [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down),
  * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up), and
@@ -15857,7 +15857,7 @@ export const webkit: BrowserType;
  * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
  * complete with `'requestfinished'` event.
  *
- * If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a new
+ * If request gets a 'redirect' response, the request is successfully finished with the `requestfinished` event, and a new
  * request is  issued to a redirected url.
  */
 export interface Request {
