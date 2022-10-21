@@ -83,7 +83,7 @@ class ProtocolHandler {
   constructor(playwright: Playwright) {
     this._controller = playwright.debugController;
     this._controller.setAutoCloseAllowed(true);
-    this._controller.setTrackHierarcy(true);
+    this._controller.setReportStateChanged(true);
     this._controller.on(DebugController.Events.BrowsersChanged, browsers => {
       process.send!({ method: 'browsersChanged', params: { browsers } });
     });
