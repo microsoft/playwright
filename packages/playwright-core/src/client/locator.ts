@@ -50,10 +50,8 @@ export class Locator implements api.Locator {
     this._frame = frame;
     this._selector = selector;
 
-    if (options?.hasText) {
-      const textSelector = 'internal:text=' + escapeForTextSelector(options.hasText, false);
-      this._selector += ` >> internal:has=${JSON.stringify(textSelector)}`;
-    }
+    if (options?.hasText)
+      this._selector += ` >> internal:has-text=${escapeForTextSelector(options.hasText, false)}`;
 
     if (options?.has) {
       const locator = options.has;

@@ -190,7 +190,7 @@ it.describe('selector generator', () => {
     await (context as any)._enableRecorder({ language: 'javascript' });
   });
 
-  it('reverse engineer internal:has locators', async ({ page }) => {
+  it('reverse engineer internal:has-text locators', async ({ page }) => {
     await page.setContent(`
       <div>Hello world</div>
       <a>Hello <span>world</span></a>
