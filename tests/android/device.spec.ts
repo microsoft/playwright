@@ -45,10 +45,13 @@ test('androidDevice.screenshot', async function({ androidDevice }, testInfo) {
 });
 
 test('androidDevice.push', async function({ androidDevice }) {
-  await androidDevice.shell('rm /data/local/tmp/hello-world');
-  await androidDevice.push(Buffer.from('hello world'), '/data/local/tmp/hello-world');
-  const data = await androidDevice.shell('cat /data/local/tmp/hello-world');
-  expect(data).toEqual(Buffer.from('hello world'));
+  try {
+    await androidDevice.push(Buffer.from('hello world'), '/data/local/tmp/hello-world');
+    const data = await androidDevice.shell('cat /data/local/tmp/hello-world');
+    expect(data).toEqual(Buffer.from('hello world'));
+  } finally {
+    await androidDevice.shell('rm /data/local/tmp/hello-world');
+  }
 });
 
 test('androidDevice.fill', async function({ androidDevice }) {

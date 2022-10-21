@@ -116,7 +116,7 @@ export class AndroidDevice extends SdkObject {
   };
 
   private _browserConnections = new Set<AndroidBrowser>();
-  private _android: Android;
+  readonly _android: Android;
   private _isClosed = false;
 
   constructor(android: Android, backend: DeviceBackend, model: string, options: channels.AndroidDevicesOptions) {

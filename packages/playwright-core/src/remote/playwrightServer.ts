@@ -24,6 +24,7 @@ import { PlaywrightConnection } from './playwrightConnection';
 import type { ClientType } from './playwrightConnection';
 import type  { LaunchOptions } from '../server/types';
 import { ManualPromise } from '../utils/manualPromise';
+import type { AndroidDevice } from '../server/android/android';
 
 const debugLog = debug('pw:server');
 
@@ -40,10 +41,11 @@ type ServerOptions = {
   maxConnections: number;
   enableSocksProxy: boolean;
   preLaunchedBrowser?: Browser
+  preLaunchedAndroidDevice?: AndroidDevice
 };
 
 export class PlaywrightServer {
-  private _preLaunchedPlaywright: Playwright | null = null;
+  private _preLaunchedPlaywright: Playwright | undefined;
   private _wsServer: WebSocketServer | undefined;
   private _options: ServerOptions;
 
@@ -51,6 +53,8 @@ export class PlaywrightServer {
     this._options = options;
     if (options.preLaunchedBrowser)
       this._preLaunchedPlaywright = options.preLaunchedBrowser.options.rootSdkObject as Playwright;
+    if (options.preLaunchedAndroidDevice)
+      this._preLaunchedPlaywright = options.preLaunchedAndroidDevice._android._playwrightOptions.rootSdkObject as Playwright;
   }
 
   preLaunchedPlaywright(): Playwright {
@@ -121,7 +125,7 @@ export class PlaywrightServer {
         clientType = 'controller';
       else if (shouldReuseBrowser)
         clientType = 'reuse-browser';
-      else if (this._options.preLaunchedBrowser)
+      else if (this._options.preLaunchedBrowser || this._options.preLaunchedAndroidDevice)
         clientType = 'pre-launched-browser';
       else if (browserName)
         clientType = 'launch-browser';
@@ -130,7 +134,7 @@ export class PlaywrightServer {
           semaphore.aquire(),
           clientType, ws,
           { enableSocksProxy, browserName, launchOptions },
-          { playwright: this._preLaunchedPlaywright, browser: this._options.preLaunchedBrowser || null },
+          { playwright: this._preLaunchedPlaywright, browser: this._options.preLaunchedBrowser, androidDevice: this._options.preLaunchedAndroidDevice },
           log, () => semaphore.release());
       (ws as any)[kConnectionSymbol] = connection;
     });

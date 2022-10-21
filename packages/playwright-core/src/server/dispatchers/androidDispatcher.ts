@@ -28,6 +28,11 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChann
     super(scope, android, 'Android', {});
   }
 
+  static from(scope: RootDispatcher, device: Android): AndroidDispatcher {
+    const result = existingDispatcher<AndroidDispatcher>(device);
+    return result || new AndroidDispatcher(scope, device);
+  }
+
   async devices(params: channels.AndroidDevicesParams): Promise<channels.AndroidDevicesResult> {
     const devices = await this._object.devices(params);
     return {

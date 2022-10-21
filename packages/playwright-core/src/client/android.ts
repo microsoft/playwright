@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import { isString, isRegExp } from '../utils';
+import { isString, isRegExp, monotonicTime } from '../utils';
 import type * as channels from '@protocol/channels';
 import { Events } from './events';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
@@ -26,12 +26,17 @@ import type { Page } from './page';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
+import { Connection } from './connection';
+import { kBrowserClosedError } from '../common/errors';
+import { raceAgainstTimeout } from '../utils/timeoutRunner';
+import type { AndroidServerLauncherImpl } from '../androidServerImpl';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
 type SpeedOptions = { speed?: number };
 
 export class Android extends ChannelOwner<channels.AndroidChannel> implements api.Android {
   readonly _timeoutSettings: TimeoutSettings;
+  _serverLauncher?: AndroidServerLauncherImpl;
 
   static from(android: channels.AndroidChannel): Android {
     return (android as any)._object;
@@ -51,11 +56,76 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
     const { devices } = await this._channel.devices(options);
     return devices.map(d => AndroidDevice.from(d));
   }
+
+  async launchServer(options: types.LaunchServerOptions = {}): Promise<api.BrowserServer> {
+    if (!this._serverLauncher)
+      throw new Error('Launching server is not supported');
+    return this._serverLauncher.launchServer(options);
+  }
+
+  async connect(wsEndpoint: string, params: Parameters<api.Android['connect']>[1] = {}): Promise<api.AndroidDevice> {
+    const logger = params.logger;
+    return await this._wrapApiCall(async () => {
+      const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
+      const headers = { 'x-playwright-browser': 'android', ...params.headers };
+      const localUtils = this._connection.localUtils();
+      const connectParams: channels.LocalUtilsConnectParams = { wsEndpoint, headers, slowMo: params.slowMo, timeout: params.timeout };
+      if ((params as any).__testHookRedirectPortForwarding)
+        connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
+      const { pipe } = await localUtils._channel.connect(connectParams);
+      const closePipe = () => pipe.close().catch(() => {});
+      const connection = new Connection(localUtils);
+      connection.markAsRemote();
+      connection.on('close', closePipe);
+
+      let device: AndroidDevice;
+      let closeError: string | undefined;
+      const onPipeClosed = () => {
+        device?._didClose();
+        connection.close(closeError || kBrowserClosedError);
+      };
+      pipe.on('closed', onPipeClosed);
+      connection.onmessage = message => pipe.send({ message }).catch(onPipeClosed);
+
+      pipe.on('message', ({ message }) => {
+        try {
+          connection!.dispatch(message);
+        } catch (e) {
+          closeError = e.toString();
+          closePipe();
+        }
+      });
+
+      const result = await raceAgainstTimeout(async () => {
+        // For tests.
+        if ((params as any).__testHookBeforeCreateBrowser)
+          await (params as any).__testHookBeforeCreateBrowser();
+
+        const playwright = await connection!.initializePlaywright();
+        if (!playwright._initializer.preConnectedAndroidDevice) {
+          closePipe();
+          throw new Error('Malformed endpoint. Did you use launchServer method?');
+        }
+        device = AndroidDevice.from(playwright._initializer.preConnectedAndroidDevice!);
+        device._logger = logger;
+        device._shouldCloseConnectionOnClose = true;
+        device.on(Events.AndroidDevice.Close, closePipe);
+        return device;
+      }, deadline ? deadline - monotonicTime() : 0);
+      if (!result.timedOut) {
+        return result.result;
+      } else {
+        closePipe();
+        throw new Error(`Timeout ${params.timeout}ms exceeded`);
+      }
+    });
+  }
 }
 
 export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> implements api.AndroidDevice {
   readonly _timeoutSettings: TimeoutSettings;
   private _webViews = new Map<string, AndroidWebView>();
+  _shouldCloseConnectionOnClose = false;
 
   static from(androidDevice: channels.AndroidDeviceChannel): AndroidDevice {
     return (androidDevice as any)._object;
@@ -173,6 +243,10 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   async close() {
     await this._channel.close();
+    this._didClose();
+  }
+
+  _didClose() {
     this.emit(Events.AndroidDevice.Close);
   }
 

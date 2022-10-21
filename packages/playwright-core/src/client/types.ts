@@ -112,6 +112,15 @@ export type LaunchServerOptions = {
   logger?: Logger,
 } & FirefoxUserPrefs;
 
+export type LaunchAndroidServerOptions = {
+  deviceSerialNumber?: string,
+  adbHost?: string,
+  adbPort?: number,
+  omitDriverInstall?: boolean,
+  port?: number,
+  wsPath?: string,
+};
+
 export type SelectorEngine = {
   /**
    * Returns the first element matching given selector in the root's subtree.

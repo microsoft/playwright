@@ -31,26 +31,30 @@ import { APIRequestContextDispatcher } from './networkDispatchers';
 import { SelectorsDispatcher } from './selectorsDispatcher';
 import { ConnectedBrowserDispatcher } from './browserDispatcher';
 import { createGuid } from '../../utils';
+import type { AndroidDevice } from '../android/android';
+import { AndroidDeviceDispatcher } from './androidDispatcher';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightChannel, RootDispatcher> implements channels.PlaywrightChannel {
   _type_Playwright;
   private _browserDispatcher: ConnectedBrowserDispatcher | undefined;
 
-  constructor(scope: RootDispatcher, playwright: Playwright, socksProxy?: SocksProxy, preLaunchedBrowser?: Browser) {
+  constructor(scope: RootDispatcher, playwright: Playwright, socksProxy?: SocksProxy, preLaunchedBrowser?: Browser, prelaunchedAndroidDevice?: AndroidDevice) {
     const descriptors = require('../deviceDescriptors') as types.Devices;
     const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
     const browserDispatcher = preLaunchedBrowser ? new ConnectedBrowserDispatcher(scope, preLaunchedBrowser) : undefined;
+    const prelaunchedAndroidDeviceDispatcher = prelaunchedAndroidDevice ? AndroidDeviceDispatcher.from(AndroidDispatcher.from(scope, prelaunchedAndroidDevice._android), prelaunchedAndroidDevice) : undefined;
     super(scope, playwright, 'Playwright', {
       chromium: new BrowserTypeDispatcher(scope, playwright.chromium),
       firefox: new BrowserTypeDispatcher(scope, playwright.firefox),
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit),
-      android: new AndroidDispatcher(scope, playwright.android),
+      android: AndroidDispatcher.from(scope, playwright.android),
       electron: new ElectronDispatcher(scope, playwright.electron),
       utils: new LocalUtilsDispatcher(scope, playwright),
       deviceDescriptors,
       selectors: new SelectorsDispatcher(scope, browserDispatcher?.selectors || playwright.selectors),
       preLaunchedBrowser: browserDispatcher,
+      preConnectedAndroidDevice: prelaunchedAndroidDeviceDispatcher,
       socksSupport: socksProxy ? new SocksSupportDispatcher(scope, socksProxy) : undefined,
     });
     this._type_Playwright = true;
