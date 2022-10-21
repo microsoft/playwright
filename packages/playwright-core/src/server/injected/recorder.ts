@@ -28,6 +28,7 @@ declare module globalThis {
   let __pw_recorderState: () => Promise<UIState>;
   let __pw_recorderSetSelector: (selector: string) => Promise<void>;
   let __pw_refreshOverlay: () => void;
+  let __pw_stopOverlay: () => void;
 }
 
 class Recorder {
@@ -51,6 +52,10 @@ class Recorder {
     this._refreshListenersIfNeeded();
     injectedScript.onGlobalListenersRemoved.add(() => this._refreshListenersIfNeeded());
 
+    globalThis.__pw_stopOverlay = () => {
+      clearTimeout(this._pollRecorderModeTimer);
+      this._clearHighlight();
+    };
     globalThis.__pw_refreshOverlay = () => {
       this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
     };

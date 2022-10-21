@@ -231,6 +231,14 @@ export class Screenshotter {
   }
 
   async _preparePageForScreenshot(progress: Progress, hideCaret: boolean, disableAnimations: boolean) {
+    // Hide recorder highlight, if any.
+    await Promise.all(this._page.frames().map(async frame => {
+      await frame.nonStallingEvaluateInExistingContext(`
+        if (window.__pw_stopOverlay)
+          window.__pw_stopOverlay();
+      `, false, 'main').catch(() => {});
+    }));
+
     if (!hideCaret && !disableAnimations)
       return;
 
