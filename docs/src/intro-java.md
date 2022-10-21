@@ -114,11 +114,11 @@ playwright.firefox().launch(new BrowserType.LaunchOptions().setHeadless(false).s
 
 ## Running the Example script
 
-By default browsers launched with Playwright run headless, meaning no browser UI will open up when running the script. To change that you can pass `new BrowserType.LaunchOptions().setHeadless(false)` when launching the browser.
-
 ```bash
 mvn compile exec:java -Dexec.mainClass="org.example.App"
 ```
+
+By default browsers launched with Playwright run headless, meaning no browser UI will open up when running the script. To change that you can pass `new BrowserType.LaunchOptions().setHeadless(false)` when launching the browser.
 
 ## What's next
 
