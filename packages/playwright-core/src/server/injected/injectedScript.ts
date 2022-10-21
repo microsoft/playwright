@@ -111,6 +111,7 @@ export class InjectedScript {
     this._engines.set('internal:has', this._createHasEngine());
     this._engines.set('internal:label', this._createInternalLabelEngine());
     this._engines.set('internal:text', this._createTextEngine(true, true));
+    this._engines.set('internal:has-text', this._createInternalHasTextEngine());
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
     this._engines.set('internal:role', RoleEngine);
 
@@ -250,7 +251,7 @@ export class InjectedScript {
 
   private _createTextEngine(shadow: boolean, internal: boolean): SelectorEngine {
     const queryList = (root: SelectorRoot, selector: string): Element[] => {
-      const { matcher, kind } = createTextMatcher(selector, false, internal);
+      const { matcher, kind } = createTextMatcher(selector, internal);
       const result: Element[] = [];
       let lastDidNotMatchSelf: Element | null = null;
 
@@ -261,7 +262,7 @@ export class InjectedScript {
         const matches = elementMatchesText(this._evaluator._cacheText, element, matcher);
         if (matches === 'none')
           lastDidNotMatchSelf = element;
-        if (matches === 'self' || (matches === 'selfAndChildren' && kind === 'strict'))
+        if (matches === 'self' || (matches === 'selfAndChildren' && kind === 'strict' && !internal))
           result.push(element);
       };
 
@@ -280,11 +281,25 @@ export class InjectedScript {
     };
   }
 
+  private _createInternalHasTextEngine(): SelectorEngine {
+    const evaluator = this._evaluator;
+    return {
+      queryAll: (root: SelectorRoot, selector: string): Element[] => {
+        if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
+          return [];
+        const element = root as Element;
+        const text = elementText(evaluator._cacheText, element);
+        const { matcher } = createTextMatcher(selector, true);
+        return matcher(text) ? [element] : [];
+      }
+    };
+  }
+
   private _createInternalLabelEngine(): SelectorEngine {
     const evaluator = this._evaluator;
     return {
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
-        const { matcher } = createTextMatcher(selector, true, true);
+        const { matcher } = createTextMatcher(selector, true);
         const result: Element[] = [];
         const labels = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, 'label') as HTMLLabelElement[];
         for (const label of labels) {
@@ -1302,7 +1317,7 @@ function cssUnquote(s: string): string {
   return r.join('');
 }
 
-function createTextMatcher(selector: string, strictMatchesFullText: boolean, internal: boolean): { matcher: TextMatcher, kind: 'regex' | 'strict' | 'lax' } {
+function createTextMatcher(selector: string, internal: boolean): { matcher: TextMatcher, kind: 'regex' | 'strict' | 'lax' } {
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
     const lastSlash = selector.lastIndexOf('/');
     const matcher: TextMatcher = createRegexTextMatcher(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
@@ -1324,7 +1339,7 @@ function createTextMatcher(selector: string, strictMatchesFullText: boolean, int
     strict = true;
   }
   if (strict)
-    return { matcher: strictMatchesFullText ? createStrictFullTextMatcher(selector) : createStrictTextMatcher(selector), kind: 'strict' };
+    return { matcher: internal ? createStrictFullTextMatcher(selector) : createStrictTextMatcher(selector), kind: 'strict' };
   return { matcher: createLaxTextMatcher(selector), kind: 'lax' };
 }
 

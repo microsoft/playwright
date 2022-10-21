@@ -16,7 +16,6 @@
 
 import { escapeWithQuotes, toSnakeCase, toTitleCase } from '../../utils/isomorphic/stringUtils';
 import { parseAttributeSelector, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
-import type { NestedSelectorBody } from '../isomorphic/selectorParser';
 import type { ParsedSelector } from '../isomorphic/selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp';
@@ -50,6 +49,11 @@ function innerAsLocator(factory: LocatorFactory, selector: string, isFrameLocato
       tokens.push(factory.generateLocator(base, 'text', text, { exact }));
       continue;
     }
+    if (part.name === 'internal:has-text') {
+      const { exact, text } = detectExact(part.body as string);
+      tokens.push(factory.generateLocator(base, 'has-text', text, { exact }));
+      continue;
+    }
     if (part.name === 'internal:label') {
       const { exact, text } = detectExact(part.body as string);
       tokens.push(factory.generateLocator(base, 'label', text, { exact }));
@@ -63,15 +67,6 @@ function innerAsLocator(factory: LocatorFactory, selector: string, isFrameLocato
       tokens.push(factory.generateLocator(base, 'role', attrSelector.name, { attrs }));
       continue;
     }
-    if (part.name === 'internal:has') {
-      const nested = (part.body as NestedSelectorBody).parsed;
-      if (nested?.parts?.[0]?.name === 'internal:text') {
-        const result = detectExact(nested.parts[0].body as string);
-        tokens.push(factory.generateLocator(base, 'has-text', result.text, { exact: result.exact }));
-        continue;
-      }
-    }
-
     if (part.name === 'internal:attr') {
       const attrSelector = parseAttributeSelector(part.body as string, true);
       const { name, value, caseSensitive } = attrSelector.attributes[0];
