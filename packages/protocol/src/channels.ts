@@ -599,7 +599,6 @@ export interface DebugControllerEventTarget {
 export interface DebugControllerChannel extends DebugControllerEventTarget, Channel {
   _type_DebugController: boolean;
   setTrackHierarchy(params: DebugControllerSetTrackHierarchyParams, metadata?: Metadata): Promise<DebugControllerSetTrackHierarchyResult>;
-  setReuseBrowser(params: DebugControllerSetReuseBrowserParams, metadata?: Metadata): Promise<DebugControllerSetReuseBrowserResult>;
   resetForReuse(params?: DebugControllerResetForReuseParams, metadata?: Metadata): Promise<DebugControllerResetForReuseResult>;
   navigateAll(params: DebugControllerNavigateAllParams, metadata?: Metadata): Promise<DebugControllerNavigateAllResult>;
   setRecorderMode(params: DebugControllerSetRecorderModeParams, metadata?: Metadata): Promise<DebugControllerSetRecorderModeResult>;
@@ -629,13 +628,6 @@ export type DebugControllerSetTrackHierarchyOptions = {
 
 };
 export type DebugControllerSetTrackHierarchyResult = void;
-export type DebugControllerSetReuseBrowserParams = {
-  enabled: boolean,
-};
-export type DebugControllerSetReuseBrowserOptions = {
-
-};
-export type DebugControllerSetReuseBrowserResult = void;
 export type DebugControllerResetForReuseParams = {};
 export type DebugControllerResetForReuseOptions = {};
 export type DebugControllerResetForReuseResult = void;

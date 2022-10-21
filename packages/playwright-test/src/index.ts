@@ -72,10 +72,22 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
   channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
   launchOptions: [{}, { scope: 'worker', option: true }],
-  connectOptions: [process.env.PW_TEST_CONNECT_WS_ENDPOINT ? {
-    wsEndpoint: process.env.PW_TEST_CONNECT_WS_ENDPOINT,
-    headers: process.env.PW_TEST_CONNECT_HEADERS ? JSON.parse(process.env.PW_TEST_CONNECT_HEADERS) : undefined,
-  } : undefined, { scope: 'worker', option: true }],
+  connectOptions: [({}, use) => {
+    const wsEndpoint = process.env.PW_TEST_CONNECT_WS_ENDPOINT;
+    if (!wsEndpoint)
+      return use(undefined);
+    let headers = process.env.PW_TEST_CONNECT_HEADERS ? JSON.parse(process.env.PW_TEST_CONNECT_HEADERS) : undefined;
+    if (process.env.PW_TEST_REUSE_CONTEXT) {
+      headers = {
+        ...headers,
+        'x-playwright-reuse-context': '1',
+      };
+    }
+    return use({
+      wsEndpoint,
+      headers
+    });
+  }, { scope: 'worker', option: true }],
   screenshot: ['off', { scope: 'worker', option: true }],
   video: ['off', { scope: 'worker', option: true }],
   trace: ['off', { scope: 'worker', option: true }],

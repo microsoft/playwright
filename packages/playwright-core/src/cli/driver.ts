@@ -49,10 +49,8 @@ export function runDriver() {
   };
 }
 
-export async function runServer(port: number | undefined, path = '/', maxClients = Infinity, enableSocksProxy = true, reuseBrowser = false) {
-  const maxIncomingConnections = maxClients;
-  const maxConcurrentConnections = reuseBrowser ? 1 : maxClients;
-  const server = new PlaywrightServer(reuseBrowser ? 'reuse-browser' : 'auto', { path, maxIncomingConnections, maxConcurrentConnections, enableSocksProxy });
+export async function runServer(port: number | undefined, path = '/', maxConnections = Infinity, enableSocksProxy = true, reuseBrowser = false) {
+  const server = new PlaywrightServer({ path, maxConnections, enableSocksProxy });
   const wsEndpoint = await server.listen(port);
   process.on('exit', () => server.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console
@@ -86,7 +84,6 @@ class ProtocolHandler {
     this._controller = playwright.debugController;
     this._controller.setAutoCloseAllowed(true);
     this._controller.setTrackHierarcy(true);
-    this._controller.setReuseBrowser(true);
     this._controller.on(DebugController.Events.BrowsersChanged, browsers => {
       process.send!({ method: 'browsersChanged', params: { browsers } });
     });

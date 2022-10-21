@@ -664,10 +664,6 @@ DebugController:
       parameters:
         enabled: boolean
 
-    setReuseBrowser:
-      parameters:
-        enabled: boolean
-
     resetForReuse:
 
     navigateAll:

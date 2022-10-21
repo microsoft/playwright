@@ -40,10 +40,6 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
     this._object.setTrackHierarcy(params.enabled);
   }
 
-  async setReuseBrowser(params: channels.DebugControllerSetReuseBrowserParams) {
-    this._object.setReuseBrowser(params.enabled);
-  }
-
   async resetForReuse() {
     await this._object.resetForReuse();
   }
