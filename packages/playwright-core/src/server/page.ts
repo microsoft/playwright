@@ -170,8 +170,11 @@ export class Page extends SdkObject {
   _pageIsError: Error | undefined;
   _video: Artifact | null = null;
   _opener: Page | undefined;
-  private _frameThrottler = new FrameThrottler(10, 200);
   private _isServerSideOnly = false;
+
+  // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
+  // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
+  private _frameThrottler = new FrameThrottler(10, 35, 200);
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext, 'page');
@@ -260,7 +263,7 @@ export class Page extends SdkObject {
   _didClose() {
     this.instrumentation.onPageClose(this);
     this._frameManager.dispose();
-    this._frameThrottler.setEnabled(false);
+    this._frameThrottler.dispose();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
     this.emit(Page.Events.Close);
@@ -270,7 +273,7 @@ export class Page extends SdkObject {
   _didCrash() {
     this.instrumentation.onPageClose(this);
     this._frameManager.dispose();
-    this._frameThrottler.setEnabled(false);
+    this._frameThrottler.dispose();
     this.emit(Page.Events.Crash);
     this._crashedPromise.resolve(new Error('Page crashed'));
   }
@@ -278,7 +281,7 @@ export class Page extends SdkObject {
   _didDisconnect() {
     this.instrumentation.onPageClose(this);
     this._frameManager.dispose();
-    this._frameThrottler.setEnabled(false);
+    this._frameThrottler.dispose();
     assert(!this._disconnected, 'Page disconnected twice');
     this._disconnected = true;
     this._disconnectedPromise.resolve(new Error('Page closed'));
@@ -671,7 +674,7 @@ export class Page extends SdkObject {
 
   setScreencastOptions(options: { width: number, height: number, quality: number } | null) {
     this._delegate.setScreencastOptions(options).catch(e => debugLogger.log('error', e));
-    this._frameThrottler.setEnabled(!!options);
+    this._frameThrottler.setThrottlingEnabled(!!options);
   }
 
   throttleScreencastFrameAck(ack: () => void) {
@@ -846,26 +849,30 @@ function addPageBinding(bindingName: string, needsHandle: boolean, utilityScript
 
 class FrameThrottler {
   private _acks: (() => void)[] = [];
-  private _interval: number;
+  private _defaultInterval: number;
+  private _throttlingInterval: number;
   private _nonThrottledFrames: number;
   private _budget: number;
-  private _intervalId: NodeJS.Timeout | undefined;
+  private _throttlingEnabled = false;
+  private _timeoutId: NodeJS.Timeout | undefined;
 
-  constructor(nonThrottledFrames: number, interval: number) {
+  constructor(nonThrottledFrames: number, defaultInterval: number, throttlingInterval: number) {
     this._nonThrottledFrames = nonThrottledFrames;
     this._budget = nonThrottledFrames;
-    this._interval = interval;
+    this._defaultInterval = defaultInterval;
+    this._throttlingInterval = throttlingInterval;
+    this._tick();
   }
 
-  setEnabled(enabled: boolean) {
-    if (enabled) {
-      if (this._intervalId)
-        clearInterval(this._intervalId);
-      this._intervalId = setInterval(() => this._tick(), this._interval);
-    } else if (this._intervalId) {
-      clearInterval(this._intervalId);
-      this._intervalId = undefined;
+  dispose() {
+    if (this._timeoutId) {
+      clearTimeout(this._timeoutId);
+      this._timeoutId = undefined;
     }
+  }
+
+  setThrottlingEnabled(enabled: boolean) {
+    this._throttlingEnabled = enabled;
   }
 
   recharge() {
@@ -874,26 +881,34 @@ class FrameThrottler {
       ack();
     this._acks = [];
     this._budget = this._nonThrottledFrames;
+    if (this._timeoutId) {
+      clearTimeout(this._timeoutId);
+      this._tick();
+    }
   }
 
   ack(ack: () => void) {
-    // Either not engaged or video is also recording, don't throttle.
-    if (!this._intervalId) {
+    if (!this._timeoutId) {
+      // Already disposed.
       ack();
       return;
     }
-
-    // Do we have enough budget to respond w/o throttling?
-    if (--this._budget > 0) {
-      ack();
-      return;
-    }
-
-    // Schedule.
     this._acks.push(ack);
   }
 
   private _tick() {
-    this._acks.shift()?.();
+    const ack = this._acks.shift();
+    if (ack) {
+      --this._budget;
+      ack();
+    }
+
+    if (this._throttlingEnabled && this._budget <= 0) {
+      // Non-throttled frame budget is exceeded. Next ack will be throttled.
+      this._timeoutId = setTimeout(() => this._tick(), this._throttlingInterval);
+    } else {
+      // Either not throttling, or still under budget. Next ack will be after the default timeout.
+      this._timeoutId = setTimeout(() => this._tick(), this._defaultInterval);
+    }
   }
 }
