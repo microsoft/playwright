@@ -4599,7 +4599,8 @@ interface TestConfigWebServer {
   ignoreHTTPSErrors?: boolean;
 
   /**
-   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
+   * How long to wait for the process to start up and be available in milliseconds. The same timeout is also used to
+   * terminate the process. Defaults to 60000.
    */
   timeout?: number;
 
