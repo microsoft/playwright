@@ -32,6 +32,7 @@ const internalMetadata = serverSideCallMetadata();
 export class DebugController extends SdkObject {
   static Events = {
     BrowsersChanged: 'browsersChanged',
+    StateChanged: 'stateChanged',
     InspectRequested: 'inspectRequested',
     SourcesChanged: 'sourcesChanged',
   };
@@ -53,11 +54,11 @@ export class DebugController extends SdkObject {
   }
 
   dispose() {
-    this.setTrackHierarcy(false);
+    this.setReportStateChanged(false);
     this.setAutoCloseAllowed(false);
   }
 
-  setTrackHierarcy(enabled: boolean) {
+  setReportStateChanged(enabled: boolean) {
     if (enabled && !this._trackHierarchyListener) {
       this._trackHierarchyListener = {
         onPageOpen: () => this._emitSnapshot(),
@@ -154,6 +155,7 @@ export class DebugController extends SdkObject {
 
   private _emitSnapshot() {
     const browsers = [];
+    let pageCount = 0;
     for (const browser of this._playwright.allBrowsers()) {
       const b = {
         contexts: [] as any[]
@@ -166,9 +168,12 @@ export class DebugController extends SdkObject {
         b.contexts.push(c);
         for (const page of context.pages())
           c.pages.push(page.mainFrame().url());
+        pageCount += context.pages().length;
       }
     }
+    // TODO: browsers is deprecated, remove it.
     this.emit(DebugController.Events.BrowsersChanged, browsers);
+    this.emit(DebugController.Events.StateChanged, { pageCount });
   }
 
   private async _allRecorders(): Promise<Recorder[]> {

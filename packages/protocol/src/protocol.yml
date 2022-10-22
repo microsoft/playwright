@@ -660,7 +660,7 @@ DebugController:
   type: interface
 
   commands:
-    setTrackHierarchy:
+    setReportStateChanged:
       parameters:
         enabled: boolean
 
@@ -699,6 +699,11 @@ DebugController:
           type: array
           items: NameValue
 
+    stateChanged:
+      parameters:
+        pageCount: number
+
+    # Deprecated
     browsersChanged:
       parameters:
         browsers:
