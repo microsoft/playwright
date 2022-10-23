@@ -670,4 +670,5 @@ const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
   acceptDownloads: true,
   strictSelectors: false,
   serviceWorkers: 'allow',
+  locale: 'en-US',
 };

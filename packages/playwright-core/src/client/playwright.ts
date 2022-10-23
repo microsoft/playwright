@@ -73,10 +73,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     (global as any)._playwrightInstance = this;
   }
 
-  async _hideHighlight() {
-    await this._channel.hideHighlight();
-  }
-
   _setSelectors(selectors: Selectors) {
     const selectorsOwner = SelectorsOwner.from(this._initializer.selectors);
     this.selectors._removeChannel(selectorsOwner);

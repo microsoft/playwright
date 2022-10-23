@@ -192,7 +192,6 @@ export class Page extends SdkObject {
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
     this.selectors = browserContext.selectors();
-    this.instrumentation.onPageOpen(this);
   }
 
   async initOpener(opener: PageDelegate | null) {
@@ -218,6 +217,7 @@ export class Page extends SdkObject {
     // corresponding Close event after it is reported on the context.
     if (this.isClosed())
       this.emit(Page.Events.Close);
+    this.instrumentation.onPageOpen(this);
   }
 
   initializedOrUndefined() {
@@ -261,25 +261,24 @@ export class Page extends SdkObject {
   }
 
   _didClose() {
-    this.instrumentation.onPageClose(this);
     this._frameManager.dispose();
     this._frameThrottler.dispose();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
     this.emit(Page.Events.Close);
     this._closedPromise.resolve();
+    this.instrumentation.onPageClose(this);
   }
 
   _didCrash() {
-    this.instrumentation.onPageClose(this);
     this._frameManager.dispose();
     this._frameThrottler.dispose();
     this.emit(Page.Events.Crash);
     this._crashedPromise.resolve(new Error('Page crashed'));
+    this.instrumentation.onPageClose(this);
   }
 
   _didDisconnect() {
-    this.instrumentation.onPageClose(this);
     this._frameManager.dispose();
     this._frameThrottler.dispose();
     assert(!this._disconnected, 'Page disconnected twice');

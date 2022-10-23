@@ -519,7 +519,6 @@ export interface PlaywrightEventTarget {
 export interface PlaywrightChannel extends PlaywrightEventTarget, Channel {
   _type_Playwright: boolean;
   newRequest(params: PlaywrightNewRequestParams, metadata?: Metadata): Promise<PlaywrightNewRequestResult>;
-  hideHighlight(params?: PlaywrightHideHighlightParams, metadata?: Metadata): Promise<PlaywrightHideHighlightResult>;
 }
 export type PlaywrightNewRequestParams = {
   baseURL?: string,
@@ -568,9 +567,6 @@ export type PlaywrightNewRequestOptions = {
 export type PlaywrightNewRequestResult = {
   request: APIRequestContextChannel,
 };
-export type PlaywrightHideHighlightParams = {};
-export type PlaywrightHideHighlightOptions = {};
-export type PlaywrightHideHighlightResult = void;
 
 export interface PlaywrightEvents {
 }
@@ -601,10 +597,10 @@ export interface DebugControllerChannel extends DebugControllerEventTarget, Chan
   _type_DebugController: boolean;
   setReportStateChanged(params: DebugControllerSetReportStateChangedParams, metadata?: Metadata): Promise<DebugControllerSetReportStateChangedResult>;
   resetForReuse(params?: DebugControllerResetForReuseParams, metadata?: Metadata): Promise<DebugControllerResetForReuseResult>;
-  navigateAll(params: DebugControllerNavigateAllParams, metadata?: Metadata): Promise<DebugControllerNavigateAllResult>;
+  navigate(params: DebugControllerNavigateParams, metadata?: Metadata): Promise<DebugControllerNavigateResult>;
   setRecorderMode(params: DebugControllerSetRecorderModeParams, metadata?: Metadata): Promise<DebugControllerSetRecorderModeResult>;
-  highlightAll(params: DebugControllerHighlightAllParams, metadata?: Metadata): Promise<DebugControllerHighlightAllResult>;
-  hideHighlightAll(params?: DebugControllerHideHighlightAllParams, metadata?: Metadata): Promise<DebugControllerHideHighlightAllResult>;
+  highlight(params: DebugControllerHighlightParams, metadata?: Metadata): Promise<DebugControllerHighlightResult>;
+  hideHighlight(params?: DebugControllerHideHighlightParams, metadata?: Metadata): Promise<DebugControllerHideHighlightResult>;
   kill(params?: DebugControllerKillParams, metadata?: Metadata): Promise<DebugControllerKillResult>;
   closeAllBrowsers(params?: DebugControllerCloseAllBrowsersParams, metadata?: Metadata): Promise<DebugControllerCloseAllBrowsersResult>;
 }
@@ -635,13 +631,13 @@ export type DebugControllerSetReportStateChangedResult = void;
 export type DebugControllerResetForReuseParams = {};
 export type DebugControllerResetForReuseOptions = {};
 export type DebugControllerResetForReuseResult = void;
-export type DebugControllerNavigateAllParams = {
+export type DebugControllerNavigateParams = {
   url: string,
 };
-export type DebugControllerNavigateAllOptions = {
+export type DebugControllerNavigateOptions = {
 
 };
-export type DebugControllerNavigateAllResult = void;
+export type DebugControllerNavigateResult = void;
 export type DebugControllerSetRecorderModeParams = {
   mode: 'inspecting' | 'recording' | 'none',
   language?: string,
@@ -652,16 +648,16 @@ export type DebugControllerSetRecorderModeOptions = {
   file?: string,
 };
 export type DebugControllerSetRecorderModeResult = void;
-export type DebugControllerHighlightAllParams = {
+export type DebugControllerHighlightParams = {
   selector: string,
 };
-export type DebugControllerHighlightAllOptions = {
+export type DebugControllerHighlightOptions = {
 
 };
-export type DebugControllerHighlightAllResult = void;
-export type DebugControllerHideHighlightAllParams = {};
-export type DebugControllerHideHighlightAllOptions = {};
-export type DebugControllerHideHighlightAllResult = void;
+export type DebugControllerHighlightResult = void;
+export type DebugControllerHideHighlightParams = {};
+export type DebugControllerHideHighlightOptions = {};
+export type DebugControllerHideHighlightResult = void;
 export type DebugControllerKillParams = {};
 export type DebugControllerKillOptions = {};
 export type DebugControllerKillResult = void;

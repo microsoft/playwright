@@ -62,10 +62,6 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
     return { request: APIRequestContextDispatcher.from(this.parentScope(), request) };
   }
 
-  async hideHighlight(params: channels.PlaywrightHideHighlightParams, metadata?: channels.Metadata): Promise<channels.PlaywrightHideHighlightResult> {
-    await this._object.hideHighlight();
-  }
-
   async cleanup() {
     // Cleanup contexts upon disconnect.
     await this._browserDispatcher?.cleanupContexts();

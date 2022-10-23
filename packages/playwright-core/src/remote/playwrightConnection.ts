@@ -142,7 +142,6 @@ export class PlaywrightConnection {
   private _initDebugControllerMode(): DebugControllerDispatcher {
     this._debugLog(`engaged reuse controller mode`);
     const playwright = this._preLaunched.playwright!;
-    this._cleanups.push(() => gracefullyCloseAll());
     // Always create new instance based on the reused Playwright instance.
     return new DebugControllerDispatcher(this._dispatcherConnection, playwright.debugController);
   }
@@ -169,7 +168,7 @@ export class PlaywrightConnection {
     if (!browser) {
       browser = await playwright[(this._options.browserName || 'chromium') as 'chromium'].launch(serverSideCallMetadata(), {
         ...this._options.launchOptions,
-        headless: false,
+        headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS,
       });
       browser.on(Browser.Events.Disconnected, () => {
         // Underlying browser did close for some reason - force disconnect the client.

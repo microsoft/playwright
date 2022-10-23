@@ -316,8 +316,6 @@ scheme.PlaywrightNewRequestParams = tObject({
 scheme.PlaywrightNewRequestResult = tObject({
   request: tChannel(['APIRequestContext']),
 });
-scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
-scheme.PlaywrightHideHighlightResult = tOptional(tObject({}));
 scheme.RecorderSource = tObject({
   isRecorded: tBoolean,
   id: tString,
@@ -355,22 +353,22 @@ scheme.DebugControllerSetReportStateChangedParams = tObject({
 scheme.DebugControllerSetReportStateChangedResult = tOptional(tObject({}));
 scheme.DebugControllerResetForReuseParams = tOptional(tObject({}));
 scheme.DebugControllerResetForReuseResult = tOptional(tObject({}));
-scheme.DebugControllerNavigateAllParams = tObject({
+scheme.DebugControllerNavigateParams = tObject({
   url: tString,
 });
-scheme.DebugControllerNavigateAllResult = tOptional(tObject({}));
+scheme.DebugControllerNavigateResult = tOptional(tObject({}));
 scheme.DebugControllerSetRecorderModeParams = tObject({
   mode: tEnum(['inspecting', 'recording', 'none']),
   language: tOptional(tString),
   file: tOptional(tString),
 });
 scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
-scheme.DebugControllerHighlightAllParams = tObject({
+scheme.DebugControllerHighlightParams = tObject({
   selector: tString,
 });
-scheme.DebugControllerHighlightAllResult = tOptional(tObject({}));
-scheme.DebugControllerHideHighlightAllParams = tOptional(tObject({}));
-scheme.DebugControllerHideHighlightAllResult = tOptional(tObject({}));
+scheme.DebugControllerHighlightResult = tOptional(tObject({}));
+scheme.DebugControllerHideHighlightParams = tOptional(tObject({}));
+scheme.DebugControllerHideHighlightResult = tOptional(tObject({}));
 scheme.DebugControllerKillParams = tOptional(tObject({}));
 scheme.DebugControllerKillResult = tOptional(tObject({}));
 scheme.DebugControllerCloseAllBrowsersParams = tOptional(tObject({}));
