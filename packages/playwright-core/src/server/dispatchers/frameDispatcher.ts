@@ -152,6 +152,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Pa
     await this._frame.focus(metadata, params.selector, params);
   }
 
+  async blur(params: channels.FrameBlurParams, metadata: CallMetadata): Promise<void> {
+    await this._frame.blur(metadata, params.selector, params);
+  }
+
   async textContent(params: channels.FrameTextContentParams, metadata: CallMetadata): Promise<channels.FrameTextContentResult> {
     const value = await this._frame.textContent(metadata, params.selector, params);
     return { value: value === null ? undefined : value };

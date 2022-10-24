@@ -198,6 +198,10 @@ export class Locator implements api.Locator {
     return this._frame.focus(this._selector, { strict: true, ...options });
   }
 
+  async blur(options?: TimeoutOptions): Promise<void> {
+    await this._frame._channel.blur({ selector: this._selector, strict: true, ...options });
+  }
+
   async count(): Promise<number> {
     return this._frame._queryCount(this._selector);
   }

@@ -2134,6 +2134,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, metadata?: Metadata): Promise<FrameEvalOnSelectorAllResult>;
   addScriptTag(params: FrameAddScriptTagParams, metadata?: Metadata): Promise<FrameAddScriptTagResult>;
   addStyleTag(params: FrameAddStyleTagParams, metadata?: Metadata): Promise<FrameAddStyleTagResult>;
+  blur(params: FrameBlurParams, metadata?: Metadata): Promise<FrameBlurResult>;
   check(params: FrameCheckParams, metadata?: Metadata): Promise<FrameCheckResult>;
   click(params: FrameClickParams, metadata?: Metadata): Promise<FrameClickResult>;
   content(params?: FrameContentParams, metadata?: Metadata): Promise<FrameContentResult>;
@@ -2238,6 +2239,16 @@ export type FrameAddStyleTagOptions = {
 export type FrameAddStyleTagResult = {
   element: ElementHandleChannel,
 };
+export type FrameBlurParams = {
+  selector: string,
+  strict?: boolean,
+  timeout?: number,
+};
+export type FrameBlurOptions = {
+  strict?: boolean,
+  timeout?: number,
+};
+export type FrameBlurResult = void;
 export type FrameCheckParams = {
   selector: string,
   strict?: boolean,
