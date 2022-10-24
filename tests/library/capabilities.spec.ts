@@ -140,3 +140,17 @@ it('should not crash on showDirectoryPicker', async ({ page, server, browserName
     new Promise(r => setTimeout(r, 1000))
   ]);
 });
+
+it('should not crash on storage.getDirectory()', async ({ page, server, browserName, browserMajorVersion }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18235' });
+  it.skip(browserName === 'firefox', 'navigator.storage.getDirectory is not a function');
+  await page.goto(server.EMPTY_PAGE);
+  const error = await page.evaluate(async () => {
+    const dir = await navigator.storage.getDirectory();
+    return dir.name;
+  }).catch(e => e);
+  if (browserName === 'webkit')
+    expect(error.message).toContain('UnknownError: The operation failed for an unknown transient reason');
+  else
+    expect(error).toBeFalsy();
+});
