@@ -636,8 +636,6 @@ Playwright:
       returns:
         request: APIRequestContext
 
-    hideHighlight:
-
 RecorderSource:
   type: object
   properties:
@@ -666,7 +664,7 @@ DebugController:
 
     resetForReuse:
 
-    navigateAll:
+    navigate:
       parameters:
         url: string
 
@@ -681,11 +679,11 @@ DebugController:
         language: string?
         file: string?
 
-    highlightAll:
+    highlight:
       parameters:
         selector: string
 
-    hideHighlightAll:
+    hideHighlight:
 
     kill:
 

@@ -44,20 +44,20 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
     await this._object.resetForReuse();
   }
 
-  async navigateAll(params: channels.DebugControllerNavigateAllParams) {
-    await this._object.navigateAll(params.url);
+  async navigate(params: channels.DebugControllerNavigateParams) {
+    await this._object.navigate(params.url);
   }
 
   async setRecorderMode(params: channels.DebugControllerSetRecorderModeParams) {
     await this._object.setRecorderMode(params);
   }
 
-  async highlightAll(params: channels.DebugControllerHighlightAllParams) {
-    await this._object.highlightAll(params.selector);
+  async highlight(params: channels.DebugControllerHighlightParams) {
+    await this._object.highlight(params.selector);
   }
 
-  async hideHighlightAll() {
-    await this._object.hideHighlightAll();
+  async hideHighlight() {
+    await this._object.hideHighlight();
   }
 
   async kill() {

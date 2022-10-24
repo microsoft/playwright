@@ -462,8 +462,6 @@ export class FrameManager {
 
   private _fireInternalFrameNavigation(frame: Frame, event: NavigationEvent) {
     frame.emit(Frame.Events.InternalNavigation, event);
-    if (event.isPublic && !frame.parentFrame())
-      frame.instrumentation.onPageNavigated(frame._page, event.url);
   }
 }
 

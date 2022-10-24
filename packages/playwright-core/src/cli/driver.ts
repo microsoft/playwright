@@ -100,7 +100,7 @@ class ProtocolHandler {
   }
 
   async navigate(params: { url: string }) {
-    await this._controller.navigateAll(params.url);
+    await this._controller.navigate(params.url);
   }
 
   async setMode(params: { mode: Mode, language?: string, file?: string }) {
@@ -112,11 +112,11 @@ class ProtocolHandler {
   }
 
   async highlight(params: { selector: string }) {
-    await this._controller.highlightAll(params.selector);
+    await this._controller.highlight(params.selector);
   }
 
   async hideHighlight() {
-    await this._controller.hideHighlightAll();
+    await this._controller.hideHighlight();
   }
 
   async closeAllBrowsers() {
