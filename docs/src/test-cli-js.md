@@ -107,7 +107,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 
 - `--timeout <number>`: Maximum timeout in milliseconds for each test, defaults to 30 seconds. Learn more about [various timeouts](./test-timeouts.md).
 
-- `--ignore-snapshots` or `-i`: Whether to ignore [snapshots](./test-snapshots.md). Use this when snapshot expectations are known to be different, e.g. running tests on Linux against Windows screenshots.
+- `--ignore-snapshots`: Whether to ignore [snapshots](./test-snapshots.md). Use this when snapshot expectations are known to be different, e.g. running tests on Linux against Windows screenshots.
 
 - `--update-snapshots` or `-u`: Whether to update [snapshots](./test-snapshots.md) with actual results instead of comparing them. Use this when snapshot expectations have changed.
 
