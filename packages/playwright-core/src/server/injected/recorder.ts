@@ -74,7 +74,7 @@ class Recorder {
       addEventListener(document, 'mouseup', event => this._onMouseUp(event as MouseEvent), true),
       addEventListener(document, 'mousemove', event => this._onMouseMove(event as MouseEvent), true),
       addEventListener(document, 'mouseleave', event => this._onMouseLeave(event as MouseEvent), true),
-      addEventListener(document, 'focus', () => this._onFocus(), true),
+      addEventListener(document, 'focus', () => this._onFocus(true), true),
       addEventListener(document, 'scroll', () => {
         this._hoveredModel = null;
         this._highlight.hideActionPoint();
@@ -234,12 +234,13 @@ class Recorder {
     }
   }
 
-  private _onFocus() {
+  private _onFocus(userGesture: boolean) {
     const activeElement = this._deepActiveElement(document);
     const result = activeElement ? generateSelector(this._injectedScript, activeElement, true) : null;
     this._activeModel = result && result.selector ? result : null;
-    if (this._injectedScript.isUnderTest)
-      console.error('Highlight updated for test: ' + (result ? result.selector : null)); // eslint-disable-line no-console
+    if (userGesture)
+      this._hoveredElement = activeElement as HTMLElement | null;
+    this._updateModelForHoveredElement();
   }
 
   private _updateModelForHoveredElement() {
@@ -250,12 +251,10 @@ class Recorder {
     }
     const hoveredElement = this._hoveredElement;
     const { selector, elements } = generateSelector(this._injectedScript, hoveredElement, true);
-    if ((this._hoveredModel && this._hoveredModel.selector === selector) || this._hoveredElement !== hoveredElement)
+    if ((this._hoveredModel && this._hoveredModel.selector === selector))
       return;
     this._hoveredModel = selector ? { selector, elements } : null;
     this._updateHighlight();
-    if (this._injectedScript.isUnderTest)
-      console.error('Highlight updated for test: ' + selector); // eslint-disable-line no-console
   }
 
   private _updateHighlight() {
@@ -392,10 +391,8 @@ class Recorder {
     await globalThis.__pw_recorderPerformAction(action).catch(() => {});
     this._performingAction = false;
 
-    // Action could have changed DOM, update hovered model selectors.
-    this._updateModelForHoveredElement();
     // If that was a keyboard action, it similarly requires new selectors for active model.
-    this._onFocus();
+    this._onFocus(false);
 
     if (this._injectedScript.isUnderTest) {
       // Serialize all to string as we cannot attribute console message to isolated world

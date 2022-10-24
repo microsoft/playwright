@@ -98,8 +98,7 @@ test.describe('cli codegen', () => {
     const errors: any[] = [];
     recorder.page.on('pageerror', e => errors.push(e));
     await recorder.page.evaluate(() => document.querySelector('body').remove());
-    const selector = await recorder.hoverOverElement('html');
-    expect(selector).toBe('html');
+    await page.dispatchEvent('html', 'mousemove', { detail: 1 });
     await recorder.page.close();
     await recorder.waitForOutput('JavaScript', 'page.close();');
     expect(errors.length).toBe(0);
@@ -219,10 +218,10 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`
       <a href="${server.PREFIX}/download" download>Download</a>
     `, server.PREFIX);
-    await recorder.hoverOverElement('text=Download');
+    await recorder.hoverOverElement('a');
     await Promise.all([
       page.waitForEvent('download'),
-      page.click('text=Download')
+      page.click('a')
     ]);
     const sources = await recorder.waitForOutput('JavaScript', 'waitForEvent');
 
@@ -274,7 +273,7 @@ test.describe('cli codegen', () => {
     page.once('dialog', async dialog => {
       await dialog.dismiss();
     });
-    await page.click('text=click me');
+    await page.click('button');
 
     const sources = await recorder.waitForOutput('JavaScript', 'once');
 
@@ -332,8 +331,8 @@ test.describe('cli codegen', () => {
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`<a href="about:blank?foo">link</a>`);
 
-    const selector = await recorder.hoverOverElement('a');
-    expect(selector).toBe('internal:role=link[name=\"link\"]');
+    const locator = await recorder.hoverOverElement('a');
+    expect(locator).toBe(`getByRole('link', { name: 'link' })`);
 
     await page.click('a', { modifiers: [platform === 'darwin' ? 'Meta' : 'Control'] });
     const sources = await recorder.waitForOutput('JavaScript', 'page1');
@@ -502,8 +501,8 @@ test.describe('cli codegen', () => {
     const recorder = await openRecorder();
 
     await recorder.setContentAndWait(`<textarea spellcheck=false id="textarea" name="name" oninput="console.log(textarea.value)"></textarea>`);
-    const selector = await recorder.focusElement('textarea');
-    expect(selector).toBe('textarea[name="name"]');
+    const locator = await recorder.focusElement('textarea');
+    expect(locator).toBe(`locator('textarea[name="name"]')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
