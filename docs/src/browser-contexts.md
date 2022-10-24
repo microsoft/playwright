@@ -7,7 +7,7 @@ Tests written with Playwright execute in isolated clean-slate environments calle
 
 ## What is Test Isolation? 
 
-Test Isolation is when each test is completely isolated from another test meaning each test has it's own local storage, session storage, cookies etc. Playwright achieves this using [BrowserContext]s which are equivalent to incognito-like profiles. They are fast and cheap to create and are completely isolated, even when running in a single browser. Playwright creates a context for each test, and provides a default [Page] in that context.
+Test Isolation is when each test is completely isolated from another test. Every test runs independently from any other test. This means that each test has it's own local storage, session storage, cookies etc. Playwright achieves this using [BrowserContext]s which are equivalent to incognito-like profiles. They are fast and cheap to create and are completely isolated, even when running in a single browser. Playwright creates a context for each test, and provides a default [Page] in that context.
 
 ## Why is Test Isolation Important? 
 
@@ -17,7 +17,7 @@ Test Isolation is when each test is completely isolated from another test meanin
 
 ## Two Ways of Test Isolation
 
-There are two different strategies when it comes to Test Isolation: start from scratch or cleanup in between. The problem with cleaning up in between tests is that it can be easy to forget to clean up. State from one test can leak into the next test which could cause your test to fail and make debugging harder as the problem comes from another test. Starting from scratch means everything is new, so if the test fails you only have to look within that test to debug.
+There are two different strategies when it comes to Test Isolation: start from scratch or cleanup in between. The problem with cleaning up in between tests is that it can be easy to forget to clean up and some things are impossible to clean up such as "visited links". State from one test can leak into the next test which could cause your test to fail and make debugging harder as the problem comes from another test. Starting from scratch means everything is new, so if the test fails you only have to look within that test to debug.
 
 ## How Playwright Achieves Test Isolation
 
