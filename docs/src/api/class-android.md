@@ -82,7 +82,7 @@ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
 * since: v1.28
 - returns: <[AndroidDevice]>
 
-This methods attaches Playwright to an existing Android instance.
+This methods attaches Playwright to an existing Android device.
 Use [`method: Android.launchServer`] to launch a new Android server instance.
 
 ### param: Android.connect.wsEndpoint
@@ -140,7 +140,7 @@ Prevents automatic playwright driver installation on attach. Assumes that the dr
 * langs: js
 - returns: <[BrowserServer]>
 
-Returns the Android browser instance. Launches Playwright Android server that client can connect to. See the following example:
+Launches Playwright Android server that clients can connect to. See the following example:
 
 Server Side:
 
@@ -214,7 +214,7 @@ Port to use for the web socket. Defaults to 0 that picks any available port.
 * since: v1.28
 - `wsPath` <[string]>
 
-Path at which to serve the Browser Server. For security, this defaults to an
+Path at which to serve the Android Server. For security, this defaults to an
 unguessable string.
 
 :::warning

@@ -85,7 +85,7 @@ export class PlaywrightConnection {
       if (clientType === 'reuse-browser')
         return await this._initReuseBrowsersMode(scope);
       if (clientType === 'pre-launched-browser')
-        return await this._initPreLaunchedBrowserMode(scope);
+        return this._preLaunched.browser ? await this._initPreLaunchedBrowserMode(scope) : await this._initPreLaunchedAndroidMode(scope);
       if (clientType === 'launch-browser')
         return await this._initLaunchBrowserMode(scope);
       if (clientType === 'playwright')
@@ -124,28 +124,32 @@ export class PlaywrightConnection {
   }
 
   private async _initPreLaunchedBrowserMode(scope: RootDispatcher) {
-    this._debugLog(`engaged pre-launched mode`);
+    this._debugLog(`engaged pre-launched (browser) mode`);
     const playwright = this._preLaunched.playwright!;
-    const browser = this._preLaunched.browser;
-    if (browser) {
-      browser.on(Browser.Events.Disconnected, () => {
-        // Underlying browser did close for some reason - force disconnect the client.
-        this.close({ code: 1001, reason: 'Browser closed' });
-      });
-    }
-    const androidDevice = this._preLaunched.androidDevice;
-    if (androidDevice) {
-      androidDevice.on(AndroidDevice.Events.Closed, () => {
-        // Underlying browser did close for some reason - force disconnect the client.
-        this.close({ code: 1001, reason: 'Android device disconnected' });
-      });
-    }
-    const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, undefined, browser, androidDevice);
+    const browser = this._preLaunched.browser!;
+    browser.on(Browser.Events.Disconnected, () => {
+      // Underlying browser did close for some reason - force disconnect the client.
+      this.close({ code: 1001, reason: 'Browser closed' });
+    });
+    const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, undefined, browser);
     // In pre-launched mode, keep only the pre-launched browser.
     for (const b of playwright.allBrowsers()) {
       if (b !== browser)
         await b.close();
     }
+    this._cleanups.push(() => playwrightDispatcher.cleanup());
+    return playwrightDispatcher;
+  }
+
+  private async _initPreLaunchedAndroidMode(scope: RootDispatcher) {
+    this._debugLog(`engaged pre-launched (Android) mode`);
+    const playwright = this._preLaunched.playwright!;
+    const androidDevice = this._preLaunched.androidDevice!;
+    androidDevice.on(AndroidDevice.Events.Closed, () => {
+      // Underlying browser did close for some reason - force disconnect the client.
+      this.close({ code: 1001, reason: 'Android device disconnected' });
+    });
+    const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, undefined, undefined, androidDevice);
     this._cleanups.push(() => playwrightDispatcher.cleanup());
     return playwrightDispatcher;
   }

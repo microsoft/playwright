@@ -12182,7 +12182,7 @@ export {};
  */
 export interface Android {
   /**
-   * This methods attaches Playwright to an existing Android instance. Use
+   * This methods attaches Playwright to an existing Android device. Use
    * [android.launchServer([options])](https://playwright.dev/docs/api/class-android#android-launch-server) to launch a new
    * Android server instance.
    * @param wsEndpoint A browser websocket endpoint to connect to.
@@ -12229,8 +12229,7 @@ export interface Android {
   }): Promise<Array<AndroidDevice>>;
 
   /**
-   * Returns the Android browser instance. Launches Playwright Android server that client can connect to. See the following
-   * example:
+   * Launches Playwright Android server that clients can connect to. See the following example:
    *
    * Server Side:
    *
@@ -12299,7 +12298,7 @@ export interface Android {
     port?: number;
 
     /**
-     * Path at which to serve the Browser Server. For security, this defaults to an unguessable string.
+     * Path at which to serve the Android Server. For security, this defaults to an unguessable string.
      *
      * > NOTE: Any process or web page (including those running in Playwright) with knowledge of the `wsPath` can take control
      * of the OS user. For this reason, you should use an unguessable token when using this option.
