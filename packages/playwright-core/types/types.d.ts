@@ -12195,11 +12195,6 @@ export interface Android {
     headers?: { [key: string]: string; };
 
     /**
-     * Logger sink for Playwright logging. Optional.
-     */
-    logger?: Logger;
-
-    /**
      * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
      * Defaults to `0`.
      */
@@ -12234,9 +12229,8 @@ export interface Android {
   }): Promise<Array<AndroidDevice>>;
 
   /**
-   * Returns the Android browser instance.
-   *
-   * Launches android server that client can connect to. Example:
+   * Returns the Android browser instance. Launches Playwright Android server that client can connect to. See the following
+   * example:
    *
    * Server Side:
    *
@@ -12246,7 +12240,6 @@ export interface Android {
    * (async () => {
    *   const browserServer = await _android.launchServer({
    *     // If you have multiple devices connected and want to use a specific one.
-   *     // By default it will use the first one.
    *     deviceSerialNumber: '<deviceSerialNumber>',
    *   });
    *   const wsEndpoint = browserServer.wsEndpoint();
@@ -12290,8 +12283,8 @@ export interface Android {
     adbPort?: number;
 
     /**
-     * Optional device serial number to launch the browser on. If not specified, the browser will be launched on the first
-     * available device.
+     * Optional device serial number to launch the browser on. If not specified, it will throw if multiple devices are
+     * connected.
      */
     deviceSerialNumber?: string;
 

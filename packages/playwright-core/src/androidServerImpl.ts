@@ -21,10 +21,12 @@ import type { BrowserServer } from './client/browserType';
 import { createGuid } from './utils';
 import { createPlaywright } from './server/playwright';
 import { PlaywrightServer } from './remote/playwrightServer';
+import { AndroidDevice } from './server/android/android';
 
 export class AndroidServerLauncherImpl {
   async launchServer(options: LaunchAndroidServerOptions = {}): Promise<BrowserServer> {
     const playwright = createPlaywright('javascript');
+    // 1. Pre-connect to the device
     let devices = await playwright.android.devices({
       host: options.adbHost,
       port: options.adbPort,
@@ -50,14 +52,14 @@ export class AndroidServerLauncherImpl {
       path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
 
     // 2. Start the server
-    const server = new PlaywrightServer({ path, maxConnections: Infinity, enableSocksProxy: false, preLaunchedAndroidDevice: device });
+    const server = new PlaywrightServer({ path, maxConnections: 1, enableSocksProxy: false, preLaunchedAndroidDevice: device });
     const wsEndpoint = await server.listen(options.port);
 
     // 3. Return the BrowserServer interface
     const browserServer = new ws.EventEmitter() as (BrowserServer & WebSocketEventEmitter);
     browserServer.wsEndpoint = () => wsEndpoint;
     browserServer.close = () => device.close();
-    (browserServer as any)._disconnectForTest = () => server.close();
+    browserServer.kill = () => device.close();
     return browserServer;
   }
 }

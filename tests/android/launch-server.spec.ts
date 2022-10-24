@@ -40,6 +40,7 @@ test('android.launchServer should be abe to reconnect to a device', async ({ pla
       await device.close();
     }
   } finally {
+    // Cleanup
     const device = await playwright._android.connect(browserServer.wsEndpoint());
     await device.shell('rm /data/local/tmp/hello-world');
     await device.close();
@@ -54,5 +55,28 @@ test('android.launchServer should throw if there is no device with a specified s
 });
 
 test('android.launchServer should make sure that the connection gets disconnected when the device gets closed', () => {
+
+});
+
+test('android.launchServer should not allow multiple connections', async ({ playwright }) => {
+  const browserServer = await playwright._android.launchServer();
+  try {
+    const deviceConnection1 = await playwright._android.connect(browserServer.wsEndpoint());
+    await expect(playwright._android.connect(browserServer.wsEndpoint())).rejects.toThrow('Cannot connect to device, because another connection is already open');
+  } finally {
+    // Cleanup
+    await browserServer.close();
+  }
+});
+
+test('android.launchServer BrowserServer.close() will disconnect the device', () => {
+
+});
+
+test('android.launchServer BrowserServer.kill() will disconnect the device', () => {
+
+});
+
+test('android.launchServer should terminate WS connection when device gets disconnected', () => {
 
 });

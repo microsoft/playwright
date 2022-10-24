@@ -23,7 +23,7 @@ import { gracefullyCloseAll } from '../utils/processLauncher';
 import { SocksProxy } from '../common/socksProxy';
 import { assert } from '../utils';
 import type { LaunchOptions } from '../server/types';
-import { AndroidDevice } from '../server/android/android';
+import type { AndroidDevice } from '../server/android/android';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
 
 export type ClientType = 'controller' | 'playwright' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser';
