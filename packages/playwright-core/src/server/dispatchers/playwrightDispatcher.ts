@@ -43,12 +43,13 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
     const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
     const browserDispatcher = preLaunchedBrowser ? new ConnectedBrowserDispatcher(scope, preLaunchedBrowser) : undefined;
-    const prelaunchedAndroidDeviceDispatcher = prelaunchedAndroidDevice ? new AndroidDeviceDispatcher(new AndroidDispatcher(scope, prelaunchedAndroidDevice._android), prelaunchedAndroidDevice) : undefined;
+    const android = new AndroidDispatcher(scope, playwright.android);
+    const prelaunchedAndroidDeviceDispatcher = prelaunchedAndroidDevice ? new AndroidDeviceDispatcher(android, prelaunchedAndroidDevice) : undefined;
     super(scope, playwright, 'Playwright', {
       chromium: new BrowserTypeDispatcher(scope, playwright.chromium),
       firefox: new BrowserTypeDispatcher(scope, playwright.firefox),
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit),
-      android: AndroidDispatcher.from(scope, playwright.android),
+      android,
       electron: new ElectronDispatcher(scope, playwright.electron),
       utils: new LocalUtilsDispatcher(scope, playwright),
       deviceDescriptors,
