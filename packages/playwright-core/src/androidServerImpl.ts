@@ -21,7 +21,6 @@ import type { BrowserServer } from './client/browserType';
 import { createGuid } from './utils';
 import { createPlaywright } from './server/playwright';
 import { PlaywrightServer } from './remote/playwrightServer';
-import { AndroidDevice } from './server/android/android';
 
 export class AndroidServerLauncherImpl {
   async launchServer(options: LaunchAndroidServerOptions = {}): Promise<BrowserServer> {

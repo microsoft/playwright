@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import ws from 'ws';
 import { androidTest as test, expect } from './androidTest';
 
 test('android.launchServer should connect to a device', async ({ playwright }) => {
@@ -54,29 +55,60 @@ test('android.launchServer should throw if there is no device with a specified s
   })).rejects.toThrow(`No device with serial number 'does-not-exist'`);
 });
 
-test('android.launchServer should make sure that the connection gets disconnected when the device gets closed', () => {
-
-});
-
 test('android.launchServer should not allow multiple connections', async ({ playwright }) => {
   const browserServer = await playwright._android.launchServer();
   try {
-    const deviceConnection1 = await playwright._android.connect(browserServer.wsEndpoint());
-    await expect(playwright._android.connect(browserServer.wsEndpoint())).rejects.toThrow('Cannot connect to device, because another connection is already open');
+    await playwright._android.connect(browserServer.wsEndpoint());
+    await expect(playwright._android.connect(browserServer.wsEndpoint(), { timeout: 2_000 })).rejects.toThrow('android.connect: Timeout 2000ms exceeded');
   } finally {
-    // Cleanup
     await browserServer.close();
   }
 });
 
-test('android.launchServer BrowserServer.close() will disconnect the device', () => {
-
+test('android.launchServer BrowserServer.close() will disconnect the device', async ({ playwright }) => {
+  const browserServer = await playwright._android.launchServer();
+  try {
+    const device = await playwright._android.connect(browserServer.wsEndpoint());
+    await browserServer.close();
+    await expect(device.shell('echo 123')).rejects.toThrow('androidDevice.shell: Device is closed');
+  } finally {
+    await browserServer.close();
+  }
 });
 
-test('android.launchServer BrowserServer.kill() will disconnect the device', () => {
-
+test('android.launchServer BrowserServer.kill() will disconnect the device',  async ({ playwright }) => {
+  const browserServer = await playwright._android.launchServer();
+  try {
+    const device = await playwright._android.connect(browserServer.wsEndpoint());
+    await browserServer.kill();
+    await expect(device.shell('echo 123')).rejects.toThrow('androidDevice.shell: Device is closed');
+  } finally {
+    await browserServer.close();
+  }
 });
 
-test('android.launchServer should terminate WS connection when device gets disconnected', () => {
-
+test('android.launchServer should terminate WS connection when device gets disconnected', async  ({ playwright }) => {
+  const browserServer = await playwright._android.launchServer();
+  const forwardingServer = new ws.Server({ port: 0, path: '/connect' });
+  let receivedConnection: ws.WebSocket;
+  forwardingServer.on('connection', connection => {
+    receivedConnection = connection;
+    const actualConnection = new ws.WebSocket(browserServer.wsEndpoint());
+    actualConnection.on('message', message => connection.send(message));
+    connection.on('message', message => actualConnection.send(message));
+    connection.on('close', () => actualConnection.close());
+    actualConnection.on('close', () => connection.close());
+  });
+  try {
+    const device = await playwright._android.connect(`ws://localhost:${(forwardingServer.address() as ws.AddressInfo).port}/connect`);
+    expect((await device.shell('echo 123')).toString()).toBe('123\n');
+    expect(receivedConnection.readyState).toBe(ws.OPEN);
+    const waitToClose = new Promise(f => receivedConnection.on('close', f));
+    await device.close();
+    await waitToClose;
+    expect(receivedConnection.readyState).toBe(ws.CLOSED);
+  } finally {
+    await browserServer.close();
+    await new Promise(f => forwardingServer.close(f));
+  }
 });

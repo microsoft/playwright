@@ -37,6 +37,7 @@ class AdbDevice implements DeviceBackend {
   status: string;
   host: string | undefined;
   port: number | undefined;
+  private _closed = false;
 
   constructor(serial: string, status: string, host?: string, port?: number) {
     this.serial = serial;
@@ -49,13 +50,18 @@ class AdbDevice implements DeviceBackend {
   }
 
   async close() {
+    this._closed = true;
   }
 
   runCommand(command: string): Promise<Buffer> {
+    if (this._closed)
+      throw new Error('Device is closed');
     return runCommand(command, this.host, this.port, this.serial);
   }
 
   async open(command: string): Promise<SocketBackend> {
+    if (this._closed)
+      throw new Error('Device is closed');
     const result = await open(command, this.host, this.port, this.serial);
     result.becomeSocket();
     return result;
