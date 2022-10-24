@@ -635,6 +635,10 @@ export function getAriaSelected(element: Element): boolean {
 
 export const kAriaCheckedRoles = ['checkbox', 'menuitemcheckbox', 'option', 'radio', 'switch', 'menuitemradio', 'treeitem'];
 export function getAriaChecked(element: Element): boolean | 'mixed' {
+  const result = getAriaCheckedStrict(element);
+  return result === 'error' ? false : result;
+}
+export function getAriaCheckedStrict(element: Element): boolean | 'mixed' | 'error' {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-checked
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
   if (element.tagName === 'INPUT' && (element as HTMLInputElement).indeterminate)
@@ -647,8 +651,9 @@ export function getAriaChecked(element: Element): boolean | 'mixed' {
       return true;
     if (checked === 'mixed')
       return 'mixed';
+    return false;
   }
-  return false;
+  return 'error';
 }
 
 export const kAriaPressedRoles = ['button'];

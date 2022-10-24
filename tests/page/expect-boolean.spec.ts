@@ -76,6 +76,16 @@ test.describe('toBeChecked', () => {
     expect(error.message).toContain(`expect.toBeChecked with timeout 1000ms`);
     expect(error.message).toContain('waiting for "locator(\'input2\')"');
   });
+
+  test('with role', async ({ page }) => {
+    for (const role of ['checkbox', 'menuitemcheckbox', 'option', 'radio', 'switch', 'menuitemradio', 'treeitem']) {
+      await test.step(`role=${role}`, async () => {
+        await page.setContent(`<div role=${role} aria-checked=true>I am checked</div>`);
+        const locator = page.locator('div');
+        await expect(locator).toBeChecked();
+      });
+    }
+  });
 });
 
 test.describe('toBeEditable', () => {
