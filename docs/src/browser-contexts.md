@@ -12,7 +12,7 @@ Test Isolation is when each test is completely isolated from another test meanin
 ## Why is Test Isolation Important? 
 
 - No failure carry-over. If one test fails it doesn't affect the other test.
-- Easy to debug errors or flakiness. 
+- Easy to debug errors or flakiness, because you can run just a single test as many times as you'd like. 
 - Don't have to think about the order when running in parallel, sharding, etc.
 
 ## Two Ways of Test Isolation
