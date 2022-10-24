@@ -758,6 +758,29 @@ it('should respect timeout after redirects', async function({ context, server })
   expect(error.message).toContain(`Request timed out after 100ms`);
 });
 
+it('should not hang on a brotli encoded Range request', async ({ context, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18190' });
+  it.skip(+process.versions.node.split('.')[0] < 18);
+
+  const encodedRequestPayload = zlib.brotliCompressSync(Buffer.from('A'));
+  server.setRoute('/brotli', (req, res) => {
+    res.writeHead(206, {
+      'Content-Type': 'text/plain',
+      'content-length': 1,
+      'Content-Encoding': 'br',
+      'content-range': `bytes 0-2/${encodedRequestPayload.byteLength}`,
+      'Accept-Ranges': 'bytes',
+    });
+    res.write(encodedRequestPayload.slice(0, 2));
+  });
+
+  await expect(context.request.get(server.PREFIX + '/brotli', {
+    headers: {
+      range: 'bytes=0-2',
+    },
+  })).rejects.toThrow(`failed to decompress 'br' encoding: Error: unexpected end of file`);
+});
+
 it('should dispose', async function({ context, server }) {
   const response = await context.request.get(server.PREFIX + '/simple.json');
   expect(await response.json()).toEqual({ foo: 'bar' });

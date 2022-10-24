@@ -360,6 +360,7 @@ export abstract class APIRequestContext extends SdkObject {
             if (e)
               reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`));
           });
+          body.on('error', e => reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`)));
         } else {
           body.on('error', reject);
         }
