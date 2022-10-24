@@ -560,6 +560,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this._mainFrame.fill(selector, value, options);
   }
 
+  async clear(selector: string, options?: channels.FrameFillOptions) {
+    return this.fill(selector, '', options);
+  }
+
   locator(selector: string, options?: LocatorOptions): Locator {
     return this.mainFrame().locator(selector, options);
   }

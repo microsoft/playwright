@@ -44,6 +44,16 @@ it('should throw on unsupported inputs', async ({ page, server }) => {
   }
 });
 
+it('should throw on unsupported inputs when clear()', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  for (const type of ['button', 'checkbox', 'file', 'image', 'radio', 'reset', 'submit']) {
+    await page.$eval('input', (input, type) => input.setAttribute('type', type), type);
+    let error = null;
+    await page.clear('input').catch(e => error = e);
+    expect(error.message).toContain(`input of type "${type}" cannot be filled`);
+  }
+});
+
 it('should fill different input types', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   for (const type of ['password', 'search', 'tel', 'text', 'url', 'invalid-type']) {
@@ -192,6 +202,13 @@ it('should throw nice error without injected script stack when element is not an
   expect(error.message).toContain('page.fill: Error: Element is not an <input>, <textarea> or [contenteditable] element\n=========================== logs');
 });
 
+it('should throw nice error without injected script stack when element is not an <input> when clear()', async ({ page, server }) => {
+  let error = null;
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.clear('body').catch(e => error = e);
+  expect(error.message).toContain('page.clear: Error: Element is not an <input>, <textarea> or [contenteditable] element\n=========================== logs');
+});
+
 it('should throw if passed a non-string value', async ({ page, server }) => {
   let error = null;
   await page.goto(server.PREFIX + '/input/textarea.html');
@@ -292,11 +309,19 @@ it('should not be able to fill text into the input[type=number]', async ({ page 
   expect(error.message).toContain('Cannot type text into input[type=number]');
 });
 
-it('should be able to clear', async ({ page, server }) => {
+it('should be able to clear using fill()', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.fill('input', 'some value');
   expect(await page.evaluate(() => window['result'])).toBe('some value');
   await page.fill('input', '');
+  expect(await page.evaluate(() => window['result'])).toBe('');
+});
+
+it('should be able to clear using clear()', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.fill('input', 'some value');
+  expect(await page.evaluate(() => window['result'])).toBe('some value');
+  await page.clear('input');
   expect(await page.evaluate(() => window['result'])).toBe('');
 });
 
