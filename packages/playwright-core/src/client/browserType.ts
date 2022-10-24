@@ -188,7 +188,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         const playwright = await connection!.initializePlaywright();
         if (!playwright._initializer.preLaunchedBrowser) {
           closePipe();
-          throw new Error('Malformed endpoint. Did you use launchServer method?');
+          throw new Error('Malformed endpoint. Did you use BrowserType.launchServer method?');
         }
         playwright._setSelectors(this._playwright.selectors);
         browser = Browser.from(playwright._initializer.preLaunchedBrowser!);

@@ -97,7 +97,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
         const playwright = await connection!.initializePlaywright();
         if (!playwright._initializer.preConnectedAndroidDevice) {
           closePipe();
-          throw new Error('Malformed endpoint. Did you use launchServer method?');
+          throw new Error('Malformed endpoint. Did you use Android.launchServer method?');
         }
         device = AndroidDevice.from(playwright._initializer.preConnectedAndroidDevice!);
         device._shouldCloseConnectionOnClose = true;

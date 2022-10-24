@@ -12240,7 +12240,7 @@ export interface Android {
    * (async () => {
    *   const browserServer = await _android.launchServer({
    *     // If you have multiple devices connected and want to use a specific one.
-   *     deviceSerialNumber: '<deviceSerialNumber>',
+   *     // deviceSerialNumber: '<deviceSerialNumber>',
    *   });
    *   const wsEndpoint = browserServer.wsEndpoint();
    *   console.log(wsEndpoint);

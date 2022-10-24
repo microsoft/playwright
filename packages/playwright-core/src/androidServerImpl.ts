@@ -46,9 +46,7 @@ export class AndroidServerLauncherImpl {
 
     const device = devices[0];
 
-    let path = `/${createGuid()}`;
-    if (options.wsPath)
-      path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
+    const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
 
     // 2. Start the server
     const server = new PlaywrightServer({ path, maxConnections: 1, enableSocksProxy: false, preLaunchedAndroidDevice: device });

@@ -70,7 +70,7 @@ test('android.launchServer BrowserServer.close() will disconnect the device', as
   try {
     const device = await playwright._android.connect(browserServer.wsEndpoint());
     await browserServer.close();
-    await expect(device.shell('echo 123')).rejects.toThrow('androidDevice.shell: Device is closed');
+    await expect(device.shell('echo 123')).rejects.toThrow('androidDevice.shell: Browser has been closed');
   } finally {
     await browserServer.close();
   }
@@ -81,7 +81,7 @@ test('android.launchServer BrowserServer.kill() will disconnect the device',  as
   try {
     const device = await playwright._android.connect(browserServer.wsEndpoint());
     await browserServer.kill();
-    await expect(device.shell('echo 123')).rejects.toThrow('androidDevice.shell: Device is closed');
+    await expect(device.shell('echo 123')).rejects.toThrow('androidDevice.shell: Browser has been closed');
   } finally {
     await browserServer.close();
   }
