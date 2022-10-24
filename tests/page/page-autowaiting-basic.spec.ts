@@ -164,7 +164,9 @@ it('should await navigation when assigning location twice', async ({ page, serve
   expect(messages.join('|')).toBe('routeoverride|evaluate');
 });
 
-it('should await navigation when evaluating reload', async ({ page, server }) => {
+it('should await navigation when evaluating reload', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'firefox', 'With fission enabled, navigations in Firefox start asynchronously');
+
   await page.goto(server.EMPTY_PAGE);
   const messages = initServer(server);
   await Promise.all([
