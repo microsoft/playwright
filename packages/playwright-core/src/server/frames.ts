@@ -1633,6 +1633,7 @@ export class Frame extends SdkObject {
     if (this._networkIdleTimer)
       clearTimeout(this._networkIdleTimer);
     this._networkIdleTimer = undefined;
+    this._firedNetworkIdleSelf = false;
   }
 
   async extendInjectedScript(source: string, arg?: any): Promise<js.JSHandle> {
