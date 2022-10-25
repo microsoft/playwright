@@ -141,7 +141,7 @@ it('should not crash on showDirectoryPicker', async ({ page, server, browserName
   ]);
 });
 
-it('should not crash on storage.getDirectory()', async ({ page, server, browserName, browserMajorVersion }) => {
+it('should not crash on storage.getDirectory()', async ({ page, server, browserName, isMac }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18235' });
   it.skip(browserName === 'firefox', 'navigator.storage.getDirectory is not a function');
   await page.goto(server.EMPTY_PAGE);
@@ -149,8 +149,12 @@ it('should not crash on storage.getDirectory()', async ({ page, server, browserN
     const dir = await navigator.storage.getDirectory();
     return dir.name;
   }).catch(e => e);
-  if (browserName === 'webkit')
-    expect(error.message).toContain('UnknownError: The operation failed for an unknown transient reason');
-  else
+  if (browserName === 'webkit') {
+    if (isMac)
+      expect(error.message).toContain('UnknownError: The operation failed for an unknown transient reason');
+    else
+      expect(error.message).toContain('TypeError: undefined is not an object');
+  } else {
     expect(error).toBeFalsy();
+  }
 });
