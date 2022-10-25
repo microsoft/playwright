@@ -7,7 +7,7 @@ title: "VS Code Extension"
 
 Install the Playwright VS Code extension from the extensions panel in VS Code or from the [marketplace](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). With the extension you can easily install Playwright and run tests right from your editor. From the testing panel, see all tests, run individual tests or multiple tests as well as run tests across multiple folders. The extension gives you the option to show browsers when running tests, run tests in debug mode, pick selectors and record a new test as well as set the default profile to run and debug tests on.
 
-<img width="1112" alt="Playwright VS Code extension" src="https://user-images.githubusercontent.com/13063165/197700480-5e1d8c5e-42fc-444e-8cc0-67d6f140e952.png" />
+<img width="1100" alt="VS Code extension for Playwright" src="https://user-images.githubusercontent.com/13063165/197744119-5ed72385-2037-450b-b988-83b2f7554cf1.png" />
 
 ## Install Playwright
 
