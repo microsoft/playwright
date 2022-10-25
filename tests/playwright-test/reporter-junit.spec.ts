@@ -106,6 +106,7 @@ test('should render stdout', async ({ runInlineTest }) => {
         console.log(colors.yellow('Hello world'));
         console.log('Hello again');
         console.error('My error');
+        console.error('\\0'); // null control character
         test.expect("abc").toBe('abcd');
       });
     `,
@@ -116,7 +117,8 @@ test('should render stdout', async ({ runInlineTest }) => {
   expect(testcase['system-out'][0]).toContain('[33mHello world[39m\nHello again');
   expect(testcase['system-out'][0]).not.toContain('u00');
   expect(testcase['system-err'][0]).toContain('My error');
-  expect(testcase['failure'][0]['_']).toContain(`> 11 |         test.expect("abc").toBe('abcd');`);
+  expect(testcase['system-err'][0]).not.toContain('\u0000'); // null control character
+  expect(testcase['failure'][0]['_']).toContain(`> 12 |         test.expect("abc").toBe('abcd');`);
   expect(result.exitCode).toBe(1);
 });
 
