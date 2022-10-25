@@ -1586,6 +1586,14 @@ Frame:
       tracing:
         snapshot: true
 
+    blur:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
+      tracing:
+        snapshot: true
+
     check:
       parameters:
         selector: string

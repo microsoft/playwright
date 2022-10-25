@@ -766,6 +766,15 @@ export class InjectedScript {
     return 'done';
   }
 
+  blurNode(node: Node): 'error:notconnected' | 'done' {
+    if (!node.isConnected)
+      return 'error:notconnected';
+    if (node.nodeType !== Node.ELEMENT_NODE)
+      throw this.createStacklessError('Node is not an element');
+    (node as HTMLElement | SVGElement).blur();
+    return 'done';
+  }
+
   setInputFiles(node: Node, payloads: { name: string, mimeType: string, buffer: string }[]) {
     if (node.nodeType !== Node.ELEMENT_NODE)
       return 'Node is not of type HTMLElement';

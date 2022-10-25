@@ -668,6 +668,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await this.evaluateInUtility(([injected, node, resetSelectionIfNotFocused]) => injected.focusNode(node, resetSelectionIfNotFocused), resetSelectionIfNotFocused);
   }
 
+  async _blur(progress: Progress): Promise<'error:notconnected' | 'done'> {
+    progress.throwIfAborted();  // Avoid action that has side-effects.
+    return await this.evaluateInUtility(([injected, node]) => injected.blurNode(node), {});
+  }
+
   async type(metadata: CallMetadata, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {

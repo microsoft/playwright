@@ -18,6 +18,14 @@ Returns an array of `node.innerText` values for all matching nodes.
 
 Returns an array of `node.textContent` values for all matching nodes.
 
+## async method: Locator.blur
+* since: v1.28
+
+Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) on the element.
+
+### option: Locator.blur.timeout = %%-input-timeout-%%
+* since: v1.28
+
 ## async method: Locator.boundingBox
 * since: v1.14
 - returns: <[null]|[Object]>

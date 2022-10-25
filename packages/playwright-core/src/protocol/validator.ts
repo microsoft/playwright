@@ -1203,6 +1203,12 @@ scheme.FrameAddStyleTagParams = tObject({
 scheme.FrameAddStyleTagResult = tObject({
   element: tChannel(['ElementHandle']),
 });
+scheme.FrameBlurParams = tObject({
+  selector: tString,
+  strict: tOptional(tBoolean),
+  timeout: tOptional(tNumber),
+});
+scheme.FrameBlurResult = tOptional(tObject({}));
 scheme.FrameCheckParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
