@@ -36,7 +36,6 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     const action = actionInContext.action;
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new JavaScriptFormatter(6);
-    formatter.newLine();
 
     if (action.name === 'openPage') {
       formatter.add(`Page ${pageAlias} = context.newPage();`);

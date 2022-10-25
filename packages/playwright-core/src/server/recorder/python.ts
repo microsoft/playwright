@@ -52,7 +52,6 @@ export class PythonLanguageGenerator implements LanguageGenerator {
 
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new PythonFormatter(4);
-    formatter.newLine();
 
     if (action.name === 'openPage') {
       formatter.add(`${pageAlias} = ${this._awaitPrefix}context.new_page()`);
