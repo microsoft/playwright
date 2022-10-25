@@ -137,6 +137,10 @@ export class Backend extends EventEmitter {
     };
   }
 
+  async close() {
+    await this._transport.closeAndWait();
+  }
+
   async resetForReuse() {
     await this._send('resetForReuse');
   }

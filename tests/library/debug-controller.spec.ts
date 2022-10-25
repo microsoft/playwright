@@ -38,13 +38,16 @@ const test = baseTest.extend<Fixtures>({
     const backend = new Backend();
     await backend.connect(wsEndpoint);
     await use(backend);
+    await backend.close();
   },
   connectedBrowser: async ({ playwright, wsEndpoint }, use) => {
+    const oldValue = (playwright.chromium as any)._defaultConnectOptions;
     (playwright.chromium as any)._defaultConnectOptions = {
       wsEndpoint,
       headers: { 'x-playwright-reuse-context': '1', },
     };
     const browser = await playwright.chromium.launch();
+    (playwright.chromium as any)._defaultConnectOptions = oldValue;
     await use(browser as any);
     await browser.close();
   },
