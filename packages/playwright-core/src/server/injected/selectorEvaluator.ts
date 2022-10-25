@@ -206,7 +206,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
       if (css !== undefined) {
         elements = this._queryCSS(context, css);
         const hasScopeClause = funcs.some(f => f.name === 'scope');
-        if (hasScopeClause && context.scope.nodeType === 1 /* Node.ELEMENT_NODE */)
+        if (hasScopeClause && context.scope.nodeType === 1 /* Node.ELEMENT_NODE */ && this._matchesCSS(context.scope as Element, css))
           elements.unshift(context.scope as Element);
       } else {
         firstIndex = funcs.findIndex(func => this._getEngine(func.name).query !== undefined);
