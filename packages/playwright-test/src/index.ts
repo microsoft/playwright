@@ -487,7 +487,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       return context;
     });
 
-    const prependToError = testInfo.status === 'timedOut' ?
+    const prependToError = (testInfo as any)._didTimeout ?
       formatPendingCalls((browser as any)._connection.pendingProtocolCalls()) : '';
 
     let counter = 0;

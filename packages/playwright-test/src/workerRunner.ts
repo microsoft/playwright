@@ -411,7 +411,7 @@ export class WorkerRunner extends EventEmitter {
     let firstAfterHooksError: TestError | undefined;
 
     let afterHooksSlot: TimeSlot | undefined;
-    if (testInfo.status === 'timedOut') {
+    if (testInfo._didTimeout) {
       // A timed-out test gets a full additional timeout to run after hooks.
       afterHooksSlot = { timeout: this._project.timeout, elapsed: 0 };
       testInfo._timeoutManager.setCurrentRunnable({ type: 'afterEach', slot: afterHooksSlot });
@@ -425,12 +425,14 @@ export class WorkerRunner extends EventEmitter {
         const onFailureError = await testInfo._runFn(async () => {
           testInfo._timeoutManager.setCurrentRunnable({ type: 'test', slot: afterHooksSlot });
           for (const [fn, title] of testInfo._onTestFailureImmediateCallbacks) {
+            debugTest(`on-failure callback started`);
             await testInfo._runAsStep(fn, {
               category: 'hook',
               title,
               canHaveChildren: true,
               forceNoParent: false,
             });
+            debugTest(`on-failure callback finished`);
           }
         });
         firstAfterHooksError = firstAfterHooksError || onFailureError;
@@ -456,7 +458,9 @@ export class WorkerRunner extends EventEmitter {
       // Teardown test-scoped fixtures. Attribute to 'test' so that users understand
       // they should probably increate the test timeout to fix this issue.
       testInfo._timeoutManager.setCurrentRunnable({ type: 'test', slot: afterHooksSlot });
+      debugTest(`tearing down test scope started`);
       const testScopeError = await testInfo._runFn(() => this._fixtureRunner.teardownScope('test', testInfo._timeoutManager));
+      debugTest(`tearing down test scope finished`);
       firstAfterHooksError = firstAfterHooksError || testScopeError;
     });
 
@@ -470,6 +474,7 @@ export class WorkerRunner extends EventEmitter {
 
       // Give it more time for the full cleanup.
       await testInfo._runWithTimeout(async () => {
+        debugTest(`running full cleanup after the failure`);
         for (const suite of reversedSuites) {
           const afterAllError = await this._runAfterAllHooksForSuite(suite, testInfo);
           firstAfterHooksError = firstAfterHooksError || afterAllError;
@@ -477,11 +482,15 @@ export class WorkerRunner extends EventEmitter {
         const teardownSlot = { timeout: this._project.timeout, elapsed: 0 };
         // Attribute to 'test' so that users understand they should probably increate the test timeout to fix this issue.
         testInfo._timeoutManager.setCurrentRunnable({ type: 'test', slot: teardownSlot });
+        debugTest(`tearing down test scope started`);
         const testScopeError = await testInfo._runFn(() => this._fixtureRunner.teardownScope('test', testInfo._timeoutManager));
+        debugTest(`tearing down test scope finished`);
         firstAfterHooksError = firstAfterHooksError || testScopeError;
         // Attribute to 'teardown' because worker fixtures are not perceived as a part of a test.
         testInfo._timeoutManager.setCurrentRunnable({ type: 'teardown', slot: teardownSlot });
+        debugTest(`tearing down worker scope started`);
         const workerScopeError = await testInfo._runFn(() => this._fixtureRunner.teardownScope('worker', testInfo._timeoutManager));
+        debugTest(`tearing down worker scope finished`);
         firstAfterHooksError = firstAfterHooksError || workerScopeError;
       });
     }
