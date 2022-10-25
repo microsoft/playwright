@@ -37,7 +37,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
   private _isPyTest: boolean;
 
   constructor(isAsync: boolean, isPyTest: boolean) {
-    this.id = isPyTest ? 'pytest' : (isAsync ? 'python-async' : 'python');
+    this.id = isPyTest ? 'python-pytest' : (isAsync ? 'python-async' : 'python');
     this.name = isPyTest ? 'Pytest' : (isAsync ? 'Library Async' : 'Library');
     this._isAsync = isAsync;
     this._isPyTest = isPyTest;

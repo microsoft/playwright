@@ -70,20 +70,10 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
   expect(events).toEqual([
     {
       selector: 'body',
-      locators: [
-        { name: 'javascript', value: 'locator(\'body\')' },
-        { name: 'python', value: 'locator("body")' },
-        { name: 'java', value: 'locator("body")' },
-        { name: 'csharp', value: 'Locator("body")' }
-      ]
+      locator: 'locator(\'body\')',
     }, {
       selector: 'body',
-      locators: [
-        { name: 'javascript', value: 'locator(\'body\')' },
-        { name: 'python', value: 'locator("body")' },
-        { name: 'java', value: 'locator("body")' },
-        { name: 'csharp', value: 'Locator("body")' }
-      ]
+      locator: 'locator(\'body\')',
     },
   ]);
 
@@ -155,4 +145,30 @@ test('should highlight all', async ({ backend, connectedBrowser }) => {
   await backend.hideHighlight();
   await expect(page1.getByText('locator(\'button\')')).toBeHidden({ timeout: 1000000 });
   await expect(page2.getByText('locator(\'button\')')).toBeHidden();
+});
+
+test('should record', async ({ backend, connectedBrowser }) => {
+  const events = [];
+  backend.on('sourceChanged', event => events.push(event));
+
+  await backend.setMode({ mode: 'recording' });
+
+  const context = await connectedBrowser._newContextForReuse();
+  const [page] = context.pages();
+
+  await page.locator('body').click();
+
+  await expect.poll(() => events[events.length - 1]).toEqual({
+    text: `import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await page.goto('about:blank');
+  await page.locator('body').click();
+});`
+  });
+  const length = events.length;
+  // No events after mode disabled
+  await backend.setMode({ mode: 'none' });
+  await page.locator('body').click();
+  expect(events).toHaveLength(length);
 });

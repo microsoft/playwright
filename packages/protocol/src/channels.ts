@@ -591,11 +591,12 @@ export type DebugControllerInitializer = {};
 export interface DebugControllerEventTarget {
   on(event: 'inspectRequested', callback: (params: DebugControllerInspectRequestedEvent) => void): this;
   on(event: 'stateChanged', callback: (params: DebugControllerStateChangedEvent) => void): this;
+  on(event: 'sourceChanged', callback: (params: DebugControllerSourceChangedEvent) => void): this;
   on(event: 'browsersChanged', callback: (params: DebugControllerBrowsersChangedEvent) => void): this;
-  on(event: 'sourcesChanged', callback: (params: DebugControllerSourcesChangedEvent) => void): this;
 }
 export interface DebugControllerChannel extends DebugControllerEventTarget, Channel {
   _type_DebugController: boolean;
+  initialize(params: DebugControllerInitializeParams, metadata?: Metadata): Promise<DebugControllerInitializeResult>;
   setReportStateChanged(params: DebugControllerSetReportStateChangedParams, metadata?: Metadata): Promise<DebugControllerSetReportStateChangedResult>;
   resetForReuse(params?: DebugControllerResetForReuseParams, metadata?: Metadata): Promise<DebugControllerResetForReuseResult>;
   navigate(params: DebugControllerNavigateParams, metadata?: Metadata): Promise<DebugControllerNavigateResult>;
@@ -607,10 +608,13 @@ export interface DebugControllerChannel extends DebugControllerEventTarget, Chan
 }
 export type DebugControllerInspectRequestedEvent = {
   selector: string,
-  locators: NameValue[],
+  locator: string,
 };
 export type DebugControllerStateChangedEvent = {
   pageCount: number,
+};
+export type DebugControllerSourceChangedEvent = {
+  text: string,
 };
 export type DebugControllerBrowsersChangedEvent = {
   browsers: {
@@ -619,9 +623,14 @@ export type DebugControllerBrowsersChangedEvent = {
     }[],
   }[],
 };
-export type DebugControllerSourcesChangedEvent = {
-  sources: RecorderSource[],
+export type DebugControllerInitializeParams = {
+  codegenId: string,
+  sdkLanguage: 'javascript' | 'python' | 'java' | 'csharp',
 };
+export type DebugControllerInitializeOptions = {
+
+};
+export type DebugControllerInitializeResult = void;
 export type DebugControllerSetReportStateChangedParams = {
   enabled: boolean,
 };
@@ -641,12 +650,9 @@ export type DebugControllerNavigateOptions = {
 export type DebugControllerNavigateResult = void;
 export type DebugControllerSetRecorderModeParams = {
   mode: 'inspecting' | 'recording' | 'none',
-  language?: string,
-  file?: string,
 };
 export type DebugControllerSetRecorderModeOptions = {
-  language?: string,
-  file?: string,
+
 };
 export type DebugControllerSetRecorderModeResult = void;
 export type DebugControllerHighlightParams = {
@@ -669,8 +675,8 @@ export type DebugControllerCloseAllBrowsersResult = void;
 export interface DebugControllerEvents {
   'inspectRequested': DebugControllerInspectRequestedEvent;
   'stateChanged': DebugControllerStateChangedEvent;
+  'sourceChanged': DebugControllerSourceChangedEvent;
   'browsersChanged': DebugControllerBrowsersChangedEvent;
-  'sourcesChanged': DebugControllerSourcesChangedEvent;
 }
 
 // ----------- SocksSupport -----------

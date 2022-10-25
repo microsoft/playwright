@@ -333,10 +333,13 @@ scheme.RecorderSource = tObject({
 scheme.DebugControllerInitializer = tOptional(tObject({}));
 scheme.DebugControllerInspectRequestedEvent = tObject({
   selector: tString,
-  locators: tArray(tType('NameValue')),
+  locator: tString,
 });
 scheme.DebugControllerStateChangedEvent = tObject({
   pageCount: tNumber,
+});
+scheme.DebugControllerSourceChangedEvent = tObject({
+  text: tString,
 });
 scheme.DebugControllerBrowsersChangedEvent = tObject({
   browsers: tArray(tObject({
@@ -345,9 +348,11 @@ scheme.DebugControllerBrowsersChangedEvent = tObject({
     })),
   })),
 });
-scheme.DebugControllerSourcesChangedEvent = tObject({
-  sources: tArray(tType('RecorderSource')),
+scheme.DebugControllerInitializeParams = tObject({
+  codegenId: tString,
+  sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),
 });
+scheme.DebugControllerInitializeResult = tOptional(tObject({}));
 scheme.DebugControllerSetReportStateChangedParams = tObject({
   enabled: tBoolean,
 });
@@ -360,8 +365,6 @@ scheme.DebugControllerNavigateParams = tObject({
 scheme.DebugControllerNavigateResult = tOptional(tObject({}));
 scheme.DebugControllerSetRecorderModeParams = tObject({
   mode: tEnum(['inspecting', 'recording', 'none']),
-  language: tOptional(tString),
-  file: tOptional(tString),
 });
 scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
 scheme.DebugControllerHighlightParams = tObject({

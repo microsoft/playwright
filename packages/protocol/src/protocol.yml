@@ -660,6 +660,17 @@ DebugController:
   type: interface
 
   commands:
+    initialize:
+      parameters:
+        codegenId: string
+        sdkLanguage:
+          type: enum
+          literals:
+          - javascript
+          - python
+          - java
+          - csharp
+
     setReportStateChanged:
       parameters:
         enabled: boolean
@@ -678,8 +689,6 @@ DebugController:
             - inspecting
             - recording
             - none
-        language: string?
-        file: string?
 
     highlight:
       parameters:
@@ -695,13 +704,15 @@ DebugController:
     inspectRequested:
       parameters:
         selector: string
-        locators:
-          type: array
-          items: NameValue
+        locator: string
 
     stateChanged:
       parameters:
         pageCount: number
+
+    sourceChanged:
+      parameters:
+        text: string
 
     # Deprecated
     browsersChanged:
@@ -719,12 +730,6 @@ DebugController:
                     pages:
                       type: array
                       items: string
-
-    sourcesChanged:
-      parameters:
-        sources:
-          type: array
-          items: RecorderSource
 
 SocksSupport:
   type: interface
