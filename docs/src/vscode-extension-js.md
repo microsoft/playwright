@@ -13,7 +13,7 @@ Install the Playwright VS Code extension from the extensions panel in VS Code or
 
 If you don't have the Playwright NPM package installed in your project, or if you are starting with a new testing project, the "Install Playwright" action from the command panel will help you get started.
 
-<img width="1107" alt="Install Playwright" src="https://user-images.githubusercontent.com/13063165/197703672-74a0ddd3-ed5a-400d-a04f-4f10603590b0.png" />
+<img width="1100" alt="Install Playwright" src="https://user-images.githubusercontent.com/13063165/197744677-edd437e7-15b2-4e3a-8c6b-e728cfe7b65c.png" />
 
 Pick the browsers you'd like to install and configure. These can be changed later in the `playwright.config.js` file. Choose to add a GitHub Action so that tests run on Continuous Integration on every pull request or push.
 
