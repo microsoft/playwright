@@ -125,6 +125,10 @@ export class Locator implements api.Locator {
     return this._frame.fill(this._selector, value, { strict: true, ...options });
   }
 
+  async clear(options: channels.ElementHandleFillOptions = {}): Promise<void> {
+    return this.fill('', options);
+  }
+
   async _highlight() {
     // VS Code extension uses this one, keep it for now.
     return this._frame._highlight(this._selector);

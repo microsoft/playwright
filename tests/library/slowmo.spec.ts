@@ -138,6 +138,9 @@ it.describe('slowMo', () => {
   it('Frame SlowMo fill', async ({ page, server, toImpl }) => {
     await checkFrameSlowMo(toImpl, page, server, frame => frame.fill('.fill', 'foo'));
   });
+  it('Frame SlowMo clear', async ({ page, server, toImpl }) => {
+    await checkFrameSlowMo(toImpl, page, server, frame => frame.clear('.fill'));
+  });
   it('Frame SlowMo focus', async ({ page, server, toImpl }) => {
     await checkFrameSlowMo(toImpl, page, server, frame => frame.focus('button'));
   });

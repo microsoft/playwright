@@ -224,6 +224,25 @@ When all steps combined have not finished during the specified [`option: timeout
 * since: v1.8
 - returns: <[Array]<[Frame]>>
 
+## async method: Frame.clear
+* since: v1.28
+
+This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, focuses the element, clears it and triggers an `input` event after clearing.
+
+If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be cleared instead.
+
+### param: Frame.clear.selector = %%-input-selector-%%
+* since: v1.28
+
+### option: Frame.clear.force = %%-input-force-%%
+* since: v1.28
+### option: Frame.clear.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.28
+### option: Frame.clear.strict = %%-input-strict-%%
+* since: v1.28
+### option: Frame.clear.timeout = %%-input-timeout-%%
+* since: v1.28
+
 ## async method: Frame.click
 * since: v1.8
 

@@ -142,6 +142,10 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     return await this._elementChannel.fill({ value, ...options });
   }
 
+  async clear(options: channels.ElementHandleFillOptions = {}): Promise<void> {
+    return this.fill('', options);
+  }
+
   async selectText(options: channels.ElementHandleSelectTextOptions = {}): Promise<void> {
     await this._elementChannel.selectText(options);
   }

@@ -103,6 +103,20 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.check.trial = %%-input-trial-%%
 * since: v1.14
 
+## async method: Locator.clear
+* since: v1.28
+
+This method waits for [actionability](../actionability.md) checks, focuses the element, clears it and triggers an `input` event after clearing.
+
+If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be cleared instead.
+
+### option: Locator.clear.force = %%-input-force-%%
+* since: v1.28
+### option: Locator.clear.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.28
+### option: Locator.clear.timeout = %%-input-timeout-%%
+* since: v1.28
+
 ## async method: Locator.click
 * since: v1.14
 

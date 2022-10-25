@@ -293,6 +293,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return await this._channel.fill({ selector, value, ...options });
   }
 
+  async clear(selector: string, options: channels.FrameFillOptions = {}) {
+    return this.fill(selector, '', options);
+  }
+
   async _highlight(selector: string) {
     return await this._channel.highlight({ selector });
   }
