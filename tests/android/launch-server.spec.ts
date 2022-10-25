@@ -32,7 +32,11 @@ test('android.launchServer should handle close event correctly', async ({ playwr
   const device = await playwright._android.connect(browserServer.wsEndpoint());
   device.on('close', () => receivedEvents.push('device'));
   browserServer.on('close', () => receivedEvents.push('browserServer'));
-  await device.close();
+  {
+    const waitForDeviceClose = new Promise(f => device.on('close', f));
+    await device.close();
+    await waitForDeviceClose;
+  }
   expect(receivedEvents).toEqual(['device']);
   await device.close();
   expect(receivedEvents).toEqual(['device']);
