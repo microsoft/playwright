@@ -25,7 +25,6 @@ test('should print the correct imports and context options', async ({ runCLI }) 
   const expectedResult = `import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
-
 });`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
@@ -93,7 +92,7 @@ test('test', async ({ page }) => {`;
 
 test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const cli = runCLI(['--target=test', `--save-har=${harFileName}`]);
+  const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`]);
   const expectedResult = `
   recordHar: {
     mode: 'minimal',

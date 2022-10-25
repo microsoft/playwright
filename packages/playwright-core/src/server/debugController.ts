@@ -25,7 +25,6 @@ import { Recorder } from './recorder';
 import { EmptyRecorderApp } from './recorder/recorderApp';
 import { asLocator } from './isomorphic/locatorGenerators';
 import type { Language } from './isomorphic/locatorGenerators';
-import type { NameValue } from '../common/types';
 
 const internalMetadata = serverSideCallMetadata();
 
@@ -34,7 +33,7 @@ export class DebugController extends SdkObject {
     BrowsersChanged: 'browsersChanged',
     StateChanged: 'stateChanged',
     InspectRequested: 'inspectRequested',
-    SourcesChanged: 'sourcesChanged',
+    SourceChanged: 'sourceChanged',
   };
 
   private _autoCloseTimer: NodeJS.Timeout | undefined;
@@ -42,10 +41,17 @@ export class DebugController extends SdkObject {
   private _autoCloseAllowed = false;
   private _trackHierarchyListener: InstrumentationListener | undefined;
   private _playwright: Playwright;
+  _sdkLanguage: Language = 'javascript';
+  _codegenId: string = 'playwright-test';
 
   constructor(playwright: Playwright) {
     super({ attribution: { isInternalPlaywright: true }, instrumentation: createInstrumentation() } as any, undefined, 'DebugController');
     this._playwright = playwright;
+  }
+
+  initialize(codegenId: string, sdkLanguage: Language) {
+    this._codegenId = codegenId;
+    this._sdkLanguage = sdkLanguage;
   }
 
   setAutoCloseAllowed(allowed: boolean) {
@@ -83,7 +89,8 @@ export class DebugController extends SdkObject {
       await p.mainFrame().goto(internalMetadata, url);
   }
 
-  async setRecorderMode(params: { mode: Mode, language?: string, file?: string }) {
+  async setRecorderMode(params: { mode: Mode, file?: string }) {
+    // TODO: |file| is only used in the legacy mode.
     await this._closeBrowsersWithoutPages();
 
     if (params.mode === 'none') {
@@ -108,7 +115,7 @@ export class DebugController extends SdkObject {
     for (const recorder of await this._allRecorders()) {
       recorder.setHighlightedSelector('');
       if (params.mode === 'recording')
-        recorder.setOutput(params.language!, params.file);
+        recorder.setOutput(this._codegenId, params.file);
       recorder.setMode(params.mode);
     }
     this.setAutoCloseEnabled(true);
@@ -216,11 +223,12 @@ class InspectingRecorderApp extends EmptyRecorderApp {
   }
 
   override async setSelector(selector: string): Promise<void> {
-    const locators: NameValue[] = ['javascript', 'python', 'java', 'csharp'].map(l => ({ name: l, value: asLocator(l as Language, selector) }));
-    this._debugController.emit(DebugController.Events.InspectRequested, { selector, locators });
+    const locator: string = asLocator(this._debugController._sdkLanguage, selector);
+    this._debugController.emit(DebugController.Events.InspectRequested, { selector, locator });
   }
 
   override async setSources(sources: Source[]): Promise<void> {
-    this._debugController.emit(DebugController.Events.SourcesChanged, sources);
+    const source = sources.find(s => s.id === this._debugController._codegenId);
+    this._debugController.emit(DebugController.Events.SourceChanged, source?.text || '');
   }
 }

@@ -58,21 +58,21 @@ function determineUserAgent(): string {
     additionalTokens.push('CI/1');
   const serializedTokens = additionalTokens.length ? ' ' + additionalTokens.join(' ') : '';
 
-  const { langName, langVersion } = getClientLanguage();
-  return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${langName}/${langVersion}${serializedTokens}`;
+  const { embedderName, embedderVersion } = getEmbedderName();
+  return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${embedderName}/${embedderVersion}${serializedTokens}`;
 }
 
-export function getClientLanguage(): { langName: string, langVersion: string } {
-  let langName = 'unknown';
-  let langVersion = 'unknown';
+export function getEmbedderName(): { embedderName: string, embedderVersion: string } {
+  let embedderName = 'unknown';
+  let embedderVersion = 'unknown';
   if (!process.env.PW_LANG_NAME) {
-    langName = 'node';
-    langVersion = process.version.substring(1).split('.').slice(0, 2).join('.');
+    embedderName = 'node';
+    embedderVersion = process.version.substring(1).split('.').slice(0, 2).join('.');
   } else if (['node', 'python', 'java', 'csharp'].includes(process.env.PW_LANG_NAME)) {
-    langName = process.env.PW_LANG_NAME;
-    langVersion = process.env.PW_LANG_NAME_VERSION ?? 'unknown';
+    embedderName = process.env.PW_LANG_NAME;
+    embedderVersion = process.env.PW_LANG_NAME_VERSION ?? 'unknown';
   }
-  return { langName, langVersion };
+  return { embedderName, embedderVersion };
 }
 
 export function getPlaywrightVersion(majorMinorOnly = false): string {

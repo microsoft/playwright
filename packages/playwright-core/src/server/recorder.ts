@@ -214,8 +214,8 @@ export class Recorder implements InstrumentationListener {
     this._refreshOverlay();
   }
 
-  setOutput(language: string, outputFile: string | undefined) {
-    this._contextRecorder.setOutput(language, outputFile);
+  setOutput(codegenId: string, outputFile: string | undefined) {
+    this._contextRecorder.setOutput(codegenId, outputFile);
   }
 
   private _refreshOverlay() {
@@ -367,7 +367,7 @@ class ContextRecorder extends EventEmitter {
     this._generator = generator;
   }
 
-  setOutput(language: string, outputFile: string | undefined) {
+  setOutput(codegenId: string, outputFile?: string) {
     const languages = new Set([
       new JavaLanguageGenerator(),
       new JavaScriptLanguageGenerator(/* isPlaywrightTest */false),
@@ -379,10 +379,9 @@ class ContextRecorder extends EventEmitter {
       new CSharpLanguageGenerator('nunit'),
       new CSharpLanguageGenerator('library'),
     ]);
-    const primaryLanguage = [...languages].find(l => l.id === language);
+    const primaryLanguage = [...languages].find(l => l.id === codegenId);
     if (!primaryLanguage)
-      throw new Error(`\n===============================\nUnsupported language: '${language}'\n===============================\n`);
-
+      throw new Error(`\n===============================\nUnsupported language: '${codegenId}'\n===============================\n`);
     languages.delete(primaryLanguage);
     this._orderedLanguages = [primaryLanguage, ...languages];
     this._throttledOutputFile = outputFile ? new ThrottledFile(outputFile) : null;

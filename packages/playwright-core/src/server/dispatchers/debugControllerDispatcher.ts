@@ -28,12 +28,16 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
     this._object.on(DebugController.Events.StateChanged, params => {
       this._dispatchEvent('stateChanged', params);
     });
-    this._object.on(DebugController.Events.InspectRequested, ({ selector, locators }) => {
-      this._dispatchEvent('inspectRequested', { selector, locators });
+    this._object.on(DebugController.Events.InspectRequested, ({ selector, locator }) => {
+      this._dispatchEvent('inspectRequested', { selector, locator });
     });
-    this._object.on(DebugController.Events.SourcesChanged, sources => {
-      this._dispatchEvent('sourcesChanged', { sources });
+    this._object.on(DebugController.Events.SourceChanged, text => {
+      this._dispatchEvent('sourceChanged', { text });
     });
+  }
+
+  async initialize(params: channels.DebugControllerInitializeParams) {
+    this._object.initialize(params.codegenId, params.sdkLanguage);
   }
 
   async setReportStateChanged(params: channels.DebugControllerSetReportStateChangedParams) {
