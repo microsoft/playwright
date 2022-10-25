@@ -7,13 +7,10 @@ When installing Playwright you are given the option to add a [GitHub Actions](ht
 
 **What you will learn:**
 
-- [How to use GitHub Actions to run your tests](#github-actions)
-- [How to create a repo and push to GitHub](#create-a-repo-and-push-to-github)
-- [How to open the workflows](#opening-the-workflows)
-- [How to view the test logs](#viewing-test-logs)
-- [How to download the report from GitHub](#downloading-the-html-report)
-- [How to view the report](#viewing-the-html-report)
-- [How to view the trace](#viewing-the-trace)
+- How to use GitHub Actions to run your tests
+- How to open the workflows and view the test logs
+- How to download the report from GitHub
+- How to view the report and trace of your test
 
 ## GitHub Actions
 
@@ -71,8 +68,6 @@ Clicking on the workflow run will show you the all the actions that GitHub perfo
 
 <img width="839" alt="Viewing Test Logs" src="https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png"/>
 
-
-
 ## HTML Report
 
 The HTML Report shows you a full report of your tests. You can filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests.
@@ -106,7 +101,6 @@ Once you have served the report using `npx playwright show-report`, click on the
 To learn more about traces check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 
 To learn more about running tests on CI check out our detailed guide on [Continuous Integration](/ci.md).
-
 
 ## What's Next
 

@@ -7,11 +7,9 @@ Playwright Trace Viewer is a GUI tool that lets you explore recorded Playwright 
 
 **You will learn**
 
-- [How to record a trace](/trace-viewer-intro.md#recording-a-trace)
-- [How to open the HTML report](/trace-viewer-intro.md#opening-the-html-report)
-- [How to open and view the trace](/trace-viewer-intro.md#viewing-the-trace)
-
-
+- How to record a trace of your test
+- How to open the HTML report
+- How to open and view the trace
 ## Recording a Trace
 
 By default the [playwright.config](/test-configuration.md#record-test-trace) file will contain the configuration needed to create a `trace.zip` file for each test. Traces are setup to run `on-first-retry` meaning they will be run on the first retry of a failed test. Also `retries` are set to 2 when running on CI and 0 locally. This means the traces will be recorded on the first retry of a failed test but not on the first run and not on the second retry.
@@ -81,3 +79,7 @@ View traces of your test by clicking through each action or hovering using the t
 <img width="1386" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/189136442-4fc6d7a3-6f0c-4a5f-9d36-2650018b018a.png" />
 
 To learn more about traces check out our detailed guide on [Trace Viewer](/trace-viewer.md).
+
+## What's Next
+
+- [Set up tests to run on CI with GitHub Actions](./ci-intro.md)

@@ -7,11 +7,10 @@ Playwright assertions are created specifically for the dynamic web. Checks are a
 
 **You will learn**
 
-- [How the example test works](/writing-tests.md#the-example-test)
-- [How to use assertions](/writing-tests.md#assertions)
-- [How to use locators](/writing-tests.md#locators)
-- [How tests run in isolation](/writing-tests.md#test-isolation)
-- [How to use test hooks](/writing-tests.md#using-test-hooks)
+- How to use assertions
+- How to use locators
+- How tests run in isolation
+- How to use test hooks
 
 ## The Example Test
 

@@ -7,15 +7,19 @@ You can run a single test, a set of tests or all tests. Tests can be run on one 
 
 **You will learn**
 
-- [How to run tests from the command line](/running-tests.md#command-line)
-- [How to debug tests](/running-tests.md#debugging-tests)
-- [How to open the HTML test reporter](/running-tests.md#test-reports)
+- How to run tests using the VS Code Extension and from the CLI
+- How to debug tests in VS Code and from the CLI
+- How to open the HTML test reporter
 
-:::note
-For a better debugging experience check out the [VS Code Extension](./getting-started-vscode.md) for Playwright where you can run tests, add breakpoints and debug your tests right from the VS Code editor.
-:::
+## Running Tests VS Code
 
-## Command Line
+From the testing panel in VS Code you can run a single test or all tests in your file or tests folder. To see tests run in a browser window select the "Show browser" option from the testing panel.
+
+<img width="1279" alt="Running tests using vs code" src="https://user-images.githubusercontent.com/13063165/197797647-8ecbecac-759c-4545-a549-01f58f506448.png" />
+
+Check out the [VS Code Extension](./getting-started-vscode.md) doc to learn more.
+
+## Running Tests CLI
 
 - Running all tests
 
@@ -59,9 +63,17 @@ For a better debugging experience check out the [VS Code Extension](./getting-st
   npx playwright test landing-page.ts --project=chromium
   ```
 
-## Debugging Tests
+## Debugging Tests VS Code
 
-Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. using `console.log` or inside your IDE or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md). Playwright comes with the [Playwright Inspector](./debug.md#playwright-inspector) which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./selectors.md).
+Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. using `console.log` or inside your IDE or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md). Right click and start breakpoint debugging. Set a breakpoint and hover over a value. When your cursor is on a Playwright action or a locator, the corresponding element (or elements) are highlighted in the browser.
+
+<img width="1149" alt="setting debug test mode" src="https://user-images.githubusercontent.com/13063165/197715919-98f32957-2ae1-478b-9588-d93cc4548c67.png" />
+
+Check out the [VS Code Extension](./getting-started-vscode.md) doc to learn more.
+
+## Debugging Tests CLI
+
+When debugging tests using the CLI Playwright comes with the [Playwright Inspector](./debug.md#playwright-inspector) which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./selectors.md).
 
 
 - Debugging all tests:
@@ -82,7 +94,7 @@ Since Playwright runs in Node.js, you can debug it with your debugger of choice 
   npx playwright test example.spec.ts:42 --debug
   ```
 
-<img width="1188" alt="Debugging Tests" src="https://user-images.githubusercontent.com/13063165/181847661-7ec5fb6c-7c21-4db0-9931-a593b21bafc2.png" />
+<img width="1350" alt="Debugging Tests with the Playwright inspector" src="https://user-images.githubusercontent.com/13063165/197800771-50cb2f39-2345-4153-b4ed-de9fe63ba29b.png" />
 
 
 Check out our [debugging guide](./debug.md) to learn more about the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
@@ -93,6 +105,7 @@ Check out our [debugging guide](./debug.md) to learn more about the [Playwright 
 The [HTML Reporter](././test-reporters.md#html-reporter) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. By default, the HTML report is opened automatically if some of the tests failed.
 
 ```bash
+npx playwright test
 npx playwright show-report
 ```
 
