@@ -96,11 +96,8 @@ from playwright.async_api import Playwright, async_playwright, expect
 async def run(playwright: Playwright) -> None:
     browser = await playwright.${browserName}.launch(${launchOptions(channel)})
     context = await browser.new_context()
-
     page = await context.new_page()
-
     await page.goto("${emptyHTML}")
-
     await page.close()
 
     # ---------------------
