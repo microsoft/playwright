@@ -597,6 +597,8 @@ Playwright:
     selectors: Selectors
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
+    # Only present when connecting remotely via Android.connect() method.
+    preConnectedAndroidDevice: AndroidDevice?
     # Only present when socks proxy is supported.
     socksSupport: SocksSupport?
 

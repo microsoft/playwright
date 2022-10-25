@@ -145,7 +145,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     const logger = params.logger;
     return await this._wrapApiCall(async () => {
       const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
-      let browser: Browser;
       const headers = { 'x-playwright-browser': this.name(), ...params.headers };
       const localUtils = this._connection.localUtils();
       const connectParams: channels.LocalUtilsConnectParams = { wsEndpoint, headers, slowMo: params.slowMo, timeout: params.timeout };
@@ -153,10 +152,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
       const { pipe } = await localUtils._channel.connect(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
-      const connection = new Connection(this._connection.localUtils());
+      const connection = new Connection(localUtils);
       connection.markAsRemote();
       connection.on('close', closePipe);
 
+      let browser: Browser;
       let closeError: string | undefined;
       const onPipeClosed = () => {
         // Emulate all pages, contexts and the browser closing upon disconnect.
@@ -188,7 +188,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         const playwright = await connection!.initializePlaywright();
         if (!playwright._initializer.preLaunchedBrowser) {
           closePipe();
-          throw new Error('Malformed endpoint. Did you use launchServer method?');
+          throw new Error('Malformed endpoint. Did you use BrowserType.launchServer method?');
         }
         playwright._setSelectors(this._playwright.selectors);
         browser = Browser.from(playwright._initializer.preLaunchedBrowser!);

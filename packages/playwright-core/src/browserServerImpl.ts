@@ -49,9 +49,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       throw e;
     });
 
-    let path = `/${createGuid()}`;
-    if (options.wsPath)
-      path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
+    const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
 
     // 2. Start the server
     const server = new PlaywrightServer({ path, maxConnections: Infinity, enableSocksProxy: false, preLaunchedBrowser: browser });

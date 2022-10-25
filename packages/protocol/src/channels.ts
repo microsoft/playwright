@@ -512,6 +512,7 @@ export type PlaywrightInitializer = {
   }[],
   selectors: SelectorsChannel,
   preLaunchedBrowser?: BrowserChannel,
+  preConnectedAndroidDevice?: AndroidDeviceChannel,
   socksSupport?: SocksSupportChannel,
 };
 export interface PlaywrightEventTarget {

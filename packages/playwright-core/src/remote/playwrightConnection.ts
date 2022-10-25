@@ -23,6 +23,7 @@ import { gracefullyCloseAll } from '../utils/processLauncher';
 import { SocksProxy } from '../common/socksProxy';
 import { assert } from '../utils';
 import type { LaunchOptions } from '../server/types';
+import { AndroidDevice } from '../server/android/android';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
 
 export type ClientType = 'controller' | 'playwright' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser';
@@ -34,8 +35,9 @@ type Options = {
 };
 
 type PreLaunched = {
-  playwright: Playwright | null;
-  browser: Browser | null;
+  playwright?: Playwright | undefined;
+  browser?: Browser | undefined;
+  androidDevice?: AndroidDevice | undefined;
 };
 
 export class PlaywrightConnection {
@@ -56,7 +58,7 @@ export class PlaywrightConnection {
     if (clientType === 'reuse-browser' || clientType === 'pre-launched-browser')
       assert(preLaunched.playwright);
     if (clientType === 'pre-launched-browser')
-      assert(preLaunched.browser);
+      assert(preLaunched.browser || preLaunched.androidDevice);
     this._onClose = onClose;
     this._debugLog = log;
 
@@ -72,7 +74,7 @@ export class PlaywrightConnection {
     });
 
     ws.on('close', () => this._onDisconnect());
-    ws.on('error', error => this._onDisconnect(error));
+    ws.on('error', (error: Error) => this._onDisconnect(error));
 
     if (clientType === 'controller') {
       this._root = this._initDebugControllerMode();
@@ -83,7 +85,7 @@ export class PlaywrightConnection {
       if (clientType === 'reuse-browser')
         return await this._initReuseBrowsersMode(scope);
       if (clientType === 'pre-launched-browser')
-        return await this._initPreLaunchedBrowserMode(scope);
+        return this._preLaunched.browser ? await this._initPreLaunchedBrowserMode(scope) : await this._initPreLaunchedAndroidMode(scope);
       if (clientType === 'launch-browser')
         return await this._initLaunchBrowserMode(scope);
       if (clientType === 'playwright')
@@ -122,7 +124,7 @@ export class PlaywrightConnection {
   }
 
   private async _initPreLaunchedBrowserMode(scope: RootDispatcher) {
-    this._debugLog(`engaged pre-launched mode`);
+    this._debugLog(`engaged pre-launched (browser) mode`);
     const playwright = this._preLaunched.playwright!;
     const browser = this._preLaunched.browser!;
     browser.on(Browser.Events.Disconnected, () => {
@@ -135,6 +137,19 @@ export class PlaywrightConnection {
       if (b !== browser)
         await b.close();
     }
+    this._cleanups.push(() => playwrightDispatcher.cleanup());
+    return playwrightDispatcher;
+  }
+
+  private async _initPreLaunchedAndroidMode(scope: RootDispatcher) {
+    this._debugLog(`engaged pre-launched (Android) mode`);
+    const playwright = this._preLaunched.playwright!;
+    const androidDevice = this._preLaunched.androidDevice!;
+    androidDevice.on(AndroidDevice.Events.Closed, () => {
+      // Underlying browser did close for some reason - force disconnect the client.
+      this.close({ code: 1001, reason: 'Android device disconnected' });
+    });
+    const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, undefined, undefined, androidDevice);
     this._cleanups.push(() => playwrightDispatcher.cleanup());
     return playwrightDispatcher;
   }

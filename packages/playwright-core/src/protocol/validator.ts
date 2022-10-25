@@ -289,6 +289,7 @@ scheme.PlaywrightInitializer = tObject({
   })),
   selectors: tChannel(['Selectors']),
   preLaunchedBrowser: tOptional(tChannel(['Browser'])),
+  preConnectedAndroidDevice: tOptional(tChannel(['AndroidDevice'])),
   socksSupport: tOptional(tChannel(['SocksSupport'])),
 });
 scheme.PlaywrightNewRequestParams = tObject({

@@ -78,6 +78,39 @@ Note that since you don't need Playwright to install web browsers when testing A
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
 ```
 
+## async method: Android.connect
+* since: v1.28
+- returns: <[AndroidDevice]>
+
+This methods attaches Playwright to an existing Android device.
+Use [`method: Android.launchServer`] to launch a new Android server instance.
+
+### param: Android.connect.wsEndpoint
+* since: v1.28
+- `wsEndpoint` <[string]>
+
+A browser websocket endpoint to connect to.
+
+### option: Android.connect.headers
+* since: v1.28
+- `headers` <[Object]<[string], [string]>>
+
+Additional HTTP headers to be sent with web socket connect request. Optional.
+
+### option: Android.connect.slowMo
+* since: v1.28
+- `slowMo` <[float]>
+
+Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
+can see what is going on. Defaults to `0`.
+
+### option: Android.connect.timeout
+* since: v1.28
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the connection to be established. Defaults to
+`30000` (30 seconds). Pass `0` to disable timeout.
+
 ## async method: Android.devices
 * since: v1.9
 - returns: <[Array]<[AndroidDevice]>>
@@ -101,6 +134,94 @@ Optional port to establish ADB server connection. Default to `5037`.
 - `omitDriverInstall` <[boolean]>
 
 Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+
+## async method: Android.launchServer
+* since: v1.28
+* langs: js
+- returns: <[BrowserServer]>
+
+Launches Playwright Android server that clients can connect to. See the following example:
+
+Server Side:
+
+```js
+const { _android } = require('playwright');
+
+(async () => {
+  const browserServer = await _android.launchServer({
+    // If you have multiple devices connected and want to use a specific one.
+    // deviceSerialNumber: '<deviceSerialNumber>',
+  });
+  const wsEndpoint = browserServer.wsEndpoint();
+  console.log(wsEndpoint);
+})();
+```
+
+Client Side:
+
+```js
+const { _android } = require('playwright');
+
+(async () => {
+  const device = await _android.connect('<wsEndpoint>');
+
+  console.log(device.model());
+  console.log(device.serial());
+  await device.shell('am force-stop com.android.chrome');
+  const context = await device.launchBrowser();
+
+  const page = await context.newPage();
+  await page.goto('https://webkit.org/');
+  console.log(await page.evaluate(() => window.location.href));
+  await page.screenshot({ path: 'page-chrome-1.png' });
+
+  await context.close();
+})();
+```
+
+### option: Android.launchServer.adbHost
+* since: v1.28
+- `adbHost` <[string]>
+
+Optional host to establish ADB server connection. Default to `127.0.0.1`.
+
+### option: Android.launchServer.adbPort
+* since: v1.28
+- `adbPort` <[int]>
+
+Optional port to establish ADB server connection. Default to `5037`.
+
+### option: Android.launchServer.omitDriverInstall
+* since: v1.28
+- `omitDriverInstall` <[boolean]>
+
+Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+
+### option: Android.launchServer.deviceSerialNumber
+* since: v1.28
+- `deviceSerialNumber` <[string]>
+
+Optional device serial number to launch the browser on. If not specified, it will
+throw if multiple devices are connected.
+
+### option: Android.launchServer.port
+* since: v1.28
+- `port` <[int]>
+
+Port to use for the web socket. Defaults to 0 that picks any available port.
+
+### option: Android.launchServer.wsPath
+* since: v1.28
+- `wsPath` <[string]>
+
+Path at which to serve the Android Server. For security, this defaults to an
+unguessable string.
+
+:::warning
+Any process or web page (including those running in Playwright) with knowledge
+of the `wsPath` can take control of the OS user. For this reason, you should
+use an unguessable token when using this option.
+:::
 
 ## method: Android.setDefaultTimeout
 * since: v1.9

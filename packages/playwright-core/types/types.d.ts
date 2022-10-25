@@ -12182,6 +12182,32 @@ export {};
  */
 export interface Android {
   /**
+   * This methods attaches Playwright to an existing Android device. Use
+   * [android.launchServer([options])](https://playwright.dev/docs/api/class-android#android-launch-server) to launch a new
+   * Android server instance.
+   * @param wsEndpoint A browser websocket endpoint to connect to.
+   * @param options
+   */
+  connect(wsEndpoint: string, options?: {
+    /**
+     * Additional HTTP headers to be sent with web socket connect request. Optional.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+     * Defaults to `0`.
+     */
+    slowMo?: number;
+
+    /**
+     * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to
+     * disable timeout.
+     */
+    timeout?: number;
+  }): Promise<AndroidDevice>;
+
+  /**
    * Returns the list of detected Android devices.
    * @param options
    */
@@ -12201,6 +12227,84 @@ export interface Android {
      */
     port?: number;
   }): Promise<Array<AndroidDevice>>;
+
+  /**
+   * Launches Playwright Android server that clients can connect to. See the following example:
+   *
+   * Server Side:
+   *
+   * ```js
+   * const { _android } = require('playwright');
+   *
+   * (async () => {
+   *   const browserServer = await _android.launchServer({
+   *     // If you have multiple devices connected and want to use a specific one.
+   *     // deviceSerialNumber: '<deviceSerialNumber>',
+   *   });
+   *   const wsEndpoint = browserServer.wsEndpoint();
+   *   console.log(wsEndpoint);
+   * })();
+   * ```
+   *
+   * Client Side:
+   *
+   * ```js
+   * const { _android } = require('playwright');
+   *
+   * (async () => {
+   *   const device = await _android.connect('<wsEndpoint>');
+   *
+   *   console.log(device.model());
+   *   console.log(device.serial());
+   *   await device.shell('am force-stop com.android.chrome');
+   *   const context = await device.launchBrowser();
+   *
+   *   const page = await context.newPage();
+   *   await page.goto('https://webkit.org/');
+   *   console.log(await page.evaluate(() => window.location.href));
+   *   await page.screenshot({ path: 'page-chrome-1.png' });
+   *
+   *   await context.close();
+   * })();
+   * ```
+   *
+   * @param options
+   */
+  launchServer(options?: {
+    /**
+     * Optional host to establish ADB server connection. Default to `127.0.0.1`.
+     */
+    adbHost?: string;
+
+    /**
+     * Optional port to establish ADB server connection. Default to `5037`.
+     */
+    adbPort?: number;
+
+    /**
+     * Optional device serial number to launch the browser on. If not specified, it will throw if multiple devices are
+     * connected.
+     */
+    deviceSerialNumber?: string;
+
+    /**
+     * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+     */
+    omitDriverInstall?: boolean;
+
+    /**
+     * Port to use for the web socket. Defaults to 0 that picks any available port.
+     */
+    port?: number;
+
+    /**
+     * Path at which to serve the Android Server. For security, this defaults to an unguessable string.
+     *
+     * > NOTE: Any process or web page (including those running in Playwright) with knowledge of the `wsPath` can take control
+     * of the OS user. For this reason, you should use an unguessable token when using this option.
+     */
+    wsPath?: string;
+  }): Promise<BrowserServer>;
 
   /**
    * This setting will change the default maximum time for all the methods accepting `timeout` option.
