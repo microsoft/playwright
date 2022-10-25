@@ -145,7 +145,7 @@ export class PlaywrightConnection {
     this._debugLog(`engaged pre-launched (Android) mode`);
     const playwright = this._preLaunched.playwright!;
     const androidDevice = this._preLaunched.androidDevice!;
-    androidDevice.on(AndroidDevice.Events.Closed, () => {
+    androidDevice.on(AndroidDevice.Events.Close, () => {
       // Underlying browser did close for some reason - force disconnect the client.
       this.close({ code: 1001, reason: 'Android device disconnected' });
     });

@@ -3267,6 +3267,8 @@ AndroidDevice:
     close:
 
   events:
+    close:
+
     webViewAdded:
       parameters:
         webView: AndroidWebView

@@ -2209,6 +2209,7 @@ scheme.AndroidDeviceInitializer = tObject({
   model: tString,
   serial: tString,
 });
+scheme.AndroidDeviceCloseEvent = tOptional(tObject({}));
 scheme.AndroidDeviceWebViewAddedEvent = tObject({
   webView: tType('AndroidWebView'),
 });

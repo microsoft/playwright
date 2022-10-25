@@ -118,6 +118,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   readonly _timeoutSettings: TimeoutSettings;
   private _webViews = new Map<string, AndroidWebView>();
   _shouldCloseConnectionOnClose = false;
+  private _closed = false;
 
   static from(androidDevice: channels.AndroidDeviceChannel): AndroidDevice {
     return (androidDevice as any)._object;
@@ -131,6 +132,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     this._timeoutSettings = new TimeoutSettings((parent as Android)._timeoutSettings);
     this._channel.on('webViewAdded', ({ webView }) => this._onWebViewAdded(webView));
     this._channel.on('webViewRemoved', ({ socketName }) => this._onWebViewRemoved(socketName));
+    this._channel.on('close', () => this._didClose());
   }
 
   private _onWebViewAdded(webView: channels.AndroidWebView) {
@@ -238,12 +240,16 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   }
 
   async close() {
+    if (this._closed)
+      return;
+    this._closed = true;
     try {
-      this._didClose();
-      if (this._shouldCloseConnectionOnClose)
+      if (this._shouldCloseConnectionOnClose) {
         this._connection.close(kBrowserClosedError);
-      else
+        this.emit(Events.AndroidDevice.Close, this);
+      } else {
         await this._channel.close();
+      }
     } catch (e) {
       if (isSafeCloseError(e))
         return;
@@ -252,7 +258,8 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   }
 
   _didClose() {
-    this.emit(Events.AndroidDevice.Close);
+    this._closed = true;
+    this.emit(Events.AndroidDevice.Close, this);
   }
 
   async shell(command: string): Promise<Buffer> {
