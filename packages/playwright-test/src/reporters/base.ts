@@ -439,6 +439,8 @@ export function prepareErrorStack(stack: string): {
     const { frame: parsed, fileName: resolvedFile } = parseStackTraceLine(line);
     if (!parsed || !resolvedFile)
       continue;
+    if (belongsToNodeModules(resolvedFile))
+      continue;
     location = { file: resolvedFile, column: parsed.column || 0, line: parsed.line || 0 };
     break;
   }
@@ -480,4 +482,8 @@ function fitToWidth(line: string, width: number, prefix?: string): string {
     }
   }
   return taken.reverse().join('');
+}
+
+function belongsToNodeModules(file: string) {
+  return file.includes(`${path.sep}node_modules${path.sep}`);
 }

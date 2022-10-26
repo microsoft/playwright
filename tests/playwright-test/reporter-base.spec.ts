@@ -85,6 +85,35 @@ test('should print an error in a codeframe', async ({ runInlineTest }) => {
   expect(result.output).toContain(`>  7 |         const error = new Error('my-message');`);
 });
 
+test('should filter out node_modules error in a codeframe', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'node_modules/utils/utils.js': `
+      function assert(value) {
+        if (!value)
+          throw new Error('Assertion error');
+      }
+      module.exports = { assert };
+    `,
+    'a.spec.ts': `
+      const { test } = pwt;
+      const { assert } = require('utils/utils.js');
+      test('fail', async ({}) => {
+        assert(false);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  const output = stripAnsi(result.output);
+  expect(output).toContain('Error: Assertion error');
+  expect(output).toContain('a.spec.ts:7:7 › fail');
+  expect(output).toContain(`   7 |       test('fail', async ({}) => {`);
+  expect(output).toContain(`>  8 |         assert(false);`);
+  expect(output).toContain(`     |         ^`);
+  expect(output).toContain(`utils.js:6`);
+  expect(output).toContain(`a.spec.ts:8:9`);
+});
+
 test('should print codeframe from a helper', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
