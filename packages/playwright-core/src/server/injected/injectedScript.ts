@@ -129,7 +129,9 @@ export class InjectedScript {
   }
 
   eval(expression: string): any {
-    return globalThis.eval(expression);
+    // We can't use globalThis.eval because it can be overridden by the page.
+    // Instead, we use the indirect eval via Function constructor.
+    return new Function('return ' + expression)();
   }
 
   parseSelector(selector: string): ParsedSelector {
@@ -376,12 +378,13 @@ export class InjectedScript {
   }
 
   extend(source: string, params: any): any {
-    const constrFunction = globalThis.eval(`
-    (() => {
+    // We can't use globalThis.eval because it can be overridden by the page.
+    // Instead, we use the indirect eval via Function constructor.
+    const constrFunction = new Function(`
       const module = {};
       ${source}
       return module.exports;
-    })()`);
+    `)();
     return new constrFunction(this, params);
   }
 

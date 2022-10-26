@@ -21,16 +21,12 @@ export class UtilityScript {
     const args = argsAndHandles.slice(0, argCount);
     const handles = argsAndHandles.slice(argCount);
     const parameters = args.map(a => parseEvaluationResultValue(a, handles));
-    let result = globalThis.eval(expression);
-    if (isFunction === true) {
-      result = result(...parameters);
-    } else if (isFunction === false) {
-      result = result;
-    } else {
-      // auto detect.
-      if (typeof result === 'function')
-        result = result(...parameters);
-    }
+    // We can't use globalThis.eval because it can be overridden by the page.
+    // Instead, we use the indirect eval via Function constructor.
+    let result = new Function('return ' + expression);
+    if (isFunction)
+      result = result();
+    result = result.apply(null, parameters);
     return returnByValue ? this._promiseAwareJsonValueNoThrow(result) : result;
   }
 

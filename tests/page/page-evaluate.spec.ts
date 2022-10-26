@@ -702,3 +702,11 @@ it('should work with overridden globalThis.Window/Document/Node', async ({ page,
     });
   }
 });
+
+it('should work with overridden window.eval', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => {
+    window.eval = null;
+  });
+  expect(await page.evaluate('11 * 11')).toBe(121);
+});
