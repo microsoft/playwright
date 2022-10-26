@@ -484,6 +484,6 @@ function fitToWidth(line: string, width: number, prefix?: string): string {
   return taken.reverse().join('');
 }
 
-export function belongsToNodeModules(file: string) {
+function belongsToNodeModules(file: string) {
   return file.includes(`${path.sep}node_modules${path.sep}`);
 }
