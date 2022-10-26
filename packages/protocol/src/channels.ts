@@ -4045,6 +4045,7 @@ export type AndroidDeviceInitializer = {
   serial: string,
 };
 export interface AndroidDeviceEventTarget {
+  on(event: 'close', callback: (params: AndroidDeviceCloseEvent) => void): this;
   on(event: 'webViewAdded', callback: (params: AndroidDeviceWebViewAddedEvent) => void): this;
   on(event: 'webViewRemoved', callback: (params: AndroidDeviceWebViewRemovedEvent) => void): this;
 }
@@ -4076,6 +4077,7 @@ export interface AndroidDeviceChannel extends AndroidDeviceEventTarget, EventTar
   connectToWebView(params: AndroidDeviceConnectToWebViewParams, metadata?: Metadata): Promise<AndroidDeviceConnectToWebViewResult>;
   close(params?: AndroidDeviceCloseParams, metadata?: Metadata): Promise<AndroidDeviceCloseResult>;
 }
+export type AndroidDeviceCloseEvent = {};
 export type AndroidDeviceWebViewAddedEvent = {
   webView: AndroidWebView,
 };
@@ -4406,6 +4408,7 @@ export type AndroidDeviceCloseOptions = {};
 export type AndroidDeviceCloseResult = void;
 
 export interface AndroidDeviceEvents {
+  'close': AndroidDeviceCloseEvent;
   'webViewAdded': AndroidDeviceWebViewAddedEvent;
   'webViewRemoved': AndroidDeviceWebViewRemovedEvent;
 }

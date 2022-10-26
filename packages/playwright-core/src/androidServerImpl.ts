@@ -57,6 +57,10 @@ export class AndroidServerLauncherImpl {
     browserServer.wsEndpoint = () => wsEndpoint;
     browserServer.close = () => device.close();
     browserServer.kill = () => device.close();
+    device.on('close', () => {
+      server.close();
+      browserServer.emit('close');
+    });
     return browserServer;
   }
 }

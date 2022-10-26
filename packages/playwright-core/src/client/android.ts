@@ -131,6 +131,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     this._timeoutSettings = new TimeoutSettings((parent as Android)._timeoutSettings);
     this._channel.on('webViewAdded', ({ webView }) => this._onWebViewAdded(webView));
     this._channel.on('webViewRemoved', ({ socketName }) => this._onWebViewRemoved(socketName));
+    this._channel.on('close', () => this._didClose());
   }
 
   private _onWebViewAdded(webView: channels.AndroidWebView) {
@@ -239,7 +240,6 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   async close() {
     try {
-      this._didClose();
       if (this._shouldCloseConnectionOnClose)
         this._connection.close(kBrowserClosedError);
       else
@@ -252,7 +252,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   }
 
   _didClose() {
-    this.emit(Events.AndroidDevice.Close);
+    this.emit(Events.AndroidDevice.Close, this);
   }
 
   async shell(command: string): Promise<Buffer> {

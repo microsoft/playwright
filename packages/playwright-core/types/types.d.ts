@@ -12476,6 +12476,11 @@ export interface Android {
  */
 export interface AndroidDevice {
   /**
+   * Emitted when the device connection gets closed.
+   */
+  on(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+
+  /**
    * Emitted when a new WebView instance is detected.
    */
   on(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
@@ -12483,7 +12488,17 @@ export interface AndroidDevice {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
+  once(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
   once(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
+
+  /**
+   * Emitted when the device connection gets closed.
+   */
+  addListener(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
 
   /**
    * Emitted when a new WebView instance is detected.
@@ -12493,12 +12508,27 @@ export interface AndroidDevice {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  off(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   off(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
+
+  /**
+   * Emitted when the device connection gets closed.
+   */
+  prependListener(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
 
   /**
    * Emitted when a new WebView instance is detected.
@@ -13104,6 +13134,11 @@ export interface AndroidDevice {
      */
     timeout?: number;
   }): Promise<void>;
+
+  /**
+   * Emitted when the device connection gets closed.
+   */
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (androidDevice: AndroidDevice) => boolean | Promise<boolean>, timeout?: number } | ((androidDevice: AndroidDevice) => boolean | Promise<boolean>)): Promise<AndroidDevice>;
 
   /**
    * Emitted when a new WebView instance is detected.

@@ -71,23 +71,26 @@ class AdbDevice implements DeviceBackend {
 async function runCommand(command: string, host: string = '127.0.0.1', port: number = 5037, serial?: string): Promise<Buffer> {
   debug('pw:adb:runCommand')(command, serial);
   const socket = new BufferedSocketWrapper(command, net.createConnection({ host, port }));
-  if (serial) {
-    await socket.write(encodeMessage(`host:transport:${serial}`));
+  try {
+    if (serial) {
+      await socket.write(encodeMessage(`host:transport:${serial}`));
+      const status = await socket.read(4);
+      assert(status.toString() === 'OKAY', status.toString());
+    }
+    await socket.write(encodeMessage(command));
     const status = await socket.read(4);
     assert(status.toString() === 'OKAY', status.toString());
+    let commandOutput: Buffer;
+    if (!command.startsWith('shell:')) {
+      const remainingLength = parseInt((await socket.read(4)).toString(), 16);
+      commandOutput = await socket.read(remainingLength);
+    } else {
+      commandOutput = await socket.readAll();
+    }
+    return commandOutput;
+  } finally {
+    socket.close();
   }
-  await socket.write(encodeMessage(command));
-  const status = await socket.read(4);
-  assert(status.toString() === 'OKAY', status.toString());
-  let commandOutput: Buffer;
-  if (!command.startsWith('shell:')) {
-    const remainingLength = parseInt((await socket.read(4)).toString(), 16);
-    commandOutput = await socket.read(remainingLength);
-  } else {
-    commandOutput = await socket.readAll();
-  }
-  socket.close();
-  return commandOutput;
 }
 
 async function open(command: string, host: string = '127.0.0.1', port: number = 5037, serial?: string): Promise<BufferedSocketWrapper> {
