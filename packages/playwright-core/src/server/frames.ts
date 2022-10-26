@@ -108,6 +108,7 @@ export class FrameManager {
   readonly _signalBarriers = new Set<SignalBarrier>();
   private _webSockets = new Map<string, network.WebSocket>();
   _openedDialogs: Set<Dialog> = new Set();
+  private _closeAllOpeningDialogs = false;
 
   constructor(page: Page) {
     this._page = page;
@@ -352,7 +353,10 @@ export class FrameManager {
     // Any ongoing evaluations will be stalled until the dialog is closed.
     for (const frame of this._frames.values())
       frame._invalidateNonStallingEvaluations('JavaScript dialog interrupted evaluation');
-    this._openedDialogs.add(dialog);
+    if (this._closeAllOpeningDialogs)
+      dialog.close().then(() => {});
+    else
+      this._openedDialogs.add(dialog);
   }
 
   dialogWillClose(dialog: Dialog) {
@@ -360,8 +364,12 @@ export class FrameManager {
   }
 
   async closeOpenDialogs() {
-    await Promise.all([...this._openedDialogs].map(dialog => dialog.dismiss())).catch(() => {});
+    await Promise.all([...this._openedDialogs].map(dialog => dialog.close())).catch(() => {});
     this._openedDialogs.clear();
+  }
+
+  setCloseAllOpeningDialogs(closeDialogs: boolean) {
+    this._closeAllOpeningDialogs = closeDialogs;
   }
 
   removeChildFramesRecursively(frame: Frame) {
