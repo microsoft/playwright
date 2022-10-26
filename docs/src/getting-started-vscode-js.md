@@ -80,7 +80,7 @@ You can modify your test right in VS Code while debugging and Playwright will hi
 
 <img width="1350" alt="Live Debugging in VS Code" src="https://user-images.githubusercontent.com/13063165/197967885-512df81f-12e3-45e5-b90f-42ed0f064eac.png" />
 
-### Debug on different Browsers
+### Debug in different Browsers
 
 Debug your tests on specific browsers by selecting a profile from the dropdown. Set the default profile or select more than one profile to debug various profiles. Playwright will launch the first profile and once finished debugging it will then launch the next one.
 
