@@ -307,8 +307,7 @@ A callback that is run immediately when calling [`method: Test.describe#2`]. Any
 ## method: Test.describe.configure
 * since: v1.10
 
-Set execution mode of execution for the enclosing scope. Can be executed either on the top level or inside a describe. Configuration applies to the entire scope, regardless of whether it run before or after the test
-declaration.
+Configures the enclosing scope. Can be executed either on the top level or inside a describe. Configuration applies to the entire scope, regardless of whether it run before or after the test declaration.
 
 Learn more about the execution modes [here](../test-parallel.md).
 
@@ -344,10 +343,33 @@ test('runs first', async ({ page }) => {});
 test('runs second', async ({ page }) => {});
 ```
 
+Configuring retries and timeout:
+
+```js tab=js-js
+// All tests in the file will be retried twice and have a timeout of 20 seconds.
+test.describe.configure({ retries: 2, timeout: 20_000 });
+test('runs first', async ({ page }) => {});
+test('runs second', async ({ page }) => {});
+```
+
+```js tab=js-ts
+// All tests in the file will be retried twice and have a timeout of 20 seconds.
+test.describe.configure({ retries: 2, timeout: 20_000 });
+test('runs first', async ({ page }) => {});
+test('runs second', async ({ page }) => {});
+```
+
 ### option: Test.describe.configure.mode
 * since: v1.10
 - `mode` <[TestMode]<"parallel"|"serial">>
 
+### option: Test.describe.configure.retries
+* since: v1.28
+- `retries` <[int]>
+
+### option: Test.describe.configure.timeout
+* since: v1.28
+- `timeout` <[int]>
 
 
 ## method: Test.describe.fixme
@@ -1126,7 +1148,7 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('group', () => {
   // Applies to all tests in this group.
-  test.setTimeout(60000);
+  test.describe.configure({ timeout: 60000 });
 
   test('test one', async () => { /* ... */ });
   test('test two', async () => { /* ... */ });
@@ -1139,7 +1161,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('group', () => {
   // Applies to all tests in this group.
-  test.setTimeout(60000);
+  test.describe.configure({ timeout: 60000 });
 
   test('test one', async () => { /* ... */ });
   test('test two', async () => { /* ... */ });

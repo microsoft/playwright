@@ -417,3 +417,27 @@ test('should run fixture teardowns after timeout with soft expect error', async 
     contentType: 'text/plain',
   });
 });
+
+test('should respect test.describe.configure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test.describe.configure({ timeout: 1000 });
+      test('test1', async ({}) => {
+        console.log('test1-' + test.info().timeout);
+      });
+      test.describe(() => {
+        test.describe.configure({ timeout: 2000 });
+        test.describe(() => {
+          test('test2', async ({}) => {
+            console.log('test2-' + test.info().timeout);
+          });
+        });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.output).toContain('test1-1000');
+  expect(result.output).toContain('test2-2000');
+});
