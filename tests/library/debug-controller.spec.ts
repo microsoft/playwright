@@ -40,14 +40,14 @@ const test = baseTest.extend<Fixtures>({
     await use(backend);
     await backend.close();
   },
-  connectedBrowser: async ({ playwright, wsEndpoint }, use) => {
-    const oldValue = (playwright.chromium as any)._defaultConnectOptions;
-    (playwright.chromium as any)._defaultConnectOptions = {
+  connectedBrowser: async ({ wsEndpoint, browserType }, use) => {
+    const oldValue = (browserType as any)._defaultConnectOptions;
+    (browserType as any)._defaultConnectOptions = {
       wsEndpoint,
       headers: { 'x-playwright-reuse-context': '1', },
     };
-    const browser = await playwright.chromium.launch();
-    (playwright.chromium as any)._defaultConnectOptions = oldValue;
+    const browser = await browserType.launch();
+    (browserType as any)._defaultConnectOptions = oldValue;
     await use(browser as any);
     await browser.close();
   },
@@ -64,16 +64,17 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
   const context = await connectedBrowser._newContextForReuse();
   const [page] = context.pages();
 
-  await page.locator('body').click();
-  await page.locator('body').click();
+  await page.setContent('<button>Submit</button>');
+  await page.getByRole('button').click();
+  await page.getByRole('button').click();
 
   expect(events).toEqual([
     {
-      selector: 'body',
-      locator: 'locator(\'body\')',
+      selector: 'internal:role=button[name=\"Submit\"]',
+      locator: 'getByRole(\'button\', { name: \'Submit\' })',
     }, {
-      selector: 'body',
-      locator: 'locator(\'body\')',
+      selector: 'internal:role=button[name=\"Submit\"]',
+      locator: 'getByRole(\'button\', { name: \'Submit\' })',
     },
   ]);
 
@@ -156,19 +157,20 @@ test('should record', async ({ backend, connectedBrowser }) => {
   const context = await connectedBrowser._newContextForReuse();
   const [page] = context.pages();
 
-  await page.locator('body').click();
+  await page.setContent('<button>Submit</button>');
+  await page.getByRole('button').click();
 
   await expect.poll(() => events[events.length - 1]).toEqual({
     text: `import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
   await page.goto('about:blank');
-  await page.locator('body').click();
+  await page.getByRole('button', { name: 'Submit' }).click();
 });`
   });
   const length = events.length;
   // No events after mode disabled
   await backend.setMode({ mode: 'none' });
-  await page.locator('body').click();
+  await page.getByRole('button').click();
   expect(events).toHaveLength(length);
 });
