@@ -139,18 +139,24 @@ export class TestTypeImpl {
     suite._hooks.push({ type: name, fn, location });
   }
 
-  private _configure(location: Location, options: { mode?: 'parallel' | 'serial' }) {
+  private _configure(location: Location, options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, `test.describe.configure()`);
-    if (!options.mode)
-      return;
-    if (suite._parallelMode !== 'default')
-      throw errorWithLocation(location, 'Parallel mode is already assigned for the enclosing scope.');
-    suite._parallelMode = options.mode;
 
-    for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
-      if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
-        throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
+    if (options.timeout !== undefined)
+      suite._timeout = options.timeout;
+
+    if (options.retries !== undefined)
+      suite._retries = options.retries;
+
+    if (options.mode !== undefined) {
+      if (suite._parallelMode !== 'default')
+        throw errorWithLocation(location, 'Parallel mode is already assigned for the enclosing scope.');
+      suite._parallelMode = options.mode;
+      for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
+        if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
+          throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
+      }
     }
   }
 

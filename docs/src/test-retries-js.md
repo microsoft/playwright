@@ -134,6 +134,42 @@ test('my test', async ({ page }, testInfo) => {
 });
 ```
 
+You can specify retries for a specific group of tests or a single file with [`method: Test.describe.configure`].
+
+```js tab=js-js
+const { test, expect } = require('@playwright/test');
+
+test.describe(() => {
+  // All tests in this describe group will get 2 retry attempts.
+  test.describe.configure({ retries: 2 });
+
+  test('test 1', async ({ page }) => {
+    // ...
+  });
+
+  test('test 2', async ({ page }) => {
+    // ...
+  });
+});
+```
+
+```js tab=js-ts
+import { test, expect } from '@playwright/test';
+
+test.describe(() => {
+  // All tests in this describe group will get 2 retry attempts.
+  test.describe.configure({ retries: 2 });
+
+  test('test 1', async ({ page }) => {
+    // ...
+  });
+
+  test('test 2', async ({ page }) => {
+    // ...
+  });
+});
+```
+
 ## Serial mode
 
 Use [`method: Test.describe.serial`] to group dependent tests to ensure they will always run together and in order. If one of the tests fails, all subsequent tests are skipped. All tests in the group are retried together.

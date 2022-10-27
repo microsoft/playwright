@@ -257,6 +257,8 @@ Use [`property: TestConfig.repeatEach`] to change this option for all projects.
 
 The maximum number of retry attempts given to failed tests. Learn more about [test retries](../test-retries.md#retries).
 
+Use [`method: Test.describe.configure`] to change the number of retries for a specific file or a group of tests.
+
 Use [`property: TestConfig.retries`] to change this option for all projects.
 
 ## property: TestProject.run
@@ -392,7 +394,7 @@ Use [`property: TestConfig.testMatch`] to change this option for all projects.
 
 Timeout for each test in milliseconds. Defaults to 30 seconds.
 
-This is a base timeout for all tests. In addition, each test can configure its own timeout with [`method: Test.setTimeout`].
+This is a base timeout for all tests. Each test can configure its own timeout with [`method: Test.setTimeout`]. Each file or a group of tests can configure the timeout with [`method: Test.describe.configure`].
 
 Use [`property: TestConfig.timeout`] to change this option for all projects.
 

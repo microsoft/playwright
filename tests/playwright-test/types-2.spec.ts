@@ -28,6 +28,7 @@ test('basics should work', async ({ runTSC }) => {
         test('my test', async({}, testInfo) => {
           expect(testInfo.title).toBe('my test');
           testInfo.annotations[0].type;
+          test.setTimeout(123);
         });
         test.skip('my test', async () => {});
         test.fixme('my test', async () => {});
@@ -43,6 +44,8 @@ test('basics should work', async ({ runTSC }) => {
       test.describe.fixme('suite', () => {});
       // @ts-expect-error
       test.foo();
+      test.describe.configure({ mode: 'parallel' });
+      test.describe.configure({ retries: 3, timeout: 123 });
     `
   });
   expect(result.exitCode).toBe(0);

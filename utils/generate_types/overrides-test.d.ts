@@ -131,7 +131,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
     parallel: SuiteFunction & {
       only: SuiteFunction;
     };
-    configure: (options: { mode?: 'parallel' | 'serial' }) => void;
+    configure: (options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
   };
   skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   skip(): void;

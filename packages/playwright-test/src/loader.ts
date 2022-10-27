@@ -398,6 +398,12 @@ class ProjectSuiteBuilder {
         const test = entry._clone();
         to._addTest(test);
         test.retries = this._project.retries;
+        for (let parentSuite: Suite | undefined = to; parentSuite; parentSuite = parentSuite.parent) {
+          if (parentSuite._retries !== undefined) {
+            test.retries = parentSuite._retries;
+            break;
+          }
+        }
         const repeatEachIndexSuffix = repeatEachIndex ? ` (repeat:${repeatEachIndex})` : '';
         // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
         const testIdExpression = `[project=${this._project._id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
