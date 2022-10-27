@@ -296,7 +296,7 @@ Most form controls usually have dedicated labels that could be conveniently used
 For example, consider the following DOM structure.
 
 ```html
-<label for="password">Password:</label><input type="password">
+<label for="password">Password:</label><input id="password" type="password">
 ```
 
 You can fill the input after locating it by the label text:
