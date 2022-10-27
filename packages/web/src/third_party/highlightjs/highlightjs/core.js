@@ -1,3 +1,5 @@
+var deepFreezeEs6 = {exports: {}};
+
 function deepFreeze(obj) {
     if (obj instanceof Map) {
         obj.clear = obj.delete = obj.set = function () {
@@ -24,9 +26,12 @@ function deepFreeze(obj) {
     return obj;
 }
 
-var deepFreezeEs6 = deepFreeze;
-var _default = deepFreeze;
-deepFreezeEs6.default = _default;
+deepFreezeEs6.exports = deepFreeze;
+deepFreezeEs6.exports.default = deepFreeze;
+
+/** @typedef {import('highlight.js').CallbackResponse} CallbackResponse */
+/** @typedef {import('highlight.js').CompiledMode} CompiledMode */
+/** @implements CallbackResponse */
 
 class Response {
   /**
@@ -37,10 +42,11 @@ class Response {
     if (mode.data === undefined) mode.data = {};
 
     this.data = mode.data;
+    this.isMatchIgnored = false;
   }
 
   ignoreMatch() {
-    this.ignore = true;
+    this.isMatchIgnored = true;
   }
 }
 
@@ -65,7 +71,7 @@ function escapeHTML(value) {
  * @param {Record<string,any>[]} objects
  * @returns {T} a single new object
  */
-function inherit(original, ...objects) {
+function inherit$1(original, ...objects) {
   /** @type Record<string,any> */
   const result = Object.create(null);
 
@@ -88,7 +94,7 @@ function inherit(original, ...objects) {
  * @property {() => string} value
  */
 
-/** @typedef {{kind?: string, sublanguage?: boolean}} Node */
+/** @typedef {{scope?: string, language?: string, sublanguage?: boolean}} Node */
 /** @typedef {{walk: (r: Renderer) => void}} Tree */
 /** */
 
@@ -99,7 +105,25 @@ const SPAN_CLOSE = '</span>';
  *
  * @param {Node} node */
 const emitsWrappingTags = (node) => {
-  return !!node.kind;
+  // rarely we can have a sublanguage where language is undefined
+  // TODO: track down why
+  return !!node.scope || (node.sublanguage && node.language);
+};
+
+/**
+ *
+ * @param {string} name
+ * @param {{prefix:string}} options
+ */
+const scopeToCSSClass = (name, { prefix }) => {
+  if (name.includes(".")) {
+    const pieces = name.split(".");
+    return [
+      `${prefix}${pieces.shift()}`,
+      ...(pieces.map((x, i) => `${x}${"_".repeat(i + 1)}`))
+    ].join(" ");
+  }
+  return `${prefix}${name}`;
 };
 
 /** @type {Renderer} */
@@ -131,9 +155,11 @@ class HTMLRenderer {
   openNode(node) {
     if (!emitsWrappingTags(node)) return;
 
-    let className = node.kind;
-    if (!node.sublanguage) {
-      className = `${this.classPrefix}${className}`;
+    let className = "";
+    if (node.sublanguage) {
+      className = `language-${node.language}`;
+    } else {
+      className = scopeToCSSClass(node.scope, { prefix: this.classPrefix });
     }
     this.span(className);
   }
@@ -166,14 +192,23 @@ class HTMLRenderer {
   }
 }
 
-/** @typedef {{kind?: string, sublanguage?: boolean, children: Node[]} | string} Node */
-/** @typedef {{kind?: string, sublanguage?: boolean, children: Node[]} } DataNode */
+/** @typedef {{scope?: string, language?: string, sublanguage?: boolean, children: Node[]} | string} Node */
+/** @typedef {{scope?: string, language?: string, sublanguage?: boolean, children: Node[]} } DataNode */
+/** @typedef {import('highlight.js').Emitter} Emitter */
 /**  */
+
+/** @returns {DataNode} */
+const newNode = (opts = {}) => {
+  /** @type DataNode */
+  const result = { children: [] };
+  Object.assign(result, opts);
+  return result;
+};
 
 class TokenTree {
   constructor() {
     /** @type DataNode */
-    this.rootNode = { children: [] };
+    this.rootNode = newNode();
     this.stack = [this.rootNode];
   }
 
@@ -188,10 +223,10 @@ class TokenTree {
     this.top.children.push(node);
   }
 
-  /** @param {string} kind */
-  openNode(kind) {
+  /** @param {string} scope */
+  openNode(scope) {
     /** @type Node */
-    const node = { kind, children: [] };
+    const node = newNode({ scope });
     this.add(node);
     this.stack.push(node);
   }
@@ -263,11 +298,11 @@ class TokenTree {
 
   Minimal interface:
 
-  - addKeyword(text, kind)
+  - addKeyword(text, scope)
   - addText(text)
   - addSublanguage(emitter, subLanguageName)
   - finalize()
-  - openNode(kind)
+  - openNode(scope)
   - closeNode()
   - closeAllNodes()
   - toHTML()
@@ -288,12 +323,12 @@ class TokenTreeEmitter extends TokenTree {
 
   /**
    * @param {string} text
-   * @param {string} kind
+   * @param {string} scope
    */
-  addKeyword(text, kind) {
+  addKeyword(text, scope) {
     if (text === "") { return; }
 
-    this.openNode(kind);
+    this.openNode(scope);
     this.addText(text);
     this.closeNode();
   }
@@ -314,8 +349,8 @@ class TokenTreeEmitter extends TokenTree {
   addSublanguage(emitter, name) {
     /** @type DataNode */
     const node = emitter.root;
-    node.kind = name;
     node.sublanguage = true;
+    node.language = name;
     this.add(node);
   }
 
@@ -333,9 +368,6 @@ class TokenTreeEmitter extends TokenTree {
  * @param {string} value
  * @returns {RegExp}
  * */
-function escape(value) {
-  return new RegExp(value.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'm');
-}
 
 /**
  * @param {RegExp | string } re
@@ -349,6 +381,30 @@ function source(re) {
 }
 
 /**
+ * @param {RegExp | string } re
+ * @returns {string}
+ */
+function lookahead(re) {
+  return concat('(?=', re, ')');
+}
+
+/**
+ * @param {RegExp | string } re
+ * @returns {string}
+ */
+function anyNumberOfTimes(re) {
+  return concat('(?:', re, ')*');
+}
+
+/**
+ * @param {RegExp | string } re
+ * @returns {string}
+ */
+function optional(re) {
+  return concat('(?:', re, ')?');
+}
+
+/**
  * @param {...(RegExp | string) } args
  * @returns {string}
  */
@@ -358,19 +414,40 @@ function concat(...args) {
 }
 
 /**
+ * @param { Array<string | RegExp | Object> } args
+ * @returns {object}
+ */
+function stripOptionsFromArgs(args) {
+  const opts = args[args.length - 1];
+
+  if (typeof opts === 'object' && opts.constructor === Object) {
+    args.splice(args.length - 1, 1);
+    return opts;
+  } else {
+    return {};
+  }
+}
+
+/** @typedef { {capture?: boolean} } RegexEitherOptions */
+
+/**
  * Any of the passed expresssions may match
  *
  * Creates a huge this | this | that | that match
- * @param {(RegExp | string)[] } args
+ * @param {(RegExp | string)[] | [...(RegExp | string)[], RegexEitherOptions]} args
  * @returns {string}
  */
 function either(...args) {
-  const joined = '(' + args.map((x) => source(x)).join("|") + ")";
+  /** @type { object & {capture?: boolean} }  */
+  const opts = stripOptionsFromArgs(args);
+  const joined = '('
+    + (opts.capture ? "" : "?:")
+    + args.map((x) => source(x)).join("|") + ")";
   return joined;
 }
 
 /**
- * @param {RegExp} re
+ * @param {RegExp | string} re
  * @returns {number}
  */
 function countMatchGroups(re) {
@@ -387,6 +464,16 @@ function startsWith(re, lexeme) {
   return match && match.index === 0;
 }
 
+// BACKREF_RE matches an open parenthesis or backreference. To avoid
+// an incorrect parse, it additionally matches the following:
+// - [...] elements, where the meaning of parentheses and escapes change
+// - other escape sequences, so we do not misparse escape sequences as
+//   interesting elements
+// - non-matching or lookahead parentheses, which do not capture. These
+//   follow the '(' with a '?'.
+const BACKREF_RE = /\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./;
+
+// **INTERNAL** Not intended for outside usage
 // join logically computes regexps.join(separator), but fixes the
 // backreferences so they continue to match.
 // it also places each individual regular expression into it's own
@@ -394,52 +481,45 @@ function startsWith(re, lexeme) {
 // is currently an exercise for the caller. :-)
 /**
  * @param {(string | RegExp)[]} regexps
- * @param {string} separator
+ * @param {{joinWith: string}} opts
  * @returns {string}
  */
-function join(regexps, separator = "|") {
-  // backreferenceRe matches an open parenthesis or backreference. To avoid
-  // an incorrect parse, it additionally matches the following:
-  // - [...] elements, where the meaning of parentheses and escapes change
-  // - other escape sequences, so we do not misparse escape sequences as
-  //   interesting elements
-  // - non-matching or lookahead parentheses, which do not capture. These
-  //   follow the '(' with a '?'.
-  const backreferenceRe = /\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./;
+function _rewriteBackreferences(regexps, { joinWith }) {
   let numCaptures = 0;
-  let ret = '';
-  for (let i = 0; i < regexps.length; i++) {
+
+  return regexps.map((regex) => {
     numCaptures += 1;
     const offset = numCaptures;
-    let re = source(regexps[i]);
-    if (i > 0) {
-      ret += separator;
-    }
-    ret += "(";
+    let re = source(regex);
+    let out = '';
+
     while (re.length > 0) {
-      const match = backreferenceRe.exec(re);
-      if (match == null) {
-        ret += re;
+      const match = BACKREF_RE.exec(re);
+      if (!match) {
+        out += re;
         break;
       }
-      ret += re.substring(0, match.index);
+      out += re.substring(0, match.index);
       re = re.substring(match.index + match[0].length);
       if (match[0][0] === '\\' && match[1]) {
         // Adjust the backreference.
-        ret += '\\' + String(Number(match[1]) + offset);
+        out += '\\' + String(Number(match[1]) + offset);
       } else {
-        ret += match[0];
+        out += match[0];
         if (match[0] === '(') {
           numCaptures++;
         }
       }
     }
-    ret += ")";
-  }
-  return ret;
+    return out;
+  }).map(re => `(${re})`).join(joinWith);
 }
 
+/** @typedef {import('highlight.js').Mode} Mode */
+/** @typedef {import('highlight.js').ModeCallback} ModeCallback */
+
 // Common regexps
+const MATCH_NOTHING_RE = /\b\B/;
 const IDENT_RE = '[a-zA-Z]\\w*';
 const UNDERSCORE_IDENT_RE = '[a-zA-Z_]\\w*';
 const NUMBER_RE = '\\b\\d+(\\.\\d+)?';
@@ -459,8 +539,8 @@ const SHEBANG = (opts = {}) => {
       opts.binary,
       /\b.*/);
   }
-  return inherit({
-    className: 'meta',
+  return inherit$1({
+    scope: 'meta',
     begin: beginShebang,
     end: /$/,
     relevance: 0,
@@ -476,14 +556,14 @@ const BACKSLASH_ESCAPE = {
   begin: '\\\\[\\s\\S]', relevance: 0
 };
 const APOS_STRING_MODE = {
-  className: 'string',
+  scope: 'string',
   begin: '\'',
   end: '\'',
   illegal: '\\n',
   contains: [BACKSLASH_ESCAPE]
 };
 const QUOTE_STRING_MODE = {
-  className: 'string',
+  scope: 'string',
   begin: '"',
   end: '"',
   illegal: '\\n',
@@ -501,52 +581,86 @@ const PHRASAL_WORDS_MODE = {
  * @returns {Partial<Mode>}
  */
 const COMMENT = function(begin, end, modeOptions = {}) {
-  const mode = inherit(
+  const mode = inherit$1(
     {
-      className: 'comment',
+      scope: 'comment',
       begin,
       end,
       contains: []
     },
     modeOptions
   );
-  mode.contains.push(PHRASAL_WORDS_MODE);
   mode.contains.push({
-    className: 'doctag',
-    begin: '(?:TODO|FIXME|NOTE|BUG|OPTIMIZE|HACK|XXX):',
+    scope: 'doctag',
+    // hack to avoid the space from being included. the space is necessary to
+    // match here to prevent the plain text rule below from gobbling up doctags
+    begin: '[ ]*(?=(TODO|FIXME|NOTE|BUG|OPTIMIZE|HACK|XXX):)',
+    end: /(TODO|FIXME|NOTE|BUG|OPTIMIZE|HACK|XXX):/,
+    excludeBegin: true,
     relevance: 0
   });
+  const ENGLISH_WORD = either(
+    // list of common 1 and 2 letter words in English
+    "I",
+    "a",
+    "is",
+    "so",
+    "us",
+    "to",
+    "at",
+    "if",
+    "in",
+    "it",
+    "on",
+    // note: this is not an exhaustive list of contractions, just popular ones
+    /[A-Za-z]+['](d|ve|re|ll|t|s|n)/, // contractions - can't we'd they're let's, etc
+    /[A-Za-z]+[-][a-z]+/, // `no-way`, etc.
+    /[A-Za-z][a-z]{2,}/ // allow capitalized words at beginning of sentences
+  );
+  // looking like plain text, more likely to be a comment
+  mode.contains.push(
+    {
+      // TODO: how to include ", (, ) without breaking grammars that use these for
+      // comment delimiters?
+      // begin: /[ ]+([()"]?([A-Za-z'-]{3,}|is|a|I|so|us|[tT][oO]|at|if|in|it|on)[.]?[()":]?([.][ ]|[ ]|\))){3}/
+      // ---
+
+      // this tries to find sequences of 3 english words in a row (without any
+      // "programming" type syntax) this gives us a strong signal that we've
+      // TRULY found a comment - vs perhaps scanning with the wrong language.
+      // It's possible to find something that LOOKS like the start of the
+      // comment - but then if there is no readable text - good chance it is a
+      // false match and not a comment.
+      //
+      // for a visual example please see:
+      // https://github.com/highlightjs/highlight.js/issues/2827
+
+      begin: concat(
+        /[ ]+/, // necessary to prevent us gobbling up doctags like /* @author Bob Mcgill */
+        '(',
+        ENGLISH_WORD,
+        /[.]?[:]?([.][ ]|[ ])/,
+        '){3}') // look for 3 words in a row
+    }
+  );
   return mode;
 };
 const C_LINE_COMMENT_MODE = COMMENT('//', '$');
 const C_BLOCK_COMMENT_MODE = COMMENT('/\\*', '\\*/');
 const HASH_COMMENT_MODE = COMMENT('#', '$');
 const NUMBER_MODE = {
-  className: 'number',
+  scope: 'number',
   begin: NUMBER_RE,
   relevance: 0
 };
 const C_NUMBER_MODE = {
-  className: 'number',
+  scope: 'number',
   begin: C_NUMBER_RE,
   relevance: 0
 };
 const BINARY_NUMBER_MODE = {
-  className: 'number',
+  scope: 'number',
   begin: BINARY_NUMBER_RE,
-  relevance: 0
-};
-const CSS_NUMBER_MODE = {
-  className: 'number',
-  begin: NUMBER_RE + '(' +
-    '%|em|ex|ch|rem' +
-    '|vw|vh|vmin|vmax' +
-    '|cm|mm|in|pt|pc|px' +
-    '|deg|grad|rad|turn' +
-    '|s|ms' +
-    '|Hz|kHz' +
-    '|dpi|dpcm|dppx' +
-    ')?',
   relevance: 0
 };
 const REGEXP_MODE = {
@@ -558,7 +672,7 @@ const REGEXP_MODE = {
   // (which will then blow up when regex's `illegal` sees the newline)
   begin: /(?=\/[^/\n]*\/)/,
   contains: [{
-    className: 'regexp',
+    scope: 'regexp',
     begin: /\//,
     end: /\/[gimuy]*/,
     illegal: /\n/,
@@ -574,12 +688,12 @@ const REGEXP_MODE = {
   }]
 };
 const TITLE_MODE = {
-  className: 'title',
+  scope: 'title',
   begin: IDENT_RE,
   relevance: 0
 };
 const UNDERSCORE_TITLE_MODE = {
-  className: 'title',
+  scope: 'title',
   begin: UNDERSCORE_IDENT_RE,
   relevance: 0
 };
@@ -608,6 +722,7 @@ const END_SAME_AS_BEGIN = function(mode) {
 
 var MODES = /*#__PURE__*/Object.freeze({
     __proto__: null,
+    MATCH_NOTHING_RE: MATCH_NOTHING_RE,
     IDENT_RE: IDENT_RE,
     UNDERSCORE_IDENT_RE: UNDERSCORE_IDENT_RE,
     NUMBER_RE: NUMBER_RE,
@@ -626,13 +741,17 @@ var MODES = /*#__PURE__*/Object.freeze({
     NUMBER_MODE: NUMBER_MODE,
     C_NUMBER_MODE: C_NUMBER_MODE,
     BINARY_NUMBER_MODE: BINARY_NUMBER_MODE,
-    CSS_NUMBER_MODE: CSS_NUMBER_MODE,
     REGEXP_MODE: REGEXP_MODE,
     TITLE_MODE: TITLE_MODE,
     UNDERSCORE_TITLE_MODE: UNDERSCORE_TITLE_MODE,
     METHOD_GUARD: METHOD_GUARD,
     END_SAME_AS_BEGIN: END_SAME_AS_BEGIN
 });
+
+/**
+@typedef {import('highlight.js').CallbackResponse} CallbackResponse
+@typedef {import('highlight.js').CompilerExt} CompilerExt
+*/
 
 // Grammar extensions / plugins
 // See: https://github.com/highlightjs/highlight.js/issues/2833
@@ -658,13 +777,24 @@ var MODES = /*#__PURE__*/Object.freeze({
  * @param {RegExpMatchArray} match
  * @param {CallbackResponse} response
  */
-function skipIfhasPrecedingDot(match, response) {
+function skipIfHasPrecedingDot(match, response) {
   const before = match.input[match.index - 1];
   if (before === ".") {
     response.ignoreMatch();
   }
 }
 
+/**
+ *
+ * @type {CompilerExt}
+ */
+function scopeClassName(mode, _parent) {
+  // eslint-disable-next-line no-undefined
+  if (mode.className !== undefined) {
+    mode.scope = mode.className;
+    delete mode.className;
+  }
+}
 
 /**
  * `beginKeywords` syntactic sugar
@@ -680,9 +810,14 @@ function beginKeywords(mode, parent) {
   // doesn't allow spaces in keywords anyways and we still check for the boundary
   // first
   mode.begin = '\\b(' + mode.beginKeywords.split(' ').join('|') + ')(?!\\.)(?=\\b|\\s)';
-  mode.__beforeBegin = skipIfhasPrecedingDot;
+  mode.__beforeBegin = skipIfHasPrecedingDot;
   mode.keywords = mode.keywords || mode.beginKeywords;
   delete mode.beginKeywords;
+
+  // prevents double relevance, the keywords themselves provide
+  // relevance, the mode doesn't need to double it
+  // eslint-disable-next-line no-undefined
+  if (mode.relevance === undefined) mode.relevance = 0;
 }
 
 /**
@@ -716,6 +851,30 @@ function compileRelevance(mode, _parent) {
   if (mode.relevance === undefined) mode.relevance = 1;
 }
 
+// allow beforeMatch to act as a "qualifier" for the match
+// the full match begin must be [beforeMatch][begin]
+const beforeMatchExt = (mode, parent) => {
+  if (!mode.beforeMatch) return;
+  // starts conflicts with endsParent which we need to make sure the child
+  // rule is not matched multiple times
+  if (mode.starts) throw new Error("beforeMatch cannot be used with starts");
+
+  const originalMode = Object.assign({}, mode);
+  Object.keys(mode).forEach((key) => { delete mode[key]; });
+
+  mode.keywords = originalMode.keywords;
+  mode.begin = concat(originalMode.beforeMatch, lookahead(originalMode.begin));
+  mode.starts = {
+    relevance: 0,
+    contains: [
+      Object.assign(originalMode, { endsParent: true })
+    ]
+  };
+  mode.relevance = 0;
+
+  delete originalMode.beforeMatch;
+};
+
 // keywords that should have no default relevance value
 const COMMON_KEYWORDS = [
   'of',
@@ -731,21 +890,31 @@ const COMMON_KEYWORDS = [
   'value' // common variable name
 ];
 
+const DEFAULT_KEYWORD_SCOPE = "keyword";
+
 /**
  * Given raw keywords from a language definition, compile them.
  *
- * @param {string | Record<string,string>} rawKeywords
+ * @param {string | Record<string,string|string[]> | Array<string>} rawKeywords
  * @param {boolean} caseInsensitive
  */
-function compileKeywords(rawKeywords, caseInsensitive) {
+function compileKeywords(rawKeywords, caseInsensitive, scopeName = DEFAULT_KEYWORD_SCOPE) {
   /** @type KeywordDict */
-  const compiledKeywords = {};
+  const compiledKeywords = Object.create(null);
 
-  if (typeof rawKeywords === 'string') { // string
-    splitAndCompile('keyword', rawKeywords);
+  // input can be a string of keywords, an array of keywords, or a object with
+  // named keys representing scopeName (which can then point to a string or array)
+  if (typeof rawKeywords === 'string') {
+    compileList(scopeName, rawKeywords.split(" "));
+  } else if (Array.isArray(rawKeywords)) {
+    compileList(scopeName, rawKeywords);
   } else {
-    Object.keys(rawKeywords).forEach(function(className) {
-      splitAndCompile(className, rawKeywords[className]);
+    Object.keys(rawKeywords).forEach(function(scopeName) {
+      // collapse all our objects back into the parent object
+      Object.assign(
+        compiledKeywords,
+        compileKeywords(rawKeywords[scopeName], caseInsensitive, scopeName)
+      );
     });
   }
   return compiledKeywords;
@@ -757,16 +926,16 @@ function compileKeywords(rawKeywords, caseInsensitive) {
    *
    * Ex: "for if when while|5"
    *
-   * @param {string} className
-   * @param {string} keywordList
+   * @param {string} scopeName
+   * @param {Array<string>} keywordList
    */
-  function splitAndCompile(className, keywordList) {
+  function compileList(scopeName, keywordList) {
     if (caseInsensitive) {
-      keywordList = keywordList.toLowerCase();
+      keywordList = keywordList.map(x => x.toLowerCase());
     }
-    keywordList.split(' ').forEach(function(keyword) {
+    keywordList.forEach(function(keyword) {
       const pair = keyword.split('|');
-      compiledKeywords[pair[0]] = [className, scoreForKeyword(pair[0], pair[1])];
+      compiledKeywords[pair[0]] = [scopeName, scoreForKeyword(pair[0], pair[1])];
     });
   }
 }
@@ -797,6 +966,183 @@ function commonKeyword(keyword) {
   return COMMON_KEYWORDS.includes(keyword.toLowerCase());
 }
 
+/*
+
+For the reasoning behind this please see:
+https://github.com/highlightjs/highlight.js/issues/2880#issuecomment-747275419
+
+*/
+
+/**
+ * @type {Record<string, boolean>}
+ */
+const seenDeprecations = {};
+
+/**
+ * @param {string} message
+ */
+const error = (message) => {
+  console.error(message);
+};
+
+/**
+ * @param {string} message
+ * @param {any} args
+ */
+const warn = (message, ...args) => {
+  console.log(`WARN: ${message}`, ...args);
+};
+
+/**
+ * @param {string} version
+ * @param {string} message
+ */
+const deprecated = (version, message) => {
+  if (seenDeprecations[`${version}/${message}`]) return;
+
+  console.log(`Deprecated as of ${version}. ${message}`);
+  seenDeprecations[`${version}/${message}`] = true;
+};
+
+/* eslint-disable no-throw-literal */
+
+/**
+@typedef {import('highlight.js').CompiledMode} CompiledMode
+*/
+
+const MultiClassError = new Error();
+
+/**
+ * Renumbers labeled scope names to account for additional inner match
+ * groups that otherwise would break everything.
+ *
+ * Lets say we 3 match scopes:
+ *
+ *   { 1 => ..., 2 => ..., 3 => ... }
+ *
+ * So what we need is a clean match like this:
+ *
+ *   (a)(b)(c) => [ "a", "b", "c" ]
+ *
+ * But this falls apart with inner match groups:
+ *
+ * (a)(((b)))(c) => ["a", "b", "b", "b", "c" ]
+ *
+ * Our scopes are now "out of alignment" and we're repeating `b` 3 times.
+ * What needs to happen is the numbers are remapped:
+ *
+ *   { 1 => ..., 2 => ..., 5 => ... }
+ *
+ * We also need to know that the ONLY groups that should be output
+ * are 1, 2, and 5.  This function handles this behavior.
+ *
+ * @param {CompiledMode} mode
+ * @param {Array<RegExp | string>} regexes
+ * @param {{key: "beginScope"|"endScope"}} opts
+ */
+function remapScopeNames(mode, regexes, { key }) {
+  let offset = 0;
+  const scopeNames = mode[key];
+  /** @type Record<number,boolean> */
+  const emit = {};
+  /** @type Record<number,string> */
+  const positions = {};
+
+  for (let i = 1; i <= regexes.length; i++) {
+    positions[i + offset] = scopeNames[i];
+    emit[i + offset] = true;
+    offset += countMatchGroups(regexes[i - 1]);
+  }
+  // we use _emit to keep track of which match groups are "top-level" to avoid double
+  // output from inside match groups
+  mode[key] = positions;
+  mode[key]._emit = emit;
+  mode[key]._multi = true;
+}
+
+/**
+ * @param {CompiledMode} mode
+ */
+function beginMultiClass(mode) {
+  if (!Array.isArray(mode.begin)) return;
+
+  if (mode.skip || mode.excludeBegin || mode.returnBegin) {
+    error("skip, excludeBegin, returnBegin not compatible with beginScope: {}");
+    throw MultiClassError;
+  }
+
+  if (typeof mode.beginScope !== "object" || mode.beginScope === null) {
+    error("beginScope must be object");
+    throw MultiClassError;
+  }
+
+  remapScopeNames(mode, mode.begin, { key: "beginScope" });
+  mode.begin = _rewriteBackreferences(mode.begin, { joinWith: "" });
+}
+
+/**
+ * @param {CompiledMode} mode
+ */
+function endMultiClass(mode) {
+  if (!Array.isArray(mode.end)) return;
+
+  if (mode.skip || mode.excludeEnd || mode.returnEnd) {
+    error("skip, excludeEnd, returnEnd not compatible with endScope: {}");
+    throw MultiClassError;
+  }
+
+  if (typeof mode.endScope !== "object" || mode.endScope === null) {
+    error("endScope must be object");
+    throw MultiClassError;
+  }
+
+  remapScopeNames(mode, mode.end, { key: "endScope" });
+  mode.end = _rewriteBackreferences(mode.end, { joinWith: "" });
+}
+
+/**
+ * this exists only to allow `scope: {}` to be used beside `match:`
+ * Otherwise `beginScope` would necessary and that would look weird
+
+  {
+    match: [ /def/, /\w+/ ]
+    scope: { 1: "keyword" , 2: "title" }
+  }
+
+ * @param {CompiledMode} mode
+ */
+function scopeSugar(mode) {
+  if (mode.scope && typeof mode.scope === "object" && mode.scope !== null) {
+    mode.beginScope = mode.scope;
+    delete mode.scope;
+  }
+}
+
+/**
+ * @param {CompiledMode} mode
+ */
+function MultiClass(mode) {
+  scopeSugar(mode);
+
+  if (typeof mode.beginScope === "string") {
+    mode.beginScope = { _wrap: mode.beginScope };
+  }
+  if (typeof mode.endScope === "string") {
+    mode.endScope = { _wrap: mode.endScope };
+  }
+
+  beginMultiClass(mode);
+  endMultiClass(mode);
+}
+
+/**
+@typedef {import('highlight.js').Mode} Mode
+@typedef {import('highlight.js').CompiledMode} CompiledMode
+@typedef {import('highlight.js').Language} Language
+@typedef {import('highlight.js').HLJSPlugin} HLJSPlugin
+@typedef {import('highlight.js').CompiledLanguage} CompiledLanguage
+*/
+
 // compilation
 
 /**
@@ -805,12 +1151,11 @@ function commonKeyword(keyword) {
  * Given the raw result of a language definition (Language), compiles this so
  * that it is ready for highlighting code.
  * @param {Language} language
- * @param {{plugins: HLJSPlugin[]}} opts
  * @returns {CompiledLanguage}
  */
-function compileLanguage(language, { plugins }) {
+function compileLanguage(language) {
   /**
-   * Builds a regex with the case sensativility of the current language
+   * Builds a regex with the case sensitivity of the current language
    *
    * @param {RegExp | string} value
    * @param {boolean} [global]
@@ -818,7 +1163,10 @@ function compileLanguage(language, { plugins }) {
   function langRe(value, global) {
     return new RegExp(
       source(value),
-      'm' + (language.case_insensitive ? 'i' : '') + (global ? 'g' : '')
+      'm'
+      + (language.case_insensitive ? 'i' : '')
+      + (language.unicodeRegex ? 'u' : '')
+      + (global ? 'g' : '')
     );
   }
 
@@ -860,7 +1208,7 @@ function compileLanguage(language, { plugins }) {
         this.exec = () => null;
       }
       const terminators = this.regexes.map(el => el[1]);
-      this.matcherRe = langRe(join(terminators), true);
+      this.matcherRe = langRe(_rewriteBackreferences(terminators, { joinWith: '|' }), true);
       this.lastIndex = 0;
     }
 
@@ -1070,12 +1418,15 @@ function compileLanguage(language, { plugins }) {
    */
   function compileMode(mode, parent) {
     const cmode = /** @type CompiledMode */ (mode);
-    if (mode.compiled) return cmode;
+    if (mode.isCompiled) return cmode;
 
     [
+      scopeClassName,
       // do this early so compiler extensions generally don't have to worry about
       // the distinction between match/begin
-      compileMatch
+      compileMatch,
+      MultiClass,
+      beforeMatchExt
     ].forEach(ext => ext(mode, parent));
 
     language.compilerExtensions.forEach(ext => ext(mode, parent));
@@ -1092,35 +1443,31 @@ function compileLanguage(language, { plugins }) {
       compileRelevance
     ].forEach(ext => ext(mode, parent));
 
-    mode.compiled = true;
+    mode.isCompiled = true;
 
     let keywordPattern = null;
-    if (typeof mode.keywords === "object") {
+    if (typeof mode.keywords === "object" && mode.keywords.$pattern) {
+      // we need a copy because keywords might be compiled multiple times
+      // so we can't go deleting $pattern from the original on the first
+      // pass
+      mode.keywords = Object.assign({}, mode.keywords);
       keywordPattern = mode.keywords.$pattern;
       delete mode.keywords.$pattern;
     }
+    keywordPattern = keywordPattern || /\w+/;
 
     if (mode.keywords) {
       mode.keywords = compileKeywords(mode.keywords, language.case_insensitive);
     }
 
-    // both are not allowed
-    if (mode.lexemes && keywordPattern) {
-      throw new Error("ERR: Prefer `keywords.$pattern` to `mode.lexemes`, BOTH are not allowed. (see mode reference) ");
-    }
-
-    // `mode.lexemes` was the old standard before we added and now recommend
-    // using `keywords.$pattern` to pass the keyword pattern
-    keywordPattern = keywordPattern || mode.lexemes || /\w+/;
     cmode.keywordPatternRe = langRe(keywordPattern, true);
 
     if (parent) {
       if (!mode.begin) mode.begin = /\B|\b/;
-      cmode.beginRe = langRe(mode.begin);
-      if (mode.endSameAsBegin) mode.end = mode.begin;
+      cmode.beginRe = langRe(cmode.begin);
       if (!mode.end && !mode.endsWithParent) mode.end = /\B|\b/;
-      if (mode.end) cmode.endRe = langRe(mode.end);
-      cmode.terminatorEnd = source(mode.end) || '';
+      if (mode.end) cmode.endRe = langRe(cmode.end);
+      cmode.terminatorEnd = source(cmode.end) || '';
       if (mode.endsWithParent && parent.terminatorEnd) {
         cmode.terminatorEnd += (mode.end ? '|' : '') + parent.terminatorEnd;
       }
@@ -1149,7 +1496,7 @@ function compileLanguage(language, { plugins }) {
   }
 
   // we need a null object, which inherit will guarantee
-  language.classNameAliases = inherit(language.classNameAliases || {});
+  language.classNameAliases = inherit$1(language.classNameAliases || {});
 
   return compileMode(/** @type Mode */ (language));
 }
@@ -1184,7 +1531,7 @@ function dependencyOnParent(mode) {
 function expandOrCloneMode(mode) {
   if (mode.variants && !mode.cachedVariants) {
     mode.cachedVariants = mode.variants.map(function(variant) {
-      return inherit(mode, { variants: null }, variant);
+      return inherit$1(mode, { variants: null }, variant);
     });
   }
 
@@ -1200,280 +1547,58 @@ function expandOrCloneMode(mode) {
   // instance of ourselves, so we can be reused with many
   // different parents without issue
   if (dependencyOnParent(mode)) {
-    return inherit(mode, { starts: mode.starts ? inherit(mode.starts) : null });
+    return inherit$1(mode, { starts: mode.starts ? inherit$1(mode.starts) : null });
   }
 
   if (Object.isFrozen(mode)) {
-    return inherit(mode);
+    return inherit$1(mode);
   }
 
   // no special dependency issues, just return ourselves
   return mode;
 }
 
-var version = "10.5.0";
+var version = "11.6.0";
 
-// @ts-nocheck
-
-function hasValueOrEmptyAttribute(value) {
-  return Boolean(value || value === "");
+class HTMLInjectionError extends Error {
+  constructor(reason, html) {
+    super(reason);
+    this.name = "HTMLInjectionError";
+    this.html = html;
+  }
 }
-
-function BuildVuePlugin(hljs) {
-  const Component = {
-    props: ["language", "code", "autodetect"],
-    data: function() {
-      return {
-        detectedLanguage: "",
-        unknownLanguage: false
-      };
-    },
-    computed: {
-      className() {
-        if (this.unknownLanguage) return "";
-
-        return "hljs " + this.detectedLanguage;
-      },
-      highlighted() {
-        // no idea what language to use, return raw code
-        if (!this.autoDetect && !hljs.getLanguage(this.language)) {
-          console.warn(`The language "${this.language}" you specified could not be found.`);
-          this.unknownLanguage = true;
-          return escapeHTML(this.code);
-        }
-
-        let result = {};
-        if (this.autoDetect) {
-          result = hljs.highlightAuto(this.code);
-          this.detectedLanguage = result.language;
-        } else {
-          result = hljs.highlight(this.language, this.code, this.ignoreIllegals);
-          this.detectedLanguage = this.language;
-        }
-        return result.value;
-      },
-      autoDetect() {
-        return !this.language || hasValueOrEmptyAttribute(this.autodetect);
-      },
-      ignoreIllegals() {
-        return true;
-      }
-    },
-    // this avoids needing to use a whole Vue compilation pipeline just
-    // to build Highlight.js
-    render(createElement) {
-      return createElement("pre", {}, [
-        createElement("code", {
-          class: this.className,
-          domProps: { innerHTML: this.highlighted }
-        })
-      ]);
-    }
-    // template: `<pre><code :class="className" v-html="highlighted"></code></pre>`
-  };
-
-  const VuePlugin = {
-    install(Vue) {
-      Vue.component('highlightjs', Component);
-    }
-  };
-
-  return { Component, VuePlugin };
-}
-
-/* plugin itself */
-
-/** @type {HLJSPlugin} */
-const mergeHTMLPlugin = {
-  "after:highlightBlock": ({ block, result, text }) => {
-    const originalStream = nodeStream(block);
-    if (!originalStream.length) return;
-
-    const resultNode = document.createElement('div');
-    resultNode.innerHTML = result.value;
-    result.value = mergeStreams(originalStream, nodeStream(resultNode), text);
-  }
-};
-
-/* Stream merging support functions */
-
-/**
- * @typedef Event
- * @property {'start'|'stop'} event
- * @property {number} offset
- * @property {Node} node
- */
-
-/**
- * @param {Node} node
- */
-function tag(node) {
-  return node.nodeName.toLowerCase();
-}
-
-/**
- * @param {Node} node
- */
-function nodeStream(node) {
-  /** @type Event[] */
-  const result = [];
-  (function _nodeStream(node, offset) {
-    for (let child = node.firstChild; child; child = child.nextSibling) {
-      if (child.nodeType === 3) {
-        offset += child.nodeValue.length;
-      } else if (child.nodeType === 1) {
-        result.push({
-          event: 'start',
-          offset: offset,
-          node: child
-        });
-        offset = _nodeStream(child, offset);
-        // Prevent void elements from having an end tag that would actually
-        // double them in the output. There are more void elements in HTML
-        // but we list only those realistically expected in code display.
-        if (!tag(child).match(/br|hr|img|input/)) {
-          result.push({
-            event: 'stop',
-            offset: offset,
-            node: child
-          });
-        }
-      }
-    }
-    return offset;
-  })(node, 0);
-  return result;
-}
-
-/**
- * @param {any} original - the original stream
- * @param {any} highlighted - stream of the highlighted source
- * @param {string} value - the original source itself
- */
-function mergeStreams(original, highlighted, value) {
-  let processed = 0;
-  let result = '';
-  const nodeStack = [];
-
-  function selectStream() {
-    if (!original.length || !highlighted.length) {
-      return original.length ? original : highlighted;
-    }
-    if (original[0].offset !== highlighted[0].offset) {
-      return (original[0].offset < highlighted[0].offset) ? original : highlighted;
-    }
-
-    /*
-    To avoid starting the stream just before it should stop the order is
-    ensured that original always starts first and closes last:
-
-    if (event1 == 'start' && event2 == 'start')
-      return original;
-    if (event1 == 'start' && event2 == 'stop')
-      return highlighted;
-    if (event1 == 'stop' && event2 == 'start')
-      return original;
-    if (event1 == 'stop' && event2 == 'stop')
-      return highlighted;
-
-    ... which is collapsed to:
-    */
-    return highlighted[0].event === 'start' ? original : highlighted;
-  }
-
-  /**
-   * @param {Node} node
-   */
-  function open(node) {
-    /** @param {Attr} attr */
-    function attributeString(attr) {
-      return ' ' + attr.nodeName + '="' + escapeHTML(attr.value) + '"';
-    }
-    // @ts-ignore
-    result += '<' + tag(node) + [].map.call(node.attributes, attributeString).join('') + '>';
-  }
-
-  /**
-   * @param {Node} node
-   */
-  function close(node) {
-    result += '</' + tag(node) + '>';
-  }
-
-  /**
-   * @param {Event} event
-   */
-  function render(event) {
-    (event.event === 'start' ? open : close)(event.node);
-  }
-
-  while (original.length || highlighted.length) {
-    let stream = selectStream();
-    result += escapeHTML(value.substring(processed, stream[0].offset));
-    processed = stream[0].offset;
-    if (stream === original) {
-      /*
-      On any opening or closing tag of the original markup we first close
-      the entire highlighted node stack, then render the original tag along
-      with all the following original tags at the same offset and then
-      reopen all the tags on the highlighted stack.
-      */
-      nodeStack.reverse().forEach(close);
-      do {
-        render(stream.splice(0, 1)[0]);
-        stream = selectStream();
-      } while (stream === original && stream.length && stream[0].offset === processed);
-      nodeStack.reverse().forEach(open);
-    } else {
-      if (stream[0].event === 'start') {
-        nodeStack.push(stream[0].node);
-      } else {
-        nodeStack.pop();
-      }
-      render(stream.splice(0, 1)[0]);
-    }
-  }
-  return result + escapeHTML(value.substr(processed));
-}
-
-/*
-
-For the reasoning behind this please see:
-https://github.com/highlightjs/highlight.js/issues/2880#issuecomment-747275419
-
-*/
-
-/**
- * @param {string} message
- */
-const error = (message) => {
-  console.error(message);
-};
-
-/**
- * @param {string} message
- * @param {any} args
- */
-const warn = (message, ...args) => {
-  console.log(`WARN: ${message}`, ...args);
-};
-
-/**
- * @param {string} version
- * @param {string} message
- */
-const deprecated = (version, message) => {
-  console.log(`Deprecated as of ${version}. ${message}`);
-};
 
 /*
 Syntax highlighting with language autodetection.
 https://highlightjs.org/
 */
 
-const escape$1 = escapeHTML;
-const inherit$1 = inherit;
+/**
+@typedef {import('highlight.js').Mode} Mode
+@typedef {import('highlight.js').CompiledMode} CompiledMode
+@typedef {import('highlight.js').CompiledScope} CompiledScope
+@typedef {import('highlight.js').Language} Language
+@typedef {import('highlight.js').HLJSApi} HLJSApi
+@typedef {import('highlight.js').HLJSPlugin} HLJSPlugin
+@typedef {import('highlight.js').PluginEvent} PluginEvent
+@typedef {import('highlight.js').HLJSOptions} HLJSOptions
+@typedef {import('highlight.js').LanguageFn} LanguageFn
+@typedef {import('highlight.js').HighlightedHTMLElement} HighlightedHTMLElement
+@typedef {import('highlight.js').BeforeHighlightContext} BeforeHighlightContext
+@typedef {import('highlight.js/private').MatchType} MatchType
+@typedef {import('highlight.js/private').KeywordData} KeywordData
+@typedef {import('highlight.js/private').EnhancedMatch} EnhancedMatch
+@typedef {import('highlight.js/private').AnnotatedError} AnnotatedError
+@typedef {import('highlight.js').AutoHighlightResult} AutoHighlightResult
+@typedef {import('highlight.js').HighlightOptions} HighlightOptions
+@typedef {import('highlight.js').HighlightResult} HighlightResult
+*/
+
+
+const escape = escapeHTML;
+const inherit = inherit$1;
 const NO_MATCH = Symbol("nomatch");
+const MAX_KEYWORD_HITS = 7;
 
 /**
  * @param {any} hljs - object that is extended (legacy)
@@ -1491,7 +1616,6 @@ const HLJS = function(hljs) {
   // safe/production mode - swallows more errors, tries to keep running
   // even if a single syntax or parse hits a fatal error
   let SAFE_MODE = true;
-  const fixMarkupRe = /(^(<[^>]+>|\t|)+|\n)/gm;
   const LANGUAGE_NOT_FOUND = "Could not find the language '{}', did you forget to load/include a language module?";
   /** @type {Language} */
   const PLAINTEXT_LANGUAGE = { disableAutodetect: true, name: 'Plain text', contains: [] };
@@ -1500,11 +1624,12 @@ const HLJS = function(hljs) {
   // calling the `hljs.configure` function.
   /** @type HLJSOptions */
   let options = {
+    ignoreUnescapedHTML: false,
+    throwUnescapedHTML: false,
     noHighlightRe: /^(no-?highlight)$/i,
     languageDetectRe: /\blang(?:uage)?-([\w-]+)\b/i,
     classPrefix: 'hljs-',
-    tabReplace: null,
-    useBR: false,
+    cssSelector: 'pre code',
     languages: null,
     // beta configuration options, subject to change, welcome to discuss
     // https://github.com/highlightjs/highlight.js/issues/1086
@@ -1548,10 +1673,15 @@ const HLJS = function(hljs) {
   /**
    * Core highlighting function.
    *
-   * @param {string} languageName - the language to use for highlighting
-   * @param {string} code - the code to highlight
+   * OLD API
+   * highlight(lang, code, ignoreIllegals, continuation)
+   *
+   * NEW API
+   * highlight(code, {lang, ignoreIllegals})
+   *
+   * @param {string} codeOrLanguageName - the language to use for highlighting
+   * @param {string | HighlightOptions} optionsOrCode - the code to highlight
    * @param {boolean} [ignoreIllegals] - whether to ignore illegal matches, default is to bail
-   * @param {CompiledMode} [continuation] - current continuation mode, if any
    *
    * @returns {HighlightResult} Result - an object that represents the result
    * @property {string} language - the language name
@@ -1561,7 +1691,25 @@ const HLJS = function(hljs) {
    * @property {CompiledMode} top - top of the current mode stack
    * @property {boolean} illegal - indicates whether any illegal matches were found
   */
-  function highlight(languageName, code, ignoreIllegals, continuation) {
+  function highlight(codeOrLanguageName, optionsOrCode, ignoreIllegals) {
+    let code = "";
+    let languageName = "";
+    if (typeof optionsOrCode === "object") {
+      code = codeOrLanguageName;
+      ignoreIllegals = optionsOrCode.ignoreIllegals;
+      languageName = optionsOrCode.language;
+    } else {
+      // old API
+      deprecated("10.7.0", "highlight(lang, code, ...args) has been deprecated.");
+      deprecated("10.7.0", "Please use highlight(code, options) instead.\nhttps://github.com/highlightjs/highlight.js/issues/2277");
+      languageName = codeOrLanguageName;
+      code = optionsOrCode;
+    }
+
+    // https://github.com/highlightjs/highlight.js/issues/3149
+    // eslint-disable-next-line no-undefined
+    if (ignoreIllegals === undefined) { ignoreIllegals = true; }
+
     /** @type {BeforeHighlightContext} */
     const context = {
       code,
@@ -1573,9 +1721,9 @@ const HLJS = function(hljs) {
 
     // a before plugin can usurp the result completely by providing it's own
     // in which case we don't even need to call highlight
-    const result = context.result ?
-      context.result :
-      _highlight(context.language, context.code, ignoreIllegals, continuation);
+    const result = context.result
+      ? context.result
+      : _highlight(context.language, context.code, ignoreIllegals);
 
     result.code = context.code;
     // the plugin can change anything in result to suite it
@@ -1588,23 +1736,22 @@ const HLJS = function(hljs) {
    * private highlight that's used internally and does not fire callbacks
    *
    * @param {string} languageName - the language to use for highlighting
-   * @param {string} code - the code to highlight
-   * @param {boolean} [ignoreIllegals] - whether to ignore illegal matches, default is to bail
-   * @param {CompiledMode} [continuation] - current continuation mode, if any
+   * @param {string} codeToHighlight - the code to highlight
+   * @param {boolean?} [ignoreIllegals] - whether to ignore illegal matches, default is to bail
+   * @param {CompiledMode?} [continuation] - current continuation mode, if any
    * @returns {HighlightResult} - result of the highlight operation
   */
-  function _highlight(languageName, code, ignoreIllegals, continuation) {
-    const codeToHighlight = code;
+  function _highlight(languageName, codeToHighlight, ignoreIllegals, continuation) {
+    const keywordHits = Object.create(null);
 
     /**
      * Return keyword data if a match is a keyword
      * @param {CompiledMode} mode - current mode
-     * @param {RegExpMatchArray} match - regexp match data
+     * @param {string} matchText - the textual match
      * @returns {KeywordData | false}
      */
-    function keywordData(mode, match) {
-      const matchText = language.case_insensitive ? match[0].toLowerCase() : match[0];
-      return Object.prototype.hasOwnProperty.call(mode.keywords, matchText) && mode.keywords[matchText];
+    function keywordData(mode, matchText) {
+      return mode.keywords[matchText];
     }
 
     function processKeywords() {
@@ -1620,22 +1767,30 @@ const HLJS = function(hljs) {
 
       while (match) {
         buf += modeBuffer.substring(lastIndex, match.index);
-        const data = keywordData(top, match);
+        const word = language.case_insensitive ? match[0].toLowerCase() : match[0];
+        const data = keywordData(top, word);
         if (data) {
           const [kind, keywordRelevance] = data;
           emitter.addText(buf);
           buf = "";
 
-          relevance += keywordRelevance;
-          const cssClass = language.classNameAliases[kind] || kind;
-          emitter.addKeyword(match[0], cssClass);
+          keywordHits[word] = (keywordHits[word] || 0) + 1;
+          if (keywordHits[word] <= MAX_KEYWORD_HITS) relevance += keywordRelevance;
+          if (kind.startsWith("_")) {
+            // _ implied for relevance only, do not highlight
+            // by applying a class name
+            buf += match[0];
+          } else {
+            const cssClass = language.classNameAliases[kind] || kind;
+            emitter.addKeyword(match[0], cssClass);
+          }
         } else {
           buf += match[0];
         }
         lastIndex = top.keywordPatternRe.lastIndex;
         match = top.keywordPatternRe.exec(modeBuffer);
       }
-      buf += modeBuffer.substr(lastIndex);
+      buf += modeBuffer.substring(lastIndex);
       emitter.addText(buf);
     }
 
@@ -1650,7 +1805,7 @@ const HLJS = function(hljs) {
           return;
         }
         result = _highlight(top.subLanguage, modeBuffer, true, continuations[top.subLanguage]);
-        continuations[top.subLanguage] = /** @type {CompiledMode} */ (result.top);
+        continuations[top.subLanguage] = /** @type {CompiledMode} */ (result._top);
       } else {
         result = highlightAuto(modeBuffer, top.subLanguage.length ? top.subLanguage : null);
       }
@@ -1662,7 +1817,7 @@ const HLJS = function(hljs) {
       if (top.relevance > 0) {
         relevance += result.relevance;
       }
-      emitter.addSublanguage(result.emitter, result.language);
+      emitter.addSublanguage(result._emitter, result.language);
     }
 
     function processBuffer() {
@@ -1675,12 +1830,47 @@ const HLJS = function(hljs) {
     }
 
     /**
-     * @param {Mode} mode - new mode to start
+     * @param {CompiledScope} scope
+     * @param {RegExpMatchArray} match
      */
-    function startNewMode(mode) {
-      if (mode.className) {
-        emitter.openNode(language.classNameAliases[mode.className] || mode.className);
+    function emitMultiClass(scope, match) {
+      let i = 1;
+      const max = match.length - 1;
+      while (i <= max) {
+        if (!scope._emit[i]) { i++; continue; }
+        const klass = language.classNameAliases[scope[i]] || scope[i];
+        const text = match[i];
+        if (klass) {
+          emitter.addKeyword(text, klass);
+        } else {
+          modeBuffer = text;
+          processKeywords();
+          modeBuffer = "";
+        }
+        i++;
       }
+    }
+
+    /**
+     * @param {CompiledMode} mode - new mode to start
+     * @param {RegExpMatchArray} match
+     */
+    function startNewMode(mode, match) {
+      if (mode.scope && typeof mode.scope === "string") {
+        emitter.openNode(language.classNameAliases[mode.scope] || mode.scope);
+      }
+      if (mode.beginScope) {
+        // beginScope just wraps the begin match itself in a scope
+        if (mode.beginScope._wrap) {
+          emitter.addKeyword(modeBuffer, language.classNameAliases[mode.beginScope._wrap] || mode.beginScope._wrap);
+          modeBuffer = "";
+        } else if (mode.beginScope._multi) {
+          // at this point modeBuffer should just be the match
+          emitMultiClass(mode.beginScope, match);
+          modeBuffer = "";
+        }
+      }
+
       top = Object.create(mode, { parent: { value: top } });
       return top;
     }
@@ -1698,7 +1888,7 @@ const HLJS = function(hljs) {
         if (mode["on:end"]) {
           const resp = new Response(mode);
           mode["on:end"](match, resp);
-          if (resp.ignore) matched = false;
+          if (resp.isMatchIgnored) matched = false;
         }
 
         if (matched) {
@@ -1722,7 +1912,7 @@ const HLJS = function(hljs) {
      */
     function doIgnore(lexeme) {
       if (top.matcher.regexIndex === 0) {
-        // no more regexs to potentially match here, so we move the cursor forward one
+        // no more regexes to potentially match here, so we move the cursor forward one
         // space
         modeBuffer += lexeme[0];
         return 1;
@@ -1750,11 +1940,7 @@ const HLJS = function(hljs) {
       for (const cb of beforeCallbacks) {
         if (!cb) continue;
         cb(match, resp);
-        if (resp.ignore) return doIgnore(lexeme);
-      }
-
-      if (newMode && newMode.endSameAsBegin) {
-        newMode.endRe = escape(lexeme);
+        if (resp.isMatchIgnored) return doIgnore(lexeme);
       }
 
       if (newMode.skip) {
@@ -1768,11 +1954,7 @@ const HLJS = function(hljs) {
           modeBuffer = lexeme;
         }
       }
-      startNewMode(newMode);
-      // if (mode["after:begin"]) {
-      //   let resp = new Response(mode);
-      //   mode["after:begin"](match, resp);
-      // }
+      startNewMode(newMode, match);
       return newMode.returnBegin ? 0 : lexeme.length;
     }
 
@@ -1783,13 +1965,19 @@ const HLJS = function(hljs) {
      */
     function doEndMatch(match) {
       const lexeme = match[0];
-      const matchPlusRemainder = codeToHighlight.substr(match.index);
+      const matchPlusRemainder = codeToHighlight.substring(match.index);
 
       const endMode = endOfMode(top, match, matchPlusRemainder);
       if (!endMode) { return NO_MATCH; }
 
       const origin = top;
-      if (origin.skip) {
+      if (top.endScope && top.endScope._wrap) {
+        processBuffer();
+        emitter.addKeyword(lexeme, top.endScope._wrap);
+      } else if (top.endScope && top.endScope._multi) {
+        processBuffer();
+        emitMultiClass(top.endScope, match);
+      } else if (origin.skip) {
         modeBuffer += lexeme;
       } else {
         if (!(origin.returnEnd || origin.excludeEnd)) {
@@ -1801,7 +1989,7 @@ const HLJS = function(hljs) {
         }
       }
       do {
-        if (top.className) {
+        if (top.scope) {
           emitter.closeNode();
         }
         if (!top.skip && !top.subLanguage) {
@@ -1810,10 +1998,7 @@ const HLJS = function(hljs) {
         top = top.parent;
       } while (top !== endMode.parent);
       if (endMode.starts) {
-        if (endMode.endSameAsBegin) {
-          endMode.starts.endRe = endMode.endRe;
-        }
-        startNewMode(endMode.starts);
+        startNewMode(endMode.starts, match);
       }
       return origin.returnEnd ? 0 : lexeme.length;
     }
@@ -1821,8 +2006,8 @@ const HLJS = function(hljs) {
     function processContinuations() {
       const list = [];
       for (let current = top; current !== language; current = current.parent) {
-        if (current.className) {
-          list.unshift(current.className);
+        if (current.scope) {
+          list.unshift(current.scope);
         }
       }
       list.forEach(item => emitter.openNode(item));
@@ -1834,7 +2019,7 @@ const HLJS = function(hljs) {
     /**
      *  Process an individual match
      *
-     * @param {string} textBeforeMatch - text preceeding the match (since the last match)
+     * @param {string} textBeforeMatch - text preceding the match (since the last match)
      * @param {EnhancedMatch} [match] - the match itself
      */
     function processLexeme(textBeforeMatch, match) {
@@ -1857,7 +2042,7 @@ const HLJS = function(hljs) {
         modeBuffer += codeToHighlight.slice(match.index, match.index + 1);
         if (!SAFE_MODE) {
           /** @type {AnnotatedError} */
-          const err = new Error('0 width match regex');
+          const err = new Error(`0 width match regex (${languageName})`);
           err.languageName = languageName;
           err.badRule = lastMatch.rule;
           throw err;
@@ -1871,7 +2056,7 @@ const HLJS = function(hljs) {
       } else if (match.type === "illegal" && !ignoreIllegals) {
         // illegal match, we do not continue processing
         /** @type {AnnotatedError} */
-        const err = new Error('Illegal lexeme "' + lexeme + '" for mode "' + (top.className || '<unnamed>') + '"');
+        const err = new Error('Illegal lexeme "' + lexeme + '" for mode "' + (top.scope || '<unnamed>') + '"');
         err.mode = top;
         throw err;
       } else if (match.type === "end") {
@@ -1899,13 +2084,9 @@ const HLJS = function(hljs) {
       }
 
       /*
-      Why might be find ourselves here?  Only one occasion now.  An end match that was
-      triggered but could not be completed.  When might this happen?  When an `endSameasBegin`
-      rule sets the end rule to a specific match.  Since the overall mode termination rule that's
-      being used to scan the text isn't recompiled that means that any match that LOOKS like
-      the end (but is not, because it is not an exact match to the beginning) will
-      end up here.  A definite end match, but when `doEndMatch` tries to "reapply"
-      the end rule and fails to match, we wind up here, and just silently ignore the end.
+      Why might be find ourselves here?  An potential end match that was
+      triggered but could not be completed.  IE, `doEndMatch` returned NO_MATCH.
+      (this could be because a callback requests the match be ignored, etc)
 
       This causes no real harm other than stopping a few times too many.
       */
@@ -1920,7 +2101,7 @@ const HLJS = function(hljs) {
       throw new Error('Unknown language: "' + languageName + '"');
     }
 
-    const md = compileLanguage(language, { plugins });
+    const md = compileLanguage(language);
     let result = '';
     /** @type {CompiledMode} */
     let top = continuation || md;
@@ -1957,42 +2138,44 @@ const HLJS = function(hljs) {
         const processedCount = processLexeme(beforeMatch, match);
         index = match.index + processedCount;
       }
-      processLexeme(codeToHighlight.substr(index));
+      processLexeme(codeToHighlight.substring(index));
       emitter.closeAllNodes();
       emitter.finalize();
       result = emitter.toHTML();
 
       return {
-        relevance: relevance,
-        value: result,
         language: languageName,
+        value: result,
+        relevance: relevance,
         illegal: false,
-        emitter: emitter,
-        top: top
+        _emitter: emitter,
+        _top: top
       };
     } catch (err) {
       if (err.message && err.message.includes('Illegal')) {
         return {
+          language: languageName,
+          value: escape(codeToHighlight),
           illegal: true,
-          illegalBy: {
-            msg: err.message,
-            context: codeToHighlight.slice(index - 100, index + 100),
-            mode: err.mode
-          },
-          sofar: result,
           relevance: 0,
-          value: escape$1(codeToHighlight),
-          emitter: emitter
+          _illegalBy: {
+            message: err.message,
+            index: index,
+            context: codeToHighlight.slice(index - 100, index + 100),
+            mode: err.mode,
+            resultSoFar: result
+          },
+          _emitter: emitter
         };
       } else if (SAFE_MODE) {
         return {
+          language: languageName,
+          value: escape(codeToHighlight),
           illegal: false,
           relevance: 0,
-          value: escape$1(codeToHighlight),
-          emitter: emitter,
-          language: languageName,
-          top: top,
-          errorRaised: err
+          errorRaised: err,
+          _emitter: emitter,
+          _top: top
         };
       } else {
         throw err;
@@ -2009,13 +2192,13 @@ const HLJS = function(hljs) {
    */
   function justTextHighlightResult(code) {
     const result = {
-      relevance: 0,
-      emitter: new options.__emitter(options),
-      value: escape$1(code),
+      value: escape(code),
       illegal: false,
-      top: PLAINTEXT_LANGUAGE
+      relevance: 0,
+      _top: PLAINTEXT_LANGUAGE,
+      _emitter: new options.__emitter(options)
     };
-    result.emitter.addText(code);
+    result._emitter.addText(code);
     return result;
   }
 
@@ -2026,7 +2209,7 @@ const HLJS = function(hljs) {
   - language (detected language)
   - relevance (int)
   - value (an HTML string with highlighting markup)
-  - second_best (object with the same structure for second-best heuristically
+  - secondBest (object with the same structure for second-best heuristically
     detected language, may be absent)
 
     @param {string} code
@@ -2067,33 +2250,9 @@ const HLJS = function(hljs) {
 
     /** @type {AutoHighlightResult} */
     const result = best;
-    result.second_best = secondBest;
+    result.secondBest = secondBest;
 
     return result;
-  }
-
-  /**
-  Post-processing of the highlighted markup:
-
-  - replace TABs with something more useful
-  - replace real line-breaks with '<br>' for non-pre containers
-
-    @param {string} html
-    @returns {string}
-  */
-  function fixMarkup(html) {
-    if (!(options.tabReplace || options.useBR)) {
-      return html;
-    }
-
-    return html.replace(fixMarkupRe, match => {
-      if (match === '\n') {
-        return options.useBR ? '<br>' : match;
-      } else if (options.tabReplace) {
-        return match.replace(/\t/g, options.tabReplace);
-      }
-      return match;
-    });
   }
 
   /**
@@ -2104,59 +2263,51 @@ const HLJS = function(hljs) {
    * @param {string} [resultLang]
    */
   function updateClassName(element, currentLang, resultLang) {
-    const language = currentLang ? aliases[currentLang] : resultLang;
+    const language = (currentLang && aliases[currentLang]) || resultLang;
 
     element.classList.add("hljs");
-    if (language) element.classList.add(language);
+    element.classList.add(`language-${language}`);
   }
 
-  /** @type {HLJSPlugin} */
-  const brPlugin = {
-    "before:highlightBlock": ({ block }) => {
-      if (options.useBR) {
-        block.innerHTML = block.innerHTML.replace(/\n/g, '').replace(/<br[ /]*>/g, '\n');
-      }
-    },
-    "after:highlightBlock": ({ result }) => {
-      if (options.useBR) {
-        result.value = result.value.replace(/\n/g, "<br>");
-      }
-    }
-  };
-
-  const TAB_REPLACE_RE = /^(<[^>]+>|\t)+/gm;
-  /** @type {HLJSPlugin} */
-  const tabReplacePlugin = {
-    "after:highlightBlock": ({ result }) => {
-      if (options.tabReplace) {
-        result.value = result.value.replace(TAB_REPLACE_RE, (m) =>
-          m.replace(/\t/g, options.tabReplace)
-        );
-      }
-    }
-  };
-
   /**
-   * Applies highlighting to a DOM node containing code. Accepts a DOM node and
-   * two optional parameters for fixMarkup.
+   * Applies highlighting to a DOM node containing code.
    *
    * @param {HighlightedHTMLElement} element - the HTML element to highlight
   */
-  function highlightBlock(element) {
+  function highlightElement(element) {
     /** @type HTMLElement */
     let node = null;
     const language = blockLanguage(element);
 
     if (shouldNotHighlight(language)) return;
 
-    fire("before:highlightBlock",
-      { block: element, language: language });
+    fire("before:highlightElement",
+      { el: element, language: language });
+
+    // we should be all text, no child nodes (unescaped HTML) - this is possibly
+    // an HTML injection attack - it's likely too late if this is already in
+    // production (the code has likely already done its damage by the time
+    // we're seeing it)... but we yell loudly about this so that hopefully it's
+    // more likely to be caught in development before making it to production
+    if (element.children.length > 0) {
+      if (!options.ignoreUnescapedHTML) {
+        console.warn("One of your code blocks includes unescaped HTML. This is a potentially serious security risk.");
+        console.warn("https://github.com/highlightjs/highlight.js/wiki/security");
+        console.warn("The element with unescaped HTML:");
+        console.warn(element);
+      }
+      if (options.throwUnescapedHTML) {
+        const err = new HTMLInjectionError(
+          "One of your code blocks includes unescaped HTML.",
+          element.innerHTML
+        );
+        throw err;
+      }
+    }
 
     node = element;
     const text = node.textContent;
-    const result = language ? highlight(language, text, true) : highlightAuto(text);
-
-    fire("after:highlightBlock", { block: element, result, text });
+    const result = language ? highlight(text, { language, ignoreIllegals: true }) : highlightAuto(text);
 
     element.innerHTML = result.value;
     updateClassName(element, language, result.language);
@@ -2164,16 +2315,16 @@ const HLJS = function(hljs) {
       language: result.language,
       // TODO: remove with version 11.0
       re: result.relevance,
-      relavance: result.relevance
+      relevance: result.relevance
     };
-    if (result.second_best) {
-      element.second_best = {
-        language: result.second_best.language,
-        // TODO: remove with version 11.0
-        re: result.second_best.relevance,
-        relavance: result.second_best.relevance
+    if (result.secondBest) {
+      element.secondBest = {
+        language: result.secondBest.language,
+        relevance: result.secondBest.relevance
       };
     }
+
+    fire("after:highlightElement", { el: element, result, text });
   }
 
   /**
@@ -2182,30 +2333,45 @@ const HLJS = function(hljs) {
    * @param {Partial<HLJSOptions>} userOptions
    */
   function configure(userOptions) {
-    if (userOptions.useBR) {
-      deprecated("10.3.0", "'useBR' will be removed entirely in v11.0");
-      deprecated("10.3.0", "Please see https://github.com/highlightjs/highlight.js/issues/2559");
-    }
-    options = inherit$1(options, userOptions);
+    options = inherit(options, userOptions);
   }
 
-  /**
-   * Highlights to all <pre><code> blocks on a page
-   *
-   * @type {Function & {called?: boolean}}
-   */
+  // TODO: remove v12, deprecated
   const initHighlighting = () => {
-    if (initHighlighting.called) return;
-    initHighlighting.called = true;
-
-    const blocks = document.querySelectorAll('pre code');
-    blocks.forEach(highlightBlock);
+    highlightAll();
+    deprecated("10.6.0", "initHighlighting() deprecated.  Use highlightAll() now.");
   };
 
-  // Higlights all when DOMContentLoaded fires
+  // TODO: remove v12, deprecated
   function initHighlightingOnLoad() {
-    // @ts-ignore
-    window.addEventListener('DOMContentLoaded', initHighlighting, false);
+    highlightAll();
+    deprecated("10.6.0", "initHighlightingOnLoad() deprecated.  Use highlightAll() now.");
+  }
+
+  let wantsHighlight = false;
+
+  /**
+   * auto-highlights all pre>code elements on the page
+   */
+  function highlightAll() {
+    // if we are called too early in the loading process
+    if (document.readyState === "loading") {
+      wantsHighlight = true;
+      return;
+    }
+
+    const blocks = document.querySelectorAll(options.cssSelector);
+    blocks.forEach(highlightElement);
+  }
+
+  function boot() {
+    // if a highlight was requested before DOM was loaded, do now
+    if (wantsHighlight) highlightAll();
+  }
+
+  // make sure we are in the browser environment
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('DOMContentLoaded', boot, false);
   }
 
   /**
@@ -2239,30 +2405,24 @@ const HLJS = function(hljs) {
   }
 
   /**
+   * Remove a language grammar module
+   *
+   * @param {string} languageName
+   */
+  function unregisterLanguage(languageName) {
+    delete languages[languageName];
+    for (const alias of Object.keys(aliases)) {
+      if (aliases[alias] === languageName) {
+        delete aliases[alias];
+      }
+    }
+  }
+
+  /**
    * @returns {string[]} List of language internal names
    */
   function listLanguages() {
     return Object.keys(languages);
-  }
-
-  /**
-    intended usage: When one language truly requires another
-
-    Unlike `getLanguage`, this will throw when the requested language
-    is not available.
-
-    @param {string} name - name of the language to fetch/require
-    @returns {Language | never}
-  */
-  function requireLanguage(name) {
-    deprecated("10.4.0", "requireLanguage will be removed entirely in v11.");
-    deprecated("10.4.0", "Please see https://github.com/highlightjs/highlight.js/pull/2844");
-
-    const lang = getLanguage(name);
-    if (lang) { return lang; }
-
-    const err = new Error('The \'{}\' language is required, but not loaded.'.replace('{}', name));
-    throw err;
   }
 
   /**
@@ -2283,7 +2443,7 @@ const HLJS = function(hljs) {
     if (typeof aliasList === 'string') {
       aliasList = [aliasList];
     }
-    aliasList.forEach(alias => { aliases[alias] = languageName; });
+    aliasList.forEach(alias => { aliases[alias.toLowerCase()] = languageName; });
   }
 
   /**
@@ -2296,9 +2456,33 @@ const HLJS = function(hljs) {
   }
 
   /**
+   * Upgrades the old highlightBlock plugins to the new
+   * highlightElement API
+   * @param {HLJSPlugin} plugin
+   */
+  function upgradePluginAPI(plugin) {
+    // TODO: remove with v12
+    if (plugin["before:highlightBlock"] && !plugin["before:highlightElement"]) {
+      plugin["before:highlightElement"] = (data) => {
+        plugin["before:highlightBlock"](
+          Object.assign({ block: data.el }, data)
+        );
+      };
+    }
+    if (plugin["after:highlightBlock"] && !plugin["after:highlightElement"]) {
+      plugin["after:highlightElement"] = (data) => {
+        plugin["after:highlightBlock"](
+          Object.assign({ block: data.el }, data)
+        );
+      };
+    }
+  }
+
+  /**
    * @param {HLJSPlugin} plugin
    */
   function addPlugin(plugin) {
+    upgradePluginAPI(plugin);
     plugins.push(plugin);
   }
 
@@ -2317,58 +2501,60 @@ const HLJS = function(hljs) {
   }
 
   /**
-  Note: fixMarkup is deprecated and will be removed entirely in v11
+   * DEPRECATED
+   * @param {HighlightedHTMLElement} el
+   */
+  function deprecateHighlightBlock(el) {
+    deprecated("10.7.0", "highlightBlock will be removed entirely in v12.0");
+    deprecated("10.7.0", "Please use highlightElement now.");
 
-  @param {string} arg
-  @returns {string}
-  */
-  function deprecateFixMarkup(arg) {
-    deprecated("10.2.0", "fixMarkup will be removed entirely in v11.0");
-    deprecated("10.2.0", "Please see https://github.com/highlightjs/highlight.js/issues/2534");
-
-    return fixMarkup(arg);
+    return highlightElement(el);
   }
 
   /* Interface definition */
   Object.assign(hljs, {
     highlight,
     highlightAuto,
-    fixMarkup: deprecateFixMarkup,
-    highlightBlock,
+    highlightAll,
+    highlightElement,
+    // TODO: Remove with v12 API
+    highlightBlock: deprecateHighlightBlock,
     configure,
     initHighlighting,
     initHighlightingOnLoad,
     registerLanguage,
+    unregisterLanguage,
     listLanguages,
     getLanguage,
     registerAliases,
-    requireLanguage,
     autoDetection,
-    inherit: inherit$1,
-    addPlugin,
-    // plugins for frameworks
-    vuePlugin: BuildVuePlugin(hljs).VuePlugin
+    inherit,
+    addPlugin
   });
 
   hljs.debugMode = function() { SAFE_MODE = false; };
   hljs.safeMode = function() { SAFE_MODE = true; };
   hljs.versionString = version;
 
+  hljs.regex = {
+    concat: concat,
+    lookahead: lookahead,
+    either: either,
+    optional: optional,
+    anyNumberOfTimes: anyNumberOfTimes
+  };
+
   for (const key in MODES) {
     // @ts-ignore
     if (typeof MODES[key] === "object") {
       // @ts-ignore
-      deepFreezeEs6(MODES[key]);
+      deepFreezeEs6.exports(MODES[key]);
     }
   }
 
-  // merge all the modes/regexs into our main object
+  // merge all the modes/regexes into our main object
   Object.assign(hljs, MODES);
 
-  // built-in plugins, likely to be moved out of core in the future
-  hljs.addPlugin(brPlugin); // slated to be removed in v11
-  hljs.addPlugin(mergeHTMLPlugin);
-  hljs.addPlugin(tabReplacePlugin);
   return hljs;
 };
 

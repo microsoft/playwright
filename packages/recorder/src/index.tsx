@@ -15,6 +15,7 @@
  */
 
 import '@web/common.css';
+import './colors.css';
 import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
 import * as React from 'react';
