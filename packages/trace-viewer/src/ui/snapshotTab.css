@@ -24,10 +24,10 @@
 
 .snapshot-controls {
   flex: none;
-  color: var(--toolbar-color);
+  background-color: var(--vscode-sideBar-background);
+  color: var(--vscode-sideBarTitle-foreground);
   display: flex;
   box-shadow: var(--box-shadow);
-  background-color: var(--toolbar-bg-color);
   height: 32px;
   align-items: center;
   justify-content: center;
@@ -65,10 +65,10 @@
 }
 
 .snapshot-url {
-  background-color: var(--background);
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
   margin: 10px;
   padding: 4px;
-  border-radius: 3px;
   height: 28px;
   white-space: nowrap;
   text-overflow: ellipsis;
