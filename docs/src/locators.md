@@ -217,6 +217,10 @@ page.get_by_test_id("product-item").filter(has_text="Playwright Book").click()
 await page.GetByTestId("product-item").Filter(new() { HasText = "Playwright Book" }).ClickAsync();
 ```
 
+:::note
+Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+:::
+
 ### Locate based on accessible attributes with [`method: Page.getByRole`]
 
 The [`method: Page.getByRole`] locator reflects how users and assistive technology percieve the page, for example whether some element is a button or a checkbox. When locating by role, you should usually pass the accessible name as well, so that locator pinpoints the exact element.
