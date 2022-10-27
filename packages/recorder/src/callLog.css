@@ -20,7 +20,6 @@
   flex: auto;
   line-height: 20px;
   white-space: pre;
-  background: white;
   overflow: auto;
 }
 
@@ -35,7 +34,7 @@
   display: flex;
   flex: none;
   flex-direction: column;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--vscode-panel-border);
 }
 
 .call-log-call-header {
@@ -58,7 +57,7 @@
 
 .call-log-call.error {
   background-color: #fff0f0;
-  border-top: 1px solid #ffd6d6;
+  border-top: 1px solid var(--vscode-panel-border);
 }
 
 .call-log-call.error .call-log-call-header,
@@ -90,7 +89,7 @@
 
 .call-log-call .codicon.preview {
   visibility: hidden;
-  color: var(--toolbar-color);
+  color: var(--vscode-sideBarTitle-foreground);
   cursor: pointer;
 }
 

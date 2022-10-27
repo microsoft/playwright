@@ -24,7 +24,7 @@
 }
 
 .call-error {
-  border-bottom: 1px solid var(--background);
+  border-bottom: 1px solid var(--vscode-panel-border);
   padding: 3px 0 3px 12px;
 }
 
@@ -37,12 +37,13 @@
 
 .call-section {
   padding-left: 6px;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid var(--vscode-panel-border);
   font-weight: bold;
   text-transform: uppercase;
   font-size: 10px;
-  border-bottom: 1px solid #ddd;
-  background-color: #efefef;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  background-color: var(--vscode-sideBar-background);
+  color: var(--vscode-sideBarTitle-foreground);
   line-height: 18px;
 }
 

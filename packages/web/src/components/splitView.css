@@ -47,19 +47,19 @@
 }
 
 .split-view.vertical:not(.sidebar-first) > .split-view-sidebar {
-  border-top: 1px solid #ddd;
+  border-top: 1px solid var(--vscode-panel-border);
 }
 
 .split-view.horizontal:not(.sidebar-first) > .split-view-sidebar {
-  border-left: 1px solid #ddd;
+  border-left: 1px solid var(--vscode-panel-border);
 }
 
 .split-view.vertical.sidebar-first > .split-view-sidebar {
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--vscode-panel-border);
 }
 
 .split-view.horizontal.sidebar-first > .split-view-sidebar {
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--vscode-panel-border);
 }
 
 .split-view-resizer {

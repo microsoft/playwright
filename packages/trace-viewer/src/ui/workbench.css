@@ -113,8 +113,3 @@
 .workbench .spacer {
   flex: auto;
 }
-
-.tab-strip {
-  background-color: var(--light-background);
-}
-

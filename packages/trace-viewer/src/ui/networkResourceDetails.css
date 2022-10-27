@@ -19,15 +19,9 @@
   display: flex;
   align-items: center;
   padding: 0 3px;
-  background: #fdfcfc;
   width: 100%;
   flex: none;
   outline: none;
-}
-
-.network-request.selected,
-.network-request:hover {
-  border-color: var(--inactive-focus-ring);
 }
 
 .network-request.selected:focus {
@@ -79,7 +73,7 @@
 .network-request-body {
   white-space: pre;
   overflow: scroll;
-  background-color: var(--network-content-bg);
+  background-color: var(--vscode-sideBar-background);
   border: black 1px solid;
   max-height: 500px;
 }
@@ -87,7 +81,7 @@
 .network-request-response-body {
   white-space: pre;
   overflow: scroll;
-  background-color: var(--network-content-bg);
+  background-color: var(--vscode-sideBar-background);
   border: black 1px solid;
   max-height: 500px;
 }
