@@ -264,7 +264,7 @@ await page.GetByLabel("Password").FillAsync("secret");
 
 ### Locate by placeholder text
 
-Inputs may have a placeholder attribute to hint to the user what value should be entered. You can locate the placeholder using [`method: Page.getByPlaceholder`].
+Inputs may have a placeholder attribute to hint to the user what value should be entered. You can locate such an input using [`method: Page.getByPlaceholder`].
 
 For example, consider the following DOM structure.
 
