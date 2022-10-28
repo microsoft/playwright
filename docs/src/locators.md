@@ -404,7 +404,7 @@ For example, consider the following DOM structure.
 You can fill the input after locating it by the label text:
 
 ```js
-await frame.getByTitle('Issues count').toHaveText('25 issues');
+await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
 ```
 
 ```java
