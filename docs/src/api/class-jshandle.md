@@ -140,7 +140,7 @@ handle.dispose();
 ```
 
 ```python async
-handle = await page.evaluate_handle("{window, document}")
+handle = await page.evaluate_handle("({window, document})")
 properties = await handle.get_properties()
 window_handle = properties.get("window")
 document_handle = properties.get("document")
@@ -148,7 +148,7 @@ await handle.dispose()
 ```
 
 ```python sync
-handle = page.evaluate_handle("{window, document}")
+handle = page.evaluate_handle("({window, document})")
 properties = handle.get_properties()
 window_handle = properties.get("window")
 document_handle = properties.get("document")
