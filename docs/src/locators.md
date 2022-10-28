@@ -618,7 +618,7 @@ page.getByRole('section').filter({ has: page.getByTestId('subscribe-button') })
 page.getByRole("section").filter(new Locator.FilterOptions().setHas(page.getByTestId("subscribe-button")))
 ```
 ```python async
-page.get_by_role("section"), has=page.get_by_test_id("subscribe-button")
+page.get_by_role("section").filter(has=page.get_by_test_id("subscribe-button"))
 ```
 ```python sync
 page.get_by_role("section").filter(has=page.get_by_test_id("subscribe-button"))
