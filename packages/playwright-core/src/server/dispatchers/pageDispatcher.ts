@@ -138,10 +138,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async emulateMedia(params: channels.PageEmulateMediaParams, metadata: CallMetadata): Promise<void> {
     await this._page.emulateMedia({
-      media: params.media === 'null' ? null : params.media,
-      colorScheme: params.colorScheme === 'null' ? null : params.colorScheme,
-      reducedMotion: params.reducedMotion === 'null' ? null : params.reducedMotion,
-      forcedColors: params.forcedColors === 'null' ? null : params.forcedColors,
+      media: params.media,
+      colorScheme: params.colorScheme,
+      reducedMotion: params.reducedMotion,
+      forcedColors: params.forcedColors,
     });
   }
 

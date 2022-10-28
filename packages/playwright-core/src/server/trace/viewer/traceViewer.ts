@@ -68,6 +68,7 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
     noDefaultViewport: true,
     ignoreDefaultArgs: ['--enable-automation'],
     headless,
+    colorScheme: 'no-override',
     useWebSocket: isUnderTest()
   });
 
