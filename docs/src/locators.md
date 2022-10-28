@@ -621,7 +621,7 @@ page.getByRole("section").filter(new Locator.FilterOptions().setHas(page.getByTe
 page.get_by_role("section"), has=page.get_by_test_id("subscribe-button")
 ```
 ```python sync
-page.get_by_role("section"), has=page.get_by_test_id("subscribe-button")
+page.get_by_role("section").filter(has=page.get_by_test_id("subscribe-button"))
 ```
 ```csharp
 page.GetByRole("section"), new() { Has = page.GetByTestId("subscribe-button") })
