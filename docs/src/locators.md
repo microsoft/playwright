@@ -8,15 +8,15 @@ a way to find element(s) on the page at any moment.
 
 ### Quick Guide
 
-These are the recommended built in locators and are available since version 1.27.
+These are the recommended built in locators.
 
-- `page.getByRole` to locate by [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
-- `page.getByText` to locate by text content.
-- `page.getByLabel` to locate a form control by associated label's text.
-- `page.getByPlaceholder` to locate an input by placeholder.
-- `page.getByAltText` to locate an element, usually image, by its text alternative.
-- `page.getByTitle` to locate an element by its title.
-- `page.getByTestId` to locate an element based on its `data-testid` attribute (other attribute can be configured).
+- [`method: Page.getByRole`] to locate by [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+- [`method: Page.getByText`] to locate by text content.
+- [`method: Page.getByLabel`] to locate a form control by associated label's text.
+- [`method: Page.getByPlaceholder`] to locate an input by placeholder.
+- [`method: Page.getByAltText`] to locate an element, usually image, by its text alternative.
+- [`method: Page.getByTitle`] to locate an element by its title.
+- [`method: Page.getByTestId`] to locate an element based on its `data-testid` attribute (other attribute can be configured).
 
 ```js
 await page.getByLabel('User Name').fill('John');
@@ -192,9 +192,9 @@ var locator = page.FrameLocator("#my-frame").GetByText("Submit");
 await locator.ClickAsync();
 ```
 
-### Locate based on accessible attributes with getByRole
+### Locate based on accessible attributes
 
-The [`method: Page.getByRole`] locator reflects how users and assistive technology percieve the page, for example whether some element is a button or a checkbox. When locating by role, you should usually pass the accessible name as well, so that locator pinpoints the exact element.
+The [`method: Page.getByRole`] locator reflects how users and assistive technology perceive the page, for example whether some element is a button or a checkbox. When locating by role, you should usually pass the accessible name as well, so that locator pinpoints the exact element.
 
 ```js
 await page.getByRole('button', { name: /submit/i }).click();
@@ -226,11 +226,11 @@ await page.GetByRole("button", new() { Name = new Regex("submit", RegexOptions.I
 await page.GetByRole("checkbox", new() { Checked = true, Name = "Check me" }).CheckAsync();
 ```
 
-Role locators follow W3C specificaitons for [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+Role locators follow W3C specifications for [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
 
 Note that role locators **do not replace** accessibility audits and conformance tests, but rather give early feedback about the ARIA guidelines.
 
-### Locate by label text with getByLabel
+### Locate by label text
 
 Most form controls usually have dedicated labels that could be conveniently used to interact with the form. In this case, you can locate the control by its associated label using [`method: Page.getByLabel`].
 
@@ -262,8 +262,7 @@ page.get_by_label("Password").fill("secret")
 await page.GetByLabel("Password").FillAsync("secret");
 ```
 
-### Locate by placeholder text with getByPlaceholder
-[`method: Page.getByPlaceholder`]
+### Locate by placeholder text
 
 Inputs may have a placeholder attribute to hint to the user what value should be entered. You can locate the placeholder using [`method: Page.getByPlaceholder`].
 
@@ -295,7 +294,7 @@ page.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
 await page.GetByPlacheolder("name@example.com").FillAsync("playwright@microsoft.com");
 ```
 
-### Locate by text using getByText
+### Locate by text
 
 The easiest way to find an element is to look for the text it contains. You can match by a substring, exact string, or a regular expression when using [`method: Page.getByText`]
 
@@ -347,7 +346,7 @@ await page.GetByTestId("product-item").Filter(new() { HasText = "Playwright Book
 Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
 :::
 
-### Locate by alt text with getByAltText
+### Locate by alt text
 
 All images should have a valid alt tag which describes the image. You can locate the placeholder using [`method: Page.getByPlaceholder`].
 
@@ -379,8 +378,7 @@ page.get_by_alt_text("playwright logo").click()
 ```csharp
 await page.getByAltText("playwright logo").click();
 ```
-### Locate by title with getByTitle
-[`method: Page.getByTitle`]
+### Locate by title
 
 Locate an element with a matching title attribute using [`method: Page.getByTitle`].
 
@@ -412,7 +410,7 @@ page.get_by_label("Close").click()
 await page.GetByTitle("Close").Click();
 ```
 
-### Define explicit contract and use getByTestId
+### Define explicit contract and use a data-testid attribute
 
 User-facing attributes like text or accessible name can change over time. In this case it is convenient to define explicit test ids using [`method: Page.getByTestId`].
 
