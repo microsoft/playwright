@@ -28,31 +28,44 @@ await page.getByRole('button', { name: 'Sign in' }).click();
 await expect(page.getByText('Welcome, John!')).toBeVisible();
 ```
 
-### Creating Locators
-
-```js
-const locator = page.getByText('Submit');
-await locator.click();
-```
-
 ```java
-Locator locator = page.getByText("Submit");
-locator.click();
+page.getByLabel("User Name").fill("John");
+
+page.getByLabel("Password").fill("secret-password");
+
+page.getByRole("button", { name: "Sign in" }).click();
+
+assertThat(page.getByText("Welcome, John!")).toBeVisible();
 ```
 
 ```python async
-locator = page.get_by_text("Submit")
-await locator.click()
+await page.get_by_label("User Name").fill("John")
+
+await page.get_by_label("Password").fill("secret-password")
+
+await page.get_by_role("button", { name: "Sign in" }).click()
+
+await page.get_by_text("Welcome, John!").toBeVisible();
 ```
 
 ```python sync
-locator = page.get_by_text("Submit")
-locator.click()
+page.get_by_label("User Name").fill("John")
+
+page.get_by_label("Password").fill("secret-password")
+
+page.get_by_role("button", { name: "Sign in" }).click()
+
+page.get_by_text("Welcome, John!").toBeVisible();
 ```
 
 ```csharp
-var locator = page.GetByText("Submit");
-await locator.ClickAsync();
+await page.GetByLabel('User Name').FillAsync('John');
+
+await page.GetByLabel('Password').FillAsync('secret-password');
+
+await page.GetByRole('button', { name: 'Sign in' }).ClickAsync();
+
+await expect(page.GetByText('Welcome, John!')).ToBeVisibleAsync();
 ```
 
 Every time locator is used for some action, up-to-date DOM element is located in the page. So in the snippet
@@ -205,13 +218,13 @@ await page.getByRole('checkbox', { checked: true, name: "Check me" }).check();
 ```python async
 await page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
 
-await page.get_by_role("checkbox", checked=True, name="Check me"]).check()
+await page.get_by_role("checkbox", checked=True, name="Check me").check()
 ```
 
 ```python sync
 page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
 
-page.get_by_role("checkbox", checked=True, name="Check me"]).check()
+page.get_by_role("checkbox", checked=True, name="Check me").check()
 ```
 
 ```java
@@ -385,34 +398,34 @@ Locate an element with a matching title attribute using [`method: Page.getByTitl
 For example, consider the following DOM structure.
 
 ```html
-<span title='Close'></span>
+<span title='Issues count'>25 issues</span>
 ```
 
 You can fill the input after locating it by the label text:
 
 ```js
-await frame.getByTitle('Close').click();
+await frame.getByTitle('Issues count').toHaveText('25 issues');
 ```
 
 ```java
-page.getByTitle("Close").click();
+page.getByTitle("Issues count").toHaveText('25 issues');
 ```
 
 ```python async
-await page.get_by_label("Close").click()
+await page.get_by_label("Issues count").toHaveText('25 issues');
 ```
 
 ```python sync
-page.get_by_label("Close").click()
+page.get_by_label("Issues count").toHaveText('25 issues');
 ```
 
 ```csharp
-await page.GetByTitle("Close").Click();
+await page.GetByTitle("Issues count").toHaveText('25 issues');
 ```
 
 ### Define explicit contract and use a data-testid attribute
 
-User-facing attributes like text or accessible name can change over time. In this case it is convenient to define explicit test ids using [`method: Page.getByTestId`].
+User-facing attributes like text or accessible name can change over time. In this case it is convenient to define explicit test ids and query them with [`method: Page.getByTestId`].
 
 ```html
 <button data-testid="directions">Itinéraire</button>
@@ -605,10 +618,10 @@ page.getByRole('section').filter({ has: page.getByTestId('subscribe-button') })
 page.getByRole("section").filter(new Locator.FilterOptions().setHas(page.getByTestId("subscribe-button")))
 ```
 ```python async
-page.get_by_role("section"), has=page.get_by_test_id("subscribe-button"))
+page.get_by_role("section"), has=page.get_by_test_id("subscribe-button")
 ```
 ```python sync
-page.get_by_role("section"), has=page.get_by_test_id("subscribe-button"))
+page.get_by_role("section"), has=page.get_by_test_id("subscribe-button")
 ```
 ```csharp
 page.GetByRole("section"), new() { Has = page.GetByTestId("subscribe-button") })
