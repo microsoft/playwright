@@ -4415,6 +4415,12 @@ interface TestProject {
   name?: string;
 
   /**
+   * Project setup files that would be executed before all tests in the project. If project setup fails the tests in this
+   * project will be skipped. All project setup files will run in every shard if the project is sharded.
+   */
+  setup?: string|RegExp|Array<string|RegExp>;
+
+  /**
    * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
    * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
    *
