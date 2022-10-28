@@ -376,7 +376,7 @@ page.get_by_alt_text("playwright logo").click()
 ```
 
 ```csharp
-await page.getByAltText("playwright logo").click();
+await page.GetByAltText("playwright logo").ClickAsync();
 ```
 ### Locate by title
 
