@@ -309,7 +309,7 @@ await page.GetByPlacheolder("name@example.com").FillAsync("playwright@microsoft.
 
 ### Locate by text
 
-The easiest way to find an element is to look for the text it contains. You can match by a substring, exact string, or a regular expression when using [`method: Page.getByText`]
+The easiest way to find an element is to look for the text it contains. You can match by a substring, exact string, or a regular expression when using [`method: Page.getByText`].
 
 ```js
 await page.getByText('Log in').click();
@@ -408,19 +408,19 @@ await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
 ```
 
 ```java
-page.getByTitle("Issues count").toHaveText('25 issues');
+assertThat(page.getByTitle("Issues count")).hasText("25 issues");
 ```
 
 ```python async
-await page.get_by_label("Issues count").toHaveText('25 issues');
+await expect(page.get_by_title("Issues count")).to_have_text("25 issues")
 ```
 
 ```python sync
-page.get_by_label("Issues count").toHaveText('25 issues');
+expect(page.get_by_title("Issues count")).to_have_text("25 issues")
 ```
 
 ```csharp
-await page.GetByTitle("Issues count").toHaveText('25 issues');
+await Expect(page.GetByTitle("Issues count")).toHaveText("25 issues");
 ```
 
 ### Define explicit contract and use a data-testid attribute
@@ -440,11 +440,11 @@ page.getByTestId("directions").click();
 ```
 
 ```python async
-await page.get_by_test_id('directions').click()
+await page.get_by_test_id("directions").click()
 ```
 
 ```python sync
-page.get_by_test_id('directions').click()
+page.get_by_test_id("directions").click()
 ```
 
 ```csharp
