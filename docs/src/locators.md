@@ -348,7 +348,7 @@ Matching by text always normalizes whitespace, even with exact match. For exampl
 
 ### Locate by alt text
 
-All images should have a valid alt tag which describes the image. You can locate the placeholder using [`method: Page.getByPlaceholder`].
+All images should have an `alt` attribute that describes the image. You can locate an image based on the text alternative using [`method: Page.getByAltText`].
 
 
 For example, consider the following DOM structure.
