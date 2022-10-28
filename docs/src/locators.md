@@ -357,7 +357,7 @@ For example, consider the following DOM structure.
 <img alt="playwright logo" src="/playwright-logo.png" />
 ```
 
-You can fill the input after locating it by the label text:
+You can click on the image after locating it by the text alternative:
 
 ```js
 await page.getByAltText('playwright logo').click();
