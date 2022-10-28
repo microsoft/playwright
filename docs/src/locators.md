@@ -33,9 +33,9 @@ page.getByLabel("User Name").fill("John");
 
 page.getByLabel("Password").fill("secret-password");
 
-page.getByRole("button", { name: "Sign in" }).click();
+page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
 
-assertThat(page.getByText("Welcome, John!")).toBeVisible();
+assertThat(page.getByText("Welcome, John!")).isVisible();
 ```
 
 ```python async
@@ -43,9 +43,9 @@ await page.get_by_label("User Name").fill("John")
 
 await page.get_by_label("Password").fill("secret-password")
 
-await page.get_by_role("button", { name: "Sign in" }).click()
+await page.get_by_role("button", name="Sign in").click()
 
-await page.get_by_text("Welcome, John!").toBeVisible();
+await expect(page.get_by_text("Welcome, John!")).to_be_visible()
 ```
 
 ```python sync
@@ -53,19 +53,19 @@ page.get_by_label("User Name").fill("John")
 
 page.get_by_label("Password").fill("secret-password")
 
-page.get_by_role("button", { name: "Sign in" }).click()
+page.get_by_role("button", name="Sign in").click()
 
-page.get_by_text("Welcome, John!").toBeVisible();
+expect(page.get_by_text("Welcome, John!")).to_be_visible()
 ```
 
 ```csharp
-await page.GetByLabel('User Name').FillAsync('John');
+await page.GetByLabel("User Name").FillAsync("John");
 
-await page.GetByLabel('Password').FillAsync('secret-password');
+await page.GetByLabel("Password").FillAsync("secret-password");
 
-await page.GetByRole('button', { name: 'Sign in' }).ClickAsync();
+await page.GetByRole("button", new() { Name = "Sign in" }).ClickAsync();
 
-await expect(page.GetByText('Welcome, John!')).ToBeVisibleAsync();
+await Expect(page.GetByText("Welcome, John!")).ToBeVisibleAsync();
 ```
 
 Every time locator is used for some action, up-to-date DOM element is located in the page. So in the snippet
@@ -285,7 +285,7 @@ For example, consider the following DOM structure.
  <input id="email" name="email" type="email" placeholder="name@example.com">
 ```
 
-You can fill the input after locating it by the label text:
+You can fill the input after locating it by the placeholder text:
 
 ```js
 await page.getByPlaceholder("name@example.com").fill("playwright@microsoft.com");
@@ -401,7 +401,7 @@ For example, consider the following DOM structure.
 <span title='Issues count'>25 issues</span>
 ```
 
-You can fill the input after locating it by the label text:
+You can check the issues count after locating it by the title text:
 
 ```js
 await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
