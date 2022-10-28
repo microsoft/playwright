@@ -34,7 +34,11 @@ it.beforeAll(async ({ browserMajorVersion, browserName, isElectron, platform }) 
 });
 
 async function expectEvent(page: Page, expected: any) {
-  const received = await page.evaluate('window.lastEvent') as any;
+  let received: any;
+  await expect.poll(async () => {
+    received = await page.evaluate('window.lastEvent') as any;
+    return received;
+  }).toBeTruthy();
   if (ignoreDelta) {
     delete received.deltaX;
     delete received.deltaY;
