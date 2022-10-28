@@ -16,7 +16,7 @@
 
 /* eslint-disable no-console */
 import { colors, ms as milliseconds } from 'playwright-core/lib/utilsBundle';
-import { BaseReporter, formatError, formatTestTitle, stripAnsiEscapes } from './base';
+import { BaseReporter, formatError, formatTestTitle, stepSuffix, stripAnsiEscapes } from './base';
 import type { FullConfig, FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
@@ -28,12 +28,16 @@ class ListReporter extends BaseReporter {
   private _lastRow = 0;
   private _lastColumn = 0;
   private _testRows = new Map<TestCase, number>();
-  private _resultIndex = new Map<TestResult, number>();
+  private _stepRows = new Map<TestStep, number>();
+  private _resultIndex = new Map<TestResult, string>();
+  private _stepIndex = new Map<TestStep, string>();
   private _needNewLine = false;
   private readonly _liveTerminal: string | boolean | undefined;
+  private _printSteps: boolean;
 
-  constructor(options: { omitFailures?: boolean } = {}) {
+  constructor(options: { omitFailures?: boolean, printSteps?: boolean } = {}) {
     super(options);
+    this._printSteps = options.printSteps || !!process.env.PW_TEST_DEBUG_REPORTERS_PRINT_STEPS;
     this._liveTerminal = process.stdout.isTTY || !!process.env.PWTEST_TTY_WIDTH;
   }
 
@@ -50,12 +54,13 @@ class ListReporter extends BaseReporter {
   onTestBegin(test: TestCase, result: TestResult) {
     if (this._liveTerminal)
       this._maybeWriteNewLine();
-    this._resultIndex.set(result, this._resultIndex.size + 1);
-    this._testRows.set(test, this._lastRow++);
+    this._resultIndex.set(result, String(this._resultIndex.size + 1));
     if (this._liveTerminal) {
-      const prefix = this._testPrefix(result, '');
+      this._testRows.set(test, this._lastRow);
+      const index = this._resultIndex.get(result)!;
+      const prefix = this._testPrefix(index, '');
       const line = colors.dim(formatTestTitle(this.config, test)) + this._retrySuffix(result);
-      process.stdout.write(prefix + this.fitToScreen(line, prefix) + '\n');
+      this._appendLine(line, prefix);
     }
   }
 
@@ -70,19 +75,52 @@ class ListReporter extends BaseReporter {
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    if (!this._liveTerminal)
-      return;
     if (step.category !== 'test.step')
       return;
-    this._updateTestLine(test, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(result, ''));
+    const testIndex = this._resultIndex.get(result)!;
+    if (!this._printSteps) {
+      if (this._liveTerminal)
+        this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+      return;
+    }
+
+    const ordinal = ((result as any)[lastStepOrdinalSymbol] || 0) + 1;
+    (result as any)[lastStepOrdinalSymbol] = ordinal;
+    const stepIndex = `${testIndex}.${ordinal}`;
+    this._stepIndex.set(step, stepIndex);
+
+    if (this._liveTerminal)
+      this._maybeWriteNewLine();
+    if (this._liveTerminal) {
+      this._stepRows.set(step, this._lastRow);
+      const prefix = this._testPrefix(stepIndex, '');
+      const line = test.title + colors.dim(stepSuffix(step));
+      this._appendLine(line, prefix);
+    }
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    if (!this._liveTerminal)
-      return;
     if (step.category !== 'test.step')
       return;
-    this._updateTestLine(test, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(result, ''));
+
+    const testIndex = this._resultIndex.get(result)!;
+    if (!this._printSteps) {
+      if (this._liveTerminal)
+        this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+      return;
+    }
+
+    const index = this._stepIndex.get(step)!;
+    const title = test.title + colors.dim(stepSuffix(step));
+    const prefix = this._testPrefix(index, '');
+    let text = '';
+    if (step.error)
+      text = colors.red(title);
+    else
+      text = title;
+    text += colors.dim(` (${milliseconds(step.duration)})`);
+
+    this._updateOrAppendLine(this._stepRows.get(step)!, text, prefix);
   }
 
   private _maybeWriteNewLine() {
@@ -125,66 +163,75 @@ class ListReporter extends BaseReporter {
     const title = formatTestTitle(this.config, test);
     let prefix = '';
     let text = '';
+    const index = this._resultIndex.get(result)!;
     if (result.status === 'skipped') {
-      prefix = this._testPrefix(result, colors.green('-'));
+      prefix = this._testPrefix(index, colors.green('-'));
       // Do not show duration for skipped.
       text = colors.cyan(title) + this._retrySuffix(result);
     } else {
       const statusMark = result.status === 'passed' ? POSITIVE_STATUS_MARK : NEGATIVE_STATUS_MARK;
       if (result.status === test.expectedStatus) {
-        prefix = this._testPrefix(result, colors.green(statusMark));
-        text = colors.dim(title);
+        prefix = this._testPrefix(index, colors.green(statusMark));
+        text = title;
       } else {
-        prefix = this._testPrefix(result, colors.red(statusMark));
+        prefix = this._testPrefix(index, colors.red(statusMark));
         text = colors.red(title);
       }
       text += this._retrySuffix(result) + colors.dim(` (${milliseconds(result.duration)})`);
     }
 
+    this._updateOrAppendLine(this._testRows.get(test)!, text, prefix);
+  }
+
+  private _updateOrAppendLine(row: number, text: string, prefix: string) {
     if (this._liveTerminal) {
-      this._updateTestLine(test, text, prefix);
+      this._updateLine(row, text, prefix);
     } else {
       this._maybeWriteNewLine();
-      process.stdout.write(prefix + text);
-      process.stdout.write('\n');
+      this._appendLine(text, prefix);
     }
   }
 
-  private _updateTestLine(test: TestCase, line: string, prefix: string) {
-    if (process.env.PW_TEST_DEBUG_REPORTERS)
-      this._updateTestLineForTest(test, line, prefix);
-    else
-      this._updateTestLineForTTY(test, line, prefix);
+  private _appendLine(text: string, prefix: string) {
+    const line = prefix + this.fitToScreen(text, prefix);
+    if (process.env.PW_TEST_DEBUG_REPORTERS) {
+      process.stdout.write(this._lastRow + ' : ' + line + '\n');
+    } else {
+      process.stdout.write(line);
+      process.stdout.write('\n');
+    }
+    ++this._lastRow;
   }
 
-  private _updateTestLineForTTY(test: TestCase, line: string, prefix: string) {
-    const testRow = this._testRows.get(test)!;
+  private _updateLine(row: number, text: string, prefix: string) {
+    const line = prefix + this.fitToScreen(text, prefix);
+    if (process.env.PW_TEST_DEBUG_REPORTERS)
+      process.stdout.write(row + ' : ' + line + '\n');
+    else
+      this._updateLineForTTY(row, line);
+  }
+
+  private _updateLineForTTY(row: number, line: string) {
     // Go up if needed
-    if (testRow !== this._lastRow)
-      process.stdout.write(`\u001B[${this._lastRow - testRow}A`);
+    if (row !== this._lastRow)
+      process.stdout.write(`\u001B[${this._lastRow - row}A`);
     // Erase line, go to the start
     process.stdout.write('\u001B[2K\u001B[0G');
-    process.stdout.write(prefix + this.fitToScreen(line, prefix));
+    process.stdout.write(line);
     // Go down if needed.
-    if (testRow !== this._lastRow)
-      process.stdout.write(`\u001B[${this._lastRow - testRow}E`);
+    if (row !== this._lastRow)
+      process.stdout.write(`\u001B[${this._lastRow - row}E`);
     if (process.env.PWTEST_TTY_WIDTH)
       process.stdout.write('\n');  // For testing.
   }
 
-  private _testPrefix(result: TestResult, statusMark: string) {
-    const index = this._resultIndex.get(result)!;
+  private _testPrefix(index: string, statusMark: string) {
     const statusMarkLength = stripAnsiEscapes(statusMark).length;
-    return '  ' + statusMark + ' '.repeat(3 - statusMarkLength) + colors.dim(String(index) + ' ');
+    return '  ' + statusMark + ' '.repeat(3 - statusMarkLength) + colors.dim(index + ' ');
   }
 
   private _retrySuffix(result: TestResult) {
     return (result.retry ? colors.yellow(` (retry #${result.retry})`) : '');
-  }
-
-  private _updateTestLineForTest(test: TestCase, line: string, prefix: string) {
-    const testRow = this._testRows.get(test)!;
-    process.stdout.write(testRow + ' : ' + prefix + line + '\n');
   }
 
   override onError(error: TestError): void {
@@ -201,5 +248,7 @@ class ListReporter extends BaseReporter {
     this.epilogue(true);
   }
 }
+
+const lastStepOrdinalSymbol = Symbol('lastStepOrdinal');
 
 export default ListReporter;

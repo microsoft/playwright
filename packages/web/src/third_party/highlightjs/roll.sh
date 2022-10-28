@@ -4,9 +4,9 @@ set +x
 
 # Pick a stable release revision from here:
 # https://github.com/highlightjs/highlight.js/releases
-RELEASE_REVISION="af20048d5c601d6e30016d8171317bfdf8a6c242"
+RELEASE_REVISION="bed790f3f3515ebcb92896ab23a518f835008233"
 LANGUAGES="javascript python csharp java"
-STYLES="tomorrow.css"
+STYLES="github*.css"
 
 trap "cd $(pwd -P)" EXIT
 SCRIPT_PATH="$(cd "$(dirname "$0")" ; pwd -P)"

@@ -29,7 +29,7 @@ import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getAriaDisabled, getAriaRole, getElementAccessibleName } from './roleUtils';
+import { getAriaCheckedStrict, getAriaDisabled, getAriaRole, getElementAccessibleName } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../isomorphic/locatorGenerators';
 import type { Language } from '../isomorphic/locatorGenerators';
@@ -111,6 +111,7 @@ export class InjectedScript {
     this._engines.set('internal:has', this._createHasEngine());
     this._engines.set('internal:label', this._createInternalLabelEngine());
     this._engines.set('internal:text', this._createTextEngine(true, true));
+    this._engines.set('internal:has-text', this._createInternalHasTextEngine());
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
     this._engines.set('internal:role', RoleEngine);
 
@@ -250,7 +251,7 @@ export class InjectedScript {
 
   private _createTextEngine(shadow: boolean, internal: boolean): SelectorEngine {
     const queryList = (root: SelectorRoot, selector: string): Element[] => {
-      const { matcher, kind } = createTextMatcher(selector, false, internal);
+      const { matcher, kind } = createTextMatcher(selector, internal);
       const result: Element[] = [];
       let lastDidNotMatchSelf: Element | null = null;
 
@@ -261,7 +262,7 @@ export class InjectedScript {
         const matches = elementMatchesText(this._evaluator._cacheText, element, matcher);
         if (matches === 'none')
           lastDidNotMatchSelf = element;
-        if (matches === 'self' || (matches === 'selfAndChildren' && kind === 'strict'))
+        if (matches === 'self' || (matches === 'selfAndChildren' && kind === 'strict' && !internal))
           result.push(element);
       };
 
@@ -280,11 +281,25 @@ export class InjectedScript {
     };
   }
 
+  private _createInternalHasTextEngine(): SelectorEngine {
+    const evaluator = this._evaluator;
+    return {
+      queryAll: (root: SelectorRoot, selector: string): Element[] => {
+        if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
+          return [];
+        const element = root as Element;
+        const text = elementText(evaluator._cacheText, element);
+        const { matcher } = createTextMatcher(selector, true);
+        return matcher(text) ? [element] : [];
+      }
+    };
+  }
+
   private _createInternalLabelEngine(): SelectorEngine {
     const evaluator = this._evaluator;
     return {
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
-        const { matcher } = createTextMatcher(selector, true, true);
+        const { matcher } = createTextMatcher(selector, true);
         const result: Element[] = [];
         const labels = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, 'label') as HTMLLabelElement[];
         for (const label of labels) {
@@ -594,16 +609,11 @@ export class InjectedScript {
       return !disabled && editable;
 
     if (state === 'checked' || state === 'unchecked') {
-      if (['checkbox', 'radio'].includes(element.getAttribute('role') || '')) {
-        const result = element.getAttribute('aria-checked') === 'true';
-        return state === 'checked' ? result : !result;
-      }
-      if (element.nodeName !== 'INPUT')
+      const need = state === 'checked';
+      const checked = getAriaCheckedStrict(element);
+      if (checked === 'error')
         throw this.createStacklessError('Not a checkbox or radio button');
-      if (!['radio', 'checkbox'].includes((element as HTMLInputElement).type.toLowerCase()))
-        throw this.createStacklessError('Not a checkbox or radio button');
-      const result = (element as HTMLInputElement).checked;
-      return state === 'checked' ? result : !result;
+      return need === checked;
     }
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
@@ -748,6 +758,15 @@ export class InjectedScript {
         // Some inputs do not allow selection.
       }
     }
+    return 'done';
+  }
+
+  blurNode(node: Node): 'error:notconnected' | 'done' {
+    if (!node.isConnected)
+      return 'error:notconnected';
+    if (node.nodeType !== Node.ELEMENT_NODE)
+      throw this.createStacklessError('Node is not an element');
+    (node as HTMLElement | SVGElement).blur();
     return 'done';
   }
 
@@ -1302,7 +1321,7 @@ function cssUnquote(s: string): string {
   return r.join('');
 }
 
-function createTextMatcher(selector: string, strictMatchesFullText: boolean, internal: boolean): { matcher: TextMatcher, kind: 'regex' | 'strict' | 'lax' } {
+function createTextMatcher(selector: string, internal: boolean): { matcher: TextMatcher, kind: 'regex' | 'strict' | 'lax' } {
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
     const lastSlash = selector.lastIndexOf('/');
     const matcher: TextMatcher = createRegexTextMatcher(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
@@ -1324,7 +1343,7 @@ function createTextMatcher(selector: string, strictMatchesFullText: boolean, int
     strict = true;
   }
   if (strict)
-    return { matcher: strictMatchesFullText ? createStrictFullTextMatcher(selector) : createStrictTextMatcher(selector), kind: 'strict' };
+    return { matcher: internal ? createStrictFullTextMatcher(selector) : createStrictTextMatcher(selector), kind: 'strict' };
   return { matcher: createLaxTextMatcher(selector), kind: 'lax' };
 }
 

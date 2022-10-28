@@ -31,9 +31,13 @@
   padding: 0 5px;
 }
 
-.stack-trace-frame.selected,
 .stack-trace-frame:hover {
-  background-color: #eaeaea;
+  background-color: var(--vscode-list-inactiveSelectionBackground);
+}
+
+.stack-trace-frame:selected {
+  background-color: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
 }
 
 .stack-trace-frame-function {

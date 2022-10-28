@@ -129,13 +129,13 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'div[mark="1"]')).toBe(`div >> nth=1`);
   });
 
-  it('should use internal:has', async ({ page }) => {
+  it('should use internal:has-text', async ({ page }) => {
     await page.setContent(`
       <div>Hello world</div>
       <a>Hello <span>world</span></a>
       <a>Goodbye <span>world</span></a>
     `);
-    expect(await generate(page, 'a:has-text("Hello")')).toBe(`a >> internal:has=\"internal:text=\\\"Hello world\\\"i\"`);
+    expect(await generate(page, 'a:has-text("Hello")')).toBe(`a >> internal:has-text="Hello world"i`);
   });
 
   it('should chain text after parent', async ({ page }) => {
@@ -143,7 +143,7 @@ it.describe('selector generator', () => {
       <div>Hello <span>world</span></div>
       <b>Hello <span mark=1>world</span></b>
     `);
-    expect(await generate(page, '[mark="1"]')).toBe(`b >> internal:has=\"internal:text=\\\"Hello world\\\"i\" >> span`);
+    expect(await generate(page, '[mark="1"]')).toBe(`b >> internal:has-text="Hello world"i >> span`);
   });
 
   it('should use parent text', async ({ page }) => {
@@ -151,7 +151,7 @@ it.describe('selector generator', () => {
       <div>Hello <span>world</span></div>
       <div>Goodbye <span mark=1>world</span></div>
     `);
-    expect(await generate(page, '[mark="1"]')).toBe(`div >> internal:has=\"internal:text=\\\"Goodbye world\\\"i\" >> span`);
+    expect(await generate(page, '[mark="1"]')).toBe(`div >> internal:has-text="Goodbye world"i >> span`);
   });
 
   it('should separate selectors by >>', async ({ page }) => {

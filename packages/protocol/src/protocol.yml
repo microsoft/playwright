@@ -597,6 +597,8 @@ Playwright:
     selectors: Selectors
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
+    # Only present when connecting remotely via Android.connect() method.
+    preConnectedAndroidDevice: AndroidDevice?
     # Only present when socks proxy is supported.
     socksSupport: SocksSupport?
 
@@ -636,8 +638,6 @@ Playwright:
       returns:
         request: APIRequestContext
 
-    hideHighlight:
-
 RecorderSource:
   type: object
   properties:
@@ -660,17 +660,24 @@ DebugController:
   type: interface
 
   commands:
-    setTrackHierarchy:
+    initialize:
       parameters:
-        enabled: boolean
+        codegenId: string
+        sdkLanguage:
+          type: enum
+          literals:
+          - javascript
+          - python
+          - java
+          - csharp
 
-    setReuseBrowser:
+    setReportStateChanged:
       parameters:
         enabled: boolean
 
     resetForReuse:
 
-    navigateAll:
+    navigate:
       parameters:
         url: string
 
@@ -682,14 +689,12 @@ DebugController:
             - inspecting
             - recording
             - none
-        language: string?
-        file: string?
 
-    highlightAll:
+    highlight:
       parameters:
         selector: string
 
-    hideHighlightAll:
+    hideHighlight:
 
     kill:
 
@@ -699,10 +704,17 @@ DebugController:
     inspectRequested:
       parameters:
         selector: string
-        locators:
-          type: array
-          items: NameValue
+        locator: string
 
+    stateChanged:
+      parameters:
+        pageCount: number
+
+    sourceChanged:
+      parameters:
+        text: string
+
+    # Deprecated
     browsersChanged:
       parameters:
         browsers:
@@ -718,12 +730,6 @@ DebugController:
                     pages:
                       type: array
                       items: string
-
-    sourcesChanged:
-      parameters:
-        sources:
-          type: array
-          items: RecorderSource
 
 SocksSupport:
   type: interface
@@ -1582,6 +1588,14 @@ Frame:
         content: string?
       returns:
         element: ElementHandle
+      tracing:
+        snapshot: true
+
+    blur:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
       tracing:
         snapshot: true
 
@@ -3253,6 +3267,8 @@ AndroidDevice:
     close:
 
   events:
+    close:
+
     webViewAdded:
       parameters:
         webView: AndroidWebView

@@ -3,31 +3,31 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1030",
+      "revision": "1031",
       "installByDefault": true,
-      "browserVersion": "107.0.5304.36"
+      "browserVersion": "107.0.5304.62"
     },
     {
       "name": "chromium-with-symbols",
-      "revision": "1030",
+      "revision": "1031",
       "installByDefault": false,
-      "browserVersion": "107.0.5304.36"
+      "browserVersion": "107.0.5304.62"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1052",
+      "revision": "1053",
       "installByDefault": false,
-      "browserVersion": "109.0.5366.0"
+      "browserVersion": "109.0.5370.0"
     },
     {
       "name": "firefox",
-      "revision": "1360",
+      "revision": "1362",
       "installByDefault": true,
       "browserVersion": "106.0"
     },
     {
       "name": "firefox-beta",
-      "revision": "1363",
+      "revision": "1365",
       "installByDefault": false,
       "browserVersion": "107.0b2"
     },
@@ -44,7 +44,7 @@
     },
     {
       "name": "ffmpeg",
-      "revision": "1007",
+      "revision": "1008",
       "installByDefault": true
     }
   ]

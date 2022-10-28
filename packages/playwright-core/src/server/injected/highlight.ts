@@ -54,10 +54,7 @@ export class Highlight {
 
     this._actionPointElement = document.createElement('x-pw-action-point');
     this._actionPointElement.setAttribute('hidden', 'true');
-
-    // NOTE: do not use an open shadow root, event for test.
-    // Closed shadow root prevents selectors matching our internal previews.
-    this._glassPaneShadow = this._glassPaneElement.attachShadow({ mode: 'closed' });
+    this._glassPaneShadow = this._glassPaneElement.attachShadow({ mode: this._isUnderTest ? 'open' : 'closed' });
     this._glassPaneShadow.appendChild(this._actionPointElement);
     const styleElement = document.createElement('style');
     styleElement.textContent = `
@@ -182,8 +179,6 @@ export class Highlight {
         tooltipElement.style.top = '0';
         tooltipElement.style.left = '0';
         tooltipElement.style.display = 'flex';
-        if (this._isUnderTest)
-          console.error('Highlight text for test: ' + JSON.stringify(tooltipElement.textContent)); // eslint-disable-line no-console
       }
       this._highlightEntries.push({ targetElement: elements[i], tooltipElement, highlightElement });
     }

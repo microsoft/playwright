@@ -79,6 +79,7 @@ export class FFPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.sameDocumentNavigation', this._onSameDocumentNavigation.bind(this)),
       eventsHelper.addEventListener(this._session, 'Runtime.executionContextCreated', this._onExecutionContextCreated.bind(this)),
       eventsHelper.addEventListener(this._session, 'Runtime.executionContextDestroyed', this._onExecutionContextDestroyed.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Runtime.executionContextsCleared', this._onExecutionContextsCleared.bind(this)),
       eventsHelper.addEventListener(this._session, 'Page.linkClicked', event => this._onLinkClicked(event.phase)),
       eventsHelper.addEventListener(this._session, 'Page.uncaughtError', this._onUncaughtError.bind(this)),
       eventsHelper.addEventListener(this._session, 'Runtime.console', this._onConsole.bind(this)),
@@ -182,6 +183,11 @@ export class FFPage implements PageDelegate {
       return;
     this._contextIdToContext.delete(executionContextId);
     context.frame._contextDestroyed(context);
+  }
+
+  _onExecutionContextsCleared() {
+    for (const executionContextId of Array.from(this._contextIdToContext.keys()))
+      this._onExecutionContextDestroyed({ executionContextId });
   }
 
   private _removeContextsForFrame(frame: frames.Frame) {

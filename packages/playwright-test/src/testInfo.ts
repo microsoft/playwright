@@ -35,6 +35,7 @@ export class TestInfoImpl implements TestInfo {
   private _hasHardError: boolean = false;
   readonly _screenshotsDir: string;
   readonly _onTestFailureImmediateCallbacks = new Map<() => Promise<void>, string>(); // fn -> title
+  _didTimeout = false;
 
   // ------------ TestInfo fields ------------
   readonly repeatEachIndex: number;
@@ -164,9 +165,11 @@ export class TestInfoImpl implements TestInfo {
   async _runWithTimeout(cb: () => Promise<any>): Promise<void> {
     const timeoutError = await this._timeoutManager.runWithTimeout(cb);
     // Do not overwrite existing failure upon hook/teardown timeout.
-    if (timeoutError && (this.status === 'passed' || this.status === 'skipped')) {
-      this.status = 'timedOut';
+    if (timeoutError && !this._didTimeout) {
+      this._didTimeout = true;
       this.errors.push(timeoutError);
+      if (this.status === 'passed' || this.status === 'skipped')
+        this.status = 'timedOut';
     }
     this.duration = this._timeoutManager.defaultSlotTimings().elapsed | 0;
   }

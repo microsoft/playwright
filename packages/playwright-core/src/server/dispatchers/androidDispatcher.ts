@@ -58,6 +58,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
       this._dispatchEvent('webViewAdded', { webView });
     this.addObjectListener(AndroidDevice.Events.WebViewAdded, webView => this._dispatchEvent('webViewAdded', { webView }));
     this.addObjectListener(AndroidDevice.Events.WebViewRemoved, socketName => this._dispatchEvent('webViewRemoved', { socketName }));
+    this.addObjectListener(AndroidDevice.Events.Close, socketName => this._dispatchEvent('close'));
   }
 
   async wait(params: channels.AndroidDeviceWaitParams) {

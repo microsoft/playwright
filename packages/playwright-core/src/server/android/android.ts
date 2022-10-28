@@ -112,11 +112,11 @@ export class AndroidDevice extends SdkObject {
   static Events = {
     WebViewAdded: 'webViewAdded',
     WebViewRemoved: 'webViewRemoved',
-    Closed: 'closed'
+    Close: 'close',
   };
 
   private _browserConnections = new Set<AndroidBrowser>();
-  private _android: Android;
+  readonly _android: Android;
   private _isClosed = false;
 
   constructor(android: Android, backend: DeviceBackend, model: string, options: channels.AndroidDevicesOptions) {
@@ -140,7 +140,11 @@ export class AndroidDevice extends SdkObject {
   async _init() {
     await this._refreshWebViews();
     const poll = () => {
-      this._pollingWebViews = setTimeout(() => this._refreshWebViews().then(poll).catch(() => {}), 500);
+      this._pollingWebViews = setTimeout(() => this._refreshWebViews()
+          .then(poll)
+          .catch(() => {
+            this.close().catch(() => {});
+          }), 500);
     };
     poll();
   }
@@ -163,7 +167,9 @@ export class AndroidDevice extends SdkObject {
     return await this._backend.runCommand(`shell:screencap -p`);
   }
 
-  private async _driver(): Promise<PipeTransport> {
+  private async _driver(): Promise<PipeTransport | undefined> {
+    if (this._isClosed)
+      return;
     if (!this._driverPromise)
       this._driverPromise = this._installDriver();
     return this._driverPromise;
@@ -223,6 +229,8 @@ export class AndroidDevice extends SdkObject {
     // Patch the timeout in!
     params.timeout = this._timeoutSettings.timeout(params);
     const driver = await this._driver();
+    if (!driver)
+      throw new Error('Device is closed');
     const id = ++this._lastId;
     const result = new Promise((fulfill, reject) => this._callbacks.set(id, { fulfill, reject }));
     driver.send(JSON.stringify({ id, method, params }));
@@ -230,6 +238,8 @@ export class AndroidDevice extends SdkObject {
   }
 
   async close() {
+    if (this._isClosed)
+      return;
     this._isClosed = true;
     if (this._pollingWebViews)
       clearTimeout(this._pollingWebViews);
@@ -237,11 +247,11 @@ export class AndroidDevice extends SdkObject {
       await connection.close();
     if (this._driverPromise) {
       const driver = await this._driver();
-      driver.close();
+      driver?.close();
     }
     await this._backend.close();
     this._android._deviceClosed(this);
-    this.emit(AndroidDevice.Events.Closed);
+    this.emit(AndroidDevice.Events.Close);
   }
 
   async launchBrowser(pkg: string = 'com.android.chrome', options: channels.BrowserNewContextParams): Promise<BrowserContext> {

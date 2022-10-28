@@ -100,11 +100,8 @@ test('should save the codegen output to a file if specified', async ({ browserNa
     ${launchOptions(channel)}
   });
   const context = await browser.newContext();
-
   const page = await context.newPage();
-
   await page.goto('${emptyHTML}');
-
   await page.close();
 
   // ---------------------

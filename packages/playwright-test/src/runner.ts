@@ -265,7 +265,6 @@ export class Runner {
     const runStages = collectRunStages(projects);
     assert(runStages.length > 0);
     for (const stage of runStages) {
-      // TODO: do not collect files for each project multiple times.
       const filesByProject = await this._collectFiles(stage, fileMatcherFrom(options.testFileFilters));
 
       const allTestFiles = new Set<string>();
@@ -287,7 +286,6 @@ export class Runner {
         fatalErrors.push(duplicateTitlesError);
 
       // Filter tests to respect line/column filter.
-      // TODO: figure out how this is supposed to work with groups.
       if (options.testFileFilters.length)
         filterByFocusedLine(preprocessRoot, options.testFileFilters);
 

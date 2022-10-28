@@ -737,6 +737,25 @@ Shortcut for main frame's [`method: Frame.check`].
 ### option: Page.check.trial = %%-input-trial-%%
 * since: v1.11
 
+## async method: Page.clear
+* since: v1.28
+
+This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, focuses the element, clears it and triggers an `input` event after clearing. Note that you can pass an empty string to clear the input field.
+
+If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be cleared instead.
+
+### param: Page.clear.selector = %%-input-selector-%%
+* since: v1.28
+
+### option: Page.clear.force = %%-input-force-%%
+* since: v1.28
+### option: Page.clear.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.28
+### option: Page.clear.strict = %%-input-strict-%%
+* since: v1.28
+### option: Page.clear.timeout = %%-input-timeout-%%
+* since: v1.28
+
 ## async method: Page.click
 * since: v1.8
 

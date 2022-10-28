@@ -180,10 +180,13 @@ export abstract class BrowserContext extends SdkObject {
       page = undefined;
     }
 
-    // Unless I do this early, setting extra http headers below does not respond.
+    // Unless dialogs are dismissed, setting extra http headers below does not respond.
+    page?._frameManager.setCloseAllOpeningDialogs(true);
     await page?._frameManager.closeOpenDialogs();
     // Navigate to about:blank first to ensure no page scripts are running after this point.
     await page?.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
+    page?._frameManager.setCloseAllOpeningDialogs(false);
+
     await this._resetStorage();
     await this._removeExposedBindings();
     await this._removeInitScripts();
@@ -670,4 +673,5 @@ const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
   acceptDownloads: true,
   strictSelectors: false,
   serviceWorkers: 'allow',
+  locale: 'en-US',
 };

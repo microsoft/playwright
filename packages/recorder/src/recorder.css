@@ -20,21 +20,11 @@
   flex: auto;
 }
 
-.recorder-paused-infobar {
-  display: flex;
-  color: #eee;
-  background-color: #333;
-  line-height: 24px;
-  align-items: center;
-  flex: none;
-  white-space: nowrap;
-}
-
 .recorder-chooser {
   border: none;
   background: none;
   outline: none;
-  color: var(--toolbar-color);
+  color: var(--vscode-sideBarTitle-foreground);
   min-width: 100px;
 }
 

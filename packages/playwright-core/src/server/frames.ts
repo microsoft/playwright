@@ -108,6 +108,7 @@ export class FrameManager {
   readonly _signalBarriers = new Set<SignalBarrier>();
   private _webSockets = new Map<string, network.WebSocket>();
   _openedDialogs: Set<Dialog> = new Set();
+  private _closeAllOpeningDialogs = false;
 
   constructor(page: Page) {
     this._page = page;
@@ -352,7 +353,10 @@ export class FrameManager {
     // Any ongoing evaluations will be stalled until the dialog is closed.
     for (const frame of this._frames.values())
       frame._invalidateNonStallingEvaluations('JavaScript dialog interrupted evaluation');
-    this._openedDialogs.add(dialog);
+    if (this._closeAllOpeningDialogs)
+      dialog.close().then(() => {});
+    else
+      this._openedDialogs.add(dialog);
   }
 
   dialogWillClose(dialog: Dialog) {
@@ -360,8 +364,12 @@ export class FrameManager {
   }
 
   async closeOpenDialogs() {
-    await Promise.all([...this._openedDialogs].map(dialog => dialog.dismiss())).catch(() => {});
+    await Promise.all([...this._openedDialogs].map(dialog => dialog.close())).catch(() => {});
     this._openedDialogs.clear();
+  }
+
+  setCloseAllOpeningDialogs(closeDialogs: boolean) {
+    this._closeAllOpeningDialogs = closeDialogs;
   }
 
   removeChildFramesRecursively(frame: Frame) {
@@ -462,8 +470,6 @@ export class FrameManager {
 
   private _fireInternalFrameNavigation(frame: Frame, event: NavigationEvent) {
     frame.emit(Frame.Events.InternalNavigation, event);
-    if (event.isPublic && !frame.parentFrame())
-      frame.instrumentation.onPageNavigated(frame._page, event.url);
   }
 }
 
@@ -1193,6 +1199,14 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
+  async blur(metadata: CallMetadata, selector: string, options: types.TimeoutOptions & types.StrictOptions = {}) {
+    const controller = new ProgressController(metadata, this);
+    await controller.run(async progress => {
+      dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, handle => handle._blur(progress)));
+      await this._page._doSlowMo();
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
   async textContent(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<string | null> {
     return this._scheduleRerunnableTask(metadata, selector, (progress, element) => element.textContent, undefined, options);
   }
@@ -1627,6 +1641,7 @@ export class Frame extends SdkObject {
     if (this._networkIdleTimer)
       clearTimeout(this._networkIdleTimer);
     this._networkIdleTimer = undefined;
+    this._firedNetworkIdleSelf = false;
   }
 
   async extendInjectedScript(source: string, arg?: any): Promise<js.JSHandle> {

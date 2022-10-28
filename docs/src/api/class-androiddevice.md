@@ -4,11 +4,31 @@
 
 [AndroidDevice] represents a connected device, either real hardware or emulated. Devices can be obtained using [`method: Android.devices`].
 
+## event: AndroidDevice.close
+* since: v1.28
+- argument: <[AndroidDevice]>
+
+Emitted when the device connection gets closed.
+
 ## event: AndroidDevice.webView
 * since: v1.9
 - argument: <[AndroidWebView]>
 
 Emitted when a new WebView instance is detected.
+
+## async method: AndroidDevice.clear
+* since: v1.28
+
+Clears the specific [`param: selector`] input box.
+
+### param: AndroidDevice.clear.selector
+* since: v1.28
+- `selector` <[AndroidSelector]>
+
+Selector to clear.
+
+### option: AndroidDevice.clear.timeout = %%-android-timeout-%%
+* since: v1.28
 
 ## async method: AndroidDevice.close
 * since: v1.9

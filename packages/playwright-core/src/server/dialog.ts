@@ -25,13 +25,13 @@ export type DialogType = 'alert' | 'beforeunload' | 'confirm' | 'prompt';
 
 export class Dialog extends SdkObject {
   private _page: Page;
-  private _type: string;
+  private _type: DialogType;
   private _message: string;
   private _onHandle: OnHandle;
   private _handled = false;
   private _defaultValue: string;
 
-  constructor(page: Page, type: string, message: string, onHandle: OnHandle, defaultValue?: string) {
+  constructor(page: Page, type: DialogType, message: string, onHandle: OnHandle, defaultValue?: string) {
     super(page, 'dialog');
     this._page = page;
     this._type = type;
@@ -53,7 +53,7 @@ export class Dialog extends SdkObject {
     return this._defaultValue;
   }
 
-  async accept(promptText: string | undefined) {
+  async accept(promptText?: string) {
     assert(!this._handled, 'Cannot accept dialog which is already handled!');
     this._handled = true;
     this._page._frameManager.dialogWillClose(this);
@@ -65,5 +65,12 @@ export class Dialog extends SdkObject {
     this._handled = true;
     this._page._frameManager.dialogWillClose(this);
     await this._onHandle(false);
+  }
+
+  async close() {
+    if (this._type === 'beforeunload')
+      await this.accept();
+    else
+      await this.dismiss();
   }
 }

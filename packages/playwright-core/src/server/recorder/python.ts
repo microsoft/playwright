@@ -37,7 +37,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
   private _isPyTest: boolean;
 
   constructor(isAsync: boolean, isPyTest: boolean) {
-    this.id = isPyTest ? 'pytest' : (isAsync ? 'python-async' : 'python');
+    this.id = isPyTest ? 'python-pytest' : (isAsync ? 'python-async' : 'python');
     this.name = isPyTest ? 'Pytest' : (isAsync ? 'Library Async' : 'Library');
     this._isAsync = isAsync;
     this._isPyTest = isPyTest;
@@ -52,7 +52,6 @@ export class PythonLanguageGenerator implements LanguageGenerator {
 
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new PythonFormatter(4);
-    formatter.newLine();
 
     if (action.name === 'openPage') {
       formatter.add(`${pageAlias} = ${this._awaitPrefix}context.new_page()`);

@@ -47,6 +47,15 @@ it('should fill input when Node is removed', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe('some value');
 });
 
+it('should clear input', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  const handle = await page.$('input');
+  await handle.fill('some value');
+  expect(await page.evaluate(() => window['result'])).toBe('some value');
+  await handle.clear();
+  expect(await page.evaluate(() => window['result'])).toBe('');
+});
+
 it('should check the box', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   const input = await page.$('input');

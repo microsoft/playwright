@@ -22,7 +22,7 @@ import * as fs from 'fs';
 import { lockfile } from '../../utilsBundle';
 import { getLinuxDistributionInfo } from '../../utils/linuxUtils';
 import { fetchData } from '../../common/netUtils';
-import { getClientLanguage } from '../../common/userAgent';
+import { getEmbedderName } from '../../common/userAgent';
 import { getFromENV, getAsBooleanFromENV, calculateSha1, wrapInASCIIBox } from '../../utils';
 import { removeFolders, existsAsync, canAccessFile } from '../../utils/fileUtils';
 import { hostPlatform } from '../../utils/hostPlatform';
@@ -696,9 +696,9 @@ export class Registry {
         if (!executable._install)
           throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
 
-        const { langName } = getClientLanguage();
-        if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !forceReinstall && executable.executablePath(langName)) {
-          const command = buildPlaywrightCLICommand(langName, 'install --force ' + executable.name);
+        const { embedderName } = getEmbedderName();
+        if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !forceReinstall && executable.executablePath(embedderName)) {
+          const command = buildPlaywrightCLICommand(embedderName, 'install --force ' + executable.name);
           throw new Error('\n' + wrapInASCIIBox([
             `ATTENTION: "${executable.name}" is already installed on the system!`,
             ``,

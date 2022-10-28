@@ -1887,6 +1887,46 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the
+   * element, clears it and triggers an `input` event after clearing. Note that you can pass an empty string to clear the
+   * input field.
+   *
+   * If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+   * However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be cleared
+   * instead.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param options
+   */
+  clear(selector: string, options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * This method clicks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
@@ -2458,7 +2498,7 @@ export interface Page {
   getByAltText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -2478,7 +2518,7 @@ export interface Page {
   getByLabel(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -2497,7 +2537,7 @@ export interface Page {
   getByPlaceholder(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -2594,14 +2634,46 @@ export interface Page {
   getByTestId(testId: string): Locator;
 
   /**
-   * Allows locating elements that contain given text.
+   * Allows locating elements that contain given text. Consider the following DOM structure:
+   *
+   * ```html
+   * <div>Hello <span>world</span></div>
+   * <div>Hello</div>
+   * ```
+   *
+   * You can locate by text substring, exact string, or a regular expression:
+   *
+   * ```js
+   * // Matches <span>
+   * page.getByText('world')
+   *
+   * // Matches first <div>
+   * page.getByText('Hello world')
+   *
+   * // Matches second <div>
+   * page.getByText('Hello', { exact: true })
+   *
+   * // Matches both <div>s
+   * page.getByText(/Hello/)
+   *
+   * // Matches second <div>
+   * page.getByText(/^hello$/i)
+   * ```
+   *
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to match
+   * by another criteria, like an accessible role, and then filter by the text content.
+   *
+   * > NOTE: Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into
+   * one, turns line breaks into spaces and ignores leading and trailing whitespace.
+   * > NOTE: Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For
+   * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
    */
   getByText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -2619,7 +2691,7 @@ export interface Page {
   getByTitle(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -5162,6 +5234,45 @@ export interface Frame {
   childFrames(): Array<Frame>;
 
   /**
+   * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the
+   * element, clears it and triggers an `input` event after clearing.
+   *
+   * If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+   * However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be cleared
+   * instead.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
+   * @param options
+   */
+  clear(selector: string, options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * This method clicks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
@@ -5566,7 +5677,7 @@ export interface Frame {
   getByAltText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -5586,7 +5697,7 @@ export interface Frame {
   getByLabel(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -5605,7 +5716,7 @@ export interface Frame {
   getByPlaceholder(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -5702,14 +5813,46 @@ export interface Frame {
   getByTestId(testId: string): Locator;
 
   /**
-   * Allows locating elements that contain given text.
+   * Allows locating elements that contain given text. Consider the following DOM structure:
+   *
+   * ```html
+   * <div>Hello <span>world</span></div>
+   * <div>Hello</div>
+   * ```
+   *
+   * You can locate by text substring, exact string, or a regular expression:
+   *
+   * ```js
+   * // Matches <span>
+   * page.getByText('world')
+   *
+   * // Matches first <div>
+   * page.getByText('Hello world')
+   *
+   * // Matches second <div>
+   * page.getByText('Hello', { exact: true })
+   *
+   * // Matches both <div>s
+   * page.getByText(/Hello/)
+   *
+   * // Matches second <div>
+   * page.getByText(/^hello$/i)
+   * ```
+   *
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to match
+   * by another criteria, like an accessible role, and then filter by the text content.
+   *
+   * > NOTE: Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into
+   * one, turns line breaks into spaces and ignores leading and trailing whitespace.
+   * > NOTE: Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For
+   * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
    */
   getByText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -5727,7 +5870,7 @@ export interface Frame {
   getByTitle(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -8485,6 +8628,38 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   }): Promise<void>;
 
   /**
+   * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the element, clears it and triggers an
+   * `input` event after clearing.
+   *
+   * If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+   * However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be cleared
+   * instead.
+   * @param options
+   */
+  clear(options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * This method clicks the element by performing the following steps:
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
@@ -9488,6 +9663,20 @@ export interface Locator {
   allTextContents(): Promise<Array<string>>;
 
   /**
+   * Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) on the element.
+   * @param options
+   */
+  blur(options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * This method returns the bounding box of the element, or `null` if the element is not visible. The bounding box is
    * calculated relative to the main frame viewport - which is usually the same as the browser window.
    *
@@ -9590,6 +9779,38 @@ export interface Locator {
      * `false`. Useful to wait until the element is ready for the action without performing it.
      */
     trial?: boolean;
+  }): Promise<void>;
+
+  /**
+   * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the element, clears it and triggers an
+   * `input` event after clearing.
+   *
+   * If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+   * However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be cleared
+   * instead.
+   * @param options
+   */
+  clear(options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
   }): Promise<void>;
 
   /**
@@ -10018,7 +10239,7 @@ export interface Locator {
   getByAltText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -10038,7 +10259,7 @@ export interface Locator {
   getByLabel(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -10057,7 +10278,7 @@ export interface Locator {
   getByPlaceholder(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -10154,14 +10375,46 @@ export interface Locator {
   getByTestId(testId: string): Locator;
 
   /**
-   * Allows locating elements that contain given text.
+   * Allows locating elements that contain given text. Consider the following DOM structure:
+   *
+   * ```html
+   * <div>Hello <span>world</span></div>
+   * <div>Hello</div>
+   * ```
+   *
+   * You can locate by text substring, exact string, or a regular expression:
+   *
+   * ```js
+   * // Matches <span>
+   * page.getByText('world')
+   *
+   * // Matches first <div>
+   * page.getByText('Hello world')
+   *
+   * // Matches second <div>
+   * page.getByText('Hello', { exact: true })
+   *
+   * // Matches both <div>s
+   * page.getByText(/Hello/)
+   *
+   * // Matches second <div>
+   * page.getByText(/^hello$/i)
+   * ```
+   *
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to match
+   * by another criteria, like an accessible role, and then filter by the text content.
+   *
+   * > NOTE: Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into
+   * one, turns line breaks into spaces and ignores leading and trailing whitespace.
+   * > NOTE: Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For
+   * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
    */
   getByText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -10179,7 +10432,7 @@ export interface Locator {
   getByTitle(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -12182,6 +12435,32 @@ export {};
  */
 export interface Android {
   /**
+   * This methods attaches Playwright to an existing Android device. Use
+   * [android.launchServer([options])](https://playwright.dev/docs/api/class-android#android-launch-server) to launch a new
+   * Android server instance.
+   * @param wsEndpoint A browser websocket endpoint to connect to.
+   * @param options
+   */
+  connect(wsEndpoint: string, options?: {
+    /**
+     * Additional HTTP headers to be sent with web socket connect request. Optional.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
+     * Defaults to `0`.
+     */
+    slowMo?: number;
+
+    /**
+     * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to
+     * disable timeout.
+     */
+    timeout?: number;
+  }): Promise<AndroidDevice>;
+
+  /**
    * Returns the list of detected Android devices.
    * @param options
    */
@@ -12203,6 +12482,84 @@ export interface Android {
   }): Promise<Array<AndroidDevice>>;
 
   /**
+   * Launches Playwright Android server that clients can connect to. See the following example:
+   *
+   * Server Side:
+   *
+   * ```js
+   * const { _android } = require('playwright');
+   *
+   * (async () => {
+   *   const browserServer = await _android.launchServer({
+   *     // If you have multiple devices connected and want to use a specific one.
+   *     // deviceSerialNumber: '<deviceSerialNumber>',
+   *   });
+   *   const wsEndpoint = browserServer.wsEndpoint();
+   *   console.log(wsEndpoint);
+   * })();
+   * ```
+   *
+   * Client Side:
+   *
+   * ```js
+   * const { _android } = require('playwright');
+   *
+   * (async () => {
+   *   const device = await _android.connect('<wsEndpoint>');
+   *
+   *   console.log(device.model());
+   *   console.log(device.serial());
+   *   await device.shell('am force-stop com.android.chrome');
+   *   const context = await device.launchBrowser();
+   *
+   *   const page = await context.newPage();
+   *   await page.goto('https://webkit.org/');
+   *   console.log(await page.evaluate(() => window.location.href));
+   *   await page.screenshot({ path: 'page-chrome-1.png' });
+   *
+   *   await context.close();
+   * })();
+   * ```
+   *
+   * @param options
+   */
+  launchServer(options?: {
+    /**
+     * Optional host to establish ADB server connection. Default to `127.0.0.1`.
+     */
+    adbHost?: string;
+
+    /**
+     * Optional port to establish ADB server connection. Default to `5037`.
+     */
+    adbPort?: number;
+
+    /**
+     * Optional device serial number to launch the browser on. If not specified, it will throw if multiple devices are
+     * connected.
+     */
+    deviceSerialNumber?: string;
+
+    /**
+     * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+     */
+    omitDriverInstall?: boolean;
+
+    /**
+     * Port to use for the web socket. Defaults to 0 that picks any available port.
+     */
+    port?: number;
+
+    /**
+     * Path at which to serve the Android Server. For security, this defaults to an unguessable string.
+     *
+     * > NOTE: Any process or web page (including those running in Playwright) with knowledge of the `wsPath` can take control
+     * of the OS user. For this reason, you should use an unguessable token when using this option.
+     */
+    wsPath?: string;
+  }): Promise<BrowserServer>;
+
+  /**
    * This setting will change the default maximum time for all the methods accepting `timeout` option.
    * @param timeout Maximum time in milliseconds
    */
@@ -12215,6 +12572,11 @@ export interface Android {
  */
 export interface AndroidDevice {
   /**
+   * Emitted when the device connection gets closed.
+   */
+  on(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+
+  /**
    * Emitted when a new WebView instance is detected.
    */
   on(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
@@ -12222,7 +12584,17 @@ export interface AndroidDevice {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
+  once(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
   once(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
+
+  /**
+   * Emitted when the device connection gets closed.
+   */
+  addListener(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
 
   /**
    * Emitted when a new WebView instance is detected.
@@ -12232,7 +12604,17 @@ export interface AndroidDevice {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -12240,9 +12622,29 @@ export interface AndroidDevice {
   off(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
 
   /**
+   * Emitted when the device connection gets closed.
+   */
+  prependListener(event: 'close', listener: (androidDevice: AndroidDevice) => void): this;
+
+  /**
    * Emitted when a new WebView instance is detected.
    */
   prependListener(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
+
+  /**
+   * Clears the specific `selector` input box.
+   * @param selector Selector to clear.
+   * @param options
+   */
+  clear(selector: AndroidSelector, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<void>;
 
   /**
    * Disconnects from the device.
@@ -12828,6 +13230,11 @@ export interface AndroidDevice {
      */
     timeout?: number;
   }): Promise<void>;
+
+  /**
+   * Emitted when the device connection gets closed.
+   */
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (androidDevice: AndroidDevice) => boolean | Promise<boolean>, timeout?: number } | ((androidDevice: AndroidDevice) => boolean | Promise<boolean>)): Promise<AndroidDevice>;
 
   /**
    * Emitted when a new WebView instance is detected.
@@ -15293,7 +15700,7 @@ export interface FrameLocator {
   getByAltText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -15313,7 +15720,7 @@ export interface FrameLocator {
   getByLabel(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -15332,7 +15739,7 @@ export interface FrameLocator {
   getByPlaceholder(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -15429,14 +15836,46 @@ export interface FrameLocator {
   getByTestId(testId: string): Locator;
 
   /**
-   * Allows locating elements that contain given text.
+   * Allows locating elements that contain given text. Consider the following DOM structure:
+   *
+   * ```html
+   * <div>Hello <span>world</span></div>
+   * <div>Hello</div>
+   * ```
+   *
+   * You can locate by text substring, exact string, or a regular expression:
+   *
+   * ```js
+   * // Matches <span>
+   * page.getByText('world')
+   *
+   * // Matches first <div>
+   * page.getByText('Hello world')
+   *
+   * // Matches second <div>
+   * page.getByText('Hello', { exact: true })
+   *
+   * // Matches both <div>s
+   * page.getByText(/Hello/)
+   *
+   * // Matches second <div>
+   * page.getByText(/^hello$/i)
+   * ```
+   *
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to match
+   * by another criteria, like an accessible role, and then filter by the text content.
+   *
+   * > NOTE: Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into
+   * one, turns line breaks into spaces and ignores leading and trailing whitespace.
+   * > NOTE: Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For
+   * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
    */
   getByText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -15454,7 +15893,7 @@ export interface FrameLocator {
   getByTitle(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;

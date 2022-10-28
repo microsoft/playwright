@@ -352,7 +352,7 @@ function relativeTestPath(config: FullConfig, test: TestCase): string {
   return relativeFilePath(config, test.location.file);
 }
 
-function stepSuffix(step: TestStep | undefined) {
+export function stepSuffix(step: TestStep | undefined) {
   const stepTitles = step ? step.titlePath() : [];
   return stepTitles.map(t => ' › ' + t).join('');
 }
@@ -364,7 +364,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
   if (omitLocation)
     location = `${relativeTestPath(config, test)}`;
   else
-    location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
+    location = `${relativeTestPath(config, test)}:${step?.location?.line ?? test.location.line}:${step?.location?.column ?? test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}`;
 }
@@ -439,6 +439,8 @@ export function prepareErrorStack(stack: string): {
     const { frame: parsed, fileName: resolvedFile } = parseStackTraceLine(line);
     if (!parsed || !resolvedFile)
       continue;
+    if (belongsToNodeModules(resolvedFile))
+      continue;
     location = { file: resolvedFile, column: parsed.column || 0, line: parsed.line || 0 };
     break;
   }
@@ -480,4 +482,8 @@ function fitToWidth(line: string, width: number, prefix?: string): string {
     }
   }
   return taken.reverse().join('');
+}
+
+function belongsToNodeModules(file: string) {
+  return file.includes(`${path.sep}node_modules${path.sep}`);
 }

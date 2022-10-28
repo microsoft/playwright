@@ -285,7 +285,7 @@ function serializeXML(entry: XMLEntry, tokens: string[], stripANSIControlSequenc
 }
 
 // See https://en.wikipedia.org/wiki/Valid_characters_in_XML
-const discouragedXMLCharacters = /[\u0001-\u0008\u000b-\u000c\u000e-\u001f\u007f-\u0084\u0086-\u009f]/g;
+const discouragedXMLCharacters = /[\u0000-\u0008\u000b-\u000c\u000e-\u001f\u007f-\u0084\u0086-\u009f]/g;
 
 function escape(text: string, stripANSIControlSequences: boolean, isCharacterData: boolean): string {
   if (stripANSIControlSequences)

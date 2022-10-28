@@ -289,6 +289,7 @@ scheme.PlaywrightInitializer = tObject({
   })),
   selectors: tChannel(['Selectors']),
   preLaunchedBrowser: tOptional(tChannel(['Browser'])),
+  preConnectedAndroidDevice: tOptional(tChannel(['AndroidDevice'])),
   socksSupport: tOptional(tChannel(['SocksSupport'])),
 });
 scheme.PlaywrightNewRequestParams = tObject({
@@ -316,8 +317,6 @@ scheme.PlaywrightNewRequestParams = tObject({
 scheme.PlaywrightNewRequestResult = tObject({
   request: tChannel(['APIRequestContext']),
 });
-scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
-scheme.PlaywrightHideHighlightResult = tOptional(tObject({}));
 scheme.RecorderSource = tObject({
   isRecorded: tBoolean,
   id: tString,
@@ -334,7 +333,13 @@ scheme.RecorderSource = tObject({
 scheme.DebugControllerInitializer = tOptional(tObject({}));
 scheme.DebugControllerInspectRequestedEvent = tObject({
   selector: tString,
-  locators: tArray(tType('NameValue')),
+  locator: tString,
+});
+scheme.DebugControllerStateChangedEvent = tObject({
+  pageCount: tNumber,
+});
+scheme.DebugControllerSourceChangedEvent = tObject({
+  text: tString,
 });
 scheme.DebugControllerBrowsersChangedEvent = tObject({
   browsers: tArray(tObject({
@@ -343,35 +348,31 @@ scheme.DebugControllerBrowsersChangedEvent = tObject({
     })),
   })),
 });
-scheme.DebugControllerSourcesChangedEvent = tObject({
-  sources: tArray(tType('RecorderSource')),
+scheme.DebugControllerInitializeParams = tObject({
+  codegenId: tString,
+  sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),
 });
-scheme.DebugControllerSetTrackHierarchyParams = tObject({
+scheme.DebugControllerInitializeResult = tOptional(tObject({}));
+scheme.DebugControllerSetReportStateChangedParams = tObject({
   enabled: tBoolean,
 });
-scheme.DebugControllerSetTrackHierarchyResult = tOptional(tObject({}));
-scheme.DebugControllerSetReuseBrowserParams = tObject({
-  enabled: tBoolean,
-});
-scheme.DebugControllerSetReuseBrowserResult = tOptional(tObject({}));
+scheme.DebugControllerSetReportStateChangedResult = tOptional(tObject({}));
 scheme.DebugControllerResetForReuseParams = tOptional(tObject({}));
 scheme.DebugControllerResetForReuseResult = tOptional(tObject({}));
-scheme.DebugControllerNavigateAllParams = tObject({
+scheme.DebugControllerNavigateParams = tObject({
   url: tString,
 });
-scheme.DebugControllerNavigateAllResult = tOptional(tObject({}));
+scheme.DebugControllerNavigateResult = tOptional(tObject({}));
 scheme.DebugControllerSetRecorderModeParams = tObject({
   mode: tEnum(['inspecting', 'recording', 'none']),
-  language: tOptional(tString),
-  file: tOptional(tString),
 });
 scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
-scheme.DebugControllerHighlightAllParams = tObject({
+scheme.DebugControllerHighlightParams = tObject({
   selector: tString,
 });
-scheme.DebugControllerHighlightAllResult = tOptional(tObject({}));
-scheme.DebugControllerHideHighlightAllParams = tOptional(tObject({}));
-scheme.DebugControllerHideHighlightAllResult = tOptional(tObject({}));
+scheme.DebugControllerHighlightResult = tOptional(tObject({}));
+scheme.DebugControllerHideHighlightParams = tOptional(tObject({}));
+scheme.DebugControllerHideHighlightResult = tOptional(tObject({}));
 scheme.DebugControllerKillParams = tOptional(tObject({}));
 scheme.DebugControllerKillResult = tOptional(tObject({}));
 scheme.DebugControllerCloseAllBrowsersParams = tOptional(tObject({}));
@@ -1205,6 +1206,12 @@ scheme.FrameAddStyleTagParams = tObject({
 scheme.FrameAddStyleTagResult = tObject({
   element: tChannel(['ElementHandle']),
 });
+scheme.FrameBlurParams = tObject({
+  selector: tString,
+  strict: tOptional(tBoolean),
+  timeout: tOptional(tNumber),
+});
+scheme.FrameBlurResult = tOptional(tObject({}));
 scheme.FrameCheckParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
@@ -2202,6 +2209,7 @@ scheme.AndroidDeviceInitializer = tObject({
   model: tString,
   serial: tString,
 });
+scheme.AndroidDeviceCloseEvent = tOptional(tObject({}));
 scheme.AndroidDeviceWebViewAddedEvent = tObject({
   webView: tType('AndroidWebView'),
 });

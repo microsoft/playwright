@@ -60,6 +60,61 @@ test('should retry based on config', async ({ runInlineTest }) => {
   expect(result.results.length).toBe(4);
 });
 
+test('should retry based on test.describe.configure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { retries: 2 };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test.describe.configure({ retries: 1 });
+      test('fail 1', ({}, testInfo) => {
+        console.log('%%fail1-' + testInfo.retry);
+        expect(1).toBe(2);
+      });
+    `,
+    'b.test.js': `
+      const { test } = pwt;
+      test('fail 4', ({}, testInfo) => {
+        console.log('%%fail4-' + testInfo.retry);
+        expect(1).toBe(2);
+      });
+      test.describe(() => {
+        test.describe.configure({ retries: 0 });
+        test('fail 2', ({}, testInfo) => {
+          console.log('%%fail2-' + testInfo.retry);
+          expect(1).toBe(2);
+        });
+        test.describe(() => {
+          test.describe.configure({ retries: 1 });
+          test.describe(() => {
+            test('fail 3', ({}, testInfo) => {
+              console.log('%%fail3-' + testInfo.retry);
+              expect(1).toBe(2);
+            });
+          });
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(4);
+  expect(result.results.length).toBe(8);
+  expect(result.output).toContain('%%fail1-0');
+  expect(result.output).toContain('%%fail1-1');
+  expect(result.output).not.toContain('%%fail1-2');
+  expect(result.output).toContain('%%fail4-0');
+  expect(result.output).toContain('%%fail4-1');
+  expect(result.output).toContain('%%fail4-2');
+  expect(result.output).not.toContain('%%fail4-3');
+  expect(result.output).toContain('%%fail2-0');
+  expect(result.output).not.toContain('%%fail2-1');
+  expect(result.output).toContain('%%fail3-0');
+  expect(result.output).toContain('%%fail3-1');
+  expect(result.output).not.toContain('%%fail3-2');
+});
+
 test('should retry timeout', async ({ runInlineTest }) => {
   const { exitCode, passed, failed, output } = await runInlineTest({
     'one-timeout.spec.js': `

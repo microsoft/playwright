@@ -14,17 +14,22 @@
   limitations under the License.
 */
 
+@import '../third_party/vscode/colors.css';
+@import '../third_party/highlightjs/highlightjs/github.css';
+@import '../third_party/highlightjs/highlightjs/github-dark.css' (prefers-color-scheme: dark);
+
 .source {
   display: flex;
   flex: auto;
   flex-direction: column;
   white-space: pre;
   overflow: auto;
-  font-family: var(--monospace-font);
-  font-size: 12px;
-  line-height: 20px;
-  background: white;
   user-select: text;
+  font-family: var(--vscode-editor-font-family);
+  font-weight: var(--vscode-editor-font-weight);
+  line-height: 19px;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
 }
 
 .source-line {
@@ -38,7 +43,6 @@
   width: 40px;
   margin-right: 3px;
   text-align: right;
-  background: #f6f5f4;
   user-select: none;
   flex: none;
 }

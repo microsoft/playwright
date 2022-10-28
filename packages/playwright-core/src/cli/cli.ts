@@ -57,7 +57,7 @@ program
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
     .action(function(url, options) {
-      open(options, url, language()).catch(logErrorAndExit);
+      open(options, url, codegenId()).catch(logErrorAndExit);
     })
     .addHelpText('afterAll', `
 Examples:
@@ -68,7 +68,7 @@ Examples:
 commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
-      ['--target <language>', `language to generate, one of javascript, test, python, python-async, pytest, csharp, csharp-mstest, csharp-nunit, java`, language()],
+      ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java`, codegenId()],
       ['--save-trace <filename>', 'record a trace for the session and save it to a file'],
     ]).action(function(url, options) {
   codegen(options, url, options.target, options.output).catch(logErrorAndExit);
@@ -267,13 +267,12 @@ program
 
 program
     .command('run-server', { hidden: true })
-    .option('--reuse-browser', 'Whether to reuse the browser instance')
     .option('--port <port>', 'Server port')
     .option('--path <path>', 'Endpoint Path', '/')
     .option('--max-clients <maxClients>', 'Maximum clients')
     .option('--no-socks-proxy', 'Disable Socks Proxy')
     .action(function(options) {
-      runServer(options.port ? +options.port : undefined,  options.path, options.maxClients ? +options.maxClients : Infinity, options.socksProxy, options.reuseBrowser).catch(logErrorAndExit);
+      runServer(options.port ? +options.port : undefined,  options.path, options.maxClients ? +options.maxClients : Infinity, options.socksProxy).catch(logErrorAndExit);
     });
 
 program
@@ -682,8 +681,8 @@ function logErrorAndExit(e: Error) {
   process.exit(1);
 }
 
-function language(): string {
-  return process.env.PW_LANG_NAME || 'test';
+function codegenId(): string {
+  return process.env.PW_LANG_NAME || 'playwright-test';
 }
 
 function commandWithOpenOptions(command: string, description: string, options: any[][]): Command {

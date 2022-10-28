@@ -195,7 +195,7 @@ See our doc on [Test Runners](./test-runners.md) to learn more about running tes
 ## What's next
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
-- [Run single tests, multiple tests, headed mode](./running-tests.md)
+- [Run single test, multiple tests, headed mode](./running-tests.md)
 - [Learn more about the NUnit and MSTest base classes](./test-runners.md)
 - [Generate tests with Codegen](./codegen.md)
 - [See a trace of your tests](./trace-viewer-intro.md)

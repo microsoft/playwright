@@ -33,7 +33,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   private _isTest: boolean;
 
   constructor(isTest: boolean) {
-    this.id = isTest ? 'test' : 'javascript';
+    this.id = isTest ? 'playwright-test' : 'javascript';
     this.name = isTest ? 'Test Runner' : 'Library';
     this._isTest = isTest;
   }
@@ -45,7 +45,6 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
 
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new JavaScriptFormatter(2);
-    formatter.newLine();
 
     if (action.name === 'openPage') {
       formatter.add(`const ${pageAlias} = await context.newPage();`);
@@ -176,7 +175,7 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
   }
 
   generateTestFooter(saveStorage: string | undefined): string {
-    return `\n});`;
+    return `});`;
   }
 
   generateStandaloneHeader(options: LanguageGeneratorOptions): string {

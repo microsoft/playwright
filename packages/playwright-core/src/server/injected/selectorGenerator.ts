@@ -221,7 +221,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
   } else {
     candidate.push({ engine: 'css', selector: element.nodeName.toLowerCase(), score: 10 });
   }
-  candidate.push({ engine: 'internal:has', selector: JSON.stringify('internal:text=' + escaped), score: 0 });
+  candidate.push({ engine: 'internal:has-text', selector: escaped, score: 0 });
   candidates.push(candidate);
   return candidates;
 }

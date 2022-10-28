@@ -58,6 +58,15 @@ it('should fill input when Node is removed', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe('some value');
 });
 
+it('should clear input', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  const handle = page.locator('input');
+  await handle.fill('some value');
+  expect(await page.evaluate(() => window['result'])).toBe('some value');
+  await handle.clear();
+  expect(await page.evaluate(() => window['result'])).toBe('');
+});
+
 it('should check the box', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   const input = page.locator('input');
@@ -89,12 +98,29 @@ it('should select single option', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'].onChange)).toEqual(['blue']);
 });
 
-it('should focus a button', async ({ page, server }) => {
+it('should focus and blur a button', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = page.locator('button');
   expect(await button.evaluate(button => document.activeElement === button)).toBe(false);
+
+  let focused = false;
+  let blurred = false;
+  await page.exposeFunction('focusEvent', () => focused = true);
+  await page.exposeFunction('blurEvent', () => blurred = true);
+  await button.evaluate(button => {
+    button.addEventListener('focus', window['focusEvent']);
+    button.addEventListener('blur', window['blurEvent']);
+  });
+
   await button.focus();
+  expect(focused).toBe(true);
+  expect(blurred).toBe(false);
   expect(await button.evaluate(button => document.activeElement === button)).toBe(true);
+
+  await button.blur();
+  expect(focused).toBe(true);
+  expect(blurred).toBe(true);
+  expect(await button.evaluate(button => document.activeElement === button)).toBe(false);
 });
 
 it('focus should respect strictness', async ({ page, server }) => {

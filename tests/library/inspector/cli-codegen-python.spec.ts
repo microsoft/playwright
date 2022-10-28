@@ -86,11 +86,8 @@ test('should save the codegen output to a file if specified', async ({ runCLI, c
 def run(playwright: Playwright) -> None:
     browser = playwright.${browserName}.launch(${launchOptions(channel)})
     context = browser.new_context()
-
     page = context.new_page()
-
     page.goto("${emptyHTML}")
-
     page.close()
 
     # ---------------------

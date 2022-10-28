@@ -15,13 +15,6 @@
 */
 
 :root {
-  --toolbar-bg-color: #fafafa;
-  --toolbar-color: #555;
-
-  --light-background: #f3f2f1;
-  --background: #edebe9;
-  --active-background: #333333;
-  --color: #252423;
   --red: #F44336;
   --green: #367c39;
   --purple: #9C27B0;
@@ -30,21 +23,20 @@
   --blue: #0b7ad5;
   --transparent-blue: #2196F355;
   --orange: #d24726;
-  --black: #1E1E1E;
-  --light-gray: #BBBBBB;
-  --gray: #888888;
-  --separator: #80808059;
-  --focus-ring: #0E639CCC;
-  --inactive-focus-ring: #80808059;
-  --layout-gap: 10px;
-  --selection: #074771;
-  --control-background: #3C3C3C;
-  --settings: #E7E7E7;
-  --sidebar-width: 250px;
   --light-pink: #ff69b460;
-  --network-content-bg: #dcdcdb;
+  --gray: #888888;
+  --sidebar-width: 250px;
   --box-shadow: rgba(0, 0, 0, 0.133) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
-  --monospace-font: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
+}
+
+@media(prefers-color-scheme: dark) {
+  :root {
+    --green: #28d12f;
+    --yellow: #ff9207;
+    --purple: #dc12ff;
+    --blue: #4dafff;
+    --orange: #ff7171;
+  }
 }
 
 html, body {
@@ -64,9 +56,11 @@ html, body {
 }
 
 body {
-  color: var(--color);
-  font-size: 14px;
-  font-family: SegoeUI-SemiBold-final,Segoe UI Semibold,SegoeUI-Regular-final,Segoe UI,"Segoe UI Web (West European)",Segoe,-apple-system,BlinkMacSystemFont,Roboto,Helvetica Neue,Tahoma,Helvetica,Arial,sans-serif;
+  background-color: var(--vscode-panel-background);
+  color: var(--vscode-foreground);
+  font-family: var(--vscode-font-family);
+  font-weight: var(--vscode-font-weight);
+  font-size: var(--vscode-font-size);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -99,9 +93,4 @@ svg {
   display: flex;
   flex: auto;
   position: relative;
-}
-
-.code {
-  font-family: var(--monospace-font);
-  color: yellow;
 }

@@ -1074,7 +1074,7 @@ Text to locate the element for.
 * since: v1.27
 - `exact` <[boolean]>
 
-Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular expression.
+Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular expression. Note that exact match still trims whitespace.
 
 ## locator-get-by-role-role
 * since: v1.27
@@ -1185,7 +1185,109 @@ use: {
 
 ## template-locator-get-by-text
 
-Allows locating elements that contain given text.
+Allows locating elements that contain given text. Consider the following DOM structure:
+
+```html
+<div>Hello <span>world</span></div>
+<div>Hello</div>
+```
+
+You can locate by text substring, exact string, or a regular expression:
+
+```js
+// Matches <span>
+page.getByText('world')
+
+// Matches first <div>
+page.getByText('Hello world')
+
+// Matches second <div>
+page.getByText('Hello', { exact: true })
+
+// Matches both <div>s
+page.getByText(/Hello/)
+
+// Matches second <div>
+page.getByText(/^hello$/i)
+```
+
+```python async
+# Matches <span>
+page.get_by_text("world")
+
+# Matches first <div>
+page.get_by_text("Hello world")
+
+# Matches second <div>
+page.get_by_text("Hello", exact=True)
+
+# Matches both <div>s
+page.get_by_text(re.compile("Hello"))
+
+# Matches second <div>
+page.get_by_text(re.compile("^hello$", re.IGNORECASE))
+```
+
+```python sync
+# Matches <span>
+page.get_by_text("world")
+
+# Matches first <div>
+page.get_by_text("Hello world")
+
+# Matches second <div>
+page.get_by_text("Hello", exact=True)
+
+# Matches both <div>s
+page.get_by_text(re.compile("Hello"))
+
+# Matches second <div>
+page.get_by_text(re.compile("^hello$", re.IGNORECASE))
+```
+
+```java
+// Matches <span>
+page.getByText("world")
+
+// Matches first <div>
+page.getByText("Hello world")
+
+// Matches second <div>
+page.getByText("Hello", new Page.GetByTextOptions().setExact(true))
+
+// Matches both <div>s
+page.getByText(Pattern.compile("Hello"))
+
+// Matches second <div>
+page.getByText(Pattern.compile("^hello$", Pattern.CASE_INSENSITIVE))
+```
+
+```csharp
+// Matches <span>
+page.GetByText("world")
+
+// Matches first <div>
+page.GetByText("Hello world")
+
+// Matches second <div>
+page.GetByText("Hello", new() { Exact: true })
+
+// Matches both <div>s
+page.GetByText(new Regex("Hello"))
+
+// Matches second <div>
+page.GetByText(new Regex("^hello$", RegexOptions.IgnoreCase))
+```
+
+See also [`method: Locator.filter`] that allows to match by another criteria, like an accessible role, and then filter by the text content.
+
+:::note
+Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+:::
+
+:::note
+Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
+:::
 
 ## template-locator-get-by-alt-text
 

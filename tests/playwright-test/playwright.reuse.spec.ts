@@ -349,3 +349,28 @@ test('should restore cookies', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
 });
+
+test('should reuse context with beforeunload', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'src/reuse.test.ts': `
+      const { test } = pwt;
+      let lastContextGuid;
+      test('one', async ({ page, context }) => {
+        lastContextGuid = context._guid;
+        await page.evaluate(() => {
+          window.addEventListener('beforeunload', event => {
+            event.preventDefault();
+            return event.returnValue = "Are you sure you want to exit?";
+          });
+        });
+      });
+
+      test('two', async ({ context }) => {
+        expect(context._guid).toBe(lastContextGuid);
+      });
+    `,
+  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});

@@ -24,6 +24,7 @@ import { existsAsync } from '../../utils/fileUtils';
 import { debugLogger } from '../../common/debugLogger';
 import { extract } from '../../zipBundle';
 import { ManualPromise } from '../../utils/manualPromise';
+import { colors } from '../../utilsBundle';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURLs: string[], downloadFileName: string, downloadConnectionTimeout: number): Promise<boolean> {
   if (await existsAsync(browserDirectory)) {
@@ -38,7 +39,8 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     for (let attempt = 1; attempt <= retryCount; ++attempt) {
       debugLogger.log('install', `downloading ${title} - attempt #${attempt}`);
       const url = downloadURLs[(attempt - 1) % downloadURLs.length];
-      const { error } = await downloadFileOutOfProcess(url, zipPath, title, getUserAgent(), downloadConnectionTimeout);
+      logPolitely(`Downloading ${title}` + colors.dim(` from ${url}`));
+      const { error } = await downloadFileOutOfProcess(url, zipPath, getUserAgent(), downloadConnectionTimeout);
       if (!error) {
         debugLogger.log('install', `SUCCESS downloading ${title}`);
         break;
@@ -71,8 +73,8 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
  * Thats why we execute it in a separate process and check manually if the destination file exists.
  * https://github.com/microsoft/playwright/issues/17394
  */
-function downloadFileOutOfProcess(url: string, destinationPath: string, progressBarName: string, userAgent: string, downloadConnectionTimeout: number): Promise<{ error: Error | null }> {
-  const cp = childProcess.fork(path.join(__dirname, 'oopDownloadMain.js'), [url, destinationPath, progressBarName, userAgent, String(downloadConnectionTimeout)]);
+function downloadFileOutOfProcess(url: string, destinationPath: string, userAgent: string, downloadConnectionTimeout: number): Promise<{ error: Error | null }> {
+  const cp = childProcess.fork(path.join(__dirname, 'oopDownloadMain.js'), [url, destinationPath, userAgent, String(downloadConnectionTimeout)]);
   const promise = new ManualPromise<{ error: Error | null }>();
   cp.on('message', (message: any) => {
     if (message?.method === 'log')

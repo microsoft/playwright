@@ -9,22 +9,22 @@ await locator.click();
 ```
 
 ```java
-Locator locator = page.frameLocator("#my-frame").locator("text=Submit");
+Locator locator = page.frameLocator("#my-frame").getByText("Submit");
 locator.click();
 ```
 
 ```python async
-locator = page.frame_locator("#my-frame").locator("text=Submit")
+locator = page.frame_locator("#my-frame").get_by_text("Submit")
 await locator.click()
 ```
 
 ```python sync
-locator = page.frame_locator("my-frame").locator("text=Submit")
+locator = page.frame_locator("my-frame").get_by_text("Submit")
 locator.click()
 ```
 
 ```csharp
-var locator = page.FrameLocator("#my-frame").Locator("text=Submit");
+var locator = page.FrameLocator("#my-frame").GetByText("Submit");
 await locator.ClickAsync();
 ```
 
