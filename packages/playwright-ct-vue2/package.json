@@ -31,6 +31,6 @@
     "vite-plugin-vue2": "^2.0.2"
   },
   "devDependencies": {
-    "vue": "^2.6.14"
+    "vue": "^2.7.13"
   }
 }
