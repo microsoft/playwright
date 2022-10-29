@@ -223,9 +223,12 @@ const appKey = Symbol('appKey');
 const wrapperKey = Symbol('wrapperKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  const wrapper = createWrapper(component);
   const app = createApp({
-    render: () => wrapper
+    render: () => {
+      const wrapper = createWrapper(component);
+      rootElement[wrapperKey] = wrapper;
+      return wrapper;
+    }
   });
   setDevtoolsHook(createDevTools(), {});
 
@@ -233,7 +236,6 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
     await hook({ app, hooksConfig });
   const instance = app.mount(rootElement);
   rootElement[appKey] = app;
-  rootElement[wrapperKey] = wrapper;
 
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
     await hook({ app, hooksConfig, instance });
