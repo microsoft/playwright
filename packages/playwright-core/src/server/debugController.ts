@@ -25,6 +25,7 @@ import { Recorder } from './recorder';
 import { EmptyRecorderApp } from './recorder/recorderApp';
 import { asLocator } from './isomorphic/locatorGenerators';
 import type { Language } from './isomorphic/locatorGenerators';
+import { locatorOrSelectorAsSelector } from './isomorphic/locatorParser';
 
 const internalMetadata = serverSideCallMetadata();
 
@@ -138,6 +139,7 @@ export class DebugController extends SdkObject {
   }
 
   async highlight(selector: string) {
+    selector = locatorOrSelectorAsSelector(selector);
     for (const recorder of await this._allRecorders())
       recorder.setHighlightedSelector(selector);
   }

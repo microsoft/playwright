@@ -206,7 +206,7 @@ export class PythonLocatorFactory implements LocatorFactory {
   private toCallWithExact(method: string, body: string | RegExp, exact: boolean) {
     if (isRegExp(body)) {
       const suffix = body.flags.includes('i') ? ', re.IGNORECASE' : '';
-      return `${method}(re.compile(r${this.quote(body.source)}${suffix}))`;
+      return `${method}(re.compile(r"${body.source.replace(/\\\//, '/').replace(/"/g, '\\"')}"${suffix}))`;
     }
     if (exact)
       return `${method}(${this.quote(body)}, exact=true)`;
@@ -216,7 +216,7 @@ export class PythonLocatorFactory implements LocatorFactory {
   private toHasText(body: string | RegExp) {
     if (isRegExp(body)) {
       const suffix = body.flags.includes('i') ? ', re.IGNORECASE' : '';
-      return `re.compile(r${this.quote(body.source)}${suffix})`;
+      return `re.compile(r"${body.source.replace(/\\\//, '/').replace(/"/g, '\\"')}"${suffix})`;
     }
     return `${this.quote(body)}`;
   }
@@ -274,7 +274,7 @@ export class JavaLocatorFactory implements LocatorFactory {
       return `${method}(Pattern.compile(${this.quote(body.source)}${suffix}))`;
     }
     if (exact)
-      return `${method}(${this.quote(body)}, new ${clazz}.${toTitleCase(method)}Options().setExact(exact))`;
+      return `${method}(${this.quote(body)}, new ${clazz}.${toTitleCase(method)}Options().setExact(true))`;
     return `${method}(${this.quote(body)})`;
   }
 

@@ -70,10 +70,10 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
 
   expect(events).toEqual([
     {
-      selector: 'internal:role=button[name=\"Submit\"]',
+      selector: 'internal:role=button[name=\"Submit\"s]',
       locator: 'getByRole(\'button\', { name: \'Submit\' })',
     }, {
-      selector: 'internal:role=button[name=\"Submit\"]',
+      selector: 'internal:role=button[name=\"Submit\"s]',
       locator: 'getByRole(\'button\', { name: \'Submit\' })',
     },
   ]);
