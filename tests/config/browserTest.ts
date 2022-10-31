@@ -100,7 +100,9 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       dirs.push(dir);
       return dir;
     });
+    console.log(`createUserDataDir: remove`, dirs);
     await removeFolders(dirs);
+    console.log(`createUserDataDir: finish`);
   },
 
   launchPersistent: async ({ createUserDataDir, browserType }, run) => {
@@ -113,8 +115,11 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       const page = persistentContext.pages()[0];
       return { context: persistentContext, page };
     });
-    if (persistentContext)
+    if (persistentContext) {
+      console.log(`persistentContext: close`);
       await persistentContext.close();
+      console.log(`persistentContext: finish`);
+    }
   },
 
   startRemoteServer: async ({ childProcess, browserType }, run) => {

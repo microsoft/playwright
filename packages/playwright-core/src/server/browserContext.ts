@@ -407,7 +407,8 @@ export abstract class BrowserContext extends SdkObject {
       } else if (this._isPersistentContext) {
         // Close all the pages instead of the context,
         // because we cannot close the default context.
-        await Promise.all(this.pages().map(page => page.close(metadata)));
+        // await Promise.all(this.pages().map(page => page.close(metadata)));
+        await this._browser.close();
       } else {
         // Close the context.
         await this.doClose();
@@ -424,8 +425,8 @@ export abstract class BrowserContext extends SdkObject {
         return;
 
       // Persistent context should also close the browser.
-      if (this._isPersistentContext)
-        await this._browser.close();
+      // if (this._isPersistentContext)
+      //   await this._browser.close();
 
       // Bookkeeping.
       this._didCloseInternal();

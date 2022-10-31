@@ -10,7 +10,7 @@ on:
       - 'browser_patches/**'
       - 'docs/**'
     branches:
-      - main
+      # - main
       - release-*
 
 env:

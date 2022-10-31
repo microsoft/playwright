@@ -157,20 +157,20 @@ it('should support javascriptEnabled option', async ({ launchPersistent, browser
     expect(error.message).toContain('something is not defined');
 });
 
-it('should support httpCredentials option', async ({ server, launchPersistent }) => {
+it.only('should support httpCredentials option', async ({ server, launchPersistent }) => {
   const { page } = await launchPersistent({ httpCredentials: { username: 'user', password: 'pass' } });
   server.setAuth('/playground.html', 'user', 'pass');
   const response = await page.goto(server.PREFIX + '/playground.html');
   expect(response.status()).toBe(200);
 });
 
-it('should support offline option', async ({ server, launchPersistent }) => {
+it.only('should support offline option', async ({ server, launchPersistent }) => {
   const { page } = await launchPersistent({ offline: true });
   const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
   expect(error).toBeTruthy();
 });
 
-it('should support acceptDownloads option', async ({ server, launchPersistent, mode }) => {
+it.only('should support acceptDownloads option', async ({ server, launchPersistent, mode }) => {
   it.skip(mode !== 'default', 'download.path() is not avaialble in remote mode');
 
   const { page } = await launchPersistent();
