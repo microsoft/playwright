@@ -1064,16 +1064,17 @@ class FrameSession {
 
   async _updateEmulateMedia(): Promise<void> {
     const emulatedMedia = this._page.emulatedMedia();
-    const colorScheme = emulatedMedia.colorScheme === null ? '' : emulatedMedia.colorScheme;
-    const reducedMotion = emulatedMedia.reducedMotion === null ? '' : emulatedMedia.reducedMotion;
-    const forcedColors = emulatedMedia.forcedColors === null ? '' : emulatedMedia.forcedColors;
+    // Empty string disables the override.
+    const media = emulatedMedia.media === 'no-override' ? '' : emulatedMedia.media;
+    const colorScheme = emulatedMedia.colorScheme === 'no-override' ? '' : emulatedMedia.colorScheme;
+    const reducedMotion = emulatedMedia.reducedMotion === 'no-override' ? '' : emulatedMedia.reducedMotion;
+    const forcedColors = emulatedMedia.forcedColors === 'no-override' ? '' : emulatedMedia.forcedColors;
     const features = [
       { name: 'prefers-color-scheme', value: colorScheme },
       { name: 'prefers-reduced-motion', value: reducedMotion },
       { name: 'forced-colors', value: forcedColors },
     ];
-    // Empty string disables the override.
-    await this._client.send('Emulation.setEmulatedMedia', { media: emulatedMedia.media || '', features });
+    await this._client.send('Emulation.setEmulatedMedia', { media, features });
   }
 
   async _updateUserAgent(): Promise<void> {

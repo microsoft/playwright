@@ -2857,8 +2857,8 @@ export interface PlaywrightTestOptions {
   bypassCSP: boolean | undefined;
   /**
    * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-   * to `'light'`.
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+   * `null` resets emulation to system defaults. Defaults to `'light'`.
    */
   colorScheme: ColorScheme | undefined;
   /**

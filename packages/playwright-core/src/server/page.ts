@@ -101,10 +101,10 @@ export interface PageDelegate {
 type EmulatedSize = { screen: types.Size, viewport: types.Size };
 
 type EmulatedMedia = {
-  media: types.MediaType | null;
-  colorScheme: types.ColorScheme | null;
-  reducedMotion: types.ReducedMotion | null;
-  forcedColors: types.ForcedColors | null;
+  media: types.MediaType;
+  colorScheme: types.ColorScheme;
+  reducedMotion: types.ReducedMotion;
+  forcedColors: types.ForcedColors;
 };
 
 type ExpectScreenshotOptions = {
@@ -442,7 +442,7 @@ export class Page extends SdkObject {
   emulatedMedia(): EmulatedMedia {
     const contextOptions = this._browserContext._options;
     return {
-      media: this._emulatedMedia.media || null,
+      media: this._emulatedMedia.media || 'no-override',
       colorScheme: this._emulatedMedia.colorScheme !== undefined ? this._emulatedMedia.colorScheme : contextOptions.colorScheme ?? 'light',
       reducedMotion: this._emulatedMedia.reducedMotion !== undefined ? this._emulatedMedia.reducedMotion : contextOptions.reducedMotion ?? 'no-preference',
       forcedColors: this._emulatedMedia.forcedColors !== undefined ? this._emulatedMedia.forcedColors : contextOptions.forcedColors ?? 'none',

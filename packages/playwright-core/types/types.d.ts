@@ -11337,10 +11337,10 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-     * to `'light'`.
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+     * `null` resets emulation to system defaults. Defaults to `'light'`.
      */
-    colorScheme?: "light"|"dark"|"no-preference";
+    colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
@@ -11379,10 +11379,10 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-     * to `'none'`.
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+     * `null` resets emulation to system defaults. Defaults to `'none'`.
      */
-    forcedColors?: "active"|"none";
+    forcedColors?: null|"active"|"none";
 
     geolocation?: {
       /**
@@ -11581,10 +11581,10 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-     * to `'no-preference'`.
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+     * `null` resets emulation to system defaults. Defaults to `'no-preference'`.
      */
-    reducedMotion?: "reduce"|"no-preference";
+    reducedMotion?: null|"reduce"|"no-preference";
 
     /**
      * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
@@ -12765,10 +12765,10 @@ export interface AndroidDevice {
 
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-     * to `'light'`.
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+     * `null` resets emulation to system defaults. Defaults to `'light'`.
      */
-    colorScheme?: "light"|"dark"|"no-preference";
+    colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
      * Optional package name to launch instead of default Chrome for Android.
@@ -12787,10 +12787,10 @@ export interface AndroidDevice {
 
     /**
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-     * to `'none'`.
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+     * `null` resets emulation to system defaults. Defaults to `'none'`.
      */
-    forcedColors?: "active"|"none";
+    forcedColors?: null|"active"|"none";
 
     geolocation?: {
       /**
@@ -12934,10 +12934,10 @@ export interface AndroidDevice {
 
     /**
      * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-     * to `'no-preference'`.
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+     * `null` resets emulation to system defaults. Defaults to `'no-preference'`.
      */
-    reducedMotion?: "reduce"|"no-preference";
+    reducedMotion?: null|"reduce"|"no-preference";
 
     /**
      * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
@@ -14552,10 +14552,10 @@ export interface Browser extends EventEmitter {
 
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-     * to `'light'`.
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+     * `null` resets emulation to system defaults. Defaults to `'light'`.
      */
-    colorScheme?: "light"|"dark"|"no-preference";
+    colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
@@ -14569,10 +14569,10 @@ export interface Browser extends EventEmitter {
 
     /**
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-     * to `'none'`.
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+     * `null` resets emulation to system defaults. Defaults to `'none'`.
      */
-    forcedColors?: "active"|"none";
+    forcedColors?: null|"active"|"none";
 
     geolocation?: {
       /**
@@ -14746,10 +14746,10 @@ export interface Browser extends EventEmitter {
 
     /**
      * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-     * to `'no-preference'`.
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+     * `null` resets emulation to system defaults. Defaults to `'no-preference'`.
      */
-    reducedMotion?: "reduce"|"no-preference";
+    reducedMotion?: null|"reduce"|"no-preference";
 
     /**
      * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`
@@ -15400,10 +15400,10 @@ export interface Electron {
 
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-     * to `'light'`.
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+     * `null` resets emulation to system defaults. Defaults to `'light'`.
      */
-    colorScheme?: "light"|"dark"|"no-preference";
+    colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
      * Current working directory to launch application from.
@@ -17421,10 +17421,10 @@ export interface BrowserContextOptions {
 
   /**
    * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-   * to `'light'`.
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+   * `null` resets emulation to system defaults. Defaults to `'light'`.
    */
-  colorScheme?: "light"|"dark"|"no-preference";
+  colorScheme?: null|"light"|"dark"|"no-preference";
 
   /**
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
@@ -17438,10 +17438,10 @@ export interface BrowserContextOptions {
 
   /**
    * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
-   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-   * to `'none'`.
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+   * `null` resets emulation to system defaults. Defaults to `'none'`.
    */
-  forcedColors?: "active"|"none";
+  forcedColors?: null|"active"|"none";
 
   geolocation?: Geolocation;
 
@@ -17596,10 +17596,10 @@ export interface BrowserContextOptions {
 
   /**
    * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
-   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-   * to `'no-preference'`.
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+   * `null` resets emulation to system defaults. Defaults to `'no-preference'`.
    */
-  reducedMotion?: "reduce"|"no-preference";
+  reducedMotion?: null|"reduce"|"no-preference";
 
   /**
    * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the `viewport`

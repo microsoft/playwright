@@ -77,13 +77,13 @@ export type FilePayload = {
   buffer: string,
 };
 
-export type MediaType = 'screen' | 'print';
+export type MediaType = 'screen' | 'print' | 'no-override';
 
-export type ColorScheme = 'dark' | 'light' | 'no-preference';
+export type ColorScheme = 'dark' | 'light' | 'no-preference' | 'no-override';
 
-export type ReducedMotion = 'no-preference' | 'reduce';
+export type ReducedMotion = 'no-preference' | 'reduce' | 'no-override';
 
-export type ForcedColors = 'active' | 'none';
+export type ForcedColors = 'active' | 'none' | 'no-override';
 
 export type DeviceDescriptor = {
   userAgent: string,

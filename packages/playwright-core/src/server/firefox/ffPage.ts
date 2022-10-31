@@ -371,12 +371,12 @@ export class FFPage implements PageDelegate {
 
   async updateEmulateMedia(): Promise<void> {
     const emulatedMedia = this._page.emulatedMedia();
-    const colorScheme = emulatedMedia.colorScheme ?? undefined;
-    const reducedMotion = emulatedMedia.reducedMotion ?? undefined;
-    const forcedColors = emulatedMedia.forcedColors ?? undefined;
+    const colorScheme = emulatedMedia.colorScheme === 'no-override' ? undefined : emulatedMedia.colorScheme;
+    const reducedMotion = emulatedMedia.reducedMotion === 'no-override' ? undefined : emulatedMedia.reducedMotion;
+    const forcedColors = emulatedMedia.forcedColors === 'no-override' ? undefined : emulatedMedia.forcedColors;
     await this._session.send('Page.setEmulatedMedia', {
       // Empty string means reset.
-      type: emulatedMedia.media === null ? '' : emulatedMedia.media,
+      type: emulatedMedia.media === 'no-override' ? '' : emulatedMedia.media,
       colorScheme,
       reducedMotion,
       forcedColors,

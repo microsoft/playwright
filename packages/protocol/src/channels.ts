@@ -892,9 +892,9 @@ export type BrowserTypeLaunchPersistentContextParams = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -962,9 +962,9 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -1057,9 +1057,9 @@ export type BrowserNewContextParams = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -1114,9 +1114,9 @@ export type BrowserNewContextOptions = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -1174,9 +1174,9 @@ export type BrowserNewContextForReuseParams = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -1231,9 +1231,9 @@ export type BrowserNewContextForReuseOptions = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -1740,16 +1740,16 @@ export type PageCloseOptions = {
 };
 export type PageCloseResult = void;
 export type PageEmulateMediaParams = {
-  media?: 'screen' | 'print' | 'null',
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'null',
-  reducedMotion?: 'reduce' | 'no-preference' | 'null',
-  forcedColors?: 'active' | 'none' | 'null',
+  media?: 'screen' | 'print' | 'no-override',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
 };
 export type PageEmulateMediaOptions = {
-  media?: 'screen' | 'print' | 'null',
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'null',
-  reducedMotion?: 'reduce' | 'no-preference' | 'null',
-  forcedColors?: 'active' | 'none' | 'null',
+  media?: 'screen' | 'print' | 'no-override',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
 };
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
@@ -3856,7 +3856,7 @@ export type ElectronLaunchParams = {
   timeout?: number,
   acceptDownloads?: boolean,
   bypassCSP?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   extraHTTPHeaders?: NameValue[],
   geolocation?: {
     longitude: number,
@@ -3889,7 +3889,7 @@ export type ElectronLaunchOptions = {
   timeout?: number,
   acceptDownloads?: boolean,
   bypassCSP?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   extraHTTPHeaders?: NameValue[],
   geolocation?: {
     longitude: number,
@@ -4272,9 +4272,9 @@ export type AndroidDeviceLaunchBrowserParams = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -4326,9 +4326,9 @@ export type AndroidDeviceLaunchBrowserOptions = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
