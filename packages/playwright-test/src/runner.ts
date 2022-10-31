@@ -17,7 +17,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { assert } from 'playwright-core/lib/utils';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { colors, minimatch, rimraf } from 'playwright-core/lib/utilsBundle';
@@ -51,9 +50,6 @@ const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.js', 'playwright.config.mjs'];
-
-// Test run is a sequence of run phases aka stages.
-type RunStage = FullProjectInternal[];
 
 type RunOptions = {
   listOnly?: boolean;
