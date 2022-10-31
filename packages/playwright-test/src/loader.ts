@@ -613,16 +613,6 @@ function validateProject(file: string, project: Project, title: string) {
       throw errorWithFile(file, `${title}.retries must be a non-negative number`);
   }
 
-  if ('stage' in project && project.stage !== undefined) {
-    if (typeof project.stage !== 'number' || Math.floor(project.stage) !== project.stage)
-      throw errorWithFile(file, `${title}.stage must be an integer`);
-  }
-
-  if ('run' in project && project.run !== undefined) {
-    if (project.run !== 'default' && project.run !== 'always')
-      throw errorWithFile(file, `${title}.run must be one of 'default', 'always'.`);
-  }
-
   if ('testDir' in project && project.testDir !== undefined) {
     if (typeof project.testDir !== 'string')
       throw errorWithFile(file, `${title}.testDir must be a string`);
