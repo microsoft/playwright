@@ -22,7 +22,7 @@ export type ReporterDescription =
   ['line'] |
   ['list'] |
   ['github'] |
-  ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean, attachmentRelativeToWorkingDirectory?: boolean, attachmentRelativeTo?: string }] |
+  ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean, embedAnnotationsAsProperties?: boolean, textContentAnnotations?: string[], embedAttachmentsAsProperty?: string, attachmentRelativeTo?: string }] |
   ['json'] | ['json', { outputFile?: string }] |
   ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure' }] |
   ['null'] |
