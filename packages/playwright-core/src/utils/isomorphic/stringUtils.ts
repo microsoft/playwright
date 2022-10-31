@@ -61,7 +61,7 @@ function cssEscapeOne(s: string, i: number): string {
 export function escapeForTextSelector(text: string | RegExp, exact: boolean): string {
   if (typeof text !== 'string')
     return String(text);
-  return `${JSON.stringify(text)}${exact ? '' : 'i'}`;
+  return `${JSON.stringify(text)}${exact ? 's' : 'i'}`;
 }
 
 export function escapeForAttributeSelector(value: string, exact: boolean): string {
@@ -69,5 +69,5 @@ export function escapeForAttributeSelector(value: string, exact: boolean): strin
   //   cssEscape(value).replace(/\\ /g, ' ')
   // However, our attribute selectors do not conform to CSS parsing spec,
   // so we escape them differently.
-  return `"${value.replace(/["]/g, '\\"')}"${exact ? '' : 'i'}`;
+  return `"${value.replace(/["]/g, '\\"')}"${exact ? 's' : 'i'}`;
 }

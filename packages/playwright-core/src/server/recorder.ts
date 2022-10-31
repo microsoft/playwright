@@ -41,6 +41,7 @@ import { Debugger } from './debugger';
 import { EventEmitter } from 'events';
 import { raceAgainstTimeout } from '../utils/timeoutRunner';
 import type { Language, LanguageGenerator } from './recorder/language';
+import { locatorOrSelectorAsSelector } from './isomorphic/locatorParser';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -210,7 +211,7 @@ export class Recorder implements InstrumentationListener {
   }
 
   setHighlightedSelector(selector: string) {
-    this._highlightedSelector = selector;
+    this._highlightedSelector = locatorOrSelectorAsSelector(selector);
     this._refreshOverlay();
   }
 

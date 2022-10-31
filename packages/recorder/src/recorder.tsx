@@ -146,7 +146,7 @@ export const Recorder: React.FC<RecorderProps> = ({
             window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' } }).catch(() => { });
           }}>Explore</ToolbarButton>
           <input ref={selectorInputRef} className='selector-input' placeholder='Playwright Selector' spellCheck='false' value={locator} disabled={mode !== 'none'} onChange={event => {
-            setLocator(asLocator(source.language, event.target.value));
+            setLocator(event.target.value);
             window.dispatch({ event: 'selectorUpdated', params: { selector: event.target.value } });
           }} />
           <ToolbarButton icon='files' title='Copy' onClick={() => {
