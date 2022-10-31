@@ -153,7 +153,7 @@ export function createPlugin(
       const isAddressInfo = (x: any): x is AddressInfo => x?.address;
       const address = previewServer.httpServer.address();
       if (isAddressInfo(address))
-        process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL = `http://localhost:${address.port}`;
+        process.env.PLAYWRIGHT_TEST_BASE_URL = `http://localhost:${address.port}`;
 
     },
 
