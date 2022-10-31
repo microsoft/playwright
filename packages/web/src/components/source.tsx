@@ -17,7 +17,6 @@
 import './source.css';
 import * as React from 'react';
 import highlightjs from '../third_party/highlightjs/highlightjs';
-import '../third_party/highlightjs/highlightjs/tomorrow.css';
 
 export type SourceHighlight = {
   line: number;

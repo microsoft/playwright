@@ -2,35 +2,35 @@
 Language: C#
 Author: Jason Diamond <jason@diamond.name>
 Contributor: Nicolas LLOBERA <nllobera@gmail.com>, Pieter Vantorre <pietervantorre@gmail.com>, David Pine <david.pine@microsoft.com>
-Website: https://docs.microsoft.com/en-us/dotnet/csharp/
+Website: https://docs.microsoft.com/dotnet/csharp/
 Category: common
 */
 
 /** @type LanguageFn */
 export default function csharp(hljs) {
-  var BUILT_IN_KEYWORDS = [
-      'bool',
-      'byte',
-      'char',
-      'decimal',
-      'delegate',
-      'double',
-      'dynamic',
-      'enum',
-      'float',
-      'int',
-      'long',
-      'nint',
-      'nuint',
-      'object',
-      'sbyte',
-      'short',
-      'string',
-      'ulong',
-      'unit',
-      'ushort'
+  const BUILT_IN_KEYWORDS = [
+    'bool',
+    'byte',
+    'char',
+    'decimal',
+    'delegate',
+    'double',
+    'dynamic',
+    'enum',
+    'float',
+    'int',
+    'long',
+    'nint',
+    'nuint',
+    'object',
+    'sbyte',
+    'short',
+    'string',
+    'ulong',
+    'uint',
+    'ushort'
   ];
-  var FUNCTION_MODIFIERS = [
+  const FUNCTION_MODIFIERS = [
     'public',
     'private',
     'protected',
@@ -47,18 +47,19 @@ export default function csharp(hljs) {
     'sealed',
     'partial'
   ];
-  var LITERAL_KEYWORDS = [
-      'default',
-      'false',
-      'null',
-      'true'
+  const LITERAL_KEYWORDS = [
+    'default',
+    'false',
+    'null',
+    'true'
   ];
-  var NORMAL_KEYWORDS = [
+  const NORMAL_KEYWORDS = [
     'abstract',
     'as',
     'base',
     'break',
     'case',
+    'catch',
     'class',
     'const',
     'continue',
@@ -92,6 +93,7 @@ export default function csharp(hljs) {
     'record',
     'ref',
     'return',
+    'scoped',
     'sealed',
     'sizeof',
     'stackalloc',
@@ -110,7 +112,7 @@ export default function csharp(hljs) {
     'volatile',
     'while'
   ];
-  var CONTEXTUAL_KEYWORDS = [
+  const CONTEXTUAL_KEYWORDS = [
     'add',
     'alias',
     'and',
@@ -147,13 +149,13 @@ export default function csharp(hljs) {
     'yield'
   ];
 
-  var KEYWORDS = {
-    keyword: NORMAL_KEYWORDS.concat(CONTEXTUAL_KEYWORDS).join(' '),
-    built_in: BUILT_IN_KEYWORDS.join(' '),
-    literal: LITERAL_KEYWORDS.join(' ')
+  const KEYWORDS = {
+    keyword: NORMAL_KEYWORDS.concat(CONTEXTUAL_KEYWORDS),
+    built_in: BUILT_IN_KEYWORDS,
+    literal: LITERAL_KEYWORDS
   };
-  var TITLE_MODE = hljs.inherit(hljs.TITLE_MODE, {begin: '[a-zA-Z](\\.?\\w)*'});
-  var NUMBERS = {
+  const TITLE_MODE = hljs.inherit(hljs.TITLE_MODE, { begin: '[a-zA-Z](\\.?\\w)*' });
+  const NUMBERS = {
     className: 'number',
     variants: [
       { begin: '\\b(0b[01\']+)' },
@@ -162,32 +164,51 @@ export default function csharp(hljs) {
     ],
     relevance: 0
   };
-  var VERBATIM_STRING = {
+  const VERBATIM_STRING = {
     className: 'string',
-    begin: '@"', end: '"',
-    contains: [{begin: '""'}]
+    begin: '@"',
+    end: '"',
+    contains: [ { begin: '""' } ]
   };
-  var VERBATIM_STRING_NO_LF = hljs.inherit(VERBATIM_STRING, {illegal: /\n/});
-  var SUBST = {
+  const VERBATIM_STRING_NO_LF = hljs.inherit(VERBATIM_STRING, { illegal: /\n/ });
+  const SUBST = {
     className: 'subst',
-    begin: /\{/, end: /\}/,
+    begin: /\{/,
+    end: /\}/,
     keywords: KEYWORDS
   };
-  var SUBST_NO_LF = hljs.inherit(SUBST, {illegal: /\n/});
-  var INTERPOLATED_STRING = {
+  const SUBST_NO_LF = hljs.inherit(SUBST, { illegal: /\n/ });
+  const INTERPOLATED_STRING = {
     className: 'string',
-    begin: /\$"/, end: '"',
+    begin: /\$"/,
+    end: '"',
     illegal: /\n/,
-    contains: [{begin: /\{\{/}, {begin: /\}\}/}, hljs.BACKSLASH_ESCAPE, SUBST_NO_LF]
+    contains: [
+      { begin: /\{\{/ },
+      { begin: /\}\}/ },
+      hljs.BACKSLASH_ESCAPE,
+      SUBST_NO_LF
+    ]
   };
-  var INTERPOLATED_VERBATIM_STRING = {
+  const INTERPOLATED_VERBATIM_STRING = {
     className: 'string',
-    begin: /\$@"/, end: '"',
-    contains: [{begin: /\{\{/}, {begin: /\}\}/}, {begin: '""'}, SUBST]
+    begin: /\$@"/,
+    end: '"',
+    contains: [
+      { begin: /\{\{/ },
+      { begin: /\}\}/ },
+      { begin: '""' },
+      SUBST
+    ]
   };
-  var INTERPOLATED_VERBATIM_STRING_NO_LF = hljs.inherit(INTERPOLATED_VERBATIM_STRING, {
+  const INTERPOLATED_VERBATIM_STRING_NO_LF = hljs.inherit(INTERPOLATED_VERBATIM_STRING, {
     illegal: /\n/,
-    contains: [{begin: /\{\{/}, {begin: /\}\}/}, {begin: '""'}, SUBST_NO_LF]
+    contains: [
+      { begin: /\{\{/ },
+      { begin: /\}\}/ },
+      { begin: '""' },
+      SUBST_NO_LF
+    ]
   });
   SUBST.contains = [
     INTERPOLATED_VERBATIM_STRING,
@@ -205,28 +226,26 @@ export default function csharp(hljs) {
     hljs.APOS_STRING_MODE,
     hljs.QUOTE_STRING_MODE,
     NUMBERS,
-    hljs.inherit(hljs.C_BLOCK_COMMENT_MODE, {illegal: /\n/})
+    hljs.inherit(hljs.C_BLOCK_COMMENT_MODE, { illegal: /\n/ })
   ];
-  var STRING = {
-    variants: [
-      INTERPOLATED_VERBATIM_STRING,
-      INTERPOLATED_STRING,
-      VERBATIM_STRING,
-      hljs.APOS_STRING_MODE,
-      hljs.QUOTE_STRING_MODE
-    ]
-  };
+  const STRING = { variants: [
+    INTERPOLATED_VERBATIM_STRING,
+    INTERPOLATED_STRING,
+    VERBATIM_STRING,
+    hljs.APOS_STRING_MODE,
+    hljs.QUOTE_STRING_MODE
+  ] };
 
-  var GENERIC_MODIFIER = {
+  const GENERIC_MODIFIER = {
     begin: "<",
     end: ">",
     contains: [
-      { beginKeywords: "in out"},
+      { beginKeywords: "in out" },
       TITLE_MODE
     ]
   };
-  var TYPE_IDENT_RE = hljs.IDENT_RE + '(<' + hljs.IDENT_RE + '(\\s*,\\s*' + hljs.IDENT_RE + ')*>)?(\\[\\])?';
-  var AT_IDENTIFIER = {
+  const TYPE_IDENT_RE = hljs.IDENT_RE + '(<' + hljs.IDENT_RE + '(\\s*,\\s*' + hljs.IDENT_RE + ')*>)?(\\[\\])?';
+  const AT_IDENTIFIER = {
     // prevents expressions like `@class` from incorrect flagging
     // `class` as a keyword
     begin: "@" + hljs.IDENT_RE,
@@ -235,7 +254,10 @@ export default function csharp(hljs) {
 
   return {
     name: 'C#',
-    aliases: ['cs', 'c#'],
+    aliases: [
+      'cs',
+      'c#'
+    ],
     keywords: KEYWORDS,
     illegal: /::/,
     contains: [
@@ -249,13 +271,13 @@ export default function csharp(hljs) {
               className: 'doctag',
               variants: [
                 {
-                  begin: '///', relevance: 0
+                  begin: '///',
+                  relevance: 0
                 },
+                { begin: '<!--|-->' },
                 {
-                  begin: '<!--|-->'
-                },
-                {
-                  begin: '</?', end: '>'
+                  begin: '</?',
+                  end: '>'
                 }
               ]
             }
@@ -266,10 +288,9 @@ export default function csharp(hljs) {
       hljs.C_BLOCK_COMMENT_MODE,
       {
         className: 'meta',
-        begin: '#', end: '$',
-        keywords: {
-          'meta-keyword': 'if else elif endif define undef warning error line region endregion pragma checksum'
-        }
+        begin: '#',
+        end: '$',
+        keywords: { keyword: 'if else elif endif define undef warning error line region endregion pragma checksum' }
       },
       STRING,
       NUMBERS,
@@ -312,9 +333,16 @@ export default function csharp(hljs) {
       {
         // [Attributes("")]
         className: 'meta',
-        begin: '^\\s*\\[', excludeBegin: true, end: '\\]', excludeEnd: true,
+        begin: '^\\s*\\[(?=[\\w])',
+        excludeBegin: true,
+        end: '\\]',
+        excludeEnd: true,
         contains: [
-          {className: 'meta-string', begin: /"/, end: /"/}
+          {
+            className: 'string',
+            begin: /"/,
+            end: /"/
+          }
         ]
       },
       {
@@ -325,8 +353,10 @@ export default function csharp(hljs) {
       },
       {
         className: 'function',
-        begin: '(' + TYPE_IDENT_RE + '\\s+)+' + hljs.IDENT_RE + '\\s*(<.+>\\s*)?\\(', returnBegin: true,
-        end: /\s*[{;=]/, excludeEnd: true,
+        begin: '(' + TYPE_IDENT_RE + '\\s+)+' + hljs.IDENT_RE + '\\s*(<[^=]+>\\s*)?\\(',
+        returnBegin: true,
+        end: /\s*[{;=]/,
+        excludeEnd: true,
         keywords: KEYWORDS,
         contains: [
           // prevents these from being highlighted `title`
@@ -335,16 +365,19 @@ export default function csharp(hljs) {
             relevance: 0
           },
           {
-            begin: hljs.IDENT_RE + '\\s*(<.+>\\s*)?\\(', returnBegin: true,
+            begin: hljs.IDENT_RE + '\\s*(<[^=]+>\\s*)?\\(',
+            returnBegin: true,
             contains: [
               hljs.TITLE_MODE,
               GENERIC_MODIFIER
             ],
             relevance: 0
           },
+          { match: /\(\)/ },
           {
             className: 'params',
-            begin: /\(/, end: /\)/,
+            begin: /\(/,
+            end: /\)/,
             excludeBegin: true,
             excludeEnd: true,
             keywords: KEYWORDS,

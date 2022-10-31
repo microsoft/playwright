@@ -77,3 +77,12 @@ it('should scroll into view display:contents with position', async ({ page, brow
   await page.click('text=click me', { position: { x: 5, y: 5 }, timeout: 5000 });
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
+
+it('should not crash when force-clicking hidden input', async ({ page, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18183' });
+  it.fixme(browserName === 'chromium');
+
+  await page.setContent(`<input type=hidden>`);
+  const error = await page.locator('input').click({ force: true, timeout: 2000 }).catch(e => e);
+  expect(error.message).toContain('Element is not visible');
+});

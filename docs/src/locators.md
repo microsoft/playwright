@@ -6,29 +6,66 @@ title: "Locators"
 [Locator]s are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent
 a way to find element(s) on the page at any moment.
 
+### Quick Guide
+
+These are the recommended built in locators.
+
+- [`method: Page.getByRole`] to locate by explicit and implicit accessibility attributes.
+- [`method: Page.getByText`] to locate by text content.
+- [`method: Page.getByLabel`] to locate a form control by associated label's text.
+- [`method: Page.getByPlaceholder`] to locate an input by placeholder.
+- [`method: Page.getByAltText`] to locate an element, usually image, by its text alternative.
+- [`method: Page.getByTitle`] to locate an element by its title.
+- [`method: Page.getByTestId`] to locate an element based on its `data-testid` attribute (other attribute can be configured).
+
 ```js
-const locator = page.getByText('Submit');
-await locator.click();
+await page.getByLabel('User Name').fill('John');
+
+await page.getByLabel('Password').fill('secret-password');
+
+await page.getByRole('button', { name: 'Sign in' }).click();
+
+await expect(page.getByText('Welcome, John!')).toBeVisible();
 ```
 
 ```java
-Locator locator = page.getByText("Submit");
-locator.click();
+page.getByLabel("User Name").fill("John");
+
+page.getByLabel("Password").fill("secret-password");
+
+page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
+
+assertThat(page.getByText("Welcome, John!")).isVisible();
 ```
 
 ```python async
-locator = page.get_by_text("Submit")
-await locator.click()
+await page.get_by_label("User Name").fill("John")
+
+await page.get_by_label("Password").fill("secret-password")
+
+await page.get_by_role("button", name="Sign in").click()
+
+await expect(page.get_by_text("Welcome, John!")).to_be_visible()
 ```
 
 ```python sync
-locator = page.get_by_text("Submit")
-locator.click()
+page.get_by_label("User Name").fill("John")
+
+page.get_by_label("Password").fill("secret-password")
+
+page.get_by_role("button", name="Sign in").click()
+
+expect(page.get_by_text("Welcome, John!")).to_be_visible()
 ```
 
 ```csharp
-var locator = page.GetByText("Submit");
-await locator.ClickAsync();
+await page.GetByLabel("User Name").FillAsync("John");
+
+await page.GetByLabel("Password").FillAsync("secret-password");
+
+await page.GetByRole("button", new() { Name = "Sign in" }).ClickAsync();
+
+await Expect(page.GetByText("Welcome, John!")).ToBeVisibleAsync();
 ```
 
 Every time locator is used for some action, up-to-date DOM element is located in the page. So in the snippet
@@ -168,10 +205,111 @@ var locator = page.FrameLocator("#my-frame").GetByText("Submit");
 await locator.ClickAsync();
 ```
 
+### Locate based on accessible attributes
 
-### Locate by text using [`method: Page.getByText`]
+The [`method: Page.getByRole`] locator reflects how users and assistive technology perceive the page, for example whether some element is a button or a checkbox. When locating by role, you should usually pass the accessible name as well, so that locator pinpoints the exact element.
 
-The easiest way to find an element is to look for the text it contains. You can match by a substring, exact string, or a regular expression.
+```js
+await page.getByRole('button', { name: /submit/i }).click();
+
+await page.getByRole('checkbox', { checked: true, name: "Check me" }).check();
+```
+
+```python async
+await page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
+
+await page.get_by_role("checkbox", checked=True, name="Check me").check()
+```
+
+```python sync
+page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
+
+page.get_by_role("checkbox", checked=True, name="Check me").check()
+```
+
+```java
+page.getByRole("button", new Page.GetByRoleOptions().setName(Pattern.compile("submit", Pattern.CASE_INSENSITIVE))).click();
+
+page.getByRole("checkbox", new Page.GetByRoleOptions().setChecked(true).setName("Check me"))).check();
+```
+
+```csharp
+await page.GetByRole("button", new() { Name = new Regex("submit", RegexOptions.IgnoreCase) }).ClickAsync();
+
+await page.GetByRole("checkbox", new() { Checked = true, Name = "Check me" }).CheckAsync();
+```
+
+Role locators follow W3C specifications for [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+Note that role locators **do not replace** accessibility audits and conformance tests, but rather give early feedback about the ARIA guidelines.
+
+### Locate by label text
+
+Most form controls usually have dedicated labels that could be conveniently used to interact with the form. In this case, you can locate the control by its associated label using [`method: Page.getByLabel`].
+
+For example, consider the following DOM structure.
+
+```html
+<label for="password">Password:</label><input type="password" id="password">
+```
+
+You can fill the input after locating it by the label text:
+
+```js
+await page.getByLabel('Password').fill('secret');
+```
+
+```java
+page.getByLabel("Password").fill("secret");
+```
+
+```python async
+await page.get_by_label("Password").fill("secret")
+```
+
+```python sync
+page.get_by_label("Password").fill("secret")
+```
+
+```csharp
+await page.GetByLabel("Password").FillAsync("secret");
+```
+
+### Locate by placeholder text
+
+Inputs may have a placeholder attribute to hint to the user what value should be entered. You can locate such an input using [`method: Page.getByPlaceholder`].
+
+For example, consider the following DOM structure.
+
+```html
+ <input id="email" name="email" type="email" placeholder="name@example.com">
+```
+
+You can fill the input after locating it by the placeholder text:
+
+```js
+await page.getByPlaceholder("name@example.com").fill("playwright@microsoft.com");
+```
+
+```java
+page.getByPlaceholder("name@example.com").fill("playwright@microsoft.com");
+```
+
+```python async
+await page.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
+```
+
+```python sync
+page.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
+```
+
+```csharp
+await page.GetByPlacheolder("name@example.com").FillAsync("playwright@microsoft.com");
+```
+
+### Locate by text
+
+The easiest way to find an element is to look for the text it contains. You can match by a substring, exact string, or a regular expression when using [`method: Page.getByText`].
 
 ```js
 await page.getByText('Log in').click();
@@ -221,47 +359,73 @@ await page.GetByTestId("product-item").Filter(new() { HasText = "Playwright Book
 Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
 :::
 
-### Locate based on accessible attributes with [`method: Page.getByRole`]
+### Locate by alt text
 
-The [`method: Page.getByRole`] locator reflects how users and assistive technology percieve the page, for example whether some element is a button or a checkbox. When locating by role, you should usually pass the accessible name as well, so that locator pinpoints the exact element.
+All images should have an `alt` attribute that describes the image. You can locate an image based on the text alternative using [`method: Page.getByAltText`].
+
+
+For example, consider the following DOM structure.
+
+```html
+<img alt="playwright logo" src="/playwright-logo.png" />
+```
+
+You can click on the image after locating it by the text alternative:
 
 ```js
-await page.getByRole('button', { name: /submit/i }).click();
-
-await page.getByRole('checkbox', { checked: true, name: "Check me" }).check();
-```
-
-```python async
-await page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
-
-await page.get_by_role("checkbox", checked=True, name="Check me"]).check()
-```
-
-```python sync
-page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
-
-page.get_by_role("checkbox", checked=True, name="Check me"]).check()
+await page.getByAltText('playwright logo').click();
 ```
 
 ```java
-page.getByRole("button", new Page.GetByRoleOptions().setName(Pattern.compile("submit", Pattern.CASE_INSENSITIVE))).click();
+page.getByAltText("playwright logo").click();
+```
 
-page.getByRole("checkbox", new Page.GetByRoleOptions().setChecked(true).setName("Check me"))).check();
+```python async
+await page.get_by_alt_text("playwright logo").click()
+```
+
+```python sync
+page.get_by_alt_text("playwright logo").click()
 ```
 
 ```csharp
-await page.GetByRole("button", new() { Name = new Regex("submit", RegexOptions.IgnoreCase) }).ClickAsync();
+await page.GetByAltText("playwright logo").ClickAsync();
+```
+### Locate by title
 
-await page.GetByRole("checkbox", new() { Checked = true, Name = "Check me" }).CheckAsync();
+Locate an element with a matching title attribute using [`method: Page.getByTitle`].
+
+For example, consider the following DOM structure.
+
+```html
+<span title='Issues count'>25 issues</span>
 ```
 
-Role locators follow W3C specificaitons for [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+You can check the issues count after locating it by the title text:
 
-Note that role locators **do not replace** accessibility audits and conformance tests, but rather give early feedback about the ARIA guidelines.
+```js
+await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
+```
 
-### Define explicit contract and use [`method: Page.getByTestId`]
+```java
+assertThat(page.getByTitle("Issues count")).hasText("25 issues");
+```
 
-User-facing attributes like text or accessible name can change over time. In this case it is convenient to define explicit test ids.
+```python async
+await expect(page.get_by_title("Issues count")).to_have_text("25 issues")
+```
+
+```python sync
+expect(page.get_by_title("Issues count")).to_have_text("25 issues")
+```
+
+```csharp
+await Expect(page.GetByTitle("Issues count")).toHaveText("25 issues");
+```
+
+### Define explicit contract and use a data-testid attribute
+
+User-facing attributes like text or accessible name can change over time. In this case it is convenient to define explicit test ids and query them with [`method: Page.getByTestId`].
 
 ```html
 <button data-testid="directions">Itinéraire</button>
@@ -276,50 +440,18 @@ page.getByTestId("directions").click();
 ```
 
 ```python async
-await page.get_by_test_id('directions').click()
+await page.get_by_test_id("directions").click()
 ```
 
 ```python sync
-page.get_by_test_id('directions').click()
+page.get_by_test_id("directions").click()
 ```
 
 ```csharp
 await page.GetByTestId("directions").ClickAsync();
 ```
 
-By default, [`method: Page.getByTestId`] will locate elements baed on the `data-testid` attribute, but you can configure it in your test config or calling [`method: Selectors.setTestIdAttribute`].
-
-### Locate by label text with [`method: Page.getByLabel`]
-
-Most form controls usually have dedicated labels that could be conveniently used to interact with the form. In this case, you can locate the control by its associated label.
-
-For example, consider the following DOM structure.
-
-```html
-<label for="password">Password:</label><input id="password" type="password">
-```
-
-You can fill the input after locating it by the label text:
-
-```js
-await page.getByLabel('Password').fill('secret');
-```
-
-```java
-page.getByLabel("Password").fill("secret");
-```
-
-```python async
-await page.get_by_label("Password").fill("secret")
-```
-
-```python sync
-page.get_by_label("Password").fill("secret")
-```
-
-```csharp
-await page.GetByLabel("Password").FillAsync("secret");
-```
+By default, [`method: Page.getByTestId`] will locate elements based on the `data-testid` attribute, but you can configure it in your test config or calling [`method: Selectors.setTestIdAttribute`].
 
 ### Locate in a subtree
 
@@ -486,10 +618,10 @@ page.getByRole('section').filter({ has: page.getByTestId('subscribe-button') })
 page.getByRole("section").filter(new Locator.FilterOptions().setHas(page.getByTestId("subscribe-button")))
 ```
 ```python async
-page.get_by_role("section"), has=page.get_by_test_id("subscribe-button"))
+page.get_by_role("section").filter(has=page.get_by_test_id("subscribe-button"))
 ```
 ```python sync
-page.get_by_role("section"), has=page.get_by_test_id("subscribe-button"))
+page.get_by_role("section").filter(has=page.get_by_test_id("subscribe-button"))
 ```
 ```csharp
 page.GetByRole("section"), new() { Has = page.GetByTestId("subscribe-button") })

@@ -145,18 +145,23 @@ with sync_playwright() as playwright:
 ```
 
 ```csharp
+using Microsoft.Playwright;
+
 using var playwright = await Playwright.CreateAsync();
 // Script that evaluates to a selector engine instance. The script is evaluated in the page context.
-await playwright.Selectors.RegisterAsync("tag", @"{
-// Returns the first element matching given selector in the root's subtree.
-query(root, selector) {
-    return root.querySelector(selector);
-  },
-  // Returns all elements matching given selector in the root's subtree.
-  queryAll(root, selector) {
-    return Array.from(root.querySelectorAll(selector));
-  }
-}");
+await playwright.Selectors.RegisterAsync("tag", new()
+{
+    Script = @"{
+    // Returns the first element matching given selector in the root's subtree.
+    query(root, selector) {
+        return root.querySelector(selector);
+      },
+      // Returns all elements matching given selector in the root's subtree.
+      queryAll(root, selector) {
+        return Array.from(root.querySelectorAll(selector));
+      }
+    }"
+});
 
 await using var browser = await playwright.Chromium.LaunchAsync();
 var page = await browser.NewPageAsync();

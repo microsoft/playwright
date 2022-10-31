@@ -252,6 +252,9 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    *
+   * Use [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) to change
+   * the number of retries for a specific file or a group of tests.
+   *
    * Use [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) to change this option for
    * all projects.
    */
@@ -344,8 +347,10 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Timeout for each test in milliseconds. Defaults to 30 seconds.
    *
-   * This is a base timeout for all tests. In addition, each test can configure its own timeout with
-   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout).
+   * This is a base timeout for all tests. Each test can configure its own timeout with
+   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout). Each file or a group of tests
+   * can configure the timeout with
+   * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure).
    *
    * Use [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout) to change this option for
    * all projects.
@@ -2017,8 +2022,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   only: SuiteFunction;
     };
     /**
-   * Set execution mode of execution for the enclosing scope. Can be executed either on the top level or inside a describe.
-   * Configuration applies to the entire scope, regardless of whether it run before or after the test declaration.
+   * Configures the enclosing scope. Can be executed either on the top level or inside a describe. Configuration applies to
+   * the entire scope, regardless of whether it run before or after the test declaration.
    *
    * Learn more about the execution modes [here](https://playwright.dev/docs/test-parallel).
    *
@@ -2040,9 +2045,18 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * test('runs second', async ({ page }) => {});
    * ```
    *
+   * Configuring retries and timeout:
+   *
+   * ```js
+   * // All tests in the file will be retried twice and have a timeout of 20 seconds.
+   * test.describe.configure({ retries: 2, timeout: 20_000 });
+   * test('runs first', async ({ page }) => {});
+   * test('runs second', async ({ page }) => {});
+   * ```
+   *
    * @param options
    */
-  configure: (options: { mode?: 'parallel' | 'serial' }) => void;
+  configure: (options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
   };
   /**
    * Declares a skipped test, similarly to
@@ -2372,7 +2386,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * test.describe('group', () => {
    *   // Applies to all tests in this group.
-   *   test.setTimeout(60000);
+   *   test.describe.configure({ timeout: 60000 });
    *
    *   test('test one', async () => { /* ... *\/ });
    *   test('test two', async () => { /* ... *\/ });
@@ -4468,6 +4482,9 @@ interface TestProject {
   /**
    * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    *
+   * Use [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) to change
+   * the number of retries for a specific file or a group of tests.
+   *
    * Use [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) to change this option for
    * all projects.
    */
@@ -4566,8 +4583,10 @@ interface TestProject {
   /**
    * Timeout for each test in milliseconds. Defaults to 30 seconds.
    *
-   * This is a base timeout for all tests. In addition, each test can configure its own timeout with
-   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout).
+   * This is a base timeout for all tests. Each test can configure its own timeout with
+   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout). Each file or a group of tests
+   * can configure the timeout with
+   * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure).
    *
    * Use [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout) to change this option for
    * all projects.

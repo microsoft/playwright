@@ -157,7 +157,7 @@ export const Workbench: React.FunctionComponent<{
       {model.title && <div className='title'>{model.title}</div>}
       <div className='spacer'></div>
     </div>
-    <div style={{ background: 'white', paddingLeft: '20px', flex: 'none', borderBottom: '1px solid #ddd' }}>
+    <div style={{ paddingLeft: '20px', flex: 'none', borderBottom: '1px solid var(--vscode-panel-border)' }}>
       <Timeline
         context={model}
         boundaries={boundaries}
