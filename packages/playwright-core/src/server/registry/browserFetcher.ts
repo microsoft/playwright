@@ -26,7 +26,7 @@ import { extract } from '../../zipBundle';
 import { ManualPromise } from '../../utils/manualPromise';
 import { colors } from '../../utilsBundle';
 
-export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURLs: string[], downloadFileName: string, downloadConnectionTimeout: number): Promise<boolean> {
+export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string | undefined, downloadURLs: string[], downloadFileName: string, downloadConnectionTimeout: number): Promise<boolean> {
   if (await existsAsync(browserDirectory)) {
     // Already downloaded.
     debugLogger.log('install', `${title} is already downloaded.`);
@@ -54,8 +54,10 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     debugLogger.log('install', `-- zip: ${zipPath}`);
     debugLogger.log('install', `-- location: ${browserDirectory}`);
     await extract(zipPath, { dir: browserDirectory });
-    debugLogger.log('install', `fixing permissions at ${executablePath}`);
-    await fs.promises.chmod(executablePath, 0o755);
+    if (executablePath) {
+      debugLogger.log('install', `fixing permissions at ${executablePath}`);
+      await fs.promises.chmod(executablePath, 0o755);
+    }
   } catch (e) {
     debugLogger.log('install', `FAILED installation ${title} with error: ${e}`);
     process.exitCode = 1;

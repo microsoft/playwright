@@ -46,6 +46,11 @@
       "name": "ffmpeg",
       "revision": "1008",
       "installByDefault": true
+    },
+    {
+      "name": "android",
+      "revision": "1000",
+      "installByDefault": false
     }
   ]
 }
