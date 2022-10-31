@@ -36,6 +36,7 @@ import { TimeoutSettings } from '../../common/timeoutSettings';
 import type * as channels from '@protocol/channels';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
 import { DEFAULT_ARGS } from '../chromium/chromium';
+import { registry } from '../registry';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -186,8 +187,13 @@ export class AndroidDevice extends SdkObject {
       await this.shell(`cmd package uninstall com.microsoft.playwright.androiddriver.test`);
 
       debug('pw:android')('Installing the new driver');
-      for (const file of ['android-driver.apk', 'android-driver-target.apk'])
-        await this.installApk(await fs.promises.readFile(require.resolve(`../../../bin/${file}`)));
+      const executable = registry.findExecutable('android')!;
+      for (const file of ['android-driver.apk', 'android-driver-target.apk']) {
+        const fullName = path.join(executable.directory!, file);
+        if (!fs.existsSync(fullName))
+          throw new Error('Please install Android driver apk using `npx playwright install android`');
+        await this.installApk(await fs.promises.readFile(fullName));
+      }
     } else {
       debug('pw:android')('Skipping the driver installation');
     }

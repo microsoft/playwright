@@ -214,6 +214,9 @@ const DOWNLOAD_PATHS = {
     'mac12-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'win64': 'builds/ffmpeg/%s/ffmpeg-win64.zip',
   },
+  'android': {
+    '<unknown>': 'builds/android/%s/android.zip',
+  },
 };
 
 export const registryDirectory = (() => {
@@ -300,7 +303,7 @@ function readDescriptors(browsersJSON: BrowsersJSON) {
 }
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
-type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-with-symbols' | 'chromium-tip-of-tree';
+type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-with-symbols' | 'chromium-tip-of-tree' | 'android';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-with-symbols', 'chromium-tip-of-tree'];
 
@@ -569,6 +572,21 @@ export class Registry {
       _dependencyGroup: 'tools',
       _isHermeticInstallation: true,
     });
+    const android = descriptors.find(d => d.name === 'android')!;
+    this._executables.push({
+      type: 'tool',
+      name: 'android',
+      browserName: undefined,
+      directory: android.dir,
+      executablePath: () => undefined,
+      executablePathOrDie: () => '',
+      installType: 'download-on-demand',
+      validateHostRequirements: () => Promise.resolve(),
+      downloadURLs: this._downloadURLs(android),
+      _install: () => this._downloadExecutable(android),
+      _dependencyGroup: 'tools',
+      _isHermeticInstallation: true,
+    });
   }
 
   private _createChromiumChannel(name: ChromiumChannel, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
@@ -743,7 +761,8 @@ export class Registry {
   }
 
   private _downloadURLs(descriptor: BrowsersJSONDescriptor): string[] {
-    const downloadPathTemplate: string|undefined = (DOWNLOAD_PATHS as any)[descriptor.name][hostPlatform];
+    const paths = (DOWNLOAD_PATHS as any)[descriptor.name];
+    const downloadPathTemplate: string|undefined = paths[hostPlatform] || paths['<unknown>'];
     if (!downloadPathTemplate)
       return [];
     const downloadPath = util.format(downloadPathTemplate, descriptor.revision);
@@ -763,9 +782,9 @@ export class Registry {
     return downloadURLs;
   }
 
-  private async _downloadExecutable(descriptor: BrowsersJSONDescriptor, executablePath: string | undefined) {
+  private async _downloadExecutable(descriptor: BrowsersJSONDescriptor, executablePath?: string) {
     const downloadURLs = this._downloadURLs(descriptor);
-    if (!downloadURLs.length || !executablePath)
+    if (!downloadURLs.length)
       throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
     if (hostPlatform === 'generic-linux' || hostPlatform === 'generic-linux-arm64')
       logPolitely('BEWARE: your OS is not officially supported by Playwright; downloading fallback build.');
