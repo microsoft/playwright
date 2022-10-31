@@ -73,6 +73,10 @@ This version was also tested against the following stable channels:
 
 ## Version 1.26
 
+<div className="embed-youtube">
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/b84eqab3kwc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### Assertions
 
 - New option `enabled` for [`method: LocatorAssertions.toBeEnabled`].
