@@ -553,7 +553,35 @@ await using var context = await browser.NewContextAsync(new()
 
 Change the location later:
 
-```js
+```js tab=js-ts
+import { test, expect } from '@playwright/test';
+
+test.use({ 
+  geolocation: { longitude: 48.858455, latitude: 2.294474 },
+  permissions: ['geolocation'],
+});
+
+test('my test with geolocation', async ({ page, context }) => {
+  // overwrite the location for this test
+  context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
+});
+```
+
+```js tab=js-js
+const { test, expect } = require('@playwright/test');
+
+test.use({ 
+  geolocation: { longitude: 48.858455, latitude: 2.294474 },
+  permissions: ['geolocation'],
+});
+
+test('my test with geolocation', async ({ page, context }) => {
+  // overwrite the location for this test
+  context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
+});
+```
+
+```js tab=js-library
 await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 ```
 
