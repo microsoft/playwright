@@ -27,7 +27,7 @@ if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   exit 0
 fi
 
-if [[ ("${GITHUB_REPOSITORY}" != "microsoft/playwright") && ("${GITHUB_REPOSITORY}" != "microsoft/playwright-internal") ]]; then
+if [[ ("${GITHUB_REPOSITORY}" != "microsoft/playwright") && ("${GITHUB_REPOSITORY}" != "microsoft/playwright-browsers") ]]; then
   echo "NOTE: skipping dashboard uploading from fork"
   exit 0
 fi

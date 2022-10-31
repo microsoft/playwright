@@ -22,7 +22,7 @@ test('render attributes', async ({ mount }) => {
   await expect(component).toHaveClass('primary');
 })
 
-test('renderer updates props without remounting', async ({ mount }) => {
+test('update props without remounting', async ({ mount }) => {
   const component = await mount(<Counter count={9001} />)
   await expect(component.locator('#props')).toContainText('9001')
 
@@ -33,7 +33,7 @@ test('renderer updates props without remounting', async ({ mount }) => {
   await expect(component.locator('#remount-count')).toContainText('1')
 });
 
-test('renderer updates callbacks without remounting', async ({ mount }) => {
+test('update callbacks without remounting', async ({ mount }) => {
   const component = await mount(<Counter />)
 
   const messages: string[] = []
@@ -46,7 +46,7 @@ test('renderer updates callbacks without remounting', async ({ mount }) => {
   await expect(component.locator('#remount-count')).toContainText('1')
 });
 
-test('renderer updates slots without remounting', async ({ mount }) => {
+test('update slots without remounting', async ({ mount }) => {
   const component = await mount(<Counter>Default Slot</Counter>)
   await expect(component).toContainText('Default Slot')
 

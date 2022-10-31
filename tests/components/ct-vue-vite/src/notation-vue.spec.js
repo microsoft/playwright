@@ -20,7 +20,7 @@ test('render props', async ({ mount }) => {
 })
 
 
-test('renderer updates props without remounting', async ({ mount }) => {
+test('update props without remounting', async ({ mount }) => {
   const component = await mount(Counter, {
     props: { count: 9001 }
   })
@@ -35,7 +35,7 @@ test('renderer updates props without remounting', async ({ mount }) => {
   await expect(component.locator('#remount-count')).toContainText('1')
 })
 
-test('renderer updates event listeners without remounting', async ({ mount }) => {
+test('update event listeners without remounting', async ({ mount }) => {
   const component = await mount(Counter)
 
   const messages = []
@@ -50,7 +50,7 @@ test('renderer updates event listeners without remounting', async ({ mount }) =>
   await expect(component.locator('#remount-count')).toContainText('1')
 })
 
-test('renderer updates slots without remounting', async ({ mount }) => {
+test('update slots without remounting', async ({ mount }) => {
   const component = await mount(Counter, {
     slots: { default: 'Default Slot' }
   })
@@ -86,6 +86,15 @@ test('render a default slot', async ({ mount }) => {
     }
   })
   await expect(component.getByRole('strong')).toContainText('Main Content')
+})
+
+test('render a component as slot', async ({ mount, page }) => {
+  const component = await mount(DefaultSlot, {
+    slots: {
+      default: '<Button title="Submit" />',
+    },
+  })  
+  await expect(component).toContainText('Submit')
 })
 
 test('render a component with multiple slots', async ({ mount }) => {

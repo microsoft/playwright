@@ -445,16 +445,19 @@ ContextOptions:
       - dark
       - light
       - no-preference
+      - no-override
     reducedMotion:
       type: enum?
       literals:
       - reduce
       - no-preference
+      - no-override
     forcedColors:
       type: enum?
       literals:
       - active
       - none
+      - no-override
     acceptDownloads: boolean?
     baseURL: string?
     recordVideo:
@@ -1173,30 +1176,26 @@ Page:
           literals:
           - screen
           - print
-          # Reset emulated value to the system default.
-          - null
+          - no-override
         colorScheme:
           type: enum?
           literals:
           - dark
           - light
           - no-preference
-          # Reset emulated value to the system default.
-          - null
+          - no-override
         reducedMotion:
           type: enum?
           literals:
           - reduce
           - no-preference
-          # Reset emulated value to the system default.
-          - null
+          - no-override
         forcedColors:
           type: enum?
           literals:
           - active
           - none
-          # Reset emulated value to the system default.
-          - null
+          - no-override
 
     exposeBinding:
       parameters:
@@ -2974,6 +2973,7 @@ Electron:
           - dark
           - light
           - no-preference
+          - no-override
         extraHTTPHeaders:
           type: array?
           items: NameValue

@@ -29,10 +29,11 @@ import type { Page } from './page';
 import type { Env, WaitForEventOptions, Headers, BrowserContextOptions } from './types';
 import { Waiter } from './waiter';
 
-type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'> & {
+type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'> & {
   env?: Env,
   extraHTTPHeaders?: Headers,
   recordHar?: BrowserContextOptions['recordHar'],
+  colorScheme?: 'dark' | 'light' | 'no-preference' | null,
 };
 
 type ElectronAppType = typeof import('electron');

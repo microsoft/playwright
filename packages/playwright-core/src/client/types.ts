@@ -47,32 +47,36 @@ export type SetStorageState = {
 export type LifecycleEvent = channels.LifecycleEvent;
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
 
-export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState' | 'recordHar'> & {
-  viewport?: Size | null,
-  extraHTTPHeaders?: Headers,
-  logger?: Logger,
-  videosPath?: string,
-  videoSize?: Size,
-  storageState?: string | SetStorageState,
+export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors'> & {
+  viewport?: Size | null;
+  extraHTTPHeaders?: Headers;
+  logger?: Logger;
+  videosPath?: string;
+  videoSize?: Size;
+  storageState?: string | SetStorageState;
   har?: {
     path: string;
     fallback?: 'abort'|'continue';
     urlFilter?: string|RegExp;
-  },
+  };
   recordHar?: {
     path: string,
     omitContent?: boolean,
     content?: 'omit' | 'embed' | 'attach',
     mode?: 'full' | 'minimal',
     urlFilter?: string | RegExp,
-  },
+  };
+  colorScheme?: 'dark' | 'light' | 'no-preference' | null;
+  reducedMotion?: 'reduce' | 'no-preference' | null;
+  forcedColors?: 'active' | 'none' | null;
 };
 
 type LaunchOverrides = {
-  ignoreDefaultArgs?: boolean | string[],
-  env?: Env,
-  logger?: Logger,
+  ignoreDefaultArgs?: boolean | string[];
+  env?: Env;
+  logger?: Logger;
 };
+
 type FirefoxUserPrefs = {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },
 };

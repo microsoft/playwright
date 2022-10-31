@@ -35,7 +35,7 @@ it('should throw in case of bad media argument', async ({ page }) => {
   let error = null;
   // @ts-expect-error 'bad' is not a valid media type
   await page.emulateMedia({ media: 'bad' }).catch(e => error = e);
-  expect(error.message).toContain('media: expected one of (screen|print|null)');
+  expect(error.message).toContain('media: expected one of (screen|print|no-override)');
 });
 
 it('should emulate colorScheme should work @smoke', async ({ page }) => {
@@ -64,7 +64,7 @@ it('should throw in case of bad colorScheme argument', async ({ page }) => {
   let error = null;
   // @ts-expect-error 'bad' is not a valid media type
   await page.emulateMedia({ colorScheme: 'bad' }).catch(e => error = e);
-  expect(error.message).toContain('colorScheme: expected one of (dark|light|no-preference|null)');
+  expect(error.message).toContain('colorScheme: expected one of (dark|light|no-preference|no-override)');
 });
 
 it('should work during navigation', async ({ page, server }) => {

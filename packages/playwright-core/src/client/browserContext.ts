@@ -416,6 +416,9 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     storageState: await prepareStorageState(options),
     serviceWorkers: options.serviceWorkers,
     recordHar: prepareRecordHarOptions(options.recordHar),
+    colorScheme: options.colorScheme === null ? 'no-override' : options.colorScheme,
+    reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
+    forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {
