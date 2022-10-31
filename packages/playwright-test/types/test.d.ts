@@ -1473,7 +1473,7 @@ export interface TestInfo {
    * > NOTE: [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach)
    * automatically takes care of copying attached files to a location that is accessible to reporters. You can safely remove
    * the attachment after awaiting the attach call.
-   * @param name Attachment name.
+   * @param name Attachment name. The name will also be sanitized and used as the prefix of file name when saving to disk.
    * @param options
    */
   attach(name: string, options?: {
