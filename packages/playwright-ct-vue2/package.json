@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@playwright/test": "1.28.0-next",
-    "vite": "^2.9.5",
+    "vite": "^3.2.1",
     "vite-plugin-vue2": "^2.0.2"
   },
   "devDependencies": {
