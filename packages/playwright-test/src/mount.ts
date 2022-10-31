@@ -42,7 +42,7 @@ export const fixtures: Fixtures<
         await page.exposeFunction('__ct_dispatch', (ordinal: number, args: any[]) => {
           boundCallbacksForMount[ordinal](...args);
         });
-        await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
+        await page.goto(process.env.PLAYWRIGHT_TEST_BASE_URL!);
       }, true);
       await use(page);
     },

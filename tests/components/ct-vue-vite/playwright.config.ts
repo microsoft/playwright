@@ -23,8 +23,7 @@ const config: PlaywrightTestConfig = {
   reporter: 'html',
   use: {
     ctTemplateDir: 'playwright',
-    ctCacheDir: 'playwright/.cache',
-    trace: 'on-first-retry',
+    trace: 'on-first-retry'
   },
   projects: [
     {
