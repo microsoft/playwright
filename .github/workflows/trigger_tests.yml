@@ -16,6 +16,6 @@ jobs:
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: token ${GH_TOKEN}" \
           --data "{\"event_type\": \"playwright_tests\", \"client_payload\": {\"ref\": \"${GITHUB_SHA}\"}}" \
-          https://api.github.com/repos/microsoft/playwright-internal/dispatches
+          https://api.github.com/repos/microsoft/playwright-browsers/dispatches
       env:
         GH_TOKEN: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}
