@@ -88,6 +88,15 @@ test('render a default slot', async ({ mount }) => {
   await expect(component.getByRole('strong')).toContainText('Main Content')
 })
 
+test('render a component as slot', async ({ mount, page }) => {
+  const component = await mount(DefaultSlot, {
+    slots: {
+      default: '<Button title="Submit" />',
+    },
+  })  
+  await expect(component).toContainText('Submit')
+})
+
 test('render a component with multiple slots', async ({ mount }) => {
   const component = await mount(DefaultSlot, {
     slots: {
