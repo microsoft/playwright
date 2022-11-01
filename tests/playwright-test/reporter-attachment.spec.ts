@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('render text attachment', async ({ runInlineTest }) => {
@@ -230,7 +231,7 @@ test(`testInfo.attach name should be sanitized`, async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
 
   expect(stripAnsi(result.output)).toContain('attachment #1: ../../../test (text/plain)');
-  expect(stripAnsi(result.output)).toContain('attachments/-test');
+  expect(stripAnsi(result.output)).toContain(`attachments${path.sep}-test`);
 });
 
 test(`testInfo.attach name can be empty string`, async ({ runInlineTest }) => {
@@ -253,7 +254,7 @@ test(`testInfo.attach name can be empty string`, async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
 
   expect(stripAnsi(result.output)).toContain('attachment #1:  (text/plain)');
-  expect(stripAnsi(result.output)).toContain('attachments/-');
+  expect(stripAnsi(result.output)).toContain(`attachments${path.sep}-`);
 });
 
 test(`testInfo.attach ignore if name is not string`, async ({ runInlineTest }) => {
@@ -276,5 +277,5 @@ test(`testInfo.attach ignore if name is not string`, async ({ runInlineTest }) =
   expect(result.failed).toBe(1);
 
   expect(stripAnsi(result.output)).toContain('attachment #1: false (text/plain)');
-  expect(stripAnsi(result.output)).toContain('attachments/');
+  expect(stripAnsi(result.output)).toContain(`attachments${path.sep}`);
 });
