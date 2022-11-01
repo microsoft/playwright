@@ -431,7 +431,7 @@ WebServer is now considered "ready" if request to the specified port has any of 
 
   Here is what a typical component test looks like:
 
-  ```ts
+  ```tsx
   // App.spec.tsx
   import { test, expect } from '@playwright/experimental-ct-react';
   import App from './App';

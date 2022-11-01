@@ -22,7 +22,7 @@ By default the [playwright.config](/test-configuration.md#record-test-trace) fil
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
   retries: process.env.CI ? 2 : 0, // set to 2 when running on CI
-  ...
+  // ...
   use: {
     trace: 'on-first-retry', // record traces on first retry of each test
   },
@@ -35,7 +35,7 @@ module.exports = config;
 import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   retries: process.env.CI ? 2 : 0, // set to 2 when running on CI
-  ...
+  // ...
   use: {
     trace: 'on-first-retry', // record traces on first retry of each test
   },
@@ -51,7 +51,7 @@ Traces are normally run in a Continuous Integration(CI) environment as locally y
 npx playwright test --trace on
 ```
 
-:::note 
+:::note
 The `trace-on` flag was introduced in Playwright v1.25. Check your `package.json` to make sure you have at least this version of Playwright installed.
 :::
 

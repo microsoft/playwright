@@ -94,7 +94,8 @@ Playwright Test is based on the concept of [test fixtures](./test-fixtures.md) s
 
 ```js
 test('basic test', async ({ page }) => {
-  ...
+  // ...
+});
 ```
 
 ### Using Test Hooks

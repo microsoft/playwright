@@ -265,7 +265,9 @@ import type { PlaywrightTestConfig } from '@playwright/experimental-ct-react';
 
 const config: PlaywrightTestConfig = {
   use: {
-    ctViteConfig: { ... },
+    ctViteConfig: {
+      // ...
+    },
   },
 };
 export default config
@@ -274,7 +276,7 @@ export default config
 ### Q) What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue,solid}`?
 
 ```ts
-test('…', async { mount, page, context } => {
+test('…', async ({ mount, page, context }) => {
     // …
 });
 ```
@@ -440,6 +442,7 @@ const config: PlaywrightTestConfig = {
       },
     },
   },
+};
 ```
 
 don't forget to initialize your plugins, for example if you are using Pinia, add init code into your `playwright/index.js`:

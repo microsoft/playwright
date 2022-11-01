@@ -16004,7 +16004,7 @@ export interface Keyboard {
  *       log: (name, severity, message, args) => console.log(`${name} ${message}`)
  *     }
  *   });
- *   ...
+ *   // ...
  * })();
  * ```
  *

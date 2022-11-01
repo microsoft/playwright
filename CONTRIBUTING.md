@@ -161,20 +161,24 @@ npm run ctest # also `ftest` for firefox and `wtest` for WebKit
 - To run a specific test, substitute `it` with `it.only`, or use the `--grep 'My test'` CLI parameter:
 
 ```js
-...
+// ...
 // Using "it.only" to run a specific test
 it.only('should work', async ({server, page}) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.ok).toBe(true);
 });
-// or
+```
+
+or
+
+```bash js
 playwright test --config=xxx --grep 'should work'
 ```
 
 - To disable a specific test, substitute `it` with `it.skip`:
 
 ```js
-...
+// ...
 // Using "it.skip" to skip a specific test
 it.skip('should work', async ({server, page}) => {
   const response = await page.goto(server.EMPTY_PAGE);

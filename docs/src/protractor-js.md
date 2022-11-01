@@ -75,7 +75,7 @@ test.describe('angularjs homepage todo list', function() {
     var completedAmount = page.locator('.done-true');
     await expect(completedAmount).toHaveCount(2);
   });
-}
+});
 ```
 
 Migration highlights (see inline comments in the Playwright Test code snippet):

@@ -14,7 +14,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
       log: (name, severity, message, args) => console.log(`${name} ${message}`)
     }
   });
-  ...
+  // ...
 })();
 ```
 
