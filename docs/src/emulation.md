@@ -8,7 +8,7 @@ With Playwright you can test your app on any browser as well as emulate a real d
 ## Devices
 * langs: js, csharp, python
 
-Playwright comes with a [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) using [`property: Playwright.devices`] for selected desktop, tablet and mobile devices. It can be used to simulate browser behavior for a specific device such as user agent, screen size, viewport and if it has touch enabled. All tests will run with the specified device parameters. 
+Playwright comes with a [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json) using [`property: Playwright.devices`] for selected desktop, tablet and mobile devices. It can be used to simulate browser behavior for a specific device such as user agent, screen size, viewport and if it has touch enabled. All tests will run with the specified device parameters.
 
 ```js tab=js-ts
 // playwright.config.ts
@@ -38,7 +38,7 @@ export default config;
 // @ts-check
 const { devices } = require('@playwright/test'); // require devices
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */ 
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
   projects: [
     {
@@ -140,7 +140,7 @@ test('my portrait test', async ({ page }) => {
 const { test, expect } = require('@playwright/test');
 
 // Run tests in this file with portrait-like viewport.
-test.use({ 
+test.use({
   viewport: { width: 600, height: 900 },
 });
 
@@ -261,7 +261,7 @@ Emulate the user Locale and Timezone which can be set globally for all tests in 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
-test.use({ 
+test.use({
   locale: 'de-DE',
   timezoneId: 'Europe/Berlin',
 });
@@ -274,7 +274,7 @@ test('my test for de lang in Berlin timezone', async ({ page }) => {
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
-test.use({ 
+test.use({
   locale: 'de-DE',
   timezoneId: 'Europe/Berlin',
 });
@@ -425,7 +425,7 @@ Allow notifications for a specific domain.
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
   use: {
-    permissions: ['notifications'], {origin: 'https://skype.com'},
+    permissions: ['notifications'],
   },
 };
 
@@ -436,7 +436,7 @@ module.exports = config;
 import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   use: {
-    permissions: ['notifications'], {origin: 'https://skype.com'},
+    permissions: ['notifications'],
   },
 };
 export default config;
@@ -492,7 +492,7 @@ Create a test with `"geolocation"` permissions granted and geolocation set to a 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
-test.use({ 
+test.use({
   geolocation: { longitude: 48.858455, latitude: 2.294474 },
   permissions: ['geolocation'],
 });
@@ -505,7 +505,7 @@ test('my test with geolocation', async ({ page }) => {
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
-test.use({ 
+test.use({
   geolocation: { longitude: 48.858455, latitude: 2.294474 },
   permissions: ['geolocation'],
 });
@@ -556,7 +556,7 @@ Change the location later:
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
-test.use({ 
+test.use({
   geolocation: { longitude: 48.858455, latitude: 2.294474 },
   permissions: ['geolocation'],
 });
@@ -570,7 +570,7 @@ test('my test with geolocation', async ({ page, context }) => {
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
-test.use({ 
+test.use({
   geolocation: { longitude: 48.858455, latitude: 2.294474 },
   permissions: ['geolocation'],
 });
@@ -609,7 +609,7 @@ Create a test that emulates the users `"colorScheme"`. Supported values are 'lig
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
-test.use({ 
+test.use({
   colorScheme: 'dark' // or 'light'
 });
 
@@ -621,7 +621,7 @@ test('my test with dark mode', async ({ page }) => {
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
-test.use({ 
+test.use({
   colorScheme: 'dark' // or 'light'
 });
 
