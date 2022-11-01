@@ -58,7 +58,13 @@ function formatFileNames(timeline: Timeline) {
 }
 
 function fileNames(timeline: Timeline) {
-  const fileNames = Array.from(new Set(timeline.map(({ titlePath }) => titlePath[2])).keys());
+  const fileNames = Array.from(new Set(timeline.map(({ titlePath }) => {
+    let name = titlePath[2];
+    const index = name.lastIndexOf(path.sep);
+    if (index === -1)
+      return name;
+    return name.slice(index + 1);
+  })).keys());
   fileNames.sort();
   return fileNames;
 }
@@ -120,7 +126,7 @@ test('should work for several projects', async ({ runGroups }, testInfo) => {
     expectFilesRunBefore(timeline, [`${name}/${name}.setup.ts`], [`${name}/${name}.spec.ts`]);
 });
 
-test('should stop project if setup fails ', async ({ runGroups }, testInfo) => {
+test('should stop project if setup fails', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
     'a': {
       setup: ['**/*.setup.ts']
@@ -249,4 +255,71 @@ test('should run setup only for projects that have tests in the shard', async ({
     expect(exitCode).toBe(0);
     expect(passed).toBe(4);
   }
+});
+
+test('--project only runs setup from that project;', async ({ runGroups }, testInfo) => {
+  const projectTemplates = {
+    'a': {
+      setup: /.*a.setup.ts/
+    },
+    'b': {
+      setup: /.*b.setup.ts/
+    },
+  };
+  const configWithFiles = createConfigWithProjects(['a', 'b', 'c'], testInfo, projectTemplates);
+  const { exitCode, passed, skipped, timeline } = await runGroups(configWithFiles, { project: ['a', 'c']});
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(3);
+  expect(fileNames(timeline)).toEqual(['a.setup.ts', 'a.spec.ts', 'c.spec.ts']);
+});
+
+test('same file cannot be a setup and a test in the same project', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*a.test.ts$/,
+            testMatch: /.*a.test.ts$/,
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+    `,
+  };
+
+  const { exitCode, output } =  await runGroups(files);
+  expect(exitCode).toBe(1);
+  expect(output).toContain(`a.test.ts" matches both 'setup' and 'testMatch' filters in project "p1"`);
+});
+
+test('same file cannot be a setup and a test in different projects', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*a.test.ts$/,
+            testMatch: /.*noMatch.test.ts$/,
+          },
+          {
+            name: 'p2',
+            setup: /.*noMatch.test.ts$/,
+            testMatch: /.*a.test.ts$/
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+    `,
+  };
+
+  const { exitCode, output } =  await runGroups(files);
+  expect(exitCode).toBe(1);
+  expect(output).toContain(`a.test.ts" matches 'setup' filter in project "p1" and 'testMatch' filter in project "p2"`);
 });

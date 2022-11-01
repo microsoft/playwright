@@ -242,6 +242,7 @@ export class Runner {
     const testFileExtension = (file: string) => extensions.includes(path.extname(file));
     const filesByProject = new Map<FullProjectInternal, string[]>();
     const setupFiles = new Set<string>();
+    const fileToProjectName = new Map<string, string>();
     for (const project of projects) {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
       const setupMatch = createFileMatcher(project._setup);
@@ -250,11 +251,24 @@ export class Runner {
       const testFiles = allFiles.filter(file => {
         if (!testFileExtension(file))
           return false;
-        if (setupMatch(file)) {
-          setupFiles.add(file);
-          return true;
+        const isSetup = setupMatch(file);
+        const isTest = !testIgnore(file) && testMatch(file) && testFileFilter(file);
+        if (!isTest && !isSetup)
+          return false;
+        if (isSetup && isTest)
+          throw new Error(`File "${file}" matches both 'setup' and 'testMatch' filters in project "${project.name}"`);
+        if (fileToProjectName.has(file)) {
+          if (isSetup) {
+            if (!setupFiles.has(file))
+              throw new Error(`File "${file}" matches 'setup' filter in project "${project.name}" and 'testMatch' filter in project "${fileToProjectName.get(file)}"`);
+          } else if (setupFiles.has(file)) {
+            throw new Error(`File "${file}" matches 'setup' filter in project "${fileToProjectName.get(file)}" and 'testMatch' filter in project "${project.name}"`);
+          }
         }
-        return !testIgnore(file) && testMatch(file) && testFileFilter(file);
+        fileToProjectName.set(file, project.name);
+        if (isSetup)
+          setupFiles.add(file);
+        return true;
       });
       filesByProject.set(project, testFiles);
     }
@@ -635,7 +649,7 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[
     return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
   };
   // Project setup files are always included.
-  const testFilter = (test: TestCase) => setupFiles.has(test.location.file) || testFileLineMatches(test.location.file, test.location.line, test.location.column);
+  const testFilter = (test: TestCase) => setupFiles.has(test._requireFile) || testFileLineMatches(test.location.file, test.location.line, test.location.column);
   return filterSuite(suite, suiteFilter, testFilter);
 }
 
