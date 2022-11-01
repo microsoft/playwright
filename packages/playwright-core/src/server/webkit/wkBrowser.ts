@@ -338,9 +338,14 @@ export class WKBrowserContext extends BrowserContext {
   onClosePersistent() {}
 
   async doClose() {
-    assert(this._browserContextId);
-    await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId });
-    this._browser._contexts.delete(this._browserContextId);
+    if (!this._browserContextId) {
+      await Promise.all(this._wkPages().map(wkPage => wkPage._stopVideo()));
+      // Closing persistent context should close the browser.
+      await this._browser.close();
+    } else {
+      await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId });
+      this._browser._contexts.delete(this._browserContextId);
+    }
   }
 
   async cancelDownload(uuid: string) {

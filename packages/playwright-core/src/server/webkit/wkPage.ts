@@ -825,7 +825,7 @@ export class WKPage implements PageDelegate {
     this._browserContext._browser._videoStarted(this._browserContext, screencastId, options.outputFile, this.pageOrError());
   }
 
-  private async _stopVideo(): Promise<void> {
+  async _stopVideo(): Promise<void> {
     if (!this._recordingVideoFile)
       return;
     await this._pageProxySession.sendMayFail('Screencast.stopVideo');
