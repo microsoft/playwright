@@ -463,37 +463,20 @@ export class Runner {
 
     // Run tests.
     try {
-      let sigintWatcher;
-
-      let hasWorkerErrors = false;
-      const failedProjects = new Set<string>();
-      for (let stageGroups of [projectSetupGroups, testGroups]) {
-        if (failedProjects.size)
-          stageGroups = this._skipTestsFromFailedProjects(stageGroups, failedProjects);
-        const dispatcher = new Dispatcher(this._loader, [...stageGroups], this._reporter);
-        sigintWatcher = new SigIntWatcher();
-        await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
-        if (!sigintWatcher.hadSignal()) {
-          // We know for sure there was no Ctrl+C, so we remove custom SIGINT handler
-          // as soon as we can.
-          sigintWatcher.disarm();
-        }
-        await dispatcher.stop();
-        hasWorkerErrors = dispatcher.hasWorkerErrors();
-        if (hasWorkerErrors)
-          break;
-        if (sigintWatcher.hadSignal())
-          break;
-
-        for (const testGroup of stageGroups) {
+      let dispatchResult = await this._dispatchToWorkers(projectSetupGroups);
+      if (dispatchResult === 'success') {
+        const failedSetupProjectIds = new Set<string>();
+        for (const testGroup of projectSetupGroups) {
           if (testGroup.tests.some(test => !test.ok()))
-            failedProjects.add(testGroup.projectId);
+            failedSetupProjectIds.add(testGroup.projectId);
         }
+        const testGroupsToRun = this._skipTestsFromFailedProjects(testGroups, failedSetupProjectIds);
+        dispatchResult = await this._dispatchToWorkers(testGroupsToRun);
       }
-      if (sigintWatcher?.hadSignal()) {
+      if (dispatchResult === 'signal') {
         result.status = 'interrupted';
       } else {
-        const failed = hasWorkerErrors || rootSuite.allTests().some(test => !test.ok());
+        const failed = dispatchResult === 'workererror' || rootSuite.allTests().some(test => !test.ok());
         result.status = failed ? 'failed' : 'passed';
       }
     } catch (e) {
@@ -503,6 +486,23 @@ export class Runner {
       await globalTearDown?.();
     }
     return result;
+  }
+
+  private async _dispatchToWorkers(stageGroups: TestGroup[]): Promise<'success'|'signal'|'workererror'> {
+    const dispatcher = new Dispatcher(this._loader, [...stageGroups], this._reporter);
+    const sigintWatcher = new SigIntWatcher();
+    await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
+    if (!sigintWatcher.hadSignal()) {
+      // We know for sure there was no Ctrl+C, so we remove custom SIGINT handler
+      // as soon as we can.
+      sigintWatcher.disarm();
+    }
+    await dispatcher.stop();
+    if (sigintWatcher.hadSignal())
+      return 'signal';
+    if (dispatcher.hasWorkerErrors())
+      return 'workererror';
+    return 'success';
   }
 
   private _skipTestsFromFailedProjects(testGroups: TestGroup[], failedProjects: Set<string>): TestGroup[] {
