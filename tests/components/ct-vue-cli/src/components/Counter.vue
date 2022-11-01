@@ -1,7 +1,7 @@
 <template>
   <div>
-    <span id="remount-count">{{ remountCount }}</span>
-    <span id="rerender-count">{{ count }}</span>
+    <span data-testid="remount-count">{{ remountCount }}</span>
+    <span data-testid="rerender-count">{{ count }}</span>
   </div>
 </template>
 

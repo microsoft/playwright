@@ -12,7 +12,7 @@ code {
     monospace;
 }
 
-@media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: dark) {
   :root {
     color: #e3e3e3;
     background-color: #1b1b1d;

@@ -11,9 +11,9 @@ import { useRef } from "react"
  export default function Counter(props: CounterProps) {
    const remountCount = useRef(_remountCount++);
    return <div onClick={() => props.onClick?.('hello')}>
-     <div id="props">{ props.count }</div>
-     <div id="remount-count">{ remountCount.current }</div>
-     { props.children }
+     <div data-testid="props">{ props.count }</div>
+     <div data-testid="remount-count">{ remountCount.current }</div>
+     <div data-testid="children">{ props.children }</div>
    </div>
  }
  

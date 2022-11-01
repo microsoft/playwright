@@ -13,7 +13,7 @@ import { createSignal } from "solid-js";
   return <div onClick={() => props.onClick?.('hello')}>
      <div data-testid="props">{ props.count }</div>
      <div data-testid="remount-count">{ remountCount }</div>
-     { props.children }
+     <div data-testid="children">{ props.children }</div>
    </div>
  }
  

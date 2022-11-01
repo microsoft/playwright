@@ -7,8 +7,10 @@ update();
 </script>
 
 <div on:click={() => dispatch('submit', 'hello')}>
-  <div id="props">{count}</div>
-  <div id="remount-count">{remountCount}</div>
-  <slot name="main" />
-  <slot />
+  <div data-testid="props">{count}</div>
+  <div data-testid="remount-count">{remountCount}</div>
+  <div data-testid="slots">
+    <slot name="main" />
+    <slot />
+  </div>
 </div>
