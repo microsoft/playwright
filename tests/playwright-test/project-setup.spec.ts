@@ -59,7 +59,7 @@ function formatFileNames(timeline: Timeline) {
 
 function fileNames(timeline: Timeline) {
   const fileNames = Array.from(new Set(timeline.map(({ titlePath }) => {
-    let name = titlePath[2];
+    const name = titlePath[2];
     const index = name.lastIndexOf(path.sep);
     if (index === -1)
       return name;
@@ -267,7 +267,7 @@ test('--project only runs setup from that project;', async ({ runGroups }, testI
     },
   };
   const configWithFiles = createConfigWithProjects(['a', 'b', 'c'], testInfo, projectTemplates);
-  const { exitCode, passed, skipped, timeline } = await runGroups(configWithFiles, { project: ['a', 'c']});
+  const { exitCode, passed, timeline } = await runGroups(configWithFiles, { project: ['a', 'c'] });
   expect(exitCode).toBe(0);
   expect(passed).toBe(3);
   expect(fileNames(timeline)).toEqual(['a.setup.ts', 'a.spec.ts', 'c.spec.ts']);
