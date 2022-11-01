@@ -359,9 +359,19 @@ export class FFBrowserContext extends BrowserContext {
   onClosePersistent() {}
 
   async doClose() {
-    assert(this._browserContextId);
-    await this._browser._connection.send('Browser.removeBrowserContext', { browserContextId: this._browserContextId });
-    this._browser._contexts.delete(this._browserContextId);
+    if (!this._browserContextId) {
+      if (this._options.recordVideo) {
+        await this._browser._connection.send('Browser.setVideoRecordingOptions', {
+          options: undefined,
+          browserContextId: this._browserContextId
+        });
+      }
+      // Closing persistent context should close the browser.
+      await this._browser.close();
+    } else {
+      await this._browser._connection.send('Browser.removeBrowserContext', { browserContextId: this._browserContextId });
+      this._browser._contexts.delete(this._browserContextId);
+    }
   }
 
   async cancelDownload(uuid: string) {

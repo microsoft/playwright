@@ -404,10 +404,6 @@ export abstract class BrowserContext extends SdkObject {
 
       if (this._customCloseHandler) {
         await this._customCloseHandler();
-      } else if (this._isPersistentContext) {
-        // Close all the pages instead of the context,
-        // because we cannot close the default context.
-        await Promise.all(this.pages().map(page => page.close(metadata)));
       } else {
         // Close the context.
         await this.doClose();
@@ -420,15 +416,8 @@ export abstract class BrowserContext extends SdkObject {
       await Promise.all(promises);
 
       // Custom handler should trigger didCloseInternal itself.
-      if (this._customCloseHandler)
-        return;
-
-      // Persistent context should also close the browser.
-      if (this._isPersistentContext)
-        await this._browser.close();
-
-      // Bookkeeping.
-      this._didCloseInternal();
+      if (!this._customCloseHandler)
+        this._didCloseInternal();
     }
     await this._closePromise;
   }
