@@ -34,6 +34,7 @@
     "packages/playwright-ct-solid",
     "packages/playwright-ct-svelte",
     "packages/playwright-ct-vue",
+    "packages/playwright-ct-vue2",
     "packages/recorder",
     "packages/trace-viewer",
     "packages/web",
