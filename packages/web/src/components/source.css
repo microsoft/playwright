@@ -15,8 +15,6 @@
 */
 
 @import '../third_party/vscode/colors.css';
-@import '../third_party/highlightjs/highlightjs/github.css';
-@import '../third_party/highlightjs/highlightjs/github-dark.css' (prefers-color-scheme: dark);
 
 .source {
   display: flex;
@@ -30,21 +28,6 @@
   line-height: 19px;
   background: var(--vscode-editor-background);
   color: var(--vscode-editor-foreground);
-}
-
-.source-line {
-  display: flex;
-  flex: none;
-}
-
-.source-line-number {
-  color: #555;
-  padding: 0 8px;
-  width: 40px;
-  margin-right: 3px;
-  text-align: right;
-  user-select: none;
-  flex: none;
 }
 
 .source-line-running {
@@ -62,4 +45,119 @@
   background-color: #fff0f0;
   outline: 1px solid #ff5656;
   z-index: 2;
+}
+
+.cm-wrapper, .cm-wrapper > div {
+  width: 100%;
+  height: 100%;
+}
+
+.CodeMirror span.cm-meta {
+  color: var(--vscode-editor-foreground);
+}
+
+.CodeMirror span.cm-number {
+  color: var(--vscode-debugTokenExpression-number);
+}
+
+.CodeMirror span.cm-keyword {
+  color: var(--vscode-debugTokenExpression-name);
+}
+
+.CodeMirror span.cm-operator {
+  color: var(--vscode-editor-foreground);
+}
+
+.CodeMirror span.cm-string {
+  color: var(--vscode-debugTokenExpression-string);
+}
+
+.CodeMirror span.cm-string-2 {
+  color: var(--vscode-debugTokenExpression-string);
+}
+
+.CodeMirror span.cm-error {
+  color: var(--vscode-errorForeground);
+}
+
+.CodeMirror span.cm-def, .CodeMirror span.cm-tag {
+  color: #0070c1;
+}
+
+.CodeMirror span.cm-comment, .CodeMirror span.cm-link {
+  color: #008000;
+}
+
+.CodeMirror span.cm-variable, .CodeMirror span.cm-variable-2, .CodeMirror span.cm-atom {
+  color: #0070c1;
+}
+
+.CodeMirror span.cm-property, .CodeMirror span.cm-qualifier, .CodeMirror span.cm-attribute {
+  color: #001080;
+}
+
+.CodeMirror span.cm-variable-3,
+.CodeMirror span.cm-type {
+  color: #267f99;
+}
+
+@media(prefers-color-scheme: dark) {
+
+  .CodeMirror span.cm-def, .CodeMirror span.cm-tag {
+    color: var(--vscode-debugView-valueChangedHighlight);
+  }
+
+  .CodeMirror span.cm-comment, .CodeMirror span.cm-link {
+    color: #6a9955;
+  }
+
+  .CodeMirror span.cm-variable, .CodeMirror span.cm-variable-2, .CodeMirror span.cm-atom {
+    color: #4fc1ff;
+  }
+
+  .CodeMirror span.cm-property, .CodeMirror span.cm-qualifier, .CodeMirror span.cm-attribute {
+    color: #9cdcfe;
+  }
+
+  .CodeMirror span.cm-variable-3,
+  .CodeMirror span.cm-type {
+    color: #4ec9b0;
+  }
+
+}
+
+.CodeMirror span.cm-bracket {
+  color: var(--vscode-editorBracketHighlight-foreground3);
+}
+
+.CodeMirror-cursor {
+  border-left: 1px solid #bebebe;
+}
+
+.CodeMirror div.CodeMirror-selected {
+  background: var(--vscode-terminal-inactiveSelectionBackground);
+}
+
+.CodeMirror .CodeMirror-gutters {
+  background: var(--vscode-editor-background);
+  border-right: 1px solid var(--vscode-editorGroup-border);
+  color: var(--vscode-editorLineNumber-foreground);
+}
+
+.CodeMirror .CodeMirror-matchingbracket {
+  background-color: var(--vscode-editorBracketPairGuide-background1);
+  color: var(--vscode-editorBracketHighlight-foreground1) !important;
+}
+
+  /* .CodeMirror-line,
+  .CodeMirror-line-like {
+    color: var(--vscode-editor-foreground) !important;
+  } */
+
+.CodeMirror {
+  font-family: var(--vscode-editor-font-family) !important;
+  color: var(--vscode-editor-foreground) !important;
+  background-color: var(--vscode-editor-background) !important;
+  font-weight: var(--vscode-editor-font-weight) !important;
+  font-size: var(--vscode-editor-font-size) !important;
 }

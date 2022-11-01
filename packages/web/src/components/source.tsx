@@ -16,7 +16,11 @@
 
 import './source.css';
 import * as React from 'react';
-import highlightjs from '../third_party/highlightjs/highlightjs';
+import CodeMirror from 'codemirror';
+import 'codemirror/mode/javascript/javascript';
+import 'codemirror/mode/python/python';
+import 'codemirror/mode/clike/clike';
+import 'codemirror/lib/codemirror.css';
 
 export type SourceHighlight = {
   line: number;
@@ -37,32 +41,51 @@ export const Source: React.FC<SourceProps> = ({
   highlight = [],
   revealLine
 }) => {
-  const lines = React.useMemo<string[]>(() => {
-    const result = [];
-    let continuation: any;
-    for (const line of text.split('\n')) {
-      const highlighted = highlightjs.highlight(language, line, true, continuation);
-      continuation = highlighted.top;
-      result.push(highlighted.value);
-    }
-    return result;
-  }, [text, language]);
+  const codemirrorElement = React.createRef<HTMLDivElement>();
+  const [codemirror, setCodemirror] = React.useState<CodeMirror.Editor>();
 
-  const revealedLineRef = React.createRef<HTMLDivElement>();
-  React.useLayoutEffect(() => {
-    if (typeof revealLine === 'number' && revealedLineRef.current)
-      revealedLineRef.current.scrollIntoView({ block: 'center', inline: 'nearest' });
-  }, [revealedLineRef, revealLine]);
+  React.useEffect(() => {
+    let mode;
+    if (language === 'javascript')
+      mode = 'javascript';
+    if (language === 'python')
+      mode = 'python';
+    if (language === 'java')
+      mode = 'text/x-java';
+    if (language === 'csharp')
+      mode = 'text/x-csharp';
 
-  return <div className='source'>{
-    lines.map((markup, index) => {
-      const lineNumber = index + 1;
-      const lineHighlight = highlight.find(h => h.line === lineNumber);
-      const lineClass = lineHighlight ? `source-line source-line-${lineHighlight.type}` : 'source-line';
-      return <div key={lineNumber} className={lineClass} ref={revealLine === lineNumber ? revealedLineRef : null}>
-        <div className='source-line-number'>{lineNumber}</div>
-        <div className='source-code' dangerouslySetInnerHTML={{ __html: markup }}></div>
-      </div>;
-    })
-  }</div>;
+    if (codemirror && codemirror.getOption('mode') === mode)
+      return;
+
+    if (!codemirrorElement.current)
+      return;
+    if (codemirror)
+      codemirror.getWrapperElement().remove();
+
+    const cm = CodeMirror(codemirrorElement.current, {
+      value: '',
+      mode,
+      readOnly: true,
+      lineNumbers: true,
+    });
+    setCodemirror(cm);
+    updateEditor(cm, text, highlight, revealLine);
+  }, [codemirror, codemirrorElement, text, language, highlight, revealLine]);
+
+  if (codemirror)
+    updateEditor(codemirror, text, highlight, revealLine);
+
+  return <div className='cm-wrapper' ref={codemirrorElement}></div>;
 };
+
+function updateEditor(cm: CodeMirror.Editor, text: string, highlight: SourceHighlight[], revealLine: number | undefined) {
+  if (cm.getValue() !== text)
+    cm.setValue(text);
+  for (let i = 0; i < cm.lineCount(); ++i)
+    cm.removeLineClass(i, 'wrap');
+  for (const h of highlight)
+    cm.addLineClass(h.line - 1, 'wrap', `source-line-${h.type}`);
+  if (revealLine)
+    cm.scrollIntoView({ line: revealLine - 1, ch: 0 }, 50);
+}

@@ -71,22 +71,22 @@ class Program
 
 test('highlight JavaScript', async ({ mount }) => {
   const component = await mount(<Source text={javascriptSnippet} language='javascript'></Source>);
-  await expect(component.locator('text="async"').first()).toHaveClass('hljs-keyword');
+  await expect(component.locator('text="async"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight Python', async ({ mount }) => {
   const component = await mount(<Source text={pythonSnippet} language='python'></Source>);
-  await expect(component.locator('text="async"').first()).toHaveClass('hljs-keyword');
+  await expect(component.locator('text="async"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight Java', async ({ mount }) => {
   const component = await mount(<Source text={javaSnippet} language='java'></Source>);
-  await expect(component.locator('text="public"').first()).toHaveClass('hljs-keyword');
+  await expect(component.locator('text="public"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight C#', async ({ mount }) => {
   const component = await mount(<Source text={csharpSnippet} language='csharp'></Source>);
-  await expect(component.locator('text="public"').first()).toHaveClass('hljs-keyword');
+  await expect(component.locator('text="public"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight lines', async ({ mount }) => {

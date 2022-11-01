@@ -35,10 +35,12 @@ export default defineConfig({
   },
   build: {
     outDir: path.resolve(__dirname, '../playwright-core/lib/webpack/traceViewer'),
-    emptyOutDir: true,
     rollupOptions: {
+      input: {
+        sw: path.resolve(__dirname, 'src/sw.ts'),
+      },
       output: {
-        entryFileNames: () => '[name].[hash].js',
+        entryFileNames: info => '[name].bundle.js',
         assetFileNames: () => '[name].[hash][extname]',
         manualChunks: undefined,
       },

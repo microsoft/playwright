@@ -18,7 +18,6 @@ import type { StackFrame } from '@protocol/channels';
 import type { ActionTraceEvent } from '@trace/trace';
 import { Source as SourceView } from '@web/components/source';
 import { SplitView } from '@web/components/splitView';
-import '@web/third_party/highlightjs/highlightjs/github.css';
 import * as React from 'react';
 import { useAsyncMemo } from './helpers';
 import './sourceTab.css';
