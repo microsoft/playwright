@@ -89,7 +89,7 @@ it.describe('pause', () => {
       await page.pause();
     })();
     const recorderPage = await recorderPageGetter();
-    const source = await recorderPage.textContent('.source-line-paused .source-code');
+    const source = await recorderPage.textContent('.source-line-paused');
     expect(source).toContain('page.pause()');
     await recorderPage.click('[title="Resume (F8)"]');
     await scriptPromise;

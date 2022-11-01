@@ -291,6 +291,21 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
   });
 }
 
+// Rebuild web projects service workers on change.
+for (const webPackage of ['trace-viewer']) {
+  onChanges.push({
+    committed: false,
+    inputs: [
+      `packages/${webPackage}/src/`,
+      `packages/${webPackage}/view.sw.config.ts`,
+      `packages/web/src/`,
+    ],
+    command: 'npx',
+    args: ['vite', '--config', 'vite.sw.config.ts', 'build', ...(watchMode ? ['--sourcemap'] : [])],
+    cwd: path.join(__dirname, '..', '..', 'packages', webPackage),
+  });
+}
+
 // The recorder and trace viewer have an app_icon.png that needs to be copied.
 copyFiles.push({
   files: 'packages/playwright-core/src/server/chromium/*.png',

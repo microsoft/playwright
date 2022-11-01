@@ -542,10 +542,6 @@ test('should show action source', async ({ showTraceViewer }) => {
   const page = traceViewer.page;
 
   await page.click('text=Source');
-  await expect(page.locator('.source-line')).toContainText([
-    /async.*function.*doClick/,
-    /page\.click/
-  ]);
   await expect(page.locator('.source-line-running')).toContainText('await page.getByText(\'Click\').click()');
   await expect(page.locator('.stack-trace-frame.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
 });
