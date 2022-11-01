@@ -60,6 +60,13 @@ Playwright requires **Python 3.7** or newer.
 
 Playwright requires **Java 8** or newer. 
 
+## WebKit Web Inspector
+
+Launching WebKit Inspector during the execution will prevent the Playwright script from executing any further and
+will reset pre-configured user agent and device emulation.
+
+This is a known limitation.
+
 ## System requirements
 
 The browser binaries for Chromium, Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
