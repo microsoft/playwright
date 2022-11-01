@@ -231,6 +231,7 @@ class InspectingRecorderApp extends EmptyRecorderApp {
 
   override async setSources(sources: Source[]): Promise<void> {
     const source = sources.find(s => s.id === this._debugController._codegenId);
-    this._debugController.emit(DebugController.Events.SourceChanged, source?.text || '');
+    const { text, header, footer, actions } = source || { text: '' };
+    this._debugController.emit(DebugController.Events.SourceChanged, { text, header, footer, actions });
   }
 }

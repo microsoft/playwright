@@ -716,6 +716,12 @@ DebugController:
     sourceChanged:
       parameters:
         text: string
+        header: string?
+        footer: string?
+        actions:
+          type: array?
+          items: string
+         
 
     # Deprecated
     browsersChanged:
