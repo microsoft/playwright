@@ -30,10 +30,10 @@ export class Waiter {
   private _waitId: string;
   private _error: string | undefined;
 
-  constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
+  constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string, customTracingEventName: string = event) {
     this._waitId = createGuid();
     this._channelOwner = channelOwner;
-    this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event } }).catch(() => {});
+    this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event: customTracingEventName } }).catch(() => {});
     this._dispose = [
       () => this._channelOwner._wrapApiCall(async () => {
         await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'after', error: this._error } });
@@ -45,13 +45,13 @@ export class Waiter {
     return new Waiter(channelOwner, event);
   }
 
-  async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): Promise<T> {
-    const { promise, dispose } = waitForEvent(emitter, event, predicate);
+  async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>, eventList?: T[]): Promise<T> {
+    const { promise, dispose } = waitForEvent(emitter, event, eventList ?? [], predicate);
     return this.waitForPromise(promise, dispose);
   }
 
   rejectOnEvent<T = void>(emitter: EventEmitter, event: string, error: Error, predicate?: (arg: T) => boolean | Promise<boolean>) {
-    const { promise, dispose } = waitForEvent(emitter, event, predicate);
+    const { promise, dispose } = waitForEvent(emitter, event, [], predicate);
     this._rejectOn(promise.then(() => { throw error; }), dispose);
   }
 
@@ -103,7 +103,7 @@ export class Waiter {
   }
 }
 
-function waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): { promise: Promise<T>, dispose: () => void } {
+function waitForEvent<T = void>(emitter: EventEmitter, event: string, eventList: T[], predicate?: (arg: T) => boolean | Promise<boolean>): { promise: Promise<T>, dispose: () => void } {
   let listener: (eventArg: any) => void;
   const promise = new Promise<T>((resolve, reject) => {
     listener = async (eventArg: any) => {
@@ -117,6 +117,7 @@ function waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?
         reject(e);
       }
     };
+    eventList.forEach(listener);
     emitter.addListener(event, listener);
   });
   const dispose = () => emitter.removeListener(event, listener);

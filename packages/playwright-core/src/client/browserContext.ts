@@ -291,14 +291,18 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.setNetworkInterceptionEnabled({ enabled: false });
   }
 
+  _setupWaiter(waiter: Waiter, event: string, timeout: number, logLine?: string) {
+    waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
+    if (event !== Events.BrowserContext.Close)
+      waiter.rejectOnEvent(this, Events.BrowserContext.Close, new Error('Context closed'));
+  }
+
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     return this._wrapApiCall(async () => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function'  ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
-      waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
-      if (event !== Events.BrowserContext.Close)
-        waiter.rejectOnEvent(this, Events.BrowserContext.Close, new Error('Context closed'));
+      this._setupWaiter(waiter, event, timeout);
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;

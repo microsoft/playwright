@@ -1600,6 +1600,10 @@ await resultHandle.DisposeAsync();
 
 Optional argument to pass to [`param: expression`].
 
+## property: Page.events
+* since: v1.28
+- type: <[PageEvents]>
+
 ## async method: Page.exposeBinding
 * since: v1.8
 

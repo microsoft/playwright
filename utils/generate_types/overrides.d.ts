@@ -207,6 +207,11 @@ export interface Accessibility {
   snapshot(options?: AccessibilitySnapshotOptions): Promise<null|AccessibilityNode>;
 }
 
+export interface EventList<T> {
+  take(optionsOrPredicate?: ((event: T) => boolean) | { timeout?: number, predicate?: (event: T) => boolean}): Promise<T>;
+  all(): T[];
+}
+
 type AccessibilityNode = {
   role: string;
   name: string;

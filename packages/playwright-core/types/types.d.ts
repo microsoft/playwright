@@ -2306,6 +2306,8 @@ export interface Page {
     reducedMotion?: null|"reduce"|"no-preference";
   }): Promise<void>;
 
+  events: PageEvents;
+
   /**
    * The method adds a function called `name` on the `window` object of every frame in the page. When called, the function
    * executes `callback` and returns a [Promise] which resolves to the return value of `callback`.
@@ -11995,6 +11997,62 @@ export interface Accessibility {
   snapshot(options?: AccessibilitySnapshotOptions): Promise<null|AccessibilityNode>;
 }
 
+/**
+ * Event list collects events of a certain kind for future use; instances of this class are accessible via the
+ * [page.events](https://playwright.dev/docs/api/class-page#page-events) getter.
+ *
+ * Notice that event lists simply store all historic events of a given type and might store outdated objects, e.g.
+ * `page.events.popup.all()` might return already-closed pages.
+ *
+ * Use event lists instead of a `Promise.all` pattern. Consider the following example:
+ *
+ * ```js
+ * // Before:
+ * const [consoleMessage] = await Promise.all([
+ *   page.waitForEvent('console'),
+ *   page.getByText('Log Console Message').click(),
+ * ]);
+ *
+ * // After:
+ * page.events.console.track();
+ * await page.getByText('Log Console Message').click();
+ * const consoleMessage = await page.events.console.take();
+ * ```
+ *
+ */
+export interface EventList<T> {
+  /**
+   * Returns the first event that satisfies condition, if any. If no condition is given, returns the first accumulated event.
+   *
+   * ```js
+   * page.events.console.track();
+   * page.events.console.clear();
+   * await page.getByText('Log Console Message').click();
+   * const consoleMessage = await page.events.console.take();
+   * ```
+   *
+   * @param optionsOrPredicate Either a predicate that receives an event or an options object. Optional.
+   */
+  take(optionsOrPredicate?: ((event: T) => boolean) | { timeout?: number, predicate?: (event: T) => boolean}): Promise<T>;
+  /**
+   * Returns all accumulated events.
+   */
+  all(): T[];
+  /**
+   * Clears all accumulated events.
+   */
+  clear(): void;
+
+  /**
+   * Enables event tracking.
+   */
+  track(): void;
+
+  /**
+   * Disables event tracking.
+   */
+  untrack(): void;}
+
 type AccessibilityNode = {
   role: string;
   name: string;
@@ -16254,6 +16312,103 @@ export interface Mouse {
    * @param deltaY Pixels to scroll vertically.
    */
   wheel(deltaX: number, deltaY: number): Promise<void>;
+}
+
+export interface PageEvents {
+  /**
+   * List of [page.on('close')](https://playwright.dev/docs/api/class-page#page-event-close) events
+   */
+  close: EventList<Page>;
+
+  /**
+   * List of [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) events.
+   */
+  console: EventList<ConsoleMessage>;
+
+  /**
+   * List of [page.on('crash')](https://playwright.dev/docs/api/class-page#page-event-crash) events.
+   */
+  crash: EventList<Page>;
+
+  /**
+   * List of [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) events.
+   */
+  dialog: EventList<Dialog>;
+
+  /**
+   * List of [page.on('domcontentloaded')](https://playwright.dev/docs/api/class-page#page-event-dom-content-loaded) events.
+   */
+  domcontentloaded: EventList<Page>;
+
+  /**
+   * List of [page.on('download')](https://playwright.dev/docs/api/class-page#page-event-download) events.
+   */
+  download: EventList<Download>;
+
+  /**
+   * List of [page.on('filechooser')](https://playwright.dev/docs/api/class-page#page-event-file-chooser) events.
+   */
+  filechooser: EventList<FileChooser>;
+
+  /**
+   * List of [page.on('frameattached')](https://playwright.dev/docs/api/class-page#page-event-frame-attached) events.
+   */
+  frameattached: EventList<Frame>;
+
+  /**
+   * List of [page.on('framedetached')](https://playwright.dev/docs/api/class-page#page-event-frame-detached) events.
+   */
+  framedetached: EventList<Frame>;
+
+  /**
+   * List of [page.on('framenavigated')](https://playwright.dev/docs/api/class-page#page-event-frame-navigated) events.
+   */
+  framenavigated: EventList<Frame>;
+
+  /**
+   * List of [page.on('load')](https://playwright.dev/docs/api/class-page#page-event-load) events.
+   */
+  load: EventList<Page>;
+
+  /**
+   * List of [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) events.
+   */
+  pageerror: EventList<Error>;
+
+  /**
+   * List of [page.on('popup')](https://playwright.dev/docs/api/class-page#page-event-popup) events.
+   */
+  popup: EventList<Page>;
+
+  /**
+   * List of [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request) events.
+   */
+  request: EventList<Request>;
+
+  /**
+   * List of [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#page-event-request-failed) events.
+   */
+  requestfailed: EventList<Request>;
+
+  /**
+   * List of [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished) events.
+   */
+  requestfinished: EventList<Request>;
+
+  /**
+   * List of [page.on('response')](https://playwright.dev/docs/api/class-page#page-event-response) events.
+   */
+  response: EventList<Response>;
+
+  /**
+   * List of [page.on('websocket')](https://playwright.dev/docs/api/class-page#page-event-web-socket) events.
+   */
+  websocket: EventList<WebSocket>;
+
+  /**
+   * List of [page.on('worker')](https://playwright.dev/docs/api/class-page#page-event-worker) events.
+   */
+  worker: EventList<Worker>;
 }
 
 /**

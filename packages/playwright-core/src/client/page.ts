@@ -53,6 +53,7 @@ import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOp
 import { Video } from './video';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
+import { PageEvents } from './pageEvents';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -74,7 +75,6 @@ type ExpectScreenshotOptions = Omit<channels.PageExpectScreenshotOptions, 'scree
   screenshotOptions: Omit<channels.PageExpectScreenshotOptions['screenshotOptions'], 'mask'> & { mask?: Locator[] }
 };
 
-
 export class Page extends ChannelOwner<channels.PageChannel> implements api.Page {
   private _browserContext: BrowserContext;
   _ownedContext: BrowserContext | undefined;
@@ -89,6 +89,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   readonly accessibility: Accessibility;
   readonly coverage: Coverage;
+  readonly events: PageEvents;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
   readonly request: APIRequestContext;
@@ -111,6 +112,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     super(parent, type, guid, initializer);
     this._browserContext = parent as unknown as BrowserContext;
     this._timeoutSettings = new TimeoutSettings(this._browserContext._timeoutSettings);
+
+    this.events = new PageEvents(this);
 
     this.accessibility = new Accessibility(this._channel);
     this.keyboard = new Keyboard(this);
@@ -394,18 +397,22 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this._waitForEvent(event, optionsOrPredicate, `waiting for event "${event}"`);
   }
 
+  _setupWaiter(waiter: Waiter, event: string, timeout: number, logLine?: string) {
+    if (logLine)
+      waiter.log(logLine);
+    waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
+    if (event !== Events.Page.Crash)
+      waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
+    if (event !== Events.Page.Close)
+      waiter.rejectOnEvent(this, Events.Page.Close, new Error('Page closed'));
+  }
+
   private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {
     return this._wrapApiCall(async () => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
-      if (logLine)
-        waiter.log(logLine);
-      waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
-      if (event !== Events.Page.Crash)
-        waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
-      if (event !== Events.Page.Close)
-        waiter.rejectOnEvent(this, Events.Page.Close, new Error('Page closed'));
+      this._setupWaiter(waiter, event, timeout, logLine);
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;

@@ -25,6 +25,8 @@ export { Coverage } from './coverage';
 export { Dialog } from './dialog';
 export { Download } from './download';
 export { Electron, ElectronApplication } from './electron';
+export { EventList } from './eventList';
+export { PageEvents } from './pageEvents';
 export { Locator, FrameLocator } from './locator';
 export { ElementHandle } from './elementHandle';
 export { FileChooser } from './fileChooser';
