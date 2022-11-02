@@ -68,6 +68,7 @@ export interface FullProjectInternal extends FullProjectPublic {
   _expect: Project['expect'];
   _screenshotsDir: string;
   _respectGitIgnore: boolean;
+  _setup: string | RegExp | (string | RegExp)[];
 }
 
 export interface ReporterInternal extends Reporter {

@@ -196,7 +196,7 @@ export class Runner {
 
   async listTestFiles(configFile: string, projectNames: string[] | undefined): Promise<any> {
     const projects = this._collectProjects(projectNames);
-    const filesByProject = await this._collectFiles(projects, () => true);
+    const { filesByProject } = await this._collectFiles(projects, () => true);
     const report: any = {
       projects: []
     };
@@ -237,24 +237,48 @@ export class Runner {
     return projects;
   }
 
-  private async _collectFiles(projects: FullProjectInternal[], testFileFilter: Matcher): Promise<Map<FullProjectInternal, string[]>> {
-    const files = new Map<FullProjectInternal, string[]>();
+  private async _collectFiles(projects: FullProjectInternal[], testFileFilter: Matcher): Promise<{filesByProject: Map<FullProjectInternal, string[]>; setupFiles: Set<string>}> {
+    const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
+    const testFileExtension = (file: string) => extensions.includes(path.extname(file));
+    const filesByProject = new Map<FullProjectInternal, string[]>();
+    const setupFiles = new Set<string>();
+    const fileToProjectName = new Map<string, string>();
     for (const project of projects) {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
+      const setupMatch = createFileMatcher(project._setup);
       const testMatch = createFileMatcher(project.testMatch);
       const testIgnore = createFileMatcher(project.testIgnore);
-      const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
-      const testFileExtension = (file: string) => extensions.includes(path.extname(file));
-      const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
-      files.set(project, testFiles);
+      const testFiles = allFiles.filter(file => {
+        if (!testFileExtension(file))
+          return false;
+        const isSetup = setupMatch(file);
+        const isTest = !testIgnore(file) && testMatch(file) && testFileFilter(file);
+        if (!isTest && !isSetup)
+          return false;
+        if (isSetup && isTest)
+          throw new Error(`File "${file}" matches both 'setup' and 'testMatch' filters in project "${project.name}"`);
+        if (fileToProjectName.has(file)) {
+          if (isSetup) {
+            if (!setupFiles.has(file))
+              throw new Error(`File "${file}" matches 'setup' filter in project "${project.name}" and 'testMatch' filter in project "${fileToProjectName.get(file)}"`);
+          } else if (setupFiles.has(file)) {
+            throw new Error(`File "${file}" matches 'setup' filter in project "${fileToProjectName.get(file)}" and 'testMatch' filter in project "${project.name}"`);
+          }
+        }
+        fileToProjectName.set(file, project.name);
+        if (isSetup)
+          setupFiles.add(file);
+        return true;
+      });
+      filesByProject.set(project, testFiles);
     }
-    return files;
+    return { filesByProject, setupFiles };
   }
 
-  private async _collectTestGroups(options: RunOptions, fatalErrors: TestError[]): Promise<{ rootSuite: Suite, testGroups: TestGroup[] }> {
+  private async _collectTestGroups(options: RunOptions, fatalErrors: TestError[]): Promise<{ rootSuite: Suite, projectSetupGroups: TestGroup[], testGroups: TestGroup[] }> {
     const config = this._loader.fullConfig();
     const projects = this._collectProjects(options.projectFilter);
-    const filesByProject = await this._collectFiles(projects, fileMatcherFrom(options.testFileFilters));
+    const { filesByProject, setupFiles } = await this._collectFiles(projects, fileMatcherFrom(options.testFileFilters));
 
     const allTestFiles = new Set<string>();
     for (const files of filesByProject.values())
@@ -276,9 +300,10 @@ export class Runner {
 
     // Filter tests to respect line/column filter.
     if (options.testFileFilters.length)
-      filterByFocusedLine(preprocessRoot, options.testFileFilters);
+      filterByFocusedLine(preprocessRoot, options.testFileFilters, setupFiles);
 
     // Complain about only.
+    // TODO: check in project setup.
     if (config.forbidOnly) {
       const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
       if (onlyTestsAndSuites.length > 0)
@@ -321,23 +346,31 @@ export class Runner {
       }
     }
 
-    const testGroups = createTestGroups(rootSuite.suites, config.workers);
-    return { rootSuite, testGroups };
+    const allTestGroups = createTestGroups(rootSuite.suites, config.workers);
+
+    const projectSetupGroups = [];
+    const testGroups = [];
+    for (const group of allTestGroups) {
+      if (setupFiles.has(group.requireFile))
+        projectSetupGroups.push(group);
+      else
+        testGroups.push(group);
+    }
+
+    return { rootSuite, projectSetupGroups, testGroups };
   }
 
-  private _filterForCurrentShard(rootSuite: Suite, testGroups: TestGroup[]) {
+  private _filterForCurrentShard(rootSuite: Suite, projectSetupGroups: TestGroup[], testGroups: TestGroup[]) {
     const shard = this._loader.fullConfig().shard;
     if (!shard)
       return;
 
     // Each shard includes:
-    // - all tests from `run: 'always'` projects (non shardale) and
-    // - its portion of the shardable ones.
+    // - its portion of the regular tests
+    // - project setup tests for the projects that have regular tests in this shard
     let shardableTotal = 0;
-    for (const group of testGroups) {
-      if (group.run !== 'always')
-        shardableTotal += group.tests.length;
-    }
+    for (const group of testGroups)
+      shardableTotal += group.tests.length;
 
     const shardTests = new Set<TestCase>();
 
@@ -350,26 +383,32 @@ export class Runner {
     const from = shardSize * currentShard + Math.min(extraOne, currentShard);
     const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
     let current = 0;
+    const shardProjects = new Set<string>();
     const shardTestGroups = [];
     for (const group of testGroups) {
-      let includeGroupInShard = false;
-      if (group.run === 'always') {
-        includeGroupInShard = true;
-      } else {
-        // Any test group goes to the shard that contains the first test of this group.
-        // So, this shard gets any group that starts at [from; to)
-        if (current >= from && current < to)
-          includeGroupInShard = true;
-        current += group.tests.length;
-      }
-      if (includeGroupInShard) {
+      // Any test group goes to the shard that contains the first test of this group.
+      // So, this shard gets any group that starts at [from; to)
+      if (current >= from && current < to) {
+        shardProjects.add(group.projectId);
         shardTestGroups.push(group);
         for (const test of group.tests)
           shardTests.add(test);
       }
+      current += group.tests.length;
     }
     testGroups.length = 0;
     testGroups.push(...shardTestGroups);
+
+    const shardSetupGroups = [];
+    for (const group of projectSetupGroups) {
+      if (!shardProjects.has(group.projectId))
+        continue;
+      shardSetupGroups.push(group);
+      for (const test of group.tests)
+        shardTests.add(test);
+    }
+    projectSetupGroups.length = 0;
+    projectSetupGroups.push(...shardSetupGroups);
 
     filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
   }
@@ -379,15 +418,15 @@ export class Runner {
     const fatalErrors: TestError[] = [];
     // Each entry is an array of test groups that can be run concurrently. All
     // test groups from the previos entries must finish before entry starts.
-    const { rootSuite, testGroups } = await this._collectTestGroups(options, fatalErrors);
+    const { rootSuite, projectSetupGroups, testGroups } = await this._collectTestGroups(options, fatalErrors);
 
     // Fail when no tests.
     if (!rootSuite.allTests().length && !options.passWithNoTests)
       fatalErrors.push(createNoTestsError());
 
-    this._filterForCurrentShard(rootSuite, testGroups);
+    this._filterForCurrentShard(rootSuite, projectSetupGroups, testGroups);
 
-    config._maxConcurrentTestGroups = testGroups.length;
+    config._maxConcurrentTestGroups = Math.max(projectSetupGroups.length, testGroups.length);
 
     // Report begin
     this._reporter.onBegin?.(config, rootSuite);
@@ -424,37 +463,20 @@ export class Runner {
 
     // Run tests.
     try {
-      let sigintWatcher;
-
-      let hasWorkerErrors = false;
-      let previousStageFailed = false;
-      // TODO: will be project setups followed by tests.
-      const orderedTestGroups = [testGroups];
-      for (let testGroups of orderedTestGroups) {
-        if (previousStageFailed)
-          testGroups = this._skipTestsNotMarkedAsRunAlways(testGroups);
-        if (!testGroups.length)
-          continue;
-        const dispatcher = new Dispatcher(this._loader, [...testGroups], this._reporter);
-        sigintWatcher = new SigIntWatcher();
-        await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
-        if (!sigintWatcher.hadSignal()) {
-          // We know for sure there was no Ctrl+C, so we remove custom SIGINT handler
-          // as soon as we can.
-          sigintWatcher.disarm();
+      let dispatchResult = await this._dispatchToWorkers(projectSetupGroups);
+      if (dispatchResult === 'success') {
+        const failedSetupProjectIds = new Set<string>();
+        for (const testGroup of projectSetupGroups) {
+          if (testGroup.tests.some(test => !test.ok()))
+            failedSetupProjectIds.add(testGroup.projectId);
         }
-        await dispatcher.stop();
-        hasWorkerErrors = dispatcher.hasWorkerErrors();
-        if (hasWorkerErrors)
-          break;
-        if (sigintWatcher.hadSignal())
-          break;
-        previousStageFailed ||= testGroups.some(testGroup => testGroup.tests.some(test => !test.ok()));
+        const testGroupsToRun = this._skipTestsFromFailedProjects(testGroups, failedSetupProjectIds);
+        dispatchResult = await this._dispatchToWorkers(testGroupsToRun);
       }
-      if (sigintWatcher?.hadSignal()) {
+      if (dispatchResult === 'signal') {
         result.status = 'interrupted';
       } else {
-        const failed = hasWorkerErrors || rootSuite.allTests().some(test => !test.ok());
+        const failed = dispatchResult === 'workererror' || rootSuite.allTests().some(test => !test.ok());
         result.status = failed ? 'failed' : 'passed';
       }
     } catch (e) {
@@ -466,21 +488,38 @@ export class Runner {
     return result;
   }
 
-  private _skipTestsNotMarkedAsRunAlways(testGroups: TestGroup[]): TestGroup[] {
-    const runAlwaysGroups = [];
+  private async _dispatchToWorkers(stageGroups: TestGroup[]): Promise<'success'|'signal'|'workererror'> {
+    const dispatcher = new Dispatcher(this._loader, [...stageGroups], this._reporter);
+    const sigintWatcher = new SigIntWatcher();
+    await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
+    if (!sigintWatcher.hadSignal()) {
+      // We know for sure there was no Ctrl+C, so we remove custom SIGINT handler
+      // as soon as we can.
+      sigintWatcher.disarm();
+    }
+    await dispatcher.stop();
+    if (sigintWatcher.hadSignal())
+      return 'signal';
+    if (dispatcher.hasWorkerErrors())
+      return 'workererror';
+    return 'success';
+  }
+
+  private _skipTestsFromFailedProjects(testGroups: TestGroup[], failedProjects: Set<string>): TestGroup[] {
+    const result = [];
     for (const group of testGroups) {
-      if (group.run === 'always') {
-        runAlwaysGroups.push(group);
-      } else {
+      if (failedProjects.has(group.projectId)) {
         for (const test of group.tests) {
           const result = test._appendTestResult();
           this._reporter.onTestBegin?.(test, result);
           result.status = 'skipped';
           this._reporter.onTestEnd?.(test, result);
         }
+      } else {
+        result.push(group);
       }
     }
-    return runAlwaysGroups;
+    return result;
   }
 
   private async _removeOutputDirs(options: RunOptions): Promise<boolean> {
@@ -595,7 +634,7 @@ function filterOnly(suite: Suite) {
   return filterSuiteWithOnlySemantics(suite, suiteFilter, testFilter);
 }
 
-function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[]) {
+function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[], setupFiles: Set<string>) {
   const filterWithLine = !!focusedTestFileLines.find(f => f.line !== null);
   if (!filterWithLine)
     return;
@@ -609,7 +648,8 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[
   const suiteFilter = (suite: Suite) => {
     return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
   };
-  const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line, test.location.column);
+  // Project setup files are always included.
+  const testFilter = (test: TestCase) => setupFiles.has(test._requireFile) || testFileLineMatches(test.location.file, test.location.line, test.location.column);
   return filterSuite(suite, suiteFilter, testFilter);
 }
 
@@ -754,7 +794,6 @@ function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] 
       requireFile: test._requireFile,
       repeatEachIndex: test.repeatEachIndex,
       projectId: test._projectId,
-      run: 'default',
       tests: [],
       watchMode: false,
     };
