@@ -84,7 +84,7 @@ async function innerUpdate(page: Page, jsxOrType: JsxComponent | string, options
         if (typeof value === 'string' && (value as string).startsWith('__pw_func_')) {
           const ordinal = +value.substring('__pw_func_'.length);
           object[key] = (...args: any[]) => {
-            (window as any)['__ct_dispatch'](ordinal, args);
+            return (window as any)['__ct_dispatch'](ordinal, args);
           };
         } else if (typeof value === 'object' && value) {
           unwrapFunctions(value);
@@ -111,7 +111,7 @@ async function innerMount(page: Page, jsxOrType: JsxComponent | string, options:
         if (typeof value === 'string' && (value as string).startsWith('__pw_func_')) {
           const ordinal = +value.substring('__pw_func_'.length);
           object[key] = (...args: any[]) => {
-            (window as any)['__ct_dispatch'](ordinal, args);
+            return (window as any)['__ct_dispatch'](ordinal, args);
           };
         } else if (typeof value === 'object' && value) {
           unwrapFunctions(value);
