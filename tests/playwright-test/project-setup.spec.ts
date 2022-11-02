@@ -128,7 +128,7 @@ test('should work for several projects', async ({ runGroups }, testInfo) => {
   expect(exitCode).toBe(0);
   expect(passed).toBe(6);
   for (const name of ['a', 'b', 'c'])
-    expectFilesRunBefore(timeline, [`${name}/${name}.setup.ts`], [`${name}/${name}.spec.ts`]);
+    expectFilesRunBefore(timeline, [`${name}${path.sep}${name}.setup.ts`], [`${name}${path.sep}${name}.spec.ts`]);
 });
 
 test('should stop project if setup fails', async ({ runGroups }, testInfo) => {
@@ -152,7 +152,7 @@ test('should stop project if setup fails', async ({ runGroups }, testInfo) => {
   expect(passed).toBe(3);
   expect(skipped).toBe(1); // 1 test from project 'a'
   for (const name of ['a', 'b'])
-    expectFilesRunBefore(timeline, [`${name}/${name}.setup.ts`], [`${name}/${name}.spec.ts`]);
+    expectFilesRunBefore(timeline, [`${name}${path.sep}${name}.setup.ts`], [`${name}${path.sep}${name}.spec.ts`]);
 });
 
 test('should run setup in each project shard', async ({ runGroups }, testInfo) => {
