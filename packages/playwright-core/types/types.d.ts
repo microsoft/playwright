@@ -2039,7 +2039,7 @@ export interface Page {
   /**
    * > NOTE: Only available for Chromium atm.
    *
-   * Browser-specific Coverage implementation. See [Coverage](#class-coverage) for more details.
+   * Browser-specific Coverage implementation. See [Coverage] for more details.
    */
   coverage: Coverage;
 
