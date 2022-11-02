@@ -16,19 +16,18 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Video, APIRequestContext, Tracing } from 'playwright-core';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, VideoMode, TraceMode } from '../types/test';
-import { rootTestType } from './testType';
+import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
+import * as playwrightLibrary from 'playwright-core';
+import * as outOfProcess from 'playwright-core/lib/outofprocess';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
-export { expect } from './expect';
-export const _baseTest: TestType<{}, {}> = rootTestType.test;
-export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
-import * as outOfProcess from 'playwright-core/lib/outofprocess';
-import * as playwrightLibrary from 'playwright-core';
+import type { PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './testInfo';
-import type { FullProjectInternal } from './types';
+import { rootTestType } from './testType';
 import { sanitizeForFilePath, trimLongString } from './util';
+export { expect } from './expect';
+export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
+export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
