@@ -164,7 +164,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       }
     };
     await use(storage);
-  }, { scope: 'worker', timeout: 0 }],
+  }, { scope: 'worker' }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
   bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP), { option: true }],
