@@ -37,20 +37,11 @@ it.describe('Drag and drop', () => {
     await page.mouse.down();
     await page.hover('#target');
     await page.mouse.up();
-    expect(await events.jsonValue()).toEqual(browserName === 'firefox' ? [
+    expect(await events.jsonValue()).toEqual([
       'mousemove at 120;86',
       'mousedown at 120;86',
-      'dragstart at 120;86',
-      'mousemove at 240;350',
-      'dragenter at 0;0',
-      'dragover at 0;0',
-      'drop at 0;0',
-      'dragend',
-    ] : [
-      'mousemove at 120;86',
-      'mousedown at 120;86',
-      'mousemove at 240;350',
-      'dragstart at 120;86',
+      browserName === 'firefox' ? 'dragstart at 120;86' : 'mousemove at 240;350',
+      browserName === 'firefox' ? 'mousemove at 240;350' : 'dragstart at 120;86',
       'dragenter at 240;350',
       'dragover at 240;350',
       'drop at 240;350',
@@ -66,17 +57,11 @@ it.describe('Drag and drop', () => {
     await page.hover('#source');
     await page.mouse.down();
     await page.hover('#target');
-    expect(await events.jsonValue()).toEqual(browserName === 'firefox' ? [
+    expect(await events.jsonValue()).toEqual([
       'mousemove at 120;86',
       'mousedown at 120;86',
-      'dragstart at 120;86',
-      'mousemove at 240;350',
-      'dragenter at 0;0',
-    ] : [
-      'mousemove at 120;86',
-      'mousedown at 120;86',
-      'mousemove at 240;350',
-      'dragstart at 120;86',
+      browserName === 'firefox' ? 'dragstart at 120;86' : 'mousemove at 240;350',
+      browserName === 'firefox' ? 'mousemove at 240;350' : 'dragstart at 120;86',
       'dragenter at 240;350',
     ]);
   });
@@ -97,20 +82,11 @@ it.describe('Drag and drop', () => {
     await frame.hover('#target');
     await page.mouse.up();
     expect(await frame.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
-    expect(await frameEvents.jsonValue()).toEqual(browserName === 'firefox' ? [
+    expect(await frameEvents.jsonValue()).toEqual([
       'mousemove at 120;86',
       'mousedown at 120;86',
-      'dragstart at 120;86',
-      'mousemove at 240;350',
-      'dragenter at 0;0',
-      'dragover at 0;0',
-      'drop at 0;0',
-      'dragend',
-    ] : [
-      'mousemove at 120;86',
-      'mousedown at 120;86',
-      'mousemove at 240;350',
-      'dragstart at 120;86',
+      browserName === 'firefox' ? 'dragstart at 120;86' : 'mousemove at 240;350',
+      browserName === 'firefox' ? 'mousemove at 240;350' : 'dragstart at 120;86',
       'dragenter at 240;350',
       'dragover at 240;350',
       'drop at 240;350',
@@ -128,20 +104,11 @@ it.describe('Drag and drop', () => {
     await page.keyboard.press('Escape');
     await page.mouse.up();
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(false); // found source in target
-    expect(await events.jsonValue()).toEqual(browserName === 'firefox' ? [
+    expect(await events.jsonValue()).toEqual([
       'mousemove at 120;86',
       'mousedown at 120;86',
-      'dragstart at 120;86',
-      'mousemove at 240;350',
-      'dragenter at 0;0',
-      'dragover at 0;0',
-      'dragend',
-      'mouseup at 240;350',
-    ] : [
-      'mousemove at 120;86',
-      'mousedown at 120;86',
-      'mousemove at 240;350',
-      'dragstart at 120;86',
+      browserName === 'firefox' ? 'dragstart at 120;86' : 'mousemove at 240;350',
+      browserName === 'firefox' ? 'mousemove at 240;350' : 'dragstart at 120;86',
       'dragenter at 240;350',
       browserName === 'chromium' ? null : 'dragover at 240;350',
       'dragend',
@@ -208,7 +175,6 @@ it.describe('Drag and drop', () => {
 
   it('should respect the drop effect', async ({ page, browserName, platform, trace }) => {
     it.fixme(browserName === 'webkit' && platform !== 'linux', 'WebKit doesn\'t handle the drop effect correctly outside of linux.');
-    it.fixme(browserName === 'firefox');
     it.slow(trace === 'on');
 
     expect(await testIfDropped('copy', 'copy')).toBe(true);
