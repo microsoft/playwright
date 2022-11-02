@@ -76,7 +76,12 @@ function expectFilesRunBefore(timeline: Timeline, before: string[], after: strin
     return index;
   };
   const fileEnd = name => {
-    const index = (timeline as any).findLastIndex(({ titlePath }) => titlePath[2] === name);
+    // There is no Array.findLastIndex in Node < 18.
+    let index = -1;
+    for (index = timeline.length - 1; index >= 0; index--) {
+      if (timeline[index].titlePath[2] === name)
+        break;
+    }
     expect(index, `cannot find ${name} in\n${formatFileNames(timeline)}`).not.toBe(-1);
     return index;
   };
