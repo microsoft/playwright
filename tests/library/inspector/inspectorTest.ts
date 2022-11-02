@@ -149,6 +149,8 @@ class Recorder {
   }
 
   async waitForHighlight(action: () => Promise<void>): Promise<string> {
+    await this.page.$$eval('x-pw-highlight', els => els.forEach(e => e.remove()));
+    await this.page.$$eval('x-pw-tooltip', els => els.forEach(e => e.remove()));
     await action();
     await this.page.locator('x-pw-highlight').waitFor();
     await this.page.locator('x-pw-tooltip').waitFor();
