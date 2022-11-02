@@ -235,6 +235,8 @@ class Recorder {
   }
 
   private _onFocus(userGesture: boolean) {
+    if (this._mode === 'none')
+      return;
     const activeElement = this._deepActiveElement(document);
     const result = activeElement ? generateSelector(this._injectedScript, activeElement, true) : null;
     this._activeModel = result && result.selector ? result : null;
