@@ -2458,7 +2458,7 @@ export interface Page {
   getByAltText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -2478,7 +2478,7 @@ export interface Page {
   getByLabel(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -2497,7 +2497,7 @@ export interface Page {
   getByPlaceholder(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -2586,14 +2586,46 @@ export interface Page {
   getByTestId(testId: string): Locator;
 
   /**
-   * Allows locating elements that contain given text.
+   * Allows locating elements that contain given text. Consider the following DOM structure:
+   *
+   * ```html
+   * <div>Hello <span>world</span></div>
+   * <div>Hello</div>
+   * ```
+   *
+   * You can locate by text substring, exact string, or a regular expression:
+   *
+   * ```js
+   * // Matches <span>
+   * page.getByText('world')
+   *
+   * // Matches first <div>
+   * page.getByText('Hello world')
+   *
+   * // Matches second <div>
+   * page.getByText('Hello', { exact: true })
+   *
+   * // Matches both <div>s
+   * page.getByText(/Hello/)
+   *
+   * // Matches second <div>
+   * page.getByText(/^hello$/i)
+   * ```
+   *
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to match
+   * by another criteria, like an accessible role, and then filter by the text content.
+   *
+   * > NOTE: Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into
+   * one, turns line breaks into spaces and ignores leading and trailing whitespace.
+   * > NOTE: Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For
+   * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
    */
   getByText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -2611,7 +2643,7 @@ export interface Page {
   getByTitle(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -5549,7 +5581,7 @@ export interface Frame {
   getByAltText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -5569,7 +5601,7 @@ export interface Frame {
   getByLabel(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -5588,7 +5620,7 @@ export interface Frame {
   getByPlaceholder(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -5677,14 +5709,46 @@ export interface Frame {
   getByTestId(testId: string): Locator;
 
   /**
-   * Allows locating elements that contain given text.
+   * Allows locating elements that contain given text. Consider the following DOM structure:
+   *
+   * ```html
+   * <div>Hello <span>world</span></div>
+   * <div>Hello</div>
+   * ```
+   *
+   * You can locate by text substring, exact string, or a regular expression:
+   *
+   * ```js
+   * // Matches <span>
+   * page.getByText('world')
+   *
+   * // Matches first <div>
+   * page.getByText('Hello world')
+   *
+   * // Matches second <div>
+   * page.getByText('Hello', { exact: true })
+   *
+   * // Matches both <div>s
+   * page.getByText(/Hello/)
+   *
+   * // Matches second <div>
+   * page.getByText(/^hello$/i)
+   * ```
+   *
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to match
+   * by another criteria, like an accessible role, and then filter by the text content.
+   *
+   * > NOTE: Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into
+   * one, turns line breaks into spaces and ignores leading and trailing whitespace.
+   * > NOTE: Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For
+   * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
    */
   getByText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -5702,7 +5766,7 @@ export interface Frame {
   getByTitle(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -9977,7 +10041,7 @@ export interface Locator {
   getByAltText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -9997,7 +10061,7 @@ export interface Locator {
   getByLabel(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -10016,7 +10080,7 @@ export interface Locator {
   getByPlaceholder(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -10105,14 +10169,46 @@ export interface Locator {
   getByTestId(testId: string): Locator;
 
   /**
-   * Allows locating elements that contain given text.
+   * Allows locating elements that contain given text. Consider the following DOM structure:
+   *
+   * ```html
+   * <div>Hello <span>world</span></div>
+   * <div>Hello</div>
+   * ```
+   *
+   * You can locate by text substring, exact string, or a regular expression:
+   *
+   * ```js
+   * // Matches <span>
+   * page.getByText('world')
+   *
+   * // Matches first <div>
+   * page.getByText('Hello world')
+   *
+   * // Matches second <div>
+   * page.getByText('Hello', { exact: true })
+   *
+   * // Matches both <div>s
+   * page.getByText(/Hello/)
+   *
+   * // Matches second <div>
+   * page.getByText(/^hello$/i)
+   * ```
+   *
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to match
+   * by another criteria, like an accessible role, and then filter by the text content.
+   *
+   * > NOTE: Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into
+   * one, turns line breaks into spaces and ignores leading and trailing whitespace.
+   * > NOTE: Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For
+   * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
    */
   getByText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -10130,7 +10226,7 @@ export interface Locator {
   getByTitle(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -15237,7 +15333,7 @@ export interface FrameLocator {
   getByAltText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -15257,7 +15353,7 @@ export interface FrameLocator {
   getByLabel(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -15276,7 +15372,7 @@ export interface FrameLocator {
   getByPlaceholder(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -15365,14 +15461,46 @@ export interface FrameLocator {
   getByTestId(testId: string): Locator;
 
   /**
-   * Allows locating elements that contain given text.
+   * Allows locating elements that contain given text. Consider the following DOM structure:
+   *
+   * ```html
+   * <div>Hello <span>world</span></div>
+   * <div>Hello</div>
+   * ```
+   *
+   * You can locate by text substring, exact string, or a regular expression:
+   *
+   * ```js
+   * // Matches <span>
+   * page.getByText('world')
+   *
+   * // Matches first <div>
+   * page.getByText('Hello world')
+   *
+   * // Matches second <div>
+   * page.getByText('Hello', { exact: true })
+   *
+   * // Matches both <div>s
+   * page.getByText(/Hello/)
+   *
+   * // Matches second <div>
+   * page.getByText(/^hello$/i)
+   * ```
+   *
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to match
+   * by another criteria, like an accessible role, and then filter by the text content.
+   *
+   * > NOTE: Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into
+   * one, turns line breaks into spaces and ignores leading and trailing whitespace.
+   * > NOTE: Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For
+   * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
    */
   getByText(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;
@@ -15390,7 +15518,7 @@ export interface FrameLocator {
   getByTitle(text: string|RegExp, options?: {
     /**
      * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular
-     * expression.
+     * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
   }): Locator;

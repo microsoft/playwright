@@ -253,3 +253,79 @@ unless page navigates or the handle is manually disposed via the [`method: JSHan
 - [`method: Page.evaluateHandle`]
 - [`method: Page.querySelector`]
 - [`method: Page.querySelectorAll`]
+
+
+## Locator vs ElementHandle
+
+:::caution
+We only recommend using [ElementHandle] in the rare cases when you need to perform extensive DOM traversal
+on a static page. For all user actions and assertions use locator instead.
+:::
+
+The difference between the [Locator] and [ElementHandle] is that the latter points to a particular element, while Locator captures the logic of how to retrieve that element.
+
+In the example below, handle points to a particular DOM element on page. If that element changes text or is used by React to render an entirely different component, handle is still pointing to that very stale DOM element. This can lead to unexpected behaviors.
+
+```js
+const handle = await page.$('text=Submit');
+// ...
+await handle.hover();
+await handle.click();
+```
+
+```java
+ElementHandle handle = page.querySelector("text=Submit");
+handle.hover();
+handle.click();
+```
+
+```python async
+handle = await page.query_selector("text=Submit")
+await handle.hover()
+await handle.click()
+```
+
+```python sync
+handle = page.query_selector("text=Submit")
+handle.hover()
+handle.click()
+```
+
+```csharp
+var handle = await page.QuerySelectorAsync("text=Submit");
+await handle.HoverAsync();
+await handle.ClickAsync();
+```
+
+With the locator, every time the locator is used, up-to-date DOM element is located in the page using the selector. So in the snippet below, underlying DOM element is going to be located twice.
+
+```js
+const locator = page.getByText('Submit');
+// ...
+await locator.hover();
+await locator.click();
+```
+
+```java
+Locator locator = page.getByText("Submit");
+locator.hover();
+locator.click();
+```
+
+```python async
+locator = page.get_by_text("Submit")
+await locator.hover()
+await locator.click()
+```
+
+```python sync
+locator = page.get_by_text("Submit")
+locator.hover()
+locator.click()
+```
+
+```csharp
+var locator = page.GetByText("Submit");
+await locator.HoverAsync();
+await locator.ClickAsync();
+```
