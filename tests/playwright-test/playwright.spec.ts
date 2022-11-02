@@ -667,7 +667,7 @@ test('should share storage state between project setup and tests', async ({ runI
     `,
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
+  expect(result.passed).toBe(3);
 });
 
 
