@@ -10,13 +10,13 @@ a way to find element(s) on the page at any moment.
 
 These are the recommended built in locators.
 
-- [`method: Page.getByRole`] to locate by explicit and implicit accessibility attributes.
-- [`method: Page.getByText`] to locate by text content.
-- [`method: Page.getByLabel`] to locate a form control by associated label's text.
-- [`method: Page.getByPlaceholder`] to locate an input by placeholder.
-- [`method: Page.getByAltText`] to locate an element, usually image, by its text alternative.
-- [`method: Page.getByTitle`] to locate an element by its title.
-- [`method: Page.getByTestId`] to locate an element based on its `data-testid` attribute (other attribute can be configured).
+- [`method: Page.getByRole`](#locate-based-on-accessible-attributes) to locate by explicit and implicit accessibility attributes.
+- [`method: Page.getByText`](#locate-by-text) to locate by text content.
+- [`method: Page.getByLabel`](#locate-by-label-text) to locate a form control by associated label's text.
+- [`method: Page.getByPlaceholder`](#locate-by-placeholder-text) to locate an input by placeholder.
+- [`method: Page.getByAltText`](#locate-by-alt-text) to locate an element, usually image, by its text alternative.
+- [`method: Page.getByTitle`](#locate-by-title) to locate an element by its title.
+- [`method: Page.getByTestId`](#define-explicit-contract-and-use-a-data-testid-attribute) to locate an element based on its `data-testid` attribute (other attribute can be configured).
 
 ```js
 await page.getByLabel('User Name').fill('John');
