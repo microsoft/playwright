@@ -139,7 +139,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
   storage: [async ({ }, use, testInfo) => {
     const toFilePath = (name: string) => {
-      const fileName = sanitizeForFilePath(trimLongString(name));
+      const fileName = sanitizeForFilePath(trimLongString(name)) + '.json';
       return path.join(testInfo.project.outputDir, 'playwright-storage', (testInfo.project as FullProjectInternal)._id, fileName);
     };
     const storage = {
