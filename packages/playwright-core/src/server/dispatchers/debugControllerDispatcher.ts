@@ -31,8 +31,8 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
     this._object.on(DebugController.Events.InspectRequested, ({ selector, locator }) => {
       this._dispatchEvent('inspectRequested', { selector, locator });
     });
-    this._object.on(DebugController.Events.SourceChanged, text => {
-      this._dispatchEvent('sourceChanged', { text });
+    this._object.on(DebugController.Events.SourceChanged, ({ text, header, footer, actions }) => {
+      this._dispatchEvent('sourceChanged', ({ text, header, footer, actions }));
     });
   }
 

@@ -340,16 +340,20 @@ class ContextRecorder extends EventEmitter {
     generator.on('change', () => {
       this._recorderSources = [];
       for (const languageGenerator of this._orderedLanguages) {
+        const { header, footer, actions, text } = generator.generateStructure(languageGenerator);
         const source: Source = {
           isRecorded: true,
           label: languageGenerator.name,
           group: languageGenerator.groupName,
           id: languageGenerator.id,
-          text: generator.generateText(languageGenerator),
+          text,
+          header,
+          footer,
+          actions,
           language: languageGenerator.highlighter,
           highlight: []
         };
-        source.revealLine = source.text.split('\n').length - 1;
+        source.revealLine = text.split('\n').length - 1;
         this._recorderSources.push(source);
         if (languageGenerator === this._orderedLanguages[0])
           this._throttledOutputFile?.setContent(source.text);

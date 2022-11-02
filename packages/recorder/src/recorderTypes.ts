@@ -63,6 +63,9 @@ export type Source = {
   revealLine?: number;
   // used to group the language generators
   group?: string;
+  header?: string;
+  footer?: string;
+  actions?: string[];
 };
 
 declare global {

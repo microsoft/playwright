@@ -340,6 +340,9 @@ scheme.DebugControllerStateChangedEvent = tObject({
 });
 scheme.DebugControllerSourceChangedEvent = tObject({
   text: tString,
+  header: tOptional(tString),
+  footer: tOptional(tString),
+  actions: tOptional(tArray(tString)),
 });
 scheme.DebugControllerBrowsersChangedEvent = tObject({
   browsers: tArray(tObject({

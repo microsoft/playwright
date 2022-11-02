@@ -615,6 +615,9 @@ export type DebugControllerStateChangedEvent = {
 };
 export type DebugControllerSourceChangedEvent = {
   text: string,
+  header?: string,
+  footer?: string,
+  actions?: string[],
 };
 export type DebugControllerBrowsersChangedEvent = {
   browsers: {
