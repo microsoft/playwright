@@ -19,14 +19,13 @@ import type { DispatcherScope, Playwright } from '../server';
 import { createPlaywright, DispatcherConnection, RootDispatcher, PlaywrightDispatcher } from '../server';
 import { Browser } from '../server/browser';
 import { serverSideCallMetadata } from '../server/instrumentation';
-import { gracefullyCloseAll } from '../utils/processLauncher';
 import { SocksProxy } from '../common/socksProxy';
 import { assert } from '../utils';
 import type { LaunchOptions } from '../server/types';
 import { AndroidDevice } from '../server/android/android';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
 
-export type ClientType = 'controller' | 'playwright' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser';
+export type ClientType = 'controller' | 'playwright' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser' | 'network-tethering';
 
 type Options = {
   enableSocksProxy: boolean,
@@ -38,6 +37,7 @@ type PreLaunched = {
   playwright?: Playwright | undefined;
   browser?: Browser | undefined;
   androidDevice?: AndroidDevice | undefined;
+  networkTetheringSocksProxy?: SocksProxy | undefined;
 };
 
 export class PlaywrightConnection {
@@ -90,17 +90,27 @@ export class PlaywrightConnection {
         return await this._initLaunchBrowserMode(scope);
       if (clientType === 'playwright')
         return await this._initPlaywrightConnectMode(scope);
+      if (clientType === 'network-tethering')
+        return await this._initPlaywrightTetheringMode(scope);
       throw new Error('Unsupported client type: ' + clientType);
     });
+  }
+
+  private async _initPlaywrightTetheringMode(scope: RootDispatcher) {
+    this._debugLog(`engaged playwright.tethering mode`);
+    const playwright = createPlaywright('javascript');
+    return new PlaywrightDispatcher(scope, playwright, this._preLaunched.networkTetheringSocksProxy);
   }
 
   private async _initPlaywrightConnectMode(scope: RootDispatcher) {
     this._debugLog(`engaged playwright.connect mode`);
     const playwright = createPlaywright('javascript');
     // Close all launched browsers on disconnect.
-    this._cleanups.push(() => gracefullyCloseAll());
+    this._cleanups.push(async () => {
+      await Promise.all(playwright.allBrowsers().map(browser => browser.close()));
+    });
 
-    const socksProxy = this._options.enableSocksProxy ? await this._enableSocksProxy(playwright) : undefined;
+    const socksProxy = await this._configureSocksProxy(playwright);
     return new PlaywrightDispatcher(scope, playwright, socksProxy);
   }
 
@@ -108,7 +118,7 @@ export class PlaywrightConnection {
     this._debugLog(`engaged launch mode for "${this._options.browserName}"`);
 
     const playwright = createPlaywright('javascript');
-    const socksProxy = this._options.enableSocksProxy ? await this._enableSocksProxy(playwright) : undefined;
+    const socksProxy = await this._configureSocksProxy(playwright);
     const browser = await playwright[this._options.browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
 
     this._cleanups.push(async () => {
@@ -208,7 +218,14 @@ export class PlaywrightConnection {
     return playwrightDispatcher;
   }
 
-  private async _enableSocksProxy(playwright: Playwright) {
+  private async _configureSocksProxy(playwright: Playwright): Promise<undefined|SocksProxy> {
+    if (!this._options.enableSocksProxy)
+      return undefined;
+    if (this._preLaunched.networkTetheringSocksProxy) {
+      playwright.options.socksProxyPort = this._preLaunched.networkTetheringSocksProxy.port();
+      this._debugLog(`using network tether proxy on port ${playwright.options.socksProxyPort}`);
+      return undefined;
+    }
     const socksProxy = new SocksProxy();
     playwright.options.socksProxyPort = await socksProxy.listen(0);
     this._debugLog(`started socks proxy on port ${playwright.options.socksProxyPort}`);

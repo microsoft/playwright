@@ -48,27 +48,27 @@ export interface ConnectionTransport {
 
 export class WebSocketTransport implements ConnectionTransport {
   private _ws: WebSocket;
-  private _progress: Progress;
+  private _progress?: Progress;
 
   onmessage?: (message: ProtocolResponse) => void;
   onclose?: () => void;
   readonly wsEndpoint: string;
 
-  static async connect(progress: Progress, url: string, headers?: { [key: string]: string; }, followRedirects?: boolean): Promise<WebSocketTransport> {
-    progress.log(`<ws connecting> ${url}`);
+  static async connect(progress: (Progress|undefined), url: string, headers?: { [key: string]: string; }, followRedirects?: boolean): Promise<WebSocketTransport> {
+    progress?.log(`<ws connecting> ${url}`);
     const transport = new WebSocketTransport(progress, url, headers, followRedirects);
     let success = false;
-    progress.cleanupWhenAborted(async () => {
+    progress?.cleanupWhenAborted(async () => {
       if (!success)
         await transport.closeAndWait().catch(e => null);
     });
     await new Promise<WebSocketTransport>((fulfill, reject) => {
       transport._ws.on('open', async () => {
-        progress.log(`<ws connected> ${url}`);
+        progress?.log(`<ws connected> ${url}`);
         fulfill(transport);
       });
       transport._ws.on('error', event => {
-        progress.log(`<ws connect error> ${url} ${event.message}`);
+        progress?.log(`<ws connect error> ${url} ${event.message}`);
         reject(new Error('WebSocket error: ' + event.message));
         transport._ws.close();
       });
@@ -78,7 +78,7 @@ export class WebSocketTransport implements ConnectionTransport {
         response.on('data', chunk => chunks.push(chunk));
         response.on('close', () => {
           const error = chunks.length ? `${errorPrefix}\n${Buffer.concat(chunks)}` : errorPrefix;
-          progress.log(`<ws unexpected response> ${error}`);
+          progress?.log(`<ws unexpected response> ${error}`);
           reject(new Error('WebSocket error: ' + error));
           transport._ws.close();
         });
@@ -88,13 +88,13 @@ export class WebSocketTransport implements ConnectionTransport {
     return transport;
   }
 
-  constructor(progress: Progress, url: string, headers?: { [key: string]: string; }, followRedirects?: boolean) {
+  constructor(progress: Progress|undefined, url: string, headers?: { [key: string]: string; }, followRedirects?: boolean) {
     this.wsEndpoint = url;
     this._ws = new ws(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,
       // Prevent internal http client error when passing negative timeout.
-      handshakeTimeout: Math.max(progress.timeUntilDeadline(), 1),
+      handshakeTimeout: Math.max(progress?.timeUntilDeadline() ?? 30_000, 1),
       headers,
       followRedirects,
     });
@@ -117,12 +117,12 @@ export class WebSocketTransport implements ConnectionTransport {
     });
 
     this._ws.addEventListener('close', event => {
-      this._progress && this._progress.log(`<ws disconnected> ${url} code=${event.code} reason=${event.reason}`);
+      this._progress?.log(`<ws disconnected> ${url} code=${event.code} reason=${event.reason}`);
       if (this.onclose)
         this.onclose.call(null);
     });
     // Prevent Error: read ECONNRESET.
-    this._ws.addEventListener('error', error => this._progress && this._progress.log(`<ws error> ${error.type} ${error.message}`));
+    this._ws.addEventListener('error', error => this._progress?.log(`<ws error> ${error.type} ${error.message}`));
   }
 
   send(message: ProtocolRequest) {
@@ -130,7 +130,7 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 
   close() {
-    this._progress && this._progress.log(`<ws disconnecting> ${this._ws.url}`);
+    this._progress?.log(`<ws disconnecting> ${this._ws.url}`);
     this._ws.close();
   }
 
