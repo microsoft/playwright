@@ -861,6 +861,10 @@ export module Protocol {
        */
       type: "media-rule"|"media-import-rule"|"media-link-node"|"media-style-node"|"supports-rule"|"layer-rule"|"layer-import-rule"|"container-rule";
       /**
+       * The CSS rule identifier for the `@rule` (absent for non-editable grouping rules). In CSSOM terms, this is the parent rule of either the previous Grouping for a CSSRule, or of a CSSRule itself.
+       */
+      ruleId?: CSSRuleId;
+      /**
        * Query text if specified by a @media, @supports, or @container rule. Layer name (or not present for anonymous layers) for @layer rules.
        */
       text?: string;
@@ -868,6 +872,10 @@ export module Protocol {
        * URL of the document containing the CSS grouping.
        */
       sourceURL?: string;
+      /**
+       * @-rule's header text range in the enclosing stylesheet (if available). This is from the first non-whitespace character after the @ declarartion to the last non-whitespace character before an opening curly bracket or semicolon.
+       */
+      range?: SourceRange;
     }
     /**
      * A representation of WebCore::Font. Conceptually this is backed by either a font file on disk or from the network.
@@ -1117,6 +1125,19 @@ export module Protocol {
        * The resulting rule after the selector modification.
        */
       rule: CSSRule;
+    }
+    /**
+     * Modifies an @rule grouping's header text.
+     */
+    export type setGroupingHeaderTextParameters = {
+      ruleId: CSSRuleId;
+      headerText: string;
+    }
+    export type setGroupingHeaderTextReturnValue = {
+      /**
+       * The resulting grouping after the header text modification.
+       */
+      grouping: Grouping;
     }
     /**
      * Creates a new special "inspector" stylesheet in the frame with given <code>frameId</code>.
@@ -9062,6 +9083,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "CSS.setStyleSheetText": CSS.setStyleSheetTextParameters;
     "CSS.setStyleText": CSS.setStyleTextParameters;
     "CSS.setRuleSelector": CSS.setRuleSelectorParameters;
+    "CSS.setGroupingHeaderText": CSS.setGroupingHeaderTextParameters;
     "CSS.createStyleSheet": CSS.createStyleSheetParameters;
     "CSS.addRule": CSS.addRuleParameters;
     "CSS.getSupportedCSSProperties": CSS.getSupportedCSSPropertiesParameters;
@@ -9370,6 +9392,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "CSS.setStyleSheetText": CSS.setStyleSheetTextReturnValue;
     "CSS.setStyleText": CSS.setStyleTextReturnValue;
     "CSS.setRuleSelector": CSS.setRuleSelectorReturnValue;
+    "CSS.setGroupingHeaderText": CSS.setGroupingHeaderTextReturnValue;
     "CSS.createStyleSheet": CSS.createStyleSheetReturnValue;
     "CSS.addRule": CSS.addRuleReturnValue;
     "CSS.getSupportedCSSProperties": CSS.getSupportedCSSPropertiesReturnValue;
