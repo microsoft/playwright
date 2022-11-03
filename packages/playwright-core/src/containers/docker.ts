@@ -235,7 +235,7 @@ export async function ensurePlaywrightContainerOrDie(port: number): Promise<Cont
     }
   }
 
-  const env: any = {
+  const env: Record<string, string | undefined> = {
     PW_OWNED_BY_TETHER_CLIENT: '1',
     DEBUG: process.env.DEBUG,
   };
