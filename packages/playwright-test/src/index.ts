@@ -216,6 +216,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     baseURL,
     contextOptions,
     serviceWorkers,
+    storage,
   }, use) => {
     const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
@@ -248,8 +249,14 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       options.permissions = permissions;
     if (proxy !== undefined)
       options.proxy = proxy;
-    if (storageState !== undefined)
+    if (storageState !== undefined) {
       options.storageState = storageState;
+      if (typeof storageState === 'string') {
+        const value = await storage.get(storageState);
+        if (value)
+          options.storageState = value as any;
+      }
+    }
     if (timezoneId !== undefined)
       options.timezoneId = timezoneId;
     if (userAgent !== undefined)
