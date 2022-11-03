@@ -21,7 +21,7 @@ import path from 'path';
 import url from 'url';
 import { colors, debug, minimatch } from 'playwright-core/lib/utilsBundle';
 import type { TestError, Location } from './types';
-import { calculateSha1, isRegExp } from 'playwright-core/lib/utils';
+import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
 import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
 import { currentTestInfo } from './globals';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
@@ -287,7 +287,12 @@ export async function normalizeAndSaveAttachment(outputPath: string, name: strin
     throw new Error(`Exactly one of "path" and "body" must be specified`);
   if (options.path !== undefined) {
     const hash = calculateSha1(options.path);
-    const dest = path.join(outputPath, 'attachments', hash + path.extname(options.path));
+
+    if (!isString(name))
+      throw new Error('"name" should be string.');
+
+    const sanitizedNamePrefix = sanitizeForFilePath(name) + '-';
+    const dest = path.join(outputPath, 'attachments', sanitizedNamePrefix + hash + path.extname(options.path));
     await fs.promises.mkdir(path.dirname(dest), { recursive: true });
     await fs.promises.copyFile(options.path, dest);
     const contentType = options.contentType ?? (mime.getType(path.basename(options.path)) || 'application/octet-stream');

@@ -104,7 +104,8 @@ after awaiting the attach call.
 * since: v1.10
 - `name` <[string]>
 
-Attachment name.
+Attachment name. The name will also be sanitized and used as the prefix of file name
+when saving to disk.
 
 ### option: TestInfo.attach.body
 * since: v1.10
