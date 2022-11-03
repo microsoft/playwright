@@ -16,8 +16,10 @@
 
 import { contextTest as it, expect } from '../config/browserTest';
 import { asLocator } from '../../packages/playwright-core/lib/server/isomorphic/locatorGenerators';
-import { parseLocator } from '../../packages/playwright-core/lib/server/isomorphic/locatorParser';
+import { locatorOrSelectorAsSelector as parseLocator } from '../../packages/playwright-core/lib/server/isomorphic/locatorParser';
 import type { Page, Frame, Locator } from 'playwright-core';
+
+it.skip(({ mode }) => mode !== 'default');
 
 function generate(locator: Locator) {
   return generateForSelector((locator as any)._selector);
@@ -27,7 +29,7 @@ function generateForSelector(selector: string) {
   const result: any = {};
   for (const lang of ['javascript', 'python', 'java', 'csharp']) {
     const locatorString = asLocator(lang, selector, false);
-    expect.soft(parseLocator(locatorString), lang + ' mismatch').toBe(selector);
+    expect.soft(parseLocator(lang, locatorString), lang + ' mismatch').toBe(selector);
     result[lang] = locatorString;
   }
   return result;
@@ -38,7 +40,7 @@ async function generateForNode(pageOrFrame: Page | Frame, target: string): Promi
   const result: any = {};
   for (const lang of ['javascript', 'python', 'java', 'csharp']) {
     const locatorString = asLocator(lang, selector, false);
-    expect.soft(parseLocator(locatorString)).toBe(selector);
+    expect.soft(parseLocator(lang, locatorString)).toBe(selector);
     result[lang] = locatorString;
   }
   return result;
@@ -257,8 +259,6 @@ it('reverse engineer hasText', async ({ page }) => {
 });
 
 it.describe(() => {
-  it.skip(({ mode }) => mode !== 'default');
-
   it.beforeEach(async ({ context }) => {
     await (context as any)._enableRecorder({ language: 'javascript' });
   });
@@ -298,4 +298,30 @@ it.describe(() => {
       python: 'locator("div").filter(has_text="Goodbye world").locator("span")',
     });
   });
+});
+
+it('parse locators strictly', () => {
+  const selector = 'div >> internal:has-text=\"Goodbye world\"i >> span';
+
+  // Exact
+  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasTextString: "Goodbye world" }).Locator("span")`)).toBe(selector);
+  expect.soft(parseLocator('java', `locator("div").filter(new Locator.LocatorOptions().setHasText("Goodbye world")).locator("span")`)).toBe(selector);
+  expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }).locator('span')`)).toBe(selector);
+  expect.soft(parseLocator('python', `locator("div").filter(has_text="Goodbye world").locator("span")`)).toBe(selector);
+
+  // Quotes
+  expect.soft(parseLocator('javascript', `locator("div").filter({ hasText: "Goodbye world" }).locator("span")`)).toBe(selector);
+  expect.soft(parseLocator('python', `locator('div').filter(has_text='Goodbye world').locator('span')`)).toBe(selector);
+
+  // Whitespace
+  expect.soft(parseLocator('csharp', `Locator("div")  .  Filter (new ( ) {  HasTextString:    "Goodbye world" }).Locator(  "span"   )`)).toBe(selector);
+  expect.soft(parseLocator('java', `  locator("div"  ).  filter(  new    Locator. LocatorOptions    ( ) .setHasText(   "Goodbye world" ) ).locator(   "span")`)).toBe(selector);
+  expect.soft(parseLocator('javascript', `locator\n('div')\n\n.filter({ hasText  : 'Goodbye world'\n }\n).locator('span')\n`)).toBe(selector);
+  expect.soft(parseLocator('python', `\tlocator(\t"div").filter(\thas_text="Goodbye world"\t).locator\t("span")`)).toBe(selector);
+
+  // Extra symbols
+  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasTextString: "Goodbye world" }).Locator("span"))`)).not.toBe(selector);
+  expect.soft(parseLocator('java', `locator("div").filter(new Locator.LocatorOptions().setHasText("Goodbye world"))..locator("span")`)).not.toBe(selector);
+  expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }}).locator('span')`)).not.toBe(selector);
+  expect.soft(parseLocator('python', `locator("div").filter(has_text=="Goodbye world").locator("span")`)).not.toBe(selector);
 });

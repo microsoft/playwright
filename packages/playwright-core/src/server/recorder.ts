@@ -107,7 +107,7 @@ export class Recorder implements InstrumentationListener {
         return;
       }
       if (data.event === 'selectorUpdated') {
-        this.setHighlightedSelector(data.params.selector);
+        this.setHighlightedSelector(data.params.language, data.params.selector);
         return;
       }
       if (data.event === 'step') {
@@ -210,8 +210,13 @@ export class Recorder implements InstrumentationListener {
     this._refreshOverlay();
   }
 
-  setHighlightedSelector(selector: string) {
-    this._highlightedSelector = locatorOrSelectorAsSelector(selector);
+  setHighlightedSelector(language: Language, selector: string) {
+    this._highlightedSelector = locatorOrSelectorAsSelector(language, selector);
+    this._refreshOverlay();
+  }
+
+  hideHighlightedSelecor() {
+    this._highlightedSelector = '';
     this._refreshOverlay();
   }
 
