@@ -287,9 +287,11 @@ export async function normalizeAndSaveAttachment(outputPath: string, name: strin
     throw new Error(`Exactly one of "path" and "body" must be specified`);
   if (options.path !== undefined) {
     const hash = calculateSha1(options.path);
-    let sanitizedNamePrefix = '';
-    if (isString(name))
-      sanitizedNamePrefix = sanitizeForFilePath(name) + '-';
+
+    if (!isString(name))
+      throw new Error('"name" should be string.');
+
+    const sanitizedNamePrefix = sanitizeForFilePath(name) + '-';
     const dest = path.join(outputPath, 'attachments', sanitizedNamePrefix + hash + path.extname(options.path));
     await fs.promises.mkdir(path.dirname(dest), { recursive: true });
     await fs.promises.copyFile(options.path, dest);

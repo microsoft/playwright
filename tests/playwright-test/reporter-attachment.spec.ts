@@ -257,7 +257,7 @@ test(`testInfo.attach name can be empty string`, async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toContain(`attachments${path.sep}-`);
 });
 
-test(`testInfo.attach ignore if name is not string`, async ({ runInlineTest }) => {
+test(`testInfo.attach throw if name is not string`, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const test = pwt.test.extend({
@@ -269,13 +269,12 @@ test(`testInfo.attach ignore if name is not string`, async ({ runInlineTest }) =
         },
       });
       test('success', async ({ fixture }) => {
-        expect(true).toBe(false);
+        expect(true).toBe(true);
       });
     `,
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
-  expect(stripAnsi(result.output)).toContain('attachment #1: false (text/plain)');
-  expect(stripAnsi(result.output)).toContain(`attachments${path.sep}`);
+  expect(stripAnsi(result.output)).toContain('"name" should be string.');
 });
