@@ -14,13 +14,9 @@
   limitations under the License.
 */
 
-import './source.css';
 import * as React from 'react';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/javascript/javascript';
-import 'codemirror/mode/python/python';
-import 'codemirror/mode/clike/clike';
-import 'codemirror/lib/codemirror.css';
+import './codeMirrorWrapper.css';
+import { CodeMirrorWrapper } from './codeMirrorWrapper';
 
 export type SourceHighlight = {
   line: number;
@@ -41,51 +37,5 @@ export const Source: React.FC<SourceProps> = ({
   highlight = [],
   revealLine
 }) => {
-  const codemirrorElement = React.createRef<HTMLDivElement>();
-  const [codemirror, setCodemirror] = React.useState<CodeMirror.Editor>();
-
-  React.useEffect(() => {
-    let mode;
-    if (language === 'javascript')
-      mode = 'javascript';
-    if (language === 'python')
-      mode = 'python';
-    if (language === 'java')
-      mode = 'text/x-java';
-    if (language === 'csharp')
-      mode = 'text/x-csharp';
-
-    if (codemirror && codemirror.getOption('mode') === mode)
-      return;
-
-    if (!codemirrorElement.current)
-      return;
-    if (codemirror)
-      codemirror.getWrapperElement().remove();
-
-    const cm = CodeMirror(codemirrorElement.current, {
-      value: '',
-      mode,
-      readOnly: true,
-      lineNumbers: true,
-    });
-    setCodemirror(cm);
-    updateEditor(cm, text, highlight, revealLine);
-  }, [codemirror, codemirrorElement, text, language, highlight, revealLine]);
-
-  if (codemirror)
-    updateEditor(codemirror, text, highlight, revealLine);
-
-  return <div className='cm-wrapper' ref={codemirrorElement}></div>;
+  return <CodeMirrorWrapper text={text} language={language} readOnly={true} highlight={highlight} revealLine={revealLine} lineNumbers={true}></CodeMirrorWrapper>;
 };
-
-function updateEditor(cm: CodeMirror.Editor, text: string, highlight: SourceHighlight[], revealLine: number | undefined) {
-  if (cm.getValue() !== text)
-    cm.setValue(text);
-  for (let i = 0; i < cm.lineCount(); ++i)
-    cm.removeLineClass(i, 'wrap');
-  for (const h of highlight)
-    cm.addLineClass(h.line - 1, 'wrap', `source-line-${h.type}`);
-  if (revealLine)
-    cm.scrollIntoView({ line: revealLine - 1, ch: 0 }, 50);
-}

@@ -49,3 +49,13 @@
 .recorder .selector-input {
   flex: auto;
 }
+
+.recorder .toolbar .cm-wrapper {
+  margin-left: 8px;
+  display: flex;
+  padding: 8px;
+}
+
+.recorder .toolbar .CodeMirror {
+  height: auto;
+}

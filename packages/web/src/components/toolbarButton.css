@@ -15,6 +15,7 @@
 */
 
 .toolbar-button {
+  flex: none;
   border: none;
   outline: none;
   color: var(--vscode-sideBarTitle-foreground);

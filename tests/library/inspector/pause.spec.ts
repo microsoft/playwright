@@ -359,10 +359,12 @@ it.describe('pause', () => {
       await page.pause();
     })();
     const recorderPage = await recorderPageGetter();
-    const [box1] = await Promise.all([
-      waitForTestLog<Box>(page, 'Highlight box for test: '),
-      recorderPage.fill('input[placeholder="Playwright Selector"]', 'text=Submit'),
-    ]);
+
+    const box1Promise = waitForTestLog<Box>(page, 'Highlight box for test: ');
+    await recorderPage.click('.toolbar .CodeMirror');
+    await recorderPage.keyboard.type('getByText(\'Submit\')');
+    const box1 = await box1Promise;
+
     const button = await page.$('text=Submit');
     const box2 = await button.boundingBox();
     expect(roundBox(box1)).toEqual(roundBox(box2));
