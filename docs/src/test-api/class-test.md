@@ -1077,6 +1077,51 @@ Test function that takes one or two arguments: an object with fixtures and optio
 
 
 
+## method: Test.reset
+* since: v1.28
+
+Resets options that were set up in the configuration file or with [`method: Test.use`] to their default or config-specified value.
+
+```js tab=js-js
+const { test, expect } = require('@playwright/test');
+
+test.reset({
+  // Reset storage state to the default empty value.
+  storageStage: 'default',
+
+  // Reset locale to the value specified in the config file.
+  locale: 'config',
+});
+
+test('example', async ({ page }) => {
+  // ...
+});
+```
+
+```js tab=js-ts
+import { test, expect } from '@playwright/test';
+
+test.reset({
+  // Reset storage state to the default empty value.
+  storageStage: 'default',
+
+  // Reset locale to the value specified in the config file.
+  locale: 'config',
+});
+
+test('example', async ({ page }) => {
+  // ...
+});
+```
+
+### param: Test.reset.fixtures
+* since: v1.28
+- `options` <[Object]>
+
+An object with options set to either `'config'` or `'default'`.
+
+
+
 
 ## method: Test.setTimeout
 * since: v1.10
