@@ -2669,6 +2669,23 @@ type ConnectOptions = {
 };
 
 /**
+ * Playwright Test provides a `storage` fixture for passing values between project setup and tests. TODO: examples
+ */
+interface Storage {
+  /**
+   * Get named item from the store.
+   * @param name Item name.
+   */
+  get<T>(name: string): Promise<T | undefined>;
+  /**
+   * Set value to the store.
+   * @param name Item name.
+   * @param value Item value. The value must be serializable to JSON.
+   */
+  set<T>(name: string, value: T | undefined): Promise<void>;
+}
+
+/**
  * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
  *
  * These options are usually provided in the [configuration file](https://playwright.dev/docs/test-configuration) through
@@ -3004,6 +3021,10 @@ export interface PlaywrightWorkerArgs {
    * Learn how to [configure browser](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
    */
   browser: Browser;
+  /**
+   * [Storage] is shared between all tests in the same run.
+   */
+  storage: Storage;
 }
 
 /**

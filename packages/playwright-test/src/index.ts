@@ -16,17 +16,18 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Video, APIRequestContext, Tracing } from 'playwright-core';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, VideoMode, TraceMode } from '../types/test';
-import { rootTestType } from './testType';
+import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
+import * as playwrightLibrary from 'playwright-core';
+import * as outOfProcess from 'playwright-core/lib/outofprocess';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
-export { expect } from './expect';
-export const _baseTest: TestType<{}, {}> = rootTestType.test;
-export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
-import * as outOfProcess from 'playwright-core/lib/outofprocess';
-import * as playwrightLibrary from 'playwright-core';
+import type { PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './testInfo';
+import { rootTestType } from './testType';
+import { sanitizeForFilePath, trimLongString } from './util';
+export { expect } from './expect';
+export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
+export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
@@ -127,13 +128,42 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     }
   }, { scope: 'worker', auto: true }],
 
-  browser: [async ({ playwright, browserName }, use) => {
+  browser: [async ({ playwright, browserName }, use, testInfo) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     const browser = await playwright[browserName].launch();
     await use(browser);
     await browser.close();
   }, { scope: 'worker', timeout: 0 }],
+
+  storage: [async ({ }, use, testInfo) => {
+    const toFilePath = (name: string) => {
+      const fileName = sanitizeForFilePath(trimLongString(name)) + '.json';
+      return path.join(testInfo.project.outputDir, '.playwright-storage', (testInfo as TestInfoImpl).project._id, fileName);
+    };
+    const storage = {
+      async get<T>(name: string) {
+        const file = toFilePath(name);
+        try {
+          const data = (await fs.promises.readFile(file)).toString('utf-8');
+          return JSON.parse(data) as T;
+        } catch (e) {
+          return undefined;
+        }
+      },
+      async set<T>(name: string, value: T | undefined) {
+        const file = toFilePath(name);
+        if (value === undefined) {
+          await fs.promises.rm(file, { force: true });
+          return;
+        }
+        const data = JSON.stringify(value, undefined, 2);
+        await fs.promises.mkdir(path.dirname(file), { recursive: true });
+        await fs.promises.writeFile(file, data);
+      }
+    };
+    await use(storage);
+  }, { scope: 'worker' }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
   bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP), { option: true }],
