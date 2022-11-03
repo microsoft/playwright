@@ -270,9 +270,15 @@ program
     .option('--port <port>', 'Server port')
     .option('--path <path>', 'Endpoint Path', '/')
     .option('--max-clients <maxClients>', 'Maximum clients')
-    .option('--no-socks-proxy', 'Disable Socks Proxy')
+    .option('--proxy-mode <mode>', 'Either `client`, `tether` or `disabled`. Defaults to `client`.', 'client')
     .action(function(options) {
-      runServer(options.port ? +options.port : undefined,  options.path, options.maxClients ? +options.maxClients : Infinity, options.socksProxy).catch(logErrorAndExit);
+      runServer({
+        port: options.port ? +options.port : undefined,
+        path: options.path,
+        maxConnections: options.maxClients ? +options.maxClients : Infinity,
+        browserProxyMode: options.proxyMode,
+        ownedByTetherClient: !!process.env.PW_OWNED_BY_TETHER_CLIENT,
+      }).catch(logErrorAndExit);
     });
 
 program

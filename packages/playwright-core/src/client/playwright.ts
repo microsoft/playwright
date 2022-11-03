@@ -16,7 +16,6 @@
 
 import type * as channels from '@protocol/channels';
 import { TimeoutError } from '../common/errors';
-import type * as socks from '../common/socksProxy';
 import { Android } from './android';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
@@ -45,7 +44,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   selectors: Selectors;
   readonly request: APIRequest;
   readonly errors: { TimeoutError: typeof TimeoutError };
-  private _socksProxyHandler: socks.SocksProxyHandler | undefined;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);
@@ -68,7 +66,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.selectors._addChannel(selectorsOwner);
     this._connection.on('close', () => {
       this.selectors._removeChannel(selectorsOwner);
-      this._socksProxyHandler?.cleanup();
     });
     (global as any)._playwrightInstance = this;
   }
