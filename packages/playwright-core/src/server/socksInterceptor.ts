@@ -68,7 +68,7 @@ export class SocksInterceptor {
     }
     if (message.method === '__create__' && message.params.type === 'SocksSupport') {
       this._socksSupportObjectGuid = message.params.guid;
-      return true;
+      return false;
     }
     if (this._socksSupportObjectGuid && message.guid === this._socksSupportObjectGuid) {
       const validator = findValidator('SocksSupport', message.method, 'Event');
