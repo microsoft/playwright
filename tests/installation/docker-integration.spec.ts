@@ -38,12 +38,12 @@ test('make sure it tells to run `npx playwright docker build` when image is not 
 });
 
 test.describe('installed image', () => {
-  test.beforeAll(async ({ exec, demonProcess, waitForPort }) => {
+  test.beforeAll(async ({ exec, daemonProcess, waitForPort }) => {
     await exec('npx playwright docker build', {
       env: { PWTEST_DOCKER_BASE_IMAGE: 'playwright:installation-tests-focal' },
       cwd: path.join(__dirname, '..', '..'),
     });
-    const dockerProcess = await demonProcess({
+    const dockerProcess = await daemonProcess({
       command: ['npx', 'playwright', 'docker', 'start', '--port=5667'],
       shell: true,
       cwd: path.join(__dirname, '..', '..'),

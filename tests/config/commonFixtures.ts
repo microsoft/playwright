@@ -116,7 +116,7 @@ export type CommonFixtures = {
 };
 
 export type CommonWorkerFixtures = {
-  demonProcess: (params: TestChildParams) => TestChildProcess;
+  daemonProcess: (params: TestChildParams) => TestChildProcess;
 };
 
 export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
@@ -137,7 +137,7 @@ export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
     }
   },
 
-  demonProcess: [async ({}, use) => {
+  daemonProcess: [async ({}, use) => {
     const processes: TestChildProcess[] = [];
     await use(params => {
       const process = new TestChildProcess(params);
