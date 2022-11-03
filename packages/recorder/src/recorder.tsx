@@ -139,7 +139,7 @@ export const Recorder: React.FC<RecorderProps> = ({
           }}>Explore</ToolbarButton>
           <CodeMirrorWrapper text={locator} language={source.language} readOnly={false} focusOnChange={true} wrapLines={true} onChange={text => {
             setLocator(text);
-            window.dispatch({ event: 'selectorUpdated', params: { selector: text } });
+            window.dispatch({ event: 'selectorUpdated', params: { selector: text, language: source.language } });
           }}></CodeMirrorWrapper>
           <ToolbarButton icon='files' title='Copy' onClick={() => {
             copy(locator);

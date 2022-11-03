@@ -15,9 +15,11 @@
  */
 
 import { escapeForAttributeSelector, escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
+import { asLocator } from './locatorGenerators';
+import type { Language } from './locatorGenerators';
 import { parseSelector } from './selectorParser';
 
-export function parseLocator(locator: string): string {
+function parseLocator(locator: string): string {
   locator = locator
       .replace(/AriaRole\s*\.\s*([\w]+)/g, (_, group) => group.toLowerCase())
       .replace(/(get_by_role|getByRole)\s*\(\s*(?:["'`])([^'"`]+)['"`]/g, (_, group1, group2) => `${group1}(${group2.toLowerCase()}`);
@@ -121,15 +123,21 @@ export function parseLocator(locator: string): string {
   }).join(' >> ');
 }
 
-export function locatorOrSelectorAsSelector(locator: string): string {
+export function locatorOrSelectorAsSelector(language: Language, locator: string): string {
   try {
     parseSelector(locator);
     return locator;
   } catch (e) {
   }
   try {
-    return parseLocator(locator);
+    const selector = parseLocator(locator);
+    if (digestForComparison(asLocator(language, selector)) === digestForComparison(locator))
+      return selector;
   } catch (e) {
   }
   return locator;
+}
+
+function digestForComparison(locator: string) {
+  return locator.replace(/\s/g, '').replace(/["`]/g, '\'');
 }

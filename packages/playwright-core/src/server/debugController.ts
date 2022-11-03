@@ -25,7 +25,6 @@ import { Recorder } from './recorder';
 import { EmptyRecorderApp } from './recorder/recorderApp';
 import { asLocator } from './isomorphic/locatorGenerators';
 import type { Language } from './isomorphic/locatorGenerators';
-import { locatorOrSelectorAsSelector } from './isomorphic/locatorParser';
 
 const internalMetadata = serverSideCallMetadata();
 
@@ -96,7 +95,7 @@ export class DebugController extends SdkObject {
 
     if (params.mode === 'none') {
       for (const recorder of await this._allRecorders()) {
-        recorder.setHighlightedSelector('');
+        recorder.hideHighlightedSelecor();
         recorder.setMode('none');
       }
       this.setAutoCloseEnabled(true);
@@ -114,7 +113,7 @@ export class DebugController extends SdkObject {
     }
     // Toggle the mode.
     for (const recorder of await this._allRecorders()) {
-      recorder.setHighlightedSelector('');
+      recorder.hideHighlightedSelecor();
       if (params.mode === 'recording')
         recorder.setOutput(this._codegenId, params.file);
       recorder.setMode(params.mode);
@@ -139,15 +138,14 @@ export class DebugController extends SdkObject {
   }
 
   async highlight(selector: string) {
-    selector = locatorOrSelectorAsSelector(selector);
     for (const recorder of await this._allRecorders())
-      recorder.setHighlightedSelector(selector);
+      recorder.setHighlightedSelector(this._sdkLanguage, selector);
   }
 
   async hideHighlight() {
     // Hide all active recorder highlights.
     for (const recorder of await this._allRecorders())
-      recorder.setHighlightedSelector('');
+      recorder.hideHighlightedSelecor();
     // Hide all locator.highlight highlights.
     await this._playwright.hideHighlight();
   }

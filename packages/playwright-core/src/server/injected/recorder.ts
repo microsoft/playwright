@@ -228,7 +228,7 @@ class Recorder {
 
   private _onMouseLeave(event: MouseEvent) {
     // Leaving iframe.
-    if (this._deepEventTarget(event).nodeType === Node.DOCUMENT_NODE) {
+    if (window.top !== window && this._deepEventTarget(event).nodeType === Node.DOCUMENT_NODE) {
       this._hoveredElement = null;
       this._updateModelForHoveredElement();
     }
