@@ -15,6 +15,7 @@
 */
 
 import type { CallLog, Mode, Source } from './recorderTypes';
+import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { Source as SourceView } from '@web/components/source';
 import { SplitView } from '@web/components/splitView';
 import { Toolbar } from '@web/components/toolbar';
@@ -45,14 +46,6 @@ export const Recorder: React.FC<RecorderProps> = ({
   log,
   mode,
 }) => {
-  const [locator, setLocator] = React.useState('');
-  const [focusSelectorInput, setFocusSelectorInput] = React.useState(false);
-  window.playwrightSetSelector = (selector: string, focus?: boolean) => {
-    const language = sources[0]?.language || 'javascript';
-    setLocator(asLocator(language, selector));
-    setFocusSelectorInput(!!focus);
-  };
-
   const [fileId, setFileId] = React.useState<string | undefined>();
 
   React.useEffect(() => {
@@ -68,6 +61,13 @@ export const Recorder: React.FC<RecorderProps> = ({
     label: '',
     highlight: []
   };
+
+  const [locator, setLocator] = React.useState('');
+  window.playwrightSetSelector = (selector: string, focus?: boolean) => {
+    const language = source.language;
+    setLocator(asLocator(language, selector));
+  };
+
   window.playwrightSetFileIfNeeded = (value: string) => {
     const newSource = sources.find(s => s.id === value);
     // Do not forcefully switch between two recorded sources, because
@@ -81,14 +81,6 @@ export const Recorder: React.FC<RecorderProps> = ({
     messagesEndRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [messagesEndRef]);
 
-  const selectorInputRef = React.createRef<HTMLInputElement>();
-  React.useLayoutEffect(() => {
-    if (focusSelectorInput && selectorInputRef.current) {
-      selectorInputRef.current.select();
-      selectorInputRef.current.focus();
-      setFocusSelectorInput(false);
-    }
-  }, [focusSelectorInput, selectorInputRef]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -145,12 +137,12 @@ export const Recorder: React.FC<RecorderProps> = ({
           <ToolbarButton icon='microscope' title='Explore' toggled={mode === 'inspecting'} onClick={() => {
             window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' } }).catch(() => { });
           }}>Explore</ToolbarButton>
-          <input ref={selectorInputRef} className='selector-input' placeholder='Playwright Selector' spellCheck='false' value={locator} disabled={mode !== 'none'} onChange={event => {
-            setLocator(event.target.value);
-            window.dispatch({ event: 'selectorUpdated', params: { selector: event.target.value } });
-          }} />
+          <CodeMirrorWrapper text={locator} language={source.language} readOnly={false} focusOnChange={true} wrapLines={true} onChange={text => {
+            setLocator(text);
+            window.dispatch({ event: 'selectorUpdated', params: { selector: text } });
+          }}></CodeMirrorWrapper>
           <ToolbarButton icon='files' title='Copy' onClick={() => {
-            copy(selectorInputRef.current?.value || '');
+            copy(locator);
           }}></ToolbarButton>
         </Toolbar>
         <CallLogView language={source.language} log={Array.from(log.values())}/>

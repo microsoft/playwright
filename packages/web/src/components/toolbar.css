@@ -19,7 +19,7 @@
   box-shadow: var(--box-shadow);
   background-color: var(--vscode-sideBar-background);
   color: var(--vscode-sideBarTitle-foreground);
-  height: 40px;
+  min-height: 40px;
   align-items: center;
   padding-right: 10px;
   flex: none;
