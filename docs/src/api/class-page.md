@@ -1224,7 +1224,7 @@ Passing `'Null'` disables CSS media emulation.
 
 ### option: Page.emulateMedia.colorScheme
 * since: v1.9
-* langs: js, python, java
+* langs: js, java
 - `colorScheme` <null|[ColorScheme]<"light"|"dark"|"no-preference">>
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
@@ -1232,7 +1232,7 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 
 ### option: Page.emulateMedia.colorScheme
 * since: v1.9
-* langs: csharp
+* langs: csharp, python
 - `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference"|"null">>
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
@@ -1240,28 +1240,28 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 
 ### option: Page.emulateMedia.reducedMotion
 * since: v1.12
-* langs: js, python, java
+* langs: js, java
 - `reducedMotion` <null|[ReducedMotion]<"reduce"|"no-preference">>
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null` disables reduced motion emulation.
 
 ### option: Page.emulateMedia.reducedMotion
 * since: v1.12
-* langs: csharp
+* langs: csharp, python
 - `reducedMotion` <[ReducedMotion]<"reduce"|"no-preference"|"null">>
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null` disables reduced motion emulation.
 
 ### option: Page.emulateMedia.forcedColors
 * since: v1.15
-* langs: js, python, java
+* langs: js, java
 - `forcedColors` <null|[ForcedColors]<"active"|"none">>
 
 Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables forced colors emulation.
 
 ### option: Page.emulateMedia.forcedColors
 * since: v1.15
-* langs: csharp
+* langs: csharp, python
 - `forcedColors` <[ForcedColors]<"active"|"none"|"null">>
 
 ## async method: Page.evalOnSelector
