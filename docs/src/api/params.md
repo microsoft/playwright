@@ -523,39 +523,39 @@ Whether to emulate network being offline. Defaults to `false`.
 Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 
 ## context-option-colorscheme
-* langs: js, python, java
+* langs: js, java
 - `colorScheme` <null|[ColorScheme]<"light"|"dark"|"no-preference">>
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
 [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'light'`.
 
-## context-option-colorscheme-csharp
-* langs: csharp
+## context-option-colorscheme-csharp-python
+* langs: csharp, python
 - `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference"|"null">>
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
 [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'light'`.
 
 ## context-option-reducedMotion
-* langs: js, python, java
+* langs: js, java
 - `reducedMotion` <null|[ReducedMotion]<"reduce"|"no-preference">>
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
 
-## context-option-reducedMotion-csharp
-* langs: csharp
+## context-option-reducedMotion-csharp-python
+* langs: csharp, python
 - `reducedMotion` <[ReducedMotion]<"reduce"|"no-preference"|"null">>
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'no-preference'`.
 
 ## context-option-forcedColors
-* langs: js, python, java
+* langs: js, java
 - `forcedColors` <null|[ForcedColors]<"active"|"none">>
 
 Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'none'`.
 
-## context-option-forcedColors-csharp
-* langs: csharp
+## context-option-forcedColors-csharp-python
+* langs: csharp, python
 - `forcedColors` <[ForcedColors]<"active"|"none"|"null">>
 
 Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'none'`.
@@ -837,11 +837,11 @@ An acceptable perceived color difference in the [YIQ color space](https://en.wik
 - %%-context-option-offline-%%
 - %%-context-option-httpcredentials-%%
 - %%-context-option-colorscheme-%%
-- %%-context-option-colorscheme-csharp-%%
+- %%-context-option-colorscheme-csharp-python-%%
 - %%-context-option-reducedMotion-%%
-- %%-context-option-reducedMotion-csharp-%%
+- %%-context-option-reducedMotion-csharp-python-%%
 - %%-context-option-forcedColors-%%
-- %%-context-option-forcedColors-csharp-%%
+- %%-context-option-forcedColors-csharp-python-%%
 - %%-context-option-logger-%%
 - %%-context-option-videospath-%%
 - %%-context-option-videosize-%%
