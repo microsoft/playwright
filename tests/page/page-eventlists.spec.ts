@@ -81,6 +81,25 @@ it('concurrent eventList.take should resolve in order', async ({ page, server })
   expect(msg2.text()).toBe('bar');
 });
 
+it('eventList.take should accept predicate', async ({ page, server }) => {
+  const eventList = page.events.console;
+  eventList.track();
+
+  let resolved = false;
+  const takePromise = eventList.take(msg => msg.text().includes('baz')).then(msg => {
+    resolved = true;
+    return msg;
+  });
+
+  await page.evaluate(() => console.log('foo'));
+  expect(resolved).toBe(false);
+  await page.evaluate(() => console.log('bar'));
+  expect(resolved).toBe(false);
+  await page.evaluate(() => console.log('baz'));
+  const msg = await takePromise;
+  expect(msg.text()).toBe('baz');
+});
+
 it('eventList.take should respect timeout option', async ({ page, server }) => {
   const eventList = page.events.console;
   eventList.track();

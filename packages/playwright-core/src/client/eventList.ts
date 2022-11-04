@@ -19,6 +19,7 @@ import { Waiter } from './waiter';
 import type { WaitForEventOptions } from './types';
 import type { Page } from './page';
 import type { BrowserContext } from './browserContext';
+import { EventEmitter } from 'events';
 
 type WrappedEvent<T> = { event: T };
 
@@ -28,11 +29,14 @@ export class EventList<T> implements api.EventList<T> {
   private _eventName: string;
   private _apiNameBase: string;
   private _eventListener: (event: T) => void;
+  private _emitter: EventEmitter;
 
   constructor(pageOrContext: Page | BrowserContext, eventName: string, apiNameBase: string) {
     this._pageOrContext = pageOrContext;
     this._eventName = eventName;
-    this._eventListener = (event: T) => this._list.push({ event });
+    this._emitter = new EventEmitter();
+    this._emitter.on(this._eventName, (obj: WrappedEvent<T>) => this._list.push(obj));
+    this._eventListener = (event: T) => this._emitter.emit(this._eventName, { event });
     this._apiNameBase = apiNameBase;
   }
 
@@ -56,13 +60,16 @@ export class EventList<T> implements api.EventList<T> {
       const waiter = new Waiter(this._pageOrContext, this._eventName, apiName);
       this._pageOrContext._setupWaiter(waiter, this._eventName, timeout, `waiting for ${apiName}`);
 
-      const composedPredicate = predicate ? (arg: WrappedEvent<T>) => predicate(arg.event) : undefined;
+      const wrappedPredicate = predicate ? (arg: WrappedEvent<T>) => predicate(arg.event) : undefined;
 
       while (true) {
-        const uniqueObj = await waiter.waitForEvent(this._pageOrContext, this._eventName, composedPredicate, this._list);
+        // The `waiter.waitForEvent` will throw after timeout or certain page events.
+        const uniqueObj = await waiter.waitForEvent(this._emitter, this._eventName, wrappedPredicate, this._list);
         const index = this._list.indexOf(uniqueObj);
-        if (index !== -1)
+        if (index !== -1) {
+          waiter.dispose();
           return this._list.splice(index, 1)[0].event;
+        }
       }
     }, false /* isInternal */, {
       ...captureStackTrace(),
