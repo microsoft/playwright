@@ -17,10 +17,11 @@ import http from 'http';
 import https from 'https';
 import path from 'path';
 import net from 'net';
+import { spawn, execSync } from 'child_process';
+import type { ChildProcess } from 'child_process';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
-import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
 
 import type { FullConfig, Reporter, Suite } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';
@@ -46,8 +47,8 @@ const debugWebServer = debug('pw:webserver');
 
 export class WebServerPlugin implements TestRunnerPlugin {
   private _isAvailable?: () => Promise<boolean>;
-  private _killProcess?: () => Promise<void>;
-  private _processExitedPromise!: Promise<any>;
+  private _processExitedPromise?: Promise<any>;
+  private _childProcess?: ChildProcess;
   private _options: WebServerPluginOptions;
   private _checkPortOnly: boolean;
   private _reporter?: Reporter;
@@ -64,7 +65,6 @@ export class WebServerPlugin implements TestRunnerPlugin {
     this._options.cwd = this._options.cwd ? path.resolve(configDir, this._options.cwd) : configDir;
     try {
       await this._startProcess();
-      await this._waitForProcess();
     } catch (error) {
       await this.teardown();
       throw error;
@@ -72,13 +72,20 @@ export class WebServerPlugin implements TestRunnerPlugin {
   }
 
   public async teardown() {
-    await this._killProcess?.();
+    if (!this._childProcess || !this._childProcess.pid || this._childProcess.killed)
+      return;
+    try {
+      if (process.platform === 'win32')
+        execSync(`taskkill /pid ${this._childProcess.pid} /T /F /FI "MEMUSAGE gt 0"`, { stdio: 'ignore' });
+      else
+        process.kill(this._childProcess.pid, 'SIGTERM');
+    } catch (e) {
+      // the process might have already stopped
+    }
+    await this._processExitedPromise;
   }
 
   private async _startProcess(): Promise<void> {
-    let processExitedReject = (error: Error) => { };
-    this._processExitedPromise = new Promise((_, reject) => processExitedReject = reject);
-
     const isAlreadyAvailable = await this._isAvailable!();
     if (isAlreadyAvailable) {
       debugWebServer(`WebServer is already available`);
@@ -89,33 +96,33 @@ export class WebServerPlugin implements TestRunnerPlugin {
     }
 
     debugWebServer(`Starting WebServer process ${this._options.command}...`);
-    const { launchedProcess, kill } = await launchProcess({
-      command: this._options.command,
+
+    this._childProcess = spawn(this._options.command, [], {
       env: {
         ...DEFAULT_ENVIRONMENT_VARIABLES,
         ...envWithoutExperimentalLoaderOptions(),
         ...this._options.env,
       },
       cwd: this._options.cwd,
-      stdio: 'stdin',
+      stdio: 'pipe',
       shell: true,
-      attemptToGracefullyClose: async () => {},
-      log: () => {},
-      onExit: code => processExitedReject(new Error(code ? `Process from config.webServer was not able to start. Exit code: ${code}` : 'Process from config.webServer exited early.')),
-      tempDirectories: [],
     });
-    this._killProcess = kill;
+    this._processExitedPromise = new Promise((resolve, reject) => {
+      this._childProcess!.once('exit', code => {
+        if (code)
+          reject(new Error(`Process from config.webServer was not able to start. Exit code: ${code}`));
+        else
+          resolve(undefined);
+      });
+    });
 
     debugWebServer(`Process started`);
 
-    launchedProcess.stderr!.on('data', line => this._reporter!.onStdErr?.('[WebServer] ' + line.toString()));
-    launchedProcess.stdout!.on('data', line => {
+    this._childProcess.stderr!.on('data', line => this._reporter!.onStdErr?.('[WebServer] ' + line.toString()));
+    this._childProcess.stdout!.on('data', line => {
       if (debugWebServer.enabled)
         this._reporter!.onStdOut?.('[WebServer] ' + line.toString());
     });
-  }
-
-  private async _waitForProcess() {
     debugWebServer(`Waiting for availability...`);
     await this._waitForAvailability();
     debugWebServer(`WebServer available`);
@@ -126,7 +133,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
     const cancellationToken = { canceled: false };
     const { timedOut } = (await Promise.race([
       raceAgainstTimeout(() => waitFor(this._isAvailable!, cancellationToken), launchTimeout),
-      this._processExitedPromise,
+      this._processExitedPromise!.then(() => { throw new Error('Process exited early'); }),
     ]));
     cancellationToken.canceled = true;
     if (timedOut)
