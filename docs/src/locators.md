@@ -299,7 +299,7 @@ Find an element by the text it contains. You can match by a substring, exact str
 For example, consider the following DOM structure.
 
 ```html
-<span>Welcome John</span>
+<span>Welcome, John</span>
 ```
 
 You can locate the element by the text it contains:
