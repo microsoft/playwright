@@ -209,7 +209,7 @@ page.getByRole("checkbox", new Page.GetByRoleOptions().setChecked(true).setName(
 ```csharp
 await page.GetByRole("button", new() { Name = new Regex("submit", RegexOptions.IgnoreCase) }).ClickAsync();
 
-await page.GetByRole("checkbox", new() { Checked = true, Name = "newsletter" }).CheckAsync();
+await page.GetByRole("checkbox", new() { Checked = true, Name = "newsletter" }).UncheckAsync();
 ```
 
 Role locators include [buttons, checkboxes, headings, links, lists, tables, and many more](https://www.w3.org/TR/html-aria/#docconformance) and follow W3C specifications for [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
