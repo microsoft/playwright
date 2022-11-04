@@ -476,6 +476,57 @@ By default, [`method: Page.getByTestId`] will locate elements based on the `data
 You can also use test ids when you choose to use the test id methodology or when you can't locate by [role](#locate-by-role) or [text](#locate-by-text).
 :::
 
+#### Set a custom test id attribute
+
+Set the test id to use a custom data attribute for your tests.
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    testIdAttribute: 'data-pw'
+  },
+};
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  use: {
+    testIdAttribute: 'data-pw'
+  }
+};
+export default config;
+```
+
+```java
+Selectors.setTestIdAttribute('data-pw')
+```
+
+```python async
+selectors.set_test_id_attribute('data-pw')
+```
+
+```python sync
+selectors.set_test_id_attribute('data-pw')
+```
+
+```csharp
+Selectors.SetTestIdAttribute('data-pw')
+```
+
+In your html you can now use `data-pw` as your test id instead of the default `data-testid`. 
+
+```html
+<span data-pw='custom'>custom test id</span>
+```
+
 ### Locate by CSS or XPath
 
 If you absolutely must use CSS or XPath locators, you can use [`method: Page.locator`] to create a locator that takes a [selector](./selectors.md) describing how to find an element in the page. Playwright supports CSS and XPath selectors, and auto-detects them if you omit `css=` or `xpath=` prefix.
