@@ -135,33 +135,43 @@ await locator.ClickAsync();
 Note that all methods that create a locator, such as [`method: Page.getByLabel`], are also available on the [Locator] and [FrameLocator] classes, so you can chain them and iteratively narrow down your locator.
 
 ```js
-const locator = page.frameLocator('#my-frame').getByRole('button', { name: 'Sign in' });
+const locator = page.frameLocator('#my-frame')
+    .getByRole('button', { name: 'Sign in' });
+
 await locator.click();
 ```
 
 ```java
-Locator locator = page.frameLocator("#my-frame").getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in"));
+Locator locator = page.frameLocator("#my-frame")
+    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in"));
+
 locator.click();
 ```
 
 ```python async
-locator = page.frame_locator("#my-frame").get_by_role("button", name="Sign in")
+locator = page.frame_locator("#my-frame")
+    .get_by_role("button", name="Sign in")
+
 await locator.click()
 ```
 
 ```python sync
-locator = page.frame_locator("my-frame").get_by_role("button", name="Sign in")
+locator = page.frame_locator("my-frame")
+    .get_by_role("button", name="Sign in")
+
 locator.click()
 ```
 
 ```csharp
-var locator = page.FrameLocator("#my-frame").GetByRole("button", new() { Name = "Sign in" });
+var locator = page.FrameLocator("#my-frame")
+    .GetByRole("button", new() { Name = "Sign in" });
+
 await locator.ClickAsync();
 ```
 
 ### Locate by role
 
-The [`method: Page.getByRole`] locator reflects how users and assistive technology perceive the page, for example whether some element is a button or a checkbox. When locating by role, you should usually pass the accessible name as well, so that locator pinpoints the exact element.
+The [`method: Page.getByRole`] locator reflects how users and assistive technology perceive the page, for example whether some element is a button or a checkbox. When locating by role, you should usually pass the accessible name as well, so that the locator pinpoints the exact element.
 
 For example, consider the following DOM structure.
 
@@ -207,7 +217,7 @@ Role locators include [buttons, checkboxes, headings, links, lists, tables, and 
 Note that role locators **do not replace** accessibility audits and conformance tests, but rather give early feedback about the ARIA guidelines.
 
 :::tip When to use role locators
-This should be your first when choosing a locator. It is the most resilient way to locate elements, as it reflects how users and assistive technology perceive the page.
+We recommend prioritizing role locators to locate elements, as it is the closest way to how users and assistive technology perceive the page.
 :::
 
 ### Locate by label
@@ -244,7 +254,7 @@ await page.GetByLabel("Password").FillAsync("secret");
 ```
 
 :::tip When to use label locators
-This should be used when locating form fields.
+Use this locator when locating form fields.
 :::
 ### Locate by placeholder
 
@@ -278,8 +288,8 @@ page.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
 await page.GetByPlaceholder("name@example.com").FillAsync("playwright@microsoft.com");
 ```
 
-:::tip When to use label locators
-This should be used when locating form elements which do not have labels but do have placeholder texts.
+:::tip When to use placeholder locators
+Use this locator when locating form elements that do not have labels but do have placeholder texts.
 :::
 
 ### Locate by text
@@ -327,19 +337,24 @@ await Expect(page.GetByText(new Regex("welcome john", RegexOptions.IgnoreCase)))
 You can also [filter by text](#filter-by-text) which can be useful when trying to find a particular item in a list.
 
 ```js
-await page.getByTestId('product-item').filter({ hasText: 'Playwright Book' }).click();
+await page.getByTestId('product-item')
+    .filter({ hasText: 'Playwright Book' }).click();
 ```
 ```java
-page.getByTestId("product-item").filter(new Locator.FilterOptions().setHasText("Playwright Book")).click();
+page.getByTestId("product-item")
+    .filter(new Locator.FilterOptions().setHasText("Playwright Book")).click();
 ```
 ```python async
-await page.get_by_test_id("product-item").filter(has_text="Playwright Book").click()
+await page.get_by_test_id("product-item")
+    .filter(has_text="Playwright Book").click()
 ```
 ```python sync
-page.get_by_test_id("product-item").filter(has_text="Playwright Book").click()
+page.get_by_test_id("product-item")
+    .filter(has_text="Playwright Book").click()
 ```
 ```csharp
-await page.GetByTestId("product-item").Filter(new() { HasText = "Playwright Book" }).ClickAsync();
+await page.GetByTestId("product-item")
+    .Filter(new() { HasText = "Playwright Book" }).ClickAsync();
 ```
 
 :::note
@@ -347,7 +362,7 @@ Matching by text always normalizes whitespace, even with exact match. For exampl
 :::
 
 :::tip When to use text locators
-This should be used to find non interactive elements like `div`, `span`, `p`, etc. For interactive elements like `button`, `a`, `input`, etc. use [role locators](#locate-by-role).
+We recommend using text locators to find non interactive elements like `div`, `span`, `p`, etc. For interactive elements like `button`, `a`, `input`, etc. use [role locators](#locate-by-role).
 :::
 
 ### Locate by alt text
@@ -420,12 +435,12 @@ await Expect(page.GetByTitle("Issues count")).toHaveText("25 issues");
 ```
 
 :::tip When to use title locators
-You can use this locator when your element contains the title attribute.
+Use this locator when your element contains the title attribute.
 :::
 
 ### Locate by testid
 
-User-facing attributes like text or accessible name can change over time. In this case it is convenient to define explicit test ids and query them with [`method: Page.getByTestId`].
+Testing by test ids is the most resilient way of testing as even if your text or role of the attribute changes the test will still pass. QA's and developers should define explicit test ids and query them with [`method: Page.getByTestId`]. However testing by test ids is not user facing. If the role or text value is important to you then consider using user facing locators such as [role](#locate-by-role) and [text locators](#locate-by-text).
 
 For example, consider the following DOM structure.
 
@@ -458,10 +473,8 @@ await page.GetByTestId("directions").ClickAsync();
 By default, [`method: Page.getByTestId`] will locate elements based on the `data-testid` attribute, but you can configure it in your test config or by calling [`method: Selectors.setTestIdAttribute`].
 
 :::tip When to use testid locators
-Use test ids when you can't locate by [role](#locate-by-role) or [text](#locate-by-text) or when the text is dynamic or when you want to test the application in different languages.
+You can also use test ids when you choose to use the test id methodology or when you can't locate by [role](#locate-by-role) or [text](#locate-by-text).
 :::
-
-
 
 ### Locate by CSS or XPath
 
@@ -539,60 +552,14 @@ await page.Locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > di
 await page.Locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").ClickAsync();
 ```
 
-Instead, try to come up with a locator that is close to how user perceives the page or [define an explicit testing contract](#locate-by-testid).
-
+:::tip When to use this
+CSS and XPath are not recommended as the DOM can often change leading to non resilient tests. Instead, try to come up with a locator that is close to how the user perceives the page such as [role locators](#locate-by-role) or [define an explicit testing contract](#locate-by-testid) using test ids.
+:::
 ## Locate elements that contain other elements
 
 ### Filter by text
 
-Locators can be optionally filtered by text. It will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
-
-```js
-await page.getByTestId('product-card').filter({ hasText: 'Product 3' }).click();
-await page.getByTestId('product-card').filter({ hasText: /product 3/ }).click();
-```
-```java
-page.getByTestId("product-card").filter(new Locator.FilterOptions().setHasText("Product 3")).click();
-page.getByTestId("product-card").filter(new Locator.FilterOptions().setHasText(Pattern.compile("Product 3"))).click();
-```
-```python async
-await page.get_by_test_id("product-card").filter(has_text="Product 3").click()
-await page.get_by_test_id("product-card").filter(has_text=re.compile("Product 3")).click()
-```
-```python sync
-page.get_by_test_id("product-card").filter(has_text="Product 3").click()
-page.get_by_test_id("product-card").filter(has_text=re.compile("Product 3")).click()
-```
-```csharp
-await page.GetByTestId("product-card").Filter(new() { HasText = "Product 3" }).ClickAsync();
-await page.GetByTestId("product-card").Filter(new() { HasText = new Regex("Product 3") }).ClickAsync();
-```
-
-### Filter by another locator
-
-Locators support an option to only select elements that have a descendant matching another locator.
-
-```js
-page.getByRole('section').filter({ has: page.getByTestId('subscribe-button') })
-```
-```java
-page.getByRole("section").filter(new Locator.FilterOptions().setHas(page.getByTestId("subscribe-button")))
-```
-```python async
-page.get_by_role("section").filter(has=page.get_by_test_id("subscribe-button"))
-```
-```python sync
-page.get_by_role("section").filter(has=page.get_by_test_id("subscribe-button"))
-```
-```csharp
-page.GetByRole("section"), new() { Has = page.GetByTestId("subscribe-button") })
-```
-
-Note that inner locator is matched starting from the outer one, not from the document root.
-
-### Locate in a subtree
-
-You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page.
+Locators can be optionally filtered by text with the [`method: Locator.filter`] method. It will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
 
 For example, consider the following DOM structure:
 
@@ -601,47 +568,117 @@ For example, consider the following DOM structure:
   <span>Product 1</span>
   <button>Buy</button>
 </div>
+
 <div data-testid='product-card'>
   <span>Product 2</span>
   <button>Buy</button>
 </div>
 ```
 
-We can first find a series of product cards by their testid and then filter by text to find the product card with the text of "Product 2" and then click the "Buy" button of this specific product card.
+You can click on the second product card by first locating the product cards by test id and then filtering to find the product card with the text of "Product 2".
 
 ```js
-const product = page.getByTestId('product-card').filter({ hasText: 'Product 2' });
+await page.getByTestId('product-card')
+    .filter({ hasText: 'Product 2' })
+    .click();
 
-await product.getByRole('button', { name: 'Buy' }).click();
-```
-
-```python async
-product = page.get_by_test_id("product-card").filter(has_text="Product 2")
-
-await product.get_by_role("button", name="Buy").click()
-```
-
-```python sync
-product = page.get_by_test_id("product-card").filter(has_text="Product 2")
-
-product.get_by_role("button", name="Buy").click()
+await page.getByTestId('product-card')
+    .filter({ hasText: /product 2/ })
+    .click();
 ```
 
 ```java
-Locator product = page.getByTestId("product-card").filter(new Locator.FilterOptions().setHasText("Product 2"));
+page.getByTestId("product-card")
+    .filter(new Locator.FilterOptions().setHasText("Product 2"))
+    .click();
+    
+page.getByTestId("product-card")
+    .filter(new Locator.FilterOptions().setHasText(Pattern.compile("Product 2")))
+    .click();
+```
 
-product.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy")).click();
+```python async
+await page.get_by_test_id("product-card")
+    .filter(has_text="Product 2")
+    .click()
+
+await page.get_by_test_id("product-card")
+    .filter(has_text=re.compile("Product 2"))
+    .click()
+```
+
+```python sync
+page.get_by_test_id("product-card")
+    .filter(has_text="Product 2")
+    .click()
+
+page.get_by_test_id("product-card")
+    .filter(has_text=re.compile("Product 2"))
+    .click()
 ```
 
 ```csharp
-var product = page.GetByTestId("product-card").Filter(new() { HasText = "Product 2" });
+await page.GetByTestId("product-card")
+    .Filter(new() { HasText = "Product 2" })
+    .ClickAsync();
 
-await product.GetByRole("button", new() { Name = "Buy" }).ClickAsync();
+await page.GetByTestId("product-card")
+    .Filter(new() { HasText = new Regex("Product 2") })
+    .ClickAsync();
 ```
+
+### Filter by another locator
+
+Locators support an option to only select elements that have a descendant matching another locator.
+
+For example, consider the following DOM structure:
+
+```html
+<header>
+  <button>Sign in</button>
+</header>
+
+<section>
+  <button>Sign in</button>
+</section>
+```
+To select the "Sign in" button from the `section` we can first locate by the role of section and then filter by the button role.
+
+```js
+await page.getByRole('section')
+    .filter({ has: page.getByRole('button', { name: 'Sign in' })
+    .click()
+```
+
+```java
+page.getByRole("section")
+    .filter(new Locator.FilterOptions().setHas(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")))
+.click()
+```
+
+```python async
+await page.get_by_role("section")
+    .filter(has=page.get_by_role("button", name="Sign in"))
+    .click()
+```
+
+```python sync
+page.get_by_role("section")
+    .filter(has=page.get_by_role("button", name="Sign in"))
+    .click()
+```
+
+```csharp
+await page.GetByTestId("section")
+    .Filter(new() { Has = page.GetByRole("button", new() { Name = "Sign in" ) })
+    .ClickAsync();
+```
+
+Note that inner locator is matched starting from the outer one, not from the document root.
 
 ### Augment an existing locator
 
-You can filter an existing locator by text or another one, using [`method: Locator.filter`] method, possibly chaining it multiple times.
+You can filter an existing locator by text or another one, using the [`method: Locator.filter`] method, possibly chaining it multiple times.
 
 ```js
 const rowLocator = page.locator('tr');
@@ -695,6 +732,7 @@ All locators in Playwright **by default** work with elements in Shadow DOM. The 
 - [Closed-mode shadow roots](https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow#parameters) are not supported.
 
 Consider the following example with a custom web component:
+
 ```html
 <x-details role=button aria-expanded=true aria-controls=inner-details>
   <div>Title</div>
@@ -756,6 +794,62 @@ You can locate in the same way as if the shadow root was not present at all.
   await Expect(page.Locator("x-details")).ToContainTextAsync("Details");
   ```
 
+## Locate within elements
+
+You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page.
+
+For example, consider the following DOM structure:
+
+```html
+<div data-testid='product-card'>
+  <span>Product 1</span>
+  <button>Buy</button>
+</div>
+
+<div data-testid='product-card'>
+  <span>Product 2</span>
+  <button>Buy</button>
+</div>
+```
+
+Locating by role `button` will return an error due to [strictness](#strictness) as there is more than one element with this role and name. 
+
+In this scenario we can locate an element within another element. First we create a locator called **product** and locate the product cards by testid. We then filter by text to find the product card with the text of "Product 2". We can then use this new locator called **product** and locate the button inside that product card and click it.
+
+```js
+const product = page.getByTestId('product-card')
+    .filter({ hasText: 'Product 2' });
+
+await product.getByRole('button', { name: 'Buy' }).click();
+```
+
+```python async
+product = page.get_by_test_id("product-card")
+    .filter(has_text="Product 2")
+
+await product.get_by_role("button", name="Buy").click()
+```
+
+```python sync
+product = page.get_by_test_id("product-card")
+    .filter(has_text="Product 2")
+
+product.get_by_role("button", name="Buy").click()
+```
+
+```java
+Locator product = page.getByTestId("product-card")
+    .filter(new Locator.FilterOptions().setHasText("Product 2"));
+
+product.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy")).click();
+```
+
+```csharp
+var product = page.GetByTestId("product-card")
+    .Filter(new() { HasText = "Product 2" });
+
+await product.GetByRole("button", new() { Name = "Buy" }).ClickAsync();
+```
 ## Lists
 
 You can also use locators to work with the element lists.
@@ -877,7 +971,7 @@ However, use these methods with caution. Often times, the page might change, and
 ## Strictness
 
 Locators are strict. This means that all operations on locators that imply
-some target DOM element will throw an exception if more than one element matches
+some target DOM element will throw an exception if more than one element matches a
 given selector. For example, the following call throws if there are several buttons in the DOM:
 
 ```js
@@ -901,7 +995,7 @@ await page.GetByRole("button").ClickAsync();
 ```
 
 On the other hand, Playwright understands when you perform a multiple-element operation,
-so the following call works perfectly fine when locator resolves to multiple elements.
+so the following call works perfectly fine when the locator resolves to multiple elements.
 
 ```js
 await page.getByRole('button').count();
@@ -923,4 +1017,4 @@ page.getByRole("button").count();
 await page.GetByRole("button").CountAsync();
 ```
 
-You can explicitly opt-out from strictness check by telling Playwright which element to use when multiple element match, through [`method: Locator.first`], [`method: Locator.last`], and [`method: Locator.nth`]. These methods are **not recommended** because when your page changes, Playwright may click on an element you did not intend. Instead, follow best practices below to create a locator that uniquely identifies the target element.
+You can explicitly opt-out from strictness check by telling Playwright which element to use when multiple elements match, through [`method: Locator.first`], [`method: Locator.last`], and [`method: Locator.nth`]. These methods are **not recommended** because when your page changes, Playwright may click on an element you did not intend. Instead, follow best practices above to create a locator that uniquely identifies the target element.
