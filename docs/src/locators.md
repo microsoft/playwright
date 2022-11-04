@@ -203,7 +203,7 @@ page.get_by_role("checkbox", checked=True, name="newsletter").uncheck()
 ```java
 page.getByRole("button", new Page.GetByRoleOptions().setName(Pattern.compile("submit", Pattern.CASE_INSENSITIVE))).click();
 
-page.getByRole("checkbox", new Page.GetByRoleOptions().setChecked(true).setName("newsletter"))).check();
+page.getByRole("checkbox", new Page.GetByRoleOptions().setChecked(true).setName("newsletter"))).uncheck();
 ```
 
 ```csharp
