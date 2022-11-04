@@ -43,7 +43,6 @@ test('should provide storage fixture', async ({ runInlineTest }) => {
   expect(result.passed).toBe(2);
 });
 
-
 test('should share storage state between project setup and tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
@@ -90,6 +89,41 @@ test('should share storage state between project setup and tests', async ({ runI
   expect(result.passed).toBe(3);
 });
 
+test('should persist storage state between project runs', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.js': `
+      module.exports = { };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('should have no data on first run', async ({ }) => {
+        const storage = test.info().storage();
+        expect(await storage.get('number')).toBe(undefined);
+        await storage.set('number', 2022)
+        expect(await storage.get('object')).toBe(undefined);
+        await storage.set('object', { 'a': 2022 })
+      });
+    `,
+    'b.test.ts': `
+      const { test } = pwt;
+      test('should get data from previous run', async ({ }) => {
+        const storage = test.info().storage();
+        expect(await storage.get('number')).toBe(2022);
+        expect(await storage.get('object')).toEqual({ 'a': 2022 });
+      });
+    `,
+  };
+  {
+    const result = await runInlineTest(files, { grep: 'should have no data on first run' });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  }
+  {
+    const result = await runInlineTest(files, { grep: 'should get data from previous run' });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  }
+});
 
 test('should isolate storage state between projects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -140,7 +174,6 @@ test('should isolate storage state between projects', async ({ runInlineTest }) 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(6);
 });
-
 
 test('should load context storageState from storage', async ({ runInlineTest, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {

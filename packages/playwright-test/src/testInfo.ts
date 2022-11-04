@@ -292,7 +292,7 @@ class JsonStorage implements Storage {
 
   private _toFilePath(name: string) {
     const fileName = sanitizeForFilePath(trimLongString(name)) + '.json';
-    return path.join(this._testInfo.project.outputDir, this._testInfo.config._storageDir, this._testInfo.project._id, fileName);
+    return path.join(this._testInfo.config._storageDir, this._testInfo.project._id, fileName);
   };
 
   async get<T>(name: string) {
