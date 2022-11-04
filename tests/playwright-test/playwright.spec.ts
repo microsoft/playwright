@@ -366,7 +366,7 @@ test('should report error on timeout with shared page', async ({ runInlineTest }
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('waiting for "getByText(\'Missing\')"');
+  expect(result.output).toContain('waiting for getByText(\'Missing\')');
   expect(stripAnsi(result.output)).toContain(`14 |         await page.getByText('Missing').click();`);
 });
 
