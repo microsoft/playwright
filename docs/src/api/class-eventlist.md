@@ -9,20 +9,13 @@ Notice that event lists simply store all historic events of a given type and
 might store outdated objects, e.g. `page.events.popup.all()` might return
 already-closed pages.
 
-Use event lists instead of a `Promise.all` pattern. Consider the following
-example:
+Use event lists instead of a `Promise.all` pattern. Consider the
+following example:
 
 ```js
-// Before:
-const [consoleMessage] = await Promise.all([
-  page.waitForEvent('console'),
-  page.getByText('Log Console Message').click(),
-]);
-
-// After:
-page.events.console.track();
-await page.getByText('Log Console Message').click();
-const consoleMessage = await page.events.console.take();
+page.events.filechooser.track();
+await page.getByText('Pick a file').click();
+const fileChooser = await page.events.filechooser.take();
 ```
 
 ## method: EventList.all
@@ -41,7 +34,8 @@ Clears all accumulated events.
 - returns: <[any]>
 
 Returns the first event that satisfies condition, if any. If no condition
-is given, returns the first accumulated event.
+is given, returns the first accumulated event. If nothing matches, then
+the method will wait for a matching event to come.
 
 ```js
 page.events.console.track();
@@ -53,7 +47,7 @@ const consoleMessage = await page.events.console.take();
 ### param: EventList.take.optionsOrPredicate
 * since: v1.28
 - `optionsOrPredicate` ?<[function]|[Object]>
-  - `predicate` <[function]> receives the event data and resolves to truthy value when the waiting should resolve.
+  - `predicate` <[function]> receives the event data and resolves to truthy value when the event should be taken.
   - `timeout` ?<[int]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to
     disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 

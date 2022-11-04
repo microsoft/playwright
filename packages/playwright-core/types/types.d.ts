@@ -12007,22 +12007,16 @@ export interface Accessibility {
  * Use event lists instead of a `Promise.all` pattern. Consider the following example:
  *
  * ```js
- * // Before:
- * const [consoleMessage] = await Promise.all([
- *   page.waitForEvent('console'),
- *   page.getByText('Log Console Message').click(),
- * ]);
- *
- * // After:
- * page.events.console.track();
- * await page.getByText('Log Console Message').click();
- * const consoleMessage = await page.events.console.take();
+ * page.events.filechooser.track();
+ * await page.getByText('Pick a file').click();
+ * const fileChooser = await page.events.filechooser.take();
  * ```
  *
  */
 export interface EventList<T> {
   /**
    * Returns the first event that satisfies condition, if any. If no condition is given, returns the first accumulated event.
+   * If nothing matches, then the method will wait for a matching event to come.
    *
    * ```js
    * page.events.console.track();
