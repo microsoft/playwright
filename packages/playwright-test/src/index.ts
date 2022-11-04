@@ -224,8 +224,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       const value = await test.info().storage().get(storageStateName);
       if (value)
         options.storageState = value as any;
-    } else if (storageState !== undefined)
+    } else if (storageState !== undefined) {
       options.storageState = storageState;
+    }
     if (timezoneId !== undefined)
       options.timezoneId = timezoneId;
     if (userAgent !== undefined)
