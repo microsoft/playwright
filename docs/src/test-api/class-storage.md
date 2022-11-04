@@ -2,14 +2,14 @@
 * since: v1.28
 * langs: js
 
-Playwright Test provides a `storage` fixture for passing values between project setup and tests.
+Playwright Test provides a [`method: TestInfo.storage`] object for passing values between project setup and tests.
 TODO: examples
 
-## method: Storage.get
+## async method: Storage.get
 * since: v1.28
 - returns: <[any]>
 
-Get named item from the store.
+Get named item from the storage. Returns undefined if there is no value with given name.
 
 ### param: Storage.get.name
 * since: v1.28
@@ -17,10 +17,10 @@ Get named item from the store.
 
 Item name.
 
-## method: Storage.set
+## async method: Storage.set
 * since: v1.28
 
-Set value to the store.
+Set value to the storage.
 
 ### param: Storage.set.name
 * since: v1.28
@@ -32,5 +32,5 @@ Item name.
 * since: v1.28
 - `value` <[any]>
 
-Item value. The value must be serializable to JSON.
+Item value. The value must be serializable to JSON. Passing `undefined` deletes the entry with given name.
 

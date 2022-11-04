@@ -16,15 +16,14 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { TestError, TestInfo, TestStatus } from '../types/test';
-import type { FullConfigInternal, FullProjectInternal } from './types';
+import { monotonicTime } from 'playwright-core/lib/utils';
+import type { Storage, TestError, TestInfo, TestStatus } from '../types/test';
 import type { WorkerInitParams } from './ipc';
 import type { Loader } from './loader';
 import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
-import type { Annotation, TestStepInternal } from './types';
+import type { Annotation, FullConfigInternal, FullProjectInternal, TestStepInternal } from './types';
 import { addSuffixToFilePath, getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
-import { monotonicTime } from 'playwright-core/lib/utils';
 
 export class TestInfoImpl implements TestInfo {
   private _addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
@@ -62,6 +61,7 @@ export class TestInfoImpl implements TestInfo {
   readonly snapshotDir: string;
   errors: TestError[] = [];
   currentStep: TestStepInternal | undefined;
+  private readonly _storage: JsonStorage;
 
   get error(): TestError | undefined {
     return this.errors[0];
@@ -109,6 +109,7 @@ export class TestInfoImpl implements TestInfo {
     this.expectedStatus = test.expectedStatus;
 
     this._timeoutManager = new TimeoutManager(this.project.timeout);
+    this._storage = new JsonStorage(this);
 
     this.outputDir = (() => {
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
@@ -278,6 +279,41 @@ export class TestInfoImpl implements TestInfo {
 
   setTimeout(timeout: number) {
     this._timeoutManager.setTimeout(timeout);
+  }
+
+  storage() {
+    return this._storage;
+  }
+}
+
+class JsonStorage implements Storage {
+  constructor(private _testInfo: TestInfoImpl) {
+  }
+
+  private _toFilePath(name: string) {
+    const fileName = sanitizeForFilePath(trimLongString(name)) + '.json';
+    return path.join(this._testInfo.config._storageDir, this._testInfo.project._id, fileName);
+  }
+
+  async get<T>(name: string) {
+    const file = this._toFilePath(name);
+    try {
+      const data = (await fs.promises.readFile(file)).toString('utf-8');
+      return JSON.parse(data) as T;
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  async set<T>(name: string, value: T | undefined) {
+    const file = this._toFilePath(name);
+    if (value === undefined) {
+      await fs.promises.rm(file, { force: true });
+      return;
+    }
+    const data = JSON.stringify(value, undefined, 2);
+    await fs.promises.mkdir(path.dirname(file), { recursive: true });
+    await fs.promises.writeFile(file, data);
   }
 }
 

@@ -128,9 +128,3 @@ test('basic test', async ({ request }) => {
   // ...
 });
 ```
-
-## property: Fixtures.storage
-* since: v1.28
-- type: <[Storage]>
-
-[Storage] is shared between all tests in the same run.
