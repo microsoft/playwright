@@ -1018,10 +1018,10 @@ export class InjectedScript {
       preview: this.previewNode(m),
       selector: this.generateSelector(m),
     }));
-    const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka page.${asLocator(this._sdkLanguage, info.selector)}`);
+    const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka ${asLocator(this._sdkLanguage, info.selector)}`);
     if (infos.length < matches.length)
       lines.push('\n    ...');
-    return this.createStacklessError(`strict mode violation: "${stringifySelector(selector)}" resolved to ${matches.length} elements:${lines.join('')}\n`);
+    return this.createStacklessError(`strict mode violation: ${asLocator(this._sdkLanguage, stringifySelector(selector))} resolved to ${matches.length} elements:${lines.join('')}\n`);
   }
 
   createStacklessError(message: string): Error {

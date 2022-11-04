@@ -98,7 +98,7 @@ it('should work for $ and $$', async ({ page, server }) => {
 it('should wait for frame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const error = await page.frameLocator('iframe').locator('span').click({ timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain('waiting for frame "iframe"');
+  expect(error.message).toContain('waiting for frameLocator(\'iframe\')');
 });
 
 it('should wait for frame 2', async ({ page, server }) => {
@@ -225,7 +225,7 @@ it('locator.frameLocator should throw on ambiguity', async ({ page, server }) =>
   await page.goto(server.EMPTY_PAGE);
   const button = page.locator('body').frameLocator('iframe').locator('button');
   const error = await button.waitFor().catch(e => e);
-  expect(error.message).toContain('Error: strict mode violation: "body >> iframe" resolved to 3 elements');
+  expect(error.message).toContain(`Error: strict mode violation: locator('body').locator('iframe') resolved to 3 elements`);
 });
 
 it('locator.frameLocator should not throw on first/last/nth', async ({ page, server }) => {

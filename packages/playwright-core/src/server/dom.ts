@@ -1015,14 +1015,14 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
       if (lastElement !== element) {
         lastElement = element;
         if (!element) {
-          progress.log(`  selector did not resolve to any element`);
+          progress.log(`  locator did not resolve to any element`);
         } else {
           if (elements.length > 1) {
             if (strict)
               throw injected.strictModeViolationError(parsed, elements);
-            progress.log(`  selector resolved to ${elements.length} elements. Proceeding with the first one.`);
+            progress.log(`  locator resolved to ${elements.length} elements. Proceeding with the first one.`);
           }
-          progress.log(`  selector resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`);
+          progress.log(`  locator resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`);
         }
       }
 

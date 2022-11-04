@@ -20,8 +20,8 @@ it('should fail page.textContent in strict mode', async ({ page }) => {
   await page.setContent(`<span>span1</span><div><span>target</span></div>`);
   const error = await page.textContent('span', { strict: true }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
-  expect(error.message).toContain(`1) <span>span1</span> aka page.getByText('span1')`);
-  expect(error.message).toContain(`2) <span>target</span> aka page.getByText('target')`);
+  expect(error.message).toContain(`1) <span>span1</span> aka getByText('span1')`);
+  expect(error.message).toContain(`2) <span>target</span> aka getByText('target')`);
 });
 
 it('should fail page.getAttribute in strict mode', async ({ page }) => {
@@ -34,8 +34,8 @@ it('should fail page.fill in strict mode', async ({ page }) => {
   await page.setContent(`<input></input><div><input></input></div>`);
   const error = await page.fill('input', 'text', { strict: true }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
-  expect(error.message).toContain(`1) <input/> aka page.locator('input').first()`);
-  expect(error.message).toContain(`2) <input/> aka page.locator('div input')`);
+  expect(error.message).toContain(`1) <input/> aka locator('input').first()`);
+  expect(error.message).toContain(`2) <input/> aka locator('div input')`);
 });
 
 it('should fail page.$ in strict mode', async ({ page }) => {
@@ -54,8 +54,8 @@ it('should fail page.dispatchEvent in strict mode', async ({ page }) => {
   await page.setContent(`<span></span><div><span></span></div>`);
   const error = await page.dispatchEvent('span', 'click', {}, { strict: true }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
-  expect(error.message).toContain(`1) <span></span> aka page.locator('span').first()`);
-  expect(error.message).toContain(`2) <span></span> aka page.locator('div span')`);
+  expect(error.message).toContain(`1) <span></span> aka locator('span').first()`);
+  expect(error.message).toContain(`2) <span></span> aka locator('div span')`);
 });
 
 it('should properly format :nth-child() in strict mode message', async ({ page }) => {

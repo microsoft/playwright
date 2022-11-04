@@ -59,7 +59,7 @@ test.describe('toBeChecked', () => {
     const locator = page.locator('input');
     const error = await expect(locator).not.toBeChecked({ timeout: 1000 }).catch(e => e);
     expect(error.message).toContain(`expect.toBeChecked with timeout 1000ms`);
-    expect(error.message).toContain(`selector resolved to <input checked type="checkbox"/>`);
+    expect(error.message).toContain(`locator resolved to <input checked type="checkbox"/>`);
   });
 
   test('fail with checked:false', async ({ page }) => {
@@ -74,7 +74,7 @@ test.describe('toBeChecked', () => {
     const locator2 = page.locator('input2');
     const error = await expect(locator2).not.toBeChecked({ timeout: 1000 }).catch(e => e);
     expect(error.message).toContain(`expect.toBeChecked with timeout 1000ms`);
-    expect(error.message).toContain('waiting for "locator(\'input2\')"');
+    expect(error.message).toContain('waiting for locator(\'input2\')');
   });
 
   test('with role', async ({ page }) => {
@@ -143,7 +143,7 @@ test.describe('toBeEnabled', () => {
     await page.setContent('<button disabled>Text</button>');
     const locator = page.locator('button');
     const error = await expect(locator).toBeEnabled({ timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain(`selector resolved to <button disabled>Text</button>`);
+    expect(error.message).toContain(`locator resolved to <button disabled>Text</button>`);
   });
 
   test('eventually', async ({ page }) => {
@@ -272,14 +272,14 @@ test.describe('toBeVisible', () => {
     await page.setContent('<button style="display: none"></button>');
     const locator = page.locator('button');
     const error = await expect(locator).toBeVisible({ timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain(`selector resolved to <button></button>`);
+    expect(error.message).toContain(`locator resolved to <button></button>`);
   });
 
   test('fail with not', async ({ page }) => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
     const error = await expect(locator).not.toBeVisible({ timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain(`selector resolved to <input/>`);
+    expect(error.message).toContain(`locator resolved to <input/>`);
   });
 });
 
@@ -324,14 +324,14 @@ test.describe('toBeHidden', () => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
     const error = await expect(locator).toBeHidden({ timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain(`selector resolved to <input/>`);
+    expect(error.message).toContain(`locator resolved to <input/>`);
   });
 
   test('fail with not', async ({ page }) => {
     await page.setContent('<button style="display: none"></button>');
     const locator = page.locator('button');
     const error = await expect(locator).not.toBeHidden({ timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain(`selector resolved to <button></button>`);
+    expect(error.message).toContain(`locator resolved to <button></button>`);
   });
 
   test('fail with not when nothing matching', async ({ page }) => {
