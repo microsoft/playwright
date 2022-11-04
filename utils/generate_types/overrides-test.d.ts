@@ -235,6 +235,7 @@ export interface PlaywrightTestOptions {
   permissions: string[] | undefined;
   proxy: Proxy | undefined;
   storageState: StorageState | undefined;
+  storageStateName: string | undefined;
   timezoneId: string | undefined;
   userAgent: string | undefined;
   viewport: ViewportSize | null | undefined;

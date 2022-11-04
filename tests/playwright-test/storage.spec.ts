@@ -204,7 +204,7 @@ test('should load context storageState from storage', async ({ runInlineTest, se
     'a.test.ts': `
       const { test } = pwt;
       test.use({
-        storageState: 'user'
+        storageStateName: 'user'
       })
       test('should get data from setup', async ({ page }) => {
         await page.goto('${server.EMPTY_PAGE}');
@@ -225,7 +225,7 @@ test('should load context storageState from storage', async ({ runInlineTest, se
   expect(result.passed).toBe(3);
 });
 
-test('should load storageState specified in the project config from storage', async ({ runInlineTest, server }) => {
+test('should load storageStateName specified in the project config from storage', async ({ runInlineTest, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v1']);
     res.end();
@@ -238,7 +238,7 @@ test('should load storageState specified in the project config from storage', as
             name: 'p1',
             setup: /.*storage.setup.ts/,
             use: {
-              storageState: 'stateInStorage',
+              storageStateName: 'stateInStorage',
             },
           }
         ]
@@ -247,7 +247,7 @@ test('should load storageState specified in the project config from storage', as
     'storage.setup.ts': `
       const { test, expect } = pwt;
       test.reset({
-        storageState: 'default'
+        storageStateName: 'default'
       })
       test('should save storageState', async ({ page, context }) => {
         const storage = test.info().storage();
@@ -270,7 +270,7 @@ test('should load storageState specified in the project config from storage', as
   expect(result.passed).toBe(2);
 });
 
-test('should load storageState specified in the global config from storage', async ({ runInlineTest, server }) => {
+test('should load storageStateName specified in the global config from storage', async ({ runInlineTest, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v1']);
     res.end();
@@ -279,7 +279,7 @@ test('should load storageState specified in the global config from storage', asy
     'playwright.config.js': `
       module.exports = {
         use: {
-          storageState: 'stateInStorage',
+          storageStateName: 'stateInStorage',
         },
         projects: [
           {
@@ -292,9 +292,9 @@ test('should load storageState specified in the global config from storage', asy
     'storage.setup.ts': `
       const { test, expect } = pwt;
       test.reset({
-        storageState: 'default'
+        storageStateName: 'default'
       })
-      test('should save storageState', async ({ page, context }) => {
+      test('should save storageStateName', async ({ page, context }) => {
         const storage = test.info().storage();
         expect(await storage.get('stateInStorage')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');

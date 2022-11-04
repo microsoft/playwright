@@ -642,6 +642,8 @@ function validateProject(file: string, project: Project, title: string) {
   if ('use' in project && project.use !== undefined) {
     if (!project.use || typeof project.use !== 'object')
       throw errorWithFile(file, `${title}.use must be an object`);
+    if ((project.use as any).storageState !== undefined && (project.use as any).storageStateName !== undefined)
+      throw errorWithFile(file, `${title}.use must specify at most one of 'storageState' and 'storageStateName'`);
   }
 }
 
