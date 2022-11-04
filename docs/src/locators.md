@@ -197,7 +197,7 @@ await page.get_by_role("checkbox", checked=True, name="newsletter").uncheck()
 ```python sync
 page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
 
-page.get_by_role("checkbox", checked=True, name="newsletter").check()
+page.get_by_role("checkbox", checked=True, name="newsletter").uncheck()
 ```
 
 ```java
