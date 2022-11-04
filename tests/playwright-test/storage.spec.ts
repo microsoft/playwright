@@ -184,7 +184,6 @@ test('should load context storageState from storage', async ({ runInlineTest, se
 });
 
 test('should load storageState specified in the project config from storage', async ({ runInlineTest, server }) => {
-  test.fixme();
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v1']);
     res.end();
@@ -205,8 +204,53 @@ test('should load storageState specified in the project config from storage', as
     `,
     'storage.setup.ts': `
       const { test, expect } = pwt;
-      test.use({
-        storageState: undefined
+      test.reset({
+        storageState: 'default'
+      })
+      test('should save storageState', async ({ page, context, storage }, testInfo) => {
+        expect(await storage.get('stateInStorage')).toBe(undefined);
+        await page.goto('${server.PREFIX}/setcookie.html');
+        const state = await page.context().storageState();
+        await storage.set('stateInStorage', state);
+        console.log('project setup state = ' + state);
+      });
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('should get data from setup', async ({ page, storage }, testInfo) => {
+        await page.goto('${server.EMPTY_PAGE}');
+        const cookies = await page.evaluate(() => document.cookie);
+        expect(cookies).toBe('a=v1');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+
+test('should load storageState specified in the global config from storage', async ({ runInlineTest, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v1']);
+    res.end();
+  });
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        use: {
+          storageState: 'stateInStorage',
+        },
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*storage.setup.ts/,
+          }
+        ]
+      };
+    `,
+    'storage.setup.ts': `
+      const { test, expect } = pwt;
+      test.reset({
+        storageState: 'default'
       })
       test('should save storageState', async ({ page, context, storage }, testInfo) => {
         expect(await storage.get('stateInStorage')).toBe(undefined);
