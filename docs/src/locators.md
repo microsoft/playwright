@@ -865,7 +865,10 @@ For example, consider the following DOM structure:
 
 Locating by role `button` will return an error due to [strictness](#strictness) as there is more than one element with this role and name. 
 
-In this scenario we can locate an element within another element. First we create a locator called **product** and locate the product cards by testid. We then filter by text to find the product card with the text of "Product 2". We can then use this new locator called **product** and locate the button inside that product card and click it.
+In this scenario we can locate an element within another element.
+1. Create a locator called **product** and locate the product cards by testid.
+1. Filter by text to find the product card with the text of "Product 2".
+1. Use the new locator called **product** and locate the button inside that product card and click it.
 
 ```js
 const product = page.getByTestId('product-card')
@@ -1022,8 +1025,7 @@ However, use these methods with caution. Often times, the page might change, and
 ## Strictness
 
 Locators are strict. This means that all operations on locators that imply
-some target DOM element will throw an exception if more than one element matches a
-given selector. For example, the following call throws if there are several buttons in the DOM:
+some target DOM element will throw an exception if more than one element matches. For example, the following call throws if there are several buttons in the DOM:
 
 ```js
 await page.getByRole('button').click();
