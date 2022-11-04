@@ -198,7 +198,7 @@ type ConnectOptions = {
   timeout?: number;
 };
 
-interface Storage {
+export interface Storage {
   get<T>(name: string): Promise<T | undefined>;
   set<T>(name: string, value: T | undefined): Promise<void>;
 }
@@ -250,7 +250,6 @@ export interface PlaywrightTestOptions {
 export interface PlaywrightWorkerArgs {
   playwright: typeof import('playwright-core');
   browser: Browser;
-  storage: Storage;
 }
 
 export interface PlaywrightTestArgs {

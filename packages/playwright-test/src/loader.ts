@@ -121,6 +121,7 @@ export class Loader {
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
 
     this._fullConfig._configDir = configDir;
+    this._fullConfig._storageDir = path.resolve(configDir, '.playwright-storage');
     this._fullConfig.configFile = this._configFile;
     this._fullConfig.rootDir = config.testDir || this._configDir;
     this._fullConfig._globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._globalOutputDir);
@@ -669,6 +670,7 @@ export const baseFullConfig: FullConfigInternal = {
   _webServers: [],
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
+  _storageDir: '',
   _maxConcurrentTestGroups: 0,
   _ignoreSnapshots: false,
   _workerIsolation: 'isolate-pools',

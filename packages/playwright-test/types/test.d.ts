@@ -1741,6 +1741,11 @@ export interface TestInfo {
   stdout: Array<string|Buffer>;
 
   /**
+   * Returns a [Storage] instance for running test project.
+   */
+  storage(): Storage;
+
+  /**
    * Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about
    * [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
@@ -2693,18 +2698,19 @@ type ConnectOptions = {
 };
 
 /**
- * Playwright Test provides a `storage` fixture for passing values between project setup and tests. TODO: examples
+ * Playwright Test provides a [testInfo.storage()](https://playwright.dev/docs/api/class-testinfo#test-info-storage) object
+ * for passing values between project setup and tests. TODO: examples
  */
-interface Storage {
+export interface Storage {
   /**
-   * Get named item from the store.
+   * Get named item from the storage. Returns undefined if there is no value with given name.
    * @param name Item name.
    */
   get<T>(name: string): Promise<T | undefined>;
   /**
-   * Set value to the store.
+   * Set value to the storage.
    * @param name Item name.
-   * @param value Item value. The value must be serializable to JSON.
+   * @param value Item value. The value must be serializable to JSON. Passing `undefined` deletes the entry with given name.
    */
   set<T>(name: string, value: T | undefined): Promise<void>;
 }
@@ -3045,10 +3051,6 @@ export interface PlaywrightWorkerArgs {
    * Learn how to [configure browser](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
    */
   browser: Browser;
-  /**
-   * [Storage] is shared between all tests in the same run.
-   */
-  storage: Storage;
 }
 
 /**

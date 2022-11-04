@@ -24,7 +24,6 @@ import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
 import type { PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './testInfo';
 import { rootTestType } from './testType';
-import { sanitizeForFilePath, trimLongString } from './util';
 export { expect } from './expect';
 export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -136,35 +135,6 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     await browser.close();
   }, { scope: 'worker', timeout: 0 }],
 
-  storage: [async ({ }, use, testInfo) => {
-    const toFilePath = (name: string) => {
-      const fileName = sanitizeForFilePath(trimLongString(name)) + '.json';
-      return path.join(testInfo.project.outputDir, '.playwright-storage', (testInfo as TestInfoImpl).project._id, fileName);
-    };
-    const storage = {
-      async get<T>(name: string) {
-        const file = toFilePath(name);
-        try {
-          const data = (await fs.promises.readFile(file)).toString('utf-8');
-          return JSON.parse(data) as T;
-        } catch (e) {
-          return undefined;
-        }
-      },
-      async set<T>(name: string, value: T | undefined) {
-        const file = toFilePath(name);
-        if (value === undefined) {
-          await fs.promises.rm(file, { force: true });
-          return;
-        }
-        const data = JSON.stringify(value, undefined, 2);
-        await fs.promises.mkdir(path.dirname(file), { recursive: true });
-        await fs.promises.writeFile(file, data);
-      }
-    };
-    await use(storage);
-  }, { scope: 'worker' }],
-
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
   bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP), { option: true }],
   colorScheme: [({ contextOptions }, use) => use(contextOptions.colorScheme), { option: true }],
@@ -216,7 +186,6 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     baseURL,
     contextOptions,
     serviceWorkers,
-    storage,
   }, use) => {
     const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
@@ -252,7 +221,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     if (storageState !== undefined) {
       options.storageState = storageState;
       if (typeof storageState === 'string') {
-        const value = await storage.get(storageState);
+        const value = test.info().storage().get(storageState);
         if (value)
           options.storageState = value as any;
       }
