@@ -1208,7 +1208,7 @@ await page.EvaluateAsync("matchMedia('(prefers-color-scheme: no-preference)').ma
 
 ### option: Page.emulateMedia.media
 * since: v1.9
-* langs: js, python, java
+* langs: js, java
 - `media` <null|[Media]<"screen"|"print">>
 
 Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`.
@@ -1216,7 +1216,7 @@ Passing `null` disables CSS media emulation.
 
 ### option: Page.emulateMedia.media
 * since: v1.9
-* langs: csharp
+* langs: csharp, python
 - `media` <[Media]<"screen"|"print"|"null">>
 
 Changes the CSS media type of the page. The only allowed values are `'Screen'`, `'Print'` and `'Null'`.
