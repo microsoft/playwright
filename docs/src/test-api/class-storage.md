@@ -5,7 +5,7 @@
 Playwright Test provides a [`method: TestInfo.storage`] object for passing values between project setup and tests.
 TODO: examples
 
-## method: Storage.get
+## async method: Storage.get
 * since: v1.28
 - returns: <[any]>
 
@@ -17,7 +17,7 @@ Get named item from the storage. Returns undefined if there is no value with giv
 
 Item name.
 
-## method: Storage.set
+## async method: Storage.set
 * since: v1.28
 
 Set value to the storage.

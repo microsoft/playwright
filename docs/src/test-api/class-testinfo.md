@@ -502,7 +502,7 @@ Output written to `process.stdout` or `console.log` during the test execution.
 * since: v1.28
 - returns: <[Storage]>
 
-Returns a [Storage] instance for running test project.
+Returns a [Storage] instance for the currently running project.
 
 ## property: TestInfo.timeout
 * since: v1.10

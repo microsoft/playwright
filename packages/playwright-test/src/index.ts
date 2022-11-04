@@ -221,7 +221,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     if (storageState !== undefined) {
       options.storageState = storageState;
       if (typeof storageState === 'string') {
-        const value = test.info().storage().get(storageState);
+        const value = await test.info().storage().get(storageState);
         if (value)
           options.storageState = value as any;
       }

@@ -1741,7 +1741,7 @@ export interface TestInfo {
   stdout: Array<string|Buffer>;
 
   /**
-   * Returns a [Storage] instance for running test project.
+   * Returns a [Storage] instance for the currently running project.
    */
   storage(): Storage;
 
