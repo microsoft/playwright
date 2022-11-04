@@ -185,7 +185,7 @@ You can locate each element by it's implicit role:
 ```js
 await page.getByRole('button', { name: /submit/i }).click();
 
-await page.getByRole('checkbox', { checked: true, name: "newsletter" }).check();
+await page.getByRole('checkbox', { checked: true, name: "newsletter" }).uncheck();
 ```
 
 ```python async
