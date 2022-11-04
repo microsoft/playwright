@@ -168,44 +168,6 @@ Project name is visible in the report and during test execution.
 
 Project setup files that would be executed before all tests in the project. If project setup fails the tests in this project will be skipped. All project setup files will run in every shard if the project is sharded.
 
-## property: TestProject.screenshotsDir
-* since: v1.10
-* experimental
-- type: ?<[string]>
-
-The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
-
-```
-<directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
-```
-
-This path will serve as the base directory for each test file screenshot directory. For example, the following test structure:
-
-```
-smoke-tests/
-└── basic.spec.ts
-```
-
-will result in the following screenshots folder structure:
-
-```
-__screenshots__/
-└── darwin/
-    ├── Mobile Safari/
-    │   └── smoke-tests/
-    │       └── basic.spec.ts/
-    │           └── screenshot-expectation.png
-    └── Desktop Chrome/
-        └── smoke-tests/
-            └── basic.spec.ts/
-                └── screenshot-expectation.png
-```
-
-where:
-* `darwin/` - a platform name folder
-* `Mobile Safari` and `Desktop Chrome` - project names
-
-
 ## property: TestProject.snapshotDir
 * since: v1.10
 - type: ?<[string]>

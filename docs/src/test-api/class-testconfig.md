@@ -441,43 +441,6 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-## property: TestConfig.screenshotsDir
-* since: v1.10
-* experimental
-- type: ?<[string]>
-
-The base directory, relative to the config file, for screenshot files created with [`method: PageAssertions.toHaveScreenshot#1`]. Defaults to
-
-```
-<directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
-```
-
-This path will serve as the base directory for each test file screenshot directory. For example, the following test structure:
-
-```
-smoke-tests/
-└── basic.spec.ts
-```
-
-will result in the following screenshots folder structure:
-
-```
-__screenshots__/
-└── darwin/
-    ├── Mobile Safari/
-    │   └── smoke-tests/
-    │       └── basic.spec.ts/
-    │           └── screenshot-expectation.png
-    └── Desktop Chrome/
-        └── smoke-tests/
-            └── basic.spec.ts/
-                └── screenshot-expectation.png
-```
-
-where:
-* `darwin/` - a platform name folder
-* `Mobile Safari` and `Desktop Chrome` - project names
-
 ## property: TestConfig.shard
 * since: v1.10
 - type: ?<[null]|[Object]>

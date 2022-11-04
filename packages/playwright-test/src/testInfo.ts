@@ -32,7 +32,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _startTime: number;
   readonly _startWallTime: number;
   private _hasHardError: boolean = false;
-  readonly _screenshotsDir: string;
   readonly _onTestFailureImmediateCallbacks = new Map<() => Promise<void>, string>(); // fn -> title
   _didTimeout = false;
 
@@ -129,10 +128,6 @@ export class TestInfoImpl implements TestInfo {
     this.snapshotDir = (() => {
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile);
       return path.join(this.project.snapshotDir, relativeTestFilePath + '-snapshots');
-    })();
-    this._screenshotsDir = (() => {
-      const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile);
-      return path.join(this.project._screenshotsDir, relativeTestFilePath);
     })();
   }
 
@@ -240,25 +235,38 @@ export class TestInfoImpl implements TestInfo {
   }
 
   snapshotPath(...pathSegments: string[]) {
-    let suffix = '';
-    const projectNamePathSegment = sanitizeForFilePath(this.project.name);
-    if (projectNamePathSegment)
-      suffix += '-' + projectNamePathSegment;
-    if (this.snapshotSuffix)
-      suffix += '-' + this.snapshotSuffix;
-    const subPath = addSuffixToFilePath(path.join(...pathSegments), suffix);
-    const snapshotPath =  getContainedPath(this.snapshotDir, subPath);
-    if (snapshotPath)
+    if (this.project._snapshotPathTemplate) {
+      const subPath = path.join(...pathSegments);
+      const parsedSubPath = path.parse(subPath);
+      const relativeTestFilePath = path.relative(this.project.testDir, this._test._requireFile);
+      const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
+      const snapshotPath = path.resolve(this.config._configDir, this.project._snapshotPathTemplate
+          .replaceAll('{testDir}', this.project.testDir)
+          .replaceAll('{snapshotDir}', this.snapshotDir)
+          .replaceAll('{platform}', process.platform)
+          .replaceAll('{projectName}', sanitizeForFilePath(this.project.name))
+          .replaceAll('{testFileDir}', parsedRelativeTestFilePath.dir)
+          .replaceAll('{testFileName}', parsedRelativeTestFilePath.base)
+          .replaceAll('{testFilePath}', relativeTestFilePath)
+          .replaceAll('{snapshotNameDir}', parsedSubPath.dir)
+          .replaceAll('{snapshotNameBase}', parsedSubPath.name)
+          .replaceAll('{snapshotNameExt}', parsedSubPath.ext)
+          .replaceAll('{snapshotName}', parsedSubPath.base)
+          .replaceAll('{snapshotSuffix}', this.snapshotSuffix));
       return snapshotPath;
-    throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${subPath}`);
-  }
-
-  _screenshotPath(...pathSegments: string[]) {
-    const subPath = path.join(...pathSegments);
-    const screenshotPath = getContainedPath(this._screenshotsDir, subPath);
-    if (screenshotPath)
-      return screenshotPath;
-    throw new Error(`Screenshot name "${subPath}" should not point outside of the parent directory.`);
+    } else {
+      let suffix = '';
+      const projectNamePathSegment = sanitizeForFilePath(this.project.name);
+      if (projectNamePathSegment)
+        suffix += '-' + projectNamePathSegment;
+      if (this.snapshotSuffix)
+        suffix += '-' + this.snapshotSuffix;
+      const subPath = addSuffixToFilePath(path.join(...pathSegments), suffix);
+      const snapshotPath = getContainedPath(this.snapshotDir, subPath);
+      if (snapshotPath)
+        return snapshotPath;
+      throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${subPath}`);
+    }
   }
 
   skip(...args: [arg?: any, description?: string]) {
