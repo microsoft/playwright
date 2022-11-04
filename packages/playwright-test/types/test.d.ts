@@ -2520,6 +2520,29 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
   /**
+   * Resets options that were set up in the configuration file or with
+   * [test.use(options)](https://playwright.dev/docs/api/class-test#test-use) to their default or config-specified value.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.reset({
+   *   // Reset storage state to the default empty value.
+   *   storageStage: 'default',
+   *
+   *   // Reset locale to the value specified in the config file.
+   *   locale: 'config',
+   * });
+   *
+   * test('example', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param options An object with options set to either `'config'` or `'default'`.
+   */
+  reset(options: ResetOptions<TestArgs & WorkerArgs>): void;
+  /**
    * Declares a test step.
    *
    * ```js
@@ -2643,6 +2666,7 @@ export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extend
 } & {
   [K in keyof T]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean, option?: boolean, timeout?: number | undefined }];
 };
+type ResetOptions<T extends KeyValue> = { [K in keyof T]?: 'config' | 'default' };
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;

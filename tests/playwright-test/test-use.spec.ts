@@ -179,3 +179,109 @@ test('test.use() should throw if called from beforeAll ', async ({ runInlineTest
   expect(result.output).toContain('Playwright Test did not expect test.use() to be called here');
 });
 
+test('test.use() with undefined should not be ignored', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: { option1: 'config' },
+      };
+    `,
+    'a.test.js': `
+      const test = pwt.test.extend({
+        option1: [ 'default', { option: true } ],
+        option2: [ 'default', { option: true } ],
+      });
+      test('test1', async ({ option1, option2 }) => {
+        console.log('test1: option1=' + option1);
+        console.log('test1: option2=' + option2);
+      });
+
+      test.describe('', () => {
+        test.use({ option1: 'foo', option2: 'foo' });
+        test('test2', async ({ option1, option2 }) => {
+          console.log('test2: option1=' + option1);
+          console.log('test2: option2=' + option2);
+        });
+
+        test.describe('', () => {
+          test.use({ option1: undefined, option2: undefined });
+          test('test3', async ({ option1, option2 }) => {
+            console.log('test3: option1=' + option1);
+            console.log('test3: option2=' + option2);
+          });
+        });
+      });
+
+      test.extend({ option1: undefined, option2: undefined })('test4', async ({ option1, option2 }) => {
+        console.log('test4: option1=' + option1);
+        console.log('test4: option2=' + option2);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(4);
+  expect(result.output).toContain('test1: option1=config');
+  expect(result.output).toContain('test1: option2=default');
+  expect(result.output).toContain('test2: option1=foo');
+  expect(result.output).toContain('test2: option2=foo');
+  expect(result.output).toContain('test3: option1=config');
+  expect(result.output).toContain('test3: option2=default');
+  expect(result.output).toContain('test4: option1=config');
+  expect(result.output).toContain('test4: option2=default');
+});
+
+test('test.reset() should reset to default or config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: { option1: 'config-value' },
+      };
+    `,
+    'a.test.js': `
+      const test = pwt.test.extend({
+        option1: [ 'default-value', { option: true } ],
+        option2: [ 'default-value', { option: true } ],
+      });
+
+      test.use({ option1: 'use-value', option2: 'use-value' });
+      test('test1', async ({ option1, option2 }) => {
+        console.log('test1: option1=' + option1);
+        console.log('test1: option2=' + option2);
+      });
+
+      test.describe(() => {
+        test.reset({ option1: 'default', option2: 'default' });
+        test('test2', async ({ option1, option2 }) => {
+          console.log('test2: option1=' + option1);
+          console.log('test2: option2=' + option2);
+        });
+      });
+
+      test.describe(() => {
+        test.reset({ option1: 'config', option2: 'config' });
+        test('test3', async ({ option1, option2 }) => {
+          console.log('test3: option1=' + option1);
+          console.log('test3: option2=' + option2);
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.output).toContain('test1: option1=use-value');
+  expect(result.output).toContain('test1: option2=use-value');
+  expect(result.output).toContain('test2: option1=default-value');
+  expect(result.output).toContain('test2: option2=default-value');
+  expect(result.output).toContain('test3: option1=config-value');
+  expect(result.output).toContain('test3: option2=default-value');
+});
+
+test('test.reset() throws for unsupported value', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      pwt.test.reset({ option: 'foo' });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('test.reset() supports "config" or "default", got unexpected value "foo"');
+});

@@ -24,6 +24,7 @@ export type { Location } from '../types/testReporter';
 export type FixturesWithLocation = {
   fixtures: Fixtures;
   location: Location;
+  fromConfig?: boolean;
 };
 export type Annotation = { type: string, description?: string };
 
