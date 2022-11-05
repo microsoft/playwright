@@ -14,40 +14,54 @@
  * limitations under the License.
  */
 
+import type { ByRoleOptions } from '../../utils/isomorphic/locatorUtils';
+import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../../utils/isomorphic/locatorUtils';
 import { escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
+import { asLocator } from '../isomorphic/locatorGenerators';
+import type { Language } from '../isomorphic/locatorGenerators';
 import { type InjectedScript } from './injectedScript';
 import { generateSelector } from './selectorGenerator';
 
-function createLocator(injectedScript: InjectedScript, initial: string, options?: { hasText?: string | RegExp }) {
-  class Locator {
-    selector: string;
-    element: Element | undefined;
-    elements: Element[];
+const selectorSymbol = Symbol('selector');
+const injectedScriptSymbol = Symbol('injectedScript');
 
-    constructor(selector: string, options?: { hasText?: string | RegExp, has?: Locator }) {
-      this.selector = selector;
-      if (options?.hasText)
-        this.selector += ` >> internal:has-text=${escapeForTextSelector(options.hasText, false)}`;
-      if (options?.has)
-        this.selector += ` >> internal:has=` + JSON.stringify(options.has.selector);
-      const parsed = injectedScript.parseSelector(this.selector);
+class Locator {
+  element: Element | undefined;
+  elements: Element[] | undefined;
+
+  constructor(injectedScript: InjectedScript, selector: string, options?: { hasText?: string | RegExp, has?: Locator }) {
+    (this as any)[selectorSymbol] = selector;
+    (this as any)[injectedScriptSymbol] = injectedScript;
+    if (options?.hasText)
+      selector += ` >> internal:has-text=${escapeForTextSelector(options.hasText, false)}`;
+    if (options?.has)
+      selector += ` >> internal:has=` + JSON.stringify((options.has as any)[selectorSymbol]);
+    if (selector) {
+      const parsed = injectedScript.parseSelector(selector);
       this.element = injectedScript.querySelector(parsed, document, false);
       this.elements = injectedScript.querySelectorAll(parsed, document);
     }
-
-    locator(selector: string, options?: { hasText: string | RegExp, has?: Locator }): Locator {
-      return new Locator(this.selector ? this.selector + ' >> ' + selector : selector, options);
-    }
+    const selectorBase = selector;
+    const self = this as any;
+    self.locator = (selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator => {
+      return new Locator(injectedScript, selectorBase ? selectorBase + ' >> ' + selector : selector, options);
+    };
+    self.getByTestId = (testId: string): Locator => self.locator(getByTestIdSelector('data-testid', testId));
+    self.getByAltText = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByAltTextSelector(text, options));
+    self.getByLabel = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByLabelSelector(text, options));
+    self.getByPlaceholder = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByPlaceholderSelector(text, options));
+    self.getByText = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByTextSelector(text, options));
+    self.getByTitle = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByTitleSelector(text, options));
+    self.getByRole = (role: string, options: ByRoleOptions = {}): Locator => self.locator(getByRoleSelector(role, options));
   }
-  return new Locator(initial, options);
 }
 
 type ConsoleAPIInterface = {
   $: (selector: string) => void;
   $$: (selector: string) => void;
-  locator: (selector: string, options?: { hasText: string | RegExp, has?: any }) => any;
   inspect: (selector: string) => void;
   selector: (element: Element) => void;
+  generateLocator: (element: Element, language?: Language) => void;
   resume: () => void;
 };
 
@@ -69,10 +83,11 @@ class ConsoleAPI {
     window.playwright = {
       $: (selector: string, strict?: boolean) => this._querySelector(selector, !!strict),
       $$: (selector: string) => this._querySelectorAll(selector),
-      locator: (selector: string, options?: { hasText?: string | RegExp }) => createLocator(this._injectedScript, selector, options),
       inspect: (selector: string) => this._inspect(selector),
       selector: (element: Element) => this._selector(element),
+      generateLocator: (element: Element, language?: Language) => this._generateLocator(element, language),
       resume: () => this._resume(),
+      ...new Locator(injectedScript, ''),
     };
   }
 
@@ -100,6 +115,13 @@ class ConsoleAPI {
     if (!(element instanceof Element))
       throw new Error(`Usage: playwright.selector(element).`);
     return generateSelector(this._injectedScript, element, true).selector;
+  }
+
+  private _generateLocator(element: Element, language?: Language) {
+    if (!(element instanceof Element))
+      throw new Error(`Usage: playwright.locator(element).`);
+    const selector = generateSelector(this._injectedScript, element, true).selector;
+    return asLocator(language || 'javascript', selector);
   }
 
   private _resume() {

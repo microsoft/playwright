@@ -27,6 +27,10 @@ export function escapeWithQuotes(text: string, char: string = '\'') {
   throw new Error('Invalid escape char');
 }
 
+export function isString(obj: any): obj is string {
+  return typeof obj === 'string' || obj instanceof String;
+}
+
 export function toTitleCase(name: string) {
   return name.charAt(0).toUpperCase() + name.substring(1);
 }
