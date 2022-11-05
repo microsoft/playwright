@@ -287,8 +287,11 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
         return { code, map: { mappings: '' } };
       }
 
-      const templateDir = path.normalize(relativeTemplateDir);
-      if (!id.endsWith(`${templateDir}/index.ts`) && !id.endsWith(`${templateDir}/index.tsx`) && !id.endsWith(`${templateDir}/index.js`))
+      const indexTs = path.join(relativeTemplateDir, 'index.ts')
+      const indexTsx = path.join(relativeTemplateDir, 'index.tsx')
+      const indexJs = path.join(relativeTemplateDir, 'index.js')
+      const idResolved = path.resolve(id);
+      if (!idResolved.endsWith(indexTs) && !idResolved.endsWith(indexTsx) && !idResolved.endsWith(indexJs))
         return;
 
       const folder = path.dirname(id);
