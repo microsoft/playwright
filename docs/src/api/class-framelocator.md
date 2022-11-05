@@ -85,11 +85,11 @@ Locator frameLocator = locator.frameLocator(':scope');
 ```
 
 ```python async
-frameLocator = locator.frame_locator(":scope");
+frameLocator = locator.frame_locator(":scope")
 ```
 
 ```python sync
-frameLocator = locator.frame_locator(":scope");
+frameLocator = locator.frame_locator(":scope")
 ```
 
 ```csharp
