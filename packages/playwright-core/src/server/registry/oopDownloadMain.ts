@@ -22,12 +22,13 @@ import { ManualPromise } from '../../utils/manualPromise';
 type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 type DownloadFileLogger = (message: string) => void;
 type DownloadFileOptions = {
-  progressCallback?: OnProgressCallback,
-  log?: DownloadFileLogger,
-  userAgent?: string
+  progressCallback: OnProgressCallback,
+  log: DownloadFileLogger,
+  userAgent: string,
+  connectionTimeout: number,
 };
 
-function downloadFile(url: string, destinationPath: string, options: DownloadFileOptions = {}): Promise<void> {
+function downloadFile(url: string, destinationPath: string, options: DownloadFileOptions): Promise<void> {
   const {
     progressCallback,
     log = () => { },
@@ -42,10 +43,10 @@ function downloadFile(url: string, destinationPath: string, options: DownloadFil
 
   httpRequest({
     url,
-    headers: options.userAgent ? {
+    headers: {
       'User-Agent': options.userAgent,
-    } : undefined,
-    timeout: 10_000,
+    },
+    timeout: options.connectionTimeout,
   }, response => {
     log(`-- response status code: ${response.statusCode}`);
     if (response.statusCode !== 200) {
@@ -68,8 +69,7 @@ function downloadFile(url: string, destinationPath: string, options: DownloadFil
     response.pipe(file);
     totalBytes = parseInt(response.headers['content-length'] || '0', 10);
     log(`-- total bytes: ${totalBytes}`);
-    if (progressCallback)
-      response.on('data', onData);
+    response.on('data', onData);
   }, (error: any) => promise.reject(error));
   return promise;
 
@@ -79,22 +79,22 @@ function downloadFile(url: string, destinationPath: string, options: DownloadFil
   }
 }
 
-function getDownloadProgress(progressBarName: string): OnProgressCallback {
+function getDownloadProgress(): OnProgressCallback {
   if (process.stdout.isTTY)
-    return _getAnimatedDownloadProgress(progressBarName);
-  return _getBasicDownloadProgress(progressBarName);
+    return getAnimatedDownloadProgress();
+  return getBasicDownloadProgress();
 }
 
-function _getAnimatedDownloadProgress(progressBarName: string): OnProgressCallback {
+function getAnimatedDownloadProgress(): OnProgressCallback {
   let progressBar: ProgressBar;
   let lastDownloadedBytes = 0;
 
   return (downloadedBytes: number, totalBytes: number) => {
     if (!progressBar) {
       progressBar = new ProgressBar(
-          `Downloading ${progressBarName} - ${toMegabytes(
+          `${toMegabytes(
               totalBytes
-          )} [:bar] :percent :etas `,
+          )} [:bar] :percent :etas`,
           {
             complete: '=',
             incomplete: ' ',
@@ -109,9 +109,8 @@ function _getAnimatedDownloadProgress(progressBarName: string): OnProgressCallba
   };
 }
 
-function _getBasicDownloadProgress(progressBarName: string): OnProgressCallback {
+function getBasicDownloadProgress(): OnProgressCallback {
   // eslint-disable-next-line no-console
-  console.log(`Downloading ${progressBarName}...`);
   const totalRows = 10;
   const stepWidth = 8;
   let lastRow = -1;
@@ -133,11 +132,12 @@ function toMegabytes(bytes: number) {
 }
 
 async function main() {
-  const [url, destination, progressBarName, userAgent] = process.argv.slice(2);
+  const [url, destination, userAgent, downloadConnectionTimeout] = process.argv.slice(2);
   await downloadFile(url, destination, {
-    progressCallback: getDownloadProgress(progressBarName),
+    progressCallback: getDownloadProgress(),
     userAgent,
     log: message => process.send?.({ method: 'log', params: { message } }),
+    connectionTimeout: +downloadConnectionTimeout,
   });
 }
 

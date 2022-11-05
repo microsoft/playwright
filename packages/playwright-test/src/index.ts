@@ -16,17 +16,17 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Video, APIRequestContext, Tracing } from 'playwright-core';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, VideoMode, TraceMode } from '../types/test';
-import { rootTestType } from './testType';
+import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
+import * as playwrightLibrary from 'playwright-core';
+import * as outOfProcess from 'playwright-core/lib/outofprocess';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
-export { expect } from './expect';
-export const _baseTest: TestType<{}, {}> = rootTestType.test;
-export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
-import * as outOfProcess from 'playwright-core/lib/outofprocess';
-import * as playwrightLibrary from 'playwright-core';
+import type { PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './testInfo';
+import { rootTestType } from './testType';
+export { expect } from './expect';
+export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
+export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
@@ -72,10 +72,22 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
   channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
   launchOptions: [{}, { scope: 'worker', option: true }],
-  connectOptions: [process.env.PW_TEST_CONNECT_WS_ENDPOINT ? {
-    wsEndpoint: process.env.PW_TEST_CONNECT_WS_ENDPOINT,
-    headers: process.env.PW_TEST_CONNECT_HEADERS ? JSON.parse(process.env.PW_TEST_CONNECT_HEADERS) : undefined,
-  } : undefined, { scope: 'worker', option: true }],
+  connectOptions: [({}, use) => {
+    const wsEndpoint = process.env.PW_TEST_CONNECT_WS_ENDPOINT;
+    if (!wsEndpoint)
+      return use(undefined);
+    let headers = process.env.PW_TEST_CONNECT_HEADERS ? JSON.parse(process.env.PW_TEST_CONNECT_HEADERS) : undefined;
+    if (process.env.PW_TEST_REUSE_CONTEXT) {
+      headers = {
+        ...headers,
+        'x-playwright-reuse-context': '1',
+      };
+    }
+    return use({
+      wsEndpoint,
+      headers
+    });
+  }, { scope: 'worker', option: true }],
   screenshot: ['off', { scope: 'worker', option: true }],
   video: ['off', { scope: 'worker', option: true }],
   trace: ['off', { scope: 'worker', option: true }],
@@ -115,7 +127,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     }
   }, { scope: 'worker', auto: true }],
 
-  browser: [async ({ playwright, browserName }, use) => {
+  browser: [async ({ playwright, browserName }, use, testInfo) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     const browser = await playwright[browserName].launch();
@@ -206,8 +218,14 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       options.permissions = permissions;
     if (proxy !== undefined)
       options.proxy = proxy;
-    if (storageState !== undefined)
+    if (storageState !== undefined) {
       options.storageState = storageState;
+      if (typeof storageState === 'string') {
+        const value = await test.info().storage().get(storageState);
+        if (value)
+          options.storageState = value as any;
+      }
+    }
     if (timezoneId !== undefined)
       options.timezoneId = timezoneId;
     if (userAgent !== undefined)
@@ -475,7 +493,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       return context;
     });
 
-    const prependToError = testInfo.status === 'timedOut' ?
+    const prependToError = (testInfo as any)._didTimeout ?
       formatPendingCalls((browser as any)._connection.pendingProtocolCalls()) : '';
 
     let counter = 0;

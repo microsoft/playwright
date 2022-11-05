@@ -115,7 +115,11 @@ export type CommonFixtures = {
   waitForPort: (port: number) => Promise<void>;
 };
 
-export const commonFixtures: Fixtures<CommonFixtures, {}> = {
+export type CommonWorkerFixtures = {
+  daemonProcess: (params: TestChildParams) => TestChildProcess;
+};
+
+export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
   childProcess: async ({}, use, testInfo) => {
     const processes: TestChildProcess[] = [];
     await use(params => {
@@ -132,6 +136,16 @@ export const commonFixtures: Fixtures<CommonFixtures, {}> = {
       }
     }
   },
+
+  daemonProcess: [async ({}, use) => {
+    const processes: TestChildProcess[] = [];
+    await use(params => {
+      const process = new TestChildProcess(params);
+      processes.push(process);
+      return process;
+    });
+    await Promise.all(processes.map(child => child.close()));
+  }, { scope: 'worker' }],
 
   waitForPort: async ({}, use) => {
     const token = { canceled: false };

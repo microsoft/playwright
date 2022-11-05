@@ -105,12 +105,6 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-## property: TestProject.canShard
-* since: v1.28
-- type: ?<[boolean]>
-
-If set to false and the tests run with --shard command line option, all tests from this project will run in every shard. If not specified, the project can be split between several shards.
-
 ## property: TestProject.expect
 * since: v1.10
 - type: ?<[Object]>
@@ -168,6 +162,11 @@ Metadata that will be put directly to the test report serialized as JSON.
 
 Project name is visible in the report and during test execution.
 
+## property: TestProject.setup
+* since: v1.28
+- type: ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+
+Project setup files that would be executed before all tests in the project. If project setup fails the tests in this project will be skipped. All project setup files will run in every shard if the project is sharded.
 
 ## property: TestProject.screenshotsDir
 * since: v1.10
@@ -263,22 +262,9 @@ Use [`property: TestConfig.repeatEach`] to change this option for all projects.
 
 The maximum number of retry attempts given to failed tests. Learn more about [test retries](../test-retries.md#retries).
 
+Use [`method: Test.describe.configure`] to change the number of retries for a specific file or a group of tests.
+
 Use [`property: TestConfig.retries`] to change this option for all projects.
-
-## property: TestProject.stage
-* since: v1.28
-- type: ?<[int]>
-
-An integer number that defines when the project should run relative to other projects. Each project runs in exactly
-one stage. By default all projects run in stage 0. Stages with lower number run first. Several projects can run in
-each stage. Exeution order between projecs in the same stage is undefined.
-
-## property: TestProject.stopOnFailure
-* since: v1.28
-- type: ?<[boolean]>
-
-If set to true and the any test in the project fails all subsequent projects in the same playwright test run will
-be skipped.
 
 ## property: TestProject.testDir
 * since: v1.10
@@ -398,7 +384,7 @@ Use [`property: TestConfig.testMatch`] to change this option for all projects.
 
 Timeout for each test in milliseconds. Defaults to 30 seconds.
 
-This is a base timeout for all tests. In addition, each test can configure its own timeout with [`method: Test.setTimeout`].
+This is a base timeout for all tests. Each test can configure its own timeout with [`method: Test.setTimeout`]. Each file or a group of tests can configure the timeout with [`method: Test.describe.configure`].
 
 Use [`property: TestConfig.timeout`] to change this option for all projects.
 

@@ -76,7 +76,7 @@ also link the script called `playwright/index.[tj]s`.
 <html lang="en">
   <body>
     <div id="root"></div>
-    <script type="module" src="/playwright/index.ts"></script>
+    <script type="module" src="./index.ts"></script>
   </body>
 </html>
 ```

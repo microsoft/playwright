@@ -424,10 +424,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async emulateMedia(options: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null, reducedMotion?: 'reduce' | 'no-preference' | null, forcedColors?: 'active' | 'none' | null } = {}) {
     await this._channel.emulateMedia({
-      media: options.media === null ? 'null' : options.media,
-      colorScheme: options.colorScheme === null ? 'null' : options.colorScheme,
-      reducedMotion: options.reducedMotion === null ? 'null' : options.reducedMotion,
-      forcedColors: options.forcedColors === null ? 'null' : options.forcedColors,
+      media: options.media === null ? 'no-override' : options.media,
+      colorScheme: options.colorScheme === null ? 'no-override' : options.colorScheme,
+      reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
+      forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,
     });
   }
 
@@ -558,6 +558,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async fill(selector: string, value: string, options?: channels.FrameFillOptions) {
     return this._mainFrame.fill(selector, value, options);
+  }
+
+  async clear(selector: string, options?: channels.FrameFillOptions) {
+    return this.fill(selector, '', options);
   }
 
   locator(selector: string, options?: LocatorOptions): Locator {

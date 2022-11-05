@@ -27,8 +27,8 @@ test.describe('cli codegen', () => {
       <button onclick="console.log('click2')">Submit</button>
     `);
 
-    const selector = await recorder.hoverOverElement('button');
-    expect(selector).toBe('role=button[name=\"Submit\"] >> nth=0');
+    const locator = await recorder.hoverOverElement('button');
+    expect(locator).toBe(`getByRole('button', { name: 'Submit' }).first()`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -62,8 +62,8 @@ test.describe('cli codegen', () => {
       <button onclick="console.log('click2')">Submit</button>
     `);
 
-    const selector = await recorder.hoverOverElement('button >> nth=1');
-    expect(selector).toBe('role=button[name=\"Submit\"] >> nth=1');
+    const locator = await recorder.hoverOverElement('button >> nth=1');
+    expect(locator).toBe(`getByRole('button', { name: 'Submit' }).nth(1)`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -234,8 +234,8 @@ test.describe('cli codegen', () => {
 
     await recorder.setContentAndWait(`<div data-testid=testid onclick="console.log('click')">Submit</div>`);
 
-    const selector = await recorder.hoverOverElement('div');
-    expect(selector).toBe('internal:attr=[data-testid="testid"]');
+    const locator = await recorder.hoverOverElement('div');
+    expect(locator).toBe(`getByTestId('testid')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -266,8 +266,8 @@ test.describe('cli codegen', () => {
 
     await recorder.setContentAndWait(`<input placeholder="Country"></input>`);
 
-    const selector = await recorder.hoverOverElement('input');
-    expect(selector).toBe('internal:attr=[placeholder="Country"i]');
+    const locator = await recorder.hoverOverElement('input');
+    expect(locator).toBe(`getByPlaceholder('Country')`);
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -295,8 +295,8 @@ test.describe('cli codegen', () => {
 
     await recorder.setContentAndWait(`<input alt="Country"></input>`);
 
-    const selector = await recorder.hoverOverElement('input');
-    expect(selector).toBe('internal:attr=[alt="Country"i]');
+    const locator = await recorder.hoverOverElement('input');
+    expect(locator).toBe(`getByAltText('Country')`);
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -324,8 +324,8 @@ test.describe('cli codegen', () => {
 
     await recorder.setContentAndWait(`<label for=target>Country</label><input id=target>`);
 
-    const selector = await recorder.hoverOverElement('input');
-    expect(selector).toBe('internal:label=Country');
+    const locator = await recorder.hoverOverElement('input');
+    expect(locator).toBe(`getByLabel('Country')`);
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -348,13 +348,13 @@ test.describe('cli codegen', () => {
         await page.GetByLabel("Country").ClickAsync();`);
   });
 
-  test('should generate getByLabel with regex', async ({ page, openRecorder }) => {
+  test('should generate getByLabel without regex', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 
     await recorder.setContentAndWait(`<label for=target>Coun"try</label><input id=target>`);
 
-    const selector = await recorder.hoverOverElement('input');
-    expect(selector).toBe('internal:label=/Coun"try/');
+    const locator = await recorder.hoverOverElement('input');
+    expect(locator).toBe(`getByLabel('Coun"try')`);
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -362,18 +362,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
-  await page.getByLabel(/Coun"try/).click();`);
+  await page.getByLabel('Coun\"try').click();`);
 
     expect.soft(sources.get('Python').text).toContain(`
-    page.get_by_label(re.compile(r"Coun\\\"try")).click()`);
+    page.get_by_label("Coun\\"try").click()`);
 
     expect.soft(sources.get('Python Async').text).toContain(`
-    await page.get_by_label(re.compile(r"Coun\\\"try")).click()`);
+    await page.get_by_label("Coun\\"try").click()`);
 
     expect.soft(sources.get('Java').text).toContain(`
-      page.getByLabel(Pattern.compile("Coun\\\"try")).click()`);
+      page.getByLabel("Coun\\"try").click()`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.GetByLabel(new Regex("Coun\\\"try")).ClickAsync();`);
+        await page.GetByLabel("Coun\\"try").ClickAsync();`);
   });
 });

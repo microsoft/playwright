@@ -252,26 +252,13 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    *
+   * Use [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) to change
+   * the number of retries for a specific file or a group of tests.
+   *
    * Use [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) to change this option for
    * all projects.
    */
   retries: number;
-  /**
-   * An integer number that defines when the project should run relative to other projects. Each project runs in exactly one
-   * stage. By default all projects run in stage 0. Stages with lower number run first. Several projects can run in each
-   * stage. Exeution order between projecs in the same stage is undefined.
-   */
-  stage: number;
-  /**
-   * If set to true and the any test in the project fails all subsequent projects in the same playwright test run will be
-   * skipped.
-   */
-  stopOnFailure: boolean;
-  /**
-   * If set to false and the tests run with --shard command line option, all tests from this project will run in every shard.
-   * If not specified, the project can be split between several shards.
-   */
-  canShard: boolean;
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
@@ -345,8 +332,10 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Timeout for each test in milliseconds. Defaults to 30 seconds.
    *
-   * This is a base timeout for all tests. In addition, each test can configure its own timeout with
-   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout).
+   * This is a base timeout for all tests. Each test can configure its own timeout with
+   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout). Each file or a group of tests
+   * can configure the timeout with
+   * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure).
    *
    * Use [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout) to change this option for
    * all projects.
@@ -1469,7 +1458,7 @@ export interface TestInfo {
    * > NOTE: [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach)
    * automatically takes care of copying attached files to a location that is accessible to reporters. You can safely remove
    * the attachment after awaiting the attach call.
-   * @param name Attachment name.
+   * @param name Attachment name. The name will also be sanitized and used as the prefix of file name when saving to disk.
    * @param options
    */
   attach(name: string, options?: {
@@ -1752,6 +1741,11 @@ export interface TestInfo {
   stdout: Array<string|Buffer>;
 
   /**
+   * Returns a [Storage] instance for the currently running project.
+   */
+  storage(): Storage;
+
+  /**
    * Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about
    * [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
@@ -2018,8 +2012,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   only: SuiteFunction;
     };
     /**
-   * Set execution mode of execution for the enclosing scope. Can be executed either on the top level or inside a describe.
-   * Configuration applies to the entire scope, regardless of whether it run before or after the test declaration.
+   * Configures the enclosing scope. Can be executed either on the top level or inside a describe. Configuration applies to
+   * the entire scope, regardless of whether it run before or after the test declaration.
    *
    * Learn more about the execution modes [here](https://playwright.dev/docs/test-parallel).
    *
@@ -2041,9 +2035,18 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * test('runs second', async ({ page }) => {});
    * ```
    *
+   * Configuring retries and timeout:
+   *
+   * ```js
+   * // All tests in the file will be retried twice and have a timeout of 20 seconds.
+   * test.describe.configure({ retries: 2, timeout: 20_000 });
+   * test('runs first', async ({ page }) => {});
+   * test('runs second', async ({ page }) => {});
+   * ```
+   *
    * @param options
    */
-  configure: (options: { mode?: 'parallel' | 'serial' }) => void;
+  configure: (options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
   };
   /**
    * Declares a skipped test, similarly to
@@ -2373,7 +2376,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * test.describe('group', () => {
    *   // Applies to all tests in this group.
-   *   test.setTimeout(60000);
+   *   test.describe.configure({ timeout: 60000 });
    *
    *   test('test one', async () => { /* ... *\/ });
    *   test('test two', async () => { /* ... *\/ });
@@ -2522,6 +2525,29 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
   /**
+   * Resets options that were set up in the configuration file or with
+   * [test.use(options)](https://playwright.dev/docs/api/class-test#test-use) to their default or config-specified value.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.reset({
+   *   // Reset storage state to the default empty value.
+   *   storageStage: 'default',
+   *
+   *   // Reset locale to the value specified in the config file.
+   *   locale: 'config',
+   * });
+   *
+   * test('example', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param options An object with options set to either `'config'` or `'default'`.
+   */
+  reset(options: ResetOptions<TestArgs & WorkerArgs>): void;
+  /**
    * Declares a test step.
    *
    * ```js
@@ -2645,6 +2671,7 @@ export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extend
 } & {
   [K in keyof T]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean, option?: boolean, timeout?: number | undefined }];
 };
+type ResetOptions<T extends KeyValue> = { [K in keyof T]?: 'config' | 'default' };
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
@@ -2669,6 +2696,24 @@ type ConnectOptions = {
    */
   timeout?: number;
 };
+
+/**
+ * Playwright Test provides a [testInfo.storage()](https://playwright.dev/docs/api/class-testinfo#test-info-storage) object
+ * for passing values between project setup and tests. TODO: examples
+ */
+export interface Storage {
+  /**
+   * Get named item from the storage. Returns undefined if there is no value with given name.
+   * @param name Item name.
+   */
+  get<T>(name: string): Promise<T | undefined>;
+  /**
+   * Set value to the storage.
+   * @param name Item name.
+   * @param value Item value. The value must be serializable to JSON. Passing `undefined` deletes the entry with given name.
+   */
+  set<T>(name: string, value: T | undefined): Promise<void>;
+}
 
 /**
  * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
@@ -2844,8 +2889,8 @@ export interface PlaywrightTestOptions {
   bypassCSP: boolean | undefined;
   /**
    * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Defaults
-   * to `'light'`.
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details. Passing
+   * `null` resets emulation to system defaults. Defaults to `'light'`.
    */
   colorScheme: ColorScheme | undefined;
   /**
@@ -3641,7 +3686,7 @@ interface LocatorAssertions {
 
     /**
      * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
-     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenshots of
      * high-dpi devices will be twice as large or even larger.
      *
      * Defaults to `"css"`.
@@ -3715,7 +3760,7 @@ interface LocatorAssertions {
 
     /**
      * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
-     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenshots of
      * high-dpi devices will be twice as large or even larger.
      *
      * Defaults to `"css"`.
@@ -3959,7 +4004,7 @@ interface PageAssertions {
 
     /**
      * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
-     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenshots of
      * high-dpi devices will be twice as large or even larger.
      *
      * Defaults to `"css"`.
@@ -4063,7 +4108,7 @@ interface PageAssertions {
 
     /**
      * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
-     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenshots of
      * high-dpi devices will be twice as large or even larger.
      *
      * Defaults to `"css"`.
@@ -4304,12 +4349,6 @@ export interface TestError {
  */
 interface TestProject {
   /**
-   * If set to false and the tests run with --shard command line option, all tests from this project will run in every shard.
-   * If not specified, the project can be split between several shards.
-   */
-  canShard?: boolean;
-
-  /**
    * Configuration for the `expect` assertion library.
    *
    * Use [testConfig.expect](https://playwright.dev/docs/api/class-testconfig#test-config-expect) to change this option for
@@ -4423,6 +4462,12 @@ interface TestProject {
   name?: string;
 
   /**
+   * Project setup files that would be executed before all tests in the project. If project setup fails the tests in this
+   * project will be skipped. All project setup files will run in every shard if the project is sharded.
+   */
+  setup?: string|RegExp|Array<string|RegExp>;
+
+  /**
    * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
    * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
    *
@@ -4475,23 +4520,13 @@ interface TestProject {
   /**
    * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    *
+   * Use [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) to change
+   * the number of retries for a specific file or a group of tests.
+   *
    * Use [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) to change this option for
    * all projects.
    */
   retries?: number;
-
-  /**
-   * An integer number that defines when the project should run relative to other projects. Each project runs in exactly one
-   * stage. By default all projects run in stage 0. Stages with lower number run first. Several projects can run in each
-   * stage. Exeution order between projecs in the same stage is undefined.
-   */
-  stage?: number;
-
-  /**
-   * If set to true and the any test in the project fails all subsequent projects in the same playwright test run will be
-   * skipped.
-   */
-  stopOnFailure?: boolean;
 
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
@@ -4569,8 +4604,10 @@ interface TestProject {
   /**
    * Timeout for each test in milliseconds. Defaults to 30 seconds.
    *
-   * This is a base timeout for all tests. In addition, each test can configure its own timeout with
-   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout).
+   * This is a base timeout for all tests. Each test can configure its own timeout with
+   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout). Each file or a group of tests
+   * can configure the timeout with
+   * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure).
    *
    * Use [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout) to change this option for
    * all projects.
@@ -4602,7 +4639,8 @@ interface TestConfigWebServer {
   ignoreHTTPSErrors?: boolean;
 
   /**
-   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
+   * How long to wait for the process to start up and be available in milliseconds. The same timeout is also used to
+   * terminate the process. Defaults to 60000.
    */
   timeout?: number;
 

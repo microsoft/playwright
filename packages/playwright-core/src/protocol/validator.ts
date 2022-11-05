@@ -257,7 +257,7 @@ scheme.LocalUtilsConnectResult = tObject({
 });
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
-  sdkLanguage: tString,
+  sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),
 });
 scheme.RootInitializeResult = tObject({
   playwright: tChannel(['Playwright']),
@@ -289,6 +289,7 @@ scheme.PlaywrightInitializer = tObject({
   })),
   selectors: tChannel(['Selectors']),
   preLaunchedBrowser: tOptional(tChannel(['Browser'])),
+  preConnectedAndroidDevice: tOptional(tChannel(['AndroidDevice'])),
   socksSupport: tOptional(tChannel(['SocksSupport'])),
 });
 scheme.PlaywrightNewRequestParams = tObject({
@@ -316,8 +317,6 @@ scheme.PlaywrightNewRequestParams = tObject({
 scheme.PlaywrightNewRequestResult = tObject({
   request: tChannel(['APIRequestContext']),
 });
-scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
-scheme.PlaywrightHideHighlightResult = tOptional(tObject({}));
 scheme.RecorderSource = tObject({
   isRecorded: tBoolean,
   id: tString,
@@ -334,7 +333,16 @@ scheme.RecorderSource = tObject({
 scheme.DebugControllerInitializer = tOptional(tObject({}));
 scheme.DebugControllerInspectRequestedEvent = tObject({
   selector: tString,
-  locators: tArray(tType('NameValue')),
+  locator: tString,
+});
+scheme.DebugControllerStateChangedEvent = tObject({
+  pageCount: tNumber,
+});
+scheme.DebugControllerSourceChangedEvent = tObject({
+  text: tString,
+  header: tOptional(tString),
+  footer: tOptional(tString),
+  actions: tOptional(tArray(tString)),
 });
 scheme.DebugControllerBrowsersChangedEvent = tObject({
   browsers: tArray(tObject({
@@ -343,35 +351,31 @@ scheme.DebugControllerBrowsersChangedEvent = tObject({
     })),
   })),
 });
-scheme.DebugControllerSourcesChangedEvent = tObject({
-  sources: tArray(tType('RecorderSource')),
+scheme.DebugControllerInitializeParams = tObject({
+  codegenId: tString,
+  sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),
 });
-scheme.DebugControllerSetTrackHierarchyParams = tObject({
+scheme.DebugControllerInitializeResult = tOptional(tObject({}));
+scheme.DebugControllerSetReportStateChangedParams = tObject({
   enabled: tBoolean,
 });
-scheme.DebugControllerSetTrackHierarchyResult = tOptional(tObject({}));
-scheme.DebugControllerSetReuseBrowserParams = tObject({
-  enabled: tBoolean,
-});
-scheme.DebugControllerSetReuseBrowserResult = tOptional(tObject({}));
+scheme.DebugControllerSetReportStateChangedResult = tOptional(tObject({}));
 scheme.DebugControllerResetForReuseParams = tOptional(tObject({}));
 scheme.DebugControllerResetForReuseResult = tOptional(tObject({}));
-scheme.DebugControllerNavigateAllParams = tObject({
+scheme.DebugControllerNavigateParams = tObject({
   url: tString,
 });
-scheme.DebugControllerNavigateAllResult = tOptional(tObject({}));
+scheme.DebugControllerNavigateResult = tOptional(tObject({}));
 scheme.DebugControllerSetRecorderModeParams = tObject({
   mode: tEnum(['inspecting', 'recording', 'none']),
-  language: tOptional(tString),
-  file: tOptional(tString),
 });
 scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
-scheme.DebugControllerHighlightAllParams = tObject({
+scheme.DebugControllerHighlightParams = tObject({
   selector: tString,
 });
-scheme.DebugControllerHighlightAllResult = tOptional(tObject({}));
-scheme.DebugControllerHideHighlightAllParams = tOptional(tObject({}));
-scheme.DebugControllerHideHighlightAllResult = tOptional(tObject({}));
+scheme.DebugControllerHighlightResult = tOptional(tObject({}));
+scheme.DebugControllerHideHighlightParams = tOptional(tObject({}));
+scheme.DebugControllerHideHighlightResult = tOptional(tObject({}));
 scheme.DebugControllerKillParams = tOptional(tObject({}));
 scheme.DebugControllerKillResult = tOptional(tObject({}));
 scheme.DebugControllerCloseAllBrowsersParams = tOptional(tObject({}));
@@ -505,9 +509,9 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
   hasTouch: tOptional(tBoolean),
-  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
-  reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
-  forcedColors: tOptional(tEnum(['active', 'none'])),
+  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
+  reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
+  forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
   acceptDownloads: tOptional(tBoolean),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
@@ -576,9 +580,9 @@ scheme.BrowserNewContextParams = tObject({
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
   hasTouch: tOptional(tBoolean),
-  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
-  reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
-  forcedColors: tOptional(tEnum(['active', 'none'])),
+  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
+  reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
+  forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
   acceptDownloads: tOptional(tBoolean),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
@@ -636,9 +640,9 @@ scheme.BrowserNewContextForReuseParams = tObject({
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
   hasTouch: tOptional(tBoolean),
-  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
-  reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
-  forcedColors: tOptional(tEnum(['active', 'none'])),
+  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
+  reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
+  forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
   acceptDownloads: tOptional(tBoolean),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
@@ -931,10 +935,10 @@ scheme.PageCloseParams = tObject({
 });
 scheme.PageCloseResult = tOptional(tObject({}));
 scheme.PageEmulateMediaParams = tObject({
-  media: tOptional(tEnum(['screen', 'print', 'null'])),
-  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'null'])),
-  reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'null'])),
-  forcedColors: tOptional(tEnum(['active', 'none', 'null'])),
+  media: tOptional(tEnum(['screen', 'print', 'no-override'])),
+  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
+  reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
+  forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
 });
 scheme.PageEmulateMediaResult = tOptional(tObject({}));
 scheme.PageExposeBindingParams = tObject({
@@ -1205,6 +1209,12 @@ scheme.FrameAddStyleTagParams = tObject({
 scheme.FrameAddStyleTagResult = tObject({
   element: tChannel(['ElementHandle']),
 });
+scheme.FrameBlurParams = tObject({
+  selector: tString,
+  strict: tOptional(tBoolean),
+  timeout: tOptional(tNumber),
+});
+scheme.FrameBlurResult = tOptional(tObject({}));
 scheme.FrameCheckParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
@@ -2118,7 +2128,7 @@ scheme.ElectronLaunchParams = tObject({
   timeout: tOptional(tNumber),
   acceptDownloads: tOptional(tBoolean),
   bypassCSP: tOptional(tBoolean),
-  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
+  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
   geolocation: tOptional(tObject({
     longitude: tNumber,
@@ -2202,6 +2212,7 @@ scheme.AndroidDeviceInitializer = tObject({
   model: tString,
   serial: tString,
 });
+scheme.AndroidDeviceCloseEvent = tOptional(tObject({}));
 scheme.AndroidDeviceWebViewAddedEvent = tObject({
   webView: tType('AndroidWebView'),
 });
@@ -2339,9 +2350,9 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
   hasTouch: tOptional(tBoolean),
-  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
-  reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
-  forcedColors: tOptional(tEnum(['active', 'none'])),
+  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
+  reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
+  forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
   acceptDownloads: tOptional(tBoolean),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({

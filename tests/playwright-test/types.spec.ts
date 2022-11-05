@@ -136,6 +136,13 @@ test('should check types of fixtures', async ({ runTSC }) => {
       // @ts-expect-error
       test.use({ baz: 'baz' });
 
+      test.reset({ foo: 'default' });
+      test.reset({ foo: 'config' });
+      // @ts-expect-error
+      test.reset({ unknown: 'config' });
+      // @ts-expect-error
+      test.reset({ foo: 'unknown' });
+
       test('my test', async ({ foo, bar }) => {
         bar += parseInt(foo);
       });
@@ -183,6 +190,21 @@ test('config should allow void/empty options', async ({ runTSC }) => {
     'a.spec.ts': `
       const { test } = pwt;
       test('my test', async () => {
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should provide storage interface', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('my test', async () => {
+        await test.info().storage().set('foo', 'bar');
+        const val = await test.info().storage().get('foo');
+        // @ts-expect-error
+        await test.info().storage().unknown();
       });
     `
   });

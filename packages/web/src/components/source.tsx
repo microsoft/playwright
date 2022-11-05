@@ -14,10 +14,9 @@
   limitations under the License.
 */
 
-import './source.css';
 import * as React from 'react';
-import highlightjs from '../third_party/highlightjs/highlightjs';
-import '../third_party/highlightjs/highlightjs/tomorrow.css';
+import './codeMirrorWrapper.css';
+import { CodeMirrorWrapper } from './codeMirrorWrapper';
 
 export type SourceHighlight = {
   line: number;
@@ -38,32 +37,5 @@ export const Source: React.FC<SourceProps> = ({
   highlight = [],
   revealLine
 }) => {
-  const lines = React.useMemo<string[]>(() => {
-    const result = [];
-    let continuation: any;
-    for (const line of text.split('\n')) {
-      const highlighted = highlightjs.highlight(language, line, true, continuation);
-      continuation = highlighted.top;
-      result.push(highlighted.value);
-    }
-    return result;
-  }, [text, language]);
-
-  const revealedLineRef = React.createRef<HTMLDivElement>();
-  React.useLayoutEffect(() => {
-    if (typeof revealLine === 'number' && revealedLineRef.current)
-      revealedLineRef.current.scrollIntoView({ block: 'center', inline: 'nearest' });
-  }, [revealedLineRef, revealLine]);
-
-  return <div className='source'>{
-    lines.map((markup, index) => {
-      const lineNumber = index + 1;
-      const lineHighlight = highlight.find(h => h.line === lineNumber);
-      const lineClass = lineHighlight ? `source-line source-line-${lineHighlight.type}` : 'source-line';
-      return <div key={lineNumber} className={lineClass} ref={revealLine === lineNumber ? revealedLineRef : null}>
-        <div className='source-line-number'>{lineNumber}</div>
-        <div className='source-code' dangerouslySetInnerHTML={{ __html: markup }}></div>
-      </div>;
-    })
-  }</div>;
+  return <CodeMirrorWrapper text={text} language={language} readOnly={true} highlight={highlight} revealLine={revealLine} lineNumbers={true}></CodeMirrorWrapper>;
 };

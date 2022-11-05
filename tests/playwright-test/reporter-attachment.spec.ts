@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('render text attachment', async ({ runInlineTest }) => {
@@ -185,4 +186,95 @@ test(`testInfo.attach allow empty buffer body`, async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(stripAnsi(result.output)).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
+});
+
+test(`testInfo.attach use name as prefix`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test.extend({
+        fixture: async ({}, use, testInfo) => {
+          const filePath = testInfo.outputPath('foo.txt');
+          require('fs').writeFileSync(filePath, 'hello');
+          await use();
+          await testInfo.attach('some random string', { path: filePath });
+        },
+      });
+      test('success', async ({ fixture }) => {
+        expect(true).toBe(false);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  expect(stripAnsi(result.output)).toContain('attachment #1: some random string (text/plain)');
+  expect(stripAnsi(result.output)).toContain('some-random-string-');
+});
+
+test(`testInfo.attach name should be sanitized`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test.extend({
+        fixture: async ({}, use, testInfo) => {
+          const filePath = testInfo.outputPath('foo.txt');
+          require('fs').writeFileSync(filePath, 'hello');
+          await use();
+          await testInfo.attach('../../../test', { path: filePath });
+        },
+      });
+      test('success', async ({ fixture }) => {
+        expect(true).toBe(false);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  expect(stripAnsi(result.output)).toContain('attachment #1: ../../../test (text/plain)');
+  expect(stripAnsi(result.output)).toContain(`attachments${path.sep}-test`);
+});
+
+test(`testInfo.attach name can be empty string`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test.extend({
+        fixture: async ({}, use, testInfo) => {
+          const filePath = testInfo.outputPath('foo.txt');
+          require('fs').writeFileSync(filePath, 'hello');
+          await use();
+          await testInfo.attach('', { path: filePath });
+        },
+      });
+      test('success', async ({ fixture }) => {
+        expect(true).toBe(false);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  expect(stripAnsi(result.output)).toContain('attachment #1:  (text/plain)');
+  expect(stripAnsi(result.output)).toContain(`attachments${path.sep}-`);
+});
+
+test(`testInfo.attach throw if name is not string`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test.extend({
+        fixture: async ({}, use, testInfo) => {
+          const filePath = testInfo.outputPath('foo.txt');
+          require('fs').writeFileSync(filePath, 'hello');
+          await use();
+          await testInfo.attach(false, { path: filePath });
+        },
+      });
+      test('success', async ({ fixture }) => {
+        expect(true).toBe(true);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  expect(stripAnsi(result.output)).toContain('"name" should be string.');
 });

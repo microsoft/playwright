@@ -6,13 +6,14 @@
     "start": "vite",
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "typecheck": "tsc --noEmit"
   },
   "license": "MIT",
   "devDependencies": {
     "typescript": "^4.7.4",
-    "vite": "^3.0.0",
-    "vite-plugin-solid": "^2.3.0"
+    "vite": "^3.2.1",
+    "vite-plugin-solid": "^2.3.10"
   },
   "dependencies": {
     "solid-js": "^1.4.7"

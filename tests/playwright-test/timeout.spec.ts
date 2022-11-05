@@ -378,3 +378,66 @@ test('should not include fixtures with own timeout and beforeAll in test duratio
   expect(duration).toBeGreaterThanOrEqual(300 * 4);  // Includes test, beforeEach, afterEach and bar.
   expect(duration).toBeLessThan(300 * 4 + 1000);  // Does not include beforeAll and foo.
 });
+
+test('should run fixture teardowns after timeout with soft expect error', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      export const test = pwt.test.extend({
+        foo: async ({}, run, testInfo) => {
+          await run();
+          await new Promise(f => setTimeout(f, 500));
+          testInfo.attachments.push({ name: 'foo', contentType: 'text/plain', body: Buffer.from('foo') });
+        },
+        bar: async ({ foo }, run, testInfo) => {
+          await run(foo);
+          await new Promise(f => setTimeout(f, 500));
+          testInfo.attachments.push({ name: 'bar', contentType: 'text/plain', body: Buffer.from('bar') });
+        },
+      });
+    `,
+    'c.spec.ts': `
+      import { test } from './helper';
+      test('works', async ({ bar }) => {
+        expect.soft(1).toBe(2);
+        await new Promise(f => setTimeout(f, 5000));
+      });
+    `
+  }, { timeout: 2000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  const test = result.report.suites[0].specs[0].tests[0];
+  expect(test.results[0].attachments[0]).toEqual({
+    name: 'bar',
+    body: 'YmFy',
+    contentType: 'text/plain',
+  });
+  expect(test.results[0].attachments[1]).toEqual({
+    name: 'foo',
+    body: 'Zm9v',
+    contentType: 'text/plain',
+  });
+});
+
+test('should respect test.describe.configure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test.describe.configure({ timeout: 1000 });
+      test('test1', async ({}) => {
+        console.log('test1-' + test.info().timeout);
+      });
+      test.describe(() => {
+        test.describe.configure({ timeout: 2000 });
+        test.describe(() => {
+          test('test2', async ({}) => {
+            console.log('test2-' + test.info().timeout);
+          });
+        });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.output).toContain('test1-1000');
+  expect(result.output).toContain('test2-2000');
+});

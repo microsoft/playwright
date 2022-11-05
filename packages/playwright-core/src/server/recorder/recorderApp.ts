@@ -125,6 +125,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       channel: findChromiumChannel(sdkLanguage),
       args,
       noDefaultViewport: true,
+      colorScheme: 'no-override',
       ignoreDefaultArgs: ['--enable-automation'],
       headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
       useWebSocket: !!process.env.PWTEST_RECORDER_PORT,

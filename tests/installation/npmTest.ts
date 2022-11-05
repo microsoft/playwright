@@ -24,6 +24,8 @@ import path from 'path';
 import debugLogger from 'debug';
 import { Registry }  from './registry';
 import { spawnAsync } from './spawnAsync';
+import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
+import { commonFixtures } from '../config/commonFixtures';
 
 
 export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os.tmpdir(), 'pwt', 'workspaces');
@@ -76,111 +78,116 @@ const expect = _expect;
 
 export type ExecOptions = { cwd?: string, env?: Record<string, string>, message?: string, expectToExitWithError?: boolean };
 export type ArgsOrOptions = [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions];
-export const test = _test.extend<{
-    _auto: void,
-    tmpWorkspace: string,
-    nodeMajorVersion: number,
-    installedSoftwareOnDisk: (registryPath?: string) => Promise<string[]>;
-    writeFiles: (nameToContents: Record<string, string>) => Promise<void>,
-    exec: (cmd: string, ...argsAndOrOptions: ArgsOrOptions) => Promise<string>
-    tsc: (...argsAndOrOptions: ArgsOrOptions) => Promise<string>,
-    registry: Registry,
-        }>({
-          _auto: [async ({ tmpWorkspace, exec }, use) => {
-            await exec('npm init -y');
-            const sourceDir = path.join(__dirname, 'fixture-scripts');
-            const contents = await fs.promises.readdir(sourceDir);
-            await Promise.all(contents.map(f => fs.promises.copyFile(path.join(sourceDir, f), path.join(tmpWorkspace, f))));
-            await use();
-          }, {
-            auto: true,
-          }],
-          nodeMajorVersion: async ({}, use) => {
-            await use(+process.versions.node.split('.')[0]);
-          },
-          writeFiles: async ({ tmpWorkspace }, use) => {
-            await use(async (nameToContents: Record<string, string>) => {
-              for (const [name, contents] of Object.entries(nameToContents))
-                await fs.promises.writeFile(path.join(tmpWorkspace, name), contents);
-            });
-          },
-          tmpWorkspace: async ({}, use) => {
-            // We want a location that won't have a node_modules dir anywhere along its path
-            const tmpWorkspace = path.join(TMP_WORKSPACES, path.basename(test.info().outputDir));
-            await fs.promises.mkdir(tmpWorkspace);
-            debug(`Workspace Folder: ${tmpWorkspace}`);
-            await use(tmpWorkspace);
-          },
-          registry: async ({}, use, testInfo) => {
-            const port = testInfo.workerIndex + 16123;
-            const url = `http://127.0.0.1:${port}`;
-            const registry = new Registry(testInfo.outputPath('registry'), url);
-            await registry.start(JSON.parse((await fs.promises.readFile(path.join(__dirname, '.registry.json'), 'utf8'))));
-            await use(registry);
-            await registry.shutdown();
-          },
-          installedSoftwareOnDisk: async ({ tmpWorkspace }, use) => {
-            await use(async (registryPath?: string) => fs.promises.readdir(registryPath || path.join(tmpWorkspace, 'browsers')).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => !f.startsWith('.'))));
-          },
-          exec: async ({ registry, tmpWorkspace }, use, testInfo) => {
-            await use(async (cmd: string, ...argsAndOrOptions: [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions]) => {
-              let args: string[] = [];
-              let options: ExecOptions = {};
-              if (typeof argsAndOrOptions[argsAndOrOptions.length - 1] === 'object')
-                options = argsAndOrOptions.pop() as ExecOptions;
 
-              args = argsAndOrOptions as string[];
+export type NPMTestFixtures = {
+  _auto: void,
+  tmpWorkspace: string,
+  nodeMajorVersion: number,
+  installedSoftwareOnDisk: (registryPath?: string) => Promise<string[]>;
+  writeFiles: (nameToContents: Record<string, string>) => Promise<void>,
+  exec: (cmd: string, ...argsAndOrOptions: ArgsOrOptions) => Promise<string>
+  tsc: (...argsAndOrOptions: ArgsOrOptions) => Promise<string>,
+  registry: Registry,
+};
 
-              let result!: Awaited<ReturnType<typeof spawnAsync>>;
-              await test.step(`exec: ${[cmd, ...args].join(' ')}`, async () => {
-                result = await spawnAsync(cmd, args, {
-                  shell: true,
-                  cwd: options.cwd ?? tmpWorkspace,
-                  // NB: We end up running npm-in-npm, so it's important that we do NOT forward process.env and instead cherry-pick environment variables.
-                  env: {
-                    'PATH': process.env.PATH,
-                    'DISPLAY': process.env.DISPLAY,
-                    'XAUTHORITY': process.env.XAUTHORITY,
-                    'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, 'browsers'),
-                    'npm_config_cache': testInfo.outputPath('npm_cache'),
-                    'npm_config_registry': registry.url(),
-                    'npm_config_prefix': testInfo.outputPath('npm_global'),
-                    ...options.env,
-                  }
-                });
-              });
-
-              const command = [cmd, ...args].join(' ');
-              const stdio = result.stdout + result.stderr;
-              await testInfo.attach(command, { body: `COMMAND: ${command}\n\nEXIT CODE: ${result.code}\n\n====== STDOUT + STDERR ======\n\n${stdio}` });
-
-              // This means something is really off with spawn
-              if (result.error)
-                throw result.error;
-
-              const error: string[] = [];
-              if (options.expectToExitWithError && result.code === 0)
-                error.push(`Expected the command to exit with an error, but exited cleanly.`);
-              else if (!options.expectToExitWithError && result.code !== 0)
-                error.push(`Expected the command to exit cleanly (0 status code), but exited with ${result.code}.`);
-
-              if (!error.length)
-                return stdio;
-
-              if (options.message)
-                error.push(`Message: ${options.message}`);
-              error.push(`Command: ${command}`);
-              error.push(`EXIT CODE: ${result.code}`);
-              error.push(`====== STDIO ======\n${stdio}`);
-
-              throw new Error(error.join('\n'));
-            });
-          },
-          tsc: async ({ exec }, use) => {
-            await exec('npm i --foreground-scripts typescript@3.8 @types/node@14');
-            await use((...args: ArgsOrOptions) => exec('npx', '-p', 'typescript@3.8', 'tsc', ...args));
-          },
+export const test = _test
+    .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
+    .extend<NPMTestFixtures>({
+      _auto: [async ({ tmpWorkspace, exec }, use) => {
+        await exec('npm init -y');
+        const sourceDir = path.join(__dirname, 'fixture-scripts');
+        const contents = await fs.promises.readdir(sourceDir);
+        await Promise.all(contents.map(f => fs.promises.copyFile(path.join(sourceDir, f), path.join(tmpWorkspace, f))));
+        await use();
+      }, {
+        auto: true,
+      }],
+      nodeMajorVersion: async ({}, use) => {
+        await use(+process.versions.node.split('.')[0]);
+      },
+      writeFiles: async ({ tmpWorkspace }, use) => {
+        await use(async (nameToContents: Record<string, string>) => {
+          for (const [name, contents] of Object.entries(nameToContents))
+            await fs.promises.writeFile(path.join(tmpWorkspace, name), contents);
         });
+      },
+      tmpWorkspace: async ({}, use) => {
+        // We want a location that won't have a node_modules dir anywhere along its path
+        const tmpWorkspace = path.join(TMP_WORKSPACES, path.basename(test.info().outputDir));
+        await fs.promises.mkdir(tmpWorkspace);
+        debug(`Workspace Folder: ${tmpWorkspace}`);
+        await use(tmpWorkspace);
+      },
+      registry: async ({}, use, testInfo) => {
+        const port = testInfo.workerIndex + 16123;
+        const url = `http://127.0.0.1:${port}`;
+        const registry = new Registry(testInfo.outputPath('registry'), url);
+        await registry.start(JSON.parse((await fs.promises.readFile(path.join(__dirname, '.registry.json'), 'utf8'))));
+        await use(registry);
+        await registry.shutdown();
+      },
+      installedSoftwareOnDisk: async ({ tmpWorkspace }, use) => {
+        await use(async (registryPath?: string) => fs.promises.readdir(registryPath || path.join(tmpWorkspace, 'browsers')).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => !f.startsWith('.'))));
+      },
+      exec: async ({ registry, tmpWorkspace }, use, testInfo) => {
+        await use(async (cmd: string, ...argsAndOrOptions: [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions]) => {
+          let args: string[] = [];
+          let options: ExecOptions = {};
+          if (typeof argsAndOrOptions[argsAndOrOptions.length - 1] === 'object')
+            options = argsAndOrOptions.pop() as ExecOptions;
+
+          args = argsAndOrOptions as string[];
+
+          let result!: Awaited<ReturnType<typeof spawnAsync>>;
+          await test.step(`exec: ${[cmd, ...args].join(' ')}`, async () => {
+            result = await spawnAsync(cmd, args, {
+              shell: true,
+              cwd: options.cwd ?? tmpWorkspace,
+              // NB: We end up running npm-in-npm, so it's important that we do NOT forward process.env and instead cherry-pick environment variables.
+              env: {
+                'PATH': process.env.PATH,
+                'DISPLAY': process.env.DISPLAY,
+                'XAUTHORITY': process.env.XAUTHORITY,
+                'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, 'browsers'),
+                'npm_config_cache': testInfo.outputPath('npm_cache'),
+                'npm_config_registry': registry.url(),
+                'npm_config_prefix': testInfo.outputPath('npm_global'),
+                ...options.env,
+              }
+            });
+          });
+
+          const command = [cmd, ...args].join(' ');
+          const stdio = result.stdout + result.stderr;
+          await testInfo.attach(command, { body: `COMMAND: ${command}\n\nEXIT CODE: ${result.code}\n\n====== STDOUT + STDERR ======\n\n${stdio}` });
+
+          // This means something is really off with spawn
+          if (result.error)
+            throw result.error;
+
+          const error: string[] = [];
+          if (options.expectToExitWithError && result.code === 0)
+            error.push(`Expected the command to exit with an error, but exited cleanly.`);
+          else if (!options.expectToExitWithError && result.code !== 0)
+            error.push(`Expected the command to exit cleanly (0 status code), but exited with ${result.code}.`);
+
+          if (!error.length)
+            return stdio;
+
+          if (options.message)
+            error.push(`Message: ${options.message}`);
+          error.push(`Command: ${command}`);
+          error.push(`EXIT CODE: ${result.code}`);
+          error.push(`====== STDIO ======\n${stdio}`);
+
+          throw new Error(error.join('\n'));
+        });
+      },
+      tsc: async ({ exec }, use) => {
+        await exec('npm i --foreground-scripts typescript@3.8 @types/node@14');
+        await use((...args: ArgsOrOptions) => exec('npx', '-p', 'typescript@3.8', 'tsc', ...args));
+      },
+    });
 
 
 export { expect };

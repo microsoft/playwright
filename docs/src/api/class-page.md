@@ -737,6 +737,25 @@ Shortcut for main frame's [`method: Frame.check`].
 ### option: Page.check.trial = %%-input-trial-%%
 * since: v1.11
 
+## async method: Page.clear
+* since: v1.28
+
+This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, focuses the element, clears it and triggers an `input` event after clearing. Note that you can pass an empty string to clear the input field.
+
+If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be cleared instead.
+
+### param: Page.clear.selector = %%-input-selector-%%
+* since: v1.28
+
+### option: Page.clear.force = %%-input-force-%%
+* since: v1.28
+### option: Page.clear.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.28
+### option: Page.clear.strict = %%-input-strict-%%
+* since: v1.28
+### option: Page.clear.timeout = %%-input-timeout-%%
+* since: v1.28
+
 ## async method: Page.click
 * since: v1.8
 
@@ -1189,7 +1208,7 @@ await page.EvaluateAsync("matchMedia('(prefers-color-scheme: no-preference)').ma
 
 ### option: Page.emulateMedia.media
 * since: v1.9
-* langs: js, python, java
+* langs: js, java
 - `media` <null|[Media]<"screen"|"print">>
 
 Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`.
@@ -1197,7 +1216,7 @@ Passing `null` disables CSS media emulation.
 
 ### option: Page.emulateMedia.media
 * since: v1.9
-* langs: csharp
+* langs: csharp, python
 - `media` <[Media]<"screen"|"print"|"null">>
 
 Changes the CSS media type of the page. The only allowed values are `'Screen'`, `'Print'` and `'Null'`.
@@ -1205,7 +1224,7 @@ Passing `'Null'` disables CSS media emulation.
 
 ### option: Page.emulateMedia.colorScheme
 * since: v1.9
-* langs: js, python, java
+* langs: js, java
 - `colorScheme` <null|[ColorScheme]<"light"|"dark"|"no-preference">>
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
@@ -1213,7 +1232,7 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 
 ### option: Page.emulateMedia.colorScheme
 * since: v1.9
-* langs: csharp
+* langs: csharp, python
 - `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference"|"null">>
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
@@ -1221,28 +1240,28 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 
 ### option: Page.emulateMedia.reducedMotion
 * since: v1.12
-* langs: js, python, java
+* langs: js, java
 - `reducedMotion` <null|[ReducedMotion]<"reduce"|"no-preference">>
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null` disables reduced motion emulation.
 
 ### option: Page.emulateMedia.reducedMotion
 * since: v1.12
-* langs: csharp
+* langs: csharp, python
 - `reducedMotion` <[ReducedMotion]<"reduce"|"no-preference"|"null">>
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null` disables reduced motion emulation.
 
 ### option: Page.emulateMedia.forcedColors
 * since: v1.15
-* langs: js, python, java
+* langs: js, java
 - `forcedColors` <null|[ForcedColors]<"active"|"none">>
 
 Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables forced colors emulation.
 
 ### option: Page.emulateMedia.forcedColors
 * since: v1.15
-* langs: csharp
+* langs: csharp, python
 - `forcedColors` <[ForcedColors]<"active"|"none"|"null">>
 
 ## async method: Page.evalOnSelector

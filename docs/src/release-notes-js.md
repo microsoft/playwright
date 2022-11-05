@@ -6,6 +6,10 @@ toc_max_heading_level: 2
 
 ## Version 1.27
 
+<div className="embed-youtube">
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/b84eqab3kwc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### Locators
 
 With these new APIs writing locators is a joy:
@@ -68,6 +72,10 @@ This version was also tested against the following stable channels:
 
 
 ## Version 1.26
+
+<div className="embed-youtube">
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/b84eqab3kwc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ### Assertions
 
@@ -637,7 +645,7 @@ This version was also tested against the following stable channels:
 
       Call log:
         - expect.toBeVisible with timeout 5000ms
-        - waiting for selector "text=Name"
+        - waiting for "getByText('Name')"
 
 
         2 |

@@ -20,21 +20,11 @@
   flex: auto;
 }
 
-.recorder-paused-infobar {
-  display: flex;
-  color: #eee;
-  background-color: #333;
-  line-height: 24px;
-  align-items: center;
-  flex: none;
-  white-space: nowrap;
-}
-
 .recorder-chooser {
   border: none;
   background: none;
   outline: none;
-  color: var(--toolbar-color);
+  color: var(--vscode-sideBarTitle-foreground);
   min-width: 100px;
 }
 
@@ -58,4 +48,14 @@
 
 .recorder .selector-input {
   flex: auto;
+}
+
+.recorder .toolbar .cm-wrapper {
+  margin-left: 8px;
+  display: flex;
+  padding: 8px;
+}
+
+.recorder .toolbar .CodeMirror {
+  height: auto;
 }

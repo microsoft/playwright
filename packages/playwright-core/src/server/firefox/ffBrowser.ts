@@ -204,18 +204,24 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)
       promises.push(this.setOffline(this._options.offline));
-    promises.push(this._browser._connection.send('Browser.setColorScheme', {
-      browserContextId,
-      colorScheme: this._options.colorScheme !== undefined  ? this._options.colorScheme : 'light',
-    }));
-    promises.push(this._browser._connection.send('Browser.setReducedMotion', {
-      browserContextId,
-      reducedMotion: this._options.reducedMotion !== undefined  ? this._options.reducedMotion : 'no-preference',
-    }));
-    promises.push(this._browser._connection.send('Browser.setForcedColors', {
-      browserContextId,
-      forcedColors: this._options.forcedColors !== undefined  ? this._options.forcedColors : 'none',
-    }));
+    if (this._options.colorScheme !== 'no-override') {
+      promises.push(this._browser._connection.send('Browser.setColorScheme', {
+        browserContextId,
+        colorScheme: this._options.colorScheme !== undefined  ? this._options.colorScheme : 'light',
+      }));
+    }
+    if (this._options.reducedMotion !== 'no-override') {
+      promises.push(this._browser._connection.send('Browser.setReducedMotion', {
+        browserContextId,
+        reducedMotion: this._options.reducedMotion !== undefined  ? this._options.reducedMotion : 'no-preference',
+      }));
+    }
+    if (this._options.forcedColors !== 'no-override') {
+      promises.push(this._browser._connection.send('Browser.setForcedColors', {
+        browserContextId,
+        forcedColors: this._options.forcedColors !== undefined  ? this._options.forcedColors : 'none',
+      }));
+    }
     if (this._options.recordVideo) {
       promises.push(this._ensureVideosPath().then(() => {
         return this._browser._connection.send('Browser.setVideoRecordingOptions', {
@@ -353,9 +359,19 @@ export class FFBrowserContext extends BrowserContext {
   onClosePersistent() {}
 
   async doClose() {
-    assert(this._browserContextId);
-    await this._browser._connection.send('Browser.removeBrowserContext', { browserContextId: this._browserContextId });
-    this._browser._contexts.delete(this._browserContextId);
+    if (!this._browserContextId) {
+      if (this._options.recordVideo) {
+        await this._browser._connection.send('Browser.setVideoRecordingOptions', {
+          options: undefined,
+          browserContextId: this._browserContextId
+        });
+      }
+      // Closing persistent context should close the browser.
+      await this._browser.close();
+    } else {
+      await this._browser._connection.send('Browser.removeBrowserContext', { browserContextId: this._browserContextId });
+      this._browser._contexts.delete(this._browserContextId);
+    }
   }
 
   async cancelDownload(uuid: string) {

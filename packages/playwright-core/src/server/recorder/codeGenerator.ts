@@ -158,15 +158,11 @@ export class CodeGenerator extends EventEmitter {
     }
   }
 
-  generateText(languageGenerator: LanguageGenerator) {
-    const text = [];
-    text.push(languageGenerator.generateHeader(this._options));
-    for (const action of this._actions) {
-      const actionText = languageGenerator.generateAction(action);
-      if (actionText)
-        text.push(actionText);
-    }
-    text.push(languageGenerator.generateFooter(this._options.saveStorage));
-    return text.join('\n');
+  generateStructure(languageGenerator: LanguageGenerator) {
+    const header = languageGenerator.generateHeader(this._options);
+    const footer = languageGenerator.generateFooter(this._options.saveStorage);
+    const actions = this._actions.map(a => languageGenerator.generateAction(a)).filter(Boolean);
+    const text = [header, ...actions, footer].join('\n');
+    return { header, footer, actions, text };
   }
 }

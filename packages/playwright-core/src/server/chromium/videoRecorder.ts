@@ -130,7 +130,6 @@ export class VideoRecorder {
     assert(this._process);
     if (this._isStopped)
       return;
-    this._progress.log(`writing frame ` + timestamp);
 
     if (this._lastFrameBuffer) {
       const durationSec = timestamp - this._lastFrameTimestamp;

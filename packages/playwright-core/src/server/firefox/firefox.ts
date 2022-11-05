@@ -26,7 +26,7 @@ import type { ConnectionTransport } from '../transport';
 import type { BrowserOptions, PlaywrightOptions } from '../browser';
 import type * as types from '../types';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { wrapInASCIIBox } from '../../utils';
+import { getAsBooleanFromENV, wrapInASCIIBox } from '../../utils';
 
 export class Firefox extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {
@@ -61,7 +61,11 @@ export class Firefox extends BrowserType {
       throw new Error('Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
-    const firefoxUserPrefs = isPersistent ? undefined : { ...kBandaidFirefoxUserPrefs, ...options.firefoxUserPrefs };
+    let firefoxUserPrefs = isPersistent ? undefined : options.firefoxUserPrefs;
+    if (getAsBooleanFromENV('PLAYWRIGHT_DISABLE_FIREFOX_CROSS_PROCESS'))
+      firefoxUserPrefs = { ...kDisableFissionFirefoxUserPrefs, ...firefoxUserPrefs };
+    if (Object.keys(kBandaidFirefoxUserPrefs).length)
+      firefoxUserPrefs = { ...kBandaidFirefoxUserPrefs, ...firefoxUserPrefs };
     if (firefoxUserPrefs) {
       const lines: string[] = [];
       for (const [name, value] of Object.entries(firefoxUserPrefs))
@@ -89,4 +93,16 @@ export class Firefox extends BrowserType {
 // Prefs for quick fixes that didn't make it to the build.
 // Should all be moved to `playwright.cfg`.
 const kBandaidFirefoxUserPrefs = {
+  // Avoid stalling on shutdown, after "xpcom-will-shutdown" phase.
+  // This at least happens when shutting down soon after launching.
+  // See AppShutdown.cpp for more details on shutdown phases.
+  'toolkit.shutdown.fastShutdownStage': 3,
+};
+
+const kDisableFissionFirefoxUserPrefs = {
+  'browser.tabs.remote.useCrossOriginEmbedderPolicy': false,
+  'browser.tabs.remote.useCrossOriginOpenerPolicy': false,
+  'browser.tabs.remote.separatePrivilegedMozillaWebContentProcess': false,
+  'fission.autostart': false,
+  'browser.tabs.remote.systemTriggeredAboutBlankAnywhere': true,
 };

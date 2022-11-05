@@ -394,7 +394,6 @@ it('should work with :scope', async ({ page, server }) => {
 
 it('should work with :scope and class', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17824' });
-  it.fixme();
   await page.setContent(`<div class="apple"></div>
                          <div class="apple selected"></div>`);
   const apples = page.locator('.apple');

@@ -383,7 +383,7 @@ test('should show trace source', async ({ runInlineTest, page, showReport }) => 
   await page.click('.action-title >> text=page.evaluate');
   await page.click('text=Source');
 
-  await expect(page.locator('.source-line')).toContainText([
+  await expect(page.locator('.CodeMirror-line')).toContainText([
     /const.*pwt;/,
     /page\.evaluate/
   ]);

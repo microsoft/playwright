@@ -460,3 +460,23 @@ it('should work with paired quotes in the middle of selector', async ({ page }) 
   // Should double escape inside quoted text.
   await expect(page.locator(`div >> text='pattern "^-?\\\\d+$"'`)).toBeVisible();
 });
+
+it('hasText and internal:text should match full node text in strict mode', async ({ page }) => {
+  await page.setContent(`
+    <div id=div1>hello<span>world</span></div>
+    <div id=div2>hello</div>
+  `);
+  await expect(page.getByText('helloworld', { exact: true })).toHaveId('div1');
+  await expect(page.getByText('hello', { exact: true })).toHaveId('div2');
+  await expect(page.locator('div', { hasText: /^helloworld$/ })).toHaveId('div1');
+  await expect(page.locator('div', { hasText: /^hello$/ })).toHaveId('div2');
+
+  await page.setContent(`
+    <div id=div1><span id=span1>hello</span>world</div>
+    <div id=div2><span id=span2>hello</span></div>
+  `);
+  await expect(page.getByText('helloworld', { exact: true })).toHaveId('div1');
+  expect(await page.getByText('hello', { exact: true }).evaluateAll(els => els.map(e => e.id))).toEqual(['span1', 'span2']);
+  await expect(page.locator('div', { hasText: /^helloworld$/ })).toHaveId('div1');
+  await expect(page.locator('div', { hasText: /^hello$/ })).toHaveId('div2');
+});

@@ -18,7 +18,7 @@ import { test, expect } from './playwright-test-fixtures';
 
 test('should work with TSX', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': `
       //@no-header
     `,
@@ -44,7 +44,7 @@ test('should work with TSX', async ({ runInlineTest }) => {
 
 test('should work with JSX', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `
       //@no-header
     `,
@@ -72,7 +72,7 @@ test('should work with JSX', async ({ runInlineTest }) => {
 
 test('should work with JSX in JS', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `
       //@no-header
     `,
@@ -100,7 +100,7 @@ test('should work with JSX in JS', async ({ runInlineTest }) => {
 
 test('should work with JSX in JS and in JSX', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `
       //@no-header
     `,
@@ -140,7 +140,7 @@ test('should work with JSX in JS and in JSX', async ({ runInlineTest }) => {
 
 test('should work with stray TSX import', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': `
       //@no-header
     `,
@@ -174,7 +174,7 @@ test('should work with stray TSX import', async ({ runInlineTest }) => {
 
 test('should work with stray JSX import', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `
       //@no-header
     `,
@@ -208,7 +208,7 @@ test('should work with stray JSX import', async ({ runInlineTest }) => {
 
 test.fixme('should work with stray JS import', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `
       //@no-header
     `,
@@ -242,7 +242,7 @@ test.fixme('should work with stray JS import', async ({ runInlineTest }) => {
 
 test('should work with JSX in variable', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `
       //@no-header
     `,
@@ -272,7 +272,7 @@ test('should work with JSX in variable', async ({ runInlineTest }) => {
 
 test('should return root locator for fragments', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `//@no-header`,
 
     'src/button.jsx': `
@@ -299,7 +299,7 @@ test('should return root locator for fragments', async ({ runInlineTest }) => {
 
 test('should respect default property values', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': `//@no-header`,
     'src/label.tsx': `//@no-header
       export const Label = ({ checked }) => <div>type:{typeof checked} value:{String(checked)}</div>;
@@ -323,7 +323,7 @@ test('should respect default property values', async ({ runInlineTest }) => {
 
 test('should bundle public folder', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': `
       //@no-header
     `,

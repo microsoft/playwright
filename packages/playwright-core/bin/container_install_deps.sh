@@ -67,20 +67,15 @@ git apply clip.patch
 
 # Configure FluxBox menus
 mkdir /root/.fluxbox
-cd /ms-playwright-agent
-cat <<'EOF' | node > /root/.fluxbox/menu
-  const { chromium, firefox, webkit } = require('playwright-core');
-
-  console.log(`
-    [begin] (fluxbox)
-      [submenu] (Browsers) {}
-        [exec] (Chromium) { ${chromium.executablePath()} --no-sandbox --test-type= } <>
-        [exec] (Firefox) { ${firefox.executablePath()} } <>
-        [exec] (WebKit) { ${webkit.executablePath()} } <>
-      [end]
-      [include] (/etc/X11/fluxbox/fluxbox-menu)
+cat <<'EOF' > /root/.fluxbox/menu
+  [begin] (fluxbox)
+    [submenu] (Browsers) {}
+      [exec] (Chromium) { /ms-playwright-agent/node_modules/.bin/playwright docker launch --endpoint http://127.0.0.1:5400 --browser chromium } <>
+      [exec] (Firefox) { /ms-playwright-agent/node_modules/.bin/playwright docker launch --endpoint http://127.0.0.1:5400 --browser firefox  } <>
+      [exec] (WebKit) { /ms-playwright-agent/node_modules/.bin/playwright docker launch --endpoint http://127.0.0.1:5400 --browser webkit  } <>
     [end]
-  `);
+    [include] (/etc/X11/fluxbox/fluxbox-menu)
+  [end]
 EOF
 
 cat <<'EOF' > /root/.fluxbox/lastwallpaper

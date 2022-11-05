@@ -45,10 +45,13 @@ test('androidDevice.screenshot', async function({ androidDevice }, testInfo) {
 });
 
 test('androidDevice.push', async function({ androidDevice }) {
-  await androidDevice.shell('rm /data/local/tmp/hello-world');
-  await androidDevice.push(Buffer.from('hello world'), '/data/local/tmp/hello-world');
-  const data = await androidDevice.shell('cat /data/local/tmp/hello-world');
-  expect(data).toEqual(Buffer.from('hello world'));
+  try {
+    await androidDevice.push(Buffer.from('hello world'), '/data/local/tmp/hello-world');
+    const data = await androidDevice.shell('cat /data/local/tmp/hello-world');
+    expect(data).toEqual(Buffer.from('hello world'));
+  } finally {
+    await androidDevice.shell('rm /data/local/tmp/hello-world');
+  }
 });
 
 test('androidDevice.fill', async function({ androidDevice }) {
@@ -88,4 +91,15 @@ test('androidDevice.options.omitDriverInstall', async function({ playwright }) {
     await new Promise(f => setTimeout(f, 200));
 
   expect(fillStatus).toBe('success');
+});
+
+test('androidDevice.close', async function({ playwright }) {
+  const devices = await playwright._android.devices();
+  expect(devices.length).toBe(1);
+  const device = devices[0];
+  const events = [];
+  device.on('close', () => events.push('close'));
+  await device.close();
+  await device.close();
+  expect(events).toEqual(['close']);
 });

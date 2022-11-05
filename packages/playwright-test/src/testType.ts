@@ -15,6 +15,7 @@
  */
 
 import { expect } from './expect';
+import { kResetToConfig, kResetToDefault } from './fixtures';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
@@ -54,6 +55,7 @@ export class TestTypeImpl {
     test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
     test.step = wrapFunctionWithLocation(this._step.bind(this));
     test.use = wrapFunctionWithLocation(this._use.bind(this));
+    test.reset = wrapFunctionWithLocation(this._reset.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
     test._extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
     test.info = () => {
@@ -139,18 +141,24 @@ export class TestTypeImpl {
     suite._hooks.push({ type: name, fn, location });
   }
 
-  private _configure(location: Location, options: { mode?: 'parallel' | 'serial' }) {
+  private _configure(location: Location, options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, `test.describe.configure()`);
-    if (!options.mode)
-      return;
-    if (suite._parallelMode !== 'default')
-      throw errorWithLocation(location, 'Parallel mode is already assigned for the enclosing scope.');
-    suite._parallelMode = options.mode;
 
-    for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
-      if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
-        throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
+    if (options.timeout !== undefined)
+      suite._timeout = options.timeout;
+
+    if (options.retries !== undefined)
+      suite._retries = options.retries;
+
+    if (options.mode !== undefined) {
+      if (suite._parallelMode !== 'default')
+        throw errorWithLocation(location, 'Parallel mode is already assigned for the enclosing scope.');
+      suite._parallelMode = options.mode;
+      for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
+        if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
+          throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
+      }
     }
   }
 
@@ -197,6 +205,20 @@ export class TestTypeImpl {
 
   private _use(location: Location, fixtures: Fixtures) {
     const suite = this._ensureCurrentSuite(location, `test.use()`);
+    suite._use.push({ fixtures, location });
+  }
+
+  private _reset(location: Location, resets: Fixtures) {
+    const suite = this._ensureCurrentSuite(location, `test.reset()`);
+    const fixtures: any = {};
+    for (const [key, value] of Object.entries(resets)) {
+      if (value === 'config')
+        fixtures[key] = kResetToConfig;
+      else if (value === 'default')
+        fixtures[key] = kResetToDefault;
+      else
+        throw errorWithLocation(location, `test.reset() supports "config" or "default", got unexpected value "${value}"`);
+    }
     suite._use.push({ fixtures, location });
   }
 

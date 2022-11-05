@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type { Language } from '@isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
@@ -36,11 +37,13 @@ export class MultiTraceModel {
   readonly actions: trace.ActionTraceEvent[];
   readonly events: trace.ActionTraceEvent[];
   readonly hasSource: boolean;
+  readonly sdkLanguage: Language | undefined;
 
   constructor(contexts: ContextEntry[]) {
     contexts.forEach(contextEntry => indexModel(contextEntry));
 
     this.browserName = contexts[0]?.browserName || '';
+    this.sdkLanguage = contexts[0]?.sdkLanguage;
     this.platform = contexts[0]?.platform || '';
     this.title = contexts[0]?.title || '';
     this.options = contexts[0]?.options || {};

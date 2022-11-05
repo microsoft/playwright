@@ -26,7 +26,8 @@ type HighlightEntry = {
   tooltipElement?: HTMLElement,
   box?: DOMRect,
   tooltipTop?: number,
-  tooltipLeft?: number
+  tooltipLeft?: number,
+  tooltipText?: string,
 };
 
 export class Highlight {
@@ -54,10 +55,7 @@ export class Highlight {
 
     this._actionPointElement = document.createElement('x-pw-action-point');
     this._actionPointElement.setAttribute('hidden', 'true');
-
-    // NOTE: do not use an open shadow root, event for test.
-    // Closed shadow root prevents selectors matching our internal previews.
-    this._glassPaneShadow = this._glassPaneElement.attachShadow({ mode: 'closed' });
+    this._glassPaneShadow = this._glassPaneElement.attachShadow({ mode: this._isUnderTest ? 'open' : 'closed' });
     this._glassPaneShadow.appendChild(this._actionPointElement);
     const styleElement = document.createElement('style');
     styleElement.textContent = `
@@ -163,7 +161,7 @@ export class Highlight {
     // Code below should trigger one layout and leave with the
     // destroyed layout.
 
-    if (this._highlightIsUpToDate(elements))
+    if (this._highlightIsUpToDate(elements, options.tooltipText))
       return;
 
     // 1. Destroy the layout
@@ -182,10 +180,8 @@ export class Highlight {
         tooltipElement.style.top = '0';
         tooltipElement.style.left = '0';
         tooltipElement.style.display = 'flex';
-        if (this._isUnderTest)
-          console.error('Highlight text for test: ' + JSON.stringify(tooltipElement.textContent)); // eslint-disable-line no-console
       }
-      this._highlightEntries.push({ targetElement: elements[i], tooltipElement, highlightElement });
+      this._highlightEntries.push({ targetElement: elements[i], tooltipElement, highlightElement, tooltipText: options.tooltipText });
     }
 
     // 2. Trigger layout while positioning tooltips and computing bounding boxes.
@@ -237,10 +233,12 @@ export class Highlight {
         console.error('Highlight box for test: ' + JSON.stringify({ x: box.x, y: box.y, width: box.width, height: box.height })); // eslint-disable-line no-console
     }
   }
-  private _highlightIsUpToDate(elements: Element[]): boolean {
+  private _highlightIsUpToDate(elements: Element[], tooltipText: string | undefined): boolean {
     if (elements.length !== this._highlightEntries.length)
       return false;
     for (let i = 0; i < this._highlightEntries.length; ++i) {
+      if (tooltipText !== this._highlightEntries[i].tooltipText)
+        return false;
       if (elements[i] !== this._highlightEntries[i].targetElement)
         return false;
       const oldBox = this._highlightEntries[i].box;

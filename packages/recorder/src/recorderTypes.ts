@@ -14,6 +14,8 @@
   limitations under the License.
 */
 
+import type { Language } from '../../playwright-core/src/server/isomorphic/locatorGenerators';
+
 export type Point = { x: number, y: number };
 
 export type Mode = 'inspecting' | 'recording' | 'none';
@@ -56,11 +58,14 @@ export type Source = {
   id: string;
   label: string;
   text: string;
-  language: string;
+  language: Language;
   highlight: SourceHighlight[];
   revealLine?: number;
   // used to group the language generators
   group?: string;
+  header?: string;
+  footer?: string;
+  actions?: string[];
 };
 
 declare global {

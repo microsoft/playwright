@@ -124,7 +124,7 @@ test('getting started should contain table of contents', async ({ page }) => {
     `How to run the example test`,
     `How to open the HTML test report`,
     `Write tests using web first assertions, page fixtures and locators`,
-    `Run single tests, multiple tests, headed mode`,
+    `Run single test, multiple tests, headed mode`,
     `Generate tests with Codegen`,
     `See a trace of your tests`
   ]);
@@ -153,7 +153,7 @@ test('getting started should contain table of contents', async ({ page }) => {
     `How to run the example test`,
     `How to open the HTML test report`,
     `Write tests using web first assertions, page fixtures and locators`,
-    `Run single tests, multiple tests, headed mode`,
+    `Run single test, multiple tests, headed mode`,
     `Generate tests with Codegen`,
     `See a trace of your tests`
   ]);
@@ -181,7 +181,7 @@ await expect(playwrightDev.tocList).toHaveText([
   `How to run the example test`,
   `How to open the HTML test report`,
   `Write tests using web first assertions, page fixtures and locators`,
-  `Run single tests, multiple tests, headed mode`,
+  `Run single test, multiple tests, headed mode`,
   `Generate tests with Codegen`,
   `See a trace of your tests`
 ]);

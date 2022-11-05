@@ -63,18 +63,19 @@ interface LaunchContainerOptions {
   autoRemove: boolean;
   command?: string[];
   labels?: Record<string, string>;
-  ports?: Number[];
+  ports?: { container: number, host: number }[],
   name?: string;
   workingDir?: string;
   waitUntil?: 'not-running' | 'next-exit' | 'removed';
+  env?: { [key: string]: string | number | boolean | undefined };
 }
 
 export async function launchContainer(options: LaunchContainerOptions): Promise<string> {
   const ExposedPorts: any = {};
   const PortBindings: any = {};
   for (const port of (options.ports ?? [])) {
-    ExposedPorts[`${port}/tcp`] = {};
-    PortBindings[`${port}/tcp`] = [{ HostPort: '0', HostIp: '127.0.0.1' }];
+    ExposedPorts[`${port.container}/tcp`] = {};
+    PortBindings[`${port.container}/tcp`] = [{ HostPort: port.host + '', HostIp: '127.0.0.1' }];
   }
   const container = await postJSON(`/containers/create` + (options.name ? '?name=' + options.name : ''), {
     Cmd: options.command,
@@ -84,6 +85,7 @@ export async function launchContainer(options: LaunchContainerOptions): Promise<
     AttachStderr: true,
     Image: options.imageId,
     ExposedPorts,
+    Env: dockerProtocolEnv(options.env),
     HostConfig: {
       Init: true,
       AutoRemove: options.autoRemove,
@@ -141,14 +143,18 @@ interface CommitContainerOptions {
   env?: {[key: string]: string | number | boolean | undefined},
 }
 
+function dockerProtocolEnv(env?: {[key: string]: string | number | boolean | undefined}): string[] {
+  const result = [];
+  for (const [key, value] of Object.entries(env ?? {}))
+    result.push(`${key}=${value}`);
+  return result;
+}
+
 export async function commitContainer(options: CommitContainerOptions) {
-  const Env = [];
-  for (const [key, value] of Object.entries(options.env ?? {}))
-    Env.push(`${key}=${value}`);
   await postJSON(`/commit?container=${options.containerId}&repo=${options.repo}&tag=${options.tag}`, {
     Entrypoint: options.entrypoint,
     WorkingDir: options.workingDir,
-    Env,
+    Env: dockerProtocolEnv(options.env),
   });
 }
 

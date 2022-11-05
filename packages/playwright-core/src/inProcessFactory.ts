@@ -18,9 +18,11 @@ import type { Playwright as PlaywrightAPI } from './client/playwright';
 import { createPlaywright, DispatcherConnection, RootDispatcher, PlaywrightDispatcher } from './server';
 import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
+import { AndroidServerLauncherImpl } from './androidServerImpl';
+import type { Language } from './server/isomorphic/locatorGenerators';
 
 export function createInProcessPlaywright(): PlaywrightAPI {
-  const playwright = createPlaywright('javascript');
+  const playwright = createPlaywright((process.env.PW_LANG_NAME as Language | undefined) || 'javascript');
 
   const clientConnection = new Connection();
   const dispatcherConnection = new DispatcherConnection(true /* local */);
@@ -37,6 +39,7 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   playwrightAPI.chromium._serverLauncher = new BrowserServerLauncherImpl('chromium');
   playwrightAPI.firefox._serverLauncher = new BrowserServerLauncherImpl('firefox');
   playwrightAPI.webkit._serverLauncher = new BrowserServerLauncherImpl('webkit');
+  playwrightAPI._android._serverLauncher = new AndroidServerLauncherImpl();
 
   // Switch to async dispatch after we got Playwright object.
   dispatcherConnection.onmessage = message => setImmediate(() => clientConnection.dispatch(message));

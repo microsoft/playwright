@@ -28,6 +28,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      '@isomorphic': path.resolve(__dirname, '../playwright-core/src/server/isomorphic'),
       '@protocol': path.resolve(__dirname, '../protocol/src'),
       '@web': path.resolve(__dirname, '../web/src'),
     },
@@ -36,12 +37,8 @@ export default defineConfig({
     outDir: path.resolve(__dirname, '../playwright-core/lib/webpack/traceViewer'),
     emptyOutDir: true,
     rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'index.html'),
-        sw: path.resolve(__dirname, 'src/sw.ts'),
-      },
       output: {
-        entryFileNames: info => info.name === 'sw' ? '[name].bundle.js' : '[name].[hash].js',
+        entryFileNames: () => '[name].[hash].js',
         assetFileNames: () => '[name].[hash][extname]',
         manualChunks: undefined,
       },

@@ -47,7 +47,7 @@ export type LaunchProcessOptions = {
 type LaunchResult = {
   launchedProcess: childProcess.ChildProcess,
   gracefullyClose: () => Promise<void>,
-  kill: () => Promise<void>,
+  kill: (sendSigtermBeforeSigkillTimeout?: number) => Promise<void>,
 };
 
 export const gracefullyCloseSet = new Set<() => Promise<void>>();
@@ -188,6 +188,21 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     }
   }
 
+  function sendPosixSIGTERM() {
+    if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
+      options.log(`[pid=${spawnedProcess.pid}] <will sigterm>`);
+      try {
+        // Send SIGTERM to process tree.
+        process.kill(-spawnedProcess.pid, 'SIGTERM');
+      } catch (e) {
+        // The process might have already stopped.
+        options.log(`[pid=${spawnedProcess.pid}] exception while trying to SIGTERM process: ${e}`);
+      }
+    } else {
+      options.log(`[pid=${spawnedProcess.pid}] <skipped sigterm spawnedProcess=${spawnedProcess.killed} processClosed=${processClosed}>`);
+    }
+  }
+
   function killProcessAndCleanup() {
     killProcess();
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] starting temporary directories cleanup`);
@@ -202,9 +217,16 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] finished temporary directories cleanup`);
   }
 
-  function killAndWait() {
-    killProcess();
-    return waitForCleanup;
+  async function killAndWait(sendSigtermBeforeSigkillTimeout?: number) {
+    if (process.platform !== 'win32' && sendSigtermBeforeSigkillTimeout) {
+      sendPosixSIGTERM();
+      const sigtermTimeoutId = setTimeout(killProcess, sendSigtermBeforeSigkillTimeout);
+      await waitForCleanup;
+      clearTimeout(sigtermTimeoutId);
+    } else {
+      killProcess();
+      await waitForCleanup;
+    }
   }
 
   return { launchedProcess: spawnedProcess, gracefullyClose, kill: killAndWait };

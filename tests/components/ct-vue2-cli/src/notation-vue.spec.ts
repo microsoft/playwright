@@ -5,6 +5,7 @@ import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
 import Component from './components/Component.vue'
 import EmptyTemplate from './components/EmptyTemplate.vue'
+import type { hooksConfig } from '../playwright'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -17,7 +18,7 @@ test('render props', async ({ mount }) => {
   await expect(component).toContainText('Submit')
 })
 
-test('renderer updates props without remounting', async ({ mount }) => {
+test('update props without remounting', async ({ mount }) => {
   const component = await mount(Counter, {
     props: { count: 9001 }
   })
@@ -32,13 +33,13 @@ test('renderer updates props without remounting', async ({ mount }) => {
   await expect(component.locator('#remount-count')).toContainText('1')
 })
 
-test('renderer updates event listeners without remounting', async ({ mount }) => {
+test('update event listeners without remounting', async ({ mount }) => {
   const component = await mount(Counter)
 
-  const messages = []
+  const messages: string[] = []
   await component.update({
     on: { 
-      submit: data => messages.push(data)
+      submit: (data: string) => messages.push(data)
     }
   })
   await component.click();
@@ -47,7 +48,7 @@ test('renderer updates event listeners without remounting', async ({ mount }) =>
   await expect(component.locator('#remount-count')).toContainText('1')
 })
 
-test('renderer updates slots without remounting', async ({ mount }) => {
+test('update slots without remounting', async ({ mount }) => {
   const component = await mount(Counter, {
     slots: { default: 'Default Slot' }
   })
@@ -69,13 +70,13 @@ test('renderer updates slots without remounting', async ({ mount }) => {
 })
 
 test('emit an submit event when the button is clicked', async ({ mount }) => {
-  const messages = []
+  const messages: string[] = []
   const component = await mount(Button, {
     props: {
       title: 'Submit'
     },
     on: {
-      submit: data => messages.push(data)
+      submit: (data: string) => messages.push(data)
     }
   })
   await component.click()
@@ -120,9 +121,9 @@ test('render a component without options', async ({ mount }) => {
 })
 
 test('run hooks', async ({ page, mount }) => {
-  const messages = []
+  const messages: string[] = []
   page.on('console', m => messages.push(m.text()))
-  await mount(Button, {
+  await mount<hooksConfig>(Button, {
     props: {
       title: 'Submit'
     },

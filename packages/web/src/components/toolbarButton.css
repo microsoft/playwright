@@ -15,11 +15,12 @@
 */
 
 .toolbar-button {
+  flex: none;
   border: none;
   outline: none;
-  color: var(--toolbar-color);
+  color: var(--vscode-sideBarTitle-foreground);
   background: transparent;
-  padding: 0;
+  padding: 4px;
   margin-left: 10px;
   cursor: pointer;
   display: inline-flex;
@@ -27,14 +28,14 @@
 }
 
 .toolbar-button:disabled {
-  color: #bbb !important;
+  color: var(--vscode-disabledForeground) !important;
   cursor: default;
 }
 
-.toolbar-button:not(.disabled):hover {
-  color: #333;
+.toolbar-button:not(:disabled):hover {
+  background-color: var(--vscode-toolbar-hoverBackground);
 }
 
-.toolbar-button .codicon {
-  margin-right: 4px;
+.toolbar-button:not(:disabled):active {
+  background-color: var(--vscode-toolbar-activeBackground);
 }

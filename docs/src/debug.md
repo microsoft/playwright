@@ -3,7 +3,10 @@ id: debug
 title: "Debugging Tests"
 ---
 
-The Playwright inspector is a great tool to help with debugging. It opens up a browser window highlighting the selectors as you step through each line of the test. You can also use the explore button to find other available [selectors](./selectors.md) which you can then copy into your test file and rerun your tests to see if it passes. For debugging selectors, see [here](./debug-selectors.md).
+## VS Code debugger
+* langs: js
+
+Use [VS Code Extension](./getting-started-vscode.md) for debugging.
 
 ## Playwright Inspector
 
@@ -13,7 +16,7 @@ Playwright Inspector is a GUI tool that helps authoring and debugging Playwright
 
 There are several ways of opening Playwright Inspector:
 
-### --debug
+#### --debug
 * langs: js
 
 * Debugging all Tests
@@ -28,7 +31,7 @@ There are several ways of opening Playwright Inspector:
   npx playwright test example --debug
   ```
 
-### PWDEBUG
+#### PWDEBUG
 
 Set the `PWDEBUG` environment variable to run your scripts in debug mode. This
 configures Playwright for debugging and opens the inspector.
@@ -149,7 +152,7 @@ $env:PWDEBUG="console"
 pytest -s
 ```
 
-### page.pause
+#### page.pause
 
 Call [`method: Page.pause`] method from your script when running in headed browser.
 
@@ -238,31 +241,6 @@ a Playwright script in headed mode. Developer tools help to:
 
 Using a [`method: Page.pause`] method is an easy way to pause the Playwright script execution
 and inspect the page in Developer tools. It will also open Playwright Inspector to help with debugging.
-
-**For Chromium**: you can also open developer tools through a launch option.
-
-```js
-await chromium.launch({ devtools: true });
-```
-
-```java
-chromium.launch(new BrowserType.LaunchOptions().setDevtools(true));
-```
-
-```python async
-await chromium.launch(devtools=True)
-```
-
-```python sync
-chromium.launch(devtools=True)
-```
-
-```csharp
-await using var browser = await playwright.Chromium.LaunchAsync(new()
-{
-  Devtools: true
-});
-```
 
 :::note
 **For WebKit**: launching WebKit Inspector during the execution will

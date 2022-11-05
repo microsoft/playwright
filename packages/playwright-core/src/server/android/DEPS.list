@@ -5,3 +5,4 @@
 ../../utils/
 ../../utilsBundle.ts
 ../chromium/
+../registry/

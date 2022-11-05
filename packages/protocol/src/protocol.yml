@@ -445,16 +445,19 @@ ContextOptions:
       - dark
       - light
       - no-preference
+      - no-override
     reducedMotion:
       type: enum?
       literals:
       - reduce
       - no-preference
+      - no-override
     forcedColors:
       type: enum?
       literals:
       - active
       - none
+      - no-override
     acceptDownloads: boolean?
     baseURL: string?
     recordVideo:
@@ -545,7 +548,13 @@ Root:
 
     initialize:
       parameters:
-        sdkLanguage: string
+        sdkLanguage:
+          type: enum
+          literals:
+          - javascript
+          - python
+          - java
+          - csharp
       returns:
         playwright: Playwright
 
@@ -591,6 +600,8 @@ Playwright:
     selectors: Selectors
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
+    # Only present when connecting remotely via Android.connect() method.
+    preConnectedAndroidDevice: AndroidDevice?
     # Only present when socks proxy is supported.
     socksSupport: SocksSupport?
 
@@ -630,8 +641,6 @@ Playwright:
       returns:
         request: APIRequestContext
 
-    hideHighlight:
-
 RecorderSource:
   type: object
   properties:
@@ -654,17 +663,24 @@ DebugController:
   type: interface
 
   commands:
-    setTrackHierarchy:
+    initialize:
       parameters:
-        enabled: boolean
+        codegenId: string
+        sdkLanguage:
+          type: enum
+          literals:
+          - javascript
+          - python
+          - java
+          - csharp
 
-    setReuseBrowser:
+    setReportStateChanged:
       parameters:
         enabled: boolean
 
     resetForReuse:
 
-    navigateAll:
+    navigate:
       parameters:
         url: string
 
@@ -676,14 +692,12 @@ DebugController:
             - inspecting
             - recording
             - none
-        language: string?
-        file: string?
 
-    highlightAll:
+    highlight:
       parameters:
         selector: string
 
-    hideHighlightAll:
+    hideHighlight:
 
     kill:
 
@@ -693,10 +707,23 @@ DebugController:
     inspectRequested:
       parameters:
         selector: string
-        locators:
-          type: array
-          items: NameValue
+        locator: string
 
+    stateChanged:
+      parameters:
+        pageCount: number
+
+    sourceChanged:
+      parameters:
+        text: string
+        header: string?
+        footer: string?
+        actions:
+          type: array?
+          items: string
+         
+
+    # Deprecated
     browsersChanged:
       parameters:
         browsers:
@@ -712,12 +739,6 @@ DebugController:
                     pages:
                       type: array
                       items: string
-
-    sourcesChanged:
-      parameters:
-        sources:
-          type: array
-          items: RecorderSource
 
 SocksSupport:
   type: interface
@@ -1161,30 +1182,26 @@ Page:
           literals:
           - screen
           - print
-          # Reset emulated value to the system default.
-          - null
+          - no-override
         colorScheme:
           type: enum?
           literals:
           - dark
           - light
           - no-preference
-          # Reset emulated value to the system default.
-          - null
+          - no-override
         reducedMotion:
           type: enum?
           literals:
           - reduce
           - no-preference
-          # Reset emulated value to the system default.
-          - null
+          - no-override
         forcedColors:
           type: enum?
           literals:
           - active
           - none
-          # Reset emulated value to the system default.
-          - null
+          - no-override
 
     exposeBinding:
       parameters:
@@ -1576,6 +1593,14 @@ Frame:
         content: string?
       returns:
         element: ElementHandle
+      tracing:
+        snapshot: true
+
+    blur:
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: number?
       tracing:
         snapshot: true
 
@@ -2954,6 +2979,7 @@ Electron:
           - dark
           - light
           - no-preference
+          - no-override
         extraHTTPHeaders:
           type: array?
           items: NameValue
@@ -3247,6 +3273,8 @@ AndroidDevice:
     close:
 
   events:
+    close:
+
     webViewAdded:
       parameters:
         webView: AndroidWebView

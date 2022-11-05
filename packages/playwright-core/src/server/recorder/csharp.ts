@@ -114,8 +114,6 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     for (const line of lines)
       formatter.add(line);
 
-    if (signals.assertNavigation)
-      formatter.add(`await ${pageAlias}.WaitForURLAsync(${quote(signals.assertNavigation.url)});`);
     return formatter.format();
   }
 

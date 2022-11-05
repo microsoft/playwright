@@ -408,7 +408,7 @@ Defaults to `20`. Pass `0` to not follow redirects.
 ## evaluate-expression
 - `expression` <[string]>
 
-JavaScript expression to be evaluated in the browser context. If the expresion evaluates
+JavaScript expression to be evaluated in the browser context. If the expression evaluates
 to a function, the function is automatically invoked.
 
 ## js-evaluate-pagefunction
@@ -523,22 +523,42 @@ Whether to emulate network being offline. Defaults to `false`.
 Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 
 ## context-option-colorscheme
-- `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference">>
+* langs: js, java
+- `colorScheme` <null|[ColorScheme]<"light"|"dark"|"no-preference">>
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-[`method: Page.emulateMedia`] for more details. Defaults to `'light'`.
+[`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'light'`.
+
+## context-option-colorscheme-csharp-python
+* langs: csharp, python
+- `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference"|"null">>
+
+Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
+[`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'light'`.
 
 ## context-option-reducedMotion
-- `reducedMotion` <[ReducedMotion]<"reduce"|"no-preference">>
+* langs: js, java
+- `reducedMotion` <null|[ReducedMotion]<"reduce"|"no-preference">>
 
-Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See [`method: Page.emulateMedia`] for more details. Defaults
-to `'no-preference'`.
+Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+
+## context-option-reducedMotion-csharp-python
+* langs: csharp, python
+- `reducedMotion` <[ReducedMotion]<"reduce"|"no-preference"|"null">>
+
+Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'no-preference'`.
 
 ## context-option-forcedColors
-- `forcedColors` <[ForcedColors]<"active"|"none">>
+* langs: js, java
+- `forcedColors` <null|[ForcedColors]<"active"|"none">>
 
-Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See [`method: Page.emulateMedia`] for more details. Defaults
-to `'none'`.
+Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'none'`.
+
+## context-option-forcedColors-csharp-python
+* langs: csharp, python
+- `forcedColors` <[ForcedColors]<"active"|"none"|"null">>
+
+Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'none'`.
 
 ## context-option-logger
 * langs: js
@@ -817,8 +837,11 @@ An acceptable perceived color difference in the [YIQ color space](https://en.wik
 - %%-context-option-offline-%%
 - %%-context-option-httpcredentials-%%
 - %%-context-option-colorscheme-%%
+- %%-context-option-colorscheme-csharp-python-%%
 - %%-context-option-reducedMotion-%%
+- %%-context-option-reducedMotion-csharp-python-%%
 - %%-context-option-forcedColors-%%
+- %%-context-option-forcedColors-csharp-python-%%
 - %%-context-option-logger-%%
 - %%-context-option-videospath-%%
 - %%-context-option-videosize-%%
@@ -1031,14 +1054,14 @@ An object which specifies clipping of the resulting image. Should have the follo
 ## screenshot-option-scale
 - `scale` <[ScreenshotScale]<"css"|"device">>
 
-When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of high-dpi devices will be twice as large or even larger.
+When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenshots of high-dpi devices will be twice as large or even larger.
 
 Defaults to `"device"`.
 
 ## screenshot-option-scale-default-css
 - `scale` <[ScreenshotScale]<"css"|"device">>
 
-When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of high-dpi devices will be twice as large or even larger.
+When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenshots of high-dpi devices will be twice as large or even larger.
 
 Defaults to `"css"`.
 
@@ -1074,7 +1097,7 @@ Text to locate the element for.
 * since: v1.27
 - `exact` <[boolean]>
 
-Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular expression.
+Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular expression. Note that exact match still trims whitespace.
 
 ## locator-get-by-role-role
 * since: v1.27
@@ -1176,9 +1199,118 @@ Locator is resolved to the element immediately before performing an action, so a
 
 Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use [`method: Selectors.setTestIdAttribute`] to configure a different test id attribute if necessary.
 
+```js
+// Set custom test id attribute from @playwright/test config:
+use: {
+  testIdAttribute: 'data-pw'
+}
+```
+
 ## template-locator-get-by-text
 
-Allows locating elements that contain given text.
+Allows locating elements that contain given text. Consider the following DOM structure:
+
+```html
+<div>Hello <span>world</span></div>
+<div>Hello</div>
+```
+
+You can locate by text substring, exact string, or a regular expression:
+
+```js
+// Matches <span>
+page.getByText('world')
+
+// Matches first <div>
+page.getByText('Hello world')
+
+// Matches second <div>
+page.getByText('Hello', { exact: true })
+
+// Matches both <div>s
+page.getByText(/Hello/)
+
+// Matches second <div>
+page.getByText(/^hello$/i)
+```
+
+```python async
+# Matches <span>
+page.get_by_text("world")
+
+# Matches first <div>
+page.get_by_text("Hello world")
+
+# Matches second <div>
+page.get_by_text("Hello", exact=True)
+
+# Matches both <div>s
+page.get_by_text(re.compile("Hello"))
+
+# Matches second <div>
+page.get_by_text(re.compile("^hello$", re.IGNORECASE))
+```
+
+```python sync
+# Matches <span>
+page.get_by_text("world")
+
+# Matches first <div>
+page.get_by_text("Hello world")
+
+# Matches second <div>
+page.get_by_text("Hello", exact=True)
+
+# Matches both <div>s
+page.get_by_text(re.compile("Hello"))
+
+# Matches second <div>
+page.get_by_text(re.compile("^hello$", re.IGNORECASE))
+```
+
+```java
+// Matches <span>
+page.getByText("world")
+
+// Matches first <div>
+page.getByText("Hello world")
+
+// Matches second <div>
+page.getByText("Hello", new Page.GetByTextOptions().setExact(true))
+
+// Matches both <div>s
+page.getByText(Pattern.compile("Hello"))
+
+// Matches second <div>
+page.getByText(Pattern.compile("^hello$", Pattern.CASE_INSENSITIVE))
+```
+
+```csharp
+// Matches <span>
+page.GetByText("world")
+
+// Matches first <div>
+page.GetByText("Hello world")
+
+// Matches second <div>
+page.GetByText("Hello", new() { Exact: true })
+
+// Matches both <div>s
+page.GetByText(new Regex("Hello"))
+
+// Matches second <div>
+page.GetByText(new Regex("^hello$", RegexOptions.IgnoreCase))
+```
+
+See also [`method: Locator.filter`] that allows to match by another criteria, like an accessible role, and then filter by the text content.
+
+:::note
+Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+:::
+
+:::note
+Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
+:::
 
 ## template-locator-get-by-alt-text
 

@@ -5,11 +5,11 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 let remountCount = 0
 </script>
 
-<script setup>
+<script lang="ts" setup>
 defineProps({
   count: {
     type: Number,

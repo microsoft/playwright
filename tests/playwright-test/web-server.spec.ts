@@ -19,6 +19,7 @@ import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
 const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
+const SIMPLE_SERVER_THAT_IGNORES_SIGTERM_PATH = path.join(__dirname, 'assets', 'simple-server-ignores-sigterm.js');
 
 test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex + 10500;
@@ -600,4 +601,28 @@ test('should treat 3XX as available server', async ({ runInlineTest }, { workerI
   expect(result.passed).toBe(1);
   expect(result.output).toContain('[WebServer] listening');
   expect(result.output).toContain('[WebServer] error from server');
+});
+
+test('should be able to kill process that ignores SIGTERM', async ({ runInlineTest }, { workerIndex }) => {
+  test.skip(process.platform === 'win32', 'there is no SIGTERM on Windows');
+  const port = workerIndex + 10500;
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      const { test } = pwt;
+      test('pass', async ({}) => {});
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_THAT_IGNORES_SIGTERM_PATH)} ${port}',
+          port: ${port},
+          timeout: 1000,
+        }
+      };
+    `,
+  }, {}, { DEBUG: 'pw:webserver' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('[WebServer] listening');
+  expect(result.output).toContain('[WebServer] received SIGTERM - ignoring');
 });

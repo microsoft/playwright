@@ -107,7 +107,9 @@ test('should not collect snapshots by default', async ({ context, page, server }
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
 });
 
-test('should not include buffers in the trace', async ({ context, page, server }, testInfo) => {
+test('should not include buffers in the trace', async ({ context, page, server, mode }, testInfo) => {
+  test.skip(mode !== 'default', 'no buffers with remote connections');
+
   await context.tracing.start({ snapshots: true });
   await page.goto(server.PREFIX + '/empty.html');
   await page.screenshot();

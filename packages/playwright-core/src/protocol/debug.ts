@@ -44,6 +44,7 @@ export const commandsWithTracingSnapshots = new Set([
   'Frame.evalOnSelectorAll',
   'Frame.addScriptTag',
   'Frame.addStyleTag',
+  'Frame.blur',
   'Frame.check',
   'Frame.click',
   'Frame.dragAndDrop',

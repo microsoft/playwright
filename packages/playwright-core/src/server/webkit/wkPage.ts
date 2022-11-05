@@ -627,25 +627,28 @@ export class WKPage implements PageDelegate {
     await this._page._onFileChooserOpened(handle);
   }
 
-  private static async _setEmulateMedia(session: WKSession, mediaType: types.MediaType | null, colorScheme: types.ColorScheme | null, reducedMotion: types.ReducedMotion | null, forcedColors: types.ForcedColors | null): Promise<void> {
+  private static async _setEmulateMedia(session: WKSession, mediaType: types.MediaType, colorScheme: types.ColorScheme, reducedMotion: types.ReducedMotion, forcedColors: types.ForcedColors): Promise<void> {
     const promises = [];
-    promises.push(session.send('Page.setEmulatedMedia', { media: mediaType || '' }));
+    promises.push(session.send('Page.setEmulatedMedia', { media: mediaType === 'no-override' ? '' : mediaType }));
     let appearance: any = undefined;
     switch (colorScheme) {
       case 'light': appearance = 'Light'; break;
       case 'dark': appearance = 'Dark'; break;
+      case 'no-override': appearance = undefined; break;
     }
     promises.push(session.send('Page.setForcedAppearance', { appearance }));
     let reducedMotionWk: any = undefined;
     switch (reducedMotion) {
       case 'reduce': reducedMotionWk = 'Reduce'; break;
       case 'no-preference': reducedMotionWk = 'NoPreference'; break;
+      case 'no-override': reducedMotionWk = undefined; break;
     }
     promises.push(session.send('Page.setForcedReducedMotion', { reducedMotion: reducedMotionWk }));
     let forcedColorsWk: any = undefined;
     switch (forcedColors) {
       case 'active': forcedColorsWk = 'Active'; break;
       case 'none': forcedColorsWk = 'None'; break;
+      case 'no-override': forcedColorsWk = undefined; break;
     }
     promises.push(session.send('Page.setForcedColors', { forcedColors: forcedColorsWk }));
     await Promise.all(promises);
@@ -822,7 +825,7 @@ export class WKPage implements PageDelegate {
     this._browserContext._browser._videoStarted(this._browserContext, screencastId, options.outputFile, this.pageOrError());
   }
 
-  private async _stopVideo(): Promise<void> {
+  async _stopVideo(): Promise<void> {
     if (!this._recordingVideoFile)
       return;
     await this._pageProxySession.sendMayFail('Screencast.stopVideo');

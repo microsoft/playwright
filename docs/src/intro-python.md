@@ -57,11 +57,9 @@ By default tests will be run on chromium. This can be configured via the CLI opt
 pytest
 ```
 
-See our doc on [Running Tests](./running-tests.md) to learn more about running tests in headed mode, running multiple tests, running specific tests etc.
-
 ## What's next
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
-- [Run single tests, multiple tests, headed mode](./running-tests.md)
+- [Run single test, multiple tests, headed mode](./running-tests.md)
 - [Generate tests with Codegen](./codegen.md)
 - [See a trace of your tests](./trace-viewer-intro.md)

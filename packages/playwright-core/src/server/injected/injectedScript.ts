@@ -29,8 +29,10 @@ import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getAriaDisabled, getAriaRole, getElementAccessibleName } from './roleUtils';
+import { getAriaCheckedStrict, getAriaDisabled, getAriaRole, getElementAccessibleName } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
+import { asLocator } from '../isomorphic/locatorGenerators';
+import type { Language } from '../isomorphic/locatorGenerators';
 
 type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
 
@@ -79,9 +81,11 @@ export class InjectedScript {
   private _hitTargetInterceptor: undefined | ((event: MouseEvent | PointerEvent | TouchEvent) => void);
   private _highlight: Highlight | undefined;
   readonly isUnderTest: boolean;
+  private _sdkLanguage: Language;
 
-  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
+  constructor(isUnderTest: boolean, sdkLanguage: Language, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
     this.isUnderTest = isUnderTest;
+    this._sdkLanguage = sdkLanguage;
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
     this._engines = new Map();
@@ -90,8 +94,8 @@ export class InjectedScript {
     this._engines.set('_react', ReactEngine);
     this._engines.set('_vue', VueEngine);
     this._engines.set('role', RoleEngine);
-    this._engines.set('text', this._createTextEngine(true));
-    this._engines.set('text:light', this._createTextEngine(false));
+    this._engines.set('text', this._createTextEngine(true, false));
+    this._engines.set('text:light', this._createTextEngine(false, false));
     this._engines.set('id', this._createAttributeEngine('id', true));
     this._engines.set('id:light', this._createAttributeEngine('id', false));
     this._engines.set('data-testid', this._createAttributeEngine('data-testid', true));
@@ -105,8 +109,11 @@ export class InjectedScript {
     this._engines.set('visible', this._createVisibleEngine());
     this._engines.set('internal:control', this._createControlEngine());
     this._engines.set('internal:has', this._createHasEngine());
-    this._engines.set('internal:label', this._createLabelEngine());
+    this._engines.set('internal:label', this._createInternalLabelEngine());
+    this._engines.set('internal:text', this._createTextEngine(true, true));
+    this._engines.set('internal:has-text', this._createInternalHasTextEngine());
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
+    this._engines.set('internal:role', RoleEngine);
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -242,9 +249,9 @@ export class InjectedScript {
     };
   }
 
-  private _createTextEngine(shadow: boolean): SelectorEngine {
+  private _createTextEngine(shadow: boolean, internal: boolean): SelectorEngine {
     const queryList = (root: SelectorRoot, selector: string): Element[] => {
-      const { matcher, kind } = createTextMatcher(selector, false);
+      const { matcher, kind } = createTextMatcher(selector, internal);
       const result: Element[] = [];
       let lastDidNotMatchSelf: Element | null = null;
 
@@ -255,7 +262,7 @@ export class InjectedScript {
         const matches = elementMatchesText(this._evaluator._cacheText, element, matcher);
         if (matches === 'none')
           lastDidNotMatchSelf = element;
-        if (matches === 'self' || (matches === 'selfAndChildren' && kind === 'strict'))
+        if (matches === 'self' || (matches === 'selfAndChildren' && kind === 'strict' && !internal))
           result.push(element);
       };
 
@@ -274,7 +281,21 @@ export class InjectedScript {
     };
   }
 
-  private _createLabelEngine(): SelectorEngine {
+  private _createInternalHasTextEngine(): SelectorEngine {
+    const evaluator = this._evaluator;
+    return {
+      queryAll: (root: SelectorRoot, selector: string): Element[] => {
+        if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
+          return [];
+        const element = root as Element;
+        const text = elementText(evaluator._cacheText, element);
+        const { matcher } = createTextMatcher(selector, true);
+        return matcher(text) ? [element] : [];
+      }
+    };
+  }
+
+  private _createInternalLabelEngine(): SelectorEngine {
     const evaluator = this._evaluator;
     return {
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
@@ -588,16 +609,11 @@ export class InjectedScript {
       return !disabled && editable;
 
     if (state === 'checked' || state === 'unchecked') {
-      if (['checkbox', 'radio'].includes(element.getAttribute('role') || '')) {
-        const result = element.getAttribute('aria-checked') === 'true';
-        return state === 'checked' ? result : !result;
-      }
-      if (element.nodeName !== 'INPUT')
+      const need = state === 'checked';
+      const checked = getAriaCheckedStrict(element);
+      if (checked === 'error')
         throw this.createStacklessError('Not a checkbox or radio button');
-      if (!['radio', 'checkbox'].includes((element as HTMLInputElement).type.toLowerCase()))
-        throw this.createStacklessError('Not a checkbox or radio button');
-      const result = (element as HTMLInputElement).checked;
-      return state === 'checked' ? result : !result;
+      return need === checked;
     }
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
@@ -742,6 +758,15 @@ export class InjectedScript {
         // Some inputs do not allow selection.
       }
     }
+    return 'done';
+  }
+
+  blurNode(node: Node): 'error:notconnected' | 'done' {
+    if (!node.isConnected)
+      return 'error:notconnected';
+    if (node.nodeType !== Node.ELEMENT_NODE)
+      throw this.createStacklessError('Node is not an element');
+    (node as HTMLElement | SVGElement).blur();
     return 'done';
   }
 
@@ -993,10 +1018,10 @@ export class InjectedScript {
       preview: this.previewNode(m),
       selector: this.generateSelector(m),
     }));
-    const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka playwright.$("${info.selector}")`);
+    const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka ${asLocator(this._sdkLanguage, info.selector)}`);
     if (infos.length < matches.length)
       lines.push('\n    ...');
-    return this.createStacklessError(`strict mode violation: "${stringifySelector(selector)}" resolved to ${matches.length} elements:${lines.join('')}\n`);
+    return this.createStacklessError(`strict mode violation: ${asLocator(this._sdkLanguage, stringifySelector(selector))} resolved to ${matches.length} elements:${lines.join('')}\n`);
   }
 
   createStacklessError(message: string): Error {
@@ -1281,7 +1306,9 @@ const kTapHitTargetInterceptorEvents = new Set(['pointerdown', 'pointerup', 'tou
 const kMouseHitTargetInterceptorEvents = new Set(['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'click', 'auxclick', 'dblclick', 'contextmenu']);
 const kAllHitTargetInterceptorEvents = new Set([...kHoverHitTargetInterceptorEvents, ...kTapHitTargetInterceptorEvents, ...kMouseHitTargetInterceptorEvents]);
 
-function unescape(s: string): string {
+function cssUnquote(s: string): string {
+  // Trim quotes.
+  s = s.substring(1, s.length - 1);
   if (!s.includes('\\'))
     return s;
   const r: string[] = [];
@@ -1294,23 +1321,29 @@ function unescape(s: string): string {
   return r.join('');
 }
 
-function createTextMatcher(selector: string, strictMatchesFullText: boolean): { matcher: TextMatcher, kind: 'regex' | 'strict' | 'lax' } {
+function createTextMatcher(selector: string, internal: boolean): { matcher: TextMatcher, kind: 'regex' | 'strict' | 'lax' } {
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
     const lastSlash = selector.lastIndexOf('/');
     const matcher: TextMatcher = createRegexTextMatcher(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
     return { matcher, kind: 'regex' };
   }
+  const unquote = internal ? JSON.parse.bind(JSON) : cssUnquote;
   let strict = false;
   if (selector.length > 1 && selector[0] === '"' && selector[selector.length - 1] === '"') {
-    selector = unescape(selector.substring(1, selector.length - 1));
+    selector = unquote(selector);
     strict = true;
-  }
-  if (selector.length > 1 && selector[0] === "'" && selector[selector.length - 1] === "'") {
-    selector = unescape(selector.substring(1, selector.length - 1));
+  } else if (internal && selector.length > 1 && selector[0] === '"' && selector[selector.length - 2] === '"' && selector[selector.length - 1] === 'i') {
+    selector = unquote(selector.substring(0, selector.length - 1));
+    strict = false;
+  } else if (internal && selector.length > 1 && selector[0] === '"' && selector[selector.length - 2] === '"' && selector[selector.length - 1] === 's') {
+    selector = unquote(selector.substring(0, selector.length - 1));
+    strict = true;
+  } else if (selector.length > 1 && selector[0] === "'" && selector[selector.length - 1] === "'") {
+    selector = unquote(selector);
     strict = true;
   }
   if (strict)
-    return { matcher: strictMatchesFullText ? createStrictFullTextMatcher(selector) : createStrictTextMatcher(selector), kind: 'strict' };
+    return { matcher: internal ? createStrictFullTextMatcher(selector) : createStrictTextMatcher(selector), kind: 'strict' };
   return { matcher: createLaxTextMatcher(selector), kind: 'lax' };
 }
 

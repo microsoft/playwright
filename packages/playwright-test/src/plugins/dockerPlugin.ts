@@ -17,7 +17,7 @@
 import type { TestRunnerPlugin } from '.';
 import type { FullConfig, Reporter, Suite } from '../../types/testReporter';
 import { colors } from 'playwright-core/lib/utilsBundle';
-import { checkDockerEngineIsRunningOrDie, containerInfo, ensurePlaywrightContainerOrDie } from 'playwright-core/lib/containers/docker';
+import { checkDockerEngineIsRunningOrDie, containerInfo } from 'playwright-core/lib/containers/docker';
 
 export const dockerPlugin: TestRunnerPlugin = {
   name: 'playwright:docker',
@@ -26,22 +26,13 @@ export const dockerPlugin: TestRunnerPlugin = {
     if (!process.env.PLAYWRIGHT_DOCKER)
       return;
 
-    const print = (text: string) => reporter.onStdOut?.(text);
     const println = (text: string) => reporter.onStdOut?.(text + '\n');
 
     println(colors.dim('Using docker container to run browsers.'));
     await checkDockerEngineIsRunningOrDie();
-    let info = await containerInfo();
-    if (!info) {
-      print(colors.dim(`Starting docker container... `));
-      const time = Date.now();
-      info = await ensurePlaywrightContainerOrDie();
-      const deltaMs = (Date.now() - time);
-      println(colors.dim('Done in ' + (deltaMs / 1000).toFixed(1) + 's'));
-      println(colors.dim('The Docker container will keep running after tests finished.'));
-      println(colors.dim('Stop manually using:'));
-      println(colors.dim('    npx playwright docker stop'));
-    }
+    const info = await containerInfo();
+    if (!info)
+      throw new Error('ERROR: please launch docker container separately!');
     println(colors.dim(`View screen: ${info.vncSession}`));
     println('');
     process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.wsEndpoint;

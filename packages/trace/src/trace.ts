@@ -15,6 +15,7 @@
  */
 
 import type { CallMetadata } from '@protocol/callMetadata';
+import type { Language } from '../../playwright-core/src/server/isomorphic/locatorGenerators';
 import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
 
 export type Size = { width: number, height: number };
@@ -36,7 +37,8 @@ export type ContextCreatedTraceEvent = {
   platform: string,
   wallTime: number,
   title?: string,
-  options: BrowserContextEventOptions
+  options: BrowserContextEventOptions,
+  sdkLanguage?: Language,
 };
 
 export type ScreencastFrameTraceEvent = {

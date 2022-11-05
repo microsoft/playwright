@@ -133,16 +133,40 @@ Here is an example output in the middle of a test run. Failures will be listed a
 npx playwright test --reporter=list
 Running 124 tests using 6 workers
 
-  ✓ should access error in env (438ms)
-  ✓ handle long test names (515ms)
-  x 1) render expected (691ms)
-  ✓ should timeout (932ms)
-    should repeat each:
-  ✓ should respect enclosing .gitignore (569ms)
-    should teardown env after timeout:
-    should respect excluded tests:
-  ✓ should handle env beforeEach error (638ms)
-    should respect enclosing .gitignore:
+ 1  ✓ should access error in env (438ms)
+ 2  ✓ handle long test names (515ms)
+ 3  x 1) render expected (691ms)
+ 4  ✓ should timeout (932ms)
+ 5    should repeat each:
+ 6  ✓ should respect enclosing .gitignore (569ms)
+ 7    should teardown env after timeout:
+ 8    should respect excluded tests:
+ 9  ✓ should handle env beforeEach error (638ms)
+10    should respect enclosing .gitignore:
+```
+
+You can opt into the step rendering via passing the following config option:
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  reporter: [['list', { printSteps: true }],
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  reporter: [['list', { printSteps: true }],
+};
+export default config;
 ```
 
 ### Line reporter
@@ -246,11 +270,11 @@ You can also configure `host` and `port` that are used to serve the HTML report.
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [ ['html', {
+  reporter: [['html', {
     open: 'never',
     host: '0.0.0.0',
     port: 9223,
-  }] ],
+  }]],
 };
 
 module.exports = config;
@@ -261,7 +285,7 @@ module.exports = config;
 import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  reporter: [ ['html', { open: 'never' }] ],
+  reporter: [['html', { open: 'never' }]],
 };
 export default config;
 ```
@@ -276,7 +300,7 @@ In configuration file, pass options directly:
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [ ['html', { outputFolder: 'my-report' }] ],
+  reporter: [['html', { outputFolder: 'my-report' }]],
 };
 
 module.exports = config;
@@ -287,7 +311,7 @@ module.exports = config;
 import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  reporter: [ ['html', { outputFolder: 'my-report' }] ],
+  reporter: [['html', { outputFolder: 'my-report' }]],
 };
 export default config;
 ```
@@ -334,7 +358,7 @@ In configuration file, pass options directly:
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [ ['json', { outputFile: 'results.json' }] ],
+  reporter: [['json', { outputFile: 'results.json' }]],
 };
 
 module.exports = config;
@@ -345,7 +369,7 @@ module.exports = config;
 import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  reporter: [ ['json', { outputFile: 'results.json' }] ],
+  reporter: [['json', { outputFile: 'results.json' }]],
 };
 export default config;
 ```
@@ -377,7 +401,7 @@ In configuration file, pass options directly:
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [ ['junit', { outputFile: 'results.xml' }] ],
+  reporter: [['junit', { outputFile: 'results.xml' }]],
 };
 
 module.exports = config;
@@ -388,7 +412,7 @@ module.exports = config;
 import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  reporter: [ ['junit', { outputFile: 'results.xml' }] ],
+  reporter: [['junit', { outputFile: 'results.xml' }]],
 };
 export default config;
 ```
@@ -421,7 +445,7 @@ const xrayOptions = {
 };
 
 const config = {
-  reporter: [ ['junit', xrayOptions] ]
+  reporter: [['junit', xrayOptions]]
 };
 
 module.exports = config;
@@ -449,7 +473,7 @@ const xrayOptions = {
 };
 
 const config: PlaywrightTestConfig = {
-  reporter: [ ['junit', xrayOptions] ]
+  reporter: [['junit', xrayOptions]]
 };
 
 export default config;
@@ -496,7 +520,7 @@ The following configuration sample enables embedding attachments by using the `t
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [ ['junit', { embedAttachmentsAsProperty: 'testrun_evidence', outputFile: 'results.xml' }] ],
+  reporter: [['junit', { embedAttachmentsAsProperty: 'testrun_evidence', outputFile: 'results.xml' }]],
 };
 
 module.exports = config;
@@ -507,7 +531,7 @@ module.exports = config;
 
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
-  reporter: [ ['junit', { embedAttachmentsAsProperty: 'testrun_evidence', outputFile: 'results.xml' }] ],
+  reporter: [['junit', { embedAttachmentsAsProperty: 'testrun_evidence', outputFile: 'results.xml' }]],
 };
 
 export default config;

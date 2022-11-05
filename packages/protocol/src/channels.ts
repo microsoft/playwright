@@ -472,7 +472,7 @@ export interface RootChannel extends RootEventTarget, Channel {
   initialize(params: RootInitializeParams, metadata?: Metadata): Promise<RootInitializeResult>;
 }
 export type RootInitializeParams = {
-  sdkLanguage: string,
+  sdkLanguage: 'javascript' | 'python' | 'java' | 'csharp',
 };
 export type RootInitializeOptions = {
 
@@ -512,6 +512,7 @@ export type PlaywrightInitializer = {
   }[],
   selectors: SelectorsChannel,
   preLaunchedBrowser?: BrowserChannel,
+  preConnectedAndroidDevice?: AndroidDeviceChannel,
   socksSupport?: SocksSupportChannel,
 };
 export interface PlaywrightEventTarget {
@@ -519,7 +520,6 @@ export interface PlaywrightEventTarget {
 export interface PlaywrightChannel extends PlaywrightEventTarget, Channel {
   _type_Playwright: boolean;
   newRequest(params: PlaywrightNewRequestParams, metadata?: Metadata): Promise<PlaywrightNewRequestResult>;
-  hideHighlight(params?: PlaywrightHideHighlightParams, metadata?: Metadata): Promise<PlaywrightHideHighlightResult>;
 }
 export type PlaywrightNewRequestParams = {
   baseURL?: string,
@@ -568,9 +568,6 @@ export type PlaywrightNewRequestOptions = {
 export type PlaywrightNewRequestResult = {
   request: APIRequestContextChannel,
 };
-export type PlaywrightHideHighlightParams = {};
-export type PlaywrightHideHighlightOptions = {};
-export type PlaywrightHideHighlightResult = void;
 
 export interface PlaywrightEvents {
 }
@@ -593,24 +590,34 @@ export type RecorderSource = {
 export type DebugControllerInitializer = {};
 export interface DebugControllerEventTarget {
   on(event: 'inspectRequested', callback: (params: DebugControllerInspectRequestedEvent) => void): this;
+  on(event: 'stateChanged', callback: (params: DebugControllerStateChangedEvent) => void): this;
+  on(event: 'sourceChanged', callback: (params: DebugControllerSourceChangedEvent) => void): this;
   on(event: 'browsersChanged', callback: (params: DebugControllerBrowsersChangedEvent) => void): this;
-  on(event: 'sourcesChanged', callback: (params: DebugControllerSourcesChangedEvent) => void): this;
 }
 export interface DebugControllerChannel extends DebugControllerEventTarget, Channel {
   _type_DebugController: boolean;
-  setTrackHierarchy(params: DebugControllerSetTrackHierarchyParams, metadata?: Metadata): Promise<DebugControllerSetTrackHierarchyResult>;
-  setReuseBrowser(params: DebugControllerSetReuseBrowserParams, metadata?: Metadata): Promise<DebugControllerSetReuseBrowserResult>;
+  initialize(params: DebugControllerInitializeParams, metadata?: Metadata): Promise<DebugControllerInitializeResult>;
+  setReportStateChanged(params: DebugControllerSetReportStateChangedParams, metadata?: Metadata): Promise<DebugControllerSetReportStateChangedResult>;
   resetForReuse(params?: DebugControllerResetForReuseParams, metadata?: Metadata): Promise<DebugControllerResetForReuseResult>;
-  navigateAll(params: DebugControllerNavigateAllParams, metadata?: Metadata): Promise<DebugControllerNavigateAllResult>;
+  navigate(params: DebugControllerNavigateParams, metadata?: Metadata): Promise<DebugControllerNavigateResult>;
   setRecorderMode(params: DebugControllerSetRecorderModeParams, metadata?: Metadata): Promise<DebugControllerSetRecorderModeResult>;
-  highlightAll(params: DebugControllerHighlightAllParams, metadata?: Metadata): Promise<DebugControllerHighlightAllResult>;
-  hideHighlightAll(params?: DebugControllerHideHighlightAllParams, metadata?: Metadata): Promise<DebugControllerHideHighlightAllResult>;
+  highlight(params: DebugControllerHighlightParams, metadata?: Metadata): Promise<DebugControllerHighlightResult>;
+  hideHighlight(params?: DebugControllerHideHighlightParams, metadata?: Metadata): Promise<DebugControllerHideHighlightResult>;
   kill(params?: DebugControllerKillParams, metadata?: Metadata): Promise<DebugControllerKillResult>;
   closeAllBrowsers(params?: DebugControllerCloseAllBrowsersParams, metadata?: Metadata): Promise<DebugControllerCloseAllBrowsersResult>;
 }
 export type DebugControllerInspectRequestedEvent = {
   selector: string,
-  locators: NameValue[],
+  locator: string,
+};
+export type DebugControllerStateChangedEvent = {
+  pageCount: number,
+};
+export type DebugControllerSourceChangedEvent = {
+  text: string,
+  header?: string,
+  footer?: string,
+  actions?: string[],
 };
 export type DebugControllerBrowsersChangedEvent = {
   browsers: {
@@ -619,53 +626,48 @@ export type DebugControllerBrowsersChangedEvent = {
     }[],
   }[],
 };
-export type DebugControllerSourcesChangedEvent = {
-  sources: RecorderSource[],
+export type DebugControllerInitializeParams = {
+  codegenId: string,
+  sdkLanguage: 'javascript' | 'python' | 'java' | 'csharp',
 };
-export type DebugControllerSetTrackHierarchyParams = {
-  enabled: boolean,
-};
-export type DebugControllerSetTrackHierarchyOptions = {
+export type DebugControllerInitializeOptions = {
 
 };
-export type DebugControllerSetTrackHierarchyResult = void;
-export type DebugControllerSetReuseBrowserParams = {
+export type DebugControllerInitializeResult = void;
+export type DebugControllerSetReportStateChangedParams = {
   enabled: boolean,
 };
-export type DebugControllerSetReuseBrowserOptions = {
+export type DebugControllerSetReportStateChangedOptions = {
 
 };
-export type DebugControllerSetReuseBrowserResult = void;
+export type DebugControllerSetReportStateChangedResult = void;
 export type DebugControllerResetForReuseParams = {};
 export type DebugControllerResetForReuseOptions = {};
 export type DebugControllerResetForReuseResult = void;
-export type DebugControllerNavigateAllParams = {
+export type DebugControllerNavigateParams = {
   url: string,
 };
-export type DebugControllerNavigateAllOptions = {
+export type DebugControllerNavigateOptions = {
 
 };
-export type DebugControllerNavigateAllResult = void;
+export type DebugControllerNavigateResult = void;
 export type DebugControllerSetRecorderModeParams = {
   mode: 'inspecting' | 'recording' | 'none',
-  language?: string,
-  file?: string,
 };
 export type DebugControllerSetRecorderModeOptions = {
-  language?: string,
-  file?: string,
-};
-export type DebugControllerSetRecorderModeResult = void;
-export type DebugControllerHighlightAllParams = {
-  selector: string,
-};
-export type DebugControllerHighlightAllOptions = {
 
 };
-export type DebugControllerHighlightAllResult = void;
-export type DebugControllerHideHighlightAllParams = {};
-export type DebugControllerHideHighlightAllOptions = {};
-export type DebugControllerHideHighlightAllResult = void;
+export type DebugControllerSetRecorderModeResult = void;
+export type DebugControllerHighlightParams = {
+  selector: string,
+};
+export type DebugControllerHighlightOptions = {
+
+};
+export type DebugControllerHighlightResult = void;
+export type DebugControllerHideHighlightParams = {};
+export type DebugControllerHideHighlightOptions = {};
+export type DebugControllerHideHighlightResult = void;
 export type DebugControllerKillParams = {};
 export type DebugControllerKillOptions = {};
 export type DebugControllerKillResult = void;
@@ -675,8 +677,9 @@ export type DebugControllerCloseAllBrowsersResult = void;
 
 export interface DebugControllerEvents {
   'inspectRequested': DebugControllerInspectRequestedEvent;
+  'stateChanged': DebugControllerStateChangedEvent;
+  'sourceChanged': DebugControllerSourceChangedEvent;
   'browsersChanged': DebugControllerBrowsersChangedEvent;
-  'sourcesChanged': DebugControllerSourcesChangedEvent;
 }
 
 // ----------- SocksSupport -----------
@@ -892,9 +895,9 @@ export type BrowserTypeLaunchPersistentContextParams = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -962,9 +965,9 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -1057,9 +1060,9 @@ export type BrowserNewContextParams = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -1114,9 +1117,9 @@ export type BrowserNewContextOptions = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -1174,9 +1177,9 @@ export type BrowserNewContextForReuseParams = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -1231,9 +1234,9 @@ export type BrowserNewContextForReuseOptions = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -1740,16 +1743,16 @@ export type PageCloseOptions = {
 };
 export type PageCloseResult = void;
 export type PageEmulateMediaParams = {
-  media?: 'screen' | 'print' | 'null',
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'null',
-  reducedMotion?: 'reduce' | 'no-preference' | 'null',
-  forcedColors?: 'active' | 'none' | 'null',
+  media?: 'screen' | 'print' | 'no-override',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
 };
 export type PageEmulateMediaOptions = {
-  media?: 'screen' | 'print' | 'null',
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'null',
-  reducedMotion?: 'reduce' | 'no-preference' | 'null',
-  forcedColors?: 'active' | 'none' | 'null',
+  media?: 'screen' | 'print' | 'no-override',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
 };
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
@@ -2137,6 +2140,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, metadata?: Metadata): Promise<FrameEvalOnSelectorAllResult>;
   addScriptTag(params: FrameAddScriptTagParams, metadata?: Metadata): Promise<FrameAddScriptTagResult>;
   addStyleTag(params: FrameAddStyleTagParams, metadata?: Metadata): Promise<FrameAddStyleTagResult>;
+  blur(params: FrameBlurParams, metadata?: Metadata): Promise<FrameBlurResult>;
   check(params: FrameCheckParams, metadata?: Metadata): Promise<FrameCheckResult>;
   click(params: FrameClickParams, metadata?: Metadata): Promise<FrameClickResult>;
   content(params?: FrameContentParams, metadata?: Metadata): Promise<FrameContentResult>;
@@ -2241,6 +2245,16 @@ export type FrameAddStyleTagOptions = {
 export type FrameAddStyleTagResult = {
   element: ElementHandleChannel,
 };
+export type FrameBlurParams = {
+  selector: string,
+  strict?: boolean,
+  timeout?: number,
+};
+export type FrameBlurOptions = {
+  strict?: boolean,
+  timeout?: number,
+};
+export type FrameBlurResult = void;
 export type FrameCheckParams = {
   selector: string,
   strict?: boolean,
@@ -3845,7 +3859,7 @@ export type ElectronLaunchParams = {
   timeout?: number,
   acceptDownloads?: boolean,
   bypassCSP?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   extraHTTPHeaders?: NameValue[],
   geolocation?: {
     longitude: number,
@@ -3878,7 +3892,7 @@ export type ElectronLaunchOptions = {
   timeout?: number,
   acceptDownloads?: boolean,
   bypassCSP?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   extraHTTPHeaders?: NameValue[],
   geolocation?: {
     longitude: number,
@@ -4034,6 +4048,7 @@ export type AndroidDeviceInitializer = {
   serial: string,
 };
 export interface AndroidDeviceEventTarget {
+  on(event: 'close', callback: (params: AndroidDeviceCloseEvent) => void): this;
   on(event: 'webViewAdded', callback: (params: AndroidDeviceWebViewAddedEvent) => void): this;
   on(event: 'webViewRemoved', callback: (params: AndroidDeviceWebViewRemovedEvent) => void): this;
 }
@@ -4065,6 +4080,7 @@ export interface AndroidDeviceChannel extends AndroidDeviceEventTarget, EventTar
   connectToWebView(params: AndroidDeviceConnectToWebViewParams, metadata?: Metadata): Promise<AndroidDeviceConnectToWebViewResult>;
   close(params?: AndroidDeviceCloseParams, metadata?: Metadata): Promise<AndroidDeviceCloseResult>;
 }
+export type AndroidDeviceCloseEvent = {};
 export type AndroidDeviceWebViewAddedEvent = {
   webView: AndroidWebView,
 };
@@ -4259,9 +4275,9 @@ export type AndroidDeviceLaunchBrowserParams = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -4313,9 +4329,9 @@ export type AndroidDeviceLaunchBrowserOptions = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference',
-  reducedMotion?: 'reduce' | 'no-preference',
-  forcedColors?: 'active' | 'none',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: boolean,
   baseURL?: string,
   recordVideo?: {
@@ -4395,6 +4411,7 @@ export type AndroidDeviceCloseOptions = {};
 export type AndroidDeviceCloseResult = void;
 
 export interface AndroidDeviceEvents {
+  'close': AndroidDeviceCloseEvent;
   'webViewAdded': AndroidDeviceWebViewAddedEvent;
   'webViewRemoved': AndroidDeviceWebViewRemovedEvent;
 }

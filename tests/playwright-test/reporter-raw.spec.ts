@@ -155,7 +155,7 @@ test(`testInfo.attach should save attachments via path`, async ({ runInlineTest 
     expect(result.attachments[0].name).toBe('foo');
     expect(result.attachments[0].contentType).toBe('application/json');
     const p = result.attachments[0].path;
-    expect(p).toMatch(/[/\\]attachments[/\\][0-9a-f]+\.json$/);
+    expect(p).toMatch(/[/\\]attachments[/\\]foo-[0-9a-f]+\.json$/);
     const contents = fs.readFileSync(p);
     expect(contents.toString()).toBe('We <3 Playwright!');
   }
@@ -164,7 +164,7 @@ test(`testInfo.attach should save attachments via path`, async ({ runInlineTest 
     expect(result.attachments[0].name).toBe('foo');
     expect(result.attachments[0].contentType).toBe('image/png');
     const p = result.attachments[0].path;
-    expect(p).toMatch(/[/\\]attachments[/\\][0-9a-f]+\.json$/);
+    expect(p).toMatch(/[/\\]attachments[/\\]foo-[0-9a-f]+\.json$/);
     const contents = fs.readFileSync(p);
     expect(contents.toString()).toBe('We <3 Playwright!');
   }
@@ -173,7 +173,7 @@ test(`testInfo.attach should save attachments via path`, async ({ runInlineTest 
     expect(result.attachments[0].name).toBe('example.png');
     expect(result.attachments[0].contentType).toBe('x-playwright/custom');
     const p = result.attachments[0].path;
-    expect(p).toMatch(/[/\\]attachments[/\\][0-9a-f]+\.json$/);
+    expect(p).toMatch(/[/\\]attachments[/\\]example-png-[0-9a-f]+\.json$/);
     const contents = fs.readFileSync(p);
     expect(contents.toString()).toBe('We <3 Playwright!');
   }
@@ -182,7 +182,7 @@ test(`testInfo.attach should save attachments via path`, async ({ runInlineTest 
     expect(result.attachments[0].name).toBe('foo');
     expect(result.attachments[0].contentType).toBe('application/octet-stream');
     const p = result.attachments[0].path;
-    expect(p).toMatch(/[/\\]attachments[/\\][0-9a-f]+\.this-extension-better-not-map-to-an-actual-mimetype$/);
+    expect(p).toMatch(/[/\\]attachments[/\\]foo-[0-9a-f]+\.this-extension-better-not-map-to-an-actual-mimetype$/);
     const contents = fs.readFileSync(p);
     expect(contents.toString()).toBe('We <3 Playwright!');
   }

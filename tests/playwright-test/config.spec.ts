@@ -481,12 +481,12 @@ test('should have correct types for the config', async ({ runTSC }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should throw when project.stage is not a number', async ({ runInlineTest }) => {
+test('should throw when project.setup has wrong type', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
         module.exports = {
           projects: [
-            { name: 'a', stage: 'foo' },
+            { name: 'a', setup: 100 },
           ],
         };
     `,
@@ -497,15 +497,15 @@ test('should throw when project.stage is not a number', async ({ runInlineTest }
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`config.projects[0].stage must be an integer`);
+  expect(result.output).toContain(`Error: playwright.config.ts: config.projects[0].setup must be a string or a RegExp`);
 });
 
-test('should throw when project.stage is not an integer', async ({ runInlineTest }) => {
+test('should throw when project.setup has wrong array type', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
         module.exports = {
           projects: [
-            { name: 'a', stage: 3.14 },
+            { name: 'a', setup: [/100/, 100] },
           ],
         };
     `,
@@ -516,24 +516,5 @@ test('should throw when project.stage is not an integer', async ({ runInlineTest
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`config.projects[0].stage must be an integer`);
-});
-
-test('should throw when project.stopOnFailure is not a boolean', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-        module.exports = {
-          projects: [
-            { name: 'a', stopOnFailure: 'yes' },
-          ],
-        };
-    `,
-    'a.test.ts': `
-        const { test } = pwt;
-        test('pass', async () => {});
-      `
-  });
-
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`config.projects[0].stopOnFailure must be a boolean`);
+  expect(result.output).toContain(`Error: playwright.config.ts: config.projects[0].setup[1] must be a string or a RegExp`);
 });

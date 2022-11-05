@@ -27,11 +27,12 @@ import type { FullConfig } from '../types';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import type { AddressInfo } from 'net';
 import { getPlaywrightVersion } from 'playwright-core/lib/common/userAgent';
+import type { PlaywrightTestConfig as BasePlaywrightTestConfig } from '@playwright/test';
 
 let stoppableServer: any;
 const playwrightVersion = getPlaywrightVersion();
 
-type CtConfig = {
+type CtConfig = BasePlaywrightTestConfig['use'] & {
   ctPort?: number;
   ctTemplateDir?: string;
   ctCacheDir?: string;
@@ -139,8 +140,10 @@ export function createPlugin(
         sourcemap: true,
       };
 
-      if (sourcesDirty)
+      if (sourcesDirty) {
         await build(viteConfig);
+        await fs.promises.rename(`${outDir}/${relativeTemplateDir}/index.html`, `${outDir}/index.html`);
+      }
 
       if (hasNewTests || hasNewComponents || sourcesDirty)
         await fs.promises.writeFile(buildInfoFile, JSON.stringify(buildInfo, undefined, 2));
@@ -150,7 +153,8 @@ export function createPlugin(
       const isAddressInfo = (x: any): x is AddressInfo => x?.address;
       const address = previewServer.httpServer.address();
       if (isAddressInfo(address))
-        process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL = `http://localhost:${address.port}/${relativeTemplateDir}/index.html`;
+        process.env.PLAYWRIGHT_TEST_BASE_URL = `http://localhost:${address.port}`;
+
     },
 
     teardown: async () => {

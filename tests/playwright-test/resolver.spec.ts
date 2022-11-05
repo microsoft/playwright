@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should respect path resolver', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11656' });
@@ -342,4 +342,59 @@ test('should not use baseurl for relative imports when dir with same name exists
   expect(result.passed).toBe(1);
   expect(result.output).not.toContain(`Could not`);
   expect(result.output).not.toContain(`Cannot`);
+});
+
+test('should respect path resolver for JS files when allowJs', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `export default { projects: [{name: 'foo'}], };`,
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "allowJs": true,
+        "baseUrl": ".",
+        "paths": {
+          "util/*": ["./foo/bar/util/*"],
+        },
+      },
+    }`,
+    'a.test.js': `
+      const { foo } = require('util/b');
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+      });
+    `,
+    'foo/bar/util/b.ts': `
+      module.exports = { foo: 'foo' };
+    `,
+  });
+
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should not respect path resolver for JS files w/o allowJS', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `export default { projects: [{name: 'foo'}], };`,
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "util/*": ["./foo/bar/util/*"],
+        },
+      },
+    }`,
+    'a.test.js': `
+      const { foo } = require('util/b');
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+      });
+    `,
+    'foo/bar/util/b.ts': `
+      module.exports = { foo: 'foo' };
+    `,
+  });
+
+  expect(stripAnsi(result.output)).toContain('Cannot find module \'util/b\'');
+  expect(result.exitCode).toBe(1);
 });

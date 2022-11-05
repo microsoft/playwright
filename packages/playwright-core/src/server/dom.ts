@@ -98,12 +98,14 @@ export class FrameExecutionContext extends js.ExecutionContext {
       const custom: string[] = [];
       for (const [name, { source }] of this.frame._page.selectors._engines)
         custom.push(`{ name: '${name}', engine: (${source}) }`);
+      const sdkLanguage = this.frame._page.context()._browser.options.sdkLanguage;
       const source = `
         (() => {
         const module = {};
         ${injectedScriptSource.source}
         return new module.exports(
           ${isUnderTest()},
+          "${sdkLanguage}",
           ${this.frame._page._delegate.rafCountForStablePosition()},
           "${this.frame._page._browserContext._browser.options.name}",
           [${custom.join(',\n')}]
@@ -666,6 +668,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await this.evaluateInUtility(([injected, node, resetSelectionIfNotFocused]) => injected.focusNode(node, resetSelectionIfNotFocused), resetSelectionIfNotFocused);
   }
 
+  async _blur(progress: Progress): Promise<'error:notconnected' | 'done'> {
+    progress.throwIfAborted();  // Avoid action that has side-effects.
+    return await this.evaluateInUtility(([injected, node]) => injected.blurNode(node), {});
+  }
+
   async type(metadata: CallMetadata, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
@@ -1008,14 +1015,14 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
       if (lastElement !== element) {
         lastElement = element;
         if (!element) {
-          progress.log(`  selector did not resolve to any element`);
+          progress.log(`  locator did not resolve to any element`);
         } else {
           if (elements.length > 1) {
             if (strict)
               throw injected.strictModeViolationError(parsed, elements);
-            progress.log(`  selector resolved to ${elements.length} elements. Proceeding with the first one.`);
+            progress.log(`  locator resolved to ${elements.length} elements. Proceeding with the first one.`);
           }
-          progress.log(`  selector resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`);
+          progress.log(`  locator resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`);
         }
       }
 

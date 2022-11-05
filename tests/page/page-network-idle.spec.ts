@@ -176,3 +176,33 @@ it('should wait for networkidle when iframe attaches and detaches', async ({ pag
   await promise;
   expect(done).toBe(true);
 });
+
+it('should work after repeated navigations in the same page', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18283' });
+
+  let requestCount = 0;
+  await page.route('**/empty.html', route => {
+    route.fulfill({
+      contentType: 'text/html',
+      body: `
+        <script>
+          fetch('http://localhost:8000/sample').then(res => console.log(res.json()))
+        </script>`
+    });
+  });
+
+  await page.route('**/sample', route => {
+    requestCount++;
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        content: 'sample'
+      })
+    });
+  });
+
+  await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle' });
+  expect(requestCount).toBe(1);
+  await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle' });
+  expect(requestCount).toBe(2);
+});

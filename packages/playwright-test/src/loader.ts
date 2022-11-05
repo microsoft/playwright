@@ -121,6 +121,7 @@ export class Loader {
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
 
     this._fullConfig._configDir = configDir;
+    this._fullConfig._storageDir = path.resolve(configDir, '.playwright-storage');
     this._fullConfig.configFile = this._configFile;
     this._fullConfig.rootDir = config.testDir || this._configDir;
     this._fullConfig._globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._globalOutputDir);
@@ -277,9 +278,7 @@ export class Loader {
     const outputDir = takeFirst(projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
     const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
     const name = takeFirst(projectConfig.name, config.name, '');
-    const stage =  takeFirst(projectConfig.stage, 0);
-    const stopOnFailure = takeFirst(projectConfig.stopOnFailure, false);
-    const canShard = takeFirst(projectConfig.canShard, true);
+    const _setup = takeFirst(projectConfig.setup, []);
 
     let screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
     if (process.env.PLAYWRIGHT_DOCKER) {
@@ -299,9 +298,7 @@ export class Loader {
       metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
       name,
       testDir,
-      stage,
-      stopOnFailure,
-      canShard,
+      _setup,
       _respectGitIgnore: respectGitIgnore,
       snapshotDir,
       _screenshotsDir: screenshotsDir,
@@ -400,6 +397,12 @@ class ProjectSuiteBuilder {
         const test = entry._clone();
         to._addTest(test);
         test.retries = this._project.retries;
+        for (let parentSuite: Suite | undefined = to; parentSuite; parentSuite = parentSuite.parent) {
+          if (parentSuite._retries !== undefined) {
+            test.retries = parentSuite._retries;
+            break;
+          }
+        }
         const repeatEachIndexSuffix = repeatEachIndex ? ` (repeat:${repeatEachIndex})` : '';
         // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
         const testIdExpression = `[project=${this._project._id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
@@ -438,18 +441,17 @@ class ProjectSuiteBuilder {
       return testType.fixtures;
     const result: FixturesWithLocation[] = [];
     for (const f of testType.fixtures) {
+      result.push(f);
       const optionsFromConfig: Fixtures = {};
-      const originalFixtures: Fixtures = {};
       for (const [key, value] of Object.entries(f.fixtures)) {
         if (isFixtureOption(value) && configKeys.has(key))
           (optionsFromConfig as any)[key] = [(configUse as any)[key], value[1]];
-        else
-          (originalFixtures as any)[key] = value;
       }
-      if (Object.entries(optionsFromConfig).length)
-        result.push({ fixtures: optionsFromConfig, location: { file: `project#${this._project._id}`, line: 1, column: 1 } });
-      if (Object.entries(originalFixtures).length)
-        result.push({ fixtures: originalFixtures, location: f.location });
+      if (Object.entries(optionsFromConfig).length) {
+        // Add config options immediately after original option definition,
+        // so that any test.use() override it.
+        result.push({ fixtures: optionsFromConfig, location: { file: `project#${this._project._id}`, line: 1, column: 1 }, fromConfig: true });
+      }
     }
     return result;
   }
@@ -613,22 +615,12 @@ function validateProject(file: string, project: Project, title: string) {
       throw errorWithFile(file, `${title}.retries must be a non-negative number`);
   }
 
-  if ('stage' in project && project.stage !== undefined) {
-    if (typeof project.stage !== 'number' || Math.floor(project.stage) !== project.stage)
-      throw errorWithFile(file, `${title}.stage must be an integer`);
-  }
-
-  if ('stopOnFailure' in project && project.stopOnFailure !== undefined) {
-    if (typeof project.stopOnFailure !== 'boolean')
-      throw errorWithFile(file, `${title}.stopOnFailure must be a boolean`);
-  }
-
   if ('testDir' in project && project.testDir !== undefined) {
     if (typeof project.testDir !== 'string')
       throw errorWithFile(file, `${title}.testDir must be a string`);
   }
 
-  for (const prop of ['testIgnore', 'testMatch'] as const) {
+  for (const prop of ['testIgnore', 'testMatch', 'setup'] as const) {
     if (prop in project && project[prop] !== undefined) {
       const value = project[prop];
       if (Array.isArray(value)) {
@@ -678,6 +670,7 @@ export const baseFullConfig: FullConfigInternal = {
   _webServers: [],
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
+  _storageDir: '',
   _maxConcurrentTestGroups: 0,
   _ignoreSnapshots: false,
   _workerIsolation: 'isolate-pools',

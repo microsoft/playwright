@@ -17,8 +17,9 @@
 .toolbar {
   display: flex;
   box-shadow: var(--box-shadow);
-  background-color: var(--toolbar-bg-color);
-  height: 40px;
+  background-color: var(--vscode-sideBar-background);
+  color: var(--vscode-sideBarTitle-foreground);
+  min-height: 40px;
   align-items: center;
   padding-right: 10px;
   flex: none;
@@ -31,19 +32,21 @@
 }
 
 .toolbar input {
-  border: 1px solid #ddd;
   padding: 0 10px;
-  border-radius: 14px;
   line-height: 24px;
-  background: white;
   outline: none;
   margin-left: 10px;
-  color: var(--toolbar-color);
 }
 
 .toolbar select {
-  border: none;
   background: none;
   outline: none;
-  color: var(--toolbar-color);
+  padding: 3px;
+  margin: 2px;
+}
+
+.toolbar input, .toolbar select {
+  border: none;
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
 }

@@ -46,8 +46,9 @@ const md = require('../markdown');
  *   clazz?: Documentation.Class,
  *   member?: Documentation.Member,
  *   param?: string,
- *   option?: string
- * }): string} Renderer
+ *   option?: string,
+ *   href?: string,
+ * }): string|undefined} Renderer
  */
 
 /**
@@ -773,13 +774,13 @@ function patchLinks(classOrMember, spec, classesMap, membersMap, linkRenderer) {
   md.visitAll(spec, node => {
     if (!node.text)
       return;
-    node.text = node.text.replace(/\[`(\w+): ([^\]]+)`\]/g, (match, p1, p2) => {
+    node.text = node.text.replace(/\[`(\w+): ([^\]]+)`\](?:\(([^)]*?)\))?/g, (match, p1, p2, href) => {
       if (['event', 'method', 'property'].includes(p1)) {
         const memberName = p1 + ': ' + p2;
         const member = membersMap.get(memberName);
         if (!member)
           throw new Error('Undefined member references: ' + match);
-        return linkRenderer({ member }) || match;
+        return linkRenderer({ member, href }) || match;
       }
       if (p1 === 'param') {
         let alias = p2;
@@ -792,16 +793,16 @@ function patchLinks(classOrMember, spec, classesMap, membersMap, linkRenderer) {
             throw new Error(`Referenced parameter ${match} not found in the parent method ${method.name} `);
           alias = param.alias;
         }
-        return linkRenderer({ param: alias }) || match;
+        return linkRenderer({ param: alias, href }) || match;
       }
       if (p1 === 'option')
-        return linkRenderer({ option: p2 }) || match;
+        return linkRenderer({ option: p2, href }) || match;
       throw new Error(`Undefined link prefix, expected event|method|property|param|option, got: ` + match);
     });
-    node.text = node.text.replace(/\[([\w]+)\]/g, (match, p1) => {
+    node.text = node.text.replace(/\[([\w]+)\](?:\(([^)]*?)\))?/g, (match, p1, href) => {
       const clazz = classesMap.get(p1);
       if (clazz)
-        return linkRenderer({ clazz }) || match;
+        return linkRenderer({ clazz, href }) || match;
       return match;
     });
   });

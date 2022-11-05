@@ -27,10 +27,9 @@
 }
 
 .tab-strip {
-  color: var(--toolbar-color);
   display: flex;
-  box-shadow: var(--box-shadow);
-  background-color: var(--toolbar-bg-color);
+  background-color: var(--vscode-sideBar-background);
+  color: var(--vscode-sideBarTitle-foreground);
   height: 32px;
   align-items: center;
   padding-right: 10px;
@@ -73,9 +72,5 @@
 }
 
 .tab-element.selected {
-  border-bottom-color: #666;
-}
-
-.tab-element:hover {
-  color: #333;
+  background-color: var(--vscode-tab-activeBackground);
 }

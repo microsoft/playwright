@@ -24,6 +24,7 @@ export type { Location } from '../types/testReporter';
 export type FixturesWithLocation = {
   fixtures: Fixtures;
   location: Location;
+  fromConfig?: boolean;
 };
 export type Annotation = { type: string, description?: string };
 
@@ -44,6 +45,7 @@ export interface TestStepInternal {
 export interface FullConfigInternal extends FullConfigPublic {
   _globalOutputDir: string;
   _configDir: string;
+  _storageDir: string;
   _maxConcurrentTestGroups: number;
   _ignoreSnapshots: boolean;
   _workerIsolation: WorkerIsolation;
@@ -68,6 +70,7 @@ export interface FullProjectInternal extends FullProjectPublic {
   _expect: Project['expect'];
   _screenshotsDir: string;
   _respectGitIgnore: boolean;
+  _setup: string | RegExp | (string | RegExp)[];
 }
 
 export interface ReporterInternal extends Reporter {

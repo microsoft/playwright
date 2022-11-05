@@ -68,7 +68,7 @@ const InnerMetadataView: React.FC<Metainfo> = metadata => {
   return (
     <AutoChip header={
       <span>
-        {metadata['revision.id'] && <span style={{ float: 'right', fontFamily: 'var(--monospace-font)' }}>
+        {metadata['revision.id'] && <span style={{ float: 'right' }}>
           {metadata['revision.id'].slice(0, 7)}
         </span>}
         {metadata['revision.subject'] || 'Commit Metainfo'}
@@ -82,7 +82,7 @@ const InnerMetadataView: React.FC<Metainfo> = metadata => {
       {metadata['revision.id'] &&
         <MetadatViewItem
           testId='revision.id'
-          content={<span style={{ fontFamily: 'var(--monospace-font)' }}>{metadata['revision.id']}</span>}
+          content={<span>{metadata['revision.id']}</span>}
           href={metadata['revision.link']}
           icon='commit'
         />

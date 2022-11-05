@@ -4,6 +4,7 @@ import Counter from './components/Counter.vue'
 import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
 import EmptyTemplate from './components/EmptyTemplate.vue'
+import type { hooksConfig } from '../playwright'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -12,7 +13,12 @@ test('render props', async ({ mount }) => {
   await expect(component).toContainText('Submit')
 })
 
-test('renderer updates props without remounting', async ({ mount }) => {
+test('render attributes', async ({ mount }) => {
+  const component = await mount(<Button class="primary" title="Submit" />)
+  await expect(component).toHaveClass('primary');
+});
+
+test('update props without remounting', async ({ mount }) => {
   const component = await mount(<Counter count={9001} />)
   await expect(component.locator('#props')).toContainText('9001')
 
@@ -23,20 +29,22 @@ test('renderer updates props without remounting', async ({ mount }) => {
   await expect(component.locator('#remount-count')).toContainText('1')
 })
 
-test('renderer updates event listeners without remounting', async ({ mount }) => {
-  const messages = []
+test('update event listeners without remounting', async ({ mount }) => {
+  const messages: string[] = []
   const component = await mount(<Counter />)
 
-  await component.update(<Counter v-on:submit={count => { 
-    messages.push(count) 
-  }} />)
+  await component.update(<Counter 
+    v-on:submit={(count: string) => { 
+      messages.push(count) 
+    }}
+  />)
   await component.click();
   expect(messages).toEqual(['hello'])
   
   await expect(component.locator('#remount-count')).toContainText('1')
 })
 
-test('renderer updates slots without remounting', async ({ mount }) => {
+test('update slots without remounting', async ({ mount }) => {
   const component = await mount(<Counter>Default Slot</Counter>)
   await expect(component).toContainText('Default Slot')
 
@@ -50,10 +58,13 @@ test('renderer updates slots without remounting', async ({ mount }) => {
 })
 
 test('emit an submit event when the button is clicked', async ({ mount }) => {
-  const messages = []
-  const component = await mount(<Button title='Submit' v-on:submit={data => {
-    messages.push(data)
-  }}></Button>)
+  const messages: string[] = []
+  const component = await mount(<Button 
+    title="Submit"
+    v-on:submit={(data: string) => {
+      messages.push(data)
+    }} 
+  />)
   await component.click()
   expect(messages).toEqual(['hello'])
 })
@@ -64,6 +75,13 @@ test('render a default slot', async ({ mount }) => {
   </DefaultSlot>)
   await expect(component).toContainText('Main Content')
 })
+
+test('render a component as slot', async ({ mount }) => {
+  const component = await mount(<DefaultSlot>
+    <Button title="Submit" />
+  </DefaultSlot>)
+  await expect(component).toContainText('Submit')
+});
 
 test('render a component with multiple slots', async ({ mount }) => {
   const component = await mount(<DefaultSlot>
@@ -101,9 +119,9 @@ test('emit a event when a slot is clicked', async ({ mount }) => {
 })
 
 test('run hooks', async ({ page, mount }) => {
-  const messages = []
+  const messages: string[] = []
   page.on('console', m => messages.push(m.text()))
-  await mount(<Button title="Submit" />, {
+  await mount<hooksConfig>(<Button title="Submit" />, {
     hooksConfig: { route: 'A' }
   })
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount el: HTMLButtonElement'])

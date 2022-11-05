@@ -18,9 +18,13 @@
 import path from 'path';
 import { spawnAsync } from '../utils/spawnAsync';
 import * as utils from '../utils';
-import { getPlaywrightVersion } from '../common/userAgent';
+import { getPlaywrightVersion, getUserAgent } from '../common/userAgent';
+import { urlToWSEndpoint } from '../server/dispatchers/localUtilsDispatcher';
+import { WebSocketTransport } from '../server/transport';
+import { SocksInterceptor } from '../server/socksInterceptor';
 import * as dockerApi from './dockerApi';
 import type { Command } from '../utilsBundle';
+import * as playwright from '../..';
 
 const VRT_IMAGE_DISTRO = 'focal';
 const VRT_IMAGE_NAME = `playwright:local-${getPlaywrightVersion()}-${VRT_IMAGE_DISTRO}`;
@@ -28,24 +32,22 @@ const VRT_CONTAINER_NAME = `playwright-${getPlaywrightVersion()}-${VRT_IMAGE_DIS
 const VRT_CONTAINER_LABEL_NAME = 'dev.playwright.vrt-service.version';
 const VRT_CONTAINER_LABEL_VALUE = '1';
 
-async function startPlaywrightContainer() {
+async function startPlaywrightContainer(port: number) {
   await checkDockerEngineIsRunningOrDie();
 
-  let info = await containerInfo();
-  if (!info) {
-    process.stdout.write(`Starting docker container... `);
-    const time = Date.now();
-    info = await ensurePlaywrightContainerOrDie();
-    const deltaMs = (Date.now() - time);
-    console.log('Done in ' + (deltaMs / 1000).toFixed(1) + 's');
-  }
+  await stopAllPlaywrightContainers();
+
+  process.stdout.write(`Starting docker container... `);
+  const time = Date.now();
+  const info = await ensurePlaywrightContainerOrDie(port);
+  const deltaMs = (Date.now() - time);
+  console.log('Done in ' + (deltaMs / 1000).toFixed(1) + 's');
+  await tetherHostNetwork(info.wsEndpoint);
+
   console.log([
+    `- Endpoint: ${info.httpEndpoint}`,
     `- View screen:`,
-    `      ${info.vncSession}`,
-    `- Run tests with browsers inside container:`,
-    `      npx playwright docker test`,
-    `- Stop background container *manually* when you are done working with tests:`,
-    `      npx playwright docker stop`,
+    `    ${info.vncSession}`,
   ].join('\n'));
 }
 
@@ -130,6 +132,7 @@ async function buildPlaywrightImage() {
 }
 
 interface ContainerInfo {
+  httpEndpoint: string;
   wsEndpoint: string;
   vncSession: string;
 }
@@ -174,10 +177,14 @@ export async function containerInfo(): Promise<ContainerInfo|undefined> {
     return undefined;
   const wsEndpoint = containerUrlToHostUrl('ws://' + webSocketLine.substring(WS_LINE_PREFIX.length));
   const vncSession = containerUrlToHostUrl(novncLine.substring(NOVNC_LINE_PREFIX.length));
-  return wsEndpoint && vncSession ? { wsEndpoint, vncSession } : undefined;
+  if (!wsEndpoint || !vncSession)
+    return undefined;
+  const wsUrl = new URL(wsEndpoint);
+  const httpEndpoint = 'http://' + wsUrl.host;
+  return { wsEndpoint, vncSession, httpEndpoint };
 }
 
-export async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
+export async function ensurePlaywrightContainerOrDie(port: number): Promise<ContainerInfo> {
   const pwImage = await findDockerImage(VRT_IMAGE_NAME);
   if (!pwImage) {
     throw createStacklessError('\n' + utils.wrapInASCIIBox([
@@ -228,14 +235,26 @@ export async function ensurePlaywrightContainerOrDie(): Promise<ContainerInfo> {
     }
   }
 
+  const env: Record<string, string | undefined> = {
+    PW_OWNED_BY_TETHER_CLIENT: '1',
+    DEBUG: process.env.DEBUG,
+  };
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.startsWith('PLAYWRIGHT_'))
+      env[key] = value;
+  }
   await dockerApi.launchContainer({
     imageId: pwImage.imageId,
     name: VRT_CONTAINER_NAME,
     autoRemove: true,
-    ports: [5400, 7900],
+    ports: [
+      { container: 5400, host: port },
+      { container: 7900, host: 0 },
+    ],
     labels: {
       [VRT_CONTAINER_LABEL_NAME]: VRT_CONTAINER_LABEL_VALUE,
     },
+    env,
   });
 
   // Wait for the service to become available.
@@ -274,6 +293,34 @@ function createStacklessError(message: string) {
   return error;
 }
 
+async function tetherHostNetwork(endpoint: string) {
+  const wsEndpoint = await urlToWSEndpoint(undefined /* progress */, endpoint);
+
+  const headers: any = {
+    'User-Agent': getUserAgent(),
+    'x-playwright-network-tethering': '1',
+  };
+  const transport = await WebSocketTransport.connect(undefined /* progress */, wsEndpoint, headers, true /* followRedirects */);
+  const socksInterceptor = new SocksInterceptor(transport, undefined);
+  transport.onmessage = json => socksInterceptor.interceptMessage(json);
+  transport.onclose = () => {
+    socksInterceptor.cleanup();
+  };
+  await transport.send({
+    id: 1,
+    guid: '',
+    method: 'initialize',
+    params: {
+      'sdkLanguage': 'javascript'
+    },
+    metadata: {
+      stack: [],
+      apiName: '',
+      internal: true
+    },
+  } as any);
+}
+
 export function addDockerCLI(program: Command) {
   const dockerCommand = program.command('docker', { hidden: true })
       .description(`Manage Docker integration (EXPERIMENTAL)`);
@@ -291,9 +338,15 @@ export function addDockerCLI(program: Command) {
 
   dockerCommand.command('start')
       .description('start docker container')
+      .option('--port <port>', 'port to start container on. Auto-pick by default')
       .action(async function(options) {
         try {
-          await startPlaywrightContainer();
+          const port = options.port ? +options.port : 0;
+          if (isNaN(port)) {
+            console.error(`ERROR: bad port number "${options.port}"`);
+            process.exit(1);
+          }
+          await startPlaywrightContainer(port);
         } catch (e) {
           console.error(e.stack ? e : e.message);
           process.exit(1);
@@ -340,5 +393,51 @@ export function addDockerCLI(program: Command) {
       .description('print docker status')
       .action(async function(options) {
         await printDockerStatus();
+      });
+
+  dockerCommand.command('launch', { hidden: true })
+      .description('launch browser in container')
+      .option('--browser <name>', 'browser to launch')
+      .option('--endpoint <url>', 'server endpoint')
+      .action(async function(options: { browser: string, endpoint: string }) {
+        let browserType: any;
+        if (options.browser === 'chromium')
+          browserType = playwright.chromium;
+        else if (options.browser === 'firefox')
+          browserType = playwright.firefox;
+        else if (options.browser === 'webkit')
+          browserType = playwright.webkit;
+        if (!browserType) {
+          console.error('Unknown browser name: ', options.browser);
+          process.exit(1);
+        }
+        const browser = await browserType.connect(options.endpoint, {
+          headers: {
+            'x-playwright-launch-options': JSON.stringify({
+              headless: false,
+              viewport: null,
+            }),
+            'x-playwright-proxy': '*',
+          },
+        });
+        const context = await browser.newContext();
+        context.on('page', (page: playwright.Page) => {
+          page.on('dialog', () => {});  // Prevent dialogs from being automatically dismissed.
+          page.once('close', () => {
+            const hasPage = browser.contexts().some((context: playwright.BrowserContext) => context.pages().length > 0);
+            if (hasPage)
+              return;
+            // Avoid the error when the last page is closed because the browser has been closed.
+            browser.close().catch((e: Error) => null);
+          });
+        });
+        await context.newPage();
+      });
+
+  dockerCommand.command('tether', { hidden: true })
+      .description('tether local network to the playwright server')
+      .option('--endpoint <url>', 'server endpoint')
+      .action(async function(options: { endpoint: string }) {
+        await tetherHostNetwork(options.endpoint);
       });
 }

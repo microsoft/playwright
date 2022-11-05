@@ -14,13 +14,17 @@
   limitations under the License.
 */
 
+.action-list {
+  background-color: var(--vscode-sideBar-background);
+  border-top: 1px solid var(--vscode-panel-border);
+}
+
 .action-list-content {
   display: flex;
   flex-direction: column;
   flex: auto;
   position: relative;
   user-select: none;
-  color: #555;
   overflow: auto;
   outline: none;
 }
@@ -37,20 +41,21 @@
 
 .action-entry.highlighted,
 .action-entry.selected {
-  background-color: var(--gray);
+  background-color: var(--vscode-list-inactiveSelectionBackground);
 }
 
 .action-entry.highlighted {
-  background-color: var(--light-gray);
+  background-color: var(--vscode-list-inactiveSelectionBackground);
 }
 
 .action-list-content:focus .action-entry.selected {
-  background-color: var(--blue);
+  background-color: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+  outline: 1px solid var(--vscode-focusBorder);
 }
 
-.action-entry.highlighted *,
-.action-entry.selected * {
-  color: white !important;
+.action-list-content:focus .action-entry.selected * {
+  color: var(--vscode-list-activeSelectionForeground);
 }
 
 .action-title {

@@ -82,7 +82,7 @@ Since Playwright runs in Node.js, you can debug it with your debugger of choice 
   npx playwright test example.spec.ts:42 --debug
   ```
 
-<img width="1188" alt="Debugging Tests" src="https://user-images.githubusercontent.com/13063165/181847661-7ec5fb6c-7c21-4db0-9931-a593b21bafc2.png" />
+<img width="1350" alt="Debugging Tests with the Playwright inspector" src="https://user-images.githubusercontent.com/13063165/197800771-50cb2f39-2345-4153-b4ed-de9fe63ba29b.png" />
 
 
 Check out our [debugging guide](./debug.md) to learn more about the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).

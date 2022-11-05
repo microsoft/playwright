@@ -46,9 +46,6 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   outputDir: string;
   repeatEach: number;
   retries: number;
-  stage: number;
-  stopOnFailure: boolean;
-  canShard: boolean;
   testDir: string;
   testIgnore: string | RegExp | (string | RegExp)[];
   testMatch: string | RegExp | (string | RegExp)[];
@@ -132,7 +129,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
     parallel: SuiteFunction & {
       only: SuiteFunction;
     };
-    configure: (options: { mode?: 'parallel' | 'serial' }) => void;
+    configure: (options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
   };
   skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   skip(): void;
@@ -154,6 +151,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   beforeAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
+  reset(options: ResetOptions<TestArgs & WorkerArgs>): void;
   step<T>(title: string, body: () => Promise<T>): Promise<T>;
   expect: Expect;
   extend<T extends KeyValue, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
@@ -174,6 +172,7 @@ export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extend
 } & {
   [K in keyof T]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean, option?: boolean, timeout?: number | undefined }];
 };
+type ResetOptions<T extends KeyValue> = { [K in keyof T]?: 'config' | 'default' };
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
@@ -198,6 +197,11 @@ type ConnectOptions = {
    */
   timeout?: number;
 };
+
+export interface Storage {
+  get<T>(name: string): Promise<T | undefined>;
+  set<T>(name: string, value: T | undefined): Promise<void>;
+}
 
 export interface PlaywrightWorkerOptions {
   browserName: BrowserName;

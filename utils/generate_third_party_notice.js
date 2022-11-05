@@ -19,6 +19,23 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+async function checkDir(dir) {
+  return await new Promise((f, r) => {
+    checker.init({
+      start: dir,
+      production: true,
+      customPath: {
+        licenseText: '',
+      }
+    }, function(err, packages) {
+      if (err)
+        r(err);
+      else
+        f(packages);
+    });
+  });
+}
+
 (async () => {
   for (const project of ['playwright-core', 'playwright-test']) {
     const lines = [];
@@ -35,24 +52,17 @@ This project incorporates components from the projects listed below. The origina
     for (const bundle of fs.readdirSync(bundlesDir)) {
       const dir = path.join(bundlesDir, bundle);
       execSync('npm ci', { cwd: dir });
-      const packages = await new Promise((f, r) => {
-        checker.init({
-          start: dir,
-          production: true,
-          customPath: {
-            licenseText: '',
-          }
-        }, function(err, packages) {
-          if (err)
-            r(err);
-          else
-            f(packages);
-        });
-      });
+      const packages = await checkDir(dir);
       for (const [key, value] of Object.entries(packages)) {
         if (value.licenseText)
           allPackages[key] = value;
       }
+    }
+
+    const packages = await checkDir('node_modules/codemirror');
+    for (const [key, value] of Object.entries(packages)) {
+      if (value.licenseText)
+        allPackages[key] = value;
     }
 
     const keys = Object.keys(allPackages).sort();

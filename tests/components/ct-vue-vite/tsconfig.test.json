@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.app.json",
+  "include": ["playwright", "env.d.ts", "src/**/*"],
+  "compilerOptions": {
+    "composite": true,
+    "lib": [],
+    "types": ["node"]
+  }
+}
