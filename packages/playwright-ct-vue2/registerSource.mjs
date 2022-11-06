@@ -160,10 +160,12 @@ const instanceKey = Symbol('instanceKey');
 const wrapperKey = Symbol('wrapperKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
+  const options = {};
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
-    await hook({ hooksConfig });
+    await hook({ hooksConfig, Vue, options });
 
   const instance = new Vue({
+    ...options,
     render: h => {
       const wrapper = createWrapper(component, h);
       /** @type {any} */ (rootElement)[wrapperKey] = wrapper;
