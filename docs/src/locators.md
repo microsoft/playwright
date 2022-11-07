@@ -177,7 +177,7 @@ For example, consider the following DOM structure.
 
 ```html
 <button>Submit</button>
-<input type="checkbox" id="newsletter" name="newsletter" checked>
+<input type="checkbox" id="newsletter" aria-label="newsletter" checked>
 ```
 
 You can locate each element by it's implicit role:
@@ -685,51 +685,96 @@ Locators support an option to only select elements that have a descendant matchi
 For example, consider the following DOM structure:
 
 ```html
-<header>
-  <button>Sign in</button>
-</header>
+<div data-testid='todo-item'>
+  <img src="no-stars.jpg" alt="no-stars" />
+  <input type="checkbox" aria-label="Toggle Todo"/>
+</div>
 
-<section>
-  <button>Sign in</button>
-</section>
+<div data-testid='todo-item'>
+  <img src="starred.jpg" alt="starred" />
+  <input type="checkbox" aria-label="Toggle Todo" />
+</div>
 ```
-To select the "Sign in" button from the `section` we can first locate by the role of section and then filter by the button role.
+To select the "checkbox" from a todo item with a `data-testid`:
+1. locate by the the test id (this gives us two items)
+1. filter by the alt text (now we have one item)
+1. find the Toggle Todo checkbox and check it.
+
+
 
 ```js
-await page.getByRole('section')
-    .filter({ has: page.getByRole('button', { name: 'Sign in' })
-    .click()
+await page.getByTestId('todo-item')
+    .filter({ has: page.getByAltText('starred') })
+    .getByRole('checkbox', { name: 'Toggle Todo' })
+    .check()
+```
+```java
+page.getByTestId("todo-item")
+    .filter(new Locator.FilterOptions().setHas(page.getByAltText("starred")
+    .getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName("Toggle Todo")))
+    .check()
+```
+```python async
+await page.get_by_test_id("todo-item")
+    .filter(has=page.get_by_alt_text("starred"))
+    .get_by_role("checkbox", name="Toggle Todo")
+    .check()
+```
+```python sync
+page.get_by_test_id("todo-item")
+    .filter(has=page.get_by_alt_text("starred"))
+    .get_by_role("checkbox", name="Toggle Todo")
+    .check()
+```
+```csharp
+await page.GetByTestId("todo-item")
+    .Filter(new() { Has = page.GetByAltText("starred" ) })
+    .GetByRole(AriaRole.Checkbox, new () { Name = "Toggle Todo" })
+    .CheckAsync();
+```
+
+We can also assert the todo item to make sure there is only one:
+1. locate by the the test id (this gives us two items)
+1. filter by the alt text (now we have one item)
+1. make sure there is only one starred item
+
+```js
+expect(page.getByTestId('todo-item')
+    .filter({ has: page.getByAltText('starred') }))
+    .toHaveCount(1)
 ```
 
 ```java
-page.getByRole("section")
-    .filter(new Locator.FilterOptions().setHas(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")))
-.click()
+expect(page.getByTestId('todo-item')
+    .filter(new Locator.FilterOptions().setHas(page.getByAltText("starred")
+    .hasCount(1)
 ```
 
 ```python async
-await page.get_by_role("section")
-    .filter(has=page.get_by_role("button", name="Sign in"))
-    .click()
+await expect(page.get_by_role("section")
+    .filter(has=page.get_by_alt_text("starred")))
+    .to_have_count(1)
 ```
 
 ```python sync
-page.get_by_role("section")
-    .filter(has=page.get_by_role("button", name="Sign in"))
-    .click()
+expect(page.get_by_role("section")
+    .filter(has=page.get_by_alt_text("starred")))
+    .to_have_count(1)
 ```
 
 ```csharp
-await page.GetByTestId("section")
-    .Filter(new() { Has = page.GetByRole("button", new() { Name = "Sign in" ) })
-    .ClickAsync();
+await Expect(page.GetByTestId("section")
+    .Filter(new() { Has = page.GetByAltText("starred" ) }))
+    .toHaveCountAsync(1)
 ```
 
-Note that inner locator is matched starting from the outer one, not from the document root.
+Note that the inner locator is matched starting from the outer one, not from the document root.
 
 ### Augment an existing locator
 
-You can filter an existing locator by text or another one, using the [`method: Locator.filter`] method, possibly chaining it multiple times.
+You can filter an existing locator by text or by another locator, using the [`method: Locator.filter`] method, possibly chaining it multiple times.
+
+
 
 ```js
 const rowLocator = page.locator('tr');
@@ -874,35 +919,40 @@ In this scenario we can locate an element within another element.
 const product = page.getByTestId('product-card')
     .filter({ hasText: 'Product 2' });
 
-await product.getByRole('button', { name: 'Buy' }).click();
+await product.getByRole('button', { name: 'Buy' })
+    .click();
 ```
 
 ```python async
 product = page.get_by_test_id("product-card")
     .filter(has_text="Product 2")
 
-await product.get_by_role("button", name="Buy").click()
+await product.get_by_role("button", name="Buy")
+    .click()
 ```
 
 ```python sync
 product = page.get_by_test_id("product-card")
     .filter(has_text="Product 2")
 
-product.get_by_role("button", name="Buy").click()
+product.get_by_role("button", name="Buy")
+    .click()
 ```
 
 ```java
 Locator product = page.getByTestId("product-card")
     .filter(new Locator.FilterOptions().setHasText("Product 2"));
 
-product.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy")).click();
+product.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy"))
+    .click();
 ```
 
 ```csharp
 var product = page.GetByTestId("product-card")
     .Filter(new() { HasText = "Product 2" });
 
-await product.GetByRole("button", new() { Name = "Buy" }).ClickAsync();
+await product.GetByRole("button", new() { Name = "Buy" })
+    .ClickAsync();
 ```
 ## Lists
 
