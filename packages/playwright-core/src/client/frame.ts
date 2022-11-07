@@ -18,8 +18,10 @@
 import { assert } from '../utils';
 import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import { FrameLocator, getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector, Locator } from './locator';
-import type { ByRoleOptions, LocatorOptions } from './locator';
+import { FrameLocator, Locator, testIdAttributeName } from './locator';
+import type { LocatorOptions } from './locator';
+import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
+import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { assertMaxArguments, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import fs from 'fs';
@@ -306,7 +308,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   getByTestId(testId: string): Locator {
-    return this.locator(getByTestIdSelector(testId));
+    return this.locator(getByTestIdSelector(testIdAttributeName, testId));
   }
 
   getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
