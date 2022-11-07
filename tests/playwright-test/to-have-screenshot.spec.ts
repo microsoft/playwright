@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-import { getComparator } from 'playwright-core/lib/utils/comparators';
 import * as fs from 'fs';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 import { test, expect, stripAnsi, createImage, paintBlackPixels } from './playwright-test-fixtures';
-
-const pngComparator = getComparator('image/png');
+import { comparePNGs } from '../config/comparator';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -171,7 +169,7 @@ test('should have scale:css by default', async ({ runInlineTest }, testInfo) => 
   expect(result.exitCode).toBe(0);
 
   const snapshotOutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.png');
-  expect(pngComparator(fs.readFileSync(snapshotOutputPath), whiteImage)).toBe(null);
+  expect(comparePNGs(fs.readFileSync(snapshotOutputPath), whiteImage)).toBe(null);
 });
 
 test('should ignore non-documented options in toHaveScreenshot config', async ({ runInlineTest }, testInfo) => {
@@ -193,7 +191,7 @@ test('should ignore non-documented options in toHaveScreenshot config', async ({
   expect(result.exitCode).toBe(0);
 
   const snapshotOutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.png');
-  expect(pngComparator(fs.readFileSync(snapshotOutputPath), whiteImage)).toBe(null);
+  expect(comparePNGs(fs.readFileSync(snapshotOutputPath), whiteImage)).toBe(null);
 });
 
 test('screenshotPath should include platform and project name by default', async ({ runInlineTest }, testInfo) => {
@@ -586,11 +584,11 @@ test('should write missing expectations locally twice and continue', async ({ ru
 
   const snapshot1OutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.png');
   expect(result.output).toContain(`Error: ${snapshot1OutputPath} is missing in snapshots, writing actual`);
-  expect(pngComparator(fs.readFileSync(snapshot1OutputPath), whiteImage)).toBe(null);
+  expect(comparePNGs(fs.readFileSync(snapshot1OutputPath), whiteImage)).toBe(null);
 
   const snapshot2OutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot2.png');
   expect(result.output).toContain(`Error: ${snapshot2OutputPath} is missing in snapshots, writing actual`);
-  expect(pngComparator(fs.readFileSync(snapshot2OutputPath), whiteImage)).toBe(null);
+  expect(comparePNGs(fs.readFileSync(snapshot2OutputPath), whiteImage)).toBe(null);
 
   expect(result.output).toContain('Here we are!');
 
@@ -629,7 +627,7 @@ test('should update snapshot with the update-snapshots flag', async ({ runInline
   expect(result.exitCode).toBe(0);
   const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png');
   expect(result.output).toContain(`${snapshotOutputPath} is re-generated, writing actual.`);
-  expect(pngComparator(fs.readFileSync(snapshotOutputPath), whiteImage)).toBe(null);
+  expect(comparePNGs(fs.readFileSync(snapshotOutputPath), whiteImage)).toBe(null);
 });
 
 test('shouldn\'t update snapshot with the update-snapshots flag for negated matcher', async ({ runInlineTest }, testInfo) => {
@@ -663,7 +661,7 @@ test('should silently write missing expectations locally with the update-snapsho
   const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png');
   expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
   const data = fs.readFileSync(snapshotOutputPath);
-  expect(pngComparator(data, whiteImage)).toBe(null);
+  expect(comparePNGs(data, whiteImage)).toBe(null);
 });
 
 test('should not write missing expectations locally with the update-snapshots flag for negated matcher', async ({ runInlineTest }, testInfo) => {
@@ -804,7 +802,7 @@ test('should not update screenshot that matches with maxDiffPixels option when -
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-diff.png'))).toBe(false);
 
   const data = fs.readFileSync(testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png'));
-  expect(pngComparator(data, EXPECTED_SNAPSHOT)).toBe(null);
+  expect(comparePNGs(data, EXPECTED_SNAPSHOT)).toBe(null);
 });
 
 test('should satisfy both maxDiffPixelRatio and maxDiffPixels', async ({ runInlineTest }) => {
@@ -990,7 +988,7 @@ test('should fail with missing expectations and retries', async ({ runInlineTest
   const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png');
   expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
   const data = fs.readFileSync(snapshotOutputPath);
-  expect(pngComparator(data, whiteImage)).toBe(null);
+  expect(comparePNGs(data, whiteImage)).toBe(null);
 });
 
 test('should update expectations with retries', async ({ runInlineTest }, testInfo) => {
@@ -1011,7 +1009,7 @@ test('should update expectations with retries', async ({ runInlineTest }, testIn
   const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png');
   expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
   const data = fs.readFileSync(snapshotOutputPath);
-  expect(pngComparator(data, whiteImage)).toBe(null);
+  expect(comparePNGs(data, whiteImage)).toBe(null);
 });
 
 function playwrightConfig(obj: any) {
