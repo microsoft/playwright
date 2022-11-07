@@ -92,14 +92,3 @@ test('androidDevice.options.omitDriverInstall', async function({ playwright }) {
 
   expect(fillStatus).toBe('success');
 });
-
-test('androidDevice.close', async function({ playwright }) {
-  const devices = await playwright._android.devices();
-  expect(devices.length).toBe(1);
-  const device = devices[0];
-  const events = [];
-  device.on('close', () => events.push('close'));
-  await device.close();
-  await device.close();
-  expect(events).toEqual(['close']);
-});

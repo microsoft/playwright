@@ -20,6 +20,7 @@ import { verifyViewport, attachFrame } from '../config/utils';
 import type { Route } from 'playwright-core';
 import path from 'path';
 import fs from 'fs';
+import { comparePNGs } from '../config/comparator';
 
 it.describe('page screenshot', () => {
   it.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
@@ -613,7 +614,7 @@ it.describe('page screenshot animations', () => {
     const buffer2 = await page.screenshot({
       animations: 'disabled',
     });
-    expect(buffer1.equals(buffer2)).toBe(true);
+    expect(comparePNGs(buffer1, buffer2)).toBe(null);
   });
 
   it('should resume infinite animations', async ({ page, server }) => {
@@ -624,7 +625,7 @@ it.describe('page screenshot animations', () => {
     const buffer1 = await page.screenshot();
     await rafraf(page);
     const buffer2 = await page.screenshot();
-    expect(buffer1.equals(buffer2)).toBe(false);
+    expect(comparePNGs(buffer1, buffer2, { threshold: 0.2, maxDiffPixels: 50 })).not.toBe(null);
   });
 
   it('should not capture infinite web animations', async ({ page, server }) => {
@@ -644,7 +645,7 @@ it.describe('page screenshot animations', () => {
     const buffer1 = await page.screenshot();
     await rafraf(page);
     const buffer2 = await page.screenshot();
-    expect(buffer1.equals(buffer2)).toBe(false);
+    expect(comparePNGs(buffer1, buffer2, { threshold: 0.2, maxDiffPixels: 50 })).not.toBe(null);
   });
 
   it('should fire transitionend for finite transitions', async ({ page, server }) => {
