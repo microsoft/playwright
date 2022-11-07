@@ -2953,7 +2953,9 @@ export interface PlaywrightTestOptions {
    * Name of the [Storage] entry that should be used to initialize
    * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state). The value must
    * be written to the storage before creatiion of a browser context that uses it (usually in
-   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup)).
+   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup)). If both this property and
+   * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state) are specified,
+   * this property will always take precedence.
    */
   storageStateName: string | undefined;
   /**
