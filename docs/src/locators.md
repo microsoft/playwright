@@ -337,24 +337,29 @@ await Expect(page.GetByText(new Regex("welcome john", RegexOptions.IgnoreCase)))
 You can also [filter by text](#filter-by-text) which can be useful when trying to find a particular item in a list.
 
 ```js
-await page.getByTestId('product-item')
-    .filter({ hasText: 'Playwright Book' }).click();
+await page.getByTestId('product-card')
+    .filter({ hasText: 'Product 2' })
+    .click();
 ```
 ```java
-page.getByTestId("product-item")
-    .filter(new Locator.FilterOptions().setHasText("Playwright Book")).click();
+page.getByTestId("product-card")
+    .filter(new Locator.FilterOptions().setHasText("Product 2"))
+    .click();
 ```
 ```python async
-await page.get_by_test_id("product-item")
-    .filter(has_text="Playwright Book").click()
+await page.get_by_test_id("product-card")
+    .filter(has_text="Product 2")
+    .click()
 ```
 ```python sync
-page.get_by_test_id("product-item")
-    .filter(has_text="Playwright Book").click()
+page.get_by_test_id("product-card")
+    .filter(has_text="Product 2")
+    .click()
 ```
 ```csharp
-await page.GetByTestId("product-item")
-    .Filter(new() { HasText = "Playwright Book" }).ClickAsync();
+await page.GetByTestId("product-card")
+    .Filter(new() { HasText = "Product 2" })
+    .ClickAsync();
 ```
 
 :::note
@@ -524,7 +529,29 @@ Selectors.SetTestIdAttribute('data-pw')
 In your html you can now use `data-pw` as your test id instead of the default `data-testid`. 
 
 ```html
-<span data-pw='custom'>custom test id</span>
+<button data-pw="directions">Itinéraire</button>
+```
+
+And then locate the element as you would normally do:
+
+```js
+await page.getByTestId('directions').click();
+```
+
+```java
+page.getByTestId("directions").click();
+```
+
+```python async
+await page.get_by_test_id("directions").click()
+```
+
+```python sync
+page.get_by_test_id("directions").click()
+```
+
+```csharp
+await page.GetByTestId("directions").ClickAsync();
 ```
 
 ### Locate by CSS or XPath
@@ -634,7 +661,7 @@ await page.getByTestId('product-card')
     .click();
 
 await page.getByTestId('product-card')
-    .filter({ hasText: /product 2/ })
+    .filter({ hasText: /Product 2/ })
     .click();
 ```
 
@@ -699,8 +726,6 @@ To select the "checkbox" from a todo item with a `data-testid`:
 1. locate by the the test id (this gives us two items)
 1. filter by the alt text (now we have one item)
 1. find the Toggle Todo checkbox and check it.
-
-
 
 ```js
 await page.getByTestId('todo-item')
@@ -772,17 +797,45 @@ Note that the inner locator is matched starting from the outer one, not from the
 
 ### Augment an existing locator
 
-You can filter an existing locator by text or by another locator, using the [`method: Locator.filter`] method, possibly chaining it multiple times.
+When you have elements with various similarities, you can use the [`method: Locator.filter`] method to select the right one. You can also chain multiple filters to narrow down the selection.
 
+For example, consider the following DOM structure:
+
+```html
+<ul>
+  <li>
+    <div>John</div>
+    <div><button>Say hello</button></div>
+  </li>
+  <li>
+    <div>Mary</div>
+    <div><button>Say hello</button></div>
+  </li>
+  <li>
+    <div>John</div>
+    <div><button>Say goodbye</button></div>
+  </li>
+  <li>
+    <div>Mary</div>
+    <div><button>Say goodbye</button></div>
+  </li>
+</ul>
+```
+
+To take a screenshot of the row with Mary and Say goodbye:
+1. create a locator for the list items
+1. filter by the text "Mary"
+1. filter by the button text "Say goodbye"
+1. take a screenshot
 
 
 ```js
-const rowLocator = page.locator('tr');
-// ...
+const rowLocator = page.getByRole('listitem');
+
 await rowLocator
-    .filter({ hasText: 'text in column 1' })
-    .filter({ has: page.getByRole('button', { name: 'column 2 button' }) })
-    .screenshot();
+  .filter({ hasText: 'Mary' })
+  .filter({ has: page.getByRole('button', { name: 'Say goodbye' }) })
+  .screenshot({path: 'screenshot.png'});
 ```
 ```java
 Locator rowLocator = page.locator("tr");
