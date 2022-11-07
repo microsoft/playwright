@@ -212,13 +212,13 @@ page.waitForLoadState(LoadState.NETWORKIDLE); // This resolves after "networkidl
 ```
 
 ```python async
-await page.locator("button").click(); # Click triggers navigation
-await page.wait_for_load_state("networkidle"); # This waits for the "networkidle"
+await page.locator("button").click()  # Click triggers navigation
+await page.wait_for_load_state("networkidle")  # This waits for the "networkidle"
 ```
 
 ```python sync
-page.locator("button").click(); # Click triggers navigation
-page.wait_for_load_state("networkidle"); # This waits for the "networkidle"
+page.locator("button").click()  # Click triggers navigation
+page.wait_for_load_state("networkidle")  # This waits for the "networkidle"
 ```
 
 ```csharp
