@@ -17,14 +17,29 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
-it('should affect accept-language header @smoke', async ({ browser, server }) => {
-  const context = await browser.newContext({ locale: 'fr-CH' });
+it.only('should affect accept-language header @smoke', async ({ browser, server }) => {
+  console.log(server.EMPTY_PAGE);
+  const context = await browser.newContext({ locale: 'cs' });
   const page = await context.newPage();
   const [request] = await Promise.all([
     server.waitForRequest('/empty.html'),
     page.goto(server.EMPTY_PAGE),
   ]);
-  expect((request.headers['accept-language'] as string).substr(0, 5)).toBe('fr-CH');
+  console.log(request.headers['accept-language']);
+  expect((request.headers['accept-language'] as string).substr(0, 5)).toBe('cs');
+  await context.close();
+});
+
+it.only('should affect accept-language header @smoke full', async ({ browser, server }) => {
+  console.log(server.EMPTY_PAGE);
+  const context = await browser.newContext({ locale: 'cs-CZ' });
+  const page = await context.newPage();
+  const [request] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.EMPTY_PAGE),
+  ]);
+  console.log(request.headers['accept-language']);
+  expect((request.headers['accept-language'] as string).substr(0, 5)).toBe('cs-CZ');
   await context.close();
 });
 
