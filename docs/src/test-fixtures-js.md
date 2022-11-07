@@ -44,7 +44,7 @@ Here is a list of the pre-defined fixtures that you are likely to use most of th
 
 Here is how typical test environment setup differs between traditional test style and the fixture-based one.
 
-We assume a `TodoPage` class that helps interacting with a "todo list" page of the web app, following the [Page Object Model](./test-pom.md) pattern. It uses Playwright's `page` internally.
+We assume a `TodoPage` class that helps interacting with a "todo list" page of the web app, following the [Page Object Model](./pom.md) pattern. It uses Playwright's `page` internally.
 
 ```js
 // todo.spec.js
@@ -147,7 +147,7 @@ test('should remove an item', async ({ todoPage }) => {
 
 To create your own fixture, use [`method: Test.extend`] to create a new `test` object that will include it.
 
-Below we create two fixtures `todoPage` and `settingsPage` that follow the [Page Object Model](./test-pom.md) pattern.
+Below we create two fixtures `todoPage` and `settingsPage` that follow the [Page Object Model](./pom.md) pattern.
 
 ```js tab=js-js
 // my-test.js

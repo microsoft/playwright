@@ -517,7 +517,7 @@ test('admin and user', async ({ browser }) => {
 
 If many of your tests require multiple authenticated roles from within the same test, you can introduce fixtures for each role. Any of the methods above to create multiple storage state files would work.
 
-Below is an example that [creates fixtures](./test-fixtures.md#creating-a-fixture) for two [Page Object Models](./test-pom.md) - admin POM and user POM. It assumes `adminStorageState.json` and `userStorageState.json` files were created.
+Below is an example that [creates fixtures](./test-fixtures.md#creating-a-fixture) for two [Page Object Models](./pom.md) - admin POM and user POM. It assumes `adminStorageState.json` and `userStorageState.json` files were created.
 
 ```js tab=js-ts
 // fixtures.ts
