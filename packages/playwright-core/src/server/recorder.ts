@@ -151,12 +151,16 @@ export class Recorder implements InstrumentationListener {
     });
 
     await this._context.exposeBinding('__pw_recorderState', false, source => {
-      let actionSelector = this._highlightedSelector;
+      let actionSelector = '';
       let actionPoint: Point | undefined;
-      for (const [metadata, sdkObject] of this._currentCallsMetadata) {
-        if (source.page === sdkObject.attribution.page) {
-          actionPoint = metadata.point || actionPoint;
-          actionSelector = actionSelector || metadata.params.selector;
+      const hasActiveScreenshotCommand = [...this._currentCallsMetadata.keys()].some(isScreenshotCommand);
+      if (!hasActiveScreenshotCommand) {
+        actionSelector = this._highlightedSelector;
+        for (const [metadata, sdkObject] of this._currentCallsMetadata) {
+          if (source.page === sdkObject.attribution.page) {
+            actionPoint = metadata.point || actionPoint;
+            actionSelector = actionSelector || metadata.params.selector;
+          }
         }
       }
       const uiState: UIState = {
@@ -235,7 +239,9 @@ export class Recorder implements InstrumentationListener {
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
     this.updateCallLog([metadata]);
-    if (metadata.params && metadata.params.selector) {
+    if (isScreenshotCommand(metadata)) {
+      this.hideHighlightedSelecor();
+    } else if (metadata.params && metadata.params.selector) {
       this._highlightedSelector = metadata.params.selector;
       this._recorderApp?.setSelector(this._highlightedSelector).catch(() => {});
     }
@@ -674,4 +680,8 @@ class ThrottledFile {
       fs.writeFileSync(this._file, this._text);
     this._text = undefined;
   }
+}
+
+function isScreenshotCommand(metadata: CallMetadata) {
+  return metadata.method.includes('screenshot');
 }
