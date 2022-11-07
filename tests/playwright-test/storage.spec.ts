@@ -314,3 +314,28 @@ test('should load storageStateName specified in the global config from storage',
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 });
+
+test('should throw on unknown storageStateName value', async ({ runInlineTest, server }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            use: {
+              storageStateName: 'stateInStorage',
+            },
+          }
+        ]
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('should fail to initialize page', async ({ page }) => {
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('Error: Cannot find value in the storage for storageStateName: "stateInStorage"');
+});

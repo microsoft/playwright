@@ -222,8 +222,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       options.proxy = proxy;
     if (storageStateName !== undefined) {
       const value = await test.info().storage().get(storageStateName);
-      if (value)
-        options.storageState = value as any;
+      if (!value)
+        throw new Error(`Cannot find value in the storage for storageStateName: "${storageStateName}"`);
+      options.storageState = value as any;
     } else if (storageState !== undefined) {
       options.storageState = storageState;
     }
