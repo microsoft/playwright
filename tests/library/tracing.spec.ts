@@ -195,7 +195,7 @@ test('should not include trace resources from the provious chunks', async ({ con
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
   // Give it enough time for both screenshots to get into the trace.
-  await new Promise(f => setTimeout(f, 1000));
+  await new Promise(f => setTimeout(f, 3000));
   await context.tracing.stopChunk({ path: testInfo.outputPath('trace1.zip') });
 
   await context.tracing.startChunk();

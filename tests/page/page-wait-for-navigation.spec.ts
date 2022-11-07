@@ -156,6 +156,8 @@ it('should work with DOM history.back()/history.forward()', async ({ page, serve
 });
 
 it('should work when subframe issues window.stop()', async ({ browserName, page, server }) => {
+  it.fixme(browserName === 'webkit', 'WebKit issues load event in some cases, but not always');
+
   server.setRoute('/frames/style.css', (req, res) => {});
   let done = false;
   page.goto(server.PREFIX + '/frames/one-frame.html').then(() => done = true).catch(() => {});
@@ -165,8 +167,7 @@ it('should work when subframe issues window.stop()', async ({ browserName, page,
       fulfill();
   }));
   await frame.evaluate(() => window.stop());
-  await page.waitForTimeout(2000);  // give it some time to erroneously resolve
-  expect(done).toBe(browserName !== 'webkit');  // Chromium and Firefox issue load event in this case.
+  expect(done).toBe(true);
 });
 
 it('should work with url match', async ({ page, server }) => {

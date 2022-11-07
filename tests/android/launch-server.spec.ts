@@ -17,6 +17,9 @@
 import ws from 'ws';
 import { androidTest as test, expect } from './androidTest';
 
+// Force a separate worker to avoid messing up with `androidDevice` fixture.
+test.use({ launchOptions: {} });
+
 test('android.launchServer should connect to a device', async ({ playwright }) => {
   const browserServer = await playwright._android.launchServer();
   const device = await playwright._android.connect(browserServer.wsEndpoint());
