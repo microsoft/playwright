@@ -88,7 +88,31 @@ it.describe('selector generator', () => {
 
   it('should prefer data-testid', async ({ page }) => {
     await page.setContent(`<div>Text</div><div>Text</div><div data-testid=a>Text</div><div>Text</div>`);
-    expect(await generate(page, '[data-testid="a"]')).toBe('internal:attr=[data-testid=\"a\"s]');
+    expect(await generate(page, '[data-testid="a"]')).toBe('internal:testid=[data-testid=\"a\"s]');
+  });
+
+  it('should use data-testid in strict errors', async ({ page, playwright }) => {
+    playwright.selectors.setTestIdAttribute('data-custom-id');
+    await page.setContent(`
+      <div>
+        <div></div>
+        <div>
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+      <div>
+        <div class='foo bar:0' data-custom-id='One'>
+        </div>
+        <div class='foo bar:1' data-custom-id='Two'>
+        </div>
+      </div>`);
+    const error = await page.locator('.foo').hover().catch(e => e);
+    expect(error.message).toContain('strict mode violation');
+    expect(error.message).toContain('<div class=\"foo bar:0');
+    expect(error.message).toContain('<div class=\"foo bar:1');
+    expect(error.message).toContain(`aka getByTestId('One')`);
+    expect(error.message).toContain(`aka getByTestId('Two')`);
   });
 
   it('should handle first non-unique data-testid', async ({ page }) => {
@@ -99,7 +123,7 @@ it.describe('selector generator', () => {
       <div data-testid=a>
         Text
       </div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe('internal:attr=[data-testid=\"a\"s] >> nth=0');
+    expect(await generate(page, 'div[mark="1"]')).toBe('internal:testid=[data-testid=\"a\"s] >> nth=0');
   });
 
   it('should handle second non-unique data-testid', async ({ page }) => {
@@ -110,7 +134,7 @@ it.describe('selector generator', () => {
       <div data-testid=a mark=1>
         Text
       </div>`);
-    expect(await generate(page, 'div[mark="1"]')).toBe(`internal:attr=[data-testid=\"a\"s] >> nth=1`);
+    expect(await generate(page, 'div[mark="1"]')).toBe(`internal:testid=[data-testid=\"a\"s] >> nth=1`);
   });
 
   it('should use readable id', async ({ page }) => {

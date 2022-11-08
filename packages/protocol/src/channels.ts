@@ -653,9 +653,10 @@ export type DebugControllerNavigateOptions = {
 export type DebugControllerNavigateResult = void;
 export type DebugControllerSetRecorderModeParams = {
   mode: 'inspecting' | 'recording' | 'none',
+  testIdAttributeName?: string,
 };
 export type DebugControllerSetRecorderModeOptions = {
-
+  testIdAttributeName?: string,
 };
 export type DebugControllerSetRecorderModeResult = void;
 export type DebugControllerHighlightParams = {
@@ -763,6 +764,7 @@ export interface SelectorsEventTarget {
 export interface SelectorsChannel extends SelectorsEventTarget, Channel {
   _type_Selectors: boolean;
   register(params: SelectorsRegisterParams, metadata?: Metadata): Promise<SelectorsRegisterResult>;
+  setTestIdAttributeName(params: SelectorsSetTestIdAttributeNameParams, metadata?: Metadata): Promise<SelectorsSetTestIdAttributeNameResult>;
 }
 export type SelectorsRegisterParams = {
   name: string,
@@ -773,6 +775,13 @@ export type SelectorsRegisterOptions = {
   contentScript?: boolean,
 };
 export type SelectorsRegisterResult = void;
+export type SelectorsSetTestIdAttributeNameParams = {
+  testIdAttributeName: string,
+};
+export type SelectorsSetTestIdAttributeNameOptions = {
+
+};
+export type SelectorsSetTestIdAttributeNameResult = void;
 
 export interface SelectorsEvents {
 }

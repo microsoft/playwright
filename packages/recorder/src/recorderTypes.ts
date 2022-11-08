@@ -30,6 +30,7 @@ export type UIState = {
   actionPoint?: Point;
   actionSelector?: string;
   language: 'javascript' | 'python' | 'java' | 'csharp';
+  testIdAttributeName: string;
 };
 
 export type CallLogStatus = 'in-progress' | 'done' | 'error' | 'paused';

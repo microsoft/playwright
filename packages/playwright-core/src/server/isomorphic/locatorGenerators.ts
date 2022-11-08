@@ -71,14 +71,15 @@ function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrame
       tokens.push(factory.generateLocator(base, 'role', attrSelector.name, { attrs }));
       continue;
     }
+    if (part.name === 'internal:testid') {
+      const attrSelector = parseAttributeSelector(part.body as string, true);
+      const { value } = attrSelector.attributes[0];
+      tokens.push(factory.generateLocator(base, 'test-id', value));
+      continue;
+    }
     if (part.name === 'internal:attr') {
       const attrSelector = parseAttributeSelector(part.body as string, true);
       const { name, value, caseSensitive } = attrSelector.attributes[0];
-      if (name === 'data-testid') {
-        tokens.push(factory.generateLocator(base, 'test-id', value));
-        continue;
-      }
-
       const text = value as string | RegExp;
       const exact = !!caseSensitive;
       if (name === 'placeholder') {

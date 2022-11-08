@@ -33,6 +33,7 @@ export class Selectors {
   readonly _builtinEnginesInMainWorld: Set<string>;
   readonly _engines: Map<string, { source: string, contentScript: boolean }>;
   readonly guid = `selectors@${createGuid()}`;
+  private _testIdAttributeName: string = 'data-testid';
 
   constructor() {
     // Note: keep in sync with InjectedScript class.
@@ -46,7 +47,7 @@ export class Selectors {
       'data-test-id', 'data-test-id:light',
       'data-test', 'data-test:light',
       'nth', 'visible', 'internal:control', 'internal:has', 'internal:has-text',
-      'role', 'internal:attr', 'internal:label', 'internal:text', 'internal:role',
+      'role', 'internal:attr', 'internal:label', 'internal:text', 'internal:role', 'internal:testid',
     ]);
     this._builtinEnginesInMainWorld = new Set([
       '_react', '_vue',
@@ -63,6 +64,14 @@ export class Selectors {
     if (this._engines.has(name))
       throw new Error(`"${name}" selector engine has been already registered`);
     this._engines.set(name, { source, contentScript });
+  }
+
+  testIdAttributeName(): string {
+    return this._testIdAttributeName;
+  }
+
+  setTestIdAttributeName(testIdAttributeName: string) {
+    this._testIdAttributeName = testIdAttributeName;
   }
 
   unregisterAll() {

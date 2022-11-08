@@ -19,7 +19,7 @@ import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
-import { setTestIdAttribute } from './locator';
+import { setTestIdAttribute, testIdAttributeName } from './locator';
 
 export class Selectors implements api.Selectors {
   private _channels = new Set<SelectorsOwner>();
@@ -35,13 +35,16 @@ export class Selectors implements api.Selectors {
 
   setTestIdAttribute(attributeName: string) {
     setTestIdAttribute(attributeName);
+    for (const channel of this._channels)
+      channel._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }).catch(() => {});
   }
 
   _addChannel(channel: SelectorsOwner) {
     this._channels.add(channel);
     for (const params of this._registrations) {
       // This should not fail except for connection closure, but just in case we catch.
-      channel._channel.register(params).catch(e => {});
+      channel._channel.register(params).catch(() => {});
+      channel._channel.setTestIdAttributeName({ testIdAttributeName: testIdAttributeName() }).catch(() => {});
     }
   }
 

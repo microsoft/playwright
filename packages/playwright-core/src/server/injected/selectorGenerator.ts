@@ -44,11 +44,11 @@ export function querySelector(injectedScript: InjectedScript, selector: string, 
   }
 }
 
-export function generateSelector(injectedScript: InjectedScript, targetElement: Element, strict: boolean): { selector: string, elements: Element[] } {
+export function generateSelector(injectedScript: InjectedScript, targetElement: Element, strict: boolean, testIdAttributeName: string): { selector: string, elements: Element[] } {
   injectedScript._evaluator.begin();
   try {
     targetElement = targetElement.closest('button,select,input,[role=button],[role=checkbox],[role=radio],a,[role=link]') || targetElement;
-    const targetTokens = generateSelectorFor(injectedScript, targetElement, strict);
+    const targetTokens = generateSelectorFor(injectedScript, targetElement, strict, testIdAttributeName);
     const bestTokens = targetTokens || cssFallback(injectedScript, targetElement, strict);
     const selector = joinTokens(bestTokens);
     const parsedSelector = injectedScript.parseSelector(selector);
@@ -68,7 +68,7 @@ function filterRegexTokens(textCandidates: SelectorToken[][]): SelectorToken[][]
   return textCandidates.filter(c => c[0].selector[0] !== '/');
 }
 
-function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element, strict: boolean): SelectorToken[] | null {
+function generateSelectorFor(injectedScript: InjectedScript, targetElement: Element, strict: boolean, testIdAttributeName: string): SelectorToken[] | null {
   if (targetElement.ownerDocument.documentElement === targetElement)
     return [{ engine: 'css', selector: 'html', score: 1 }];
 
@@ -81,7 +81,7 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
       // Do not use regex for parent elements (for performance).
       textCandidates = filterRegexTokens(textCandidates);
     }
-    const noTextCandidates = buildCandidates(injectedScript, element, accessibleNameCache).map(token => [token]);
+    const noTextCandidates = buildCandidates(injectedScript, element, testIdAttributeName, accessibleNameCache).map(token => [token]);
 
     // First check all text and non-text candidates for the element.
     let result = chooseFirstSelector(injectedScript, targetElement.ownerDocument, element, [...textCandidates, ...noTextCandidates], allowNthMatch, strict);
@@ -144,14 +144,13 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
   return calculateCached(targetElement, true);
 }
 
-function buildCandidates(injectedScript: InjectedScript, element: Element, accessibleNameCache: Map<Element, boolean>): SelectorToken[] {
+function buildCandidates(injectedScript: InjectedScript, element: Element, testIdAttributeName: string, accessibleNameCache: Map<Element, boolean>): SelectorToken[] {
   const candidates: SelectorToken[] = [];
+  if (element.getAttribute(testIdAttributeName))
+    candidates.push({ engine: 'internal:testid', selector: `[${testIdAttributeName}=${escapeForAttributeSelector(element.getAttribute(testIdAttributeName)!, true)}]`, score: 1 });
 
-  if (element.getAttribute('data-testid'))
-    candidates.push({ engine: 'internal:attr', selector: `[data-testid=${escapeForAttributeSelector(element.getAttribute('data-testid')!, true)}]`, score: 1 });
-
-  for (const attr of ['data-test-id', 'data-test']) {
-    if (element.getAttribute(attr))
+  for (const attr of ['data-testid', 'data-test-id', 'data-test']) {
+    if (attr !== testIdAttributeName && element.getAttribute(attr))
       candidates.push({ engine: 'css', selector: `[${attr}=${quoteAttributeValue(element.getAttribute(attr)!)}]`, score: 2 });
   }
 

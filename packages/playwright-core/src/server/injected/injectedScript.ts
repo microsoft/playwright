@@ -82,10 +82,12 @@ export class InjectedScript {
   private _highlight: Highlight | undefined;
   readonly isUnderTest: boolean;
   private _sdkLanguage: Language;
+  private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
 
-  constructor(isUnderTest: boolean, sdkLanguage: Language, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
+  constructor(isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
     this.isUnderTest = isUnderTest;
     this._sdkLanguage = sdkLanguage;
+    this._testIdAttributeNameForStrictErrorAndConsoleCodegen = testIdAttributeNameForStrictErrorAndConsoleCodegen;
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
     this._engines = new Map();
@@ -113,6 +115,7 @@ export class InjectedScript {
     this._engines.set('internal:text', this._createTextEngine(true, true));
     this._engines.set('internal:has-text', this._createInternalHasTextEngine());
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
+    this._engines.set('internal:testid', this._createNamedAttributeEngine());
     this._engines.set('internal:role', RoleEngine);
 
     for (const { name, engine } of customEngines)
@@ -132,6 +135,10 @@ export class InjectedScript {
     return globalThis.eval(expression);
   }
 
+  testIdAttributeNameForStrictErrorAndConsoleCodegen(): string {
+    return this._testIdAttributeNameForStrictErrorAndConsoleCodegen;
+  }
+
   parseSelector(selector: string): ParsedSelector {
     const result = parseSelector(selector);
     for (const name of allEngineNames(result)) {
@@ -141,8 +148,8 @@ export class InjectedScript {
     return result;
   }
 
-  generateSelector(targetElement: Element): string {
-    return generateSelector(this, targetElement, true).selector;
+  generateSelector(targetElement: Element, testIdAttributeName: string): string {
+    return generateSelector(this, targetElement, true, testIdAttributeName).selector;
   }
 
   querySelector(selector: ParsedSelector, root: Node, strict: boolean): Element | undefined {
@@ -1016,7 +1023,7 @@ export class InjectedScript {
   strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
     const infos = matches.slice(0, 10).map(m => ({
       preview: this.previewNode(m),
-      selector: this.generateSelector(m),
+      selector: this.generateSelector(m, this._testIdAttributeNameForStrictErrorAndConsoleCodegen),
     }));
     const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka ${asLocator(this._sdkLanguage, info.selector)}`);
     if (infos.length < matches.length)
