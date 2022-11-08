@@ -2950,6 +2950,15 @@ export interface PlaywrightTestOptions {
    */
   storageState: StorageState | undefined;
   /**
+   * Name of the [Storage] entry that should be used to initialize
+   * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state). The value must
+   * be written to the storage before creatiion of a browser context that uses it (usually in
+   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup)). If both this property and
+   * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state) are specified,
+   * this property will always take precedence.
+   */
+  storageStateName: string | undefined;
+  /**
    * Changes the timezone of the context. See
    * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
    * for a list of supported timezone IDs.
