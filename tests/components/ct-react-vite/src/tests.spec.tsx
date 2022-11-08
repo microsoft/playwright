@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/experimental-ct-react';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
 import Button from './components/Button';
 import DefaultChildren from './components/DefaultChildren';
 import MultipleChildren from './components/MultipleChildren';
@@ -138,4 +140,13 @@ test('get textContent of the empty fragment', async ({ mount }) => {
   expect(await component.allTextContents()).toEqual(['']);
   expect(await component.textContent()).toBe('');
   await expect(component).toHaveText('');
+});
+
+test('navigate to a page by clicking a link', async ({ page, mount }) => {
+  const component = await mount(<BrowserRouter><App /></BrowserRouter>);
+  await expect(component.getByRole('main')).toHaveText('Login');
+  await expect(page).toHaveURL('/');
+  await component.getByRole('link', { name: 'Dashboard' }).click();
+  await expect(component.getByRole('main')).toHaveText('Dashboard');
+  await expect(page).toHaveURL('/dashboard');
 });
