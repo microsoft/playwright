@@ -17,12 +17,12 @@
 import { contextTest as it, expect } from '../config/browserTest';
 import { asLocator } from '../../packages/playwright-core/lib/server/isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector as parseLocator } from '../../packages/playwright-core/lib/server/isomorphic/locatorParser';
-import type { Page, Frame, Locator } from 'playwright-core';
+import type { Page, Frame, Locator, FrameLocator } from 'playwright-core';
 
 it.skip(({ mode }) => mode !== 'default');
 
-function generate(locator: Locator) {
-  return generateForSelector((locator as any)._selector);
+function generate(locator: Locator | FrameLocator) {
+  return generateForSelector((locator as any)._selector || (locator as any)._frameSelector);
 }
 
 function generateForSelector(selector: string) {
@@ -65,7 +65,7 @@ it('reverse engineer locators', async ({ page }) => {
     csharp: 'GetByText("Hello", new() { Exact: true })',
     java: 'getByText("Hello", new Page.GetByTextOptions().setExact(true))',
     javascript: 'getByText(\'Hello\', { exact: true })',
-    python: 'get_by_text("Hello", exact=true)',
+    python: 'get_by_text("Hello", exact=True)',
   });
 
   expect.soft(generate(page.getByText('Hello'))).toEqual({
@@ -90,7 +90,7 @@ it('reverse engineer locators', async ({ page }) => {
     csharp: 'GetByLabel("Last Name", new() { Exact: true })',
     java: 'getByLabel("Last Name", new Page.GetByLabelOptions().setExact(true))',
     javascript: 'getByLabel(\'Last Name\', { exact: true })',
-    python: 'get_by_label("Last Name", exact=true)',
+    python: 'get_by_label("Last Name", exact=True)',
   });
   expect.soft(generate(page.getByLabel(/Last\s+name/i))).toEqual({
     csharp: 'GetByLabel(new Regex("Last\\\\s+name", RegexOptions.IgnoreCase))',
@@ -109,7 +109,7 @@ it('reverse engineer locators', async ({ page }) => {
     csharp: 'GetByPlaceholder("Hello", new() { Exact: true })',
     java: 'getByPlaceholder("Hello", new Page.GetByPlaceholderOptions().setExact(true))',
     javascript: 'getByPlaceholder(\'Hello\', { exact: true })',
-    python: 'get_by_placeholder("Hello", exact=true)',
+    python: 'get_by_placeholder("Hello", exact=True)',
   });
   expect.soft(generate(page.getByPlaceholder(/wor/i))).toEqual({
     csharp: 'GetByPlaceholder(new Regex("wor", RegexOptions.IgnoreCase))',
@@ -128,7 +128,7 @@ it('reverse engineer locators', async ({ page }) => {
     csharp: 'GetByAltText("Hello", new() { Exact: true })',
     java: 'getByAltText("Hello", new Page.GetByAltTextOptions().setExact(true))',
     javascript: 'getByAltText(\'Hello\', { exact: true })',
-    python: 'get_by_alt_text("Hello", exact=true)',
+    python: 'get_by_alt_text("Hello", exact=True)',
   });
   expect.soft(generate(page.getByAltText(/wor/i))).toEqual({
     csharp: 'GetByAltText(new Regex("wor", RegexOptions.IgnoreCase))',
@@ -147,7 +147,7 @@ it('reverse engineer locators', async ({ page }) => {
     csharp: 'GetByTitle("Hello", new() { Exact: true })',
     java: 'getByTitle("Hello", new Page.GetByTitleOptions().setExact(true))',
     javascript: 'getByTitle(\'Hello\', { exact: true })',
-    python: 'get_by_title("Hello", exact=true)',
+    python: 'get_by_title("Hello", exact=True)',
   });
   expect.soft(generate(page.getByTitle(/wor/i))).toEqual({
     csharp: 'GetByTitle(new Regex("wor", RegexOptions.IgnoreCase))',
@@ -277,6 +277,25 @@ it('reverse engineer has', async ({ page }) => {
     javascript: `locator('section').filter({ has: locator('div').filter({ has: locator('span') }) }).filter({ hasText: 'foo' }).filter({ has: locator('a') })`,
     python: `locator("section").filter(has=locator("div").filter(has=locator("span"))).filter(has_text="foo").filter(has=locator("a"))`,
   });
+});
+
+it('reverse engineer frameLocator', async ({ page }) => {
+  const locator = page
+      .frameLocator('iframe')
+      .getByText('foo', { exact: true })
+      .frameLocator('frame')
+      .frameLocator('iframe')
+      .locator('span');
+  expect.soft(generate(locator)).toEqual({
+    csharp: `FrameLocator("iframe").GetByText("foo", new() { Exact: true }).FrameLocator("frame").FrameLocator("iframe").Locator("span")`,
+    java: `frameLocator("iframe").getByText("foo", new FrameLocator.GetByTextOptions().setExact(true)).frameLocator("frame").frameLocator("iframe").locator("span")`,
+    javascript: `frameLocator('iframe').getByText('foo', { exact: true }).frameLocator('frame').frameLocator('iframe').locator('span')`,
+    python: `frame_locator("iframe").get_by_text("foo", exact=True).frame_locator("frame").frame_locator("iframe").locator("span")`,
+  });
+
+  // Note that frame locators with ">>" are not restored back due to ambiguity.
+  const selector = (page.frameLocator('div >> iframe').locator('span') as any)._selector;
+  expect.soft(asLocator('javascript', selector, false)).toBe(`locator('div').frameLocator('iframe').locator('span')`);
 });
 
 it.describe(() => {

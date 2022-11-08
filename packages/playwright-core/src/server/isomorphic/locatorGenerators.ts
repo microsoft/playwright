@@ -19,7 +19,7 @@ import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringi
 import type { ParsedSelector } from '../isomorphic/selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has' | 'frame';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 
 export interface LocatorFactory {
@@ -32,8 +32,12 @@ export function asLocator(lang: Language, selector: string, isFrameLocator: bool
 
 function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrameLocator: boolean = false): string {
   const tokens: string[] = [];
-  for (const part of parsed.parts) {
-    const base = part === parsed.parts[0] ? (isFrameLocator ? 'frame-locator' : 'page') : 'locator';
+  let nextBase: LocatorBase = isFrameLocator ? 'frame-locator' : 'page';
+  for (let index = 0; index < parsed.parts.length; index++) {
+    const part = parsed.parts[index];
+    const base = nextBase;
+    nextBase = 'locator';
+
     if (part.name === 'nth') {
       if (part.body === '0')
         tokens.push(factory.generateLocator(base, 'first', ''));
@@ -95,8 +99,18 @@ function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrame
         continue;
       }
     }
+
+    let locatorType: LocatorType = 'default';
+
+    const nextPart = parsed.parts[index + 1];
+    if (nextPart && nextPart.name === 'internal:control' && (nextPart.body as string) === 'enter-frame') {
+      locatorType = 'frame';
+      nextBase = 'frame-locator';
+      index++;
+    }
+
     const p: ParsedSelector = { parts: [part] };
-    tokens.push(factory.generateLocator(base, 'default', stringifySelector(p)));
+    tokens.push(factory.generateLocator(base, locatorType, stringifySelector(p)));
   }
   return tokens.join('.');
 }
@@ -124,6 +138,8 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
     switch (kind) {
       case 'default':
         return `locator(${this.quote(body as string)})`;
+      case 'frame':
+        return `frameLocator(${this.quote(body as string)})`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -179,6 +195,8 @@ export class PythonLocatorFactory implements LocatorFactory {
     switch (kind) {
       case 'default':
         return `locator(${this.quote(body as string)})`;
+      case 'frame':
+        return `frame_locator(${this.quote(body as string)})`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -218,7 +236,7 @@ export class PythonLocatorFactory implements LocatorFactory {
       return `${method}(re.compile(r"${body.source.replace(/\\\//, '/').replace(/"/g, '\\"')}"${suffix}))`;
     }
     if (exact)
-      return `${method}(${this.quote(body)}, exact=true)`;
+      return `${method}(${this.quote(body)}, exact=True)`;
     return `${method}(${this.quote(body)})`;
   }
 
@@ -246,6 +264,8 @@ export class JavaLocatorFactory implements LocatorFactory {
     switch (kind) {
       case 'default':
         return `locator(${this.quote(body as string)})`;
+      case 'frame':
+        return `frameLocator(${this.quote(body as string)})`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -307,6 +327,8 @@ export class CSharpLocatorFactory implements LocatorFactory {
     switch (kind) {
       case 'default':
         return `Locator(${this.quote(body as string)})`;
+      case 'frame':
+        return `FrameLocator(${this.quote(body as string)})`;
       case 'nth':
         return `Nth(${body})`;
       case 'first':
