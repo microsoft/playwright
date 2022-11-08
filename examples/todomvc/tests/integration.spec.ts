@@ -143,6 +143,7 @@ test.describe('Item', () => {
     // Assert completed class.
     await expect(firstTodo).toHaveClass('completed');
     await expect(secondTodo).toHaveClass('completed');
+    
   });
 
   test('should allow me to un-mark items as complete', async ({ page }) => {
