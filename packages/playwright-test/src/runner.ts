@@ -194,7 +194,7 @@ export class Runner {
     return fullResult;
   }
 
-  async listTestFiles(configFile: string, projectNames: string[] | undefined): Promise<any> {
+  async listTestFiles(projectNames: string[] | undefined): Promise<any> {
     const projects = this._collectProjects(projectNames);
     const { filesByProject } = await this._collectFiles(projects, () => true);
     const report: any = {
@@ -202,10 +202,8 @@ export class Runner {
     };
     for (const [project, files] of filesByProject) {
       report.projects.push({
-        docker: process.env.PLAYWRIGHT_DOCKER,
-        name: project.name,
-        testDir: path.resolve(configFile, project.testDir),
-        files: files
+        ...sanitizeConfigForJSON(project, new Set()),
+        files: files,
       });
     }
     return report;
@@ -951,6 +949,35 @@ function createNoTestsError(): TestError {
 
 function createStacklessError(message: string): TestError {
   return { message, __isNotAFatalError: true } as any;
+}
+
+function sanitizeConfigForJSON(object: any, visited: Set<any>): any {
+  const type = typeof object;
+  if (type === 'function' || type === 'symbol')
+    return undefined;
+  if (!object || type !== 'object')
+    return object;
+
+  if (object instanceof RegExp)
+    return String(object);
+  if (object instanceof Date)
+    return object.toISOString();
+
+  if (visited.has(object))
+    return undefined;
+  visited.add(object);
+
+  if (Array.isArray(object))
+    return object.map(a => sanitizeConfigForJSON(a, visited));
+
+  const result: any = {};
+  const keys = Object.keys(object).slice(0, 100);
+  for (const key of keys) {
+    if (key.startsWith('_'))
+      continue;
+    result[key] = sanitizeConfigForJSON(object[key], visited);
+  }
+  return result;
 }
 
 export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html'] as const;

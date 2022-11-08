@@ -195,7 +195,7 @@ async function listTestFiles(opts: { [key: string]: any }) {
 
   const runner = new Runner();
   await runner.loadConfigFromResolvedFile(resolvedConfigFile);
-  const report = await runner.listTestFiles(resolvedConfigFile, opts.project);
+  const report = await runner.listTestFiles(opts.project);
   write(JSON.stringify(report), () => {
     process.exit(0);
   });
