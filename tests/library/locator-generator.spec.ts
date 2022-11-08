@@ -29,7 +29,7 @@ function generateForSelector(selector: string) {
   const result: any = {};
   for (const lang of ['javascript', 'python', 'java', 'csharp']) {
     const locatorString = asLocator(lang, selector, false);
-    expect.soft(parseLocator(lang, locatorString), lang + ' mismatch').toBe(selector);
+    expect.soft(parseLocator(lang, locatorString, 'data-testid'), lang + ' mismatch').toBe(selector);
     result[lang] = locatorString;
   }
   return result;

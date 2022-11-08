@@ -20,7 +20,7 @@ import type { Language } from './locatorGenerators';
 import { parseSelector } from './selectorParser';
 
 type TemplateParams = { quote: string, text: string }[];
-function parseLocator(locator: string): string {
+function parseLocator(locator: string, testIdAttributeName: string): string {
   locator = locator
       .replace(/AriaRole\s*\.\s*([\w]+)/g, (_, group) => group.toLowerCase())
       .replace(/(get_by_role|getByRole)\s*\(\s*(?:["'`])([^'"`]+)['"`]/g, (_, group1, group2) => `${group1}(${group2.toLowerCase()}`);
@@ -87,7 +87,7 @@ function parseLocator(locator: string): string {
       .replace(/regex=/g, '=')
       .replace(/,,/g, ',');
 
-  return transform(template, params);
+  return transform(template, params, testIdAttributeName);
 }
 
 function countParams(template: string) {
@@ -98,7 +98,7 @@ function shiftParams(template: string, sub: number) {
   return template.replace(/\$(\d+)/g, (_, ordinal) => `$${ordinal - sub}`);
 }
 
-function transform(template: string, params: TemplateParams): string {
+function transform(template: string, params: TemplateParams, testIdAttributeName: string): string {
   // Recursively handle filter(has=).
   while (true) {
     const hasMatch = template.match(/filter\(,?has=/);
@@ -122,7 +122,7 @@ function transform(template: string, params: TemplateParams): string {
     const hasTemplate = shiftParams(template.substring(start, end), paramsCountBeforeHas);
     const paramsCountInHas = countParams(hasTemplate);
     const hasParams = params.slice(paramsCountBeforeHas, paramsCountBeforeHas + paramsCountInHas);
-    const hasSelector = JSON.stringify(transform(hasTemplate, hasParams));
+    const hasSelector = JSON.stringify(transform(hasTemplate, hasParams, testIdAttributeName));
 
     // Replace filter(has=...) with filter(has2=$5). Use has2 to avoid matching the same filter again.
     template = template.substring(0, start - 1) + `2=$${paramsCountBeforeHas + 1}` + shiftParams(template.substring(end), paramsCountInHas - 1);
@@ -139,7 +139,7 @@ function transform(template: string, params: TemplateParams): string {
       .replace(/getbyrole\(([^)]+)\)/g, 'internal:role=$1')
       .replace(/getbytext\(([^)]+)\)/g, 'internal:text=$1')
       .replace(/getbylabel\(([^)]+)\)/g, 'internal:label=$1')
-      .replace(/getbytestid\(([^)]+)\)/g, 'internal:attr=[data-testid=$1s]')
+      .replace(/getbytestid\(([^)]+)\)/g, `internal:testid=[${testIdAttributeName}=$1s]`)
       .replace(/getby(placeholder|alt|title)(?:text)?\(([^)]+)\)/g, 'internal:attr=[$1=$2]')
       .replace(/first(\(\))?/g, 'nth=0')
       .replace(/last(\(\))?/g, 'nth=-1')
@@ -158,7 +158,7 @@ function transform(template: string, params: TemplateParams): string {
     t = t
         .replace(/(?:r)\$(\d+)(i)?/g, (_, ordinal, suffix) => {
           const param = params[+ordinal - 1];
-          if (t.startsWith('internal:attr') || t.startsWith('internal:role'))
+          if (t.startsWith('internal:attr') || t.startsWith('internal:testid') || t.startsWith('internal:role'))
             return new RegExp(param.text) + (suffix || '');
           return escapeForTextSelector(new RegExp(param.text, suffix), false);
         })
@@ -166,7 +166,7 @@ function transform(template: string, params: TemplateParams): string {
           const param = params[+ordinal - 1];
           if (t.startsWith('internal:has='))
             return param.text;
-          if (t.startsWith('internal:attr') || t.startsWith('internal:role'))
+          if (t.startsWith('internal:attr') || t.startsWith('internal:testid') || t.startsWith('internal:role'))
             return escapeForAttributeSelector(param.text, suffix === 's');
           return escapeForTextSelector(param.text, suffix === 's');
         });
@@ -174,14 +174,14 @@ function transform(template: string, params: TemplateParams): string {
   }).join(' >> ');
 }
 
-export function locatorOrSelectorAsSelector(language: Language, locator: string): string {
+export function locatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string): string {
   try {
     parseSelector(locator);
     return locator;
   } catch (e) {
   }
   try {
-    const selector = parseLocator(locator);
+    const selector = parseLocator(locator, testIdAttributeName);
     if (digestForComparison(asLocator(language, selector)) === digestForComparison(locator))
       return selector;
   } catch (e) {

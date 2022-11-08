@@ -368,6 +368,7 @@ scheme.DebugControllerNavigateParams = tObject({
 scheme.DebugControllerNavigateResult = tOptional(tObject({}));
 scheme.DebugControllerSetRecorderModeParams = tObject({
   mode: tEnum(['inspecting', 'recording', 'none']),
+  testIdAttributeName: tOptional(tString),
 });
 scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
 scheme.DebugControllerHighlightParams = tObject({
@@ -425,6 +426,10 @@ scheme.SelectorsRegisterParams = tObject({
   contentScript: tOptional(tBoolean),
 });
 scheme.SelectorsRegisterResult = tOptional(tObject({}));
+scheme.SelectorsSetTestIdAttributeNameParams = tObject({
+  testIdAttributeName: tString,
+});
+scheme.SelectorsSetTestIdAttributeNameResult = tOptional(tObject({}));
 scheme.BrowserTypeInitializer = tObject({
   executablePath: tString,
   name: tString,

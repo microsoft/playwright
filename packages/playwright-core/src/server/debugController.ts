@@ -89,7 +89,7 @@ export class DebugController extends SdkObject {
       await p.mainFrame().goto(internalMetadata, url);
   }
 
-  async setRecorderMode(params: { mode: Mode, file?: string }) {
+  async setRecorderMode(params: { mode: Mode, file?: string, testIdAttributeName?: string }) {
     // TODO: |file| is only used in the legacy mode.
     await this._closeBrowsersWithoutPages();
 
@@ -114,8 +114,11 @@ export class DebugController extends SdkObject {
     // Toggle the mode.
     for (const recorder of await this._allRecorders()) {
       recorder.hideHighlightedSelecor();
-      if (params.mode === 'recording')
+      if (params.mode === 'recording') {
         recorder.setOutput(this._codegenId, params.file);
+        if (params.testIdAttributeName)
+          recorder.setTestIdAttributeName(params.testIdAttributeName);
+      }
       recorder.setMode(params.mode);
     }
     this.setAutoCloseEnabled(true);

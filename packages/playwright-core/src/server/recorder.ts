@@ -167,7 +167,8 @@ export class Recorder implements InstrumentationListener {
         mode: this._mode,
         actionPoint,
         actionSelector,
-        language: this._currentLanguage
+        language: this._currentLanguage,
+        testIdAttributeName: this._contextRecorder.testIdAttributeName(),
       };
       return uiState;
     });
@@ -215,13 +216,17 @@ export class Recorder implements InstrumentationListener {
   }
 
   setHighlightedSelector(language: Language, selector: string) {
-    this._highlightedSelector = locatorOrSelectorAsSelector(language, selector);
+    this._highlightedSelector = locatorOrSelectorAsSelector(language, selector, this._contextRecorder.testIdAttributeName());
     this._refreshOverlay();
   }
 
   hideHighlightedSelecor() {
     this._highlightedSelector = '';
     this._refreshOverlay();
+  }
+
+  setTestIdAttributeName(testIdAttributeName: string) {
+    this._contextRecorder.setTestIdAttributeName(testIdAttributeName);
   }
 
   setOutput(codegenId: string, outputFile: string | undefined) {
@@ -339,6 +344,7 @@ class ContextRecorder extends EventEmitter {
   private _recorderSources: Source[];
   private _throttledOutputFile: ThrottledFile | null = null;
   private _orderedLanguages: LanguageGenerator[] = [];
+  private _testIdAttributeName: string = 'data-testid';
 
   constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
     super();
@@ -381,6 +387,14 @@ class ContextRecorder extends EventEmitter {
       this._throttledOutputFile?.flush();
     });
     this._generator = generator;
+  }
+
+  testIdAttributeName() {
+    return this._testIdAttributeName;
+  }
+
+  setTestIdAttributeName(testIdAttributeName: string) {
+    this._testIdAttributeName = testIdAttributeName;
   }
 
   setOutput(codegenId: string, outputFile?: string) {
@@ -536,7 +550,7 @@ class ContextRecorder extends EventEmitter {
         return;
       const utility = await parent._utilityContext();
       const injected = await utility.injectedScript();
-      const selector = await injected.evaluate((injected, element) => injected.generateSelector(element as Element), frameElement);
+      const selector = await injected.evaluate((injected, element) => injected.generateSelector(element as Element, this._testIdAttributeName), frameElement);
       return selector;
     } catch (e) {
     }

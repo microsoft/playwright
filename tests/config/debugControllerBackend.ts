@@ -149,7 +149,7 @@ export class Backend extends EventEmitter {
     await this._send('navigate', params);
   }
 
-  async setMode(params: { mode: 'none' | 'inspecting' | 'recording', language?: string, file?: string }) {
+  async setMode(params: { mode: 'none' | 'inspecting' | 'recording', language?: string, file?: string, testIdAttributeName?: string }) {
     await this._send('setRecorderMode', params);
   }
 

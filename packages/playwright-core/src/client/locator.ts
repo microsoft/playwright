@@ -134,7 +134,7 @@ export class Locator implements api.Locator {
   }
 
   getByTestId(testId: string): Locator {
-    return this.locator(getByTestIdSelector(testIdAttributeName, testId));
+    return this.locator(getByTestIdSelector(testIdAttributeName(), testId));
   }
 
   getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
@@ -340,7 +340,7 @@ export class FrameLocator implements api.FrameLocator {
   }
 
   getByTestId(testId: string): Locator {
-    return this.locator(getByTestIdSelector(testIdAttributeName, testId));
+    return this.locator(getByTestIdSelector(testIdAttributeName(), testId));
   }
 
   getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
@@ -384,8 +384,12 @@ export class FrameLocator implements api.FrameLocator {
   }
 }
 
-export let testIdAttributeName: string = 'data-testid';
+let _testIdAttributeName: string = 'data-testid';
+
+export function testIdAttributeName(): string {
+  return _testIdAttributeName;
+}
 
 export function setTestIdAttribute(attributeName: string) {
-  testIdAttributeName = attributeName;
+  _testIdAttributeName = attributeName;
 }

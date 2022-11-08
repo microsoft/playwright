@@ -34,7 +34,7 @@ function getByAttributeTextSelector(attrName: string, text: string | RegExp, opt
 }
 
 export function getByTestIdSelector(testIdAttributeName: string, testId: string): string {
-  return getByAttributeTextSelector(testIdAttributeName, testId, { exact: true });
+  return `internal:testid=[${testIdAttributeName}=${escapeForAttributeSelector(testId, true)}]`;
 }
 
 export function getByLabelSelector(text: string | RegExp, options?: { exact?: boolean }): string {

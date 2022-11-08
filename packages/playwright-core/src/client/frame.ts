@@ -308,7 +308,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   getByTestId(testId: string): Locator {
-    return this.locator(getByTestIdSelector(testIdAttributeName, testId));
+    return this.locator(getByTestIdSelector(testIdAttributeName(), testId));
   }
 
   getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {

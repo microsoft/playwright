@@ -692,6 +692,7 @@ DebugController:
             - inspecting
             - recording
             - none
+        testIdAttributeName: string?
 
     highlight:
       parameters:
@@ -796,6 +797,9 @@ Selectors:
         source: string
         contentScript: boolean?
 
+    setTestIdAttributeName:
+      parameters:
+        testIdAttributeName: string
 
 BrowserType:
   type: interface

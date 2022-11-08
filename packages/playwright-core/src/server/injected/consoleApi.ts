@@ -46,7 +46,7 @@ class Locator {
     self.locator = (selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator => {
       return new Locator(injectedScript, selectorBase ? selectorBase + ' >> ' + selector : selector, options);
     };
-    self.getByTestId = (testId: string): Locator => self.locator(getByTestIdSelector('data-testid', testId));
+    self.getByTestId = (testId: string): Locator => self.locator(getByTestIdSelector(injectedScript.testIdAttributeNameForStrictErrorAndConsoleCodegen(), testId));
     self.getByAltText = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByAltTextSelector(text, options));
     self.getByLabel = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByLabelSelector(text, options));
     self.getByPlaceholder = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByPlaceholderSelector(text, options));
@@ -114,13 +114,13 @@ class ConsoleAPI {
   private _selector(element: Element) {
     if (!(element instanceof Element))
       throw new Error(`Usage: playwright.selector(element).`);
-    return generateSelector(this._injectedScript, element, true).selector;
+    return generateSelector(this._injectedScript, element, true, this._injectedScript.testIdAttributeNameForStrictErrorAndConsoleCodegen()).selector;
   }
 
   private _generateLocator(element: Element, language?: Language) {
     if (!(element instanceof Element))
       throw new Error(`Usage: playwright.locator(element).`);
-    const selector = generateSelector(this._injectedScript, element, true).selector;
+    const selector = generateSelector(this._injectedScript, element, true, this._injectedScript.testIdAttributeNameForStrictErrorAndConsoleCodegen()).selector;
     return asLocator(language || 'javascript', selector);
   }
 

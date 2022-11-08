@@ -106,6 +106,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
         return new module.exports(
           ${isUnderTest()},
           "${sdkLanguage}",
+          ${JSON.stringify(this.frame._page.selectors.testIdAttributeName())},
           ${this.frame._page._delegate.rafCountForStablePosition()},
           "${this.frame._page._browserContext._browser.options.name}",
           [${custom.join(',\n')}]
