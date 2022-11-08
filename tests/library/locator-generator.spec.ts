@@ -258,6 +258,27 @@ it('reverse engineer hasText', async ({ page }) => {
   });
 });
 
+it('reverse engineer has', async ({ page }) => {
+  expect.soft(generate(page.getByText('Hello').filter({ has: page.locator('div').getByText('bye') }))).toEqual({
+    csharp: `GetByText("Hello").Filter(new() { Has: Locator("div").GetByText("bye") })`,
+    java: `getByText("Hello").filter(new Locator.LocatorOptions().setHas(locator("div").getByText("bye")))`,
+    javascript: `getByText('Hello').filter({ has: locator('div').getByText('bye') })`,
+    python: `get_by_text("Hello").filter(has=locator("div").get_by_text("bye"))`,
+  });
+
+  const locator = page
+      .locator('section')
+      .filter({ has: page.locator('div').filter({ has: page.locator('span') }) })
+      .filter({ hasText: 'foo' })
+      .filter({ has: page.locator('a') });
+  expect.soft(generate(locator)).toEqual({
+    csharp: `Locator("section").Filter(new() { Has: Locator("div").Filter(new() { Has: Locator("span") }) }).Filter(new() { HasTextString: "foo" }).Filter(new() { Has: Locator("a") })`,
+    java: `locator("section").filter(new Locator.LocatorOptions().setHas(locator("div").filter(new Locator.LocatorOptions().setHas(locator("span"))))).filter(new Locator.LocatorOptions().setHasText("foo")).filter(new Locator.LocatorOptions().setHas(locator("a")))`,
+    javascript: `locator('section').filter({ has: locator('div').filter({ has: locator('span') }) }).filter({ hasText: 'foo' }).filter({ has: locator('a') })`,
+    python: `locator("section").filter(has=locator("div").filter(has=locator("span"))).filter(has_text="foo").filter(has=locator("a"))`,
+  });
+});
+
 it.describe(() => {
   it.beforeEach(async ({ context }) => {
     await (context as any)._enableRecorder({ language: 'javascript' });

@@ -15,11 +15,11 @@
  */
 
 import { escapeWithQuotes, toSnakeCase, toTitleCase } from '../../utils/isomorphic/stringUtils';
-import { parseAttributeSelector, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
+import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
 import type { ParsedSelector } from '../isomorphic/selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 
 export interface LocatorFactory {
@@ -27,11 +27,10 @@ export interface LocatorFactory {
 }
 
 export function asLocator(lang: Language, selector: string, isFrameLocator: boolean = false): string {
-  return innerAsLocator(generators[lang], selector, isFrameLocator);
+  return innerAsLocator(generators[lang], parseSelector(selector), isFrameLocator);
 }
 
-function innerAsLocator(factory: LocatorFactory, selector: string, isFrameLocator: boolean = false): string {
-  const parsed = parseSelector(selector);
+function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrameLocator: boolean = false): string {
   const tokens: string[] = [];
   for (const part of parsed.parts) {
     const base = part === parsed.parts[0] ? (isFrameLocator ? 'frame-locator' : 'page') : 'locator';
@@ -52,6 +51,11 @@ function innerAsLocator(factory: LocatorFactory, selector: string, isFrameLocato
     if (part.name === 'internal:has-text') {
       const { exact, text } = detectExact(part.body as string);
       tokens.push(factory.generateLocator(base, 'has-text', text, { exact }));
+      continue;
+    }
+    if (part.name === 'internal:has') {
+      const inner = innerAsLocator(factory, (part.body as NestedSelectorBody).parsed);
+      tokens.push(factory.generateLocator(base, 'has', inner));
       continue;
     }
     if (part.name === 'internal:label') {
@@ -133,6 +137,8 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         return `getByRole(${this.quote(body as string)}${attrString})`;
       case 'has-text':
         return `filter({ hasText: ${this.toHasText(body as string)} })`;
+      case 'has':
+        return `filter({ has: ${body} })`;
       case 'test-id':
         return `getByTestId(${this.quote(body as string)})`;
       case 'text':
@@ -186,6 +192,8 @@ export class PythonLocatorFactory implements LocatorFactory {
         return `get_by_role(${this.quote(body as string)}${attrString})`;
       case 'has-text':
         return `filter(has_text=${this.toHasText(body as string)})`;
+      case 'has':
+        return `filter(has=${body})`;
       case 'test-id':
         return `get_by_test_id(${this.quote(body as string)})`;
       case 'text':
@@ -251,6 +259,8 @@ export class JavaLocatorFactory implements LocatorFactory {
         return `getByRole(AriaRole.${toSnakeCase(body as string).toUpperCase()}${attrString})`;
       case 'has-text':
         return `filter(new ${clazz}.LocatorOptions().setHasText(${this.toHasText(body)}))`;
+      case 'has':
+        return `filter(new ${clazz}.LocatorOptions().setHas(${body}))`;
       case 'test-id':
         return `getByTestId(${this.quote(body as string)})`;
       case 'text':
@@ -312,6 +322,8 @@ export class CSharpLocatorFactory implements LocatorFactory {
         return `GetByRole(AriaRole.${toTitleCase(body as string)}${attrString})`;
       case 'has-text':
         return `Filter(new() { HasTextString: ${this.toHasText(body)} })`;
+      case 'has':
+        return `Filter(new() { Has: ${body} })`;
       case 'test-id':
         return `GetByTestId(${this.quote(body as string)})`;
       case 'text':
