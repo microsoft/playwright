@@ -1350,3 +1350,89 @@ Allows locating elements by their title. For example, this method will find the 
 ```html
 <button title='Place the order'>Order Now</button>
 ```
+
+## test-config-snapshot-template-path
+- `type` <[string]>
+
+This configuration option allows to set a string with template values for precise control over snapshot path location.
+
+```js tab=js-ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  testDir: './tests',
+  snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{argPath}{ext}',
+};
+
+export default config;
+```
+
+The value might include some "tokens" that will be replaced with actual values during test execution.
+
+Consider the following file structure:
+
+```
+playwright.config.ts
+tests/
+└── page/
+    └── page-click.spec.ts
+```
+
+And the following `page-click.spec.ts` that uses `toHaveScreenshot()` call:
+
+```ts
+// page-click.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('should work', async ({ page }) => {
+  await expect(page).toHaveScreenshot(['foo', 'bar', 'baz.png']);
+});
+```
+
+The list of supported tokens:
+
+* `{testDir}` - Project's `testDir`.
+  * Example: `tests/`
+* `{snapshotDir}` - Project's `snapshotDir`.
+  * Example: `tests/` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
+* `{platform}` - The value of `process.platform`.
+* `{snapshotSuffix}` - The value of `testInfo.snapshotSuffix`.
+* `{projectName}` - Project's sanitized name, if any.
+  * Example: `undefined`.
+* `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
+  * Example: `page/`
+* `{testFileName}` - Test file name with extension.
+  * Example: `page-click.spec.ts`
+* `{testFilePath}` - Relative path from `testDir` to **test file**
+  * Example: `page/page-click.spec.ts`
+* `{argPath}` - Relative snapshot path **without extension**.
+  * Example: `foo/bar/baz`
+* `{ext}` - snapshot extension (with dots)
+  * Example: `.png`
+
+Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
+
+Consider the following config:
+
+```js tab=js-ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  snapshotPathTemplate: '__screenshots__{/projectName}/{testFilePath}/{argPath}{ext}',
+  testMatch: 'example.spec.ts',
+  projects: [
+    { use: { browserName: 'firefox' } },
+    { name: 'chromium', use: { browserName: 'chromium' } },
+  ],
+};
+export default config;
+```
+
+In this config:
+1. First project **does not** have a name, so its snapshots will be stored in `<configDir>/__screenshots__/example.spec.ts/...`.
+1. Second project **does** have a name, so its snapshots will be stored in `<configDir>/__screenshots__/chromium/example.spec.ts/..`.
+1. Since `snapshotPathTemplate` resolves to relative path, it will be resolved relative to `configDir`.
+1. Forward slashes `"/"` can be used as path separators regarding of the platform and work everywhere.
+
