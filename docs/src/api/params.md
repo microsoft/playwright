@@ -1352,7 +1352,7 @@ Allows locating elements by their title. For example, this method will find the 
 ```
 
 ## test-config-snapshot-template-path
-- `type` <[string]>
+- `type` ?<[string]>
 
 This configuration option allows to set a string with template values for precise control over snapshot path location.
 

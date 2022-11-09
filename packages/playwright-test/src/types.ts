@@ -68,7 +68,6 @@ export interface FullProjectInternal extends FullProjectPublic {
   _fullConfig: FullConfigInternal;
   _fullyParallel: boolean;
   _expect: Project['expect'];
-  snapshotPathTemplate: string;
   _respectGitIgnore: boolean;
   _setup: string | RegExp | (string | RegExp)[];
 }

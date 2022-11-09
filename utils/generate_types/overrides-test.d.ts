@@ -43,6 +43,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   metadata: Metadata;
   name: string;
   snapshotDir: string;
+  snapshotPathTemplate: string;
   outputDir: string;
   repeatEach: number;
   retries: number;
