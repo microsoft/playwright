@@ -47,7 +47,7 @@ const debugWebServer = debug('pw:webserver');
 
 export class WebServerPlugin implements TestRunnerPlugin {
   private _isAvailable?: () => Promise<boolean>;
-  private _processExitedPromise?: Promise<any>;
+  private _processExitedPromise?: Promise<void>;
   private _childProcess?: ChildProcess;
   private _options: WebServerPluginOptions;
   private _checkPortOnly: boolean;
@@ -74,6 +74,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
   public async teardown() {
     if (!this._childProcess || !this._childProcess.pid || this._childProcess.killed)
       return;
+    // Send SIGTERM and wait for it to gracefully close.
     try {
       if (process.platform === 'win32')
         execSync(`taskkill /pid ${this._childProcess.pid} /T /F /FI "MEMUSAGE gt 0"`, { stdio: 'ignore' });
@@ -108,9 +109,9 @@ export class WebServerPlugin implements TestRunnerPlugin {
       shell: true,
     });
     this._processExitedPromise = new Promise((resolve, reject) => {
-      this._childProcess!.once('exit', code => {
+      this._childProcess!.once('exit', (code, signal) => {
         if (code)
-          reject(new Error(`Process from config.webServer was not able to start. Exit code: ${code}`));
+          reject(new Error(`Process from config.webServer terminated with exit code "${code}" and signal "${signal}"`));
         else
           resolve(undefined);
       });
