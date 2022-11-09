@@ -254,7 +254,7 @@ export class TestInfoImpl implements TestInfo {
   snapshotPath(...pathSegments: string[]) {
     const snapshotPath = this._snapshotPath(...pathSegments);
     if (!snapshotPath.startsWith(this.snapshotDir))
-      throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${snapshotPath}`);
+      throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${path.relative(this.snapshotDir, snapshotPath)}`);
     return snapshotPath;
   }
 
