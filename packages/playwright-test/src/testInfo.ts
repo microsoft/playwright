@@ -237,7 +237,7 @@ export class TestInfoImpl implements TestInfo {
     const relativeTestFilePath = path.relative(this.project.testDir, this._test._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
-    const snapshotPath = path.resolve(this.config._configDir, this.project._snapshotPathTemplate
+    const snapshotPath = path.resolve(this.config._configDir, this.project.snapshotPathTemplate
         .replaceAll(/\{(.)?testDir\}/g, '$1' + this.project.testDir)
         .replaceAll(/\{(.)?snapshotDir\}/g, '$1' + this.project.snapshotDir)
         .replaceAll(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix ? '$1' + this.snapshotSuffix : ''))

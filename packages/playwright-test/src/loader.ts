@@ -277,7 +277,7 @@ export class Loader {
 
     const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
     const defaultSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{argPath}{-projectName}{-snapshotSuffix}{ext}';
-    const snapshotPathTemplate = takeFirst((projectConfig as any)._snapshotPathTemplate, (config as any)._snapshotPathTemplate, defaultSnapshotPathTemplate);
+    const snapshotPathTemplate = takeFirst((projectConfig as any).snapshotPathTemplate, (config as any).snapshotPathTemplate, defaultSnapshotPathTemplate);
     return {
       _id: '',
       _fullConfig: fullConfig,
@@ -294,7 +294,7 @@ export class Loader {
       _setup,
       _respectGitIgnore: respectGitIgnore,
       snapshotDir,
-      _snapshotPathTemplate: snapshotPathTemplate,
+      snapshotPathTemplate: snapshotPathTemplate,
       testIgnore: takeFirst(projectConfig.testIgnore, config.testIgnore, []),
       testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/?(*.)@(spec|test).*'),
       timeout: takeFirst(projectConfig.timeout, config.timeout, defaultTimeout),

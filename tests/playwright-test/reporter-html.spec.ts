@@ -159,7 +159,7 @@ test('should include multiple image diffs', async ({ runInlineTest, page, showRe
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
-        _snapshotPathTemplate: '__screenshots__/{testFilePath}/{snapshotName}',
+        snapshotPathTemplate: '__screenshots__/{testFilePath}/{snapshotName}',
         use: { viewport: { width: ${IMG_WIDTH}, height: ${IMG_HEIGHT} }}
       };
     `,
