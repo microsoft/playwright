@@ -183,6 +183,45 @@ it('should scope browser handles', async ({ browserType, expectScopeState }) => 
   expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
+it('should not generate dispatchers for subresources w/o listeners', async ({ page, server, browserType, expectScopeState }) => {
+  server.setRedirect('/one-style.css', '/two-style.css');
+  server.setRedirect('/two-style.css', '/three-style.css');
+  server.setRedirect('/three-style.css', '/four-style.css');
+  server.setRoute('/four-style.css', (req, res) => res.end('body {box-sizing: border-box; }'));
+
+  await page.goto(server.PREFIX + '/one-style.html');
+
+  expectScopeState(browserType, {
+    _guid: '',
+    objects: [
+      { _guid: 'android', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [] },
+      { _guid: 'browser-type', objects: [
+        {
+          _guid: 'browser', objects: [
+            { _guid: 'browser-context', objects: [
+              {
+                _guid: 'page', objects: [
+                  { _guid: 'frame', objects: [] }
+                ]
+              },
+              { _guid: 'request', objects: [] },
+              { _guid: 'request-context', objects: [] },
+              { _guid: 'response', objects: [] },
+              { _guid: 'tracing', objects: [] }
+            ] },
+          ]
+        }],
+      },
+      { _guid: 'electron', objects: [] },
+      { _guid: 'localUtils', objects: [] },
+      { _guid: 'Playwright', objects: [] },
+      { _guid: 'selectors', objects: [] },
+    ]
+  });
+});
+
 it('should work with the domain module', async ({ browserType, server, browserName }) => {
   const local = domain.create();
   local.run(() => { });

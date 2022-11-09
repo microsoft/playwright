@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import type * as channels from '@protocol/channels';
 import { serializeError } from '../../protocol/serializers';
 import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
-import { assert, debugAssert, isUnderTest, monotonicTime } from '../../utils';
+import { assert, isUnderTest, monotonicTime } from '../../utils';
 import { kBrowserOrContextClosedError } from '../../common/errors';
 import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
@@ -30,18 +30,8 @@ import type { RegisteredListener } from '../..//utils/eventsHelper';
 export const dispatcherSymbol = Symbol('dispatcher');
 const metadataValidator = createMetadataValidator();
 
-export function lookupDispatcher<DispatcherType>(object: any): DispatcherType {
-  const result = object[dispatcherSymbol];
-  debugAssert(result);
-  return result;
-}
-
-export function existingDispatcher<DispatcherType>(object: any): DispatcherType {
+export function existingDispatcher<DispatcherType>(object: any): DispatcherType | undefined {
   return object[dispatcherSymbol];
-}
-
-export function lookupNullableDispatcher<DispatcherType>(object: any | null): DispatcherType | undefined {
-  return object ? lookupDispatcher(object) : undefined;
 }
 
 export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeType extends DispatcherScope> extends EventEmitter implements channels.Channel {

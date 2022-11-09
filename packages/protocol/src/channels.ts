@@ -1369,6 +1369,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   harStart(params: BrowserContextHarStartParams, metadata?: Metadata): Promise<BrowserContextHarStartResult>;
   harExport(params: BrowserContextHarExportParams, metadata?: Metadata): Promise<BrowserContextHarExportResult>;
   createTempFile(params: BrowserContextCreateTempFileParams, metadata?: Metadata): Promise<BrowserContextCreateTempFileResult>;
+  updateSubscription(params: BrowserContextUpdateSubscriptionParams, metadata?: Metadata): Promise<BrowserContextUpdateSubscriptionResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1598,6 +1599,14 @@ export type BrowserContextCreateTempFileOptions = {
 export type BrowserContextCreateTempFileResult = {
   writableStream: WritableStreamChannel,
 };
+export type BrowserContextUpdateSubscriptionParams = {
+  event: 'request' | 'response' | 'requestFinished' | 'requestFailed',
+  enabled: boolean,
+};
+export type BrowserContextUpdateSubscriptionOptions = {
+
+};
+export type BrowserContextUpdateSubscriptionResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;
@@ -1643,7 +1652,6 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   _type_Page: boolean;
   setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
   setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultTimeoutNoReplyResult>;
-  setFileChooserInterceptedNoReply(params: PageSetFileChooserInterceptedNoReplyParams, metadata?: Metadata): Promise<PageSetFileChooserInterceptedNoReplyResult>;
   addInitScript(params: PageAddInitScriptParams, metadata?: Metadata): Promise<PageAddInitScriptResult>;
   close(params: PageCloseParams, metadata?: Metadata): Promise<PageCloseResult>;
   emulateMedia(params: PageEmulateMediaParams, metadata?: Metadata): Promise<PageEmulateMediaResult>;
@@ -1674,6 +1682,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   startCSSCoverage(params: PageStartCSSCoverageParams, metadata?: Metadata): Promise<PageStartCSSCoverageResult>;
   stopCSSCoverage(params?: PageStopCSSCoverageParams, metadata?: Metadata): Promise<PageStopCSSCoverageResult>;
   bringToFront(params?: PageBringToFrontParams, metadata?: Metadata): Promise<PageBringToFrontResult>;
+  updateSubscription(params: PageUpdateSubscriptionParams, metadata?: Metadata): Promise<PageUpdateSubscriptionResult>;
 }
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1730,13 +1739,6 @@ export type PageSetDefaultTimeoutNoReplyOptions = {
   timeout?: number,
 };
 export type PageSetDefaultTimeoutNoReplyResult = void;
-export type PageSetFileChooserInterceptedNoReplyParams = {
-  intercepted: boolean,
-};
-export type PageSetFileChooserInterceptedNoReplyOptions = {
-
-};
-export type PageSetFileChooserInterceptedNoReplyResult = void;
 export type PageAddInitScriptParams = {
   source: string,
 };
@@ -2114,6 +2116,14 @@ export type PageStopCSSCoverageResult = {
 export type PageBringToFrontParams = {};
 export type PageBringToFrontOptions = {};
 export type PageBringToFrontResult = void;
+export type PageUpdateSubscriptionParams = {
+  event: 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
+  enabled: boolean,
+};
+export type PageUpdateSubscriptionOptions = {
+
+};
+export type PageUpdateSubscriptionResult = void;
 
 export interface PageEvents {
   'bindingCall': PageBindingCallEvent;

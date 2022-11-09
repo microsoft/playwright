@@ -1090,6 +1090,17 @@ BrowserContext:
       returns:
         writableStream: WritableStream
 
+    updateSubscription:
+      parameters:
+        event:
+          type: enum
+          literals:
+          - request
+          - response
+          - requestFinished
+          - requestFailed
+        enabled: boolean
+
   events:
 
     bindingCall:
@@ -1166,10 +1177,6 @@ Page:
     setDefaultTimeoutNoReply:
       parameters:
         timeout: number?
-
-    setFileChooserInterceptedNoReply:
-      parameters:
-        intercepted: boolean
 
     addInitScript:
       parameters:
@@ -1485,6 +1492,18 @@ Page:
                     end: number
 
     bringToFront:
+
+    updateSubscription:
+      parameters:
+        event:
+          type: enum
+          literals:
+          - fileChooser
+          - request
+          - response
+          - requestFinished
+          - requestFailed
+        enabled: boolean
 
   events:
 

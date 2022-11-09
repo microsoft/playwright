@@ -17,10 +17,10 @@
 import type { NavigationEvent } from '../frames';
 import { Frame } from '../frames';
 import type * as channels from '@protocol/channels';
-import { Dispatcher, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
+import { Dispatcher, existingDispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
-import type { ResponseDispatcher } from './networkDispatchers';
+import { ResponseDispatcher } from './networkDispatchers';
 import { RequestDispatcher } from './networkDispatchers';
 import type { CallMetadata } from '../instrumentation';
 import type { WritableStreamDispatcher } from './writableStreamDispatcher';
@@ -62,13 +62,13 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Pa
         return;
       const params = { url: event.url, name: event.name, error: event.error ? event.error.message : undefined };
       if (event.newDocument)
-        (params as any).newDocument = { request: RequestDispatcher.fromNullable(scope.parentScope(), event.newDocument.request || null) };
+        (params as any).newDocument = { request: RequestDispatcher.fromNullable(this.parentScope().parentScope(), event.newDocument.request || null) };
       this._dispatchEvent('navigated', params);
     });
   }
 
   async goto(params: channels.FrameGotoParams, metadata: CallMetadata): Promise<channels.FrameGotoResult> {
-    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._frame.goto(metadata, params.url, params)) };
+    return { response: ResponseDispatcher.fromNullable(this.parentScope().parentScope(), await this._frame.goto(metadata, params.url, params)) };
   }
 
   async frameElement(): Promise<channels.FrameFrameElementResult> {
