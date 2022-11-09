@@ -82,7 +82,7 @@ test('tokens should expand property', async ({ runInlineTest }, testInfo) => {
     }, {
       name: 'snapshotSuffix',
       snapshotPathTemplate: '{-snapshotSuffix}',
-    },],
+    }],
   }, ['foo.png']);
   expect.soft(snapshotPath['proj1']).toBe('proj1');
   expect.soft(snapshotPath['proj 2']).toBe('-proj-2');
@@ -103,7 +103,7 @@ test('args array should work', async ({ runInlineTest }, testInfo) => {
     projects: [{
       name: 'proj',
       snapshotPathTemplate: '{ext}{arg}',
-    },],
+    }],
   }, ['foo', 'bar', 'baz.jpeg']);
   expect.soft(snapshotPath['proj']).toBe(path.join('.jpegfoo', 'bar', 'baz'));
 });
