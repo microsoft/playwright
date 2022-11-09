@@ -344,9 +344,9 @@ export class CSharpLocatorFactory implements LocatorFactory {
         const attrString = attrs.length ? `, new() { ${attrs.join(', ')} }` : '';
         return `GetByRole(AriaRole.${toTitleCase(body as string)}${attrString})`;
       case 'has-text':
-        return `Filter(new() { HasTextString: ${this.toHasText(body)} })`;
+        return `Filter(new() { HasTextString = ${this.toHasText(body)} })`;
       case 'has':
-        return `Filter(new() { Has: ${body} })`;
+        return `Filter(new() { Has = ${body} })`;
       case 'test-id':
         return `GetByTestId(${this.quote(body as string)})`;
       case 'text':
@@ -370,7 +370,7 @@ export class CSharpLocatorFactory implements LocatorFactory {
       return `${method}(new Regex(${this.quote(body.source)}${suffix}))`;
     }
     if (exact)
-      return `${method}(${this.quote(body)}, new() { Exact: true })`;
+      return `${method}(${this.quote(body)}, new() { Exact = true })`;
     return `${method}(${this.quote(body)})`;
   }
 

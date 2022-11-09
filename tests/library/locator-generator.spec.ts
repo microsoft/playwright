@@ -62,7 +62,7 @@ it('reverse engineer locators', async ({ page }) => {
   });
 
   expect.soft(generate(page.getByText('Hello', { exact: true }))).toEqual({
-    csharp: 'GetByText("Hello", new() { Exact: true })',
+    csharp: 'GetByText("Hello", new() { Exact = true })',
     java: 'getByText("Hello", new Page.GetByTextOptions().setExact(true))',
     javascript: 'getByText(\'Hello\', { exact: true })',
     python: 'get_by_text("Hello", exact=True)',
@@ -87,7 +87,7 @@ it('reverse engineer locators', async ({ page }) => {
     python: 'get_by_label("Name")',
   });
   expect.soft(generate(page.getByLabel('Last Name', { exact: true }))).toEqual({
-    csharp: 'GetByLabel("Last Name", new() { Exact: true })',
+    csharp: 'GetByLabel("Last Name", new() { Exact = true })',
     java: 'getByLabel("Last Name", new Page.GetByLabelOptions().setExact(true))',
     javascript: 'getByLabel(\'Last Name\', { exact: true })',
     python: 'get_by_label("Last Name", exact=True)',
@@ -106,7 +106,7 @@ it('reverse engineer locators', async ({ page }) => {
     python: 'get_by_placeholder("hello")',
   });
   expect.soft(generate(page.getByPlaceholder('Hello', { exact: true }))).toEqual({
-    csharp: 'GetByPlaceholder("Hello", new() { Exact: true })',
+    csharp: 'GetByPlaceholder("Hello", new() { Exact = true })',
     java: 'getByPlaceholder("Hello", new Page.GetByPlaceholderOptions().setExact(true))',
     javascript: 'getByPlaceholder(\'Hello\', { exact: true })',
     python: 'get_by_placeholder("Hello", exact=True)',
@@ -125,7 +125,7 @@ it('reverse engineer locators', async ({ page }) => {
     python: 'get_by_alt_text("hello")',
   });
   expect.soft(generate(page.getByAltText('Hello', { exact: true }))).toEqual({
-    csharp: 'GetByAltText("Hello", new() { Exact: true })',
+    csharp: 'GetByAltText("Hello", new() { Exact = true })',
     java: 'getByAltText("Hello", new Page.GetByAltTextOptions().setExact(true))',
     javascript: 'getByAltText(\'Hello\', { exact: true })',
     python: 'get_by_alt_text("Hello", exact=True)',
@@ -144,7 +144,7 @@ it('reverse engineer locators', async ({ page }) => {
     python: 'get_by_title("hello")',
   });
   expect.soft(generate(page.getByTitle('Hello', { exact: true }))).toEqual({
-    csharp: 'GetByTitle("Hello", new() { Exact: true })',
+    csharp: 'GetByTitle("Hello", new() { Exact = true })',
     java: 'getByTitle("Hello", new Page.GetByTitleOptions().setExact(true))',
     javascript: 'getByTitle(\'Hello\', { exact: true })',
     python: 'get_by_title("Hello", exact=True)',
@@ -237,21 +237,21 @@ it('reverse engineer locators with regex', async ({ page }) => {
 
 it('reverse engineer hasText', async ({ page }) => {
   expect.soft(generate(page.getByText('Hello').filter({ hasText: 'wo"rld\n' }))).toEqual({
-    csharp: `GetByText("Hello").Filter(new() { HasTextString: "wo\\"rld\\n" })`,
+    csharp: `GetByText("Hello").Filter(new() { HasTextString = "wo\\"rld\\n" })`,
     java: `getByText("Hello").filter(new Locator.LocatorOptions().setHasText("wo\\"rld\\n"))`,
     javascript: `getByText('Hello').filter({ hasText: 'wo"rld\\n' })`,
     python: `get_by_text("Hello").filter(has_text="wo\\"rld\\n")`,
   });
 
   expect.soft(generate(page.getByText('Hello').filter({ hasText: /wo\/\srld\n/ }))).toEqual({
-    csharp: `GetByText("Hello").Filter(new() { HasTextString: new Regex("wo\\\\/\\\\srld\\\\n") })`,
+    csharp: `GetByText("Hello").Filter(new() { HasTextString = new Regex("wo\\\\/\\\\srld\\\\n") })`,
     java: `getByText("Hello").filter(new Locator.LocatorOptions().setHasText(Pattern.compile("wo\\\\/\\\\srld\\\\n")))`,
     javascript: `getByText('Hello').filter({ hasText: /wo\\/\\srld\\n/ })`,
     python: `get_by_text("Hello").filter(has_text=re.compile(r"wo/\\srld\\n"))`,
   });
 
   expect.soft(generate(page.getByText('Hello').filter({ hasText: /wor"ld/ }))).toEqual({
-    csharp: `GetByText("Hello").Filter(new() { HasTextString: new Regex("wor\\"ld") })`,
+    csharp: `GetByText("Hello").Filter(new() { HasTextString = new Regex("wor\\"ld") })`,
     java: `getByText("Hello").filter(new Locator.LocatorOptions().setHasText(Pattern.compile("wor\\"ld")))`,
     javascript: `getByText('Hello').filter({ hasText: /wor"ld/ })`,
     python: `get_by_text("Hello").filter(has_text=re.compile(r"wor\\"ld"))`,
@@ -260,7 +260,7 @@ it('reverse engineer hasText', async ({ page }) => {
 
 it('reverse engineer has', async ({ page }) => {
   expect.soft(generate(page.getByText('Hello').filter({ has: page.locator('div').getByText('bye') }))).toEqual({
-    csharp: `GetByText("Hello").Filter(new() { Has: Locator("div").GetByText("bye") })`,
+    csharp: `GetByText("Hello").Filter(new() { Has = Locator("div").GetByText("bye") })`,
     java: `getByText("Hello").filter(new Locator.LocatorOptions().setHas(locator("div").getByText("bye")))`,
     javascript: `getByText('Hello').filter({ has: locator('div').getByText('bye') })`,
     python: `get_by_text("Hello").filter(has=locator("div").get_by_text("bye"))`,
@@ -272,7 +272,7 @@ it('reverse engineer has', async ({ page }) => {
       .filter({ hasText: 'foo' })
       .filter({ has: page.locator('a') });
   expect.soft(generate(locator)).toEqual({
-    csharp: `Locator("section").Filter(new() { Has: Locator("div").Filter(new() { Has: Locator("span") }) }).Filter(new() { HasTextString: "foo" }).Filter(new() { Has: Locator("a") })`,
+    csharp: `Locator("section").Filter(new() { Has = Locator("div").Filter(new() { Has = Locator("span") }) }).Filter(new() { HasTextString = "foo" }).Filter(new() { Has = Locator("a") })`,
     java: `locator("section").filter(new Locator.LocatorOptions().setHas(locator("div").filter(new Locator.LocatorOptions().setHas(locator("span"))))).filter(new Locator.LocatorOptions().setHasText("foo")).filter(new Locator.LocatorOptions().setHas(locator("a")))`,
     javascript: `locator('section').filter({ has: locator('div').filter({ has: locator('span') }) }).filter({ hasText: 'foo' }).filter({ has: locator('a') })`,
     python: `locator("section").filter(has=locator("div").filter(has=locator("span"))).filter(has_text="foo").filter(has=locator("a"))`,
@@ -287,7 +287,7 @@ it('reverse engineer frameLocator', async ({ page }) => {
       .frameLocator('iframe')
       .locator('span');
   expect.soft(generate(locator)).toEqual({
-    csharp: `FrameLocator("iframe").GetByText("foo", new() { Exact: true }).FrameLocator("frame").FrameLocator("iframe").Locator("span")`,
+    csharp: `FrameLocator("iframe").GetByText("foo", new() { Exact = true }).FrameLocator("frame").FrameLocator("iframe").Locator("span")`,
     java: `frameLocator("iframe").getByText("foo", new FrameLocator.GetByTextOptions().setExact(true)).frameLocator("frame").frameLocator("iframe").locator("span")`,
     javascript: `frameLocator('iframe').getByText('foo', { exact: true }).frameLocator('frame').frameLocator('iframe').locator('span')`,
     python: `frame_locator("iframe").get_by_text("foo", exact=True).frame_locator("frame").frame_locator("iframe").locator("span")`,
@@ -310,7 +310,7 @@ it.describe(() => {
       <a>Goodbye <span>world</span></a>
     `);
     expect.soft(await generateForNode(page, 'a:has-text("Hello")')).toEqual({
-      csharp: 'Locator("a").Filter(new() { HasTextString: "Hello world" })',
+      csharp: 'Locator("a").Filter(new() { HasTextString = "Hello world" })',
       java: 'locator("a").filter(new Locator.LocatorOptions().setHasText("Hello world"))',
       javascript: `locator('a').filter({ hasText: 'Hello world' })`,
       python: 'locator("a").filter(has_text="Hello world")',
@@ -321,7 +321,7 @@ it.describe(() => {
       <b>Hello <span mark=1>world</span></b>
     `);
     expect.soft(await generateForNode(page, '[mark="1"]')).toEqual({
-      csharp: 'Locator("b").Filter(new() { HasTextString: "Hello world" }).Locator("span")',
+      csharp: 'Locator("b").Filter(new() { HasTextString = "Hello world" }).Locator("span")',
       java: 'locator("b").filter(new Locator.LocatorOptions().setHasText("Hello world")).locator("span")',
       javascript: `locator('b').filter({ hasText: 'Hello world' }).locator('span')`,
       python: 'locator("b").filter(has_text="Hello world").locator("span")',
@@ -332,7 +332,7 @@ it.describe(() => {
       <div>Goodbye <span mark=1>world</span></div>
     `);
     expect.soft(await generateForNode(page, '[mark="1"]')).toEqual({
-      csharp: 'Locator("div").Filter(new() { HasTextString: "Goodbye world" }).Locator("span")',
+      csharp: 'Locator("div").Filter(new() { HasTextString = "Goodbye world" }).Locator("span")',
       java: 'locator("div").filter(new Locator.LocatorOptions().setHasText("Goodbye world")).locator("span")',
       javascript: `locator('div').filter({ hasText: 'Goodbye world' }).locator('span')`,
       python: 'locator("div").filter(has_text="Goodbye world").locator("span")',
@@ -344,7 +344,7 @@ it('parse locators strictly', () => {
   const selector = 'div >> internal:has-text=\"Goodbye world\"i >> span';
 
   // Exact
-  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasTextString: "Goodbye world" }).Locator("span")`)).toBe(selector);
+  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasTextString = "Goodbye world" }).Locator("span")`)).toBe(selector);
   expect.soft(parseLocator('java', `locator("div").filter(new Locator.LocatorOptions().setHasText("Goodbye world")).locator("span")`)).toBe(selector);
   expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }).locator('span')`)).toBe(selector);
   expect.soft(parseLocator('python', `locator("div").filter(has_text="Goodbye world").locator("span")`)).toBe(selector);
@@ -354,13 +354,13 @@ it('parse locators strictly', () => {
   expect.soft(parseLocator('python', `locator('div').filter(has_text='Goodbye world').locator('span')`)).toBe(selector);
 
   // Whitespace
-  expect.soft(parseLocator('csharp', `Locator("div")  .  Filter (new ( ) {  HasTextString:    "Goodbye world" }).Locator(  "span"   )`)).toBe(selector);
+  expect.soft(parseLocator('csharp', `Locator("div")  .  Filter (new ( ) {  HasTextString =    "Goodbye world" }).Locator(  "span"   )`)).toBe(selector);
   expect.soft(parseLocator('java', `  locator("div"  ).  filter(  new    Locator. LocatorOptions    ( ) .setHasText(   "Goodbye world" ) ).locator(   "span")`)).toBe(selector);
   expect.soft(parseLocator('javascript', `locator\n('div')\n\n.filter({ hasText  : 'Goodbye world'\n }\n).locator('span')\n`)).toBe(selector);
   expect.soft(parseLocator('python', `\tlocator(\t"div").filter(\thas_text="Goodbye world"\t).locator\t("span")`)).toBe(selector);
 
   // Extra symbols
-  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasTextString: "Goodbye world" }).Locator("span"))`)).not.toBe(selector);
+  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasTextString = "Goodbye world" }).Locator("span"))`)).not.toBe(selector);
   expect.soft(parseLocator('java', `locator("div").filter(new Locator.LocatorOptions().setHasText("Goodbye world"))..locator("span")`)).not.toBe(selector);
   expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }}).locator('span')`)).not.toBe(selector);
   expect.soft(parseLocator('python', `locator("div").filter(has_text=="Goodbye world").locator("span")`)).not.toBe(selector);
