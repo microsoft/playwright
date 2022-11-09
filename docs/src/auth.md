@@ -780,7 +780,7 @@ await context.add_init_script("""(storage => {
   if (window.location.hostname === 'example.com') {
     const entries = JSON.parse(storage)
     for (const [key, value] of Object.entries(entries)) {
-      window.sessionStorage.setItem(key, key)
+      window.sessionStorage.setItem(key, value)
     }
   }
 })('""" + session_storage + "')")
@@ -798,7 +798,7 @@ context.add_init_script("""(storage => {
   if (window.location.hostname === 'example.com') {
     const entries = JSON.parse(storage)
     for (const [key, value] of Object.entries(entries)) {
-      window.sessionStorage.setItem(key, key)
+      window.sessionStorage.setItem(key, value)
     }
   }
 })('""" + session_storage + "')")
