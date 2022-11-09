@@ -23,7 +23,7 @@ import type { Loader } from './loader';
 import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal, TestStepInternal } from './types';
-import { addSuffixToFilePath, getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
+import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
 
 export class TestInfoImpl implements TestInfo {
   private _addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
