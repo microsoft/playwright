@@ -1362,7 +1362,7 @@ import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   testDir: './tests',
-  snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{argPath}{ext}',
+  snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
 };
 
 export default config;
@@ -1406,7 +1406,7 @@ The list of supported tokens:
   * Example: `page-click.spec.ts`
 * `{testFilePath}` - Relative path from `testDir` to **test file**
   * Example: `page/page-click.spec.ts`
-* `{argPath}` - Relative snapshot path **without extension**.
+* `{arg}` - Relative snapshot path **without extension**.
   * Example: `foo/bar/baz`
 * `{ext}` - snapshot extension (with dots)
   * Example: `.png`
@@ -1420,7 +1420,7 @@ Consider the following config:
 import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  snapshotPathTemplate: '__screenshots__{/projectName}/{testFilePath}/{argPath}{ext}',
+  snapshotPathTemplate: '__screenshots__{/projectName}/{testFilePath}/{arg}{ext}',
   testMatch: 'example.spec.ts',
   projects: [
     { use: { browserName: 'firefox' } },

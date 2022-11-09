@@ -276,7 +276,7 @@ export class Loader {
     const _setup = takeFirst(projectConfig.setup, []);
 
     const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
-    const defaultSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{argPath}{-projectName}{-snapshotSuffix}{ext}';
+    const defaultSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
     const snapshotPathTemplate = takeFirst((projectConfig as any).snapshotPathTemplate, (config as any).snapshotPathTemplate, defaultSnapshotPathTemplate);
     return {
       _id: '',

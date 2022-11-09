@@ -246,7 +246,7 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?testFileDir\}/g, '$1' + parsedRelativeTestFilePath.dir)
         .replace(/\{(.)?testFileName\}/g, '$1' + parsedRelativeTestFilePath.base)
         .replace(/\{(.)?testFilePath\}/g, '$1' + relativeTestFilePath)
-        .replace(/\{(.)?argPath\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))
+        .replace(/\{(.)?arg\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))
         .replace(/\{(.)?ext\}/g, '$1' + parsedSubPath.ext);
     return path.normalize(snapshotPath);
   }

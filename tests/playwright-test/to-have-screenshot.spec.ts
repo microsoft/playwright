@@ -134,7 +134,7 @@ test('should fail with proper error when unsupported argument is given', async (
 test('should have scale:css by default', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ browser }) => {
@@ -157,7 +157,7 @@ test('should have scale:css by default', async ({ runInlineTest }, testInfo) => 
 test('should ignore non-documented options in toHaveScreenshot config', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
       expect: {
         toHaveScreenshot: {
           clip: { x: 0, y: 0, width: 10, height: 10 },
@@ -212,7 +212,7 @@ test('should not fail when racing with navigation', async ({ runInlineTest }, te
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': createImage(10, 10, 255, 0, 0),
     'a.spec.js': `
@@ -235,7 +235,7 @@ test('should successfully screenshot a page with infinite animation with disable
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
@@ -253,7 +253,7 @@ test('should successfully screenshot a page with infinite animation with disable
 test('should support clip option for page', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': createImage(50, 50, 255, 255, 255),
     'a.spec.js': `
@@ -271,7 +271,7 @@ test('should support clip option for page', async ({ runInlineTest }, testInfo) 
 test('should support omitBackground option for locator', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
@@ -302,7 +302,7 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
       projects: [{
         expect: {
           toHaveScreenshot: {
@@ -332,7 +332,7 @@ test('should fail to screenshot an element that keeps moving', async ({ runInlin
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
       expect: {
         toHaveScreenshot: {
           animations: 'allow',
@@ -358,7 +358,7 @@ test('should fail to screenshot an element that keeps moving', async ({ runInlin
 test('should generate default name', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
@@ -418,7 +418,7 @@ test('should compile with different option combinations', async ({ runTSC }) => 
 test('should fail when screenshot is different size', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': createImage(22, 33),
     'a.spec.js': `
@@ -436,7 +436,7 @@ test('should fail when screenshot is different size', async ({ runInlineTest }) 
 test('should fail when given non-png snapshot name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
@@ -464,7 +464,7 @@ test('should fail when given buffer', async ({ runInlineTest }) => {
 test('should fail when screenshot is different pixels', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': paintBlackPixels(whiteImage, 12345),
     'a.spec.js': `
@@ -485,7 +485,7 @@ test('should fail when screenshot is different pixels', async ({ runInlineTest }
 test('doesn\'t create comparison artifacts in an output folder for passed negated snapshot matcher', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': blueImage,
     'a.spec.js': `
@@ -508,7 +508,7 @@ test('doesn\'t create comparison artifacts in an output folder for passed negate
 test('should fail on same snapshots with negate matcher', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': whiteImage,
     'a.spec.js': `
@@ -526,7 +526,7 @@ test('should fail on same snapshots with negate matcher', async ({ runInlineTest
 test('should not fail if --ignore-snapshots is passed', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': redImage,
     'a.spec.js': `
@@ -542,7 +542,7 @@ test('should not fail if --ignore-snapshots is passed', async ({ runInlineTest }
 test('should write missing expectations locally twice and continue', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
@@ -574,7 +574,7 @@ test('should write missing expectations locally twice and continue', async ({ ru
 test('shouldn\'t write missing expectations locally for negated matcher', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
@@ -592,7 +592,7 @@ test('shouldn\'t write missing expectations locally for negated matcher', async 
 test('should update snapshot with the update-snapshots flag', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': blueImage,
     'a.spec.js': `
@@ -612,7 +612,7 @@ test('shouldn\'t update snapshot with the update-snapshots flag for negated matc
   const EXPECTED_SNAPSHOT = blueImage;
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
@@ -630,7 +630,7 @@ test('shouldn\'t update snapshot with the update-snapshots flag for negated matc
 test('should silently write missing expectations locally with the update-snapshots flag', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
@@ -649,7 +649,7 @@ test('should silently write missing expectations locally with the update-snapsho
 test('should not write missing expectations locally with the update-snapshots flag for negated matcher', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
@@ -667,7 +667,7 @@ test('should not write missing expectations locally with the update-snapshots fl
 test('should match multiple snapshots', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/red.png': redImage,
     '__screenshots__/a.spec.js/green.png': greenImage,
@@ -695,7 +695,7 @@ test('should match multiple snapshots', async ({ runInlineTest }) => {
 test('should use provided name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/provided.png': whiteImage,
     'a.spec.js': `
@@ -710,7 +710,7 @@ test('should use provided name', async ({ runInlineTest }) => {
 test('should use provided name via options', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/provided.png': whiteImage,
     'a.spec.js': `
@@ -728,7 +728,7 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
 
   expect((await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
@@ -740,7 +740,7 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
 
   expect((await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
@@ -761,7 +761,7 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
       },
       projects: [
         {
-          snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+          snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
         },
       ],
     }),
@@ -780,7 +780,7 @@ test('should not update screenshot that matches with maxDiffPixels option when -
 
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
@@ -808,7 +808,7 @@ test('should satisfy both maxDiffPixelRatio and maxDiffPixels', async ({ runInli
 
   expect((await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
@@ -820,7 +820,7 @@ test('should satisfy both maxDiffPixelRatio and maxDiffPixels', async ({ runInli
 
   expect((await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
@@ -836,7 +836,7 @@ test('should satisfy both maxDiffPixelRatio and maxDiffPixels', async ({ runInli
 
   expect((await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
@@ -852,7 +852,7 @@ test('should satisfy both maxDiffPixelRatio and maxDiffPixels', async ({ runInli
 
   expect((await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
@@ -873,7 +873,7 @@ test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
 
   expect((await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
@@ -885,7 +885,7 @@ test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
 
   expect((await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
@@ -905,7 +905,7 @@ test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
         },
       },
       projects: [{
-        snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+        snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
       }],
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
@@ -947,7 +947,7 @@ test('should throw for invalid maxDiffPixelRatio values', async ({ runInlineTest
 test('should attach expected/actual and no diff when sizes are different', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     '__screenshots__/a.spec.js/snapshot.png': createImage(2, 2),
     'a.spec.js': `
@@ -984,7 +984,7 @@ test('should fail with missing expectations and retries', async ({ runInlineTest
   const result = await runInlineTest({
     ...playwrightConfig({
       retries: 1,
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
@@ -1005,7 +1005,7 @@ test('should update expectations with retries', async ({ runInlineTest }, testIn
   const result = await runInlineTest({
     ...playwrightConfig({
       retries: 1,
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{argPath}{ext}',
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
