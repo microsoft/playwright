@@ -46,17 +46,15 @@ const debugWebServer = debug('pw:webserver');
 
 export class WebServerPlugin implements TestRunnerPlugin {
   private _isAvailable?: () => Promise<boolean>;
-  private _killProcess?: (presendSigtermBeforeSigkillTimeout?: number) => Promise<void>;
+  private _killProcess?: () => Promise<void>;
   private _processExitedPromise!: Promise<any>;
   private _options: WebServerPluginOptions;
   private _checkPortOnly: boolean;
   private _reporter?: Reporter;
-  private _launchTerminateTimeout: number;
   name = 'playwright:webserver';
 
   constructor(options: WebServerPluginOptions, checkPortOnly: boolean) {
     this._options = options;
-    this._launchTerminateTimeout = this._options.timeout || 60 * 1000;
     this._checkPortOnly = checkPortOnly;
   }
 
@@ -74,8 +72,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
   }
 
   public async teardown() {
-    // Send SIGTERM and wait for it to gracefully close.
-    await this._killProcess?.(this._launchTerminateTimeout);
+    await this._killProcess?.();
   }
 
   private async _startProcess(): Promise<void> {
@@ -125,14 +122,15 @@ export class WebServerPlugin implements TestRunnerPlugin {
   }
 
   private async _waitForAvailability() {
+    const launchTimeout = this._options.timeout || 60 * 1000;
     const cancellationToken = { canceled: false };
     const { timedOut } = (await Promise.race([
-      raceAgainstTimeout(() => waitFor(this._isAvailable!, cancellationToken), this._launchTerminateTimeout),
+      raceAgainstTimeout(() => waitFor(this._isAvailable!, cancellationToken), launchTimeout),
       this._processExitedPromise,
     ]));
     cancellationToken.canceled = true;
     if (timedOut)
-      throw new Error(`Timed out waiting ${this._launchTerminateTimeout}ms from config.webServer.`);
+      throw new Error(`Timed out waiting ${launchTimeout}ms from config.webServer.`);
   }
 }
 
