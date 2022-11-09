@@ -258,7 +258,9 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    *   - Example: `page-click.spec.ts`
    * - `{testFilePath}` - Relative path from `testDir` to **test file**
    *   - Example: `page/page-click.spec.ts`
-   * - `{arg}` - Relative snapshot path **without extension**.
+   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
+   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
+   *   snapshot name.
    *   - Example: `foo/bar/baz`
    * - `{ext}` - snapshot extension (with dots)
    *   - Example: `.png`
@@ -888,7 +890,9 @@ interface TestConfig {
    *   - Example: `page-click.spec.ts`
    * - `{testFilePath}` - Relative path from `testDir` to **test file**
    *   - Example: `page/page-click.spec.ts`
-   * - `{arg}` - Relative snapshot path **without extension**.
+   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
+   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
+   *   snapshot name.
    *   - Example: `foo/bar/baz`
    * - `{ext}` - snapshot extension (with dots)
    *   - Example: `.png`
@@ -4686,7 +4690,9 @@ interface TestProject {
    *   - Example: `page-click.spec.ts`
    * - `{testFilePath}` - Relative path from `testDir` to **test file**
    *   - Example: `page/page-click.spec.ts`
-   * - `{arg}` - Relative snapshot path **without extension**.
+   * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
+   *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
+   *   snapshot name.
    *   - Example: `foo/bar/baz`
    * - `{ext}` - snapshot extension (with dots)
    *   - Example: `.png`
