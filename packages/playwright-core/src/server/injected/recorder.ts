@@ -240,7 +240,7 @@ class Recorder {
     if (this._mode === 'none')
       return;
     const activeElement = this._deepActiveElement(document);
-    const result = activeElement ? generateSelector(this._injectedScript, activeElement, true, this._testIdAttributeName) : null;
+    const result = activeElement ? generateSelector(this._injectedScript, activeElement, this._testIdAttributeName) : null;
     this._activeModel = result && result.selector ? result : null;
     if (userGesture)
       this._hoveredElement = activeElement as HTMLElement | null;
@@ -254,7 +254,7 @@ class Recorder {
       return;
     }
     const hoveredElement = this._hoveredElement;
-    const { selector, elements } = generateSelector(this._injectedScript, hoveredElement, true, this._testIdAttributeName);
+    const { selector, elements } = generateSelector(this._injectedScript, hoveredElement, this._testIdAttributeName);
     if ((this._hoveredModel && this._hoveredModel.selector === selector))
       return;
     this._hoveredModel = selector ? { selector, elements } : null;

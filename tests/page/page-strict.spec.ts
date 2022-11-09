@@ -34,8 +34,8 @@ it('should fail page.fill in strict mode', async ({ page }) => {
   await page.setContent(`<input></input><div><input></input></div>`);
   const error = await page.fill('input', 'text', { strict: true }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
-  expect(error.message).toContain(`1) <input/> aka locator('input').first()`);
-  expect(error.message).toContain(`2) <input/> aka locator('div input')`);
+  expect(error.message).toContain(`1) <input/> aka getByRole('textbox').first()`);
+  expect(error.message).toContain(`2) <input/> aka locator('div').getByRole('textbox')`);
 });
 
 it('should fail page.$ in strict mode', async ({ page }) => {

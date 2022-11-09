@@ -121,19 +121,19 @@ test.describe('cli codegen', () => {
     const sources = await recorder.waitForOutput('JavaScript', 'setInputFiles');
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('input[type="file"]').setInputFiles('file-to-upload.txt');`);
+  await page.getByRole('textbox').setInputFiles('file-to-upload.txt');`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("input[type=\\\"file\\\"]").setInputFiles(Paths.get("file-to-upload.txt"));`);
+      page.getByRole(AriaRole.TEXTBOX).setInputFiles(Paths.get("file-to-upload.txt"));`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator(\"input[type=\\\"file\\\"]\").set_input_files(\"file-to-upload.txt\")`);
+    page.get_by_role("textbox").set_input_files(\"file-to-upload.txt\")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator(\"input[type=\\\"file\\\"]\").set_input_files(\"file-to-upload.txt\")`);
+    await page.get_by_role("textbox").set_input_files(\"file-to-upload.txt\")`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator(\"input[type=\\\"file\\\"]\").SetInputFilesAsync(new[] { \"file-to-upload.txt\" });`);
+        await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-upload.txt\" });`);
   });
 
   test('should upload multiple files', async ({ page, openRecorder, browserName, asset }) => {
@@ -153,19 +153,19 @@ test.describe('cli codegen', () => {
     const sources = await recorder.waitForOutput('JavaScript', 'setInputFiles');
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('input[type=\"file\"]').setInputFiles(['file-to-upload.txt', 'file-to-upload-2.txt']);`);
+  await page.getByRole('textbox').setInputFiles(['file-to-upload.txt', 'file-to-upload-2.txt']);`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("input[type=\\\"file\\\"]").setInputFiles(new Path[] {Paths.get("file-to-upload.txt"), Paths.get("file-to-upload-2.txt")});`);
+      page.getByRole(AriaRole.TEXTBOX).setInputFiles(new Path[] {Paths.get("file-to-upload.txt"), Paths.get("file-to-upload-2.txt")});`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator(\"input[type=\\\"file\\\"]\").set_input_files([\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
+    page.get_by_role("textbox").set_input_files([\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator(\"input[type=\\\"file\\\"]\").set_input_files([\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
+    await page.get_by_role("textbox").set_input_files([\"file-to-upload.txt\", \"file-to-upload-2.txt\"]`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator(\"input[type=\\\"file\\\"]\").SetInputFilesAsync(new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
+        await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
   });
 
   test('should clear files', async ({ page, openRecorder, browserName, asset }) => {
@@ -185,20 +185,19 @@ test.describe('cli codegen', () => {
     const sources = await recorder.waitForOutput('JavaScript', 'setInputFiles');
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('input[type=\"file\"]').setInputFiles([]);`);
+  await page.getByRole('textbox').setInputFiles([]);`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("input[type=\\\"file\\\"]").setInputFiles(new Path[0]);`);
+      page.getByRole(AriaRole.TEXTBOX).setInputFiles(new Path[0]);`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator(\"input[type=\\\"file\\\"]\").set_input_files([])`);
+    page.get_by_role("textbox").set_input_files([])`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator(\"input[type=\\\"file\\\"]\").set_input_files([])`);
+    await page.get_by_role("textbox").set_input_files([])`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator(\"input[type=\\\"file\\\"]\").SetInputFilesAsync(new[] {  });`);
-
+        await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] {  });`);
   });
 
   test('should download files', async ({ page, openRecorder, server }) => {
@@ -381,20 +380,20 @@ test.describe('cli codegen', () => {
     await recorder.waitForOutput('JavaScript', 'TextB');
 
     const sources = recorder.sources();
-    expect(sources.get('JavaScript').text).toContain(`await page1.locator('input').fill('TextA');`);
-    expect(sources.get('JavaScript').text).toContain(`await page2.locator('input').fill('TextB');`);
+    expect(sources.get('JavaScript').text).toContain(`await page1.locator('#name').fill('TextA');`);
+    expect(sources.get('JavaScript').text).toContain(`await page2.locator('#name').fill('TextB');`);
 
-    expect(sources.get('Java').text).toContain(`page1.locator("input").fill("TextA");`);
-    expect(sources.get('Java').text).toContain(`page2.locator("input").fill("TextB");`);
+    expect(sources.get('Java').text).toContain(`page1.locator("#name").fill("TextA");`);
+    expect(sources.get('Java').text).toContain(`page2.locator("#name").fill("TextB");`);
 
-    expect(sources.get('Python').text).toContain(`page1.locator(\"input\").fill(\"TextA\")`);
-    expect(sources.get('Python').text).toContain(`page2.locator(\"input\").fill(\"TextB\")`);
+    expect(sources.get('Python').text).toContain(`page1.locator("#name").fill("TextA")`);
+    expect(sources.get('Python').text).toContain(`page2.locator("#name").fill("TextB")`);
 
-    expect(sources.get('Python Async').text).toContain(`await page1.locator(\"input\").fill(\"TextA\")`);
-    expect(sources.get('Python Async').text).toContain(`await page2.locator(\"input\").fill(\"TextB\")`);
+    expect(sources.get('Python Async').text).toContain(`await page1.locator("#name").fill("TextA")`);
+    expect(sources.get('Python Async').text).toContain(`await page2.locator("#name").fill("TextB")`);
 
-    expect(sources.get('C#').text).toContain(`await page1.Locator(\"input\").FillAsync(\"TextA\");`);
-    expect(sources.get('C#').text).toContain(`await page2.Locator(\"input\").FillAsync(\"TextB\");`);
+    expect(sources.get('C#').text).toContain(`await page1.Locator("#name").FillAsync("TextA");`);
+    expect(sources.get('C#').text).toContain(`await page2.Locator("#name").FillAsync("TextB");`);
   });
 
   test('click should emit events in order', async ({ page, openRecorder }) => {
@@ -429,7 +428,7 @@ test.describe('cli codegen', () => {
       recorder.waitForActionPerformed(),
       page.click('input')
     ]);
-    expect(models.hovered).toBe('input[name="updated"]');
+    expect(models.hovered).toBe('#checkbox');
   });
 
   test('should update active model on action', async ({ page, openRecorder, browserName, headless }) => {
@@ -441,7 +440,7 @@ test.describe('cli codegen', () => {
       recorder.waitForActionPerformed(),
       page.click('input')
     ]);
-    expect(models.active).toBe('input[name="updated"]');
+    expect(models.active).toBe('#checkbox');
   });
 
   test('should check input with chaning id', async ({ page, openRecorder }) => {
@@ -502,7 +501,7 @@ test.describe('cli codegen', () => {
 
     await recorder.setContentAndWait(`<textarea spellcheck=false id="textarea" name="name" oninput="console.log(textarea.value)"></textarea>`);
     const locator = await recorder.focusElement('textarea');
-    expect(locator).toBe(`locator('textarea[name="name"]')`);
+    expect(locator).toBe(`locator('#textarea')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -511,19 +510,19 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('textarea[name="name"]').fill('Hello\\'"\`\\nWorld');`);
+  await page.locator('#textarea').fill('Hello\\'"\`\\nWorld');`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("textarea[name=\\\"name\\\"]").fill("Hello'\\"\`\\nWorld");`);
+      page.locator("#textarea").fill("Hello'\\"\`\\nWorld");`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator(\"textarea[name=\\\"name\\\"]\").fill(\"Hello'\\"\`\\nWorld\")`);
+    page.locator("#textarea").fill(\"Hello'\\"\`\\nWorld\")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator(\"textarea[name=\\\"name\\\"]\").fill(\"Hello'\\"\`\\nWorld\")`);
+    await page.locator("#textarea").fill(\"Hello'\\"\`\\nWorld\")`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator(\"textarea[name=\\\"name\\\"]\").FillAsync(\"Hello'\\"\`\\nWorld\");`);
+        await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
 
     expect(message.text()).toBe('Hello\'\"\`\nWorld');
   });

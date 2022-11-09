@@ -78,7 +78,7 @@ it.describe('selector generator', () => {
       <select><option>foo</option></select>
       <select mark=1><option>bar</option></select>
     `);
-    expect(await generate(page, '[mark="1"]')).toBe('select >> nth=1');
+    expect(await generate(page, '[mark="1"]')).toBe('internal:role=combobox >> nth=1');
   });
 
   it('should use ordinal for identical nodes', async ({ page }) => {
@@ -167,7 +167,7 @@ it.describe('selector generator', () => {
       <div>Hello <span>world</span></div>
       <b>Hello <span mark=1>world</span></b>
     `);
-    expect(await generate(page, '[mark="1"]')).toBe(`b >> internal:has-text="Hello world"i >> span`);
+    expect(await generate(page, '[mark="1"]')).toBe(`b >> internal:text="world"i`);
   });
 
   it('should use parent text', async ({ page }) => {
@@ -246,21 +246,25 @@ it.describe('selector generator', () => {
       <input value="two" mark="1">
       <input value="three">
     `);
-    expect(await generate(page, 'input[mark="1"]')).toBe('input >> nth=1');
+    expect(await generate(page, 'input[mark="1"]')).toBe('internal:role=textbox >> nth=1');
   });
 
-  it.describe('should prioritise input element attributes correctly', () => {
-    it('name', async ({ page }) => {
+  it.describe('should prioritise attributes correctly', () => {
+    it('role', async ({ page }) => {
       await page.setContent(`<input name="foobar" type="text"/>`);
-      expect(await generate(page, 'input')).toBe('input[name="foobar"]');
+      expect(await generate(page, 'input')).toBe('internal:role=textbox');
     });
     it('placeholder', async ({ page }) => {
       await page.setContent(`<input placeholder="foobar" type="text"/>`);
       expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"foobar\"i]');
     });
+    it('name', async ({ page }) => {
+      await page.setContent(`<input role="presentation" aria-hidden="false" name="foobar" type="date"/>`);
+      expect(await generate(page, 'input')).toBe('input[name="foobar"]');
+    });
     it('type', async ({ page }) => {
-      await page.setContent(`<input type="text"/>`);
-      expect(await generate(page, 'input')).toBe('input[type="text"]');
+      await page.setContent(`<input role="presentation" aria-hidden="false" type="checkbox"/>`);
+      expect(await generate(page, 'input')).toBe('input[type="checkbox"]');
     });
   });
 
@@ -282,7 +286,7 @@ it.describe('selector generator', () => {
       const input = document.createElement('input');
       shadowRoot.appendChild(input);
     });
-    expect(await generate(page, 'input')).toBe('input');
+    expect(await generate(page, 'input')).toBe('internal:role=textbox');
   });
 
   it('should match in deep shadow dom', async ({ page }) => {
@@ -300,7 +304,7 @@ it.describe('selector generator', () => {
       input2.setAttribute('value', 'foo');
       shadowRoot2.appendChild(input2);
     });
-    expect(await generate(page, 'input[value=foo]')).toBe('input >> nth=2');
+    expect(await generate(page, 'input[value=foo]')).toBe('internal:role=textbox >> nth=2');
   });
 
   it('should work in dynamic iframes without navigation', async ({ page }) => {
@@ -352,7 +356,7 @@ it.describe('selector generator', () => {
   });
 
   it('should work without CSS.escape', async ({ page }) => {
-    await page.setContent(`<button></button>`);
+    await page.setContent(`<button role="presentation" aria-hidden="false"></button>`);
     await page.$eval('button', button => {
       delete window.CSS.escape;
       button.setAttribute('name', '-tricky\u0001name');
@@ -396,5 +400,10 @@ it.describe('selector generator', () => {
 
     await page.setContent(`<label for=target>Coun"try</label><input id=target>`);
     expect(await generate(page, 'input')).toBe('internal:label="Coun\\\"try"i');
+  });
+
+  it('should prefer role other input[type]', async ({ page }) => {
+    await page.setContent(`<input type=checkbox><div data-testid=wrapper><input type=checkbox></div>`);
+    expect(await generate(page, '[data-testid=wrapper] > input')).toBe('internal:testid=[data-testid="wrapper"s] >> internal:role=checkbox');
   });
 });
