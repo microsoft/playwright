@@ -272,11 +272,12 @@ export class Loader {
     const respectGitIgnore = !projectConfig.testDir && !config.testDir;
 
     const outputDir = takeFirst(projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
-    const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
     const name = takeFirst(projectConfig.name, config.name, '');
     const _setup = takeFirst(projectConfig.setup, []);
 
-    const snapshotPathTemplate = takeFirst((projectConfig as any)._snapshotPathTemplate, (config as any)._snapshotPathTemplate);
+    const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
+    const defaultSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{argPath}{-projectName}{-snapshotSuffix}{ext}';
+    const snapshotPathTemplate = takeFirst((projectConfig as any)._snapshotPathTemplate, (config as any)._snapshotPathTemplate, defaultSnapshotPathTemplate);
     return {
       _id: '',
       _fullConfig: fullConfig,
