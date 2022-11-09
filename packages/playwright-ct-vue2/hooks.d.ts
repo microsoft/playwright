@@ -21,13 +21,12 @@ type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 type JsonArray = JsonValue[];
 type JsonObject = { [Key in string]?: JsonValue };
-type VueOptions = ComponentOptions<Vue> & { router?: unknown, store?: unknown, [key: string]: unknown };
 
 export declare function beforeMount<HooksConfig extends JsonObject>(
   callback: (params: { 
     hooksConfig: HooksConfig, 
     Vue: VueConstructor<Vue>, 
-    options: VueOptions }) => Promise<void>
+  }) => Promise<void | ComponentOptions<Vue> & Record<string, unknown>>
 ): void;
 export declare function afterMount<HooksConfig extends JsonObject>(
   callback: (params: {

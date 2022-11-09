@@ -7,10 +7,10 @@ export type HooksConfig = {
   route: string;
 }
 
-beforeMount<HooksConfig>(async ({ Vue, options, hooksConfig }) => {
+beforeMount<HooksConfig>(async ({ Vue, hooksConfig }) => {
   console.log(`Before mount: ${JSON.stringify(hooksConfig)}`);
-  Vue.use(Router);
-  options.router = router;
+  Vue.use(Router as any); // TODO: remove any and fix the various installed conflicting Vue versions
+  return { router }
 });
 
 afterMount<HooksConfig>(async ({ instance }) => {
