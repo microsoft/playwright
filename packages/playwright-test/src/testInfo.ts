@@ -23,7 +23,7 @@ import type { Loader } from './loader';
 import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal, TestStepInternal } from './types';
-import { addSuffixToFilePath, getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
+import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
 
 export class TestInfoImpl implements TestInfo {
   private _addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
@@ -32,7 +32,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _startTime: number;
   readonly _startWallTime: number;
   private _hasHardError: boolean = false;
-  readonly _screenshotsDir: string;
   readonly _onTestFailureImmediateCallbacks = new Map<() => Promise<void>, string>(); // fn -> title
   _didTimeout = false;
 
@@ -129,10 +128,6 @@ export class TestInfoImpl implements TestInfo {
     this.snapshotDir = (() => {
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile);
       return path.join(this.project.snapshotDir, relativeTestFilePath + '-snapshots');
-    })();
-    this._screenshotsDir = (() => {
-      const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile);
-      return path.join(this.project._screenshotsDir, relativeTestFilePath);
     })();
   }
 
@@ -240,25 +235,23 @@ export class TestInfoImpl implements TestInfo {
   }
 
   snapshotPath(...pathSegments: string[]) {
-    let suffix = '';
-    const projectNamePathSegment = sanitizeForFilePath(this.project.name);
-    if (projectNamePathSegment)
-      suffix += '-' + projectNamePathSegment;
-    if (this.snapshotSuffix)
-      suffix += '-' + this.snapshotSuffix;
-    const subPath = addSuffixToFilePath(path.join(...pathSegments), suffix);
-    const snapshotPath =  getContainedPath(this.snapshotDir, subPath);
-    if (snapshotPath)
-      return snapshotPath;
-    throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${subPath}`);
-  }
-
-  _screenshotPath(...pathSegments: string[]) {
     const subPath = path.join(...pathSegments);
-    const screenshotPath = getContainedPath(this._screenshotsDir, subPath);
-    if (screenshotPath)
-      return screenshotPath;
-    throw new Error(`Screenshot name "${subPath}" should not point outside of the parent directory.`);
+    const parsedSubPath = path.parse(subPath);
+    const relativeTestFilePath = path.relative(this.project.testDir, this._test._requireFile);
+    const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
+    const projectNamePathSegment = sanitizeForFilePath(this.project.name);
+    const snapshotPath = path.resolve(this.config._configDir, this.project.snapshotPathTemplate
+        .replace(/\{(.)?testDir\}/g, '$1' + this.project.testDir)
+        .replace(/\{(.)?snapshotDir\}/g, '$1' + this.project.snapshotDir)
+        .replace(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix ? '$1' + this.snapshotSuffix : ''))
+        .replace(/\{(.)?platform\}/g, '$1' + process.platform)
+        .replace(/\{(.)?projectName\}/g, projectNamePathSegment ? '$1' + projectNamePathSegment : projectNamePathSegment)
+        .replace(/\{(.)?testFileDir\}/g, '$1' + parsedRelativeTestFilePath.dir)
+        .replace(/\{(.)?testFileName\}/g, '$1' + parsedRelativeTestFilePath.base)
+        .replace(/\{(.)?testFilePath\}/g, '$1' + relativeTestFilePath)
+        .replace(/\{(.)?arg\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))
+        .replace(/\{(.)?ext\}/g, '$1' + parsedSubPath.ext);
+    return path.normalize(snapshotPath);
   }
 
   skip(...args: [arg?: any, description?: string]) {

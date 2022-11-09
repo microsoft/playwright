@@ -301,9 +301,7 @@ export async function toHaveScreenshot(
     return { pass: !this.isNot, message: () => '' };
 
   const config = (testInfo.project._expect as any)?.toHaveScreenshot;
-  const snapshotPathResolver = process.env.PWTEST_USE_SCREENSHOTS_DIR
-    ? testInfo._screenshotPath.bind(testInfo)
-    : testInfo.snapshotPath.bind(testInfo);
+  const snapshotPathResolver = testInfo.snapshotPath.bind(testInfo);
   const helper = new SnapshotHelper(
       testInfo, snapshotPathResolver, 'png',
       {

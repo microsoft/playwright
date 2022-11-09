@@ -93,17 +93,6 @@ test.describe('installed image', () => {
     }
   });
 
-  test('screenshots should use __screenshots__ folder', async ({ exec, tmpWorkspace }) => {
-    await exec('npm i --foreground-scripts @playwright/test');
-    await exec('npx playwright test docker.spec.js --grep screenshot --browser all', {
-      expectToExitWithError: true,
-      env: { PLAYWRIGHT_DOCKER: '1' },
-    });
-    await expect(path.join(tmpWorkspace, '__screenshots__', 'firefox', 'docker.spec.js', 'img.png')).toExistOnFS();
-    await expect(path.join(tmpWorkspace, '__screenshots__', 'chromium', 'docker.spec.js', 'img.png')).toExistOnFS();
-    await expect(path.join(tmpWorkspace, '__screenshots__', 'webkit', 'docker.spec.js', 'img.png')).toExistOnFS();
-  });
-
   test('port forwarding works', async ({ exec, tmpWorkspace }) => {
     await exec('npm i --foreground-scripts @playwright/test');
     const TEST_PORT = 8425;
