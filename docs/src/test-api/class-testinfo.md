@@ -260,6 +260,8 @@ Line number where the currently running test is declared.
 
 Absolute path to the snapshot output directory for this specific test. Each test suite gets its own directory so they cannot conflict.
 
+This property does not account for the [`property: TestProject.snapshotPathTemplate`] configuration.
+
 ## property: TestInfo.outputDir
 * since: v1.10
 - type: <[string]>

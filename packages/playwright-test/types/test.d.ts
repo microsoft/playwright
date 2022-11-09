@@ -1726,6 +1726,10 @@ export interface TestInfo {
   /**
    * Absolute path to the snapshot output directory for this specific test. Each test suite gets its own directory so they
    * cannot conflict.
+   *
+   * This property does not account for the
+   * [testProject.snapshotPathTemplate](https://playwright.dev/docs/api/class-testproject#test-project-snapshot-path-template)
+   * configuration.
    */
   snapshotDir: string;
 

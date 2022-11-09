@@ -125,7 +125,10 @@ export class TestInfoImpl implements TestInfo {
       return path.join(this.project.outputDir, testOutputDir);
     })();
 
-    this.snapshotDir = path.parse(this._snapshotPath('noop.png')).dir;
+    this.snapshotDir = (() => {
+      const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile);
+      return path.join(this.project.snapshotDir, relativeTestFilePath + '-snapshots');
+    })();
   }
 
   private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', modifierArgs: [arg?: any, description?: string]) {
@@ -231,7 +234,7 @@ export class TestInfoImpl implements TestInfo {
     throw new Error(`The outputPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\toutputPath: ${joinedPath}`);
   }
 
-  _snapshotPath(...pathSegments: string[]) {
+  snapshotPath(...pathSegments: string[]) {
     const subPath = path.join(...pathSegments);
     const parsedSubPath = path.parse(subPath);
     const relativeTestFilePath = path.relative(this.project.testDir, this._test._requireFile);
@@ -249,13 +252,6 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?arg\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))
         .replace(/\{(.)?ext\}/g, '$1' + parsedSubPath.ext);
     return path.normalize(snapshotPath);
-  }
-
-  snapshotPath(...pathSegments: string[]) {
-    const snapshotPath = this._snapshotPath(...pathSegments);
-    if (!snapshotPath.startsWith(this.snapshotDir))
-      throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${path.relative(this.snapshotDir, snapshotPath)}`);
-    return snapshotPath;
   }
 
   skip(...args: [arg?: any, description?: string]) {
