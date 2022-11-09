@@ -72,6 +72,7 @@ function parseLocator(locator: string, testIdAttributeName: string): string {
       .replace(/get_by_test_id/g, 'getbytestid')
       .replace(/get_by_([\w]+)/g, 'getby$1')
       .replace(/has_text/g, 'hastext')
+      .replace(/frame_locator/g, 'framelocator')
       .replace(/[{}\s]/g, '')
       .replace(/new\(\)/g, '')
       .replace(/new[\w]+\.[\w]+options\(\)/g, '')
@@ -135,6 +136,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
 
   // Transform to selector engines.
   template = template
+      .replace(/framelocator\(([^)]+)\)/g, '$1.internal:control=enter-frame')
       .replace(/locator\(([^)]+)\)/g, '$1')
       .replace(/getbyrole\(([^)]+)\)/g, 'internal:role=$1')
       .replace(/getbytext\(([^)]+)\)/g, 'internal:text=$1')
@@ -152,7 +154,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
 
   // Substitute params.
   return template.split('.').map(t => {
-    if (!t.startsWith('internal:'))
+    if (!t.startsWith('internal:') || t === 'internal:control')
       return t.replace(/\$(\d+)/g, (_, ordinal) => { const param = params[+ordinal - 1]; return param.text; });
     t = t.includes('[') ? t.replace(/\]/, '') + ']' : t;
     t = t
