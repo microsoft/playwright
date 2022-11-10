@@ -186,10 +186,6 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     await this._channel.fill({ selector: toSelectorChannel(selector), text, ...options });
   }
 
-  async clear(selector: api.AndroidSelector, options?: types.TimeoutOptions) {
-    await this.fill(selector, '', options);
-  }
-
   async press(selector: api.AndroidSelector, key: api.AndroidKey, options?: types.TimeoutOptions) {
     await this.tap(selector, options);
     await this.input.press(key);

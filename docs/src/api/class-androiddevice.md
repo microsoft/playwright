@@ -16,20 +16,6 @@ Emitted when the device connection gets closed.
 
 Emitted when a new WebView instance is detected.
 
-## async method: AndroidDevice.clear
-* since: v1.28
-
-Clears the specific [`param: selector`] input box.
-
-### param: AndroidDevice.clear.selector
-* since: v1.28
-- `selector` <[AndroidSelector]>
-
-Selector to clear.
-
-### option: AndroidDevice.clear.timeout = %%-android-timeout-%%
-* since: v1.28
-
 ## async method: AndroidDevice.close
 * since: v1.9
 
