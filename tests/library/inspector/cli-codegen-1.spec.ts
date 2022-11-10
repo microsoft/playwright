@@ -532,6 +532,47 @@ test.describe('cli codegen', () => {
     expect(message.text()).toBe('2');
   });
 
+  test('should select with size attribute', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <style>
+        body {
+          margin: 0;
+        }
+      </style>
+      <select id="age" size="2" onchange="console.log(age.selectedOptions[0].value)">
+        <option value="1">v1</option>
+        <option value="2">v2</option>
+      </select>
+    `);
+
+    const locator = await recorder.hoverOverElement('select');
+    expect(locator).toBe(`locator('#age')`);
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', 'select'),
+      page.mouse.click(10, 25)
+    ]);
+
+    expect(sources.get('JavaScript').text).toContain(`
+  await page.locator('#age').selectOption('2');`);
+
+    expect(sources.get('Java').text).toContain(`
+      page.locator("#age").selectOption("2");`);
+
+    expect(sources.get('Python').text).toContain(`
+    page.locator(\"#age\").select_option(\"2\")`);
+
+    expect(sources.get('Python Async').text).toContain(`
+    await page.locator(\"#age\").select_option(\"2\")`);
+
+    expect(sources.get('C#').text).toContain(`
+        await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
+
+    expect(message.text()).toBe('2');
+  });
+
   test('should await popup', async ({ page, openRecorder, browserName, headless }) => {
     test.fixme(browserName === 'webkit' && !headless, 'Middle click does not open a popup in our webkit embedder');
 
