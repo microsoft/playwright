@@ -180,7 +180,6 @@ This path will serve as the base directory for each test file snapshot directory
 
 ## property: TestProject.snapshotPathTemplate = %%-test-config-snapshot-path-template-%%
 * since: v1.28
-* langs: js
 
 ## property: TestProject.outputDir
 * since: v1.10

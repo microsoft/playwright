@@ -801,9 +801,10 @@ interface TestConfig {
    * And the following `page-click.spec.ts` that uses `toHaveScreenshot()` call:
    *
    * The list of supported tokens:
-   * - `{testDir}` - Project's `testDir`.
+   * - `{testDir}` - Project's [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
    *   - Example: `tests/`
-   * - `{snapshotDir}` - Project's `snapshotDir`.
+   * - `{snapshotDir}` - Project's
+   *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
    *   - Example: `tests/` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
    * - `{platform}` - The value of `process.platform`.
    * - `{snapshotSuffix}` - The value of
@@ -4609,9 +4610,10 @@ interface TestProject {
    * And the following `page-click.spec.ts` that uses `toHaveScreenshot()` call:
    *
    * The list of supported tokens:
-   * - `{testDir}` - Project's `testDir`.
+   * - `{testDir}` - Project's [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
    *   - Example: `tests/`
-   * - `{snapshotDir}` - Project's `snapshotDir`.
+   * - `{snapshotDir}` - Project's
+   *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
    *   - Example: `tests/` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
    * - `{platform}` - The value of `process.platform`.
    * - `{snapshotSuffix}` - The value of

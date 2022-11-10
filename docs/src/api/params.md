@@ -1393,9 +1393,9 @@ test('should work', async ({ page }) => {
 
 The list of supported tokens:
 
-* `{testDir}` - Project's `testDir`.
+* `{testDir}` - Project's [`property: TestConfig.testDir`].
   * Example: `tests/`
-* `{snapshotDir}` - Project's `snapshotDir`.
+* `{snapshotDir}` - Project's [`property: TestConfig.snapshotDir`].
   * Example: `tests/` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
 * `{platform}` - The value of `process.platform`.
 * `{snapshotSuffix}` - The value of [`property: TestInfo.snapshotSuffix`].
