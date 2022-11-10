@@ -188,51 +188,74 @@ The [`method: Page.getByRole`] locator reflects how users and assistive technolo
 For example, consider the following DOM structure.
 
 ```html
+<h1>my form<h1>
+<form>
+<label for="newsletter">newsletter</label>
+<input type="checkbox" checked id="newsletter">
 <button>Submit</button>
-<input type="checkbox" checked aria-label="newsletter" id="newsletter">
+<form>
 ```
+
+<img width="239" alt="form with newsletter checkbox and submit button" src="https://user-images.githubusercontent.com/13063165/201135368-0b85f894-84b6-4f3b-a69b-ed4f53cacb34.png" />
 
 You can locate each element by it's implicit role:
 
 ```js
-await page.getByRole('button', { name: /submit/i })
-    .click();
+await expect (page.getByRole('heading', { name: 'my form' }))
+    .toBeVisible()
 
 await page.getByRole('checkbox', { checked: true, name: "newsletter" })
     .uncheck();
+
+await page.getByRole('button', { name: /submit/i })
+    .click();
 ```
 
 ```python async
-await page.get_by_role("button", name=re.compile("submit", re.IGNORECASE))
-    .click()
+await expect(page.get_by_role("heading", name="my form"))
+    .to_be_visible()
 
 await page.get_by_role("checkbox", checked=True, name="newsletter")
     .uncheck()
+
+await page.get_by_role("button", name=re.compile("submit", re.IGNORECASE))
+    .click()
 ```
 
 ```python sync
-page.get_by_role("button", name=re.compile("submit", re.IGNORECASE))
-    .click()
+expect(page.get_by_role("heading", name="my from"))
+    .to_be_visible()
 
 page.get_by_role("checkbox", checked=True, name="newsletter")
     .uncheck()
+
+page.get_by_role("button", name=re.compile("submit", re.IGNORECASE))
+    .click()
 ```
 
 ```java
-page.getByRole("button", new Page.GetByRoleOptions().setName(Pattern.compile("submit", Pattern.CASE_INSENSITIVE)))
-    .click();
+assertThat(page.getByRole("heading", new Page.GetByRoleOptions().setName("my from")))
+    .isVisible();
 
 page.getByRole("checkbox", new Page.GetByRoleOptions().setChecked(true).setName("newsletter"))
     .uncheck();
+
+page.getByRole("button", new Page.GetByRoleOptions().setName(Pattern.compile("submit", Pattern.CASE_INSENSITIVE)))
+    .click();
 ```
 
 ```csharp
-await page.GetByRole("button", new() { Name = new Regex("submit", RegexOptions.IgnoreCase) })
-    .ClickAsync();
+await Expect(page.GetByRole("heading", new() { Checked = true, Name = "my form" }))
+    .ToBeVisibleAsync();
 
 await page.GetByRole("checkbox", new() { Checked = true, Name = "newsletter" })
     .UncheckAsync();
+
+await page.GetByRole("button", new() { Name = new Regex("submit", RegexOptions.IgnoreCase) })
+    .ClickAsync();
 ```
+
+<img width="239" alt="form with newsletter checkbox unchecked and submit button highlighted" src="https://user-images.githubusercontent.com/13063165/201134851-f707a433-1e10-4b83-b648-c19df2a04de0.png" />
 
 Role locators include [buttons, checkboxes, headings, links, lists, tables, and many more](https://www.w3.org/TR/html-aria/#docconformance) and follow W3C specifications for [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
 
@@ -252,6 +275,7 @@ For example, consider the following DOM structure.
 <label for="password">Password</label>
 <input type="password" id="password">
 ```
+<img width="220" alt="password input with label of password" src="https://user-images.githubusercontent.com/13063165/201115785-f996ede8-01ae-4aa6-bd76-a60600efa125.png" />
 
 You can fill the input after locating it by the label text:
 
@@ -274,6 +298,7 @@ page.get_by_label("Password").fill("secret")
 ```csharp
 await page.GetByLabel("Password").FillAsync("secret");
 ```
+<img width="225" alt="password input with label and password filled in with encryption" src="https://user-images.githubusercontent.com/13063165/201113928-3b383887-433c-4b2c-9516-6c17d87d1eb2.png" />
 
 :::tip When to use label locators
 Use this locator when locating form fields.
@@ -287,6 +312,8 @@ For example, consider the following DOM structure.
 ```html
  <input id="email" name="email" type="email" placeholder="name@example.com">
 ```
+
+<img width="155" alt="input field filled in with name@example.com" src="https://user-images.githubusercontent.com/13063165/201114537-597b157f-68f3-473e-8802-4c099d1d6e93.png" />
 
 You can fill the input after locating it by the placeholder text:
 
@@ -315,6 +342,8 @@ await page.GetByPlaceholder("name@example.com")
     .FillAsync("playwright@microsoft.com");
 ```
 
+<img width="155" alt="input field filled in with playwright@microsoft.com" src="https://user-images.githubusercontent.com/13063165/201114985-c5bb9709-3680-4137-a3d9-e272056ca79e.png" />
+
 :::tip When to use placeholder locators
 Use this locator when locating form elements that do not have labels but do have placeholder texts.
 :::
@@ -328,6 +357,7 @@ For example, consider the following DOM structure.
 ```html
 <span>Welcome, John</span>
 ```
+<img width="218" alt="Welcome, John" src="https://user-images.githubusercontent.com/13063165/201122791-10ee8cba-871c-4fb6-a925-ce42c8500f04.png" />
 
 You can locate the element by the text it contains:
 
@@ -430,6 +460,9 @@ For example, consider the following DOM structure.
 <img alt="playwright logo" src="/playwright-logo.png" />
 ```
 
+<img width="48" alt="playwright logo" src="https://user-images.githubusercontent.com/13063165/201125864-dad707d2-efbc-4fd8-ab2e-8f41e3b24416.png" />
+
+
 You can click on the image after locating it by the text alternative:
 
 ```js
@@ -457,6 +490,9 @@ await page.GetByAltText("playwright logo")
     .ClickAsync();
 ```
 
+<img width="49" alt="playwright logo being clicked" src="https://user-images.githubusercontent.com/13063165/201134010-4b7af9fc-cfaf-42b5-b968-79b2e1921b57.png" />
+
+
 :::tip When to use alt locators
 Use this locator when your element supports alt text such as `img` and `area` elements.
 :::
@@ -470,6 +506,7 @@ For example, consider the following DOM structure.
 ```html
 <span title='Issues count'>25 issues</span>
 ```
+<img width="67" alt="25 issues" src="https://user-images.githubusercontent.com/13063165/201129562-2c2cb7f2-4072-4dfe-8286-e7d3a036e965.png" />
 
 You can check the issues count after locating it by the title text:
 
@@ -511,6 +548,7 @@ For example, consider the following DOM structure.
 ```html
 <button data-testid="directions">Itinéraire</button>
 ```
+<img width="74" alt="Screenshot 2022-11-10 at 16 07 47" src="https://user-images.githubusercontent.com/13063165/201131385-5e18c551-625c-4153-9808-e2666b90b152.png" />
 
 You can locate the element by it's test id:
 
@@ -538,6 +576,9 @@ page.get_by_test_id("directions")
 await page.GetByTestId("directions")
     .ClickAsync();
 ```
+
+<img width="72" alt="button with Itinéraire text showing click action" src="https://user-images.githubusercontent.com/13063165/201133588-789926c6-9de3-4866-abd9-8d0a7e3fa95d.png" />
+
 
 By default, [`method: Page.getByTestId`] will locate elements based on the `data-testid` attribute, but you can configure it in your test config or by calling [`method: Selectors.setTestIdAttribute`].
 
@@ -792,34 +833,44 @@ For example, consider the following DOM structure:
 </div>
 ```
 
-You can click on the second product card by first locating the product cards by test id and then filtering to find the product card with the text of "Product 2".
+<img width="110" alt="2 product cards with text and a button" src="https://user-images.githubusercontent.com/13063165/201133018-5881a5ca-f86d-4c98-8a83-eec40d14aa49.png" />
+
+To click on the "buy" button from the second product card: 
+1. locate the product cards by test id
+1. filter to find the product card with the text of "Product 2"
+1. get the button role with name of buy and click it
 
 ```js
 await page.getByTestId('product-card')
     .filter({ hasText: 'Product 2' })
+    .getByRole('button', { name: 'Buy' })
     .click();
 ```
 
 ```java
 page.getByTestId("product-card")
     .filter(new Locator.FilterOptions().setHasText("Product 2"))
+    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy"))
     .click();
 ```
 
 ```python async
 await page.get_by_test_id("product-card")
     .filter(has_text="Product 2")
+    .get_by_role("button", name="Buy")
     .click()
 ```
 
 ```python sync
 page.get_by_test_id("product-card")
     .filter(has_text="Product 2")
+    .get_by_role("button", name="Buy")
     .click()
 ```
 ```csharp
 await page.GetByTestId("product-card")
     .Filter(new() { HasText = "Product 2" })
+    .GetByRole(AriaRole.Button, new () { Name = "Buy" })
     .ClickAsync();
 ```
 
@@ -828,126 +879,43 @@ Use a regular expression:
 ```js
 await page.getByTestId('product-card')
     .filter({ hasText: /Product 2/ })
+    .getByRole('button', { name: 'Buy' })
     .click();
 ```
 
 ```java
 page.getByTestId("product-card")
     .filter(new Locator.FilterOptions().setHasText(Pattern.compile("Product 2")))
+    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy"))
     .click();
 ```
 
 ```python async
 await page.get_by_test_id("product-card")
     .filter(has_text=re.compile("Product 2"))
+    .get_by_role("button", name="Buy")
     .click()
 ```
 
 ```python sync
 page.get_by_test_id("product-card")
     .filter(has_text=re.compile("Product 2"))
+    .get_by_role("button", name="Buy")
     .click()
 ```
 
 ```csharp
 await page.GetByTestId("product-card")
     .Filter(new() { HasText = new Regex("Product 2") })
+    .GetByRole(AriaRole.Button, new () { Name = "Buy" })
     .ClickAsync();
 ```
 
+<img width="112" alt="2 product cards with text and a button and the second one being highlighted" src="https://user-images.githubusercontent.com/13063165/201138706-177f887a-0095-417a-924c-c5370b23acff.png" />
+
 ### Filter by another locator
 
-Locators support an option to only select elements that have a descendant matching another locator.
-
-For example, consider the following DOM structure:
-
-```html
-<div data-testid='todo-item'>
-  <img src="no-stars.jpg" alt="no-stars" />
-  <input type="checkbox" aria-label="Toggle Todo"/>
-</div>
-
-<div data-testid='todo-item'>
-  <img src="starred.jpg" alt="starred" />
-  <input type="checkbox" aria-label="Toggle Todo" />
-</div>
-```
-To select the "checkbox" from a todo item with a `data-testid`:
-1. locate by the the test id (this gives us two items)
-1. filter by the alt text (now we have one item)
-1. find the Toggle Todo checkbox and check it.
-
-```js
-await page.getByTestId('todo-item')
-    .filter({ has: page.getByAltText('starred') })
-    .getByRole('checkbox', { name: 'Toggle Todo' })
-    .check()
-```
-```java
-page.getByTestId("todo-item")
-    .filter(new Locator.FilterOptions().setHas(page.getByAltText("starred")
-    .getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName("Toggle Todo")))
-    .check()
-```
-```python async
-await page.get_by_test_id("todo-item")
-    .filter(has=page.get_by_alt_text("starred"))
-    .get_by_role("checkbox", name="Toggle Todo")
-    .check()
-```
-```python sync
-page.get_by_test_id("todo-item")
-    .filter(has=page.get_by_alt_text("starred"))
-    .get_by_role("checkbox", name="Toggle Todo")
-    .check()
-```
-```csharp
-await page.GetByTestId("todo-item")
-    .Filter(new() { Has = page.GetByAltText("starred" ) })
-    .GetByRole(AriaRole.Checkbox, new () { Name = "Toggle Todo" })
-    .CheckAsync();
-```
-
-We can also assert the todo item to make sure there is only one:
-1. locate by the the test id (this gives us two items)
-1. filter by the alt text (now we have one item)
-1. make sure there is only one starred item
-
-```js
-expect(page.getByTestId('todo-item')
-    .filter({ has: page.getByAltText('starred') }))
-    .toHaveCount(1)
-```
-
-```java
-expect(page.getByTestId('todo-item')
-    .filter(new Locator.FilterOptions().setHas(page.getByAltText("starred")
-    .hasCount(1)
-```
-
-```python async
-await expect(page.get_by_role("section")
-    .filter(has=page.get_by_alt_text("starred")))
-    .to_have_count(1)
-```
-
-```python sync
-expect(page.get_by_role("section")
-    .filter(has=page.get_by_alt_text("starred")))
-    .to_have_count(1)
-```
-
-```csharp
-await Expect(page.GetByTestId("section")
-    .Filter(new() { Has = page.GetByAltText("starred" ) }))
-    .toHaveCountAsync(1)
-```
-
-Note that the inner locator is matched starting from the outer one, not from the document root.
-
-## Locate elements inside elements
-
-You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page.
+Locators support an option to only select elements that have a descendant matching another locator. You can therefore filter by any other locator such as a role locator, text locator, test-id locator etc.
 
 For example, consider the following DOM structure:
 
@@ -963,12 +931,110 @@ For example, consider the following DOM structure:
 </div>
 ```
 
+<img width="110" alt="2 product cards with text and a button" src="https://user-images.githubusercontent.com/13063165/201133018-5881a5ca-f86d-4c98-8a83-eec40d14aa49.png" />
+
+To click on the "buy" button from the second product card: 
+1. locate the product cards by test id
+1. filter to find the product card that has the [`method: Page.getByText`] locator with text of 'Product 2'
+1. get the button role with name of buy and click it
+
+```js
+await page.getByTestId('todo-item')
+    .filter({ has: page.getByText('Product 2') })
+    .getByRole('button', { name: 'Buy' })
+    .click()
+```
+```java
+page.getByTestId("todo-item")
+    .filter(new Locator.FilterOptions().setHas(page.getByText("Product 2")
+    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy")))
+    .click()
+```
+```python async
+await page.get_by_test_id("todo-item")
+    .filter(has=page.get_by_text("Product 2"))
+    .get_by_role("button", name="Buy")
+    .click()
+```
+```python sync
+page.get_by_test_id("todo-item")
+    .filter(has=page.get_by_text("Product 2"))
+    .get_by_role("button", name="Buy")
+    .click()
+```
+```csharp
+await page.GetByTestId("todo-item")
+    .Filter(new() { Has = page.GetByText("Product 2" ) })
+    .GetByRole(AriaRole.Button, new () { Name = "Buy" })
+    .ClickAsync();
+```
+
+<img width="112" alt="Screenshot 2022-11-10 at 16 37 36" src="https://user-images.githubusercontent.com/13063165/201138706-177f887a-0095-417a-924c-c5370b23acff.png" />
+
+We can also assert the product card to make sure there is only one:
+1. locate by the the test id (this gives us two items)
+1. filter by the text (now we have one item)
+1. make sure there is only one product called 'Product 2'
+
+```js
+await expect(page.getByTestId('product-card')
+    .filter({ has: page.getByText('Product2') }))
+    .toHaveCount(1)
+```
+
+```java
+await expect(page.getByTestId('product-card')
+    .filter(new Locator.FilterOptions().setHas(page.getByText("Product 2")
+    .hasCount(1)
+```
+
+```python async
+await expect(page.get_by_role("product-card")
+    .filter(has=page.get_by_text("Product 2")))
+    .to_have_count(1)
+```
+
+```python sync
+expect(page.get_by_role("product-card")
+    .filter(has=page.get_by_text("Product 2")))
+    .to_have_count(1)
+```
+
+```csharp
+await Expect(page.GetByTestId("product-card")
+    .Filter(new() { Has = page.GetByText("Product 2" ) }))
+    .toHaveCountAsync(1)
+```
+
+Note that the inner locator is matched starting from the outer one, not from the document root.
+
+## Locate elements inside elements
+
+You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page.
+
+For example, consider the following DOM structure where we want to click on the Buy button from the second product card.
+
+```html
+<div data-testid='product-card'>
+  <span>Product 1</span>
+  <button>Buy</button>
+</div>
+
+<div data-testid='product-card'>
+  <span>Product 2</span>
+  <button>Buy</button>
+</div>
+```
+<img width="110" alt="2 product cards with text and a button" src="https://user-images.githubusercontent.com/13063165/201133018-5881a5ca-f86d-4c98-8a83-eec40d14aa49.png" />
+
+
 Locating by role `button` will return an error due to [strictness](#strictness) as there is more than one element with this role and name. 
 
 In this scenario we can locate an element within another element.
 1. Create a locator called **product** and locate the product cards by testid.
 1. Filter by text to find the product card with the text of "Product 2".
 1. Use the new locator called **product** and locate the button inside that product card and click it.
+1. Reuse this locator for assertions or more filtering
 
 ```js
 const product = page.getByTestId('product-card')
@@ -976,6 +1042,8 @@ const product = page.getByTestId('product-card')
 
 await product.getByRole('button', { name: 'Buy' })
     .click();
+
+await expect(product).toHaveCount(1)
 ```
 
 ```python async
@@ -1009,6 +1077,8 @@ var product = page.GetByTestId("product-card")
 await product.GetByRole("button", new() { Name = "Buy" })
     .ClickAsync();
 ```
+
+<img width="112" alt="Screenshot 2022-11-10 at 16 37 36" src="https://user-images.githubusercontent.com/13063165/201138706-177f887a-0095-417a-924c-c5370b23acff.png" />
 ## Lists
 
 ### Count items in a list
@@ -1024,6 +1094,9 @@ For example, consider the following DOM structure:
   <li>orange</li>
 </ul>
 ```
+
+<img width="81" alt="list of 3 items, apple, banana and orange" src="https://user-images.githubusercontent.com/13063165/200641602-95a801ce-8a3e-4141-b4ac-926b890f4648.png" />
+
 Use the count assertion to ensure that the list has 3 items.
 
 ```js
@@ -1059,6 +1132,8 @@ For example, consider the following DOM structure:
   <li>orange</li>
 </ul>
 ```
+<img width="81" alt="list of 3 items, apple, banana and orange" src="https://user-images.githubusercontent.com/13063165/200641602-95a801ce-8a3e-4141-b4ac-926b890f4648.png" />
+
 Use text assertion to ensure that the list has the text "apple", "banana" and "orange".
 
 ```js
@@ -1089,6 +1164,9 @@ await Expect(page.GetByRole("listitem"))
 ### Get a specific item
 
 There are many ways to get a specific item in a list.
+#### Get by text
+
+Use the [`method: Page.getByText`] method to locate an element in a list by it's text content and then click on it.
 
 For example, consider the following DOM structure:
 
@@ -1099,59 +1177,87 @@ For example, consider the following DOM structure:
   <li>orange</li>
 </ul>
 ```
+
+Locate an item by it's text content and click it.
+
+```js
+await page.getByText('orange')
+    .click();
+```
+
+```python async
+await page.get_by_text("orange")
+    .click()
+```
+
+```python sync
+page.get_by_text("orange")
+    .click()
+```
+
+```java
+page.getByText("orange")
+    .click();
+```
+
+```csharp
+await page.GetByText("orange")
+    .ClickAsync();
+```
+
+<img width="78" alt="list of apple, banana and orange highlighting orange" src="https://user-images.githubusercontent.com/13063165/201171918-0f689261-a48e-4660-9726-c8fcf29e9105.png" />
+
 #### Filter by text
 Use the [`method: Locator.filter`] to locate a specific item in a list.
 
+For example, consider the following DOM structure:
+
+```html
+<ul>
+  <li>apple</li>
+  <li>banana</li>
+  <li>orange</li>
+</ul>
+```
+
+Locate an item by the role of "listitem" and then filter by the text of "orange" and then click it.
+
 ```js
-const banana = await page.getByRole('listitem')
-    .filter({ hasText: 'banana' });
+await page.getByRole('listitem')
+    .filter({ hasText: 'orange' })
+    .click();
 ```
 
 ```python async
-banana = await page.get_by_role("listitem")
-    .filter(has_text="banana")
+await page.get_by_role("listitem")
+    .filter(has_text="orange")
+    .click()
 ```
 
 ```python sync
-banana = page.get_by_role("listitem").filter(has_text="banana")
+page.get_by_role("listitem")
+    .filter(has_text="orange")
+    .click()
 ```
 
 ```java
-Locator banana = page.getByRole(AriaRole.LISTITEM)
-    .filter(new Locator.FilterOptions().setHasText("banana"));
+page.getByRole(AriaRole.LISTITEM)
+    .filter(new Locator.FilterOptions().setHasText("orange"))
+    .click();
 ```
 
 ```csharp
-var banana = await page.GetByRole("listitem")
-    .Filter(new() { HasText = "banana" });
+await page.GetByRole("listitem")
+    .Filter(new() { HasText = "orange" })
+    .ClickAsync();
 ```
-
-#### Get by text
-
-Use the [`method: Page.getByText`] method to locate an element in a list.
-
-```js
-const banana = await page.getByText('banana');
-```
-
-```python async
-banana = await page.get_by_text("banana")
-```
-
-```python sync
-banana = page.get_by_text("banana")
-```
-
-```java
-Locator banana = page.getByText("banana");
-```
-
-```csharp
-var banana = await page.GetByTextAsync("banana");
-```
+<img width="78" alt="list of apple, banana and orange highlighting orange" src="https://user-images.githubusercontent.com/13063165/201171918-0f689261-a48e-4660-9726-c8fcf29e9105.png" />
 
 #### Get by test id
-Use the [`method: Page.getByTestId`] method to locate an element in a list. This will require you to modify the html to add a testid.
+
+Use the [`method: Page.getByTestId`] method to locate an element in a list. You may need to modify the html and add a test id if you don't already have a test id.
+
+For example, consider the following DOM structure:
 
 ```html
 <ul>
@@ -1160,27 +1266,35 @@ Use the [`method: Page.getByTestId`] method to locate an element in a list. This
   <li data-testid='orange'>orange</li>
 </ul>
 ```
-  Once you have added the testid, you can use the [`method: Page.getByTestId`] method to get the text.
+
+Locate an item by it's test id of "orange" and then click it.
 
 ```js
-const banana = await page.getByTestId('banana');
+await page.getByTestId('orange')
+    .click();
 ```
 
 ```python async
-banana = await page.get_by_test_id("banana")
+await page.get_by_test_id("orange")
+    .click()
 ```
 
 ```python sync
-banana = page.get_by_test_id("banana")
+page.get_by_test_id("orange")
+    .click()
 ```
 
 ```java
-Locator banana = page.getByTestId("banana");
+page.getByTestId("orange")
+    .click();
 ```
 
 ```csharp
-var banana = await page.GetByTestIdAsync("banana");
+await page.GetByTestId("orange")
+    .ClickAsync();
 ```
+
+<img width="78" alt="list of apple, banana and orange highlighting orange" src="https://user-images.githubusercontent.com/13063165/201171918-0f689261-a48e-4660-9726-c8fcf29e9105.png" />
 
 #### Get by nth item
 
@@ -1234,6 +1348,7 @@ For example, consider the following DOM structure:
   </li>
 </ul>
 ```
+<img width="112" alt="text John and Mary with buttons say hello and say goodbye beside their names" src="https://user-images.githubusercontent.com/13063165/201173459-4c560974-6712-48a6-8b6d-a636276f0dd3.png" />
 
 To take a screenshot of the row with "Mary" and "Say goodbye":
 1. create a locator for the list items
@@ -1281,8 +1396,11 @@ await rowLocator.Filter(new() { HasText = "Mary" })
     .Filter(new() { Has = page.GetByRole("button", new() { Name = "Say goodbye" }) })
     .ScreenshotAsync(new() { Path = "screenshot.png" });
 ```
+<img width="112" alt="text John and Mary with buttons say hello and say goodbye beside their names and the goodbye button next to Mary is highlighted" src="https://user-images.githubusercontent.com/13063165/201173620-1f04cdd2-5d10-4980-9cf3-b8a6b9acf244.png" />
 
 You should now have a "screenshot.png" file in your project's root directory.
+
+<img width="154" alt="Mary and a button that says say goodbye" src="https://user-images.githubusercontent.com/13063165/201173882-18cb6bc0-be75-4c19-9215-e64254e7f150.png" />
 ### Rare use cases
 
 #### Get All text contents
