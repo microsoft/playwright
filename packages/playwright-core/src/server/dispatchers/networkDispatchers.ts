@@ -20,7 +20,7 @@ import type { CallMetadata } from '../instrumentation';
 import type { Request, Response, Route } from '../network';
 import { WebSocket } from '../network';
 import type { RootDispatcher } from './dispatcher';
-import { Dispatcher, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
+import { Dispatcher, existingDispatcher } from './dispatcher';
 import { TracingDispatcher } from './tracingDispatcher';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
@@ -60,7 +60,7 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
   }
 
   async response(): Promise<channels.RequestResponseResult> {
-    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._object.response()) };
+    return { response: ResponseDispatcher.fromNullable(this.parentScope(), await this._object.response()) };
   }
 }
 

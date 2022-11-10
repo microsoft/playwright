@@ -96,6 +96,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('requestFinished', params => this._onRequestFinished(params));
     this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
+
+    this._setEventToSubscriptionMapping(new Map<string, channels.BrowserContextUpdateSubscriptionParams['event']>([
+      [Events.BrowserContext.Request, 'request'],
+      [Events.BrowserContext.Response, 'response'],
+      [Events.BrowserContext.RequestFinished, 'requestFinished'],
+      [Events.BrowserContext.RequestFailed, 'requestFailed'],
+    ]));
   }
 
   _setBrowserType(browserType: BrowserType) {

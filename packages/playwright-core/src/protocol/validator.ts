@@ -869,6 +869,11 @@ scheme.BrowserContextCreateTempFileParams = tObject({
 scheme.BrowserContextCreateTempFileResult = tObject({
   writableStream: tChannel(['WritableStream']),
 });
+scheme.BrowserContextUpdateSubscriptionParams = tObject({
+  event: tEnum(['request', 'response', 'requestFinished', 'requestFailed']),
+  enabled: tBoolean,
+});
+scheme.BrowserContextUpdateSubscriptionResult = tOptional(tObject({}));
 scheme.PageInitializer = tObject({
   mainFrame: tChannel(['Frame']),
   viewportSize: tOptional(tObject({
@@ -927,10 +932,6 @@ scheme.PageSetDefaultTimeoutNoReplyParams = tObject({
   timeout: tOptional(tNumber),
 });
 scheme.PageSetDefaultTimeoutNoReplyResult = tOptional(tObject({}));
-scheme.PageSetFileChooserInterceptedNoReplyParams = tObject({
-  intercepted: tBoolean,
-});
-scheme.PageSetFileChooserInterceptedNoReplyResult = tOptional(tObject({}));
 scheme.PageAddInitScriptParams = tObject({
   source: tString,
 });
@@ -1162,6 +1163,11 @@ scheme.PageStopCSSCoverageResult = tObject({
 });
 scheme.PageBringToFrontParams = tOptional(tObject({}));
 scheme.PageBringToFrontResult = tOptional(tObject({}));
+scheme.PageUpdateSubscriptionParams = tObject({
+  event: tEnum(['fileChooser', 'request', 'response', 'requestFinished', 'requestFailed']),
+  enabled: tBoolean,
+});
+scheme.PageUpdateSubscriptionResult = tOptional(tObject({}));
 scheme.FrameInitializer = tObject({
   url: tString,
   name: tString,

@@ -15,7 +15,7 @@
  */
 
 import { BrowserContext } from '../browserContext';
-import { Dispatcher, lookupDispatcher } from './dispatcher';
+import { Dispatcher, existingDispatcher } from './dispatcher';
 import type { DispatcherScope } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import type { FrameDispatcher } from './frameDispatcher';
@@ -38,6 +38,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   _type_EventTarget = true;
   _type_BrowserContext = true;
   private _context: BrowserContext;
+  private _subscriptions = new Set<channels.BrowserContextUpdateSubscriptionParams['event']>();
 
   constructor(parentScope: DispatcherScope, context: BrowserContext) {
     // We will reparent these to the context below.
@@ -60,7 +61,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     const onVideo = (artifact: Artifact) => {
       // Note: Video must outlive Page and BrowserContext, so that client can saveAs it
       // after closing the context. We use |scope| for it.
-      const artifactDispatcher = new ArtifactDispatcher(parentScope, artifact);
+      const artifactDispatcher = ArtifactDispatcher.from(parentScope, artifact);
       this._dispatchEvent('video', { artifact: artifactDispatcher });
     };
     this.addObjectListener(BrowserContext.Events.VideoStarted, onVideo);
@@ -88,27 +89,56 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this.addObjectListener(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this, serviceWorker) }));
     }
     this.addObjectListener(BrowserContext.Events.Request, (request: Request) =>  {
-      return this._dispatchEvent('request', {
-        request: RequestDispatcher.from(this, request),
+      const redirectFromDispatcher = request.redirectedFrom() && existingDispatcher(request.redirectedFrom());
+      if (!redirectFromDispatcher && !this._shouldDispatchNetworkEvent(request, 'request'))
+        return;
+      const requestDispatcher = RequestDispatcher.from(this, request);
+      this._dispatchEvent('request', {
+        request: requestDispatcher,
         page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined())
       });
     });
-    this.addObjectListener(BrowserContext.Events.Response, (response: Response) => this._dispatchEvent('response', {
-      response: ResponseDispatcher.from(this, response),
-      page: PageDispatcher.fromNullable(this, response.frame()?._page.initializedOrUndefined())
-    }));
-    this.addObjectListener(BrowserContext.Events.RequestFailed, (request: Request) => this._dispatchEvent('requestFailed', {
-      request: RequestDispatcher.from(this, request),
-      failureText: request._failureText || undefined,
-      responseEndTiming: request._responseEndTiming,
-      page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined())
-    }));
-    this.addObjectListener(BrowserContext.Events.RequestFinished, ({ request, response }: { request: Request, response: Response | null }) => this._dispatchEvent('requestFinished', {
-      request: RequestDispatcher.from(this, request),
-      response: ResponseDispatcher.fromNullable(this, response),
-      responseEndTiming: request._responseEndTiming,
-      page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined()),
-    }));
+    this.addObjectListener(BrowserContext.Events.Response, (response: Response) => {
+      const requestDispatcher = existingDispatcher<RequestDispatcher>(response.request());
+      if (!requestDispatcher && !this._shouldDispatchNetworkEvent(response.request(), 'response'))
+        return;
+      this._dispatchEvent('response', {
+        response: ResponseDispatcher.from(this, response),
+        page: PageDispatcher.fromNullable(this, response.frame()?._page.initializedOrUndefined())
+      });
+    });
+    this.addObjectListener(BrowserContext.Events.RequestFailed, (request: Request) => {
+      const requestDispatcher = existingDispatcher<RequestDispatcher>(request);
+      if (!requestDispatcher && !this._shouldDispatchNetworkEvent(request, 'requestFailed'))
+        return;
+      this._dispatchEvent('requestFailed', {
+        request: RequestDispatcher.from(this, request),
+        failureText: request._failureText || undefined,
+        responseEndTiming: request._responseEndTiming,
+        page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined())
+      });
+    });
+    this.addObjectListener(BrowserContext.Events.RequestFinished, ({ request, response }: { request: Request, response: Response | null }) => {
+      const requestDispatcher = existingDispatcher<RequestDispatcher>(request);
+      if (!requestDispatcher && !this._shouldDispatchNetworkEvent(request, 'requestFinished'))
+        return;
+      this._dispatchEvent('requestFinished', {
+        request: RequestDispatcher.from(this, request),
+        response: ResponseDispatcher.fromNullable(this, response),
+        responseEndTiming: request._responseEndTiming,
+        page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined()),
+      });
+    });
+  }
+
+  private _shouldDispatchNetworkEvent(request: Request, event: channels.BrowserContextUpdateSubscriptionParams['event'] & channels.PageUpdateSubscriptionParams['event']): boolean {
+    if (this._subscriptions.has(event))
+      return true;
+    const page = request.frame()?._page?.initializedOrUndefined();
+    const pageDispatcher = page ? existingDispatcher<PageDispatcher>(page) : undefined;
+    if (pageDispatcher?._subscriptions.has(event))
+      return true;
+    return false;
   }
 
   async createTempFile(params: channels.BrowserContextCreateTempFileParams, metadata?: channels.Metadata): Promise<channels.BrowserContextCreateTempFileResult> {
@@ -138,7 +168,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {
-    return { page: lookupDispatcher<PageDispatcher>(await this._context.newPage(metadata)) };
+    return { page: PageDispatcher.from(this, await this._context.newPage(metadata)) };
   }
 
   async cookies(params: channels.BrowserContextCookiesParams): Promise<channels.BrowserContextCookiesResult> {
@@ -225,7 +255,14 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     const artifact = await this._context._harExport(params.harId);
     if (!artifact)
       throw new Error('No HAR artifact. Ensure record.harPath is set.');
-    return { artifact: new ArtifactDispatcher(this, artifact) };
+    return { artifact: ArtifactDispatcher.from(this, artifact) };
+  }
+
+  async updateSubscription(params: channels.BrowserContextUpdateSubscriptionParams, metadata?: channels.Metadata | undefined): Promise<void> {
+    if (params.enabled)
+      this._subscriptions.add(params.event);
+    else
+      this._subscriptions.delete(params.event);
   }
 
   override _dispose() {
