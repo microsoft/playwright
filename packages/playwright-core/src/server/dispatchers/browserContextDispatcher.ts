@@ -89,8 +89,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this.addObjectListener(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('serviceWorker', { worker: new WorkerDispatcher(this, serviceWorker) }));
     }
     this.addObjectListener(BrowserContext.Events.Request, (request: Request) =>  {
+      // Create dispatcher, if:
+      // - There are listeners to the requests.
+      // - We are redirected from a reported request so that redirectedTo was updated on client.
+      // - We are a navigation request and dispatcher will be reported as a part of the goto return value and newDocument param anyways.
+      //   By the time requestFinished is triggered to update the request, we should have a request on the client already.
       const redirectFromDispatcher = request.redirectedFrom() && existingDispatcher(request.redirectedFrom());
-      if (!redirectFromDispatcher && !this._shouldDispatchNetworkEvent(request, 'request'))
+      if (!redirectFromDispatcher && !this._shouldDispatchNetworkEvent(request, 'request') && !request.isNavigationRequest())
         return;
       const requestDispatcher = RequestDispatcher.from(this, request);
       this._dispatchEvent('request', {
