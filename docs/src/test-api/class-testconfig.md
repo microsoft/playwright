@@ -337,8 +337,9 @@ The directory for each test can be accessed by [`property: TestInfo.snapshotDir`
 
 This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to `'snapshots'`, the [`property: TestInfo.snapshotDir`] would resolve to `snapshots/a.spec.js-snapshots`.
 
-## property: TestConfig.snapshotPathTemplate = %%-test-config-snapshot-template-path-%%
+## property: TestConfig.snapshotPathTemplate = %%-test-config-snapshot-path-template-%%
 * since: v1.28
+* langs: js
 
 ## property: TestConfig.preserveOutput
 * since: v1.10

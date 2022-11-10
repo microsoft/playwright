@@ -70,6 +70,7 @@ export interface FullProjectInternal extends FullProjectPublic {
   _expect: Project['expect'];
   _respectGitIgnore: boolean;
   _setup: string | RegExp | (string | RegExp)[];
+  snapshotPathTemplate: string;
 }
 
 export interface ReporterInternal extends Reporter {
