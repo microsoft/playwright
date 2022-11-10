@@ -343,17 +343,17 @@ test('runs first', async ({ page }) => {});
 test('runs second', async ({ page }) => {});
 ```
 
-Configuring retries and timeout:
+Configuring retries and timeout for each test:
 
 ```js tab=js-js
-// All tests in the file will be retried twice and have a timeout of 20 seconds.
+// Each test in the file will be retried twice and have a timeout of 20 seconds.
 test.describe.configure({ retries: 2, timeout: 20_000 });
 test('runs first', async ({ page }) => {});
 test('runs second', async ({ page }) => {});
 ```
 
 ```js tab=js-ts
-// All tests in the file will be retried twice and have a timeout of 20 seconds.
+// Each test in the file will be retried twice and have a timeout of 20 seconds.
 test.describe.configure({ retries: 2, timeout: 20_000 });
 test('runs first', async ({ page }) => {});
 test('runs second', async ({ page }) => {});
@@ -363,13 +363,19 @@ test('runs second', async ({ page }) => {});
 * since: v1.10
 - `mode` <[TestMode]<"parallel"|"serial">>
 
+Execution mode. Learn more about the execution modes [here](../test-parallel.md).
+
 ### option: Test.describe.configure.retries
 * since: v1.28
 - `retries` <[int]>
 
+The number of retries for each test.
+
 ### option: Test.describe.configure.timeout
 * since: v1.28
 - `timeout` <[int]>
+
+Timeout for each test in milliseconds. Overrides [`property: TestProject.timeout`] and [`property: TestConfig.timeout`].
 
 
 ## method: Test.describe.fixme

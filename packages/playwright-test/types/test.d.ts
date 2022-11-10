@@ -2123,10 +2123,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * test('runs second', async ({ page }) => {});
    * ```
    *
-   * Configuring retries and timeout:
+   * Configuring retries and timeout for each test:
    *
    * ```js
-   * // All tests in the file will be retried twice and have a timeout of 20 seconds.
+   * // Each test in the file will be retried twice and have a timeout of 20 seconds.
    * test.describe.configure({ retries: 2, timeout: 20_000 });
    * test('runs first', async ({ page }) => {});
    * test('runs second', async ({ page }) => {});
