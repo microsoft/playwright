@@ -48,12 +48,7 @@ type FixtureRegistration = {
   id: string;
   // A fixture override can use the previous version of the fixture.
   super?: FixtureRegistration;
-  // Whether this fixture is an option value set from the config.
-  fromConfig?: boolean;
 };
-
-export const kResetToConfig = Symbol('reset-to-config');
-export const kResetToDefault = Symbol('reset-to-default');
 
 class Fixture {
   runner: FixtureRunner;
@@ -193,7 +188,7 @@ export class FixturePool {
   constructor(fixturesList: FixturesWithLocation[], parentPool?: FixturePool, disallowWorkerFixtures?: boolean) {
     this.registrations = new Map(parentPool ? parentPool.registrations : []);
 
-    for (const { fixtures, location, fromConfig } of fixturesList) {
+    for (const { fixtures, location } of fixturesList) {
       for (const entry of Object.entries(fixtures)) {
         const name = entry[0];
         let value = entry[1];
@@ -227,30 +222,17 @@ export class FixturePool {
         if (options.scope === 'worker' && disallowWorkerFixtures)
           throw errorWithLocations(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, { location, name });
 
-        if (fn === undefined && options.option) {
-          // Overriding option with "undefined" value means setting it to the config value.
-          fn = kResetToConfig;
-        }
-        if (fn === kResetToConfig || fn === kResetToDefault) {
-          // Find the target fixture to copy the reset value from.
-          // It is either the original definition, or "fromConfig" one.
-          //
-          // Note that "reset to config" behaves like "reset to default"
-          // if no value is set in the config.
-          let targetFixture = previous;
-          while (targetFixture && targetFixture.super) {
-            if (fn === kResetToConfig && targetFixture.fromConfig)
-              break;
-            targetFixture = targetFixture.super;
-          }
-          if (targetFixture)
-            fn = targetFixture.fn;
-          else
-            fn = undefined;
+        // Overriding option with "undefined" value means setting it to the default value
+        // from the original declaration of the option.
+        if (fn === undefined && options.option && previous) {
+          let original = previous;
+          while (original.super)
+            original = original.super;
+          fn = original.fn;
         }
 
         const deps = fixtureParameterNames(fn, location);
-        const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, deps, super: previous, fromConfig };
+        const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, deps, super: previous };
         registrationId(registration);
         this.registrations.set(name, registration);
       }

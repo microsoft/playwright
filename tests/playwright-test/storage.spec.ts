@@ -246,8 +246,8 @@ test('should load storageStateName specified in the project config from storage'
     `,
     'storage.setup.ts': `
       const { test, expect } = pwt;
-      test.reset({
-        storageStateName: 'default'
+      test.use({
+        storageStateName: ({}, use) => use(undefined),
       })
       test('should save storageState', async ({ page, context }) => {
         const storage = test.info().storage();
@@ -291,8 +291,8 @@ test('should load storageStateName specified in the global config from storage',
     `,
     'storage.setup.ts': `
       const { test, expect } = pwt;
-      test.reset({
-        storageStateName: 'default'
+      test.use({
+        storageStateName: ({}, use) => use(undefined),
       })
       test('should save storageStateName', async ({ page, context }) => {
         const storage = test.info().storage();

@@ -136,13 +136,6 @@ test('should check types of fixtures', async ({ runTSC }) => {
       // @ts-expect-error
       test.use({ baz: 'baz' });
 
-      test.reset({ foo: 'default' });
-      test.reset({ foo: 'config' });
-      // @ts-expect-error
-      test.reset({ unknown: 'config' });
-      // @ts-expect-error
-      test.reset({ foo: 'unknown' });
-
       test('my test', async ({ foo, bar }) => {
         bar += parseInt(foo);
       });

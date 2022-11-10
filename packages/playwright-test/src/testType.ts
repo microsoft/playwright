@@ -15,7 +15,6 @@
  */
 
 import { expect } from './expect';
-import { kResetToConfig, kResetToDefault } from './fixtures';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
@@ -55,7 +54,6 @@ export class TestTypeImpl {
     test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
     test.step = wrapFunctionWithLocation(this._step.bind(this));
     test.use = wrapFunctionWithLocation(this._use.bind(this));
-    test.reset = wrapFunctionWithLocation(this._reset.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
     test._extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
     test.info = () => {
@@ -205,20 +203,6 @@ export class TestTypeImpl {
 
   private _use(location: Location, fixtures: Fixtures) {
     const suite = this._ensureCurrentSuite(location, `test.use()`);
-    suite._use.push({ fixtures, location });
-  }
-
-  private _reset(location: Location, resets: Fixtures) {
-    const suite = this._ensureCurrentSuite(location, `test.reset()`);
-    const fixtures: any = {};
-    for (const [key, value] of Object.entries(resets)) {
-      if (value === 'config')
-        fixtures[key] = kResetToConfig;
-      else if (value === 'default')
-        fixtures[key] = kResetToDefault;
-      else
-        throw errorWithLocation(location, `test.reset() supports "config" or "default", got unexpected value "${value}"`);
-    }
     suite._use.push({ fixtures, location });
   }
 
