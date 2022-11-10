@@ -820,7 +820,7 @@ jobs:
         ./utils/docker/build.sh --amd64 focal $PWTEST_DOCKER_BASE_IMAGE
         npx playwright docker build
         nohup npx playwright docker start &
-        xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --grep '@smoke',
+        xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --grep '@smoke'
       env:
         PLAYWRIGHT_DOCKER: 1
         PWTEST_DOCKER_BASE_IMAGE: playwright:localbuild
