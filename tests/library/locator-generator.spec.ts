@@ -305,29 +305,6 @@ it.describe(() => {
 
   it('reverse engineer internal:has-text locators', async ({ page }) => {
     await page.setContent(`
-      <div>Hello world</div>
-      <a>Hello <span>world</span></a>
-      <a>Goodbye <span>world</span></a>
-    `);
-    expect.soft(await generateForNode(page, 'a:has-text("Hello")')).toEqual({
-      csharp: 'Locator("a").Filter(new() { HasTextString = "Hello world" })',
-      java: 'locator("a").filter(new Locator.LocatorOptions().setHasText("Hello world"))',
-      javascript: `locator('a').filter({ hasText: 'Hello world' })`,
-      python: 'locator("a").filter(has_text="Hello world")',
-    });
-
-    await page.setContent(`
-      <div>Hello <span>world</span></div>
-      <b>Hello <span mark=1>world</span></b>
-    `);
-    expect.soft(await generateForNode(page, '[mark="1"]')).toEqual({
-      csharp: 'Locator("b").Filter(new() { HasTextString = "Hello world" }).Locator("span")',
-      java: 'locator("b").filter(new Locator.LocatorOptions().setHasText("Hello world")).locator("span")',
-      javascript: `locator('b').filter({ hasText: 'Hello world' }).locator('span')`,
-      python: 'locator("b").filter(has_text="Hello world").locator("span")',
-    });
-
-    await page.setContent(`
       <div>Hello <span>world</span></div>
       <div>Goodbye <span mark=1>world</span></div>
     `);

@@ -149,7 +149,7 @@ export class InjectedScript {
   }
 
   generateSelector(targetElement: Element, testIdAttributeName: string): string {
-    return generateSelector(this, targetElement, true, testIdAttributeName).selector;
+    return generateSelector(this, targetElement, testIdAttributeName).selector;
   }
 
   querySelector(selector: ParsedSelector, root: Node, strict: boolean): Element | undefined {
