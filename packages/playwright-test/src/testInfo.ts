@@ -245,12 +245,12 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?snapshotDir\}/g, '$1' + this.project.snapshotDir)
         .replace(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix ? '$1' + this.snapshotSuffix : ''))
         .replace(/\{(.)?platform\}/g, '$1' + process.platform)
-        .replace(/\{(.)?projectName\}/g, projectNamePathSegment ? '$1' + projectNamePathSegment : projectNamePathSegment)
+        .replace(/\{(.)?projectName\}/g, projectNamePathSegment ? '$1' + projectNamePathSegment : '')
         .replace(/\{(.)?testFileDir\}/g, '$1' + parsedRelativeTestFilePath.dir)
         .replace(/\{(.)?testFileName\}/g, '$1' + parsedRelativeTestFilePath.base)
         .replace(/\{(.)?testFilePath\}/g, '$1' + relativeTestFilePath)
         .replace(/\{(.)?arg\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))
-        .replace(/\{(.)?ext\}/g, '$1' + parsedSubPath.ext);
+        .replace(/\{(.)?ext\}/g, parsedSubPath.ext ? '$1' + parsedSubPath.ext : '');
     return path.normalize(snapshotPath);
   }
 
