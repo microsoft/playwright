@@ -196,7 +196,7 @@ class Recorder {
       return true;
     }
     const nodeName = target.nodeName;
-    if (nodeName === 'SELECT')
+    if (nodeName === 'SELECT' || nodeName === 'OPTION')
       return true;
     if (nodeName === 'INPUT' && ['date'].includes((target as HTMLInputElement).type))
       return true;
