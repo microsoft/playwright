@@ -13,7 +13,6 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "dtest": "cross-env PLAYWRIGHT_DOCKER=1 playwright test --config=tests/library/playwright.config.ts --grep '@smoke'",
     "ctest": "playwright test --config=tests/library/playwright.config.ts --project=chromium",
     "ftest": "playwright test --config=tests/library/playwright.config.ts --project=firefox",
     "wtest": "playwright test --config=tests/library/playwright.config.ts --project=webkit",
