@@ -700,6 +700,8 @@ DebugController:
 
     hideHighlight:
 
+    resume:
+
     kill:
 
     closeAllBrowsers:
@@ -722,7 +724,10 @@ DebugController:
         actions:
           type: array?
           items: string
-         
+
+    paused:
+      parameters:
+        paused: boolean
 
     # Deprecated
     browsersChanged:

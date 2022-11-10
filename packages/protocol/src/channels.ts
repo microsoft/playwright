@@ -592,6 +592,7 @@ export interface DebugControllerEventTarget {
   on(event: 'inspectRequested', callback: (params: DebugControllerInspectRequestedEvent) => void): this;
   on(event: 'stateChanged', callback: (params: DebugControllerStateChangedEvent) => void): this;
   on(event: 'sourceChanged', callback: (params: DebugControllerSourceChangedEvent) => void): this;
+  on(event: 'paused', callback: (params: DebugControllerPausedEvent) => void): this;
   on(event: 'browsersChanged', callback: (params: DebugControllerBrowsersChangedEvent) => void): this;
 }
 export interface DebugControllerChannel extends DebugControllerEventTarget, Channel {
@@ -603,6 +604,7 @@ export interface DebugControllerChannel extends DebugControllerEventTarget, Chan
   setRecorderMode(params: DebugControllerSetRecorderModeParams, metadata?: Metadata): Promise<DebugControllerSetRecorderModeResult>;
   highlight(params: DebugControllerHighlightParams, metadata?: Metadata): Promise<DebugControllerHighlightResult>;
   hideHighlight(params?: DebugControllerHideHighlightParams, metadata?: Metadata): Promise<DebugControllerHideHighlightResult>;
+  resume(params?: DebugControllerResumeParams, metadata?: Metadata): Promise<DebugControllerResumeResult>;
   kill(params?: DebugControllerKillParams, metadata?: Metadata): Promise<DebugControllerKillResult>;
   closeAllBrowsers(params?: DebugControllerCloseAllBrowsersParams, metadata?: Metadata): Promise<DebugControllerCloseAllBrowsersResult>;
 }
@@ -618,6 +620,9 @@ export type DebugControllerSourceChangedEvent = {
   header?: string,
   footer?: string,
   actions?: string[],
+};
+export type DebugControllerPausedEvent = {
+  paused: boolean,
 };
 export type DebugControllerBrowsersChangedEvent = {
   browsers: {
@@ -669,6 +674,9 @@ export type DebugControllerHighlightResult = void;
 export type DebugControllerHideHighlightParams = {};
 export type DebugControllerHideHighlightOptions = {};
 export type DebugControllerHideHighlightResult = void;
+export type DebugControllerResumeParams = {};
+export type DebugControllerResumeOptions = {};
+export type DebugControllerResumeResult = void;
 export type DebugControllerKillParams = {};
 export type DebugControllerKillOptions = {};
 export type DebugControllerKillResult = void;
@@ -680,6 +688,7 @@ export interface DebugControllerEvents {
   'inspectRequested': DebugControllerInspectRequestedEvent;
   'stateChanged': DebugControllerStateChangedEvent;
   'sourceChanged': DebugControllerSourceChangedEvent;
+  'paused': DebugControllerPausedEvent;
   'browsersChanged': DebugControllerBrowsersChangedEvent;
 }
 
