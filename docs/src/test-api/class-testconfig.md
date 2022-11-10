@@ -331,6 +331,11 @@ test('example test', async ({}, testInfo) => {
 * since: v1.10
 - type: ?<[string]>
 
+:::note
+Use of [`property: TestConfig.snapshotDir`] is discouraged. Please use [`property: TestConfig.snapshotPathTemplate`] to configure
+snapshot paths.
+:::
+
 The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to [`property: TestConfig.testDir`].
 
 The directory for each test can be accessed by [`property: TestInfo.snapshotDir`] and [`method: TestInfo.snapshotPath`].

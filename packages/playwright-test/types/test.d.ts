@@ -756,6 +756,11 @@ interface TestConfig {
   outputDir?: string;
 
   /**
+   * > NOTE: Use of [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir) is
+   * discouraged. Please use
+   * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
+   * to configure snapshot paths.
+   *
    * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
    * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
    *
@@ -802,27 +807,27 @@ interface TestConfig {
    *
    * The list of supported tokens:
    * - `{testDir}` - Project's [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
-   *   - Example: `tests/`
+   *   - Value: `/home/playwright/tests/`
    * - `{snapshotDir}` - Project's
    *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
-   *   - Example: `tests/` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
+   *   - Value: `tests/` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
    * - `{platform}` - The value of `process.platform`.
-   * - `{snapshotSuffix}` - The value of
-   *   [testInfo.snapshotSuffix](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-suffix).
-   * - `{projectName}` - Project's sanitized name, if any.
-   *   - Example: `''` (empty string).
+   * - `{projectName}` - Project's file-system-sanitized name, if any.
+   *   - Value: `''` (empty string).
    * - `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
-   *   - Example: `page/`
+   *   - Value: `page/`
    * - `{testFileName}` - Test file name with extension.
-   *   - Example: `page-click.spec.ts`
+   *   - Value: `page-click.spec.ts`
    * - `{testFilePath}` - Relative path from `testDir` to **test file**
-   *   - Example: `page/page-click.spec.ts`
+   *   - Value: `page/page-click.spec.ts`
+   * - `{testName}` - File-system-sanitized Test title, including parent describes but excluding file name.
+   *   - Value: `suite-test-should-work`
    * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
    *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
    *   snapshot name.
-   *   - Example: `foo/bar/baz`
+   *   - Value: `foo/bar/baz`
    * - `{ext}` - snapshot extension (with dots)
-   *   - Example: `.png`
+   *   - Value: `.png`
    *
    * Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
    *
@@ -1792,6 +1797,11 @@ export interface TestInfo {
   snapshotPath(...pathSegments: Array<string>): string;
 
   /**
+   * > NOTE: Use of [testInfo.snapshotSuffix](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-suffix) is
+   * discouraged. Please use
+   * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
+   * to configure snapshot paths.
+   *
    * Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the
    * platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case
    * `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about
@@ -4587,27 +4597,27 @@ interface TestProject {
    *
    * The list of supported tokens:
    * - `{testDir}` - Project's [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
-   *   - Example: `tests/`
+   *   - Value: `/home/playwright/tests/`
    * - `{snapshotDir}` - Project's
    *   [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir).
-   *   - Example: `tests/` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
+   *   - Value: `tests/` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
    * - `{platform}` - The value of `process.platform`.
-   * - `{snapshotSuffix}` - The value of
-   *   [testInfo.snapshotSuffix](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-suffix).
-   * - `{projectName}` - Project's sanitized name, if any.
-   *   - Example: `''` (empty string).
+   * - `{projectName}` - Project's file-system-sanitized name, if any.
+   *   - Value: `''` (empty string).
    * - `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
-   *   - Example: `page/`
+   *   - Value: `page/`
    * - `{testFileName}` - Test file name with extension.
-   *   - Example: `page-click.spec.ts`
+   *   - Value: `page-click.spec.ts`
    * - `{testFilePath}` - Relative path from `testDir` to **test file**
-   *   - Example: `page/page-click.spec.ts`
+   *   - Value: `page/page-click.spec.ts`
+   * - `{testName}` - File-system-sanitized Test title, including parent describes but excluding file name.
+   *   - Value: `suite-test-should-work`
    * - `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the
    *   `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated
    *   snapshot name.
-   *   - Example: `foo/bar/baz`
+   *   - Value: `foo/bar/baz`
    * - `{ext}` - snapshot extension (with dots)
-   *   - Example: `.png`
+   *   - Value: `.png`
    *
    * Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
    *

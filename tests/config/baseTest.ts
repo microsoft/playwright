@@ -37,7 +37,4 @@ export const baseTest = base
     ._extendTest(platformTest)
     ._extendTest(testModeTest)
     .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
-    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures)
-    .extend<{}, { _snapshotSuffix: string }>({
-      _snapshotSuffix: ['', { scope: 'worker' }],
-    });
+    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures);
