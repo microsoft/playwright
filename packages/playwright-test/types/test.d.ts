@@ -2579,7 +2579,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Specifies options or fixtures to use in a single test file or a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group. Most useful to set
    * an option, for example set `locale` to configure `context` fixture. `test.use` can be called either in the global scope
-   * or inside `test.describe`, it's is an error to call it within `beforeEach` or `beforeAll`.
+   * or inside `test.describe`. It is an error to call it within `beforeEach` or `beforeAll`.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
