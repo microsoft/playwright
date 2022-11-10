@@ -34,6 +34,9 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
     this._object.on(DebugController.Events.SourceChanged, ({ text, header, footer, actions }) => {
       this._dispatchEvent('sourceChanged', ({ text, header, footer, actions }));
     });
+    this._object.on(DebugController.Events.Paused, ({ paused }) => {
+      this._dispatchEvent('paused', ({ paused }));
+    });
   }
 
   async initialize(params: channels.DebugControllerInitializeParams) {
@@ -62,6 +65,10 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
 
   async hideHighlight() {
     await this._object.hideHighlight();
+  }
+
+  async resume() {
+    await this._object.resume();
   }
 
   async kill() {

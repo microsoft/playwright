@@ -34,6 +34,7 @@ export class DebugController extends SdkObject {
     StateChanged: 'stateChanged',
     InspectRequested: 'inspectRequested',
     SourceChanged: 'sourceChanged',
+    Paused: 'paused',
   };
 
   private _autoCloseTimer: NodeJS.Timeout | undefined;
@@ -52,6 +53,7 @@ export class DebugController extends SdkObject {
   initialize(codegenId: string, sdkLanguage: Language) {
     this._codegenId = codegenId;
     this._sdkLanguage = sdkLanguage;
+    Recorder.setAppFactory(async () => new InspectingRecorderApp(this));
   }
 
   setAutoCloseAllowed(allowed: boolean) {
@@ -61,6 +63,7 @@ export class DebugController extends SdkObject {
   dispose() {
     this.setReportStateChanged(false);
     this.setAutoCloseAllowed(false);
+    Recorder.setAppFactory(undefined);
   }
 
   setReportStateChanged(enabled: boolean) {
@@ -157,6 +160,11 @@ export class DebugController extends SdkObject {
     return [...this._playwright.allBrowsers()];
   }
 
+  async resume() {
+    for (const recorder of await this._allRecorders())
+      recorder.resume();
+  }
+
   async kill() {
     selfDestruct();
   }
@@ -192,7 +200,7 @@ export class DebugController extends SdkObject {
     const contexts = new Set<BrowserContext>();
     for (const page of this._playwright.allPages())
       contexts.add(page.context());
-    const result = await Promise.all([...contexts].map(c => Recorder.show(c, { omitCallTracking: true }, () => Promise.resolve(new InspectingRecorderApp(this)))));
+    const result = await Promise.all([...contexts].map(c => Recorder.show(c, { omitCallTracking: true })));
     return result.filter(Boolean) as Recorder[];
   }
 
@@ -234,5 +242,9 @@ class InspectingRecorderApp extends EmptyRecorderApp {
     const source = sources.find(s => s.id === this._debugController._codegenId);
     const { text, header, footer, actions } = source || { text: '' };
     this._debugController.emit(DebugController.Events.SourceChanged, { text, header, footer, actions });
+  }
+
+  override async setPaused(paused: boolean) {
+    this._debugController.emit(DebugController.Events.Paused, { paused });
   }
 }

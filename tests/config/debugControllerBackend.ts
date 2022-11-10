@@ -137,6 +137,10 @@ export class Backend extends EventEmitter {
     };
   }
 
+  async initialize() {
+    await this._send('initialize', { codegenId: 'playwright-test', sdkLanguage: 'javascript' });
+  }
+
   async close() {
     await this._transport.closeAndWait();
   }
@@ -163,6 +167,10 @@ export class Backend extends EventEmitter {
 
   async hideHighlight() {
     await this._send('hideHighlight');
+  }
+
+  async resume() {
+    this._send('resume');
   }
 
   async kill() {

@@ -83,6 +83,9 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   }
 
   resume(step: boolean) {
+    if (!this.isPaused())
+      return;
+
     this._pauseOnNextStatement = step;
     const endTime = monotonicTime();
     for (const [metadata, { resolve }] of this._pausedCallsMetadata) {

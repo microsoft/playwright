@@ -344,6 +344,9 @@ scheme.DebugControllerSourceChangedEvent = tObject({
   footer: tOptional(tString),
   actions: tOptional(tArray(tString)),
 });
+scheme.DebugControllerPausedEvent = tObject({
+  paused: tBoolean,
+});
 scheme.DebugControllerBrowsersChangedEvent = tObject({
   browsers: tArray(tObject({
     contexts: tArray(tObject({
@@ -377,6 +380,8 @@ scheme.DebugControllerHighlightParams = tObject({
 scheme.DebugControllerHighlightResult = tOptional(tObject({}));
 scheme.DebugControllerHideHighlightParams = tOptional(tObject({}));
 scheme.DebugControllerHideHighlightResult = tOptional(tObject({}));
+scheme.DebugControllerResumeParams = tOptional(tObject({}));
+scheme.DebugControllerResumeResult = tOptional(tObject({}));
 scheme.DebugControllerKillParams = tOptional(tObject({}));
 scheme.DebugControllerKillResult = tOptional(tObject({}));
 scheme.DebugControllerCloseAllBrowsersParams = tOptional(tObject({}));
