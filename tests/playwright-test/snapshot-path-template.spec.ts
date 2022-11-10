@@ -45,6 +45,7 @@ async function getSnapshotPaths(runInlineTest, testInfo, playwrightConfig, pathA
 }
 
 test('tokens should expand property', async ({ runInlineTest }, testInfo) => {
+  test.slow();
   const snapshotPath = await getSnapshotPaths(runInlineTest, testInfo, {
     projects: [{
       name: 'proj1',
