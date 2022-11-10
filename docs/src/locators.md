@@ -815,30 +815,25 @@ You can locate in the same way as if the shadow root was not present at all.
 
 ## Filtering Locators
 
-### Filter by text
-
-Locators can be optionally filtered by text with the [`method: Locator.filter`] method. It will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
-
-For example, consider the following DOM structure:
+Consider the following DOM structure where we want to click on the buy button of the second product card. We have a few options in order to filter the locators to get the right one.
 
 ```html
 <div data-testid='product-card'>
-  <span>Product 1</span>
+  <h3>Product 1</h3>
   <button>Buy</button>
 </div>
 
 <div data-testid='product-card'>
-  <span>Product 2</span>
+  <h3>Product 2</h3>
   <button>Buy</button>
 </div>
 ```
 
-<img width="110" alt="2 product cards with text and a button" src="https://user-images.githubusercontent.com/13063165/201133018-5881a5ca-f86d-4c98-8a83-eec40d14aa49.png" />
+<img width="83" alt="2 product cards with text and a button" src="https://user-images.githubusercontent.com/13063165/201182468-348eb733-7cf5-4e5b-94de-604312fe5fc7.png" />
 
-To click on the "buy" button from the second product card: 
-1. locate the product cards by test id
-1. filter to find the product card with the text of "Product 2"
-1. get the button role with name of buy and click it
+### Filter by text
+
+Locators can be optionally filtered by text with the [`method: Locator.filter`] method. It will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
 
 ```js
 await page.getByTestId('product-card')
@@ -911,70 +906,46 @@ await page.GetByTestId("product-card")
     .ClickAsync();
 ```
 
-<img width="112" alt="2 product cards with text and a button and the second one being highlighted" src="https://user-images.githubusercontent.com/13063165/201138706-177f887a-0095-417a-924c-c5370b23acff.png" />
+<img width="83" alt="2 product cards with text and a button and the second one being highlighted" src="https://user-images.githubusercontent.com/13063165/201182749-253ff808-cd70-4d42-88c6-a9f07fb7eeae.png" />
 
 ### Filter by another locator
 
-Locators support an option to only select elements that have a descendant matching another locator. You can therefore filter by any other locator such as a role locator, text locator, test-id locator etc.
-
-For example, consider the following DOM structure:
-
-```html
-<div data-testid='product-card'>
-  <span>Product 1</span>
-  <button>Buy</button>
-</div>
-
-<div data-testid='product-card'>
-  <span>Product 2</span>
-  <button>Buy</button>
-</div>
-```
-
-<img width="110" alt="2 product cards with text and a button" src="https://user-images.githubusercontent.com/13063165/201133018-5881a5ca-f86d-4c98-8a83-eec40d14aa49.png" />
-
-To click on the "buy" button from the second product card: 
-1. locate the product cards by test id
-1. filter to find the product card that has the [`method: Page.getByText`] locator with text of 'Product 2'
-1. get the button role with name of buy and click it
+Locators support an option to only select elements that have a descendant matching another locator. You can therefore filter by any other locator such as a [`method: Locator.getByRole`], [`method: Locator.getByTestId`], [`method: Locator.getByText`] etc.
 
 ```js
-await page.getByTestId('todo-item')
-    .filter({ has: page.getByText('Product 2') })
+await page.getByTestId('product-card')
+    .filter({ has: page.getByRole('heading', { name: 'Product 2' })})
     .getByRole('button', { name: 'Buy' })
     .click()
 ```
 ```java
-page.getByTestId("todo-item")
-    .filter(new Locator.FilterOptions().setHas(page.getByText("Product 2")
+page.getByTestId("product-card")
+    .filter(new Locator.FilterOptions().setHas(page.AriaRole.Heading, new Page.GetByRoleOptions().setName("Product 2"))
     .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy")))
     .click()
 ```
 ```python async
-await page.get_by_test_id("todo-item")
-    .filter(has=page.get_by_text("Product 2"))
+await page.get_by_test_id("product-card")
+    .filter(has=page.get_by_role("heading", name="Product 2"))
     .get_by_role("button", name="Buy")
     .click()
 ```
 ```python sync
-page.get_by_test_id("todo-item")
-    .filter(has=page.get_by_text("Product 2"))
+page.get_by_test_id("product-card")
+    .filter(has=page.get_by_role("heading", name="Product 2"))
     .get_by_role("button", name="Buy")
     .click()
 ```
 ```csharp
-await page.GetByTestId("todo-item")
-    .Filter(new() { Has = page.GetByText("Product 2" ) })
+await page.GetByTestId("product-card")
+    .Filter(new() { Has = page.GetByRole(AriaRole.Heading, new () { Name = "Product 2" })})
     .GetByRole(AriaRole.Button, new () { Name = "Buy" })
     .ClickAsync();
 ```
 
-<img width="112" alt="Screenshot 2022-11-10 at 16 37 36" src="https://user-images.githubusercontent.com/13063165/201138706-177f887a-0095-417a-924c-c5370b23acff.png" />
+<img width="83" alt="2 product cards with text and a button and the second one being highlighted" src="https://user-images.githubusercontent.com/13063165/201182749-253ff808-cd70-4d42-88c6-a9f07fb7eeae.png" />
 
-We can also assert the product card to make sure there is only one:
-1. locate by the the test id (this gives us two items)
-1. filter by the text (now we have one item)
-1. make sure there is only one product called 'Product 2'
+We can also assert the product card to make sure there is only one
 
 ```js
 await expect(page.getByTestId('product-card')
@@ -990,51 +961,33 @@ await expect(page.getByTestId('product-card')
 
 ```python async
 await expect(page.get_by_role("product-card")
-    .filter(has=page.get_by_text("Product 2")))
+    .filter(has=page.get_by_role("heading", name="Product 2"))
     .to_have_count(1)
 ```
 
 ```python sync
 expect(page.get_by_role("product-card")
-    .filter(has=page.get_by_text("Product 2")))
+    .filter(has=page.get_by_role("heading", name="Product 2"))
     .to_have_count(1)
 ```
 
 ```csharp
 await Expect(page.GetByTestId("product-card")
-    .Filter(new() { Has = page.GetByText("Product 2" ) }))
+    .Filter(new() { Has = page.GetByRole(AriaRole.Heading, new () { Name = "Product 2" })})
     .toHaveCountAsync(1)
 ```
 
 Note that the inner locator is matched starting from the outer one, not from the document root.
 
-## Locate elements inside elements
+## Chaining Locators
 
-You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page.
+You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page. 
 
-For example, consider the following DOM structure where we want to click on the Buy button from the second product card.
+:::info
+You must create a locator or use filtering in order to chain locators
+:::
 
-```html
-<div data-testid='product-card'>
-  <span>Product 1</span>
-  <button>Buy</button>
-</div>
-
-<div data-testid='product-card'>
-  <span>Product 2</span>
-  <button>Buy</button>
-</div>
-```
-<img width="110" alt="2 product cards with text and a button" src="https://user-images.githubusercontent.com/13063165/201133018-5881a5ca-f86d-4c98-8a83-eec40d14aa49.png" />
-
-
-Locating by role `button` will return an error due to [strictness](#strictness) as there is more than one element with this role and name. 
-
-In this scenario we can locate an element within another element.
-1. Create a locator called **product** and locate the product cards by testid.
-1. Filter by text to find the product card with the text of "Product 2".
-1. Use the new locator called **product** and locate the button inside that product card and click it.
-1. Reuse this locator for assertions or more filtering
+In this example we first create a locator called product by locating the test id. We then filter by text. We can use the product locator again to get by role of button and click it and then use an assertion to make sure there is only one product with the text ' Product 2'.
 
 ```js
 const product = page.getByTestId('product-card')
@@ -1078,7 +1031,8 @@ await product.GetByRole("button", new() { Name = "Buy" })
     .ClickAsync();
 ```
 
-<img width="112" alt="Screenshot 2022-11-10 at 16 37 36" src="https://user-images.githubusercontent.com/13063165/201138706-177f887a-0095-417a-924c-c5370b23acff.png" />
+<img width="83" alt="2 product cards with text and a button and the second one being highlighted" src="https://user-images.githubusercontent.com/13063165/201182749-253ff808-cd70-4d42-88c6-a9f07fb7eeae.png" />
+
 ## Lists
 
 ### Count items in a list
@@ -1351,10 +1305,6 @@ For example, consider the following DOM structure:
 <img width="112" alt="text John and Mary with buttons say hello and say goodbye beside their names" src="https://user-images.githubusercontent.com/13063165/201173459-4c560974-6712-48a6-8b6d-a636276f0dd3.png" />
 
 To take a screenshot of the row with "Mary" and "Say goodbye":
-1. create a locator for the list items
-1. filter by the text "Mary"
-1. filter by the button text "Say goodbye"
-1. take a screenshot
 
 ```js
 const rowLocator = page.getByRole('listitem');
@@ -1400,7 +1350,6 @@ await rowLocator.Filter(new() { HasText = "Mary" })
 
 You should now have a "screenshot.png" file in your project's root directory.
 
-<img width="154" alt="Mary and a button that says say goodbye" src="https://user-images.githubusercontent.com/13063165/201173882-18cb6bc0-be75-4c19-9215-e64254e7f150.png" />
 ### Rare use cases
 
 #### Get All text contents
