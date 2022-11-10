@@ -192,7 +192,7 @@ export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL
 export function wrapInASCIIBox(text: string, padding = 0): string {
   const lines = text.split('\n');
   const maxLineLength = Math.max(...lines.map(line => line.length));
-  const separatorLength = process.stdout.isTTY ? process.stdout.columns : maxLineLength;
+  const separatorLength = process.stdout.columns || maxLineLength;
   const separator = '═'.repeat(separatorLength);
   return [separator, ...lines, separator, ''].join('\n');
 }
