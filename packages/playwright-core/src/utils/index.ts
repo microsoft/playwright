@@ -191,12 +191,10 @@ export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL
 
 export function wrapInASCIIBox(text: string, padding = 0): string {
   const lines = text.split('\n');
-  const maxLength = Math.max(...lines.map(line => line.length));
-  return [
-    '╔' + '═'.repeat(maxLength + padding * 2) + '╗',
-    ...lines.map(line => '║' + ' '.repeat(padding) + line + ' '.repeat(maxLength - line.length + padding) + '║'),
-    '╚' + '═'.repeat(maxLength + padding * 2) + '╝',
-  ].join('\n');
+  const maxLineLength = Math.max(...lines.map(line => line.length));
+  const separatorLength = process.stdout.columns || maxLineLength;
+  const separator = '═'.repeat(separatorLength);
+  return [separator, ...lines, separator, ''].join('\n');
 }
 
 export function isFilePayload(value: any): boolean {
