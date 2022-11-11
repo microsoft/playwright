@@ -251,7 +251,7 @@ await Expect(page.GetByRole("heading", new() { NameString = "my form" }))
 await page.GetByRole("checkbox", new() { Checked = true, NameString = "newsletter" })
     .UncheckAsync();
 
-await page.GetByRole("button", new() { Name = new Regex("submit", RegexOptions.IgnoreCase) })
+await page.GetByRole("button", new() { NameRegex = new Regex("submit", RegexOptions.IgnoreCase) })
     .ClickAsync();
 ```
 
