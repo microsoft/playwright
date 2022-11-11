@@ -194,7 +194,7 @@ For example, consider the following DOM structure.
 <form>
 ```
 
-<img width="239" alt="form with newsletter checkbox and submit button" src="https://user-images.githubusercontent.com/13063165/201135368-0b85f894-84b6-4f3b-a69b-ed4f53cacb34.png" />
+<img width="247" alt="form with newsletter checkbox that is checked and a submit button" src="https://user-images.githubusercontent.com/13063165/201355711-20f1f45d-81b5-42b1-8932-397c935cedd8.png">
 
 You can locate each element by it's implicit role:
 
@@ -399,27 +399,27 @@ await Expect(page.GetByText("Welcome, John", new() { Exact = true }))
     .ToBeVisibleAsync();
 ```
 
-Ignore the case:
+Match with a regular expression:
 
 ```js
-await expect(page.getByText(/welcome, john$/i))
+await expect(page.getByText(/welcome, [A-Za-z]+$/i))
     .toBeVisible();
 ```
 
 ```java
-assertThat(page.getByText(Pattern.compile("welcome john$", Pattern.CASE_INSENSITIVE))).isVisible();
+assertThat(page.getByText(Pattern.compile("welcome, john$", Pattern.CASE_INSENSITIVE))).isVisible();
 ```
 
 ```python async
-await expect(page.get_by_text(re.compile("welcome john", re.IGNORECASE))).to_be_visible()
+await expect(page.get_by_text(re.compile("welcome, john", re.IGNORECASE))).to_be_visible()
 ```
 
 ```python sync
-expect(page.get_by_text(re.compile("welcome john", re.IGNORECASE))).to_be_visible()
+expect(page.get_by_text(re.compile("welcome, john", re.IGNORECASE))).to_be_visible()
 ```
 
 ```csharp
-await Expect(page.GetByText(new Regex("welcome john", RegexOptions.IgnoreCase)))
+await Expect(page.GetByText(new Regex("welcome, john", RegexOptions.IgnoreCase)))
     .ToBeVisibleAsync();
 ```
 
@@ -557,14 +557,13 @@ await page.GetByTestId("directions")
 
 <img width="72" alt="button with Itinéraire text showing click action" src="https://user-images.githubusercontent.com/13063165/201133588-789926c6-9de3-4866-abd9-8d0a7e3fa95d.png" />
 
-
-By default, [`method: Page.getByTestId`] will locate elements based on the `data-testid` attribute, but you can configure it in your test config or by calling [`method: Selectors.setTestIdAttribute`].
-
 :::tip When to use testid locators
 You can also use test ids when you choose to use the test id methodology or when you can't locate by [role](#locate-by-role) or [text](#locate-by-text).
 :::
 
 #### Set a custom test id attribute
+
+By default, [`method: Page.getByTestId`] will locate elements based on the `data-testid` attribute, but you can configure it in your test config or by calling [`method: Selectors.setTestIdAttribute`].
 
 Set the test id to use a custom data attribute for your tests.
 
