@@ -735,59 +735,72 @@ Consider the following example with a custom web component:
 </x-details>
 ```
 
+<img width="101" alt="Title, shadow-root and details" src="https://user-images.githubusercontent.com/13063165/201364144-fe6ea945-505d-4650-bbe4-056439c311c8.png" />
+
+
 You can locate in the same way as if the shadow root was not present at all.
 
-- Click `<div>Details</div>`
-  ```js
-  await page.getByText('Details').click();
-  ```
-  ```java
-  page.getByText("Details").click();
-  ```
-  ```python async
-  await page.get_by_text("Details").click()
-  ```
-  ```python sync
-  page.get_by_text("Details").click()
-  ```
-  ```csharp
-  await page.GetByText("Details").ClickAsync();
-  ```
+To click `<div>Details</div>`:
 
-- Click `<x-details>`
-  ```js
-  await page.locator('x-details', { hasText: 'Details' }).click();
-  ```
-  ```java
-  page.locator("x-details", new Page.LocatorOptions().setHasText("Details")).click();
-  ```
-  ```python async
-  await page.locator("x-details", has_text="Details" ).click()
-  ```
-  ```python sync
-  page.locator("x-details", has_text="Details" ).click()
-  ```
-  ```csharp
-  await page.Locator("x-details", new() { HasTextString = "Details" }).ClickAsync();
-  ```
+```js
+await page.getByText('Details').click();
+```
+```java
+page.getByText("Details").click();
+```
+```python async
+await page.get_by_text("Details").click()
+```
+```python sync
+page.get_by_text("Details").click()
+```
+```csharp
+await page.GetByText("Details").ClickAsync();
+```
 
-- Ensure that `<x-details>` contains text "Details"
-  ```js
-  await expect(page.locator('x-details')).toContainText('Details');
-  ```
-  ```java
-  assertThat(page.locator("x-details")).containsText("Details");
-  ```
-  ```python async
-  await expect(page.locator("x-details")).to_contain_text("Details")
-  ```
-  ```python sync
-  expect(page.locator("x-details")).to_contain_text("Details")
-  ```
-  ```csharp
-  await Expect(page.Locator("x-details")).ToContainTextAsync("Details");
-  ```
+<img width="100" alt="Title, shadow-root and details with text details highlighted" src="https://user-images.githubusercontent.com/13063165/201364000-42820d75-053f-449e-80bf-8b38470a2a23.png" /> 
 
+
+<br /><br />
+
+To click `<x-details>`:
+
+```js
+await page.locator('x-details', { hasText: 'Details' }).click();
+```
+```java
+page.locator("x-details", new Page.LocatorOptions().setHasText("Details")).click();
+```
+```python async
+await page.locator("x-details", has_text="Details" ).click()
+```
+```python sync
+page.locator("x-details", has_text="Details" ).click()
+```
+```csharp
+await page.Locator("x-details", new() { HasTextString = "Details" }).ClickAsync();
+```
+
+<img width="103" alt="Title, shadow-root and details highlighted" src="https://user-images.githubusercontent.com/13063165/201363856-09fd3eec-6e55-45fe-a251-7b39c3ea09d7.png" />
+
+<br /><br />
+
+To ensure that `<x-details>` contains the text "Details":
+```js
+await expect(page.locator('x-details')).toContainText('Details');
+```
+```java
+assertThat(page.locator("x-details")).containsText("Details");
+```
+```python async
+await expect(page.locator("x-details")).to_contain_text("Details")
+```
+```python sync
+expect(page.locator("x-details")).to_contain_text("Details")
+```
+```csharp
+await Expect(page.Locator("x-details")).ToContainTextAsync("Details");
+```
 ## Filtering Locators
 
 Consider the following DOM structure where we want to click on the buy button of the second product card. We have a few options in order to filter the locators to get the right one.
