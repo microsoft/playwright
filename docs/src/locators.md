@@ -1385,49 +1385,6 @@ Object texts = rows.evaluateAll("list => list.map(element => element.textContent
 var rows = page.GetByRole("listitem");
 var texts = await rows.EvaluateAllAsync("list => list.map(element => element.textContent)");
 ```
-
-
-#### CSS Scoped
-
-Use CSS scoping to locate elements.
-
-```js
-function helper(locator) {
-  locator.locator(':scope.selected');
-
-  locator.filter({ hasText: 'banana' });
-}
-```
-
-```python async
-def helper(locator):
-    locator.locator(":scope.selected")
-
-    locator.filter(has_text="banana")
-```
-
-```python sync
-def helper(locator):
-    locator.locator(":scope.selected")
-
-    locator.filter(has_text="banana")
-```
-
-```java
-void helper(Locator locator) {
-    locator.locator(":scope.selected");
-
-    locator.filter(new Locator.FilterOptions().setHasText("banana"));
-}
-```
-
-```csharp
-void Helper(Locator locator){
-    locator.Locator(":scope.selected");
-
-    locator.Filter(new() { HasText = "banana" });
-}
-```
 ## Strictness
 
 Locators are strict. This means that all operations on locators that imply
