@@ -1019,7 +1019,7 @@ product.get_by_role("button", name="Buy")
 Locator product = page.getByTestId("product-card")
     .filter(new Locator.FilterOptions().setHasText("Product 2"));
 
-product.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy"))
+product.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Buy"))
     .click();
 ```
 
