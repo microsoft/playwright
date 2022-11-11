@@ -1106,7 +1106,7 @@ expect(page.get_by_role("listitem"))
 ```
 
 ```java
-assertThat(page.getByRole(AriaRole.LISTITEM)
+assertThat(page.getByRole(AriaRole.LISTITEM))
     .hasText(new String[] { "apple", "banana", "orange" });
 ```
 
