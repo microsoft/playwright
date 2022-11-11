@@ -88,12 +88,10 @@ page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in"))
     .click();
 ```
 ```python async
-await page.get_by_role("button", name="Sign in")
-    .click()
+await page.get_by_role("button", name="Sign in").click()
 ```
 ```python sync
-page.get_by_role("button", name="Sign in")
-    .click()
+page.get_by_role("button", name="Sign in").click()
 ```
 ```csharp
 await page.GetByRole("button", new() { Name = "Sign in" })
@@ -212,25 +210,19 @@ await page.getByRole('button', { name: /submit/i })
 ```
 
 ```python async
-await expect(page.get_by_role("heading", name="my form"))
-    .to_be_visible()
+await expect(page.get_by_role("heading", name="my form")).to_be_visible()
 
-await page.get_by_role("checkbox", checked=True, name="newsletter")
-    .uncheck()
+await page.get_by_role("checkbox", checked=True, name="newsletter").uncheck()
 
-await page.get_by_role("button", name=re.compile("submit", re.IGNORECASE))
-    .click()
+await page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
 ```
 
 ```python sync
-expect(page.get_by_role("heading", name="my from"))
-    .to_be_visible()
+expect(page.get_by_role("heading", name="my from")).to_be_visible()
 
-page.get_by_role("checkbox", checked=True, name="newsletter")
-    .uncheck()
+page.get_by_role("checkbox", checked=True, name="newsletter").uncheck()
 
-page.get_by_role("button", name=re.compile("submit", re.IGNORECASE))
-    .click()
+page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
 ```
 
 ```java
@@ -328,13 +320,11 @@ page.getByPlaceholder("name@example.com")
 ```
 
 ```python async
-await page.get_by_placeholder("name@example.com")
-    .fill("playwright@microsoft.com")
+await page.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
 ```
 
 ```python sync
-page.get_by_placeholder("name@example.com")
-    .fill("playwright@microsoft.com")
+page.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
 ```
 
 ```csharp
@@ -372,13 +362,11 @@ assertThat(page.getByText("Welcome, John"))
 ```
 
 ```python async
-await expect(page.get_by_text("Welcome, John"))
-    .to_be_visible()
+await expect(page.get_by_text("Welcome, John")).to_be_visible()
 ```
 
 ```python sync
-expect(page.get_by_text("Welcome, John"))
-    .to_be_visible()
+expect(page.get_by_text("Welcome, John")).to_be_visible()
 ```
 
 ```csharp
@@ -399,13 +387,11 @@ assertThat(page.getByText("Welcome, John", new Page.GetByTextOptions().setExact(
 ```
 
 ```python async
-await expect(page.get_by_text("Welcome, John", exact=True))
-    .to_be_visible()
+await expect(page.get_by_text("Welcome, John", exact=True)).to_be_visible()
 ```
 
 ```python sync
-expect(page.get_by_text("Welcome, John", exact=True))
-    .to_be_visible()
+expect(page.get_by_text("Welcome, John", exact=True)).to_be_visible()
 ```
 
 ```csharp
@@ -425,13 +411,11 @@ assertThat(page.getByText(Pattern.compile("welcome john$", Pattern.CASE_INSENSIT
 ```
 
 ```python async
-await expect(page.get_by_text(re.compile("welcome john", re.IGNORECASE)))
-    .to_be_visible()
+await expect(page.get_by_text(re.compile("welcome john", re.IGNORECASE))).to_be_visible()
 ```
 
 ```python sync
-expect(page.get_by_text(re.compile("welcome john", re.IGNORECASE)))
-    .to_be_visible()
+expect(page.get_by_text(re.compile("welcome john", re.IGNORECASE))).to_be_visible()
 ```
 
 ```csharp
@@ -476,13 +460,11 @@ page.getByAltText("playwright logo")
 ```
 
 ```python async
-await page.get_by_alt_text("playwright logo")
-    .click()
+await page.get_by_alt_text("playwright logo").click()
 ```
 
 ```python sync
-page.get_by_alt_text("playwright logo")
-    .click()
+page.get_by_alt_text("playwright logo").click()
 ```
 
 ```csharp
@@ -521,13 +503,11 @@ assertThat(page.getByTitle("Issues count"))
 ```
 
 ```python async
-await expect(page.get_by_title("Issues count"))
-    .to_have_text("25 issues")
+await expect(page.get_by_title("Issues count")).to_have_text("25 issues")
 ```
 
 ```python sync
-expect(page.get_by_title("Issues count"))
-    .to_have_text("25 issues")
+expect(page.get_by_title("Issues count")).to_have_text("25 issues")
 ```
 
 ```csharp
@@ -563,13 +543,11 @@ page.getByTestId("directions")
 ```
 
 ```python async
-await page.get_by_test_id("directions")
-    .click()
+await page.get_by_test_id("directions").click()
 ```
 
 ```python sync
-page.get_by_test_id("directions")
-    .click()
+page.get_by_test_id("directions").click()
 ```
 
 ```csharp
@@ -650,13 +628,11 @@ page.getByTestId("directions")
 ```
 
 ```python async
-await page.get_by_test_id("directions")
-    .click()
+await page.get_by_test_id("directions").click()
 ```
 
 ```python sync
-page.get_by_test_id("directions")
-    .click()
+page.get_by_test_id("directions").click()
 ```
 
 ```csharp
@@ -850,17 +826,11 @@ page.getByTestId("product-card")
 ```
 
 ```python async
-await page.get_by_test_id("product-card")
-    .filter(has_text="Product 2")
-    .get_by_role("button", name="Buy")
-    .click()
+await page.get_by_test_id("product-card").filter(has_text="Product 2").get_by_role("button", name="Buy").click()
 ```
 
 ```python sync
-page.get_by_test_id("product-card")
-    .filter(has_text="Product 2")
-    .get_by_role("button", name="Buy")
-    .click()
+page.get_by_test_id("product-card").filter(has_text="Product 2").get_by_role("button", name="Buy").click()
 ```
 ```csharp
 await page.GetByTestId("product-card")
@@ -886,10 +856,7 @@ page.getByTestId("product-card")
 ```
 
 ```python async
-await page.get_by_test_id("product-card")
-    .filter(has_text=re.compile("Product 2"))
-    .get_by_role("button", name="Buy")
-    .click()
+await page.get_by_test_id("product-card").filter(has_text=re.compile("Product 2")).get_by_role("button", name="Buy").click()
 ```
 
 ```python sync
@@ -925,10 +892,7 @@ page.getByTestId("product-card")
     .click()
 ```
 ```python async
-await page.get_by_test_id("product-card")
-    .filter(has=page.get_by_role("heading", name="Product 2"))
-    .get_by_role("button", name="Buy")
-    .click()
+await page.get_by_test_id("product-card").filter(has=page.get_by_role("heading", name="Product 2")).get_by_role("button", name="Buy").click()
 ```
 ```python sync
 page.get_by_test_id("product-card")
@@ -960,15 +924,11 @@ assertThat(page.getByTestId("product-card")
 ```
 
 ```python async
-await expect(page.get_by_role("product-card")
-    .filter(has=page.get_by_role("heading", name="Product 2"))
-    .to_have_count(1)
+await expect(page.get_by_role("product-card").filter(has=page.get_by_role("heading", name="Product 2")).to_have_count(1)
 ```
 
 ```python sync
-expect(page.get_by_role("product-card")
-    .filter(has=page.get_by_role("heading", name="Product 2"))
-    .to_have_count(1)
+expect(page.get_by_role("product-card").filter(has=page.get_by_role("heading", name="Product 2")).to_have_count(1)
 ```
 
 ```csharp
@@ -1000,19 +960,15 @@ await expect(product).toHaveCount(1);
 ```
 
 ```python async
-product = page.get_by_test_id("product-card")
-    .filter(has_text="Product 2")
+product = page.get_by_test_id("product-card").filter(has_text="Product 2")
 
-await product.get_by_role("button", name="Buy")
-    .click()
+await product.get_by_role("button", name="Buy").click()
 ```
 
 ```python sync
-product = page.get_by_test_id("product-card")
-    .filter(has_text="Product 2")
+product = page.get_by_test_id("product-card").filter(has_text="Product 2")
 
-product.get_by_role("button", name="Buy")
-    .click()
+product.get_by_role("button", name="Buy").click()
 ```
 
 ```java
@@ -1096,13 +1052,11 @@ await expect(page.getByRole('listitem'))
 ```
 
 ```python async
-await expect(page.get_by_role("listitem"))
-    .to_have_text(["apple", "banana", "orange"])
+await expect(page.get_by_role("listitem")).to_have_text(["apple", "banana", "orange"])
 ```
 
 ```python sync
-expect(page.get_by_role("listitem"))
-    .to_have_text(["apple", "banana", "orange"])
+expect(page.get_by_role("listitem")).to_have_text(["apple", "banana", "orange"])
 ```
 
 ```java
@@ -1140,13 +1094,11 @@ await page.getByText('orange')
 ```
 
 ```python async
-await page.get_by_text("orange")
-    .click()
+await page.get_by_text("orange").click()
 ```
 
 ```python sync
-page.get_by_text("orange")
-    .click()
+page.get_by_text("orange").click()
 ```
 
 ```java
@@ -1183,15 +1135,11 @@ await page.getByRole('listitem')
 ```
 
 ```python async
-await page.get_by_role("listitem")
-    .filter(has_text="orange")
-    .click()
+await page.get_by_role("listitem").filter(has_text="orange").click()
 ```
 
 ```python sync
-page.get_by_role("listitem")
-    .filter(has_text="orange")
-    .click()
+page.get_by_role("listitem").filter(has_text="orange").click()
 ```
 
 ```java
@@ -1229,13 +1177,11 @@ await page.getByTestId('orange')
 ```
 
 ```python async
-await page.get_by_test_id("orange")
-    .click()
+await page.get_by_test_id("orange").click()
 ```
 
 ```python sync
-page.get_by_test_id("orange")
-    .click()
+page.get_by_test_id("orange").click()
 ```
 
 ```java
@@ -1318,17 +1264,13 @@ await rowLocator
 ```python async
 row_locator = page.get_by_role("listitem")
 
-await row_locator.filter(has_text="Mary") \
-    .filter(has=page.get_by_role("button", name="Say goodbye")) \
-    .screenshot(path="screenshot.png")
+await row_locator.filter(has_text="Mary").filter(has=page.get_by_role("button", name="Say goodbye")).screenshot(path="screenshot.png")
 ```
 
 ```python sync
 row_locator = page.get_by_role("listitem")
 
-row_locator.filter(has_text="Mary") \
-    .filter(has=page.get_by_role("button", name="Say goodbye")) \
-    .screenshot(path="screenshot.png")
+row_locator.filter(has_text="Mary").filter(has=page.get_by_role("button", name="Say goodbye")).screenshot(path="screenshot.png")
 ```
 
 ```java
