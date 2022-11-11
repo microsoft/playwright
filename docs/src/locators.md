@@ -938,7 +938,7 @@ page.get_by_test_id("product-card")
 ```
 ```csharp
 await page.GetByTestId("product-card")
-    .Filter(new() { Has = page.GetByRole(AriaRole.Heading, new () { Name = "Product 2" })})
+    .Filter(new() { Has = page.GetByRole(AriaRole.Heading, new () { NameString = "Product 2" })})
     .GetByRole(AriaRole.Button, new () { Name = "Buy" })
     .ClickAsync();
 ```
