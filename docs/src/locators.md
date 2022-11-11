@@ -1202,7 +1202,7 @@ page.getByRole(AriaRole.LISTITEM)
 
 ```csharp
 await page.GetByRole("listitem")
-    .Filter(new() { HasText = "orange" })
+    .Filter(new() { HasTextString = "orange" })
     .ClickAsync();
 ```
 <img width="78" alt="list of apple, banana and orange highlighting orange" src="https://user-images.githubusercontent.com/13063165/201171918-0f689261-a48e-4660-9726-c8fcf29e9105.png" />
