@@ -1416,7 +1416,7 @@ for (int i = 0; i < count; ++i)
   Console.WriteLine(await rows.Nth(i).TextContentAsync());
 ```
 
-#### Evaluate all elements in the list
+#### Evaluate in the page
 
 The code inside [`method: Locator.evaluateAll`] runs in the page, you can call any DOM apis there.
 
