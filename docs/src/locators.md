@@ -974,7 +974,7 @@ expect(page.get_by_role("product-card")
 ```csharp
 await Expect(page.GetByTestId("product-card")
     .Filter(new() { Has = page.GetByRole(AriaRole.Heading, new () { Name = "Product 2" })})
-    .toHaveCountAsync(1)
+    .toHaveCountAsync(1);
 ```
 
 Note that the inner locator is matched starting from the outer one, not from the document root.
