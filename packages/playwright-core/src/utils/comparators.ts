@@ -24,9 +24,19 @@ export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: numbe
 export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
 
+let customPNGComparator: Comparator | undefined;
+if (process.env.PW_CUSTOM_PNG_COMPARATOR) {
+  try {
+    customPNGComparator = require(process.env.PW_CUSTOM_PNG_COMPARATOR);
+    if (typeof customPNGComparator !== 'function')
+      customPNGComparator = undefined;
+  } catch (e) {
+  }
+}
+
 export function getComparator(mimeType: string): Comparator {
   if (mimeType === 'image/png')
-    return compareImages.bind(null, 'image/png');
+    return customPNGComparator ?? compareImages.bind(null, 'image/png');
   if (mimeType === 'image/jpeg')
     return compareImages.bind(null, 'image/jpeg');
   if (mimeType === 'text/plain')
