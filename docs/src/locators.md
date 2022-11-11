@@ -245,7 +245,7 @@ page.getByRole("button", new Page.GetByRoleOptions().setName(Pattern.compile("su
 ```
 
 ```csharp
-await Expect(page.GetByRole("heading", new() { Checked = true, Name = "my form" }))
+await Expect(page.GetByRole("heading", new() { NameString = "my form" }))
     .ToBeVisibleAsync();
 
 await page.GetByRole("checkbox", new() { Checked = true, Name = "newsletter" })
