@@ -920,7 +920,7 @@ await page.getByTestId('product-card')
 ```
 ```java
 page.getByTestId("product-card")
-    .filter(new Locator.FilterOptions().setHas(page.AriaRole.Heading, new Page.GetByRoleOptions().setName("Product 2"))
+    .filter(new Locator.FilterOptions().setHas(page.GetByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Product 2"))))
     .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy")))
     .click()
 ```
