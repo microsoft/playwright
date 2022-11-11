@@ -26,7 +26,7 @@ public class App {
             assertThat(page).hasTitle(Pattern.compile("Playwright"));
 
             // create a locator
-            Locator getStarted = page.locator("text=Get Started");
+            Locator getStarted = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Get Started"))
 
             // Expect an attribute "to be strictly equal" to the value.
             assertThat(getStarted).hasAttribute("href", "/docs/intro");
