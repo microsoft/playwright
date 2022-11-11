@@ -833,7 +833,7 @@ Consider the following DOM structure where we want to click on the buy button of
 
 ### Filter by text
 
-Locators can be optionally filtered by text with the [`method: Locator.filter`] method. It will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
+Locators can be filtered by text with the [`method: Locator.filter`] method. It will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
 
 ```js
 await page.getByTestId('product-card')
