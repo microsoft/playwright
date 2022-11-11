@@ -1505,7 +1505,7 @@ page.get_by_role("button").click()
 ```
 
 ```java
-page.getByRole("button").click();
+page.getByRole(AriaRole.BUTTON).click();
 ```
 
 ```csharp
