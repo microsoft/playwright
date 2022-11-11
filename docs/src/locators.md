@@ -1383,7 +1383,7 @@ var texts = await rows.AllTextContentsAsync();
 
 ```js
 const rows = page.getByRole('listitem');
-const count = await rows.count()
+const count = await rows.count();
 for (let i = 0; i < count; ++i)
   console.log(await rows.nth(i).textContent());
 ```
