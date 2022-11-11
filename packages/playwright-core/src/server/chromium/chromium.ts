@@ -335,6 +335,8 @@ export const DEFAULT_ARGS = [
   '--disable-breakpad',
   '--disable-client-side-phishing-detection',
   '--disable-component-extensions-with-background-pages',
+  '--disable-component-update', // Avoids unneeded network activity after startup.
+  '--no-default-browser-check',
   '--disable-default-apps',
   '--disable-dev-shm-usage',
   '--disable-extensions',
