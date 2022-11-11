@@ -17,7 +17,7 @@ import http from 'http';
 import https from 'https';
 import path from 'path';
 import net from 'net';
-import { spawn, execSync, spawnSync } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 import type { ChildProcess } from 'child_process';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
@@ -47,7 +47,7 @@ const debugWebServer = debug('pw:webserver');
 
 export class WebServerPlugin implements TestRunnerPlugin {
   private _isAvailable?: () => Promise<boolean>;
-  private _processExitedPromise?: Promise<void>;
+  private _processExitedPromise?: Promise<{ code: number|null, signal: NodeJS.Signals|null }>;
   private _childProcess?: ChildProcess;
   private _options: WebServerPluginOptions;
   private _checkPortOnly: boolean;
@@ -115,12 +115,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
       shell: true,
     });
     this._processExitedPromise = new Promise((resolve, reject) => {
-      this._childProcess!.once('exit', (code, signal) => {
-        if (code)
-          reject(new Error(`Process from config.webServer terminated with exit code "${code}" and signal "${signal}"`));
-        else
-          resolve(undefined);
-      });
+      this._childProcess!.once('exit', (code, signal) => resolve({ code, signal }));
     });
 
     debugWebServer(`Process started`);
@@ -140,7 +135,9 @@ export class WebServerPlugin implements TestRunnerPlugin {
     const cancellationToken = { canceled: false };
     const { timedOut } = (await Promise.race([
       raceAgainstTimeout(() => waitFor(this._isAvailable!, cancellationToken), launchTimeout),
-      this._processExitedPromise!.then(() => { throw new Error('Process exited early'); }),
+      this._processExitedPromise!.then(({ code, signal }) => {
+        throw new Error(`Process from config.webServer terminated with exit code "${code}" and signal "${signal}"`);
+      }),
     ]));
     cancellationToken.canceled = true;
     if (timedOut)
