@@ -144,3 +144,36 @@ world</label><input id=control />`);
   await expect(page.getByAltText('hello my\nworld')).toHaveAttribute('id', 'control');
   await expect(page.getByTitle('hello my\nworld')).toHaveAttribute('id', 'control');
 });
+
+it('getByRole escaping', async ({ page }) => {
+  await page.setContent(`
+    <a href="https://playwright.dev">issues 123</a>
+    <a href="https://playwright.dev">he llo 56</a>
+    <button>Click me</button>
+  `);
+  expect.soft(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Click me</button>`,
+  ]);
+  expect.soft(await page.getByRole('link').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<a href="https://playwright.dev">issues 123</a>`,
+    `<a href="https://playwright.dev">he llo 56</a>`,
+  ]);
+
+  expect.soft(await page.getByRole('link', { name: 'issues 123' }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<a href="https://playwright.dev">issues 123</a>`,
+  ]);
+  expect.soft(await page.getByRole('link', { name: 'sues' }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<a href="https://playwright.dev">issues 123</a>`,
+  ]);
+  expect.soft(await page.getByRole('link', { name: '  he    \n  llo ' }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<a href="https://playwright.dev">he llo 56</a>`,
+  ]);
+  expect.soft(await page.getByRole('button', { name: 'issues' }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+  ]);
+
+  expect.soft(await page.getByRole('link', { name: 'sues', exact: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+  ]);
+  expect.soft(await page.getByRole('link', { name: '   he \n llo 56 ', exact: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<a href="https://playwright.dev">he llo 56</a>`,
+  ]);
+});

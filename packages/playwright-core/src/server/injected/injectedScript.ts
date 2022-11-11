@@ -18,7 +18,7 @@ import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
-import { RoleEngine } from './roleSelectorEngine';
+import { createRoleEngine } from './roleSelectorEngine';
 import { parseAttributeSelector } from '../isomorphic/selectorParser';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../isomorphic/selectorParser';
 import { allEngineNames, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
@@ -95,7 +95,7 @@ export class InjectedScript {
     this._engines.set('xpath:light', XPathEngine);
     this._engines.set('_react', ReactEngine);
     this._engines.set('_vue', VueEngine);
-    this._engines.set('role', RoleEngine);
+    this._engines.set('role', createRoleEngine(false));
     this._engines.set('text', this._createTextEngine(true, false));
     this._engines.set('text:light', this._createTextEngine(false, false));
     this._engines.set('id', this._createAttributeEngine('id', true));
@@ -116,7 +116,7 @@ export class InjectedScript {
     this._engines.set('internal:has-text', this._createInternalHasTextEngine());
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
     this._engines.set('internal:testid', this._createNamedAttributeEngine());
-    this._engines.set('internal:role', RoleEngine);
+    this._engines.set('internal:role', createRoleEngine(true));
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);

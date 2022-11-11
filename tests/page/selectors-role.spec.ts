@@ -317,17 +317,20 @@ test('should filter hidden, unless explicitly asked for', async ({ page }) => {
 
 test('should support name', async ({ page }) => {
   await page.setContent(`
-    <div role="button" aria-label="Hello"></div>
+    <div role="button" aria-label=" Hello "></div>
     <div role="button" aria-label="Hallo"></div>
     <div role="button" aria-label="Hello" aria-hidden="true"></div>
     <div role="button" aria-label="123" aria-hidden="true"></div>
     <div role="button" aria-label='foo"bar' aria-hidden="true"></div>
   `);
   expect(await page.locator(`role=button[name="Hello"]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label=" Hello "></div>`,
+  ]);
+  expect(await page.locator(`role=button[name=" \n Hello "]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-label=" Hello "></div>`,
   ]);
   expect(await page.getByRole('button', { name: 'Hello' }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label=" Hello "></div>`,
   ]);
 
   expect(await page.locator(`role=button[name*="all"]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
@@ -335,38 +338,38 @@ test('should support name', async ({ page }) => {
   ]);
 
   expect(await page.locator(`role=button[name=/^H[ae]llo$/]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label=" Hello "></div>`,
     `<div role="button" aria-label="Hallo"></div>`,
   ]);
   expect(await page.getByRole('button', { name: /^H[ae]llo$/ }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label=" Hello "></div>`,
     `<div role="button" aria-label="Hallo"></div>`,
   ]);
 
   expect(await page.locator(`role=button[name=/h.*o/i]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label=" Hello "></div>`,
     `<div role="button" aria-label="Hallo"></div>`,
   ]);
   expect(await page.getByRole('button', { name: /h.*o/i }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label=" Hello "></div>`,
     `<div role="button" aria-label="Hallo"></div>`,
   ]);
 
   expect(await page.locator(`role=button[name="Hello"][include-hidden]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label=" Hello "></div>`,
     `<div role="button" aria-label="Hello" aria-hidden="true"></div>`,
   ]);
   expect(await page.getByRole('button', { name: 'Hello', includeHidden: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label=" Hello "></div>`,
     `<div role="button" aria-label="Hello" aria-hidden="true"></div>`,
   ]);
   expect(await page.getByRole('button', { name: 'hello', includeHidden: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label=" Hello "></div>`,
     `<div role="button" aria-label="Hello" aria-hidden="true"></div>`,
   ]);
 
   expect(await page.locator(`role=button[name=Hello]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<div role="button" aria-label="Hello"></div>`,
+    `<div role="button" aria-label=" Hello "></div>`,
   ]);
   expect(await page.locator(`role=button[name=123][include-hidden]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="123" aria-hidden="true"></div>`,
