@@ -3,11 +3,13 @@ import { router } from '../src/router';
 import '../src/assets/index.css';
 
 export type HooksConfig = {
-  route: string;
+  route?: string;
+  routing?: boolean;
 }
 
 beforeMount<HooksConfig>(async ({ app, hooksConfig }) => {
-  app.use(router);
+  if (hooksConfig?.routing)
+    app.use(router);
   console.log(`Before mount: ${JSON.stringify(hooksConfig)}, app: ${!!app}`);
 });
 
