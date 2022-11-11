@@ -1369,6 +1369,19 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  testDir: './tests',
+  snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
+};
+
+module.exports = config;
+```
+
 The value might include some "tokens" that will be replaced with actual values during test execution.
 
 Consider the following file structure:
@@ -1382,9 +1395,20 @@ tests/
 
 And the following `page-click.spec.ts` that uses `toHaveScreenshot()` call:
 
-```ts
+```js tab=js-ts
 // page-click.spec.ts
 import { test, expect } from '@playwright/test';
+
+test.describe('suite', () => {
+  test('test should work', async ({ page }) => {
+    await expect(page).toHaveScreenshot(['foo', 'bar', 'baz.png']);
+  });
+});
+```
+
+```js tab=js-js
+// page-click.spec.js
+const { test, expect } = require('@playwright/test');
 
 test.describe('suite', () => {
   test('test should work', async ({ page }) => {
@@ -1432,6 +1456,23 @@ const config: PlaywrightTestConfig = {
   ],
 };
 export default config;
+```
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  snapshotPathTemplate: '__screenshots__{/projectName}/{testFilePath}/{arg}{ext}',
+  testMatch: 'example.spec.ts',
+  projects: [
+    { use: { browserName: 'firefox' } },
+    { name: 'chromium', use: { browserName: 'chromium' } },
+  ],
+};
+
+module.exports = config;
 ```
 
 In this config:
