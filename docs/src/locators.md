@@ -248,7 +248,7 @@ page.getByRole("button", new Page.GetByRoleOptions().setName(Pattern.compile("su
 await Expect(page.GetByRole("heading", new() { NameString = "my form" }))
     .ToBeVisibleAsync();
 
-await page.GetByRole("checkbox", new() { Checked = true, Name = "newsletter" })
+await page.GetByRole("checkbox", new() { Checked = true, NameString = "newsletter" })
     .UncheckAsync();
 
 await page.GetByRole("button", new() { Name = new Regex("submit", RegexOptions.IgnoreCase) })
