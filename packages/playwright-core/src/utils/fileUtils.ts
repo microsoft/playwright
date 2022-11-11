@@ -46,3 +46,8 @@ export function canAccessFile(file: string) {
     return false;
   }
 }
+
+export async function copyFileAndMakeWritable(from: string, to: string) {
+  await fs.promises.copyFile(from, to);
+  await fs.promises.chmod(to, 0o664);
+}
