@@ -1418,7 +1418,7 @@ for (int i = 0; i < count; ++i)
 
 #### Evaluate all elements in the list
 
-The code inside evaluateAll runs in the page, you can call any DOM apis there.
+The code inside [`method: Locator.evaluateAll`] runs in the page, you can call any DOM apis there.
 
 ```js
 const rows = page.getByRole('listitem');
