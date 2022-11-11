@@ -1107,7 +1107,7 @@ expect(page.get_by_role("listitem"))
 
 ```java
 assertThat(page.getByRole(AriaRole.LISTITEM)
-    .hasText("apple", "banana", "orange"));
+    .hasText(new String[] { "apple", "banana", "orange" });
 ```
 
 ```csharp
