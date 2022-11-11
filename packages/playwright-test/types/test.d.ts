@@ -805,6 +805,17 @@ interface TestConfig {
    *
    * And the following `page-click.spec.ts` that uses `toHaveScreenshot()` call:
    *
+   * ```js
+   * // page-click.spec.ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.describe('suite', () => {
+   *   test('test should work', async ({ page }) => {
+   *     await expect(page).toHaveScreenshot(['foo', 'bar', 'baz.png']);
+   *   });
+   * });
+   * ```
+   *
    * The list of supported tokens:
    * - `{testDir}` - Project's [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
    *   - Value: `/home/playwright/tests` (absolute path is since `testDir` is resolved relative to directory with config)
@@ -4594,6 +4605,17 @@ interface TestProject {
    * ```
    *
    * And the following `page-click.spec.ts` that uses `toHaveScreenshot()` call:
+   *
+   * ```js
+   * // page-click.spec.ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.describe('suite', () => {
+   *   test('test should work', async ({ page }) => {
+   *     await expect(page).toHaveScreenshot(['foo', 'bar', 'baz.png']);
+   *   });
+   * });
+   * ```
    *
    * The list of supported tokens:
    * - `{testDir}` - Project's [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
