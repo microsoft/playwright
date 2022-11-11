@@ -949,6 +949,7 @@ Attribute name to get the value for.
 ### param: Frame.getByRole.role = %%-locator-get-by-role-role-%%
 ### option: Frame.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
 * since: v1.27
+### option: Frame.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
 
 ## method: Frame.getByTestId

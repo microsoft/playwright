@@ -19,6 +19,7 @@ import { escapeForAttributeSelector, escapeForTextSelector, isString } from './s
 export type ByRoleOptions = {
   checked?: boolean;
   disabled?: boolean;
+  exact?: boolean;
   expanded?: boolean;
   includeHidden?: boolean;
   level?: number;
@@ -72,7 +73,7 @@ export function getByRoleSelector(role: string, options: ByRoleOptions = {}): st
   if (options.level !== undefined)
     props.push(['level', String(options.level)]);
   if (options.name !== undefined)
-    props.push(['name', isString(options.name) ? escapeForAttributeSelector(options.name, false) : String(options.name)]);
+    props.push(['name', isString(options.name) ? escapeForAttributeSelector(options.name, !!options.exact) : String(options.name)]);
   if (options.pressed !== undefined)
     props.push(['pressed', String(options.pressed)]);
   return `internal:role=${role}${props.map(([n, v]) => `[${n}=${v}]`).join('')}`;

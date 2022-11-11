@@ -182,7 +182,7 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
   if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
     const ariaName = getElementAccessibleName(element, false, accessibleNameCache);
     if (ariaName)
-      candidates.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScore });
+      candidates.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, false)}]`, score: kRoleWithNameScore });
     else
       candidates.push({ engine: 'internal:role', selector: ariaRole, score: kRoleWithoutNameScore });
   }
@@ -227,7 +227,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
   if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
     const ariaName = getElementAccessibleName(element, false, accessibleNameCache);
     if (ariaName)
-      candidate.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScore });
+      candidate.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, false)}]`, score: kRoleWithNameScore });
     else
       candidate.push({ engine: 'internal:role', selector: ariaRole, score: kRoleWithoutNameScore });
   } else {

@@ -50,7 +50,7 @@ it.describe('selector generator', () => {
 
   it('should generate text for <input type=button>', async ({ page }) => {
     await page.setContent(`<input type=button value="Click me">`);
-    expect(await generate(page, 'input')).toBe('internal:role=button[name=\"Click me\"s]');
+    expect(await generate(page, 'input')).toBe('internal:role=button[name=\"Click me\"i]');
   });
 
   it('should trim text', async ({ page }) => {
@@ -347,7 +347,7 @@ it.describe('selector generator', () => {
 
     await page.setContent(`<button><span></span></button><button></button>`);
     await page.$eval('button', button => button.setAttribute('aria-label', `!#'!?:`));
-    expect(await generate(page, 'button')).toBe(`internal:role=button[name="!#'!?:"s]`);
+    expect(await generate(page, 'button')).toBe(`internal:role=button[name="!#'!?:"i]`);
     expect(await page.$(`role=button[name="!#'!?:"]`)).toBeTruthy();
 
     await page.setContent(`<div><span></span></div>`);
@@ -371,7 +371,7 @@ it.describe('selector generator', () => {
 
   it('should accept valid aria-label for candidate consideration', async ({ page }) => {
     await page.setContent(`<button aria-label="ariaLabel" id="buttonId"></button>`);
-    expect(await generate(page, 'button')).toBe('internal:role=button[name=\"ariaLabel\"s]');
+    expect(await generate(page, 'button')).toBe('internal:role=button[name=\"ariaLabel\"i]');
   });
 
   it('should ignore empty role for candidate consideration', async ({ page }) => {

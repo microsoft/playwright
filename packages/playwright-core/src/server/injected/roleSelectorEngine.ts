@@ -107,8 +107,8 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string) {
   }
 }
 
-export const RoleEngine: SelectorEngine = {
-  queryAll(scope: SelectorRoot, selector: string): Element[] {
+export function createRoleEngine(internal: boolean): SelectorEngine {
+  const queryAll = (scope: SelectorRoot, selector: string): Element[] => {
     const parsed = parseAttributeSelector(selector, true);
     const role = parsed.name.toLowerCase();
     if (!role)
@@ -149,7 +149,13 @@ export const RoleEngine: SelectorEngine = {
           return;
       }
       if (nameAttr !== undefined) {
-        const accessibleName = getElementAccessibleName(element, includeHidden, hiddenCache);
+        // Always normalize whitespace in the accessible name.
+        const accessibleName = getElementAccessibleName(element, includeHidden, hiddenCache).trim().replace(/\s+/g, ' ');
+        if (typeof nameAttr.value === 'string')
+          nameAttr.value = nameAttr.value.trim().replace(/\s+/g, ' ');
+        // internal:role assumes that [name="foo"i] also means substring.
+        if (internal && !nameAttr.caseSensitive && nameAttr.op === '=')
+          nameAttr.op = '*=';
         if (!matchesAttributePart(accessibleName, nameAttr))
           return;
       }
@@ -170,5 +176,6 @@ export const RoleEngine: SelectorEngine = {
 
     query(scope);
     return result;
-  }
-};
+  };
+  return { queryAll };
+}

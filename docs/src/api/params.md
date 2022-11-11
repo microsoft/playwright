@@ -1109,7 +1109,7 @@ Required aria role.
 * since: v1.27
 - `checked` <[boolean]>
 
-An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for checked are `true`, `false` and `"mixed"`.
+An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls.
 
 Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
 
@@ -1117,7 +1117,7 @@ Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-check
 * since: v1.27
 - `disabled` <[boolean]>
 
-A boolean attribute that is usually set by `aria-disabled` or `disabled`.
+An attribute that is usually set by `aria-disabled` or `disabled`.
 
 :::note
 Unlike most other attributes, `disabled` is inherited through the DOM hierarchy.
@@ -1128,15 +1128,15 @@ Learn more about [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disa
 * since: v1.27
 - `expanded` <[boolean]>
 
-A boolean attribute that is usually set by `aria-expanded`.
+An attribute that is usually set by `aria-expanded`.
 
-  Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
 
 ## locator-get-by-role-option-includeHidden
 * since: v1.27
 - `includeHidden` <[boolean]>
 
-A boolean attribute that controls whether hidden elements are matched. By default, only non-hidden elements, as [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
+Option that controls whether hidden elements are matched. By default, only non-hidden elements, as [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
 
 Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
 
@@ -1152,15 +1152,21 @@ Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
 * since: v1.27
 - `name` <[string]|[RegExp]>
 
-A string attribute that matches [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+Option to match the [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). By default, matching is case-insensitive and searches for a substring, use [`option: exact`] to control this behavior.
 
 Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+## locator-get-by-role-option-exact
+* since: v1.28
+- `exact` <[boolean]>
+
+Whether [`option: name`] is matched exactly: case-sensitive and whole-string. Defaults to false. Ignored when [`option: name`] is a regular expression. Note that exact match still trims whitespace.
 
 ## locator-get-by-role-option-pressed
 * since: v1.27
 - `pressed` <[boolean]>
 
-An attribute that is usually set by `aria-pressed`. Available values for pressed are `true`, `false` and `"mixed"`.
+An attribute that is usually set by `aria-pressed`.
 
 Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
 
@@ -1168,7 +1174,7 @@ Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-press
 * since: v1.27
 - `selected` <boolean>
 
-A boolean attribute that is usually set by `aria-selected`.
+An attribute that is usually set by `aria-selected`.
 
 Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
 

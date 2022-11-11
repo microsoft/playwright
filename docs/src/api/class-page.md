@@ -2222,6 +2222,7 @@ Attribute name to get the value for.
 ### param: Page.getByRole.role = %%-locator-get-by-role-role-%%
 ### option: Page.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
 * since: v1.27
+### option: Page.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
 
 ## method: Page.getByTestId
