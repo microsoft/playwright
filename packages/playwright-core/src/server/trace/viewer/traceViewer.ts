@@ -21,7 +21,7 @@ import { HttpServer } from '../../../utils/httpServer';
 import { findChromiumChannel } from '../../registry';
 import { isUnderTest } from '../../../utils';
 import type { BrowserContext } from '../../browserContext';
-import { installAppIcon } from '../../chromium/crApp';
+import { installAppIcon, syncLocalStorageWithSettings } from '../../chromium/crApp';
 import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
@@ -81,7 +81,7 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
 
   if (traceViewerBrowser === 'chromium')
     await installAppIcon(page);
-
+  await syncLocalStorageWithSettings(page, 'traceviewer');
 
   const params = traceUrls.map(t => `trace=${t}`);
   if (isUnderTest()) {

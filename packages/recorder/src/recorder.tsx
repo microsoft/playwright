@@ -24,6 +24,7 @@ import * as React from 'react';
 import { CallLogView } from './callLog';
 import './recorder.css';
 import { asLocator } from '@isomorphic/locatorGenerators';
+import { toggleTheme } from '@web/theme';
 
 declare global {
   interface Window {
@@ -129,6 +130,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       <ToolbarButton icon='clear-all' title='Clear' disabled={!source || !source.text} onClick={() => {
         window.dispatch({ event: 'clear' });
       }}></ToolbarButton>
+      <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
     </Toolbar>
     <SplitView sidebarSize={200} sidebarHidden={mode === 'recording'}>
       <SourceView text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine}></SourceView>

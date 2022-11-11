@@ -85,6 +85,11 @@
   color: white;
 }
 
+.workbench .header .toolbar-button {
+  margin: 12px;
+  padding: 8px 4px;
+}
+
 .workbench tab-content {
   padding: 25px;
   contain: size;

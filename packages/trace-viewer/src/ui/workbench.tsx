@@ -17,6 +17,7 @@
 import type { ActionTraceEvent } from '@trace/trace';
 import { SplitView } from '@web/components/splitView';
 import { msToString } from '@web/uiUtils';
+import { ToolbarButton } from '@web/components/toolbarButton';
 import * as React from 'react';
 import type { ContextEntry } from '../entries';
 import { ActionList } from './actionList';
@@ -30,6 +31,7 @@ import { SourceTab } from './sourceTab';
 import { TabbedPane } from './tabbedPane';
 import { Timeline } from './timeline';
 import './workbench.css';
+import { toggleTheme } from '@web/theme';
 
 export const Workbench: React.FunctionComponent<{
 }> = () => {
@@ -156,6 +158,7 @@ export const Workbench: React.FunctionComponent<{
       <div className='product'>Playwright</div>
       {model.title && <div className='title'>{model.title}</div>}
       <div className='spacer'></div>
+      <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
     </div>
     <div style={{ paddingLeft: '20px', flex: 'none', borderBottom: '1px solid var(--vscode-panel-border)' }}>
       <Timeline
