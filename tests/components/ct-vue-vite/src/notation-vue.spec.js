@@ -160,7 +160,9 @@ test('get textContent of the empty template', async ({ mount }) => {
 });
 
 test('render app and navigate to a page', async ({ page, mount }) => {
-  const component = await mount(App);
+  const component = await mount(App, {
+    hooksConfig: { routing: true }
+  });
   await expect(component.getByRole('main')).toHaveText('Login');
   await expect(page).toHaveURL('/');
   await component.getByRole('link', { name: 'Dashboard' }).click();
