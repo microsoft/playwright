@@ -902,7 +902,7 @@ page.get_by_test_id("product-card")
 ```csharp
 await page.GetByTestId("product-card")
     .Filter(new() { HasText = new Regex("Product 2") })
-    .GetByRole(AriaRole.Button, new () { Name = "Buy" })
+    .GetByRole(AriaRole.Button, new () { NameString = "Buy" })
     .ClickAsync();
 ```
 
