@@ -63,7 +63,7 @@ await page.GetByLabel("User Name").FillAsync("John");
 
 await page.GetByLabel("Password").FillAsync("secret-password");
 
-await page.GetByRole("button", new() { Name = "Sign in" }).ClickAsync();
+await page.GetByRole("button", new() { NameString = "Sign in" }).ClickAsync();
 
 await Expect(page.GetByText("Welcome, John!")).ToBeVisibleAsync();
 ```
@@ -94,7 +94,7 @@ await page.get_by_role("button", name="Sign in").click()
 page.get_by_role("button", name="Sign in").click()
 ```
 ```csharp
-await page.GetByRole("button", new() { Name = "Sign in" })
+await page.GetByRole("button", new() { NameString = "Sign in" })
     .ClickAsync();
 ```
 
@@ -136,7 +136,7 @@ locator.click()
 ```
 
 ```csharp
-var locator = page.GetByRole("button", new() { Name = "Sign in" })
+var locator = page.GetByRole("button", new() { NameString = "Sign in" })
 
 await locator.HoverAsync();
 await locator.ClickAsync();
@@ -174,7 +174,7 @@ locator.click()
 
 ```csharp
 var locator = page.FrameLocator("#my-frame")
-    .GetByRole("button", new() { Name = "Sign in" });
+    .GetByRole("button", new() { NameString = "Sign in" });
 
 await locator.ClickAsync();
 ```
@@ -768,7 +768,7 @@ You can locate in the same way as if the shadow root was not present at all.
   page.locator("x-details", has_text="Details" ).click()
   ```
   ```csharp
-  await page.Locator("x-details", new() { HasText = "Details" }).ClickAsync();
+  await page.Locator("x-details", new() { HasTextString = "Details" }).ClickAsync();
   ```
 
 - Ensure that `<x-details>` contains text "Details"
@@ -833,7 +833,7 @@ page.get_by_test_id("product-card").filter(has_text="Product 2").get_by_role("bu
 ```
 ```csharp
 await page.GetByTestId("product-card")
-    .Filter(new() { HasText = "Product 2" })
+    .Filter(new() { HasTextString = "Product 2" })
     .GetByRole(AriaRole.Button, new () { NameString = "Buy" })
     .ClickAsync();
 ```
@@ -867,7 +867,7 @@ page.get_by_test_id("product-card")
 
 ```csharp
 await page.GetByTestId("product-card")
-    .Filter(new() { HasText = new Regex("Product 2") })
+    .Filter(new() { HasTextRegex = new Regex("Product 2") })
     .GetByRole(AriaRole.Button, new () { NameString = "Buy" })
     .ClickAsync();
 ```
@@ -1279,8 +1279,8 @@ rowLocator.filter(new Locator.FilterOptions().setHasText("Mary"))
 ```csharp
 var rowLocator = page.GetByRole("listitem");
 
-await rowLocator.Filter(new() { HasText = "Mary" })
-    .Filter(new() { Has = page.GetByRole("button", new() { Name = "Say goodbye" }) })
+await rowLocator.Filter(new() { HasTextString = "Mary" })
+    .Filter(new() { Has = page.GetByRole("button", new() { NameString = "Say goodbye" }) })
     .ScreenshotAsync(new() { Path = "screenshot.png" });
 ```
 
