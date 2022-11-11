@@ -23,7 +23,7 @@ import { serverSideCallMetadata } from '../instrumentation';
 import type { CallLog, EventData, Mode, Source } from '@recorder/recorderTypes';
 import { isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
-import { installAppIcon } from '../chromium/crApp';
+import { installAppIcon, syncLocalStorageWithSettings } from '../chromium/crApp';
 import { findChromiumChannel } from '../registry';
 import type { Recorder } from '../recorder';
 import type { BrowserContext } from '../browserContext';
@@ -37,6 +37,7 @@ declare global {
     playwrightSetSelector: (selector: string, focus?: boolean) => void;
     playwrightUpdateLogs: (callLogs: CallLog[]) => void;
     dispatch(data: EventData): Promise<void>;
+    saveSettings(data: any): Promise<void>;
   }
 }
 
@@ -79,6 +80,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
 
   private async _init() {
     await installAppIcon(this._page);
+    await syncLocalStorageWithSettings(this._page, 'recorder');
 
     await this._page._setServerRequestInterceptor(async route => {
       if (route.request().url().startsWith('https://playwright/')) {

@@ -25,4 +25,23 @@ export function applyTheme() {
   document!.defaultView!.addEventListener('blur', event => {
     document.body.classList.add('inactive');
   }, false);
+
+  const currentTheme = localStorage.getItem('theme');
+  const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+  if (currentTheme === 'dark-mode' || prefersDarkScheme.matches)
+    document.body.classList.add('dark-mode');
+}
+
+export function toggleTheme() {
+  const oldTheme = localStorage.getItem('theme');
+  let newTheme: string;
+  if (oldTheme === 'dark-mode')
+    newTheme = 'light-mode';
+  else
+    newTheme = 'dark-mode';
+
+  if (oldTheme)
+    document.body.classList.remove(oldTheme);
+  document.body.classList.add(newTheme);
+  localStorage.setItem('theme', newTheme);
 }

@@ -15,6 +15,10 @@
 */
 
 :root {
+  color-scheme: light dark;
+}
+
+body {
   --red: #F44336;
   --green: #367c39;
   --purple: #9C27B0;
@@ -29,14 +33,12 @@
   --box-shadow: rgba(0, 0, 0, 0.133) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
 }
 
-@media(prefers-color-scheme: dark) {
-  :root {
-    --green: #28d12f;
-    --yellow: #ff9207;
-    --purple: #dc12ff;
-    --blue: #4dafff;
-    --orange: #ff9800;
-  }
+body.dark-mode {
+  --green: #28d12f;
+  --yellow: #ff9207;
+  --purple: #dc12ff;
+  --blue: #4dafff;
+  --orange: #ff9800;
 }
 
 html, body {

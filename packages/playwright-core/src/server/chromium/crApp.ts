@@ -15,7 +15,9 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import type { Page } from '../page';
+import { registryDirectory } from '../registry';
 import type { CRPage } from './crPage';
 
 export async function installAppIcon(page: Page) {
@@ -24,4 +26,26 @@ export async function installAppIcon(page: Page) {
   await crPage._mainFrameSession._client.send('Browser.setDockTile', {
     image: icon.toString('base64')
   });
+}
+
+export async function syncLocalStorageWithSettings(page: Page, appName: string) {
+  const settingsFile = path.join(registryDirectory, '.settings', `${appName}.json`);
+  await page.exposeBinding('saveSettings', false, (_, settings: any) => {
+    fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
+    fs.writeFileSync(settingsFile, settings);
+  });
+
+  const settings = await fs.promises.readFile(settingsFile, 'utf-8').catch(() => ('{}'));
+  await page.addInitScript(`(${String((settings: any) => {
+    Object.entries(settings).map(([k, v]) => localStorage[k] = v);
+
+    let lastValue = JSON.stringify(localStorage);
+    setInterval(() => {
+      const value = JSON.stringify(localStorage);
+      if (value !== lastValue) {
+        lastValue = value;
+        window.saveSettings(value);
+      }
+    }, 2000);
+  })})(${settings})`);
 }
