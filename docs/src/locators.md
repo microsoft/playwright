@@ -194,7 +194,7 @@ For example, consider the following DOM structure.
 <form>
 ```
 
-<img width="247" alt="form with newsletter checkbox that is checked and a submit button" src="https://user-images.githubusercontent.com/13063165/201355711-20f1f45d-81b5-42b1-8932-397c935cedd8.png">
+<img width="247" alt="form with newsletter checkbox that is checked and a submit button" src="https://user-images.githubusercontent.com/13063165/201355711-20f1f45d-81b5-42b1-8932-397c935cedd8.png" />
 
 You can locate each element by it's implicit role:
 
@@ -940,11 +940,7 @@ Note that the inner locator is matched starting from the outer one, not from the
 
 ## Chaining Locators
 
-You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page. 
-
-:::info
-You must create a locator or use filtering in order to chain locators
-:::
+You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page.
 
 In this example we first create a locator called product by locating the test id. We then filter by text. We can use the product locator again to get by role of button and click it and then use an assertion to make sure there is only one product with the text ' Product 2'.
 
@@ -1287,9 +1283,10 @@ await rowLocator.Filter(new() { HasText = "Mary" })
     .Filter(new() { Has = page.GetByRole("button", new() { Name = "Say goodbye" }) })
     .ScreenshotAsync(new() { Path = "screenshot.png" });
 ```
-<img width="112" alt="text John and Mary with buttons say hello and say goodbye beside their names and the goodbye button next to Mary is highlighted" src="https://user-images.githubusercontent.com/13063165/201173620-1f04cdd2-5d10-4980-9cf3-b8a6b9acf244.png" />
 
 You should now have a "screenshot.png" file in your project's root directory.
+
+<img width="153" alt="text Mary with buttons say goodbye" src="https://user-images.githubusercontent.com/13063165/201357594-7910f8ad-7626-48a4-85a2-2a3e63d67e34.png" />
 
 ### Rare use cases
 
