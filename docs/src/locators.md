@@ -950,7 +950,7 @@ We can also assert the product card to make sure there is only one
 ```js
 await expect(page.getByTestId('product-card')
     .filter({ has: page.getByText('Product2') }))
-    .toHaveCount(1)
+    .toHaveCount(1);
 ```
 
 ```java
