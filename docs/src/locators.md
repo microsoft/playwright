@@ -1025,7 +1025,7 @@ product.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Buy")
 
 ```csharp
 var product = page.GetByTestId("product-card")
-    .Filter(new() { HasText = "Product 2" });
+    .Filter(new() { HasTextString = "Product 2" });
 
 await product.GetByRole("button", new() { NameString = "Buy" })
     .ClickAsync();
