@@ -118,6 +118,7 @@ for (const browserName of browserNames) {
       name: browserName,
       testDir: path.join(testDir, folder),
       testIgnore,
+      snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{ext}',
       use: {
         mode,
         browserName,

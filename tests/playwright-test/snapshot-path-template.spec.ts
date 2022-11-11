@@ -25,14 +25,16 @@ async function getSnapshotPaths(runInlineTest, testInfo, playwrightConfig, pathA
       module.exports = ${JSON.stringify(playwrightConfig, null, 2)}
     `,
     'a/b/c/d.spec.js': `
-      pwt.test('test', async ({ page }, testInfo) => {
-        console.log([
-          ${JSON.stringify(SEPARATOR)},
-          testInfo.project.name,
-          ${JSON.stringify(SEPARATOR)},
-          testInfo.snapshotPath(...${JSON.stringify(pathArgs)}),
-          ${JSON.stringify(SEPARATOR)},
-        ].join(''));
+      pwt.test.describe('suite', () => {
+        pwt.test('test should work', async ({ page }, testInfo) => {
+          console.log([
+            ${JSON.stringify(SEPARATOR)},
+            testInfo.project.name,
+            ${JSON.stringify(SEPARATOR)},
+            testInfo.snapshotPath(...${JSON.stringify(pathArgs)}),
+            ${JSON.stringify(SEPARATOR)},
+          ].join(''));
+        });
       });
     `
   }, { workers: 1 });
@@ -83,6 +85,9 @@ test('tokens should expand property', async ({ runInlineTest }, testInfo) => {
     }, {
       name: 'snapshotSuffix',
       snapshotPathTemplate: '{-snapshotSuffix}',
+    }, {
+      name: 'testName',
+      snapshotPathTemplate: '{testName}',
     }],
   }, ['foo.png']);
   expect.soft(snapshotPath['proj1']).toBe('proj1');
@@ -97,6 +102,7 @@ test('tokens should expand property', async ({ runInlineTest }, testInfo) => {
   expect.soft(snapshotPath['testFileName']).toBe('d.spec.js');
   expect.soft(snapshotPath['snapshotDir']).toBe('a-snapshot-dir.png');
   expect.soft(snapshotPath['snapshotSuffix']).toBe('-' + process.platform);
+  expect.soft(snapshotPath['testName']).toBe('suite-test-should-work');
 });
 
 test('args array should work', async ({ runInlineTest }, testInfo) => {

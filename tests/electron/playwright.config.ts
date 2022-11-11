@@ -51,7 +51,7 @@ const metadata = {
 };
 
 config.projects.push({
-  name: 'chromium',  // We use 'chromium' here to share screenshots with chromium.
+  name: 'electron',
   use: {
     browserName: 'chromium',
     coverageName: 'electron',
@@ -61,7 +61,9 @@ config.projects.push({
 });
 
 config.projects.push({
-  name: 'chromium',  // We use 'chromium' here to share screenshots with chromium.
+  name: 'electron',
+  // Share screenshots with chromium.
+  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-chromium{ext}',
   use: {
     browserName: 'chromium',
     coverageName: 'electron',

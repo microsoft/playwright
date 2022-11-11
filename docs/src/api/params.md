@@ -1386,31 +1386,34 @@ And the following `page-click.spec.ts` that uses `toHaveScreenshot()` call:
 // page-click.spec.ts
 import { test, expect } from '@playwright/test';
 
-test('should work', async ({ page }) => {
-  await expect(page).toHaveScreenshot(['foo', 'bar', 'baz.png']);
+test.describe('suite', () => {
+  test('test should work', async ({ page }) => {
+    await expect(page).toHaveScreenshot(['foo', 'bar', 'baz.png']);
+  });
 });
 ```
 
 The list of supported tokens:
 
 * `{testDir}` - Project's [`property: TestConfig.testDir`].
-  * Example: `tests/`
+  * Value: `/home/playwright/tests` (absolute path is since `testDir` is resolved relative to directory with config)
 * `{snapshotDir}` - Project's [`property: TestConfig.snapshotDir`].
-  * Example: `tests/` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
+  * Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
 * `{platform}` - The value of `process.platform`.
-* `{snapshotSuffix}` - The value of [`property: TestInfo.snapshotSuffix`].
-* `{projectName}` - Project's sanitized name, if any.
-  * Example: `''` (empty string).
+* `{projectName}` - Project's file-system-sanitized name, if any.
+  * Value: `''` (empty string).
 * `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
-  * Example: `page/`
+  * Value: `page`
 * `{testFileName}` - Test file name with extension.
-  * Example: `page-click.spec.ts`
+  * Value: `page-click.spec.ts`
 * `{testFilePath}` - Relative path from `testDir` to **test file**
-  * Example: `page/page-click.spec.ts`
+  * Value: `page/page-click.spec.ts`
+* `{testName}` - File-system-sanitized test title, including parent describes but excluding file name.
+  * Value: `suite-test-should-work`
 * `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated snapshot name.
-  * Example: `foo/bar/baz`
+  * Value: `foo/bar/baz`
 * `{ext}` - snapshot extension (with dots)
-  * Example: `.png`
+  * Value: `.png`
 
 Each token can be preceded with a single character that will be used **only if** this token has non-empty value.
 

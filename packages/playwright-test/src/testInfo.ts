@@ -234,18 +234,25 @@ export class TestInfoImpl implements TestInfo {
     throw new Error(`The outputPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\toutputPath: ${joinedPath}`);
   }
 
+  _fsSanitizedTestName() {
+    const fullTitleWithoutSpec = this.titlePath.slice(1).join(' ');
+    return sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
+  }
+
   snapshotPath(...pathSegments: string[]) {
     const subPath = path.join(...pathSegments);
     const parsedSubPath = path.parse(subPath);
     const relativeTestFilePath = path.relative(this.project.testDir, this._test._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
+
     const snapshotPath = path.resolve(this.config._configDir, this.project.snapshotPathTemplate
         .replace(/\{(.)?testDir\}/g, '$1' + this.project.testDir)
         .replace(/\{(.)?snapshotDir\}/g, '$1' + this.project.snapshotDir)
         .replace(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix ? '$1' + this.snapshotSuffix : ''))
         .replace(/\{(.)?platform\}/g, '$1' + process.platform)
         .replace(/\{(.)?projectName\}/g, projectNamePathSegment ? '$1' + projectNamePathSegment : '')
+        .replace(/\{(.)?testName\}/g, '$1' + this._fsSanitizedTestName())
         .replace(/\{(.)?testFileDir\}/g, '$1' + parsedRelativeTestFilePath.dir)
         .replace(/\{(.)?testFileName\}/g, '$1' + parsedRelativeTestFilePath.base)
         .replace(/\{(.)?testFilePath\}/g, '$1' + relativeTestFilePath)

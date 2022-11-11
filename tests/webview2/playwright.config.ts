@@ -52,7 +52,9 @@ const metadata = {
 };
 
 config.projects.push({
-  name: 'chromium',  // We use 'chromium' here to share screenshots with chromium.
+  name: 'webview2',
+  // Share screenshots with chromium.
+  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-chromium{ext}',
   use: {
     browserName: 'chromium',
     coverageName: 'webview2',
