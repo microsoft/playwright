@@ -624,7 +624,7 @@ playwright.selectors.set_test_id_attribute("data-pw")
 ```
 
 ```python sync
-selectors.set_test_id_attribute('data-pw')
+playwright.selectors.set_test_id_attribute("data-pw")
 ```
 
 ```csharp
