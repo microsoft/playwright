@@ -955,7 +955,7 @@ await expect(page.getByTestId('product-card')
 
 ```java
 assertThat(page.getByTestId("product-card")
-    .filter(new Locator.FilterOptions().setHas(page.getByText("Product 2")
+    .filter(new Locator.FilterOptions().setHas(page.getByText("Product 2")))
     .hasCount(1)
 ```
 
