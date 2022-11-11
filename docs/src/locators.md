@@ -536,7 +536,7 @@ await Expect(page.GetByTitle("Issues count"))
 ```
 
 :::tip When to use title locators
-Use this locator when your element contains the title attribute.
+Use this locator when your element has the `title` attribute.
 :::
 
 ### Locate by test id
