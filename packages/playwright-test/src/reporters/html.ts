@@ -272,7 +272,10 @@ class HtmlBuilder {
 
     // Copy app.
     const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
-    fs.copyFileSync(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
+    const destIndexPath = path.join(this._reportFolder, 'index.html');
+    fs.copyFileSync(path.join(appFolder, 'index.html'), destIndexPath);
+    const destIndexStat = fs.statSync(destIndexPath);
+    fs.chmodSync(destIndexPath, destIndexStat.mode | fs.constants.S_IWUSR);
 
     // Copy trace viewer.
     if (this._hasTraces) {
