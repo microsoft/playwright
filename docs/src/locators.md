@@ -409,7 +409,7 @@ expect(page.get_by_text("Welcome, John", exact=True))
 ```
 
 ```csharp
-await Expect(page.GetByText("Welcome, John", new() { Exact: true }))
+await Expect(page.GetByText("Welcome, John", new() { Exact = true }))
     .ToBeVisibleAsync();
 ```
 
