@@ -512,6 +512,7 @@ In addition to configuring [Browser] or [BrowserContext], videos or screenshots,
 - `globalTeardown`: Path to the global teardown file. This file will be required and run after all the tests. It must export a single function.
 - `retries`: The maximum number of retry attempts per test.
 - `testDir`: Directory with the test files.
+- `testIdAttribute`: Set a custom data attribute for your [`method: Page.getByTestId`] locators.
 - `testIgnore`: Glob patterns or regular expressions that should be ignored when looking for the test files. For example, `'**/test-assets'`.
 - `testMatch`: Glob patterns or regular expressions that match test files. For example, `'**/todo-tests/*.spec.ts'`. By default, Playwright Test runs `.*(test|spec)\.(js|ts|mjs)` files.
 - `timeout`: Time in milliseconds given to each test. Learn more about [various timeouts](./test-timeouts.md).
@@ -528,6 +529,9 @@ You can specify these options in the configuration file. Note that testing optio
 const config = {
   // Look for test files in the "tests" directory, relative to this configuration file
   testDir: 'tests',
+
+  // change the default data-testid to a custom attribute
+  testIdAttribute: 'data-pw'
 
   // Each test is given 30 seconds
   timeout: 30000,
