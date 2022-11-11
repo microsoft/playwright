@@ -628,7 +628,7 @@ playwright.selectors.set_test_id_attribute("data-pw")
 ```
 
 ```csharp
-Selectors.SetTestIdAttribute('data-pw')
+playwright.Selectors.SetTestIdAttribute("data-pw");
 ```
 
 In your html you can now use `data-pw` as your test id instead of the default `data-testid`. 
