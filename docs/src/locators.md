@@ -1509,7 +1509,7 @@ page.getByRole("button").click();
 ```
 
 ```csharp
-await page.GetByRole("button").ClickAsync();
+await page.GetByRole(AriaRole.Button).ClickAsync();
 ```
 
 On the other hand, Playwright understands when you perform a multiple-element operation,
