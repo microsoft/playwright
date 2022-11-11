@@ -201,7 +201,7 @@ For example, consider the following DOM structure.
 You can locate each element by it's implicit role:
 
 ```js
-await expect (page.getByRole('heading', { name: 'my form' }))
+await expect(page.getByRole('heading', { name: 'my form' }))
     .toBeVisible()
 
 await page.getByRole('checkbox', { checked: true, name: "newsletter" })
