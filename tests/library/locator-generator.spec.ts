@@ -175,6 +175,39 @@ it('reverse engineer locators', async ({ page }) => {
   });
 });
 
+it('reverse engineer getByRole', async ({ page }) => {
+  expect.soft(generate(page.getByRole('button'))).toEqual({
+    javascript: `getByRole('button')`,
+    python: `get_by_role("button")`,
+    java: `getByRole(AriaRole.BUTTON)`,
+    csharp: `GetByRole(AriaRole.Button)`,
+  });
+  expect.soft(generate(page.getByRole('button', { name: 'Hello' }))).toEqual({
+    javascript: `getByRole('button', { name: 'Hello' })`,
+    python: `get_by_role("button", name="Hello")`,
+    java: `getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Hello"))`,
+    csharp: `GetByRole(AriaRole.Button, new() { NameString = "Hello" })`,
+  });
+  expect.soft(generate(page.getByRole('button', { name: /Hello/ }))).toEqual({
+    javascript: `getByRole('button', { name: /Hello/ })`,
+    python: `get_by_role("button", name=re.compile(r"Hello"))`,
+    java: `getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("Hello")))`,
+    csharp: `GetByRole(AriaRole.Button, new() { NameRegex = new Regex("Hello") })`,
+  });
+  expect.soft(generate(page.getByRole('button', { name: 'He"llo', exact: true }))).toEqual({
+    javascript: `getByRole('button', { name: 'He"llo', exact: true })`,
+    python: `get_by_role("button", name="He\\"llo", exact=True)`,
+    java: `getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("He\\"llo").setExact(true))`,
+    csharp: `GetByRole(AriaRole.Button, new() { NameString = "He\\"llo", Exact = true })`,
+  });
+  expect.soft(generate(page.getByRole('button', { checked: true, pressed: false, level: 3 }))).toEqual({
+    javascript: `getByRole('button', { checked: true, level: 3, pressed: false })`,
+    python: `get_by_role("button", checked=True, level=3, pressed=False)`,
+    java: `getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setChecked(true).setLevel(3).setPressed(false))`,
+    csharp: `GetByRole(AriaRole.Button, new() { Checked = true, Level = 3, Pressed = false })`,
+  });
+});
+
 it('reverse engineer ignore-case locators', async ({ page }) => {
   expect.soft(generate(page.getByText('hello my\nwo"rld'))).toEqual({
     csharp: 'GetByText("hello my\\nwo\\"rld")',
@@ -244,14 +277,14 @@ it('reverse engineer hasText', async ({ page }) => {
   });
 
   expect.soft(generate(page.getByText('Hello').filter({ hasText: /wo\/\srld\n/ }))).toEqual({
-    csharp: `GetByText("Hello").Filter(new() { HasTextString = new Regex("wo\\\\/\\\\srld\\\\n") })`,
+    csharp: `GetByText("Hello").Filter(new() { HasTextRegex = new Regex("wo\\\\/\\\\srld\\\\n") })`,
     java: `getByText("Hello").filter(new Locator.LocatorOptions().setHasText(Pattern.compile("wo\\\\/\\\\srld\\\\n")))`,
     javascript: `getByText('Hello').filter({ hasText: /wo\\/\\srld\\n/ })`,
     python: `get_by_text("Hello").filter(has_text=re.compile(r"wo/\\srld\\n"))`,
   });
 
   expect.soft(generate(page.getByText('Hello').filter({ hasText: /wor"ld/ }))).toEqual({
-    csharp: `GetByText("Hello").Filter(new() { HasTextString = new Regex("wor\\"ld") })`,
+    csharp: `GetByText("Hello").Filter(new() { HasTextRegex = new Regex("wor\\"ld") })`,
     java: `getByText("Hello").filter(new Locator.LocatorOptions().setHasText(Pattern.compile("wor\\"ld")))`,
     javascript: `getByText('Hello').filter({ hasText: /wor"ld/ })`,
     python: `get_by_text("Hello").filter(has_text=re.compile(r"wor\\"ld"))`,
