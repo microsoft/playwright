@@ -234,7 +234,7 @@ page.get_by_role("button", name=re.compile("submit", re.IGNORECASE))
 ```
 
 ```java
-assertThat(page.getByRole("heading", new Page.GetByRoleOptions().setName("my from")))
+assertThat(page.getByRole("heading", new Page.GetByRoleOptions().setName("my form")))
     .isVisible();
 
 page.getByRole("checkbox", new Page.GetByRoleOptions().setChecked(true).setName("newsletter"))
