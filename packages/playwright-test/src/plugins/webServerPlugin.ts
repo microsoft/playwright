@@ -17,7 +17,7 @@ import http from 'http';
 import https from 'https';
 import path from 'path';
 import net from 'net';
-import { spawn, execSync } from 'child_process';
+import { spawn, execSync, spawnSync } from 'child_process';
 import type { ChildProcess } from 'child_process';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
@@ -76,10 +76,16 @@ export class WebServerPlugin implements TestRunnerPlugin {
       return;
     // Send SIGTERM and wait for it to gracefully close.
     try {
-      if (process.platform === 'win32')
-        execSync(`taskkill /pid ${this._childProcess.pid} /T /F /FI "MEMUSAGE gt 0"`, { stdio: 'ignore' });
-      else
+      if (process.platform === 'win32') {
+        const taskkillProcess = spawnSync(`taskkill /pid ${this._childProcess.pid} /T /F`, { shell: true });
+        const [stdout, stderr] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
+        if (stdout)
+          debugWebServer(`[pid=${this._childProcess.pid}] taskkill stdout: ${stdout}`);
+        if (stderr)
+          debugWebServer(`[pid=${this._childProcess.pid}] taskkill stderr: ${stderr}`);
+      } else {
         process.kill(this._childProcess.pid, 'SIGTERM');
+      }
     } catch (e) {
       // the process might have already stopped
     }
