@@ -1396,19 +1396,19 @@ test.describe('suite', () => {
 The list of supported tokens:
 
 * `{testDir}` - Project's [`property: TestConfig.testDir`].
-  * Value: `/home/playwright/tests/`
+  * Value: `/home/playwright/tests` (absolute path is since `testDir` is resolved relative to directory with config)
 * `{snapshotDir}` - Project's [`property: TestConfig.snapshotDir`].
-  * Value: `tests/` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
+  * Value: `/home/playwright/tests` (since `snapshotDir` is not provided in config, it defaults to `testDir`)
 * `{platform}` - The value of `process.platform`.
 * `{projectName}` - Project's file-system-sanitized name, if any.
   * Value: `''` (empty string).
 * `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
-  * Value: `page/`
+  * Value: `page`
 * `{testFileName}` - Test file name with extension.
   * Value: `page-click.spec.ts`
 * `{testFilePath}` - Relative path from `testDir` to **test file**
   * Value: `page/page-click.spec.ts`
-* `{testName}` - File-system-sanitized Test title, including parent describes but excluding file name.
+* `{testName}` - File-system-sanitized test title, including parent describes but excluding file name.
   * Value: `suite-test-should-work`
 * `{arg}` - Relative snapshot path **without extension**. These come from the arguments passed to the `toHaveScreenshot()` and `toMatchSnapshot()` calls; if called without arguments, this will be an auto-generated snapshot name.
   * Value: `foo/bar/baz`
