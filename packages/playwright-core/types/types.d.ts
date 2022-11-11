@@ -13483,7 +13483,6 @@ export interface APIRequest {
  * If you want API requests to not interfere with the browser cookies you should create a new [APIRequestContext] by
  * calling [apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context).
  * Such `APIRequestContext` object will have its own isolated cookie storage.
- *
  */
 export interface APIRequestContext {
   /**
@@ -14188,7 +14187,6 @@ export interface APIRequestContext {
  * [APIResponse] class represents responses returned by
  * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
  * and similar methods.
- *
  */
 export interface APIResponse {
   /**
