@@ -1088,7 +1088,7 @@ For example, consider the following DOM structure:
 ```
 <img width="81" alt="list of 3 items, apple, banana and orange" src="https://user-images.githubusercontent.com/13063165/200641602-95a801ce-8a3e-4141-b4ac-926b890f4648.png" />
 
-Use text assertion to ensure that the list has the text "apple", "banana" and "orange".
+Use [`method: LocatorAssertions.toHaveText`] to ensure that the list has the text "apple", "banana" and "orange".
 
 ```js
 await expect(page.getByRole('listitem'))
