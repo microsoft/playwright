@@ -616,7 +616,7 @@ export default config;
 ```
 
 ```java
-Selectors.setTestIdAttribute('data-pw')
+playwright.selectors().setTestIdAttribute("data-pw");
 ```
 
 ```python async
