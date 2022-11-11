@@ -996,7 +996,7 @@ const product = page.getByTestId('product-card')
 await product.getByRole('button', { name: 'Buy' })
     .click();
 
-await expect(product).toHaveCount(1)
+await expect(product).toHaveCount(1);
 ```
 
 ```python async
