@@ -1112,7 +1112,7 @@ assertThat(page.getByRole(AriaRole.LISTITEM))
 
 ```csharp
 await Expect(page.GetByRole("listitem"))
-    .ToHaveTextAsync("apple", "banana", "orange");
+    .ToHaveTextAsync(new string[] {"apple", "banana", "orange"});
 ```
 
 ### Get a specific item
