@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import Button from './components/Button';
 import DefaultChildren from './components/DefaultChildren';
+import Fetch from './components/Fetch';
 import MultipleChildren from './components/MultipleChildren';
 import MultiRoot from './components/MultiRoot';
 import Counter from './components/Counter';
@@ -149,4 +150,16 @@ test('navigate to a page by clicking a link', async ({ page, mount }) => {
   await component.getByRole('link', { name: 'Dashboard' }).click();
   await expect(component.getByRole('main')).toHaveText('Dashboard');
   await expect(page).toHaveURL('/dashboard');
+});
+
+test('intercept http request', async ({ page, mount }) => {
+  const url = '/product';
+  await page.route(url, async route => {
+		await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ text: 'intercepted' })
+    });
+	});
+  const component = await mount(<Fetch url={url} />);
+  await expect(component).toHaveText('intercepted');
 });

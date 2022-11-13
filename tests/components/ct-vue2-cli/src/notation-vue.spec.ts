@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/experimental-ct-vue2'
 import Button from './components/Button.vue'
 import Counter from './components/Counter.vue'
 import DefaultSlot from './components/DefaultSlot.vue'
+import Fetch from './components/Fetch.vue';
 import NamedSlots from './components/NamedSlots.vue'
 import Component from './components/Component.vue'
 import EmptyTemplate from './components/EmptyTemplate.vue'
@@ -148,4 +149,18 @@ test('get textContent of the empty template', async ({ mount }) => {
   expect(await component.allTextContents()).toEqual(['']);
   expect(await component.textContent()).toBe('');
   await expect(component).toHaveText('');
+});
+
+test('intercept http request', async ({ page, mount }) => {
+  const url = '/product';
+  await page.route(url, async route => {
+		await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ text: 'intercepted' })
+    });
+	});
+  const component = await mount(Fetch, {
+    props: { url }
+  });
+  await expect(component).toHaveText('intercepted');
 });

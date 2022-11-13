@@ -19,6 +19,7 @@ import Button from './components/Button.svelte';
 import Counter from './components/Counter.svelte';
 import Component from './components/Component.svelte';
 import DefaultSlot from './components/DefaultSlot.svelte';
+import Fetch from './components/Fetch.svelte';
 import NamedSlots from './components/NamedSlots.svelte'
 import MultiRoot from './components/MultiRoot.svelte';
 import Empty from './components/Empty.svelte';
@@ -143,4 +144,18 @@ test('get textContent of the empty component', async ({ mount }) => {
   expect(await component.allTextContents()).toEqual(['']);
   expect(await component.textContent()).toBe('');
   await expect(component).toHaveText('');
+});
+
+test('intercept http request', async ({ page, mount }) => {
+  const url = '/product';
+  await page.route(url, async route => {
+		await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ text: 'intercepted' })
+    });
+	});
+  const component = await mount(Fetch, {
+    props: { url }
+  });
+  await expect(component).toHaveText('intercepted');
 });

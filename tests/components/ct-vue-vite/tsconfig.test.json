@@ -3,7 +3,7 @@
   "include": ["playwright", "env.d.ts", "src/**/*"],
   "compilerOptions": {
     "composite": true,
-    "lib": [],
+    "lib": ["dom"],
     "types": ["node"]
   }
 }

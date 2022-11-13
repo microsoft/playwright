@@ -3,6 +3,7 @@ import App from './App.vue';
 import Button from './components/Button.vue'
 import Counter from './components/Counter.vue'
 import DefaultSlot from './components/DefaultSlot.vue'
+import Fetch from './components/Fetch.vue';
 import NamedSlots from './components/NamedSlots.vue'
 import MultiRoot from './components/MultiRoot.vue'
 import EmptyTemplate from './components/EmptyTemplate.vue'
@@ -150,4 +151,16 @@ test('render app and navigate to a page', async ({ page, mount }) => {
   await component.getByRole('link', { name: 'Dashboard' }).click();
   await expect(component.getByRole('main')).toHaveText('Dashboard');
   await expect(page).toHaveURL('/dashboard');
+});
+
+test('intercept http request', async ({ page, mount }) => {
+  const url = '/product';
+  await page.route(url, async route => {
+		await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ text: 'intercepted' })
+    });
+	});
+  const component = await mount(<Fetch url={url} />);
+  await expect(component).toHaveText('intercepted');
 });

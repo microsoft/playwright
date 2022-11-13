@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/experimental-ct-solid';
 import Button from './components/Button';
 import Counter from './components/Counter';
 import DefaultChildren from './components/DefaultChildren';
+import Fetch from './components/Fetch';
 import MultipleChildren from './components/MultipleChildren';
 import MultiRoot from './components/MultiRoot';
 import EmptyFragment from './components/EmptyFragment';
@@ -162,4 +163,16 @@ test('get textContent of the empty fragment', async ({ mount }) => {
   expect(await component.allTextContents()).toEqual(['']);
   expect(await component.textContent()).toBe('');
   await expect(component).toHaveText('');
+});
+
+test('intercept http request', async ({ page, mount }) => {
+  const url = '/product';
+  await page.route(url, async route => {
+		await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ text: 'intercepted' })
+    });
+	});
+  const component = await mount(<Fetch url={url} />);
+  await expect(component).toHaveText('intercepted');
 });
