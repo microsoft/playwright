@@ -23,7 +23,7 @@ import { Transform } from 'stream';
 import type { FullConfig, Suite } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/lib/utils/httpServer';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils';
-import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
+import { copyFileAndMakeWritable, removeFolders } from 'playwright-core/lib/utils/fileUtils';
 import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
@@ -272,7 +272,7 @@ class HtmlBuilder {
 
     // Copy app.
     const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
-    fs.copyFileSync(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
+    await copyFileAndMakeWritable(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
 
     // Copy trace viewer.
     if (this._hasTraces) {
@@ -282,7 +282,7 @@ class HtmlBuilder {
       for (const file of fs.readdirSync(traceViewerFolder)) {
         if (file.endsWith('.map'))
           continue;
-        fs.copyFileSync(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
+        await copyFileAndMakeWritable(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
       }
     }
 
