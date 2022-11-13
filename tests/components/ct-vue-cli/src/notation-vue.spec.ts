@@ -7,6 +7,7 @@ import NamedSlots from './components/NamedSlots.vue'
 import MultiRoot from './components/MultiRoot.vue'
 import Component from './components/Component.vue'
 import EmptyTemplate from './components/EmptyTemplate.vue'
+import Store from './components/Store.vue';
 import type { HooksConfig } from '../playwright'
 
 test.use({ viewport: { width: 500, height: 500 } })
@@ -134,4 +135,18 @@ test('navigate to a page by clicking a link', async ({ page, mount }) => {
   await component.getByRole('link', { name: 'Dashboard' }).click();
   await expect(component.getByRole('main')).toHaveText('Dashboard');
   await expect(page).toHaveURL('/dashboard');
+});
+
+test('render global store state', async ({ mount }) => {
+  const component = await mount(Store);
+  await expect(component).toContainText('playwright');
+});
+
+test('override and render global store state', async ({ mount }) => {
+  const component = await mount<HooksConfig>(Store, {
+    hooksConfig: {
+      store: { main: { name: 'override' } }
+    }
+  });
+  await expect(component).toContainText('override');
 });
