@@ -251,7 +251,7 @@ prevent the Playwright script from executing any further.
 
 Playwright runs browsers in headless mode by default. To change this behavior,
 use `headless: false` as a launch option. You can also use the [`option: slowMo`] option
-to slow down execution and follow along while debugging.
+to slow down execution (by N milliseconds per operation) and follow along while debugging.
 
 ```js
 await chromium.launch({ headless: false, slowMo: 100 }); // or firefox, webkit
