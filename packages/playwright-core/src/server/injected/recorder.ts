@@ -75,8 +75,10 @@ class Recorder {
       addEventListener(document, 'mouseup', event => this._onMouseUp(event as MouseEvent), true),
       addEventListener(document, 'mousemove', event => this._onMouseMove(event as MouseEvent), true),
       addEventListener(document, 'mouseleave', event => this._onMouseLeave(event as MouseEvent), true),
-      addEventListener(document, 'focus', () => this._onFocus(true), true),
-      addEventListener(document, 'scroll', () => {
+      addEventListener(document, 'focus', event => event.isTrusted && this._onFocus(true), true),
+      addEventListener(document, 'scroll', event => {
+        if (!event.isTrusted)
+          return;
         this._hoveredModel = null;
         this._highlight.hideActionPoint();
         this._updateHighlight();
@@ -156,6 +158,8 @@ class Recorder {
   }
 
   private _onClick(event: MouseEvent) {
+    if (!event.isTrusted)
+      return;
     if (this._mode === 'inspecting')
       globalThis.__pw_recorderSetSelector(this._hoveredModel ? this._hoveredModel.selector : '');
     if (this._shouldIgnoreMouseEvent(event))
@@ -204,6 +208,8 @@ class Recorder {
   }
 
   private _onMouseDown(event: MouseEvent) {
+    if (!event.isTrusted)
+      return;
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (!this._performingAction)
@@ -212,6 +218,8 @@ class Recorder {
   }
 
   private _onMouseUp(event: MouseEvent) {
+    if (!event.isTrusted)
+      return;
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (!this._performingAction)
@@ -219,6 +227,8 @@ class Recorder {
   }
 
   private _onMouseMove(event: MouseEvent) {
+    if (!event.isTrusted)
+      return;
     if (this._mode === 'none')
       return;
     const target = this._deepEventTarget(event);
@@ -229,6 +239,8 @@ class Recorder {
   }
 
   private _onMouseLeave(event: MouseEvent) {
+    if (!event.isTrusted)
+      return;
     // Leaving iframe.
     if (window.top !== window && this._deepEventTarget(event).nodeType === Node.DOCUMENT_NODE) {
       this._hoveredElement = null;
@@ -339,6 +351,8 @@ class Recorder {
   }
 
   private _onKeyDown(event: KeyboardEvent) {
+    if (!event.isTrusted)
+      return;
     if (this._mode === 'inspecting') {
       consumeEvent(event);
       return;
@@ -376,6 +390,8 @@ class Recorder {
   }
 
   private _onKeyUp(event: KeyboardEvent) {
+    if (!event.isTrusted)
+      return;
     if (this._mode === 'none')
       return;
     if (!this._shouldGenerateKeyPressFor(event))

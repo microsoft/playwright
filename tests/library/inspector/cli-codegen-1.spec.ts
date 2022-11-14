@@ -31,7 +31,7 @@ test.describe('cli codegen', () => {
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('JavaScript', 'click'),
-      page.dispatchEvent('button', 'click', { detail: 1 })
+      recorder.trustedClick(),
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
@@ -50,6 +50,27 @@ test.describe('cli codegen', () => {
         await page.GetByRole(AriaRole.Button, new() { NameString = "Submit" }).ClickAsync();`);
 
     expect(message.text()).toBe('click');
+  });
+
+
+  test('should ignore programmatic events', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`);
+
+    const locator = await recorder.hoverOverElement('button');
+    expect(locator).toBe(`getByRole('button', { name: 'Submit' })`);
+
+    await page.dispatchEvent('button', 'click', { detail: 1 });
+
+    await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', 'click'),
+      recorder.trustedClick()
+    ]);
+
+    const clicks = recorder.sources().get('Playwright Test').actions.filter(l => l.includes('Submit'));
+    expect(clicks.length).toBe(1);
   });
 
   test('should click after same-document navigation', async ({ page, openRecorder, server }) => {
@@ -74,7 +95,7 @@ test.describe('cli codegen', () => {
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('JavaScript', 'click'),
-      page.dispatchEvent('button', 'click', { detail: 1 })
+      recorder.trustedClick(),
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
@@ -95,16 +116,14 @@ test.describe('cli codegen', () => {
       </script>
     `);
 
-    const locator = await recorder.waitForHighlight(() => recorder.page.hover('canvas', {
+    const locator = await recorder.hoverOverElement('canvas', {
       position: { x: 250, y: 250 },
-    }));
+    });
     expect(locator).toBe(`locator('canvas')`);
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('JavaScript', 'click'),
-      recorder.page.click('canvas', {
-        position: { x: 250, y: 250 },
-      })
+      recorder.trustedClick(),
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
@@ -154,7 +173,7 @@ test.describe('cli codegen', () => {
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('JavaScript', 'click'),
-      page.dispatchEvent('button', 'click', { detail: 1 })
+      recorder.trustedClick(),
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
@@ -182,13 +201,12 @@ test.describe('cli codegen', () => {
 
     // Force highlight.
     await recorder.hoverOverElement('span');
-
     // Append text after highlight.
     await page.evaluate(() => {
       const div = document.createElement('div');
       div.setAttribute('onclick', "console.log('click')");
       div.textContent = ' Some long text here ';
-      document.documentElement.appendChild(div);
+      document.body.appendChild(div);
     });
 
     const locator = await recorder.hoverOverElement('div');
@@ -200,7 +218,7 @@ test.describe('cli codegen', () => {
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('JavaScript', 'click'),
-      page.dispatchEvent('div', 'click', { detail: 1 })
+      recorder.trustedMove('div').then(() => recorder.trustedClick()),
     ]);
     expect(sources.get('JavaScript').text).toContain(`
   await page.getByText('Some long text here').click();`);
@@ -585,7 +603,7 @@ test.describe('cli codegen', () => {
     const [popup, sources] = await Promise.all([
       page.context().waitForEvent('page'),
       recorder.waitForOutput('JavaScript', 'waitForEvent'),
-      page.dispatchEvent('a', 'click', { detail: 1 })
+      recorder.trustedClick(),
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
@@ -628,7 +646,7 @@ test.describe('cli codegen', () => {
     const [, sources] = await Promise.all([
       page.waitForNavigation(),
       recorder.waitForOutput('JavaScript', '.click()'),
-      page.dispatchEvent('a', 'click', { detail: 1 })
+      recorder.trustedClick(),
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`

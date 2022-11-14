@@ -171,8 +171,22 @@ class Recorder {
     return new Promise(f => callback = f);
   }
 
-  async hoverOverElement(selector: string): Promise<string> {
-    return this.waitForHighlight(() => this.page.dispatchEvent(selector, 'mousemove', { detail: 1 }));
+  async hoverOverElement(selector: string, options?: { position?: { x: number, y: number }}): Promise<string> {
+    return this.waitForHighlight(async () => {
+      const box = await this.page.locator(selector).first().boundingBox();
+      const offset = options?.position || { x: box.width / 2, y: box.height / 2 };
+      await this.page.mouse.move(box.x + offset.x, box.y + offset.y);
+    });
+  }
+
+  async trustedMove(selector: string) {
+    const box = await this.page.locator(selector).first().boundingBox();
+    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  }
+
+  async trustedClick() {
+    await this.page.mouse.down();
+    await this.page.mouse.up();
   }
 
   async focusElement(selector: string): Promise<string> {
