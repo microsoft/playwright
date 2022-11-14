@@ -3,6 +3,8 @@ id: locators
 title: "Locators"
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+
 [Locator]s are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent
 a way to find element(s) on the page at any moment.
 
@@ -185,16 +187,24 @@ The [`method: Page.getByRole`] locator reflects how users and assistive technolo
 
 For example, consider the following DOM structure.
 
-```html
-<h1>my form<h1>
-<form>
-<label for="newsletter">newsletter</label>
-<input type="checkbox" checked id="newsletter">
-<button>Submit</button>
-<form>
-```
-
-<img width="247" alt="form with newsletter checkbox that is checked and a submit button" src="https://user-images.githubusercontent.com/13063165/201355711-20f1f45d-81b5-42b1-8932-397c935cedd8.png" />
+<div className="render-example">
+    <CodeBlock language="html" class="codeblock">{
+    `<h1>my form</h1>
+    <form>
+        <label for="newsletter">newsletter</label>
+        <input type="checkbox" checked id="newsletter" />
+        <button type="button">Submit</button>
+    </form>`}
+    </CodeBlock>
+    <div class="rendered-html">
+        <h1>my form</h1>
+        <form>
+        <label for="newsletter">newsletter</label>
+        <input type="checkbox" checked id="newsletter" />
+        <button type="button">Submit</button>
+        </form>
+    </div>
+</div>
 
 You can locate each element by it's implicit role:
 
@@ -247,7 +257,15 @@ await page.GetByRole("button", new() { NameRegex = new Regex("submit", RegexOpti
     .ClickAsync();
 ```
 
-<img width="239" alt="form with newsletter checkbox unchecked and submit button highlighted" src="https://user-images.githubusercontent.com/13063165/201134851-f707a433-1e10-4b83-b648-c19df2a04de0.png" />
+<div className="rendered-html">
+    <h1>my form</h1>
+    <form>
+    <label for="newsletter">newsletter</label>
+    <input type="checkbox" id="newsletter" />
+    <button type="button" class="highlight">Submit</button>
+    </form>
+</div>
+
 
 Role locators include [buttons, checkboxes, headings, links, lists, tables, and many more](https://www.w3.org/TR/html-aria/#docconformance) and follow W3C specifications for [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
 
@@ -265,9 +283,12 @@ For example, consider the following DOM structure.
 
 ```html
 <label for="password">Password</label>
-<input type="password" id="password">
+<input type="password" id="password" />
 ```
-<img width="220" alt="password input with label of password" src="https://user-images.githubusercontent.com/13063165/201115785-f996ede8-01ae-4aa6-bd76-a60600efa125.png" />
+<div className="rendered-html">
+    <label for="password">Password</label>
+    <input type="password" id="password" />
+</div>
 
 You can fill the input after locating it by the label text:
 
@@ -290,7 +311,11 @@ page.get_by_label("Password").fill("secret")
 ```csharp
 await page.GetByLabel("Password").FillAsync("secret");
 ```
-<img width="225" alt="password input with label and password filled in with encryption" src="https://user-images.githubusercontent.com/13063165/201113928-3b383887-433c-4b2c-9516-6c17d87d1eb2.png" />
+
+<div className="rendered-html">
+    <label for="password">Password</label>
+    <input type="password" id="password" value="secret" class="highlight" />
+</div>
 
 :::tip When to use label locators
 Use this locator when locating form fields.
@@ -302,8 +327,12 @@ Inputs may have a placeholder attribute to hint to the user what value should be
 For example, consider the following DOM structure.
 
 ```html
- <input id="email" name="email" type="email" placeholder="name@example.com">
+<input id="email" name="email" type="email" placeholder="name@example.com" />
 ```
+
+<div className="rendered-html">
+    <input id="email" name="email" type="email" placeholder="name@example.com" />
+</div>
 
 <img width="155" alt="input field filled in with name@example.com" src="https://user-images.githubusercontent.com/13063165/201114537-597b157f-68f3-473e-8802-4c099d1d6e93.png" />
 
@@ -331,8 +360,9 @@ page.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
 await page.GetByPlaceholder("name@example.com")
     .FillAsync("playwright@microsoft.com");
 ```
-
-<img width="155" alt="input field filled in with playwright@microsoft.com" src="https://user-images.githubusercontent.com/13063165/201114985-c5bb9709-3680-4137-a3d9-e272056ca79e.png" />
+<div className="rendered-html">
+    <input id="email" name="email" type="email" placeholder="name@example.com" value="playwright@microsoft.com" class="highlighted" />
+</div>
 
 :::tip When to use placeholder locators
 Use this locator when locating form elements that do not have labels but do have placeholder texts.
@@ -347,7 +377,11 @@ For example, consider the following DOM structure.
 ```html
 <span>Welcome, John</span>
 ```
-<img width="218" alt="Welcome, John" src="https://user-images.githubusercontent.com/13063165/201122791-10ee8cba-871c-4fb6-a925-ce42c8500f04.png" />
+
+<div className="rendered-html">
+    <span>Welcome, John</span>
+</div>
+
 
 You can locate the element by the text it contains:
 
