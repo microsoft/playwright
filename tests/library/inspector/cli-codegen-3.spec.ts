@@ -33,7 +33,7 @@ test.describe('cli codegen', () => {
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('JavaScript', 'click'),
-      page.dispatchEvent('button', 'click', { detail: 1 })
+      recorder.trustedClick()
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
@@ -68,7 +68,7 @@ test.describe('cli codegen', () => {
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('JavaScript', 'click'),
-      page.dispatchEvent('button', 'click', { detail: 1 })
+      recorder.trustedClick()
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
@@ -240,7 +240,7 @@ test.describe('cli codegen', () => {
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('JavaScript', 'click'),
-      page.dispatchEvent('div', 'click', { detail: 1 })
+      recorder.trustedClick(),
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
@@ -271,7 +271,7 @@ test.describe('cli codegen', () => {
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
-      page.dispatchEvent('input', 'click', { detail: 1 })
+      recorder.trustedClick(),
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
@@ -300,7 +300,7 @@ test.describe('cli codegen', () => {
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
-      page.dispatchEvent('input', 'click', { detail: 1 })
+      recorder.trustedClick(),
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
@@ -329,7 +329,7 @@ test.describe('cli codegen', () => {
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
-      page.dispatchEvent('input', 'click', { detail: 1 })
+      recorder.trustedClick(),
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
@@ -358,7 +358,7 @@ test.describe('cli codegen', () => {
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
-      page.dispatchEvent('input', 'click', { detail: 1 })
+      recorder.trustedClick(),
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
