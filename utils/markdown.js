@@ -492,6 +492,8 @@ function parseCodeLang(codeLang) {
   if (!language) {
     if (highlighter === 'ts')
       language = 'js';
+    else if (highlighter === 'py')
+      language = 'python';
     else if (['js', 'python', 'csharp', 'java'].includes(highlighter))
       language = highlighter;
   }
