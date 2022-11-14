@@ -49,6 +49,7 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserOptions: LaunchOptions;
+  _storageStateName: string | undefined;
   _artifactsDir: () => string;
   _snapshotSuffix: string;
 };
@@ -151,7 +152,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true }],
   proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true }],
   storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true }],
-  storageStateName: [undefined, { option: true }],
+  _storageStateName: [undefined, { option: true, scope: 'worker' }],
   timezoneId: [({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true }],
   userAgent: [({ contextOptions }, use) => use(contextOptions.userAgent), { option: true }],
   viewport: [({ contextOptions }, use) => use(contextOptions.viewport === undefined ? { width: 1280, height: 720 } : contextOptions.viewport), { option: true }],
@@ -181,7 +182,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     permissions,
     proxy,
     storageState,
-    storageStateName,
+    _storageStateName,
     viewport,
     timezoneId,
     userAgent,
@@ -220,10 +221,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       options.permissions = permissions;
     if (proxy !== undefined)
       options.proxy = proxy;
-    if (storageStateName !== undefined) {
-      const value = await test.info().storage().get(storageStateName);
+    if (_storageStateName !== undefined) {
+      const value = await (test.info() as TestInfoImpl)._storage().get(_storageStateName);
       if (!value)
-        throw new Error(`Cannot find value in the storage for storageStateName: "${storageStateName}"`);
+        throw new Error(`Cannot find value in the storage for storageStateName: "${_storageStateName}"`);
       options.storageState = value as any;
     } else if (storageState !== undefined) {
       options.storageState = storageState;

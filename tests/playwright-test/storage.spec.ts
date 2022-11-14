@@ -204,7 +204,7 @@ test('should load context storageState from storage', async ({ runInlineTest, se
     'a.test.ts': `
       const { test } = pwt;
       test.use({
-        storageStateName: 'user'
+        _storageStateName: 'user'
       })
       test('should get data from setup', async ({ page }) => {
         await page.goto('${server.EMPTY_PAGE}');
@@ -225,7 +225,7 @@ test('should load context storageState from storage', async ({ runInlineTest, se
   expect(result.passed).toBe(3);
 });
 
-test('should load storageStateName specified in the project config from storage', async ({ runInlineTest, server }) => {
+test('should load _storageStateName specified in the project config from storage', async ({ runInlineTest, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v1']);
     res.end();
@@ -238,7 +238,7 @@ test('should load storageStateName specified in the project config from storage'
             name: 'p1',
             setup: /.*storage.setup.ts/,
             use: {
-              storageStateName: 'stateInStorage',
+              _storageStateName: 'stateInStorage',
             },
           }
         ]
@@ -247,7 +247,7 @@ test('should load storageStateName specified in the project config from storage'
     'storage.setup.ts': `
       const { test, expect } = pwt;
       test.use({
-        storageStateName: ({}, use) => use(undefined),
+        _storageStateName: ({}, use) => use(undefined),
       })
       test('should save storageState', async ({ page, context }) => {
         const storage = test.info().storage();
@@ -270,7 +270,7 @@ test('should load storageStateName specified in the project config from storage'
   expect(result.passed).toBe(2);
 });
 
-test('should load storageStateName specified in the global config from storage', async ({ runInlineTest, server }) => {
+test('should load _storageStateName specified in the global config from storage', async ({ runInlineTest, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v1']);
     res.end();
@@ -279,7 +279,7 @@ test('should load storageStateName specified in the global config from storage',
     'playwright.config.js': `
       module.exports = {
         use: {
-          storageStateName: 'stateInStorage',
+          _storageStateName: 'stateInStorage',
         },
         projects: [
           {
@@ -292,9 +292,9 @@ test('should load storageStateName specified in the global config from storage',
     'storage.setup.ts': `
       const { test, expect } = pwt;
       test.use({
-        storageStateName: ({}, use) => use(undefined),
+        _storageStateName: ({}, use) => use(undefined),
       })
-      test('should save storageStateName', async ({ page, context }) => {
+      test('should save _storageStateName', async ({ page, context }) => {
         const storage = test.info().storage();
         expect(await storage.get('stateInStorage')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
@@ -315,7 +315,7 @@ test('should load storageStateName specified in the global config from storage',
   expect(result.passed).toBe(2);
 });
 
-test('should throw on unknown storageStateName value', async ({ runInlineTest, server }) => {
+test('should throw on unknown _storageStateName value', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = {
@@ -323,7 +323,7 @@ test('should throw on unknown storageStateName value', async ({ runInlineTest, s
           {
             name: 'p1',
             use: {
-              storageStateName: 'stateInStorage',
+              _storageStateName: 'stateInStorage',
             },
           }
         ]
