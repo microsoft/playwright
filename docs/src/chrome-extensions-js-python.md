@@ -99,8 +99,11 @@ with sync_playwright() as playwright:
 
 To have the extension loaded when running tests you can use a test fixture to set the context. You can also dynamically retrieve the extension id and use it to load and test the popup page for example.
 
+First, add fixtures that will load the extension:
+
 ```ts
-import { test as base, expect, BrowserContext } from "@playwright/test";
+// fixtures.ts
+import { test as base, expect, chromium, type BrowserContext } from "@playwright/test";
 import path from "path";
 
 export const test = base.extend<{
@@ -108,8 +111,8 @@ export const test = base.extend<{
   extensionId: string;
 }>({
   context: async ({ }, use) => {
-    const pathToExtension = path.join(__dirname, "my-extension");
-    const context = await chromium.launchPersistentContext("", {
+    const pathToExtension = path.join(__dirname, 'my-extension');
+    const context = await chromium.launchPersistentContext('', {
       headless: false,
       args: [
         `--disable-extensions-except=${pathToExtension}`,
@@ -124,31 +127,22 @@ export const test = base.extend<{
     // for manifest v2:
     let [background] = context.backgroundPages()
     if (!background)
-      background = await context.waitForEvent("backgroundpage")
+      background = await context.waitForEvent('backgroundpage')
     */
 
     // for manifest v3:
     let [background] = context.serviceWorkers();
     if (!background)
-      background = await context.waitForEvent("serviceworker");
+      background = await context.waitForEvent('serviceworker');
 
-    const extensionId = background.url().split("/")[2];
+    const extensionId = background.url().split('/')[2];
     await use(extensionId);
   },
 });
-
-test("example test", async ({ page }) => {
-  await page.goto("https://example.com");
-  await expect(page.locator("body")).toHaveText("Changed by my-extension");
-});
-
-test("popup page", async ({ page, extensionId }) => {
-  await page.goto(`chrome-extension://${extensionId}/popup.html`);
-  await expect(page.locator("body")).toHaveText("my-extension popup");
-});
+export const expect = test.expect;
 ```
 
-```py
+```python
 # conftest.py
 from typing import Generator
 from pathlib import Path
@@ -188,7 +182,23 @@ def extension_id(context) -> Generator[str, None, None]:
 
 ```
 
-```py
+Then use these fixtures in a test:
+
+```ts
+import { test, expect } from "./fixtures";
+
+test("example test", async ({ page }) => {
+  await page.goto("https://example.com");
+  await expect(page.locator("body")).toHaveText("Changed by my-extension");
+});
+
+test("popup page", async ({ page, extensionId }) => {
+  await page.goto(`chrome-extension://${extensionId}/popup.html`);
+  await expect(page.locator("body")).toHaveText("my-extension popup");
+});
+```
+
+```python
 # test_foo.py
 from playwright.sync_api import expect, Page
 
