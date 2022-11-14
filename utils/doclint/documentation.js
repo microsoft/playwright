@@ -165,9 +165,23 @@ class Documentation {
     this._patchLinks?.(null, nodes);
   }
 
+  /**
+   * @param {string} lang
+   * @param {import('../markdown').CodeGroupTransformer} transformer
+   */
+  setCodeGroupsTransformer(lang, transformer) {
+    this._codeGroupsTransformer = { lang, transformer };
+  }
+
   generateSourceCodeComments() {
-    for (const clazz of this.classesArray)
-      clazz.visit(item => item.comment = generateSourceCodeComment(item.spec));
+    for (const clazz of this.classesArray) {
+      clazz.visit(item => {
+        let spec = item.spec;
+        if (spec && this._codeGroupsTransformer)
+          spec = md.processCodeGroups(spec, this._codeGroupsTransformer.lang, this._codeGroupsTransformer.transformer);
+        item.comment = generateSourceCodeComment(spec);
+      });
+    }
   }
 
   clone() {
@@ -814,8 +828,6 @@ function patchLinks(classOrMember, spec, classesMap, membersMap, linkRenderer) {
 function generateSourceCodeComment(spec) {
   const comments = (spec || []).filter(n => !n.type.startsWith('h') && (n.type !== 'li' ||  n.liType !== 'default')).map(c => md.clone(c));
   md.visitAll(comments, node => {
-    if (node.codeLang && node.codeLang.includes('tab=js-js'))
-      node.type = 'null';
     if (node.type === 'li' && node.liType === 'bullet')
       node.liType = 'default';
     if (node.type === 'note') {
