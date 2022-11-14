@@ -59,6 +59,12 @@ const md = require('../markdown');
  * }} Metainfo
  */
 
+/**
+ * @typedef {{
+ *   csharpOptionOverloadsShortNotation?: boolean,
+ * }} LanguageOptions
+ */
+
 class Documentation {
   /**
    * @param {!Array<!Documentation.Class>} classesArray
@@ -104,13 +110,14 @@ class Documentation {
 
   /**
    * @param {string} lang
+   * @param {LanguageOptions=} options
    */
-  filterForLanguage(lang) {
+  filterForLanguage(lang, options = {}) {
     const classesArray = [];
     for (const clazz of this.classesArray) {
       if (clazz.langs.only && !clazz.langs.only.includes(lang))
         continue;
-      clazz.filterForLanguage(lang);
+      clazz.filterForLanguage(lang, options);
       classesArray.push(clazz);
     }
     this.classesArray = classesArray;
@@ -259,13 +266,14 @@ Documentation.Class = class {
 
   /**
    * @param {string} lang
+   * @param {LanguageOptions=} options
    */
-  filterForLanguage(lang) {
+  filterForLanguage(lang, options = {}) {
     const membersArray = [];
     for (const member of this.membersArray) {
       if (member.langs.only && !member.langs.only.includes(lang))
         continue;
-      member.filterForLanguage(lang);
+      member.filterForLanguage(lang, options);
       membersArray.push(member);
     }
     this.membersArray = membersArray;
@@ -406,31 +414,41 @@ Documentation.Member = class {
     }
   }
 
-    /**
+  /**
    * @param {string} lang
+   * @param {LanguageOptions=} options
    */
-  filterForLanguage(lang) {
+  filterForLanguage(lang, options = {}) {
     if (!this.type)
       return;
     if (this.langs.aliases && this.langs.aliases[lang])
       this.alias = this.langs.aliases[lang];
     if (this.langs.types && this.langs.types[lang])
       this.type = this.langs.types[lang];
-    this.type.filterForLanguage(lang);
+    this.type.filterForLanguage(lang, options);
     const argsArray = [];
     for (const arg of this.argsArray) {
       if (arg.langs.only && !arg.langs.only.includes(lang))
         continue;
       const overriddenArg = (arg.langs.overrides && arg.langs.overrides[lang]) || arg;
-      overriddenArg.filterForLanguage(lang);
+      overriddenArg.filterForLanguage(lang, options);
       // @ts-ignore
       if (overriddenArg.name === 'options' && !overriddenArg.type.properties.length)
         continue;
       // @ts-ignore
-      overriddenArg.type.filterForLanguage(lang);
+      overriddenArg.type.filterForLanguage(lang, options);
       argsArray.push(overriddenArg);
     }
     this.argsArray = argsArray;
+
+    const optionsArg = this.argsArray.find(arg => arg.name === 'options');
+    if (lang === 'csharp' && optionsArg) {
+      try {
+        patchCSharpOptionOverloads(optionsArg, options);
+      } catch (e) {
+        throw new Error(`Error processing csharp options in ${this.clazz?.name}.${this.name}: ` + e.message);
+      }
+    }
   }
 
   filterOutExperimental() {
@@ -642,15 +660,16 @@ Documentation.Type = class {
 
   /**
    * @param {string} lang
+   * @param {LanguageOptions=} options
    */
-  filterForLanguage(lang) {
+  filterForLanguage(lang, options = {}) {
     if (!this.properties)
       return;
     const properties = [];
     for (const prop of this.properties) {
       if (prop.langs.only && !prop.langs.only.includes(lang))
         continue;
-      prop.filterForLanguage(lang);
+      prop.filterForLanguage(lang, options);
       properties.push(prop);
     }
     this.properties = properties;
@@ -837,6 +856,75 @@ function generateSourceCodeComment(spec) {
     }
   });
   return md.render(comments, 120);
+}
+
+/**
+ * @param {Documentation.Member} optionsArg
+ * @param {LanguageOptions=} options
+ */
+function patchCSharpOptionOverloads(optionsArg, options = {}) {
+  const props = optionsArg.type?.properties;
+  if (!props)
+    return;
+  const propsToDelete = new Set();
+  const propsToAdd = [];
+  for (const prop of props) {
+    const union = prop.type?.union;
+    if (!union)
+      continue;
+    const isEnum = union[0].name.startsWith('"');
+    const isNullable = union.length === 2 && union.some(type => type.name === 'null');
+    if (isEnum || isNullable)
+      continue;
+
+    const shortNotation = [];
+    propsToDelete.add(prop);
+    for (const type of union) {
+      const suffix = csharpOptionOverloadSuffix(prop.name, type.name);
+      if (options.csharpOptionOverloadsShortNotation) {
+        if (type.name === 'string')
+          shortNotation.push(prop.alias);
+        else
+          shortNotation.push(prop.alias + suffix);
+        continue;
+      }
+
+      const newProp = prop.clone();
+      newProp.name = prop.name + suffix;
+      newProp.alias = prop.alias + suffix;
+      newProp.type = type;
+      propsToAdd.push(newProp);
+
+      if (type.name === 'string') {
+        const stringProp = prop.clone();
+        stringProp.type = type;
+        propsToAdd.push(stringProp);
+      }
+    }
+    if (options.csharpOptionOverloadsShortNotation) {
+      const newProp = prop.clone();
+      newProp.alias = newProp.name = shortNotation.join('|');
+      propsToAdd.push(newProp);
+    }
+  }
+  for (const prop of propsToDelete)
+    props.splice(props.indexOf(prop), 1);
+  props.push(...propsToAdd);
+}
+
+/**
+ * @param {string} option
+ * @param {string} type
+ */
+function csharpOptionOverloadSuffix(option, type) {
+  switch (type) {
+    case 'string': return 'String';
+    case 'RegExp': return 'Regex';
+    case 'function': return 'Func';
+    case 'Buffer': return 'Byte';
+    case 'Serializable': return 'Object';
+  }
+  throw new Error(`CSharp option "${option}" has unsupported type overload "${type}"`);
 }
 
 module.exports = Documentation;
