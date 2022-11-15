@@ -61,7 +61,11 @@
   color: #0070c1;
 }
 
-.CodeMirror span.cm-property, .CodeMirror span.cm-qualifier, .CodeMirror span.cm-attribute {
+.CodeMirror span.cm-property {
+  color: #795e26;
+}
+
+.CodeMirror span.cm-qualifier, .CodeMirror span.cm-attribute {
   color: #001080;
 }
 
@@ -70,29 +74,34 @@
   color: #267f99;
 }
 
-@media(prefers-color-scheme: dark) {
+body.dark-mode .CodeMirror span.cm-def,
+body.dark-mode .CodeMirror span.cm-tag {
+  color: var(--vscode-debugView-valueChangedHighlight);
+}
 
-  .CodeMirror span.cm-def, .CodeMirror span.cm-tag {
-    color: var(--vscode-debugView-valueChangedHighlight);
-  }
+body.dark-mode .CodeMirror span.cm-comment,
+body.dark-mode .CodeMirror span.cm-link {
+  color: #6a9955;
+}
 
-  .CodeMirror span.cm-comment, .CodeMirror span.cm-link {
-    color: #6a9955;
-  }
+body.dark-mode .CodeMirror span.cm-variable,
+body.dark-mode .CodeMirror span.cm-variable-2,
+body.dark-mode .CodeMirror span.cm-atom {
+  color: #4fc1ff;
+}
 
-  .CodeMirror span.cm-variable, .CodeMirror span.cm-variable-2, .CodeMirror span.cm-atom {
-    color: #4fc1ff;
-  }
+body.dark-mode .CodeMirror span.cm-property {
+  color: #dcdcaa;
+}
 
-  .CodeMirror span.cm-property, .CodeMirror span.cm-qualifier, .CodeMirror span.cm-attribute {
-    color: #9cdcfe;
-  }
+body.dark-mode .CodeMirror span.cm-qualifier,
+body.dark-mode .CodeMirror span.cm-attribute {
+  color: #9cdcfe;
+}
 
-  .CodeMirror span.cm-variable-3,
-  .CodeMirror span.cm-type {
-    color: #4ec9b0;
-  }
-
+body.dark-mode .CodeMirror span.cm-variable-3,
+body.dark-mode .CodeMirror span.cm-type {
+  color: #4ec9b0;
 }
 
 .CodeMirror span.cm-bracket {

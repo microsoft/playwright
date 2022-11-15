@@ -188,7 +188,7 @@ export function locatorOrSelectorAsSelector(language: Language, locator: string,
       return selector;
   } catch (e) {
   }
-  return locator;
+  return '';
 }
 
 function digestForComparison(locator: string) {

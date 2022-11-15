@@ -33,7 +33,11 @@
 }
 
 .recorder .toolbar-button.toggled.record {
-  color: #fd1e1e;
+  color: #a1260d;
+}
+
+body.dark-mode .recorder .toolbar-button.toggled.record {
+  color: #f48771;
 }
 
 .recorder .toolbar-button:not([disabled]) .codicon-debug-continue,
