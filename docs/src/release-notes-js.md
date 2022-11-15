@@ -10,7 +10,7 @@ toc_max_heading_level: 2
 
 * **Record at Cursor in VSCode.** You can run the test, position the cursor at the end of the test and continue generating the test.
 
-![New VSCode Extension](https://user-images.githubusercontent.com/746130/201796672-b62481a8-18a1-49e3-b979-03988a4d7a11.png)
+![New VSCode Extension](https://user-images.githubusercontent.com/746130/202005839-aba2eeba-217b-424d-8496-8b4f5fa72f41.png)
 
 * **Live Locators in VSCode.** You can hover and edit locators in VSCode to get them  highlighted in the opened browser.
 * **Live Locators in CodeGen.** Generate a locator for any element on the page using "Explore" tool.
