@@ -3,7 +3,9 @@ id: locators
 title: "Locators"
 ---
 
-import CodeBlock from '@theme/CodeBlock';
+import RenderCard from '@site/src/components/RenderCard';
+import RenderHTML from '@site/src/components/RenderHTML';
+import HighlightHTML from '@site/src/components/HighlightHTML';
 
 [Locator]s are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent
 a way to find element(s) on the page at any moment.
@@ -76,9 +78,15 @@ Playwright comes with multiple built-in locators. To make tests resilient, we re
 
 For example, consider the following DOM structure.
 
-```html
-<button>Sign in</button>
-```
+<RenderCard>
+  ```html
+  <button>Sign in</button>
+  ```
+  <RenderHTML>
+    <div><button type="button">Sign in</button></div>
+  </RenderHTML>
+</RenderCard>
+
 Locate the element by its role of `button` with name "Sign in".
 
 ```js
@@ -99,6 +107,12 @@ page.get_by_role("button", name="Sign in").click()
 await page.GetByRole("button", new() { NameString = "Sign in" })
     .ClickAsync();
 ```
+
+<RenderCard>
+  <RenderHTML>
+    <div><button type="button" class="renderHTML-highlight">Sign in</button></div>
+  </RenderHTML>
+</RenderCard>
 
 :::tip
 Use the [code generator](./codegen.md) to generate a locator, and then edit it as you'd like.
@@ -187,24 +201,27 @@ The [`method: Page.getByRole`] locator reflects how users and assistive technolo
 
 For example, consider the following DOM structure.
 
-<div className="render-example">
-    <CodeBlock language="html" class="codeblock">{
-    `<h1>my form</h1>
+<RenderCard>
+  ```html
+  <h1>my form</h1>
+  <form>
+    <label for="newsletter">newsletter</label>
+    <input type="checkbox" checked id="newsletter" />
+    <button>Submit</button>
+  </form>
+  ```
+  <RenderHTML>
+    <h1>my form</h1>
     <form>
+      <div>
         <label for="newsletter">newsletter</label>
         <input type="checkbox" checked id="newsletter" />
-        <button type="button">Submit</button>
-    </form>`}
-    </CodeBlock>
-    <div class="rendered-html">
-        <h1>my form</h1>
-        <form>
-        <label for="newsletter">newsletter</label>
-        <input type="checkbox" checked id="newsletter" />
-        <button type="button">Submit</button>
-        </form>
-    </div>
-</div>
+      </div>
+      <div><button type="button">Submit</button></div>
+    </form>
+  </RenderHTML>
+</RenderCard>
+
 
 You can locate each element by it's implicit role:
 
@@ -257,15 +274,18 @@ await page.GetByRole("button", new() { NameRegex = new Regex("submit", RegexOpti
     .ClickAsync();
 ```
 
-<div className="rendered-html">
+<RenderCard>
+  <RenderHTML>
     <h1>my form</h1>
     <form>
-    <label for="newsletter">newsletter</label>
-    <input type="checkbox" id="newsletter" />
-    <button type="button" class="highlight">Submit</button>
+      <div>
+        <label for="newsletter">newsletter</label>
+        <input type="checkbox" id="newsletter" />
+      </div>
+      <div><button type="button" class="renderHTML-highlight">Submit</button></div>
     </form>
-</div>
-
+  </RenderHTML>
+</RenderCard>
 
 Role locators include [buttons, checkboxes, headings, links, lists, tables, and many more](https://www.w3.org/TR/html-aria/#docconformance) and follow W3C specifications for [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
 
@@ -281,14 +301,18 @@ Most form controls usually have dedicated labels that could be conveniently used
 
 For example, consider the following DOM structure.
 
-```html
-<label for="password">Password</label>
-<input type="password" id="password" />
-```
-<div className="rendered-html">
-    <label for="password">Password</label>
-    <input type="password" id="password" />
-</div>
+<RenderCard>
+  ```html
+  <label for="password">Password</label>
+  <input type="password" id="password" />
+  ```
+  <RenderHTML>
+    <div>
+      <label for="password">Password</label>
+      <input type="password" id="password" />
+    </div>
+  </RenderHTML>
+</RenderCard>
 
 You can fill the input after locating it by the label text:
 
@@ -312,10 +336,14 @@ page.get_by_label("Password").fill("secret")
 await page.GetByLabel("Password").FillAsync("secret");
 ```
 
-<div className="rendered-html">
-    <label for="password">Password</label>
-    <input type="password" id="password" value="secret" class="highlight" />
-</div>
+<RenderCard>
+  <RenderHTML>
+    <div>
+      <label for="password">Password</label>
+      <input type="password" id="password" value="secret" class="renderHTML-highlight" />
+    </div>
+  </RenderHTML>
+</RenderCard>
 
 :::tip When to use label locators
 Use this locator when locating form fields.
@@ -326,15 +354,16 @@ Inputs may have a placeholder attribute to hint to the user what value should be
 
 For example, consider the following DOM structure.
 
-```html
-<input id="email" name="email" type="email" placeholder="name@example.com" />
-```
-
-<div className="rendered-html">
-    <input id="email" name="email" type="email" placeholder="name@example.com" />
-</div>
-
-<img width="155" alt="input field filled in with name@example.com" src="https://user-images.githubusercontent.com/13063165/201114537-597b157f-68f3-473e-8802-4c099d1d6e93.png" />
+<RenderCard>
+  ```html
+  <input id="email" name="email" type="email" placeholder="name@example.com" />
+  ```
+  <RenderHTML>
+    <div>
+      <input id="email" name="email" type="email" placeholder="name@example.com" />
+    </div>
+  </RenderHTML>
+</RenderCard>
 
 You can fill the input after locating it by the placeholder text:
 
@@ -360,9 +389,13 @@ page.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
 await page.GetByPlaceholder("name@example.com")
     .FillAsync("playwright@microsoft.com");
 ```
-<div className="rendered-html">
-    <input id="email" name="email" type="email" placeholder="name@example.com" value="playwright@microsoft.com" class="highlighted" />
-</div>
+<RenderCard>
+  <RenderHTML>
+    <div>
+      <input id="email" name="email" type="email" placeholder="name@example.com" value="playwright@microsoft.com" class="renderHTML-highlight" />
+    </div>
+  </RenderHTML>
+</RenderCard>
 
 :::tip When to use placeholder locators
 Use this locator when locating form elements that do not have labels but do have placeholder texts.
@@ -374,14 +407,14 @@ Find an element by the text it contains. You can match by a substring, exact str
 
 For example, consider the following DOM structure.
 
-```html
-<span>Welcome, John</span>
-```
-
-<div className="rendered-html">
+<RenderCard>
+  ```html
+  <span>Welcome, John</span>
+  ```
+  <RenderHTML>
     <span>Welcome, John</span>
-</div>
-
+  </RenderHTML>
+</RenderCard>
 
 You can locate the element by the text it contains:
 
@@ -471,15 +504,18 @@ You can also [filter by text](#filter-by-text) which can be useful when trying t
 
 All images should have an `alt` attribute that describes the image. You can locate an image based on the text alternative using [`method: Page.getByAltText`].
 
-
 For example, consider the following DOM structure.
 
-```html
-<img alt="playwright logo" src="/playwright-logo.png" />
-```
-
-<img width="48" alt="playwright logo" src="https://user-images.githubusercontent.com/13063165/201125864-dad707d2-efbc-4fd8-ab2e-8f41e3b24416.png" />
-
+<RenderCard>
+  ```html
+  <img alt="playwright logo" src="/playwright-logo.png" />
+  ```
+  <RenderHTML>
+    <div class="renderHTML-logo">
+      <img alt="playwright logo" src="https://playwright.dev/img/playwright-logo.svg" />
+    </div>
+  </RenderHTML>
+</RenderCard>
 
 You can click on the image after locating it by the text alternative:
 
@@ -505,9 +541,13 @@ page.get_by_alt_text("playwright logo").click()
 await page.GetByAltText("playwright logo")
     .ClickAsync();
 ```
-
-<img width="49" alt="playwright logo being clicked" src="https://user-images.githubusercontent.com/13063165/201134010-4b7af9fc-cfaf-42b5-b968-79b2e1921b57.png" />
-
+<RenderCard>
+  <RenderHTML>
+    <div class="renderHTML-logo renderHTML-highlight">
+      <img alt="playwright logo" src="https://playwright.dev/img/playwright-logo.svg" />
+    </div>
+  </RenderHTML>
+</RenderCard>
 
 :::tip When to use alt locators
 Use this locator when your element supports alt text such as `img` and `area` elements.
@@ -519,10 +559,14 @@ Locate an element with a matching title attribute using [`method: Page.getByTitl
 
 For example, consider the following DOM structure.
 
-```html
-<span title='Issues count'>25 issues</span>
-```
-<img width="67" alt="25 issues" src="https://user-images.githubusercontent.com/13063165/201129562-2c2cb7f2-4072-4dfe-8286-e7d3a036e965.png" />
+<RenderCard>
+  ```html
+  <span title='Issues count'>25 issues</span>
+  ```
+  <RenderHTML>
+    <span title='Issues count'>25 issues</span>
+  </RenderHTML>
+</RenderCard>
 
 You can check the issues count after locating it by the title text:
 
@@ -559,10 +603,16 @@ Testing by test ids is the most resilient way of testing as even if your text or
 
 For example, consider the following DOM structure.
 
-```html
-<button data-testid="directions">Itinéraire</button>
-```
-<img width="74" alt="Screenshot 2022-11-10 at 16 07 47" src="https://user-images.githubusercontent.com/13063165/201131385-5e18c551-625c-4153-9808-e2666b90b152.png" />
+<RenderCard>
+  ```html
+  <button data-testid="directions">Itinéraire</button>
+  ```
+  <RenderHTML>
+    <div>
+      <button data-testid="directions">Itinéraire</button>
+    </div>
+  </RenderHTML>
+</RenderCard>
 
 You can locate the element by it's test id:
 
@@ -589,7 +639,13 @@ await page.GetByTestId("directions")
     .ClickAsync();
 ```
 
-<img width="72" alt="button with Itinéraire text showing click action" src="https://user-images.githubusercontent.com/13063165/201133588-789926c6-9de3-4866-abd9-8d0a7e3fa95d.png" />
+<RenderCard>
+  <RenderHTML>
+    <div>
+      <button data-testid="directions" class="renderHTML-highlight">Itinéraire</button>
+    </div>
+  </RenderHTML>
+</RenderCard>
 
 :::tip When to use testid locators
 You can also use test ids when you choose to use the test id methodology or when you can't locate by [role](#locate-by-role) or [text](#locate-by-text).
@@ -769,9 +825,6 @@ Consider the following example with a custom web component:
 </x-details>
 ```
 
-<img width="101" alt="Title, shadow-root and details" src="https://user-images.githubusercontent.com/13063165/201364144-fe6ea945-505d-4650-bbe4-056439c311c8.png" />
-
-
 You can locate in the same way as if the shadow root was not present at all.
 
 To click `<div>Details</div>`:
@@ -792,11 +845,6 @@ page.get_by_text("Details").click()
 await page.GetByText("Details").ClickAsync();
 ```
 
-<img width="100" alt="Title, shadow-root and details with text details highlighted" src="https://user-images.githubusercontent.com/13063165/201364000-42820d75-053f-449e-80bf-8b38470a2a23.png" /> 
-
-
-<br /><br />
-
 To click `<x-details>`:
 
 ```js
@@ -814,10 +862,6 @@ page.locator("x-details", has_text="Details" ).click()
 ```csharp
 await page.Locator("x-details", new() { HasTextString = "Details" }).ClickAsync();
 ```
-
-<img width="103" alt="Title, shadow-root and details highlighted" src="https://user-images.githubusercontent.com/13063165/201363856-09fd3eec-6e55-45fe-a251-7b39c3ea09d7.png" />
-
-<br /><br />
 
 To ensure that `<x-details>` contains the text "Details":
 ```js
@@ -839,19 +883,29 @@ await Expect(page.Locator("x-details")).ToContainTextAsync("Details");
 
 Consider the following DOM structure where we want to click on the buy button of the second product card. We have a few options in order to filter the locators to get the right one.
 
-```html
-<div data-testid='product-card'>
-  <h3>Product 1</h3>
-  <button>Buy</button>
-</div>
+<RenderCard>
+  ```html
+  <div data-testid='product-card'>
+    <h3>Product 1</h3>
+    <button>Buy</button>
+  </div>
+  <div data-testid='product-card'>
+    <h3>Product 2</h3>
+    <button>Buy</button>
+  </div>
+  ```
+<RenderHTML>
+    <div data-testid='product-card' class="renderedHTML-card">
+      <h3>Product 1</h3>
+      <button>Buy</button>
+    </div>
 
-<div data-testid='product-card'>
-  <h3>Product 2</h3>
-  <button>Buy</button>
-</div>
-```
-
-<img width="83" alt="2 product cards with text and a button" src="https://user-images.githubusercontent.com/13063165/201182468-348eb733-7cf5-4e5b-94de-604312fe5fc7.png" />
+  <div data-testid='product-card' class="renderedHTML-card">
+      <h3>Product 2</h3>
+      <button>Buy</button>
+    </div>
+  </RenderHTML>
+</RenderCard>
 
 ### Filter by text
 
@@ -919,7 +973,19 @@ await page.GetByTestId("product-card")
     .ClickAsync();
 ```
 
-<img width="83" alt="2 product cards with text and a button and the second one being highlighted" src="https://user-images.githubusercontent.com/13063165/201182749-253ff808-cd70-4d42-88c6-a9f07fb7eeae.png" />
+<RenderCard>
+<RenderHTML>
+    <div data-testid='product-card'>
+      <h3>Product 1</h3>
+      <button>Buy</button>
+    </div>
+
+  <div data-testid='product-card'>
+      <h3>Product 2</h3>
+      <button class="renderHTML-highlight">Buy</button>
+    </div>
+  </RenderHTML>
+</RenderCard>
 
 ### Filter by another locator
 
@@ -953,7 +1019,19 @@ await page.GetByTestId("product-card")
     .ClickAsync();
 ```
 
-<img width="83" alt="2 product cards with text and a button and the second one being highlighted" src="https://user-images.githubusercontent.com/13063165/201182749-253ff808-cd70-4d42-88c6-a9f07fb7eeae.png" />
+<RenderCard>
+  <RenderHTML>
+    <div data-testid='product-card'>
+      <h3>Product 1</h3>
+      <button>Buy</button>
+    </div>
+
+  <div data-testid='product-card'>
+      <h3>Product 2</h3>
+      <button class="renderHTML-highlight">Buy</button>
+    </div>
+  </RenderHTML>
+</RenderCard>
 
 We can also assert the product card to make sure there is only one
 
@@ -989,7 +1067,7 @@ Note that the inner locator is matched starting from the outer one, not from the
 
 You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page.
 
-In this example we first create a locator called product by locating the test id. We then filter by text. We can use the product locator again to get by role of button and click it and then use an assertion to make sure there is only one product with the text ' Product 2'.
+In this example we first create a locator called product by locating the test id. We then filter by text. We can use the product locator again to get by role of button and click it and then use an assertion to make sure there is only one product with the text " Product 2".
 
 ```js
 const product = page.getByTestId('product-card')
@@ -1029,7 +1107,19 @@ await product.GetByRole("button", new() { NameString = "Buy" })
     .ClickAsync();
 ```
 
-<img width="83" alt="2 product cards with text and a button and the second one being highlighted" src="https://user-images.githubusercontent.com/13063165/201182749-253ff808-cd70-4d42-88c6-a9f07fb7eeae.png" />
+<RenderCard>
+  <RenderHTML>
+    <div data-testid='product-card'>
+      <h3>Product 1</h3>
+      <button>Buy</button>
+    </div>
+
+  <div data-testid='product-card'>
+      <h3>Product 2</h3>
+      <button class="renderHTML-highlight">Buy</button>
+    </div>
+  </RenderHTML>
+</RenderCard>
 
 ## Lists
 
@@ -1039,15 +1129,22 @@ You can assert locators in order to count the items in a list.
 
 For example, consider the following DOM structure:
 
-```html
-<ul>
-  <li>apple</li>
-  <li>banana</li>
-  <li>orange</li>
-</ul>
-```
-
-<img width="81" alt="list of 3 items, apple, banana and orange" src="https://user-images.githubusercontent.com/13063165/200641602-95a801ce-8a3e-4141-b4ac-926b890f4648.png" />
+<RenderCard>
+  ```html
+  <ul>
+    <li>apple</li>
+    <li>banana</li>
+    <li>orange</li>
+  </ul>
+  ```
+<RenderHTML>
+    <ul>
+      <li>apple</li>
+      <li>banana</li>
+      <li>orange</li>
+    </ul>
+  </RenderHTML>
+</RenderCard>
 
 Use the count assertion to ensure that the list has 3 items.
 
@@ -1077,14 +1174,22 @@ You can assert locators in order to find all the text in a list.
 
 For example, consider the following DOM structure:
 
-```html
-<ul>
-  <li>apple</li>
-  <li>banana</li>
-  <li>orange</li>
-</ul>
-```
-<img width="81" alt="list of 3 items, apple, banana and orange" src="https://user-images.githubusercontent.com/13063165/200641602-95a801ce-8a3e-4141-b4ac-926b890f4648.png" />
+<RenderCard>
+  ```html
+  <ul>
+    <li>apple</li>
+    <li>banana</li>
+    <li>orange</li>
+  </ul>
+  ```
+<RenderHTML>
+    <ul>
+      <li>apple</li>
+      <li>banana</li>
+      <li>orange</li>
+    </ul>
+  </RenderHTML>
+</RenderCard>
 
 Use [`method: LocatorAssertions.toHaveText`] to ensure that the list has the text "apple", "banana" and "orange".
 
@@ -1120,13 +1225,22 @@ Use the [`method: Page.getByText`] method to locate an element in a list by it's
 
 For example, consider the following DOM structure:
 
-```html
-<ul>
-  <li>apple</li>
-  <li>banana</li>
-  <li>orange</li>
-</ul>
-```
+<RenderCard>
+  ```html
+  <ul>
+    <li>apple</li>
+    <li>banana</li>
+    <li>orange</li>
+  </ul>
+  ```
+<RenderHTML>
+    <ul>
+      <li>apple</li>
+      <li>banana</li>
+      <li>orange</li>
+    </ul>
+  </RenderHTML>
+</RenderCard>
 
 Locate an item by it's text content and click it.
 
@@ -1153,20 +1267,37 @@ await page.GetByText("orange")
     .ClickAsync();
 ```
 
-<img width="78" alt="list of apple, banana and orange highlighting orange" src="https://user-images.githubusercontent.com/13063165/201171918-0f689261-a48e-4660-9726-c8fcf29e9105.png" />
+<RenderCard>
+<RenderHTML>
+    <ul>
+      <li>apple</li>
+      <li>banana</li>
+      <li class="renderHTML-highlight">orange</li>
+    </ul>
+  </RenderHTML>
+</RenderCard>
 
 #### Filter by text
 Use the [`method: Locator.filter`] to locate a specific item in a list.
 
 For example, consider the following DOM structure:
 
-```html
-<ul>
-  <li>apple</li>
-  <li>banana</li>
-  <li>orange</li>
-</ul>
-```
+<RenderCard>
+  ```html
+  <ul>
+    <li>apple</li>
+    <li>banana</li>
+    <li>orange</li>
+  </ul>
+  ```
+<RenderHTML>
+    <ul>
+      <li>apple</li>
+      <li>banana</li>
+      <li>orange</li>
+    </ul>
+  </RenderHTML>
+</RenderCard>
 
 Locate an item by the role of "listitem" and then filter by the text of "orange" and then click it.
 
@@ -1195,7 +1326,16 @@ await page.GetByRole("listitem")
     .Filter(new() { HasTextString = "orange" })
     .ClickAsync();
 ```
-<img width="78" alt="list of apple, banana and orange highlighting orange" src="https://user-images.githubusercontent.com/13063165/201171918-0f689261-a48e-4660-9726-c8fcf29e9105.png" />
+
+<RenderCard>
+<RenderHTML>
+    <ul>
+      <li>apple</li>
+      <li>banana</li>
+      <li class="renderHTML-highlight">orange</li>
+    </ul>
+  </RenderHTML>
+</RenderCard>
 
 #### Get by test id
 
@@ -1203,13 +1343,22 @@ Use the [`method: Page.getByTestId`] method to locate an element in a list. You 
 
 For example, consider the following DOM structure:
 
-```html
-<ul>
-  <li data-testid='apple'>apple</li>
-  <li data-testid='banana'>banana</li>
-  <li data-testid='orange'>orange</li>
-</ul>
-```
+<RenderCard>
+  ```html
+  <ul>
+    <li data-testid='apple'>apple</li>
+    <li data-testid='banana'>banana</li>
+    <li data-testid='orange'>orange</li>
+  </ul>
+  ```
+  <RenderHTML>
+    <ul>
+      <li data-testid='apple'>apple</li>
+      <li data-testid='banana'>banana</li>
+      <li data-testid='orange'>orange</li>
+    </ul>
+  </RenderHTML>
+</RenderCard>
 
 Locate an item by it's test id of "orange" and then click it.
 
@@ -1236,7 +1385,15 @@ await page.GetByTestId("orange")
     .ClickAsync();
 ```
 
-<img width="78" alt="list of apple, banana and orange highlighting orange" src="https://user-images.githubusercontent.com/13063165/201171918-0f689261-a48e-4660-9726-c8fcf29e9105.png" />
+<RenderCard>
+  <RenderHTML>
+    <ul>
+      <li data-testid='apple'>apple</li>
+      <li data-testid='banana'>banana</li>
+      <li data-testid='orange' class="renderHTML-highlight">orange</li>
+    </ul>
+  </RenderHTML>
+</RenderCard>
 
 #### Get by nth item
 
@@ -1270,6 +1427,7 @@ When you have elements with various similarities, you can use the [`method: Loca
 
 For example, consider the following DOM structure:
 
+<RenderCard>
 ```html
 <ul>
   <li>
@@ -1290,7 +1448,27 @@ For example, consider the following DOM structure:
   </li>
 </ul>
 ```
-<img width="112" alt="text John and Mary with buttons say hello and say goodbye beside their names" src="https://user-images.githubusercontent.com/13063165/201173459-4c560974-6712-48a6-8b6d-a636276f0dd3.png" />
+  <RenderHTML>
+    <ul>
+  <li>
+    <div>John</div>
+    <div><button>Say hello</button></div>
+  </li>
+  <li>
+    <div>Mary</div>
+    <div><button>Say hello</button></div>
+  </li>
+  <li>
+    <div>John</div>
+    <div><button>Say goodbye</button></div>
+  </li>
+  <li>
+    <div>Mary</div>
+    <div><button>Say goodbye</button></div>
+  </li>
+</ul>
+  </RenderHTML>
+</RenderCard>
 
 To take a screenshot of the row with "Mary" and "Say goodbye":
 
@@ -1333,7 +1511,12 @@ await rowLocator.Filter(new() { HasTextString = "Mary" })
 
 You should now have a "screenshot.png" file in your project's root directory.
 
-<img width="153" alt="text Mary with buttons say goodbye" src="https://user-images.githubusercontent.com/13063165/201357594-7910f8ad-7626-48a4-85a2-2a3e63d67e34.png" />
+<RenderCard>
+  <RenderHTML>
+    <div>Mary</div>
+    <div><button>Say goodbye</button></div>
+  </RenderHTML>
+</RenderCard>
 
 ### Rare use cases
 
