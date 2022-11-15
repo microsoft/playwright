@@ -1850,11 +1850,6 @@ export interface TestInfo {
   stdout: Array<string|Buffer>;
 
   /**
-   * Returns a [Storage] instance for the currently running project.
-   */
-  storage(): Storage;
-
-  /**
    * Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about
    * [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
@@ -2783,24 +2778,6 @@ type ConnectOptions = {
 };
 
 /**
- * Playwright Test provides a [testInfo.storage()](https://playwright.dev/docs/api/class-testinfo#test-info-storage) object
- * for passing values between project setup and tests. TODO: examples
- */
-export interface Storage {
-  /**
-   * Get named item from the storage. Returns undefined if there is no value with given name.
-   * @param name Item name.
-   */
-  get<T>(name: string): Promise<T | undefined>;
-  /**
-   * Set value to the storage.
-   * @param name Item name.
-   * @param value Item value. The value must be serializable to JSON. Passing `undefined` deletes the entry with given name.
-   */
-  set<T>(name: string, value: T | undefined): Promise<void>;
-}
-
-/**
  * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
  *
  * These options are usually provided in the [configuration file](https://playwright.dev/docs/test-configuration) through
@@ -3034,15 +3011,6 @@ export interface PlaywrightTestOptions {
    * Either a path to the file with saved storage, or an object with the following fields:
    */
   storageState: StorageState | undefined;
-  /**
-   * Name of the [Storage] entry that should be used to initialize
-   * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state). The value must
-   * be written to the storage before creatiion of a browser context that uses it (usually in
-   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup)). If both this property and
-   * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state) are specified,
-   * this property will always take precedence.
-   */
-  storageStateName: string | undefined;
   /**
    * Changes the timezone of the context. See
    * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
@@ -4554,12 +4522,6 @@ interface TestProject {
    * Project name is visible in the report and during test execution.
    */
   name?: string;
-
-  /**
-   * Project setup files that would be executed before all tests in the project. If project setup fails the tests in this
-   * project will be skipped. All project setup files will run in every shard if the project is sharded.
-   */
-  setup?: string|RegExp|Array<string|RegExp>;
 
   /**
    * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
