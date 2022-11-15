@@ -79,12 +79,12 @@ Playwright comes with multiple built-in locators. To make tests resilient, we re
 For example, consider the following DOM structure.
 
 <RenderCard>
-  ```html
-  <button>Sign in</button>
-  ```
   <RenderHTML>
     <div><button type="button">Sign in</button></div>
   </RenderHTML>
+  ```html
+    <button>Sign in</button>
+  ```
 </RenderCard>
 
 Locate the element by its role of `button` with name "Sign in".
@@ -202,14 +202,6 @@ The [`method: Page.getByRole`] locator reflects how users and assistive technolo
 For example, consider the following DOM structure.
 
 <RenderCard>
-  ```html
-  <h1>Sign up</h1>
-  <form>
-    <label for="subscribe">subscribe</label>
-    <input type="checkbox" checked id="subscribe" />
-    <button>Submit</button>
-  </form>
-  ```
   <RenderHTML>
     <h1>Sign up</h1>
     <form>
@@ -220,6 +212,15 @@ For example, consider the following DOM structure.
       <div><button type="button">Submit</button></div>
     </form>
   </RenderHTML>
+
+  ```html
+  <h1>Sign up</h1>
+  <form>
+    <label for="subscribe">subscribe</label>
+    <input type="checkbox" checked id="subscribe" />
+    <button>Submit</button>
+  </form>
+  ```
 </RenderCard>
 
 
@@ -302,16 +303,17 @@ Most form controls usually have dedicated labels that could be conveniently used
 For example, consider the following DOM structure.
 
 <RenderCard>
-  ```html
-  <label for="password">Password</label>
-  <input type="password" id="password" />
-  ```
   <RenderHTML>
     <div>
       <label for="password">Password</label>
       <input type="password" id="password" />
     </div>
   </RenderHTML>
+
+  ```html
+  <label for="password">Password</label>
+  <input type="password" id="password" />
+  ```
 </RenderCard>
 
 You can fill the input after locating it by the label text:
@@ -355,14 +357,15 @@ Inputs may have a placeholder attribute to hint to the user what value should be
 For example, consider the following DOM structure.
 
 <RenderCard>
-  ```html
-  <input id="email" name="email" type="email" placeholder="name@example.com" />
-  ```
   <RenderHTML>
     <div>
       <input id="email" name="email" type="email" placeholder="name@example.com" />
     </div>
   </RenderHTML>
+
+  ```html
+  <input id="email" name="email" type="email" placeholder="name@example.com" />
+  ```
 </RenderCard>
 
 You can fill the input after locating it by the placeholder text:
@@ -408,12 +411,13 @@ Find an element by the text it contains. You can match by a substring, exact str
 For example, consider the following DOM structure.
 
 <RenderCard>
-  ```html
-  <span>Welcome, John</span>
-  ```
   <RenderHTML>
     <span>Welcome, John</span>
   </RenderHTML>
+
+  ```html
+  <span>Welcome, John</span>
+  ```
 </RenderCard>
 
 You can locate the element by the text it contains:
@@ -507,14 +511,15 @@ All images should have an `alt` attribute that describes the image. You can loca
 For example, consider the following DOM structure.
 
 <RenderCard>
-  ```html
-  <img alt="playwright logo" src="/playwright-logo.png" />
-  ```
   <RenderHTML>
     <div class="renderHTML-logo">
       <img alt="playwright logo" src="https://playwright.dev/img/playwright-logo.svg" />
     </div>
   </RenderHTML>
+
+  ```html
+  <img alt="playwright logo" src="/playwright-logo.png" />
+  ```
 </RenderCard>
 
 You can click on the image after locating it by the text alternative:
@@ -560,12 +565,13 @@ Locate an element with a matching title attribute using [`method: Page.getByTitl
 For example, consider the following DOM structure.
 
 <RenderCard>
-  ```html
-  <span title='Issues count'>25 issues</span>
-  ```
   <RenderHTML>
     <span title='Issues count'>25 issues</span>
   </RenderHTML>
+
+  ```html
+  <span title='Issues count'>25 issues</span>
+  ```
 </RenderCard>
 
 You can check the issues count after locating it by the title text:
@@ -604,14 +610,15 @@ Testing by test ids is the most resilient way of testing as even if your text or
 For example, consider the following DOM structure.
 
 <RenderCard>
-  ```html
-  <button data-testid="directions">Itinéraire</button>
-  ```
   <RenderHTML>
     <div>
       <button data-testid="directions">Itinéraire</button>
     </div>
   </RenderHTML>
+
+  ```html
+  <button data-testid="directions">Itinéraire</button>
+  ```
 </RenderCard>
 
 You can locate the element by it's test id:
@@ -884,6 +891,18 @@ await Expect(page.Locator("x-details")).ToContainTextAsync("Details");
 Consider the following DOM structure where we want to click on the buy button of the second product card. We have a few options in order to filter the locators to get the right one.
 
 <RenderCard>
+  <RenderHTML>
+    <div data-testid='product-card'>
+      <h3>Product 1</h3>
+      <button>Buy</button>
+    </div>
+
+    <div data-testid='product-card'>
+      <h3>Product 2</h3>
+      <button>Buy</button>
+    </div>
+  </RenderHTML>
+
   ```html
   <div data-testid='product-card'>
     <h3>Product 1</h3>
@@ -894,17 +913,6 @@ Consider the following DOM structure where we want to click on the buy button of
     <button>Buy</button>
   </div>
   ```
-<RenderHTML>
-    <div data-testid='product-card' class="renderedHTML-card">
-      <h3>Product 1</h3>
-      <button>Buy</button>
-    </div>
-
-  <div data-testid='product-card' class="renderedHTML-card">
-      <h3>Product 2</h3>
-      <button>Buy</button>
-    </div>
-  </RenderHTML>
 </RenderCard>
 
 ### Filter by text
@@ -1130,13 +1138,6 @@ You can assert locators in order to count the items in a list.
 For example, consider the following DOM structure:
 
 <RenderCard>
-  ```html
-  <ul>
-    <li>apple</li>
-    <li>banana</li>
-    <li>orange</li>
-  </ul>
-  ```
 <RenderHTML>
     <ul>
       <li>apple</li>
@@ -1144,6 +1145,14 @@ For example, consider the following DOM structure:
       <li>orange</li>
     </ul>
   </RenderHTML>
+
+  ```html
+  <ul>
+    <li>apple</li>
+    <li>banana</li>
+    <li>orange</li>
+  </ul>
+  ```
 </RenderCard>
 
 Use the count assertion to ensure that the list has 3 items.
@@ -1175,13 +1184,6 @@ You can assert locators in order to find all the text in a list.
 For example, consider the following DOM structure:
 
 <RenderCard>
-  ```html
-  <ul>
-    <li>apple</li>
-    <li>banana</li>
-    <li>orange</li>
-  </ul>
-  ```
 <RenderHTML>
     <ul>
       <li>apple</li>
@@ -1189,6 +1191,14 @@ For example, consider the following DOM structure:
       <li>orange</li>
     </ul>
   </RenderHTML>
+
+  ```html
+  <ul>
+    <li>apple</li>
+    <li>banana</li>
+    <li>orange</li>
+  </ul>
+  ```
 </RenderCard>
 
 Use [`method: LocatorAssertions.toHaveText`] to ensure that the list has the text "apple", "banana" and "orange".
@@ -1226,6 +1236,14 @@ Use the [`method: Page.getByText`] method to locate an element in a list by it's
 For example, consider the following DOM structure:
 
 <RenderCard>
+  <RenderHTML>
+    <ul>
+      <li>apple</li>
+      <li>banana</li>
+      <li>orange</li>
+    </ul>
+  </RenderHTML>
+
   ```html
   <ul>
     <li>apple</li>
@@ -1233,13 +1251,6 @@ For example, consider the following DOM structure:
     <li>orange</li>
   </ul>
   ```
-<RenderHTML>
-    <ul>
-      <li>apple</li>
-      <li>banana</li>
-      <li>orange</li>
-    </ul>
-  </RenderHTML>
 </RenderCard>
 
 Locate an item by it's text content and click it.
@@ -1268,7 +1279,7 @@ await page.GetByText("orange")
 ```
 
 <RenderCard>
-<RenderHTML>
+  <RenderHTML>
     <ul>
       <li>apple</li>
       <li>banana</li>
@@ -1283,6 +1294,14 @@ Use the [`method: Locator.filter`] to locate a specific item in a list.
 For example, consider the following DOM structure:
 
 <RenderCard>
+  <RenderHTML>
+    <ul>
+      <li>apple</li>
+      <li>banana</li>
+      <li>orange</li>
+    </ul>
+  </RenderHTML>
+
   ```html
   <ul>
     <li>apple</li>
@@ -1290,13 +1309,6 @@ For example, consider the following DOM structure:
     <li>orange</li>
   </ul>
   ```
-<RenderHTML>
-    <ul>
-      <li>apple</li>
-      <li>banana</li>
-      <li>orange</li>
-    </ul>
-  </RenderHTML>
 </RenderCard>
 
 Locate an item by the role of "listitem" and then filter by the text of "orange" and then click it.
@@ -1328,7 +1340,7 @@ await page.GetByRole("listitem")
 ```
 
 <RenderCard>
-<RenderHTML>
+  <RenderHTML>
     <ul>
       <li>apple</li>
       <li>banana</li>
@@ -1344,13 +1356,6 @@ Use the [`method: Page.getByTestId`] method to locate an element in a list. You 
 For example, consider the following DOM structure:
 
 <RenderCard>
-  ```html
-  <ul>
-    <li data-testid='apple'>apple</li>
-    <li data-testid='banana'>banana</li>
-    <li data-testid='orange'>orange</li>
-  </ul>
-  ```
   <RenderHTML>
     <ul>
       <li data-testid='apple'>apple</li>
@@ -1358,6 +1363,14 @@ For example, consider the following DOM structure:
       <li data-testid='orange'>orange</li>
     </ul>
   </RenderHTML>
+
+  ```html
+  <ul>
+    <li data-testid='apple'>apple</li>
+    <li data-testid='banana'>banana</li>
+    <li data-testid='orange'>orange</li>
+  </ul>
+  ```
 </RenderCard>
 
 Locate an item by it's test id of "orange" and then click it.
@@ -1428,46 +1441,47 @@ When you have elements with various similarities, you can use the [`method: Loca
 For example, consider the following DOM structure:
 
 <RenderCard>
-```html
-<ul>
-  <li>
-    <div>John</div>
-    <div><button>Say hello</button></div>
-  </li>
-  <li>
-    <div>Mary</div>
-    <div><button>Say hello</button></div>
-  </li>
-  <li>
-    <div>John</div>
-    <div><button>Say goodbye</button></div>
-  </li>
-  <li>
-    <div>Mary</div>
-    <div><button>Say goodbye</button></div>
-  </li>
-</ul>
-```
   <RenderHTML>
     <ul>
-  <li>
-    <div>John</div>
-    <div><button>Say hello</button></div>
-  </li>
-  <li>
-    <div>Mary</div>
-    <div><button>Say hello</button></div>
-  </li>
-  <li>
-    <div>John</div>
-    <div><button>Say goodbye</button></div>
-  </li>
-  <li>
-    <div>Mary</div>
-    <div><button>Say goodbye</button></div>
-  </li>
-</ul>
+      <li>
+        <div>John</div>
+        <div><button>Say hello</button></div>
+      </li>
+      <li>
+        <div>Mary</div>
+        <div><button>Say hello</button></div>
+      </li>
+      <li>
+        <div>John</div>
+        <div><button>Say goodbye</button></div>
+      </li>
+      <li>
+        <div>Mary</div>
+        <div><button>Say goodbye</button></div>
+      </li>
+    </ul>
   </RenderHTML>
+
+  ```html
+  <ul>
+    <li>
+      <div>John</div>
+      <div><button>Say hello</button></div>
+    </li>
+    <li>
+      <div>Mary</div>
+      <div><button>Say hello</button></div>
+    </li>
+    <li>
+      <div>John</div>
+      <div><button>Say goodbye</button></div>
+    </li>
+    <li>
+      <div>Mary</div>
+      <div><button>Say goodbye</button></div>
+    </li>
+  </ul>
+```
 </RenderCard>
 
 To take a screenshot of the row with "Mary" and "Say goodbye":
