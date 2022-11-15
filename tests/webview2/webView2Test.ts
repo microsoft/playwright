@@ -23,7 +23,7 @@ import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
 export { expect } from '@playwright/test';
 import { TestChildProcess } from '../config/commonFixtures';
-import { DEFAULT_ARGS } from '../../packages/playwright-core/lib/server/chromium/chromium';
+import { chromiumSwitches } from '../../packages/playwright-core/lib/server/chromium/chromiumSwitches';
 
 export const webView2Test = baseTest.extend<TraceViewerFixtures>(traceViewerFixtures).extend<PageTestFixtures, PageWorkerFixtures>({
   browserVersion: [process.env.PWTEST_WEBVIEW2_CHROMIUM_VERSION, { scope: 'worker' }],
@@ -39,7 +39,7 @@ export const webView2Test = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
       shell: true,
       env: {
         ...process.env,
-        WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${cdpPort} ${DEFAULT_ARGS.join(' ')}`,
+        WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${cdpPort} ${chromiumSwitches.join(' ')}`,
         WEBVIEW2_USER_DATA_FOLDER: path.join(fs.realpathSync.native(os.tmpdir()), `playwright-webview2-tests/user-data-dir-${testInfo.workerIndex}`),
       }
     });

@@ -35,7 +35,7 @@ import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../common/timeoutSettings';
 import type * as channels from '@protocol/channels';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
-import { DEFAULT_ARGS } from '../chromium/chromium';
+import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { registry } from '../registry';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
@@ -269,7 +269,7 @@ export class AndroidDevice extends SdkObject {
       '--disable-fre',
       '--no-default-browser-check',
       `--remote-debugging-socket-name=${socketName}`,
-      ...DEFAULT_ARGS,
+      ...chromiumSwitches,
     ].join(' ');
     debug('pw:android')('Starting', pkg, commandLine);
     await this._backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);
