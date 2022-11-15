@@ -1667,7 +1667,7 @@ export class Frame extends SdkObject {
     for (let i = 0; i < frameChunks.length - 1 && progress.isRunning(); ++i) {
       const info = this._page.parseSelector(frameChunks[i], options);
       const task = dom.waitForSelectorTask(info, 'attached', false, i === 0 ? scope : undefined);
-      progress.log(`  waiting for frameLocator('${stringifySelector(frameChunks[i])}')`);
+      progress.log(`  waiting for ${this._asLocator(stringifySelector(frameChunks[i]) + ' >> internal:control=enter-frame')}`);
       const handle = i === 0 && scope ? await frame._runWaitForSelectorTaskOnce(progress, stringifySelector(info.parsed), info.world, task)
         : await frame._scheduleRerunnableHandleTask(progress, info.world, task);
       const element = handle.asElement() as dom.ElementHandle<Element>;
