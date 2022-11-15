@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
-import type { Storage, TestError, TestInfo, TestStatus } from '../types/test';
+import type { TestError, TestInfo, TestStatus } from '../types/test';
 import type { WorkerInitParams } from './ipc';
 import type { Loader } from './loader';
 import type { TestCase } from './test';
@@ -60,7 +60,7 @@ export class TestInfoImpl implements TestInfo {
   readonly snapshotDir: string;
   errors: TestError[] = [];
   currentStep: TestStepInternal | undefined;
-  private readonly _storage: JsonStorage;
+  private readonly _testStorage: JsonStorage;
 
   get error(): TestError | undefined {
     return this.errors[0];
@@ -108,7 +108,7 @@ export class TestInfoImpl implements TestInfo {
     this.expectedStatus = test.expectedStatus;
 
     this._timeoutManager = new TimeoutManager(this.project.timeout);
-    this._storage = new JsonStorage(this);
+    this._testStorage = new JsonStorage(this);
 
     this.outputDir = (() => {
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
@@ -281,12 +281,12 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager.setTimeout(timeout);
   }
 
-  storage() {
-    return this._storage;
+  _storage() {
+    return this._testStorage;
   }
 }
 
-class JsonStorage implements Storage {
+class JsonStorage {
   constructor(private _testInfo: TestInfoImpl) {
   }
 

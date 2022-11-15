@@ -505,12 +505,6 @@ Output written to `process.stderr` or `console.error` during the test execution.
 
 Output written to `process.stdout` or `console.log` during the test execution.
 
-## method: TestInfo.storage
-* since: v1.28
-- returns: <[Storage]>
-
-Returns a [Storage] instance for the currently running project.
-
 ## property: TestInfo.timeout
 * since: v1.10
 - type: <[int]>
