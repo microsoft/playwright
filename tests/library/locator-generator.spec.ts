@@ -316,14 +316,14 @@ it('reverse engineer frameLocator', async ({ page }) => {
   const locator = page
       .frameLocator('iframe')
       .getByText('foo', { exact: true })
-      .frameLocator('frame')
+      .frameLocator('frame').first()
       .frameLocator('iframe')
       .locator('span');
   expect.soft(generate(locator)).toEqual({
-    csharp: `FrameLocator("iframe").GetByText("foo", new() { Exact = true }).FrameLocator("frame").FrameLocator("iframe").Locator("span")`,
-    java: `frameLocator("iframe").getByText("foo", new FrameLocator.GetByTextOptions().setExact(true)).frameLocator("frame").frameLocator("iframe").locator("span")`,
-    javascript: `frameLocator('iframe').getByText('foo', { exact: true }).frameLocator('frame').frameLocator('iframe').locator('span')`,
-    python: `frame_locator("iframe").get_by_text("foo", exact=True).frame_locator("frame").frame_locator("iframe").locator("span")`,
+    csharp: `FrameLocator("iframe").GetByText("foo", new() { Exact = true }).FrameLocator("frame").First.FrameLocator("iframe").Locator("span")`,
+    java: `frameLocator("iframe").getByText("foo", new FrameLocator.GetByTextOptions().setExact(true)).frameLocator("frame").first().frameLocator("iframe").locator("span")`,
+    javascript: `frameLocator('iframe').getByText('foo', { exact: true }).frameLocator('frame').first().frameLocator('iframe').locator('span')`,
+    python: `frame_locator("iframe").get_by_text("foo", exact=True).frame_locator("frame").first.frame_locator("iframe").locator("span")`,
   });
 
   // Note that frame locators with ">>" are not restored back due to ambiguity.

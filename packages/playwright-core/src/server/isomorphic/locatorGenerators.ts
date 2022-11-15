@@ -32,10 +32,21 @@ export function asLocator(lang: Language, selector: string, isFrameLocator: bool
 }
 
 function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrameLocator: boolean = false): string {
+  const parts = [...parsed.parts];
+  // frameLocator('iframe').first is actually "iframe >> nth=0 >> internal:control=enter-frame"
+  // To make it easier to parse, we turn it into "iframe >> internal:control=enter-frame >> nth=0"
+  for (let index = 0; index < parts.length - 1; index++) {
+    if (parts[index].name === 'nth' && parts[index + 1].name === 'internal:control' && (parts[index + 1].body as string) === 'enter-frame') {
+      // Swap nth and enter-frame.
+      const [nth] = parts.splice(index, 1);
+      parts.splice(index + 1, 0, nth);
+    }
+  }
+
   const tokens: string[] = [];
   let nextBase: LocatorBase = isFrameLocator ? 'frame-locator' : 'page';
-  for (let index = 0; index < parsed.parts.length; index++) {
-    const part = parsed.parts[index];
+  for (let index = 0; index < parts.length; index++) {
+    const part = parts[index];
     const base = nextBase;
     nextBase = 'locator';
 
@@ -111,7 +122,7 @@ function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrame
 
     let locatorType: LocatorType = 'default';
 
-    const nextPart = parsed.parts[index + 1];
+    const nextPart = parts[index + 1];
     if (nextPart && nextPart.name === 'internal:control' && (nextPart.body as string) === 'enter-frame') {
       locatorType = 'frame';
       nextBase = 'frame-locator';
