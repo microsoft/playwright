@@ -202,6 +202,14 @@ Learn more about [automatic screenshots](../test-configuration.md#automatic-scre
 ## property: TestOptions.storageState = %%-js-python-context-option-storage-state-%%
 * since: v1.10
 
+## property: TestOptions.storageStateName
+* since: v1.28
+- type: <[string]>
+
+Name of the [Storage] entry that should be used to initialize [`property: TestOptions.storageState`]. The value must be
+written to the storage before creatiion of a browser context that uses it (usually in [`property: TestProject.setup`]). If both
+this property and [`property: TestOptions.storageState`] are specified, this property will always take precedence.
+
 ## property: TestOptions.testIdAttribute
 * since: v1.27
 
