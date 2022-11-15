@@ -18,7 +18,13 @@ const { app } = require('electron');
 const path = require('path');
 const { chromiumSwitches } = require('../chromium/chromiumSwitches');
 
-const appPath = path.resolve(process.argv[2], process.argv[3]);
+// Command line is like:
+// [Electron, loader.js, --inspect=0, --remote-debugging-port=0, options.cwd, app.js, ...args]
+const appPath = path.resolve(process.argv[4], process.argv[5]);
+process.argv.splice(2, 4);
+process.argv[1] = appPath;
+// Now it is like
+// [Electron, app.js, ...args]
 
 for (const arg of chromiumSwitches) {
   const match = arg.match(/--([^=]*)=?(.*)/)!;
