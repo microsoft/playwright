@@ -183,7 +183,7 @@ it('should scope browser handles', async ({ browserType, expectScopeState }) => 
   expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
-it('should not generate dispatchers for subresources w/o listeners', async ({ page, server, browserType, expectScopeState }) => {
+it('should not generate dispatchers for subresources w/o listeners', async ({ page, server, browserType, expectScopeState, video }) => {
   server.setRedirect('/one-style.css', '/two-style.css');
   server.setRedirect('/two-style.css', '/three-style.css');
   server.setRedirect('/three-style.css', '/four-style.css');
@@ -200,6 +200,7 @@ it('should not generate dispatchers for subresources w/o listeners', async ({ pa
       { _guid: 'browser-type', objects: [
         {
           _guid: 'browser', objects: [
+            ...(video === 'on' ? [{ _guid: 'artifact', objects: [] }] : []),
             { _guid: 'browser-context', objects: [
               {
                 _guid: 'page', objects: [
