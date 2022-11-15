@@ -162,12 +162,6 @@ Metadata that will be put directly to the test report serialized as JSON.
 
 Project name is visible in the report and during test execution.
 
-## property: TestProject.setup
-* since: v1.28
-- type: ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>>
-
-Project setup files that would be executed before all tests in the project. If project setup fails the tests in this project will be skipped. All project setup files will run in every shard if the project is sharded.
-
 ## property: TestProject.snapshotDir
 * since: v1.10
 - type: ?<[string]>
