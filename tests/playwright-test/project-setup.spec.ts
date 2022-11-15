@@ -98,7 +98,7 @@ function expectFilesRunBefore(timeline: Timeline, before: string[], after: strin
 test('should work for one project', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
     'a': {
-      setup: ['**/*.setup.ts']
+      _setup: ['**/*.setup.ts']
     },
   };
   const configWithFiles = createConfigWithProjects(['a'], testInfo, projectTemplates);
@@ -114,13 +114,13 @@ a > a${path.sep}a.spec.ts > a test [end]`);
 test('should work for several projects', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
     'a': {
-      setup: ['**/*.setup.ts']
+      _setup: ['**/*.setup.ts']
     },
     'b': {
-      setup: /.*b.setup.ts/
+      _setup: /.*b.setup.ts/
     },
     'c': {
-      setup: '**/c.setup.ts'
+      _setup: '**/c.setup.ts'
     },
   };
   const configWithFiles = createConfigWithProjects(['a', 'b', 'c'], testInfo, projectTemplates);
@@ -134,10 +134,10 @@ test('should work for several projects', async ({ runGroups }, testInfo) => {
 test('should stop project if setup fails', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
     'a': {
-      setup: ['**/*.setup.ts']
+      _setup: ['**/*.setup.ts']
     },
     'b': {
-      setup: /.*b.setup.ts/
+      _setup: /.*b.setup.ts/
     },
   };
   const configWithFiles = createConfigWithProjects(['a', 'b', 'c'], testInfo, projectTemplates);
@@ -162,7 +162,7 @@ test('should run setup in each project shard', async ({ runGroups }, testInfo) =
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            _setup: /.*.setup.ts/,
           },
         ]
       };`,
@@ -210,12 +210,12 @@ test('should run setup only for projects that have tests in the shard', async ({
         projects: [
           {
             name: 'p1',
-            setup: /.*p1.setup.ts$/,
+            _setup: /.*p1.setup.ts$/,
             testMatch: /.*a.test.ts/,
           },
           {
             name: 'p2',
-            setup: /.*p2.setup.ts$/,
+            _setup: /.*p2.setup.ts$/,
             testMatch: /.*b.test.ts/,
           },
         ]
@@ -265,10 +265,10 @@ test('should run setup only for projects that have tests in the shard', async ({
 test('--project only runs setup from that project;', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
     'a': {
-      setup: /.*a.setup.ts/
+      _setup: /.*a.setup.ts/
     },
     'b': {
-      setup: /.*b.setup.ts/
+      _setup: /.*b.setup.ts/
     },
   };
   const configWithFiles = createConfigWithProjects(['a', 'b', 'c'], testInfo, projectTemplates);
@@ -285,7 +285,7 @@ test('same file cannot be a setup and a test in the same project', async ({ runG
         projects: [
           {
             name: 'p1',
-            setup: /.*a.test.ts$/,
+            _setup: /.*a.test.ts$/,
             testMatch: /.*a.test.ts$/,
           },
         ]
@@ -308,12 +308,12 @@ test('same file cannot be a setup and a test in different projects', async ({ ru
         projects: [
           {
             name: 'p1',
-            setup: /.*a.test.ts$/,
+            _setup: /.*a.test.ts$/,
             testMatch: /.*noMatch.test.ts$/,
           },
           {
             name: 'p2',
-            setup: /.*noMatch.test.ts$/,
+            _setup: /.*noMatch.test.ts$/,
             testMatch: /.*a.test.ts$/
           },
         ]
