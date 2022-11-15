@@ -29,3 +29,6 @@ test-results
 /tests/installation/output/
 /tests/installation/.registry.json
 .cache/
+/test-results/
+/playwright-report/
+/playwright/.cache/
