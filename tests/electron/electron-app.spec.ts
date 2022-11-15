@@ -131,7 +131,6 @@ test('should create page for browser view', async ({ playwright }) => {
   const app = await playwright._electron.launch({
     args: [path.join(__dirname, 'electron-window-app.js')],
   });
-  const browserViewPagePromise = app.waitForEvent('window');
   await app.evaluate(async electron => {
     const window = electron.BrowserWindow.getAllWindows()[0];
     const view = new electron.BrowserView();
@@ -139,8 +138,7 @@ test('should create page for browser view', async ({ playwright }) => {
     await view.webContents.loadURL('about:blank');
     view.setBounds({ x: 0, y: 0, width: 256, height: 256 });
   });
-  await browserViewPagePromise;
-  expect(app.windows()).toHaveLength(2);
+  await expect.poll(() => app.windows().length).toBe(2);
   await app.close();
 });
 
@@ -148,7 +146,6 @@ test('should return same browser window for browser view pages', async ({ playwr
   const app = await playwright._electron.launch({
     args: [path.join(__dirname, 'electron-window-app.js')],
   });
-  const browserViewPagePromise = app.waitForEvent('window');
   await app.evaluate(async electron => {
     const window = electron.BrowserWindow.getAllWindows()[0];
     const view = new electron.BrowserView();
@@ -156,7 +153,7 @@ test('should return same browser window for browser view pages', async ({ playwr
     await view.webContents.loadURL('about:blank');
     view.setBounds({ x: 0, y: 0, width: 256, height: 256 });
   });
-  await browserViewPagePromise;
+  await expect.poll(() => app.windows().length).toBe(2);
   const [firstWindowId, secondWindowId] = await Promise.all(
       app.windows().map(async page => {
         const bwHandle = await app.browserWindow(page);
@@ -183,7 +180,6 @@ test('should record video', async ({ playwright }, testInfo) => {
 
 test('should be able to get the first window when with a delayed navigation', async ({ playwright }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17765' });
-  test.fixme();
 
   const app = await playwright._electron.launch({
     args: [path.join(__dirname, 'electron-window-app-delayed-loadURL.js')],

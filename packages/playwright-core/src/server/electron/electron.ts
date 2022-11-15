@@ -79,7 +79,12 @@ export class ElectronApplication extends SdkObject {
       const electronHandle = await this._nodeElectronHandlePromise;
       await electronHandle.evaluate(({ app }) => app.quit());
     });
-    this._nodeSession.send('Runtime.enable', {}).catch(e => {});
+  }
+
+  async initialize() {
+    await this._nodeSession.send('Runtime.enable', {});
+    // Delay loading the app until browser is started and the browser targets are configured to auto-attach.
+    await this._nodeSession.send('Runtime.evaluate', { expression: '__playwright_run()' });
   }
 
   process(): childProcess.ChildProcess {
@@ -125,7 +130,7 @@ export class Electron extends SdkObject {
     controller.setLogName('browser');
     return controller.run(async progress => {
       let app: ElectronApplication | undefined = undefined;
-      const electronArguments = [...args, '--inspect=0', '--remote-debugging-port=0'];
+      const electronArguments = [require.resolve('./loader'), options.cwd || process.cwd(), ...args, '--inspect=0', '--remote-debugging-port=0'];
 
       if (os.platform() === 'linux') {
         const runningAsRoot = process.geteuid && process.geteuid() === 0;
@@ -231,6 +236,7 @@ export class Electron extends SdkObject {
       validateBrowserContextOptions(contextOptions, browserOptions);
       const browser = await CRBrowser.connect(chromeTransport, browserOptions);
       app = new ElectronApplication(this, browser, nodeConnection, launchedProcess);
+      await app.initialize();
       return app;
     }, TimeoutSettings.timeout(options));
   }
