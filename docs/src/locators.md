@@ -203,19 +203,19 @@ For example, consider the following DOM structure.
 
 <RenderCard>
   ```html
-  <h1>my form</h1>
+  <h1>Sign up</h1>
   <form>
-    <label for="newsletter">newsletter</label>
-    <input type="checkbox" checked id="newsletter" />
+    <label for="subscribe">subscribe</label>
+    <input type="checkbox" checked id="subscribe" />
     <button>Submit</button>
   </form>
   ```
   <RenderHTML>
-    <h1>my form</h1>
+    <h1>Sign up</h1>
     <form>
       <div>
-        <label for="newsletter">newsletter</label>
-        <input type="checkbox" checked id="newsletter" />
+        <label for="subscribe">subscribe</label>
+        <input type="checkbox" checked id="subscribe" />
       </div>
       <div><button type="button">Submit</button></div>
     </form>
@@ -226,10 +226,10 @@ For example, consider the following DOM structure.
 You can locate each element by it's implicit role:
 
 ```js
-await expect(page.getByRole('heading', { name: 'my form' }))
+await expect(page.getByRole('heading', { name: 'Sign up' }))
     .toBeVisible()
 
-await page.getByRole('checkbox', { checked: true, name: "newsletter" })
+await page.getByRole('checkbox', { checked: true, name: "subscribe" })
     .uncheck();
 
 await page.getByRole('button', { name: /submit/i })
@@ -237,9 +237,9 @@ await page.getByRole('button', { name: /submit/i })
 ```
 
 ```python async
-await expect(page.get_by_role("heading", name="my form")).to_be_visible()
+await expect(page.get_by_role("heading", name="Sign up")).to_be_visible()
 
-await page.get_by_role("checkbox", checked=True, name="newsletter").uncheck()
+await page.get_by_role("checkbox", checked=True, name="subscribe").uncheck()
 
 await page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
 ```
@@ -247,16 +247,16 @@ await page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click
 ```python sync
 expect(page.get_by_role("heading", name="my from")).to_be_visible()
 
-page.get_by_role("checkbox", checked=True, name="newsletter").uncheck()
+page.get_by_role("checkbox", checked=True, name="subscribe").uncheck()
 
 page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
 ```
 
 ```java
-assertThat(page.getByRole("heading", new Page.GetByRoleOptions().setName("my form")))
+assertThat(page.getByRole("heading", new Page.GetByRoleOptions().setName("Sign up")))
     .isVisible();
 
-page.getByRole("checkbox", new Page.GetByRoleOptions().setChecked(true).setName("newsletter"))
+page.getByRole("checkbox", new Page.GetByRoleOptions().setChecked(true).setName("subscribe"))
     .uncheck();
 
 page.getByRole("button", new Page.GetByRoleOptions().setName(Pattern.compile("submit", Pattern.CASE_INSENSITIVE)))
@@ -264,10 +264,10 @@ page.getByRole("button", new Page.GetByRoleOptions().setName(Pattern.compile("su
 ```
 
 ```csharp
-await Expect(page.GetByRole("heading", new() { NameString = "my form" }))
+await Expect(page.GetByRole("heading", new() { NameString = "Sign up" }))
     .ToBeVisibleAsync();
 
-await page.GetByRole("checkbox", new() { Checked = true, NameString = "newsletter" })
+await page.GetByRole("checkbox", new() { Checked = true, NameString = "subscribe" })
     .UncheckAsync();
 
 await page.GetByRole("button", new() { NameRegex = new Regex("submit", RegexOptions.IgnoreCase) })
@@ -276,11 +276,11 @@ await page.GetByRole("button", new() { NameRegex = new Regex("submit", RegexOpti
 
 <RenderCard>
   <RenderHTML>
-    <h1>my form</h1>
+    <h1>Sign up</h1>
     <form>
       <div>
-        <label for="newsletter">newsletter</label>
-        <input type="checkbox" id="newsletter" />
+        <label for="subscribe">subscribe</label>
+        <input type="checkbox" id="subscribe" />
       </div>
       <div><button type="button" class="renderHTML-highlight">Submit</button></div>
     </form>
@@ -1067,7 +1067,7 @@ Note that the inner locator is matched starting from the outer one, not from the
 
 You can chain methods that create a locator, like [`method: Page.getByText`] or [`method: Locator.getByRole`], to narrow down the search to a particular part of the page.
 
-In this example we first create a locator called product by locating the test id. We then filter by text. We can use the product locator again to get by role of button and click it and then use an assertion to make sure there is only one product with the text " Product 2".
+In this example we first create a locator called product by locating the test id. We then filter by text. We can use the product locator again to get by role of button and click it and then use an assertion to make sure there is only one product with the text "Product 2".
 
 ```js
 const product = page.getByTestId('product-card')
