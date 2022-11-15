@@ -152,8 +152,19 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
       .replace(/,exact=true/g, 's')
       .replace(/\,/g, '][');
 
+  const parts = template.split('.');
+  // Turn "internal:control=enter-frame >> nth=0" into "nth=0 >> internal:control=enter-frame"
+  // because these are swapped in locators vs selectors.
+  for (let index = 0; index < parts.length - 1; index++) {
+    if (parts[index] === 'internal:control=enter-frame' && parts[index + 1].startsWith('nth=')) {
+      // Swap nth and enter-frame.
+      const [nth] = parts.splice(index, 1);
+      parts.splice(index + 1, 0, nth);
+    }
+  }
+
   // Substitute params.
-  return template.split('.').map(t => {
+  return parts.map(t => {
     if (!t.startsWith('internal:') || t === 'internal:control')
       return t.replace(/\$(\d+)/g, (_, ordinal) => { const param = params[+ordinal - 1]; return param.text; });
     t = t.includes('[') ? t.replace(/\]/, '') + ']' : t;
