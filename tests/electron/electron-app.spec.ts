@@ -38,6 +38,11 @@ test('should script application', async ({ electronApp }) => {
   expect(appPath).toBe(path.resolve(__dirname));
 });
 
+test('should preserve args', async ({ electronApp }) => {
+  const argv = await electronApp.evaluate(async ({ app }) => process.argv);
+  expect(argv.slice(1)).toEqual([expect.stringContaining('electron/electron-app.js')]);
+});
+
 test('should return windows', async ({ electronApp, newWindow }) => {
   const window = await newWindow();
   expect(electronApp.windows()).toEqual([window]);
