@@ -58,7 +58,7 @@ toc_max_heading_level: 2
 
 * Chromium 108.0.5359.29
 * Mozilla Firefox 106.0
-* WebKit 16.0
+* WebKit 16.4
 
 This version was also tested against the following stable channels:
 
