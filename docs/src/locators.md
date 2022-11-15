@@ -894,23 +894,23 @@ Consider the following DOM structure where we want to click on the buy button of
   <RenderHTML>
     <div data-testid='product-card'>
       <h3>Product 1</h3>
-      <button>Buy</button>
+      <button>Add to cart</button>
     </div>
 
     <div data-testid='product-card'>
       <h3>Product 2</h3>
-      <button>Buy</button>
+      <button>Add to cart</button>
     </div>
   </RenderHTML>
 
   ```html
   <div data-testid='product-card'>
     <h3>Product 1</h3>
-    <button>Buy</button>
+    <button>Add to cart</button>
   </div>
   <div data-testid='product-card'>
     <h3>Product 2</h3>
-    <button>Buy</button>
+    <button>Add to cart</button>
   </div>
   ```
 </RenderCard>
@@ -922,28 +922,28 @@ Locators can be filtered by text with the [`method: Locator.filter`] method. It 
 ```js
 await page.getByTestId('product-card')
     .filter({ hasText: 'Product 2' })
-    .getByRole('button', { name: 'Buy' })
+    .getByRole('button', { name: 'Add to cart' })
     .click();
 ```
 
 ```java
 page.getByTestId("product-card")
     .filter(new Locator.FilterOptions().setHasText("Product 2"))
-    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy"))
+    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add to cart"))
     .click();
 ```
 
 ```python async
-await page.get_by_test_id("product-card").filter(has_text="Product 2").get_by_role("button", name="Buy").click()
+await page.get_by_test_id("product-card").filter(has_text="Product 2").get_by_role("button", name="Add to cart").click()
 ```
 
 ```python sync
-page.get_by_test_id("product-card").filter(has_text="Product 2").get_by_role("button", name="Buy").click()
+page.get_by_test_id("product-card").filter(has_text="Product 2").get_by_role("button", name="Add to cart").click()
 ```
 ```csharp
 await page.GetByTestId("product-card")
     .Filter(new() { HasTextString = "Product 2" })
-    .GetByRole(AriaRole.Button, new () { NameString = "Buy" })
+    .GetByRole(AriaRole.Button, new () { NameString = "Add to cart" })
     .ClickAsync();
 ```
 
@@ -952,32 +952,32 @@ Use a regular expression:
 ```js
 await page.getByTestId('product-card')
     .filter({ hasText: /Product 2/ })
-    .getByRole('button', { name: 'Buy' })
+    .getByRole('button', { name: 'Add to cart' })
     .click();
 ```
 
 ```java
 page.getByTestId("product-card")
     .filter(new Locator.FilterOptions().setHasText(Pattern.compile("Product 2")))
-    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy"))
+    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add to cart"))
     .click();
 ```
 
 ```python async
-await page.get_by_test_id("product-card").filter(has_text=re.compile("Product 2")).get_by_role("button", name="Buy").click()
+await page.get_by_test_id("product-card").filter(has_text=re.compile("Product 2")).get_by_role("button", name="Add to cart").click()
 ```
 
 ```python sync
 page.get_by_test_id("product-card")
     .filter(has_text=re.compile("Product 2"))
-    .get_by_role("button", name="Buy")
+    .get_by_role("button", name="Add to cart")
     .click()
 ```
 
 ```csharp
 await page.GetByTestId("product-card")
     .Filter(new() { HasTextRegex = new Regex("Product 2") })
-    .GetByRole(AriaRole.Button, new () { NameString = "Buy" })
+    .GetByRole(AriaRole.Button, new () { NameString = "Add to cart" })
     .ClickAsync();
 ```
 
@@ -985,12 +985,12 @@ await page.GetByTestId("product-card")
 <RenderHTML>
     <div data-testid='product-card'>
       <h3>Product 1</h3>
-      <button>Buy</button>
+      <button>Add to cart</button>
     </div>
 
   <div data-testid='product-card'>
       <h3>Product 2</h3>
-      <button class="renderHTML-highlight">Buy</button>
+      <button class="renderHTML-highlight">Add to cart</button>
     </div>
   </RenderHTML>
 </RenderCard>
@@ -1002,28 +1002,28 @@ Locators support an option to only select elements that have a descendant matchi
 ```js
 await page.getByTestId('product-card')
     .filter({ has: page.getByRole('heading', { name: 'Product 2' })})
-    .getByRole('button', { name: 'Buy' })
+    .getByRole('button', { name: 'Add to cart' })
     .click()
 ```
 ```java
 page.getByTestId("product-card")
     .filter(new Locator.FilterOptions().setHas(page.GetByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Product 2"))))
-    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Buy")))
+    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add to cart")))
     .click()
 ```
 ```python async
-await page.get_by_test_id("product-card").filter(has=page.get_by_role("heading", name="Product 2")).get_by_role("button", name="Buy").click()
+await page.get_by_test_id("product-card").filter(has=page.get_by_role("heading", name="Product 2")).get_by_role("button", name="Add to cart").click()
 ```
 ```python sync
 page.get_by_test_id("product-card")
     .filter(has=page.get_by_role("heading", name="Product 2"))
-    .get_by_role("button", name="Buy")
+    .get_by_role("button", name="Add to cart")
     .click()
 ```
 ```csharp
 await page.GetByTestId("product-card")
     .Filter(new() { Has = page.GetByRole(AriaRole.Heading, new () { NameString = "Product 2" })})
-    .GetByRole(AriaRole.Button, new () { NameString = "Buy" })
+    .GetByRole(AriaRole.Button, new () { NameString = "Add to cart" })
     .ClickAsync();
 ```
 
@@ -1031,12 +1031,12 @@ await page.GetByTestId("product-card")
   <RenderHTML>
     <div data-testid='product-card'>
       <h3>Product 1</h3>
-      <button>Buy</button>
+      <button>Add to cart</button>
     </div>
 
   <div data-testid='product-card'>
       <h3>Product 2</h3>
-      <button class="renderHTML-highlight">Buy</button>
+      <button class="renderHTML-highlight">Add to cart</button>
     </div>
   </RenderHTML>
 </RenderCard>
@@ -1081,7 +1081,7 @@ In this example we first create a locator called product by locating the test id
 const product = page.getByTestId('product-card')
     .filter({ hasText: 'Product 2' });
 
-await product.getByRole('button', { name: 'Buy' })
+await product.getByRole('button', { name: 'Add to cart' })
     .click();
 
 await expect(product).toHaveCount(1);
@@ -1090,20 +1090,20 @@ await expect(product).toHaveCount(1);
 ```python async
 product = page.get_by_test_id("product-card").filter(has_text="Product 2")
 
-await product.get_by_role("button", name="Buy").click()
+await product.get_by_role("button", name="Add to cart").click()
 ```
 
 ```python sync
 product = page.get_by_test_id("product-card").filter(has_text="Product 2")
 
-product.get_by_role("button", name="Buy").click()
+product.get_by_role("button", name="Add to cart").click()
 ```
 
 ```java
 Locator product = page.getByTestId("product-card")
     .filter(new Locator.FilterOptions().setHasText("Product 2"));
 
-product.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Buy"))
+product.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Add to cart"))
     .click();
 ```
 
@@ -1111,7 +1111,7 @@ product.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Buy")
 var product = page.GetByTestId("product-card")
     .Filter(new() { HasTextString = "Product 2" });
 
-await product.GetByRole("button", new() { NameString = "Buy" })
+await product.GetByRole("button", new() { NameString = "Add to cart" })
     .ClickAsync();
 ```
 
@@ -1119,12 +1119,12 @@ await product.GetByRole("button", new() { NameString = "Buy" })
   <RenderHTML>
     <div data-testid='product-card'>
       <h3>Product 1</h3>
-      <button>Buy</button>
+      <button>Add to cart</button>
     </div>
 
   <div data-testid='product-card'>
       <h3>Product 2</h3>
-      <button class="renderHTML-highlight">Buy</button>
+      <button class="renderHTML-highlight">Add to cart</button>
     </div>
   </RenderHTML>
 </RenderCard>
