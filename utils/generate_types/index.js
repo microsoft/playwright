@@ -16,7 +16,6 @@
 
 //@ts-check
 const path = require('path');
-const os = require('os');
 const toKebabCase = require('lodash/kebabCase')
 const devices = require('../../packages/playwright-core/lib/server/deviceDescriptors');
 const Documentation = require('../doclint/documentation');
@@ -87,6 +86,7 @@ class TypesGenerator {
         return createMarkdownLink(member, `${className}${member.alias}`);
       throw new Error('Unknown member kind ' + member.kind);
     });
+    this.documentation.setCodeGroupsTransformer('js', tabs => tabs.filter(tab => tab.value === 'ts').map(tab => tab.spec));
     this.documentation.generateSourceCodeComments();
 
     const handledClasses = new Set();

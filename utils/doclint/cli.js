@@ -89,7 +89,6 @@ async function run() {
 
   // Patch docker version in docs
   {
-    const regex = new RegExp("(mcr.microsoft.com/playwright[^: ]*):?([^ ]*)");
     for (const filePath of getAllMarkdownFiles(path.join(PROJECT_DIR, 'docs'))) {
       let content = fs.readFileSync(filePath).toString();
       content = content.replace(new RegExp('(mcr.microsoft.com/playwright[^:]*):([\\w\\d-.]+)', 'ig'), (match, imageName, imageVersion) => {
@@ -165,6 +164,9 @@ async function run() {
 
         // This validates member links.
         documentation.setLinkRenderer(() => undefined);
+        // This validates code snippet groups in comments.
+        documentation.setCodeGroupsTransformer(lang, tabs => tabs.map(tab => tab.spec));
+        documentation.generateSourceCodeComments();
 
         const relevantMarkdownFiles = new Set([...getAllMarkdownFiles(documentationRoot)
           // filter out language specific files
@@ -185,9 +187,12 @@ async function run() {
           if (langs.some(other => other !== lang && filePath.endsWith(`-${other}.md`)))
             continue;
           const data = fs.readFileSync(filePath, 'utf-8');
-          const rootNode = md.filterNodesForLanguage(md.parse(data), lang);
+          let rootNode = md.filterNodesForLanguage(md.parse(data), lang);
+          // Validates code snippet groups.
+          rootNode = md.processCodeGroups(rootNode, lang, tabs => tabs.map(tab => tab.spec));
+          // Renders links.
           documentation.renderLinksInText(rootNode);
-          // Validate links
+          // Validate links.
           {
             md.visitAll(rootNode, node => {
               if (!node.text)
