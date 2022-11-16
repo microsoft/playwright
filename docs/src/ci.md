@@ -58,9 +58,9 @@ The [Command line tools](./cli.md#install-system-dependencies) can be used to in
 ```yml js
 steps:
   - uses: actions/checkout@v3
-  - uses: actions/setup-node@v2
+  - uses: actions/setup-node@v3
     with:
-      node-version: '14'
+      node-version: '18'
   - name: Install dependencies
     run: npm ci
   - name: Install Playwright
@@ -69,7 +69,7 @@ steps:
     run: npx playwright test
   - name: Upload test results
     if: always()
-    uses: actions/upload-artifact@v2
+    uses: actions/upload-artifact@v3
     with:
       name: playwright-report
       path: playwright-report
@@ -81,7 +81,7 @@ steps:
   - name: Set up Python
     uses: actions/setup-python@v4
     with:
-      python-version: '3.10'
+      python-version: '3.11'
   - name: Install dependencies
     run: |
       python -m pip install --upgrade pip
@@ -112,7 +112,7 @@ steps:
 steps:
   - uses: actions/checkout@v3
   - name: Setup dotnet
-    uses: actions/setup-dotnet@v2
+    uses: actions/setup-dotnet@v3
     with:
       dotnet-version: 6.0.x
   - run: dotnet build
@@ -140,9 +140,9 @@ jobs:
     if: github.event.deployment_status.state == 'success'
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-node@v2
+    - uses: actions/setup-node@v3
       with:
-        node-version: '14.x'
+        node-version: '18.x'
     - name: Install dependencies
       run: npm ci
     - name: Install Playwright
@@ -179,9 +179,9 @@ steps:
       image: mcr.microsoft.com/playwright:v1.29.0-focal
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '18'
       - name: Install dependencies
         run: npm ci
       - name: Run your tests
@@ -200,7 +200,7 @@ steps:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -243,7 +243,7 @@ steps:
     steps:
       - uses: actions/checkout@v3
       - name: Setup dotnet
-        uses: actions/setup-dotnet@v2
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 6.0.x
       - run: dotnet build
@@ -273,9 +273,9 @@ steps:
         shardTotal: [10]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '18'
       - name: Install dependencies
         run: npm ci
       - name: Run your tests
