@@ -4,6 +4,31 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.28
+
+### Playwright Tools
+
+* **Live Locators in CodeGen.** Generate a locator for any element on the page using "Explore" tool.
+
+![Locator Explorer](https://user-images.githubusercontent.com/9798949/202293631-2f402cc2-35fb-4877-8ea1-82265fbbc232.png)
+
+### New APIs
+
+- [`method: Locator.blur`]
+- [`method: Locator.clear`]
+
+### Browser Versions
+
+* Chromium 108.0.5359.29
+* Mozilla Firefox 106.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 107
+* Microsoft Edge 107
+
+
 ## Version 1.27
 
 ### Locators
