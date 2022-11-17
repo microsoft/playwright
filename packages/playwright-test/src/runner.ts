@@ -196,15 +196,14 @@ export class Runner {
 
   async listTestFiles(projectNames: string[] | undefined): Promise<any> {
     const projects = this._collectProjects(projectNames);
-    const { filesByProject, setupFiles } = await this._collectFiles(projects, () => true);
+    const { filesByProject } = await this._collectFiles(projects, () => true);
     const report: any = {
       projects: []
     };
     for (const [project, files] of filesByProject) {
       report.projects.push({
         ...sanitizeConfigForJSON(project, new Set()),
-        files: files.filter(f => !setupFiles.has(f)),
-        setupFiles: files.filter(f => setupFiles.has(f)),
+        files
       });
     }
     return report;
