@@ -99,7 +99,7 @@ page.get_by_role("button", name="Sign in").click()
 ```
 
 ```csharp
-await page.GetByRole(AriaRole.BUTTON, new() { NameString = "Sign in" }).ClickAsync();
+await page.GetByRole(AriaRole.Button, new() { NameString = "Sign in" }).ClickAsync();
 ```
 
 :::tip
@@ -248,7 +248,7 @@ await Expect(page
     .ToBeVisibleAsync();
 
 await page
-    .GetByRole(AriaRole.Ceckbox, new() { NameString = "Subscribe" })
+    .GetByRole(AriaRole.Checkbox, new() { NameString = "Subscribe" })
     .CheckAsync();
 
 await page
@@ -1023,7 +1023,7 @@ product.get_by_role("button", name="Add to cart").click()
 
 ```java
 Locator product = page
-    .get_by_role("listitem")
+    .getByRole(AriaRole.LISTITEM)
     .filter(new Locator.FilterOptions().setHasText("Product 2"));
 
 product
