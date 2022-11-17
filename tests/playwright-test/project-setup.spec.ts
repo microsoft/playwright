@@ -328,3 +328,51 @@ test('same file cannot be a setup and a test in different projects', async ({ ru
   expect(exitCode).toBe(1);
   expect(output).toContain(`a.test.ts" matches 'setup' filter in project "p1" and 'testMatch' filter in project "p2"`);
 });
+
+test('list-files should enumerate setup files in a separate field', async ({ runCommand }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*a..setup.ts$/,
+            testMatch: /.*a.test.ts$/,
+          },
+          {
+            name: 'p2',
+            setup: /.*b.setup.ts$/,
+            testMatch: /.*b.test.ts$/
+          },
+        ]
+      };`,
+    'a1.setup.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+    `,
+    'a2.setup.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test2', async () => { });
+    `,
+    'b.setup.ts': `
+      const { test } = pwt;
+      test('test3', async () => { });
+    `,
+    'b.test.ts': `
+      const { test } = pwt;
+      test('test4', async () => { });
+    `,
+  };
+
+  const { exitCode, output } =  await runCommand(files, ['list-files']);
+  expect(exitCode).toBe(0);
+  const json = JSON.parse(output);
+  expect(json.projects.map(p => p.name)).toEqual(['p1', 'p2']);
+  expect(json.projects[0].setupFiles.map(f => path.basename(f))).toEqual(['a1.setup.ts', 'a2.setup.ts']);
+  expect(json.projects[1].setupFiles.map(f => path.basename(f))).toEqual(['b.setup.ts']);
+});
+
