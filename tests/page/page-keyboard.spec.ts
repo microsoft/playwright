@@ -482,7 +482,7 @@ it('should support simple copy-pasting', async ({ page, isMac, browserName }) =>
   expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('123123');
 });
 
-it('should support simple cut-pasting', async ({ page, isMac, browserName }) => {
+it('should support simple cut-pasting', async ({ page, isMac }) => {
   const modifier = isMac ? 'Meta' : 'Control';
   await page.setContent(`<div contenteditable>123</div>`);
   await page.focus('div');
