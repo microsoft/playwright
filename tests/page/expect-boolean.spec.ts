@@ -96,6 +96,16 @@ test.describe('toBeChecked', () => {
     const message2 = await expect(page.locator('input')).toBeChecked({ checked: false, timeout: 1000 }).catch(e => e.message);
     expect(message2).toContain('unexpected value "checked"');
   });
+
+  test('with impossible timeout', async ({ page }) => {
+    await page.setContent('<input type=checkbox checked></input>');
+    await expect(page.locator('input')).toBeChecked({ timeout: 1 });
+  });
+
+  test('with impossible timeout .not', async ({ page }) => {
+    await page.setContent('<input type=checkbox></input>');
+    await expect(page.locator('input')).not.toBeChecked({ timeout: 1 });
+  });
 });
 
 test.describe('toBeEditable', () => {
@@ -291,6 +301,16 @@ test.describe('toBeVisible', () => {
     const error = await expect(locator).not.toBeVisible({ timeout: 1000 }).catch(e => e);
     expect(error.message).toContain(`locator resolved to <input/>`);
   });
+
+  test('with impossible timeout', async ({ page }) => {
+    await page.setContent('<div id=node>Text content</div>');
+    await expect(page.locator('#node')).toBeVisible({ timeout: 1 });
+  });
+
+  test('with impossible timeout .not', async ({ page }) => {
+    await page.setContent('<div id=node>Text content</div>');
+    await expect(page.locator('no-such-thing')).not.toBeVisible({ timeout: 1 });
+  });
 });
 
 test.describe('toBeHidden', () => {
@@ -349,6 +369,16 @@ test.describe('toBeHidden', () => {
     const locator = page.locator('button');
     const error = await expect(locator).not.toBeHidden({ timeout: 1000 }).catch(e => e);
     expect(error.message).toContain(`expect.toBeHidden with timeout 1000ms`);
+  });
+
+  test('with impossible timeout .not', async ({ page }) => {
+    await page.setContent('<div id=node>Text content</div>');
+    await expect(page.locator('#node')).not.toBeHidden({ timeout: 1 });
+  });
+
+  test('with impossible timeout', async ({ page }) => {
+    await page.setContent('<div id=node>Text content</div>');
+    await expect(page.locator('no-such-thing')).toBeHidden({ timeout: 1 });
   });
 });
 
