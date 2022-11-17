@@ -1205,6 +1205,30 @@ export class InjectedScript {
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
   }
 
+  renderUnexpectedValue(expression: string, received: any): string {
+    if (expression === 'to.be.checked')
+      return received ? 'checked' : 'unchecked';
+    if (expression === 'to.be.unchecked')
+      return received ? 'unchecked' : 'checked';
+    if (expression === 'to.be.visible')
+      return received ? 'visible' : 'hidden';
+    if (expression === 'to.be.hidden')
+      return received ? 'hidden' : 'visible';
+    if (expression === 'to.be.enabled')
+      return received ? 'enabled' : 'disabled';
+    if (expression === 'to.be.disabled')
+      return received ? 'disabled' : 'enabled';
+    if (expression === 'to.be.editable')
+      return received ? 'editable' : 'readonly';
+    if (expression === 'to.be.readonly')
+      return received ? 'readonly' : 'editable';
+    if (expression === 'to.be.empty')
+      return received ? 'empty' : 'not empty';
+    if (expression === 'to.be.focused')
+      return received ? 'focused' : 'not focused';
+    return received;
+  }
+
   expectArray(elements: Element[], options: FrameExpectParams): { matches: boolean, received?: any } {
     const expression = options.expression;
 
