@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-11, macos-12]
-        browser: [chromium, firefox, webkit]
+        browser: [webkit]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -40,7 +40,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
-    - run: npm run test -- --project=${{ matrix.browser }}
+    - run: npm run test -- --project=${{ matrix.browser }} --reporter=list
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
