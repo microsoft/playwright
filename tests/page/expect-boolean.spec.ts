@@ -86,6 +86,16 @@ test.describe('toBeChecked', () => {
       });
     }
   });
+
+  test('friendly log', async ({ page }) => {
+    await page.setContent('<input type=checkbox></input>');
+    const message1 = await expect(page.locator('input')).toBeChecked({ timeout: 1000 }).catch(e => e.message);
+    expect(message1).toContain('unexpected value "unchecked"');
+
+    await page.setContent('<input type=checkbox checked></input>');
+    const message2 = await expect(page.locator('input')).toBeChecked({ checked: false, timeout: 1000 }).catch(e => e.message);
+    expect(message2).toContain('unexpected value "checked"');
+  });
 });
 
 test.describe('toBeEditable', () => {

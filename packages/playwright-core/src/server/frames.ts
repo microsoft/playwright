@@ -1406,7 +1406,7 @@ export class Frame extends SdkObject {
           // expect(locator).not.conditionThatDoesMatch
           progress.setIntermediateResult(result.received);
           if (!Array.isArray(result.received))
-            progress.log(`  unexpected value "${result.received}"`);
+            progress.log(`  unexpected value "${progress.injectedScript.renderUnexpectedValue(options.expression, result.received)}"`);
           return progress.continuePolling;
         }
 
