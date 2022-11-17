@@ -316,7 +316,7 @@ export const test = base
 
           let timeline;
           try {
-            timeline = JSON.parse((await fs.promises.readFile(timelinePath, 'utf8')).toString('utf8'));
+            timeline = JSON.parse((await fs.promises.readFile(timelinePath, 'utf8')).toString());
           } catch (e) {
           }
           return {
