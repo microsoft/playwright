@@ -29,3 +29,4 @@ test-results
 /tests/installation/output/
 /tests/installation/.registry.json
 .cache/
+.eslintcache
