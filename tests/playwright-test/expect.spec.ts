@@ -504,7 +504,7 @@ test('should print pending operations for toHaveText', async ({ runInlineTest })
   expect(result.exitCode).toBe(1);
   const output = stripAnsi(result.output);
   expect(output).toContain('Pending operations:');
-  expect(output).toContain('Error: expect(received).toHaveText(expected)');
+  expect(output).toContain('expect(received).toHaveText(expected)');
   expect(output).toContain('Expected string: "Text"');
   expect(output).toContain('Received string: ""');
   expect(output).toContain('waiting for locator(\'no-such-thing\')');
@@ -531,4 +531,21 @@ test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
   expect(result.interrupted).toBe(1);
   expect(stripAnsi(result.output)).toContain('Expected string: "Text 2"');
   expect(stripAnsi(result.output)).toContain('Received string: "Text content"');
+});
+
+test('should print timed out error message', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('fail', async ({ page }) => {
+        await page.setContent('<div id=node>Text content</div>');
+        await expect(page.locator('no-such-thing')).not.toBeVisible({ timeout: 1 });
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+  const output = stripAnsi(result.output);
+  expect(output).toContain('Timed out 1ms waiting for expect(received).not.toBeVisible()');
 });

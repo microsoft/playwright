@@ -24,13 +24,14 @@ import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
 } from '../expect';
+import { matcherHint } from './matcherHint';
 
 export async function toMatchText(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number, customStackTrace: ParsedStackTrace) => Promise<{ matches: boolean, received?: string, log?: string[] }>,
+  query: (isNot: boolean, timeout: number, customStackTrace: ParsedStackTrace) => Promise<{ matches: boolean, received?: string, log?: string[], timedOut?: boolean }>,
   expected: string | RegExp,
   options: { timeout?: number, matchSubstring?: boolean } = {},
 ) {
@@ -47,7 +48,7 @@ export async function toMatchText(
   ) {
     throw new Error(
         this.utils.matcherErrorMessage(
-            this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions),
+            matcherHint(this, matcherName, undefined, undefined, matcherOptions),
             `${this.utils.EXPECTED_COLOR(
                 'expected',
             )} value must be a string or regular expression`,
@@ -58,13 +59,13 @@ export async function toMatchText(
 
   const timeout = currentExpectTimeout(options);
 
-  const { matches: pass, received, log } = await query(this.isNot, timeout, captureStackTrace('expect.' + matcherName));
+  const { matches: pass, received, log, timedOut } = await query(this.isNot, timeout, captureStackTrace('expect.' + matcherName));
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const receivedString = received || '';
   const message = pass
     ? () =>
       typeof expected === 'string'
-        ? this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
+        ? matcherHint(this, matcherName, undefined, undefined, matcherOptions, timedOut ? timeout : undefined) +
         '\n\n' +
         `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}\n` +
         `Received string: ${printReceivedStringContainExpectedSubstring(
@@ -72,7 +73,7 @@ export async function toMatchText(
             receivedString.indexOf(expected),
             expected.length,
         )}` + callLogText(log)
-        : this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
+        : matcherHint(this, matcherName, undefined, undefined, matcherOptions, timedOut ? timeout : undefined) +
         '\n\n' +
         `Expected pattern: not ${this.utils.printExpected(expected)}\n` +
         `Received string: ${printReceivedStringContainExpectedResult(
@@ -87,7 +88,7 @@ export async function toMatchText(
       const labelReceived = 'Received string';
 
       return (
-        this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
+        matcherHint(this, matcherName, undefined, undefined, matcherOptions, timedOut ? timeout : undefined) +
         '\n\n' +
         this.utils.printDiffOrStringify(
             expected,

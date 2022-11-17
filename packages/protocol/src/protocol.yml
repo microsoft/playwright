@@ -2130,6 +2130,7 @@ Frame:
       returns:
         matches: boolean
         received: SerializedValue?
+        timedOut: boolean?
         log:
           type: array?
           items: string
