@@ -17,13 +17,14 @@
 import type { Expect } from '../types';
 import type { ParsedStackTrace } from '../util';
 import { expectTypes, callLogText, currentExpectTimeout, captureStackTrace } from '../util';
+import { matcherHint } from './matcherHint';
 
 export async function toBeTruthy(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number, customStackTrace: ParsedStackTrace) => Promise<{ matches: boolean, log?: string[] }>,
+  query: (isNot: boolean, timeout: number, customStackTrace: ParsedStackTrace) => Promise<{ matches: boolean, log?: string[], received?: any, timedOut?: boolean }>,
   options: { timeout?: number } = {},
 ) {
   expectTypes(receiver, [receiverType], matcherName);
@@ -35,10 +36,10 @@ export async function toBeTruthy(
 
   const timeout = currentExpectTimeout(options);
 
-  const { matches, log } = await query(this.isNot, timeout, captureStackTrace('expect.' + matcherName));
+  const { matches, log, timedOut } = await query(this.isNot, timeout, captureStackTrace('expect.' + matcherName));
 
   const message = () => {
-    return this.utils.matcherHint(matcherName, undefined, '', matcherOptions) + callLogText(log);
+    return matcherHint(this, matcherName, undefined, '', matcherOptions, timedOut ? timeout : undefined) + callLogText(log);
   };
 
   return { message, pass: matches };

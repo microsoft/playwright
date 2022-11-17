@@ -1,4 +1,5 @@
 [*]
+../types.ts
 ./utilsBundle.ts
 matchers/
 reporters/

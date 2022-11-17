@@ -1358,7 +1358,7 @@ export class Frame extends SdkObject {
     });
   }
 
-  async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[] }> {
+  async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     const controller = new ProgressController(metadata, this);
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     const mainWorld = options.expression === 'to.have.property';
@@ -1418,7 +1418,13 @@ export class Frame extends SdkObject {
       // A: We want user to receive a friendly message containing the last intermediate result.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
-      return { received: controller.lastIntermediateResult(), matches: options.isNot, log: metadata.log };
+      const result: { matches: boolean, received?: any, log?: string[], timedOut?: boolean } = { matches: options.isNot, log: metadata.log };
+      const intermediateResult = controller.lastIntermediateResult();
+      if (intermediateResult)
+        result.received = intermediateResult.value;
+      else
+        result.timedOut = true;
+      return result;
     });
   }
 

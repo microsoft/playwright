@@ -2843,6 +2843,7 @@ export type FrameExpectOptions = {
 export type FrameExpectResult = {
   matches: boolean,
   received?: SerializedValue,
+  timedOut?: boolean,
   log?: string[],
 };
 
