@@ -106,7 +106,7 @@ export const SnapshotTab: React.FunctionComponent<{
     <div ref={ref} className='snapshot-wrapper'>
       { snapshots.length ? <div className='snapshot-container' style={{
         width: snapshotSize.width + 'px',
-        height: (snapshotSize.height + 40) + 'px',
+        height: (snapshotSize.height + windowHeaderHeight) + 'px',
         transform: `translate(${-snapshotSize.width * (1 - scale) / 2 + (measure.width - scaledSize.width) / 2}px, ${-snapshotSize.height * (1 - scale) / 2  + (measure.height - scaledSize.height) / 2}px) scale(${scale})`,
       }}>
         <div className='window-header'>
