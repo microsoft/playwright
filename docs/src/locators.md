@@ -33,7 +33,8 @@ page.getByLabel("User Name").fill("John");
 
 page.getByLabel("Password").fill("secret-password");
 
-page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
+page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in"))
+    .click();
 
 assertThat(page.getByText("Welcome, John!")).isVisible();
 ```
@@ -63,7 +64,7 @@ await page.GetByLabel("User Name").FillAsync("John");
 
 await page.GetByLabel("Password").FillAsync("secret-password");
 
-await page.GetByRole("button", new() { NameString = "Sign in" }).ClickAsync();
+await page.GetByRole(AriaRole.Button, new() { NameString = "Sign in" }).ClickAsync();
 
 await Expect(page.GetByText("Welcome, John!")).ToBeVisibleAsync();
 ```
@@ -74,29 +75,31 @@ Playwright comes with multiple built-in locators. To make tests resilient, we re
 
 For example, consider the following DOM structure.
 
-```html
+```html card
 <button>Sign in</button>
 ```
 
 Locate the element by its role of `button` with name "Sign in".
 
 ```js
-await page.getByRole('button', { name: 'Sign in' })
-    .click();
+await page.getByRole('button', { name: 'Sign in' }).click();
 ```
+
 ```java
 page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in"))
     .click();
 ```
+
 ```python async
 await page.get_by_role("button", name="Sign in").click()
 ```
+
 ```python sync
 page.get_by_role("button", name="Sign in").click()
 ```
+
 ```csharp
-await page.GetByRole("button", new() { NameString = "Sign in" })
-    .ClickAsync();
+await page.GetByRole(AriaRole.Button, new() { NameString = "Sign in" }).ClickAsync();
 ```
 
 :::tip
@@ -116,7 +119,8 @@ await locator.click();
 ```
 
 ```java
-Locator locator = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in"))
+Locator locator = page.getByRole(AriaRole.BUTTON,
+                                 new Page.GetByRoleOptions().setName("Sign in"))
 
 locator.hover();
 locator.click();
@@ -137,7 +141,7 @@ locator.click()
 ```
 
 ```csharp
-var locator = page.GetByRole("button", new() { NameString = "Sign in" })
+var locator = page.GetByRole(AriaRole.Button, new() { NameString = "Sign in" })
 
 await locator.HoverAsync();
 await locator.ClickAsync();
@@ -146,36 +150,37 @@ await locator.ClickAsync();
 Note that all methods that create a locator, such as [`method: Page.getByLabel`], are also available on the [Locator] and [FrameLocator] classes, so you can chain them and iteratively narrow down your locator.
 
 ```js
-const locator = page.frameLocator('#my-frame')
+const locator = page
+    .frameLocator('#my-frame')
     .getByRole('button', { name: 'Sign in' });
 
 await locator.click();
 ```
 
 ```java
-Locator locator = page.frameLocator("#my-frame")
+Locator locator = page
+    .frameLocator("#my-frame")
     .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in"));
 
 locator.click();
 ```
 
 ```python async
-locator = page.frame_locator("#my-frame")
-    .get_by_role("button", name="Sign in")
+locator = page.frame_locator("#my-frame").get_by_role("button", name="Sign in")
 
 await locator.click()
 ```
 
 ```python sync
-locator = page.frame_locator("my-frame")
-    .get_by_role("button", name="Sign in")
+locator = page.frame_locator("my-frame").get_by_role("button", name="Sign in")
 
 locator.click()
 ```
 
 ```csharp
-var locator = page.FrameLocator("#my-frame")
-    .GetByRole("button", new() { NameString = "Sign in" });
+var locator = page
+    .FrameLocator("#my-frame")
+    .GetByRole(AriaRole.Button), new() { NameString = "Sign in" });
 
 await locator.ClickAsync();
 ```
@@ -186,27 +191,23 @@ The [`method: Page.getByRole`] locator reflects how users and assistive technolo
 
 For example, consider the following DOM structure.
 
-```html
+```html card
 <h3>Sign up</h3>
-<form>
-  <input type="checkbox" id="subscribe" />
-  <label for="subscribe">Subscribe</label>
-  <br>
-  <button>Submit</button>
-</form>
+<label>
+  <input type="checkbox" /> Subscribe
+</label>
+<br/>
+<button>Submit</button>
 ```
 
 You can locate each element by it's implicit role:
 
 ```js
-await expect(page.getByRole('heading', { name: 'Sign up' }))
-    .toBeVisible()
+await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible()
 
-await page.getByRole('checkbox', { name: 'Subscribe' })
-    .check();
+await page.getByRole('checkbox', { name: 'Subscribe' }).check();
 
-await page.getByRole('button', { name: /submit/i })
-    .click();
+await page.getByRole('button', { name: /submit/i }).click();
 ```
 
 ```python async
@@ -226,34 +227,35 @@ page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
 ```
 
 ```java
-assertThat(page.getByRole("heading", new Page.GetByRoleOptions().setName("Sign up")))
+assertThat(page
+    .getByRole(AriaRole.HEADING,
+               new Page.GetByRoleOptions().setName("Sign up")))
     .isVisible();
 
-page.getByRole("checkbox", new Page.GetByRoleOptions().setName("Subscribe"))
+page.getByRole(AriaRole.CHECKBOX,
+               new Page.GetByRoleOptions().setName("Subscribe"))
     .check();
 
-page.getByRole("button", new Page.GetByRoleOptions().setName(Pattern.compile("submit", Pattern.CASE_INSENSITIVE)))
+page.getByRole(AriaRole.BUTTON,
+               new Page.GetByRoleOptions().setName(
+                   Pattern.compile("submit", Pattern.CASE_INSENSITIVE)))
     .click();
 ```
 
 ```csharp
-await Expect(page.GetByRole("heading", new() { NameString = "Sign up" }))
+await Expect(page
+    .GetByRole(AriaRole.Heading, new() { NameString = "Sign up" }))
     .ToBeVisibleAsync();
 
-await page.GetByRole("checkbox", new() { NameString = "Subscribe" })
+await page
+    .GetByRole(AriaRole.Checkbox, new() { NameString = "Subscribe" })
     .CheckAsync();
 
-await page.GetByRole("button", new() { NameRegex = new Regex("submit", RegexOptions.IgnoreCase) })
+await page
+    .GetByRole(AriaRole.Button, new() {
+        NameRegex = new Regex("submit", RegexOptions.IgnoreCase)
+    })
     .ClickAsync();
-```
-
-```html
-<form>
-  <input type="checkbox" checked id="subscribe" />
-  <label for="subscribe">Subscribe</label>
-  <br>
-  <button>Submit</button>
-</form>
 ```
 
 Role locators include [buttons, checkboxes, headings, links, lists, tables, and many more](https://www.w3.org/TR/html-aria/#docconformance) and follow W3C specifications for [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
@@ -270,9 +272,9 @@ Most form controls usually have dedicated labels that could be conveniently used
 
 For example, consider the following DOM structure.
 
-```html
-<label for="password">Password</label>
-<input type="password" id="password">
+```html card
+<label>Password <input type="password" /></label>
+
 ```
 
 You can fill the input after locating it by the label text:
@@ -297,11 +299,6 @@ page.get_by_label("Password").fill("secret")
 await page.GetByLabel("Password").FillAsync("secret");
 ```
 
-```html
-<label for="password">Password</label>
-<input type="password" id="password" value="secret" target>
-```
-
 :::tip When to use label locators
 Use this locator when locating form fields.
 :::
@@ -311,20 +308,20 @@ Inputs may have a placeholder attribute to hint to the user what value should be
 
 For example, consider the following DOM structure.
 
-```html
-<input id="email" name="email" type="email" placeholder="name@example.com">
+```html card
+<input type="email" placeholder="name@example.com" />
 ```
 
 You can fill the input after locating it by the placeholder text:
 
 ```js
-await page.getByPlaceholder("name@example.com")
+await page
+    .getByPlaceholder("name@example.com")
     .fill("playwright@microsoft.com");
 ```
 
 ```java
-page.getByPlaceholder("name@example.com")
-    .fill("playwright@microsoft.com");
+page.getByPlaceholder("name@example.com").fill("playwright@microsoft.com");
 ```
 
 ```python async
@@ -336,12 +333,9 @@ page.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
 ```
 
 ```csharp
-await page.GetByPlaceholder("name@example.com")
+await page
+    .GetByPlaceholder("name@example.com")
     .FillAsync("playwright@microsoft.com");
-```
-
-```html
-<input id="email" name="email" type="email" placeholder="name@example.com" value="playwright@microsoft.com">
 ```
 
 :::tip When to use placeholder locators
@@ -354,20 +348,18 @@ Find an element by the text it contains. You can match by a substring, exact str
 
 For example, consider the following DOM structure.
 
-```html
+```html card
 <span>Welcome, John</span>
 ```
 
 You can locate the element by the text it contains:
 
 ```js
-await expect(page.getByText('Welcome, John'))
-    .toBeVisible();
+await expect(page.getByText('Welcome, John')).toBeVisible();
 ```
 
 ```java
-assertThat(page.getByText("Welcome, John"))
-    .isVisible();
+assertThat(page.getByText("Welcome, John")).isVisible();
 ```
 
 ```python async
@@ -379,18 +371,17 @@ expect(page.get_by_text("Welcome, John")).to_be_visible()
 ```
 
 ```csharp
-await Expect(page.GetByText("Welcome, John"))
-    .ToBeVisibleAsync();
+await Expect(page.GetByText("Welcome, John")).ToBeVisibleAsync();
 ```
 
 Set an exact match:
 ```js
-await expect(page.getByText('Welcome, John', { exact: true }))
-    .toBeVisible();
+await expect(page.getByText('Welcome, John', { exact: true })).toBeVisible();
 ```
 
 ```java
-assertThat(page.getByText("Welcome, John", new Page.GetByTextOptions().setExact(true)))
+assertThat(page
+    .getByText("Welcome, John", new Page.GetByTextOptions().setExact(true)))
     .isVisible();
 ```
 
@@ -403,31 +394,38 @@ expect(page.get_by_text("Welcome, John", exact=True)).to_be_visible()
 ```
 
 ```csharp
-await Expect(page.GetByText("Welcome, John", new() { Exact = true }))
+await Expect(page
+    .GetByText("Welcome, John", new() { Exact = true }))
     .ToBeVisibleAsync();
 ```
 
 Match with a regular expression:
 
 ```js
-await expect(page.getByText(/welcome, [A-Za-z]+$/i))
-    .toBeVisible();
+await expect(page.getByText(/welcome, [A-Za-z]+$/i)).toBeVisible();
 ```
 
 ```java
-assertThat(page.getByText(Pattern.compile("welcome, john$", Pattern.CASE_INSENSITIVE))).isVisible();
+assertThat(page
+    .getByText(Pattern.compile("welcome, john$", Pattern.CASE_INSENSITIVE)))
+    .isVisible();
 ```
 
 ```python async
-await expect(page.get_by_text(re.compile("welcome, john", re.IGNORECASE))).to_be_visible()
+await expect(page
+    .get_by_text(re.compile("welcome, john", re.IGNORECASE)))
+    .to_be_visible()
 ```
 
 ```python sync
-expect(page.get_by_text(re.compile("welcome, john", re.IGNORECASE))).to_be_visible()
+expect(page
+    .get_by_text(re.compile("welcome, john", re.IGNORECASE)))
+    .to_be_visible()
 ```
 
 ```csharp
-await Expect(page.GetByText(new Regex("welcome, john", RegexOptions.IgnoreCase)))
+await Expect(page
+    .GetByText(new Regex("welcome, john", RegexOptions.IgnoreCase)))
     .ToBeVisibleAsync();
 ```
 
@@ -447,20 +445,18 @@ All images should have an `alt` attribute that describes the image. You can loca
 
 For example, consider the following DOM structure.
 
-```html
-<img alt="playwright logo" src="/playwright-logo.png" />
+```html card
+<img alt="playwright logo" src="/img/playwright-logo.svg" width="100" />
 ```
 
 You can click on the image after locating it by the text alternative:
 
 ```js
-await page.getByAltText('playwright logo')
-    .click();
+await page.getByAltText('playwright logo').click();
 ```
 
 ```java
-page.getByAltText("playwright logo")
-    .click();
+page.getByAltText("playwright logo").click();
 ```
 
 ```python async
@@ -472,12 +468,7 @@ page.get_by_alt_text("playwright logo").click()
 ```
 
 ```csharp
-await page.GetByAltText("playwright logo")
-    .ClickAsync();
-```
-
-```html
-<img alt="playwright logo" src="/playwright-logo.png">
+await page.GetByAltText("playwright logo").ClickAsync();
 ```
 
 :::tip When to use alt locators
@@ -490,20 +481,18 @@ Locate an element with a matching title attribute using [`method: Page.getByTitl
 
 For example, consider the following DOM structure.
 
-```html
+```html card
 <span title='Issues count'>25 issues</span>
 ```
 
 You can check the issues count after locating it by the title text:
 
 ```js
-await expect(page.getByTitle('Issues count'))
-    .toHaveText('25 issues');
+await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
 ```
 
 ```java
-assertThat(page.getByTitle("Issues count"))
-    .hasText("25 issues");
+assertThat(page.getByTitle("Issues count")).hasText("25 issues");
 ```
 
 ```python async
@@ -515,8 +504,7 @@ expect(page.get_by_title("Issues count")).to_have_text("25 issues")
 ```
 
 ```csharp
-await Expect(page.GetByTitle("Issues count"))
-    .toHaveText("25 issues");
+await Expect(page.GetByTitle("Issues count")).toHaveText("25 issues");
 ```
 
 :::tip When to use title locators
@@ -529,20 +517,18 @@ Testing by test ids is the most resilient way of testing as even if your text or
 
 For example, consider the following DOM structure.
 
-```html
+```html card
 <button data-testid="directions">Itinéraire</button>
 ```
 
 You can locate the element by it's test id:
 
 ```js
-await page.getByTestId('directions')
-    .click();
+await page.getByTestId('directions').click();
 ```
 
 ```java
-page.getByTestId("directions")
-    .click();
+page.getByTestId("directions").click();
 ```
 
 ```python async
@@ -554,12 +540,7 @@ page.get_by_test_id("directions").click()
 ```
 
 ```csharp
-await page.GetByTestId("directions")
-    .ClickAsync();
-```
-
-```html
-<button data-testid="directions">Itinéraire</button>
+await page.GetByTestId("directions").ClickAsync();
 ```
 
 :::tip When to use testid locators
@@ -615,20 +596,18 @@ playwright.Selectors.SetTestIdAttribute("data-pw");
 
 In your html you can now use `data-pw` as your test id instead of the default `data-testid`. 
 
-```html
+```html card
 <button data-pw="directions">Itinéraire</button>
 ```
 
 And then locate the element as you would normally do:
 
 ```js
-await page.getByTestId('directions')
-    .click();
+await page.getByTestId('directions').click();
 ```
 
 ```java
-page.getByTestId("directions")
-    .click();
+page.getByTestId("directions").click();
 ```
 
 ```python async
@@ -640,8 +619,7 @@ page.get_by_test_id("directions").click()
 ```
 
 ```csharp
-await page.GetByTestId("directions")
-    .ClickAsync();
+await page.GetByTestId("directions").ClickAsync();
 ```
 
 ### Locate by CSS or XPath
@@ -691,27 +669,37 @@ await page.Locator('//button').ClickAsync();
 XPath and CSS selectors can be tied to the DOM structure or implementation. These selectors can break when the DOM structure changes. Long CSS or XPath chains below are an example of a **bad practice** that leads to unstable tests:
 
 ```js
-await page.locator('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input').click();
+await page.locator(
+    '#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input'
+).click();
 
-await page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click();
+await page
+    .locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input')
+    .click();
 ```
 
 ```java
-page.locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input").click();
+page.locator(
+    "#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input"
+).click();
 
 page.locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").click();
 ```
 
 ```python async
-await page.locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input").click()
+await page.locator(
+    "#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input"
+).click()
 
-await page.locator("//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input").click()
+await page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click()
 ```
 
 ```python sync
-page.locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input").click()
+page.locator(
+    "#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input"
+).click()
 
-page.locator("//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input").click()
+page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click()
 ```
 
 ```csharp
@@ -774,7 +762,8 @@ To click `<x-details>`:
 await page.locator('x-details', { hasText: 'Details' }).click();
 ```
 ```java
-page.locator("x-details", new Page.LocatorOptions().setHasText("Details")).click();
+page.locator("x-details", new Page.LocatorOptions().setHasText("Details"))
+    .click();
 ```
 ```python async
 await page.locator("x-details", has_text="Details" ).click()
@@ -783,7 +772,9 @@ await page.locator("x-details", has_text="Details" ).click()
 page.locator("x-details", has_text="Details" ).click()
 ```
 ```csharp
-await page.Locator("x-details", new() { HasTextString = "Details" }).ClickAsync();
+await page
+    .Locator("x-details", new() { HasTextString = "Details" })
+    .ClickAsync();
 ```
 
 ```html
@@ -814,12 +805,12 @@ await Expect(page.Locator("x-details")).ToContainTextAsync("Details");
 
 Consider the following DOM structure where we want to click on the buy button of the second product card. We have a few options in order to filter the locators to get the right one.
 
-```html
-<div data-testid='product-card'>
+```html card
+<div role="listitem">
   <h3>Product 1</h3>
   <button>Add to cart</button>
 </div>
-<div data-testid='product-card'>
+<div role="listitem">
   <h3>Product 2</h3>
   <button>Add to cart</button>
 </div>
@@ -830,28 +821,36 @@ Consider the following DOM structure where we want to click on the buy button of
 Locators can be filtered by text with the [`method: Locator.filter`] method. It will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
 
 ```js
-await page.getByTestId('product-card')
+await page
+    .getByRole('listitem')
     .filter({ hasText: 'Product 2' })
     .getByRole('button', { name: 'Add to cart' })
     .click();
 ```
 
 ```java
-page.getByTestId("product-card")
+page.getByRole(AriaRole.LISTITEM)
     .filter(new Locator.FilterOptions().setHasText("Product 2"))
-    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add to cart"))
+    .getByRole(AriaRole.BUTTON,
+               new Page.GetByRoleOptions().setName("Add to cart"))
     .click();
 ```
 
 ```python async
-await page.get_by_test_id("product-card").filter(has_text="Product 2").get_by_role("button", name="Add to cart").click()
+await page.get_by_role("listitem").filter(has_text="Product 2").get_by_role(
+    "button", name="Add to cart"
+).click()
 ```
 
 ```python sync
-page.get_by_test_id("product-card").filter(has_text="Product 2").get_by_role("button", name="Add to cart").click()
+page.get_by_role("listitem").filter(has_text="Product 2").get_by_role(
+    "button", name="Add to cart"
+).click()
 ```
+
 ```csharp
-await page.GetByTestId("product-card")
+await page
+    .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasTextString = "Product 2" })
     .GetByRole(AriaRole.Button, new () { NameString = "Add to cart" })
     .ClickAsync();
@@ -860,116 +859,137 @@ await page.GetByTestId("product-card")
 Use a regular expression:
 
 ```js
-await page.getByTestId('product-card')
+await page
+    .getByRole('listitem')
     .filter({ hasText: /Product 2/ })
     .getByRole('button', { name: 'Add to cart' })
     .click();
 ```
 
 ```java
-page.getByTestId("product-card")
-    .filter(new Locator.FilterOptions().setHasText(Pattern.compile("Product 2")))
-    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add to cart"))
+page.getByRole(AriaRole.LISTITEM)
+    .filter(new Locator.FilterOptions()
+        .setHasText(Pattern.compile("Product 2")))
+    .getByRole(AriaRole.BUTTON,
+               new Page.GetByRoleOptions().setName("Add to cart"))
     .click();
 ```
 
 ```python async
-await page.get_by_test_id("product-card").filter(has_text=re.compile("Product 2")).get_by_role("button", name="Add to cart").click()
+await page.get_by_role("listitem").filter(has_text=re.compile("Product 2")).get_by_role(
+    "button", name="Add to cart"
+).click()
 ```
 
 ```python sync
-page.get_by_test_id("product-card")
-    .filter(has_text=re.compile("Product 2"))
-    .get_by_role("button", name="Add to cart")
-    .click()
+page.get_by_role("listitem").filter(has_text=re.compile("Product 2")).get_by_role(
+    "button", name="Add to cart"
+).click()
 ```
 
 ```csharp
-await page.GetByTestId("product-card")
+await page
+    .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasTextRegex = new Regex("Product 2") })
     .GetByRole(AriaRole.Button, new () { NameString = "Add to cart" })
     .ClickAsync();
-```
-
-```html
-<div data-testid='product-card'>
-  <h3>Product 1</h3>
-  <button>Add to cart</button>
-</div>
-<div data-testid='product-card'>
-  <h3>Product 2</h3>
-  <button>Add to cart</button>
-</div>
 ```
 
 ### Filter by another locator
 
 Locators support an option to only select elements that have a descendant matching another locator. You can therefore filter by any other locator such as a [`method: Locator.getByRole`], [`method: Locator.getByTestId`], [`method: Locator.getByText`] etc.
 
-```js
-await page.getByTestId('product-card')
-    .filter({ has: page.getByRole('heading', { name: 'Product 2' })})
-    .getByRole('button', { name: 'Add to cart' })
-    .click()
-```
-```java
-page.getByTestId("product-card")
-    .filter(new Locator.FilterOptions().setHas(page.GetByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Product 2"))))
-    .getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add to cart")))
-    .click()
-```
-```python async
-await page.get_by_test_id("product-card").filter(has=page.get_by_role("heading", name="Product 2")).get_by_role("button", name="Add to cart").click()
-```
-```python sync
-page.get_by_test_id("product-card")
-    .filter(has=page.get_by_role("heading", name="Product 2"))
-    .get_by_role("button", name="Add to cart")
-    .click()
-```
-```csharp
-await page.GetByTestId("product-card")
-    .Filter(new() { Has = page.GetByRole(AriaRole.Heading, new () { NameString = "Product 2" })})
-    .GetByRole(AriaRole.Button, new () { NameString = "Add to cart" })
-    .ClickAsync();
-```
-
-```html
-<div data-testid='product-card'>
+```html card
+<div role="listitem">
   <h3>Product 1</h3>
   <button>Add to cart</button>
 </div>
-<div data-testid='product-card'>
+<div role="listitem">
   <h3>Product 2</h3>
   <button>Add to cart</button>
 </div>
 ```
 
+```js
+await page
+    .getByRole('listitem')
+    .filter({ has: page.getByRole('heading', { name: 'Product 2' })})
+    .getByRole('button', { name: 'Add to cart' })
+    .click()
+```
+
+```java
+page.getByRole(AriaRole.LISTITEM)
+    .filter(new Locator.FilterOptions()
+        .setHas(page.GetByRole(AriaRole.HEADING, new Page.GetByRoleOptions()
+        .setName("Product 2"))))
+    .getByRole(AriaRole.BUTTON,
+               new Page.GetByRoleOptions().setName("Add to cart")))
+    .click()
+```
+
+```python async
+await page.get_by_role("listitem").filter(
+    has=page.get_by_role("heading", name="Product 2")
+).get_by_role("button", name="Add to cart").click()
+```
+
+```python sync
+page.get_by_role("listitem").filter(
+    has=page.get_by_role("heading", name="Product 2")
+).get_by_role("button", name="Add to cart").click()
+```
+
+```csharp
+await page
+    .GetByRole(AriaRole.Listitem)
+    .Filter(new() {
+        Has = page.GetByRole(AriaRole.Heading, new () {
+            NameString = "Product 2"
+        })
+    })
+    .GetByRole(AriaRole.Button, new () { NameString = "Add to cart" })
+    .ClickAsync();
+```
+
 We can also assert the product card to make sure there is only one
 
 ```js
-await expect(page.getByTestId('product-card')
+await expect(page
+    .getByRole('listitem')
     .filter({ has: page.getByText('Product2') }))
     .toHaveCount(1);
 ```
 
 ```java
-assertThat(page.getByTestId("product-card")
+assertThat(page
+    .getByRole(AriaRole.LISTITEM)
     .filter(new Locator.FilterOptions().setHas(page.getByText("Product 2")))
     .hasCount(1);
 ```
 
 ```python async
-await expect(page.get_by_role("product-card").filter(has=page.get_by_role("heading", name="Product 2")).to_have_count(1)
+await expect(
+    page.get_by_role("listitem").filter(
+        has=page.get_by_role("heading", name="Product 2")
+    )
+).to_have_count(1)
 ```
 
 ```python sync
-expect(page.get_by_role("product-card").filter(has=page.get_by_role("heading", name="Product 2")).to_have_count(1)
+expect(
+    page.get_by_role("listitem").filter(
+        has=page.get_by_role("heading", name="Product 2")
+    )
+).to_have_count(1)
 ```
 
 ```csharp
-await Expect(page.GetByTestId("product-card")
-    .Filter(new() { Has = page.GetByRole(AriaRole.Heading, new () { Name = "Product 2" })})
+await Expect(page
+    .GetByRole(AriaRole.Listitem)
+    .Filter(new() {
+        Has = page.GetByRole(AriaRole.Heading, new () { Name = "Product 2" })
+    })
     .toHaveCountAsync(1);
 ```
 
@@ -982,52 +1002,44 @@ You can chain methods that create a locator, like [`method: Page.getByText`] or 
 In this example we first create a locator called product by locating the test id. We then filter by text. We can use the product locator again to get by role of button and click it and then use an assertion to make sure there is only one product with the text "Product 2".
 
 ```js
-const product = page.getByTestId('product-card')
-    .filter({ hasText: 'Product 2' });
+const product = page.getByRole('listitem').filter({ hasText: 'Product 2' });
 
-await product.getByRole('button', { name: 'Add to cart' })
-    .click();
+await product.getByRole('button', { name: 'Add to cart' }).click();
 
 await expect(product).toHaveCount(1);
 ```
 
 ```python async
-product = page.get_by_test_id("product-card").filter(has_text="Product 2")
+product = page.get_by_role("listitem").filter(has_text="Product 2")
 
 await product.get_by_role("button", name="Add to cart").click()
 ```
 
 ```python sync
-product = page.get_by_test_id("product-card").filter(has_text="Product 2")
+product = page.get_by_role("listitem").filter(has_text="Product 2")
 
 product.get_by_role("button", name="Add to cart").click()
 ```
 
 ```java
-Locator product = page.getByTestId("product-card")
+Locator product = page
+    .getByRole(AriaRole.LISTITEM)
     .filter(new Locator.FilterOptions().setHasText("Product 2"));
 
-product.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Add to cart"))
+product
+    .getByRole(AriaRole.BUTTON,
+               new Locator.GetByRoleOptions().setName("Add to cart"))
     .click();
 ```
 
 ```csharp
-var product = page.GetByTestId("product-card")
+var product = page
+    .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasTextString = "Product 2" });
 
-await product.GetByRole("button", new() { NameString = "Add to cart" })
+await product
+    .GetByRole(AriaRole.Button), new() { NameString = "Add to cart" })
     .ClickAsync();
-```
-
-```html
-<div data-testid='product-card'>
-  <h3>Product 1</h3>
-  <button>Add to cart</button>
-</div>
-<div data-testid='product-card'>
-  <h3>Product 2</h3>
-  <button>Add to cart</button>
-</div>
 ```
 
 ## Lists
@@ -1038,7 +1050,7 @@ You can assert locators in order to count the items in a list.
 
 For example, consider the following DOM structure:
 
-```html
+```html card
 <ul>
   <li>apple</li>
   <li>banana</li>
@@ -1065,7 +1077,7 @@ assertThat(page.getByRole(AriaRole.LISTITEM).hasCount(3);
 ```
 
 ```csharp
-await Expect(page.GetByRole("listitem")).ToHaveCountAsync(3);
+await Expect(page.GetByRole(AriaRole.Listitem)).ToHaveCountAsync(3);
 ```
 
 ### Assert all text in a list
@@ -1074,7 +1086,7 @@ You can assert locators in order to find all the text in a list.
 
 For example, consider the following DOM structure:
 
-```html
+```html card
 <ul>
   <li>apple</li>
   <li>banana</li>
@@ -1085,7 +1097,8 @@ For example, consider the following DOM structure:
 Use [`method: LocatorAssertions.toHaveText`] to ensure that the list has the text "apple", "banana" and "orange".
 
 ```js
-await expect(page.getByRole('listitem'))
+await expect(page
+    .getByRole('listitem'))
     .toHaveText(['apple', 'banana', 'orange']);
 ```
 
@@ -1098,12 +1111,14 @@ expect(page.get_by_role("listitem")).to_have_text(["apple", "banana", "orange"])
 ```
 
 ```java
-assertThat(page.getByRole(AriaRole.LISTITEM))
+assertThat(page
+    .getByRole(AriaRole.LISTITEM))
     .hasText(new String[] { "apple", "banana", "orange" });
 ```
 
 ```csharp
-await Expect(page.GetByRole("listitem"))
+await Expect(page
+    .GetByRole(AriaRole.Listitem))
     .ToHaveTextAsync(new string[] {"apple", "banana", "orange"});
 ```
 
@@ -1116,7 +1131,7 @@ Use the [`method: Page.getByText`] method to locate an element in a list by it's
 
 For example, consider the following DOM structure:
 
-```html
+```html card
 <ul>
   <li>apple</li>
   <li>banana</li>
@@ -1127,8 +1142,7 @@ For example, consider the following DOM structure:
 Locate an item by it's text content and click it.
 
 ```js
-await page.getByText('orange')
-    .click();
+await page.getByText('orange').click();
 ```
 
 ```python async
@@ -1140,16 +1154,14 @@ page.get_by_text("orange").click()
 ```
 
 ```java
-page.getByText("orange")
-    .click();
+page.getByText("orange").click();
 ```
 
 ```csharp
-await page.GetByText("orange")
-    .ClickAsync();
+await page.GetByText("orange").ClickAsync();
 ```
 
-```html
+```html card
 <ul>
   <li>apple</li>
   <li>banana</li>
@@ -1162,7 +1174,7 @@ Use the [`method: Locator.filter`] to locate a specific item in a list.
 
 For example, consider the following DOM structure:
 
-```html
+```html card
 <ul>
   <li>apple</li>
   <li>banana</li>
@@ -1173,7 +1185,8 @@ For example, consider the following DOM structure:
 Locate an item by the role of "listitem" and then filter by the text of "orange" and then click it.
 
 ```js
-await page.getByRole('listitem')
+await page
+    .getByRole('listitem')
     .filter({ hasText: 'orange' })
     .click();
 ```
@@ -1193,17 +1206,10 @@ page.getByRole(AriaRole.LISTITEM)
 ```
 
 ```csharp
-await page.GetByRole("listitem")
+await page
+    .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasTextString = "orange" })
     .ClickAsync();
-```
-
-```html
-<ul>
-  <li>apple</li>
-  <li>banana</li>
-  <li>orange</li>
-</ul>
 ```
 
 #### Get by test id
@@ -1212,7 +1218,7 @@ Use the [`method: Page.getByTestId`] method to locate an element in a list. You 
 
 For example, consider the following DOM structure:
 
-```html
+```html card
 <ul>
   <li data-testid='apple'>apple</li>
   <li data-testid='banana'>banana</li>
@@ -1223,8 +1229,7 @@ For example, consider the following DOM structure:
 Locate an item by it's test id of "orange" and then click it.
 
 ```js
-await page.getByTestId('orange')
-    .click();
+await page.getByTestId('orange').click();
 ```
 
 ```python async
@@ -1236,21 +1241,11 @@ page.get_by_test_id("orange").click()
 ```
 
 ```java
-page.getByTestId("orange")
-    .click();
+page.getByTestId("orange").click();
 ```
 
 ```csharp
-await page.GetByTestId("orange")
-    .ClickAsync();
-```
-
-```html
-<ul>
-  <li data-testid='apple'>apple</li>
-  <li data-testid='banana'>banana</li>
-  <li data-testid='orange'>orange</li>
-</ul>
+await page.GetByTestId("orange").ClickAsync();
 ```
 
 #### Get by nth item
@@ -1274,8 +1269,7 @@ Locator banana = page.getByRole(AriaRole.LISTITEM).nth(1);
 ```
 
 ```csharp
-var banana = await page.GetByRole("listitem")
-    .NthAsync(1);
+var banana = await page.GetByRole(AriaRole.Listitem).NthAsync(1);
 ```
 However, use this method with caution. Often times, the page might change, and the locator will point to a completely different element from the one you expected. Instead, try to come up with a unique locator that will pass the [strictness criteria](#strictness).
 
@@ -1285,7 +1279,7 @@ When you have elements with various similarities, you can use the [`method: Loca
 
 For example, consider the following DOM structure:
 
-```html
+```html card
 <ul>
   <li>
     <div>John</div>
@@ -1314,43 +1308,52 @@ const rowLocator = page.getByRole('listitem');
 await rowLocator
   .filter({ hasText: 'Mary' })
   .filter({ has: page.getByRole('button', { name: 'Say goodbye' }) })
-  .screenshot({path: 'screenshot.png'});
+  .screenshot({ path: 'screenshot.png' });
 ```
 
 ```python async
 row_locator = page.get_by_role("listitem")
 
-await row_locator.filter(has_text="Mary").filter(has=page.get_by_role("button", name="Say goodbye")).screenshot(path="screenshot.png")
+await row_locator
+    .filter(has_text="Mary")
+    .filter(has=page.get_by_role("button", name="Say goodbye"))
+    .screenshot(path="screenshot.png")
 ```
 
 ```python sync
 row_locator = page.get_by_role("listitem")
 
-row_locator.filter(has_text="Mary").filter(has=page.get_by_role("button", name="Say goodbye")).screenshot(path="screenshot.png")
+row_locator
+    .filter(has_text="Mary")
+    .filter(has=page.get_by_role("button", name="Say goodbye"))
+    .screenshot(path="screenshot.png")
 ```
 
 ```java
 Locator rowLocator = page.getByRole(AriaRole.LISTITEM);
 
-rowLocator.filter(new Locator.FilterOptions().setHasText("Mary"))
-    .filter(new Locator.FilterOptions().setHas(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Say goodbye"))))
+rowLocator
+    .filter(new Locator.FilterOptions().setHasText("Mary"))
+    .filter(new Locator.FilterOptions()
+        .setHas(page.getByRole(
+            AriaRole.BUTTON,
+            new Page.GetByRoleOptions().setName("Say goodbye"))))
     .screenshot(new Page.ScreenshotOptions().setPath("screenshot.png"));
 ```
 
 ```csharp
-var rowLocator = page.GetByRole("listitem");
+var rowLocator = page.GetByRole(AriaRole.Listitem);
 
-await rowLocator.Filter(new() { HasTextString = "Mary" })
-    .Filter(new() { Has = page.GetByRole("button", new() { NameString = "Say goodbye" }) })
+await rowLocator
+    .Filter(new() { HasTextString = "Mary" })
+    .Filter(new() {
+        Has = page.GetByRole(AriaRole.Button), new() { NameString = "Say goodbye" })
+    })
     .ScreenshotAsync(new() { Path = "screenshot.png" });
 ```
 
 You should now have a "screenshot.png" file in your project's root directory.
 
-```html
-<div>Mary</div>
-<div><button>Say goodbye</button></div>
-```
 ### Rare use cases
 
 #### Get All text contents
@@ -1376,7 +1379,7 @@ List<String> texts = rows.allTextContents();
 ```
 
 ```csharp
-var rows = page.GetByRole("listitem");
+var rows = page.GetByRole(AriaRole.Listitem);
 var texts = await rows.AllTextContentsAsync();
 ```
 
@@ -1411,7 +1414,7 @@ for (int i = 0; i < count; ++i)
 ```
 
 ```csharp
-var rows = page.GetByRole("listitem");
+var rows = page.GetByRole(AriaRole.Listitem);
 var count = await rows.CountAsync();
 for (int i = 0; i < count; ++i)
   Console.WriteLine(await rows.Nth(i).TextContentAsync());
@@ -1423,7 +1426,8 @@ The code inside [`method: Locator.evaluateAll`] runs in the page, you can call a
 
 ```js
 const rows = page.getByRole('listitem');
-const texts = await rows.evaluateAll(list => list.map(element => element.textContent));
+const texts = await rows.evaluateAll(
+    list => list.map(element => element.textContent));
 ```
 
 ```python async
@@ -1438,11 +1442,13 @@ texts = rows.evaluate_all("list => list.map(element => element.textContent)")
 
 ```java
 Locator rows = page.getByRole(AriaRole.LISTITEM);
-Object texts = rows.evaluateAll("list => list.map(element => element.textContent)");
+Object texts = rows.evaluateAll(
+    "list => list.map(element => element.textContent)");
 ```
 ```csharp
-var rows = page.GetByRole("listitem");
-var texts = await rows.EvaluateAllAsync("list => list.map(element => element.textContent)");
+var rows = page.GetByRole(AriaRole.Listitem);
+var texts = await rows.EvaluateAllAsync(
+    "list => list.map(element => element.textContent)");
 ```
 ## Strictness
 
@@ -1488,11 +1494,11 @@ page.get_by_role("button").count()
 ```
 
 ```java
-page.getByRole("button").count();
+page.getByRole(AriaRole.BUTTON).count();
 ```
 
 ```csharp
-await page.GetByRole("button").CountAsync();
+await page.GetByRole(AriaRole.Button).CountAsync();
 ```
 
 You can explicitly opt-out from strictness check by telling Playwright which element to use when multiple elements match, through [`method: Locator.first`], [`method: Locator.last`], and [`method: Locator.nth`]. These methods are **not recommended** because when your page changes, Playwright may click on an element you did not intend. Instead, follow best practices above to create a locator that uniquely identifies the target element.
