@@ -203,7 +203,7 @@ export class Runner {
     for (const [project, files] of filesByProject) {
       report.projects.push({
         ...sanitizeConfigForJSON(project, new Set()),
-        files: files,
+        files
       });
     }
     return report;

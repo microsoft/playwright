@@ -30,6 +30,11 @@ import { test as base } from './stable-test-runner';
 
 const removeFolderAsync = promisify(rimraf);
 
+export type CliRunResult = {
+  exitCode: number,
+  output: string,
+};
+
 export type RunResult = {
   exitCode: number,
   output: string,
@@ -113,7 +118,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   }
   const outputDir = path.join(baseDir, 'test-results');
   const reportFile = path.join(outputDir, 'report.json');
-  const args = ['node', cliEntrypoint, 'test'];
+  const args = ['test'];
   if (!options.usesCustomOutputDir)
     args.push('--output=' + outputDir);
   if (!options.usesCustomReporters)
@@ -124,12 +129,71 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   );
   if (options.additionalArgs)
     args.push(...options.additionalArgs);
-  const cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-test-cache-'));
+
+  const cwd = options.cwd ? path.resolve(baseDir, options.cwd) : baseDir;
+  // eslint-disable-next-line prefer-const
+  let { exitCode, output } = await runPlaywrightCommand(childProcess, cwd, args, {
+    PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
+    ...env,
+  }, options.sendSIGINTAfter);
+
+  const summary = (re: RegExp) => {
+    let result = 0;
+    let match = re.exec(output);
+    while (match) {
+      result += (+match[1]);
+      match = re.exec(output);
+    }
+    return result;
+  };
+  const passed = summary(/(\d+) passed/g);
+  const failed = summary(/(\d+) failed/g);
+  const flaky = summary(/(\d+) flaky/g);
+  const skipped = summary(/(\d+) skipped/g);
+  const interrupted = summary(/(\d+) interrupted/g);
+  let report;
+  try {
+    report = JSON.parse(fs.readFileSync(reportFile).toString());
+  } catch (e) {
+    output += '\n' + e.toString();
+  }
+
+  const results: JSONReportTestResult[] = [];
+  function visitSuites(suites?: JSONReportSuite[]) {
+    if (!suites)
+      return;
+    for (const suite of suites) {
+      for (const spec of suite.specs) {
+        for (const test of spec.tests)
+          results.push(...test.results);
+      }
+      visitSuites(suite.suites);
+    }
+  }
+  if (report)
+    visitSuites(report.suites);
+
+  return {
+    exitCode,
+    output,
+    passed,
+    failed,
+    flaky,
+    skipped,
+    interrupted,
+    report,
+    results,
+  };
+}
+
+async function runPlaywrightCommand(childProcess: CommonFixtures['childProcess'], cwd: string, commandWithArguments: string[], env: Env, sendSIGINTAfter?: number): Promise<CliRunResult> {
+  const command = ['node', cliEntrypoint];
+  command.push(...commandWithArguments);
+  const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
   const testProcess = childProcess({
-    command: args,
+    command,
     env: {
       ...process.env,
-      PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
       PWTEST_CACHE_DIR: cacheDir,
       // BEGIN: Reserved CI
       CI: undefined,
@@ -151,11 +215,11 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
       NODE_OPTIONS: undefined,
       ...env,
     },
-    cwd: options.cwd ? path.resolve(baseDir, options.cwd) : baseDir,
+    cwd,
   });
   let didSendSigint = false;
   testProcess.onOutput = () => {
-    if (options.sendSIGINTAfter && !didSendSigint && countTimes(testProcess.output, '%%SEND-SIGINT%%') >= options.sendSIGINTAfter) {
+    if (sendSIGINTAfter && !didSendSigint && countTimes(testProcess.output, '%%SEND-SIGINT%%') >= sendSIGINTAfter) {
       didSendSigint = true;
       process.kill(testProcess.process.pid!, 'SIGINT');
     }
@@ -163,55 +227,9 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   const { exitCode } = await testProcess.exited;
   await removeFolderAsync(cacheDir);
 
-  const outputString = testProcess.output.toString();
-  const summary = (re: RegExp) => {
-    let result = 0;
-    let match = re.exec(outputString);
-    while (match) {
-      result += (+match[1]);
-      match = re.exec(outputString);
-    }
-    return result;
-  };
-  const passed = summary(/(\d+) passed/g);
-  const failed = summary(/(\d+) failed/g);
-  const flaky = summary(/(\d+) flaky/g);
-  const skipped = summary(/(\d+) skipped/g);
-  const interrupted = summary(/(\d+) interrupted/g);
-  let report;
-  try {
-    report = JSON.parse(fs.readFileSync(reportFile).toString());
-  } catch (e) {
-    testProcess.output += '\n' + e.toString();
-  }
-
-  const results: JSONReportTestResult[] = [];
-  function visitSuites(suites?: JSONReportSuite[]) {
-    if (!suites)
-      return;
-    for (const suite of suites) {
-      for (const spec of suite.specs) {
-        for (const test of spec.tests)
-          results.push(...test.results);
-      }
-      visitSuites(suite.suites);
-    }
-  }
-  if (report)
-    visitSuites(report.suites);
-
-  return {
-    exitCode,
-    output: testProcess.output,
-    passed,
-    failed,
-    flaky,
-    skipped,
-    interrupted,
-    report,
-    results,
-  };
+  return { exitCode, output: testProcess.output.toString() };
 }
+
 
 type RunOptions = {
   sendSIGINTAfter?: number;
@@ -226,6 +244,7 @@ type Fixtures = {
   runTSC: (files: Files) => Promise<TSCResult>;
   nodeVersion: { major: number, minor: number, patch: number };
   runGroups: (files: Files, params?: Params, env?: Env, options?: RunOptions) => Promise<{ timeline: { titlePath: string[], event: 'begin' | 'end' }[] } & RunResult>;
+  runCommand: (files: Files, args: string[]) => Promise<CliRunResult>;
 };
 
 export const test = base
@@ -242,6 +261,13 @@ export const test = base
           if (beforeRunPlaywrightTest)
             await beforeRunPlaywrightTest({ baseDir });
           return await runPlaywrightTest(childProcess, baseDir, params, env, options);
+        });
+      },
+
+      runCommand: async ({ childProcess }, use, testInfo: TestInfo) => {
+        await use(async (files: Files, args: string[]) => {
+          const baseDir = await writeFiles(testInfo, files);
+          return await runPlaywrightCommand(childProcess, baseDir, args, { });
         });
       },
 

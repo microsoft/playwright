@@ -328,3 +328,100 @@ test('same file cannot be a setup and a test in different projects', async ({ ru
   expect(exitCode).toBe(1);
   expect(output).toContain(`a.test.ts" matches 'setup' filter in project "p1" and 'testMatch' filter in project "p2"`);
 });
+
+test('list-files should enumerate setup files in same group', async ({ runCommand }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*a..setup.ts$/,
+            testMatch: /.*a.test.ts$/,
+          },
+          {
+            name: 'p2',
+            setup: /.*b.setup.ts$/,
+            testMatch: /.*b.test.ts$/
+          },
+        ]
+      };`,
+    'a1.setup.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+    `,
+    'a2.setup.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test2', async () => { });
+    `,
+    'b.setup.ts': `
+      const { test } = pwt;
+      test('test3', async () => { });
+    `,
+    'b.test.ts': `
+      const { test } = pwt;
+      test('test4', async () => { });
+    `,
+  };
+
+  const { exitCode, output } =  await runCommand(files, ['list-files']);
+  expect(exitCode).toBe(0);
+  const json = JSON.parse(output);
+  expect(json.projects.map(p => p.name)).toEqual(['p1', 'p2']);
+  expect(json.projects[0].files.map(f => path.basename(f))).toEqual(['a.test.ts', 'a1.setup.ts', 'a2.setup.ts']);
+  expect(json.projects[1].files.map(f => path.basename(f))).toEqual(['b.setup.ts', 'b.test.ts']);
+});
+
+test('test --list should enumerate setup tests as regular ones', async ({ runCommand }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*a..setup.ts$/,
+            testMatch: /.*a.test.ts$/,
+          },
+          {
+            name: 'p2',
+            setup: /.*b.setup.ts$/,
+            testMatch: /.*b.test.ts$/
+          },
+        ]
+      };`,
+    'a1.setup.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+    `,
+    'a2.setup.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test2', async () => { });
+    `,
+    'b.setup.ts': `
+      const { test } = pwt;
+      test('test3', async () => { });
+    `,
+    'b.test.ts': `
+      const { test } = pwt;
+      test('test4', async () => { });
+    `,
+  };
+
+  const { exitCode, output } =  await runCommand(files, ['test', '--list']);
+  expect(exitCode).toBe(0);
+  expect(output).toContain(`Listing tests:
+  [p1] › a.test.ts:6:7 › test2
+  [p1] › a1.setup.ts:5:7 › test1
+  [p1] › a2.setup.ts:5:7 › test1
+  [p2] › b.setup.ts:5:7 › test3
+  [p2] › b.test.ts:6:7 › test4
+Total: 5 tests in 5 files`);
+});
