@@ -869,16 +869,23 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async _checkFrameIsHitTarget(point: types.Point): Promise<{ framePoint: types.Point } | 'error:notconnected' | { hitTargetDescription: string }> {
+  async _checkFrameIsHitTarget(point: types.Point): Promise<{ framePoint: types.Point | undefined } | 'error:notconnected' | { hitTargetDescription: string }> {
     let frame = this._frame;
     const data: { frame: frames.Frame, frameElement: ElementHandle<Element> | null, pointInFrame: types.Point }[] = [];
     while (frame.parentFrame()) {
       const frameElement = await frame.frameElement() as ElementHandle<Element>;
       const box = await frameElement.boundingBox();
-      if (!box)
+      const style = await frameElement.evaluateInUtility(([injected, iframe]) => injected.describeIFrameStyle(iframe), {}).catch(e => 'error:notconnected' as const);
+      if (!box || style === 'error:notconnected')
         return 'error:notconnected';
+      if (style === 'transformed') {
+        // We cannot translate coordinates when iframe has any transform applied.
+        // The best we can do right now is to skip the hitPoint check,
+        // and solely rely on the event interceptor.
+        return { framePoint: undefined };
+      }
       // Translate from viewport coordinates to frame coordinates.
-      const pointInFrame = { x: point.x - box.x, y: point.y - box.y };
+      const pointInFrame = { x: point.x - box.x - style.borderLeft, y: point.y - box.y - style.borderTop };
       data.push({ frame, frameElement, pointInFrame });
       frame = frame.parentFrame()!;
     }

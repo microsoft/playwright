@@ -32,7 +32,7 @@ it('should click the button @smoke', async ({ page, server }) => {
 it('should click button inside frameset', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/frameset.html');
   const frameElement = await page.$('frame');
-  await frameElement.evaluate(frame => frame.src = '/input/button.html');
+  await frameElement.evaluate((frame: HTMLFrameElement) => frame.src = '/input/button.html');
   const frame = await frameElement.contentFrame();
   await frame.click('button');
   expect(await frame.evaluate('result')).toBe('Clicked');
@@ -885,4 +885,127 @@ it('should climb up to a [role=link]', async ({ page }) => {
   await page.setContent(`<div role=link onclick="javascript:window.__CLICKED=true;" id="outer"><div id="inner" style="pointer-events: none">Inner</div></div>`);
   await page.click('#inner');
   expect(await page.evaluate('__CLICKED')).toBe(true);
+});
+
+it('should click in an iframe with border', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      body, html, iframe { margin: 0; padding: 0; border: none; box-sizing: border-box; }
+      iframe { border: 4px solid black; background: gray; margin-left: 33px; margin-top: 24px; width: 400px; height: 400px; }
+    </style>
+    <iframe srcdoc="
+      <style>
+        body, html { margin: 0; padding: 0; }
+        div { margin-left: 10px; margin-top: 20px; width: 2px; height: 2px; }
+      </style>
+      <div>Target</div>
+      <script>
+        document.querySelector('div').addEventListener('click', () => window.top._clicked = true);
+      </script>
+    "></iframe>
+  `);
+  const locator = page.frameLocator('iframe').locator('div');
+  await locator.click();
+  expect(await page.evaluate('window._clicked')).toBe(true);
+});
+
+it('should click in an iframe with border 2', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      body, html, iframe { margin: 0; padding: 0; border: none; }
+      iframe { border: 4px solid black; background: gray; margin-left: 33px; margin-top: 24px; width: 400px; height: 400px; }
+    </style>
+    <iframe srcdoc="
+      <style>
+        body, html { margin: 0; padding: 0; }
+        div { margin-left: 10px; margin-top: 20px; width: 2px; height: 2px; }
+      </style>
+      <div>Target</div>
+      <script>
+        document.querySelector('div').addEventListener('click', () => window.top._clicked = true);
+      </script>
+    "></iframe>
+  `);
+  const locator = page.frameLocator('iframe').locator('div');
+  await locator.click();
+  expect(await page.evaluate('window._clicked')).toBe(true);
+});
+
+it('should click in a transformed iframe', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      body, html, iframe { margin: 0; padding: 0; border: none; }
+      iframe {
+        border: 4px solid black;
+        background: gray;
+        margin-left: 33px;
+        margin-top: 24px;
+        width: 400px;
+        height: 400px;
+        transform: translate(100px, 100px) scale(1.2) rotate3d(1, 1, 1, 25deg);
+      }
+    </style>
+    <iframe srcdoc="
+      <style>
+        body, html { margin: 0; padding: 0; }
+        div { margin-left: 10px; margin-top: 20px; width: 2px; height: 2px; }
+      </style>
+      <div>Target</div>
+      <script>
+        document.querySelector('div').addEventListener('click', () => window.top._clicked = true);
+      </script>
+    "></iframe>
+  `);
+  const locator = page.frameLocator('iframe').locator('div');
+  await locator.click();
+  expect(await page.evaluate('window._clicked')).toBe(true);
+});
+
+it('should click in a transformed iframe with force', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      body, html, iframe { margin: 0; padding: 0; border: none; }
+      iframe { background: gray; margin-left: 33px; margin-top: 24px; width: 400px; height: 400px; transform: translate(-40px, -40px) scale(0.8); }
+    </style>
+    <iframe srcdoc="
+      <style>
+        body, html { margin: 0; padding: 0; }
+        div { margin-left: 10px; margin-top: 20px; width: 2px; height: 2px; }
+      </style>
+      <div>Target</div>
+      <script>
+        document.querySelector('div').addEventListener('click', () => window.top._clicked = true);
+      </script>
+    "></iframe>
+  `);
+  const locator = page.frameLocator('iframe').locator('div');
+  await locator.click({ force: true });
+  expect(await page.evaluate('window._clicked')).toBe(true);
+});
+
+it('should click in a nested transformed iframe', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      body, html, iframe { margin: 0; padding: 0; box-sizing: border-box; }
+      iframe { border: 1px solid black; background: gray; margin-left: 33px; margin-top: 24px; width: 400px; height: 400px; transform: scale(0.8); }
+    </style>
+    <iframe srcdoc="
+      <style>
+        body, html, iframe { margin: 0; padding: 0; box-sizing: border-box; }
+        iframe { border: 3px solid black; background: gray; margin-left: 18px; margin-top: 14px; width: 200px; height: 200px; transform: scale(0.7); }
+      </style>
+      <iframe srcdoc='
+        <style>
+          div { margin-left: 10px; margin-top: 20px; width: 2px; height: 2px; }
+        </style>
+        <div>Target</div>
+      '></iframe>
+    "></iframe>
+  `);
+  const locator = page.frameLocator('iframe').frameLocator('iframe').locator('div');
+  await locator.evaluate(div => {
+    div.addEventListener('click', () => window.top['_clicked'] = true);
+  });
+  await locator.click();
+  expect(await page.evaluate('window._clicked')).toBe(true);
 });
