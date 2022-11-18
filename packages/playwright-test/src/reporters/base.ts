@@ -344,7 +344,7 @@ export function formatResultFailure(config: FullConfig, test: TestCase, result: 
   return errorDetails;
 }
 
-function relativeFilePath(config: FullConfig, file: string): string {
+export function relativeFilePath(config: FullConfig, file: string): string {
   return path.relative(config.rootDir, file) || path.basename(file);
 }
 
