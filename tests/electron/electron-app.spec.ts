@@ -39,8 +39,8 @@ test('should script application', async ({ electronApp }) => {
 });
 
 test('should preserve args', async ({ electronApp }) => {
-  const argv = await electronApp.evaluate(async ({ app }) => process.argv);
-  expect(argv.slice(1)).toEqual([expect.stringContaining('electron/electron-app.js')]);
+  const argv = await electronApp.evaluate(async () => process.argv);
+  expect(argv.slice(1)).toEqual([expect.stringContaining(path.join('electron', 'electron-app.js'))]);
 });
 
 test('should return windows', async ({ electronApp, newWindow }) => {
