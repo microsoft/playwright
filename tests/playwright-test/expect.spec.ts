@@ -540,12 +540,12 @@ test('should print timed out error message', async ({ runInlineTest }) => {
 
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
-        await expect(page.locator('no-such-thing')).not.toBeVisible({ timeout: 1 });
+        await expect(page.locator('no-such-thing')).toBeChecked({ timeout: 1 });
       });
       `,
   }, { workers: 1 });
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
   const output = stripAnsi(result.output);
-  expect(output).toContain('Timed out 1ms waiting for expect(received).not.toBeVisible()');
+  expect(output).toContain('Timed out 1ms waiting for expect(received).toBeChecked()');
 });

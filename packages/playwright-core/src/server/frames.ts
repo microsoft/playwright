@@ -29,7 +29,7 @@ import * as types from './types';
 import { BrowserContext } from './browserContext';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils';
+import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../common/debugLogger';
 import type { CallMetadata } from './instrumentation';
@@ -1359,13 +1359,27 @@ export class Frame extends SdkObject {
   }
 
   async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+    let timeout = this._page._timeoutSettings.timeout(options);
+    const start = timeout > 0 ? monotonicTime() : 0;
+    const resultOneShot = await this._expectInternal(metadata, selector, options, true, timeout);
+    if (resultOneShot.matches !== options.isNot)
+      return resultOneShot;
+    if (timeout > 0) {
+      const elapsed = monotonicTime() - start;
+      timeout -= elapsed;
+    }
+    if (timeout < 0)
+      return { matches: options.isNot, log: metadata.log, timedOut: true };
+    return await this._expectInternal(metadata, selector, options, false, timeout);
+  }
+
+  private async _expectInternal(metadata: CallMetadata, selector: string, options: FrameExpectParams, oneShot: boolean, timeout: number): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     const controller = new ProgressController(metadata, this);
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     const mainWorld = options.expression === 'to.have.property';
-    const timeout = this._page._timeoutSettings.timeout(options);
 
     // List all combinations that are satisfied with the detached node(s).
-    let omitAttached = false;
+    let omitAttached = oneShot;
     if (!options.isNot && options.expression === 'to.be.hidden')
       omitAttached = true;
     else if (options.isNot && options.expression === 'to.be.visible')
@@ -1380,7 +1394,8 @@ export class Frame extends SdkObject {
       omitAttached = true;
 
     return controller.run(async outerProgress => {
-      outerProgress.log(`${metadata.apiName}${timeout ? ` with timeout ${timeout}ms` : ''}`);
+      if (oneShot)
+        outerProgress.log(`${metadata.apiName}${timeout ? ` with timeout ${timeout}ms` : ''}`);
       return await this._scheduleRerunnableTaskWithProgress(outerProgress, selector, (progress, element, options, elements) => {
         let result: { matches: boolean, received?: any };
 
@@ -1395,7 +1410,7 @@ export class Frame extends SdkObject {
             if (options.isNot && options.expression === 'to.be.visible')
               return { matches: false };
             // When none of the above applies, keep waiting for the element.
-            return progress.continuePolling;
+            return options.oneShot ? { matches: options.isNot } : progress.continuePolling;
           }
           result = progress.injectedScript.expectSingleElement(progress, element, options);
         }
@@ -1407,13 +1422,13 @@ export class Frame extends SdkObject {
           progress.setIntermediateResult(result.received);
           if (!Array.isArray(result.received))
             progress.log(`  unexpected value "${progress.injectedScript.renderUnexpectedValue(options.expression, result.received)}"`);
-          return progress.continuePolling;
+          return options.oneShot ? result : progress.continuePolling;
         }
 
         // Reached the expected state!
         return result;
-      }, { ...options, isArray }, { strict: true, querySelectorAll: isArray, mainWorld, omitAttached, logScale: true, ...options });
-    }, timeout).catch(e => {
+      }, { ...options, isArray, oneShot }, { strict: true, querySelectorAll: isArray, mainWorld, omitAttached, logScale: true, ...options });
+    }, oneShot ? 0 : timeout).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly message containing the last intermediate result.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
