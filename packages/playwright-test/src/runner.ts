@@ -337,8 +337,15 @@ export class Runner {
     }
 
     // Filter only.
-    if (!options.listOnly)
-      filterOnly(preprocessRoot);
+    if (!options.listOnly) {
+      const hasOnly = filterOnly(preprocessRoot);
+      if (hasOnly) {
+        const setup = preprocessRoot.allTests().filter(testCase => setupFiles.has(testCase._requireFile));
+        const test = preprocessRoot.allTests().filter(testCase => !setupFiles.has(testCase._requireFile));
+        if (setup.length && test.length)
+          fatalErrors.push(createSetupAndTestOnlyError(config, setup, test));
+      }
+    }
 
     // Generate projects.
     const fileSuites = new Map<string, Suite>();
@@ -940,6 +947,30 @@ function createForbidOnlyError(config: FullConfigInternal, onlyTestsAndSuites: (
     const title = testOrSuite.titlePath().slice(2).join(' ');
     errorMessage.push(` - ${buildItemLocation(config.rootDir, testOrSuite)} > ${title}`);
   }
+  errorMessage.push('=====================================');
+  return createStacklessError(errorMessage.join('\n'));
+}
+
+function createSetupAndTestOnlyError(config: FullConfigInternal, onlySetups: (TestCase | Suite)[], onlyTests: (TestCase | Suite)[]): TestError {
+  const errorMessage = [
+    '=====================================',
+    'Found both setup and test with .only()'
+  ];
+  const addLocations = (onlyTestsAndSuites: (TestCase | Suite)[]) => {
+    const maxLen = 5;
+    for (let i = 0; i < Math.min(maxLen, onlyTestsAndSuites.length); i++) {
+      const testOrSuite = onlyTestsAndSuites[i];
+      // Skip root and file.
+      const title = testOrSuite.titlePath().slice(2).join(' ');
+      errorMessage.push(` - ${buildItemLocation(config.rootDir, testOrSuite)} > ${title}`);
+    }
+    if (onlyTestsAndSuites.length > maxLen)
+      errorMessage.push(` and ${onlyTestsAndSuites.length - maxLen} more...`);
+  }
+  errorMessage.push('Setups:');
+  addLocations(onlySetups);
+  errorMessage.push('Tests:');
+  addLocations(onlyTests);
   errorMessage.push('=====================================');
   return createStacklessError(errorMessage.join('\n'));
 }

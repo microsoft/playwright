@@ -461,6 +461,43 @@ test('should allow .only in setup files', async ({ runGroups }, testInfo) => {
   expect(passed).toBe(2);
 });
 
+test('should not allow .only in both setup and test files', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*.setup.ts/,
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test.only('test2', async () => { });
+      test('test3', async () => { });
+      test('test4', async () => { });
+    `,
+    'a.setup.ts': `
+      const { test } = pwt;
+      test.only('setup1', async () => { });
+      test('setup2', async () => { });
+      test('setup3', async () => { });
+    `,
+  };
+
+  const { exitCode, output } =  await runGroups(files);
+  expect(exitCode).toBe(1);
+  expect(output).toContain(`=====================================
+Found both setup and test with .only()
+Setups:
+ - a.setup.ts:5 > setup1
+Tests:
+ - a.test.ts:7 > test2
+=====================================`);
+});
+
 test('should allow filtering setup by file:line', async ({ runGroups }, testInfo) => {
   const files = {
     'playwright.config.ts': `
