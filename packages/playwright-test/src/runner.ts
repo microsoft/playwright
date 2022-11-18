@@ -966,7 +966,7 @@ function createSetupAndTestOnlyError(config: FullConfigInternal, onlySetups: (Te
     }
     if (onlyTestsAndSuites.length > maxLen)
       errorMessage.push(` and ${onlyTestsAndSuites.length - maxLen} more...`);
-  }
+  };
   errorMessage.push('Setups:');
   addLocations(onlySetups);
   errorMessage.push('Tests:');
