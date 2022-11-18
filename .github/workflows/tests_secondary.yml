@@ -40,6 +40,8 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - run: npm run test -- --project=${{ matrix.browser }} --reporter=list
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
