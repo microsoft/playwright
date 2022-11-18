@@ -29,7 +29,7 @@ import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
 import { dockerPlugin } from './plugins/dockerPlugin';
 import { webServerPluginsForConfig } from './plugins/webServerPlugin';
-import { formatError } from './reporters/base';
+import { formatError, relativeFilePath } from './reporters/base';
 import DotReporter from './reporters/dot';
 import EmptyReporter from './reporters/empty';
 import GitHubReporter from './reporters/github';
@@ -196,7 +196,7 @@ export class Runner {
 
   async listTestFiles(projectNames: string[] | undefined): Promise<any> {
     const projects = this._collectProjects(projectNames);
-    const { filesByProject } = await this._collectFiles(projects, () => true);
+    const { filesByProject } = await this._collectFiles(projects, []);
     const report: any = {
       projects: []
     };
@@ -235,12 +235,13 @@ export class Runner {
     return projects;
   }
 
-  private async _collectFiles(projects: FullProjectInternal[], testFileFilter: Matcher): Promise<{filesByProject: Map<FullProjectInternal, string[]>; setupFiles: Set<string>}> {
+  private async _collectFiles(projects: FullProjectInternal[], commandLineFileFilters: TestFileFilter[]): Promise<{filesByProject: Map<FullProjectInternal, string[]>; setupFiles: Set<string>, applyFilterToSetup: boolean}> {
     const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
     const testFileExtension = (file: string) => extensions.includes(path.extname(file));
     const filesByProject = new Map<FullProjectInternal, string[]>();
     const setupFiles = new Set<string>();
     const fileToProjectName = new Map<string, string>();
+    const commandLineFileMatcher = fileMatcherFrom(commandLineFileFilters);
     for (const project of projects) {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
       const setupMatch = createFileMatcher(project._setup);
@@ -250,7 +251,7 @@ export class Runner {
         if (!testFileExtension(file))
           return false;
         const isSetup = setupMatch(file);
-        const isTest = !testIgnore(file) && testMatch(file) && testFileFilter(file);
+        const isTest = !testIgnore(file) && testMatch(file) && commandLineFileMatcher(file);
         if (!isTest && !isSetup)
           return false;
         if (isSetup && isTest)
@@ -270,13 +271,40 @@ export class Runner {
       });
       filesByProject.set(project, testFiles);
     }
-    return { filesByProject, setupFiles };
+
+    // If the filter didn't match any tests, apply it to the setup files.
+    const applyFilterToSetup = setupFiles.size === fileToProjectName.size;
+    if (applyFilterToSetup) {
+      // We now have only setup files in filesByProject, because all test files were filtered out.
+      for (const [project, setupFiles] of filesByProject) {
+        const filteredFiles = setupFiles.filter(commandLineFileMatcher);
+        if (filteredFiles.length)
+          filesByProject.set(project, filteredFiles);
+        else
+          filesByProject.delete(project);
+      }
+      for (const file of setupFiles) {
+        if (!commandLineFileMatcher(file))
+          setupFiles.delete(file);
+      }
+    } else if (commandLineFileFilters.length) {
+      const setupFile = [...setupFiles].find(commandLineFileMatcher);
+      // If the filter is not empty and it matches both setup and tests then it's an error: we allow
+      // to run either subset of tests with full setup or partial setup without any tests.
+      if (setupFile) {
+        const testFile = Array.from(fileToProjectName.keys()).find(f => !setupFiles.has(f));
+        const config = this._loader.fullConfig();
+        throw new Error(`Both setup and test files match command line filter.\n  Setup file: ${relativeFilePath(config, setupFile)}\n  Test file: ${relativeFilePath(config, testFile!)}`);
+      }
+    }
+
+    return { filesByProject, setupFiles, applyFilterToSetup };
   }
 
   private async _collectTestGroups(options: RunOptions, fatalErrors: TestError[]): Promise<{ rootSuite: Suite, projectSetupGroups: TestGroup[], testGroups: TestGroup[] }> {
     const config = this._loader.fullConfig();
     const projects = this._collectProjects(options.projectFilter);
-    const { filesByProject, setupFiles } = await this._collectFiles(projects, fileMatcherFrom(options.testFileFilters));
+    const { filesByProject, setupFiles, applyFilterToSetup } = await this._collectFiles(projects, options.testFileFilters);
 
     const allTestFiles = new Set<string>();
     for (const files of filesByProject.values())
@@ -298,7 +326,7 @@ export class Runner {
 
     // Filter tests to respect line/column filter.
     if (options.testFileFilters.length)
-      filterByFocusedLine(preprocessRoot, options.testFileFilters, setupFiles);
+      filterByFocusedLine(preprocessRoot, options.testFileFilters, applyFilterToSetup ? new Set() : setupFiles);
 
     // Complain about only.
     // TODO: check in project setup.
