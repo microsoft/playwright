@@ -81,7 +81,7 @@ it('should scroll into view display:contents with position', async ({ page, brow
 
 it('should not crash when force-clicking hidden input', async ({ page, browserName, channel, browserMajorVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18183' });
-  it.skip(browserName === 'chromium' && browserMajorVersion < 109 || channel.startsWith('msedge') && browserMajorVersion < 110);
+  it.skip(browserName === 'chromium' && browserMajorVersion < 109 || channel && channel.startsWith('msedge') && browserMajorVersion < 110);
 
   await page.setContent(`<input type=hidden>`);
   const error = await page.locator('input').click({ force: true, timeout: 2000 }).catch(e => e);
