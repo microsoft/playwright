@@ -87,7 +87,7 @@ test('very slow test', async ({ page }) => {
 
 API reference: [`method: Test.setTimeout`] and [`method: Test.slow#1`].
 
-### Change timeout from a slow hook
+### Change timeout from a `beforeEach` hook
 
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
