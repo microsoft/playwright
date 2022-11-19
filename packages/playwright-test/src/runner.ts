@@ -29,7 +29,7 @@ import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
 import { dockerPlugin } from './plugins/dockerPlugin';
 import { webServerPluginsForConfig } from './plugins/webServerPlugin';
-import { formatError, relativeFilePath } from './reporters/base';
+import { formatError } from './reporters/base';
 import DotReporter from './reporters/dot';
 import EmptyReporter from './reporters/empty';
 import GitHubReporter from './reporters/github';
@@ -957,30 +957,6 @@ function createForbidOnlyError(config: FullConfigInternal, onlyTestsAndSuites: (
     const title = testOrSuite.titlePath().slice(2).join(' ');
     errorMessage.push(` - ${buildItemLocation(config.rootDir, testOrSuite)} > ${title}`);
   }
-  errorMessage.push('=====================================');
-  return createStacklessError(errorMessage.join('\n'));
-}
-
-function createSetupAndTestOnlyError(config: FullConfigInternal, onlySetups: (TestCase | Suite)[], onlyTests: (TestCase | Suite)[]): TestError {
-  const errorMessage = [
-    '=====================================',
-    'Found both setup and test with .only()'
-  ];
-  const addLocations = (onlyTestsAndSuites: (TestCase | Suite)[]) => {
-    const maxLen = 5;
-    for (let i = 0; i < Math.min(maxLen, onlyTestsAndSuites.length); i++) {
-      const testOrSuite = onlyTestsAndSuites[i];
-      // Skip root and file.
-      const title = testOrSuite.titlePath().slice(2).join(' ');
-      errorMessage.push(` - ${buildItemLocation(config.rootDir, testOrSuite)} > ${title}`);
-    }
-    if (onlyTestsAndSuites.length > maxLen)
-      errorMessage.push(` and ${onlyTestsAndSuites.length - maxLen} more...`);
-  };
-  errorMessage.push('Setups:');
-  addLocations(onlySetups);
-  errorMessage.push('Tests:');
-  addLocations(onlyTests);
   errorMessage.push('=====================================');
   return createStacklessError(errorMessage.join('\n'));
 }
