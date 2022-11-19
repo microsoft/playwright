@@ -362,3 +362,35 @@ it('should detect overlay from another shadow root', async ({ page, server }) =>
   const error = await page.locator('#container1 >> text=click me').click({ timeout: 2000 }).catch(e => e);
   expect(error.message).toContain(`<div id="container2"></div> intercepts pointer events`);
 });
+
+it('should detect overlayed element in a transformed iframe', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      body, html, iframe { margin: 0; padding: 0; border: none; }
+      iframe {
+        border: 4px solid black;
+        background: gray;
+        margin-left: 33px;
+        margin-top: 24px;
+        width: 400px;
+        height: 400px;
+        transform: scale(1.2);
+      }
+    </style>
+    <iframe srcdoc="
+      <style>
+        body, html { margin: 0; padding: 0; }
+        div { margin-left: 10px; margin-top: 20px; width: 2px; height: 2px; }
+        section { position: absolute; top: 0; left: 0; bottom: 0; right: 0; }
+      </style>
+      <div>Target</div>
+      <section>Overlay</section>
+      <script>
+        document.querySelector('div').addEventListener('click', () => window.top._clicked = true);
+      </script>
+    "></iframe>
+  `);
+  const locator = page.frameLocator('iframe').locator('div');
+  const error = await locator.click({ timeout: 2000 }).catch(e => e);
+  expect(error.message).toContain('<section>Overlay</section> intercepts pointer events');
+});

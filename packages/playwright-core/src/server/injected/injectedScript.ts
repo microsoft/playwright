@@ -507,6 +507,18 @@ export class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
+  describeIFrameStyle(iframe: Element): 'error:notconnected' | 'transformed' | { borderLeft: number, borderTop: number } {
+    if (!iframe.ownerDocument || !iframe.ownerDocument.defaultView)
+      return 'error:notconnected';
+    const defaultView = iframe.ownerDocument.defaultView;
+    for (let e: Element | undefined = iframe; e; e = parentElementOrShadowHost(e)) {
+      if (defaultView.getComputedStyle(e).transform !== 'none')
+        return 'transformed';
+    }
+    const iframeStyle = defaultView.getComputedStyle(iframe);
+    return { borderLeft: parseInt(iframeStyle.borderLeftWidth || '', 10), borderTop: parseInt(iframeStyle.borderTopWidth || '', 10) };
+  }
+
   retarget(node: Node, behavior: 'none' | 'follow-label' | 'no-follow-label' | 'button-link'): Element | null {
     let element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
     if (!element)
@@ -901,16 +913,18 @@ export class InjectedScript {
   //     2k. (injected) Event interceptor is removed.
   //     2l. All navigations triggered between 2g-2k are awaited to be either committed or canceled.
   //     2m. If failed, wait for increasing amount of time before the next retry.
-  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse' | 'drag', hitPoint: { x: number, y: number }, blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' | string /* hitTargetDescription */ {
+  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse' | 'drag', hitPoint: { x: number, y: number } | undefined, blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' | string /* hitTargetDescription */ {
     const element = this.retarget(node, 'button-link');
     if (!element || !element.isConnected)
       return 'error:notconnected';
 
-    // First do a preliminary check, to reduce the possibility of some iframe
-    // intercepting the action.
-    const preliminaryResult = this.expectHitTarget(hitPoint, element);
-    if (preliminaryResult !== 'done')
-      return preliminaryResult.hitTargetDescription;
+    if (hitPoint) {
+      // First do a preliminary check, to reduce the possibility of some iframe
+      // intercepting the action.
+      const preliminaryResult = this.expectHitTarget(hitPoint, element);
+      if (preliminaryResult !== 'done')
+        return preliminaryResult.hitTargetDescription;
+    }
 
     // When dropping, the "element that is being dragged" often stays under the cursor,
     // so hit target check at the moment we receive mousedown does not work -
