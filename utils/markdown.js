@@ -62,12 +62,6 @@
  *    lines: string[],
  *  }} MarkdownPropsNode */
 
-/** @typedef {{
- *    value: string, groupId: string, spec: MarkdownNode
- * }} CodeGroup */
-
-/** @typedef {function(CodeGroup[]): MarkdownNode[]} CodeGroupTransformer */
-
 /** @typedef {MarkdownTextNode | MarkdownLiNode | MarkdownCodeNode | MarkdownNoteNode | MarkdownHeaderNode | MarkdownNullNode | MarkdownPropsNode } MarkdownNode */
 
 function flattenWrappedLines(content) {
@@ -310,10 +304,7 @@ function innerRenderMdNode(indent, node, lastNode, result, maxColumns) {
 
   if (node.type === 'code') {
     newLine();
-    if (process.env.API_JSON_MODE)
-      result.push(`${indent}\`\`\`${node.codeLang}`);
-    else
-      result.push(`${indent}\`\`\`${node.codeLang ? parseCodeLang(node.codeLang).highlighter : ''}`);
+    result.push(`${indent}\`\`\`${node.codeLang}`);
     for (const line of node.lines)
       result.push(indent + line);
     result.push(`${indent}\`\`\``);
@@ -473,86 +464,4 @@ function filterNodesForLanguage(nodes, language) {
   return result;
 }
 
-/**
- * @param {string} codeLang
- * @return {{ highlighter: string, language: string|undefined, codeGroup: string|undefined}}
- */
-function parseCodeLang(codeLang) {
-  if (codeLang === 'python async')
-    return { highlighter: 'py', codeGroup: 'python-async', language: 'python' };
-  if (codeLang === 'python sync')
-    return { highlighter: 'py', codeGroup: 'python-sync', language: 'python' };
-
-  const [highlighter] = codeLang.split(' ');
-  if (!highlighter)
-    throw new Error(`Cannot parse code block lang: "${codeLang}"`);
-
-  const languageMatch = codeLang.match(/ lang=([\w\d]+)/);
-  let language = languageMatch ? languageMatch[1] : undefined;
-  if (!language) {
-    if (highlighter === 'ts')
-      language = 'js';
-    else if (highlighter === 'py')
-      language = 'python';
-    else if (['js', 'python', 'csharp', 'java'].includes(highlighter))
-      language = highlighter;
-  }
-
-  const tabMatch = codeLang.match(/ tab=([\w\d-]+)/);
-  return { highlighter, language, codeGroup: tabMatch ? tabMatch[1] : '' };
-}
-
-/**
- * @param {MarkdownNode[]} spec
- * @param {string} language
- * @param {CodeGroupTransformer} transformer
- * @returns {MarkdownNode[]}
- */
-function processCodeGroups(spec, language, transformer) {
-  /** @type {MarkdownNode[]} */
-  const newSpec = [];
-  for (let i = 0; i < spec.length; ++i) {
-    /** @type {{value: string, groupId: string, spec: MarkdownNode}[]} */
-    const tabs = [];
-    for (;i < spec.length; i++) {
-      const codeLang = spec[i].codeLang;
-      if (!codeLang)
-        break;
-      let parsed;
-      try {
-        parsed = parseCodeLang(codeLang);
-      } catch (e) {
-        throw new Error(e.message + '\n while processing:\n' + render([spec[i]]));
-      }
-      if (!parsed.codeGroup)
-        break;
-      if (parsed.language && parsed.language !== language)
-        continue;
-      const [groupId, value] = parsed.codeGroup.split('-');
-      tabs.push({ groupId, value, spec: spec[i] });
-    }
-    if (tabs.length) {
-      if (tabs.length === 1)
-        throw new Error(`Lonely tab "${tabs[0].spec.codeLang}". Make sure there are at least two tabs in the group.\n` + render([tabs[0].spec]));
-
-      // Validate group consistency.
-      const groupId = tabs[0].groupId;
-      const values = new Set();
-      for (const tab of tabs) {
-        if (tab.groupId !== groupId)
-          throw new Error('Mixed group ids: ' + render(spec));
-        if (values.has(tab.value))
-          throw new Error(`Duplicated tab "${tab.value}"\n` + render(tabs.map(tab => tab.spec)));
-        values.add(tab.value);
-      }
-
-      // Append transformed nodes.
-      newSpec.push(...transformer(tabs));
-    }
-    if (i < spec.length)
-      newSpec.push(spec[i]);
-  }
-  return newSpec;
-}
-
-module.exports = { parse, render, clone, visitAll, visit, generateToc, filterNodesForLanguage, parseCodeLang, processCodeGroups };
+module.exports = { parse, render, clone, visitAll, visit, generateToc, filterNodesForLanguage };
