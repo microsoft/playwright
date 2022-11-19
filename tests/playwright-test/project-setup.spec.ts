@@ -488,7 +488,7 @@ test('should allow .only in both setup and test files', async ({ runGroups }, te
   };
 
   const { exitCode, output } =  await runGroups(files);
-  // expect(exitCode).toBe(1);
+  expect(exitCode).toBe(0);
   expect(output).toContain('[p1] › a.setup.ts:5:12 › setup1');
   expect(output).toContain('[p1] › a.test.ts:7:12 › test2');
 });
