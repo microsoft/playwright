@@ -23,6 +23,7 @@ const path = require('path');
 const { parseApi } = require('./api_parser');
 const missingDocs = require('./missingDocs');
 const md = require('../markdown');
+const docs = require('./documentation');
 
 /** @typedef {import('./documentation').Type} Type */
 /** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
@@ -189,7 +190,7 @@ async function run() {
           const data = fs.readFileSync(filePath, 'utf-8');
           let rootNode = md.filterNodesForLanguage(md.parse(data), lang);
           // Validates code snippet groups.
-          rootNode = md.processCodeGroups(rootNode, lang, tabs => tabs.map(tab => tab.spec));
+          rootNode = docs.processCodeGroups(rootNode, lang, tabs => tabs.map(tab => tab.spec));
           // Renders links.
           documentation.renderLinksInText(rootNode);
           // Validate links.

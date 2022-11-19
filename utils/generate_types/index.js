@@ -18,7 +18,7 @@
 const path = require('path');
 const toKebabCase = require('lodash/kebabCase')
 const devices = require('../../packages/playwright-core/lib/server/deviceDescriptors');
-const Documentation = require('../doclint/documentation');
+const docs = require('../doclint/documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const { parseOverrides } = require('./parseOverrides');
@@ -30,7 +30,7 @@ Error.stackTraceLimit = 50;
 class TypesGenerator {
   /**
    * @param {{
-   *   documentation: Documentation,
+   *   documentation: docs.Documentation,
    *   overridesToDocsClassMapping?: Map<string, string>,
    *   ignoreMissing?: Set<string>,
    *   doNotExportClassNames?: Set<string>,
@@ -39,7 +39,7 @@ class TypesGenerator {
    * }} options
    */
   constructor(options) {
-    /** @type {Array<{name: string, properties: Documentation.Member[]}>} */
+    /** @type {Array<{name: string, properties: docs.Member[]}>} */
     this.objectDefinitions = [];
     /** @type {Set<string>} */
     this.handledMethods = new Set();
@@ -77,6 +77,8 @@ class TypesGenerator {
         return `\`${option}\``;
       if (clazz)
         return `[${clazz.name}]`;
+      if (!member || !member.clazz)
+        throw new Error('Internal error');
       const className = member.clazz.varName === 'playwrightAssertions' ? '' : member.clazz.varName + '.';
       if (member.kind === 'method')
         return createMarkdownLink(member, `${className}${member.alias}(${this.renderJSSignature(member.argsArray)})`);
@@ -203,7 +205,7 @@ class TypesGenerator {
   }
 
   /**
-   * @param {Documentation.Class} classDesc
+   * @param {docs.Class} classDesc
    */
   classToString(classDesc) {
     const parts = [];
@@ -229,7 +231,7 @@ class TypesGenerator {
   }
 
   /**
-   * @param {Documentation.Class} classDesc
+   * @param {docs.Class} classDesc
    */
   hasUniqueEvents(classDesc) {
     if (!classDesc.events.size)
@@ -241,7 +243,7 @@ class TypesGenerator {
   }
 
   /**
-   * @param {Documentation.Class} classDesc
+   * @param {docs.Class} classDesc
    */
   createEventDescriptions(classDesc) {
     if (!this.hasUniqueEvents(classDesc))
@@ -263,7 +265,7 @@ class TypesGenerator {
   }
 
   /**
-   * @param {Documentation.Class} classDesc
+   * @param {docs.Class} classDesc
    * @param {boolean=} exportMembersAsGlobals
    */
   classBody(classDesc, exportMembersAsGlobals) {
@@ -319,8 +321,8 @@ class TypesGenerator {
   }
 
   /**
-   * @param {Documentation.Class} classDesc
-   * @param {Documentation.Member} member
+   * @param {docs.Class} classDesc
+   * @param {docs.Member} member
    */
   hasOwnMethod(classDesc, member) {
     if (this.handledMethods.has(`${classDesc.name}.${member.alias}#${member.overloadIndex}`))
@@ -333,7 +335,7 @@ class TypesGenerator {
   }
 
   /**
-   * @param {Documentation.Class} classDesc
+   * @param {docs.Class} classDesc
    */
   parentClass(classDesc) {
     if (!classDesc.extends)
@@ -378,7 +380,7 @@ class TypesGenerator {
   }
 
   /**
-   * @param {Documentation.Type} type
+   * @param {docs.Type} type
    */
   stringifyComplexType(type, indent, ...namespace) {
     if (!type)
@@ -387,7 +389,7 @@ class TypesGenerator {
   }
 
   /**
-   * @param {Documentation.Member[]} properties
+   * @param {docs.Member[]} properties
    * @param {string} name
    * @param {string=} indent
    * @returns {string}
@@ -406,7 +408,7 @@ class TypesGenerator {
   }
 
   /**
-   * @param {Documentation.Type=} type
+   * @param {docs.Type=} type
    * @returns{string}
    */
   stringifySimpleType(type, indent = '', ...namespace) {
@@ -455,7 +457,7 @@ class TypesGenerator {
   }
 
   /**
-   * @param {Documentation.Member} member
+   * @param {docs.Member} member
    */
   argsFromMember(member, indent, ...namespace) {
     if (member.kind === 'property')
@@ -464,7 +466,7 @@ class TypesGenerator {
   }
 
   /**
-   * @param {Documentation.Member} member
+   * @param {docs.Member} member
    * @param {string} indent
    */
   memberJSDOC(member, indent) {
@@ -480,7 +482,7 @@ class TypesGenerator {
   }
 
   /**
-   * @param {Documentation.Member[]} args
+   * @param {docs.Member[]} args
    */
   renderJSSignature(args) {
     const tokens = [];
