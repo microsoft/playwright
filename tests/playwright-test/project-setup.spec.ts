@@ -591,6 +591,49 @@ test('should support filters matching both setup and test', async ({ runGroups }
   expect(output).toContain('[p1] › a.test.ts:8:7 › test3');
 });
 
+test('should run setup for a project if tests match only in another project', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            testMatch: /.*a.test.ts/,
+            setup: /.*a.setup.ts/,
+          },
+          {
+            name: 'p2',
+            testMatch: /.*b.test.ts/,
+            setup: /.*b.setup.ts/,
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+    `,
+    'a.setup.ts': `
+      const { test } = pwt;
+      test('setup1', async () => { });
+    `,
+    'b.setup.ts': `
+      const { test } = pwt;
+      test('setup1', async () => { });
+    `,
+    'b.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+    `,
+  };
+
+  const { exitCode, output } =  await runGroups(files, undefined, undefined, { additionalArgs: ['.*a.test.ts$'] });
+  expect(exitCode).toBe(0);
+  expect(output).toContain('Running 3 tests using 2 workers');
+  expect(output).toContain('[p1] › a.setup.ts:5:7 › setup1');
+  expect(output).toContain('[p1] › a.test.ts:6:7 › test1');
+  expect(output).toContain('[p2] › b.setup.ts:5:7 › setup1');
+});
+
 test('should run all setup files if only tests match filter', async ({ runGroups }, testInfo) => {
   const files = {
     'playwright.config.ts': `
