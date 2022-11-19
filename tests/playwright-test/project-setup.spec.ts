@@ -461,7 +461,7 @@ test('should allow .only in setup files', async ({ runGroups }, testInfo) => {
   expect(passed).toBe(2);
 });
 
-test('should not allow .only in both setup and test files', async ({ runGroups }, testInfo) => {
+test('should allow .only in both setup and test files', async ({ runGroups }, testInfo) => {
   const files = {
     'playwright.config.ts': `
       module.exports = {
@@ -488,14 +488,9 @@ test('should not allow .only in both setup and test files', async ({ runGroups }
   };
 
   const { exitCode, output } =  await runGroups(files);
-  expect(exitCode).toBe(1);
-  expect(output).toContain(`=====================================
-Found both setup and test with .only()
-Setups:
- - a.setup.ts:5 > setup1
-Tests:
- - a.test.ts:7 > test2
-=====================================`);
+  // expect(exitCode).toBe(1);
+  expect(output).toContain('[p1] › a.setup.ts:5:12 › setup1');
+  expect(output).toContain('[p1] › a.test.ts:7:12 › test2');
 });
 
 test('should allow filtering setup by file:line', async ({ runGroups }, testInfo) => {
@@ -554,7 +549,7 @@ test('should allow filtering setup by file:line', async ({ runGroups }, testInfo
   }
 });
 
-test('should prohibit filters matching both setup and test', async ({ runGroups }, testInfo) => {
+test('should support filters matching both setup and test', async ({ runGroups }, testInfo) => {
   const files = {
     'playwright.config.ts': `
       module.exports = {
@@ -576,11 +571,24 @@ test('should prohibit filters matching both setup and test', async ({ runGroups 
       test('setup1', async () => { });
       test('setup2', async () => { });
     `,
+    'b.setup.ts': `
+      const { test } = pwt;
+      test('setup1', async () => { });
+    `,
+    'b.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+    `,
   };
 
-  const { exitCode, output } =  await runGroups(files, undefined, undefined, { additionalArgs: ['.*ts$'] });
-  expect(output).toContain('Error: Both setup and test files match command line filter.');
-  expect(exitCode).toBe(1);
+  const { exitCode, output } =  await runGroups(files, undefined, undefined, { additionalArgs: ['.*a.(setup|test).ts$'] });
+  expect(exitCode).toBe(0);
+  expect(output).toContain('Running 5 tests using 1 worker');
+  expect(output).toContain('[p1] › a.setup.ts:5:7 › setup1');
+  expect(output).toContain('[p1] › a.setup.ts:6:7 › setup2');
+  expect(output).toContain('[p1] › a.test.ts:6:7 › test1');
+  expect(output).toContain('[p1] › a.test.ts:7:7 › test2');
+  expect(output).toContain('[p1] › a.test.ts:8:7 › test3');
 });
 
 test('should run all setup files if only tests match filter', async ({ runGroups }, testInfo) => {
@@ -619,3 +627,43 @@ test('should run all setup files if only tests match filter', async ({ runGroups
   expect(output).toContain('[p1] › b.setup.ts:5:7 › setup1');
   expect(output).toContain('[p1] › a.test.ts:7:7 › test2');
 });
+
+test('should run all setup files if only tests match grep filter', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*.setup.ts/,
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+      test('test3', async () => { });
+    `,
+    'a.setup.ts': `
+      const { test } = pwt;
+      test('setup1', async () => { });
+      test('setup2', async () => { });
+    `,
+    'b.setup.ts': `
+      const { test } = pwt;
+      test('setup1', async () => { });
+    `,
+  };
+
+  const { exitCode, output } =  await runGroups(files, undefined, undefined, { additionalArgs: ['--grep', '.*test2$'] });
+  expect(exitCode).toBe(0);
+  expect(output).toContain('Running 4 tests using 2 workers');
+  expect(output).toContain('[p1] › a.setup.ts:5:7 › setup1');
+  expect(output).toContain('[p1] › a.setup.ts:6:7 › setup2');
+  expect(output).toContain('[p1] › b.setup.ts:5:7 › setup1');
+  expect(output).toContain('[p1] › a.test.ts:7:7 › test2');
+});
+
+
+// TODO: test that grep applies to both setup and tests

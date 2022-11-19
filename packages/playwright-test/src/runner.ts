@@ -272,12 +272,12 @@ export class Runner {
       filesByProject.set(project, testFiles);
     }
 
-    // If the filter didn't match any tests, apply it to the setup files.
-    const applyFilterToSetup = setupFiles.size === fileToProjectName.size;
+    // If none of the setup files matched the filter, we inlude all of them, otherwise
+    // only those that match the filter.
+    const applyFilterToSetup = !!commandLineFileFilters.length && [...setupFiles].some(commandLineFileMatcher);
     if (applyFilterToSetup) {
-      // We now have only setup files in filesByProject, because all test files were filtered out.
-      for (const [project, setupFiles] of filesByProject) {
-        const filteredFiles = setupFiles.filter(commandLineFileMatcher);
+      for (const [project, files] of filesByProject) {
+        const filteredFiles = files.filter(commandLineFileMatcher);
         if (filteredFiles.length)
           filesByProject.set(project, filteredFiles);
         else
@@ -286,15 +286,6 @@ export class Runner {
       for (const file of setupFiles) {
         if (!commandLineFileMatcher(file))
           setupFiles.delete(file);
-      }
-    } else if (commandLineFileFilters.length) {
-      const setupFile = [...setupFiles].find(commandLineFileMatcher);
-      // If the filter is not empty and it matches both setup and tests then it's an error: we allow
-      // to run either subset of tests with full setup or partial setup without any tests.
-      if (setupFile) {
-        const testFile = Array.from(fileToProjectName.keys()).find(f => !setupFiles.has(f));
-        const config = this._loader.fullConfig();
-        throw new Error(`Both setup and test files match command line filter.\n  Setup file: ${relativeFilePath(config, setupFile)}\n  Test file: ${relativeFilePath(config, testFile!)}`);
       }
     }
 
@@ -329,7 +320,6 @@ export class Runner {
       filterByFocusedLine(preprocessRoot, options.testFileFilters, applyFilterToSetup ? new Set() : setupFiles);
 
     // Complain about only.
-    // TODO: check in project setup.
     if (config.forbidOnly) {
       const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
       if (onlyTestsAndSuites.length > 0)
@@ -337,15 +327,8 @@ export class Runner {
     }
 
     // Filter only.
-    if (!options.listOnly) {
-      const hasOnly = filterOnly(preprocessRoot);
-      if (hasOnly) {
-        const setup = preprocessRoot.allTests().filter(testCase => setupFiles.has(testCase._requireFile));
-        const test = preprocessRoot.allTests().filter(testCase => !setupFiles.has(testCase._requireFile));
-        if (setup.length && test.length)
-          fatalErrors.push(createSetupAndTestOnlyError(config, setup, test));
-      }
-    }
+    if (!options.listOnly)
+      filterOnly(preprocessRoot);
 
     // Generate projects.
     const fileSuites = new Map<string, Suite>();
@@ -356,6 +339,13 @@ export class Runner {
     for (const [project, files] of filesByProject) {
       const grepMatcher = createTitleMatcher(project.grep);
       const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
+
+      const titleMatcher = (test: TestCase) => {
+        const grepTitle = test.titlePath().join(' ');
+        if (grepInvertMatcher?.(grepTitle))
+          return false;
+        return grepMatcher(grepTitle) && options.testTitleMatcher(grepTitle);
+      };
 
       const projectSuite = new Suite(project.name, 'project');
       projectSuite._projectConfig = project;
@@ -368,13 +358,33 @@ export class Runner {
           continue;
         for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
           const builtSuite = this._loader.buildFileSuiteForProject(project, fileSuite, repeatEachIndex, test => {
-            const grepTitle = test.titlePath().join(' ');
-            if (grepInvertMatcher?.(grepTitle))
-              return false;
-            return grepMatcher(grepTitle) && options.testTitleMatcher(grepTitle);
+            if (setupFiles.has(test._requireFile))
+              return true;
+            return titleMatcher(test);
           });
           if (builtSuite)
             projectSuite._addSuite(builtSuite);
+        }
+      }
+
+      // At this point projectSuite contains all setup tests (unfiltered) and all regular
+      // tests matching the filter.
+      if (projectSuite.allTests().some(test => !setupFiles.has(test._requireFile))) {
+        // If >0 tests match and
+        // - none of the setup files match the filter then we run all setup files,
+        // - if the filter also matches some of the setup tests, we'll run only
+        //   that maching subset of setup tests.
+        const filterMatchesSetup = projectSuite.allTests().some(test => {
+          if (!setupFiles.has(test._requireFile))
+            return false;
+          return titleMatcher(test);
+        });
+        if (filterMatchesSetup) {
+          filterSuiteWithOnlySemantics(projectSuite, () => false, test => {
+            if (!setupFiles.has(test._requireFile))
+              return true;
+            return titleMatcher(test);
+          });
         }
       }
     }
