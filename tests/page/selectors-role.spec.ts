@@ -169,26 +169,42 @@ test('should support pressed', async ({ page }) => {
 
 test('should support expanded', async ({ page }) => {
   await page.setContent(`
-    <button>Hi</button>
-    <button aria-expanded="true">Hello</button>
-    <button aria-expanded="false">Bye</button>
+    <div role="treeitem">Hi</div>
+    <div role="treeitem" aria-expanded="true">Hello</div>
+    <div role="treeitem" aria-expanded="false">Bye</div>
   `);
-  expect(await page.locator(`role=button[expanded]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<button aria-expanded="true">Hello</button>`,
+
+  expect(await page.locator('role=treeitem').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="treeitem">Hi</div>`,
+    `<div role="treeitem" aria-expanded="true">Hello</div>`,
+    `<div role="treeitem" aria-expanded="false">Bye</div>`,
   ]);
-  expect(await page.locator(`role=button[expanded=true]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<button aria-expanded="true">Hello</button>`,
+  expect(await page.getByRole('treeitem').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="treeitem">Hi</div>`,
+    `<div role="treeitem" aria-expanded="true">Hello</div>`,
+    `<div role="treeitem" aria-expanded="false">Bye</div>`,
   ]);
-  expect(await page.getByRole('button', { expanded: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<button aria-expanded="true">Hello</button>`,
+
+  expect(await page.locator(`role=treeitem[expanded]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="treeitem" aria-expanded="true">Hello</div>`,
   ]);
-  expect(await page.locator(`role=button[expanded=false]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<button>Hi</button>`,
-    `<button aria-expanded="false">Bye</button>`,
+  expect(await page.locator(`role=treeitem[expanded=true]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="treeitem" aria-expanded="true">Hello</div>`,
   ]);
-  expect(await page.getByRole('button', { expanded: false }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<button>Hi</button>`,
-    `<button aria-expanded="false">Bye</button>`,
+  expect(await page.getByRole('treeitem', { expanded: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="treeitem" aria-expanded="true">Hello</div>`,
+  ]);
+
+  expect(await page.locator(`role=treeitem[expanded=false]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="treeitem" aria-expanded="false">Bye</div>`,
+  ]);
+  expect(await page.getByRole('treeitem', { expanded: false }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="treeitem" aria-expanded="false">Bye</div>`,
+  ]);
+
+  // Workaround for expanded="none".
+  expect(await page.locator(`[role=treeitem]:not([aria-expanded])`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="treeitem">Hi</div>`,
   ]);
 });
 
@@ -403,4 +419,7 @@ test('errors', async ({ page }) => {
 
   const e7 = await page.$('role=button[name]').catch(e => e);
   expect(e7.message).toContain(`"name" attribute must have a value`);
+
+  const e8 = await page.$('role=treeitem[expanded="none"]').catch(e => e);
+  expect(e8.message).toContain(`"expanded" must be one of true, false`);
 });
