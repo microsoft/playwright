@@ -46,7 +46,6 @@ def test_navigates_to_login_page(page: Page) -> None:
     expect(response).to_be_ok()
 ```
 
-
 ## property: APIResponseAssertions.not
 * since: v1.20
 * langs: java, js, csharp

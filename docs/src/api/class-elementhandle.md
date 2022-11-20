@@ -504,8 +504,10 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ### option: ElementHandle.fill.force = %%-input-force-%%
 * since: v1.13
+
 ### option: ElementHandle.fill.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
 ### option: ElementHandle.fill.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -785,10 +787,13 @@ await handle.SelectOptionAsync(new[] {
 
 ### param: ElementHandle.selectOption.values = %%-select-options-values-%%
 * since: v1.8
+
 ### option: ElementHandle.selectOption.force = %%-input-force-%%
 * since: v1.13
+
 ### option: ElementHandle.selectOption.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
 ### option: ElementHandle.selectOption.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -802,6 +807,7 @@ If the element is inside the `<label>` element that has an associated [control](
 
 ### option: ElementHandle.selectText.force = %%-input-force-%%
 * since: v1.13
+
 ### option: ElementHandle.selectText.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -823,14 +829,19 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### param: ElementHandle.setChecked.checked = %%-input-checked-%%
 * since: v1.15
+
 ### option: ElementHandle.setChecked.force = %%-input-force-%%
 * since: v1.15
+
 ### option: ElementHandle.setChecked.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.15
+
 ### option: ElementHandle.setChecked.position = %%-input-position-%%
 * since: v1.15
+
 ### option: ElementHandle.setChecked.timeout = %%-input-timeout-%%
 * since: v1.15
+
 ### option: ElementHandle.setChecked.trial = %%-input-trial-%%
 * since: v1.15
 
@@ -842,7 +853,6 @@ are resolved relative to the current working directory. For empty array, clears 
 
 This method expects [ElementHandle] to point to an
 [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
-
 
 ### param: ElementHandle.setInputFiles.files = %%-input-files-%%
 * since: v1.8

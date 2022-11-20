@@ -726,14 +726,19 @@ Shortcut for main frame's [`method: Frame.check`].
 
 ### option: Page.check.force = %%-input-force-%%
 * since: v1.8
+
 ### option: Page.check.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
 ### option: Page.check.position = %%-input-position-%%
 * since: v1.11
+
 ### option: Page.check.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.check.timeout = %%-input-timeout-%%
 * since: v1.8
+
 ### option: Page.check.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -759,22 +764,31 @@ Shortcut for main frame's [`method: Frame.click`].
 
 ### option: Page.click.button = %%-input-button-%%
 * since: v1.8
+
 ### option: Page.click.clickCount = %%-input-click-count-%%
 * since: v1.8
+
 ### option: Page.click.delay = %%-input-down-up-delay-%%
 * since: v1.8
+
 ### option: Page.click.force = %%-input-force-%%
 * since: v1.8
+
 ### option: Page.click.modifiers = %%-input-modifiers-%%
 * since: v1.8
+
 ### option: Page.click.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
 ### option: Page.click.position = %%-input-position-%%
 * since: v1.8
+
 ### option: Page.click.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.click.timeout = %%-input-timeout-%%
 * since: v1.8
+
 ### option: Page.click.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -850,20 +864,28 @@ Shortcut for main frame's [`method: Frame.dblclick`].
 
 ### option: Page.dblclick.button = %%-input-button-%%
 * since: v1.8
+
 ### option: Page.dblclick.force = %%-input-force-%%
 * since: v1.8
+
 ### option: Page.dblclick.delay = %%-input-down-up-delay-%%
 * since: v1.8
+
 ### option: Page.dblclick.modifiers = %%-input-modifiers-%%
 * since: v1.8
+
 ### option: Page.dblclick.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
 ### option: Page.dblclick.position = %%-input-position-%%
 * since: v1.8
+
 ### option: Page.dblclick.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.dblclick.timeout = %%-input-timeout-%%
 * since: v1.8
+
 ### option: Page.dblclick.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -958,6 +980,7 @@ Optional event-specific initialization properties.
 
 ### option: Page.dispatchEvent.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.dispatchEvent.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -1018,17 +1041,22 @@ await Page.DragAndDropAsync("#source", "#target", new()
 
 ### param: Page.dragAndDrop.source = %%-input-source-%%
 * since: v1.13
+
 ### param: Page.dragAndDrop.target = %%-input-target-%%
 * since: v1.13
 
 ### option: Page.dragAndDrop.force = %%-input-force-%%
 * since: v1.13
+
 ### option: Page.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.13
+
 ### option: Page.dragAndDrop.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.dragAndDrop.timeout = %%-input-timeout-%%
 * since: v1.13
+
 ### option: Page.dragAndDrop.trial = %%-input-trial-%%
 * since: v1.13
 
@@ -1302,8 +1330,10 @@ Shortcut for main frame's [`method: Frame.evalOnSelector`].
 
 ### param: Page.evalOnSelector.selector = %%-query-selector-%%
 * since: v1.9
+
 ### param: Page.evalOnSelector.expression = %%-evaluate-expression-%%
 * since: v1.9
+
 ### param: Page.evalOnSelector.arg
 * since: v1.9
 - `arg` ?<[EvaluationArgument]>
@@ -1354,8 +1384,10 @@ var divsCount = await page.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => d
 
 ### param: Page.evalOnSelectorAll.selector = %%-query-selector-%%
 * since: v1.9
+
 ### param: Page.evalOnSelectorAll.expression = %%-evaluate-expression-%%
 * since: v1.9
+
 ### param: Page.evalOnSelectorAll.arg
 * since: v1.9
 - `arg` ?<[EvaluationArgument]>
@@ -2026,10 +2058,13 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ### option: Page.fill.force = %%-input-force-%%
 * since: v1.13
+
 ### option: Page.fill.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
 ### option: Page.fill.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.fill.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -2046,6 +2081,7 @@ Shortcut for main frame's [`method: Frame.focus`].
 
 ### option: Page.focus.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.focus.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -2118,7 +2154,6 @@ Returns frame with matching URL.
 
 A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object.
 
-
 ## method: Page.frameLocator
 * since: v1.17
 - returns: <[FrameLocator]>
@@ -2155,7 +2190,6 @@ await locator.ClickAsync();
 ### param: Page.frameLocator.selector = %%-find-selector-%%
 * since: v1.17
 
-
 ## method: Page.frames
 * since: v1.8
 - returns: <[Array]<[Frame]>>
@@ -2179,9 +2213,9 @@ Attribute name to get the value for.
 
 ### option: Page.getAttribute.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.getAttribute.timeout = %%-input-timeout-%%
 * since: v1.8
-
 
 ## method: Page.getByAltText
 * since: v1.27
@@ -2190,8 +2224,8 @@ Attribute name to get the value for.
 %%-template-locator-get-by-alt-text-%%
 
 ### param: Page.getByAltText.text = %%-locator-get-by-text-text-%%
-### option: Page.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
+### option: Page.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
 ## method: Page.getByLabel
 * since: v1.27
@@ -2200,8 +2234,8 @@ Attribute name to get the value for.
 %%-template-locator-get-by-label-text-%%
 
 ### param: Page.getByLabel.text = %%-locator-get-by-text-text-%%
-### option: Page.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
+### option: Page.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
 ## method: Page.getByPlaceholder
 * since: v1.27
@@ -2210,8 +2244,8 @@ Attribute name to get the value for.
 %%-template-locator-get-by-placeholder-text-%%
 
 ### param: Page.getByPlaceholder.text = %%-locator-get-by-text-text-%%
-### option: Page.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
 
+### option: Page.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
 
 ## method: Page.getByRole
 * since: v1.27
@@ -2220,10 +2254,11 @@ Attribute name to get the value for.
 %%-template-locator-get-by-role-%%
 
 ### param: Page.getByRole.role = %%-locator-get-by-role-role-%%
+
 ### option: Page.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
 * since: v1.27
-### option: Page.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
+### option: Page.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
 ## method: Page.getByTestId
 * since: v1.27
@@ -2234,7 +2269,6 @@ Attribute name to get the value for.
 ### param: Page.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
 * since: v1.27
 
-
 ## method: Page.getByText
 * since: v1.27
 - returns: <[Locator]>
@@ -2242,8 +2276,8 @@ Attribute name to get the value for.
 %%-template-locator-get-by-text-%%
 
 ### param: Page.getByText.text = %%-locator-get-by-text-text-%%
-### option: Page.getByText.exact = %%-locator-get-by-text-exact-%%
 
+### option: Page.getByText.exact = %%-locator-get-by-text-exact-%%
 
 ## method: Page.getByTitle
 * since: v1.27
@@ -2252,8 +2286,8 @@ Attribute name to get the value for.
 %%-template-locator-get-by-title-%%
 
 ### param: Page.getByTitle.text = %%-locator-get-by-text-text-%%
-### option: Page.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
+### option: Page.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
 ## async method: Page.goBack
 * since: v1.8
@@ -2360,16 +2394,22 @@ Shortcut for main frame's [`method: Frame.hover`].
 
 ### option: Page.hover.force = %%-input-force-%%
 * since: v1.8
+
 ### option: Page.hover.modifiers = %%-input-modifiers-%%
 * since: v1.8
+
 ### option: Page.hover.position = %%-input-position-%%
 * since: v1.8
+
 ### option: Page.hover.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.hover.timeout = %%-input-timeout-%%
 * since: v1.8
+
 ### option: Page.hover.trial = %%-input-trial-%%
 * since: v1.11
+
 ### option: Page.hover.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.28
 
@@ -2384,6 +2424,7 @@ Returns `element.innerHTML`.
 
 ### option: Page.innerHTML.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.innerHTML.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -2398,6 +2439,7 @@ Returns `element.innerText`.
 
 ### option: Page.innerText.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.innerText.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -2414,6 +2456,7 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 
 ### option: Page.inputValue.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.inputValue.timeout = %%-input-timeout-%%
 * since: v1.13
 
@@ -2426,9 +2469,9 @@ Returns whether the element is checked. Throws if the element is not a checkbox 
 ### param: Page.isChecked.selector = %%-input-selector-%%
 * since: v1.8
 
-
 ### option: Page.isChecked.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.isChecked.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -2449,6 +2492,7 @@ Returns whether the element is disabled, the opposite of [enabled](../actionabil
 
 ### option: Page.isDisabled.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.isDisabled.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -2463,6 +2507,7 @@ Returns whether the element is [editable](../actionability.md#editable).
 
 ### option: Page.isEditable.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.isEditable.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -2477,6 +2522,7 @@ Returns whether the element is [enabled](../actionability.md#enabled).
 
 ### option: Page.isEnabled.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.isEnabled.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -2491,6 +2537,7 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 
 ### option: Page.isHidden.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.isHidden.timeout
 * since: v1.8
 - `timeout` <[float]>
@@ -2508,6 +2555,7 @@ Returns whether the element is [visible](../actionability.md#visible). [`option:
 
 ### option: Page.isVisible.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.isVisible.timeout
 * since: v1.8
 - `timeout` <[float]>
@@ -2526,6 +2574,7 @@ Returns whether the element is [visible](../actionability.md#visible). [`option:
 
 ### param: Page.locator.selector = %%-find-selector-%%
 * since: v1.14
+
 ### option: Page.locator.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.14
 
@@ -2857,8 +2906,10 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ### option: Page.press.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
 ### option: Page.press.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.press.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -3077,6 +3128,7 @@ Enabling routing disables http cache.
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+
 ### param: Page.route.handler
 * since: v1.8
 * langs: js, python
@@ -3113,7 +3165,6 @@ Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerec
 ### option: Page.routeFromHAR.notFound
 * since: v1.23
 - `notFound` ?<[HarNotFound]<"abort"|"fallback">>
-
 * If set to 'abort' any request not found in the HAR file will be aborted.
 * If set to 'fallback' missing requests will be sent to the network.
 
@@ -3210,14 +3261,19 @@ Shortcut for main frame's [`method: Frame.selectOption`].
 
 ### param: Page.selectOption.selector = %%-input-selector-%%
 * since: v1.8
+
 ### param: Page.selectOption.values = %%-select-options-values-%%
 * since: v1.8
+
 ### option: Page.selectOption.force = %%-input-force-%%
 * since: v1.13
+
 ### option: Page.selectOption.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
 ### option: Page.selectOption.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.selectOption.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -3243,18 +3299,25 @@ Shortcut for main frame's [`method: Frame.setChecked`].
 
 ### param: Page.setChecked.selector = %%-input-selector-%%
 * since: v1.15
+
 ### param: Page.setChecked.checked = %%-input-checked-%%
 * since: v1.15
+
 ### option: Page.setChecked.force = %%-input-force-%%
 * since: v1.15
+
 ### option: Page.setChecked.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.15
+
 ### option: Page.setChecked.position = %%-input-position-%%
 * since: v1.15
+
 ### option: Page.setChecked.strict = %%-input-strict-%%
 * since: v1.15
+
 ### option: Page.setChecked.timeout = %%-input-timeout-%%
 * since: v1.15
+
 ### option: Page.setChecked.trial = %%-input-trial-%%
 * since: v1.15
 
@@ -3343,8 +3406,10 @@ This method expects [`param: selector`] to point to an
 
 ### option: Page.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
 ### option: Page.setInputFiles.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.setInputFiles.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -3433,16 +3498,22 @@ Shortcut for main frame's [`method: Frame.tap`].
 
 ### option: Page.tap.force = %%-input-force-%%
 * since: v1.8
+
 ### option: Page.tap.modifiers = %%-input-modifiers-%%
 * since: v1.8
+
 ### option: Page.tap.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
 ### option: Page.tap.position = %%-input-position-%%
 * since: v1.8
+
 ### option: Page.tap.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.tap.timeout = %%-input-timeout-%%
 * since: v1.8
+
 ### option: Page.tap.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -3457,6 +3528,7 @@ Returns `element.textContent`.
 
 ### option: Page.textContent.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.textContent.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -3524,8 +3596,10 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ### option: Page.type.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
 ### option: Page.type.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.type.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -3554,14 +3628,19 @@ Shortcut for main frame's [`method: Frame.uncheck`].
 
 ### option: Page.uncheck.force = %%-input-force-%%
 * since: v1.8
+
 ### option: Page.uncheck.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
+
 ### option: Page.uncheck.position = %%-input-position-%%
 * since: v1.11
+
 ### option: Page.uncheck.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.uncheck.timeout = %%-input-timeout-%%
 * since: v1.8
+
 ### option: Page.uncheck.trial = %%-input-trial-%%
 * since: v1.11
 
@@ -4140,7 +4219,6 @@ Request URL string, regex or predicate receiving [Request] object.
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: Page.setDefaultTimeout`] method.
 
-
 ## async method: Page.waitForRequestFinished
 * since: v1.12
 * langs: java, python, csharp
@@ -4160,7 +4238,6 @@ Receives the [Request] object and resolves to truthy value when the waiting shou
 
 ### option: Page.waitForRequestFinished.timeout = %%-wait-for-event-timeout-%%
 * since: v1.12
-
 
 ## async method: Page.waitForResponse
 * since: v1.8
@@ -4392,8 +4469,10 @@ class FrameExamples
 
 ### option: Page.waitForSelector.state = %%-wait-for-selector-state-%%
 * since: v1.8
+
 ### option: Page.waitForSelector.strict = %%-input-strict-%%
 * since: v1.14
+
 ### option: Page.waitForSelector.timeout = %%-input-timeout-%%
 * since: v1.8
 
@@ -4472,8 +4551,10 @@ Shortcut for main frame's [`method: Frame.waitForURL`].
 
 ### param: Page.waitForURL.url = %%-wait-for-navigation-url-%%
 * since: v1.11
+
 ### option: Page.waitForURL.timeout = %%-navigation-timeout-%%
 * since: v1.11
+
 ### option: Page.waitForURL.waitUntil = %%-navigation-wait-until-%%
 * since: v1.11
 
@@ -4544,7 +4625,9 @@ Will throw an error if the page is closed before the `event` is fired.
 
 ### param: Page.waitForEvent2.event = %%-wait-for-event-event-%%
 * since: v1.8
+
 ### option: Page.waitForEvent2.predicate = %%-wait-for-event-predicate-%%
 * since: v1.8
+
 ### option: Page.waitForEvent2.timeout = %%-wait-for-event-timeout-%%
 * since: v1.8

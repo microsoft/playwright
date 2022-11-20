@@ -94,12 +94,16 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Locator.check.position = %%-input-position-%%
 * since: v1.14
+
 ### option: Locator.check.force = %%-input-force-%%
 * since: v1.14
+
 ### option: Locator.check.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
+
 ### option: Locator.check.timeout = %%-input-timeout-%%
 * since: v1.14
+
 ### option: Locator.check.trial = %%-input-trial-%%
 * since: v1.14
 
@@ -112,8 +116,10 @@ If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` e
 
 ### option: Locator.clear.force = %%-input-force-%%
 * since: v1.28
+
 ### option: Locator.clear.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.28
+
 ### option: Locator.clear.timeout = %%-input-timeout-%%
 * since: v1.28
 
@@ -133,20 +139,28 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Locator.click.button = %%-input-button-%%
 * since: v1.14
+
 ### option: Locator.click.clickCount = %%-input-click-count-%%
 * since: v1.14
+
 ### option: Locator.click.delay = %%-input-down-up-delay-%%
 * since: v1.14
+
 ### option: Locator.click.position = %%-input-position-%%
 * since: v1.14
+
 ### option: Locator.click.modifiers = %%-input-modifiers-%%
 * since: v1.14
+
 ### option: Locator.click.force = %%-input-force-%%
 * since: v1.14
+
 ### option: Locator.click.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
+
 ### option: Locator.click.timeout = %%-input-timeout-%%
 * since: v1.14
+
 ### option: Locator.click.trial = %%-input-trial-%%
 * since: v1.14
 
@@ -179,18 +193,25 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Locator.dblclick.button = %%-input-button-%%
 * since: v1.14
+
 ### option: Locator.dblclick.delay = %%-input-down-up-delay-%%
 * since: v1.14
+
 ### option: Locator.dblclick.position = %%-input-position-%%
 * since: v1.14
+
 ### option: Locator.dblclick.modifiers = %%-input-modifiers-%%
 * since: v1.14
+
 ### option: Locator.dblclick.force = %%-input-force-%%
 * since: v1.14
+
 ### option: Locator.dblclick.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
+
 ### option: Locator.dblclick.timeout = %%-input-timeout-%%
 * since: v1.14
+
 ### option: Locator.dblclick.trial = %%-input-trial-%%
 * since: v1.14
 
@@ -362,14 +383,19 @@ Locator of the element to drag to.
 
 ### option: Locator.dragTo.force = %%-input-force-%%
 * since: v1.18
+
 ### option: Locator.dragTo.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.18
+
 ### option: Locator.dragTo.timeout = %%-input-timeout-%%
 * since: v1.18
+
 ### option: Locator.dragTo.trial = %%-input-trial-%%
 * since: v1.18
+
 ### option: Locator.dragTo.sourcePosition = %%-input-source-position-%%
 * since: v1.18
+
 ### option: Locator.dragTo.targetPosition = %%-input-target-position-%%
 * since: v1.18
 
@@ -484,7 +510,6 @@ var divsCount = await elements.EvaluateAll<bool>("(divs, min) => divs.length >= 
 
 Optional argument to pass to [`param: expression`].
 
-
 ## async method: Locator.evaluateHandle
 * since: v1.14
 - returns: <[JSHandle]>
@@ -529,8 +554,10 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ### option: Locator.fill.force = %%-input-force-%%
 * since: v1.14
+
 ### option: Locator.fill.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
+
 ### option: Locator.fill.timeout = %%-input-timeout-%%
 * since: v1.14
 
@@ -549,6 +576,7 @@ await rowLocator
     .filter({ has: page.getByRole('button', { name: 'column 2 button' }) })
     .screenshot();
 ```
+
 ```java
 Locator rowLocator = page.locator("tr");
 // ...
@@ -559,6 +587,7 @@ rowLocator
     ))
     .screenshot();
 ```
+
 ```python async
 row_locator = page.locator("tr")
 # ...
@@ -567,6 +596,7 @@ await row_locator
     .filter(has=page.get_by_role("button", name="column 2 button"))
     .screenshot()
 ```
+
 ```python sync
 row_locator = page.locator("tr")
 # ...
@@ -575,6 +605,7 @@ row_locator
     .filter(has=page.get_by_role("button", name="column 2 button"))
     .screenshot()
 ```
+
 ```csharp
 var rowLocator = page.Locator("tr");
 // ...
@@ -602,7 +633,6 @@ Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus
 
 ### option: Locator.focus.timeout = %%-input-timeout-%%
 * since: v1.14
-
 
 ## method: Locator.frameLocator
 * since: v1.17
@@ -639,7 +669,6 @@ await locator.ClickAsync();
 ### param: Locator.frameLocator.selector = %%-find-selector-%%
 * since: v1.17
 
-
 ## async method: Locator.getAttribute
 * since: v1.14
 - returns: <[null]|[string]>
@@ -655,7 +684,6 @@ Attribute name to get the value for.
 ### option: Locator.getAttribute.timeout = %%-input-timeout-%%
 * since: v1.14
 
-
 ## method: Locator.getByAltText
 * since: v1.27
 - returns: <[Locator]>
@@ -663,8 +691,8 @@ Attribute name to get the value for.
 %%-template-locator-get-by-alt-text-%%
 
 ### param: Locator.getByAltText.text = %%-locator-get-by-text-text-%%
-### option: Locator.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
+### option: Locator.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
 ## method: Locator.getByLabel
 * since: v1.27
@@ -673,8 +701,8 @@ Attribute name to get the value for.
 %%-template-locator-get-by-label-text-%%
 
 ### param: Locator.getByLabel.text = %%-locator-get-by-text-text-%%
-### option: Locator.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
+### option: Locator.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
 ## method: Locator.getByPlaceholder
 * since: v1.27
@@ -683,8 +711,8 @@ Attribute name to get the value for.
 %%-template-locator-get-by-placeholder-text-%%
 
 ### param: Locator.getByPlaceholder.text = %%-locator-get-by-text-text-%%
-### option: Locator.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
 
+### option: Locator.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
 
 ## method: Locator.getByRole
 * since: v1.27
@@ -693,10 +721,11 @@ Attribute name to get the value for.
 %%-template-locator-get-by-role-%%
 
 ### param: Locator.getByRole.role = %%-locator-get-by-role-role-%%
+
 ### option: Locator.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
 * since: v1.27
-### option: Locator.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
+### option: Locator.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
 ## method: Locator.getByTestId
 * since: v1.27
@@ -707,7 +736,6 @@ Attribute name to get the value for.
 ### param: Locator.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
 * since: v1.27
 
-
 ## method: Locator.getByText
 * since: v1.27
 - returns: <[Locator]>
@@ -715,8 +743,8 @@ Attribute name to get the value for.
 %%-template-locator-get-by-text-%%
 
 ### param: Locator.getByText.text = %%-locator-get-by-text-text-%%
-### option: Locator.getByText.exact = %%-locator-get-by-text-exact-%%
 
+### option: Locator.getByText.exact = %%-locator-get-by-text-exact-%%
 
 ## method: Locator.getByTitle
 * since: v1.27
@@ -725,8 +753,8 @@ Attribute name to get the value for.
 %%-template-locator-get-by-title-%%
 
 ### param: Locator.getByTitle.text = %%-locator-get-by-text-text-%%
-### option: Locator.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
+### option: Locator.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
 ## async method: Locator.highlight
 * since: v1.20
@@ -749,14 +777,19 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Locator.hover.position = %%-input-position-%%
 * since: v1.14
+
 ### option: Locator.hover.modifiers = %%-input-modifiers-%%
 * since: v1.14
+
 ### option: Locator.hover.force = %%-input-force-%%
 * since: v1.14
+
 ### option: Locator.hover.timeout = %%-input-timeout-%%
 * since: v1.14
+
 ### option: Locator.hover.trial = %%-input-trial-%%
 * since: v1.14
+
 ### option: Locator.hover.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.28
 
@@ -863,6 +896,7 @@ Returns locator to the last matching element.
 
 ### param: Locator.locator.selector = %%-find-selector-%%
 * since: v1.14
+
 ### option: Locator.locator.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.14
 
@@ -1013,10 +1047,13 @@ await element.SelectOptionAsync(new[] {
 
 ### param: Locator.selectOption.values = %%-select-options-values-%%
 * since: v1.14
+
 ### option: Locator.selectOption.force = %%-input-force-%%
 * since: v1.14
+
 ### option: Locator.selectOption.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
+
 ### option: Locator.selectOption.timeout = %%-input-timeout-%%
 * since: v1.14
 
@@ -1030,6 +1067,7 @@ If the element is inside the `<label>` element that has an associated [control](
 
 ### option: Locator.selectText.force = %%-input-force-%%
 * since: v1.14
+
 ### option: Locator.selectText.timeout = %%-input-timeout-%%
 * since: v1.14
 
@@ -1051,14 +1089,19 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### param: Locator.setChecked.checked = %%-input-checked-%%
 * since: v1.15
+
 ### option: Locator.setChecked.force = %%-input-force-%%
 * since: v1.15
+
 ### option: Locator.setChecked.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.15
+
 ### option: Locator.setChecked.position = %%-input-position-%%
 * since: v1.15
+
 ### option: Locator.setChecked.timeout = %%-input-timeout-%%
 * since: v1.15
+
 ### option: Locator.setChecked.trial = %%-input-trial-%%
 * since: v1.15
 
@@ -1073,8 +1116,10 @@ This method expects [Locator] to point to an
 
 ### param: Locator.setInputFiles.files = %%-input-files-%%
 * since: v1.14
+
 ### option: Locator.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
+
 ### option: Locator.setInputFiles.timeout = %%-input-timeout-%%
 * since: v1.14
 
@@ -1098,14 +1143,19 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Locator.tap.position = %%-input-position-%%
 * since: v1.14
+
 ### option: Locator.tap.modifiers = %%-input-modifiers-%%
 * since: v1.14
+
 ### option: Locator.tap.force = %%-input-force-%%
 * since: v1.14
+
 ### option: Locator.tap.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
+
 ### option: Locator.tap.timeout = %%-input-timeout-%%
 * since: v1.14
+
 ### option: Locator.tap.trial = %%-input-trial-%%
 * since: v1.14
 
@@ -1196,6 +1246,7 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ### option: Locator.type.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
+
 ### option: Locator.type.timeout = %%-input-timeout-%%
 * since: v1.14
 
@@ -1218,12 +1269,16 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Locator.uncheck.position = %%-input-position-%%
 * since: v1.14
+
 ### option: Locator.uncheck.force = %%-input-force-%%
 * since: v1.14
+
 ### option: Locator.uncheck.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
+
 ### option: Locator.uncheck.timeout = %%-input-timeout-%%
 * since: v1.14
+
 ### option: Locator.uncheck.trial = %%-input-trial-%%
 * since: v1.14
 
@@ -1262,5 +1317,6 @@ orderSent.WaitForAsync();
 
 ### option: Locator.waitFor.state = %%-wait-for-selector-state-%%
 * since: v1.16
+
 ### option: Locator.waitFor.timeout = %%-input-timeout-%%
 * since: v1.16

@@ -58,6 +58,7 @@ await Page.Mouse.MoveAsync(100, 0);
 await Page.Mouse.MoveAsync(0, 0);
 await Page.Mouse.UpAsync();
 ```
+
 ## async method: Mouse.click
 * since: v1.8
 

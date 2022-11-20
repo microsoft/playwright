@@ -173,7 +173,6 @@ Launches a process in the shell on the device and returns a socket to communicat
 * since: v1.9
 - `command` <[string]> Shell command to execute.
 
-
 ## async method: AndroidDevice.pinchClose
 * since: v1.9
 
@@ -343,7 +342,6 @@ Executes a shell command on the device and returns its output.
 - `command` <[string]>
 
 Shell command to execute.
-
 
 ## async method: AndroidDevice.swipe
 * since: v1.9

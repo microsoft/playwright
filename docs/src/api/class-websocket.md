@@ -127,7 +127,9 @@ Will throw an error if the socket is closed before the `event` is fired.
 
 ### param: WebSocket.waitForEvent2.event = %%-wait-for-event-event-%%
 * since: v1.8
+
 ### option: WebSocket.waitForEvent2.predicate = %%-wait-for-event-predicate-%%
 * since: v1.8
+
 ### option: WebSocket.waitForEvent2.timeout = %%-wait-for-event-timeout-%%
 * since: v1.8

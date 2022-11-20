@@ -102,7 +102,6 @@ var frameLocator = locator.FrameLocator(":scope");
 
 Returns locator to the first matching frame.
 
-
 ## method: FrameLocator.frameLocator
 * since: v1.17
 - returns: <[FrameLocator]>
@@ -113,7 +112,6 @@ in that iframe.
 ### param: FrameLocator.frameLocator.selector = %%-find-selector-%%
 * since: v1.17
 
-
 ## method: FrameLocator.getByAltText
 * since: v1.27
 - returns: <[Locator]>
@@ -121,8 +119,8 @@ in that iframe.
 %%-template-locator-get-by-alt-text-%%
 
 ### param: FrameLocator.getByAltText.text = %%-locator-get-by-text-text-%%
-### option: FrameLocator.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
+### option: FrameLocator.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
 ## method: FrameLocator.getByLabel
 * since: v1.27
@@ -131,8 +129,8 @@ in that iframe.
 %%-template-locator-get-by-label-text-%%
 
 ### param: FrameLocator.getByLabel.text = %%-locator-get-by-text-text-%%
-### option: FrameLocator.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
+### option: FrameLocator.getByLabel.exact = %%-locator-get-by-text-exact-%%
 
 ## method: FrameLocator.getByPlaceholder
 * since: v1.27
@@ -141,8 +139,8 @@ in that iframe.
 %%-template-locator-get-by-placeholder-text-%%
 
 ### param: FrameLocator.getByPlaceholder.text = %%-locator-get-by-text-text-%%
-### option: FrameLocator.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
 
+### option: FrameLocator.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
 
 ## method: FrameLocator.getByRole
 * since: v1.27
@@ -151,10 +149,11 @@ in that iframe.
 %%-template-locator-get-by-role-%%
 
 ### param: FrameLocator.getByRole.role = %%-locator-get-by-role-role-%%
+
 ### option: FrameLocator.getByRole.-inline- = %%-locator-get-by-role-option-list-v1.27-%%
 * since: v1.27
-### option: FrameLocator.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
+### option: FrameLocator.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
 ## method: FrameLocator.getByTestId
 * since: v1.27
@@ -165,7 +164,6 @@ in that iframe.
 ### param: FrameLocator.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
 * since: v1.27
 
-
 ## method: FrameLocator.getByText
 * since: v1.27
 - returns: <[Locator]>
@@ -173,8 +171,8 @@ in that iframe.
 %%-template-locator-get-by-text-%%
 
 ### param: FrameLocator.getByText.text = %%-locator-get-by-text-text-%%
-### option: FrameLocator.getByText.exact = %%-locator-get-by-text-exact-%%
 
+### option: FrameLocator.getByText.exact = %%-locator-get-by-text-exact-%%
 
 ## method: FrameLocator.getByTitle
 * since: v1.27
@@ -183,15 +181,14 @@ in that iframe.
 %%-template-locator-get-by-title-%%
 
 ### param: FrameLocator.getByTitle.text = %%-locator-get-by-text-text-%%
-### option: FrameLocator.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
+### option: FrameLocator.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
 ## method: FrameLocator.last
 * since: v1.17
 - returns: <[FrameLocator]>
 
 Returns locator to the last matching frame.
-
 
 ## method: FrameLocator.locator
 * since: v1.17
@@ -201,9 +198,9 @@ Returns locator to the last matching frame.
 
 ### param: FrameLocator.locator.selector = %%-find-selector-%%
 * since: v1.17
+
 ### option: FrameLocator.locator.-inline- = %%-locator-options-list-v1.14-%%
 * since: v1.17
-
 
 ## method: FrameLocator.nth
 * since: v1.17

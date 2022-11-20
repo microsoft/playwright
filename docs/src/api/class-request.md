@@ -89,7 +89,6 @@ Returns the value of the header matching the name. The name is case insensitive.
 
 Name of the header.
 
-
 ## method: Request.isNavigationRequest
 * since: v1.8
 - returns: <[boolean]>

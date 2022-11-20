@@ -40,7 +40,6 @@ Presses the [`param: key`].
 
 Key to press.
 
-
 ## async method: AndroidInput.swipe
 * since: v1.9
 

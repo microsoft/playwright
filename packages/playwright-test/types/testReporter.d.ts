@@ -66,8 +66,8 @@ export interface Suite {
 
   /**
    * Test cases in the suite. Note that only test cases defined directly in this suite are in the list. Any test cases
-   * defined in nested [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) groups
-   * are listed in the child [suite.suites](https://playwright.dev/docs/api/class-suite#suite-suites).
+   * defined in nested [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1)
+   * groups are listed in the child [suite.suites](https://playwright.dev/docs/api/class-suite#suite-suites).
    */
   tests: Array<TestCase>;
 
@@ -76,8 +76,8 @@ export interface Suite {
    * - Empty for root suite.
    * - Project name for project suite.
    * - File path for file suite.
-   * - Title passed to [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) for a
-   *   group suite.
+   * - Title passed to [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1)
+   *   for a group suite.
    */
   title: string;
 
@@ -87,10 +87,11 @@ export interface Suite {
   titlePath(): Array<string>;}
 
 /**
- * `TestCase` corresponds to every [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call)
- * call in a test file. When a single
- * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call) is running in multiple projects
- * or repeated multiple times, it will have multiple `TestCase` objects in corresponding projects' suites.
+ * `TestCase` corresponds to every
+ * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call) call in a test file. When
+ * a single [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call) is running in
+ * multiple projects or repeated multiple times, it will have multiple `TestCase` objects in corresponding projects'
+ * suites.
  */
 export interface TestCase {
   /**
@@ -98,16 +99,18 @@ export interface TestCase {
    * - Tests marked as [test.skip(title, testFunction)](https://playwright.dev/docs/api/class-test#test-skip-1) or
    *   [test.fixme(title, testFunction)](https://playwright.dev/docs/api/class-test#test-fixme-1) are expected to be
    *   `'skipped'`.
-   * - Tests marked as [test.fail()](https://playwright.dev/docs/api/class-test#test-fail-1) are expected to be `'failed'`.
+   * - Tests marked as [test.fail()](https://playwright.dev/docs/api/class-test#test-fail-1) are expected to be
+   *   `'failed'`.
    * - Other tests are expected to be `'passed'`.
    *
-   * See also [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status) for the actual status.
+   * See also [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status) for the actual
+   * status.
    */
   expectedStatus: TestStatus;
   /**
    * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) groups the test belongs to
-   * and file-level annotations for the test file.
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) groups the test
+   * belongs to and file-level annotations for the test file.
    *
    * Annotations are available during test execution through
    * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
@@ -156,8 +159,8 @@ export interface TestCase {
   parent: Suite;
 
   /**
-   * Contains the repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to the
-   * [command line](https://playwright.dev/docs/test-cli).
+   * Contains the repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to
+   * the [command line](https://playwright.dev/docs/test-cli).
    */
   repeatEachIndex: number;
 
@@ -184,8 +187,8 @@ export interface TestCase {
   timeout: number;
 
   /**
-   * Test title as passed to the [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call)
-   * call.
+   * Test title as passed to the
+   * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call) call.
    */
   title: string;
 
@@ -214,7 +217,8 @@ export interface TestResult {
     name: string;
 
     /**
-     * Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
+     * Content type of this attachment to properly present in the report, for example `'application/json'` or
+     * `'image/png'`.
      */
     contentType: string;
 
@@ -273,8 +277,8 @@ export interface TestResult {
   steps: Array<TestStep>;
 
   /**
-   * Index of the worker where the test was run. If the test was not run a single time, for example when the user interrupted
-   * testing, the only result will have a `workerIndex` equal to `-1`.
+   * Index of the worker where the test was run. If the test was not run a single time, for example when the user
+   * interrupted testing, the only result will have a `workerIndex` equal to `-1`.
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
    */
@@ -295,10 +299,11 @@ export interface FullResult {
 }
 
 /**
- * Test runner notifies the reporter about various events during test execution. All methods of the reporter are optional.
+ * Test runner notifies the reporter about various events during test execution. All methods of the reporter are
+ * optional.
  *
- * You can create a custom reporter by implementing a class with some of the reporter methods. Make sure to export this
- * class as default.
+ * You can create a custom reporter by implementing a class with some of the reporter methods. Make sure to export
+ * this class as default.
  *
  * ```js
  * // my-awesome-reporter.ts
@@ -324,8 +329,9 @@ export interface FullResult {
  * export default MyReporter;
  * ```
  *
- * Now use this reporter with [testConfig.reporter](https://playwright.dev/docs/api/class-testconfig#test-config-reporter).
- * Learn more about [using reporters](https://playwright.dev/docs/test-reporters).
+ * Now use this reporter with
+ * [testConfig.reporter](https://playwright.dev/docs/api/class-testconfig#test-config-reporter). Learn more about
+ * [using reporters](https://playwright.dev/docs/test-reporters).
  *
  * ```js
  * // playwright.config.ts
@@ -338,28 +344,29 @@ export interface FullResult {
  * ```
  *
  * Here is a typical order of reporter calls:
- * - [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin) is called once
- *   with a root suite that contains all other suites and tests. Learn more about [suites hierarchy][Suite].
+ * - [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin) is called
+ *   once with a root suite that contains all other suites and tests. Learn more about [suites hierarchy][Suite].
  * - [reporter.onTestBegin(test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-test-begin) is
- *   called for each test run. It is given a [TestCase] that is executed, and a [TestResult] that is almost empty. Test
- *   result will be populated while the test runs (for example, with steps and stdio) and will get final `status` once
- *   the test finishes.
+ *   called for each test run. It is given a [TestCase] that is executed, and a [TestResult] that is almost empty.
+ *   Test result will be populated while the test runs (for example, with steps and stdio) and will get final
+ *   `status` once the test finishes.
  * - [reporter.onStepBegin(test, result, step)](https://playwright.dev/docs/api/class-reporter#reporter-on-step-begin)
- *   and [reporter.onStepEnd(test, result, step)](https://playwright.dev/docs/api/class-reporter#reporter-on-step-end)
+ *   and
+ *   [reporter.onStepEnd(test, result, step)](https://playwright.dev/docs/api/class-reporter#reporter-on-step-end)
  *   are called for each executed step inside the test. When steps are executed, test run has not finished yet.
- * - [reporter.onTestEnd(test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-test-end) is called
- *   when test run has finished. By this time, [TestResult] is complete and you can use
+ * - [reporter.onTestEnd(test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-test-end) is
+ *   called when test run has finished. By this time, [TestResult] is complete and you can use
  *   [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status),
  *   [testResult.error](https://playwright.dev/docs/api/class-testresult#test-result-error) and more.
- * - [reporter.onEnd(result)](https://playwright.dev/docs/api/class-reporter#reporter-on-end) is called once after all
- *   tests that should run had finished.
+ * - [reporter.onEnd(result)](https://playwright.dev/docs/api/class-reporter#reporter-on-end) is called once after
+ *   all tests that should run had finished.
  *
  * Additionally,
  * [reporter.onStdOut(chunk, test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-std-out) and
- * [reporter.onStdErr(chunk, test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-std-err) are called
- * when standard output is produced in the worker process, possibly during a test execution, and
- * [reporter.onError(error)](https://playwright.dev/docs/api/class-reporter#reporter-on-error) is called when something
- * went wrong outside of the test execution.
+ * [reporter.onStdErr(chunk, test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-std-err) are
+ * called when standard output is produced in the worker process, possibly during a test execution, and
+ * [reporter.onError(error)](https://playwright.dev/docs/api/class-reporter#reporter-on-error) is called when
+ * something went wrong outside of the test execution.
  */
 export interface Reporter {
   /**
@@ -369,13 +376,13 @@ export interface Reporter {
    */
   onBegin?(config: FullConfig, suite: Suite): void;
   /**
-   * Called after all tests has been run, or testing has been interrupted. Note that this method may return a [Promise] and
-   * Playwright Test will await it.
+   * Called after all tests has been run, or testing has been interrupted. Note that this method may return a [Promise]
+   * and Playwright Test will await it.
    * @param result Result of the full test run. - `'passed'` - Everything went as expected.
    * - `'failed'` - Any test has failed.
    * - `'timedout'` - The
-   *   [testConfig.globalTimeout](https://playwright.dev/docs/api/class-testconfig#test-config-global-timeout) has been
-   *   reached.
+   *   [testConfig.globalTimeout](https://playwright.dev/docs/api/class-testconfig#test-config-global-timeout) has
+   *   been reached.
    * - `'interrupted'` - Interrupted by the user.
    */
   onEnd?(result: FullResult): void | Promise<void>;
@@ -432,8 +439,8 @@ export interface Reporter {
   onTestEnd?(test: TestCase, result: TestResult): void;
 
   /**
-   * Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance user
-   * experience.
+   * Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance
+   * user experience.
    */
   printsToStdio?(): boolean;}
 

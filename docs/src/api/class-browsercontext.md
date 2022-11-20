@@ -73,7 +73,6 @@ Only works with Chromium browser's persistent context.
 
 Emitted when new background page is created in the context.
 
-
 ```js
 const backgroundPage = await context.waitForEvent('backgroundpage');
 ```
@@ -1083,7 +1082,6 @@ Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerec
 ### option: BrowserContext.routeFromHAR.notFound
 * since: v1.23
 - `notFound` ?<[HarNotFound]<"abort"|"fallback">>
-
 * If set to 'abort' any request not found in the HAR file will be aborted.
 * If set to 'fallback' falls through to the next route handler in the handler chain.
 
@@ -1380,7 +1378,9 @@ Will throw an error if the browser context is closed before the `event` is fired
 
 ### param: BrowserContext.waitForEvent2.event = %%-wait-for-event-event-%%
 * since: v1.8
+
 ### option: BrowserContext.waitForEvent2.predicate = %%-wait-for-event-predicate-%%
 * since: v1.8
+
 ### option: BrowserContext.waitForEvent2.timeout = %%-wait-for-event-timeout-%%
 * since: v1.8

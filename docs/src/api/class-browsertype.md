@@ -264,19 +264,24 @@ describes some differences for Linux users.
 
 ### option: BrowserType.launch.-inline- = %%-shared-browser-options-list-v1.8-%%
 * since: v1.8
+
 ### option: BrowserType.launch.firefoxUserPrefs = %%-js-python-browser-option-firefoxuserprefs-%%
 * since: v1.8
+
 ### option: BrowserType.launch.firefoxUserPrefs2 = %%-csharp-java-browser-option-firefoxuserprefs-%%
 * since: v1.8
+
 ### option: BrowserType.launch.logger = %%-browser-option-logger-%%
 * since: v1.8
+
 ### option: BrowserType.launch.slowMo = %%-browser-option-slowmo-%%
 * since: v1.8
+
 ### option: BrowserType.launch.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%
 * since: v1.8
+
 ### option: BrowserType.launch.ignoreAllDefaultArgs = %%-csharp-java-browser-option-ignorealldefaultargs-%%
 * since: v1.9
-
 
 ## async method: BrowserType.launchPersistentContext
 * since: v1.8
@@ -299,12 +304,16 @@ use a temporary directory instead.
 
 ### option: BrowserType.launchPersistentContext.-inline- = %%-shared-browser-options-list-v1.8-%%
 * since: v1.8
+
 ### option: BrowserType.launchPersistentContext.slowMo = %%-browser-option-slowmo-%%
 * since: v1.8
+
 ### option: BrowserType.launchPersistentContext.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%
 * since: v1.8
+
 ### option: BrowserType.launchPersistentContext.ignoreAllDefaultArgs = %%-csharp-java-browser-option-ignorealldefaultargs-%%
 * since: v1.9
+
 ### option: BrowserType.launchPersistentContext.-inline- = %%-shared-context-params-list-v1.8-%%
 * since: v1.8
 
@@ -333,10 +342,13 @@ const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
 
 ### option: BrowserType.launchServer.-inline- = %%-shared-browser-options-list-v1.8-%%
 * since: v1.8
+
 ### option: BrowserType.launchServer.firefoxUserPrefs = %%-js-python-browser-option-firefoxuserprefs-%%
 * since: v1.8
+
 ### option: BrowserType.launchServer.firefoxUserPrefs2 = %%-csharp-java-browser-option-firefoxuserprefs-%%
 * since: v1.8
+
 ### option: BrowserType.launchServer.logger = %%-browser-option-logger-%%
 * since: v1.8
 
