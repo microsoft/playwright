@@ -421,6 +421,17 @@ await page.RouteAsync("**/api/fetch_data", async route => {
 await page.GotoAsync("https://example.com");
 ```
 
+#### Precedence
+
+When a request matches multiple routes, the last matched route is used to handle the request. As an example, the routes below will return data for `useful-resource`, and block all other requests to the API.
+
+```js
+page.route("**/api", route => route.abort());
+page.route("**/api/useful-resource", route => route.fulfill(/* data */));
+```
+
+It is also possible to explicitly fall back to another matching route with [`method: Route.fallback`].
+
 ## Modify requests
 
 ```js
