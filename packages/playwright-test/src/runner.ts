@@ -329,7 +329,6 @@ export class Runner {
     // Filter only.
     if (!options.listOnly) {
       const hasSetupOnly = preprocessRoot.allTests().some(test => test._only && setupFiles.has(test._requireFile));
-      console.error('hasSetupOnly = ' + hasSetupOnly);
       filterOnly(preprocessRoot, hasSetupOnly ? new Set() : setupFiles);
     }
 
