@@ -121,7 +121,6 @@ It is recommended to always pin your Docker image to a specific version if possi
 We currently publish images based on the following [Ubuntu](https://hub.docker.com/_/ubuntu) versions:
 - **Ubuntu 22.04 LTS** (Jammy Jellyfish), image tags include `jammy` (not published for Java and .NET)
 - **Ubuntu 20.04 LTS** (Focal Fossa), image tags include `focal`
-- **Ubuntu 18.04 LTS** (Bionic Beaver), image tags include `bionic` (not published for Java and .NET)
 
 #### Alpine
 

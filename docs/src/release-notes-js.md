@@ -273,11 +273,11 @@ if you encounter any issues!
 
 Linux support looks like this:
 
-|          | Ubuntu 18.04 | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11
+|          | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11
 | :--- | :---: | :---: | :---: | :---: |
-| Chromium | ✅ | ✅ | ✅ | ✅ |
-| WebKit | ✅ | ✅ | ✅ | ✅ |
-| Firefox | ✅ | ✅ | ✅ | ✅ |
+| Chromium | ✅ | ✅ | ✅ |
+| WebKit | ✅ | ✅ | ✅ |
+| Firefox | ✅ | ✅ | ✅ |
 
 ### 🕵️ Anonymous Describe
 
