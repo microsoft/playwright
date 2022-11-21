@@ -328,9 +328,10 @@ export class Runner {
 
     // Filter only.
     if (!options.listOnly) {
-      if (preprocessRoot.allTests().some(test => test._only)) {
-        const hasSetupOnly = preprocessRoot.allTests().some(test => test._only && setupFiles.has(test._requireFile));
-        filterOnly(preprocessRoot, hasSetupOnly ? new Set() : setupFiles);
+      const onlyItems = preprocessRoot._getOnlyItems();
+      if (onlyItems.length) {
+        const hasOnlyInSetup = onlyItems.some(item => setupFiles.has(item._requireFile));
+        filterOnly(preprocessRoot, hasOnlyInSetup ? new Set() : setupFiles);
       }
     }
 

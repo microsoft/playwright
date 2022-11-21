@@ -461,6 +461,44 @@ test('should allow .only in setup files', async ({ runGroups }, testInfo) => {
   expect(passed).toBe(2);
 });
 
+test('should allow describe.only in setup files', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*.setup.ts/,
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+      test('test3', async () => { });
+      test('test4', async () => { });
+    `,
+    'a.setup.ts': `
+      const { test } = pwt;
+      test.describe.only('main', () => {
+        test('setup1', async () => { });
+        test('setup2', async () => { });
+      });
+      test('setup3', async () => { });
+    `,
+  };
+
+  const { exitCode, passed, timeline, output } =  await runGroups(files);
+  expect(output).toContain('Running 2 tests using 1 worker');
+  expect(output).toContain('[p1] › a.setup.ts:6:9 › main › setup1');
+  expect(output).toContain('[p1] › a.setup.ts:7:9 › main › setup2');
+  expect(fileNames(timeline)).toEqual(['a.setup.ts']);
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(2);
+});
+
+
 test('should allow .only in both setup and test files', async ({ runGroups }, testInfo) => {
   const files = {
     'playwright.config.ts': `
