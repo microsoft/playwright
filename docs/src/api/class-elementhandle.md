@@ -127,6 +127,8 @@ Elements from child frames return the bounding box relative to the main frame, u
 Assuming the page is static, it is safe to use bounding box coordinates to perform input. For example, the following
 snippet should click the center of the element.
 
+**Usage**
+
 ```js
 const box = await elementHandle.boundingBox();
 await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
@@ -283,6 +285,8 @@ The snippet below dispatches the `click` event on the element. Regardless of the
 is dispatched. This is equivalent to calling
 [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
 
+**Usage**
+
 ```js
 await elementHandle.dispatchEvent('click');
 ```
@@ -381,7 +385,7 @@ details. If no elements match the selector, the method throws an error.
 If [`param: expression`] returns a [Promise], then [`method: ElementHandle.evalOnSelector`] would wait for the promise to resolve and return its
 value.
 
-Examples:
+**Usage**
 
 ```js
 const tweetHandle = await page.$('.tweet');
@@ -441,7 +445,7 @@ matched elements as a first argument to [`param: expression`]. See
 If [`param: expression`] returns a [Promise], then [`method: ElementHandle.evalOnSelectorAll`] would wait for the promise to resolve and return its
 value.
 
-Examples:
+**Usage**
 
 ```html
 <div class="feed">
@@ -733,6 +737,8 @@ Returns the array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected.
 
+**Usage**
+
 ```js
 // single selection matching the value
 handle.selectOption('blue');
@@ -912,6 +918,8 @@ Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup`
 
 To press a special key, like `Control` or `ArrowDown`, use [`method: ElementHandle.press`].
 
+**Usage**
+
 ```js
 await elementHandle.type('Hello'); // Types instantly
 await elementHandle.type('World', {delay: 100}); // Types slower, like a user
@@ -1057,6 +1065,8 @@ Wait for the [`param: selector`] relative to the element handle to satisfy [`opt
 appear/disappear from dom, or become visible/hidden). If at the moment of calling the method [`param: selector`] already
 satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for the
 [`option: timeout`] milliseconds, the function will throw.
+
+**Usage**
 
 ```js
 await page.setContent(`<div><span></span></div>`);

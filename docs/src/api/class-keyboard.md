@@ -180,6 +180,8 @@ Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress` events.
 
+**Usage**
+
 ```js
 page.keyboard.insertText('嗨');
 ```
@@ -230,6 +232,8 @@ respective texts.
 
 Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When specified with the
 modifier, modifier is pressed and being held while the subsequent key is being pressed.
+
+**Usage**
 
 ```js
 const page = await browser.newPage();
@@ -310,6 +314,8 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
 To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].
+
+**Usage**
 
 ```js
 await page.keyboard.type('Hello'); // Types instantly

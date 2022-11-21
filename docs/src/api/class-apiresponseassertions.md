@@ -74,6 +74,8 @@ The opposite of [`method: APIResponseAssertions.toBeOK`].
 
 Ensures the response status code is within `200..299` range.
 
+**Usage**
+
 ```js
 await expect(response).toBeOK();
 ```

@@ -108,6 +108,8 @@ The [Browser] object itself is considered to be disposed and cannot be used anym
 
 Returns an array of all open browser contexts. In a newly created browser, this will return zero browser contexts.
 
+**Usage**
+
 ```js
 const browser = await pw.webkit.launch();
 console.log(browser.contexts().length); // prints `0`
@@ -172,6 +174,8 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 If directly using this method to create [BrowserContext]s, it is best practice to explicitly close the returned context via [`method: BrowserContext.close`] when your code is done with the [BrowserContext],
 and before calling [`method: Browser.close`]. This will ensure the `context` is closed gracefully and any artifacts—like HARs and videos—are fully flushed and saved.
 :::
+
+**Usage**
 
 ```js
 (async () => {
@@ -291,6 +295,8 @@ This API controls [Chromium Tracing](https://www.chromium.org/developers/how-tos
 
 You can use [`method: Browser.startTracing`] and [`method: Browser.stopTracing`] to create a trace file that can
 be opened in Chrome DevTools performance panel.
+
+**Usage**
 
 ```js
 await browser.startTracing(page, {path: 'trace.json'});

@@ -57,7 +57,7 @@ This method passes this handle as the first argument to [`param: expression`].
 If [`param: expression`] returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and return
 its value.
 
-Examples:
+**Usage**
 
 ```js
 const tweetHandle = await page.$('.tweet .retweets');
@@ -122,6 +122,8 @@ Optional argument to pass to [`param: expression`].
 - returns: <[Map]<[string], [JSHandle]>>
 
 The method returns a map with **own property names** as keys and JSHandle instances for the property values.
+
+**Usage**
 
 ```js
 const handle = await page.evaluateHandle(() => ({window, document}));

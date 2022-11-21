@@ -3387,6 +3387,8 @@ interface APIResponseAssertions {
   /**
    * Ensures the response status code is within `200..299` range.
    *
+   * **Usage**
+   *
    * ```js
    * await expect(response).toBeOK();
    * ```
@@ -3426,6 +3428,8 @@ interface LocatorAssertions {
   /**
    * Ensures the [Locator] points to a checked input.
    *
+   * **Usage**
+   *
    * ```js
    * const locator = page.getByLabel('Subscribe to newsletter');
    * await expect(locator).toBeChecked();
@@ -3449,6 +3453,8 @@ interface LocatorAssertions {
    * that only native control elements such as HTML `button`, `input`, `select`, `textarea`, `option`, `optgroup` can be
    * disabled by setting "disabled" attribute. "disabled" attribute on other elements is ignored by the browser.
    *
+   * **Usage**
+   *
    * ```js
    * const locator = page.locator('button.submit');
    * await expect(locator).toBeDisabled();
@@ -3465,6 +3471,8 @@ interface LocatorAssertions {
 
   /**
    * Ensures the [Locator] points to an editable element.
+   *
+   * **Usage**
    *
    * ```js
    * const locator = page.getByRole('textbox');
@@ -3485,6 +3493,8 @@ interface LocatorAssertions {
   /**
    * Ensures the [Locator] points to an empty editable element or to a DOM node that has no text.
    *
+   * **Usage**
+   *
    * ```js
    * const locator = page.locator('div.warning');
    * await expect(locator).toBeEmpty();
@@ -3501,6 +3511,8 @@ interface LocatorAssertions {
 
   /**
    * Ensures the [Locator] points to an enabled element.
+   *
+   * **Usage**
    *
    * ```js
    * const locator = page.locator('button.submit');
@@ -3521,6 +3533,8 @@ interface LocatorAssertions {
   /**
    * Ensures the [Locator] points to a focused DOM node.
    *
+   * **Usage**
+   *
    * ```js
    * const locator = page.getByRole('textbox');
    * await expect(locator).toBeFocused();
@@ -3539,6 +3553,8 @@ interface LocatorAssertions {
    * Ensures that [Locator] either does not resolve to any DOM node, or resolves to a
    * [non-visible](https://playwright.dev/docs/api/actionability#visible) one.
    *
+   * **Usage**
+   *
    * ```js
    * const locator = page.locator('.my-element');
    * await expect(locator).toBeHidden();
@@ -3556,6 +3572,8 @@ interface LocatorAssertions {
   /**
    * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/api/actionability#attached) and
    * [visible](https://playwright.dev/docs/api/actionability#visible) DOM node.
+   *
+   * **Usage**
    *
    * ```js
    * const locator = page.locator('.my-element');
@@ -3576,6 +3594,8 @@ interface LocatorAssertions {
   /**
    * Ensures the [Locator] points to an element that contains the given text. You can use regular expressions for the
    * value as well.
+   *
+   * **Usage**
    *
    * ```js
    * const locator = page.locator('.title');
@@ -3639,6 +3659,8 @@ interface LocatorAssertions {
   /**
    * Ensures the [Locator] points to an element with given attribute.
    *
+   * **Usage**
+   *
    * ```js
    * const locator = page.locator('input');
    * await expect(locator).toHaveAttribute('type', 'text');
@@ -3658,6 +3680,8 @@ interface LocatorAssertions {
   /**
    * Ensures the [Locator] points to an element with given CSS classes. This needs to be a full match or using a relaxed
    * regular expression.
+   *
+   * **Usage**
    *
    * ```html
    * <div class='selected row' id='component'></div>
@@ -3689,6 +3713,8 @@ interface LocatorAssertions {
   /**
    * Ensures the [Locator] resolves to an exact number of DOM nodes.
    *
+   * **Usage**
+   *
    * ```js
    * const list = page.locator('list > .component');
    * await expect(list).toHaveCount(3);
@@ -3706,6 +3732,8 @@ interface LocatorAssertions {
 
   /**
    * Ensures the [Locator] resolves to an element with the given computed CSS style.
+   *
+   * **Usage**
    *
    * ```js
    * const locator = page.getByRole('button');
@@ -3726,6 +3754,8 @@ interface LocatorAssertions {
   /**
    * Ensures the [Locator] points to an element with the given DOM Node ID.
    *
+   * **Usage**
+   *
    * ```js
    * const locator = page.getByRole('textbox');
    * await expect(locator).toHaveId('lastname');
@@ -3744,6 +3774,8 @@ interface LocatorAssertions {
   /**
    * Ensures the [Locator] points to an element with given JavaScript property. Note that this property can be of a
    * primitive type as well as a plain serializable JavaScript object.
+   *
+   * **Usage**
    *
    * ```js
    * const locator = page.locator('.component');
@@ -3764,6 +3796,8 @@ interface LocatorAssertions {
   /**
    * This function will wait until two consecutive locator screenshots yield the same result, and then compare the last
    * screenshot with the expectation.
+   *
+   * **Usage**
    *
    * ```js
    * const locator = page.getByRole('button');
@@ -3840,6 +3874,8 @@ interface LocatorAssertions {
    * This function will wait until two consecutive locator screenshots yield the same result, and then compare the last
    * screenshot with the expectation.
    *
+   * **Usage**
+   *
    * ```js
    * const locator = page.getByRole('button');
    * await expect(locator).toHaveScreenshot();
@@ -3914,6 +3950,8 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to an element with the given text. You can use regular expressions for the value as
    * well.
    *
+   * **Usage**
+   *
    * ```js
    * const locator = page.locator('.title');
    * await expect(locator).toHaveText(/Welcome, Test User/);
@@ -3976,6 +4014,8 @@ interface LocatorAssertions {
    * Ensures the [Locator] points to an element with the given input value. You can use regular expressions for the
    * value as well.
    *
+   * **Usage**
+   *
    * ```js
    * const locator = page.locator('input[type=number]');
    * await expect(locator).toHaveValue(/[0-9]/);
@@ -3994,6 +4034,8 @@ interface LocatorAssertions {
   /**
    * Ensures the [Locator] points to multi-select/combobox (i.e. a `select` with the `multiple` attribute) and the
    * specified values are selected.
+   *
+   * **Usage**
    *
    * For example, given the following element:
    *
@@ -4053,6 +4095,8 @@ interface PageAssertions {
   /**
    * This function will wait until two consecutive page screenshots yield the same result, and then compare the last
    * screenshot with the expectation.
+   *
+   * **Usage**
    *
    * ```js
    * await expect(page).toHaveScreenshot('image.png');
@@ -4159,6 +4203,8 @@ interface PageAssertions {
    * This function will wait until two consecutive page screenshots yield the same result, and then compare the last
    * screenshot with the expectation.
    *
+   * **Usage**
+   *
    * ```js
    * await expect(page).toHaveScreenshot();
    * ```
@@ -4262,6 +4308,8 @@ interface PageAssertions {
   /**
    * Ensures the page has the given title.
    *
+   * **Usage**
+   *
    * ```js
    * await expect(page).toHaveTitle(/.*checkout/);
    * ```
@@ -4278,6 +4326,8 @@ interface PageAssertions {
 
   /**
    * Ensures the page is navigated to the given URL.
+   *
+   * **Usage**
    *
    * ```js
    * await expect(page).toHaveURL(/.*checkout/);
@@ -4306,6 +4356,8 @@ interface ScreenshotAssertions {
   /**
    * Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test
    * snapshots directory.
+   *
+   * **Usage**
    *
    * ```js
    * // Basic usage.
@@ -4352,6 +4404,8 @@ interface ScreenshotAssertions {
   /**
    * Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test
    * snapshots directory.
+   *
+   * **Usage**
    *
    * ```js
    * // Basic usage and the file name is derived from the test name.

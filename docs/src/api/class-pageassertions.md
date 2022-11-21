@@ -132,6 +132,8 @@ Expected URL string or RegExp.
 This function will wait until two consecutive page screenshots
 yield the same result, and then compare the last screenshot with the expectation.
 
+**Usage**
+
 ```js
 await expect(page).toHaveScreenshot('image.png');
 ```
@@ -182,6 +184,8 @@ Snapshot name.
 This function will wait until two consecutive page screenshots
 yield the same result, and then compare the last screenshot with the expectation.
 
+**Usage**
+
 ```js
 await expect(page).toHaveScreenshot();
 ```
@@ -225,6 +229,8 @@ await expect(page).toHaveScreenshot();
   - alias-java: hasTitle
 
 Ensures the page has the given title.
+
+**Usage**
 
 ```js
 await expect(page).toHaveTitle(/.*checkout/);
@@ -272,6 +278,8 @@ Expected title or RegExp.
   - alias-java: hasURL
 
 Ensures the page is navigated to the given URL.
+
+**Usage**
 
 ```js
 await expect(page).toHaveURL(/.*checkout/);

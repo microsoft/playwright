@@ -203,6 +203,8 @@ Emitted when new service worker is created in the context.
 Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be
 obtained via [`method: BrowserContext.cookies`].
 
+**Usage**
+
 ```js
 await browserContext.addCookies([cookieObject1, cookieObject2]);
 ```
@@ -246,6 +248,8 @@ Adds a script which would be evaluated in one of the following scenarios:
 
 The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend
 the JavaScript environment, e.g. to seed `Math.random`.
+
+**Usage**
 
 An example of overriding `Math.random` before the page loads:
 
@@ -336,6 +340,8 @@ Clears context cookies.
 
 Clears all permission overrides for the browser context.
 
+**Usage**
+
 ```js
 const context = await browser.newContext();
 await context.grantPermissions(['clipboard-read']);
@@ -414,6 +420,8 @@ The first argument of the [`param: callback`] function contains information abou
 BrowserContext, page: Page, frame: Frame }`.
 
 See [`method: Page.exposeBinding`] for page-only version.
+
+**Usage**
 
 An example of exposing page URL to all frames in all pages in the context:
 
@@ -638,6 +646,8 @@ When called, the function executes [`param: callback`] and returns a [Promise] w
 If the [`param: callback`] returns a [Promise], it will be awaited.
 
 See [`method: Page.exposeFunction`] for page-only version.
+
+**Usage**
 
 An example of adding a `sha256` function to all pages in the context:
 
@@ -893,6 +903,8 @@ is enabled, every request matching the url pattern will stall unless it's contin
 :::note
 [`method: BrowserContext.route`] will not intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception by setting [`option: Browser.newContext.serviceWorkers`] to `'block'`.
 :::
+
+**Usage**
 
 An example of a naive handler that aborts all image requests:
 
@@ -1170,6 +1182,8 @@ An object containing additional HTTP headers to be sent with every request. All 
 
 Sets the context's geolocation. Passing `null` or `undefined` emulates position unavailable.
 
+**Usage**
+
 ```js
 await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 ```
@@ -1294,6 +1308,8 @@ Optional handler function used to register a routing with [`method: BrowserConte
 
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
 value. Will throw an error if the context closes before the event is fired. Returns the event data value.
+
+**Usage**
 
 ```js
 const [page, _] = await Promise.all([

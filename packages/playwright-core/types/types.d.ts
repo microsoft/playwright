@@ -88,6 +88,8 @@ export interface Page {
    * `undefined`. Playwright also supports transferring some additional values that are not serializable by `JSON`:
    * `-0`, `NaN`, `Infinity`, `-Infinity`.
    *
+   * **Usage**
+   *
    * Passing argument to `pageFunction`:
    *
    * ```js
@@ -134,6 +136,8 @@ export interface Page {
    * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) resolves to
    * `undefined`. Playwright also supports transferring some additional values that are not serializable by `JSON`:
    * `-0`, `NaN`, `Infinity`, `-Infinity`.
+   *
+   * **Usage**
    *
    * Passing argument to `pageFunction`:
    *
@@ -183,6 +187,8 @@ export interface Page {
    * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) would
    * wait for the promise to resolve and return its value.
    *
+   * **Usage**
+   *
    * ```js
    * const aWindowHandle = await page.evaluateHandle(() => Promise.resolve(window));
    * aWindowHandle; // Handle for the window object.
@@ -223,6 +229,8 @@ export interface Page {
    * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) would
    * wait for the promise to resolve and return its value.
    *
+   * **Usage**
+   *
    * ```js
    * const aWindowHandle = await page.evaluateHandle(() => Promise.resolve(window));
    * aWindowHandle; // Handle for the window object.
@@ -257,6 +265,8 @@ export interface Page {
    *
    * The script is evaluated after the document was created but before any of its scripts were run. This is useful to
    * amend the JavaScript environment, e.g. to seed `Math.random`.
+   *
+   * **Usage**
    *
    * An example of overriding `Math.random` before the page loads:
    *
@@ -342,7 +352,7 @@ export interface Page {
    * [page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const searchValue = await page.$eval('#search', el => el.value);
@@ -373,7 +383,7 @@ export interface Page {
    * [page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const searchValue = await page.$eval('#search', el => el.value);
@@ -404,7 +414,7 @@ export interface Page {
    * [page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const searchValue = await page.$eval('#search', el => el.value);
@@ -435,7 +445,7 @@ export interface Page {
    * [page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const searchValue = await page.$eval('#search', el => el.value);
@@ -466,7 +476,7 @@ export interface Page {
    * [page.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const divCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
@@ -489,7 +499,7 @@ export interface Page {
    * [page.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const divCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
@@ -512,7 +522,7 @@ export interface Page {
    * [page.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const divCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
@@ -535,7 +545,7 @@ export interface Page {
    * [page.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const divCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
@@ -549,6 +559,8 @@ export interface Page {
 
   /**
    * Returns when the `pageFunction` returns a truthy value. It resolves to a JSHandle of the truthy value.
+   *
+   * **Usage**
    *
    * The
    * [page.waitForFunction(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-wait-for-function)
@@ -585,6 +597,8 @@ export interface Page {
   waitForFunction<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
   /**
    * Returns when the `pageFunction` returns a truthy value. It resolves to a JSHandle of the truthy value.
+   *
+   * **Usage**
    *
    * The
    * [page.waitForFunction(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-wait-for-function)
@@ -631,6 +645,8 @@ export interface Page {
    * at the moment of calling the method `selector` already satisfies the condition, the method will return immediately.
    * If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
    *
+   * **Usage**
+   *
    * This method works across navigations:
    *
    * ```js
@@ -662,6 +678,8 @@ export interface Page {
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If
    * at the moment of calling the method `selector` already satisfies the condition, the method will return immediately.
    * If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
+   *
+   * **Usage**
    *
    * This method works across navigations:
    *
@@ -695,6 +713,8 @@ export interface Page {
    * at the moment of calling the method `selector` already satisfies the condition, the method will return immediately.
    * If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
    *
+   * **Usage**
+   *
    * This method works across navigations:
    *
    * ```js
@@ -726,6 +746,8 @@ export interface Page {
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If
    * at the moment of calling the method `selector` already satisfies the condition, the method will return immediately.
    * If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
+   *
+   * **Usage**
    *
    * This method works across navigations:
    *
@@ -764,6 +786,8 @@ export interface Page {
    * > NOTE: Functions installed via
    * [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
    * survive navigations.
+   *
+   * **Usage**
    *
    * An example of exposing page URL to all frames in a page:
    *
@@ -823,6 +847,8 @@ export interface Page {
    * > NOTE: Functions installed via
    * [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
    * survive navigations.
+   *
+   * **Usage**
    *
    * An example of exposing page URL to all frames in a page:
    *
@@ -2098,6 +2124,8 @@ export interface Page {
    * `click` is dispatched. This is equivalent to calling
    * [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
    *
+   * **Usage**
+   *
    * ```js
    * await page.dispatchEvent('button#submit', 'click');
    * ```
@@ -2146,6 +2174,8 @@ export interface Page {
   /**
    * This method drags the source element to the target element. It will first move to the source element, perform a
    * `mousedown`, then move to the target element and perform a `mouseup`.
+   *
+   * **Usage**
    *
    * ```js
    * await page.dragAndDrop('#source', '#target');
@@ -2218,6 +2248,8 @@ export interface Page {
    * This method changes the `CSS media type` through the `media` argument, and/or the `'prefers-colors-scheme'` media
    * feature, using the `colorScheme` argument.
    *
+   * **Usage**
+   *
    * ```js
    * await page.evaluate(() => matchMedia('screen').matches);
    * // → true
@@ -2288,6 +2320,8 @@ export interface Page {
    * > NOTE: Functions installed via
    * [page.exposeFunction(name, callback)](https://playwright.dev/docs/api/class-page#page-expose-function) survive
    * navigations.
+   *
+   * **Usage**
    *
    * An example of adding a `sha256` function to the page:
    *
@@ -2392,6 +2426,8 @@ export interface Page {
   /**
    * Returns frame matching the specified criteria. Either `name` or `url` must be specified.
    *
+   * **Usage**
+   *
    * ```js
    * const frame = page.frame('frame-name');
    * ```
@@ -2416,8 +2452,12 @@ export interface Page {
 
   /**
    * When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
-   * in that iframe. Following snippet locates element with text "Submit" in the iframe with id `my-frame`, like
-   * `<iframe id="my-frame">`:
+   * in that iframe.
+   *
+   * **Usage**
+   *
+   * Following snippet locates element with text "Submit" in the iframe with id `my-frame`, like `<iframe
+   * id="my-frame">`:
    *
    * ```js
    * const locator = page.frameLocator('#my-iframe').getByText('Submit');
@@ -3121,6 +3161,8 @@ export interface Page {
    * [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust)
    * property to force rendering of exact colors.
    *
+   * **Usage**
+   *
    * ```js
    * // Generates a PDF with 'screen' media type.
    * await page.emulateMedia({media: 'screen'});
@@ -3277,6 +3319,8 @@ export interface Page {
    * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When specified with the
    * modifier, modifier is pressed and being held while the subsequent key is being pressed.
    *
+   * **Usage**
+   *
    * ```js
    * const page = await browser.newPage();
    * await page.goto('https://keycode.info');
@@ -3370,6 +3414,8 @@ export interface Page {
    * intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090)
    * issue. We recommend disabling Service Workers when using request interception by setting
    * `Browser.newContext.serviceWorkers` to `'block'`.
+   *
+   * **Usage**
    *
    * An example of a naive handler that aborts all image requests:
    *
@@ -3472,6 +3518,8 @@ export interface Page {
    * Returns the array of option values that have been successfully selected.
    *
    * Triggers a `change` and `input` event once all the provided options have been selected.
+   *
+   * **Usage**
    *
    * ```js
    * // single selection matching the value
@@ -3762,6 +3810,8 @@ export interface Page {
    * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) with `screen`
    * and `viewport` parameters if you need better control of these properties.
    *
+   * **Usage**
+   *
    * ```js
    * const page = await browser.newPage();
    * await page.setViewportSize({
@@ -3891,6 +3941,8 @@ export interface Page {
    *
    * To press a special key, like `Control` or `ArrowDown`, use
    * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
+   *
+   * **Usage**
    *
    * ```js
    * await page.type('#mytextarea', 'Hello'); // Types instantly
@@ -4237,6 +4289,8 @@ export interface Page {
    * committed when this method is called. If current document has already reached the required state, resolves
    * immediately.
    *
+   * **Usage**
+   *
    * ```js
    * await page.getByRole('button').click(); // Click triggers navigation.
    * await page.waitForLoadState(); // The promise resolves after 'load' event.
@@ -4277,6 +4331,8 @@ export interface Page {
    * Waits for the main frame navigation and returns the main resource response. In case of multiple redirects, the
    * navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or
    * navigation due to History API usage, the navigation will resolve with `null`.
+   *
+   * **Usage**
    *
    * This resolves when the page navigates to a new URL or reloads. It is useful for when you run code which will
    * indirectly cause the page to navigate. e.g. The click target has an `onclick` handler that triggers navigation from
@@ -4334,6 +4390,8 @@ export interface Page {
    * Waits for the matching request and returns it. See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more
    * details about events.
    *
+   * **Usage**
+   *
    * ```js
    * // Note that Promise.all prevents a race condition
    * // between clicking and waiting for the request.
@@ -4368,6 +4426,8 @@ export interface Page {
   /**
    * Returns the matched response. See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details about
    * events.
+   *
+   * **Usage**
    *
    * ```js
    * // Note that Promise.all prevents a race condition
@@ -4408,6 +4468,8 @@ export interface Page {
    * Note that `page.waitForTimeout()` should only be used for debugging. Tests using the timer in production are going
    * to be flaky. Use signals such as network events, selectors becoming visible and others instead.
    *
+   * **Usage**
+   *
    * ```js
    * // wait for 1 second
    * await page.waitForTimeout(1000);
@@ -4421,6 +4483,8 @@ export interface Page {
 
   /**
    * Waits for the main frame to navigate to the given URL.
+   *
+   * **Usage**
    *
    * ```js
    * await page.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation
@@ -4515,6 +4579,8 @@ export interface Frame {
    * `undefined`. Playwright also supports transferring some additional values that are not serializable by `JSON`:
    * `-0`, `NaN`, `Infinity`, `-Infinity`.
    *
+   * **Usage**
+   *
    * ```js
    * const result = await frame.evaluate(([x, y]) => {
    *   return Promise.resolve(x * y);
@@ -4555,6 +4621,8 @@ export interface Frame {
    * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns
    * `undefined`. Playwright also supports transferring some additional values that are not serializable by `JSON`:
    * `-0`, `NaN`, `Infinity`, `-Infinity`.
+   *
+   * **Usage**
    *
    * ```js
    * const result = await frame.evaluate(([x, y]) => {
@@ -4598,6 +4666,8 @@ export interface Frame {
    * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle)
    * would wait for the promise to resolve and return its value.
    *
+   * **Usage**
+   *
    * ```js
    * const aWindowHandle = await frame.evaluateHandle(() => Promise.resolve(window));
    * aWindowHandle; // Handle for the window object.
@@ -4637,6 +4707,8 @@ export interface Frame {
    * returns a [Promise], then
    * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle)
    * would wait for the promise to resolve and return its value.
+   *
+   * **Usage**
    *
    * ```js
    * const aWindowHandle = await frame.evaluateHandle(() => Promise.resolve(window));
@@ -4724,7 +4796,7 @@ export interface Frame {
    * [frame.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const searchValue = await frame.$eval('#search', el => el.value);
@@ -4754,7 +4826,7 @@ export interface Frame {
    * [frame.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const searchValue = await frame.$eval('#search', el => el.value);
@@ -4784,7 +4856,7 @@ export interface Frame {
    * [frame.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const searchValue = await frame.$eval('#search', el => el.value);
@@ -4814,7 +4886,7 @@ export interface Frame {
    * [frame.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const searchValue = await frame.$eval('#search', el => el.value);
@@ -4843,7 +4915,7 @@ export interface Frame {
    * [frame.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
@@ -4868,7 +4940,7 @@ export interface Frame {
    * [frame.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
@@ -4893,7 +4965,7 @@ export interface Frame {
    * [frame.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
@@ -4918,7 +4990,7 @@ export interface Frame {
    * [frame.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
@@ -4932,6 +5004,8 @@ export interface Frame {
 
   /**
    * Returns when the `pageFunction` returns a truthy value, returns that value.
+   *
+   * **Usage**
    *
    * The
    * [frame.waitForFunction(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-function)
@@ -4964,6 +5038,8 @@ export interface Frame {
   waitForFunction<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
   /**
    * Returns when the `pageFunction` returns a truthy value, returns that value.
+   *
+   * **Usage**
    *
    * The
    * [frame.waitForFunction(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-function)
@@ -5006,6 +5082,8 @@ export interface Frame {
    * at the moment of calling the method `selector` already satisfies the condition, the method will return immediately.
    * If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
    *
+   * **Usage**
+   *
    * This method works across navigations:
    *
    * ```js
@@ -5037,6 +5115,8 @@ export interface Frame {
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If
    * at the moment of calling the method `selector` already satisfies the condition, the method will return immediately.
    * If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
+   *
+   * **Usage**
    *
    * This method works across navigations:
    *
@@ -5070,6 +5150,8 @@ export interface Frame {
    * at the moment of calling the method `selector` already satisfies the condition, the method will return immediately.
    * If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
    *
+   * **Usage**
+   *
    * This method works across navigations:
    *
    * ```js
@@ -5101,6 +5183,8 @@ export interface Frame {
    * Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If
    * at the moment of calling the method `selector` already satisfies the condition, the method will return immediately.
    * If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
+   *
+   * **Usage**
    *
    * This method works across navigations:
    *
@@ -5410,6 +5494,8 @@ export interface Frame {
    * `click` is dispatched. This is equivalent to calling
    * [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
    *
+   * **Usage**
+   *
    * ```js
    * await frame.dispatchEvent('button#submit', 'click');
    * ```
@@ -5589,6 +5675,8 @@ export interface Frame {
    *
    * This method throws an error if the frame has been detached before `frameElement()` returns.
    *
+   * **Usage**
+   *
    * ```js
    * const frameElement = await frame.frameElement();
    * const contentFrame = await frameElement.contentFrame();
@@ -5600,8 +5688,12 @@ export interface Frame {
 
   /**
    * When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
-   * in that iframe. Following snippet locates element with text "Submit" in the iframe with id `my-frame`, like
-   * `<iframe id="my-frame">`:
+   * in that iframe.
+   *
+   * **Usage**
+   *
+   * Following snippet locates element with text "Submit" in the iframe with id `my-frame`, like `<iframe
+   * id="my-frame">`:
    *
    * ```js
    * const locator = frame.frameLocator('#my-iframe').getByText('Submit');
@@ -6281,6 +6373,8 @@ export interface Frame {
    *
    * Triggers a `change` and `input` event once all the provided options have been selected.
    *
+   * **Usage**
+   *
    * ```js
    * // single selection matching the value
    * frame.selectOption('select#colors', 'blue');
@@ -6611,6 +6705,8 @@ export interface Frame {
    * To press a special key, like `Control` or `ArrowDown`, use
    * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
    *
+   * **Usage**
+   *
    * ```js
    * await frame.type('#mytextarea', 'Hello'); // Types instantly
    * await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
@@ -6722,6 +6818,8 @@ export interface Frame {
    * committed when this method is called. If current document has already reached the required state, resolves
    * immediately.
    *
+   * **Usage**
+   *
    * ```js
    * await frame.click('button'); // Click triggers navigation.
    * await frame.waitForLoadState(); // Waits for 'load' state by default.
@@ -6749,6 +6847,8 @@ export interface Frame {
    * Waits for the frame navigation and returns the main resource response. In case of multiple redirects, the
    * navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or
    * navigation due to History API usage, the navigation will resolve with `null`.
+   *
+   * **Usage**
    *
    * This method waits for the frame to navigate to a new URL. It is useful for when you run code which will indirectly
    * cause the frame to navigate. Consider this example:
@@ -6805,6 +6905,8 @@ export interface Frame {
 
   /**
    * Waits for the frame to navigate to the given URL.
+   *
+   * **Usage**
    *
    * ```js
    * await frame.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation
@@ -6873,6 +6975,8 @@ export interface BrowserContext {
    * See [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
    * for page-only version.
    *
+   * **Usage**
+   *
    * An example of exposing page URL to all frames in all pages in the context:
    *
    * ```js
@@ -6927,6 +7031,8 @@ export interface BrowserContext {
    * See [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
    * for page-only version.
    *
+   * **Usage**
+   *
    * An example of exposing page URL to all frames in all pages in the context:
    *
    * ```js
@@ -6979,6 +7085,8 @@ export interface BrowserContext {
    *
    * The script is evaluated after the document was created but before any of its scripts were run. This is useful to
    * amend the JavaScript environment, e.g. to seed `Math.random`.
+   *
+   * **Usage**
    *
    * An example of overriding `Math.random` before the page loads:
    *
@@ -7394,6 +7502,8 @@ export interface BrowserContext {
    * can be obtained via
    * [browserContext.cookies([urls])](https://playwright.dev/docs/api/class-browsercontext#browser-context-cookies).
    *
+   * **Usage**
+   *
    * ```js
    * await browserContext.addCookies([cookieObject1, cookieObject2]);
    * ```
@@ -7461,6 +7571,8 @@ export interface BrowserContext {
   /**
    * Clears all permission overrides for the browser context.
    *
+   * **Usage**
+   *
    * ```js
    * const context = await browser.newContext();
    * await context.grantPermissions(['clipboard-read']);
@@ -7493,6 +7605,8 @@ export interface BrowserContext {
    *
    * See [page.exposeFunction(name, callback)](https://playwright.dev/docs/api/class-page#page-expose-function) for
    * page-only version.
+   *
+   * **Usage**
    *
    * An example of adding a `sha256` function to all pages in the context:
    *
@@ -7582,6 +7696,8 @@ export interface BrowserContext {
    * will not intercept requests intercepted by Service Worker. See
    * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when
    * using request interception by setting `Browser.newContext.serviceWorkers` to `'block'`.
+   *
+   * **Usage**
    *
    * An example of a naive handler that aborts all image requests:
    *
@@ -7722,6 +7838,8 @@ export interface BrowserContext {
 
   /**
    * Sets the context's geolocation. Passing `null` or `undefined` emulates position unavailable.
+   *
+   * **Usage**
    *
    * ```js
    * await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
@@ -8068,7 +8186,7 @@ export interface JSHandle<T = any> {
    * If `pageFunction` returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and return its
    * value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const tweetHandle = await page.$('.tweet .retweets');
@@ -8087,7 +8205,7 @@ export interface JSHandle<T = any> {
    * If `pageFunction` returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and return its
    * value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const tweetHandle = await page.$('.tweet .retweets');
@@ -8152,6 +8270,8 @@ export interface JSHandle<T = any> {
 
   /**
    * The method returns a map with **own property names** as keys and JSHandle instances for the property values.
+   *
+   * **Usage**
    *
    * ```js
    * const handle = await page.evaluateHandle(() => ({window, document}));
@@ -8254,7 +8374,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [elementHandle.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const tweetHandle = await page.$('.tweet');
@@ -8278,7 +8398,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [elementHandle.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const tweetHandle = await page.$('.tweet');
@@ -8302,7 +8422,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [elementHandle.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const tweetHandle = await page.$('.tweet');
@@ -8326,7 +8446,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [elementHandle.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const tweetHandle = await page.$('.tweet');
@@ -8351,7 +8471,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [elementHandle.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```html
    * <div class="feed">
@@ -8381,7 +8501,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [elementHandle.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```html
    * <div class="feed">
@@ -8411,7 +8531,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [elementHandle.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```html
    * <div class="feed">
@@ -8441,7 +8561,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [elementHandle.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```html
    * <div class="feed">
@@ -8470,6 +8590,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the
    * function will throw.
    *
+   * **Usage**
+   *
    * ```js
    * await page.setContent(`<div><span></span></div>`);
    * const div = await page.$('div');
@@ -8492,6 +8614,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * or become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the
    * method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the
    * function will throw.
+   *
+   * **Usage**
    *
    * ```js
    * await page.setContent(`<div><span></span></div>`);
@@ -8516,6 +8640,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the
    * function will throw.
    *
+   * **Usage**
+   *
    * ```js
    * await page.setContent(`<div><span></span></div>`);
    * const div = await page.$('div');
@@ -8538,6 +8664,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * or become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the
    * method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the
    * function will throw.
+   *
+   * **Usage**
    *
    * ```js
    * await page.setContent(`<div><span></span></div>`);
@@ -8566,6 +8694,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * Assuming the page is static, it is safe to use bounding box coordinates to perform input. For example, the
    * following snippet should click the center of the element.
+   *
+   * **Usage**
    *
    * ```js
    * const box = await elementHandle.boundingBox();
@@ -8803,6 +8933,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element,
    * `click` is dispatched. This is equivalent to calling
    * [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
+   *
+   * **Usage**
    *
    * ```js
    * await elementHandle.dispatchEvent('click');
@@ -9156,6 +9288,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * Triggers a `change` and `input` event once all the provided options have been selected.
    *
+   * **Usage**
+   *
    * ```js
    * // single selection matching the value
    * handle.selectOption('blue');
@@ -9432,6 +9566,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * To press a special key, like `Control` or `ArrowDown`, use
    * [elementHandle.press(key[, options])](https://playwright.dev/docs/api/class-elementhandle#element-handle-press).
    *
+   * **Usage**
+   *
    * ```js
    * await elementHandle.type('Hello'); // Types instantly
    * await elementHandle.type('World', {delay: 100}); // Types slower, like a user
@@ -9570,7 +9706,7 @@ export interface Locator {
    * If `pageFunction` returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and return its
    * value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const tweets = page.locator('.tweet .retweets');
@@ -9592,7 +9728,7 @@ export interface Locator {
    * If `pageFunction` returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and return its
    * value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const tweets = page.locator('.tweet .retweets');
@@ -9614,7 +9750,7 @@ export interface Locator {
    * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const elements = page.locator('div');
@@ -9633,7 +9769,7 @@ export interface Locator {
    * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all)
    * would wait for the promise to resolve and return its value.
    *
-   * Examples:
+   * **Usage**
    *
    * ```js
    * const elements = page.locator('div');
@@ -9689,6 +9825,8 @@ export interface Locator {
    *
    * Assuming the page is static, it is safe to use bounding box coordinates to perform input. For example, the
    * following snippet should click the center of the element.
+   *
+   * **Usage**
    *
    * ```js
    * const box = await element.boundingBox();
@@ -9968,6 +10106,8 @@ export interface Locator {
    * `click` is dispatched. This is equivalent to calling
    * [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
    *
+   * **Usage**
+   *
    * ```js
    * await element.dispatchEvent('click');
    * ```
@@ -10009,6 +10149,8 @@ export interface Locator {
   /**
    * This method drags the locator to another target locator or target position. It will first move to the source
    * element, perform a `mousedown`, then move to the target element or position and perform a `mouseup`.
+   *
+   * **Usage**
    *
    * ```js
    * const source = page.locator('#source');
@@ -10153,6 +10295,8 @@ export interface Locator {
    * This method narrows existing locator according to the options, for example filters by text. It can be chained to
    * filter multiple times.
    *
+   * **Usage**
+   *
    * ```js
    * const rowLocator = page.locator('tr');
    * // ...
@@ -10201,6 +10345,8 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * **Usage**
+   *
    * When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
    * in that iframe:
    *
@@ -10773,6 +10919,8 @@ export interface Locator {
    *
    * Triggers a `change` and `input` event once all the provided options have been selected.
    *
+   * **Usage**
+   *
    * ```js
    * // single selection matching the value
    * element.selectOption('blue');
@@ -11058,6 +11206,8 @@ export interface Locator {
    * To press a special key, like `Control` or `ArrowDown`, use
    * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press).
    *
+   * **Usage**
+   *
    * ```js
    * await element.type('Hello'); // Types instantly
    * await element.type('World', {delay: 100}); // Types slower, like a user
@@ -11157,6 +11307,8 @@ export interface Locator {
    * If target element already satisfies the condition, the method returns immediately. Otherwise, waits for up to
    * `timeout` milliseconds until the condition is met.
    *
+   * **Usage**
+   *
    * ```js
    * const orderSent = page.locator('#order-sent');
    * await orderSent.waitFor();
@@ -11211,6 +11363,8 @@ export interface BrowserType<Unused = {}> {
    *
    * > NOTE: Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
    *
+   * **Usage**
+   *
    * ```js
    * const browser = await playwright.chromium.connectOverCDP('http://localhost:9222');
    * const defaultContext = browser.contexts()[0];
@@ -11232,6 +11386,8 @@ export interface BrowserType<Unused = {}> {
    * [browser.contexts()](https://playwright.dev/docs/api/class-browser#browser-contexts).
    *
    * > NOTE: Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
+   *
+   * **Usage**
    *
    * ```js
    * const browser = await playwright.chromium.connectOverCDP('http://localhost:9222');
@@ -11272,6 +11428,8 @@ export interface BrowserType<Unused = {}> {
 
   /**
    * Returns the browser instance.
+   *
+   * **Usage**
    *
    * You can use `ignoreDefaultArgs` to filter out `--mute-audio` from default arguments:
    *
@@ -11712,6 +11870,8 @@ export interface BrowserType<Unused = {}> {
    * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect),
    * which requires the major/minor client/server version to match (1.2.3 → is compatible with 1.2.x).
    *
+   * **Usage**
+   *
    * Launches browser server that client can connect to. An example of launching a browser executable and connecting to
    * it later:
    *
@@ -11987,6 +12147,8 @@ export interface Accessibility {
    * > NOTE: The Chromium accessibility tree contains nodes that go unused on most platforms and by most screen readers.
    * Playwright will discard them as well for an easier to process tree, unless `interestingOnly` is set to `false`.
    *
+   * **Usage**
+   *
    * An example of dumping the entire accessibility tree:
    *
    * ```js
@@ -12249,7 +12411,9 @@ export interface ElectronApplication {
   context(): BrowserContext;
 
   /**
-   * Convenience method that waits for the first application window to be opened. Typically your script will start with:
+   * Convenience method that waits for the first application window to be opened.
+   *
+   * **Usage**
    *
    * ```js
    *   const electronApp = await electron.launch({
@@ -12509,6 +12673,8 @@ export interface Android {
 
   /**
    * Launches Playwright Android server that clients can connect to. See the following example:
+   *
+   * **Usage**
    *
    * Server Side:
    *
@@ -13723,9 +13889,10 @@ export interface APIRequestContext {
 
   /**
    * Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and
-   * update context cookies from the response. The method will automatically follow redirects.
+   * update context cookies from the response. The method will automatically follow redirects. JSON objects can be
+   * passed directly to the request.
    *
-   * JSON objects can be passed directly to the request:
+   * **Usage**
    *
    * ```js
    * await request.fetch('https://example.com/api/createBook', {
@@ -13848,6 +14015,8 @@ export interface APIRequestContext {
    * Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its
    * response. The method will populate request cookies from the context and update context cookies from the response.
    * The method will automatically follow redirects.
+   *
+   * **Usage**
    *
    * Request parameters can be configured with `params` option, they will be serialized into the URL search parameters:
    *
@@ -14097,6 +14266,8 @@ export interface APIRequestContext {
    * Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its
    * response. The method will populate request cookies from the context and update context cookies from the response.
    * The method will automatically follow redirects.
+   *
+   * **Usage**
    *
    * JSON objects can be passed directly to the request:
    *
@@ -14500,6 +14671,8 @@ export interface Browser extends EventEmitter {
   /**
    * Returns an array of all open browser contexts. In a newly created browser, this will return zero browser contexts.
    *
+   * **Usage**
+   *
    * ```js
    * const browser = await pw.webkit.launch();
    * console.log(browser.contexts().length); // prints `0`
@@ -14532,6 +14705,8 @@ export interface Browser extends EventEmitter {
    * is done with the [BrowserContext], and before calling
    * [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close). This will ensure the `context` is
    * closed gracefully and any artifacts—like HARs and videos—are fully flushed and saved.
+   *
+   * **Usage**
    *
    * ```js
    * (async () => {
@@ -14938,6 +15113,8 @@ export interface Browser extends EventEmitter {
    * [browser.startTracing([page, options])](https://playwright.dev/docs/api/class-browser#browser-start-tracing) and
    * [browser.stopTracing()](https://playwright.dev/docs/api/class-browser#browser-stop-tracing) to create a trace file
    * that can be opened in Chrome DevTools performance panel.
+   *
+   * **Usage**
    *
    * ```js
    * await browser.startTracing(page, {path: 'trace.json'});
@@ -16073,6 +16250,8 @@ export interface Keyboard {
   /**
    * Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress` events.
    *
+   * **Usage**
+   *
    * ```js
    * page.keyboard.insertText('嗨');
    * ```
@@ -16103,6 +16282,8 @@ export interface Keyboard {
    * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When specified with the
    * modifier, modifier is pressed and being held while the subsequent key is being pressed.
    *
+   * **Usage**
+   *
    * ```js
    * const page = await browser.newPage();
    * await page.goto('https://keycode.info');
@@ -16132,6 +16313,8 @@ export interface Keyboard {
    *
    * To press a special key, like `Control` or `ArrowDown`, use
    * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
+   *
+   * **Usage**
    *
    * ```js
    * await page.keyboard.type('Hello'); // Types instantly
@@ -16373,6 +16556,8 @@ export interface Request {
   /**
    * The method returns `null` unless this request has failed, as reported by `requestfailed` event.
    *
+   * **Usage**
+   *
    * Example of logging of all the failed requests:
    *
    * ```js
@@ -16460,6 +16645,8 @@ export interface Request {
    * by `redirectedFrom()` and `redirectedTo()` methods. When multiple server redirects has happened, it is possible to
    * construct the whole redirect chain by repeatedly calling `redirectedFrom()`.
    *
+   * **Usage**
+   *
    * For example, if the website `http://example.com` redirects to `https://example.com`:
    *
    * ```js
@@ -16479,6 +16666,8 @@ export interface Request {
 
   /**
    * New request issued by the browser if the server responded with redirect.
+   *
+   * **Usage**
    *
    * This method is the opposite of
    * [request.redirectedFrom()](https://playwright.dev/docs/api/class-request#request-redirected-from):
@@ -16540,6 +16729,8 @@ export interface Request {
    * Returns resource timing information for given request. Most of the timing values become available upon the
    * response, `responseEnd` becomes available when request finishes. Find more information at
    * [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming).
+   *
+   * **Usage**
    *
    * ```js
    * const [request] = await Promise.all([
@@ -16796,6 +16987,8 @@ export interface Route {
   /**
    * Continues route's request with optional overrides.
    *
+   * **Usage**
+   *
    * ```js
    * await page.route('**\/*', (route, request) => {
    *   // Override headers
@@ -16837,6 +17030,8 @@ export interface Route {
    * last registered route can always override all the previous ones. In the example below, request will be handled by
    * the bottom-most handler first, then it'll fall back to the previous one and in the end will be aborted by the first
    * registered route.
+   *
+   * **Usage**
    *
    * ```js
    * await page.route('**\/*', route => {
@@ -16921,6 +17116,8 @@ export interface Route {
   /**
    * Fulfills route's request with given response.
    *
+   * **Usage**
+   *
    * An example of fulfilling all requests with 404 responses:
    *
    * ```js
@@ -16987,6 +17184,8 @@ export interface Route {
  */
 export interface Selectors {
   /**
+   * **Usage**
+   *
    * An example of registering selector engine that queries elements based on a tag name:
    *
    * ```js
@@ -17090,6 +17289,8 @@ export interface Tracing {
   /**
    * Start tracing.
    *
+   * **Usage**
+   *
    * ```js
    * await context.tracing.start({ screenshots: true, snapshots: true });
    * const page = await context.newPage();
@@ -17136,6 +17337,8 @@ export interface Tracing {
    * multiple trace chunks with
    * [tracing.startChunk([options])](https://playwright.dev/docs/api/class-tracing#tracing-start-chunk) and
    * [tracing.stopChunk([options])](https://playwright.dev/docs/api/class-tracing#tracing-stop-chunk).
+   *
+   * **Usage**
    *
    * ```js
    * await context.tracing.start({ screenshots: true, snapshots: true });

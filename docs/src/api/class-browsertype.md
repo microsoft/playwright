@@ -136,6 +136,8 @@ The default browser context is accessible via [`method: Browser.contexts`].
 Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
 :::
 
+**Usage**
+
 ```js
 const browser = await playwright.chromium.connectOverCDP('http://localhost:9222');
 const defaultContext = browser.contexts()[0];
@@ -217,6 +219,8 @@ A path where Playwright expects to find a bundled browser executable.
 - returns: <[Browser]>
 
 Returns the browser instance.
+
+**Usage**
 
 You can use [`option: ignoreDefaultArgs`] to filter out `--mute-audio` from default arguments:
 
@@ -323,6 +327,8 @@ use a temporary directory instead.
 - returns: <[BrowserServer]>
 
 Returns the browser app instance. You can connect to it via [`method: BrowserType.connect`], which requires the major/minor client/server version to match (1.2.3 → is compatible with 1.2.x).
+
+**Usage**
 
 Launches browser server that client can connect to. An example of launching a browser executable and connecting to it
 later:

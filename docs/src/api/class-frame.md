@@ -342,6 +342,8 @@ The snippet below dispatches the `click` event on the element. Regardless of the
 is dispatched. This is equivalent to calling
 [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
 
+**Usage**
+
 ```js
 await frame.dispatchEvent('button#submit', 'click');
 ```
@@ -482,7 +484,7 @@ elements match the selector, the method throws an error.
 If [`param: expression`] returns a [Promise], then [`method: Frame.evalOnSelector`] would wait for the promise to resolve and return its
 value.
 
-Examples:
+**Usage**
 
 ```js
 const searchValue = await frame.$eval('#search', el => el.value);
@@ -549,7 +551,7 @@ more details.
 If [`param: expression`] returns a [Promise], then [`method: Frame.evalOnSelectorAll`] would wait for the promise to resolve and return its
 value.
 
-Examples:
+**Usage**
 
 ```js
 const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
@@ -595,6 +597,8 @@ resolve and return its value.
 If the function passed to the [`method: Frame.evaluate`] returns a non-[Serializable] value, then
 [`method: Frame.evaluate`] returns `undefined`. Playwright also supports transferring some
 additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
+
+**Usage**
 
 ```js
 const result = await frame.evaluate(([x, y]) => {
@@ -703,6 +707,8 @@ The only difference between [`method: Frame.evaluate`] and [`method: Frame.evalu
 
 If the function, passed to the [`method: Frame.evaluateHandle`], returns a [Promise], then
 [`method: Frame.evaluateHandle`] would wait for the promise to resolve and return its value.
+
+**Usage**
 
 ```js
 const aWindowHandle = await frame.evaluateHandle(() => Promise.resolve(window));
@@ -853,6 +859,8 @@ frame.
 
 This method throws an error if the frame has been detached before `frameElement()` returns.
 
+**Usage**
+
 ```js
 const frameElement = await frame.frameElement();
 const contentFrame = await frameElement.contentFrame();
@@ -888,8 +896,11 @@ Console.WriteLine(frame == contentFrame); // -> True
 - returns: <[FrameLocator]>
 
 When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
-in that iframe. Following snippet locates element with text "Submit" in the iframe with id `my-frame`,
-like `<iframe id="my-frame">`:
+in that iframe.
+
+**Usage**
+
+Following snippet locates element with text "Submit" in the iframe with id `my-frame`, like `<iframe id="my-frame">`:
 
 ```js
 const locator = frame.frameLocator('#my-iframe').getByText('Submit');
@@ -1387,6 +1398,8 @@ Returns the array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected.
 
+**Usage**
+
 ```js
 // single selection matching the value
 frame.selectOption('select#colors', 'blue');
@@ -1605,6 +1618,8 @@ send fine-grained keyboard events. To fill values in form fields, use [`method: 
 
 To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].
 
+**Usage**
+
 ```js
 await frame.type('#mytextarea', 'Hello'); // Types instantly
 await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
@@ -1706,6 +1721,8 @@ Returns frame's url.
 - returns: <[JSHandle]>
 
 Returns when the [`param: expression`] returns a truthy value, returns that value.
+
+**Usage**
 
 The [`method: Frame.waitForFunction`] can be used to observe viewport size change:
 
@@ -1842,6 +1859,8 @@ Waits for the required load state to be reached.
 This returns when the frame reaches a required load state, `load` by default. The navigation must have been committed
 when this method is called. If current document has already reached the required state, resolves immediately.
 
+**Usage**
+
 ```js
 await frame.click('button'); // Click triggers navigation.
 await frame.waitForLoadState(); // Waits for 'load' state by default.
@@ -1883,6 +1902,8 @@ await frame.WaitForLoadStateAsync(); // Defaults to LoadState.Load
 Waits for the frame navigation and returns the main resource response. In case of multiple redirects, the navigation
 will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to
 History API usage, the navigation will resolve with `null`.
+
+**Usage**
 
 This method waits for the frame to navigate to a new URL. It is useful for when you run code which will indirectly cause
 the frame to navigate. Consider this example:
@@ -1954,6 +1975,8 @@ Wait for the [`param: selector`] to satisfy [`option: state`] option (either app
 visible/hidden). If at the moment of calling the method [`param: selector`] already satisfies the condition, the method
 will return immediately. If the selector doesn't satisfy the condition for the [`option: timeout`] milliseconds, the
 function will throw.
+
+**Usage**
 
 This method works across navigations:
 
@@ -2082,6 +2105,8 @@ A timeout to wait for
 * since: v1.11
 
 Waits for the frame to navigate to the given URL.
+
+**Usage**
 
 ```js
 await frame.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation
