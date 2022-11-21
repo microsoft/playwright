@@ -14,12 +14,16 @@ Creates new instances of [APIRequestContext].
 
 ### option: APIRequest.newContext.useragent = %%-context-option-useragent-%%
 * since: v1.16
+
 ### option: APIRequest.newContext.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
 * since: v1.16
+
 ### option: APIRequest.newContext.httpCredentials = %%-context-option-httpcredentials-%%
 * since: v1.16
+
 ### option: APIRequest.newContext.proxy = %%-browser-option-proxy-%%
 * since: v1.16
+
 ### option: APIRequest.newContext.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 * since: v1.16
 
@@ -29,7 +33,6 @@ Creates new instances of [APIRequestContext].
 
 Maximum time in milliseconds to wait for the response. Defaults to
 `30000` (30 seconds). Pass `0` to disable timeout.
-
 
 ### option: APIRequest.newContext.baseURL
 * since: v1.16

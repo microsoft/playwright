@@ -863,7 +863,8 @@ function generateSourceCodeComment(spec) {
       node.text = '> NOTE: ' + node.text;
     }
   });
-  return md.render(comments, 120);
+  // 5 is a typical member doc offset.
+  return md.render(comments, { maxColumns: 120 - 5, omitLastCR: true, flattenText: true });
 }
 
 /**

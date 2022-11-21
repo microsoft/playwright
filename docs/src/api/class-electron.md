@@ -91,33 +91,48 @@ Maximum time in milliseconds to wait for the application to start. Defaults to `
 
 ### option: Electron.launch.acceptdownloads = %%-context-option-acceptdownloads-%%
 * since: v1.12
+
 ### option: Electron.launch.bypassCSP = %%-context-option-bypasscsp-%%
 * since: v1.12
+
 ### option: Electron.launch.colorScheme = %%-context-option-colorscheme-%%
 * since: v1.12
+
 ### option: Electron.launch.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
 * since: v1.12
+
 ### option: Electron.launch.geolocation = %%-context-option-geolocation-%%
 * since: v1.12
+
 ### option: Electron.launch.httpcredentials = %%-context-option-httpcredentials-%%
 * since: v1.12
+
 ### option: Electron.launch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 * since: v1.12
+
 ### option: Electron.launch.locale = %%-context-option-locale-%%
 * since: v1.12
+
 ### option: Electron.launch.offline = %%-context-option-offline-%%
 * since: v1.12
+
 ### option: Electron.launch.recordhar = %%-context-option-recordhar-%%
 * since: v1.12
+
 ### option: Electron.launch.recordharpath = %%-context-option-recordhar-path-%%
 * since: v1.12
+
 ### option: Electron.launch.recordHarOmitContent = %%-context-option-recordhar-omit-content-%%
 * since: v1.12
+
 ### option: Electron.launch.recordvideo = %%-context-option-recordvideo-%%
 * since: v1.12
+
 ### option: Electron.launch.recordvideodir = %%-context-option-recordvideo-dir-%%
 * since: v1.12
+
 ### option: Electron.launch.recordvideosize = %%-context-option-recordvideo-size-%%
 * since: v1.12
+
 ### option: Electron.launch.timezoneId = %%-context-option-timezoneid-%%
 * since: v1.12

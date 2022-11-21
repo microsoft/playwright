@@ -263,7 +263,6 @@ await context.Tracing.StopChunkAsync(new()
 
 Trace name to be shown in the Trace Viewer.
 
-
 ## async method: Tracing.stop
 * since: v1.12
 
@@ -274,8 +273,6 @@ Stop tracing.
 - `path` <[path]>
 
 Export trace into the file with the given path.
-
-
 
 ## async method: Tracing.stopChunk
 * since: v1.15

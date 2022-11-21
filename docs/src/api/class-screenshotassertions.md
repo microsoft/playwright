@@ -48,8 +48,6 @@ Snapshot name.
 ### option: ScreenshotAssertions.toMatchSnapshot#1.threshold = %%-assertions-threshold-%%
 * since: v1.22
 
-
-
 ## method: ScreenshotAssertions.toMatchSnapshot#2
 * since: v1.22
 
@@ -87,4 +85,3 @@ Snapshot name. If not passed, the test name and ordinals are used when called mu
 
 ### option: ScreenshotAssertions.toMatchSnapshot#2.threshold = %%-assertions-threshold-%%
 * since: v1.22
-
