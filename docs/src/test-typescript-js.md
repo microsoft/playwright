@@ -34,7 +34,7 @@ test('example', async ({ page }) => {
 
 You can opt into using [ECMAScript modules](https://nodejs.org/api/esm.html) by setting `type: "module"` in your `package.json` file. Playwright Test will switch to the ESM mode once it reads the `playwright.config.ts` file, so make sure you have one.
 
-Playwright Test follows the [experimental support for ESM in TypeScript](https://www.typescriptlang.org/docs/handbook/esm-node.html) and, according to the specification, **requires an extension** when importing from a module, either `'.js'` or `'.ts'`.
+Playwright Test follows the [experimental support for ESM in TypeScript](https://www.typescriptlang.org/docs/handbook/esm-node.html) and, according to the specification, **requires a file extension** when importing from a module, either `'.js'` or `'.ts'`.
 
 First, enable modules in your `package.json`:
 
