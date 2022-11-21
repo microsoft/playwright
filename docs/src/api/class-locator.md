@@ -488,17 +488,17 @@ boolean divCounts = (boolean) elements.evaluateAll("(divs, min) => divs.length >
 
 ```python async
 elements = page.locator("div")
-div_counts = await elements("(divs, min) => divs.length >= min", 10)
+div_counts = await elements.evaluate_all("(divs, min) => divs.length >= min", 10)
 ```
 
 ```python sync
 elements = page.locator("div")
-div_counts = elements("(divs, min) => divs.length >= min", 10)
+div_counts = elements.evaluate_all("(divs, min) => divs.length >= min", 10)
 ```
 
 ```csharp
 var elements = page.Locator("div");
-var divsCount = await elements.EvaluateAll<bool>("(divs, min) => divs.length >= min", 10);
+var divsCount = await elements.EvaluateAllAsync<bool>("(divs, min) => divs.length >= min", 10);
 ```
 
 ### param: Locator.evaluateAll.expression = %%-evaluate-expression-%%
