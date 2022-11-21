@@ -673,13 +673,13 @@ export class Runner {
   }
 }
 
-function filterOnly(suite: Suite, setupFiles: Set<string>) {
+function filterOnly(suite: Suite, doNotFilterFiles: Set<string>) {
   const suiteFilter = (suite: Suite) => suite._only;
-  const testFilter = (test: TestCase) => setupFiles.has(test._requireFile) || test._only;
+  const testFilter = (test: TestCase) => doNotFilterFiles.has(test._requireFile) || test._only;
   return filterSuiteWithOnlySemantics(suite, suiteFilter, testFilter);
 }
 
-function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[], setupFiles: Set<string>) {
+function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[], doNotFilterFiles: Set<string>) {
   const filterWithLine = !!focusedTestFileLines.find(f => f.line !== null);
   if (!filterWithLine)
     return;
@@ -694,7 +694,7 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[
     return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
   };
   // Project setup files are always included.
-  const testFilter = (test: TestCase) => setupFiles.has(test._requireFile) || testFileLineMatches(test.location.file, test.location.line, test.location.column);
+  const testFilter = (test: TestCase) => doNotFilterFiles.has(test._requireFile) || testFileLineMatches(test.location.file, test.location.line, test.location.column);
   return filterSuite(suite, suiteFilter, testFilter);
 }
 
