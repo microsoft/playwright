@@ -670,14 +670,20 @@ export function getAriaPressed(element: Element): boolean | 'mixed' {
 }
 
 export const kAriaExpandedRoles = ['application', 'button', 'checkbox', 'combobox', 'gridcell', 'link', 'listbox', 'menuitem', 'row', 'rowheader', 'tab', 'treeitem', 'columnheader', 'menuitemcheckbox', 'menuitemradio', 'rowheader', 'switch'];
-export function getAriaExpanded(element: Element): boolean {
+export function getAriaExpanded(element: Element): boolean | 'none' {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-expanded
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
   if (element.tagName === 'DETAILS')
     return (element as HTMLDetailsElement).open;
-  if (kAriaExpandedRoles.includes(getAriaRole(element) || ''))
-    return getAriaBoolean(element.getAttribute('aria-expanded')) === true;
-  return false;
+  if (kAriaExpandedRoles.includes(getAriaRole(element) || '')) {
+    const expanded = element.getAttribute('aria-expanded');
+    if (expanded === null)
+      return 'none';
+    if (expanded === 'true')
+      return true;
+    return false;
+  }
+  return 'none';
 }
 
 export const kAriaLevelRoles = ['heading', 'listitem', 'row', 'treeitem'];
