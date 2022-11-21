@@ -328,8 +328,10 @@ export class Runner {
 
     // Filter only.
     if (!options.listOnly) {
-      const hasSetupOnly = preprocessRoot.allTests().some(test => test._only && setupFiles.has(test._requireFile));
-      filterOnly(preprocessRoot, hasSetupOnly ? new Set() : setupFiles);
+      if (preprocessRoot.allTests().some(test => test._only)) {
+        const hasSetupOnly = preprocessRoot.allTests().some(test => test._only && setupFiles.has(test._requireFile));
+        filterOnly(preprocessRoot, hasSetupOnly ? new Set() : setupFiles);
+      }
     }
 
     // Generate projects.
