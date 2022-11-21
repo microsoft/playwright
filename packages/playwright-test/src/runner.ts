@@ -327,8 +327,11 @@ export class Runner {
     }
 
     // Filter only.
-    if (!options.listOnly)
-      filterOnly(preprocessRoot);
+    if (!options.listOnly) {
+      const hasSetupOnly = preprocessRoot.allTests().some(test => test._only && setupFiles.has(test._requireFile));
+      console.error('hasSetupOnly = ' + hasSetupOnly);
+      filterOnly(preprocessRoot, hasSetupOnly ? new Set() : setupFiles);
+    }
 
     // Generate projects.
     const fileSuites = new Map<string, Suite>();
@@ -671,9 +674,9 @@ export class Runner {
   }
 }
 
-function filterOnly(suite: Suite) {
+function filterOnly(suite: Suite, setupFiles: Set<string>) {
   const suiteFilter = (suite: Suite) => suite._only;
-  const testFilter = (test: TestCase) => test._only;
+  const testFilter = (test: TestCase) => setupFiles.has(test._requireFile) || test._only;
   return filterSuiteWithOnlySemantics(suite, suiteFilter, testFilter);
 }
 
