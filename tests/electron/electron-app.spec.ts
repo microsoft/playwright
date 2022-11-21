@@ -33,6 +33,24 @@ test('should fire close event', async ({ playwright }) => {
   expect(events.join('|')).toBe('context|application');
 });
 
+test('should dispatch ready event', async ({ playwright }) => {
+  const electronApp = await playwright._electron.launch({
+    args: [path.join(__dirname, 'electron-app-ready-event.js')],
+  });
+  try {
+    const events = await electronApp.evaluate(() => globalThis.__playwrightLog);
+    expect(events).toEqual([
+      'isReady == false',
+      'will-finish-launching fired',
+      'ready fired',
+      'whenReady resolved',
+      'isReady == true',
+    ]);
+  } finally {
+    await electronApp.close();
+  }
+});
+
 test('should script application', async ({ electronApp }) => {
   const appPath = await electronApp.evaluate(async ({ app }) => app.getAppPath());
   expect(appPath).toBe(path.resolve(__dirname));
