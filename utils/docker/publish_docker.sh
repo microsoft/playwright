@@ -31,14 +31,6 @@ if [[ -z "${GITHUB_SHA}" ]]; then
   exit 1
 fi
 
-BIONIC_TAGS=(
-  "next-bionic"
-  "v${PW_VERSION}-bionic"
-)
-if [[ "$RELEASE_CHANNEL" == "stable" ]]; then
-  BIONIC_TAGS+=("bionic")
-fi
-
 FOCAL_TAGS=(
   "next"
   "sha-${GITHUB_SHA}"
@@ -72,14 +64,12 @@ tag_and_push() {
 publish_docker_images_with_arch_suffix() {
   local FLAVOR="$1"
   local TAGS=()
-  if [[ "$FLAVOR" == "bionic" ]]; then
-    TAGS=("${BIONIC_TAGS[@]}")
-  elif [[ "$FLAVOR" == "focal" ]]; then
+  if [[ "$FLAVOR" == "focal" ]]; then
     TAGS=("${FOCAL_TAGS[@]}")
   elif [[ "$FLAVOR" == "jammy" ]]; then
     TAGS=("${JAMMY_TAGS[@]}")
   else
-    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'bionic', 'focal', or 'jammy'"
+    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'focal', or 'jammy'"
     exit 1
   fi
   local ARCH="$2"
@@ -100,14 +90,12 @@ publish_docker_images_with_arch_suffix() {
 publish_docker_manifest () {
   local FLAVOR="$1"
   local TAGS=()
-  if [[ "$FLAVOR" == "bionic" ]]; then
-    TAGS=("${BIONIC_TAGS[@]}")
-  elif [[ "$FLAVOR" == "focal" ]]; then
+  if [[ "$FLAVOR" == "focal" ]]; then
     TAGS=("${FOCAL_TAGS[@]}")
   elif [[ "$FLAVOR" == "jammy" ]]; then
     TAGS=("${JAMMY_TAGS[@]}")
   else
-    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'bionic', 'focal', or 'jammy'"
+    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'focal', or 'jammy'"
     exit 1
   fi
 
@@ -125,9 +113,6 @@ publish_docker_manifest () {
     docker manifest push "${BASE_IMAGE_TAG}"
   done
 }
-
-publish_docker_images_with_arch_suffix bionic amd64
-publish_docker_manifest bionic amd64
 
 publish_docker_images_with_arch_suffix focal amd64
 publish_docker_images_with_arch_suffix focal arm64

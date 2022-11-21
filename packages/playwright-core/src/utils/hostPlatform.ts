@@ -23,8 +23,8 @@ export type HostPlatform = 'win64' |
                            'mac10.15' |
                            'mac11' | 'mac11-arm64' |
                            'mac12' | 'mac12-arm64' |
-                           'ubuntu18.04' | 'ubuntu18.04-arm64' |
                            'ubuntu20.04' | 'ubuntu20.04-arm64' |
+                           'ubuntu22.04' | 'ubuntu22.04-arm64' |
                            'debian11' |
                            'generic-linux' | 'generic-linux-arm64' |
                            '<unknown>';
