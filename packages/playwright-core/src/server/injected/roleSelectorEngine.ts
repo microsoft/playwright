@@ -72,6 +72,11 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string) {
         validateSupportedRole(attr.name, kAriaExpandedRoles, role);
         validateSupportedValues(attr, [true, false]);
         validateSupportedOp(attr, ['<truthy>', '=']);
+        if (attr.op === '<truthy>') {
+          // Do not match "none" in "treeitem[expanded]".
+          attr.op = '=';
+          attr.value = true;
+        }
         break;
       }
       case 'level': {
