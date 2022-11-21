@@ -118,7 +118,8 @@ Optional argument to pass to [`param: expression`].
 - returns: <[Page]>
 
 Convenience method that waits for the first application window to be opened.
-Typically your script will start with:
+
+**Usage**
 
 ```js
   const electronApp = await electron.launch({
@@ -139,6 +140,8 @@ Returns the main process for this Electron Application.
 - returns: <[any]>
 
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy value. Will throw an error if the application is closed before the event is fired. Returns the event data value.
+
+**Usage**
 
 ```js
 const [window] = await Promise.all([

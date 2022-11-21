@@ -58,6 +58,8 @@ The Chromium accessibility tree contains nodes that go unused on most platforms 
 will discard them as well for an easier to process tree, unless [`option: interestingOnly`] is set to `false`.
 :::
 
+**Usage**
+
 An example of dumping the entire accessibility tree:
 
 ```js

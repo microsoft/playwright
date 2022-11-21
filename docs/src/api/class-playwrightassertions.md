@@ -84,6 +84,8 @@ By default, the timeout for assertions is set to 5 seconds.
 
 Creates a [APIResponseAssertions] object for the given [APIResponse].
 
+**Usage**
+
 ```java
 PlaywrightAssertions.assertThat(response).isOK();
 ```
@@ -104,6 +106,8 @@ PlaywrightAssertions.assertThat(response).isOK();
 - returns: <[LocatorAssertions]>
 
 Creates a [LocatorAssertions] object for the given [Locator].
+
+**Usage**
 
 ```java
 PlaywrightAssertions.assertThat(locator).isVisible();
@@ -130,6 +134,8 @@ await Expect(locator).ToBeVisibleAsync();
 
 Creates a [PageAssertions] object for the given [Page].
 
+**Usage**
+
 ```java
 PlaywrightAssertions.assertThat(page).hasTitle("News");
 ```
@@ -149,6 +155,8 @@ await Expect(page).ToHaveTitleAsync("News");
 * langs: java
 
 Changes default timeout for Playwright assertions from 5 seconds to the specified value.
+
+**Usage**
 
 ```java
 PlaywrightAssertions.setDefaultAssertionTimeout(30_000);

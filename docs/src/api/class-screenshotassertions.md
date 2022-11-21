@@ -14,6 +14,8 @@ expect(screenshot).toMatchSnapshot('landing-page.png');
 
 Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
 
+**Usage**
+
 ```js
 // Basic usage.
 expect(await page.screenshot()).toMatchSnapshot('landing-page.png');
@@ -52,6 +54,8 @@ Snapshot name.
 * since: v1.22
 
 Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
+
+**Usage**
 
 ```js
 // Basic usage and the file name is derived from the test name.

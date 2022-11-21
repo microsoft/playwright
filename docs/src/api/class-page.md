@@ -573,6 +573,8 @@ Adds a script which would be evaluated in one of the following scenarios:
 The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend
 the JavaScript environment, e.g. to seed `Math.random`.
 
+**Usage**
+
 An example of overriding `Math.random` before the page loads:
 
 ```js browser
@@ -896,6 +898,8 @@ The snippet below dispatches the `click` event on the element. Regardless of the
 is dispatched. This is equivalent to calling
 [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
 
+**Usage**
+
 ```js
 await page.dispatchEvent('button#submit', 'click');
 ```
@@ -991,6 +995,8 @@ This method drags the source element to the target element.
 It will first move to the source element, perform a `mousedown`,
 then move to the target element and perform a `mouseup`.
 
+**Usage**
+
 ```js
 await page.dragAndDrop('#source', '#target');
 // or specify exact positions relative to the top-left corners of the elements:
@@ -1070,6 +1076,8 @@ await Page.DragAndDropAsync("#source", "#target", new()
 * since: v1.8
 
 This method changes the `CSS media type` through the `media` argument, and/or the `'prefers-colors-scheme'` media feature, using the `colorScheme` argument.
+
+**Usage**
 
 ```js
 await page.evaluate(() => matchMedia('screen').matches);
@@ -1292,7 +1300,7 @@ The method finds an element matching the specified selector within the page and 
 If [`param: expression`] returns a [Promise], then [`method: Page.evalOnSelector`] would wait for the promise to resolve and
 return its value.
 
-Examples:
+**Usage**
 
 ```js
 const searchValue = await page.$eval('#search', el => el.value);
@@ -1360,7 +1368,7 @@ a first argument to [`param: expression`]. Returns the result of [`param: expres
 If [`param: expression`] returns a [Promise], then [`method: Page.evalOnSelectorAll`] would wait for the promise to resolve and
 return its value.
 
-Examples:
+**Usage**
 
 ```js
 const divCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
@@ -1406,6 +1414,8 @@ for the promise to resolve and return its value.
 If the function passed to the [`method: Page.evaluate`] returns a non-[Serializable] value, then
 [`method: Page.evaluate`] resolves to `undefined`. Playwright also supports transferring some
 additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
+
+**Usage**
 
 Passing argument to [`param: expression`]:
 
@@ -1520,6 +1530,8 @@ The only difference between [`method: Page.evaluate`] and [`method: Page.evaluat
 If the function passed to the [`method: Page.evaluateHandle`] returns a [Promise], then [`method: Page.evaluateHandle`] would wait for the
 promise to resolve and return its value.
 
+**Usage**
+
 ```js
 const aWindowHandle = await page.evaluateHandle(() => Promise.resolve(window));
 aWindowHandle; // Handle for the window object.
@@ -1628,6 +1640,8 @@ See [`method: BrowserContext.exposeBinding`] for the context-wide version.
 :::note
 Functions installed via [`method: Page.exposeBinding`] survive navigations.
 :::
+
+**Usage**
 
 An example of exposing page URL to all frames in a page:
 
@@ -1863,6 +1877,8 @@ See [`method: BrowserContext.exposeFunction`] for context-wide exposed function.
 Functions installed via [`method: Page.exposeFunction`] survive navigations.
 :::
 
+**Usage**
+
 An example of adding a `sha256` function to the page:
 
 ```js
@@ -2091,6 +2107,8 @@ Shortcut for main frame's [`method: Frame.focus`].
 
 Returns frame matching the specified criteria. Either `name` or `url` must be specified.
 
+**Usage**
+
 ```js
 const frame = page.frame('frame-name');
 ```
@@ -2159,7 +2177,11 @@ A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] ob
 - returns: <[FrameLocator]>
 
 When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
-in that iframe. Following snippet locates element with text "Submit" in the iframe with id `my-frame`,
+in that iframe.
+
+**Usage**
+
+Following snippet locates element with text "Submit" in the iframe with id `my-frame`,
 like `<iframe id="my-frame">`:
 
 ```js
@@ -2627,6 +2649,8 @@ By default, `page.pdf()` generates a pdf with modified colors for printing. Use 
 force rendering of exact colors.
 :::
 
+**Usage**
+
 ```js
 // Generates a PDF with 'screen' media type.
 await page.emulateMedia({media: 'screen'});
@@ -2831,6 +2855,8 @@ respective texts.
 Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When specified with the
 modifier, modifier is pressed and being held while the subsequent key is being pressed.
 
+**Usage**
+
 ```js
 const page = await browser.newPage();
 await page.goto('https://keycode.info');
@@ -2991,6 +3017,8 @@ The handler will only be called for the first url if the response is a redirect.
 :::note
 [`method: Page.route`] will not intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception by setting [`option: Browser.newContext.serviceWorkers`] to `'block'`.
 :::
+
+**Usage**
 
 An example of a naive handler that aborts all image requests:
 
@@ -3209,6 +3237,8 @@ Returns the array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected.
 
+**Usage**
+
 ```js
 // single selection matching the value
 page.selectOption('select#colors', 'blue');
@@ -3422,6 +3452,8 @@ In the case of multiple pages in a single browser, each page can have its own vi
 [`method: Page.setViewportSize`] will resize the page. A lot of websites don't expect phones to change size, so you should set the
 viewport size before navigating to the page. [`method: Page.setViewportSize`] will also reset `screen` size, use [`method: Browser.newContext`] with `screen` and `viewport` parameters if you need better control of these properties.
 
+**Usage**
+
 ```js
 const page = await browser.newPage();
 await page.setViewportSize({
@@ -3549,6 +3581,8 @@ Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in t
 fine-grained keyboard events. To fill values in form fields, use [`method: Page.fill`].
 
 To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].
+
+**Usage**
 
 ```js
 await page.type('#mytextarea', 'Hello'); // Types instantly
@@ -3747,6 +3781,8 @@ Receives the [Download] object and resolves to truthy value when the waiting sho
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
 value. Will throw an error if the page is closed before the event is fired. Returns the event data value.
 
+**Usage**
+
 ```js
 // Note that Promise.all prevents a race condition
 // between clicking and waiting for the event.
@@ -3808,6 +3844,8 @@ Receives the [FileChooser] object and resolves to truthy value when the waiting 
 - returns: <[JSHandle]>
 
 Returns when the [`param: expression`] returns a truthy value. It resolves to a JSHandle of the truthy value.
+
+**Usage**
 
 The [`method: Page.waitForFunction`] can be used to observe viewport size change:
 
@@ -3946,6 +3984,8 @@ Returns when the required load state has been reached.
 This resolves when the page reaches a required load state, `load` by default. The navigation must have been committed
 when this method is called. If current document has already reached the required state, resolves immediately.
 
+**Usage**
+
 ```js
 await page.getByRole('button').click(); // Click triggers navigation.
 await page.waitForLoadState(); // The promise resolves after 'load' event.
@@ -4036,6 +4076,8 @@ Waits for the main frame navigation and returns the main resource response. In c
 will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to
 History API usage, the navigation will resolve with `null`.
 
+**Usage**
+
 This resolves when the page navigates to a new URL or reloads. It is useful for when you run code which will indirectly
 cause the page to navigate. e.g. The click target has an `onclick` handler that triggers navigation from a `setTimeout`.
 Consider this example:
@@ -4124,6 +4166,8 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 - returns: <[Request]>
 
 Waits for the matching request and returns it. See [waiting for event](../events.md#waiting-for-event) for more details about events.
+
+**Usage**
 
 ```js
 // Note that Promise.all prevents a race condition
@@ -4248,6 +4292,8 @@ Receives the [Request] object and resolves to truthy value when the waiting shou
 
 Returns the matched response. See [waiting for event](../events.md#waiting-for-event) for more details about events.
 
+**Usage**
+
 ```js
 // Note that Promise.all prevents a race condition
 // between clicking and waiting for the response.
@@ -4364,6 +4410,8 @@ Wait for the [`param: selector`] to satisfy [`option: state`] option (either app
 visible/hidden). If at the moment of calling the method [`param: selector`] already satisfies the condition, the method
 will return immediately. If the selector doesn't satisfy the condition for the [`option: timeout`] milliseconds, the
 function will throw.
+
+**Usage**
 
 This method works across navigations:
 
@@ -4484,6 +4532,8 @@ Waits for the given [`param: timeout`] in milliseconds.
 Note that `page.waitForTimeout()` should only be used for debugging. Tests using the timer in production are going to be
 flaky. Use signals such as network events, selectors becoming visible and others instead.
 
+**Usage**
+
 ```js
 // wait for 1 second
 await page.waitForTimeout(1000);
@@ -4521,6 +4571,8 @@ A timeout to wait for
 * since: v1.11
 
 Waits for the main frame to navigate to the given URL.
+
+**Usage**
 
 ```js
 await page.click('a.delayed-navigation'); // Clicking the link will indirectly cause a navigation

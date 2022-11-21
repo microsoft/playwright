@@ -65,6 +65,8 @@ await context.Tracing.StopAsync(new()
 
 Start tracing.
 
+**Usage**
+
 ```js
 await context.tracing.start({ screenshots: true, snapshots: true });
 const page = await context.newPage();
@@ -160,6 +162,8 @@ Trace name to be shown in the Trace Viewer.
 * since: v1.15
 
 Start a new trace chunk. If you'd like to record multiple traces on the same [BrowserContext], use [`method: Tracing.start`] once, and then create multiple trace chunks with [`method: Tracing.startChunk`] and [`method: Tracing.stopChunk`].
+
+**Usage**
 
 ```js
 await context.tracing.start({ screenshots: true, snapshots: true });

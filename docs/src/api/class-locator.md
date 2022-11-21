@@ -47,6 +47,8 @@ Elements from child frames return the bounding box relative to the main frame, u
 Assuming the page is static, it is safe to use bounding box coordinates to perform input. For example, the following
 snippet should click the center of the element.
 
+**Usage**
+
 ```js
 const box = await element.boundingBox();
 await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
@@ -222,6 +224,8 @@ The snippet below dispatches the `click` event on the element. Regardless of the
 is dispatched. This is equivalent to calling
 [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
 
+**Usage**
+
 ```js
 await element.dispatchEvent('click');
 ```
@@ -313,6 +317,8 @@ Optional event-specific initialization properties.
 This method drags the locator to another target locator or target position. It will
 first move to the source element, perform a `mousedown`, then move to the target
 element or position and perform a `mouseup`.
+
+**Usage**
 
 ```js
 const source = page.locator('#source');
@@ -425,7 +431,7 @@ This method passes this handle as the first argument to [`param: expression`].
 If [`param: expression`] returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and return
 its value.
 
-Examples:
+**Usage**
 
 ```js
 const tweets = page.locator('.tweet .retweets');
@@ -474,7 +480,7 @@ a first argument to [`param: expression`]. Returns the result of [`param: expres
 If [`param: expression`] returns a [Promise], then [`method: Locator.evaluateAll`] would wait for the promise
 to resolve and return its value.
 
-Examples:
+**Usage**
 
 ```js
 const elements = page.locator('div');
@@ -568,6 +574,8 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 This method narrows existing locator according to the options, for example filters by text.
 It can be chained to filter multiple times.
 
+**Usage**
+
 ```js
 const rowLocator = page.locator('tr');
 // ...
@@ -637,6 +645,8 @@ Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus
 ## method: Locator.frameLocator
 * since: v1.17
 - returns: <[FrameLocator]>
+
+**Usage**
 
 When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
 in that iframe:
@@ -993,6 +1003,8 @@ Returns the array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected.
 
+**Usage**
+
 ```js
 // single selection matching the value
 element.selectOption('blue');
@@ -1175,6 +1187,8 @@ Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup`
 
 To press a special key, like `Control` or `ArrowDown`, use [`method: Locator.press`].
 
+**Usage**
+
 ```js
 await element.type('Hello'); // Types instantly
 await element.type('World', {delay: 100}); // Types slower, like a user
@@ -1289,6 +1303,8 @@ Returns when element specified by locator satisfies the [`option: state`] option
 
 If target element already satisfies the condition, the method returns immediately. Otherwise, waits for up to
 [`option: timeout`] milliseconds until the condition is met.
+
+**Usage**
 
 ```js
 const orderSent = page.locator('#order-sent');

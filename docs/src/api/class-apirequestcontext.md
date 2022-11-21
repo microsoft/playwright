@@ -188,9 +188,9 @@ discards all stored responses, and makes [`method: APIResponse.body`] throw "Res
 - returns: <[APIResponse]>
 
 Sends HTTP(S) request and returns its response. The method will populate request cookies from the context and update
-context cookies from the response. The method will automatically follow redirects.
+context cookies from the response. The method will automatically follow redirects. JSON objects can be passed directly to the request.
 
-JSON objects can be passed directly to the request:
+**Usage**
 
 ```js
 await request.fetch('https://example.com/api/createBook', {
@@ -350,6 +350,8 @@ If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/
 Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its response.
 The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
+
+**Usage**
 
 Request parameters can be configured with `params` option, they will be serialized into the URL search parameters:
 
@@ -534,6 +536,8 @@ context cookies from the response. The method will automatically follow redirect
 Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its response.
 The method will populate request cookies from the context and update
 context cookies from the response. The method will automatically follow redirects.
+
+**Usage**
 
 JSON objects can be passed directly to the request:
 

@@ -423,6 +423,8 @@ Expected options currently selected.
 
 Ensures the [Locator] points to a checked input.
 
+**Usage**
+
 ```js
 const locator = page.getByLabel('Subscribe to newsletter');
 await expect(locator).toBeChecked();
@@ -472,6 +474,8 @@ Note that only native control elements such as HTML `button`, `input`, `select`,
 can be disabled by setting "disabled" attribute. "disabled" attribute on other elements is ignored
 by the browser.
 
+**Usage**
+
 ```js
 const locator = page.locator('button.submit');
 await expect(locator).toBeDisabled();
@@ -512,6 +516,8 @@ await Expect(locator).ToBeDisabledAsync();
   - alias-java: isEditable
 
 Ensures the [Locator] points to an editable element.
+
+**Usage**
 
 ```js
 const locator = page.getByRole('textbox');
@@ -558,6 +564,8 @@ await Expect(locator).ToBeEditableAsync();
 
 Ensures the [Locator] points to an empty editable element or to a DOM node that has no text.
 
+**Usage**
+
 ```js
 const locator = page.locator('div.warning');
 await expect(locator).toBeEmpty();
@@ -598,6 +606,8 @@ await Expect(locator).ToBeEmptyAsync();
   - alias-java: isEnabled
 
 Ensures the [Locator] points to an enabled element.
+
+**Usage**
 
 ```js
 const locator = page.locator('button.submit');
@@ -644,6 +654,8 @@ await Expect(locator).toBeEnabledAsync();
 
 Ensures the [Locator] points to a focused DOM node.
 
+**Usage**
+
 ```js
 const locator = page.getByRole('textbox');
 await expect(locator).toBeFocused();
@@ -685,6 +697,8 @@ await Expect(locator).ToBeFocusedAsync();
 
 Ensures that [Locator] either does not resolve to any DOM node, or resolves to a [non-visible](./actionability.md#visible) one.
 
+**Usage**
+
 ```js
 const locator = page.locator('.my-element');
 await expect(locator).toBeHidden();
@@ -725,6 +739,8 @@ await Expect(locator).ToBeHiddenAsync();
   - alias-java: isVisible
 
 Ensures that [Locator] points to an [attached](./actionability.md#attached) and [visible](./actionability.md#visible) DOM node.
+
+**Usage**
 
 ```js
 const locator = page.locator('.my-element');
@@ -770,6 +786,8 @@ await Expect(locator).ToBeVisibleAsync();
   - alias-java: containsText
 
 Ensures the [Locator] points to an element that contains the given text. You can use regular expressions for the value as well.
+
+**Usage**
 
 ```js
 const locator = page.locator('.title');
@@ -936,6 +954,8 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 
 Ensures the [Locator] points to an element with given attribute.
 
+**Usage**
+
 ```js
 const locator = page.locator('input');
 await expect(locator).toHaveAttribute('type', 'text');
@@ -989,6 +1009,8 @@ Expected attribute value.
 
 Ensures the [Locator] points to an element with given CSS classes. This needs to be a full match
 or using a relaxed regular expression.
+
+**Usage**
 
 ```html
 <div class='selected row' id='component'></div>
@@ -1084,6 +1106,8 @@ Expected class or RegExp or a list of those.
 
 Ensures the [Locator] resolves to an exact number of DOM nodes.
 
+**Usage**
+
 ```js
 const list = page.locator('list > .component');
 await expect(list).toHaveCount(3);
@@ -1130,6 +1154,8 @@ Expected count.
   - alias-java: hasCSS
 
 Ensures the [Locator] resolves to an element with the given computed CSS style.
+
+**Usage**
 
 ```js
 const locator = page.getByRole('button');
@@ -1184,6 +1210,8 @@ CSS property value.
 
 Ensures the [Locator] points to an element with the given DOM Node ID.
 
+**Usage**
+
 ```js
 const locator = page.getByRole('textbox');
 await expect(locator).toHaveId('lastname');
@@ -1231,6 +1259,8 @@ Element id.
 
 Ensures the [Locator] points to an element with given JavaScript property. Note that this property can be
 of a primitive type as well as a plain serializable JavaScript object.
+
+**Usage**
 
 ```js
 const locator = page.locator('.component');
@@ -1285,6 +1315,8 @@ Property value.
 This function will wait until two consecutive locator screenshots
 yield the same result, and then compare the last screenshot with the expectation.
 
+**Usage**
+
 ```js
 const locator = page.getByRole('button');
 await expect(locator).toHaveScreenshot('image.png');
@@ -1330,6 +1362,8 @@ Snapshot name.
 This function will wait until two consecutive locator screenshots
 yield the same result, and then compare the last screenshot with the expectation.
 
+**Usage**
+
 ```js
 const locator = page.getByRole('button');
 await expect(locator).toHaveScreenshot();
@@ -1368,6 +1402,8 @@ await expect(locator).toHaveScreenshot();
   - alias-java: hasText
 
 Ensures the [Locator] points to an element with the given text. You can use regular expressions for the value as well.
+
+**Usage**
 
 ```js
 const locator = page.locator('.title');
@@ -1534,6 +1570,8 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 
 Ensures the [Locator] points to an element with the given input value. You can use regular expressions for the value as well.
 
+**Usage**
+
 ```js
 const locator = page.locator('input[type=number]');
 await expect(locator).toHaveValue(/[0-9]/);
@@ -1582,6 +1620,8 @@ Expected value.
   - alias-java: hasValues
 
 Ensures the [Locator] points to multi-select/combobox (i.e. a `select` with the `multiple` attribute) and the specified values are selected.
+
+**Usage**
 
 For example, given the following element:
 
