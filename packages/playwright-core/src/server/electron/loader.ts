@@ -32,6 +32,25 @@ for (const arg of chromiumSwitches) {
   app.getAppPath = () => path.dirname(appPath);
 }
 
-(globalThis as any).__playwright_run = () => {
+let launchInfoEventPayload: any;
+app.on('ready', launchInfo => launchInfoEventPayload = launchInfo);
+
+(globalThis as any).__playwright_run = async () => {
+  // Wait for app to be ready to avoid browser initialization races.
+  await app.whenReady();
+
+  // Override isReady pipeline.
+  let isReady = false;
+  let whenReadyCallback: () => void;
+  const whenReadyPromise = new Promise<void>(f => whenReadyCallback = f);
+  app.isReady = () => isReady;
+  app.whenReady = () => whenReadyPromise;
+
   require(appPath);
+
+  // Trigger isReady.
+  isReady = true;
+  whenReadyCallback!();
+  app.emit('will-finish-launching');
+  app.emit('ready', launchInfoEventPayload);
 };
