@@ -43,7 +43,7 @@ import { SigIntWatcher } from './sigIntWatcher';
 import type { TestCase } from './test';
 import { Suite } from './test';
 import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal } from './types';
-import { createFileMatcher, createTitleMatcher, serializeError } from './util';
+import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher, serializeError } from './util';
 import type { Matcher, TestFileFilter } from './util';
 
 const removeFolderAsync = promisify(rimraf);
@@ -196,7 +196,7 @@ export class Runner {
 
   async listTestFiles(projectNames: string[] | undefined): Promise<any> {
     const projects = this._collectProjects(projectNames);
-    const { filesByProject } = await this._collectFiles(projects);
+    const { filesByProject } = await this._collectFiles(projects, []);
     const report: any = {
       projects: []
     };
@@ -235,12 +235,13 @@ export class Runner {
     return projects;
   }
 
-  private async _collectFiles(projects: FullProjectInternal[]): Promise<{filesByProject: Map<FullProjectInternal, string[]>; setupFiles: Set<string>}> {
+  private async _collectFiles(projects: FullProjectInternal[], commandLineFileFilters: TestFileFilter[]): Promise<{filesByProject: Map<FullProjectInternal, string[]>; setupFiles: Set<string>}> {
     const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
     const testFileExtension = (file: string) => extensions.includes(path.extname(file));
     const filesByProject = new Map<FullProjectInternal, string[]>();
     const setupFiles = new Set<string>();
     const fileToProjectName = new Map<string, string>();
+    const commandLineFileMatcher = commandLineFileFilters.length ? createFileMatcherFromFilters(commandLineFileFilters) : () => true;
     for (const project of projects) {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
       const setupMatch = createFileMatcher(project._setup);
@@ -250,7 +251,7 @@ export class Runner {
         if (!testFileExtension(file))
           return false;
         const isSetup = setupMatch(file);
-        const isTest = !testIgnore(file) && testMatch(file);
+        const isTest = !testIgnore(file) && testMatch(file) && commandLineFileMatcher(file);
         if (!isTest && !isSetup)
           return false;
         if (isSetup && isTest)
@@ -277,18 +278,20 @@ export class Runner {
   private async _collectTestGroups(options: RunOptions, fatalErrors: TestError[]): Promise<{ rootSuite: Suite, projectSetupGroups: TestGroup[], testGroups: TestGroup[] }> {
     const config = this._loader.fullConfig();
     const projects = this._collectProjects(options.projectFilter);
-    const { filesByProject, setupFiles } = await this._collectFiles(projects);
+    const { filesByProject, setupFiles } = await this._collectFiles(projects, options.testFileFilters);
 
-    let result = await this._createFilteredRootSuite(options, filesByProject, new Set());
-    // If >0 tests match and
-    // - none of the setup files match the filter then we run all setup files,
-    // - if the filter also matches some of the setup tests, we'll run only
-    //   that maching subset of setup tests.
-    const allTests = result.rootSuite.allTests();
-    if (setupFiles.size &&
-        allTests.some(test => !setupFiles.has(test._requireFile)) &&
-        !allTests.some(test => setupFiles.has(test._requireFile)))
-      result =  await this._createFilteredRootSuite(options, filesByProject, setupFiles);
+    let result = await this._createFilteredRootSuite(options, filesByProject, new Set(), !!setupFiles.size);
+    if (setupFiles.size) {
+      const allTests = result.rootSuite.allTests();
+      const tests = allTests.filter(test => !setupFiles.has(test._requireFile));
+      // If >0 tests match and
+      // - none of the setup files match the filter then we run all setup files,
+      // - if the filter also matches some of the setup tests, we'll run only
+      //   that maching subset of setup tests.
+      if (tests.length > 0 && tests.length === allTests.length)
+        result = await this._createFilteredRootSuite(options, filesByProject, setupFiles, false);
+    }
+
     fatalErrors.push(...result.fatalErrors);
     const { rootSuite } = result;
 
@@ -304,7 +307,7 @@ export class Runner {
     return { rootSuite, projectSetupGroups, testGroups };
   }
 
-  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>, doNotFilterFiles: Set<string>): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
+  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>, doNotFilterFiles: Set<string>, shouldCloneTests: boolean): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
     const config = this._loader.fullConfig();
     const fatalErrors: TestError[] = [];
     const allTestFiles = new Set<string>();
@@ -317,7 +320,8 @@ export class Runner {
       const fileSuite = await this._loader.loadTestFile(file, 'runner');
       if (fileSuite._loadError)
         fatalErrors.push(fileSuite._loadError);
-      preprocessRoot._addSuite(fileSuite._deepClone());
+      // We have to clone only if there maybe subsequent calls of this method.
+      preprocessRoot._addSuite(shouldCloneTests ? fileSuite._deepClone() : fileSuite);
     }
 
     // Complain about duplicate titles.
@@ -664,8 +668,7 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[
     return;
   const matchers = focusedTestFileLines.map(createFileMatcherFromFilter);
   const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => matchers.some(m => m(testFileName, testLine, testColumn));
-  const suiteFilter = (suite: Suite) => !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
-  // Project setup files are always included.
+  const suiteFilter = (suite: Suite) => doNotFilterFiles.has(suite._requireFile) || !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
   const testFilter = (test: TestCase) => doNotFilterFiles.has(test._requireFile) || testFileLineMatches(test.location.file, test.location.line, test.location.column);
   return filterSuite(suite, suiteFilter, testFilter);
 }
