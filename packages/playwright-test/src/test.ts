@@ -104,6 +104,17 @@ export class Suite extends Base implements reporterTypes.Suite {
     return items;
   }
 
+  _deepClone(): Suite {
+    const suite = this._clone();
+    for (const entry of this._entries) {
+      if (entry instanceof Suite)
+        suite._addSuite(entry._deepClone());
+      else
+        suite._addTest(entry._clone());
+    }
+    return suite;
+  }
+
   _clone(): Suite {
     const suite = new Suite(this.title, this._type);
     suite._only = this._only;
