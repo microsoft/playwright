@@ -154,6 +154,7 @@ test('should create page for browser view', async ({ playwright }) => {
   const app = await playwright._electron.launch({
     args: [path.join(__dirname, 'electron-window-app.js')],
   });
+  await app.firstWindow();
   await app.evaluate(async electron => {
     const window = electron.BrowserWindow.getAllWindows()[0];
     const view = new electron.BrowserView();
@@ -169,6 +170,7 @@ test('should return same browser window for browser view pages', async ({ playwr
   const app = await playwright._electron.launch({
     args: [path.join(__dirname, 'electron-window-app.js')],
   });
+  await app.firstWindow();
   await app.evaluate(async electron => {
     const window = electron.BrowserWindow.getAllWindows()[0];
     const view = new electron.BrowserView();
