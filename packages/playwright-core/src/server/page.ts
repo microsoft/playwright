@@ -253,13 +253,6 @@ export class Page extends SdkObject {
     ]);
   }
 
-  async _doSlowMo() {
-    const slowMo = this._browserContext._browser.options.slowMo;
-    if (!slowMo)
-      return;
-    await new Promise(x => setTimeout(x, slowMo));
-  }
-
   _didClose() {
     this._frameManager.dispose();
     this._frameThrottler.dispose();
@@ -378,7 +371,6 @@ export class Page extends SdkObject {
         this.mainFrame()._waitForNavigation(progress, true /* requiresNewDocument */, options),
         this._delegate.reload(),
       ]);
-      await this._doSlowMo();
       return response;
     }), this._timeoutSettings.navigationTimeout(options));
   }
@@ -399,7 +391,6 @@ export class Page extends SdkObject {
       const response = await waitPromise;
       if (error)
         throw error;
-      await this._doSlowMo();
       return response;
     }), this._timeoutSettings.navigationTimeout(options));
   }
@@ -420,7 +411,6 @@ export class Page extends SdkObject {
       const response = await waitPromise;
       if (error)
         throw error;
-      await this._doSlowMo();
       return response;
     }), this._timeoutSettings.navigationTimeout(options));
   }
@@ -436,7 +426,6 @@ export class Page extends SdkObject {
       this._emulatedMedia.forcedColors = options.forcedColors;
 
     await this._delegate.updateEmulateMedia();
-    await this._doSlowMo();
   }
 
   emulatedMedia(): EmulatedMedia {
@@ -452,7 +441,6 @@ export class Page extends SdkObject {
   async setViewportSize(viewportSize: types.Size) {
     this._emulatedSize = { viewport: { ...viewportSize }, screen: { ...viewportSize } };
     await this._delegate.updateEmulatedViewportSize();
-    await this._doSlowMo();
   }
 
   viewportSize(): types.Size | null {

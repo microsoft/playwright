@@ -76,6 +76,7 @@ export abstract class BrowserContext extends SdkObject {
   private _settingStorageState = false;
   readonly initScripts: string[] = [];
   private _routesInFlight = new Set<network.Route>();
+  private _debugger!: Debugger;
 
   constructor(browser: Browser, options: channels.BrowserNewContextParams, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -112,16 +113,16 @@ export abstract class BrowserContext extends SdkObject {
     if (this.attribution.isInternalPlaywright)
       return;
     // Debugger will pause execution upon page.pause in headed mode.
-    const contextDebugger = new Debugger(this);
+    this._debugger = new Debugger(this);
 
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector')
       await Recorder.show(this, { pauseOnNextStatement: true });
 
     // When paused, show inspector.
-    if (contextDebugger.isPaused())
+    if (this._debugger.isPaused())
       Recorder.showInspector(this);
-    contextDebugger.on(Debugger.Events.PausedStateChanged, () => {
+    this._debugger.on(Debugger.Events.PausedStateChanged, () => {
       Recorder.showInspector(this);
     });
 
@@ -132,6 +133,10 @@ export abstract class BrowserContext extends SdkObject {
 
     if (this._options.permissions)
       await this.grantPermissions(this._options.permissions);
+  }
+
+  debugger(): Debugger {
+    return this._debugger;
   }
 
   async _ensureVideosPath() {

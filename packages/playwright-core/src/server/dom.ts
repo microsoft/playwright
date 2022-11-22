@@ -117,10 +117,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
     }
     return this._injectedScriptPromise;
   }
-
-  override async doSlowMo() {
-    return this.frame._page._doSlowMo();
-  }
 }
 
 export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
@@ -255,7 +251,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await this._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
       return main.evaluate(([injected, node, { type, eventInit }]) => injected.dispatchEvent(node, type, eventInit), [await main.injectedScript(), this, { type, eventInit }] as const);
     });
-    await this._page._doSlowMo();
   }
 
   async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
@@ -559,7 +554,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const result = await this.evaluatePoll(progress, ([injected, node, { optionsToSelect, force }]) => {
         return injected.waitForElementStatesAndPerformAction(node, ['visible', 'enabled'], force, injected.selectOptions.bind(injected, optionsToSelect));
       }, { optionsToSelect, force: options.force });
-      await this._page._doSlowMo();
       return result;
     });
   }
@@ -651,7 +645,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       else
         await this._page._delegate.setInputFiles(retargeted, filePayloads!);
     });
-    await this._page._doSlowMo();
     return 'done';
   }
 
@@ -659,7 +652,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const controller = new ProgressController(metadata, this);
     await controller.run(async progress => {
       const result = await this._focus(progress);
-      await this._page._doSlowMo();
       return assertDone(throwRetargetableDOMError(result));
     }, 0);
   }
