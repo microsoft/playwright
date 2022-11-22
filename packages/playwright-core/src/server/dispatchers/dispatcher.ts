@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import type * as channels from '@protocol/channels';
 import { serializeError } from '../../protocol/serializers';
 import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
-import { assert, isUnderTest, monotonicTime } from '../../utils';
+import { assert, isUnderTest, monotonicTime, formatLogRecording } from '../../utils';
 import { kBrowserOrContextClosedError } from '../../common/errors';
 import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
@@ -316,16 +316,6 @@ export class DispatcherConnection {
       response.error = error;
     this.onmessage(response);
   }
-}
-
-function formatLogRecording(log: string[]): string {
-  if (!log.length)
-    return '';
-  const header = ` logs `;
-  const headerLength = 60;
-  const leftLength = (headerLength - header.length) / 2;
-  const rightLength = headerLength - header.length - leftLength;
-  return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
 }
 
 let lastEventId = 0;

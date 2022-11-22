@@ -217,3 +217,53 @@ export const isLikelyNpxGlobal = () => process.argv.length >= 2 && process.argv[
 export function deepCopy<T>(obj: T): T {
   return v8.deserialize(v8.serialize(obj));
 }
+
+export function formatLogRecording(log: string[]): string {
+  if (!log.length)
+    return '';
+  const header = ` logs `;
+  const headerLength = 60;
+  const leftLength = (headerLength - header.length) / 2;
+  const rightLength = headerLength - header.length - leftLength;
+  const logGroups = splitIntoRepeatGroups(log);
+  const newLog = logGroups.map(group => {
+    if (group.repeat === 1)
+      return group.lines;
+    return [
+      `┌──── (repeated ${group.repeat}x) ────`,
+      ...group.lines.map(line => '│ ' + line),
+      `└────`,
+    ];
+  }).flat();
+
+  return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${newLog.join('\n')}\n${'='.repeat(headerLength)}`;
+}
+
+function splitIntoRepeatGroups(lines: string[]): { lines: string[], repeat: number }[] {
+  const lineToIndex = new Map();
+  const nextIndex = new Array(lines.length);
+  const N = lines.length;
+  for (let i = N - 1; i >= 0; --i) {
+    nextIndex[i] = lineToIndex.get(lines[i]);
+    lineToIndex.set(lines[i], i);
+  }
+  const groups = [];
+  let i = 0;
+  while (i < N) {
+    const groupEnd = nextIndex[i] ?? i + 1;
+    const newGroup = {
+      lines: lines.slice(i, groupEnd),
+      repeat: 1,
+    };
+    i = groupEnd;
+    const lastGroup = groups.length > 0 ? groups[groups.length - 1] : undefined;
+    let isEqual = lastGroup?.lines.length === newGroup.lines.length;
+    for (let j = 0; isEqual && j < newGroup.lines.length; ++j)
+      isEqual = lastGroup?.lines[j] === newGroup.lines[j];
+    if (lastGroup && isEqual)
+      ++lastGroup.repeat;
+    else
+      groups.push(newGroup);
+  }
+  return groups;
+}

@@ -17,7 +17,7 @@
 import type { EventEmitter } from 'events';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { TimeoutError } from '../common/errors';
-import { createGuid } from '../utils';
+import { createGuid, formatLogRecording } from '../utils';
 import type * as channels from '@protocol/channels';
 import type { ChannelOwner } from './channelOwner';
 
@@ -128,14 +128,4 @@ function waitForTimeout(timeout: number): { promise: Promise<void>, dispose: () 
   const promise = new Promise<void>(resolve => timeoutId = setTimeout(resolve, timeout));
   const dispose = () => clearTimeout(timeoutId);
   return { promise, dispose };
-}
-
-function formatLogRecording(log: string[]): string {
-  if (!log.length)
-    return '';
-  const header = ` logs `;
-  const headerLength = 60;
-  const leftLength = (headerLength - header.length) / 2;
-  const rightLength = headerLength - header.length - leftLength;
-  return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
 }
