@@ -86,7 +86,7 @@ export class Recorder implements InstrumentationListener {
     this._contextRecorder = new ContextRecorder(context, params);
     this._context = context;
     this._omitCallTracking = !!params.omitCallTracking;
-    this._debugger = Debugger.lookup(context)!;
+    this._debugger = context.debugger();
     this._handleSIGINT = params.handleSIGINT;
     context.instrumentation.addListener(this, context);
     this._currentLanguage = this._contextRecorder.languageName();

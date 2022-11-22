@@ -705,7 +705,6 @@ export class Frame extends SdkObject {
 
     const request = event.newDocument ? event.newDocument.request : undefined;
     const response = request ? request._finalRequest().response() : null;
-    await this._page._doSlowMo();
     return response;
   }
 
@@ -765,24 +764,18 @@ export class Frame extends SdkObject {
   async evaluateExpressionHandleAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
     const context = await this._context(world);
     const handle = await context.evaluateExpressionHandleAndWaitForSignals(expression, isFunction, arg);
-    if (world === 'main')
-      await this._page._doSlowMo();
     return handle;
   }
 
   async evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
     const context = await this._context(world);
     const value = await context.evaluateExpression(expression, isFunction, arg);
-    if (world === 'main')
-      await this._page._doSlowMo();
     return value;
   }
 
   async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
     const context = await this._context(world);
     const value = await context.evaluateExpressionAndWaitForSignals(expression, isFunction, arg);
-    if (world === 'main')
-      await this._page._doSlowMo();
     return value;
   }
 
@@ -833,7 +826,6 @@ export class Frame extends SdkObject {
     await this._scheduleRerunnableTask(metadata, selector, (progress, element, data) => {
       progress.injectedScript.dispatchEvent(element, data.type, data.eventInit);
     }, { type, eventInit }, { mainWorld: true, ...options });
-    await this._page._doSlowMo();
   }
 
   async evalOnSelectorAndWaitForSignals(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
@@ -919,7 +911,6 @@ export class Frame extends SdkObject {
           document.close();
         }, { html, tag });
         await Promise.all([contentPromise, lifecyclePromise]);
-        await this._page._doSlowMo();
         return null;
       });
     }, this._page._timeoutSettings.navigationTimeout(options));
@@ -1195,7 +1186,6 @@ export class Frame extends SdkObject {
     const controller = new ProgressController(metadata, this);
     await controller.run(async progress => {
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, handle => handle._focus(progress)));
-      await this._page._doSlowMo();
     }, this._page._timeoutSettings.timeout(options));
   }
 
@@ -1203,7 +1193,6 @@ export class Frame extends SdkObject {
     const controller = new ProgressController(metadata, this);
     await controller.run(async progress => {
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, handle => handle._blur(progress)));
-      await this._page._doSlowMo();
     }, this._page._timeoutSettings.timeout(options));
   }
 

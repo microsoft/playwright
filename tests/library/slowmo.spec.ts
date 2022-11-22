@@ -19,13 +19,15 @@ import { attachFrame } from '../config/utils';
 
 async function checkSlowMo(toImpl, page, task) {
   let didSlowMo = false;
-  const orig = toImpl(page)._doSlowMo;
-  toImpl(page)._doSlowMo = async function(...args) {
+  const contextDebugger = toImpl(page.context()).debugger();
+  contextDebugger._slowMo = 100;
+  const orig = contextDebugger._doSlowMo;
+  contextDebugger._doSlowMo = async () => {
     if (didSlowMo)
       throw new Error('already did slowmo');
     await new Promise(x => setTimeout(x, 100));
     didSlowMo = true;
-    return orig.call(this, ...args);
+    return orig.call(contextDebugger);
   };
   await task();
   expect(!!didSlowMo).toBe(true);

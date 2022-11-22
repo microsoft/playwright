@@ -62,6 +62,7 @@ export type BrowserOptions = PlaywrightOptions & {
 };
 
 export abstract class Browser extends SdkObject {
+
   static Events = {
     Disconnected: 'disconnected',
   };

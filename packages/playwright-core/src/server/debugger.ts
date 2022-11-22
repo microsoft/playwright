@@ -32,6 +32,7 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     PausedStateChanged: 'pausedstatechanged'
   };
   private _muted = false;
+  private _slowMo: number | undefined;
 
   constructor(context: BrowserContext) {
     super();
@@ -44,12 +45,7 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     this._context.once(BrowserContext.Events.Close, () => {
       this._context.instrumentation.removeListener(this);
     });
-  }
-
-  static lookup(context?: BrowserContext): Debugger | undefined {
-    if (!context)
-      return;
-    return (context as any)[symbol] as Debugger | undefined;
+    this._slowMo = this._context._browser.options.slowMo;
   }
 
   async setMuted(muted: boolean) {
@@ -61,6 +57,15 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
       return;
     if (shouldPauseOnCall(sdkObject, metadata) || (this._pauseOnNextStatement && shouldPauseBeforeStep(metadata)))
       await this.pause(sdkObject, metadata);
+  }
+
+  async _doSlowMo() {
+    await new Promise(f => setTimeout(f, this._slowMo));
+  }
+
+  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if (this._slowMo && shouldSlowMo(metadata))
+      await this._doSlowMo();
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
@@ -133,4 +138,8 @@ function shouldPauseBeforeStep(metadata: CallMetadata): boolean {
   // Stop before everything that generates snapshot. But don't stop before those marked as pausesBeforeInputActions
   // since we stop in them on a separate instrumentation signal.
   return commandsWithTracingSnapshots.has(step) && !pausesBeforeInputActions.has(metadata.type + '.' + metadata.method);
+}
+
+export function shouldSlowMo(metadata: CallMetadata): boolean {
+  return commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
 }

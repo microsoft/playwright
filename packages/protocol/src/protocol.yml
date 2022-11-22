@@ -1218,6 +1218,8 @@ Page:
           - active
           - none
           - no-override
+      tracing:
+        snapshot: true
 
     exposeBinding:
       parameters:
@@ -2365,6 +2367,8 @@ ElementHandle:
         pausesBeforeInput: true
 
     focus:
+      tracing:
+        snapshot: true
 
     getAttribute:
       parameters:
