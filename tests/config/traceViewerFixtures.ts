@@ -51,7 +51,7 @@ class TraceViewerPage {
     this.consoleStacks = page.locator('.console-stack');
     this.stackFrames = page.locator('.stack-trace-frame');
     this.networkRequests = page.locator('.network-request-title');
-    this.snapshotContainer = page.locator('.snapshot-container');
+    this.snapshotContainer = page.locator('.snapshot-container iframe');
   }
 
   async actionIconsText(action: string) {

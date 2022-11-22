@@ -78,11 +78,12 @@ export const SnapshotTab: React.FunctionComponent<{
     })();
   }, [iframeRef, snapshotUrl, snapshotInfoUrl, pointX, pointY]);
 
+  const windowHeaderHeight = 40;
   const snapshotSize = snapshotInfo.viewport;
-  const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height, 1);
+  const scale = Math.min(measure.width / snapshotSize.width, measure.height / (snapshotSize.height + windowHeaderHeight), 1);
   const scaledSize = {
     width: snapshotSize.width * scale,
-    height: snapshotSize.height * scale,
+    height: (snapshotSize.height + windowHeaderHeight) * scale,
   };
   return <div
     className='snapshot-tab'
@@ -102,13 +103,27 @@ export const SnapshotTab: React.FunctionComponent<{
         </div>;
       })}
     </div>
-    <div className='snapshot-url' title={snapshotInfo.url}>{snapshotInfo.url}</div>
     <div ref={ref} className='snapshot-wrapper'>
       { snapshots.length ? <div className='snapshot-container' style={{
         width: snapshotSize.width + 'px',
-        height: snapshotSize.height + 'px',
+        height: (snapshotSize.height + windowHeaderHeight) + 'px',
         transform: `translate(${-snapshotSize.width * (1 - scale) / 2 + (measure.width - scaledSize.width) / 2}px, ${-snapshotSize.height * (1 - scale) / 2  + (measure.height - scaledSize.height) / 2}px) scale(${scale})`,
       }}>
+        <div className='window-header'>
+          <div style={{ whiteSpace: 'nowrap' }}>
+            <span className='window-dot' style={{ backgroundColor: 'rgb(242, 95, 88)' }}></span>
+            <span className='window-dot' style={{ backgroundColor: 'rgb(251, 190, 60)' }}></span>
+            <span className='window-dot' style={{ backgroundColor: 'rgb(88, 203, 66)' }}></span>
+          </div>
+          <div className='window-address-bar' title={snapshotInfo.url}>{snapshotInfo.url}</div>
+          <div style={{ marginLeft: 'auto' }}>
+            <div>
+              <span className='window-menu-bar'></span>
+              <span className='window-menu-bar'></span>
+              <span className='window-menu-bar'></span>
+            </div>
+          </div>
+        </div>
         <iframe ref={iframeRef} id='snapshot' name='snapshot'></iframe>
       </div> : <div className='no-snapshot'>Action does not have snapshots</div>
       }

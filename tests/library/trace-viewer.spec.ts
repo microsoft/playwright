@@ -204,7 +204,7 @@ test('should show snapshot URL', async ({ page, runAndTrace, server }) => {
     await page.evaluate('2+2');
   });
   await traceViewer.snapshotFrame('page.evaluate');
-  await expect(traceViewer.page.locator('.snapshot-url')).toHaveText(server.EMPTY_PAGE);
+  await expect(traceViewer.page.locator('.window-address-bar')).toHaveText(server.EMPTY_PAGE);
 });
 
 test('should capture iframe with sandbox attribute', async ({ page, server, runAndTrace }) => {
