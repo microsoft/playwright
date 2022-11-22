@@ -208,6 +208,8 @@ export class PlaywrightConnection {
         for (const context of browser.contexts()) {
           if (!context.pages().length)
             await context.close(serverSideCallMetadata());
+          else
+            await context.stopPendingOperations();
         }
         if (!browser.contexts())
           await browser.close();
