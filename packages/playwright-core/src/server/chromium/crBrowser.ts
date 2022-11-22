@@ -196,6 +196,18 @@ export class CRBrowser extends Browser {
       context.emit(CRBrowserContext.CREvents.ServiceWorker, serviceWorker);
       return;
     }
+
+    // Detach from any targets we are not interested in, to avoid side-effects.
+    //
+    // One example of a side effect: upon shared worker restart, we receive
+    // Inspector.targetReloadedAfterCrash and backend waits for Runtime.runIfWaitingForDebugger
+    // from any attached client. If we do not resume, shared worker will stall.
+    //
+    // Ideally, detaching should resume any target, but there is a bug in the backend,
+    // so we must Runtime.runIfWaitingForDebugger first.
+    session._sendMayFail('Runtime.runIfWaitingForDebugger').then(() => {
+      this._session._sendMayFail('Target.detachFromTarget', { sessionId });
+    });
   }
 
   _onDetachedFromTarget(payload: Protocol.Target.detachFromTargetParameters) {

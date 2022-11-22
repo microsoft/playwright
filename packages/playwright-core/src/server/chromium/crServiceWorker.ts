@@ -49,6 +49,10 @@ export class CRServiceWorker extends Worker {
 
     session.send('Runtime.enable', {}).catch(e => { });
     session.send('Runtime.runIfWaitingForDebugger').catch(e => { });
+    session.on('Inspector.targetReloadedAfterCrash', () => {
+      // Resume service worker after restart.
+      session._sendMayFail('Runtime.runIfWaitingForDebugger', {});
+    });
   }
 
   async updateOffline(initial: boolean): Promise<void> {

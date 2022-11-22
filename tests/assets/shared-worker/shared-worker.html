@@ -1,0 +1,7 @@
+<script>
+  window.sharedWorkerResponsePromise = new Promise(f => {
+    window.myWorker = new SharedWorker("shared-worker.js");
+    window.myWorker.port.postMessage('hello');
+    window.myWorker.port.onmessage = e => f(e.data);
+  });
+</script>
