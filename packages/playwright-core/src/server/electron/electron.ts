@@ -77,7 +77,7 @@ export class ElectronApplication extends SdkObject {
     });
     this._browserContext.setCustomCloseHandler(async () => {
       const electronHandle = await this._nodeElectronHandlePromise;
-      await electronHandle.evaluate(({ app }) => app.quit());
+      await electronHandle.evaluate(({ app }) => app.quit()).catch(() => {});
     });
   }
 

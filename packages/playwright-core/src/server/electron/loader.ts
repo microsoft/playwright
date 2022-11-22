@@ -29,8 +29,9 @@ process.argv[1] = appPath;
 for (const arg of chromiumSwitches) {
   const match = arg.match(/--([^=]*)=?(.*)/)!;
   app.commandLine.appendSwitch(match[1], match[2]);
-  app.getAppPath = () => path.dirname(appPath);
 }
+
+app.getAppPath = () => path.dirname(appPath);
 
 let launchInfoEventPayload: any;
 app.on('ready', launchInfo => launchInfoEventPayload = launchInfo);
