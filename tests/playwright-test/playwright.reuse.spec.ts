@@ -374,3 +374,27 @@ test('should reuse context with beforeunload', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 });
+
+test('should cancel pending operations upon reuse', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'src/reuse.test.ts': `
+      const { test } = pwt;
+      test('one', async ({ page }) => {
+        await Promise.race([
+          page.getByText('click me').click().catch(e => {}),
+          page.waitForTimeout(2000),
+        ]);
+      });
+
+      test('two', async ({ page }) => {
+        await page.setContent('<button onclick="window._clicked=true">click me</button>');
+        // Give it time to erroneously click.
+        await page.waitForTimeout(2000);
+        expect(await page.evaluate('window._clicked')).toBe(undefined);
+      });
+    `,
+  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});

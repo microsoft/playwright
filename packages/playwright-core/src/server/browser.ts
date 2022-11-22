@@ -106,6 +106,7 @@ export abstract class Browser extends SdkObject {
       this._contextForReuse = { context: await this.newContext(metadata, params), hash };
       return { context: this._contextForReuse.context, needsReset: false };
     }
+    await this._contextForReuse.context.stopPendingOperations();
     return { context: this._contextForReuse.context, needsReset: true };
   }
 

@@ -26,7 +26,7 @@ import { helper } from './helper';
 import * as network from './network';
 import type { PageDelegate } from './page';
 import { Page, PageBinding } from './page';
-import type { Progress } from './progress';
+import type { Progress, ProgressController } from './progress';
 import type { Selectors } from './selectors';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
@@ -56,6 +56,7 @@ export abstract class BrowserContext extends SdkObject {
 
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
+  readonly _activeProgressControllers = new Set<ProgressController>();
   readonly _options: channels.BrowserNewContextParams;
   _requestInterceptor?: network.RouteHandler;
   private _isPersistentContext: boolean;
@@ -143,6 +144,11 @@ export abstract class BrowserContext extends SdkObject {
     if (this._closedStatus !== 'open')
       return false;
     return true;
+  }
+
+  async stopPendingOperations() {
+    for (const controller of this._activeProgressControllers)
+      controller.abort(new Error(`Context was reset for reuse.`));
   }
 
   static reusableContextHash(params: channels.BrowserNewContextForReuseParams): string {

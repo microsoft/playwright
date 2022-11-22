@@ -63,6 +63,10 @@ export class ProgressController {
     return this._lastIntermediateResult;
   }
 
+  abort(error: Error) {
+    this._forceAbortPromise.reject(error);
+  }
+
   async run<T>(task: (progress: Progress) => Promise<T>, timeout?: number): Promise<T> {
     if (timeout) {
       this._timeout = timeout;
@@ -71,6 +75,7 @@ export class ProgressController {
 
     assert(this._state === 'before');
     this._state = 'running';
+    this.sdkObject.attribution.context?._activeProgressControllers.add(this);
 
     const progress: Progress = {
       log: message => {
@@ -117,6 +122,7 @@ export class ProgressController {
       await Promise.all(this._cleanups.splice(0).map(runCleanup));
       throw e;
     } finally {
+      this.sdkObject.attribution.context?._activeProgressControllers.delete(this);
       clearTimeout(timer);
     }
   }
