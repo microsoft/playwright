@@ -461,6 +461,44 @@ test('should allow .only in setup files', async ({ runGroups }, testInfo) => {
   expect(passed).toBe(2);
 });
 
+test('should allow describe.only in setup files', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*.setup.ts/,
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+      test('test3', async () => { });
+      test('test4', async () => { });
+    `,
+    'a.setup.ts': `
+      const { test } = pwt;
+      test.describe.only('main', () => {
+        test('setup1', async () => { });
+        test('setup2', async () => { });
+      });
+      test('setup3', async () => { });
+    `,
+  };
+
+  const { exitCode, passed, timeline, output } =  await runGroups(files);
+  expect(output).toContain('Running 2 tests using 1 worker');
+  expect(output).toContain('[p1] › a.setup.ts:6:9 › main › setup1');
+  expect(output).toContain('[p1] › a.setup.ts:7:9 › main › setup2');
+  expect(fileNames(timeline)).toEqual(['a.setup.ts']);
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(2);
+});
+
+
 test('should allow .only in both setup and test files', async ({ runGroups }, testInfo) => {
   const files = {
     'playwright.config.ts': `
@@ -491,6 +529,45 @@ test('should allow .only in both setup and test files', async ({ runGroups }, te
   expect(exitCode).toBe(0);
   expect(output).toContain('[p1] › a.setup.ts:5:12 › setup1');
   expect(output).toContain('[p1] › a.test.ts:7:12 › test2');
+});
+
+test('should run full setup when there is test.only', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*.setup.ts/,
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test.only('test1', async () => { });
+      test('test2', async () => { });
+      test('test3', async () => { });
+      test('test4', async () => { });
+    `,
+    'a.setup.ts': `
+      const { test } = pwt;
+      test('setup1', async () => { });
+      test('setup2', async () => { });
+    `,
+    'b.setup.ts': `
+      const { test } = pwt;
+      test('setup3', async () => { });
+    `,
+  };
+
+  const { exitCode, passed, output } =  await runGroups(files);
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(4);
+  expect(output).toContain('Running 4 tests using 2 workers');
+  expect(output).toContain('[p1] › b.setup.ts:5:7 › setup3');
+  expect(output).toContain('[p1] › a.setup.ts:5:7 › setup1');
+  expect(output).toContain('[p1] › a.setup.ts:6:7 › setup2');
+  expect(output).toContain('[p1] › a.test.ts:6:12 › test1');
 });
 
 test('should allow filtering setup by file:line', async ({ runGroups }, testInfo) => {

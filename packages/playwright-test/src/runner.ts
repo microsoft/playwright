@@ -327,8 +327,13 @@ export class Runner {
     }
 
     // Filter only.
-    if (!options.listOnly)
-      filterOnly(preprocessRoot);
+    if (!options.listOnly) {
+      const onlyItems = preprocessRoot._getOnlyItems();
+      if (onlyItems.length) {
+        const hasOnlyInSetup = onlyItems.some(item => setupFiles.has(item._requireFile));
+        filterOnly(preprocessRoot, hasOnlyInSetup ? new Set() : setupFiles);
+      }
+    }
 
     // Generate projects.
     const fileSuites = new Map<string, Suite>();
@@ -671,13 +676,13 @@ export class Runner {
   }
 }
 
-function filterOnly(suite: Suite) {
+function filterOnly(suite: Suite, doNotFilterFiles: Set<string>) {
   const suiteFilter = (suite: Suite) => suite._only;
-  const testFilter = (test: TestCase) => test._only;
+  const testFilter = (test: TestCase) => doNotFilterFiles.has(test._requireFile) || test._only;
   return filterSuiteWithOnlySemantics(suite, suiteFilter, testFilter);
 }
 
-function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[], setupFiles: Set<string>) {
+function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[], doNotFilterFiles: Set<string>) {
   const filterWithLine = !!focusedTestFileLines.find(f => f.line !== null);
   if (!filterWithLine)
     return;
@@ -692,7 +697,7 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[
     return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
   };
   // Project setup files are always included.
-  const testFilter = (test: TestCase) => setupFiles.has(test._requireFile) || testFileLineMatches(test.location.file, test.location.line, test.location.column);
+  const testFilter = (test: TestCase) => doNotFilterFiles.has(test._requireFile) || testFileLineMatches(test.location.file, test.location.line, test.location.column);
   return filterSuite(suite, suiteFilter, testFilter);
 }
 
