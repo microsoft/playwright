@@ -18,7 +18,6 @@
 import { ws } from '../utilsBundle';
 import type { WebSocket } from '../utilsBundle';
 import { getProxyForUrl, HttpsProxyAgent } from '../utilsBundle';
-import { URL } from 'url';
 import type { ClientRequest, IncomingMessage, Agent } from 'http';
 import type { Progress } from './progress';
 import { makeWaitForNextTask } from '../utils';
