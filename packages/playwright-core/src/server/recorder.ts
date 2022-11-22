@@ -172,7 +172,7 @@ export class Recorder implements InstrumentationListener {
         actionPoint,
         actionSelector,
         language: this._currentLanguage,
-        testIdAttributeName: this._contextRecorder.testIdAttributeName(),
+        testIdAttributeName: this._context.selectors().testIdAttributeName(),
       };
       return uiState;
     });
@@ -224,17 +224,13 @@ export class Recorder implements InstrumentationListener {
   }
 
   setHighlightedSelector(language: Language, selector: string) {
-    this._highlightedSelector = locatorOrSelectorAsSelector(language, selector, this._contextRecorder.testIdAttributeName());
+    this._highlightedSelector = locatorOrSelectorAsSelector(language, selector, this._context.selectors().testIdAttributeName());
     this._refreshOverlay();
   }
 
   hideHighlightedSelecor() {
     this._highlightedSelector = '';
     this._refreshOverlay();
-  }
-
-  setTestIdAttributeName(testIdAttributeName: string) {
-    this._contextRecorder.setTestIdAttributeName(testIdAttributeName);
   }
 
   setOutput(codegenId: string, outputFile: string | undefined) {
@@ -395,14 +391,6 @@ class ContextRecorder extends EventEmitter {
       this._throttledOutputFile?.flush();
     });
     this._generator = generator;
-  }
-
-  testIdAttributeName() {
-    return this._testIdAttributeName;
-  }
-
-  setTestIdAttributeName(testIdAttributeName: string) {
-    this._testIdAttributeName = testIdAttributeName;
   }
 
   setOutput(codegenId: string, outputFile?: string) {
