@@ -91,6 +91,26 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
   await context.close();
 });
 
+
+it('should set cookie for top-level domain', async ({ contextFactory, server, proxyServer, browserName, isLinux }) => {
+  it.fixme(browserName === 'webkit' && isLinux);
+  proxyServer.forwardTo(server.PORT);
+  const context = await contextFactory({
+    proxy: { server: `localhost:${proxyServer.PORT}` }
+  });
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Set-Cookie', `name=val; Domain=codes; Path=/;`);
+    res.end();
+  });
+
+  await context.request.get('http://codes/empty.html');
+  const [cookie] = await context.cookies();
+  expect(cookie).toBeTruthy();
+  expect(cookie.name).toBe('name');
+  expect(cookie.value).toBe('val');
+  await context.close();
+});
+
 it.describe('should proxy local network requests', () => {
   for (const additionalBypass of [false, true]) {
     it.describe(additionalBypass ? 'with other bypasses' : 'by default', () => {
