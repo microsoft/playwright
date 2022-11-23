@@ -5,7 +5,6 @@ THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 This project incorporates components from the projects listed below. The original copyright notices and the licenses under which Microsoft received such components are set forth below. Microsoft reserves all rights not expressly granted herein, whether by implication, estoppel or otherwise.
 
 -	@ampproject/remapping@2.2.0 (https://github.com/ampproject/remapping)
--	@babel/code-frame@7.16.7 (https://github.com/babel/babel)
 -	@babel/code-frame@7.18.6 (https://github.com/babel/babel)
 -	@babel/compat-data@7.20.1 (https://github.com/babel/babel)
 -	@babel/core@7.20.2 (https://github.com/babel/babel)
@@ -26,11 +25,9 @@ This project incorporates components from the projects listed below. The origina
 -	@babel/helper-skip-transparent-expression-wrappers@7.20.0 (https://github.com/babel/babel)
 -	@babel/helper-split-export-declaration@7.18.6 (https://github.com/babel/babel)
 -	@babel/helper-string-parser@7.19.4 (https://github.com/babel/babel)
--	@babel/helper-validator-identifier@7.16.7 (https://github.com/babel/babel)
 -	@babel/helper-validator-identifier@7.19.1 (https://github.com/babel/babel)
 -	@babel/helper-validator-option@7.18.6 (https://github.com/babel/babel)
 -	@babel/helpers@7.20.1 (https://github.com/babel/babel)
--	@babel/highlight@7.17.9 (https://github.com/babel/babel)
 -	@babel/highlight@7.18.6 (https://github.com/babel/babel)
 -	@babel/parser@7.20.3 (https://github.com/babel/babel)
 -	@babel/plugin-proposal-class-properties@7.18.6 (https://github.com/babel/babel)
@@ -71,7 +68,7 @@ This project incorporates components from the projects listed below. The origina
 -	@types/istanbul-lib-coverage@2.0.4 (https://github.com/DefinitelyTyped/DefinitelyTyped)
 -	@types/istanbul-lib-report@3.0.0 (https://github.com/DefinitelyTyped/DefinitelyTyped)
 -	@types/istanbul-reports@3.0.1 (https://github.com/DefinitelyTyped/DefinitelyTyped)
--	@types/node@17.0.24 (https://github.com/DefinitelyTyped/DefinitelyTyped)
+-	@types/node@18.11.9 (https://github.com/DefinitelyTyped/DefinitelyTyped)
 -	@types/stack-utils@2.0.1 (https://github.com/DefinitelyTyped/DefinitelyTyped)
 -	@types/yargs-parser@21.0.0 (https://github.com/DefinitelyTyped/DefinitelyTyped)
 -	@types/yargs@16.0.4 (https://github.com/DefinitelyTyped/DefinitelyTyped)
@@ -130,7 +127,7 @@ This project incorporates components from the projects listed below. The origina
 -	slash@3.0.0 (https://github.com/sindresorhus/slash)
 -	source-map-support@0.5.21 (https://github.com/evanw/node-source-map-support)
 -	source-map@0.6.1 (https://github.com/mozilla/source-map)
--	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
+-	stack-utils@2.0.6 (https://github.com/tapjs/stack-utils)
 -	stoppable@1.1.0 (https://github.com/hunterloftis/stoppable)
 -	supports-color@5.5.0 (https://github.com/chalk/supports-color)
 -	supports-color@7.2.0 (https://github.com/chalk/supports-color)
@@ -343,33 +340,6 @@ Apache License
    limitations under the License.
 =========================================
 END OF @ampproject/remapping@2.2.0 AND INFORMATION
-
-%% @babel/code-frame@7.16.7 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-MIT License
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=========================================
-END OF @babel/code-frame@7.16.7 AND INFORMATION
 
 %% @babel/code-frame@7.18.6 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -911,33 +881,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/helper-string-parser@7.19.4 AND INFORMATION
 
-%% @babel/helper-validator-identifier@7.16.7 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-MIT License
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=========================================
-END OF @babel/helper-validator-identifier@7.16.7 AND INFORMATION
-
 %% @babel/helper-validator-identifier@7.19.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
@@ -1018,33 +961,6 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF @babel/helpers@7.20.1 AND INFORMATION
-
-%% @babel/highlight@7.17.9 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-MIT License
-
-Copyright (c) 2014-present Sebastian McKenzie and other contributors
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=========================================
-END OF @babel/highlight@7.17.9 AND INFORMATION
 
 %% @babel/highlight@7.18.6 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -2103,7 +2019,7 @@ MIT License
 =========================================
 END OF @types/istanbul-reports@3.0.1 AND INFORMATION
 
-%% @types/node@17.0.24 NOTICES AND INFORMATION BEGIN HERE
+%% @types/node@18.11.9 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -2127,7 +2043,7 @@ MIT License
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE
 =========================================
-END OF @types/node@17.0.24 AND INFORMATION
+END OF @types/node@18.11.9 AND INFORMATION
 
 %% @types/stack-utils@2.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -3749,11 +3665,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =========================================
 END OF source-map@0.6.1 AND INFORMATION
 
-%% stack-utils@2.0.5 NOTICES AND INFORMATION BEGIN HERE
+%% stack-utils@2.0.6 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
-Copyright (c) Isaac Z. Schlueter <i@izs.me>, James Talmage <james@talmage.io> (github.com/jamestalmage), and Contributors
+Copyright (c) 2016-2022 Isaac Z. Schlueter <i@izs.me>, James Talmage <james@talmage.io> (github.com/jamestalmage), and Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -3773,7 +3689,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
-END OF stack-utils@2.0.5 AND INFORMATION
+END OF stack-utils@2.0.6 AND INFORMATION
 
 %% stoppable@1.1.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -3897,6 +3813,6 @@ END OF update-browserslist-db@1.0.10 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 133
+Total Packages: 130
 =========================================
 END OF SUMMARY
