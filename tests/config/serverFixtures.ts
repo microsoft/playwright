@@ -52,7 +52,7 @@ export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
       if (!socket)
         return;
       socket.on('data', data => {
-        if (!data.toString().startsWith('GET /'))
+        if (!data.toString().includes('\r\n\r\n'))
           return;
         const body = '<html><title>Served by the SOCKS proxy</title></html>';
         socket.end([
