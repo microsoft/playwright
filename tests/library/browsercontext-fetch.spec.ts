@@ -1072,6 +1072,17 @@ it('should support SameSite cookie attribute over https', async ({ contextFactor
   }
 });
 
+it.only('should set localhost cookie', async ({ context, server, browserName, isWindows }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Set-Cookie', `name=val; Domain=localhost; Path=/;`);
+    res.end();
+  });
+  await context.request.get(server.EMPTY_PAGE);
+  const [cookie] = await context.cookies();
+  expect(cookie).toBeTruthy();
+});
+
+
 it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows }) => {
   for (const value of ['None', 'Lax', 'Strict']) {
     await it.step(`SameSite=${value}`, async () => {
