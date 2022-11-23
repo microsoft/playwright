@@ -378,11 +378,12 @@ export interface Reporter {
   /**
    * Called after all tests has been run, or testing has been interrupted. Note that this method may return a [Promise]
    * and Playwright Test will await it.
-   * @param result Result of the full test run. - `'passed'` - Everything went as expected.
+   * @param result Result of the full test run.
+   * - `'passed'` - Everything went as expected.
    * - `'failed'` - Any test has failed.
    * - `'timedout'` - The
-   *   [testConfig.globalTimeout](https://playwright.dev/docs/api/class-testconfig#test-config-global-timeout) has
-   *   been reached.
+   * [testConfig.globalTimeout](https://playwright.dev/docs/api/class-testconfig#test-config-global-timeout) has
+   * been reached.
    * - `'interrupted'` - Interrupted by the user.
    */
   onEnd?(result: FullResult): void | Promise<void>;

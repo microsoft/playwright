@@ -188,7 +188,7 @@ Raw CSS content to be injected into frame.
 
 ## async method: Frame.check
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.check`] instead.
+* discouraged: Use locator-based [`method: Locator.check`] instead. Read more about [locators](../locators.md).
 
 This method checks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -232,7 +232,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Frame.click
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.click`] instead.
+* discouraged: Use locator-based [`method: Locator.click`] instead. Read more about [locators](../locators.md).
 
 This method clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -287,7 +287,7 @@ Gets the full HTML contents of the frame, including the doctype.
 
 ## async method: Frame.dblclick
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.dblclick`] instead.
+* discouraged: Use locator-based [`method: Locator.dblclick`] instead. Read more about [locators](../locators.md).
 * langs:
   - alias-csharp: DblClickAsync
 
@@ -340,7 +340,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Frame.dispatchEvent
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.dispatchEvent`] instead.
+* discouraged: Use locator-based [`method: Locator.dispatchEvent`] instead. Read more about [locators](../locators.md).
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element, `click`
 is dispatched. This is equivalent to calling
@@ -469,18 +469,14 @@ Optional event-specific initialization properties.
 
 ## async method: Frame.evalOnSelector
 * since: v1.9
-* discouraged: Use locator-based [`method: Locator.evaluate`] instead.
+* discouraged: This method does not wait for the element to pass the actionability
+  checks and therefore can lead to the flaky tests. Use [`method: Locator.evaluate`], other [Locator] helper methods or web-first assertions instead.
 * langs:
   - alias-python: eval_on_selector
   - alias-js: $eval
 - returns: <[Serializable]>
 
 Returns the return value of [`param: expression`].
-
-:::caution
-This method does not wait for the element to pass actionability checks and therefore can lead to
-the flaky tests. Use [`method: Locator.evaluate`], other [Locator] helper methods or web-first assertions instead.
-:::
 
 The method finds an element matching the specified selector within the frame and passes it as a first argument to
 [`param: expression`]. See [Working with selectors](../selectors.md) for more details. If no
@@ -538,17 +534,14 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.evalOnSelectorAll
 * since: v1.9
-* discouraged: Use locator-based [`method: Locator.evaluateAll`] instead.
+* discouraged: In most cases, [`method: Locator.evaluateAll`],
+  other [Locator] helper methods and web-first assertions do a better job.
 * langs:
   - alias-python: eval_on_selector_all
   - alias-js: $$eval
 - returns: <[Serializable]>
 
 Returns the return value of [`param: expression`].
-
-:::note
-In most cases, [`method: Locator.evaluateAll`], other [Locator] helper methods and web-first assertions do a better job.
-:::
 
 The method finds all elements matching the specified selector within the frame and passes an array of matched elements
 as a first argument to [`param: expression`]. See [Working with selectors](../selectors.md) for
@@ -811,7 +804,7 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.fill
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.fill`] instead.
+* discouraged: Use locator-based [`method: Locator.fill`] instead. Read more about [locators](../locators.md).
 
 This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
@@ -842,7 +835,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ## async method: Frame.focus
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.focus`] instead.
+* discouraged: Use locator-based [`method: Locator.focus`] instead. Read more about [locators](../locators.md).
 
 This method fetches an element with [`param: selector`] and focuses it. If there's no element matching
 [`param: selector`], the method waits until a matching element appears in the DOM.
@@ -940,7 +933,7 @@ await locator.ClickAsync();
 
 ## async method: Frame.getAttribute
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.getAttribute`] instead.
+* discouraged: Use locator-based [`method: Locator.getAttribute`] instead. Read more about [locators](../locators.md).
 - returns: <[null]|[string]>
 
 Returns element attribute value.
@@ -1083,7 +1076,7 @@ Referer header value. If provided it will take preference over the referer heade
 
 ## async method: Frame.hover
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.hover`] instead.
+* discouraged: Use locator-based [`method: Locator.hover`] instead. Read more about [locators](../locators.md).
 
 This method hovers over an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -1123,7 +1116,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Frame.innerHTML
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.innerHTML`] instead.
+* discouraged: Use locator-based [`method: Locator.innerHTML`] instead. Read more about [locators](../locators.md).
 - returns: <[string]>
 
 Returns `element.innerHTML`.
@@ -1139,7 +1132,7 @@ Returns `element.innerHTML`.
 
 ## async method: Frame.innerText
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.innerText`] instead.
+* discouraged: Use locator-based [`method: Locator.innerText`] instead. Read more about [locators](../locators.md).
 - returns: <[string]>
 
 Returns `element.innerText`.
@@ -1155,7 +1148,7 @@ Returns `element.innerText`.
 
 ## async method: Frame.inputValue
 * since: v1.13
-* discouraged: Use locator-based [`method: Locator.inputValue`] instead.
+* discouraged: Use locator-based [`method: Locator.inputValue`] instead. Read more about [locators](../locators.md).
 - returns: <[string]>
 
 Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
@@ -1173,7 +1166,7 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 
 ## async method: Frame.isChecked
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isChecked`] instead.
+* discouraged: Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
@@ -1195,7 +1188,7 @@ Returns `true` if the frame has been detached, or `false` otherwise.
 
 ## async method: Frame.isDisabled
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isDisabled`] instead.
+* discouraged: Use locator-based [`method: Locator.isDisabled`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
@@ -1211,7 +1204,7 @@ Returns whether the element is disabled, the opposite of [enabled](../actionabil
 
 ## async method: Frame.isEditable
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isEditable`] instead.
+* discouraged: Use locator-based [`method: Locator.isEditable`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is [editable](../actionability.md#editable).
@@ -1242,7 +1235,7 @@ Returns whether the element is [enabled](../actionability.md#enabled).
 
 ## async method: Frame.isHidden
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isHidden`] instead.
+* discouraged: Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
@@ -1260,7 +1253,7 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 
 ## async method: Frame.isVisible
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.isVisible`] instead.
+* discouraged: Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
 Returns whether the element is [visible](../actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
@@ -1316,7 +1309,7 @@ Parent frame, if any. Detached frames and main frames return `null`.
 
 ## async method: Frame.press
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.press`] instead.
+* discouraged: Use locator-based [`method: Locator.press`] instead. Read more about [locators](../locators.md).
 
 [`param: key`] can specify the intended
 [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to
@@ -1362,7 +1355,7 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ## async method: Frame.querySelector
 * since: v1.9
-* discouraged: Use locator-based [`method: Frame.locator`] instead.
+* discouraged: Use locator-based [`method: Frame.locator`] instead. Read more about [locators](../locators.md).
 * langs:
   - alias-python: query_selector
   - alias-js: $
@@ -1386,7 +1379,7 @@ returns `null`.
 
 ## async method: Frame.querySelectorAll
 * since: v1.9
-* discouraged: Use locator-based [`method: Frame.locator`] instead.
+* discouraged: Use locator-based [`method: Frame.locator`] instead. Read more about [locators](../locators.md).
 * langs:
   - alias-python: query_selector_all
   - alias-js: $$
@@ -1407,7 +1400,7 @@ returns empty array.
 
 ## async method: Frame.selectOption
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.selectOption`] instead.
+* discouraged: Use locator-based [`method: Locator.selectOption`] instead. Read more about [locators](../locators.md).
 - returns: <[Array]<[string]>>
 
 This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
@@ -1487,7 +1480,7 @@ await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" })
 
 ## async method: Frame.setChecked
 * since: v1.15
-* discouraged: Use locator-based [`method: Locator.setChecked`] instead.
+* discouraged: Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](../locators.md).
 
 This method checks or unchecks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -1545,7 +1538,7 @@ HTML markup to assign to the page.
 
 ## async method: Frame.setInputFiles
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.setInputFiles`] instead.
+* discouraged: Use locator-based [`method: Locator.setInputFiles`] instead. Read more about [locators](../locators.md).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the current working directory. For empty array, clears the selected files.
@@ -1570,7 +1563,7 @@ This method expects [`param: selector`] to point to an
 
 ## async method: Frame.tap
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.tap`] instead.
+* discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../locators.md).
 
 This method taps an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -1614,7 +1607,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Frame.textContent
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.textContent`] instead.
+* discouraged: Use locator-based [`method: Locator.textContent`] instead. Read more about [locators](../locators.md).
 - returns: <[null]|[string]>
 
 Returns `element.textContent`.
@@ -1636,7 +1629,7 @@ Returns the page title.
 
 ## async method: Frame.type
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.type`] instead.
+* discouraged: Use locator-based [`method: Locator.type`] instead. Read more about [locators](../locators.md).
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used to
 send fine-grained keyboard events. To fill values in form fields, use [`method: Frame.fill`].
@@ -1698,7 +1691,7 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ## async method: Frame.uncheck
 * since: v1.8
-* discouraged: Use locator-based [`method: Locator.uncheck`] instead.
+* discouraged: Use locator-based [`method: Locator.uncheck`] instead. Read more about [locators](../locators.md).
 
 This method checks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to

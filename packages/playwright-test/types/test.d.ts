@@ -436,7 +436,7 @@ interface TestConfig {
    * `8080` produces `baseURL` equal `http://localhost:8080`. If `webServer` is specified as an array, you must
    * explicitly configure the `baseURL` (even if it only has one entry).
    *
-   * > NOTE: It is also recommended to specify
+   * **NOTE** It is also recommended to specify
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so
    * that tests could use relative urls.
    *
@@ -764,7 +764,7 @@ interface TestConfig {
   outputDir?: string;
 
   /**
-   * > NOTE: Use of [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir)
+   * **NOTE** Use of [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir)
    * is discouraged. Please use
    * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
    * to configure snapshot paths.
@@ -1358,7 +1358,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * `8080` produces `baseURL` equal `http://localhost:8080`. If `webServer` is specified as an array, you must
    * explicitly configure the `baseURL` (even if it only has one entry).
    *
-   * > NOTE: It is also recommended to specify
+   * **NOTE** It is also recommended to specify
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so
    * that tests could use relative urls.
    *
@@ -1571,7 +1571,7 @@ export interface TestInfo {
    * });
    * ```
    *
-   * > NOTE: [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach)
+   * **NOTE** [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach)
    * automatically takes care of copying attached files to a location that is accessible to reporters. You can safely
    * remove the attachment after awaiting the attach call.
    * @param name Attachment name. The name will also be sanitized and used as the prefix of file name when saving to disk.
@@ -1822,12 +1822,13 @@ export interface TestInfo {
    * 'path', 'to', 'snapshot.png')`.
    * > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`),
    * otherwise it will throw.
-   * @param pathSegments The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the same test file are expected to be the same.
+   * @param pathSegments The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the
+   * same test file are expected to be the same.
    */
   snapshotPath(...pathSegments: Array<string>): string;
 
   /**
-   * > NOTE: Use of [testInfo.snapshotSuffix](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-suffix)
+   * **NOTE** Use of [testInfo.snapshotSuffix](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-suffix)
    * is discouraged. Please use
    * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
    * to configure snapshot paths.
@@ -1927,7 +1928,8 @@ interface SuiteFunction {
    * ```
    *
    * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Any tests added in
+   * @param callback A callback that is run immediately when calling
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Any tests added in
    * this callback will belong to the group.
    */
   (title: string, callback: () => void): void;
@@ -1949,7 +1951,8 @@ interface SuiteFunction {
    * });
    * ```
    *
-   * @param callback A callback that is run immediately when calling [test.describe(callback)](https://playwright.dev/docs/api/class-test#test-describe-2). Any tests added in this
+   * @param callback A callback that is run immediately when calling
+   * [test.describe(callback)](https://playwright.dev/docs/api/class-test#test-describe-2). Any tests added in this
    * callback will belong to the group.
    */
   (callback: () => void): void;
@@ -2004,7 +2007,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Any tests added in
+   * @param callback A callback that is run immediately when calling
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Any tests added in
    * this callback will belong to the group.
    */
   describe: SuiteFunction & {
@@ -2024,7 +2028,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Any tests
+   * @param callback A callback that is run immediately when calling
+   * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Any tests
    * added in this callback will belong to the group.
    */
   only: SuiteFunction;
@@ -2042,7 +2047,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe.skip(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-skip). Any tests
+   * @param callback A callback that is run immediately when calling
+   * [test.describe.skip(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-skip). Any tests
    * added in this callback will belong to the group, and will not be run.
    */
   skip: SuiteFunction;
@@ -2060,7 +2066,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe.fixme(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-fixme). Any tests
+   * @param callback A callback that is run immediately when calling
+   * [test.describe.fixme(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-fixme). Any tests
    * added in this callback will belong to the group, and will not be run.
    */
   fixme: SuiteFunction;
@@ -2068,10 +2075,11 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are
    * skipped. All tests in a group are retried together.
    *
-   * > NOTE: See
+   * **NOTE** See
    * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for the
    * preferred way of configuring the execution mode.
-   * > NOTE: Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
+   *
+   * **NOTE** Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
    *
    * ```js
@@ -2082,7 +2090,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe.serial(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-serial). Any tests
+   * @param callback A callback that is run immediately when calling
+   * [test.describe.serial(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-serial). Any tests
    * added in this callback will belong to the group.
    */
   serial: SuiteFunction & {
@@ -2091,7 +2100,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * tests are skipped. All tests in a group are retried together. If there are some focused tests or suites, all of
    * them will be run but nothing else.
    *
-   * > NOTE: Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
+   * **NOTE** Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
    *
    * ```js
@@ -2104,7 +2113,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe.serial.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-serial-only).
+   * @param callback A callback that is run immediately when calling
+   * [test.describe.serial.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-serial-only).
    * Any tests added in this callback will belong to the group.
    */
   only: SuiteFunction;
@@ -2115,7 +2125,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel) allows
    * them to run in parallel.
    *
-   * > NOTE: See
+   * **NOTE** See
    * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for the
    * preferred way of configuring the execution mode.
    *
@@ -2129,7 +2139,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Note that parallel tests are executed in separate processes and cannot share any state or global variables. Each of
    * the parallel tests executes all relevant hooks.
    * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel). Any
+   * @param callback A callback that is run immediately when calling
+   * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel). Any
    * tests added in this callback will belong to the group.
    */
   parallel: SuiteFunction & {
@@ -2138,7 +2149,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel), but
    * focuses the group. If there are some focused tests or suites, all of them will be run but nothing else.
    * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe.parallel.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel-only).
+   * @param callback A callback that is run immediately when calling
+   * [test.describe.parallel.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel-only).
    * Any tests added in this callback will belong to the group.
    */
   only: SuiteFunction;
@@ -2272,7 +2284,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param callback A function that returns whether to skip, based on test fixtures. Test or tests are skipped when the return value is `true`.
+   * @param callback A function that returns whether to skip, based on test fixtures. Test or tests are skipped when the return value is
+   * `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   skip(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
@@ -2357,7 +2370,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param callback A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme" when the return value is `true`.
+   * @param callback A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme"
+   * when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
@@ -2411,7 +2425,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as "should fail" when the return value is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   fail(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
@@ -2427,7 +2442,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * > NOTE: [test.slow()](https://playwright.dev/docs/api/class-test#test-slow-1) cannot be used in a `beforeAll` or
+   * **NOTE** [test.slow()](https://playwright.dev/docs/api/class-test#test-slow-1) cannot be used in a `beforeAll` or
    * `afterAll` hook. Use [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout)
    * instead.
    */
@@ -2467,7 +2482,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param callback A function that returns whether to mark as "slow", based on test fixtures. Test or tests are marked as "slow" when the return value is `true`.
+   * @param callback A function that returns whether to mark as "slow", based on test fixtures. Test or tests are marked as "slow" when
+   * the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
   slow(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
