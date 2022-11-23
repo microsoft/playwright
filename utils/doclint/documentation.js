@@ -55,6 +55,8 @@ const md = require('../markdown');
  * @typedef {{
  *   langs: Langs,
  *   since: string,
+ *   deprecated: string | undefined,
+ *   discouraged: string | undefined,
  *   experimental: boolean
  * }} Metainfo
  */
@@ -162,20 +164,33 @@ class Documentation {
         membersMap.set(`${member.kind}: ${clazz.name}.${member.name}`, member);
     }
     /**
-     * @param {Class|Member|null} classOrMember
-     * @param {MarkdownNode[] | undefined} nodes
+     * @param {Class|Member|undefined} classOrMember
+     * @param {string} text
      */
-    this._patchLinks = (classOrMember, nodes) => patchLinks(classOrMember, nodes, classesMap, membersMap, linkRenderer);
+    this._patchLinksInText = (classOrMember, text) => patchLinksInText(classOrMember, text, classesMap, membersMap, linkRenderer);
 
     for (const clazz of this.classesArray)
-      clazz.visit(item => this._patchLinks?.(item, item.spec));
+      clazz.visit(item => item.spec && this.renderLinksInNodes(item.spec, item));
   }
 
   /**
    * @param {MarkdownNode[]} nodes
+   * @param {Class|Member=} classOrMember
    */
-  renderLinksInText(nodes) {
-    this._patchLinks?.(null, nodes);
+  renderLinksInNodes(nodes, classOrMember) {
+    md.visitAll(nodes, node => {
+      if (!node.text)
+        return;
+      node.text = this.renderLinksInText(node.text, classOrMember);
+    });
+  }
+
+  /**
+   * @param {string} text
+   * @param {Class|Member=} classOrMember
+   */
+  renderLinksInText(text, classOrMember) {
+    return this._patchLinksInText?.(classOrMember, text);
   }
 
   /**
@@ -214,6 +229,8 @@ class Documentation {
     this.langs = metainfo.langs;
     this.experimental = metainfo.experimental;
     this.since = metainfo.since;
+    this.deprecated = metainfo.deprecated;
+    this.discouraged = metainfo.discouraged;
     this.name = name;
     this.membersArray = membersArray;
     this.spec = spec;
@@ -265,7 +282,7 @@ class Documentation {
   }
 
   clone() {
-    const cls = new Class({ langs: this.langs, experimental: this.experimental, since: this.since }, this.name, this.membersArray.map(m => m.clone()), this.extends, this.spec);
+    const cls = new Class({ langs: this.langs, experimental: this.experimental, since: this.since, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.membersArray.map(m => m.clone()), this.extends, this.spec);
     cls.comment = this.comment;
     return cls;
   }
@@ -369,6 +386,8 @@ class Member {
     this.langs = metainfo.langs;
     this.experimental = metainfo.experimental;
     this.since = metainfo.since;
+    this.deprecated = metainfo.deprecated;
+    this.discouraged = metainfo.discouraged;
     this.name = name;
     this.type = type;
     this.spec = spec;
@@ -382,13 +401,6 @@ class Member {
     this.clazz = null;
     /** @type {Member=} */
     this.enclosingMethod = undefined;
-    this.deprecated = false;
-    if (spec) {
-      md.visitAll(spec, node => {
-        if (node.text && node.text.includes('**DEPRECATED**'))
-          this.deprecated = true;
-      });
-    };
     this.async = false;
     this.alias = name;
     this.overloadIndex = 0;
@@ -472,7 +484,7 @@ class Member {
   }
 
   clone() {
-    const result = new Member(this.kind, { langs: this.langs, experimental: this.experimental, since: this.since }, this.name, this.type?.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required);
+    const result = new Member(this.kind, { langs: this.langs, experimental: this.experimental, since: this.since, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.type?.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required);
     result.alias = this.alias;
     result.async = this.async;
     result.paramOrOption = this.paramOrOption;
@@ -801,50 +813,45 @@ function matchingBracket(str, open, close) {
 }
 
 /**
- * @param {Class|Member|null} classOrMember
- * @param {MarkdownNode[]|undefined} spec
+ * @param {Class|Member|undefined} classOrMember
+ * @param {string} text
  * @param {Map<string, Class>} classesMap
  * @param {Map<string, Member>} membersMap
  * @param {Renderer} linkRenderer
  */
-function patchLinks(classOrMember, spec, classesMap, membersMap, linkRenderer) {
-  if (!spec)
-    return;
-  md.visitAll(spec, node => {
-    if (!node.text)
-      return;
-    node.text = node.text.replace(/\[`(\w+): ([^\]]+)`\](?:\(([^)]*?)\))?/g, (match, p1, p2, href) => {
-      if (['event', 'method', 'property'].includes(p1)) {
-        const memberName = p1 + ': ' + p2;
-        const member = membersMap.get(memberName);
-        if (!member)
-          throw new Error('Undefined member references: ' + match);
-        return linkRenderer({ member, href }) || match;
+function patchLinksInText(classOrMember, text, classesMap, membersMap, linkRenderer) {
+  text = text.replace(/\[`(\w+): ([^\]]+)`\](?:\(([^)]*?)\))?/g, (match, p1, p2, href) => {
+    if (['event', 'method', 'property'].includes(p1)) {
+      const memberName = p1 + ': ' + p2;
+      const member = membersMap.get(memberName);
+      if (!member)
+        throw new Error('Undefined member references: ' + match);
+      return linkRenderer({ member, href }) || match;
+    }
+    if (p1 === 'param') {
+      let alias = p2;
+      if (classOrMember) {
+        // param/option reference can only be in method or same method parameter comments.
+        // @ts-ignore
+        const method = classOrMember.enclosingMethod;
+        const param = method.argsArray.find(a => a.name === p2);
+        if (!param)
+          throw new Error(`Referenced parameter ${match} not found in the parent method ${method.name} `);
+        alias = param.alias;
       }
-      if (p1 === 'param') {
-        let alias = p2;
-        if (classOrMember) {
-          // param/option reference can only be in method or same method parameter comments.
-          // @ts-ignore
-          const method = classOrMember.enclosingMethod;
-          const param = method.argsArray.find(a => a.name === p2);
-          if (!param)
-            throw new Error(`Referenced parameter ${match} not found in the parent method ${method.name} `);
-          alias = param.alias;
-        }
-        return linkRenderer({ param: alias, href }) || match;
-      }
-      if (p1 === 'option')
-        return linkRenderer({ option: p2, href }) || match;
-      throw new Error(`Undefined link prefix, expected event|method|property|param|option, got: ` + match);
-    });
-    node.text = node.text.replace(/\[([\w]+)\](?:\(([^)]*?)\))?/g, (match, p1, href) => {
-      const clazz = classesMap.get(p1);
-      if (clazz)
-        return linkRenderer({ clazz, href }) || match;
-      return match;
-    });
+      return linkRenderer({ param: alias, href }) || match;
+    }
+    if (p1 === 'option')
+      return linkRenderer({ option: p2, href }) || match;
+    throw new Error(`Undefined link prefix, expected event|method|property|param|option, got: ` + match);
   });
+  text = text.replace(/\[([\w]+)\](?:\(([^)]*?)\))?/g, (match, p1, href) => {
+    const clazz = classesMap.get(p1);
+    if (clazz)
+      return linkRenderer({ clazz, href }) || match;
+    return match;
+  });
+  return text;
 }
 
 /**

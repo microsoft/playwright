@@ -568,17 +568,15 @@ Logger sink for Playwright logging.
 
 ## context-option-videospath
 * langs: js
+* deprecated: Use [`option: recordVideo`] instead.
 - `videosPath` <[path]>
-
-**DEPRECATED** Use [`option: recordVideo`] instead.
 
 ## context-option-videosize
 * langs: js
+* deprecated: Use [`option: recordVideo`] instead.
 - `videoSize` <[Object]>
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
-
-**DEPRECATED** Use [`option: recordVideo`] instead.
 
 ## context-option-recordhar
 * langs: js

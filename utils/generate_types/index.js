@@ -474,7 +474,7 @@ class TypesGenerator {
     if (member.comment)
       lines.push(...member.comment.split('\n'));
     if (member.deprecated)
-      lines.push('@deprecated');
+      lines.push('@deprecated ' + member.deprecated);
     lines.push(...member.argsArray.map(arg => `@param ${arg.alias.replace(/\./g, '')} ${arg.comment.replace('\n', ' ')}`));
     if (!lines.length)
       return indent;
