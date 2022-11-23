@@ -49,9 +49,11 @@ export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
 
     const socksServer = socks.createServer((info, accept, deny) => {
       const socket = accept(true);
-      if (socket) {
-        // Catch and ignore ECONNRESET errors.
-        socket.on('error', () => {});
+      if (!socket)
+        return;
+      socket.on('data', data => {
+        if (!data.toString().includes('\r\n\r\n'))
+          return;
         const body = '<html><title>Served by the SOCKS proxy</title></html>';
         socket.end([
           'HTTP/1.1 200 OK',
@@ -61,7 +63,10 @@ export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
           '',
           body
         ].join('\r\n'));
-      }
+      });
+      // Catch and ignore ECONNRESET errors.
+      socket.on('error', () => {});
+      setTimeout(() => socket.end(), 1000);
     });
     const socksPort = port + 2;
     socksServer.listen(socksPort, 'localhost');
