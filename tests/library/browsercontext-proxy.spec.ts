@@ -92,7 +92,8 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
 });
 
 
-it.only('should set cookie for top-level domain', async ({ contextFactory, server, proxyServer }) => {
+it('should set cookie for top-level domain', async ({ contextFactory, server, proxyServer, browserName, isLinux }) => {
+  it.fixme(browserName === 'webkit' && isLinux);
   proxyServer.forwardTo(server.PORT);
   const context = await contextFactory({
     proxy: { server: `localhost:${proxyServer.PORT}` }
@@ -105,6 +106,8 @@ it.only('should set cookie for top-level domain', async ({ contextFactory, serve
   await context.request.get('http://codes/empty.html');
   const [cookie] = await context.cookies();
   expect(cookie).toBeTruthy();
+  expect(cookie.name).toBe('name');
+  expect(cookie.value).toBe('val');
   await context.close();
 });
 

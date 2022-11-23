@@ -1072,7 +1072,7 @@ it('should support SameSite cookie attribute over https', async ({ contextFactor
   }
 });
 
-it.only('should set localhost cookie', async ({ context, server, browserName, isWindows }) => {
+it('should set domain=localhost cookie', async ({ context, server, browserName, isWindows }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', `name=val; Domain=localhost; Path=/;`);
     res.end();
@@ -1080,6 +1080,8 @@ it.only('should set localhost cookie', async ({ context, server, browserName, is
   await context.request.get(server.EMPTY_PAGE);
   const [cookie] = await context.cookies();
   expect(cookie).toBeTruthy();
+  expect(cookie.name).toBe('name');
+  expect(cookie.value).toBe('val');
 });
 
 
