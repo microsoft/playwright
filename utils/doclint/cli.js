@@ -192,7 +192,7 @@ async function run() {
           // Validates code snippet groups.
           rootNode = docs.processCodeGroups(rootNode, lang, tabs => tabs.map(tab => tab.spec));
           // Renders links.
-          documentation.renderLinksInText(rootNode);
+          documentation.renderLinksInNodes(rootNode);
           // Validate links.
           {
             md.visitAll(rootNode, node => {

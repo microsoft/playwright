@@ -558,9 +558,9 @@ page.
 ## property: Page.accessibility
 * since: v1.8
 * langs: csharp, js, python
+* deprecated: This property is discouraged. Please use other libraries such as
+  [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
 - type: <[Accessibility]>
-
-**DEPRECATED** This property is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
 
 ## async method: Page.addInitScript
 * since: v1.8
@@ -642,8 +642,6 @@ Optional argument to pass to [`param: script`] (only supported when passing a fu
 Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
 fires or when the script content was injected into frame.
 
-Shortcut for main frame's [`method: Frame.addScriptTag`].
-
 ### option: Page.addScriptTag.url
 * since: v1.8
 - `url` <[string]>
@@ -677,8 +675,6 @@ Script type. Use 'module' in order to load a Javascript ES6 module. See
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
 content. Returns the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
 
-Shortcut for main frame's [`method: Frame.addStyleTag`].
-
 ### option: Page.addStyleTag.url
 * since: v1.8
 - `url` <[string]>
@@ -705,6 +701,7 @@ Brings page to front (activates tab).
 
 ## async method: Page.check
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.check`] instead.
 
 This method checks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -720,8 +717,6 @@ This method checks an element matching [`param: selector`] by performing the fol
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
-
-Shortcut for main frame's [`method: Frame.check`].
 
 ### param: Page.check.selector = %%-input-selector-%%
 * since: v1.8
@@ -746,6 +741,7 @@ Shortcut for main frame's [`method: Frame.check`].
 
 ## async method: Page.click
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.click`] instead.
 
 This method clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -758,8 +754,6 @@ This method clicks an element matching [`param: selector`] by performing the fol
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
-
-Shortcut for main frame's [`method: Frame.click`].
 
 ### param: Page.click.selector = %%-input-selector-%%
 * since: v1.8
@@ -839,6 +833,7 @@ Browser-specific Coverage implementation. See [Coverage](#class-coverage) for mo
 
 ## async method: Page.dblclick
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.dblclick`] instead.
 * langs:
   - alias-csharp: DblClickAsync
 
@@ -858,8 +853,6 @@ When all steps combined have not finished during the specified [`option: timeout
 :::note
 `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
 :::
-
-Shortcut for main frame's [`method: Frame.dblclick`].
 
 ### param: Page.dblclick.selector = %%-input-selector-%%
 * since: v1.8
@@ -893,6 +886,7 @@ Shortcut for main frame's [`method: Frame.dblclick`].
 
 ## async method: Page.dispatchEvent
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.dispatchEvent`] instead.
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element, `click`
 is dispatched. This is equivalent to calling
@@ -1283,6 +1277,7 @@ Emulates `'forced-colors'` media feature, supported values are `'active'` and `'
 
 ## async method: Page.evalOnSelector
 * since: v1.9
+* discouraged: Use locator-based [`method: Locator.evaluate`] instead.
 * langs:
   - alias-python: eval_on_selector
   - alias-js: $eval
@@ -1334,8 +1329,6 @@ var preloadHref = await page.EvalOnSelectorAsync<string>("link[rel=preload]", "e
 var html = await page.EvalOnSelectorAsync(".main-container", "(e, suffix) => e.outerHTML + suffix", "hello");
 ```
 
-Shortcut for main frame's [`method: Frame.evalOnSelector`].
-
 ### param: Page.evalOnSelector.selector = %%-query-selector-%%
 * since: v1.9
 
@@ -1353,6 +1346,7 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: Page.evalOnSelectorAll
 * since: v1.9
+* discouraged: Use locator-based [`method: Locator.evaluateAll`] instead.
 * langs:
   - alias-python: eval_on_selector_all
   - alias-js: $$eval
@@ -1507,8 +1501,6 @@ var bodyHandle = await page.EvaluateAsync("document.body");
 var html = await page.EvaluateAsync<string>("([body, suffix]) => body.innerHTML + suffix", new object [] { bodyHandle, "hello" });
 await bodyHandle.DisposeAsync();
 ```
-
-Shortcut for main frame's [`method: Frame.evaluate`].
 
 ### param: Page.evaluate.expression = %%-evaluate-expression-%%
 * since: v1.8
@@ -2054,14 +2046,13 @@ Callback function which will be called in Playwright's context.
 
 ## async method: Page.fill
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.fill`] instead.
 
 This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
 To send fine-grained keyboard events, use [`method: Page.type`].
-
-Shortcut for main frame's [`method: Frame.fill`].
 
 ### param: Page.fill.selector = %%-input-selector-%%
 * since: v1.8
@@ -2086,11 +2077,10 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ## async method: Page.focus
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.focus`] instead.
 
 This method fetches an element with [`param: selector`] and focuses it. If there's no element matching
 [`param: selector`], the method waits until a matching element appears in the DOM.
-
-Shortcut for main frame's [`method: Frame.focus`].
 
 ### param: Page.focus.selector = %%-input-selector-%%
 * since: v1.8
@@ -2220,6 +2210,7 @@ An array of all frames attached to the page.
 
 ## async method: Page.getAttribute
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.getAttribute`] instead.
 - returns: <[null]|[string]>
 
 Returns element attribute value.
@@ -2371,8 +2362,6 @@ Headless mode doesn't support navigation to a PDF document. See the
 [upstream issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
 :::
 
-Shortcut for main frame's [`method: Frame.goto`]
-
 ### param: Page.goto.url
 * since: v1.8
 - `url` <[string]>
@@ -2396,6 +2385,7 @@ Referer header value. If provided it will take preference over the referer heade
 
 ## async method: Page.hover
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.hover`] instead.
 
 This method hovers over an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -2408,8 +2398,6 @@ This method hovers over an element matching [`param: selector`] by performing th
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
-
-Shortcut for main frame's [`method: Frame.hover`].
 
 ### param: Page.hover.selector = %%-input-selector-%%
 * since: v1.8
@@ -2437,6 +2425,7 @@ Shortcut for main frame's [`method: Frame.hover`].
 
 ## async method: Page.innerHTML
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.innerHTML`] instead.
 - returns: <[string]>
 
 Returns `element.innerHTML`.
@@ -2452,6 +2441,7 @@ Returns `element.innerHTML`.
 
 ## async method: Page.innerText
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.innerText`] instead.
 - returns: <[string]>
 
 Returns `element.innerText`.
@@ -2467,6 +2457,7 @@ Returns `element.innerText`.
 
 ## async method: Page.inputValue
 * since: v1.13
+* discouraged: Use locator-based [`method: Locator.inputValue`] instead.
 - returns: <[string]>
 
 Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
@@ -2484,6 +2475,7 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 
 ## async method: Page.isChecked
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isChecked`] instead.
 - returns: <[boolean]>
 
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
@@ -2505,6 +2497,7 @@ Indicates that the page has been closed.
 
 ## async method: Page.isDisabled
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isDisabled`] instead.
 - returns: <[boolean]>
 
 Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
@@ -2520,6 +2513,7 @@ Returns whether the element is disabled, the opposite of [enabled](../actionabil
 
 ## async method: Page.isEditable
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isEditable`] instead.
 - returns: <[boolean]>
 
 Returns whether the element is [editable](../actionability.md#editable).
@@ -2535,6 +2529,7 @@ Returns whether the element is [editable](../actionability.md#editable).
 
 ## async method: Page.isEnabled
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isEnabled`] instead.
 - returns: <[boolean]>
 
 Returns whether the element is [enabled](../actionability.md#enabled).
@@ -2550,6 +2545,7 @@ Returns whether the element is [enabled](../actionability.md#enabled).
 
 ## async method: Page.isHidden
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isHidden`] instead.
 - returns: <[boolean]>
 
 Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
@@ -2562,12 +2558,13 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 
 ### option: Page.isHidden.timeout
 * since: v1.8
+* deprecated: This option is ignored. [`method: Page.isHidden`] does not wait for the
+  element to become hidden and returns immediately.
 - `timeout` <[float]>
-
-**DEPRECATED** This option is ignored. [`method: Page.isHidden`] does not wait for the element to become hidden and returns immediately.
 
 ## async method: Page.isVisible
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isVisible`] instead.
 - returns: <[boolean]>
 
 Returns whether the element is [visible](../actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
@@ -2580,9 +2577,9 @@ Returns whether the element is [visible](../actionability.md#visible). [`option:
 
 ### option: Page.isVisible.timeout
 * since: v1.8
+* deprecated: This option is ignored. [`method: Page.isVisible`] does not wait
+  for the element to become visible and returns immediately.
 - `timeout` <[float]>
-
-**DEPRECATED** This option is ignored. [`method: Page.isVisible`] does not wait for the element to become visible and returns immediately.
 
 ## property: Page.keyboard
 * since: v1.8
@@ -2834,6 +2831,7 @@ size.
 
 ## async method: Page.press
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.press`] instead.
 
 Focuses the element, and then uses [`method: Keyboard.down`] and [`method: Keyboard.up`].
 
@@ -2941,19 +2939,14 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ## async method: Page.querySelector
 * since: v1.9
+* discouraged: Use locator-based [`method: Page.locator`] instead.
 * langs:
   - alias-python: query_selector
   - alias-js: $
 - returns: <[null]|[ElementHandle]>
 
-:::caution
-The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
-:::
-
 The method finds an element matching the specified selector within the page. If no elements match the selector, the
 return value resolves to `null`. To wait for an element on the page, use [`method: Locator.waitFor`].
-
-Shortcut for main frame's [`method: Frame.querySelector`].
 
 ### param: Page.querySelector.selector = %%-query-selector-%%
 * since: v1.9
@@ -2963,19 +2956,14 @@ Shortcut for main frame's [`method: Frame.querySelector`].
 
 ## async method: Page.querySelectorAll
 * since: v1.9
+* discouraged: Use locator-based [`method: Page.locator`] instead.
 * langs:
   - alias-python: query_selector_all
   - alias-js: $$
 - returns: <[Array]<[ElementHandle]>>
 
-:::caution
-The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
-:::
-
 The method finds all elements matching the specified selector within the page. If no elements match the selector, the
 return value resolves to `[]`.
-
-Shortcut for main frame's [`method: Frame.querySelectorAll`].
 
 ### param: Page.querySelectorAll.selector = %%-query-selector-%%
 * since: v1.9
@@ -3227,6 +3215,7 @@ Returns the buffer with the captured screenshot.
 
 ## async method: Page.selectOption
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.selectOption`] instead.
 - returns: <[Array]<[string]>>
 
 This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
@@ -3287,8 +3276,6 @@ await page.SelectOptionAsync("select#colors", new[] { new SelectOptionValue() { 
 await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 ```
 
-Shortcut for main frame's [`method: Frame.selectOption`].
-
 ### param: Page.selectOption.selector = %%-input-selector-%%
 * since: v1.8
 
@@ -3309,6 +3296,7 @@ Shortcut for main frame's [`method: Frame.selectOption`].
 
 ## async method: Page.setChecked
 * since: v1.15
+* discouraged: Use locator-based [`method: Locator.setChecked`] instead.
 
 This method checks or unchecks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -3324,8 +3312,6 @@ This method checks or unchecks an element matching [`param: selector`] by perfor
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
-
-Shortcut for main frame's [`method: Frame.setChecked`].
 
 ### param: Page.setChecked.selector = %%-input-selector-%%
 * since: v1.15
@@ -3421,6 +3407,7 @@ An object containing additional HTTP headers to be sent with every request. All 
 
 ## async method: Page.setInputFiles
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.setInputFiles`] instead.
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the current working directory. For empty array, clears the selected files.
@@ -3506,6 +3493,7 @@ await page.GotoAsync("https://www.microsoft.com");
 
 ## async method: Page.tap
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.tap`] instead.
 
 This method taps an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -3522,8 +3510,6 @@ When all steps combined have not finished during the specified [`option: timeout
 :::note
 [`method: Page.tap`] requires that the [`option: hasTouch`] option of the browser context be set to true.
 :::
-
-Shortcut for main frame's [`method: Frame.tap`].
 
 ### param: Page.tap.selector = %%-input-selector-%%
 * since: v1.8
@@ -3551,6 +3537,7 @@ Shortcut for main frame's [`method: Frame.tap`].
 
 ## async method: Page.textContent
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.textContent`] instead.
 - returns: <[null]|[string]>
 
 Returns `element.textContent`.
@@ -3568,7 +3555,7 @@ Returns `element.textContent`.
 * since: v1.8
 - returns: <[string]>
 
-Returns the page's title. Shortcut for main frame's [`method: Frame.title`].
+Returns the page's title.
 
 ## property: Page.touchscreen
 * since: v1.8
@@ -3576,6 +3563,7 @@ Returns the page's title. Shortcut for main frame's [`method: Frame.title`].
 
 ## async method: Page.type
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.type`] instead.
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `page.type` can be used to send
 fine-grained keyboard events. To fill values in form fields, use [`method: Page.fill`].
@@ -3611,8 +3599,6 @@ await page.TypeAsync("#mytextarea", "hello"); // types instantly
 await page.TypeAsync("#mytextarea", "world", new() { Delay = 100 }); // types slower, like a user
 ```
 
-Shortcut for main frame's [`method: Frame.type`].
-
 ### param: Page.type.selector = %%-input-selector-%%
 * since: v1.8
 
@@ -3639,6 +3625,7 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ## async method: Page.uncheck
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.uncheck`] instead.
 
 This method unchecks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -3654,8 +3641,6 @@ This method unchecks an element matching [`param: selector`] by performing the f
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
-
-Shortcut for main frame's [`method: Frame.uncheck`].
 
 ### param: Page.uncheck.selector = %%-input-selector-%%
 * since: v1.8
@@ -3707,8 +3692,6 @@ Optional handler function to route the request.
 ## method: Page.url
 * since: v1.8
 - returns: <[string]>
-
-Shortcut for main frame's [`method: Frame.url`].
 
 ## method: Page.video
 * since: v1.8
@@ -3956,8 +3939,6 @@ var selector = ".foo";
 await page.WaitForFunctionAsync("selector => !!document.querySelector(selector)", selector);
 ```
 
-Shortcut for main frame's [`method: Frame.waitForFunction`].
-
 ### param: Page.waitForFunction.expression = %%-evaluate-expression-%%
 * since: v1.8
 
@@ -4057,8 +4038,6 @@ await popup.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 Console.WriteLine(await popup.TitleAsync()); // popup is ready to use.
 ```
 
-Shortcut for main frame's [`method: Frame.waitForLoadState`].
-
 ### param: Page.waitForLoadState.state = %%-wait-for-load-state-state-%%
 * since: v1.8
 
@@ -4126,8 +4105,6 @@ await page.RunAndWaitForNavigationAsync(async () =>
 Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is considered
 a navigation.
 :::
-
-Shortcut for main frame's [`method: Frame.waitForNavigation`].
 
 ### option: Page.waitForNavigation.url = %%-wait-for-navigation-url-%%
 * since: v1.8
@@ -4559,8 +4536,6 @@ page.wait_for_timeout(1000)
 await page.WaitForTimeoutAsync(1000);
 ```
 
-Shortcut for main frame's [`method: Frame.waitForTimeout`].
-
 ### param: Page.waitForTimeout.timeout
 * since: v1.8
 - `timeout` <[float]>
@@ -4598,8 +4573,6 @@ page.wait_for_url("**/target.html")
 await page.ClickAsync("a.delayed-navigation"); // clicking the link will indirectly cause a navigation
 await page.WaitForURLAsync("**/target.html");
 ```
-
-Shortcut for main frame's [`method: Frame.waitForURL`].
 
 ### param: Page.waitForURL.url = %%-wait-for-navigation-url-%%
 * since: v1.11

@@ -116,8 +116,6 @@ export interface Page {
    * await bodyHandle.dispose();
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate).
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`.
    */
@@ -165,8 +163,6 @@ export interface Page {
    * await bodyHandle.dispose();
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate).
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`.
    */
@@ -290,51 +286,31 @@ export interface Page {
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
 
   /**
-   * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
-   *
    * The method finds an element matching the specified selector within the page. If no elements match the selector, the
    * return value resolves to `null`. To wait for an element on the page, use
    * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for).
-   *
-   * Shortcut for main frame's
-   * [frame.$(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-query-selector).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   $<K extends keyof HTMLElementTagNameMap>(selector: K, options?: { strict: boolean }): Promise<ElementHandleForTag<K> | null>;
   /**
-   * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
-   *
    * The method finds an element matching the specified selector within the page. If no elements match the selector, the
    * return value resolves to `null`. To wait for an element on the page, use
    * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for).
-   *
-   * Shortcut for main frame's
-   * [frame.$(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-query-selector).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   $(selector: string, options?: { strict: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
 
   /**
-   * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
-   *
    * The method finds all elements matching the specified selector within the page. If no elements match the selector,
    * the return value resolves to `[]`.
-   *
-   * Shortcut for main frame's
-   * [frame.$$(selector)](https://playwright.dev/docs/api/class-frame#frame-query-selector-all).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
   $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
   /**
-   * > NOTE: The use of [ElementHandle] is discouraged, use [Locator] objects and web-first assertions instead.
-   *
    * The method finds all elements matching the specified selector within the page. If no elements match the selector,
    * the return value resolves to `[]`.
-   *
-   * Shortcut for main frame's
-   * [frame.$$(selector)](https://playwright.dev/docs/api/class-frame#frame-query-selector-all).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    */
   $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]>;
@@ -362,8 +338,6 @@ export interface Page {
    * const preloadHrefTS = await page.$eval('link[rel=preload]', (el: HTMLLinkElement) => el.href);
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`.
@@ -393,8 +367,6 @@ export interface Page {
    * const preloadHrefTS = await page.$eval('link[rel=preload]', (el: HTMLLinkElement) => el.href);
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`.
@@ -424,8 +396,6 @@ export interface Page {
    * const preloadHrefTS = await page.$eval('link[rel=preload]', (el: HTMLLinkElement) => el.href);
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`.
@@ -455,8 +425,6 @@ export interface Page {
    * const preloadHrefTS = await page.$eval('link[rel=preload]', (el: HTMLLinkElement) => el.href);
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`.
@@ -588,8 +556,6 @@ export interface Page {
    * await page.waitForFunction(selector => !!document.querySelector(selector), selector);
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.waitForFunction(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-function).
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`.
    * @param options
@@ -626,8 +592,6 @@ export interface Page {
    * await page.waitForFunction(selector => !!document.querySelector(selector), selector);
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.waitForFunction(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-function).
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to `pageFunction`.
    * @param options
@@ -1785,19 +1749,13 @@ export interface Page {
   prependListener(event: 'worker', listener: (worker: Worker) => void): this;
 
   /**
-   * **DEPRECATED** This property is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if
-   * you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for
-   * integration with Axe.
-   * @deprecated
+   * @deprecated This property is discouraged. Please use other libraries such as↵[Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
    */
   accessibility: Accessibility;
 
   /**
    * Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
    * fires or when the script content was injected into frame.
-   *
-   * Shortcut for main frame's
-   * [frame.addScriptTag([options])](https://playwright.dev/docs/api/class-frame#frame-add-script-tag).
    * @param options
    */
   addScriptTag(options?: {
@@ -1827,9 +1785,6 @@ export interface Page {
   /**
    * Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
    * content. Returns the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
-   *
-   * Shortcut for main frame's
-   * [frame.addStyleTag([options])](https://playwright.dev/docs/api/class-frame#frame-add-style-tag).
    * @param options
    */
   addStyleTag(options?: {
@@ -1870,9 +1825,6 @@ export interface Page {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError].
    * Passing zero timeout disables this.
-   *
-   * Shortcut for main frame's
-   * [frame.check(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-check).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -1932,9 +1884,6 @@ export interface Page {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError].
    * Passing zero timeout disables this.
-   *
-   * Shortcut for main frame's
-   * [frame.click(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-click).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2053,9 +2002,6 @@ export interface Page {
    * Passing zero timeout disables this.
    *
    * > NOTE: `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
-   *
-   * Shortcut for main frame's
-   * [frame.dblclick(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-dblclick).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2363,9 +2309,6 @@ export interface Page {
    *
    * To send fine-grained keyboard events, use
    * [page.type(selector, text[, options])](https://playwright.dev/docs/api/class-page#page-type).
-   *
-   * Shortcut for main frame's
-   * [frame.fill(selector, value[, options])](https://playwright.dev/docs/api/class-frame#frame-fill).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options
@@ -2401,9 +2344,6 @@ export interface Page {
   /**
    * This method fetches an element with `selector` and focuses it. If there's no element matching `selector`, the
    * method waits until a matching element appears in the DOM.
-   *
-   * Shortcut for main frame's
-   * [frame.focus(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-focus).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2793,8 +2733,6 @@ export interface Page {
    * to `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
    * > NOTE: Headless mode doesn't support navigation to a PDF document. See the
    * [upstream issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
-   *
-   * Shortcut for main frame's [frame.goto(url[, options])](https://playwright.dev/docs/api/class-frame#frame-goto)
    * @param url URL to navigate page to. The url should include scheme, e.g. `https://`. When a `baseURL` via the context options was provided and the passed URL is a path, it gets merged via the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param options
@@ -2840,9 +2778,6 @@ export interface Page {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError].
    * Passing zero timeout disables this.
-   *
-   * Shortcut for main frame's
-   * [frame.hover(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-hover).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -3066,10 +3001,7 @@ export interface Page {
     strict?: boolean;
 
     /**
-     * **DEPRECATED** This option is ignored.
-     * [page.isHidden(selector[, options])](https://playwright.dev/docs/api/class-page#page-is-hidden) does not wait for
-     * the element to become hidden and returns immediately.
-     * @deprecated
+     * @deprecated This option is ignored. [`method: Page.isHidden`] does not wait for the↵element to become hidden and returns immediately.
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -3088,10 +3020,7 @@ export interface Page {
     strict?: boolean;
 
     /**
-     * **DEPRECATED** This option is ignored.
-     * [page.isVisible(selector[, options])](https://playwright.dev/docs/api/class-page#page-is-visible) does not wait for
-     * the element to become visible and returns immediately.
-     * @deprecated
+     * @deprecated This option is ignored. [`method: Page.isVisible`] does not wait↵for the element to become visible and returns immediately.
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -3533,8 +3462,6 @@ export interface Page {
    *
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.selectOption(selector, values[, options])](https://playwright.dev/docs/api/class-frame#frame-select-option).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to
    * `{value:'string'}`. Option is considered matching if all specified properties match.
@@ -3613,9 +3540,6 @@ export interface Page {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError].
    * Passing zero timeout disables this.
-   *
-   * Shortcut for main frame's
-   * [frame.setChecked(selector, checked[, options])](https://playwright.dev/docs/api/class-frame#frame-set-checked).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param checked Whether to check or uncheck the checkbox.
    * @param options
@@ -3850,8 +3774,6 @@ export interface Page {
    *
    * > NOTE: [page.tap(selector[, options])](https://playwright.dev/docs/api/class-page#page-tap) requires that the
    * `hasTouch` option of the browser context be set to true.
-   *
-   * Shortcut for main frame's [frame.tap(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-tap).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -3927,8 +3849,7 @@ export interface Page {
   }): Promise<null|string>;
 
   /**
-   * Returns the page's title. Shortcut for main frame's
-   * [frame.title()](https://playwright.dev/docs/api/class-frame#frame-title).
+   * Returns the page's title.
    */
   title(): Promise<string>;
 
@@ -3949,8 +3870,6 @@ export interface Page {
    * await page.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.type(selector, text[, options])](https://playwright.dev/docs/api/class-frame#frame-type).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param text A text to type into a focused element.
    * @param options
@@ -3998,9 +3917,6 @@ export interface Page {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError].
    * Passing zero timeout disables this.
-   *
-   * Shortcut for main frame's
-   * [frame.uncheck(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-uncheck).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -4057,9 +3973,6 @@ export interface Page {
    */
   unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => void)): Promise<void>;
 
-  /**
-   * Shortcut for main frame's [frame.url()](https://playwright.dev/docs/api/class-frame#frame-url).
-   */
   url(): string;
 
   /**
@@ -4307,8 +4220,6 @@ export interface Page {
    * console.log(await popup.title()); // Popup is ready to use.
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-load-state).
    * @param state Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately. Can be one of:
    * - `'load'` - wait for the `load` event to be fired.
    * - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
@@ -4351,9 +4262,6 @@ export interface Page {
    *
    * > NOTE: Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL
    * is considered a navigation.
-   *
-   * Shortcut for main frame's
-   * [frame.waitForNavigation([options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-navigation).
    * @param options
    */
   waitForNavigation(options?: {
@@ -4475,8 +4383,6 @@ export interface Page {
    * await page.waitForTimeout(1000);
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.waitForTimeout(timeout)](https://playwright.dev/docs/api/class-frame#frame-wait-for-timeout).
    * @param timeout A timeout to wait for
    */
   waitForTimeout(timeout: number): Promise<void>;
@@ -4491,8 +4397,6 @@ export interface Page {
    * await page.waitForURL('**\/target.html');
    * ```
    *
-   * Shortcut for main frame's
-   * [frame.waitForURL(url[, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-url).
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly
    * equal to the string.
    * @param options
@@ -6231,10 +6135,7 @@ export interface Frame {
     strict?: boolean;
 
     /**
-     * **DEPRECATED** This option is ignored.
-     * [frame.isHidden(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-is-hidden) does not wait
-     * for the element to become hidden and returns immediately.
-     * @deprecated
+     * @deprecated This option is ignored. [`method: Frame.isHidden`] does not wait for the element to become hidden and returns immediately.
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -6253,10 +6154,7 @@ export interface Frame {
     strict?: boolean;
 
     /**
-     * **DEPRECATED** This option is ignored.
-     * [frame.isVisible(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-is-visible) does not wait
-     * for the element to become visible and returns immediately.
-     * @deprecated
+     * @deprecated This option is ignored. [`method: Frame.isVisible`] does not wait for the element to become visible and returns immediately.
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -7868,9 +7766,7 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
-   * **DEPRECATED** Browsers may cache credentials after successful authentication. Create a new browser context
-   * instead.
-   * @deprecated
+   * @deprecated Browsers may cache credentials after successful authentication. Create a new browser context instead.
    * @param httpCredentials
    */
   setHTTPCredentials(httpCredentials: null|{
@@ -10765,10 +10661,7 @@ export interface Locator {
    */
   isHidden(options?: {
     /**
-     * **DEPRECATED** This option is ignored.
-     * [locator.isHidden([options])](https://playwright.dev/docs/api/class-locator#locator-is-hidden) does not wait for
-     * the element to become hidden and returns immediately.
-     * @deprecated
+     * @deprecated This option is ignored. [`method: Locator.isHidden`] does not wait for the element to become hidden and returns immediately.
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -10779,10 +10672,7 @@ export interface Locator {
    */
   isVisible(options?: {
     /**
-     * **DEPRECATED** This option is ignored.
-     * [locator.isVisible([options])](https://playwright.dev/docs/api/class-locator#locator-is-visible) does not wait for
-     * the element to become visible and returns immediately.
-     * @deprecated
+     * @deprecated This option is ignored. [`method: Locator.isVisible`] does not wait for the element to become visible and returns immediately.
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -11828,8 +11718,7 @@ export interface BrowserType<Unused = {}> {
     userAgent?: string;
 
     /**
-     * **DEPRECATED** Use `recordVideo` instead.
-     * @deprecated
+     * @deprecated Use [`option: recordVideo`] instead.
      */
     videoSize?: {
       /**
@@ -11844,8 +11733,7 @@ export interface BrowserType<Unused = {}> {
     };
 
     /**
-     * **DEPRECATED** Use `recordVideo` instead.
-     * @deprecated
+     * @deprecated Use [`option: recordVideo`] instead.
      */
     videosPath?: string;
 
@@ -12117,10 +12005,6 @@ class TimeoutError extends Error {}
 }
 
 /**
- * **DEPRECATED** This class is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if
- * you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for
- * integration with Axe.
- *
  * The Accessibility class provides methods for inspecting Chromium's accessibility tree. The accessibility tree is
  * used by assistive technology such as [screen readers](https://en.wikipedia.org/wiki/Screen_reader) or
  * [switches](https://en.wikipedia.org/wiki/Switch_access).
@@ -12137,10 +12021,6 @@ class TimeoutError extends Error {}
  */
 export interface Accessibility {
   /**
-   * **DEPRECATED** This method is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if
-   * you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for
-   * integration with Axe.
-   *
    * Captures the current state of the accessibility tree. The returned object represents the root accessible node of
    * the page.
    *
@@ -12175,7 +12055,7 @@ export interface Accessibility {
    * }
    * ```
    *
-   * @deprecated
+   * @deprecated This method is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
    * @param options
    */
   snapshot(options?: AccessibilitySnapshotOptions): Promise<null|AccessibilityNode>;
@@ -13164,8 +13044,7 @@ export interface AndroidDevice {
     userAgent?: string;
 
     /**
-     * **DEPRECATED** Use `recordVideo` instead.
-     * @deprecated
+     * @deprecated Use [`option: recordVideo`] instead.
      */
     videoSize?: {
       /**
@@ -13180,8 +13059,7 @@ export interface AndroidDevice {
     };
 
     /**
-     * **DEPRECATED** Use `recordVideo` instead.
-     * @deprecated
+     * @deprecated Use [`option: recordVideo`] instead.
      */
     videosPath?: string;
 
@@ -15066,8 +14944,7 @@ export interface Browser extends EventEmitter {
     userAgent?: string;
 
     /**
-     * **DEPRECATED** Use `recordVideo` instead.
-     * @deprecated
+     * @deprecated Use [`option: recordVideo`] instead.
      */
     videoSize?: {
       /**
@@ -15082,8 +14959,7 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * **DEPRECATED** Use `recordVideo` instead.
-     * @deprecated
+     * @deprecated Use [`option: recordVideo`] instead.
      */
     videosPath?: string;
 
@@ -17976,8 +17852,7 @@ export interface BrowserContextOptions {
   userAgent?: string;
 
   /**
-   * **DEPRECATED** Use `recordVideo` instead.
-   * @deprecated
+   * @deprecated Use [`option: recordVideo`] instead.
    */
   videoSize?: {
     /**
@@ -17992,8 +17867,7 @@ export interface BrowserContextOptions {
   };
 
   /**
-   * **DEPRECATED** Use `recordVideo` instead.
-   * @deprecated
+   * @deprecated Use [`option: recordVideo`] instead.
    */
   videosPath?: string;
 

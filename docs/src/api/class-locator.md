@@ -876,9 +876,8 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 
 ### option: Locator.isHidden.timeout
 * since: v1.14
+* deprecated: This option is ignored. [`method: Locator.isHidden`] does not wait for the element to become hidden and returns immediately.
 - `timeout` <[float]>
-
-**DEPRECATED** This option is ignored. [`method: Locator.isHidden`] does not wait for the element to become hidden and returns immediately.
 
 ## async method: Locator.isVisible
 * since: v1.14
@@ -888,9 +887,8 @@ Returns whether the element is [visible](../actionability.md#visible).
 
 ### option: Locator.isVisible.timeout
 * since: v1.14
+* deprecated: This option is ignored. [`method: Locator.isVisible`] does not wait for the element to become visible and returns immediately.
 - `timeout` <[float]>
-
-**DEPRECATED** This option is ignored. [`method: Locator.isVisible`] does not wait for the element to become visible and returns immediately.
 
 ## method: Locator.last
 * since: v1.14

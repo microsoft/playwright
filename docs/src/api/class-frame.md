@@ -188,6 +188,7 @@ Raw CSS content to be injected into frame.
 
 ## async method: Frame.check
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.check`] instead.
 
 This method checks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -231,6 +232,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Frame.click
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.click`] instead.
 
 This method clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -285,6 +287,7 @@ Gets the full HTML contents of the frame, including the doctype.
 
 ## async method: Frame.dblclick
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.dblclick`] instead.
 * langs:
   - alias-csharp: DblClickAsync
 
@@ -337,6 +340,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Frame.dispatchEvent
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.dispatchEvent`] instead.
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element, `click`
 is dispatched. This is equivalent to calling
@@ -465,6 +469,7 @@ Optional event-specific initialization properties.
 
 ## async method: Frame.evalOnSelector
 * since: v1.9
+* discouraged: Use locator-based [`method: Locator.evaluate`] instead.
 * langs:
   - alias-python: eval_on_selector
   - alias-js: $eval
@@ -533,6 +538,7 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.evalOnSelectorAll
 * since: v1.9
+* discouraged: Use locator-based [`method: Locator.evaluateAll`] instead.
 * langs:
   - alias-python: eval_on_selector_all
   - alias-js: $$eval
@@ -805,6 +811,7 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.fill
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.fill`] instead.
 
 This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
@@ -835,6 +842,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ## async method: Frame.focus
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.focus`] instead.
 
 This method fetches an element with [`param: selector`] and focuses it. If there's no element matching
 [`param: selector`], the method waits until a matching element appears in the DOM.
@@ -932,6 +940,7 @@ await locator.ClickAsync();
 
 ## async method: Frame.getAttribute
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.getAttribute`] instead.
 - returns: <[null]|[string]>
 
 Returns element attribute value.
@@ -1074,6 +1083,7 @@ Referer header value. If provided it will take preference over the referer heade
 
 ## async method: Frame.hover
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.hover`] instead.
 
 This method hovers over an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -1113,6 +1123,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Frame.innerHTML
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.innerHTML`] instead.
 - returns: <[string]>
 
 Returns `element.innerHTML`.
@@ -1128,6 +1139,7 @@ Returns `element.innerHTML`.
 
 ## async method: Frame.innerText
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.innerText`] instead.
 - returns: <[string]>
 
 Returns `element.innerText`.
@@ -1143,6 +1155,7 @@ Returns `element.innerText`.
 
 ## async method: Frame.inputValue
 * since: v1.13
+* discouraged: Use locator-based [`method: Locator.inputValue`] instead.
 - returns: <[string]>
 
 Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
@@ -1160,6 +1173,7 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 
 ## async method: Frame.isChecked
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isChecked`] instead.
 - returns: <[boolean]>
 
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
@@ -1181,6 +1195,7 @@ Returns `true` if the frame has been detached, or `false` otherwise.
 
 ## async method: Frame.isDisabled
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isDisabled`] instead.
 - returns: <[boolean]>
 
 Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
@@ -1196,6 +1211,7 @@ Returns whether the element is disabled, the opposite of [enabled](../actionabil
 
 ## async method: Frame.isEditable
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isEditable`] instead.
 - returns: <[boolean]>
 
 Returns whether the element is [editable](../actionability.md#editable).
@@ -1226,6 +1242,7 @@ Returns whether the element is [enabled](../actionability.md#enabled).
 
 ## async method: Frame.isHidden
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isHidden`] instead.
 - returns: <[boolean]>
 
 Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
@@ -1238,12 +1255,12 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 
 ### option: Frame.isHidden.timeout
 * since: v1.8
+* deprecated: This option is ignored. [`method: Frame.isHidden`] does not wait for the element to become hidden and returns immediately.
 - `timeout` <[float]>
-
-**DEPRECATED** This option is ignored. [`method: Frame.isHidden`] does not wait for the element to become hidden and returns immediately.
 
 ## async method: Frame.isVisible
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.isVisible`] instead.
 - returns: <[boolean]>
 
 Returns whether the element is [visible](../actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
@@ -1256,9 +1273,8 @@ Returns whether the element is [visible](../actionability.md#visible). [`option:
 
 ### option: Frame.isVisible.timeout
 * since: v1.8
+* deprecated: This option is ignored. [`method: Frame.isVisible`] does not wait for the element to become visible and returns immediately.
 - `timeout` <[float]>
-
-**DEPRECATED** This option is ignored. [`method: Frame.isVisible`] does not wait for the element to become visible and returns immediately.
 
 ## method: Frame.locator
 * since: v1.14
@@ -1300,6 +1316,7 @@ Parent frame, if any. Detached frames and main frames return `null`.
 
 ## async method: Frame.press
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.press`] instead.
 
 [`param: key`] can specify the intended
 [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to
@@ -1345,6 +1362,7 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ## async method: Frame.querySelector
 * since: v1.9
+* discouraged: Use locator-based [`method: Frame.locator`] instead.
 * langs:
   - alias-python: query_selector
   - alias-js: $
@@ -1368,6 +1386,7 @@ returns `null`.
 
 ## async method: Frame.querySelectorAll
 * since: v1.9
+* discouraged: Use locator-based [`method: Frame.locator`] instead.
 * langs:
   - alias-python: query_selector_all
   - alias-js: $$
@@ -1388,6 +1407,7 @@ returns empty array.
 
 ## async method: Frame.selectOption
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.selectOption`] instead.
 - returns: <[Array]<[string]>>
 
 This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
@@ -1467,6 +1487,7 @@ await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" })
 
 ## async method: Frame.setChecked
 * since: v1.15
+* discouraged: Use locator-based [`method: Locator.setChecked`] instead.
 
 This method checks or unchecks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -1524,6 +1545,7 @@ HTML markup to assign to the page.
 
 ## async method: Frame.setInputFiles
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.setInputFiles`] instead.
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the current working directory. For empty array, clears the selected files.
@@ -1548,6 +1570,7 @@ This method expects [`param: selector`] to point to an
 
 ## async method: Frame.tap
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.tap`] instead.
 
 This method taps an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -1591,6 +1614,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Frame.textContent
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.textContent`] instead.
 - returns: <[null]|[string]>
 
 Returns `element.textContent`.
@@ -1612,6 +1636,7 @@ Returns the page title.
 
 ## async method: Frame.type
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.type`] instead.
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used to
 send fine-grained keyboard events. To fill values in form fields, use [`method: Frame.fill`].
@@ -1673,6 +1698,7 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ## async method: Frame.uncheck
 * since: v1.8
+* discouraged: Use locator-based [`method: Locator.uncheck`] instead.
 
 This method checks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to

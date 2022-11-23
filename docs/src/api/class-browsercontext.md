@@ -1223,8 +1223,7 @@ its geolocation.
 ## async method: BrowserContext.setHTTPCredentials
 * since: v1.8
 * langs: js
-
-**DEPRECATED** Browsers may cache credentials after successful authentication. Create a new browser context instead.
+* deprecated: Browsers may cache credentials after successful authentication. Create a new browser context instead.
 
 ### param: BrowserContext.setHTTPCredentials.httpCredentials
 * since: v1.8
