@@ -4679,6 +4679,10 @@ interface TestProject {
   /**
    * Project setup files that would be executed before all tests in the project. If project setup fails the tests in
    * this project will be skipped. All project setup files will run in every shard if the project is sharded.
+   * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep) and
+   * [testProject.grepInvert](https://playwright.dev/docs/api/class-testproject#test-project-grep-invert) and their
+   * command line counterparts also apply to the setup files. If such filters match only tests in the project Playwright
+   * will run all setup files.
    */
   setup?: string|RegExp|Array<string|RegExp>;
 

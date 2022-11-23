@@ -166,7 +166,7 @@ Project name is visible in the report and during test execution.
 * since: v1.28
 - type: ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
-Project setup files that would be executed before all tests in the project. If project setup fails the tests in this project will be skipped. All project setup files will run in every shard if the project is sharded.
+Project setup files that would be executed before all tests in the project. If project setup fails the tests in this project will be skipped. All project setup files will run in every shard if the project is sharded. [`property: TestProject.grep`] and [`property: TestProject.grepInvert`] and their command line counterparts also apply to the setup files. If such filters match only tests in the project Playwright will run all setup files.
 
 ## property: TestProject.snapshotDir
 * since: v1.10
