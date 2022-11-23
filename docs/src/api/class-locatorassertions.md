@@ -202,7 +202,7 @@ The opposite of [`method: LocatorAssertions.toContainText`].
 
 ### param: LocatorAssertions.NotToContainText.expected
 * since: v1.18
-- `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+- `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
 
 Expected substring or RegExp or a list of those.
 
@@ -256,7 +256,7 @@ The opposite of [`method: LocatorAssertions.toHaveClass`].
 
 ### param: LocatorAssertions.NotToHaveClass.expected
 * since: v1.18
-- `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+- `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
 
 Expected class or RegExp or a list of those.
 
@@ -358,7 +358,7 @@ The opposite of [`method: LocatorAssertions.toHaveText`].
 
 ### param: LocatorAssertions.NotToHaveText.expected
 * since: v1.18
-- `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+- `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
 
 Expected substring or RegExp or a list of those.
 
@@ -406,7 +406,7 @@ The opposite of [`method: LocatorAssertions.toHaveValues`].
 
 ### param: LocatorAssertions.NotToHaveValues.values
 * since: v1.23
-- `values` <[Array]<[string]|[RegExp]>>
+- `values` <[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
 
 Expected options currently selected.
 
@@ -917,8 +917,15 @@ await Expect(Page.Locator("ul")).ToContainTextAsync(new string[] {"Text 3"});
 
 ### param: LocatorAssertions.toContainText.expected
 * since: v1.18
-* langs: python, js
+* langs: js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+
+Expected substring or RegExp or a list of those.
+
+### param: LocatorAssertions.toContainText.expected
+* since: v1.18
+* langs: python
+- `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
 
 Expected substring or RegExp or a list of those.
 
@@ -1081,8 +1088,15 @@ await Expect(locator).ToHaveClassAsync(new string[]{"component", "component sele
 
 ### param: LocatorAssertions.toHaveClass.expected
 * since: v1.18
-* langs: python, js
+* langs: js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+
+Expected class or RegExp or a list of those.
+
+### param: LocatorAssertions.toHaveClass.expected
+* since: v1.18
+* langs: python
+- `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
 
 Expected class or RegExp or a list of those.
 
@@ -1533,8 +1547,15 @@ await Expect(Page.Locator("ul")).ToHaveTextAsync(new string[] {"Text 1", "Text 2
 
 ### param: LocatorAssertions.toHaveText.expected
 * since: v1.18
-* langs: python, js
+* langs: js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+
+Expected substring or RegExp or a list of those.
+
+### param: LocatorAssertions.toHaveText.expected
+* since: v1.18
+* langs: python
+- `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
 
 Expected substring or RegExp or a list of those.
 
@@ -1670,8 +1691,15 @@ await Expect(locator).ToHaveValuesAsync(new Regex[] { new Regex("R"), new Regex(
 
 ### param: LocatorAssertions.toHaveValues.values
 * since: v1.23
-* langs: python, js
+* langs: js
 - `values` <[Array]<[string]|[RegExp]>>
+
+Expected options currently selected.
+
+### param: LocatorAssertions.toHaveValues.values
+* since: v1.23
+* langs: python
+- `values` <[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
 
 Expected options currently selected.
 
