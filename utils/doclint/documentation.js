@@ -867,7 +867,7 @@ function generateSourceCodeComment(spec) {
     if (node.type === 'note') {
       // @ts-ignore
       node.type = 'text';
-      node.text = '> NOTE: ' + node.text;
+      node.text = '**NOTE** ' + node.text;
     }
   });
   // 5 is a typical member doc offset.

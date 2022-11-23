@@ -18,6 +18,7 @@
 const path = require('path');
 const toKebabCase = require('lodash/kebabCase')
 const devices = require('../../packages/playwright-core/lib/server/deviceDescriptors');
+const md = require('../markdown');
 const docs = require('../doclint/documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
@@ -471,11 +472,18 @@ class TypesGenerator {
    */
   memberJSDOC(member, indent) {
     const lines = [];
+    if (member.discouraged) {
+      lines.push('**NOTE** ' + md.wrapText(member.discouraged, { flattenText: true, maxColumns: 120 - 5 }, ''));
+      lines.push('');
+    }
     if (member.comment)
       lines.push(...member.comment.split('\n'));
     if (member.deprecated)
-      lines.push('@deprecated ' + member.deprecated);
-    lines.push(...member.argsArray.map(arg => `@param ${arg.alias.replace(/\./g, '')} ${arg.comment.replace('\n', ' ')}`));
+      lines.push('@deprecated ' + md.wrapText(member.deprecated, { flattenText: true, maxColumns: 120 - 5 }, ''));
+    lines.push(...member.argsArray.map(arg => {
+      const paramPrefix = `@param ${arg.alias.replace(/\./g, '')} `;
+      return paramPrefix + md.wrapText(arg.comment, { flattenText: true, maxColumns: 120 - 5 }, '');
+    }));
     if (!lines.length)
       return indent;
     return this.writeComment(lines.join('\n'), indent) + '\n' + indent;

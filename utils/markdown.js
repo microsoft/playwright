@@ -491,4 +491,4 @@ function filterNodesForLanguage(nodes, language) {
   return result;
 }
 
-module.exports = { parse, render, clone, visitAll, visit, generateToc, filterNodesForLanguage };
+module.exports = { parse, render, clone, visitAll, visit, generateToc, filterNodesForLanguage, wrapText };
