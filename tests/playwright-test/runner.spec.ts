@@ -479,3 +479,22 @@ test('should not crash with duplicate titles and line filter', async ({ runInlin
     `   - example.spec.ts:8`,
   ].join('\n'));
 });
+
+test('should not load tests not matching filter', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      console.log('in a.spec.ts');
+      test('test1', () => {});
+    `,
+    'example.spec.ts': `
+      const { test } = pwt;
+      console.log('in example.spec.ts');
+      test('test2', () => {});
+  `
+
+  }, {}, {}, { additionalArgs: ['a.spec.ts'] });
+  expect(result.exitCode).toBe(0);
+  expect(stripAnsi(result.output)).not.toContain('in example.spec.ts');
+  expect(stripAnsi(result.output)).toContain('in a.spec.ts');
+});

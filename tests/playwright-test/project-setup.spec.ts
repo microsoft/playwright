@@ -498,6 +498,42 @@ test('should allow describe.only in setup files', async ({ runGroups }, testInfo
   expect(passed).toBe(2);
 });
 
+test('should filter describe line in setup files', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*.setup.ts/,
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+      test('test3', async () => { });
+      test('test4', async () => { });
+    `,
+    'a.setup.ts': `
+      const { test } = pwt;
+      test.describe('main', () => {
+        test('setup1', async () => { });
+        test('setup2', async () => { });
+      });
+      test('setup3', async () => { });
+    `,
+  };
+
+  const { exitCode, passed, timeline, output } =  await runGroups(files, undefined, undefined, { additionalArgs: ['a.setup.ts:5'] });
+  expect(output).toContain('Running 2 tests using 1 worker');
+  expect(output).toContain('[p1] › a.setup.ts:6:9 › main › setup1');
+  expect(output).toContain('[p1] › a.setup.ts:7:9 › main › setup2');
+  expect(fileNames(timeline)).toEqual(['a.setup.ts']);
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(2);
+});
 
 test('should allow .only in both setup and test files', async ({ runGroups }, testInfo) => {
   const files = {
@@ -785,5 +821,40 @@ test('should run all setup files if only tests match grep filter', async ({ runG
   expect(output).toContain('[p1] › a.test.ts:7:7 › test2');
 });
 
+test('should apply project.grep filter to both setup and tests', async ({ runGroups }, testInfo) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          {
+            name: 'p1',
+            setup: /.*.setup.ts/,
+            grep: /a.(test|setup).ts.*(test|setup)/,
+          },
+        ]
+      };`,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('test1', async () => { });
+      test('test2', async () => { });
+      test('foo', async () => { });
+    `,
+    'a.setup.ts': `
+      const { test } = pwt;
+      test('setup1', async () => { });
+      test('setup2', async () => { });
+    `,
+    'b.setup.ts': `
+      const { test } = pwt;
+      test('setup1', async () => { });
+      test('foo', async () => { });
+    `,
+  };
 
-// TODO: test that grep applies to both setup and tests
+  const { exitCode, output } =  await runGroups(files);
+  expect(exitCode).toBe(0);
+  expect(output).toContain('[p1] › a.setup.ts:5:7 › setup1');
+  expect(output).toContain('[p1] › a.setup.ts:6:7 › setup2');
+  expect(output).toContain('[p1] › a.test.ts:6:7 › test1');
+  expect(output).toContain('[p1] › a.test.ts:7:7 › test2');
+});
