@@ -806,14 +806,14 @@ await Expect(page.Locator("x-details")).ToContainTextAsync("Details");
 Consider the following DOM structure where we want to click on the buy button of the second product card. We have a few options in order to filter the locators to get the right one.
 
 ```html card
-<div role="listitem">
+<article>
   <h3>Product 1</h3>
   <button>Add to cart</button>
-</div>
-<div role="listitem">
+</article>
+<article>
   <h3>Product 2</h3>
   <button>Add to cart</button>
-</div>
+</article>
 ```
 
 ### Filter by text
@@ -822,14 +822,14 @@ Locators can be filtered by text with the [`method: Locator.filter`] method. It 
 
 ```js
 await page
-    .getByRole('listitem')
+    .getByRole('article')
     .filter({ hasText: 'Product 2' })
     .getByRole('button', { name: 'Add to cart' })
     .click();
 ```
 
 ```java
-page.getByRole(AriaRole.LISTITEM)
+page.getByRole(AriaRole.ARTICLE)
     .filter(new Locator.FilterOptions().setHasText("Product 2"))
     .getByRole(AriaRole.BUTTON,
                new Page.GetByRoleOptions().setName("Add to cart"))
@@ -837,20 +837,20 @@ page.getByRole(AriaRole.LISTITEM)
 ```
 
 ```python async
-await page.get_by_role("listitem").filter(has_text="Product 2").get_by_role(
+await page.get_by_role("article").filter(has_text="Product 2").get_by_role(
     "button", name="Add to cart"
 ).click()
 ```
 
 ```python sync
-page.get_by_role("listitem").filter(has_text="Product 2").get_by_role(
+page.get_by_role("article").filter(has_text="Product 2").get_by_role(
     "button", name="Add to cart"
 ).click()
 ```
 
 ```csharp
 await page
-    .GetByRole(AriaRole.Listitem)
+    .GetByRole(AriaRole.Article)
     .Filter(new() { HasTextString = "Product 2" })
     .GetByRole(AriaRole.Button, new () { NameString = "Add to cart" })
     .ClickAsync();
@@ -860,14 +860,14 @@ Use a regular expression:
 
 ```js
 await page
-    .getByRole('listitem')
+    .getByRole('article')
     .filter({ hasText: /Product 2/ })
     .getByRole('button', { name: 'Add to cart' })
     .click();
 ```
 
 ```java
-page.getByRole(AriaRole.LISTITEM)
+page.getByRole(AriaRole.ARTICLE)
     .filter(new Locator.FilterOptions()
         .setHasText(Pattern.compile("Product 2")))
     .getByRole(AriaRole.BUTTON,
@@ -876,20 +876,20 @@ page.getByRole(AriaRole.LISTITEM)
 ```
 
 ```python async
-await page.get_by_role("listitem").filter(has_text=re.compile("Product 2")).get_by_role(
+await page.get_by_role("article").filter(has_text=re.compile("Product 2")).get_by_role(
     "button", name="Add to cart"
 ).click()
 ```
 
 ```python sync
-page.get_by_role("listitem").filter(has_text=re.compile("Product 2")).get_by_role(
+page.get_by_role("article").filter(has_text=re.compile("Product 2")).get_by_role(
     "button", name="Add to cart"
 ).click()
 ```
 
 ```csharp
 await page
-    .GetByRole(AriaRole.Listitem)
+    .GetByRole(AriaRole.Article)
     .Filter(new() { HasTextRegex = new Regex("Product 2") })
     .GetByRole(AriaRole.Button, new () { NameString = "Add to cart" })
     .ClickAsync();
@@ -900,49 +900,49 @@ await page
 Locators support an option to only select elements that have a descendant matching another locator. You can therefore filter by any other locator such as a [`method: Locator.getByRole`], [`method: Locator.getByTestId`], [`method: Locator.getByText`] etc.
 
 ```html card
-<div role="listitem">
+<article>
   <h3>Product 1</h3>
   <button>Add to cart</button>
-</div>
-<div role="listitem">
+</article>
+<article>
   <h3>Product 2</h3>
   <button>Add to cart</button>
-</div>
+</article>
 ```
 
 ```js
 await page
-    .getByRole('listitem')
+    .getByRole('article')
     .filter({ has: page.getByRole('heading', { name: 'Product 2' })})
     .getByRole('button', { name: 'Add to cart' })
     .click()
 ```
 
 ```java
-page.getByRole(AriaRole.LISTITEM)
+page.getByRole(AriaRole.ARTICLE)
     .filter(new Locator.FilterOptions()
         .setHas(page.GetByRole(AriaRole.HEADING, new Page.GetByRoleOptions()
         .setName("Product 2"))))
     .getByRole(AriaRole.BUTTON,
-               new Page.GetByRoleOptions().setName("Add to cart")))
+               new Page.GetByRoleOptions().setName("Add to cart"))
     .click()
 ```
 
 ```python async
-await page.get_by_role("listitem").filter(
+await page.get_by_role("article").filter(
     has=page.get_by_role("heading", name="Product 2")
 ).get_by_role("button", name="Add to cart").click()
 ```
 
 ```python sync
-page.get_by_role("listitem").filter(
+page.get_by_role("article").filter(
     has=page.get_by_role("heading", name="Product 2")
 ).get_by_role("button", name="Add to cart").click()
 ```
 
 ```csharp
 await page
-    .GetByRole(AriaRole.Listitem)
+    .GetByRole(AriaRole.Article)
     .Filter(new() {
         Has = page.GetByRole(AriaRole.Heading, new () {
             NameString = "Product 2"
@@ -956,21 +956,21 @@ We can also assert the product card to make sure there is only one
 
 ```js
 await expect(page
-    .getByRole('listitem')
-    .filter({ has: page.getByText('Product2') }))
+    .getByRole('article')
+    .filter({ has: page.getByText('Product 2') }))
     .toHaveCount(1);
 ```
 
 ```java
 assertThat(page
-    .getByRole(AriaRole.LISTITEM)
+    .getByRole(AriaRole.ARTICLE)
     .filter(new Locator.FilterOptions().setHas(page.getByText("Product 2")))
     .hasCount(1);
 ```
 
 ```python async
 await expect(
-    page.get_by_role("listitem").filter(
+    page.get_by_role("article").filter(
         has=page.get_by_role("heading", name="Product 2")
     )
 ).to_have_count(1)
@@ -978,7 +978,7 @@ await expect(
 
 ```python sync
 expect(
-    page.get_by_role("listitem").filter(
+    page.get_by_role("article").filter(
         has=page.get_by_role("heading", name="Product 2")
     )
 ).to_have_count(1)
@@ -986,7 +986,7 @@ expect(
 
 ```csharp
 await Expect(page
-    .GetByRole(AriaRole.Listitem)
+    .GetByRole(AriaRole.Article)
     .Filter(new() {
         Has = page.GetByRole(AriaRole.Heading, new () { Name = "Product 2" })
     })
