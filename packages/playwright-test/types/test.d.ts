@@ -3567,7 +3567,7 @@ interface LocatorAssertions {
 
   /**
    * Ensures that [Locator] either does not resolve to any DOM node, or resolves to a
-   * [non-visible](https://playwright.dev/docs/api/actionability#visible) one.
+   * [non-visible](https://playwright.dev/docs/actionability#visible) one.
    *
    * **Usage**
    *
@@ -3586,8 +3586,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/api/actionability#attached) and
-   * [visible](https://playwright.dev/docs/api/actionability#visible) DOM node.
+   * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/actionability#attached) and
+   * [visible](https://playwright.dev/docs/actionability#visible) DOM node.
    *
    * **Usage**
    *
@@ -4392,7 +4392,7 @@ interface ScreenshotAssertions {
    * expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
    * ```
    *
-   * Learn more about [visual comparisons](https://playwright.dev/docs/api/test-snapshots).
+   * Learn more about [visual comparisons](https://playwright.dev/docs/test-snapshots).
    * @param name Snapshot name.
    * @param options
    */
@@ -4439,7 +4439,7 @@ interface ScreenshotAssertions {
    * });
    * ```
    *
-   * Learn more about [visual comparisons](https://playwright.dev/docs/api/test-snapshots).
+   * Learn more about [visual comparisons](https://playwright.dev/docs/test-snapshots).
    * @param options
    */
   toMatchSnapshot(options?: {
