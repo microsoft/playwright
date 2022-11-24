@@ -695,7 +695,7 @@ await Expect(locator).ToBeFocusedAsync();
 * langs:
   - alias-java: isHidden
 
-Ensures that [Locator] either does not resolve to any DOM node, or resolves to a [non-visible](./actionability.md#visible) one.
+Ensures that [Locator] either does not resolve to any DOM node, or resolves to a [non-visible](../actionability.md#visible) one.
 
 **Usage**
 
@@ -738,7 +738,7 @@ await Expect(locator).ToBeHiddenAsync();
 * langs:
   - alias-java: isVisible
 
-Ensures that [Locator] points to an [attached](./actionability.md#attached) and [visible](./actionability.md#visible) DOM node.
+Ensures that [Locator] points to an [attached](../actionability.md#attached) and [visible](../actionability.md#visible) DOM node.
 
 **Usage**
 

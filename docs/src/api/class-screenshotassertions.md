@@ -33,7 +33,7 @@ expect(await page.screenshot()).toMatchSnapshot(['landing', 'step2.png']);
 expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
 ```
 
-Learn more about [visual comparisons](./test-snapshots.md).
+Learn more about [visual comparisons](../test-snapshots.md).
 
 ### param: ScreenshotAssertions.toMatchSnapshot#1.name
 * since: v1.22
@@ -73,7 +73,7 @@ expect(await page.screenshot()).toMatchSnapshot({
 });
 ```
 
-Learn more about [visual comparisons](./test-snapshots.md).
+Learn more about [visual comparisons](../test-snapshots.md).
 
 ### option: ScreenshotAssertions.toMatchSnapshot#2.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 * since: v1.22
