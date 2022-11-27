@@ -6,6 +6,10 @@ toc_max_heading_level: 2
 
 ## Version 1.28
 
+<div className="embed-youtube">
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/tVSq-0n-TY4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### Playwright Tools
 
 * **Record at Cursor in VSCode.** You can run the test, position the cursor at the end of the test and continue generating the test.
