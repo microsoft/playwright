@@ -59,7 +59,7 @@ export async function toMatchText(
 
   const timeout = currentExpectTimeout(options);
 
-  const { matches: pass, received, log, timedOut } = await query(this.isNot, timeout, captureStackTrace('expect.' + matcherName));
+  const { matches: pass, received, log, timedOut } = await query(this.isNot, timeout, captureStackTrace(`expect.${this.isNot ? 'not.' : ''}${matcherName}`));
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const receivedString = received || '';
   const message = pass
