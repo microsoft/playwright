@@ -138,6 +138,8 @@ yield the same result, and then compare the last screenshot with the expectation
 await expect(page).toHaveScreenshot('image.png');
 ```
 
+Note that screenshot assertions only work with Playwright test runner.
+
 ### param: PageAssertions.toHaveScreenshot#1.name
 * since: v1.23
 - `name` <[string]|[Array]<[string]>>
@@ -189,6 +191,8 @@ yield the same result, and then compare the last screenshot with the expectation
 ```js
 await expect(page).toHaveScreenshot();
 ```
+
+Note that screenshot assertions only work with Playwright test runner.
 
 ### option: PageAssertions.toHaveScreenshot#2.timeout = %%-js-assertions-timeout-%%
 * since: v1.23

@@ -35,6 +35,8 @@ expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
 
 Learn more about [visual comparisons](../test-snapshots.md).
 
+Note that matching snapshots only work with Playwright test runner.
+
 ### param: ScreenshotAssertions.toMatchSnapshot#1.name
 * since: v1.22
 - `name` <[string]|[Array]<[string]>>
@@ -74,6 +76,8 @@ expect(await page.screenshot()).toMatchSnapshot({
 ```
 
 Learn more about [visual comparisons](../test-snapshots.md).
+
+Note that matching snapshots only work with Playwright test runner.
 
 ### option: ScreenshotAssertions.toMatchSnapshot#2.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 * since: v1.22

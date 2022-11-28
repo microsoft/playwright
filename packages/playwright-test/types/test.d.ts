@@ -3820,6 +3820,7 @@ interface LocatorAssertions {
    * await expect(locator).toHaveScreenshot('image.png');
    * ```
    *
+   * Note that screenshot assertions only work with Playwright test runner.
    * @param name Snapshot name.
    * @param options
    */
@@ -3897,6 +3898,7 @@ interface LocatorAssertions {
    * await expect(locator).toHaveScreenshot();
    * ```
    *
+   * Note that screenshot assertions only work with Playwright test runner.
    * @param options
    */
   toHaveScreenshot(options?: {
@@ -4118,6 +4120,7 @@ interface PageAssertions {
    * await expect(page).toHaveScreenshot('image.png');
    * ```
    *
+   * Note that screenshot assertions only work with Playwright test runner.
    * @param name Snapshot name.
    * @param options
    */
@@ -4225,6 +4228,7 @@ interface PageAssertions {
    * await expect(page).toHaveScreenshot();
    * ```
    *
+   * Note that screenshot assertions only work with Playwright test runner.
    * @param options
    */
   toHaveScreenshot(options?: {
@@ -4393,6 +4397,8 @@ interface ScreenshotAssertions {
    * ```
    *
    * Learn more about [visual comparisons](https://playwright.dev/docs/test-snapshots).
+   *
+   * Note that matching snapshots only work with Playwright test runner.
    * @param name Snapshot name.
    * @param options
    */
@@ -4440,6 +4446,8 @@ interface ScreenshotAssertions {
    * ```
    *
    * Learn more about [visual comparisons](https://playwright.dev/docs/test-snapshots).
+   *
+   * Note that matching snapshots only work with Playwright test runner.
    * @param options
    */
   toMatchSnapshot(options?: {

@@ -1336,6 +1336,8 @@ const locator = page.getByRole('button');
 await expect(locator).toHaveScreenshot('image.png');
 ```
 
+Note that screenshot assertions only work with Playwright test runner.
+
 ### param: LocatorAssertions.toHaveScreenshot#1.name
 * since: v1.23
 - `name` <[string]|[Array]<[string]>>
@@ -1382,6 +1384,8 @@ yield the same result, and then compare the last screenshot with the expectation
 const locator = page.getByRole('button');
 await expect(locator).toHaveScreenshot();
 ```
+
+Note that screenshot assertions only work with Playwright test runner.
 
 ### option: LocatorAssertions.toHaveScreenshot#2.timeout = %%-js-assertions-timeout-%%
 * since: v1.23
