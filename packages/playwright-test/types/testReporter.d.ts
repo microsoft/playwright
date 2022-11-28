@@ -367,6 +367,11 @@ export interface FullResult {
  * called when standard output is produced in the worker process, possibly during a test execution, and
  * [reporter.onError(error)](https://playwright.dev/docs/api/class-reporter#reporter-on-error) is called when
  * something went wrong outside of the test execution.
+ *
+ * If your custom reporter does not print anything to the terminal, implement
+ * [reporter.printsToStdio()](https://playwright.dev/docs/api/class-reporter#reporter-prints-to-stdio) and return
+ * `false`. This way, Playwright will use one of the standard terminal reporters in addition to your custom reporter
+ * to enhance user experience.
  */
 export interface Reporter {
   /**
@@ -441,7 +446,7 @@ export interface Reporter {
 
   /**
    * Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance
-   * user experience.
+   * user experience. If your reporter does not print to the terminal, it is strongly recommended to return `false`.
    */
   printsToStdio?(): boolean;}
 

@@ -90,6 +90,8 @@ Here is a typical order of reporter calls:
 Additionally, [`method: Reporter.onStdOut`] and [`method: Reporter.onStdErr`] are called when standard output is produced in the worker process, possibly during a test execution,
 and [`method: Reporter.onError`] is called when something went wrong outside of the test execution.
 
+If your custom reporter does not print anything to the terminal, implement [`method: Reporter.printsToStdio`] and return `false`. This way, Playwright will use one of the standard terminal reporters in addition to your custom reporter to enhance user experience.
+
 ## optional method: Reporter.onBegin
 * since: v1.10
 
@@ -273,4 +275,4 @@ Result of the test run.
 * since: v1.10
 - returns: <[boolean]>
 
-Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance user experience.
+Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance user experience. If your reporter does not print to the terminal, it is strongly recommended to return `false`.
