@@ -86,6 +86,8 @@ await expect.soft(page.locator('#eta')).toHaveText('1 day');
 expect(test.info().errors).toHaveLength(0);
 ```
 
+Note that soft assertions only work with Playwright test runner.
+
 ## Custom Expect Message
 
 You can specify a custom error message as a second argument to the `expect` function, for example:
