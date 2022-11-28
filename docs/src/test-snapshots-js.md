@@ -27,7 +27,7 @@ test('example test', async ({ page }) => {
 
 When you run above for the first time, test runner will say:
 ```
-Error: example.spec.ts-snapshots/example-test-1-chromium-darwin.png is missing in snapshots, writing actual.
+Error: A snapshot doesn't exist at example.spec.ts-snapshots/example-test-1-chromium-darwin.png, writing actual.
 ```
 
 That's because there was no golden file yet. This method took a bunch of screenshots until two consecutive
