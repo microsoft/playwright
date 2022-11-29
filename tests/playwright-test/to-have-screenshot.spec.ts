@@ -557,11 +557,11 @@ test('should write missing expectations locally twice and continue', async ({ ru
   expect(result.failed).toBe(1);
 
   const snapshot1OutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.png');
-  expect(result.output).toContain(`Error: ${snapshot1OutputPath} is missing in snapshots, writing actual`);
+  expect(result.output).toContain(`Error: A snapshot doesn't exist at ${snapshot1OutputPath}, writing actual`);
   expect(comparePNGs(fs.readFileSync(snapshot1OutputPath), whiteImage)).toBe(null);
 
   const snapshot2OutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot2.png');
-  expect(result.output).toContain(`Error: ${snapshot2OutputPath} is missing in snapshots, writing actual`);
+  expect(result.output).toContain(`Error: A snapshot doesn't exist at ${snapshot2OutputPath}, writing actual`);
   expect(comparePNGs(fs.readFileSync(snapshot2OutputPath), whiteImage)).toBe(null);
 
   expect(result.output).toContain('Here we are!');
@@ -585,7 +585,7 @@ test('shouldn\'t write missing expectations locally for negated matcher', async 
 
   expect(result.exitCode).toBe(1);
   const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png');
-  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, matchers using ".not" won\'t write them automatically.`);
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, matchers using ".not" won\'t write them automatically.`);
   expect(fs.existsSync(snapshotOutputPath)).toBe(false);
 });
 
@@ -641,7 +641,7 @@ test('should silently write missing expectations locally with the update-snapsho
 
   expect(result.exitCode).toBe(0);
   const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png');
-  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
   const data = fs.readFileSync(snapshotOutputPath);
   expect(comparePNGs(data, whiteImage)).toBe(null);
 });
@@ -660,7 +660,7 @@ test('should not write missing expectations locally with the update-snapshots fl
 
   expect(result.exitCode).toBe(1);
   const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png');
-  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, matchers using ".not" won\'t write them automatically.`);
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, matchers using ".not" won\'t write them automatically.`);
   expect(fs.existsSync(snapshotOutputPath)).toBe(false);
 });
 
@@ -996,7 +996,7 @@ test('should fail with missing expectations and retries', async ({ runInlineTest
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png');
-  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
   const data = fs.readFileSync(snapshotOutputPath);
   expect(comparePNGs(data, whiteImage)).toBe(null);
 });
@@ -1017,7 +1017,7 @@ test('should update expectations with retries', async ({ runInlineTest }, testIn
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   const snapshotOutputPath = testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png');
-  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
   const data = fs.readFileSync(snapshotOutputPath);
   expect(comparePNGs(data, whiteImage)).toBe(null);
 });
