@@ -185,30 +185,35 @@ test('test', async ({ page }) => {
 });
 
 test('should record custom data-testid', async ({ backend, connectedBrowser }) => {
+  // This test emulates "record at cursor" functionality
+  // with custom test id attribute in the config.
+
   const events = [];
   backend.on('sourceChanged', event => events.push(event));
 
+  // 1. "Show browser" (or "run test").
+  const context = await connectedBrowser._newContextForReuse();
+  const page = await context.newPage();
+  await page.setContent(`<div data-custom-id='one'>One</div>`);
+
+  // 2. "Record at cursor".
   await backend.setMode({ mode: 'recording', testIdAttributeName: 'data-custom-id' });
 
-  const context = await connectedBrowser._newContextForReuse();
-  const [page] = context.pages();
-
-  await page.setContent(`<div data-custom-id='one'>One</div>`);
+  // 3. Record a click action.
   await page.locator('div').click();
 
+  // 4. Expect "getByTestId" locator.
   await expect.poll(() => events[events.length - 1]).toEqual({
     header: `import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {`,
     footer: `});`,
     actions: [
-      `  await page.goto('about:blank');`,
       `  await page.getByTestId('one').click();`,
     ],
     text: `import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
-  await page.goto('about:blank');
   await page.getByTestId('one').click();
 });`
   });

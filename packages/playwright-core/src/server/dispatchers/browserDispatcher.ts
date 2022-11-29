@@ -48,7 +48,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
-    return newContextForReuse(this._object, this, params, null, metadata);
+    return await newContextForReuse(this._object, this, params, null, metadata);
   }
 
   async close(): Promise<void> {
@@ -105,7 +105,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
-    return newContextForReuse(this._object, this as any as BrowserDispatcher, params, this.selectors, metadata);
+    return await newContextForReuse(this._object, this as any as BrowserDispatcher, params, this.selectors, metadata);
   }
 
   async close(): Promise<void> {
