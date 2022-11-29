@@ -161,7 +161,12 @@ export const ImageDiffSlider: React.FC<React.PropsWithChildren<{
           backgroundColor: 'var(--color-diff-blob-expander-icon)',
         }}>
         </div>
-        <svg style={{ fill: 'var(--color-diff-blob-expander-icon)' }} viewBox="0 0 27 20"><path d="M9.6 0L0 9.6l9.6 9.6z"></path><path d="M17 19.2l9.5-9.6L16.9 0z"></path></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45">
+          <circle style={{ fill: 'var(--color-diff-blob-expander-icon)' }} cx="22.5" cy="22.5" r="22.5"/>
+          <g style={{ fill: 'var(--color-canvas-subtle)' }} fill-rule="nonzero">
+            <path d="m18.208 15-8 8 8 8zM26.375 31l7.916-8-8-8z"/>
+          </g>
+        </svg>
       </div>
     </div>
   </>;

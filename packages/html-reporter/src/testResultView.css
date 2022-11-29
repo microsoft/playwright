@@ -29,6 +29,7 @@
 .test-result img {
   flex: none;
   box-shadow: var(--box-shadow-thick);
+  border: 0.5px solid var(--color-border-default);
   margin: 24px auto;
   min-width: 200px;
   max-width: 80%;

@@ -16,11 +16,9 @@
 
 :root {
   --box-shadow: rgba(0, 0, 0, 0.133) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
-  --box-shadow-thick: rgb(0 0 0 / 10%) 0px 1.8px 1.9px,
-    rgb(0 0 0 / 15%) 0px 6.1px 6.3px,
-    rgb(0 0 0 / 10%) 0px -2px 4px,
-    rgb(0 0 0 / 15%) 0px -6.1px 12px,
-    rgb(0 0 0 / 25%) 0px 6px 12px;
+  --box-shadow-thick: 0.4px 0.4px 1.4px rgba(0, 0, 0, 0.07),
+  1.3px 1.3px 4.7px rgba(0, 0, 0, 0.042),
+  6px 6px 21px rgba(0, 0, 0, 0.028);
 }
 
 * {
