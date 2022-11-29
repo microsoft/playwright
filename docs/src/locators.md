@@ -16,7 +16,7 @@ These are the recommended built in locators.
 - [`method: Page.getByPlaceholder`](#locate-by-placeholder) to locate an input by placeholder.
 - [`method: Page.getByAltText`](#locate-by-alt-text) to locate an element, usually image, by its text alternative.
 - [`method: Page.getByTitle`](#locate-by-title) to locate an element by its title attribute.
-- [`method: Page.getByTestId`](#locate-by-testid) to locate an element based on its `data-testid` attribute (other attributes can be configured).
+- [`method: Page.getByTestId`](#locate-by-test-id) to locate an element based on its `data-testid` attribute (other attributes can be configured).
 
 ```js
 await page.getByLabel('User Name').fill('John');
