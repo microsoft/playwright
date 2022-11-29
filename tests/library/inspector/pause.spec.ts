@@ -230,6 +230,7 @@ it.describe('pause', () => {
     const scriptPromise = (async () => {
       await page.pause();
       await expect(page.locator('button')).toHaveText('Submit');
+      await expect(page.locator('button')).not.toHaveText('Submit2');
       await page.pause();  // 2
     })();
     const recorderPage = await recorderPageGetter();
@@ -238,6 +239,7 @@ it.describe('pause', () => {
     expect(await sanitizeLog(recorderPage)).toEqual([
       'page.pause- XXms',
       'expect(page.locator(\'button\')).toHaveText()- XXms',
+      'expect(page.locator(\'button\')).not.toHaveText()- XXms',
       'page.pause',
     ]);
     await recorderPage.click('[title="Resume (F8)"]');

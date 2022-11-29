@@ -327,7 +327,7 @@ export async function toHaveScreenshot(
     maxDiffPixelRatio: undefined,
   };
 
-  const customStackTrace = captureStackTrace(`expect.toHaveScreenshot`);
+  const customStackTrace = captureStackTrace(`expect.${this.isNot ? 'not.' : ''}toHaveScreenshot`);
   const hasSnapshot = fs.existsSync(helper.snapshotPath);
   if (this.isNot) {
     if (!hasSnapshot)

@@ -58,7 +58,7 @@ test.describe('toBeChecked', () => {
     await page.setContent('<input type=checkbox checked></input>');
     const locator = page.locator('input');
     const error = await expect(locator).not.toBeChecked({ timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain(`expect.toBeChecked with timeout 1000ms`);
+    expect(error.message).toContain(`expect.not.toBeChecked with timeout 1000ms`);
     expect(error.message).toContain(`locator resolved to <input checked type="checkbox"/>`);
   });
 
@@ -73,7 +73,7 @@ test.describe('toBeChecked', () => {
     await page.setContent('<div>no inputs here</div>');
     const locator2 = page.locator('input2');
     const error = await expect(locator2).not.toBeChecked({ timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain(`expect.toBeChecked with timeout 1000ms`);
+    expect(error.message).toContain(`expect.not.toBeChecked with timeout 1000ms`);
     expect(error.message).toContain('waiting for locator(\'input2\')');
   });
 
@@ -368,7 +368,7 @@ test.describe('toBeHidden', () => {
     await page.setContent('<div></div>');
     const locator = page.locator('button');
     const error = await expect(locator).not.toBeHidden({ timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain(`expect.toBeHidden with timeout 1000ms`);
+    expect(error.message).toContain(`expect.not.toBeHidden with timeout 1000ms`);
   });
 
   test('with impossible timeout .not', async ({ page }) => {
