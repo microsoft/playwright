@@ -128,6 +128,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   }, { scope: 'worker', auto: true }],
 
   browser: [async ({ playwright, browserName }, use, testInfo) => {
+    if (browserName !== 'firefox')
+      test.skip();
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     const browser = await playwright[browserName].launch();
@@ -531,15 +533,17 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     await use(reuse);
   },
 
-  context: async ({ playwright, browser, _reuseContext, _contextFactory }, use, testInfo) => {
+  context: async ({ playwright, browserName, _reuseContext, _contextFactory }, use, testInfo) => {
     if (!_reuseContext) {
       await use(await _contextFactory());
       return;
     }
 
+    const browser = await playwright[browserName].launch();
     const defaultContextOptions = (playwright.chromium as any)._defaultContextOptions as BrowserContextOptions;
     const context = await (browser as any)._newContextForReuse(defaultContextOptions);
     await use(context);
+    await browser.close();
   },
 
   page: async ({ context, _reuseContext }, use) => {
