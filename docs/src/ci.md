@@ -319,7 +319,7 @@ jobs:
                   npx playwright test
 ```
 This will make the pipeline run fail if any of the playwright tests fails.
-If you also want to integrate the test results with Azure DevOps, use `failOnStderr:false` and the built-in `PublishTestResults` task like so:
+If you also want to integrate the test results with Azure DevOps, use the task `PublishTestResults` task like so:
 ```yml
 jobs:
     - deployment: Run_E2E_Tests
@@ -337,13 +337,12 @@ jobs:
               inputs:
                 workingDirectory: 'my-e2e-tests'
                 targetType: 'inline'
-                failOnStderr: false
+                failOnStderr: true
                 env:
                   CI: true
                 script: |
                   npm ci
                   npx playwright test
-                  exit 0
             - task: PublishTestResults@2
               displayName: 'Publish test results'
               inputs:
@@ -353,6 +352,8 @@ jobs:
                 mergeTestResults: true
                 failTaskOnFailedTests: true
                 testRunTitle: 'My End-To-End Tests'
+              condition: succeededOrFailed()
+
 ```
 Note: The JUnit reporter needs to be configured accordingly via
 ```ts
