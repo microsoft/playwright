@@ -435,18 +435,14 @@ test('should respect expect.timeout', async ({ runInlineTest }) => {
 
       test('timeout', async ({ page }) => {
         await page.goto('data:text/html,<div>A</div>');
-        await Promise.all([
-          expect(page).toHaveURL('data:text/html,<div>B</div>'),
-          new Promise(f => setTimeout(f, 2000)).then(() => expect(true).toBe(false))
-        ]);
+        const error = await expect(page).toHaveURL('data:text/html,<div>B</div>').catch(e => e);
+        expect(error.message).toContain('expect.toHaveURL with timeout 1000ms');
+        expect(error.message).toContain('data:text/html,<div>');
       });
       `,
   }, { workers: 1 });
-  const output = stripAnsi(result.output);
-  expect(output).toContain('expect(received).toHaveURL(expected)');
-  expect(output).toContain('expect.toHaveURL with timeout 1000ms');
-  expect(result.failed).toBe(1);
-  expect(result.exitCode).toBe(1);
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });
 
 test('should log scale the time', async ({ runInlineTest }) => {
