@@ -561,6 +561,9 @@ LocalUtils:
         socksProxyRedirectPortForTest: number?
       returns:
         pipe: JsonPipe
+        headers:
+          type: array
+          items: NameValue
 
     tracingStarted:
       parameters:

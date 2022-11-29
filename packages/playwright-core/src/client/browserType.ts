@@ -28,6 +28,7 @@ import type * as api from '../../types/types';
 import { kBrowserClosedError } from '../common/errors';
 import { raceAgainstTimeout } from '../utils/timeoutRunner';
 import type { Playwright } from './playwright';
+import { debugLogger } from '../common/debugLogger';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
@@ -154,7 +155,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       };
       if ((params as any).__testHookRedirectPortForwarding)
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
-      const { pipe } = await localUtils._channel.connect(connectParams);
+      const { pipe, headers: connectHeaders } = await localUtils._channel.connect(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
       const connection = new Connection(localUtils);
       connection.markAsRemote();
@@ -198,6 +199,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
         this._didLaunchBrowser(browser, {}, logger);
         browser._shouldCloseConnectionOnClose = true;
+        browser._connectHeaders = connectHeaders;
+        for (const header of connectHeaders) {
+          if (header.name === 'x-playwright-debug-log')
+            debugLogger.log('browser', header.value);
+        }
         browser.on(Events.Browser.Disconnected, closePipe);
         return browser;
       }, deadline ? deadline - monotonicTime() : 0);

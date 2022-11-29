@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
+import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, addInternalStackPrefix, mergeTraceFiles, saveTraceFile, removeFolders } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
@@ -313,6 +313,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       const listener = createInstrumentationListener(context);
       (context as any)._instrumentation.addListener(listener);
       (context.request as any)._instrumentation.addListener(listener);
+      attachConnectedHeaderIfNeeded(testInfo, context.browser());
     };
     const onDidCreateRequestContext = async (context: APIRequestContext) => {
       const tracing = (context as any)._tracing as Tracing;
@@ -537,6 +538,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   }, { scope: 'test',  _title: 'context' } as any],
 
   context: async ({ playwright, browser, _reuseContext, _contextFactory }, use, testInfo) => {
+    attachConnectedHeaderIfNeeded(testInfo, browser);
     if (!_reuseContext) {
       await use(await _contextFactory());
       return;
@@ -633,6 +635,22 @@ function normalizeScreenshotMode(screenshot: PlaywrightWorkerOptions['screenshot
   if (!screenshot)
     return 'off';
   return typeof screenshot === 'string' ? screenshot : screenshot.mode;
+}
+
+function attachConnectedHeaderIfNeeded(testInfo: TestInfo, browser: Browser | null) {
+  const connectHeaders: { name: string, value: string }[] | undefined = (browser as any)?._connectHeaders;
+  if (!connectHeaders)
+    return;
+  for (const header of connectHeaders) {
+    if (header.name !== 'x-playwright-attachment')
+      continue;
+    const [name, value] = header.value.split('=');
+    if (!name || !value)
+      continue;
+    if (testInfo.attachments.some(attachment => attachment.name === name))
+      continue;
+    testInfo.attachments.push({ name, contentType: 'text/plain', body: Buffer.from(value) });
+  }
 }
 
 const kTracingStarted = Symbol('kTracingStarted');
