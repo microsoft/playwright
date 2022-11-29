@@ -254,6 +254,7 @@ scheme.LocalUtilsConnectParams = tObject({
 });
 scheme.LocalUtilsConnectResult = tObject({
   pipe: tChannel(['JsonPipe']),
+  headers: tArray(tType('NameValue')),
 });
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({

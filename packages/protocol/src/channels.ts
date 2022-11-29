@@ -458,6 +458,7 @@ export type LocalUtilsConnectOptions = {
 };
 export type LocalUtilsConnectResult = {
   pipe: JsonPipeChannel,
+  headers: NameValue[],
 };
 
 export interface LocalUtilsEvents {

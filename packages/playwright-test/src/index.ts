@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
+import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
 import * as outOfProcess from 'playwright-core/lib/outofprocess';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
@@ -311,6 +311,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       const listener = createInstrumentationListener(context);
       (context as any)._instrumentation.addListener(listener);
       (context.request as any)._instrumentation.addListener(listener);
+      attachConnectedHeaderIfNeeded(testInfo, context.browser());
     };
     const onDidCreateRequestContext = async (context: APIRequestContext) => {
       const tracing = (context as any)._tracing as Tracing;
@@ -532,6 +533,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   },
 
   context: async ({ playwright, browser, _reuseContext, _contextFactory }, use, testInfo) => {
+    attachConnectedHeaderIfNeeded(testInfo, browser);
     if (!_reuseContext) {
       await use(await _contextFactory());
       return;
@@ -623,6 +625,22 @@ export function normalizeTraceMode(trace: TraceMode | 'retry-with-trace' | { mod
 
 export function shouldCaptureTrace(traceMode: TraceMode, testInfo: TestInfo) {
   return traceMode === 'on' || traceMode === 'retain-on-failure' || (traceMode === 'on-first-retry' && testInfo.retry === 1);
+}
+
+function attachConnectedHeaderIfNeeded(testInfo: TestInfo, browser: Browser | null) {
+  const connectHeaders: { name: string, value: string }[] | undefined = (browser as any)?._connectHeaders;
+  if (!connectHeaders)
+    return;
+  for (const header of connectHeaders) {
+    if (header.name !== 'x-playwright-attach-string')
+      continue;
+    const [name, value] = header.value.split('=');
+    if (!name || !value)
+      continue;
+    if (testInfo.attachments.some(attachment => attachment.name === name))
+      continue;
+    testInfo.attachments.push({ name, contentType: 'text/plain', body: Buffer.from(value) });
+  }
 }
 
 const kTracingStarted = Symbol('kTracingStarted');

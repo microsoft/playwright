@@ -56,7 +56,7 @@ export class APIRequest implements api.APIRequest {
   private _playwright: Playwright;
   readonly _contexts = new Set<APIRequestContext>();
 
-  // Instrumentation.
+  // Instrumentation, used from @playwright/test fixtures.
   _onDidCreateContext?: (context: APIRequestContext) => Promise<void>;
   _onWillCloseContext?: (context: APIRequestContext) => Promise<void>;
 

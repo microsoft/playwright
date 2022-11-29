@@ -185,7 +185,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
         pipe.wasClosed();
       };
       pipe.on('close', () => transport.close());
-      return { pipe };
+      return { pipe, headers: transport.headers };
     }, params.timeout || 0);
   }
 
