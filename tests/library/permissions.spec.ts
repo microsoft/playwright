@@ -103,6 +103,7 @@ it.describe('permissions', () => {
   it('should trigger permission onchange', async ({ page, context, server, browserName, headless, browserMajorVersion }) => {
     it.fail(browserName === 'webkit');
     it.fail(browserName === 'chromium' && !headless && browserMajorVersion <= 102, 'Fixed on ToT, remove once Beta rolls');
+    it.fixme(browserName === 'chromium' && browserMajorVersion >= 110, 'https://github.com/microsoft/playwright/issues/19180');
 
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
