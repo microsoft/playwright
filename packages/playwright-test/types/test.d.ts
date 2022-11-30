@@ -193,7 +193,10 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
    * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally
-   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
+   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option. This filter and its command line
+   * counterpart also applies to the setup files. If all
+   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup) tests match the filter
+   * Playwright **will** run all setup files before running the matching tests.
    *
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
@@ -4660,7 +4663,10 @@ interface TestProject {
   /**
    * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
    * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally
-   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
+   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option. This filter and its command line
+   * counterpart also applies to the setup files. If all
+   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup) tests match the filter
+   * Playwright **will** run all setup files before running the matching tests.
    *
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
@@ -4682,7 +4688,12 @@ interface TestProject {
    * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep) and
    * [testProject.grepInvert](https://playwright.dev/docs/api/class-testproject#test-project-grep-invert) and their
    * command line counterparts also apply to the setup files. If such filters match only tests in the project Playwright
-   * will run all setup files.
+   * will run all setup files before running the matching tests.
+   *
+   * If there is a file that matches both
+   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup) and
+   * [testProject.testMatch](https://playwright.dev/docs/api/class-testproject#test-project-test-match) filters an error
+   * will be thrown.
    */
   setup?: string|RegExp|Array<string|RegExp>;
 
