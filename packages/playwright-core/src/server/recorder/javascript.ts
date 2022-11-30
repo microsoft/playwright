@@ -74,33 +74,18 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   });`);
     }
 
-    const emitPromiseAll = signals.popup || signals.download;
-    if (emitPromiseAll) {
-      // Generate either await Promise.all([]) or
-      // const [popup1] = await Promise.all([]).
-      let leftHandSide = '';
-      if (signals.popup)
-        leftHandSide = `const [${signals.popup.popupAlias}] = `;
-      else if (signals.download)
-        leftHandSide = `const [download] = `;
-      formatter.add(`${leftHandSide}await Promise.all([`);
-    }
-
-    // Popup signals.
     if (signals.popup)
-      formatter.add(`${pageAlias}.waitForEvent('popup'),`);
-
-    // Download signals.
+      formatter.add(`const ${signals.popup.popupAlias}Promise = ${pageAlias}.waitForEvent('popup');`);
     if (signals.download)
-      formatter.add(`${pageAlias}.waitForEvent('download'),`);
+      formatter.add(`const download${signals.download.downloadAlias}Promise = ${pageAlias}.waitForEvent('download');`);
 
-    const prefix = (signals.popup || signals.download) ? '' : 'await ';
     const actionCall = this._generateActionCall(action);
-    const suffix = emitPromiseAll ? '' : ';';
-    formatter.add(`${prefix}${subject}.${actionCall}${suffix}`);
+    formatter.add(`await ${subject}.${actionCall};`);
 
-    if (emitPromiseAll)
-      formatter.add(`]);`);
+    if (signals.popup)
+      formatter.add(`const ${signals.popup.popupAlias} = await ${signals.popup.popupAlias}Promise;`);
+    if (signals.download)
+      formatter.add(`const download${signals.download.downloadAlias} = await download${signals.download.downloadAlias}Promise;`);
 
     return formatter.format();
   }

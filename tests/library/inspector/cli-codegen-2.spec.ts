@@ -222,39 +222,53 @@ test.describe('cli codegen', () => {
       page.waitForEvent('download'),
       page.click('a')
     ]);
-    const sources = await recorder.waitForOutput('JavaScript', 'waitForEvent');
+    await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const sources = await recorder.waitForOutput('JavaScript', 'download1Promise');
 
     expect.soft(sources.get('JavaScript').text).toContain(`
-  const context = await browser.newContext();`);
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Download' }).click();
+  const download = await downloadPromise;`);
     expect.soft(sources.get('JavaScript').text).toContain(`
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('link', { name: 'Download' }).click()
-  ]);`);
+  const download1Promise = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Download' }).click();
+  const download1 = await download1Promise;`);
 
-    expect.soft(sources.get('Java').text).toContain(`
-      BrowserContext context = browser.newContext();`);
     expect.soft(sources.get('Java').text).toContain(`
       Download download = page.waitForDownload(() -> {
         page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Download")).click();
       });`);
+    expect.soft(sources.get('Java').text).toContain(`
+      Download download1 = page.waitForDownload(() -> {
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Download")).click();
+      });`);
 
-    expect.soft(sources.get('Python').text).toContain(`
-    context = browser.new_context()`);
     expect.soft(sources.get('Python').text).toContain(`
     with page.expect_download() as download_info:
         page.get_by_role("link", name="Download").click()
     download = download_info.value`);
+    expect.soft(sources.get('Python').text).toContain(`
+    with page.expect_download() as download1_info:
+        page.get_by_role("link", name="Download").click()
+    download1 = download1_info.value`);
 
-    expect.soft(sources.get('Python Async').text).toContain(`
-    context = await browser.new_context()`);
     expect.soft(sources.get('Python Async').text).toContain(`
     async with page.expect_download() as download_info:
         await page.get_by_role("link", name="Download").click()
     download = await download_info.value`);
+    expect.soft(sources.get('Python Async').text).toContain(`
+    async with page.expect_download() as download1_info:
+        await page.get_by_role("link", name="Download").click()
+    download1 = await download1_info.value`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        var context = await browser.NewContextAsync();`);
+        var download = await page.RunAndWaitForDownloadAsync(async () =>
+        {
+            await page.GetByRole(AriaRole.Link, new() { Name = "Download" }).ClickAsync();
+        });`);
     expect.soft(sources.get('C#').text).toContain(`
         var download1 = await page.RunAndWaitForDownloadAsync(async () =>
         {
@@ -299,13 +313,13 @@ test.describe('cli codegen', () => {
     await page.get_by_role("button", name="click me").click()`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        void page_Dialog1_EventHandler(object sender, IDialog dialog)
+        void page_Dialog_EventHandler(object sender, IDialog dialog)
         {
             Console.WriteLine($\"Dialog message: {dialog.Message}\");
             dialog.DismissAsync();
-            page.Dialog -= page_Dialog1_EventHandler;
+            page.Dialog -= page_Dialog_EventHandler;
         }
-        page.Dialog += page_Dialog1_EventHandler;
+        page.Dialog += page_Dialog_EventHandler;
         await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();`);
 
   });
@@ -348,12 +362,11 @@ test.describe('cli codegen', () => {
         await page1.GotoAsync("about:blank?foo");`);
     } else {
       expect(sources.get('JavaScript').text).toContain(`
-  const [page1] = await Promise.all([
-    page.waitForEvent('popup'),
-    page.getByRole('link', { name: 'link' }).click({
-      modifiers: ['${platform === 'darwin' ? 'Meta' : 'Control'}']
-    })
-  ]);`);
+  const page1Promise = page.waitForEvent('popup');
+  await page.getByRole('link', { name: 'link' }).click({
+    modifiers: ['${platform === 'darwin' ? 'Meta' : 'Control'}']
+  });
+  const page1 = await page1Promise;`);
     }
   });
 
