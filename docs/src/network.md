@@ -348,6 +348,7 @@ var waitForResponseTask = page.WaitForResponseAsync(r => r.Url.Contains(token));
 await page.GetByText("Update").ClickAsync();
 var response = await waitForResponseTask;
 ```
+
 ## Handle requests
 
 ```js
@@ -416,7 +417,7 @@ page.goto("https://example.com")
 
 ```csharp
 await page.RouteAsync("**/api/fetch_data", async route => {
-  await route.FulfillAsync(status: 200, body: testData);
+  await route.FulfillAsync(new() { Status = 200, Body = testData });
 });
 await page.GotoAsync("https://example.com");
 ```

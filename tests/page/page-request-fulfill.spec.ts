@@ -380,3 +380,18 @@ it('should fulfill preload link requests', async ({ page, server, browserName })
   expect(color).toBe('rgb(0, 128, 0)');
 });
 
+it('should fulfill json', async ({ page, server }) => {
+  await page.route('**/*', route => {
+    route.fulfill({
+      status: 201,
+      headers: {
+        foo: 'bar'
+      },
+      json: { bar: 'baz' },
+    });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(201);
+  expect(response.headers()['content-type']).toBe('application/json');
+  expect(await page.evaluate(() => document.body.textContent)).toBe(JSON.stringify({ bar: 'baz' }));
+});

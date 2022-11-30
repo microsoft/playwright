@@ -797,11 +797,6 @@ it('should dispose when context closes', async function({ context, server }) {
   expect(error.message).toContain('Response has been disposed');
 });
 
-it('should throw on invalid first argument', async function({ context }) {
-  const error = await context.request.get({} as any).catch(e => e);
-  expect(error.message).toContain('First argument must be either URL string or Request');
-});
-
 it('should override request parameters', async function({ context, page, server }) {
   const [pageReq] = await Promise.all([
     page.waitForRequest('**/*'),
