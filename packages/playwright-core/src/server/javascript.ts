@@ -226,12 +226,12 @@ export class JSHandle<T = any> extends SdkObject {
 }
 
 export async function evaluate(context: ExecutionContext, returnByValue: boolean, pageFunction: Function | string, ...args: any[]): Promise<any> {
-  return evaluateExpression(context, returnByValue, String(pageFunction), typeof pageFunction === 'function', ...args);
+  return evaluateExpression(context, String(pageFunction), { returnByValue, isFunction: typeof pageFunction === 'function' }, ...args);
 }
 
-export async function evaluateExpression(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction: boolean | undefined, ...args: any[]): Promise<any> {
+export async function evaluateExpression(context: ExecutionContext, expression: string, options: { returnByValue?: boolean, isFunction?: boolean, exposeUtilityScript?: boolean }, ...args: any[]): Promise<any> {
   const utilityScript = await context.utilityScript();
-  expression = normalizeEvaluationExpression(expression, isFunction);
+  expression = normalizeEvaluationExpression(expression, options.isFunction);
   const handles: (Promise<JSHandle>)[] = [];
   const toDispose: Promise<JSHandle>[] = [];
   const pushHandle = (handle: Promise<JSHandle>): number => {
@@ -262,18 +262,18 @@ export async function evaluateExpression(context: ExecutionContext, returnByValu
   }
 
   // See UtilityScript for arguments.
-  const utilityScriptValues = [isFunction, returnByValue, expression, args.length, ...args];
+  const utilityScriptValues = [options.isFunction, options.returnByValue, options.exposeUtilityScript, expression, args.length, ...args];
 
   const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)`;
   try {
-    return await context.evaluateWithArguments(script, returnByValue, utilityScript, utilityScriptValues, utilityScriptObjectIds);
+    return await context.evaluateWithArguments(script, options.returnByValue || false, utilityScript, utilityScriptValues, utilityScriptObjectIds);
   } finally {
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   }
 }
 
-export async function evaluateExpressionAndWaitForSignals(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction?: boolean, ...args: any[]): Promise<any> {
-  return await context.waitForSignalsCreatedBy(() => evaluateExpression(context, returnByValue, expression, isFunction, ...args));
+export async function evaluateExpressionAndWaitForSignals(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction: boolean | undefined, ...args: any[]): Promise<any> {
+  return await context.waitForSignalsCreatedBy(() => evaluateExpression(context, expression, { returnByValue, isFunction }, ...args));
 }
 
 export function parseUnserializableValue(unserializableValue: string): any {

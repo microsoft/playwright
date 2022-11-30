@@ -702,3 +702,13 @@ it('should work with overridden globalThis.Window/Document/Node', async ({ page,
     });
   }
 });
+
+it('should expose utilityScript', async ({ page }) => {
+  const result = await (page.mainFrame() as any)._evaluateExposeUtilityScript((utilityScript, { a }) => {
+    return { utils: 'parseEvaluationResultValue' in utilityScript, a };
+  }, { a: 42 });
+  expect(result).toEqual({
+    a: 42,
+    utils: true,
+  });
+});

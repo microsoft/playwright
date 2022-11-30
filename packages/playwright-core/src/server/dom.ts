@@ -71,19 +71,19 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return js.evaluate(this, false /* returnByValue */, pageFunction, arg);
   }
 
-  async evaluateExpression(expression: string, isFunction: boolean | undefined, arg?: any): Promise<any> {
-    return js.evaluateExpression(this, true /* returnByValue */, expression, isFunction, arg);
+  async evaluateExpression(expression: string, options: { isFunction?: boolean, exposeUtilityScript?: boolean }, arg?: any): Promise<any> {
+    return js.evaluateExpression(this, expression, { ...options, returnByValue: true }, arg);
   }
 
-  async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg?: any): Promise<any> {
+  async evaluateExpressionAndWaitForSignals(expression: string, options: { isFunction?: boolean, exposeUtilityScript?: boolean }, arg?: any): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return this.evaluateExpression(expression, isFunction, arg);
+      return this.evaluateExpression(expression, options, arg);
     });
   }
 
-  async evaluateExpressionHandleAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+  async evaluateExpressionHandleAndWaitForSignals(expression: string, options: { isFunction?: boolean, exposeUtilityScript?: boolean }, arg: any): Promise<any> {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return js.evaluateExpression(this, false /* returnByValue */, expression, isFunction, arg);
+      return js.evaluateExpression(this, expression, { ...options, returnByValue: false }, arg);
     });
   }
 
