@@ -800,6 +800,12 @@ Time to retry the assertion for.
 
 An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by default.
 
+## assertions-comparator
+* langs: js
+- `comparator` <[string]> Either `"pixelmatch"` or `"ssim_v1"`.
+
+A comparator function to use when comparing images.
+
 ## assertions-max-diff-pixel-ratio
 * langs: js
 - `maxDiffPixelRatio` <[float]>

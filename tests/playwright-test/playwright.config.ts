@@ -22,15 +22,20 @@ import * as path from 'path';
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const config: Config = {
-  testDir: __dirname,
-  testIgnore: ['assets/**', 'stable-test-runner/**'],
   timeout: 30000,
   forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
   preserveOutput: process.env.CI ? 'failures-only' : 'always',
   projects: [
     {
-      name: 'playwright-test'
+      name: 'playwright-test',
+      testDir: __dirname,
+      testIgnore: ['assets/**', 'stable-test-runner/**'],
+    },
+    {
+      name: 'image_tools',
+      testDir: path.join(__dirname, '../image_tools'),
+      testIgnore: [path.join(__dirname, '../fixtures/**')],
     },
   ],
   reporter: process.env.CI ? [

@@ -620,6 +620,35 @@ test('should respect project threshold', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should respect comparator name', async ({ runInlineTest }) => {
+  const expected = fs.readFileSync(path.join(__dirname, '../image_tools/fixtures/should-match/tiny-antialiasing-sample/tiny-expected.png'));
+  const actual = fs.readFileSync(path.join(__dirname, '../image_tools/fixtures/should-match/tiny-antialiasing-sample/tiny-actual.png'));
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.png': expected,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('should pass', ({}) => {
+        expect(Buffer.from('${actual.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
+          threshold: 0,
+          comparator: 'ssim_v1',
+        });
+      });
+      test('should fail', ({}) => {
+        expect(Buffer.from('${actual.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
+          threshold: 0,
+          comparator: 'pixelmatch',
+        });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.report.suites[0].specs[0].title).toBe('should pass');
+  expect(result.report.suites[0].specs[0].ok).toBe(true);
+  expect(result.report.suites[0].specs[1].title).toBe('should fail');
+  expect(result.report.suites[0].specs[1].ok).toBe(false);
+});
+
 test('should sanitize snapshot name when passed as string', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,

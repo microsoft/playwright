@@ -145,6 +145,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       maxDiffPixels: options.maxDiffPixels,
       maxDiffPixelRatio: options.maxDiffPixelRatio,
       threshold: options.threshold,
+      comparator: options.comparator,
     };
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
