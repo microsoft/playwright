@@ -25,7 +25,7 @@ await page.getByLabel('Local time').fill('2020-03-02T05:15');
 
 ```java
 // Text input
-page.getByRole("textbox").fill("Peter");
+page.getByRole(AriaRole.TEXTBOX).fill("Peter");
 
 // Date input
 page.getByLabel("Birth date").fill("2020-02-02");
@@ -67,7 +67,7 @@ page.get_by_label("Local time").fill("2020-03-02T05:15")
 
 ```csharp
 // Text input
-await page.GetByRole("textbox").FillAsync("Peter");
+await page.GetByRole(AriaRole.Textbox).FillAsync("Peter");
 
 // Date input
 await page.GetByLabel("Birth date").FillAsync("2020-02-02");
@@ -224,7 +224,7 @@ await page.getByText('Item').click({ position: { x: 0, y: 0} });
 
 ```java
 // Generic click
-page.getByRole("button").click();
+page.getByRole(AriaRole.BUTTON).click();
 
 // Double click
 page.getByText("Item").dblclick();
@@ -284,7 +284,7 @@ page.get_by_text("Item").click(position={ "x": 0, "y": 0})
 
 ```csharp
 // Generic click
-await page.GetByRole("button").ClickAsync();
+await page.GetByRole(AriaRole.Button).ClickAsync();
 
 // Double click
 await page.GetByText("Item").DblClickAsync();
@@ -320,7 +320,7 @@ await page.getByRole('button').click({ force: true });
 ```
 
 ```java
-page.getByRole("button").click(new Locator.ClickOptions().setForce(true));
+page.getByRole(AriaRole.BUTTON).click(new Locator.ClickOptions().setForce(true));
 ```
 
 ```python async
@@ -332,7 +332,7 @@ page.get_by_role("button").click(force=True)
 ```
 
 ```csharp
-await page.GetByRole("button").ClickAsync(new() { Force = true });
+await page.GetByRole(AriaRole.Button).ClickAsync(new() { Force = true });
 ```
 
 #### Programmatic click
@@ -344,7 +344,7 @@ await page.getByRole('button').dispatchEvent('click');
 ```
 
 ```java
-page.getByRole("button").dispatchEvent("click");
+page.getByRole(AriaRole.BUTTON).dispatchEvent("click");
 ```
 
 ```python async
@@ -356,7 +356,7 @@ page.get_by_role("button").dispatch_event('click')
 ```
 
 ```csharp
-await page.GetByRole("button").DispatchEventAsync("click");
+await page.GetByRole(AriaRole.Button).DispatchEventAsync("click");
 ```
 
 ## Type characters
@@ -412,10 +412,10 @@ await page.getByRole('textbox').press('$');
 page.getByText("Submit").press("Enter");
 
 // Dispatch Control+Right
-page.getByRole("textbox").press("Control+ArrowRight");
+page.getByRole(AriaRole.TEXTBOX).press("Control+ArrowRight");
 
 // Press $ sign on keyboard
-page.getByRole("textbox").press("$");
+page.getByRole(AriaRole.TEXTBOX).press("$");
 ```
 
 ```python async
@@ -445,10 +445,10 @@ page.get_by_role("textbox").press("$")
 await page.GetByText("Submit").PressAsync("Enter");
 
 // Dispatch Control+Right
-await page.GetByRole("textbox").PressAsync("Control+ArrowRight");
+await page.GetByRole(AriaRole.Textbox).PressAsync("Control+ArrowRight");
 
 // Press $ sign on keyboard
-await page.GetByRole("textbox").PressAsync("$");
+await page.GetByRole(AriaRole.Textbox).PressAsync("$");
 ```
 
 The [`method: Locator.press`] method focuses the selected element and produces a single keystroke. It accepts the logical key names that are emitted in the [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) property of the keyboard events:

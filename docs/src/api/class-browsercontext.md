@@ -463,7 +463,7 @@ public class Example {
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
         "<div></div>");
-      page.getByRole("button").click();
+      page.getByRole(AriaRole.BUTTON).click();
     }
   }
 }
@@ -536,7 +536,7 @@ await page.SetContentAsync("<script>\n" +
 "</script>\n" +
 "<button onclick=\"onClick()\">Click me</button>\n" +
 "<div></div>");
-await page.GetByRole("button").ClickAsync();
+await page.GetByRole(AriaRole.Button).ClickAsync();
 ```
 
 An example of passing an element handle:
@@ -704,7 +704,7 @@ public class Example {
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
         "<div></div>\n");
-      page.getByRole("button").click();
+      page.getByRole(AriaRole.BUTTON).click();
     }
   }
 }
@@ -804,7 +804,7 @@ class BrowserContextExamples
         "<button onclick=\"onClick()\">Click me</button>\n" +
         "<div></div>");
 
-        await page.GetByRole("button").ClickAsync();
+        await page.GetByRole(AriaRole.Button).ClickAsync();
         Console.WriteLine(await page.TextContentAsync("div"));
     }
 }

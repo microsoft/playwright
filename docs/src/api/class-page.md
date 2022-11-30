@@ -3959,7 +3959,7 @@ await page.waitForLoadState(); // The promise resolves after 'load' event.
 ```
 
 ```java
-page.getByRole("button").click(); // Click triggers navigation.
+page.getByRole(AriaRole.BUTTON).click(); // Click triggers navigation.
 page.waitForLoadState(); // The promise resolves after "load" event.
 ```
 
@@ -3974,7 +3974,7 @@ page.wait_for_load_state() # the promise resolves after "load" event.
 ```
 
 ```csharp
-await page.GetByRole("button").ClickAsync(); // Click triggers navigation.
+await page.GetByRole(AriaRole.Button).ClickAsync(); // Click triggers navigation.
 await page.WaitForLoadStateAsync(); // The promise resolves after 'load' event.
 ```
 
