@@ -990,14 +990,10 @@ export interface Page {
    * "http://example.com" is done and its response has started loading in the popup.
    *
    * ```js
-   * // Note that Promise.all prevents a race condition
-   * // between evaluating and waiting for the popup.
-   * const [popup] = await Promise.all([
-   *   // It is important to call waitForEvent first.
-   *   page.waitForEvent('popup'),
-   *   // Opens the popup.
-   *   page.evaluate(() => window.open('https://example.com')),
-   * ]);
+   * // Start waiting for popup before clicking. Note no await.
+   * const popupPromise = page.waitForEvent('popup');
+   * await page.getByText('open the popup').click();
+   * const popup = await popupPromise;
    * console.log(await popup.evaluate('location.href'));
    * ```
    *
@@ -1287,14 +1283,10 @@ export interface Page {
    * "http://example.com" is done and its response has started loading in the popup.
    *
    * ```js
-   * // Note that Promise.all prevents a race condition
-   * // between evaluating and waiting for the popup.
-   * const [popup] = await Promise.all([
-   *   // It is important to call waitForEvent first.
-   *   page.waitForEvent('popup'),
-   *   // Opens the popup.
-   *   page.evaluate(() => window.open('https://example.com')),
-   * ]);
+   * // Start waiting for popup before clicking. Note no await.
+   * const popupPromise = page.waitForEvent('popup');
+   * await page.getByText('open the popup').click();
+   * const popup = await popupPromise;
    * console.log(await popup.evaluate('location.href'));
    * ```
    *
@@ -1679,14 +1671,10 @@ export interface Page {
    * "http://example.com" is done and its response has started loading in the popup.
    *
    * ```js
-   * // Note that Promise.all prevents a race condition
-   * // between evaluating and waiting for the popup.
-   * const [popup] = await Promise.all([
-   *   // It is important to call waitForEvent first.
-   *   page.waitForEvent('popup'),
-   *   // Opens the popup.
-   *   page.evaluate(() => window.open('https://example.com')),
-   * ]);
+   * // Start waiting for popup before clicking. Note no await.
+   * const popupPromise = page.waitForEvent('popup');
+   * await page.getByText('open the popup').click();
+   * const popup = await popupPromise;
    * console.log(await popup.evaluate('location.href'));
    * ```
    *
@@ -4214,14 +4202,10 @@ export interface Page {
    * "http://example.com" is done and its response has started loading in the popup.
    *
    * ```js
-   * // Note that Promise.all prevents a race condition
-   * // between evaluating and waiting for the popup.
-   * const [popup] = await Promise.all([
-   *   // It is important to call waitForEvent first.
-   *   page.waitForEvent('popup'),
-   *   // Opens the popup.
-   *   page.evaluate(() => window.open('https://example.com')),
-   * ]);
+   * // Start waiting for popup before clicking. Note no await.
+   * const popupPromise = page.waitForEvent('popup');
+   * await page.getByText('open the popup').click();
+   * const popup = await popupPromise;
    * console.log(await popup.evaluate('location.href'));
    * ```
    *
@@ -4295,13 +4279,10 @@ export interface Page {
    * ```
    *
    * ```js
-   * const [popup] = await Promise.all([
-   *   // It is important to call waitForEvent before click to set up waiting.
-   *   page.waitForEvent('popup'),
-   *   // Click triggers a popup.
-   *   page.getByRole('button').click(),
-   * ])
-   * await popup.waitForLoadState('domcontentloaded'); // The promise resolves after 'domcontentloaded' event.
+   * const popupPromise = page.waitForEvent('popup');
+   * await page.getByRole('button').click(); // Click triggers a popup.
+   * const popup = await popupPromise;
+   * await popup.waitForLoadState('domcontentloaded'); // Wait for the 'DOMContentLoaded' event.
    * console.log(await popup.title()); // Popup is ready to use.
    * ```
    *
@@ -4336,14 +4317,10 @@ export interface Page {
    * a `setTimeout`. Consider this example:
    *
    * ```js
-   * // Note that Promise.all prevents a race condition
-   * // between clicking and waiting for the navigation.
-   * const [response] = await Promise.all([
-   *   // It is important to call waitForNavigation before click to set up waiting.
-   *   page.waitForNavigation(),
-   *   // Clicking the link will indirectly cause a navigation.
-   *   page.locator('a.delayed-navigation').click(),
-   * ]);
+   * // Start waiting for navigation before clicking. Note no await.
+   * const navigationPromise = page.waitForNavigation();
+   * await page.getByText('Navigate after timeout').click();
+   * await navigationPromise;
    * ```
    *
    * **NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL
@@ -4387,22 +4364,15 @@ export interface Page {
    * **Usage**
    *
    * ```js
-   * // Note that Promise.all prevents a race condition
-   * // between clicking and waiting for the request.
-   * const [request] = await Promise.all([
-   *   // Waits for the next request with the specified url
-   *   page.waitForRequest('https://example.com/resource'),
-   *   // Triggers the request
-   *   page.click('button.triggers-request'),
-   * ]);
+   * // Start waiting for request before clicking. Note no await.
+   * const requestPromise = page.waitForRequest('https://example.com/resource');
+   * await page.getByText('trigger request').click();
+   * const request = await requestPromise;
    *
-   * // Alternative way with a predicate.
-   * const [request] = await Promise.all([
-   *   // Waits for the next request matching some conditions
-   *   page.waitForRequest(request => request.url() === 'https://example.com' && request.method() === 'GET'),
-   *   // Triggers the request
-   *   page.click('button.triggers-request'),
-   * ]);
+   * // Alternative way with a predicate. Note no await.
+   * const requestPromise = page.waitForRequest(request => request.url() === 'https://example.com' && request.method() === 'GET');
+   * await page.getByText('trigger request').click();
+   * const request = await requestPromise;
    * ```
    *
    * @param urlOrPredicate Request URL string, regex or predicate receiving [Request] object.
@@ -4424,22 +4394,15 @@ export interface Page {
    * **Usage**
    *
    * ```js
-   * // Note that Promise.all prevents a race condition
-   * // between clicking and waiting for the response.
-   * const [response] = await Promise.all([
-   *   // Waits for the next response with the specified url
-   *   page.waitForResponse('https://example.com/resource'),
-   *   // Triggers the response
-   *   page.click('button.triggers-response'),
-   * ]);
+   * // Start waiting for response before clicking. Note no await.
+   * const responsePromise = page.waitForRequest('https://example.com/resource');
+   * await page.getByText('trigger response').click();
+   * const response = await responsePromise;
    *
-   * // Alternative way with a predicate.
-   * const [response] = await Promise.all([
-   *   // Waits for the next response matching some conditions
-   *   page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200),
-   *   // Triggers the response
-   *   page.click('button.triggers-response'),
-   * ]);
+   * // Alternative way with a predicate. Note no await.
+   * const responsePromise = page.waitForRequest(response => response.url() === 'https://example.com' && response.status() === 200);
+   * await page.getByText('trigger response').click();
+   * const response = await responsePromise;
    * ```
    *
    * @param urlOrPredicate Request URL string, regex or predicate receiving [Response] object. When a `baseURL` via the context options was
@@ -6916,10 +6879,10 @@ export interface Frame {
    * cause the frame to navigate. Consider this example:
    *
    * ```js
-   * const [response] = await Promise.all([
-   *   frame.waitForNavigation(), // The promise resolves after navigation has finished
-   *   frame.click('a.delayed-navigation'), // Clicking the link will indirectly cause a navigation
-   * ]);
+   * // Start waiting for navigation before clicking. Note no await.
+   * const navigationPromise = page.waitForNavigation();
+   * await page.getByText('Navigate after timeout').click();
+   * await navigationPromise;
    * ```
    *
    * **NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL
@@ -7204,10 +7167,9 @@ export interface BrowserContext {
    * "http://example.com" is done and its response has started loading in the popup.
    *
    * ```js
-   * const [newPage] = await Promise.all([
-   *   context.waitForEvent('page'),
-   *   page.locator('a[target=_blank]').click(),
-   * ]);
+   * const newPagePromise = context.waitForEvent('page');
+   * await page.getByText('open new page').click();
+   * const newPage = await newPagePromise;
    * console.log(await newPage.evaluate('location.href'));
    * ```
    *
@@ -7333,10 +7295,9 @@ export interface BrowserContext {
    * "http://example.com" is done and its response has started loading in the popup.
    *
    * ```js
-   * const [newPage] = await Promise.all([
-   *   context.waitForEvent('page'),
-   *   page.locator('a[target=_blank]').click(),
-   * ]);
+   * const newPagePromise = context.waitForEvent('page');
+   * await page.getByText('open new page').click();
+   * const newPage = await newPagePromise;
    * console.log(await newPage.evaluate('location.href'));
    * ```
    *
@@ -7502,10 +7463,9 @@ export interface BrowserContext {
    * "http://example.com" is done and its response has started loading in the popup.
    *
    * ```js
-   * const [newPage] = await Promise.all([
-   *   context.waitForEvent('page'),
-   *   page.locator('a[target=_blank]').click(),
-   * ]);
+   * const newPagePromise = context.waitForEvent('page');
+   * await page.getByText('open new page').click();
+   * const newPage = await newPagePromise;
    * console.log(await newPage.evaluate('location.href'));
    * ```
    *
@@ -8036,10 +7996,9 @@ export interface BrowserContext {
    * "http://example.com" is done and its response has started loading in the popup.
    *
    * ```js
-   * const [newPage] = await Promise.all([
-   *   context.waitForEvent('page'),
-   *   page.locator('a[target=_blank]').click(),
-   * ]);
+   * const newPagePromise = context.waitForEvent('page');
+   * await page.getByText('open new page').click();
+   * const newPage = await newPagePromise;
    * console.log(await newPage.evaluate('location.href'));
    * ```
    *
@@ -15289,13 +15248,11 @@ export interface BrowserServer {
  * });
  *
  * // Get the next console log
- * const [msg] = await Promise.all([
- *   page.waitForEvent('console'),
- *   // Issue console.log inside the page
- *   page.evaluate(() => {
- *     console.log('hello', 42, { foo: 'bar' });
- *   }),
- * ]);
+ * const msgPromise = page.waitForEvent('console');
+ * await page.evaluate(() => {
+ *   console.log('hello', 42, { foo: 'bar' });  // Issue console.log inside the page
+ * });
+ * const msg = await msgPromise;
  *
  * // Deconstruct console log arguments
  * await msg.args[0].jsonValue() // hello
@@ -15539,16 +15496,13 @@ export interface Dialog {
  * Download event is emitted once the download starts. Download path becomes available once download completes:
  *
  * ```js
- * // Note that Promise.all prevents a race condition
- * // between clicking and waiting for the download.
- * const [ download ] = await Promise.all([
- *   // It is important to call waitForEvent before click to set up waiting.
- *   page.waitForEvent('download'),
- *   // Triggers the download.
- *   page.getByText('Download file').click(),
- * ]);
- * // wait for download to complete
- * const path = await download.path();
+ * // Start waiting for download before clicking. Note no await.
+ * const downloadPromise = page.waitForEvent('download');
+ * await page.getByText('Download file').click();
+ * const download = await downloadPromise;
+ *
+ * // Wait for the download process to complete.
+ * console.log(await download.path());
  * ```
  *
  */
@@ -15843,14 +15797,10 @@ export interface Electron {
  * [page.on('filechooser')](https://playwright.dev/docs/api/class-page#page-event-file-chooser) event.
  *
  * ```js
- * // Note that Promise.all prevents a race condition
- * // between clicking and waiting for the file chooser.
- * const [fileChooser] = await Promise.all([
- *   // It is important to call waitForEvent before click to set up waiting.
- *   page.waitForEvent('filechooser'),
- *   // Opens the file chooser.
- *   page.getByText('Upload').click(),
- * ]);
+ * // Start waiting for file chooser before clicking. Note no await.
+ * const fileChooserPromise = page.waitForEvent('filechooser');
+ * await page.getByText('Upload file').click();
+ * const fileChooser = await fileChooserPromise;
  * await fileChooser.setFiles('myfile.pdf');
  * ```
  *
@@ -16794,10 +16744,9 @@ export interface Request {
    * **Usage**
    *
    * ```js
-   * const [request] = await Promise.all([
-   *   page.waitForEvent('requestfinished'),
-   *   page.goto('http://example.com')
-   * ]);
+   * const requestFinishedPromise = page.waitForEvent('requestfinished');
+   * await page.goto('http://example.com');
+   * const request = await requestFinishedPromise;
    * console.log(request.timing());
    * ```
    *

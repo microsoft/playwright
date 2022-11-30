@@ -12,13 +12,10 @@ Most of the time, scripts will need to wait for a particular event to happen. Be
 Wait for a request with the specified url using [`method: Page.waitForRequest`]:
 
 ```js
-// Note that Promise.all prevents a race condition
-// between clicking and waiting for the request.
-const [request] = await Promise.all([
-  page.waitForRequest('**/*logo*.png'),
-  // This action triggers the request
-  page.goto('https://wikipedia.org')
-]);
+// Start waiting for request before goto. Note no await.
+const requestPromise = page.waitForRequest('**/*logo*.png');
+await page.goto('https://wikipedia.org');
+const request = await requestPromise;
 console.log(request.url());
 ```
 
@@ -54,14 +51,10 @@ Console.WriteLine(request.Url);
 Wait for popup window:
 
 ```js
-// Note that Promise.all prevents a race condition
-// between clicking and waiting for the popup.
-const [popup] = await Promise.all([
-  // It is important to call waitForEvent first.
-  page.waitForEvent('popup'),
-  // This action triggers the popup
-  page.evaluate('window.open()')
-]);
+// Start waiting for popup before clicking. Note no await.
+const popupPromise = page.waitForEvent('popup');
+await page.getByText('open the popup').click();
+const popup = await popupPromise;
 await popup.goto('https://wikipedia.org');
 ```
 
@@ -69,28 +62,28 @@ await popup.goto('https://wikipedia.org');
 // The callback lambda defines scope of the code that is expected to
 // create popup window.
 Page popup = page.waitForPopup(() -> {
-  page.evaluate("window.open()");
+  page.getByText("open the popup").click();
 });
 popup.navigate("https://wikipedia.org");
 ```
 
 ```python async
 async with page.expect_popup() as popup:
-  await page.evaluate("window.open()")
+  await page.get_by_text("open the popup").click()
 child_page = await popup.value
 await child_page.goto("https://wikipedia.org")
 ```
 
 ```python sync
 with page.expect_popup() as popup:
-  page.evaluate("window.open()")
+  page.get_by_text("open the popup").click()
 popup.value.goto("https://wikipedia.org")
 ```
 
 ```csharp
 var popup = await page.RunAndWaitForPopupAsync(async =>
 {
-    await page.EvaluateAsync("window.open()");
+    await page.GetByText("open the popup").ClickAsync();
 });
 await popup.GotoAsync("https://wikipedia.org");
 ```

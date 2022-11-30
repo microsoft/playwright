@@ -16,12 +16,10 @@ Downloaded files are deleted when the browser context that produced them is clos
 Here is the simplest way to handle the file download:
 
 ```js
-const [ download ] = await Promise.all([
-  // Start waiting for the download
-  page.waitForEvent('download'),
-  // Perform the action that initiates download
-  page.locator('button#delayed-download').click(),
-]);
+// Start waiting for download before clicking. Note no await.
+const downloadPromise = page.waitForEvent('download');
+await page.getByText('Download file').click();
+const download = await downloadPromise;
 // Wait for the download process to complete
 console.log(await download.path());
 // Save downloaded file somewhere
@@ -32,7 +30,7 @@ await download.saveAs('/path/to/save/download/at.txt');
 // Wait for the download to start
 Download download = page.waitForDownload(() -> {
     // Perform the action that initiates download
-    page.locator("button#delayed-download").click();
+    page.getByText("Download file").click();
 });
 // Wait for the download process to complete
 Path path = download.path();
@@ -45,7 +43,7 @@ download.saveAs(Paths.get("/path/to/save/download/at.txt"));
 # Start waiting for the download
 async with page.expect_download() as download_info:
     # Perform the action that initiates download
-    await page.locator("button#delayed-download").click()
+    await page.get_by_text("Download file").click()
 download = await download_info.value
 # Wait for the download process to complete
 print(await download.path())
@@ -57,7 +55,8 @@ download.save_as("/path/to/save/download/at.txt")
 # Start waiting for the download
 with page.expect_download() as download_info:
     # Perform the action that initiates download
-    page.locator("button#delayed-download").click()
+    page.get_by_text("Download file").click()
+# Wait for the download to start
 download = download_info.value
 # Wait for the download process to complete
 print(download.path())
@@ -66,12 +65,11 @@ download.save_as("/path/to/save/download/at.txt")
 ```
 
 ```csharp
-// Start the task of waiting for the download
+// Start the task of waiting for the download before clicking
 var waitForDownloadTask = page.WaitForDownloadAsync();
-// Perform the action that initiates download
-await page.Locator("#downloadButton").ClickAsync();
-// Wait for the download process to complete
+await page.GetByText("Download file").ClickAsync();
 var download = await waitForDownloadTask;
+// Wait for the download process to complete
 Console.WriteLine(await download.PathAsync());
 // Save downloaded file somewhere
 await download.SaveAsAsync("/path/to/save/download/at.txt");

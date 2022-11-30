@@ -281,10 +281,9 @@ Returns resource timing information for given request. Most of the timing values
 **Usage**
 
 ```js
-const [request] = await Promise.all([
-  page.waitForEvent('requestfinished'),
-  page.goto('http://example.com')
-]);
+const requestFinishedPromise = page.waitForEvent('requestfinished');
+await page.goto('http://example.com');
+const request = await requestFinishedPromise;
 console.log(request.timing());
 ```
 

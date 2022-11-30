@@ -16,13 +16,11 @@ page.on('console', msg => {
 });
 
 // Get the next console log
-const [msg] = await Promise.all([
-  page.waitForEvent('console'),
-  // Issue console.log inside the page
-  page.evaluate(() => {
-    console.log('hello', 42, { foo: 'bar' });
-  }),
-]);
+const msgPromise = page.waitForEvent('console');
+await page.evaluate(() => {
+  console.log('hello', 42, { foo: 'bar' });  // Issue console.log inside the page
+});
+const msg = await msgPromise;
 
 // Deconstruct console log arguments
 await msg.args[0].jsonValue() // hello
