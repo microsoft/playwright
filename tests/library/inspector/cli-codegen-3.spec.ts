@@ -49,7 +49,7 @@ test.describe('cli codegen', () => {
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).first().click();`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.GetByRole(AriaRole.Button, new() { NameString = "Submit" }).First.ClickAsync();`);
+        await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).First.ClickAsync();`);
 
     expect(message.text()).toBe('click1');
   });
@@ -84,7 +84,7 @@ test.describe('cli codegen', () => {
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).nth(1).click();`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.GetByRole(AriaRole.Button, new() { NameString = "Submit" }).Nth(1).ClickAsync();`);
+        await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).Nth(1).ClickAsync();`);
 
     expect(message.text()).toBe('click2');
   });
@@ -226,7 +226,7 @@ test.describe('cli codegen', () => {
     await page.frame_locator("#frame1").get_by_role("button", name="Submit").click()`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.FrameLocator("#frame1").GetByRole(AriaRole.Button, new() { NameString = "Submit" }).ClickAsync();`);
+        await page.FrameLocator("#frame1").GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
   });
 
   test('should generate getByTestId', async ({ page, openRecorder }) => {

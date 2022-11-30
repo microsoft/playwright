@@ -387,7 +387,7 @@ export class CSharpLocatorFactory implements LocatorFactory {
         if (isRegExp(options.name)) {
           attrs.push(`NameRegex = ${this.regexToString(options.name)}`);
         } else if (typeof options.name === 'string') {
-          attrs.push(`NameString = ${this.quote(options.name)}`);
+          attrs.push(`Name = ${this.quote(options.name)}`);
           if (options.exact)
             attrs.push(`Exact = true`);
         }
@@ -432,7 +432,7 @@ export class CSharpLocatorFactory implements LocatorFactory {
   private toHasText(body: string | RegExp) {
     if (isRegExp(body))
       return `HasTextRegex = ${this.regexToString(body)}`;
-    return `HasTextString = ${this.quote(body)}`;
+    return `HasText = ${this.quote(body)}`;
   }
 
   private quote(text: string) {
