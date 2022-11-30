@@ -258,7 +258,7 @@ test.describe('cli codegen', () => {
     expect.soft(sources.get('C#').text).toContain(`
         var download1 = await page.RunAndWaitForDownloadAsync(async () =>
         {
-            await page.GetByRole(AriaRole.Link, new() { NameString = "Download" }).ClickAsync();
+            await page.GetByRole(AriaRole.Link, new() { Name = "Download" }).ClickAsync();
         });`);
   });
 
@@ -306,7 +306,7 @@ test.describe('cli codegen', () => {
             page.Dialog -= page_Dialog1_EventHandler;
         }
         page.Dialog += page_Dialog1_EventHandler;
-        await page.GetByRole(AriaRole.Button, new() { NameString = "click me" }).ClickAsync();`);
+        await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();`);
 
   });
 
