@@ -22,7 +22,7 @@ public class TestLocator {
   @Test
   void statusBecomesSubmitted() {
     ...
-    page.getByRole("button").click();
+    page.getByRole(AriaRole.BUTTON).click();
     assertThat(page.locator(".status")).hasText("Submitted");
   }
 }
@@ -61,7 +61,7 @@ public class ExampleTests : PageTest
     public async Task StatusBecomesSubmitted()
     {
         // ..
-        await Page.GetByRole("button").ClickAsync();
+        await Page.GetByRole(AriaRole.Button).ClickAsync();
         await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
     }
 }
@@ -525,7 +525,7 @@ await expect(locator).toBeEditable();
 ```
 
 ```java
-assertThat(page.getByRole("textbox")).isEditable();
+assertThat(page.getByRole(AriaRole.TEXTBOX)).isEditable();
 ```
 
 ```python async
@@ -543,7 +543,7 @@ expect(locator).to_be_editable()
 ```
 
 ```csharp
-var locator = Page.GetByRole("textbox");
+var locator = Page.GetByRole(AriaRole.Textbox);
 await Expect(locator).ToBeEditableAsync();
 ```
 
@@ -662,7 +662,7 @@ await expect(locator).toBeFocused();
 ```
 
 ```java
-assertThat(page.getByRole("textbox")).isFocused();
+assertThat(page.getByRole(AriaRole.TEXTBOX)).isFocused();
 ```
 
 ```python async
@@ -680,7 +680,7 @@ expect(locator).to_be_focused()
 ```
 
 ```csharp
-var locator = Page.GetByRole("textbox");
+var locator = Page.GetByRole(AriaRole.Textbox);
 await Expect(locator).ToBeFocusedAsync();
 ```
 
@@ -1177,7 +1177,7 @@ await expect(locator).toHaveCSS('display', 'flex');
 ```
 
 ```java
-assertThat(page.getByRole("button")).hasCSS("display", "flex");
+assertThat(page.getByRole(AriaRole.BUTTON)).hasCSS("display", "flex");
 ```
 
 ```python async
@@ -1195,7 +1195,7 @@ expect(locator).to_have_css("display", "flex")
 ```
 
 ```csharp
-var locator = Page.GetByRole("button");
+var locator = Page.GetByRole(AriaRole.Button);
 await Expect(locator).ToHaveCSSAsync("display", "flex");
 ```
 
@@ -1232,7 +1232,7 @@ await expect(locator).toHaveId('lastname');
 ```
 
 ```java
-assertThat(page.getByRole("textbox")).hasId("lastname");
+assertThat(page.getByRole(AriaRole.TEXTBOX)).hasId("lastname");
 ```
 
 ```python async
@@ -1250,7 +1250,7 @@ expect(locator).to_have_id("lastname")
 ```
 
 ```csharp
-var locator = Page.GetByRole("textbox");
+var locator = Page.GetByRole(AriaRole.Textbox);
 await Expect(locator).ToHaveIdAsync("lastname");
 ```
 
