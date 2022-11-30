@@ -153,7 +153,7 @@ You can opt into the step rendering via passing the following config option:
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [['list', { printSteps: true }],
+  reporter: [['list', { printSteps: true }]],
 };
 
 module.exports = config;
@@ -164,7 +164,7 @@ module.exports = config;
 import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  reporter: [['list', { printSteps: true }],
+  reporter: [['list', { printSteps: true }]],
 };
 export default config;
 ```
