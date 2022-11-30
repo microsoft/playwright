@@ -302,7 +302,7 @@ type MakeMatchers<R, T> = BaseMatchers<R, T> & {
     * If the promise is fulfilled the assertion fails.
     */
     rejects: MakeMatchers<Promise<R>, Awaited<T>>;
-  } & ScreenshotAssertions &
+  } & SnapshotAssertions &
   ExtraMatchers<T, Page, PageAssertions> &
   ExtraMatchers<T, Locator, LocatorAssertions> &
   ExtraMatchers<T, APIResponse, APIResponseAssertions>;
