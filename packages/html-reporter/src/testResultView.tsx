@@ -96,10 +96,6 @@ export const TestResultView: React.FC<{
     {!!result.errors.length && <AutoChip header='Errors'>
       {result.errors.map((error, index) => <ErrorMessage key={'test-result-error-message-' + index} error={error}></ErrorMessage>)}
     </AutoChip>}
-    {!!result.steps.length && <AutoChip header='Test Steps'>
-      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
-    </AutoChip>}
-
     {diffs.map((diff, index) =>
       <AutoChip key={`diff-${index}`} header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
         <ImageDiffView key='image-diff' imageDiff={diff}></ImageDiffView>

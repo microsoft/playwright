@@ -41,7 +41,7 @@
 }
 
 .test-result-error-message {
-  white-space: pre-wrap;
+  white-space: pre;
   font-family: monospace;
   overflow: auto;
   flex: none;
