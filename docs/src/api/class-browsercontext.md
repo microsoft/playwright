@@ -106,30 +106,29 @@ popup with `window.open('http://example.com')`, this event will fire when the ne
 done and its response has started loading in the popup.
 
 ```js
-const [newPage] = await Promise.all([
-  context.waitForEvent('page'),
-  page.locator('a[target=_blank]').click(),
-]);
+const newPagePromise = context.waitForEvent('page');
+await page.getByText('open new page').click();
+const newPage = await newPagePromise;
 console.log(await newPage.evaluate('location.href'));
 ```
 
 ```java
 Page newPage = context.waitForPage(() -> {
-  page.locator("a[target=_blank]").click();
+  page.getByText("open new page").click();
 });
 System.out.println(newPage.evaluate("location.href"));
 ```
 
 ```python async
 async with context.expect_page() as page_info:
-    await page.locator("a[target=_blank]").click(),
+    await page.get_by_text("open new page").click(),
 page = await page_info.value
 print(await page.evaluate("location.href"))
 ```
 
 ```python sync
 with context.expect_page() as page_info:
-    page.locator("a[target=_blank]").click(),
+    page.get_by_text("open new page").click(),
 page = page_info.value
 print(page.evaluate("location.href"))
 ```
@@ -137,7 +136,7 @@ print(page.evaluate("location.href"))
 ```csharp
 var popup = await context.RunAndWaitForPageAsync(async =>
 {
-    await page.Locator("a").ClickAsync();
+    await page.GetByText("open new page").ClickAsync();
 });
 Console.WriteLine(await popup.EvaluateAsync<string>("location.href"));
 ```
@@ -1311,14 +1310,13 @@ value. Will throw an error if the context closes before the event is fired. Retu
 **Usage**
 
 ```js
-const [page, _] = await Promise.all([
-  context.waitForEvent('page'),
-  page.getByRole('button').click()
-]);
+const pagePromise = context.waitForEvent('page');
+await page.getByRole('button').click();
+const page = await pagePromise;
 ```
 
 ```java
-Page newPage = context.waitForPage(() -> page.getByRole("button").click());
+Page newPage = context.waitForPage(() -> page.getByRole(AriaRole.BUTTON).click());
 ```
 
 ```python async
@@ -1336,7 +1334,7 @@ page = event_info.value
 ```csharp
 var page = await context.RunAndWaitForPageAsync(async () =>
 {
-    await page.GetByRole("button").ClickAsync();
+    await page.GetByRole(AriaRole.Button).ClickAsync();
 });
 ```
 

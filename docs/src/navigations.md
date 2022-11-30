@@ -299,22 +299,17 @@ recommended to explicitly call [`method: Page.waitForNavigation`]. For example:
 * Page waits for network requests before navigation
 
 ```js
-// Note that Promise.all prevents a race condition
-// between clicking and waiting for a navigation.
-await Promise.all([
-  // Waits for the next navigation.
-  // It is important to call waitForNavigation before click to set up waiting.
-  page.waitForNavigation(),
-  // Triggers a navigation after a timeout.
-  page.locator('div.delayed-navigation').click(),
-]);
+// Start waiting for navigation before clicking. Note no await.
+const navigationPromise = page.waitForNavigation();
+await page.getByText('Navigate after timeout').click();
+await navigationPromise;
 ```
 
 ```java
 // Using waitForNavigation with a callback prevents a race condition
 // between clicking and waiting for a navigation.
 page.waitForNavigation(() -> { // Waits for the next navigation
-  page.locator("div.delayed-navigation").click(); // Triggers a navigation after a timeout
+  page.getByText("Navigate after timeout").click(); // Triggers a navigation after a timeout
 });
 ```
 
@@ -323,7 +318,7 @@ page.waitForNavigation(() -> { // Waits for the next navigation
 # prevents a race condition between clicking and waiting for a navigation.
 async with page.expect_navigation():
     # Triggers a navigation after a timeout
-    await page.locator("div.delayed-navigation").click()
+    await page.get_by_text("Navigate after timeout").click()
 ```
 
 ```python sync
@@ -331,7 +326,7 @@ async with page.expect_navigation():
 # prevents a race condition between clicking and waiting for a navigation.
 with page.expect_navigation():
     # Triggers a navigation after a timeout
-    page.locator("a").click()
+    page.get_by_text("Navigate after timeout").click()
 ```
 
 ```csharp
@@ -340,7 +335,7 @@ with page.expect_navigation():
 await page.RunAndWaitForNavigationAsync(async () =>
 {
     // Triggers a navigation after a timeout
-    await page.Locator("div.delayed-navigation").ClickAsync();
+    await page.GetByText("Navigate after timeout").ClickAsync();
 });
 ```
 
@@ -352,14 +347,11 @@ Clicking an element could trigger multiple navigations. In these cases, it is re
 * Multiple pushes to history state
 
 ```js
-// Note that Promise.all prevents a race condition
-// between clicking and waiting for a navigation.
-await Promise.all([
-  // It is important to call waitForNavigation before click to set up waiting.
-  page.waitForNavigation({ url: '**/login' }),
-  // Triggers a navigation with a script redirect.
-  page.getByText('Click me').click(),
-]);
+// Start waiting for navigation before clicking. Note no await.
+const navigationPromise = page.waitForNavigation({ url: '**/login' });
+// This action triggers the navigation with a script redirect.
+await page.getByText('Click me').click();
+await navigationPromise;
 ```
 
 ```java
@@ -404,34 +396,31 @@ await page.RunAndWaitForNavigationAsync(async () =>
 When popup is opened, explicitly calling [`method: Page.waitForLoadState`] ensures that popup is loaded to the desired state.
 
 ```js
-// Note that Promise.all prevents a race condition
-// between clicking and waiting for the popup.
-const [ popup ] = await Promise.all([
-  // It is important to call waitForEvent before click to set up waiting.
-  page.waitForEvent('popup'),
-  // Opens popup.
-  page.locator('a[target="_blank"]').click(),
-]);
+// Start waiting for popup before clicking. Note no await.
+const popupPromise = page.waitForEvent('popup');
+await page.getByText('Open popup').click();
+const popup = await popupPromise;
+// Wait for the popup to load.
 await popup.waitForLoadState('load');
 ```
 
 ```java
 Page popup = page.waitForPopup(() -> {
-  page.locator("a[target='_blank']").click(); // Opens popup
+  page.getByText("Open popup").click(); // Opens popup
 });
 popup.waitForLoadState(LoadState.LOAD);
 ```
 
 ```python async
 async with page.expect_popup() as popup_info:
-    await page.locator('a[target="_blank"]').click() # Opens popup
+    await page.get_by_text("Open popup").click() # Opens popup
 popup = await popup_info.value
 await popup.wait_for_load_state("load")
 ```
 
 ```python sync
 with page.expect_popup() as popup_info:
-    page.locator('a[target="_blank"]').click() # Opens popup
+    page.get_by_text("Open popup").click() # Opens popup
 popup = popup_info.value
 popup.wait_for_load_state("load")
 ```
@@ -439,7 +428,7 @@ popup.wait_for_load_state("load")
 ```csharp
 var popup = await page.RunAndWaitForPopupAsync(async () =>
 {
-    await page.Locator("a[target='_blank']").ClickAsync(); // Opens popup
+    await page.GetByText("Open popup").ClickAsync(); // Opens popup
 });
 popup.WaitForLoadStateAsync(LoadState.Load);
 ```

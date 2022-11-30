@@ -606,33 +606,30 @@ If you don't have input element in hand (it is created dynamically), you can han
 or use a corresponding waiting method upon your action:
 
 ```js
-// Note that Promise.all prevents a race condition
-// between clicking and waiting for the file chooser.
-const [fileChooser] = await Promise.all([
-  // It is important to call waitForEvent before click to set up waiting.
-  page.waitForEvent('filechooser'),
-  page.locator('upload').click(),
-]);
+// Start waiting for file chooser before clicking. Note no await.
+const fileChooserPromise = page.waitForEvent('filechooser');
+await page.getByLabel('Upload file').click();
+const fileChooser = await fileChooserPromise;
 await fileChooser.setFiles('myfile.pdf');
 ```
 
 ```java
 FileChooser fileChooser = page.waitForFileChooser(() -> {
-  page.locator("upload").click();
+  page.getByLabel("Upload file").click();
 });
 fileChooser.setFiles(Paths.get("myfile.pdf"));
 ```
 
 ```python async
 async with page.expect_file_chooser() as fc_info:
-    await page.locator("upload").click()
+    await page.get_by_label("Upload file").click()
 file_chooser = await fc_info.value
 await file_chooser.set_files("myfile.pdf")
 ```
 
 ```python sync
 with page.expect_file_chooser() as fc_info:
-    page.locator("upload").click()
+    page.get_by_label("Upload file").click()
 file_chooser = fc_info.value
 file_chooser.set_files("myfile.pdf")
 ```
@@ -640,7 +637,7 @@ file_chooser.set_files("myfile.pdf")
 ```csharp
 var fileChooser = page.RunAndWaitForFileChooserAsync(async () =>
 {
-    await page.Locator("upload").ClickAsync();
+    await page.GetByLabel("Upload file").ClickAsync();
 });
 await fileChooser.SetFilesAsync("myfile.pdf");
 ```

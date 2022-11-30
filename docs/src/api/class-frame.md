@@ -1928,15 +1928,15 @@ This method waits for the frame to navigate to a new URL. It is useful for when 
 the frame to navigate. Consider this example:
 
 ```js
-const [response] = await Promise.all([
-  frame.waitForNavigation(), // The promise resolves after navigation has finished
-  frame.click('a.delayed-navigation'), // Clicking the link will indirectly cause a navigation
-]);
+// Start waiting for navigation before clicking. Note no await.
+const navigationPromise = page.waitForNavigation();
+await page.getByText('Navigate after timeout').click();
+await navigationPromise;
 ```
 
 ```java
 // The method returns after navigation has finished
-Response response = frame.waitForNavigation(() -> {
+frame.waitForNavigation(() -> {
   // Clicking the link will indirectly cause a navigation
   frame.click("a.delayed-navigation");
 });

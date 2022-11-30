@@ -141,11 +141,10 @@ The `page` event on browser contexts can be used to get new pages that are creat
 handle new pages opened by `target="_blank"` links.
 
 ```js
-// Get page after a specific action (e.g. clicking a link)
-const [newPage] = await Promise.all([
-  context.waitForEvent('page'),
-  page.locator('a[target="_blank"]').click() // Opens a new tab
-])
+// Start waiting for new page before clicking. Note no await.
+const pagePromise = context.waitForEvent('page');
+await page.getByText('open new tab').click();
+const newPage = await pagePromise;
 await newPage.waitForLoadState();
 console.log(await newPage.title());
 ```
@@ -153,7 +152,7 @@ console.log(await newPage.title());
 ```java
 // Get page after a specific action (e.g. clicking a link)
 Page newPage = context.waitForPage(() -> {
-  page.locator("a[target='_blank']").click(); // Opens a new tab
+  page.getByText("open new tab").click(); // Opens a new tab
 });
 newPage.waitForLoadState();
 System.out.println(newPage.title());
@@ -162,7 +161,7 @@ System.out.println(newPage.title());
 ```python async
 # Get page after a specific action (e.g. clicking a link)
 async with context.expect_page() as new_page_info:
-    await page.locator('a[target="_blank"]').click() # Opens a new tab
+    await page.get_by_text("open new tab").click() # Opens a new tab
 new_page = await new_page_info.value
 
 await new_page.wait_for_load_state()
@@ -172,7 +171,7 @@ print(await new_page.title())
 ```python sync
 # Get page after a specific action (e.g. clicking a link)
 with context.expect_page() as new_page_info:
-    page.locator('a[target="_blank"]').click() # Opens a new tab
+    page.get_by_text("open new tab").click() # Opens a new tab
 new_page = new_page_info.value
 
 new_page.wait_for_load_state()
@@ -183,7 +182,7 @@ print(new_page.title())
 // Get page after a specific action (e.g. clicking a link)
 var newPage = await context.RunAndWaitForPageAsync(async () =>
 {
-    await page.Locator("a[target='_blank']").ClickAsync();
+    await page.GetByText("open new tab").ClickAsync();
 });
 await newPage.WaitForLoadStateAsync();
 Console.WriteLine(await newPage.TitleAsync());
@@ -241,14 +240,11 @@ If the page opens a pop-up (e.g. pages opened by `target="_blank"` links), you c
 This event is emitted in addition to the `browserContext.on('page')` event, but only for popups relevant to this page.
 
 ```js
-// Note that Promise.all prevents a race condition
-// between clicking and waiting for the popup.
-const [popup] = await Promise.all([
-  // It is important to call waitForEvent before click to set up waiting.
-  page.waitForEvent('popup'),
-  // Opens popup.
-  page.locator('#open').click(),
-]);
+// Start waiting for popup before clicking. Note no await.
+const popupPromise = page.waitForEvent('popup');
+await page.getByText('open the popup').click();
+const popup = await popupPromise;
+// Wait for the popup to load.
 await popup.waitForLoadState();
 console.log(await popup.title());
 ```
@@ -256,7 +252,7 @@ console.log(await popup.title());
 ```java
 // Get popup after a specific action (e.g., click)
 Page popup = page.waitForPopup(() -> {
-  page.locator("#open").click();
+  page.getByText("open the popup").click();
 });
 popup.waitForLoadState();
 System.out.println(popup.title());
@@ -265,7 +261,7 @@ System.out.println(popup.title());
 ```python async
 # Get popup after a specific action (e.g., click)
 async with page.expect_popup() as popup_info:
-    await page.locator("#open").click()
+    await page.get_by_text("open the popup").click()
 popup = await popup_info.value
 
 await popup.wait_for_load_state()
@@ -275,7 +271,7 @@ print(await popup.title())
 ```python sync
 # Get popup after a specific action (e.g., click)
 with page.expect_popup() as popup_info:
-    page.locator("#open").click()
+    page.get_by_text("open the popup").click()
 popup = popup_info.value
 
 popup.wait_for_load_state()
@@ -284,12 +280,12 @@ print(popup.title())
 
 ```csharp
 // Get popup after a specific action (e.g., click)
-var newPage = await page.RunAndWaitForPopupAsync(async () =>
+var popup = await page.RunAndWaitForPopupAsync(async () =>
 {
-    await page.Locator("#open").ClickAsync();
+    await page.GetByText("open the popup").ClickAsync();
 });
-await newPage.WaitForLoadStateAsync();
-Console.WriteLine(await newPage.TitleAsync());
+await popup.WaitForLoadStateAsync();
+Console.WriteLine(await popup.TitleAsync());
 ```
 
 If the action that triggers the popup is unknown, the following pattern can be used.
@@ -298,7 +294,7 @@ If the action that triggers the popup is unknown, the following pattern can be u
 // Get all popups when they open
 page.on('popup', async popup => {
   await popup.waitForLoadState();
-  await popup.title();
+  console.log(await popup.title());
 })
 ```
 
