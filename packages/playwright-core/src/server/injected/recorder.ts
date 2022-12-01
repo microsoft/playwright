@@ -283,21 +283,20 @@ class Recorder {
     if (this._mode !== 'recording')
       return true;
     const target = this._deepEventTarget(event);
-    if (['INPUT', 'TEXTAREA'].includes(target.nodeName)) {
-      const inputElement = target as HTMLInputElement;
-      const elementType = (inputElement.type || '').toLowerCase();
-      if (['checkbox', 'radio'].includes(elementType)) {
-        // Checkbox is handled in click, we can't let input trigger on checkbox - that would mean we dispatched click events while recording.
-        return;
-      }
 
-      if (elementType === 'file') {
-        globalThis.__pw_recorderRecordAction({
-          name: 'setInputFiles',
-          selector: this._activeModel!.selector,
-          signals: [],
-          files: [...(inputElement.files || [])].map(file => file.name),
-        });
+    if (target.nodeName === 'INPUT' && (target as HTMLInputElement).type.toLowerCase() === 'file') {
+      globalThis.__pw_recorderRecordAction({
+        name: 'setInputFiles',
+        selector: this._activeModel!.selector,
+        signals: [],
+        files: [...((target as HTMLInputElement).files || [])].map(file => file.name),
+      });
+      return;
+    }
+
+    if (['INPUT', 'TEXTAREA'].includes(target.nodeName) || target.isContentEditable) {
+      if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes((target as HTMLInputElement).type.toLowerCase())) {
+        // Checkbox is handled in click, we can't let input trigger on checkbox - that would mean we dispatched click events while recording.
         return;
       }
 
@@ -308,7 +307,7 @@ class Recorder {
         name: 'fill',
         selector: this._activeModel!.selector,
         signals: [],
-        text: inputElement.value,
+        text: target.isContentEditable ? target.innerText : (target as HTMLInputElement).value,
       });
     }
 

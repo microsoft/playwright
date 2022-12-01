@@ -159,6 +159,15 @@ it('should fill contenteditable', async ({ page, server }) => {
   expect(await page.$eval('div[contenteditable]', div => div.textContent)).toBe('some value');
 });
 
+it('should fill contenteditable with new lines', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'firefox', 'Firefox does not handle new lines in contenteditable');
+
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<div contenteditable="true"></div>`);
+  await page.locator('div[contenteditable]').fill('John\nDoe');
+  expect(await page.locator('div[contenteditable]').innerText()).toBe('John\nDoe');
+});
+
 it('should fill elements with existing value and selection', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
 
