@@ -92,12 +92,7 @@ export class Firefox extends BrowserType {
 
 // Prefs for quick fixes that didn't make it to the build.
 // Should all be moved to `playwright.cfg`.
-const kBandaidFirefoxUserPrefs = {
-  // Avoid stalling on shutdown, after "xpcom-will-shutdown" phase.
-  // This at least happens when shutting down soon after launching.
-  // See AppShutdown.cpp for more details on shutdown phases.
-  'toolkit.shutdown.fastShutdownStage': 3,
-};
+const kBandaidFirefoxUserPrefs = {};
 
 const kDisableFissionFirefoxUserPrefs = {
   'browser.tabs.remote.useCrossOriginEmbedderPolicy': false,
