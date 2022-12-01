@@ -1,5 +1,5 @@
 ---
-id: mocj
+id: mock
 title: "Mock APIs"
 ---
 
