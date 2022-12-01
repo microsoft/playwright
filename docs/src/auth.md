@@ -200,7 +200,7 @@ test('sign in', async ({ page, context }) => {
 
 ```js tab=js-ts
 // github-login.setup.ts
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test('sign in', async ({ page, context }) => {
   await page.goto('https://github.com/login');
