@@ -1,6 +1,6 @@
 ---
-id: mock
-title: "Mock APIs"
+id: mock-browser-apis
+title: "Mock Browser APIs"
 ---
 
 Playwright provides native support for most of the browser features. However, there are some experimental APIs
