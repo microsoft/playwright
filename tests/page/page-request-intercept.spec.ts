@@ -20,20 +20,18 @@ import { expect, test as base } from './pageTest';
 import fs from 'fs';
 import path from 'path';
 
-const it = base.extend<{
-  // We access test servers at 10.0.2.2 from inside the browser on Android,
-  // which is actually forwarded to the desktop localhost.
-  // To use request such an url with apiRequestContext on the desktop, we need to change it back to localhost.
-  rewriteAndroidLoopbackURL(url: string): string
-      }>({
-        rewriteAndroidLoopbackURL: ({ isAndroid }, use) => use(givenURL => {
-          if (!isAndroid)
-            return givenURL;
-          const requestURL = new URL(givenURL);
-          requestURL.hostname = 'localhost';
-          return requestURL.toString();
-        })
-      });
+// We access test servers at 10.0.2.2 from inside the browser on Android,
+// which is actually forwarded to the desktop localhost.
+// To use request such an url with apiRequestContext on the desktop, we need to change it back to localhost.
+const it = base.extend<{ rewriteAndroidLoopbackURL(url: string): string }>({
+  rewriteAndroidLoopbackURL: ({ isAndroid }, use) => use(givenURL => {
+    if (!isAndroid)
+      return givenURL;
+    const requestURL = new URL(givenURL);
+    requestURL.hostname = 'localhost';
+    return requestURL.toString();
+  })
+});
 
 it('should fulfill intercepted response', async ({ page, server, isElectron, isAndroid }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
@@ -194,4 +192,43 @@ it('should intercept multipart/form-data request body', async ({ page, server, a
   ]);
   expect(request.method()).toBe('POST');
   expect(request.postData()).toContain(fs.readFileSync(filePath, 'utf8'));
+});
+
+it('should fulfill intercepted response using alias', async ({ page, server, isElectron, isAndroid }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
+  await page.route('**/*', async route => {
+    const response = await route.fetch();
+    await route.fulfill({ response });
+  });
+  const response = await page.goto(server.PREFIX + '/empty.html');
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('text/html');
+});
+
+it('should intercept with url override', async ({ page, server, isElectron, isAndroid }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
+  await page.route('**/*.html', async route => {
+    const response = await route.fetch({ url: server.PREFIX + '/one-style.html' });
+    await route.fulfill({ response });
+  });
+  const response = await page.goto(server.PREFIX + '/empty.html');
+  expect(response.status()).toBe(200);
+  expect((await response.body()).toString()).toContain('one-style.css');
+});
+
+it('should intercept with post data override', async ({ page, server, isElectron, isAndroid }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
+  const requestPromise = server.waitForRequest('/empty.html');
+  await page.route('**/*.html', async route => {
+    const response = await route.fetch({
+      data: { 'foo': 'bar' },
+    });
+    await route.fulfill({ response });
+  });
+  await page.goto(server.PREFIX + '/empty.html');
+  const request = await requestPromise;
+  expect((await request.postBody).toString()).toBe(JSON.stringify({ 'foo': 'bar' }));
 });

@@ -307,7 +307,14 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     this._reportHandled(true);
   }
 
-  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fetch(options: FallbackOverrides = {}) {
+    return await this._wrapApiCall(async () => {
+      const context = this.request()._context();
+      return context.request._innerFetch({ request: this.request(), data: options.postData, ...options });
+    });
+  }
+
+  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, json?: any, path?: string } = {}) {
     this._checkNotHandled();
     await this._wrapApiCall(async () => {
       await this._innerFulfill(options);
@@ -315,9 +322,14 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     });
   }
 
-  private async _innerFulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}): Promise<void> {
+  private async _innerFulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, json?: any, path?: string } = {}): Promise<void> {
     let fetchResponseUid;
     let { status: statusOption, headers: headersOption, body } = options;
+
+    if (options.json !== undefined) {
+      assert(options.body === undefined, 'Can specify either body or json parameters');
+      body = JSON.stringify(options.json);
+    }
 
     if (options.response instanceof APIResponse) {
       statusOption ??= options.response.status();
@@ -351,6 +363,8 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       headers[header.toLowerCase()] = String(headersOption![header]);
     if (options.contentType)
       headers['content-type'] = String(options.contentType);
+    else if (options.json)
+      headers['content-type'] = 'application/json';
     else if (options.path)
       headers['content-type'] = mime.getType(options.path) || 'application/octet-stream';
     if (length && !('content-length' in headers))

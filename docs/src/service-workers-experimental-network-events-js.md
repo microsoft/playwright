@@ -375,11 +375,12 @@ context.route('**', handle)
 await context.RouteAsync("**", async route => {
   if (route.request().serviceWorker() != null) {
     // NB: calling route.request.frame here would THROW
-    await route.FulfillAsync(
-      contentType: "text/plain",
-      status: 200,
-      body: "from sw"
-    );
+    await route.FulfillAsync(new ()
+    {
+      ContentType = "text/plain",
+      Status = 200,
+      Body = "from sw"
+    });
   } else {
     await route.Continue()Async();
   }

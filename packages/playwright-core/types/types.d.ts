@@ -17021,12 +17021,12 @@ export interface Route {
     headers?: { [key: string]: string; };
 
     /**
-     * If set changes the request method (e.g. GET or POST)
+     * If set changes the request method (e.g. GET or POST).
      */
     method?: string;
 
     /**
-     * If set changes the post data of request
+     * If set changes the post data of request.
      */
     postData?: string|Buffer;
 
@@ -17108,12 +17108,12 @@ export interface Route {
     headers?: { [key: string]: string; };
 
     /**
-     * If set changes the request method (e.g. GET or POST)
+     * If set changes the request method (e.g. GET or POST).
      */
     method?: string;
 
     /**
-     * If set changes the post data of request
+     * If set changes the post data of request.
      */
     postData?: string|Buffer;
 
@@ -17123,6 +17123,47 @@ export interface Route {
      */
     url?: string;
   }): Promise<void>;
+
+  /**
+   * Performs the request and fetches result without fulfilling it, so that the response could be modified and then
+   * fulfilled.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.route('https://dog.ceo/api/breeds/list/all', async route => {
+   *   const response = await route.fetch();
+   *   const json = await response.json();
+   *   json.message['big_red_dog'] = [];
+   *   await route.fulfill({ response, json });
+   * });
+   * ```
+   *
+   * @param options
+   */
+  fetch(options?: {
+    /**
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
+     * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
+     * header will be set to `application/octet-stream` if not explicitly set.
+     */
+    data?: string|Buffer|Serializable;
+
+    /**
+     * If set changes the request HTTP headers. Header values will be converted to a string.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * If set changes the request method (e.g. GET or POST).
+     */
+    method?: string;
+
+    /**
+     * If set changes the request URL. New URL must have same protocol as original one.
+     */
+    url?: string;
+  }): Promise<APIResponse>;
 
   /**
    * Fulfills route's request with given response.
@@ -17164,6 +17205,23 @@ export interface Route {
      * Response headers. Header values will be converted to a string.
      */
     headers?: { [key: string]: string; };
+
+    /**
+     * JSON response. This method will set the content type to `application/json` if not set.
+     *
+     * **Usage**
+     *
+     * ```js
+     * await page.route('https://dog.ceo/api/breeds/list/all', async route => {
+     *   const json = {
+     *     message: { 'test_breed': [] }
+     *   };
+     *   await route.fulfill({ json });
+     * });
+     * ```
+     *
+     */
+    json?: Serializable;
 
     /**
      * File path to respond with. The content type will be inferred from file extension. If `path` is a relative path,
