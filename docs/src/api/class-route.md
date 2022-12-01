@@ -430,7 +430,8 @@ await page.route('https://dog.ceo/api/breeds/list/all', async route => {
 page.route("https://dog.ceo/api/breeds/list/all", route -> {
   APIResponse response = route.fetch();
   JsonObject json = new Gson().fromJson(response.text(), JsonObject.class);
-  json.set("big_red_dog", new JsonArray());
+  JsonObject message = itemObj.get("json").getAsJsonObject();
+  message.set("big_red_dog", new JsonArray());
   route.fulfill(new Route.FulfillOptions()
     .setResponse(response)
     .setBody(json.toString()));
@@ -441,7 +442,7 @@ page.route("https://dog.ceo/api/breeds/list/all", route -> {
 async def handle(route):
     response = await route.fulfill()
     json = await response.json()
-    json["big_red_dog"] = []
+    json["message"]["big_red_dog"] = []
     await route.fulfill(response=response, json=json)
 
 await page.route("https://dog.ceo/api/breeds/list/all", handle)
@@ -451,7 +452,7 @@ await page.route("https://dog.ceo/api/breeds/list/all", handle)
 def handle(route):
     response = route.fulfill()
     json = response.json()
-    json["big_red_dog"] = []
+    json["message"]["big_red_dog"] = []
     route.fulfill(response=response, json=json)
 
 page.route("https://dog.ceo/api/breeds/list/all", handle)
@@ -462,7 +463,7 @@ await page.RouteAsync("https://dog.ceo/api/breeds/list/all", async route =>
 {
     var response = await route.FetchAsync();
     dynamic json = await response.JsonAsync();
-    json.big_red_dog = new string[] {};
+    json.message.big_red_dog = new string[] {};
     await route.FulfillAsync(new() { Response = response, Json = json });
 });
 ```
