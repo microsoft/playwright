@@ -1,5 +1,5 @@
 {
-  "name": "test",
+  "name": "outlook-login-example",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -7,7 +7,8 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "@playwright/test": "next"
+  "devDependencies": {
+    "@playwright/test": "next",
+    "dotenv": "latest"
   }
 }

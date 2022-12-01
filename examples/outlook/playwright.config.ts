@@ -2,14 +2,17 @@ import type { PlaywrightTestConfig } from '@playwright/test';
 import { devices } from '@playwright/test';
 
 /**
- * Read environment variables from file.
+ * Read environment variables OUTLOOK_USER and OUTLOOK_PASSWORD from file.
  * https://github.com/motdotla/dotenv
  */
-// require('dotenv').config();
+require('dotenv').config();
 
 const config: PlaywrightTestConfig = {
   testDir: './tests',
   reporter: 'html',
+  use: {
+    baseURL: 'https://outlook.com'
+  },
 
   projects: [
     {
