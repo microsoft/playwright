@@ -571,7 +571,7 @@ Below is an example that [creates fixtures](./test-fixtures.md#creating-a-fixtur
 
 ```js tab=js-ts
 // fixtures.ts
-import { test as base, Page, Browser, Locator, Storage } from '@playwright/test';
+import { test as base, Page, Browser, Locator } from '@playwright/test';
 export { expect } from '@playwright/test';
 
 // Page Object Model for the "admin" page.
@@ -584,8 +584,8 @@ class AdminPage {
     this.page = page;
   }
 
-  static async create(browser: Browser, storage: Storage) {
-    const context = await browser.newContext({ storageState: await storage.get('admin') });
+  static async create(browser: Browser) {
+    const context = await browser.newContext({ storageState: await test.info().storage().get('admin') });
     const page = await context.newPage();
     return new AdminPage(page);
   }
@@ -605,8 +605,8 @@ class UserPage {
     this.greeting = page.locator('#greeting');
   }
 
-  static async create(browser: Browser, storage: Storage) {
-    const context = await browser.newContext({ storageState: await storage.get('user') });
+  static async create(browser: Browser) {
+    const context = await browser.newContext({ storageState: await test.info().storage().get('user') });
     const page = await context.newPage();
     return new UserPage(page);
   }
@@ -622,13 +622,12 @@ type MyFixtures = {
 // This new "test" can be used in multiple test files, and each of them will get the fixtures.
 export const test = base.extend<MyFixtures>({
   adminPage: async ({ browser }, use) => {
-    await use(await AdminPage.create(browser, base.info().storage()));
+    await use(await AdminPage.create(browser));
   },
   userPage: async ({ browser }, use) => {
-    await use(await UserPage.create(browser, base.info().storage()));
+    await use(await UserPage.create(browser));
   },
 });
-
 
 // example.spec.ts
 // Import test with our new fixtures.
@@ -654,8 +653,8 @@ class AdminPage {
     this.page = page;
   }
 
-  static async create(browser, storage) {
-    const context = await browser.newContext({ storageState: await storage.get('admin') });
+  static async create(browser) {
+    const context = await browser.newContext({ storageState: await test.info().storage().get('admin') });
     const page = await context.newPage();
     return new AdminPage(page);
   }
@@ -671,8 +670,8 @@ class UserPage {
     this.greeting = page.locator('#greeting');
   }
 
-  static async create(browser, storage) {
-    const context = await browser.newContext({ storageState: await storage.get('user') });
+  static async create(browser) {
+    const context = await browser.newContext({ storageState: await test.info().storage().get('user') });
     const page = await context.newPage();
     return new UserPage(page);
   }
@@ -682,10 +681,10 @@ class UserPage {
 // This new "test" can be used in multiple test files, and each of them will get the fixtures.
 exports.test = base.extend({
   adminPage: async ({ browser }, use) => {
-    await use(await AdminPage.create(browser, base.info().storage()));
+    await use(await AdminPage.create(browser));
   },
   userPage: async ({ browser }, use) => {
-    await use(await UserPage.create(browser, base.info().storage()));
+    await use(await UserPage.create(browser));
   },
 });
 exports.expect = base.expect;
