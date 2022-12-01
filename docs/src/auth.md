@@ -278,7 +278,7 @@ test('test', async ({ page }) => {
 });
 ```
 
-### Committing storage state int the repository
+### Reusing signed in state between test runs
 * langs: js
 
 When you set an entry on [`method: TestInfo.storage`] Playwright will store it in a separate file under `.playwright-storage/`. Playwright does not delete those files automatically. You can leverage this fact to persist storage state between test runs and only sign in if the entry is not in the storage yet.
