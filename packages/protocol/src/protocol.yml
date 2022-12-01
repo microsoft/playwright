@@ -476,6 +476,9 @@ ContextOptions:
       literals:
       - allow
       - block
+    browserArgs:
+      type: array?
+      items: string
 
 LocalUtils:
   type: interface

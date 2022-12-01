@@ -264,12 +264,14 @@ export class AndroidDevice extends SdkObject {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
     const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright-' + createGuid());
+    const additionalBrowserArgs = (options && options.browserArgs) ? options.browserArgs : [];
     const commandLine = [
       '_',
       '--disable-fre',
       '--no-default-browser-check',
       `--remote-debugging-socket-name=${socketName}`,
       ...chromiumSwitches,
+      ...additionalBrowserArgs
     ].join(' ');
     debug('pw:android')('Starting', pkg, commandLine);
     await this._backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);

@@ -928,6 +928,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  browserArgs?: string[],
   userDataDir: string,
   slowMo?: number,
 };
@@ -998,6 +999,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  browserArgs?: string[],
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -1093,6 +1095,7 @@ export type BrowserNewContextParams = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  browserArgs?: string[],
   proxy?: {
     server: string,
     bypass?: string,
@@ -1150,6 +1153,7 @@ export type BrowserNewContextOptions = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  browserArgs?: string[],
   proxy?: {
     server: string,
     bypass?: string,
@@ -1210,6 +1214,7 @@ export type BrowserNewContextForReuseParams = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  browserArgs?: string[],
   proxy?: {
     server: string,
     bypass?: string,
@@ -1267,6 +1272,7 @@ export type BrowserNewContextForReuseOptions = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  browserArgs?: string[],
   proxy?: {
     server: string,
     bypass?: string,
@@ -4321,6 +4327,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  browserArgs?: string[],
   pkg?: string,
   proxy?: {
     server: string,
@@ -4375,6 +4382,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
+  browserArgs?: string[],
   pkg?: string,
   proxy?: {
     server: string,
