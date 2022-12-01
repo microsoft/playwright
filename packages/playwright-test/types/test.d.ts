@@ -4011,7 +4011,7 @@ interface LocatorAssertions {
    * await expect(page.locator('ul')).toHaveText(['Text 1', 'Text 2', 'Text 3']);
    * ```
    *
-   * @param expected Expected substring or RegExp or a list of those.
+   * @param expected Expected string or RegExp or a list of those.
    * @param options
    */
   toHaveText(expected: string|RegExp|Array<string|RegExp>, options?: {
