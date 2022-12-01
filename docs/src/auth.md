@@ -283,7 +283,7 @@ test('test', async ({ page }) => {
 
 When you set an entry on [`method: TestInfo.storage`] Playwright will store it in a separate file under `.playwright-storage/`. Playwright does not delete those files automatically. You can leverage this fact to persist storage state between test runs and only sign in if the entry is not in the storage yet.
 
-If you can log in once and commit the storage state into the repository, you won't need the setup step test that signs in at all, just specify the name of the storage entry as above and it'll be picked up.
+If you can log in once and commit the storage state into the repository, you won't need the setup that signs in at all, just specify the name of the storage entry as above and it'll be picked up.
 
 However, you may need to periodically update the storage state entry if your app requires you to re-authenticate after some amount of time. For example, if your app prompts you to sign in every week even if you're on the same computer/browser, you'll need to update saved storage state at least this often.
 
