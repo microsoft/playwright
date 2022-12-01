@@ -612,8 +612,6 @@ export function validateBrowserContextOptions(options: channels.BrowserNewContex
       throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'http://per-context' } })"`);
     options.proxy = normalizeProxySettings(options.proxy);
   }
-  if (debugMode() === 'inspector')
-    options.bypassCSP = true;
   verifyGeolocation(options.geolocation);
 }
 
