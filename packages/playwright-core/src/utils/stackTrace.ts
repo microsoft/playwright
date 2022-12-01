@@ -31,7 +31,7 @@ const CORE_DIR = path.resolve(__dirname, '..', '..');
 const CORE_LIB = path.join(CORE_DIR, 'lib');
 const CORE_SRC = path.join(CORE_DIR, 'src');
 const TEST_DIR_SRC = path.resolve(CORE_DIR, '..', 'playwright-test');
-const TEST_DIR_LIB = path.resolve(CORE_DIR, '..', '@playwright', 'test');
+
 const COVERAGE_PATH = path.join(CORE_DIR, '..', '..', 'tests', 'config', 'coverage.js');
 
 export type StackFrame = {
@@ -125,7 +125,7 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
   parsedFrames = parsedFrames.filter((f, i) => {
     if (process.env.PWDEBUGIMPL)
       return true;
-    if (f.frame.file.startsWith(TEST_DIR_SRC) || f.frame.file.startsWith(TEST_DIR_LIB))
+    if (f.frame.file.startsWith(TEST_DIR_SRC))
       return false;
     if (f.frame.file.startsWith(CORE_DIR))
       return false;

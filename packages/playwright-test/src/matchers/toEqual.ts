@@ -15,10 +15,9 @@
  */
 
 import type { Expect } from '../types';
-import { expectTypes } from '../util';
+import { expectTypes, captureStackTrace } from '../util';
 import { callLogText, currentExpectTimeout } from '../util';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
-import { captureStackTrace } from 'playwright-core/lib/utils/stackTrace';
 import { matcherHint } from './matcherHint';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.

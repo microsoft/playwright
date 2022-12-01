@@ -30,8 +30,6 @@ import { captureStackTrace as coreCaptureStackTrace } from 'playwright-core/lib/
 export type { ParsedStackTrace };
 
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core'));
-const EXPECT_PATH = require.resolve('./expectBundle');
-const EXPECT_PATH_IMPL = require.resolve('./expectBundleImpl');
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 
 function filterStackTrace(e: Error) {
@@ -73,7 +71,7 @@ export function captureStackTrace(customApiName?: string): ParsedStackTrace {
   const frameTexts = [];
   for (let i = 0; i < stackTrace.frames.length; ++i) {
     const frame = stackTrace.frames[i];
-    if (frame.file === EXPECT_PATH || frame.file === EXPECT_PATH_IMPL)
+    if (frame.file.startsWith(PLAYWRIGHT_TEST_PATH))
       continue;
     frames.push(frame);
     frameTexts.push(stackTrace.frameTexts[i]);
