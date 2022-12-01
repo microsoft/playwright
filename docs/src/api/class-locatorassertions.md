@@ -360,7 +360,7 @@ The opposite of [`method: LocatorAssertions.toHaveText`].
 * since: v1.18
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
 
-Expected substring or RegExp or a list of those.
+Expected string or RegExp or a list of those.
 
 ### option: LocatorAssertions.NotToHaveText.ignoreCase
 * since: v1.23
@@ -1554,21 +1554,21 @@ await Expect(Page.Locator("ul")).ToHaveTextAsync(new string[] {"Text 1", "Text 2
 * langs: js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
-Expected substring or RegExp or a list of those.
+Expected string or RegExp or a list of those.
 
 ### param: LocatorAssertions.toHaveText.expected
 * since: v1.18
 * langs: python
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
 
-Expected substring or RegExp or a list of those.
+Expected string or RegExp or a list of those.
 
 ### param: LocatorAssertions.toHaveText.expected
 * since: v1.18
 * langs: java, csharp
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
 
-Expected substring or RegExp or a list of those.
+Expected string or RegExp or a list of those.
 
 ### option: LocatorAssertions.toHaveText.ignoreCase
 * since: v1.23
