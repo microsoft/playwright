@@ -852,7 +852,7 @@ page.get_by_role("listitem").filter(has_text="Product 2").get_by_role(
 
 ```csharp
 await page
-    .GetByRole(AriaRole.ListItem)
+    .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasText = "Product 2" })
     .GetByRole(AriaRole.Button, new () { Name = "Add to cart" })
     .ClickAsync();
