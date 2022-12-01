@@ -370,7 +370,7 @@ const { test } = require('@playwright/test');
 
 test.use({
   // User different user for each worker.
-  storageStateName: `test-user-${test.info().parallelIndex}`
+  storageStateName: ({}, use) => use(`test-user-${test.info().parallelIndex}`)
 });
 
 test('test', async ({ page }) => {
