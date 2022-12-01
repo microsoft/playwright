@@ -1,4 +1,4 @@
-# class: ScreenshotAssertions
+# class: SnapshotAssertions
 * since: v1.20
 * langs: js
 
@@ -9,7 +9,7 @@ expected values stored in files.
 expect(screenshot).toMatchSnapshot('landing-page.png');
 ```
 
-## method: ScreenshotAssertions.toMatchSnapshot#1
+## method: SnapshotAssertions.toMatchSnapshot#1
 * since: v1.22
 
 Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
@@ -33,24 +33,26 @@ expect(await page.screenshot()).toMatchSnapshot(['landing', 'step2.png']);
 expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
 ```
 
-Learn more about [visual comparisons](./test-snapshots.md).
+Learn more about [visual comparisons](../test-snapshots.md).
 
-### param: ScreenshotAssertions.toMatchSnapshot#1.name
+Note that matching snapshots only work with Playwright test runner.
+
+### param: SnapshotAssertions.toMatchSnapshot#1.name
 * since: v1.22
 - `name` <[string]|[Array]<[string]>>
 
 Snapshot name.
 
-### option: ScreenshotAssertions.toMatchSnapshot#1.maxDiffPixels = %%-assertions-max-diff-pixels-%%
+### option: SnapshotAssertions.toMatchSnapshot#1.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 * since: v1.22
 
-### option: ScreenshotAssertions.toMatchSnapshot#1.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
+### option: SnapshotAssertions.toMatchSnapshot#1.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
 * since: v1.22
 
-### option: ScreenshotAssertions.toMatchSnapshot#1.threshold = %%-assertions-threshold-%%
+### option: SnapshotAssertions.toMatchSnapshot#1.threshold = %%-assertions-threshold-%%
 * since: v1.22
 
-## method: ScreenshotAssertions.toMatchSnapshot#2
+## method: SnapshotAssertions.toMatchSnapshot#2
 * since: v1.22
 
 Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
@@ -73,19 +75,21 @@ expect(await page.screenshot()).toMatchSnapshot({
 });
 ```
 
-Learn more about [visual comparisons](./test-snapshots.md).
+Learn more about [visual comparisons](../test-snapshots.md).
 
-### option: ScreenshotAssertions.toMatchSnapshot#2.maxDiffPixels = %%-assertions-max-diff-pixels-%%
+Note that matching snapshots only work with Playwright test runner.
+
+### option: SnapshotAssertions.toMatchSnapshot#2.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 * since: v1.22
 
-### option: ScreenshotAssertions.toMatchSnapshot#2.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
+### option: SnapshotAssertions.toMatchSnapshot#2.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
 * since: v1.22
 
-### option: ScreenshotAssertions.toMatchSnapshot#2.name
+### option: SnapshotAssertions.toMatchSnapshot#2.name
 * since: v1.22
 - `name` <[string]|[Array]<[string]>>
 
 Snapshot name. If not passed, the test name and ordinals are used when called multiple times.
 
-### option: ScreenshotAssertions.toMatchSnapshot#2.threshold = %%-assertions-threshold-%%
+### option: SnapshotAssertions.toMatchSnapshot#2.threshold = %%-assertions-threshold-%%
 * since: v1.22

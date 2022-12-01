@@ -186,7 +186,7 @@ it('reverse engineer getByRole', async ({ page }) => {
     javascript: `getByRole('button', { name: 'Hello' })`,
     python: `get_by_role("button", name="Hello")`,
     java: `getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Hello"))`,
-    csharp: `GetByRole(AriaRole.Button, new() { NameString = "Hello" })`,
+    csharp: `GetByRole(AriaRole.Button, new() { Name = "Hello" })`,
   });
   expect.soft(generate(page.getByRole('button', { name: /Hello/ }))).toEqual({
     javascript: `getByRole('button', { name: /Hello/ })`,
@@ -198,7 +198,7 @@ it('reverse engineer getByRole', async ({ page }) => {
     javascript: `getByRole('button', { name: 'He"llo', exact: true })`,
     python: `get_by_role("button", name="He\\"llo", exact=True)`,
     java: `getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("He\\"llo").setExact(true))`,
-    csharp: `GetByRole(AriaRole.Button, new() { NameString = "He\\"llo", Exact = true })`,
+    csharp: `GetByRole(AriaRole.Button, new() { Name = "He\\"llo", Exact = true })`,
   });
   expect.soft(generate(page.getByRole('button', { checked: true, pressed: false, level: 3 }))).toEqual({
     javascript: `getByRole('button', { checked: true, level: 3, pressed: false })`,
@@ -270,7 +270,7 @@ it('reverse engineer locators with regex', async ({ page }) => {
 
 it('reverse engineer hasText', async ({ page }) => {
   expect.soft(generate(page.getByText('Hello').filter({ hasText: 'wo"rld\n' }))).toEqual({
-    csharp: `GetByText("Hello").Filter(new() { HasTextString = "wo\\"rld\\n" })`,
+    csharp: `GetByText("Hello").Filter(new() { HasText = "wo\\"rld\\n" })`,
     java: `getByText("Hello").filter(new Locator.LocatorOptions().setHasText("wo\\"rld\\n"))`,
     javascript: `getByText('Hello').filter({ hasText: 'wo"rld\\n' })`,
     python: `get_by_text("Hello").filter(has_text="wo\\"rld\\n")`,
@@ -305,7 +305,7 @@ it('reverse engineer has', async ({ page }) => {
       .filter({ hasText: 'foo' })
       .filter({ has: page.locator('a') });
   expect.soft(generate(locator)).toEqual({
-    csharp: `Locator("section").Filter(new() { Has = Locator("div").Filter(new() { Has = Locator("span") }) }).Filter(new() { HasTextString = "foo" }).Filter(new() { Has = Locator("a") })`,
+    csharp: `Locator("section").Filter(new() { Has = Locator("div").Filter(new() { Has = Locator("span") }) }).Filter(new() { HasText = "foo" }).Filter(new() { Has = Locator("a") })`,
     java: `locator("section").filter(new Locator.LocatorOptions().setHas(locator("div").filter(new Locator.LocatorOptions().setHas(locator("span"))))).filter(new Locator.LocatorOptions().setHasText("foo")).filter(new Locator.LocatorOptions().setHas(locator("a")))`,
     javascript: `locator('section').filter({ has: locator('div').filter({ has: locator('span') }) }).filter({ hasText: 'foo' }).filter({ has: locator('a') })`,
     python: `locator("section").filter(has=locator("div").filter(has=locator("span"))).filter(has_text="foo").filter(has=locator("a"))`,
@@ -342,7 +342,7 @@ it.describe(() => {
       <div>Goodbye <span mark=1>world</span></div>
     `);
     expect.soft(await generateForNode(page, '[mark="1"]')).toEqual({
-      csharp: 'Locator("div").Filter(new() { HasTextString = "Goodbye world" }).Locator("span")',
+      csharp: 'Locator("div").Filter(new() { HasText = "Goodbye world" }).Locator("span")',
       java: 'locator("div").filter(new Locator.LocatorOptions().setHasText("Goodbye world")).locator("span")',
       javascript: `locator('div').filter({ hasText: 'Goodbye world' }).locator('span')`,
       python: 'locator("div").filter(has_text="Goodbye world").locator("span")',
@@ -354,7 +354,7 @@ it('parse locators strictly', () => {
   const selector = 'div >> internal:has-text=\"Goodbye world\"i >> span';
 
   // Exact
-  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasTextString = "Goodbye world" }).Locator("span")`)).toBe(selector);
+  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasText = "Goodbye world" }).Locator("span")`)).toBe(selector);
   expect.soft(parseLocator('java', `locator("div").filter(new Locator.LocatorOptions().setHasText("Goodbye world")).locator("span")`)).toBe(selector);
   expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }).locator('span')`)).toBe(selector);
   expect.soft(parseLocator('python', `locator("div").filter(has_text="Goodbye world").locator("span")`)).toBe(selector);
@@ -364,13 +364,13 @@ it('parse locators strictly', () => {
   expect.soft(parseLocator('python', `locator('div').filter(has_text='Goodbye world').locator('span')`)).toBe(selector);
 
   // Whitespace
-  expect.soft(parseLocator('csharp', `Locator("div")  .  Filter (new ( ) {  HasTextString =    "Goodbye world" }).Locator(  "span"   )`)).toBe(selector);
+  expect.soft(parseLocator('csharp', `Locator("div")  .  Filter (new ( ) {  HasText =    "Goodbye world" }).Locator(  "span"   )`)).toBe(selector);
   expect.soft(parseLocator('java', `  locator("div"  ).  filter(  new    Locator. LocatorOptions    ( ) .setHasText(   "Goodbye world" ) ).locator(   "span")`)).toBe(selector);
   expect.soft(parseLocator('javascript', `locator\n('div')\n\n.filter({ hasText  : 'Goodbye world'\n }\n).locator('span')\n`)).toBe(selector);
   expect.soft(parseLocator('python', `\tlocator(\t"div").filter(\thas_text="Goodbye world"\t).locator\t("span")`)).toBe(selector);
 
   // Extra symbols
-  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasTextString = "Goodbye world" }).Locator("span"))`)).not.toBe(selector);
+  expect.soft(parseLocator('csharp', `Locator("div").Filter(new() { HasText = "Goodbye world" }).Locator("span"))`)).not.toBe(selector);
   expect.soft(parseLocator('java', `locator("div").filter(new Locator.LocatorOptions().setHasText("Goodbye world"))..locator("span")`)).not.toBe(selector);
   expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }}).locator('span')`)).not.toBe(selector);
   expect.soft(parseLocator('python', `locator("div").filter(has_text=="Goodbye world").locator("span")`)).not.toBe(selector);

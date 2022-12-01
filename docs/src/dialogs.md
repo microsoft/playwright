@@ -16,7 +16,7 @@ await page.getByRole('button').click();
 
 ```java
 page.onDialog(dialog -> dialog.accept());
-page.getByRole("button").click();
+page.getByRole(AriaRole.BUTTON).click();
 ```
 
 ```python async
@@ -31,7 +31,7 @@ page.get_by_role("button").click()
 
 ```csharp
 page.Dialog += (_, dialog) => dialog.AcceptAsync();
-await page.GetByRole("button").ClickAsync();
+await page.GetByRole(AriaRole.Button).ClickAsync();
 ```
 
 :::note
@@ -51,7 +51,7 @@ await page.getByRole('button').click(); // Will hang here
 
 ```java
 page.onDialog(dialog -> System.out.println(dialog.message()));
-page.getByRole("button").click(); // Will hang here
+page.getByRole(AriaRole.BUTTON).click(); // Will hang here
 ```
 
 ```python async
@@ -66,7 +66,7 @@ page.get_by_role("button").click() # Will hang here
 
 ```csharp
 page.Dialog += (_, dialog) => Console.WriteLine(dialog.Message);
-await page.GetByRole("button").ClickAsync(); // Will hang here
+await page.GetByRole(AriaRole.Button).ClickAsync(); // Will hang here
 ```
 
 :::note

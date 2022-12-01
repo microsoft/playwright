@@ -1739,6 +1739,7 @@ Frame:
       parameters:
         expression: string
         isFunction: boolean?
+        exposeUtilityScript: boolean?
         arg: SerializedArgument
       returns:
         value: SerializedValue

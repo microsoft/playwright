@@ -431,7 +431,15 @@ export class Runner {
     projectSetupGroups.length = 0;
     projectSetupGroups.push(...shardSetupGroups);
 
-    filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
+    if (!shardTests.size) {
+      // Filtering with "only semantics" does not work when we have zero tests - it leaves all the tests.
+      // We need an empty suite in this case.
+      rootSuite._entries = [];
+      rootSuite.suites = [];
+      rootSuite.tests = [];
+    } else {
+      filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
+    }
   }
 
   private async _run(options: RunOptions): Promise<FullResult> {

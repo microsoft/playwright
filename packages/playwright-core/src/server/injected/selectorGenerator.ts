@@ -35,6 +35,7 @@ const kLabelScore = 3;
 const kRoleWithNameScore = 5;
 const kAltTextScore = 10;
 const kTextScore = 15;
+const kTitleScore = 20;
 const kCSSIdScore = 100;
 const kRoleWithoutNameScore = 140;
 const kCSSInputTypeNameScore = 150;
@@ -192,6 +193,9 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
 
   if (element.getAttribute('name') && ['BUTTON', 'FORM', 'FIELDSET', 'FRAME', 'IFRAME', 'INPUT', 'KEYGEN', 'OBJECT', 'OUTPUT', 'SELECT', 'TEXTAREA', 'MAP', 'META', 'PARAM'].includes(element.nodeName))
     candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[name=${quoteAttributeValue(element.getAttribute('name')!)}]`, score: kCSSInputTypeNameScore });
+
+  if (element.getAttribute('title'))
+    candidates.push({ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(element.getAttribute('title')!, false)}]`, score: kTitleScore });
 
   if (['INPUT', 'TEXTAREA'].includes(element.nodeName) && element.getAttribute('type') !== 'hidden') {
     if (element.getAttribute('type'))

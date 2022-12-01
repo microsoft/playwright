@@ -36,7 +36,7 @@ export async function toBeTruthy(
 
   const timeout = currentExpectTimeout(options);
 
-  const { matches, log, timedOut } = await query(this.isNot, timeout, captureStackTrace('expect.' + matcherName));
+  const { matches, log, timedOut } = await query(this.isNot, timeout, captureStackTrace(`expect.${this.isNot ? 'not.' : ''}${matcherName}`));
 
   const message = () => {
     return matcherHint(this, matcherName, undefined, '', matcherOptions, timedOut ? timeout : undefined) + callLogText(log);

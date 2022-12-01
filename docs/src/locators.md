@@ -16,7 +16,7 @@ These are the recommended built in locators.
 - [`method: Page.getByPlaceholder`](#locate-by-placeholder) to locate an input by placeholder.
 - [`method: Page.getByAltText`](#locate-by-alt-text) to locate an element, usually image, by its text alternative.
 - [`method: Page.getByTitle`](#locate-by-title) to locate an element by its title attribute.
-- [`method: Page.getByTestId`](#locate-by-testid) to locate an element based on its `data-testid` attribute (other attributes can be configured).
+- [`method: Page.getByTestId`](#locate-by-test-id) to locate an element based on its `data-testid` attribute (other attributes can be configured).
 
 ```js
 await page.getByLabel('User Name').fill('John');
@@ -64,14 +64,14 @@ await page.GetByLabel("User Name").FillAsync("John");
 
 await page.GetByLabel("Password").FillAsync("secret-password");
 
-await page.GetByRole(AriaRole.Button, new() { NameString = "Sign in" }).ClickAsync();
+await page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync();
 
 await Expect(page.GetByText("Welcome, John!")).ToBeVisibleAsync();
 ```
 
 ## Locating elements
 
-Playwright comes with multiple built-in locators. To make tests resilient, we recommend prioritizing user-facing attributes and explicit contracts such as [`method: Page.getByRole`]. 
+Playwright comes with multiple built-in locators. To make tests resilient, we recommend prioritizing user-facing attributes and explicit contracts such as [`method: Page.getByRole`].
 
 For example, consider the following DOM structure.
 
@@ -99,7 +99,7 @@ page.get_by_role("button", name="Sign in").click()
 ```
 
 ```csharp
-await page.GetByRole(AriaRole.Button, new() { NameString = "Sign in" }).ClickAsync();
+await page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync();
 ```
 
 :::tip
@@ -141,7 +141,7 @@ locator.click()
 ```
 
 ```csharp
-var locator = page.GetByRole(AriaRole.Button, new() { NameString = "Sign in" })
+var locator = page.GetByRole(AriaRole.Button, new() { Name = "Sign in" })
 
 await locator.HoverAsync();
 await locator.ClickAsync();
@@ -180,7 +180,7 @@ locator.click()
 ```csharp
 var locator = page
     .FrameLocator("#my-frame")
-    .GetByRole(AriaRole.Button), new() { NameString = "Sign in" });
+    .GetByRole(AriaRole.Button), new() { Name = "Sign in" });
 
 await locator.ClickAsync();
 ```
@@ -244,11 +244,11 @@ page.getByRole(AriaRole.BUTTON,
 
 ```csharp
 await Expect(page
-    .GetByRole(AriaRole.Heading, new() { NameString = "Sign up" }))
+    .GetByRole(AriaRole.Heading, new() { Name = "Sign up" }))
     .ToBeVisibleAsync();
 
 await page
-    .GetByRole(AriaRole.Checkbox, new() { NameString = "Subscribe" })
+    .GetByRole(AriaRole.Checkbox, new() { Name = "Subscribe" })
     .CheckAsync();
 
 await page
@@ -594,7 +594,7 @@ playwright.selectors.set_test_id_attribute("data-pw")
 playwright.Selectors.SetTestIdAttribute("data-pw");
 ```
 
-In your html you can now use `data-pw` as your test id instead of the default `data-testid`. 
+In your html you can now use `data-pw` as your test id instead of the default `data-testid`.
 
 ```html card
 <button data-pw="directions">Itinéraire</button>
@@ -773,7 +773,7 @@ page.locator("x-details", has_text="Details" ).click()
 ```
 ```csharp
 await page
-    .Locator("x-details", new() { HasTextString = "Details" })
+    .Locator("x-details", new() { HasText = "Details" })
     .ClickAsync();
 ```
 
@@ -891,7 +891,7 @@ page.get_by_role("article").filter(has_text=re.compile("Product 2")).get_by_role
 await page
     .GetByRole(AriaRole.Article)
     .Filter(new() { HasTextRegex = new Regex("Product 2") })
-    .GetByRole(AriaRole.Button, new () { NameString = "Add to cart" })
+    .GetByRole(AriaRole.Button, new () { Name = "Add to cart" })
     .ClickAsync();
 ```
 
@@ -945,10 +945,10 @@ await page
     .GetByRole(AriaRole.Article)
     .Filter(new() {
         Has = page.GetByRole(AriaRole.Heading, new () {
-            NameString = "Product 2"
+            Name = "Product 2"
         })
     })
-    .GetByRole(AriaRole.Button, new () { NameString = "Add to cart" })
+    .GetByRole(AriaRole.Button, new () { Name = "Add to cart" })
     .ClickAsync();
 ```
 
@@ -1035,10 +1035,10 @@ product
 ```csharp
 var product = page
     .GetByRole(AriaRole.Listitem)
-    .Filter(new() { HasTextString = "Product 2" });
+    .Filter(new() { HasText = "Product 2" });
 
 await product
-    .GetByRole(AriaRole.Button), new() { NameString = "Add to cart" })
+    .GetByRole(AriaRole.Button), new() { Name = "Add to cart" })
     .ClickAsync();
 ```
 
@@ -1208,7 +1208,7 @@ page.getByRole(AriaRole.LISTITEM)
 ```csharp
 await page
     .GetByRole(AriaRole.Listitem)
-    .Filter(new() { HasTextString = "orange" })
+    .Filter(new() { HasText = "orange" })
     .ClickAsync();
 ```
 
@@ -1345,9 +1345,9 @@ rowLocator
 var rowLocator = page.GetByRole(AriaRole.Listitem);
 
 await rowLocator
-    .Filter(new() { HasTextString = "Mary" })
+    .Filter(new() { HasText = "Mary" })
     .Filter(new() {
-        Has = page.GetByRole(AriaRole.Button), new() { NameString = "Say goodbye" })
+        Has = page.GetByRole(AriaRole.Button), new() { Name = "Say goodbye" })
     })
     .ScreenshotAsync(new() { Path = "screenshot.png" });
 ```

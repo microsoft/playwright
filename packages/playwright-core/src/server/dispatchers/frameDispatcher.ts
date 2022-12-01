@@ -76,7 +76,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Pa
   }
 
   async evaluateExpression(params: channels.FrameEvaluateExpressionParams, metadata: CallMetadata): Promise<channels.FrameEvaluateExpressionResult> {
-    return { value: serializeResult(await this._frame.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, parseArgument(params.arg), 'main')) };
+    return { value: serializeResult(await this._frame.evaluateExpressionAndWaitForSignals(params.expression, { isFunction: params.isFunction, exposeUtilityScript: params.exposeUtilityScript }, parseArgument(params.arg), 'main')) };
   }
 
   async evaluateExpressionHandle(params: channels.FrameEvaluateExpressionHandleParams, metadata: CallMetadata): Promise<channels.FrameEvaluateExpressionHandleResult> {

@@ -230,6 +230,7 @@ it.describe('pause', () => {
     const scriptPromise = (async () => {
       await page.pause();
       await expect(page.locator('button')).toHaveText('Submit');
+      await expect(page.locator('button')).not.toHaveText('Submit2');
       await page.pause();  // 2
     })();
     const recorderPage = await recorderPageGetter();
@@ -238,6 +239,7 @@ it.describe('pause', () => {
     expect(await sanitizeLog(recorderPage)).toEqual([
       'page.pause- XXms',
       'expect(page.locator(\'button\')).toHaveText()- XXms',
+      'expect(page.locator(\'button\')).not.toHaveText()- XXms',
       'page.pause',
     ]);
     await recorderPage.click('[title="Resume (F8)"]');
@@ -410,6 +412,35 @@ it.describe('pause', () => {
       'keyup',
       'keyup',
     ]);
+  });
+
+  it('should highlight locators with custom testId', async ({ page, playwright, recorderPageGetter }) => {
+    await page.setContent('<div id=target1>click me</div><div data-custom-id=foo id=target2>and me</div>');
+    const scriptPromise = (async () => {
+      await page.pause();
+      await page.getByText('click me').click();
+      playwright.selectors.setTestIdAttribute('data-custom-id');
+      await page.getByTestId('foo').click();
+    })();
+    const recorderPage = await recorderPageGetter();
+
+    await recorderPage.click('[title="Step over (F10)"]');
+    const div1Box1 = roundBox(await page.locator('x-pw-highlight').boundingBox());
+    const div1Box2 = roundBox(await page.locator('#target1').boundingBox());
+    expect(div1Box1).toEqual(div1Box2);
+
+    await recorderPage.click('[title="Step over (F10)"]');
+    let div2Box1: Box;
+    await expect.poll(async () => {
+      div2Box1 = await page.locator('x-pw-highlight').boundingBox();
+      return div2Box1;
+    }).toBeTruthy();
+    div2Box1 = roundBox(div2Box1);
+    const div2Box2 = roundBox(await page.locator('#target2').boundingBox());
+    expect(div2Box1).toEqual(div2Box2);
+
+    await recorderPage.click('[title="Resume (F8)"]');
+    await scriptPromise;
   });
 });
 

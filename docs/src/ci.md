@@ -319,7 +319,7 @@ jobs:
                   npx playwright test
 ```
 This will make the pipeline run fail if any of the playwright tests fails.
-If you also want to integrate the test results with Azure DevOps, use `failOnStderr:false` and the built-in `PublishTestResults` task like so:
+If you also want to integrate the test results with Azure DevOps, use the task `PublishTestResults` task like so:
 ```yml
 jobs:
     - deployment: Run_E2E_Tests
@@ -337,13 +337,12 @@ jobs:
               inputs:
                 workingDirectory: 'my-e2e-tests'
                 targetType: 'inline'
-                failOnStderr: false
+                failOnStderr: true
                 env:
                   CI: true
                 script: |
                   npm ci
                   npx playwright test
-                  exit 0
             - task: PublishTestResults@2
               displayName: 'Publish test results'
               inputs:
@@ -353,6 +352,8 @@ jobs:
                 mergeTestResults: true
                 failTaskOnFailedTests: true
                 testRunTitle: 'My End-To-End Tests'
+              condition: succeededOrFailed()
+
 ```
 Note: The JUnit reporter needs to be configured accordingly via
 ```ts
@@ -362,7 +363,7 @@ in `playwright.config.ts`.
 
 ### CircleCI
 
-Running Playwright on Circle CI is very similar to running on GitHub Actions. In order to specify the pre-built Playwright [Docker image](./docker.md) , simply modify the agent definition with `docker:` in your config like so:
+Running Playwright on CircleCI is very similar to running on GitHub Actions. In order to specify the pre-built Playwright [Docker image](./docker.md) , simply modify the agent definition with `docker:` in your config like so:
 
    ```yml
    executors:
@@ -385,9 +386,9 @@ Similarly, If you’re using Playwright through Jest, then you may encounter an 
 
    This is likely caused by Jest autodetecting the number of processes on the entire machine (`36`) rather than the number allowed to your container (`2`). To fix this, set `jest --maxWorkers=2` in your test command.
 
-#### Sharding in Circle CI
+#### Sharding in CircleCI
 
-Sharding in Circle CI is indexed with 0 which means that you will need to override the default parallelism ENV VARS. The following example demonstrates how to run Playwright with a Circle CI Parallelism of 4 by adding 1 to the `CIRCLE_NODE_INDEX` to pass into the `--shard` cli arg.
+Sharding in CircleCI is indexed with 0 which means that you will need to override the default parallelism ENV VARS. The following example demonstrates how to run Playwright with a CircleCI Parallelism of 4 by adding 1 to the `CIRCLE_NODE_INDEX` to pass into the `--shard` cli arg.
 
   ```yml
     playwright-job-name:

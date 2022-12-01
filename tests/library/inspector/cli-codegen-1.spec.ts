@@ -47,7 +47,7 @@ test.describe('cli codegen', () => {
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).click()`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.GetByRole(AriaRole.Button, new() { NameString = "Submit" }).ClickAsync();`);
+        await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
 
     expect(message.text()).toBe('click');
   });
@@ -189,7 +189,7 @@ test.describe('cli codegen', () => {
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).click()`);
 
     expect.soft(sources.get('C#').text).toContain(`
-        await page.GetByRole(AriaRole.Button, new() { NameString = "Submit" }).ClickAsync();`);
+        await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
 
     expect(message.text()).toBe('click');
   });
@@ -630,7 +630,7 @@ test.describe('cli codegen', () => {
     expect.soft(sources.get('C#').text).toContain(`
         var page1 = await page.RunAndWaitForPopupAsync(async () =>
         {
-            await page.GetByRole(AriaRole.Link, new() { NameString = "link" }).ClickAsync();
+            await page.GetByRole(AriaRole.Link, new() { Name = "link" }).ClickAsync();
         });`);
 
     expect(popup.url()).toBe('about:blank');

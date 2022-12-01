@@ -58,18 +58,18 @@ page.frame_locator('.result-frame').first.get_by_role('button').click()
 
 ```java
 // Throws if there are several frames in DOM:
-page.frame_locator(".result-frame").getByRole("button").click();
+page.frame_locator(".result-frame").getByRole(AriaRole.BUTTON).click();
 
 // Works because we explicitly tell locator to pick the first frame:
-page.frame_locator(".result-frame").first().getByRole("button").click();
+page.frame_locator(".result-frame").first().getByRole(AriaRole.BUTTON).click();
 ```
 
 ```csharp
 // Throws if there are several frames in DOM:
-await page.FrameLocator(".result-frame").GetByRole("button").ClickAsync();
+await page.FrameLocator(".result-frame").GetByRole(AriaRole.Button).ClickAsync();
 
 // Works because we explicitly tell locator to pick the first frame:
-await page.FrameLocator(".result-frame").First.getByRole("button").ClickAsync();
+await page.FrameLocator(".result-frame").First.getByRole(AriaRole.Button).ClickAsync();
 ```
 
 **Converting Locator to FrameLocator**

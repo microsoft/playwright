@@ -28,17 +28,15 @@ If you're using (or are interested in using this this feature), please comment o
 You can use [`method: BrowserContext.serviceWorkers`] to list the Service [Worker]s, or specifically watch for the Service [Worker] if you anticipate a page will trigger its [registration](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register):
 
 ```js tab=js-ts
-const [ serviceworker ] = await Promise.all([
-  context.waitForEvent('serviceworker'),
-  page.goto('/example-with-a-service-worker.html'),
-]);
+const serviceWorkerPromise = context.waitForEvent('serviceworker');
+await page.goto('/example-with-a-service-worker.html');
+const serviceworker = await serviceWorkerPromise;
 ```
 
 ```js tab=js-js
-const [ serviceworker ] = await Promise.all([
-  context.waitForEvent('serviceworker'),
-  page.goto('/example-with-a-service-worker.html'),
-]);
+const serviceWorkerPromise = context.waitForEvent('serviceworker');
+await page.goto('/example-with-a-service-worker.html');
+const serviceworker = await serviceWorkerPromise;
 ```
 
 ```python async
@@ -148,7 +146,7 @@ Many Service Worker implementations simply execute the request from the page (po
 // filename: transparent-service-worker.js
 self.addEventListener("fetch", (event) => {
   // actually make the request
-  const responsePromise = fetch(event.request); 
+  const responsePromise = fetch(event.request);
   // send it back to the page
   event.respondWith(responsePromise);
 });
@@ -377,11 +375,12 @@ context.route('**', handle)
 await context.RouteAsync("**", async route => {
   if (route.request().serviceWorker() != null) {
     // NB: calling route.request.frame here would THROW
-    await route.FulfillAsync(
-      contentType: "text/plain",
-      status: 200,
-      body: "from sw"
-    );
+    await route.FulfillAsync(new ()
+    {
+      ContentType = "text/plain",
+      Status = 200,
+      Body = "from sw"
+    });
   } else {
     await route.Continue()Async();
   }

@@ -134,7 +134,6 @@ Here is the list of the most popular async assertions. Note that there are [many
 | Assertion | Description |
 | :- | :- |
 | [`method: LocatorAssertions.toBeChecked`] | Checkbox is checked |
-| [`method: LocatorAssertions.toBeChecked`] | Checkbox is checked |
 | [`method: LocatorAssertions.toBeEnabled`] | Control is enabled |
 | [`method: LocatorAssertions.toBeVisible`] | Element is visible |
 | [`method: LocatorAssertions.toContainText`] | Element contains text |

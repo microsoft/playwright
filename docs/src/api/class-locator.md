@@ -591,7 +591,7 @@ Locator rowLocator = page.locator("tr");
 rowLocator
     .filter(new Locator.FilterOptions().setHasText("text in column 1"))
     .filter(new Locator.FilterOptions().setHas(
-        page.getByRole("button", new Page.GetByRoleOptions().setName("column 2 button"))
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("column 2 button"))
     ))
     .screenshot();
 ```
@@ -620,7 +620,7 @@ var rowLocator = page.Locator("tr");
 await rowLocator
     .Filter(new LocatorFilterOptions { HasText = "text in column 1" })
     .Filter(new LocatorFilterOptions {
-        Has = page.GetByRole("button", new() { Name = "column 2 button" } )
+        Has = page.GetByRole(AriaRole.Button, new() { Name = "column 2 button" } )
     })
     .ScreenshotAsync();
 ```

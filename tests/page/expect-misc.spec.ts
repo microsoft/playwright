@@ -255,11 +255,11 @@ test.describe('toHaveAttribute', () => {
     await expect(locator).toHaveAttribute('checked', /.*/);
     {
       const error = await expect(locator).not.toHaveAttribute('checked', '', { timeout: 1000 }).catch(e => e);
-      expect(error.message).toContain('expect.toHaveAttribute with timeout 1000ms');
+      expect(error.message).toContain('expect.not.toHaveAttribute with timeout 1000ms');
     }
     {
       const error = await expect(locator).not.toHaveAttribute('checked', /.*/, { timeout: 1000 }).catch(e => e);
-      expect(error.message).toContain('expect.toHaveAttribute with timeout 1000ms');
+      expect(error.message).toContain('expect.not.toHaveAttribute with timeout 1000ms');
     }
   });
 });

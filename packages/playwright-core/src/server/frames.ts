@@ -595,12 +595,12 @@ export class Frame extends SdkObject {
     });
   }
 
-  nonStallingEvaluateInExistingContext(expression: string, isFunction: boolean|undefined, world: types.World): Promise<any> {
+  nonStallingEvaluateInExistingContext(expression: string, isFunction: boolean | undefined, world: types.World): Promise<any> {
     return this.raceAgainstEvaluationStallingEvents(() => {
       const context = this._contextData.get(world)?.context;
       if (!context)
         throw new Error('Frame does not yet have the execution context');
-      return context.evaluateExpression(expression, isFunction);
+      return context.evaluateExpression(expression, { isFunction });
     });
   }
 
@@ -763,19 +763,19 @@ export class Frame extends SdkObject {
 
   async evaluateExpressionHandleAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
     const context = await this._context(world);
-    const handle = await context.evaluateExpressionHandleAndWaitForSignals(expression, isFunction, arg);
+    const handle = await context.evaluateExpressionHandleAndWaitForSignals(expression, { isFunction }, arg);
     return handle;
   }
 
   async evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
     const context = await this._context(world);
-    const value = await context.evaluateExpression(expression, isFunction, arg);
+    const value = await context.evaluateExpression(expression, { isFunction }, arg);
     return value;
   }
 
-  async evaluateExpressionAndWaitForSignals(expression: string, isFunction: boolean | undefined, arg: any, world: types.World = 'main'): Promise<any> {
+  async evaluateExpressionAndWaitForSignals(expression: string, options: { isFunction?: boolean, exposeUtilityScript?: boolean }, arg: any, world: types.World = 'main'): Promise<any> {
     const context = await this._context(world);
-    const value = await context.evaluateExpressionAndWaitForSignals(expression, isFunction, arg);
+    const value = await context.evaluateExpressionAndWaitForSignals(expression, options, arg);
     return value;
   }
 

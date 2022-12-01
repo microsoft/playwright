@@ -46,7 +46,7 @@ await page.GetByLabel("User Name").FillAsync("John");
 
 await page.GetByLabel("Password").FillAsync("secret-password");
 
-await page.GetByRole("button", new() { NameString = "Sign in" }).ClickAsync();
+await page.GetByRole(AriaRole.Button, new() { NameString = "Sign in" }).ClickAsync();
 
 await Expect(page.GetByText("Welcome, John!")).ToBeVisibleAsync();
 ```
@@ -61,8 +61,8 @@ All the same methods are also available on [Locator], [FrameLocator] and [Frame]
 
 - [`method: LocatorAssertions.toHaveAttribute`] with an empty value does not match missing attribute anymore. For example, the following snippet will succeed when `button` **does not** have a `disabled` attribute.
 
-   ```js
-   await Expect(page.GetByRole("button")).ToHaveAttribute("disabled", "");
+   ```csharp
+   await Expect(page.GetByRole(AriaRole.Button)).ToHaveAttribute("disabled", "");
    ```
 
 ### Browser Versions

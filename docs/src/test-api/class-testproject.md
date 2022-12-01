@@ -116,7 +116,7 @@ export default config;
     - `animations` ?<[ScreenshotAnimations]<"allow"|"disabled">> See [`option: animations`] in [`method: Page.screenshot`]. Defaults to `"disabled"`.
     - `caret` ?<[ScreenshotCaret]<"hide"|"initial">> See [`option: caret`] in [`method: Page.screenshot`]. Defaults to `"hide"`.
     - `scale` ?<[ScreenshotScale]<"css"|"device">> See [`option: scale`] in [`method: Page.screenshot`]. Defaults to `"css"`.
-  - `toMatchSnapshot` ?<[Object]> Configuration for the [`method: ScreenshotAssertions.toMatchSnapshot#1`] method.
+  - `toMatchSnapshot` ?<[Object]> Configuration for the [`method: SnapshotAssertions.toMatchSnapshot#1`] method.
     - `threshold` ?<[float]> an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
     - `maxDiffPixels` ?<[int]> an acceptable amount of pixels that could be different, unset by default.
     - `maxDiffPixelRatio` ?<[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
@@ -138,7 +138,7 @@ You can configure entire test project to concurrently run all tests in all files
 * since: v1.10
 - type: ?<[RegExp]|[Array]<[RegExp]>>
 
-Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run tests with "cart" in the title. Also available globally and in the [command line](../test-cli.md) with the `-g` option.
+Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run tests with "cart" in the title. Also available globally and in the [command line](../test-cli.md) with the `-g` option. The regular expression will be tested against the string that consists of the test file name, `test.describe` name (if any) and the test name divided by spaces, e.g. `my-test.spec.ts my suite my test`.
 
 `grep` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
@@ -146,7 +146,7 @@ Filter to only run tests with a title matching one of the patterns. For example,
 * since: v1.10
 - type: ?<[RegExp]|[Array]<[RegExp]>>
 
-Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestProject.grep`]. Also available globally and in the [command line](../test-cli.md) with the `--grep-invert` option.
+Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestProject.grep`]. Also available globally and in the [command line](../test-cli.md) with the `--grep-invert` option. This filter and its command line counterpart also applies to the setup files. If all [`property: TestProject.setup`] tests match the filter Playwright **will** run all setup files before running the matching tests.
 
 `grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
@@ -166,7 +166,9 @@ Project name is visible in the report and during test execution.
 * since: v1.28
 - type: ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
-Project setup files that would be executed before all tests in the project. If project setup fails the tests in this project will be skipped. All project setup files will run in every shard if the project is sharded.
+Project setup files that would be executed before all tests in the project. If project setup fails the tests in this project will be skipped. All project setup files will run in every shard if the project is sharded. [`property: TestProject.grep`] and [`property: TestProject.grepInvert`] and their command line counterparts also apply to the setup files. If such filters match only tests in the project Playwright will run all setup files before running the matching tests.
+
+If there is a file that matches both [`property: TestProject.setup`] and [`property: TestProject.testMatch`] filters an error will be thrown.
 
 ## property: TestProject.snapshotDir
 * since: v1.10

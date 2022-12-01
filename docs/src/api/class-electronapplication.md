@@ -144,10 +144,9 @@ Waits for event to fire and passes its value into the predicate function. Return
 **Usage**
 
 ```js
-const [window] = await Promise.all([
-  electronApp.waitForEvent('window'),
-  mainWindow.click('button')
-]);
+const windowPromise = electronApp.waitForEvent('window');
+await mainWindow.click('button');
+const window = await windowPromise;
 ```
 
 ### param: ElectronApplication.waitForEvent.event = %%-wait-for-event-event-%%

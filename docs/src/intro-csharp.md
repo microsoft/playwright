@@ -73,7 +73,7 @@ dotnet build
 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
-If `pwsh` is not available, you have to [install PowerShell](https://docs.microsoft.com/powershell/scripting/install/installing-powershell). 
+If `pwsh` is not available, you have to [install PowerShell](https://docs.microsoft.com/powershell/scripting/install/installing-powershell).
 
 ## Add Example Tests
 
@@ -110,7 +110,7 @@ public class Tests : PageTest
         await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
 
         // create a locator
-        var getStarted = Page.GetByRole(AriaRole.Link, new() { NameString = "Get started" });
+        var getStarted = Page.GetByRole(AriaRole.Link, new() { Name = "Get started" });
 
         // Expect an attribute "to be strictly equal" to the value.
         await Expect(getStarted).ToHaveAttributeAsync("href", "/docs/intro");
@@ -145,7 +145,7 @@ public class UnitTest1 : PageTest
         await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
 
         // create a locator
-        var getStarted = Page.GetByRole(AriaRole.Link, new() { NameString = "Get started" });
+        var getStarted = Page.GetByRole(AriaRole.Link, new() { Name = "Get started" });
 
         // Expect an attribute "to be strictly equal" to the value.
         await Expect(getStarted).ToHaveAttributeAsync("href", "/docs/intro");

@@ -248,11 +248,10 @@ await page.GotoAsync("https://example.com");
 Or wait for a network response after the button click with [`method: Page.waitForResponse`]:
 
 ```js
-// Use a glob URL pattern
-const [response] = await Promise.all([
-  page.waitForResponse('**/api/fetch_data'),
-  page.getByText('Update').click(),
-]);
+// Use a glob URL pattern. Note no await.
+const responsePromise = page.waitForResponse('**/api/fetch_data');
+await page.getByText('Update').click();
+const response = await responsePromise;
 ```
 
 ```java
@@ -288,17 +287,15 @@ var response = await waitForResponseTask;
 Wait for [Response]s with [`method: Page.waitForResponse`]
 
 ```js
-// Use a RegExp
-const [response] = await Promise.all([
-  page.waitForResponse(/\.jpeg$/),
-  page.getByText('Update').click(),
-]);
+// Use a RegExp. Note no await.
+const responsePromise = page.waitForResponse(/\.jpeg$/);
+await page.getByText('Update').click();
+const response = await responsePromise;
 
-// Use a predicate taking a Response object
-const [response] = await Promise.all([
-  page.waitForResponse(response => response.url().includes(token)),
-  page.getByText('Update').click(),
-]);
+// Use a predicate taking a Response object. Note no await.
+const responsePromise = page.waitForResponse(response => response.url().includes(token));
+await page.getByText('Update').click();
+const response = await responsePromise;
 ```
 
 ```java
@@ -348,6 +345,7 @@ var waitForResponseTask = page.WaitForResponseAsync(r => r.Url.Contains(token));
 await page.GetByText("Update").ClickAsync();
 var response = await waitForResponseTask;
 ```
+
 ## Handle requests
 
 ```js
@@ -416,7 +414,7 @@ page.goto("https://example.com")
 
 ```csharp
 await page.RouteAsync("**/api/fetch_data", async route => {
-  await route.FulfillAsync(status: 200, body: testData);
+  await route.FulfillAsync(new() { Status = 200, Body = testData });
 });
 await page.GotoAsync("https://example.com");
 ```

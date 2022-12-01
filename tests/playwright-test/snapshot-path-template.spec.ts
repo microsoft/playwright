@@ -132,7 +132,7 @@ test('arg should receive default arg', async ({ runInlineTest }, testInfo) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   const snapshotOutputPath = testInfo.outputPath('__screenshots__/is-a-test-1.png');
-  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
   expect(fs.existsSync(snapshotOutputPath)).toBe(true);
 });
 

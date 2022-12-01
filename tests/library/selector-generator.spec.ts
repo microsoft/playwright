@@ -406,4 +406,12 @@ it.describe('selector generator', () => {
     await page.setContent(`<input type=checkbox><div data-testid=wrapper><input type=checkbox></div>`);
     expect(await generate(page, '[data-testid=wrapper] > input')).toBe('internal:testid=[data-testid="wrapper"s] >> internal:role=checkbox');
   });
+
+  it('should generate title selector', async ({ page }) => {
+    await page.setContent(`<div>
+      <button title="Send to">Send</button>
+      <button>Send</button>
+    </div>`);
+    expect(await generate(page, 'button')).toBe('internal:attr=[title=\"Send to\"i]');
+  });
 });

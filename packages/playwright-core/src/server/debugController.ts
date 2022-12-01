@@ -114,14 +114,16 @@ export class DebugController extends SdkObject {
       const { context } = await browser.newContextForReuse({}, internalMetadata);
       await context.newPage(internalMetadata);
     }
+    // Update test id attribute.
+    if (params.testIdAttributeName) {
+      for (const page of this._playwright.allPages())
+        page.context().selectors().setTestIdAttributeName(params.testIdAttributeName);
+    }
     // Toggle the mode.
     for (const recorder of await this._allRecorders()) {
       recorder.hideHighlightedSelecor();
-      if (params.mode === 'recording') {
+      if (params.mode === 'recording')
         recorder.setOutput(this._codegenId, params.file);
-        if (params.testIdAttributeName)
-          recorder.setTestIdAttributeName(params.testIdAttributeName);
-      }
       recorder.setMode(params.mode);
     }
     this.setAutoCloseEnabled(true);

@@ -448,34 +448,30 @@ popup with `window.open('http://example.com')`, this event will fire when the ne
 done and its response has started loading in the popup.
 
 ```js
-// Note that Promise.all prevents a race condition
-// between evaluating and waiting for the popup.
-const [popup] = await Promise.all([
-  // It is important to call waitForEvent first.
-  page.waitForEvent('popup'),
-  // Opens the popup.
-  page.evaluate(() => window.open('https://example.com')),
-]);
+// Start waiting for popup before clicking. Note no await.
+const popupPromise = page.waitForEvent('popup');
+await page.getByText('open the popup').click();
+const popup = await popupPromise;
 console.log(await popup.evaluate('location.href'));
 ```
 
 ```java
 Page popup = page.waitForPopup(() -> {
-  page.evaluate("() => window.open('https://example.com')");
+  page.getByText("open the popup").click();
 });
 System.out.println(popup.evaluate("location.href"));
 ```
 
 ```python async
 async with page.expect_event("popup") as page_info:
-    page.evaluate("window.open('https://example.com')")
+    await page.get_by_text("open the popup").click()
 popup = await page_info.value
 print(await popup.evaluate("location.href"))
 ```
 
 ```python sync
 with page.expect_event("popup") as page_info:
-    page.evaluate("window.open('https://example.com')")
+    page.get_by_text("open the popup").click()
 popup = page_info.value
 print(popup.evaluate("location.href"))
 ```
@@ -483,7 +479,7 @@ print(popup.evaluate("location.href"))
 ```csharp
 var popup = await page.RunAndWaitForPopupAsync(async () =>
 {
-    await page.EvaluateAsync("() => window.open('https://microsoft.com')");
+    await page.GetByText("open the popup").ClickAsync();
 });
 Console.WriteLine(await popup.EvaluateAsync<string>("location.href"));
 ```
@@ -3761,14 +3757,10 @@ value. Will throw an error if the page is closed before the event is fired. Retu
 **Usage**
 
 ```js
-// Note that Promise.all prevents a race condition
-// between clicking and waiting for the event.
-const [frame, _] = await Promise.all([
-  // It is important to call waitForEvent before click to set up waiting.
-  page.waitForEvent('framenavigated'),
-  // Triggers the navigation.
-  page.getByRole('button').click(),
-]);
+// Start waiting for download before clicking. Note no await.
+const downloadPromise = page.waitForEvent('download');
+await page.getByText('Download file').click();
+const download = await downloadPromise;
 ```
 
 ```python async
@@ -3967,7 +3959,7 @@ await page.waitForLoadState(); // The promise resolves after 'load' event.
 ```
 
 ```java
-page.getByRole("button").click(); // Click triggers navigation.
+page.getByRole(AriaRole.BUTTON).click(); // Click triggers navigation.
 page.waitForLoadState(); // The promise resolves after "load" event.
 ```
 
@@ -3982,25 +3974,23 @@ page.wait_for_load_state() # the promise resolves after "load" event.
 ```
 
 ```csharp
-await page.GetByRole("button").ClickAsync(); // Click triggers navigation.
+await page.GetByRole(AriaRole.Button).ClickAsync(); // Click triggers navigation.
 await page.WaitForLoadStateAsync(); // The promise resolves after 'load' event.
 ```
 
 ```js
-const [popup] = await Promise.all([
-  // It is important to call waitForEvent before click to set up waiting.
-  page.waitForEvent('popup'),
-  // Click triggers a popup.
-  page.getByRole('button').click(),
-])
-await popup.waitForLoadState('domcontentloaded'); // The promise resolves after 'domcontentloaded' event.
+const popupPromise = page.waitForEvent('popup');
+await page.getByRole('button').click(); // Click triggers a popup.
+const popup = await popupPromise;
+await popup.waitForLoadState('domcontentloaded'); // Wait for the 'DOMContentLoaded' event.
 console.log(await popup.title()); // Popup is ready to use.
 ```
 
 ```java
 Page popup = page.waitForPopup(() -> {
-  page.getByRole("button").click(); // Click triggers a popup.
+  page.getByRole(AriaRole.BUTTON).click(); // Click triggers a popup.
 });
+// Wait for the "DOMContentLoaded" event
 popup.waitForLoadState(LoadState.DOMCONTENTLOADED);
 System.out.println(popup.title()); // Popup is ready to use.
 ```
@@ -4009,7 +3999,7 @@ System.out.println(popup.title()); // Popup is ready to use.
 async with page.expect_popup() as page_info:
     await page.get_by_role("button").click() # click triggers a popup.
 popup = await page_info.value
- # Following resolves after "domcontentloaded" event.
+# Wait for the "DOMContentLoaded" event.
 await popup.wait_for_load_state("domcontentloaded")
 print(await popup.title()) # popup is ready to use.
 ```
@@ -4018,7 +4008,7 @@ print(await popup.title()) # popup is ready to use.
 with page.expect_popup() as page_info:
     page.get_by_role("button").click() # click triggers a popup.
 popup = page_info.value
- # Following resolves after "domcontentloaded" event.
+# Wait for the "DOMContentLoaded" event.
 popup.wait_for_load_state("domcontentloaded")
 print(popup.title()) # popup is ready to use.
 ```
@@ -4026,8 +4016,9 @@ print(popup.title()) # popup is ready to use.
 ```csharp
 var popup = await page.RunAndWaitForPopupAsync(async () =>
 {
-    await page.GetByRole("button").ClickAsync(); // click triggers the popup/
+    await page.GetByRole(AriaRole.Button).ClickAsync(); // click triggers the popup
 });
+// Wait for the "DOMContentLoaded" event.
 await popup.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 Console.WriteLine(await popup.TitleAsync()); // popup is ready to use.
 ```
@@ -4056,40 +4047,39 @@ cause the page to navigate. e.g. The click target has an `onclick` handler that 
 Consider this example:
 
 ```js
-// Note that Promise.all prevents a race condition
-// between clicking and waiting for the navigation.
-const [response] = await Promise.all([
-  // It is important to call waitForNavigation before click to set up waiting.
-  page.waitForNavigation(),
-  // Clicking the link will indirectly cause a navigation.
-  page.locator('a.delayed-navigation').click(),
-]);
+// Start waiting for navigation before clicking. Note no await.
+const navigationPromise = page.waitForNavigation();
+await page.getByText('Navigate after timeout').click();
+await navigationPromise;
 ```
 
 ```java
 // The method returns after navigation has finished
 Response response = page.waitForNavigation(() -> {
-  page.click("a.delayed-navigation"); // Clicking the link will indirectly cause a navigation
+  // This action triggers the navigation after a timeout.
+  page.getByText("Navigate after timeout").click();
 });
 ```
 
 ```python async
 async with page.expect_navigation():
-    await page.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
+    # This action triggers the navigation after a timeout.
+    await page.get_by_text("Navigate after timeout").click()
 # Resolves after navigation has finished
 ```
 
 ```python sync
 with page.expect_navigation():
-    page.click("a.delayed-navigation") # clicking the link will indirectly cause a navigation
+    # This action triggers the navigation after a timeout.
+    page.get_by_text("Navigate after timeout").click()
 # Resolves after navigation has finished
 ```
 
 ```csharp
 await page.RunAndWaitForNavigationAsync(async () =>
 {
-    // Clicking the link will indirectly cause a navigation.
-    await page.ClickAsync("a.delayed-navigation");
+    // This action triggers the navigation after a timeout.
+    await page.GetByText("Navigate after timeout").ClickAsync();
 });
 
 // The method continues after navigation has finished
@@ -4141,57 +4131,50 @@ Waits for the matching request and returns it. See [waiting for event](../events
 **Usage**
 
 ```js
-// Note that Promise.all prevents a race condition
-// between clicking and waiting for the request.
-const [request] = await Promise.all([
-  // Waits for the next request with the specified url
-  page.waitForRequest('https://example.com/resource'),
-  // Triggers the request
-  page.click('button.triggers-request'),
-]);
+// Start waiting for request before clicking. Note no await.
+const requestPromise = page.waitForRequest('https://example.com/resource');
+await page.getByText('trigger request').click();
+const request = await requestPromise;
 
-// Alternative way with a predicate.
-const [request] = await Promise.all([
-  // Waits for the next request matching some conditions
-  page.waitForRequest(request => request.url() === 'https://example.com' && request.method() === 'GET'),
-  // Triggers the request
-  page.click('button.triggers-request'),
-]);
+// Alternative way with a predicate. Note no await.
+const requestPromise = page.waitForRequest(request => request.url() === 'https://example.com' && request.method() === 'GET');
+await page.getByText('trigger request').click();
+const request = await requestPromise;
 ```
 
 ```java
 // Waits for the next request with the specified url
 Request request = page.waitForRequest("https://example.com/resource", () -> {
   // Triggers the request
-  page.click("button.triggers-request");
+  page.getByText("trigger request").click();
 });
 
 // Waits for the next request matching some conditions
 Request request = page.waitForRequest(request -> "https://example.com".equals(request.url()) && "GET".equals(request.method()), () -> {
   // Triggers the request
-  page.click("button.triggers-request");
+  page.getByText("trigger request").click();
 });
 ```
 
 ```python async
 async with page.expect_request("http://example.com/resource") as first:
-    await page.click('button')
+    await page.get_by_text("trigger request").click()
 first_request = await first.value
 
 # or with a lambda
 async with page.expect_request(lambda request: request.url == "http://example.com" and request.method == "get") as second:
-    await page.click('img')
+    await page.get_by_text("trigger request").click()
 second_request = await second.value
 ```
 
 ```python sync
 with page.expect_request("http://example.com/resource") as first:
-    page.click('button')
+    page.get_by_text("trigger request").click()
 first_request = first.value
 
 # or with a lambda
 with page.expect_request(lambda request: request.url == "http://example.com" and request.method == "get") as second:
-    page.click('img')
+    page.get_by_text("trigger request").click()
 second_request = second.value
 ```
 
@@ -4199,13 +4182,13 @@ second_request = second.value
 // Waits for the next request with the specified url.
 await page.RunAndWaitForRequestAsync(async () =>
 {
-    await page.ClickAsync("button");
+    await page.GetByText("trigger request").ClickAsync();
 }, "http://example.com/resource");
 
 // Alternative way with a predicate.
 await page.RunAndWaitForRequestAsync(async () =>
 {
-    await page.ClickAsync("button");
+    await page.GetByText("trigger request").ClickAsync();
 }, request => request.Url == "https://example.com" && request.Method == "GET");
 ```
 
@@ -4266,60 +4249,53 @@ Returns the matched response. See [waiting for event](../events.md#waiting-for-e
 **Usage**
 
 ```js
-// Note that Promise.all prevents a race condition
-// between clicking and waiting for the response.
-const [response] = await Promise.all([
-  // Waits for the next response with the specified url
-  page.waitForResponse('https://example.com/resource'),
-  // Triggers the response
-  page.click('button.triggers-response'),
-]);
+// Start waiting for response before clicking. Note no await.
+const responsePromise = page.waitForRequest('https://example.com/resource');
+await page.getByText('trigger response').click();
+const response = await responsePromise;
 
-// Alternative way with a predicate.
-const [response] = await Promise.all([
-  // Waits for the next response matching some conditions
-  page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200),
-  // Triggers the response
-  page.click('button.triggers-response'),
-]);
+// Alternative way with a predicate. Note no await.
+const responsePromise = page.waitForRequest(response => response.url() === 'https://example.com' && response.status() === 200);
+await page.getByText('trigger response').click();
+const response = await responsePromise;
 ```
 
 ```java
 // Waits for the next response with the specified url
 Response response = page.waitForResponse("https://example.com/resource", () -> {
   // Triggers the response
-  page.click("button.triggers-response");
+  page.getByText("trigger response").click();
 });
 
 // Waits for the next response matching some conditions
 Response response = page.waitForResponse(response -> "https://example.com".equals(response.url()) && response.status() == 200, () -> {
   // Triggers the response
-  page.click("button.triggers-response");
+  page.getByText("trigger response").click();
 });
 ```
 
 ```python async
 async with page.expect_response("https://example.com/resource") as response_info:
-    await page.click("input")
+    await page.get_by_text("trigger response").click()
 response = await response_info.value
 return response.ok
 
 # or with a lambda
 async with page.expect_response(lambda response: response.url == "https://example.com" and response.status == 200) as response_info:
-    await page.click("input")
+    await page.get_by_text("trigger response").click()
 response = await response_info.value
 return response.ok
 ```
 
 ```python sync
 with page.expect_response("https://example.com/resource") as response_info:
-    page.click("input")
+    page.get_by_text("trigger response").click()
 response = response_info.value
 return response.ok
 
 # or with a lambda
 with page.expect_response(lambda response: response.url == "https://example.com" and response.status == 200) as response_info:
-    page.click("input")
+    page.get_by_text("trigger response").click()
 response = response_info.value
 return response.ok
 ```
@@ -4328,13 +4304,13 @@ return response.ok
 // Waits for the next response with the specified url.
 await page.RunAndWaitForResponseAsync(async () =>
 {
-    await page.ClickAsync("button.triggers-response");
+    await page.GetByText("trigger response").ClickAsync();
 }, "http://example.com/resource");
 
 // Alternative way with a predicate.
 await page.RunAndWaitForResponseAsync(async () =>
 {
-    await page.ClickAsync("button");
+    await page.GetByText("trigger response").ClickAsync();
 }, response => response.Url == "https://example.com" && response.Status == 200);
 ```
 
