@@ -115,16 +115,6 @@ test('args array should work', async ({ runInlineTest }, testInfo) => {
   expect.soft(snapshotPath['proj']).toBe(path.join('.jpegfoo', 'bar', 'baz'));
 });
 
-test('moving up directory should work fine with test file dir', async ({ runInlineTest }, testInfo) => {
-  const snapshotPath = await getSnapshotPaths(runInlineTest, testInfo, {
-    projects: [{
-      name: 'proj',
-      snapshotPathTemplate: '{testFileDir}/../image{ext}',
-    }],
-  }, ['foo', 'bar', 'baz.jpeg']);
-  expect.soft(snapshotPath['proj']).toBe(path.join('a', 'b', 'image.jpeg'));
-});
-
 test('arg should receive default arg', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.js': `
