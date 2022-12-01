@@ -284,7 +284,7 @@ class Recorder {
       return true;
     const target = this._deepEventTarget(event);
 
-    if (target.nodeName === 'INPUT' && (target as HTMLInputElement).type.toLocaleLowerCase() === 'file') {
+    if (target.nodeName === 'INPUT' && (target as HTMLInputElement).type.toLowerCase() === 'file') {
       globalThis.__pw_recorderRecordAction({
         name: 'setInputFiles',
         selector: this._activeModel!.selector,
@@ -295,7 +295,7 @@ class Recorder {
     }
 
     if (['INPUT', 'TEXTAREA'].includes(target.nodeName) || target.isContentEditable) {
-      if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes((target as HTMLInputElement).type.toLocaleLowerCase())) {
+      if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes((target as HTMLInputElement).type.toLowerCase())) {
         // Checkbox is handled in click, we can't let input trigger on checkbox - that would mean we dispatched click events while recording.
         return;
       }

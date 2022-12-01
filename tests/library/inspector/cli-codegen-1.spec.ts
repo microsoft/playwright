@@ -309,18 +309,18 @@ test.describe('cli codegen', () => {
   test('should fill [contentEditable]', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 
-    await recorder.setContentAndWait(`<div id="content" contentEditable oninput="console.log(content.innerText)"></div>`);
+    await recorder.setContentAndWait(`<div id="content" contenteditable="" oninput="console.log(content.innerText)"/>`);
     const locator = await recorder.focusElement('div');
     expect(locator).toBe(`locator('#content')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('JavaScript', 'fill'),
-      page.fill('div', 'John\nDoe')
+      page.fill('div', 'John Doe')
     ]);
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('#content').fill('John\\nDoe');`);
-    expect(message.text()).toBe('John\nDoe');
+  await page.locator('#content').fill('John Doe');`);
+    expect(message.text()).toBe('John Doe');
   });
 
   test('should press', async ({ page, openRecorder }) => {
