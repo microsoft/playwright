@@ -355,7 +355,6 @@ test.describe.configure({
 for (let i = 0; i < users.length; i++) {
   test(`login user ${i}`, async ({ page }) => {
     await page.goto('https://github.com/login');
-    // Use a unique username for each worker.
     await page.getByLabel('User Name').fill(users[i].username);
     await page.getByLabel('Password').fill(users[i].password);
     await page.getByText('Sign in').click();
