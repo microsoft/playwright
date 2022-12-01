@@ -102,9 +102,13 @@ export function walkForTsConfig(
   directory: string,
   existsSync: (path: string) => boolean = fs.existsSync
 ): string | undefined {
-  const configPath = path.join(directory, "./tsconfig.json");
-  if (existsSync(configPath)) {
-    return configPath;
+  const tsconfigPath = path.join(directory, "./tsconfig.json");
+  if (existsSync(tsconfigPath)) {
+    return tsconfigPath;
+  }
+  const jsconfigPath = path.join(directory, "./jsconfig.json");
+  if (existsSync(jsconfigPath)) {
+    return jsconfigPath;
   }
 
   const parentDirectory = path.join(directory, "../");
@@ -129,7 +133,7 @@ function loadTsconfig(
 
   const configString = readFileSync(configFilePath);
   const cleanedJson = StripBom(configString);
-  const config: Tsconfig = json5.parse(cleanedJson);
+  let config: Tsconfig = json5.parse(cleanedJson);
   let extendedConfig = config.extends;
 
   if (extendedConfig) {
@@ -166,7 +170,7 @@ function loadTsconfig(
       );
     }
 
-    return {
+    config = {
       ...base,
       ...config,
       compilerOptions: {
@@ -175,6 +179,12 @@ function loadTsconfig(
       },
     };
   }
+
+  if (path.basename(configFilePath) === 'jsconfig.json' && config.compilerOptions?.allowJs === undefined) {
+    config.compilerOptions = config.compilerOptions || {};
+    config.compilerOptions.allowJs = true;
+  }
+
   return config;
 }
 
