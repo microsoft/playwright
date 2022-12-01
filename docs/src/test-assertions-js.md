@@ -13,10 +13,10 @@ Playwright also extends it with convenience async matchers that will wait until
 the expected condition is met. Consider the following example:
 
 ```js
-await expect(page.locator('.status')).toHaveText('Submitted');
+await expect(page.getByTestId('status')).toHaveText('Submitted');
 ```
 
-Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"` text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value in test config.
+Playwright Test will be re-testing the node with the test id of `status` until the fetched Node has the `"Submitted"` text. It will re-fetch the node and check it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value in the test config.
 
 By default, the timeout for assertions is set to 5 seconds. Learn more about [various timeouts](./test-timeouts.md).
 
@@ -66,12 +66,12 @@ but mark the test as failed.
 
 ```js
 // Make a few checks that will not stop the test when failed...
-await expect.soft(page.locator('#status')).toHaveText('Success');
-await expect.soft(page.locator('#eta')).toHaveText('1 day');
+await expect.soft(page.getByTestId('status')).toHaveText('Success');
+await expect.soft(page.getByTestId('eta')).toHaveText('1 day');
 
 // ... and continue the test to check more things.
-await page.locator('#next-page').click();
-await expect.soft(page.locator('#title')).toHaveText('Make another order');
+await page.getByRole('link', { name: 'next page' }).click();
+await expect.soft(page.getByRole('heading', { name: 'Make another order' })).toBeVisible();
 ```
 
 At any point during test execution, you can check whether there were any
@@ -79,8 +79,8 @@ soft assertion failures:
 
 ```js
 // Make a few checks that will not stop the test when failed...
-await expect.soft(page.locator('#status')).toHaveText('Success');
-await expect.soft(page.locator('#eta')).toHaveText('1 day');
+await expect.soft(page.getByTestId('status')).toHaveText('Success');
+await expect.soft(page.getByTestId('eta')).toHaveText('1 day');
 
 // Avoid running further if there were soft assertion failures.
 expect(test.info().errors).toHaveLength(0);
