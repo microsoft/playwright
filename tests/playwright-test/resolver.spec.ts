@@ -398,3 +398,37 @@ test('should not respect path resolver for JS files w/o allowJS', async ({ runIn
   expect(stripAnsi(result.output)).toContain('Cannot find module \'util/b\'');
   expect(result.exitCode).toBe(1);
 });
+
+test('should respect path resolver for JS and TS files from jsconfig.json', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `export default { projects: [{name: 'foo'}], };`,
+    'jsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "util/*": ["./foo/bar/util/*"],
+        },
+      },
+    }`,
+    'a.test.js': `
+      const { foo } = require('util/b');
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+      });
+    `,
+    'b.test.ts': `
+      import { foo } from 'util/b';
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+      });
+    `,
+    'foo/bar/util/b.ts': `
+      module.exports = { foo: 'foo' };
+    `,
+  });
+
+  expect(result.passed).toBe(2);
+  expect(result.exitCode).toBe(0);
+});
