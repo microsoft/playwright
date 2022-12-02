@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getComparator } from 'playwright-core/lib/utils/comparators';
+import { getComparator } from 'playwright-core/lib/image_tools/comparators';
 
 const pngComparator = getComparator('image/png');
 type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
