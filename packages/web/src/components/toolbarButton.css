@@ -16,15 +16,25 @@
 
 .toolbar-button {
   flex: none;
-  border: none;
-  outline: none;
   color: var(--vscode-sideBarTitle-foreground);
   background: transparent;
-  padding: 4px;
   margin-left: 10px;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
+  border-radius: 6px;
+  border: 1px solid var(--vscode-dropdown-border);
+  font-family: inherit;
+  line-height: 20px;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: pointer;
+  appearance: none;
+  user-select: none;
+  text-decoration: none;
+  text-align: center;
+  padding: 5px 8px;
+  font-size: 14px;
+  color: var(--vscode-sideBarTitle-foreground);
 }
 
 .toolbar-button:disabled {
@@ -38,4 +48,8 @@
 
 .toolbar-button:not(:disabled):active {
   background-color: var(--vscode-toolbar-activeBackground);
+}
+
+.toolbar-button > :not(:last-child) {
+  margin-right: 8px;
 }

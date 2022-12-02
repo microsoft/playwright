@@ -23,6 +23,7 @@ export interface ToolbarButtonProps {
   icon: string,
   disabled?: boolean,
   toggled?: boolean,
+  type?: 'button' | 'submit' | 'reset',
   onClick: () => void,
 }
 
@@ -32,10 +33,11 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
   icon = '',
   disabled = false,
   toggled = false,
+  type = 'button',
   onClick = () => {},
 }) => {
   let className = `toolbar-button ${icon}`;
   if (toggled)
     className += ' toggled';
-  return <button className={className} onClick={onClick} title={title} disabled={!!disabled}><span className={`codicon codicon-${icon}`}></span>{ children }</button>;
+  return <button className={className} type={type} onClick={onClick} title={title} disabled={!!disabled}><span className={`codicon codicon-${icon}`}></span>{ children }</button>;
 };
