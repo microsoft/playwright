@@ -283,9 +283,31 @@ test('test', async ({ page }) => {
 
 When you set an entry on [`method: TestInfo.storage`] Playwright will store it in a separate file under `.playwright-storage/`. Playwright does not delete those files automatically. You can leverage this fact to persist storage state between test runs and only sign in if the entry is not in the storage yet.
 
-If you can log in once and commit the storage state into the repository, you won't need the setup that signs in at all, just specify the name of the storage entry as above and it'll be picked up.
+```js tab=js-js
+// github-login.setup.js
+const { test } = require('@playwright/test');
 
-However, you may need to periodically update the storage state entry if your app requires you to re-authenticate after some amount of time. For example, if your app prompts you to sign in every week even if you're on the same computer/browser, you'll need to update saved storage state at least this often.
+test('sign in', async ({ page, context }) => {
+  if (test.info().storage().get('github-test-user'))
+    return;
+  // ... login here ...
+  await test.info().storage().set('github-test-user', await context.storageState());
+});
+```
+
+```js tab=js-ts
+// github-login.setup.ts
+import { test } from '@playwright/test';
+
+test('sign in', async ({ page, context }) => {
+  if (test.info().storage().get('github-test-user'))
+    return;
+  // ... login here ...
+  await test.info().storage().set('github-test-user', await context.storageState());
+});
+```
+
+You may need to periodically update the storage state entry if your app requires you to re-authenticate after some amount of time. For example, if your app prompts you to sign in every week even if you're on the same computer/browser, you'll need to update saved storage state at least this often. You can simply delete `.playwright-storage/` directory to clear the storage and run the tests again so that they populate it.
 
 ### Sign in via API request
 * langs: js
