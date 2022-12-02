@@ -987,6 +987,7 @@ scheme.PageExpectScreenshotParams = tObject({
     selector: tString,
   })),
   comparatorOptions: tOptional(tObject({
+    comparator: tOptional(tString),
     maxDiffPixels: tOptional(tNumber),
     maxDiffPixelRatio: tOptional(tNumber),
     threshold: tOptional(tNumber),

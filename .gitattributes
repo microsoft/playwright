@@ -1,5 +1,4 @@
 # text files must be lf for golden file tests to work
 * text=auto eol=lf
-
 # make project show as TS on GitHub
 *.js linguist-detectable=false

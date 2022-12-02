@@ -145,6 +145,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       maxDiffPixels: options.maxDiffPixels,
       maxDiffPixelRatio: options.maxDiffPixelRatio,
       threshold: options.threshold,
+      comparator: options.comparator,
     };
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
@@ -305,6 +306,7 @@ export async function toHaveScreenshot(
   const helper = new SnapshotHelper(
       testInfo, snapshotPathResolver, 'png',
       {
+        comparator: config?.comparator,
         maxDiffPixels: config?.maxDiffPixels,
         maxDiffPixelRatio: config?.maxDiffPixelRatio,
         threshold: config?.threshold,

@@ -17,26 +17,17 @@
 
 import { colors, jpegjs } from '../utilsBundle';
 import pixelmatch from '../third_party/pixelmatch';
+import { compare } from '../image_tools/compare';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';
 import { PNG } from '../utilsBundle';
 
-export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number };
+export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, comparator?: string };
 export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
 
-let customPNGComparator: Comparator | undefined;
-if (process.env.PW_CUSTOM_PNG_COMPARATOR) {
-  try {
-    customPNGComparator = require(process.env.PW_CUSTOM_PNG_COMPARATOR);
-    if (typeof customPNGComparator !== 'function')
-      customPNGComparator = undefined;
-  } catch (e) {
-  }
-}
-
 export function getComparator(mimeType: string): Comparator {
   if (mimeType === 'image/png')
-    return customPNGComparator ?? compareImages.bind(null, 'image/png');
+    return compareImages.bind(null, 'image/png');
   if (mimeType === 'image/jpeg')
     return compareImages.bind(null, 'image/jpeg');
   if (mimeType === 'text/plain')
@@ -68,9 +59,18 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
     };
   }
   const diff = new PNG({ width: expected.width, height: expected.height });
-  const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, {
-    threshold: options.threshold ?? 0.2,
-  });
+  let count;
+  if (options.comparator === 'ssim-cie94') {
+    count = compare(expected.data, actual.data, diff.data, expected.width, expected.height, {
+      maxColorDeltaE94: (options.threshold ?? 0.01) * 100,
+    });
+  } else if ((options.comparator ?? 'pixelmatch') === 'pixelmatch') {
+    count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, {
+      threshold: options.threshold ?? 0.2,
+    });
+  } else {
+    throw new Error(`Configuration specifies unknown comparator "${options.comparator}"`);
+  }
 
   const maxDiffPixels1 = options.maxDiffPixels;
   const maxDiffPixels2 = options.maxDiffPixelRatio !== undefined ? expected.width * expected.height * options.maxDiffPixelRatio : undefined;

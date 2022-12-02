@@ -43,6 +43,9 @@ Note that matching snapshots only work with Playwright test runner.
 
 Snapshot name.
 
+### option: SnapshotAssertions.toMatchSnapshot#1.comparator = %%-assertions-comparator-%%
+* since: v1.29
+
 ### option: SnapshotAssertions.toMatchSnapshot#1.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 * since: v1.22
 
@@ -78,6 +81,9 @@ expect(await page.screenshot()).toMatchSnapshot({
 Learn more about [visual comparisons](../test-snapshots.md).
 
 Note that matching snapshots only work with Playwright test runner.
+
+### option: SnapshotAssertions.toMatchSnapshot#2.comparator = %%-assertions-comparator-%%
+* since: v1.29
 
 ### option: SnapshotAssertions.toMatchSnapshot#2.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 * since: v1.22

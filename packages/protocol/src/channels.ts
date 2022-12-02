@@ -1825,6 +1825,7 @@ export type PageExpectScreenshotParams = {
     selector: string,
   },
   comparatorOptions?: {
+    comparator?: string,
     maxDiffPixels?: number,
     maxDiffPixelRatio?: number,
     threshold?: number,
@@ -1850,6 +1851,7 @@ export type PageExpectScreenshotOptions = {
     selector: string,
   },
   comparatorOptions?: {
+    comparator?: string,
     maxDiffPixels?: number,
     maxDiffPixelRatio?: number,
     threshold?: number,

@@ -1266,6 +1266,7 @@ Page:
         comparatorOptions:
           type: object?
           properties:
+            comparator: string?
             maxDiffPixels: number?
             maxDiffPixelRatio: number?
             threshold: number?
