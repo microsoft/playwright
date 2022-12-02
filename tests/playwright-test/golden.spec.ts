@@ -631,7 +631,7 @@ test('should respect comparator name', async ({ runInlineTest }) => {
       test('should pass', ({}) => {
         expect(Buffer.from('${actual.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
           threshold: 0,
-          comparator: 'ssim_v1',
+          comparator: 'ssim-cie94',
         });
       });
       test('should fail', ({}) => {

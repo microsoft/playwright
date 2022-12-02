@@ -1035,7 +1035,7 @@ test('should respect comparator name', async ({ runInlineTest }) => {
         await page.goto('${actualURL}');
         await expect(page.locator('img')).toHaveScreenshot('snapshot.png', {
           threshold: 0,
-          comparator: 'ssim_v1',
+          comparator: 'ssim-cie94',
         });
       });
       pwt.test('should fail', async ({ page }) => {

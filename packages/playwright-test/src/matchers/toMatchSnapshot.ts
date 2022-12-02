@@ -306,6 +306,7 @@ export async function toHaveScreenshot(
   const helper = new SnapshotHelper(
       testInfo, snapshotPathResolver, 'png',
       {
+        comparator: config?.comparator,
         maxDiffPixels: config?.maxDiffPixels,
         maxDiffPixelRatio: config?.maxDiffPixelRatio,
         threshold: config?.threshold,

@@ -60,7 +60,7 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   }
   const diff = new PNG({ width: expected.width, height: expected.height });
   let count;
-  if (options.comparator === 'ssim_v1') {
+  if (options.comparator === 'ssim-cie94') {
     count = compare(expected.data, actual.data, diff.data, expected.width, expected.height, {
       maxColorDeltaE94: (options.threshold ?? 0.01) * 100,
     });

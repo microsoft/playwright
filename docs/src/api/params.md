@@ -802,7 +802,7 @@ An acceptable amount of pixels that could be different. Default is configurable 
 
 ## assertions-comparator
 * langs: js
-- `comparator` <[string]> Either `"pixelmatch"` or `"ssim_v1"`.
+- `comparator` <[string]> Either `"pixelmatch"` or `"ssim-cie94"`.
 
 A comparator function to use when comparing images.
 

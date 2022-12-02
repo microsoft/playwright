@@ -48,9 +48,7 @@ export function compare(actual: Buffer, expected: Buffer, diff: Buffer, width: n
     drawPixel(width, diff, x, y, value, value, value);
   };
 
-  const fastR = new FastStats(r1, r2);
-  const fastG = new FastStats(g1, g2);
-  const fastB = new FastStats(b1, b2);
+  let fastR, fastG, fastB;
 
   let diffCount = 0;
   for (let y = 0; y < height; ++y){
@@ -77,6 +75,11 @@ export function compare(actual: Buffer, expected: Buffer, diff: Buffer, width: n
 
       // if this pixel is a part of a flood fill of a 3x3 square then it cannot be
       // anti-aliasing pixel so it must be a pixel difference.
+      if (!fastR || !fastG || !fastB) {
+        fastR = new FastStats(r1, r2);
+        fastG = new FastStats(g1, g2);
+        fastB = new FastStats(b1, b2);
+      }
       const [varX1, varY1] = r1.boundXY(x - VARIANCE_WINDOW_RADIUS, y - VARIANCE_WINDOW_RADIUS);
       const [varX2, varY2] = r1.boundXY(x + VARIANCE_WINDOW_RADIUS, y + VARIANCE_WINDOW_RADIUS);
       const var1 = fastR.varianceC1(varX1, varY1, varX2, varY2) + fastG.varianceC1(varX1, varY1, varX2, varY2) + fastB.varianceC1(varX1, varY1, varX2, varY2);
