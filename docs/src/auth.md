@@ -247,10 +247,7 @@ const config = {
 module.exports = config;
 ```
 
-In the tests that require authentication specify name of the storage entry
-that contains state of the authenticated context, Playwright will automatically
-load it when creating new contexts for the tests:
-
+Specify [`property: TestOptions.storageStateName`] in the test files that need to be logged in. Playwright will use the previously saved state when creating a page.
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
