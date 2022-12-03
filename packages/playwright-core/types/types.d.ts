@@ -9980,6 +9980,10 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Click an element.
+   *
+   * **Details**
+   *
    * This method clicks the element by performing the following steps:
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
