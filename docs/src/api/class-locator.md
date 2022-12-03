@@ -128,6 +128,10 @@ If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` e
 ## async method: Locator.click
 * since: v1.14
 
+Click an element.
+
+**Details**
+
 This method clicks the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
