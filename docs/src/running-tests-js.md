@@ -61,7 +61,7 @@ For a better debugging experience check out the [VS Code Extension](./getting-st
 
 ## Debugging Tests
 
-Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. using `console.log` or inside your IDE or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md). Playwright comes with the [Playwright Inspector](./debug.md#playwright-inspector) which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./selectors.md).
+Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. using `console.log` or inside your IDE or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md). Playwright comes with the [Playwright Inspector](./debug.md#playwright-inspector) which allows you to step through Playwright API calls, see their debug logs and explore [locators](./locators.md).
 
 
 - Debugging all tests:
@@ -98,7 +98,7 @@ npx playwright show-report
 
 <img width="963" alt="HTML Report > Test Reports view" src="https://user-images.githubusercontent.com/13063165/189140120-71a6bc41-f921-40be-a7a4-61d44da33b20.png" />
 
-You can click on each test and explore the tests errors as well as each step of the test. 
+You can click on each test and explore the tests errors as well as each step of the test.
 
 <img width="955" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/189140263-0e3ac2d9-4e75-40c8-b29c-58323c8be433.png" />
 

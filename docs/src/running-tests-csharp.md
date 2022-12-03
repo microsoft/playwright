@@ -36,7 +36,7 @@ You can run a single test, a set of tests or all tests. Tests can be run on diff
   ```
 
 - Running Tests on multiple browsers
-  
+
   To run your test on multiple browsers or configurations you need to invoke the `dotnet test` command multiple times. There you can then either specify the `BROWSER` environment variable or set the `Playwright.BrowserName` via the runsettings file:
 
   ```bash
@@ -58,7 +58,7 @@ For more information see [selective unit tests](https://docs.microsoft.com/en-us
 
 ## Debugging Tests
 
-Since Playwright runs in .NET, you can debug it with your debugger of choice in e.g. Visual Studio Code or Visual Studio. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./selectors.md).
+Since Playwright runs in .NET, you can debug it with your debugger of choice in e.g. Visual Studio Code or Visual Studio. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [locators](./locators.md).
 
 ```bash tab=bash-bash lang=csharp
 PWDEBUG=1 dotnet test

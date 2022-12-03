@@ -24,13 +24,13 @@ Playwright enables fast, reliable and capable testing and automation across all 
 
 * **Fast isolation with browser contexts**. Reuse a single browser instance for multiple isolated execution environments with [browser contexts](./browser-contexts.md).
 
-* **Resilient element selectors**. Playwright can rely on user-facing strings, like text content and accessibility labels to [select elements](./selectors.md). These strings are more resilient than selectors tightly-coupled to the DOM structure.
+* **Resilient element locators**. Playwright can rely on user-facing strings, like text content and accessibility attributes to [locate elements](./locators.md). These locators are more resilient than selectors tightly-coupled to the DOM structure.
 
 ## Powerful automation capabilities
 * **Multiple domains, pages and frames**. Playwright is an out-of-process automation driver that is not limited by the scope of in-page JavaScript execution and can automate scenarios with [multiple pages](./pages.md).
 
 * **Powerful network control**. Playwright introduces context-wide [network interception](./network.md) to stub and mock network requests.
 
-* **Modern web features**. Playwright supports web components through [shadow-piercing selectors](./selectors.md), [geolocation, permissions](./emulation.md), web workers and other modern web APIs.
+* **Modern web features**. Playwright supports web components through [shadow-piercing locators](./locators.md), [geolocation, permissions](./emulation.md), web workers and other modern web APIs.
 
 * **Capabilities to cover all scenarios**. Support for [file downloads](./downloads.md) and [uploads](./input.md), out-of-process iframes, native [input events](./input.md), and even [dark mode](./emulation.md).
