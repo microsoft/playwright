@@ -77,7 +77,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     }
 
     if (signals.download) {
-      code = `Download download = ${pageAlias}.waitForDownload(() -> {
+      code = `Download download${signals.download.downloadAlias} = ${pageAlias}.waitForDownload(() -> {
         ${code}
       });`;
     }

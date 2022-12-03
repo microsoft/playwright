@@ -624,10 +624,9 @@ test.describe('cli codegen', () => {
     ]);
 
     expect.soft(sources.get('JavaScript').text).toContain(`
-  const [page1] = await Promise.all([
-    page.waitForEvent('popup'),
-    page.getByRole('link', { name: 'link' }).click()
-  ]);`);
+  const page1Promise = page.waitForEvent('popup');
+  await page.getByRole('link', { name: 'link' }).click();
+  const page1 = await page1Promise;`);
 
     expect.soft(sources.get('Java').text).toContain(`
       Page page1 = page.waitForPopup(() -> {
@@ -635,14 +634,14 @@ test.describe('cli codegen', () => {
       });`);
 
     expect.soft(sources.get('Python').text).toContain(`
-    with page.expect_popup() as popup_info:
+    with page.expect_popup() as page1_info:
         page.get_by_role("link", name="link").click()
-    page1 = popup_info.value`);
+    page1 = page1_info.value`);
 
     expect.soft(sources.get('Python Async').text).toContain(`
-    async with page.expect_popup() as popup_info:
+    async with page.expect_popup() as page1_info:
         await page.get_by_role("link", name="link").click()
-    page1 = await popup_info.value`);
+    page1 = await page1_info.value`);
 
     expect.soft(sources.get('C#').text).toContain(`
         var page1 = await page.RunAndWaitForPopupAsync(async () =>

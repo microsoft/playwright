@@ -340,8 +340,8 @@ class ContextRecorder extends EventEmitter {
   private _generator: CodeGenerator;
   private _pageAliases = new Map<Page, string>();
   private _lastPopupOrdinal = 0;
-  private _lastDialogOrdinal = 0;
-  private _lastDownloadOrdinal = 0;
+  private _lastDialogOrdinal = -1;
+  private _lastDownloadOrdinal = -1;
   private _timers = new Set<NodeJS.Timeout>();
   private _context: BrowserContext;
   private _params: channels.BrowserContextRecorderSupplementEnableParams;
@@ -647,12 +647,14 @@ class ContextRecorder extends EventEmitter {
 
   private _onDownload(page: Page) {
     const pageAlias = this._pageAliases.get(page)!;
-    this._generator.signal(pageAlias, page.mainFrame(), { name: 'download', downloadAlias: String(++this._lastDownloadOrdinal) });
+    ++this._lastDownloadOrdinal;
+    this._generator.signal(pageAlias, page.mainFrame(), { name: 'download', downloadAlias: this._lastDownloadOrdinal ? String(this._lastDownloadOrdinal) : '' });
   }
 
   private _onDialog(page: Page) {
     const pageAlias = this._pageAliases.get(page)!;
-    this._generator.signal(pageAlias, page.mainFrame(), { name: 'dialog', dialogAlias: String(++this._lastDialogOrdinal) });
+    ++this._lastDialogOrdinal;
+    this._generator.signal(pageAlias, page.mainFrame(), { name: 'dialog', dialogAlias: this._lastDialogOrdinal ? String(this._lastDialogOrdinal) : '' });
   }
 }
 
