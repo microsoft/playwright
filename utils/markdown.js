@@ -283,8 +283,8 @@ function render(nodes, options) {
  */
 function innerRenderMdNode(indent, node, lastNode, result, options) {
   const newLine = () => {
-    if (result.length && result[result.length - 1] !== '')
-      result.push('');
+    if (result.length && (result[result.length - 1] || '').trim() !== '')
+      result.push(indent);
   };
 
   if (node.type.startsWith('h')) {
