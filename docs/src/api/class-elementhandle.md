@@ -379,8 +379,7 @@ Optional event-specific initialization properties.
 Returns the return value of [`param: expression`].
 
 The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first
-argument to [`param: expression`]. See [Working with selectors](../selectors.md) for more
-details. If no elements match the selector, the method throws an error.
+argument to [`param: expression`]. If no elements match the selector, the method throws an error.
 
 If [`param: expression`] returns a [Promise], then [`method: ElementHandle.evalOnSelector`] would wait for the promise to resolve and return its
 value.
@@ -439,8 +438,7 @@ Optional argument to pass to [`param: expression`].
 Returns the return value of [`param: expression`].
 
 The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
-matched elements as a first argument to [`param: expression`]. See
-[Working with selectors](../selectors.md) for more details.
+matched elements as a first argument to [`param: expression`].
 
 If [`param: expression`] returns a [Promise], then [`method: ElementHandle.evalOnSelectorAll`] would wait for the promise to resolve and return its
 value.
@@ -677,8 +675,7 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
   - alias-js: $
 - returns: <[null]|[ElementHandle]>
 
-The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See
-[Working with selectors](../selectors.md) for more details. If no elements match the selector,
+The method finds an element matching the specified selector in the `ElementHandle`'s subtree. If no elements match the selector,
 returns `null`.
 
 ### param: ElementHandle.querySelector.selector = %%-query-selector-%%
@@ -691,8 +688,7 @@ returns `null`.
   - alias-js: $$
 - returns: <[Array]<[ElementHandle]>>
 
-The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See
-[Working with selectors](../selectors.md) for more details. If no elements match the selector,
+The method finds all elements matching the specified selector in the `ElementHandle`s subtree. If no elements match the selector,
 returns empty array.
 
 ### param: ElementHandle.querySelectorAll.selector = %%-query-selector-%%
