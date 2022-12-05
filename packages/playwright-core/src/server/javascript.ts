@@ -27,10 +27,16 @@ export type RemoteObject = {
   value?: any
 };
 
-type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
+interface TaggedAsJSHandle<T> {
+  __jshandle: T;
+}
+interface TaggedAsElementHandle<T> {
+  __elementhandle: T;
+}
+type NoHandles<Arg> = Arg extends TaggedAsJSHandle<any> ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
 type Unboxed<Arg> =
-  Arg extends dom.ElementHandle<infer T> ? T :
-  Arg extends JSHandle<infer T> ? T :
+  Arg extends TaggedAsElementHandle<infer T> ? T :
+  Arg extends TaggedAsJSHandle<infer T> ? T :
   Arg extends NoHandles<Arg> ? Arg :
   Arg extends [infer A0] ? [Unboxed<A0>] :
   Arg extends [infer A0, infer A1] ? [Unboxed<A0>, Unboxed<A1>] :
@@ -129,6 +135,7 @@ export class ExecutionContext extends SdkObject {
 }
 
 export class JSHandle<T = any> extends SdkObject {
+  __jshandle: T = true as any;
   readonly _context: ExecutionContext;
   _disposed = false;
   readonly _objectId: ObjectId | undefined;
