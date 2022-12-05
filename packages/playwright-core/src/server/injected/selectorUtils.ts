@@ -50,38 +50,6 @@ export function matchesAttributePart(value: any, attr: AttributeSelectorPart) {
   return false;
 }
 
-
-export function createLaxTextMatcher(text: string): TextMatcher {
-  text = text.trim().replace(/\s+/g, ' ').toLowerCase();
-  return (elementText: ElementText) => {
-    const s = elementText.full.trim().replace(/\s+/g, ' ').toLowerCase();
-    return s.includes(text);
-  };
-}
-
-export function createStrictTextMatcher(text: string): TextMatcher {
-  text = text.trim().replace(/\s+/g, ' ');
-  return (elementText: ElementText) => {
-    if (!text && !elementText.immediate.length)
-      return true;
-    return elementText.immediate.some(s => s.trim().replace(/\s+/g, ' ') === text);
-  };
-}
-
-export function createStrictFullTextMatcher(text: string): TextMatcher {
-  text = text.trim().replace(/\s+/g, ' ');
-  return (elementText: ElementText) => {
-    return elementText.full.trim().replace(/\s+/g, ' ') === text;
-  };
-}
-
-export function createRegexTextMatcher(source: string, flags?: string): TextMatcher {
-  const re = new RegExp(source, flags);
-  return (elementText: ElementText) => {
-    return re.test(elementText.full);
-  };
-}
-
 export function shouldSkipForTextMatching(element: Element | ShadowRoot) {
   return element.nodeName === 'SCRIPT' || element.nodeName === 'NOSCRIPT' || element.nodeName === 'STYLE' || document.head && document.head.contains(element);
 }

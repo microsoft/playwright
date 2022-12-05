@@ -22,7 +22,7 @@ import { createRoleEngine } from './roleSelectorEngine';
 import { parseAttributeSelector } from '../isomorphic/selectorParser';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../isomorphic/selectorParser';
 import { allEngineNames, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
-import { type TextMatcher, elementMatchesText, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher, elementText, createStrictFullTextMatcher } from './selectorUtils';
+import { type TextMatcher, elementMatchesText, elementText, type ElementText } from './selectorUtils';
 import { SelectorEvaluatorImpl } from './selectorEvaluator';
 import { enclosingShadowRootOrDocument, isElementVisible, parentElementOrShadowHost } from './domUtils';
 import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
@@ -33,6 +33,7 @@ import { getAriaCheckedStrict, getAriaDisabled, getAriaRole, getElementAccessibl
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../isomorphic/locatorGenerators';
 import type { Language } from '../isomorphic/locatorGenerators';
+import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
 type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
 
@@ -64,16 +65,12 @@ export type InjectedScriptPoll<T> = {
 export type ElementStateWithoutStable = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked';
 export type ElementState = ElementStateWithoutStable | 'stable';
 
-export interface SelectorEngineV2 {
-  queryAll(root: SelectorRoot, body: any): Element[];
-}
-
 export type HitTargetInterceptionResult = {
   stop: () => 'done' | { hitTargetDescription: string };
 };
 
 export class InjectedScript {
-  private _engines: Map<string, SelectorEngineV2>;
+  private _engines: Map<string, SelectorEngine>;
   _evaluator: SelectorEvaluatorImpl;
   private _stableRafCount: number;
   private _browserName: string;
@@ -247,17 +244,16 @@ export class InjectedScript {
     };
   }
 
-  private _createCSSEngine(): SelectorEngineV2 {
-    const evaluator = this._evaluator;
+  private _createCSSEngine(): SelectorEngine {
     return {
-      queryAll(root: SelectorRoot, body: any) {
-        return evaluator.query({ scope: root as Document | Element, pierceShadow: true }, body);
+      queryAll: (root: SelectorRoot, body: any) => {
+        return this._evaluator.query({ scope: root as Document | Element, pierceShadow: true }, body);
       }
     };
   }
 
   private _createTextEngine(shadow: boolean, internal: boolean): SelectorEngine {
-    const queryList = (root: SelectorRoot, selector: string): Element[] => {
+    const queryAll = (root: SelectorRoot, selector: string): Element[] => {
       const { matcher, kind } = createTextMatcher(selector, internal);
       const result: Element[] = [];
       let lastDidNotMatchSelf: Element | null = null;
@@ -280,22 +276,16 @@ export class InjectedScript {
         appendElement(element);
       return result;
     };
-
-    return {
-      queryAll: (root: SelectorRoot, selector: string): Element[] => {
-        return queryList(root, selector);
-      }
-    };
+    return { queryAll };
   }
 
   private _createInternalHasTextEngine(): SelectorEngine {
-    const evaluator = this._evaluator;
     return {
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
         if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
           return [];
         const element = root as Element;
-        const text = elementText(evaluator._cacheText, element);
+        const text = elementText(this._evaluator._cacheText, element);
         const { matcher } = createTextMatcher(selector, true);
         return matcher(text) ? [element] : [];
       }
@@ -303,7 +293,6 @@ export class InjectedScript {
   }
 
   private _createInternalLabelEngine(): SelectorEngine {
-    const evaluator = this._evaluator;
     return {
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
         const { matcher } = createTextMatcher(selector, true);
@@ -311,7 +300,7 @@ export class InjectedScript {
         const labels = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, 'label') as HTMLLabelElement[];
         for (const label of labels) {
           const control = label.control;
-          if (control && matcher(elementText(evaluator._cacheText, label)))
+          if (control && matcher(elementText(this._evaluator._cacheText, label)))
             result.push(control);
         }
         return result;
@@ -320,7 +309,7 @@ export class InjectedScript {
   }
 
   private _createNamedAttributeEngine(): SelectorEngine {
-    const queryList = (root: SelectorRoot, selector: string): Element[] => {
+    const queryAll = (root: SelectorRoot, selector: string): Element[] => {
       const parsed = parseAttributeSelector(selector, true);
       if (parsed.name || parsed.attributes.length !== 1)
         throw new Error('Malformed attribute selector: ' + selector);
@@ -336,15 +325,10 @@ export class InjectedScript {
       const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, `[${name}]`);
       return elements.filter(e => matcher(e.getAttribute(name)!));
     };
-
-    return {
-      queryAll: (root: SelectorRoot, selector: string): Element[] => {
-        return queryList(root, selector);
-      }
-    };
+    return { queryAll };
   }
 
-  private _createControlEngine(): SelectorEngineV2 {
+  private _createControlEngine(): SelectorEngine {
     return {
       queryAll(root: SelectorRoot, body: any) {
         if (body === 'enter-frame')
@@ -363,7 +347,7 @@ export class InjectedScript {
     };
   }
 
-  private _createHasEngine(): SelectorEngineV2 {
+  private _createHasEngine(): SelectorEngine {
     const queryAll = (root: SelectorRoot, body: NestedSelectorBody) => {
       if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
         return [];
@@ -373,7 +357,7 @@ export class InjectedScript {
     return { queryAll };
   }
 
-  private _createVisibleEngine(): SelectorEngineV2 {
+  private _createVisibleEngine(): SelectorEngine {
     const queryAll = (root: SelectorRoot, body: string) => {
       if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
         return [];
@@ -1369,8 +1353,8 @@ function cssUnquote(s: string): string {
 function createTextMatcher(selector: string, internal: boolean): { matcher: TextMatcher, kind: 'regex' | 'strict' | 'lax' } {
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
     const lastSlash = selector.lastIndexOf('/');
-    const matcher: TextMatcher = createRegexTextMatcher(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
-    return { matcher, kind: 'regex' };
+    const re = new RegExp(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
+    return { matcher: (elementText: ElementText) => re.test(elementText.full), kind: 'regex' };
   }
   const unquote = internal ? JSON.parse.bind(JSON) : cssUnquote;
   let strict = false;
@@ -1387,9 +1371,20 @@ function createTextMatcher(selector: string, internal: boolean): { matcher: Text
     selector = unquote(selector);
     strict = true;
   }
-  if (strict)
-    return { matcher: internal ? createStrictFullTextMatcher(selector) : createStrictTextMatcher(selector), kind: 'strict' };
-  return { matcher: createLaxTextMatcher(selector), kind: 'lax' };
+  selector = normalizeWhiteSpace(selector);
+  if (strict) {
+    if (internal)
+      return { kind: 'strict', matcher: (elementText: ElementText) => normalizeWhiteSpace(elementText.full) === selector };
+
+    const strictTextNodeMatcher = (elementText: ElementText) => {
+      if (!selector && !elementText.immediate.length)
+        return true;
+      return elementText.immediate.some(s => normalizeWhiteSpace(s) === selector);
+    };
+    return { matcher: strictTextNodeMatcher, kind: 'strict' };
+  }
+  selector = selector.toLowerCase();
+  return { kind: 'lax', matcher: (elementText: ElementText) => normalizeWhiteSpace(elementText.full).toLowerCase().includes(selector) };
 }
 
 class ExpectedTextMatcher {
@@ -1430,7 +1425,7 @@ class ExpectedTextMatcher {
     if (!s)
       return s;
     if (this._normalizeWhiteSpace)
-      s = s.trim().replace(/\u200b/g, '').replace(/\s+/g, ' ');
+      s = normalizeWhiteSpace(s);
     if (this._ignoreCase)
       s = s.toLocaleLowerCase();
     return s;
