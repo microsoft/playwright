@@ -58,7 +58,7 @@ it('should report stylesheets that have no coverage', async function({ page, ser
 });
 
 it('should work with media queries', async function({ page, server, browserVersion }) {
-  it.fixme(chromiumVersionLessThan(browserVersion, '110.0.5451.0'), 'https://chromium-review.googlesource.com/c/chromium/src/+/4051280');
+  it.skip(chromiumVersionLessThan(browserVersion, '110.0.5451.0'), 'https://chromium-review.googlesource.com/c/chromium/src/+/4051280');
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/media.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -70,7 +70,7 @@ it('should work with media queries', async function({ page, server, browserVersi
 });
 
 it('should work with complicated usecases', async function({ page, server, browserVersion }) {
-  it.fixme(chromiumVersionLessThan(browserVersion, '110.0.5451.0'), 'https://chromium-review.googlesource.com/c/chromium/src/+/4051280');
+  it.skip(chromiumVersionLessThan(browserVersion, '110.0.5451.0'), 'https://chromium-review.googlesource.com/c/chromium/src/+/4051280');
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/involved.html');
   const coverage = await page.coverage.stopCSSCoverage();
