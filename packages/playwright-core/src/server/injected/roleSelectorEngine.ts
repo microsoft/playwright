@@ -18,6 +18,7 @@ import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { matchesAttributePart } from './selectorUtils';
 import { getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
 import { parseAttributeSelector, type AttributeSelectorPart, type AttributeSelectorOperator } from '../isomorphic/selectorParser';
+import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
 const kSupportedAttributes = ['selected', 'checked', 'pressed', 'expanded', 'level', 'disabled', 'name', 'include-hidden'];
 kSupportedAttributes.sort();
@@ -155,9 +156,9 @@ export function createRoleEngine(internal: boolean): SelectorEngine {
       }
       if (nameAttr !== undefined) {
         // Always normalize whitespace in the accessible name.
-        const accessibleName = getElementAccessibleName(element, includeHidden, hiddenCache).trim().replace(/\s+/g, ' ');
+        const accessibleName = normalizeWhiteSpace(getElementAccessibleName(element, includeHidden, hiddenCache));
         if (typeof nameAttr.value === 'string')
-          nameAttr.value = nameAttr.value.trim().replace(/\s+/g, ' ');
+          nameAttr.value = normalizeWhiteSpace(nameAttr.value);
         // internal:role assumes that [name="foo"i] also means substring.
         if (internal && !nameAttr.caseSensitive && nameAttr.op === '=')
           nameAttr.op = '*=';

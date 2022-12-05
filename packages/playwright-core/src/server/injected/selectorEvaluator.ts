@@ -18,7 +18,8 @@ import type { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSS
 import { customCSSNames } from '../isomorphic/selectorParser';
 import { isElementVisible, parentElementOrShadowHost } from './domUtils';
 import { type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
-import { createLaxTextMatcher, createRegexTextMatcher, createStrictTextMatcher, elementMatchesText, elementText, shouldSkipForTextMatching, type ElementText } from './selectorUtils';
+import { elementMatchesText, elementText, shouldSkipForTextMatching, type ElementText } from './selectorUtils';
+import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
 type QueryContext = {
   scope: Element | Document;
@@ -431,7 +432,8 @@ const textEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text" engine expects a single string`);
-    const matcher = createLaxTextMatcher(args[0]);
+    const text = normalizeWhiteSpace(args[0]).toLowerCase();
+    const matcher = (elementText: ElementText) => normalizeWhiteSpace(elementText.full).toLowerCase().includes(text);
     return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) === 'self';
   },
 };
@@ -440,7 +442,12 @@ const textIsEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text-is" engine expects a single string`);
-    const matcher = createStrictTextMatcher(args[0]);
+    const text = normalizeWhiteSpace(args[0]);
+    const matcher = (elementText: ElementText) => {
+      if (!text && !elementText.immediate.length)
+        return true;
+      return elementText.immediate.some(s => normalizeWhiteSpace(s) === text);
+    };
     return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) !== 'none';
   },
 };
@@ -449,7 +456,8 @@ const textMatchesEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
       throw new Error(`"text-matches" engine expects a regexp body and optional regexp flags`);
-    const matcher = createRegexTextMatcher(args[0], args.length === 2 ? args[1] : undefined);
+    const re = new RegExp(args[0], args.length === 2 ? args[1] : undefined);
+    const matcher = (elementText: ElementText) => re.test(elementText.full);
     return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) === 'self';
   },
 };
@@ -460,7 +468,8 @@ const hasTextEngine: SelectorEngine = {
       throw new Error(`"has-text" engine expects a single string`);
     if (shouldSkipForTextMatching(element))
       return false;
-    const matcher = createLaxTextMatcher(args[0]);
+    const text = normalizeWhiteSpace(args[0]).toLowerCase();
+    const matcher = (elementText: ElementText) => normalizeWhiteSpace(elementText.full).toLowerCase().includes(text);
     return matcher(elementText((evaluator as SelectorEvaluatorImpl)._cacheText, element));
   },
 };
