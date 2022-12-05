@@ -190,7 +190,10 @@ Learn more about [various timeouts](../test-timeouts.md).
 
 ## property: TestOptions.screenshot
 * since: v1.10
-- type: <[Screenshot]<"off"|"on"|"only-on-failure">>
+- type: <[Object]|[ScreenshotMode]<"off"|"on"||"only-on-failure">>
+  - `mode` <[ScreenshotMode]<"off"|"on"|"only-on-failure">> Automatic screenshot mode.
+  - `fullPage` ?<[boolean]> When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to `false`.
+  - `omitBackground` ?<[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
 
 Whether to automatically capture a screenshot after each test. Defaults to `'off'`.
 * `'off'`: Do not capture screenshots.

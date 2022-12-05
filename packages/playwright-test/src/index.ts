@@ -255,6 +255,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (debugMode())
       testInfo.setTimeout(0);
 
+    const screenshotOptions = typeof screenshot !== 'string' ? { fullPage: screenshot.fullPage, omitBackground: screenshot.omitBackground } : undefined;
+    const screenshotMode = typeof screenshot === 'string' ? screenshot : screenshot.mode;
     const traceMode = normalizeTraceMode(trace);
     const defaultTraceOptions = { screenshots: true, snapshots: true, sources: true };
     const traceOptions = typeof trace === 'string' ? defaultTraceOptions : { ...defaultTraceOptions, ...trace, mode: undefined };
@@ -342,7 +344,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       temporaryScreenshots.push(screenshotPath);
       // Pass caret=initial to avoid any evaluations that might slow down the screenshot
       // and let the page modify itself from the problematic state it had at the moment of failure.
-      await page.screenshot({ timeout: 5000, path: screenshotPath, caret: 'initial' }).catch(() => {});
+      await page.screenshot({ ...screenshotOptions, timeout: 5000, path: screenshotPath, caret: 'initial' }).catch(() => {});
     };
 
     const screenshotOnTestFailure = async () => {
@@ -354,7 +356,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     const onWillCloseContext = async (context: BrowserContext) => {
       await stopTracing(context.tracing);
-      if (screenshot === 'on' || screenshot === 'only-on-failure') {
+      if (screenshotMode === 'on' || screenshotMode === 'only-on-failure') {
         // Capture screenshot for now. We'll know whether we have to preserve them
         // after the test finishes.
         await Promise.all(context.pages().map(screenshotPage));
@@ -380,7 +382,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       const existingApiRequests: APIRequestContext[] =  Array.from((playwright.request as any)._contexts as Set<APIRequestContext>);
       await Promise.all(existingApiRequests.map(onDidCreateRequestContext));
     }
-    if (screenshot === 'on' || screenshot === 'only-on-failure')
+    if (screenshotMode === 'on' || screenshotMode === 'only-on-failure')
       testInfoImpl._onTestFailureImmediateCallbacks.set(screenshotOnTestFailure, 'Screenshot on failure');
 
     // 2. Run the test.
@@ -389,7 +391,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     // 3. Determine whether we need the artifacts.
     const testFailed = testInfo.status !== testInfo.expectedStatus;
     const preserveTrace = captureTrace && (traceMode === 'on' || (testFailed && traceMode === 'retain-on-failure') || (traceMode === 'on-first-retry' && testInfo.retry === 1));
-    const captureScreenshots = (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed));
+    const captureScreenshots = screenshotMode === 'on' || (screenshotMode === 'only-on-failure' && testFailed);
 
     const traceAttachments: string[] = [];
     const addTraceAttachment = () => {
@@ -446,7 +448,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
             return;
           // Pass caret=initial to avoid any evaluations that might slow down the screenshot
           // and let the page modify itself from the problematic state it had at the moment of failure.
-          await page.screenshot({ timeout: 5000, path: addScreenshotAttachment(), caret: 'initial' }).catch(() => {});
+          await page.screenshot({ ...screenshotOptions, timeout: 5000, path: addScreenshotAttachment(), caret: 'initial' }).catch(() => {});
         }));
       }
     }).concat(leftoverApiRequests.map(async context => {

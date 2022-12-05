@@ -189,6 +189,35 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
   ]);
 });
 
+test('should work with screenshot: only-on-failure & fullPage', async ({ runInlineTest, server }, testInfo) => {
+  const result = await runInlineTest({
+    'artifacts.spec.ts': `
+    const { test } = pwt;
+
+    test('should fail and take fullPage screenshots', async ({ page }) => {
+      await page.setViewportSize({ width: 500, height: 500 });
+      await page.goto('${server.PREFIX}/grid.html');
+      expect(1).toBe(2);
+    });
+    `,
+    'playwright.config.ts': `
+      module.exports = { use: { screenshot: { mode: 'only-on-failure', fullPage: true } } };
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    'artifacts-should-fail-and-take-fullPage-screenshots',
+    '  test-failed-1.png',
+    'report.json',
+  ]);
+  const screenshotFailure = fs.readFileSync(
+      testInfo.outputPath('test-results', 'artifacts-should-fail-and-take-fullPage-screenshots', 'test-failed-1.png')
+  );
+  expect.soft(screenshotFailure).toMatchSnapshot('screenshot-grid-fullpage.png');
+});
+
 test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
