@@ -120,6 +120,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
 }
 
 export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
+  __elementhandle: T = true as any;
   declare readonly _context: FrameExecutionContext;
   readonly _page: Page;
   declare readonly _objectId: string;
