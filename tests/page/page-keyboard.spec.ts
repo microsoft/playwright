@@ -657,8 +657,7 @@ async function captureLastKeydown(page) {
       lastEvent.key = e.key;
       lastEvent.code = e.code;
       lastEvent.metaKey = e.metaKey;
-      // keyIdentifier only exists in WebKit, and isn't in TypeScript's lib.
-      lastEvent.keyIdentifier = 'keyIdentifier' in e && e['keyIdentifier'];
+      lastEvent.keyIdentifier = 'keyIdentifier' in e && typeof e['keyIdentifier'] === 'string' && e['keyIdentifier'];
     }, true);
     return lastEvent;
   });
