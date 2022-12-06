@@ -252,7 +252,7 @@ import { test, expect } from '@playwright/test';
 
 // Name of the storage state entry. The entry is saved in the project setup.
 test.use({
-  storageStateName: 'outlook-test-user'
+  storageStateName: 'github-test-user'
 })
 
 test('test', async ({ page }) => {
@@ -265,7 +265,7 @@ const { test } = require('@playwright/test');
 
 // Name of the storage state entry. The entry is saved in the project setup.
 test.use({
-  storageStateName: 'outlook-test-user'
+  storageStateName: 'github-test-user'
 })
 
 test('test', async ({ page }) => {
@@ -351,8 +351,8 @@ By default, Playwright Test runs tests in parallel. If you reuse a single signed
 In this example we [override `storageState` fixture](./test-fixtures.md#overriding-fixtures) and ensure we only sign in once per worker, using [`property: TestInfo.workerIndex`] to differentiate between workers.
 
 ```js tab=js-js
-// signin-all-users.setup.js
-const { setup, storage } = require('@playwright/test');
+// login-fixture.js
+const { test: base, storage } = require('@playwright/test');
 
 const users = [
   { username: 'user-1', password: 'password-1' },
@@ -360,30 +360,35 @@ const users = [
   // ... put your test users here ...
 ];
 
-// Run all logins in parallel.
-setup.describe.configure({
-  mode: 'parallel'
-});
-
-// Sign in all test users duing project setup and save their state
-// to be used in the tests.
-for (let i = 0; i < users.length; i++) {
-  setup(`login user ${i}`, async ({ page }) => {
+exports.test = base.extend({
+  // Sign in corresponding user during test worker startup and save the state
+  // to storage.
+  login: [async ({ browser }, use) => {
+    const page = await browser.newPage();
     await page.goto('https://github.com/login');
-    await page.getByLabel('User Name').fill(users[i].username);
-    await page.getByLabel('Password').fill(users[i].password);
+    // Use a unique credentials for each worker.
+    const index = test.info().parallelIndex;
+    await page.getByLabel('User Name').fill(users[index].username);
+    await page.getByLabel('Password').fill(users[index].password);
     await page.getByText('Sign in').click();
 
     const contextState = await page.context().storageState();
-    await storage.set(`test-user-${i}`, contextState);
-  });
-}
+    // Store with worker-specific key.
+    await storage.set(`test-user-${index}`, contextState);
+
+    await page.close();
+    await use();
+  }, { auto: true }],
+});
+
+exports.expect = base.expect;
+exporta.storage = base.storage;
 
 // example.spec.js
-const { test } = require('@playwright/test');
+const { test, expect } = require('./login-fixture');
 
 test.use({
-  // User different user for each worker.
+  // User worker specific user.
   storageStateName: ({}, use) => use(`test-user-${test.info().parallelIndex}`)
 });
 
@@ -393,8 +398,8 @@ test('test', async ({ page }) => {
 ```
 
 ```js tab=js-ts
-// signin-all-users.setup.ts
-import { setup, storage } from '@playwright/test';
+// login-fixture.ts
+import { test as base, storage } from '@playwright/test';
 
 const users = [
   { username: 'user-1', password: 'password-1' },
@@ -402,31 +407,33 @@ const users = [
   // ... put your test users here ...
 ];
 
-// Run all logins in parallel.
-setup.describe.configure({
-  mode: 'parallel'
-});
-
-// Sign in all test users duing project setup and save their state
-// to be used in the tests.
-for (let i = 0; i < users.length; i++) {
-  setup(`login user ${i}`, async ({ page }) => {
+export const test = base.extend<{ login: void }>({
+  // Sign in corresponding user during test worker startup and save the state
+  // to storage.
+  login: [async ({ browser }, use) => {
+    const page = await browser.newPage();
     await page.goto('https://github.com/login');
-    // Use a unique username for each worker.
-    await page.getByLabel('User Name').fill(users[i].username);
-    await page.getByLabel('Password').fill(users[i].password);
+    // Use a unique credentials for each worker.
+    const index = test.info().parallelIndex;
+    await page.getByLabel('User Name').fill(users[index].username);
+    await page.getByLabel('Password').fill(users[index].password);
     await page.getByText('Sign in').click();
 
     const contextState = await page.context().storageState();
-    await storage.set(`test-user-${i}`, contextState);
-  });
-}
+    // Store with worker-specific key.
+    await storage.set(`test-user-${index}`, contextState);
+
+    await page.close();
+    await use();
+  }, { auto: true }],
+});
+export { expect } from '@playwright/test';
 
 // example.spec.ts
-import { test } from '@playwright/test';
+import { test } from './login-fixture';
 
 test.use({
-  // User different user for each worker.
+  // User worker specific user.
   storageStateName: ({}, use) => use(`test-user-${test.info().parallelIndex}`)
 });
 
