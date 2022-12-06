@@ -2858,7 +2858,7 @@ type ConnectOptions = {
  * ```
  *
  */
-export interface Storage {
+export interface TestStorage {
   /**
    * Get named item from the storage. Returns undefined if there is no value with given name.
    * @param name Item name.
@@ -3108,9 +3108,9 @@ export interface PlaywrightTestOptions {
    */
   storageState: StorageState | undefined;
   /**
-   * Name of the [Storage] entry that should be used to initialize
+   * Name of the [TestStorage] entry that should be used to initialize
    * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state). The value
-   * must be written to the storage before creatiion of a browser context that uses it (usually in
+   * must be written to the test storage before creation of a browser context that uses it (usually in
    * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup)). If both this property
    * and [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state) are
    * specified, this property will always take precedence.
@@ -3393,7 +3393,7 @@ export default test;
 
 export const _baseTest: TestType<{}, {}>;
 export const expect: Expect;
-export const storage: Storage;
+export const storage: TestStorage;
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
