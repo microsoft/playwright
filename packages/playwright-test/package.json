@@ -23,7 +23,18 @@
     "./lib/mount": "./lib/mount.js",
     "./lib/plugins": "./lib/plugins/index.js",
     "./lib/plugins/vitePlugin": "./lib/plugins/vitePlugin.js",
-    "./reporter": "./reporter.js"
+    "./reporter": "./reporter.js",
+    "./reporters/base": "./lib/reporters/base.js",
+    "./reporters/dot": "./lib/reporters/dot.js",
+    "./reporters/empty": "./lib/reporters/empty.js",
+    "./reporters/github": "./lib/reporters/github.js",
+    "./reporters/html": "./lib/reporters/html.js",
+    "./reporters/json": "./lib/reporters/json.js",
+    "./reporters/junit": "./lib/reporters/junit.js",
+    "./reporters/list": "./lib/reporters/list.js",
+    "./reporters/line": "./lib/reporters/line.js",
+    "./reporters/multiplexer": "./lib/reporters/multiplexer.js",
+    "./reporters/raw": "./lib/reporters/raw.js"
   },
   "bin": {
     "playwright": "./cli.js"
