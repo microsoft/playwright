@@ -44,7 +44,7 @@ export interface TestStepInternal {
 export interface FullConfigInternal extends FullConfigPublic {
   _globalOutputDir: string;
   _configDir: string;
-  _storageDir: string;
+  _storeDir: string;
   _maxConcurrentTestGroups: number;
   _ignoreSnapshots: boolean;
   _workerIsolation: WorkerIsolation;

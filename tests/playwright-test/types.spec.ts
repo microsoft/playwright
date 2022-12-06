@@ -189,15 +189,15 @@ test('config should allow void/empty options', async ({ runTSC }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should provide storage interface', async ({ runTSC }) => {
+test('should provide store interface', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test, storage } = pwt;
+      const { test, store } = pwt;
       test('my test', async () => {
-        await storage.set('foo', 'bar');
-        const val = await storage.get('foo');
+        await store.set('foo', 'bar');
+        const val = await store.get('foo');
         // @ts-expect-error
-        await storage.unknown();
+        await store.unknown();
       });
     `
   });

@@ -1,54 +1,54 @@
-# class: TestStorage
+# class: TestStore
 * since: v1.29
 * langs: js
 
-Playwright Test provides a global `storage` object for passing values between project setup and tests. It is
-an error to call storage methods outside of setup and tests.
+Playwright Test provides a global `store` object for passing values between project setup and tests. It is
+an error to call store methods outside of setup and tests.
 
 ```js tab=js-js
-const { setup, storage } = require('@playwright/test');
+const { setup, store } = require('@playwright/test');
 
 setup('sign in', async ({ page, context }) => {
   // Save signed-in state to an entry named 'github-test-user'.
   const contextState = await context.storageState();
-  await storage.set('test-user', contextState)
+  await store.set('test-user', contextState)
 });
 ```
 
 ```js tab=js-ts
-import { setup, storage } from '@playwright/test';
+import { setup, store } from '@playwright/test';
 
 setup('sign in', async ({ page, context }) => {
   // Save signed-in state to an entry named 'github-test-user'.
   const contextState = await context.storageState();
-  await storage.set('test-user', contextState)
+  await store.set('test-user', contextState)
 });
 ```
 
-## async method: TestStorage.get
+## async method: TestStore.get
 * since: v1.29
 - returns: <[any]>
 
-Get named item from the storage. Returns undefined if there is no value with given name.
+Get named item from the store. Returns undefined if there is no value with given name.
 
-### param: TestStorage.get.name
+### param: TestStore.get.name
 * since: v1.29
 - `name` <[string]>
 
 Item name.
 
-## async method: TestStorage.set
+## async method: TestStore.set
 * since: v1.29
 
-Set value to the storage.
+Set value to the store.
 
-### param: TestStorage.set.name
+### param: TestStore.set.name
 * since: v1.29
 - `name` <[string]>
 
 Item name.
 
-### param: TestStorage.set.value
+### param: TestStore.set.value
 * since: v1.29
 - `value` <[any]>
 
