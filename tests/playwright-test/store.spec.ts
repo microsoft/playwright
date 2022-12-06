@@ -48,7 +48,7 @@ test('should share store state between project setup and tests', async ({ runInl
         projects: [
           {
             name: 'p1',
-            setup: /.*store.setup.ts/
+            setupMatch: /.*store.setup.ts/
           }
         ]
       };
@@ -125,11 +125,11 @@ test('should isolate store state between projects', async ({ runInlineTest }) =>
         projects: [
           {
             name: 'p1',
-            setup: /.*store.setup.ts/
+            setupMatch: /.*store.setup.ts/
           },
           {
             name: 'p2',
-            setup: /.*store.setup.ts/
+            setupMatch: /.*store.setup.ts/
           }
         ]
       };
@@ -176,7 +176,7 @@ test('should load context storageState from store', async ({ runInlineTest, serv
         projects: [
           {
             name: 'p1',
-            setup: /.*store.setup.ts/
+            setupMatch: /.*store.setup.ts/
           }
         ]
       };
@@ -225,7 +225,7 @@ test('should load storageStateName specified in the project config from store', 
         projects: [
           {
             name: 'p1',
-            setup: /.*store.setup.ts/,
+            setupMatch: /.*store.setup.ts/,
             use: {
               storageStateName: 'stateInStorage',
             },
@@ -272,7 +272,7 @@ test('should load storageStateName specified in the global config from store', a
         projects: [
           {
             name: 'p1',
-            setup: /.*store.setup.ts/,
+            setupMatch: /.*store.setup.ts/,
           }
         ]
       };
