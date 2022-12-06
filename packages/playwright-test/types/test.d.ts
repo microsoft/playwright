@@ -2844,28 +2844,28 @@ type ConnectOptions = {
 };
 
 /**
- * Playwright Test provides a global `storage` object for passing values between project setup and tests. It is an
- * error to call storage methods outside of setup and tests.
+ * Playwright Test provides a global `store` object for passing values between project setup and tests. It is an error
+ * to call store methods outside of setup and tests.
  *
  * ```js
- * import { setup, storage } from '@playwright/test';
+ * import { setup, store } from '@playwright/test';
  *
  * setup('sign in', async ({ page, context }) => {
  *   // Save signed-in state to an entry named 'github-test-user'.
  *   const contextState = await context.storageState();
- *   await storage.set('test-user', contextState)
+ *   await store.set('test-user', contextState)
  * });
  * ```
  *
  */
-export interface TestStorage {
+export interface TestStore {
   /**
-   * Get named item from the storage. Returns undefined if there is no value with given name.
+   * Get named item from the store. Returns undefined if there is no value with given name.
    * @param name Item name.
    */
   get<T>(name: string): Promise<T | undefined>;
   /**
-   * Set value to the storage.
+   * Set value to the store.
    * @param name Item name.
    * @param value Item value. The value must be serializable to JSON. Passing `undefined` deletes the entry with given name.
    */
@@ -3108,7 +3108,7 @@ export interface PlaywrightTestOptions {
    */
   storageState: StorageState | undefined;
   /**
-   * Name of the [TestStorage] entry that should be used to initialize
+   * Name of the [TestStore] entry that should be used to initialize
    * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state). The value
    * must be written to the test storage before creation of a browser context that uses it (usually in
    * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup)). If both this property
@@ -3393,7 +3393,7 @@ export default test;
 
 export const _baseTest: TestType<{}, {}>;
 export const expect: Expect;
-export const storage: TestStorage;
+export const store: TestStore;
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};

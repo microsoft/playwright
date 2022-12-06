@@ -16,17 +16,17 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { TestStorage } from '../types/test';
+import type { TestStore } from '../types/test';
 import { currentTestInfo } from './globals';
 import { sanitizeForFilePath, trimLongString } from './util';
 
-class JsonStorage implements TestStorage {
+class JsonStore implements TestStore {
   private _toFilePath(name: string) {
     const testInfo = currentTestInfo();
     if (!testInfo)
-      throw new Error('storage can only be called while test is running');
+      throw new Error('store can only be called while test is running');
     const fileName = sanitizeForFilePath(trimLongString(name)) + '.json';
-    return path.join(testInfo.config._storageDir, testInfo.project._id, fileName);
+    return path.join(testInfo.config._storeDir, testInfo.project._id, fileName);
   }
 
   async get<T>(name: string) {
@@ -51,4 +51,4 @@ class JsonStorage implements TestStorage {
   }
 }
 
-export const storage = new JsonStorage();
+export const store = new JsonStore();

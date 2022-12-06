@@ -16,24 +16,24 @@
 
 import { expect, test } from './playwright-test-fixtures';
 
-test('should provide storage fixture', async ({ runInlineTest }) => {
+test('should provide store fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = {};
     `,
     'a.test.ts': `
-      const { test, storage } = pwt;
+      const { test, store } = pwt;
       test('should store number', async ({ }) => {
-        expect(storage).toBeTruthy();
-        expect(await storage.get('number')).toBe(undefined);
-        await storage.set('number', 2022)
-        expect(await storage.get('number')).toBe(2022);
+        expect(store).toBeTruthy();
+        expect(await store.get('number')).toBe(undefined);
+        await store.set('number', 2022)
+        expect(await store.get('number')).toBe(2022);
       });
       test('should store object', async ({ }) => {
-        expect(storage).toBeTruthy();
-        expect(await storage.get('object')).toBe(undefined);
-        await storage.set('object', { 'a': 2022 })
-        expect(await storage.get('object')).toEqual({ 'a': 2022 });
+        expect(store).toBeTruthy();
+        expect(await store.get('object')).toBe(undefined);
+        await store.set('object', { 'a': 2022 })
+        expect(await store.get('object')).toEqual({ 'a': 2022 });
       });
     `,
   }, { workers: 1 });
@@ -41,42 +41,42 @@ test('should provide storage fixture', async ({ runInlineTest }) => {
   expect(result.passed).toBe(2);
 });
 
-test('should share storage state between project setup and tests', async ({ runInlineTest }) => {
+test('should share store state between project setup and tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = {
         projects: [
           {
             name: 'p1',
-            setup: /.*storage.setup.ts/
+            setup: /.*store.setup.ts/
           }
         ]
       };
     `,
-    'storage.setup.ts': `
-      const { setup, expect, storage } = pwt;
-      setup('should initialize storage', async ({ }) => {
-        expect(await storage.get('number')).toBe(undefined);
-        await storage.set('number', 2022)
-        expect(await storage.get('number')).toBe(2022);
+    'store.setup.ts': `
+      const { setup, expect, store } = pwt;
+      setup('should initialize store', async ({ }) => {
+        expect(await store.get('number')).toBe(undefined);
+        await store.set('number', 2022)
+        expect(await store.get('number')).toBe(2022);
 
-        expect(await storage.get('object')).toBe(undefined);
-        await storage.set('object', { 'a': 2022 })
-        expect(await storage.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('object')).toBe(undefined);
+        await store.set('object', { 'a': 2022 })
+        expect(await store.get('object')).toEqual({ 'a': 2022 });
       });
     `,
     'a.test.ts': `
-      const { test, storage } = pwt;
+      const { test, store } = pwt;
       test('should get data from setup', async ({ }) => {
-        expect(await storage.get('number')).toBe(2022);
-        expect(await storage.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('number')).toBe(2022);
+        expect(await store.get('object')).toEqual({ 'a': 2022 });
       });
     `,
     'b.test.ts': `
-      const { test, storage } = pwt;
+      const { test, store } = pwt;
       test('should get data from setup', async ({ }) => {
-        expect(await storage.get('number')).toBe(2022);
-        expect(await storage.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('number')).toBe(2022);
+        expect(await store.get('object')).toEqual({ 'a': 2022 });
       });
     `,
   }, { workers: 1 });
@@ -84,25 +84,25 @@ test('should share storage state between project setup and tests', async ({ runI
   expect(result.passed).toBe(3);
 });
 
-test('should persist storage state between project runs', async ({ runInlineTest }) => {
+test('should persist store state between project runs', async ({ runInlineTest }) => {
   const files = {
     'playwright.config.js': `
       module.exports = { };
     `,
     'a.test.ts': `
-      const { test, storage } = pwt;
+      const { test, store } = pwt;
       test('should have no data on first run', async ({ }) => {
-        expect(await storage.get('number')).toBe(undefined);
-        await storage.set('number', 2022)
-        expect(await storage.get('object')).toBe(undefined);
-        await storage.set('object', { 'a': 2022 })
+        expect(await store.get('number')).toBe(undefined);
+        await store.set('number', 2022)
+        expect(await store.get('object')).toBe(undefined);
+        await store.set('object', { 'a': 2022 })
       });
     `,
     'b.test.ts': `
-      const { test, storage } = pwt;
+      const { test, store } = pwt;
       test('should get data from previous run', async ({ }) => {
-        expect(await storage.get('number')).toBe(2022);
-        expect(await storage.get('object')).toEqual({ 'a': 2022 });
+        expect(await store.get('number')).toBe(2022);
+        expect(await store.get('object')).toEqual({ 'a': 2022 });
       });
     `,
   };
@@ -118,46 +118,46 @@ test('should persist storage state between project runs', async ({ runInlineTest
   }
 });
 
-test('should isolate storage state between projects', async ({ runInlineTest }) => {
+test('should isolate store state between projects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = {
         projects: [
           {
             name: 'p1',
-            setup: /.*storage.setup.ts/
+            setup: /.*store.setup.ts/
           },
           {
             name: 'p2',
-            setup: /.*storage.setup.ts/
+            setup: /.*store.setup.ts/
           }
         ]
       };
     `,
-    'storage.setup.ts': `
-      const { setup, expect, storage } = pwt;
-      setup('should initialize storage', async ({ }) => {
-        expect(await storage.get('number')).toBe(undefined);
-        await storage.set('number', 2022)
-        expect(await storage.get('number')).toBe(2022);
+    'store.setup.ts': `
+      const { setup, expect, store } = pwt;
+      setup('should initialize store', async ({ }) => {
+        expect(await store.get('number')).toBe(undefined);
+        await store.set('number', 2022)
+        expect(await store.get('number')).toBe(2022);
 
-        expect(await storage.get('name')).toBe(undefined);
-        await storage.set('name', 'str-' + setup.info().project.name)
-        expect(await storage.get('name')).toBe('str-' + setup.info().project.name);
+        expect(await store.get('name')).toBe(undefined);
+        await store.set('name', 'str-' + setup.info().project.name)
+        expect(await store.get('name')).toBe('str-' + setup.info().project.name);
       });
     `,
     'a.test.ts': `
-      const { test, storage } = pwt;
+      const { test, store } = pwt;
       test('should get data from setup', async ({ }) => {
-        expect(await storage.get('number')).toBe(2022);
-        expect(await storage.get('name')).toBe('str-' + test.info().project.name);
+        expect(await store.get('number')).toBe(2022);
+        expect(await store.get('name')).toBe('str-' + test.info().project.name);
       });
     `,
     'b.test.ts': `
-      const { test, storage } = pwt;
+      const { test, store } = pwt;
       test('should get data from setup', async ({ }) => {
-        expect(await storage.get('number')).toBe(2022);
-        expect(await storage.get('name')).toBe('str-' + test.info().project.name);
+        expect(await store.get('number')).toBe(2022);
+        expect(await store.get('name')).toBe('str-' + test.info().project.name);
       });
     `,
   }, { workers: 2 });
@@ -165,7 +165,7 @@ test('should isolate storage state between projects', async ({ runInlineTest }) 
   expect(result.passed).toBe(6);
 });
 
-test('should load context storageState from storage', async ({ runInlineTest, server }) => {
+test('should load context storageState from store', async ({ runInlineTest, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v1']);
     res.end();
@@ -176,18 +176,18 @@ test('should load context storageState from storage', async ({ runInlineTest, se
         projects: [
           {
             name: 'p1',
-            setup: /.*storage.setup.ts/
+            setup: /.*store.setup.ts/
           }
         ]
       };
     `,
-    'storage.setup.ts': `
-      const { setup, expect, storage } = pwt;
+    'store.setup.ts': `
+      const { setup, expect, store } = pwt;
       setup('should save storageState', async ({ page, context }) => {
-        expect(await storage.get('user')).toBe(undefined);
+        expect(await store.get('user')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
         const state = await page.context().storageState();
-        await storage.set('user', state);
+        await store.set('user', state);
       });
     `,
     'a.test.ts': `
@@ -214,7 +214,7 @@ test('should load context storageState from storage', async ({ runInlineTest, se
   expect(result.passed).toBe(3);
 });
 
-test('should load storageStateName specified in the project config from storage', async ({ runInlineTest, server }) => {
+test('should load storageStateName specified in the project config from store', async ({ runInlineTest, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v1']);
     res.end();
@@ -225,7 +225,7 @@ test('should load storageStateName specified in the project config from storage'
         projects: [
           {
             name: 'p1',
-            setup: /.*storage.setup.ts/,
+            setup: /.*store.setup.ts/,
             use: {
               storageStateName: 'stateInStorage',
             },
@@ -233,16 +233,16 @@ test('should load storageStateName specified in the project config from storage'
         ]
       };
     `,
-    'storage.setup.ts': `
-      const { setup, expect, storage } = pwt;
+    'store.setup.ts': `
+      const { setup, expect, store } = pwt;
       setup.use({
         storageStateName: ({}, use) => use(undefined),
       })
       setup('should save storageState', async ({ page, context }) => {
-        expect(await storage.get('stateInStorage')).toBe(undefined);
+        expect(await store.get('stateInStorage')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
         const state = await page.context().storageState();
-        await storage.set('stateInStorage', state);
+        await store.set('stateInStorage', state);
       });
     `,
     'a.test.ts': `
@@ -258,7 +258,7 @@ test('should load storageStateName specified in the project config from storage'
   expect(result.passed).toBe(2);
 });
 
-test('should load storageStateName specified in the global config from storage', async ({ runInlineTest, server }) => {
+test('should load storageStateName specified in the global config from store', async ({ runInlineTest, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v1']);
     res.end();
@@ -272,21 +272,21 @@ test('should load storageStateName specified in the global config from storage',
         projects: [
           {
             name: 'p1',
-            setup: /.*storage.setup.ts/,
+            setup: /.*store.setup.ts/,
           }
         ]
       };
     `,
-    'storage.setup.ts': `
-      const { setup, expect, storage } = pwt;
+    'store.setup.ts': `
+      const { setup, expect, store } = pwt;
       setup.use({
         storageStateName: ({}, use) => use(undefined),
       })
       setup('should save storageStateName', async ({ page, context }) => {
-        expect(await storage.get('stateInStorage')).toBe(undefined);
+        expect(await store.get('stateInStorage')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
         const state = await page.context().storageState();
-        await storage.set('stateInStorage', state);
+        await store.set('stateInStorage', state);
       });
     `,
     'a.test.ts': `
@@ -324,5 +324,5 @@ test('should throw on unknown storageStateName value', async ({ runInlineTest, s
   }, { workers: 1 });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(result.output).toContain('Error: Cannot find value in the storage for storageStateName: "stateInStorage"');
+  expect(result.output).toContain('Error: Cannot find value in the store for storageStateName: "stateInStorage"');
 });
