@@ -26,6 +26,7 @@ const config: Config = {
   forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
   preserveOutput: process.env.CI ? 'failures-only' : 'always',
+  snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
   projects: [
     {
       name: 'playwright-test',
