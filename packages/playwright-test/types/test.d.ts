@@ -195,8 +195,8 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally
    * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option. This filter and its command line
    * counterpart also applies to the setup files. If all
-   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup) tests match the filter
-   * Playwright **will** run all setup files before running the matching tests.
+   * [testProject.setupMatch](https://playwright.dev/docs/api/class-testproject#test-project-setup-match) tests match
+   * the filter Playwright **will** run all setup files before running the matching tests.
    *
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
@@ -3111,8 +3111,9 @@ export interface PlaywrightTestOptions {
    * Name of the [TestStore] entry that should be used to initialize
    * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state). The value
    * must be written to the test storage before creation of a browser context that uses it (usually in
-   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup)). If both this property
-   * and [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state) are
+   * [testProject.setupMatch](https://playwright.dev/docs/api/class-testproject#test-project-setup-match)). If both this
+   * property and
+   * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state) are
    * specified, this property will always take precedence.
    */
   storageStateName: string | undefined;
@@ -4734,8 +4735,8 @@ interface TestProject {
    * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally
    * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option. This filter and its command line
    * counterpart also applies to the setup files. If all
-   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup) tests match the filter
-   * Playwright **will** run all setup files before running the matching tests.
+   * [testProject.setupMatch](https://playwright.dev/docs/api/class-testproject#test-project-setup-match) tests match
+   * the filter Playwright **will** run all setup files before running the matching tests.
    *
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
@@ -4752,19 +4753,22 @@ interface TestProject {
   name?: string;
 
   /**
-   * Project setup files that would be executed before all tests in the project. If project setup fails the tests in
-   * this project will be skipped. All project setup files will run in every shard if the project is sharded.
-   * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep) and
-   * [testProject.grepInvert](https://playwright.dev/docs/api/class-testproject#test-project-grep-invert) and their
-   * command line counterparts also apply to the setup files. If such filters match only tests in the project Playwright
-   * will run all setup files before running the matching tests.
+   * Project setup files that will be executed before all tests in the project.
+   *
+   * **Details**
+   *
+   * If project setup fails the tests in this project will be skipped. All project setup files will run in every shard
+   * if the project is sharded. [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep)
+   * and [testProject.grepInvert](https://playwright.dev/docs/api/class-testproject#test-project-grep-invert) and their
+   * command line counterparts also apply to the setup files. If such filters match only tests in the project,
+   * Playwright will run **all** setup files before running the matching tests.
    *
    * If there is a file that matches both
-   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup) and
+   * [testProject.setupMatch](https://playwright.dev/docs/api/class-testproject#test-project-setup-match) and
    * [testProject.testMatch](https://playwright.dev/docs/api/class-testproject#test-project-test-match) filters an error
    * will be thrown.
    */
-  setup?: string|RegExp|Array<string|RegExp>;
+  setupMatch?: string|RegExp|Array<string|RegExp>;
 
   /**
    * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to

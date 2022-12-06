@@ -481,7 +481,7 @@ test('should have correct types for the config', async ({ runTSC }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should throw when project.setup has wrong type', async ({ runInlineTest }) => {
+test('should throw when project.setupMatch has wrong type', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
         module.exports = {
@@ -500,7 +500,7 @@ test('should throw when project.setup has wrong type', async ({ runInlineTest })
   expect(result.output).toContain(`Error: playwright.config.ts: config.projects[0].setup must be a string or a RegExp`);
 });
 
-test('should throw when project.setup has wrong array type', async ({ runInlineTest }) => {
+test('should throw when project.setupMatch has wrong array type', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
         module.exports = {

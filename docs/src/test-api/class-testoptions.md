@@ -207,7 +207,7 @@ Learn more about [automatic screenshots](../test-configuration.md#automatic-scre
 - type: <[string]>
 
 Name of the [TestStore] entry that should be used to initialize [`property: TestOptions.storageState`]. The value must be
-written to the test storage before creation of a browser context that uses it (usually in [`property: TestProject.setup`]). If both
+written to the test storage before creation of a browser context that uses it (usually in [`property: TestProject.setupMatch`]). If both
 this property and [`property: TestOptions.storageState`] are specified, this property will always take precedence.
 
 ## property: TestOptions.testIdAttribute

@@ -98,7 +98,7 @@ function expectFilesRunBefore(timeline: Timeline, before: string[], after: strin
 test('should work for one project', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
     'a': {
-      setup: ['**/*.setup.ts']
+      setupMatch: ['**/*.setup.ts']
     },
   };
   const configWithFiles = createConfigWithProjects(['a'], testInfo, projectTemplates);
@@ -114,13 +114,13 @@ a > a${path.sep}a.spec.ts > a test [end]`);
 test('should work for several projects', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
     'a': {
-      setup: ['**/*.setup.ts']
+      setupMatch: ['**/*.setup.ts']
     },
     'b': {
-      setup: /.*b.setup.ts/
+      setupMatch: /.*b.setup.ts/
     },
     'c': {
-      setup: '**/c.setup.ts'
+      setupMatch: '**/c.setup.ts'
     },
   };
   const configWithFiles = createConfigWithProjects(['a', 'b', 'c'], testInfo, projectTemplates);
@@ -134,10 +134,10 @@ test('should work for several projects', async ({ runGroups }, testInfo) => {
 test('should stop project if setup fails', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
     'a': {
-      setup: ['**/*.setup.ts']
+      setupMatch: ['**/*.setup.ts']
     },
     'b': {
-      setup: /.*b.setup.ts/
+      setupMatch: /.*b.setup.ts/
     },
   };
   const configWithFiles = createConfigWithProjects(['a', 'b', 'c'], testInfo, projectTemplates);
@@ -162,7 +162,7 @@ test('should run setup in each project shard', async ({ runGroups }, testInfo) =
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            setupMatch: /.*.setup.ts/,
           },
         ]
       };`,
@@ -210,12 +210,12 @@ test('should run setup only for projects that have tests in the shard', async ({
         projects: [
           {
             name: 'p1',
-            setup: /.*p1.setup.ts$/,
+            setupMatch: /.*p1.setup.ts$/,
             testMatch: /.*a.test.ts/,
           },
           {
             name: 'p2',
-            setup: /.*p2.setup.ts$/,
+            setupMatch: /.*p2.setup.ts$/,
             testMatch: /.*b.test.ts/,
           },
         ]
@@ -265,10 +265,10 @@ test('should run setup only for projects that have tests in the shard', async ({
 test('--project only runs setup from that project;', async ({ runGroups }, testInfo) => {
   const projectTemplates = {
     'a': {
-      setup: /.*a.setup.ts/
+      setupMatch: /.*a.setup.ts/
     },
     'b': {
-      setup: /.*b.setup.ts/
+      setupMatch: /.*b.setup.ts/
     },
   };
   const configWithFiles = createConfigWithProjects(['a', 'b', 'c'], testInfo, projectTemplates);
@@ -285,7 +285,7 @@ test('same file cannot be a setup and a test in the same project', async ({ runG
         projects: [
           {
             name: 'p1',
-            setup: /.*a.test.ts$/,
+            setupMatch: /.*a.test.ts$/,
             testMatch: /.*a.test.ts$/,
           },
         ]
@@ -308,12 +308,12 @@ test('same file cannot be a setup and a test in different projects', async ({ ru
         projects: [
           {
             name: 'p1',
-            setup: /.*a.test.ts$/,
+            setupMatch: /.*a.test.ts$/,
             testMatch: /.*noMatch.test.ts$/,
           },
           {
             name: 'p2',
-            setup: /.*noMatch.test.ts$/,
+            setupMatch: /.*noMatch.test.ts$/,
             testMatch: /.*a.test.ts$/
           },
         ]
@@ -336,12 +336,12 @@ test('list-files should enumerate setup files in same group', async ({ runComman
         projects: [
           {
             name: 'p1',
-            setup: /.*a..setup.ts$/,
+            setupMatch: /.*a..setup.ts$/,
             testMatch: /.*a.test.ts$/,
           },
           {
             name: 'p2',
-            setup: /.*b.setup.ts$/,
+            setupMatch: /.*b.setup.ts$/,
             testMatch: /.*b.test.ts$/
           },
         ]
@@ -383,12 +383,12 @@ test('test --list should enumerate setup tests as regular ones', async ({ runCom
         projects: [
           {
             name: 'p1',
-            setup: /.*a..setup.ts$/,
+            setupMatch: /.*a..setup.ts$/,
             testMatch: /.*a.test.ts$/,
           },
           {
             name: 'p2',
-            setup: /.*b.setup.ts$/,
+            setupMatch: /.*b.setup.ts$/,
             testMatch: /.*b.test.ts$/
           },
         ]
@@ -433,7 +433,7 @@ test('should allow .only in setup files', async ({ runGroups }, testInfo) => {
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            setupMatch: /.*.setup.ts/,
           },
         ]
       };`,
@@ -468,7 +468,7 @@ test('should allow describe.only in setup files', async ({ runGroups }, testInfo
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            setupMatch: /.*.setup.ts/,
           },
         ]
       };`,
@@ -505,7 +505,7 @@ test('should filter describe line in setup files', async ({ runGroups }, testInf
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            setupMatch: /.*.setup.ts/,
           },
         ]
       };`,
@@ -542,7 +542,7 @@ test('should allow .only in both setup and test files', async ({ runGroups }, te
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            setupMatch: /.*.setup.ts/,
           },
         ]
       };`,
@@ -574,7 +574,7 @@ test('should run full setup when there is test.only', async ({ runGroups }, test
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            setupMatch: /.*.setup.ts/,
           },
         ]
       };`,
@@ -613,11 +613,11 @@ test('should allow filtering setup by file:line', async ({ runGroups }, testInfo
         projects: [
           {
             name: 'p1',
-            setup: /.*a.setup.ts/,
+            setupMatch: /.*a.setup.ts/,
           },
           {
             name: 'p2',
-            setup: /.*b.setup.ts/,
+            setupMatch: /.*b.setup.ts/,
           },
         ]
       };`,
@@ -669,7 +669,7 @@ test('should support filters matching both setup and test', async ({ runGroups }
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            setupMatch: /.*.setup.ts/,
           },
         ]
       };`,
@@ -712,12 +712,12 @@ test('should run setup for a project if tests match only in another project', as
           {
             name: 'p1',
             testMatch: /.*a.test.ts/,
-            setup: /.*a.setup.ts/,
+            setupMatch: /.*a.setup.ts/,
           },
           {
             name: 'p2',
             testMatch: /.*b.test.ts/,
-            setup: /.*b.setup.ts/,
+            setupMatch: /.*b.setup.ts/,
           },
         ]
       };`,
@@ -754,7 +754,7 @@ test('should run all setup files if only tests match filter', async ({ runGroups
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            setupMatch: /.*.setup.ts/,
           },
         ]
       };`,
@@ -791,7 +791,7 @@ test('should run all setup files if only tests match grep filter', async ({ runG
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            setupMatch: /.*.setup.ts/,
           },
         ]
       };`,
@@ -828,7 +828,7 @@ test('should apply project.grep filter to both setup and tests', async ({ runGro
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            setupMatch: /.*.setup.ts/,
             grep: /a.(test|setup).ts.*(test|setup)/,
           },
         ]
@@ -893,7 +893,7 @@ test('should prohibit test in setup files', async ({ runGroups }, testInfo) => {
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            setupMatch: /.*.setup.ts/,
           },
         ]
       };`,
@@ -915,7 +915,7 @@ test('should prohibit test hooks in setup files', async ({ runGroups }, testInfo
         projects: [
           {
             name: 'p1',
-            setup: /.*.setup.ts/,
+            setupMatch: /.*.setup.ts/,
           },
         ]
       };`,
