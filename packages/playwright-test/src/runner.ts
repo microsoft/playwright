@@ -244,7 +244,7 @@ export class Runner {
     const commandLineFileMatcher = commandLineFileFilters.length ? createFileMatcherFromFilters(commandLineFileFilters) : () => true;
     for (const project of projects) {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
-      const setupMatch = createFileMatcher(project._setup);
+      const setupMatch = createFileMatcher(project._setupMatch);
       const testMatch = createFileMatcher(project.testMatch);
       const testIgnore = createFileMatcher(project.testIgnore);
       const testFiles = allFiles.filter(file => {
