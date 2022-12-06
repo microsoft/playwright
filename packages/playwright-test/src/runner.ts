@@ -283,7 +283,7 @@ export class Runner {
     let result = await this._createFilteredRootSuite(options, filesByProject, new Set(), !!setupFiles.size, setupFiles);
     if (setupFiles.size) {
       const allTests = result.rootSuite.allTests();
-      const tests = allTests.filter(test => !setupFiles.has(test._requireFile));
+      const tests = allTests.filter(test => !test._isProjectSetup);
       // If >0 tests match and
       // - none of the setup files match the filter then we run all setup files,
       // - if the filter also matches some of the setup tests, we'll run only
@@ -299,7 +299,7 @@ export class Runner {
     const projectSetupGroups = [];
     const testGroups = [];
     for (const group of allTestGroups) {
-      if (setupFiles.has(group.requireFile))
+      if (group.isProjectSetup)
         projectSetupGroups.push(group);
       else
         testGroups.push(group);
