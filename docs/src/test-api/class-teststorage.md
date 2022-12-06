@@ -1,4 +1,4 @@
-# class: Storage
+# class: TestStorage
 * since: v1.29
 * langs: js
 
@@ -25,30 +25,30 @@ setup('sign in', async ({ page, context }) => {
 });
 ```
 
-## async method: Storage.get
+## async method: TestStorage.get
 * since: v1.29
 - returns: <[any]>
 
 Get named item from the storage. Returns undefined if there is no value with given name.
 
-### param: Storage.get.name
+### param: TestStorage.get.name
 * since: v1.29
 - `name` <[string]>
 
 Item name.
 
-## async method: Storage.set
+## async method: TestStorage.set
 * since: v1.29
 
 Set value to the storage.
 
-### param: Storage.set.name
+### param: TestStorage.set.name
 * since: v1.29
 - `name` <[string]>
 
 Item name.
 
-### param: Storage.set.value
+### param: TestStorage.set.value
 * since: v1.29
 - `value` <[any]>
 

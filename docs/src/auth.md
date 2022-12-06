@@ -177,7 +177,7 @@ in only once per project and then skip the log in step for all of the tests.
 
 Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). Playwright provides [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state) method that can be used to retrieve storage state from authenticated contexts and then create new contexts with prepopulated state.
 
-You can run authentication steps once during the project [`property: TestProject.setup`] phase and save the context state into [Storage]. The stored value can later be reused to automatically restore authenticated context state in every test of the project. This way the login will run once per project before all tests.
+You can run authentication steps once during the project [`property: TestProject.setup`] phase and save the context state into [TestStorage]. The stored value can later be reused to automatically restore authenticated context state in every test of the project. This way the login will run once per project before all tests.
 
 Create a setup test that performs login and saves the context state into project storage:
 
@@ -276,7 +276,7 @@ test('test', async ({ page }) => {
 ### Reusing signed in state between test runs
 * langs: js
 
-When you set an entry on [Storage] Playwright will store it in a separate file under `.playwright-storage/`. Playwright does not delete those files automatically. You can leverage this fact to persist storage state between test runs and only sign in if the entry is not in the storage yet.
+When you set an entry on [TestStorage] Playwright will store it in a separate file under `.playwright-storage/`. Playwright does not delete those files automatically. You can leverage this fact to persist storage state between test runs and only sign in if the entry is not in the storage yet.
 
 ```js tab=js-js
 // github-login.setup.js
