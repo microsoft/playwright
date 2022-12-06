@@ -615,7 +615,7 @@ function validateProject(file: string, project: Project, title: string) {
       throw errorWithFile(file, `${title}.testDir must be a string`);
   }
 
-  for (const prop of ['testIgnore', 'testMatch', 'setup'] as const) {
+  for (const prop of ['testIgnore', 'testMatch', 'setupMatch'] as const) {
     if (prop in project && project[prop] !== undefined) {
       const value = project[prop];
       if (Array.isArray(value)) {
