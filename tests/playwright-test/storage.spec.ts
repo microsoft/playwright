@@ -22,16 +22,14 @@ test('should provide storage fixture', async ({ runInlineTest }) => {
       module.exports = {};
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      const { test, storage } = pwt;
       test('should store number', async ({ }) => {
-        const storage = test.info().storage();
         expect(storage).toBeTruthy();
         expect(await storage.get('number')).toBe(undefined);
         await storage.set('number', 2022)
         expect(await storage.get('number')).toBe(2022);
       });
       test('should store object', async ({ }) => {
-        const storage = test.info().storage();
         expect(storage).toBeTruthy();
         expect(await storage.get('object')).toBe(undefined);
         await storage.set('object', { 'a': 2022 })
@@ -56,9 +54,18 @@ test('should share storage state between project setup and tests', async ({ runI
       };
     `,
     'storage.setup.ts': `
+<<<<<<< HEAD
       const { setup, expect } = pwt;
       setup('should initialize storage', async ({ }) => {
         const storage = setup.info().storage();
+||||||| parent of b1f7eb1d4 (feat: make storage a global variable)
+      const { test, expect } = pwt;
+      test('should initialize storage', async ({ }) => {
+        const storage = test.info().storage();
+=======
+      const { test, expect, storage } = pwt;
+      test('should initialize storage', async ({ }) => {
+>>>>>>> b1f7eb1d4 (feat: make storage a global variable)
         expect(await storage.get('number')).toBe(undefined);
         await storage.set('number', 2022)
         expect(await storage.get('number')).toBe(2022);
@@ -69,17 +76,15 @@ test('should share storage state between project setup and tests', async ({ runI
       });
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      const { test, storage } = pwt;
       test('should get data from setup', async ({ }) => {
-        const storage = test.info().storage();
         expect(await storage.get('number')).toBe(2022);
         expect(await storage.get('object')).toEqual({ 'a': 2022 });
       });
     `,
     'b.test.ts': `
-      const { test } = pwt;
+      const { test, storage } = pwt;
       test('should get data from setup', async ({ }) => {
-        const storage = test.info().storage();
         expect(await storage.get('number')).toBe(2022);
         expect(await storage.get('object')).toEqual({ 'a': 2022 });
       });
@@ -95,9 +100,8 @@ test('should persist storage state between project runs', async ({ runInlineTest
       module.exports = { };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      const { test, storage } = pwt;
       test('should have no data on first run', async ({ }) => {
-        const storage = test.info().storage();
         expect(await storage.get('number')).toBe(undefined);
         await storage.set('number', 2022)
         expect(await storage.get('object')).toBe(undefined);
@@ -105,9 +109,8 @@ test('should persist storage state between project runs', async ({ runInlineTest
       });
     `,
     'b.test.ts': `
-      const { test } = pwt;
+      const { test, storage } = pwt;
       test('should get data from previous run', async ({ }) => {
-        const storage = test.info().storage();
         expect(await storage.get('number')).toBe(2022);
         expect(await storage.get('object')).toEqual({ 'a': 2022 });
       });
@@ -142,9 +145,8 @@ test('should isolate storage state between projects', async ({ runInlineTest }) 
       };
     `,
     'storage.setup.ts': `
-      const { setup, expect } = pwt;
-      setup('should initialize storage', async ({ }) => {
-        const storage = setup.info().storage();
+      const { expect, storage } = pwt;
+      test('should initialize storage', async ({ }) => {
         expect(await storage.get('number')).toBe(undefined);
         await storage.set('number', 2022)
         expect(await storage.get('number')).toBe(2022);
@@ -155,17 +157,15 @@ test('should isolate storage state between projects', async ({ runInlineTest }) 
       });
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      const { test, storage } = pwt;
       test('should get data from setup', async ({ }) => {
-        const storage = test.info().storage();
         expect(await storage.get('number')).toBe(2022);
         expect(await storage.get('name')).toBe('str-' + test.info().project.name);
       });
     `,
     'b.test.ts': `
-      const { test } = pwt;
+      const { test, storage } = pwt;
       test('should get data from setup', async ({ }) => {
-        const storage = test.info().storage();
         expect(await storage.get('number')).toBe(2022);
         expect(await storage.get('name')).toBe('str-' + test.info().project.name);
       });
@@ -192,9 +192,8 @@ test('should load context storageState from storage', async ({ runInlineTest, se
       };
     `,
     'storage.setup.ts': `
-      const { setup, expect } = pwt;
+      const { setup, expect, storage } = pwt;
       setup('should save storageState', async ({ page, context }) => {
-        const storage = setup.info().storage();
         expect(await storage.get('user')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
         const state = await page.context().storageState();
@@ -245,12 +244,11 @@ test('should load storageStateName specified in the project config from storage'
       };
     `,
     'storage.setup.ts': `
-      const { setup, expect } = pwt;
+      const { setup, expect, storage } = pwt;
       setup.use({
         storageStateName: ({}, use) => use(undefined),
       })
       setup('should save storageState', async ({ page, context }) => {
-        const storage = setup.info().storage();
         expect(await storage.get('stateInStorage')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
         const state = await page.context().storageState();
@@ -290,12 +288,11 @@ test('should load storageStateName specified in the global config from storage',
       };
     `,
     'storage.setup.ts': `
-      const { setup, expect } = pwt;
+      const { setup, expect, storage } = pwt;
       setup.use({
         storageStateName: ({}, use) => use(undefined),
       })
       setup('should save storageStateName', async ({ page, context }) => {
-        const storage = setup.info().storage();
         expect(await storage.get('stateInStorage')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
         const state = await page.context().storageState();

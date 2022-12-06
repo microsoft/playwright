@@ -1890,11 +1890,6 @@ export interface TestInfo {
   stdout: Array<string|Buffer>;
 
   /**
-   * Returns a [Storage] instance for the currently running project.
-   */
-  storage(): Storage;
-
-  /**
    * Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about
    * [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
@@ -2849,8 +2844,19 @@ type ConnectOptions = {
 };
 
 /**
- * Playwright Test provides a [testInfo.storage()](https://playwright.dev/docs/api/class-testinfo#test-info-storage)
- * object for passing values between project setup and tests. TODO: examples
+ * Playwright Test provides a global `storage` object for passing values between project setup and tests. It is an
+ * error to call storage methods outside of setup and tests.
+ *
+ * ```js
+ * import { setup, storage } from '@playwright/test';
+ *
+ * setup('sign in', async ({ page, context }) => {
+ *   // Save signed-in state to an entry named 'github-test-user'.
+ *   const contextState = await context.storageState();
+ *   await storage.set('test-user', contextState)
+ * });
+ * ```
+ *
  */
 export interface Storage {
   /**
@@ -3387,6 +3393,7 @@ export default test;
 
 export const _baseTest: TestType<{}, {}>;
 export const expect: Expect;
+export const storage: Storage;
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
