@@ -280,7 +280,7 @@ export class Runner {
     const projects = this._collectProjects(options.projectFilter);
     const { filesByProject, setupFiles } = await this._collectFiles(projects, options.testFileFilters);
 
-    let result = await this._createFilteredRootSuite(options, filesByProject, new Set(), !!setupFiles.size);
+    let result = await this._createFilteredRootSuite(options, filesByProject, new Set(), !!setupFiles.size, setupFiles);
     if (setupFiles.size) {
       const allTests = result.rootSuite.allTests();
       const tests = allTests.filter(test => !setupFiles.has(test._requireFile));
@@ -289,7 +289,7 @@ export class Runner {
       // - if the filter also matches some of the setup tests, we'll run only
       //   that maching subset of setup tests.
       if (tests.length > 0 && tests.length === allTests.length)
-        result = await this._createFilteredRootSuite(options, filesByProject, setupFiles, false);
+        result = await this._createFilteredRootSuite(options, filesByProject, setupFiles, false, setupFiles);
     }
 
     fatalErrors.push(...result.fatalErrors);
@@ -307,7 +307,7 @@ export class Runner {
     return { rootSuite, projectSetupGroups, testGroups };
   }
 
-  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>, doNotFilterFiles: Set<string>, shouldCloneTests: boolean): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
+  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>, doNotFilterFiles: Set<string>, shouldCloneTests: boolean, setupFiles: Set<string>): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
     const config = this._loader.fullConfig();
     const fatalErrors: TestError[] = [];
     const allTestFiles = new Set<string>();
@@ -317,7 +317,7 @@ export class Runner {
     // Add all tests.
     const preprocessRoot = new Suite('', 'root');
     for (const file of allTestFiles) {
-      const fileSuite = await this._loader.loadTestFile(file, 'runner');
+      const fileSuite = await this._loader.loadTestFile(file, 'runner', setupFiles.has(file));
       if (fileSuite._loadError)
         fatalErrors.push(fileSuite._loadError);
       // We have to clone only if there maybe subsequent calls of this method.
@@ -824,6 +824,7 @@ function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] 
       projectId: test._projectId,
       tests: [],
       watchMode: false,
+      projectSetup: test._projectSetup,
     };
   };
 

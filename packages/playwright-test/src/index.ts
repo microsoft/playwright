@@ -21,9 +21,9 @@ import * as playwrightLibrary from 'playwright-core';
 import * as outOfProcess from 'playwright-core/lib/outofprocess';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
-import type { PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
+import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './testInfo';
-import { rootTestType } from './testType';
+import { rootTestType, _setProjectSetup } from './testType';
 export { expect } from './expect';
 export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -53,7 +53,7 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _snapshotSuffix: string;
 };
 
-export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
+const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   defaultBrowserType: ['chromium', { scope: 'worker', option: true }],
   browserName: [({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true }],
   playwright: [async ({ }, use) => {
@@ -626,5 +626,9 @@ export function shouldCaptureTrace(traceMode: TraceMode, testInfo: TestInfo) {
 }
 
 const kTracingStarted = Symbol('kTracingStarted');
+
+export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
+export const setup = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
+_setProjectSetup(setup, true);
 
 export default test;
