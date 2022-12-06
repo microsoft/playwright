@@ -824,7 +824,7 @@ function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] 
       projectId: test._projectId,
       tests: [],
       watchMode: false,
-      projectSetup: test._projectSetup,
+      isProjectSetup: test._isProjectSetup,
     };
   };
 

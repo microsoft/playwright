@@ -79,7 +79,7 @@ export class TestTypeImpl {
         `  when one of the dependencies in your package.json depends on @playwright/test.`,
       ].join('\n'));
     }
-    if (this._projectSetup !== suite._projectSetup) {
+    if (this._projectSetup !== suite._isProjectSetup) {
       if (this._projectSetup)
         throw errorWithLocation(location, `${title} is called in a file which is not a part of project setup.`);
       throw errorWithLocation(location, `${title} is called in a project setup file (use 'setup' instead of 'test').`);
@@ -92,7 +92,7 @@ export class TestTypeImpl {
     const suite = this._ensureCurrentSuite(location, this._projectSetup ? 'setup()' : 'test()');
     const test = new TestCase(title, fn, this, location);
     test._requireFile = suite._requireFile;
-    test._projectSetup = suite._projectSetup;
+    test._isProjectSetup = suite._isProjectSetup;
     suite._addTest(test);
 
     if (type === 'only')
@@ -118,7 +118,7 @@ export class TestTypeImpl {
 
     const child = new Suite(title, 'describe');
     child._requireFile = suite._requireFile;
-    child._projectSetup = suite._projectSetup;
+    child._isProjectSetup = suite._isProjectSetup;
     child.location = location;
     suite._addSuite(child);
 

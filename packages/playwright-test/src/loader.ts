@@ -185,7 +185,7 @@ export class Loader {
       return cachedFileSuites.get(file)!;
     const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file), 'file');
     suite._requireFile = file;
-    suite._projectSetup = projectSetup;
+    suite._isProjectSetup = projectSetup;
     suite.location = { file, line: 0, column: 0 };
 
     setCurrentlyLoadingFileSuite(suite);
