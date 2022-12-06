@@ -579,7 +579,9 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
   if (allowsNameFromContent || options.embeddedInLabelledBy !== 'none' || options.embeddedInLabel !== 'none' || options.embeddedInTextAlternativeElement || options.embeddedInTargetElement === 'descendant') {
     options.visitedElements.add(element);
     const tokens: string[] = [];
-    const visit = (node: Node) => {
+    const visit = (node: Node, skipSlotted: boolean) => {
+      if (skipSlotted && (node as Element | Text).assignedSlot)
+        return;
       if (node.nodeType === 1 /* Node.ELEMENT_NODE */) {
         const display = getComputedStyle(node as Element)?.getPropertyValue('display') || 'inline';
         let token = getElementAccessibleNameInternal(node as Element, childOptions);
@@ -596,14 +598,20 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       }
     };
     tokens.push(getPseudoContent(getComputedStyle(element, '::before')));
-    for (let child = element.firstChild; child; child = child.nextSibling)
-      visit(child);
-    if (element.shadowRoot) {
-      for (let child = element.shadowRoot.firstChild; child; child = child.nextSibling)
-        visit(child);
+    const assignedNodes = element.nodeName === 'SLOT' ? (element as HTMLSlotElement).assignedNodes() : [];
+    if (assignedNodes.length) {
+      for (const child of assignedNodes)
+        visit(child, false);
+    } else {
+      for (let child = element.firstChild; child; child = child.nextSibling)
+        visit(child, true);
+      if (element.shadowRoot) {
+        for (let child = element.shadowRoot.firstChild; child; child = child.nextSibling)
+          visit(child, true);
+      }
+      for (const owned of getIdRefs(element, element.getAttribute('aria-owns')))
+        visit(owned, true);
     }
-    for (const owned of getIdRefs(element, element.getAttribute('aria-owns')))
-      visit(owned);
     tokens.push(getPseudoContent(getComputedStyle(element, '::after')));
     const accessibleName = tokens.join('');
     if (accessibleName.trim())
