@@ -23,6 +23,7 @@ class Base {
   title: string;
   _only = false;
   _requireFile: string = '';
+  _isProjectSetup: boolean = false;
 
   constructor(title: string) {
     this.title = title;
@@ -120,6 +121,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     suite._only = this._only;
     suite.location = this.location;
     suite._requireFile = this._requireFile;
+    suite._isProjectSetup = this._isProjectSetup;
     suite._use = this._use.slice();
     suite._hooks = this._hooks.slice();
     suite._timeout = this._timeout;
@@ -191,6 +193,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     const test = new TestCase(this.title, this.fn, this._testType, this.location);
     test._only = this._only;
     test._requireFile = this._requireFile;
+    test._isProjectSetup = this._isProjectSetup;
     test.expectedStatus = this.expectedStatus;
     test.annotations = this.annotations.slice();
     test._annotateWithInheritence = this._annotateWithInheritence;

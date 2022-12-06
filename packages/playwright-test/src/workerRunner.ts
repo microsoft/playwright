@@ -169,7 +169,7 @@ export class WorkerRunner extends EventEmitter {
     let fatalUnknownTestIds;
     try {
       await this._loadIfNeeded();
-      const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker');
+      const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker', runPayload.projectSetup);
       const suite = this._loader.buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex, test => {
         if (runPayload.watchMode) {
           const testResolvedPayload: WatchTestResolvedPayload = {

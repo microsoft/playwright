@@ -180,11 +180,12 @@ export class Loader {
     }
   }
 
-  async loadTestFile(file: string, environment: 'runner' | 'worker') {
+  async loadTestFile(file: string, environment: 'runner' | 'worker', projectSetup: boolean) {
     if (cachedFileSuites.has(file))
       return cachedFileSuites.get(file)!;
     const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file), 'file');
     suite._requireFile = file;
+    suite._isProjectSetup = projectSetup;
     suite.location = { file, line: 0, column: 0 };
 
     setCurrentlyLoadingFileSuite(suite);
