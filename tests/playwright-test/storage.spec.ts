@@ -54,18 +54,8 @@ test('should share storage state between project setup and tests', async ({ runI
       };
     `,
     'storage.setup.ts': `
-<<<<<<< HEAD
-      const { setup, expect } = pwt;
+      const { setup, expect, storage } = pwt;
       setup('should initialize storage', async ({ }) => {
-        const storage = setup.info().storage();
-||||||| parent of b1f7eb1d4 (feat: make storage a global variable)
-      const { test, expect } = pwt;
-      test('should initialize storage', async ({ }) => {
-        const storage = test.info().storage();
-=======
-      const { test, expect, storage } = pwt;
-      test('should initialize storage', async ({ }) => {
->>>>>>> b1f7eb1d4 (feat: make storage a global variable)
         expect(await storage.get('number')).toBe(undefined);
         await storage.set('number', 2022)
         expect(await storage.get('number')).toBe(2022);
@@ -145,8 +135,8 @@ test('should isolate storage state between projects', async ({ runInlineTest }) 
       };
     `,
     'storage.setup.ts': `
-      const { expect, storage } = pwt;
-      test('should initialize storage', async ({ }) => {
+      const { setup, expect, storage } = pwt;
+      setup('should initialize storage', async ({ }) => {
         expect(await storage.get('number')).toBe(undefined);
         await storage.set('number', 2022)
         expect(await storage.get('number')).toBe(2022);

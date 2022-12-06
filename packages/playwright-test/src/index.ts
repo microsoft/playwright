@@ -21,7 +21,7 @@ import * as playwrightLibrary from 'playwright-core';
 import * as outOfProcess from 'playwright-core/lib/outofprocess';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
-import type { PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
+import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import { storage as _baseStorage } from './storage';
 import type { TestInfoImpl } from './testInfo';
 import { rootTestType, _setProjectSetup } from './testType';
