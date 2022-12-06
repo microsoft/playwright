@@ -177,15 +177,15 @@ in only once per project and then skip the log in step for all of the tests.
 
 Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). Playwright provides [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state) method that can be used to retrieve storage state from authenticated contexts and then create new contexts with prepopulated state.
 
-You can run authentication steps once during the project [`property: TestProject.setup`] phase and save the context state into [`method: TestInfo.storage`]. The stored value can later be reused to automatically restore authenticated context state in every test of the project. This way the login will run once per project before all tests.
+You can run authentication steps once during the project [`property: TestProject.setup`] phase and save the context state into [TestStorage]. The stored value can later be reused to automatically restore authenticated context state in every test of the project. This way the login will run once per project before all tests.
 
 Create a setup test that performs login and saves the context state into project storage:
 
 ```js tab=js-js
 // github-login.setup.js
-const { test } = require('@playwright/test');
+const { setup, storage } = require('@playwright/test');
 
-test('sign in', async ({ page, context }) => {
+setup('sign in', async ({ page, context }) => {
   await page.goto('https://github.com/login');
   await page.getByLabel('User Name').fill('user');
   await page.getByLabel('Password').fill('password');
@@ -193,16 +193,15 @@ test('sign in', async ({ page, context }) => {
 
   // Save signed-in state to an entry named 'github-test-user'.
   const contextState = await context.storageState();
-  const storage = test.info().storage();
   await storage.set('github-test-user', contextState)
 });
 ```
 
 ```js tab=js-ts
 // github-login.setup.ts
-import { test } from '@playwright/test';
+import { setup, storage } from '@playwright/setup';
 
-test('sign in', async ({ page, context }) => {
+setup('sign in', async ({ page, context }) => {
   await page.goto('https://github.com/login');
   await page.getByLabel('User Name').fill('user');
   await page.getByLabel('Password').fill('password');
@@ -210,7 +209,6 @@ test('sign in', async ({ page, context }) => {
 
   // Save signed-in state to an entry named 'github-test-user'.
   const contextState = await context.storageState();
-  const storage = test.info().storage();
   await storage.set('github-test-user', contextState)
 });
 ```
@@ -278,29 +276,29 @@ test('test', async ({ page }) => {
 ### Reusing signed in state between test runs
 * langs: js
 
-When you set an entry on [`method: TestInfo.storage`] Playwright will store it in a separate file under `.playwright-storage/`. Playwright does not delete those files automatically. You can leverage this fact to persist storage state between test runs and only sign in if the entry is not in the storage yet.
+When you set an entry on [TestStorage] Playwright will store it in a separate file under `.playwright-storage/`. Playwright does not delete those files automatically. You can leverage this fact to persist storage state between test runs and only sign in if the entry is not in the storage yet.
 
 ```js tab=js-js
 // github-login.setup.js
-const { test } = require('@playwright/test');
+const { setup, storage } = require('@playwright/test');
 
-test('sign in', async ({ page, context }) => {
-  if (test.info().storage().get('github-test-user'))
+setup('sign in', async ({ page, context }) => {
+  if (storage.get('github-test-user'))
     return;
   // ... login here ...
-  await test.info().storage().set('github-test-user', await context.storageState());
+  await storage.set('github-test-user', await context.storageState());
 });
 ```
 
 ```js tab=js-ts
 // github-login.setup.ts
-import { test } from '@playwright/test';
+import { setup, storage } from '@playwright/test';
 
-test('sign in', async ({ page, context }) => {
-  if (test.info().storage().get('github-test-user'))
+setup('sign in', async ({ page, context }) => {
+  if (storage.get('github-test-user'))
     return;
   // ... login here ...
-  await test.info().storage().set('github-test-user', await context.storageState());
+  await storage.set('github-test-user', await context.storageState());
 });
 ```
 
@@ -313,9 +311,9 @@ If your web application supports signing in via API, you can use [APIRequestCont
 
 ```js tab=js-js
 // github-login.setup.js
-const { test } = require('@playwright/test');
+const { setup, storage } = require('@playwright/test');
 
-test('sign in', async ({ request }) => {
+setup('sign in', async ({ request }) => {
   await request.post('https://github.com/login', {
     form: {
       'user': 'user',
@@ -324,16 +322,15 @@ test('sign in', async ({ request }) => {
   });
   // Save signed-in state to an entry named 'github-test-user'.
   const contextState = await request.storageState();
-  const storage = test.info().storage();
   await storage.set('github-test-user', contextState)
 });
 ```
 
 ```js tab=js-ts
 // github-login.setup.ts
-import { test } from '@playwright/test';
+import { setup, storage } from '@playwright/test';
 
-test('sign in', async ({ request }) => {
+setup('sign in', async ({ request }) => {
   await request.post('https://github.com/login', {
     form: {
       'user': 'user',
@@ -342,7 +339,6 @@ test('sign in', async ({ request }) => {
   });
   // Save signed-in state to an entry named 'github-test-user'.
   const contextState = await request.storageState();
-  const storage = test.info().storage();
   await storage.set('github-test-user', contextState)
 });
 ```
@@ -356,7 +352,7 @@ In this example we [override `storageState` fixture](./test-fixtures.md#overridi
 
 ```js tab=js-js
 // signin-all-users.setup.js
-const { test } = require('@playwright/test');
+const { setup, storage } = require('@playwright/test');
 
 const users = [
   { username: 'user-1', password: 'password-1' },
@@ -365,21 +361,20 @@ const users = [
 ];
 
 // Run all logins in parallel.
-test.describe.configure({
+setup.describe.configure({
   mode: 'parallel'
 });
 
 // Sign in all test users duing project setup and save their state
 // to be used in the tests.
 for (let i = 0; i < users.length; i++) {
-  test(`login user ${i}`, async ({ page }) => {
+  setup(`login user ${i}`, async ({ page }) => {
     await page.goto('https://github.com/login');
     await page.getByLabel('User Name').fill(users[i].username);
     await page.getByLabel('Password').fill(users[i].password);
     await page.getByText('Sign in').click();
 
     const contextState = await page.context().storageState();
-    const storage = test.info().storage();
     await storage.set(`test-user-${i}`, contextState);
   });
 }
@@ -399,7 +394,7 @@ test('test', async ({ page }) => {
 
 ```js tab=js-ts
 // signin-all-users.setup.ts
-import { test } from '@playwright/test';
+import { setup, storage } from '@playwright/test';
 
 const users = [
   { username: 'user-1', password: 'password-1' },
@@ -408,14 +403,14 @@ const users = [
 ];
 
 // Run all logins in parallel.
-test.describe.configure({
+setup.describe.configure({
   mode: 'parallel'
 });
 
 // Sign in all test users duing project setup and save their state
 // to be used in the tests.
 for (let i = 0; i < users.length; i++) {
-  test(`login user ${i}`, async ({ page }) => {
+  setup(`login user ${i}`, async ({ page }) => {
     await page.goto('https://github.com/login');
     // Use a unique username for each worker.
     await page.getByLabel('User Name').fill(users[i].username);
@@ -423,7 +418,6 @@ for (let i = 0; i < users.length; i++) {
     await page.getByText('Sign in').click();
 
     const contextState = await page.context().storageState();
-    const storage = test.info().storage();
     await storage.set(`test-user-${i}`, contextState);
   });
 }
@@ -433,7 +427,7 @@ import { test } from '@playwright/test';
 
 test.use({
   // User different user for each worker.
-  storageStateName: `test-user-${test.info().parallelIndex}`
+  storageStateName: ({}, use) => use(`test-user-${test.info().parallelIndex}`)
 });
 
 test('test', async ({ page }) => {
@@ -448,29 +442,27 @@ Sometimes you have more than one signed-in user in your end to end tests. You ca
 
 ```js tab=js-js
 // login.setup.js
-const { test } = require('@playwright/test');
+const { setup, storage } = require('@playwright/test');
 
 // Run all logins in parallel.
-test.describe.configure({
+setup.describe.configure({
   mode: 'parallel'
 });
 
-test(`login as regular user`, async ({ page }) => {
+setup(`login as regular user`, async ({ page }) => {
   await page.goto('https://github.com/login');
   //...
 
   const contextState = await page.context().storageState();
-  const storage = test.info().storage();
   // Save the user state.
   await storage.set(`user`, contextState);
 });
 
-test(`login as admin`, async ({ page }) => {
+setup(`login as admin`, async ({ page }) => {
   await page.goto('https://github.com/login');
   //...
 
   const contextState = await page.context().storageState();
-  const storage = test.info().storage();
   // Save the admin state.
   await storage.set(`admin`, contextState);
 });
@@ -478,29 +470,27 @@ test(`login as admin`, async ({ page }) => {
 
 ```js tab=js-ts
 // login.setup.ts
-import { test } from '@playwright/test';
+import { setup, storage } from '@playwright/test';
 
 // Run all logins in parallel.
-test.describe.configure({
+setup.describe.configure({
   mode: 'parallel'
 });
 
-test(`login as regular user`, async ({ page }) => {
+setup(`login as regular user`, async ({ page }) => {
   await page.goto('https://github.com/login');
   //...
 
   const contextState = await page.context().storageState();
-  const storage = test.info().storage();
   // Save the user state.
   await storage.set(`user`, contextState);
 });
 
-test(`login as admin`, async ({ page }) => {
+setup(`login as admin`, async ({ page }) => {
   await page.goto('https://github.com/login');
   //...
 
   const contextState = await page.context().storageState();
-  const storage = test.info().storage();
   // Save the admin state.
   await storage.set(`admin`, contextState);
 });
@@ -550,15 +540,15 @@ test.describe(() => {
 If you need to test how multiple authenticated roles interact together, use multiple [BrowserContext]s and [Page]s with different storage states in the same test. Any of the methods above to create multiple storage state entries would work.
 
 ```js tab=js-ts
-import { test } from '@playwright/test';
+import { test, storage } from '@playwright/test';
 
 test('admin and user', async ({ browser }) => {
   // adminContext and all pages inside, including adminPage, are signed in as "admin".
-  const adminContext = await browser.newContext({ storageState: await test.info().storage().get('admin') });
+  const adminContext = await browser.newContext({ storageState: await storage.get('admin') });
   const adminPage = await adminContext.newPage();
 
   // userContext and all pages inside, including userPage, are signed in as "user".
-  const userContext = await browser.newContext({ storageState: await test.info().storage().get('user') });
+  const userContext = await browser.newContext({ storageState: await storage.get('user') });
   const userPage = await userContext.newPage();
 
   // ... interact with both adminPage and userPage ...
@@ -566,15 +556,15 @@ test('admin and user', async ({ browser }) => {
 ```
 
 ```js tab=js-js
-const { test } = require('@playwright/test');
+const { test, storage } = require('@playwright/test');
 
 test('admin and user', async ({ browser }) => {
   // adminContext and all pages inside, including adminPage, are signed in as "admin".
-  const adminContext = await browser.newContext({ storageState: await test.info().storage().get('admin') });
+  const adminContext = await browser.newContext({ storageState: await storage.get('admin') });
   const adminPage = await adminContext.newPage();
 
   // userContext and all pages inside, including userPage, are signed in as "user".
-  const userContext = await browser.newContext({ storageState: await test.info().storage().get('user') });
+  const userContext = await browser.newContext({ storageState: await storage.get('user') });
   const userPage = await userContext.newPage();
 
   // ... interact with both adminPage and userPage ...
@@ -591,7 +581,7 @@ Below is an example that [creates fixtures](./test-fixtures.md#creating-a-fixtur
 ```js tab=js-ts
 // fixtures.ts
 import { test as base, Page, Browser, Locator } from '@playwright/test';
-export { expect } from '@playwright/test';
+export { expect, storage } from '@playwright/test';
 
 // Page Object Model for the "admin" page.
 // Here you can add locators and helper methods specific to the admin page.
@@ -604,7 +594,7 @@ class AdminPage {
   }
 
   static async create(browser: Browser) {
-    const context = await browser.newContext({ storageState: await test.info().storage().get('admin') });
+    const context = await browser.newContext({ storageState: await storage.get('admin') });
     const page = await context.newPage();
     return new AdminPage(page);
   }
@@ -625,7 +615,7 @@ class UserPage {
   }
 
   static async create(browser: Browser) {
-    const context = await browser.newContext({ storageState: await test.info().storage().get('user') });
+    const context = await browser.newContext({ storageState: await storage.get('user') });
     const page = await context.newPage();
     return new UserPage(page);
   }
@@ -662,7 +652,7 @@ test('admin and user', async ({ adminPage, userPage }) => {
 
 ```js tab=js-js
 // fixtures.js
-const { test: base } = require('@playwright/test');
+const { test: base, storage } = require('@playwright/test');
 
 // Page Object Model for the "admin" page.
 // Here you can add locators and helper methods specific to the admin page.
@@ -673,7 +663,7 @@ class AdminPage {
   }
 
   static async create(browser) {
-    const context = await browser.newContext({ storageState: await test.info().storage().get('admin') });
+    const context = await browser.newContext({ storageState: await storage.get('admin') });
     const page = await context.newPage();
     return new AdminPage(page);
   }
@@ -690,7 +680,7 @@ class UserPage {
   }
 
   static async create(browser) {
-    const context = await browser.newContext({ storageState: await test.info().storage().get('user') });
+    const context = await browser.newContext({ storageState: await storage.get('user') });
     const page = await context.newPage();
     return new UserPage(page);
   }

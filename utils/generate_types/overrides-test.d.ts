@@ -196,7 +196,7 @@ type ConnectOptions = {
   timeout?: number;
 };
 
-export interface Storage {
+export interface TestStorage {
   get<T>(name: string): Promise<T | undefined>;
   set<T>(name: string, value: T | undefined): Promise<void>;
 }
@@ -350,6 +350,7 @@ export default test;
 
 export const _baseTest: TestType<{}, {}>;
 export const expect: Expect;
+export const storage: TestStorage;
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};

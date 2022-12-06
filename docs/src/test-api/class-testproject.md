@@ -165,7 +165,7 @@ Metadata that will be put directly to the test report serialized as JSON.
 Project name is visible in the report and during test execution.
 
 ## property: TestProject.setup
-* since: v1.28
+* since: v1.29
 - type: ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Project setup files that would be executed before all tests in the project. If project setup fails the tests in this project will be skipped. All project setup files will run in every shard if the project is sharded. [`property: TestProject.grep`] and [`property: TestProject.grepInvert`] and their command line counterparts also apply to the setup files. If such filters match only tests in the project Playwright will run all setup files before running the matching tests.

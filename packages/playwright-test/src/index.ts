@@ -22,11 +22,13 @@ import * as outOfProcess from 'playwright-core/lib/outofprocess';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
+import { storage as _baseStorage } from './storage';
 import type { TestInfoImpl } from './testInfo';
 import { rootTestType, _setProjectSetup } from './testType';
 export { expect } from './expect';
 export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
+export const storage = _baseStorage;
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
@@ -221,7 +223,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (proxy !== undefined)
       options.proxy = proxy;
     if (storageStateName !== undefined) {
-      const value = await test.info().storage().get(storageStateName);
+      const value = await storage.get(storageStateName);
       if (!value)
         throw new Error(`Cannot find value in the storage for storageStateName: "${storageStateName}"`);
       options.storageState = value as any;
