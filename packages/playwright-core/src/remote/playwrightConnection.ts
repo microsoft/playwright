@@ -28,7 +28,7 @@ import { DebugControllerDispatcher } from '../server/dispatchers/debugController
 export type ClientType = 'controller' | 'playwright' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser' | 'network-tethering';
 
 type Options = {
-  enableSocksProxy: boolean,
+  socksProxy: string | undefined,
   browserName: string | null,
   launchOptions: LaunchOptions,
 };
@@ -99,6 +99,7 @@ export class PlaywrightConnection {
   private async _initPlaywrightTetheringMode(scope: RootDispatcher) {
     this._debugLog(`engaged playwright.tethering mode`);
     const playwright = createPlaywright('javascript');
+    this._preLaunched.networkTetheringSocksProxy?.setProxyPattern(this._options.socksProxy);
     return new PlaywrightDispatcher(scope, playwright, this._preLaunched.networkTetheringSocksProxy);
   }
 
@@ -221,7 +222,7 @@ export class PlaywrightConnection {
   }
 
   private async _configureSocksProxy(playwright: Playwright): Promise<undefined|SocksProxy> {
-    if (!this._options.enableSocksProxy)
+    if (!this._options.socksProxy)
       return undefined;
     if (this._preLaunched.networkTetheringSocksProxy) {
       playwright.options.socksProxyPort = this._preLaunched.networkTetheringSocksProxy.port();
@@ -229,6 +230,7 @@ export class PlaywrightConnection {
       return undefined;
     }
     const socksProxy = new SocksProxy();
+    socksProxy.setProxyPattern(this._options.socksProxy);
     playwright.options.socksProxyPort = await socksProxy.listen(0);
     this._debugLog(`started socks proxy on port ${playwright.options.socksProxyPort}`);
     this._cleanups.push(() => socksProxy.close());

@@ -58,15 +58,15 @@ class OutOfProcessPlaywrightServer {
   }
 }
 
-const it = contextTest.extend<{ pageFactory: (redirectPortForTest?: number) => Promise<Page> }>({
+const it = contextTest.extend<{ pageFactory: (redirectPortForTest?: number, pattern?: string) => Promise<Page> }>({
   pageFactory: async ({ browserType, browserName, channel }, run, testInfo) => {
     const playwrightServers: OutOfProcessPlaywrightServer[] = [];
     const browsers: Browser[] = [];
-    await run(async (redirectPortForTest?: number): Promise<Page> => {
+    await run(async (redirectPortForTest?: number, pattern = '*'): Promise<Page> => {
       const server = new OutOfProcessPlaywrightServer(0, 3200 + testInfo.workerIndex);
       playwrightServers.push(server);
       const browser = await browserType.connect({
-        wsEndpoint: await server.wsEndpoint() + '?proxy=*&browser=' + browserName,
+        wsEndpoint: await server.wsEndpoint() + `?proxy=${pattern}&browser=` + browserName,
         headers: { 'x-playwright-launch-options': JSON.stringify({ channel }) },
         __testHookRedirectPortForwarding: redirectPortForTest,
       } as any);
@@ -166,5 +166,37 @@ it('should lead to the error page for forwarded requests when the connection is 
   else if (browserName === 'webkit')
     expect(error.message).toBeTruthy();
   else if (browserName === 'firefox')
-    expect(error.message.includes('NS_ERROR_NET_RESET') || error.message.includes('NS_ERROR_CONNECTION_REFUSED')).toBe(true);
+    expect(error.message.includes('NS_ERROR_NET_RESET') || error.message.includes('NS_ERROR_CONNECTION_REFUSED')).toBe(true);
+});
+
+it('should proxy based on the pattern', async ({ pageFactory, server, browserName, platform }, workerInfo) => {
+  it.skip(browserName === 'webkit' && platform === 'darwin');
+
+  const { testServerPort, stopTestServer } = await startTestServer();
+  let reachedOriginalTarget = false;
+  server.setRoute('/foo.html', async (req, res) => {
+    reachedOriginalTarget = true;
+    res.end('<html><body>from-original-server</body></html>');
+  });
+  const examplePort = 20_000 + workerInfo.workerIndex * 3;
+  const page = await pageFactory(testServerPort, 'localhost');
+
+  // localhost should be proxied.
+  await page.goto(`http://localhost:${examplePort}/foo.html`);
+  expect(await page.content()).toContain('from-retargeted-server');
+  expect(reachedOriginalTarget).toBe(false);
+
+  // 127.0.0.1 should be served directly.
+  await page.goto(`http://127.0.0.1:${server.PORT}/foo.html`);
+  expect(await page.content()).toContain('from-original-server');
+  expect(reachedOriginalTarget).toBe(true);
+
+  // Random domain should be served directly and fail.
+  let failed = false;
+  await page.goto(`http://does-not-exist-bad-domain.oh-no-should-not-work`).catch(e => {
+    failed = true;
+  });
+  expect(failed).toBe(true);
+
+  stopTestServer();
 });
