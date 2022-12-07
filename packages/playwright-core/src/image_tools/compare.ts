@@ -18,7 +18,7 @@ import { blendWithWhite, colorDeltaE94, rgb2gray } from './colorUtils';
 import { ImageChannel } from './imageChannel';
 import { ssim, FastStats } from './stats';
 
-const SSIM_WINDOW_RADIUS = 5;
+const SSIM_WINDOW_RADIUS = 15;
 const VARIANCE_WINDOW_RADIUS = 1;
 
 function drawPixel(width: number, data: Buffer, x: number, y: number, r: number, g: number, b: number) {
