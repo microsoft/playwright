@@ -279,14 +279,13 @@ export class AndroidDevice extends SdkObject {
       `--remote-debugging-socket-name=${socketName}`,
       ...chromiumSwitches,
       ...this._innerDefaultArgs(options)
-    ]
+    ];
     return chromeArguments;
   }
 
   private _innerDefaultArgs(options: channels.BrowserNewContextParams): string[] {
     const { args = [], proxy } = options;
     const chromeArguments = [];
-
     if (proxy) {
       chromeArguments.push(`--proxy-server=${proxy.server}`);
       const proxyBypassRules = [];
@@ -297,7 +296,6 @@ export class AndroidDevice extends SdkObject {
       if (proxyBypassRules.length > 0)
         chromeArguments.push(`--proxy-bypass-list=${proxyBypassRules.join(';')}`);
     }
-    
     chromeArguments.push(...args);
     return chromeArguments;
   }
