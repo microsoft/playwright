@@ -1,0 +1,31 @@
+Scenario: Todo item creation
+Given I am a user
+When I create a new todo item
+Then it appears last on my todo list
+
+Scenario: Editing the todo item
+Given I have created a todo item
+When I edit a todo item
+Then the todo item gets updated with the new changes
+
+Scenario: deleting a todo item
+Given I have created a todo item
+When I delete a todo item using the red X
+Then the todo item is removed from my todo list
+
+Scenario: strikethrough a todo item
+Given I have created a todo item
+When I mark a todo item as completed
+Then it is marked with a green check mark
+And it is crossed off my todo list with a Strikethrough
+
+Scenario: viewing an active todo list
+Given I have marked a todo item as complete
+When I view the Active list
+Then only Active (Not Completed) todo items are shown
+
+Scenario: moving a todo to complete list
+Given I have marked a todo item as complete
+When I click “Clear Completed”
+Then the completed todo item is removed from my todo list
+And the todo item is moved to the Completed list
