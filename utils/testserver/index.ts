@@ -281,7 +281,7 @@ export class TestServer {
     }
   }
 
-  onceWebSocketConnection(handler) {
+  onceWebSocketConnection(handler: (socket: ws.WebSocket, request: http.IncomingMessage) => void) {
     this._wsServer.once('connection', handler);
   }
 

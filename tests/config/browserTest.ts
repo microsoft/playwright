@@ -21,8 +21,7 @@ import * as path from 'path';
 import type { BrowserContext, BrowserContextOptions, BrowserType, Page } from 'playwright-core';
 import { removeFolders } from '../../packages/playwright-core/lib/utils/fileUtils';
 import { baseTest } from './baseTest';
-import type { RemoteServerOptions } from './remoteServer';
-import { RemoteServer } from './remoteServer';
+import { type RemoteServerOptions, type PlaywrightServer, RunServer, RemoteServer } from './remoteServer';
 import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
 
@@ -36,10 +35,15 @@ export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   isElectron: boolean;
 };
 
+interface StartRemoteServer {
+  (kind: 'run-server' | 'launchServer'): Promise<PlaywrightServer>;
+  (kind: 'launchServer', options?: RemoteServerOptions): Promise<RemoteServer>;
+}
+
 type BrowserTestTestFixtures = PageTestFixtures & {
   createUserDataDir: () => Promise<string>;
   launchPersistent: (options?: Parameters<BrowserType['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
-  startRemoteServer: (options?: RemoteServerOptions) => Promise<RemoteServer>;
+  startRemoteServer: StartRemoteServer;
   contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
   pageWithHar(options?: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean }): Promise<{ context: BrowserContext, page: Page, getLog: () => Promise<Log>, getZip: () => Promise<Map<string, Buffer>> }>
 };
@@ -118,16 +122,24 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   },
 
   startRemoteServer: async ({ childProcess, browserType }, run) => {
-    let remoteServer: RemoteServer | undefined;
-    await run(async options => {
-      if (remoteServer)
+    let server: PlaywrightServer | undefined;
+    const fn = async (kind: 'launchServer' | 'run-server', options?: RemoteServerOptions) => {
+      if (server)
         throw new Error('can only start one remote server');
-      remoteServer = new RemoteServer();
-      await remoteServer._start(childProcess, browserType, options);
-      return remoteServer;
-    });
-    if (remoteServer) {
-      await remoteServer.close();
+      if (kind === 'launchServer') {
+        const remoteServer = new RemoteServer();
+        await remoteServer._start(childProcess, browserType, options);
+        server = remoteServer;
+      } else {
+        const runServer = new RunServer();
+        await runServer._start(childProcess);
+        server = runServer;
+      }
+      return server;
+    };
+    await run(fn as any);
+    if (server) {
+      await server.close();
       // Give any connected browsers a chance to disconnect to avoid
       // poisoning next test with quasy-alive browsers.
       await new Promise(f => setTimeout(f, 1000));
