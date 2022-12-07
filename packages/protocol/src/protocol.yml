@@ -476,9 +476,6 @@ ContextOptions:
       literals:
       - allow
       - block
-    browserArgs:
-      type: array?
-      items: string
 
 LocalUtils:
   type: interface
@@ -870,6 +867,9 @@ Browser:
             bypass: string?
             username: string?
             password: string?
+        args:
+          type: array?
+          items: string
         storageState:
           type: object?
           properties:

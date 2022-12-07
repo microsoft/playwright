@@ -264,19 +264,42 @@ export class AndroidDevice extends SdkObject {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
     const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright-' + createGuid());
-    const additionalBrowserArgs = (options && options.browserArgs) ? options.browserArgs : [];
-    const commandLine = [
+    const commandLine = this._defaultArgs(options, socketName).join(' ');
+    debug('pw:android')('Starting', pkg, commandLine);
+    await this._backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);
+    await this._backend.runCommand(`shell:am start -a android.intent.action.VIEW -d about:blank ${pkg}`);
+    return await this._connectToBrowser(socketName, options);
+  }
+
+  _defaultArgs(options: channels.BrowserNewContextParams, socketName: string): string[] {
+    const chromeArguments = [
       '_',
       '--disable-fre',
       '--no-default-browser-check',
       `--remote-debugging-socket-name=${socketName}`,
       ...chromiumSwitches,
-      ...additionalBrowserArgs
-    ].join(' ');
-    debug('pw:android')('Starting', pkg, commandLine);
-    await this._backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);
-    await this._backend.runCommand(`shell:am start -a android.intent.action.VIEW -d about:blank ${pkg}`);
-    return await this._connectToBrowser(socketName, options);
+      ...this._innerDefaultArgs(options)
+    ]
+    return chromeArguments;
+  }
+
+  private _innerDefaultArgs(options: channels.BrowserNewContextParams): string[] {
+    const { args = [], proxy } = options;
+    const chromeArguments = [];
+
+    if (proxy) {
+      chromeArguments.push(`--proxy-server=${proxy.server}`);
+      const proxyBypassRules = [];
+      if (proxy.bypass)
+        proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));
+      if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !proxyBypassRules.includes('<-loopback>'))
+        proxyBypassRules.push('<-loopback>');
+      if (proxyBypassRules.length > 0)
+        chromeArguments.push(`--proxy-bypass-list=${proxyBypassRules.join(';')}`);
+    }
+    
+    chromeArguments.push(...args);
+    return chromeArguments;
   }
 
   async connectToWebView(socketName: string): Promise<BrowserContext> {

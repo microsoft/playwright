@@ -534,7 +534,6 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
-  browserArgs: tOptional(tArray(tString)),
   userDataDir: tString,
   slowMo: tOptional(tNumber),
 });
@@ -606,13 +605,13 @@ scheme.BrowserNewContextParams = tObject({
   recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
-  browserArgs: tOptional(tArray(tString)),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
     username: tOptional(tString),
     password: tOptional(tString),
   })),
+  args: tOptional(tArray(tString)),
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
     origins: tOptional(tArray(tType('OriginStorage'))),
@@ -667,7 +666,6 @@ scheme.BrowserNewContextForReuseParams = tObject({
   recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
-  browserArgs: tOptional(tArray(tString)),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -2386,7 +2384,6 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   recordHar: tOptional(tType('RecordHarOptions')),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
-  browserArgs: tOptional(tArray(tString)),
   pkg: tOptional(tString),
   proxy: tOptional(tObject({
     server: tString,
