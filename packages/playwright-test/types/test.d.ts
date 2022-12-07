@@ -541,9 +541,8 @@ interface TestConfig {
       /**
        * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
        * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. `"ssim-cie94"`
-       * comparator computes color difference by [CIE94](https://en.wikipedia.org/wiki/Color_difference#CIE94) and defaults
-       * `threshold` value to `0.01`.
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. This option is
+       * ignored in the `ssim-cie94` comparator.
        */
       threshold?: number;
 
@@ -591,9 +590,8 @@ interface TestConfig {
       /**
        * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
        * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. `"ssim-cie94"`
-       * comparator computes color difference by [CIE94](https://en.wikipedia.org/wiki/Color_difference#CIE94) and defaults
-       * `threshold` value to `0.01`.
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. This option is
+       * ignored in the `ssim-cie94` comparator.
        */
       threshold?: number;
 
@@ -3869,7 +3867,7 @@ interface LocatorAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * A comparator function to use when comparing images.
+     * A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
      */
     comparator?: string;
 
@@ -3909,7 +3907,7 @@ interface LocatorAssertions {
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-     * `TestConfig.expect`. Defaults to `0.2`.
+     * `TestConfig.expect`. Defaults to `0.2`. This option is ignored by the `ssim-cie94` image comparator.
      */
     threshold?: number;
 
@@ -3951,7 +3949,7 @@ interface LocatorAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * A comparator function to use when comparing images.
+     * A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
      */
     comparator?: string;
 
@@ -3991,7 +3989,7 @@ interface LocatorAssertions {
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-     * `TestConfig.expect`. Defaults to `0.2`.
+     * `TestConfig.expect`. Defaults to `0.2`. This option is ignored by the `ssim-cie94` image comparator.
      */
     threshold?: number;
 
@@ -4204,7 +4202,7 @@ interface PageAssertions {
     };
 
     /**
-     * A comparator function to use when comparing images.
+     * A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
      */
     comparator?: string;
 
@@ -4250,7 +4248,7 @@ interface PageAssertions {
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-     * `TestConfig.expect`. Defaults to `0.2`.
+     * `TestConfig.expect`. Defaults to `0.2`. This option is ignored by the `ssim-cie94` image comparator.
      */
     threshold?: number;
 
@@ -4316,7 +4314,7 @@ interface PageAssertions {
     };
 
     /**
-     * A comparator function to use when comparing images.
+     * A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
      */
     comparator?: string;
 
@@ -4362,7 +4360,7 @@ interface PageAssertions {
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-     * `TestConfig.expect`. Defaults to `0.2`.
+     * `TestConfig.expect`. Defaults to `0.2`. This option is ignored by the `ssim-cie94` image comparator.
      */
     threshold?: number;
 
@@ -4451,7 +4449,7 @@ interface SnapshotAssertions {
    */
   toMatchSnapshot(name: string|Array<string>, options?: {
     /**
-     * A comparator function to use when comparing images.
+     * A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
      */
     comparator?: string;
 
@@ -4470,7 +4468,7 @@ interface SnapshotAssertions {
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-     * `TestConfig.expect`. Defaults to `0.2`.
+     * `TestConfig.expect`. Defaults to `0.2`. This option is ignored by the `ssim-cie94` image comparator.
      */
     threshold?: number;
   }): void;
@@ -4504,7 +4502,7 @@ interface SnapshotAssertions {
    */
   toMatchSnapshot(options?: {
     /**
-     * A comparator function to use when comparing images.
+     * A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
      */
     comparator?: string;
 
@@ -4528,7 +4526,7 @@ interface SnapshotAssertions {
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-     * `TestConfig.expect`. Defaults to `0.2`.
+     * `TestConfig.expect`. Defaults to `0.2`. This option is ignored by the `ssim-cie94` image comparator.
      */
     threshold?: number;
   }): void;
@@ -4641,9 +4639,8 @@ interface TestProject {
       /**
        * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
        * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. `"ssim-cie94"`
-       * comparator computes color difference by [CIE94](https://en.wikipedia.org/wiki/Color_difference#CIE94) and defaults
-       * `threshold` value to `0.01`.
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. This option is
+       * ignored in the `ssim-cie94` comparator.
        */
       threshold?: number;
 
@@ -4691,9 +4688,8 @@ interface TestProject {
       /**
        * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
        * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. `"ssim-cie94"`
-       * comparator computes color difference by [CIE94](https://en.wikipedia.org/wiki/Color_difference#CIE94) and defaults
-       * `threshold` value to `0.01`.
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. This option is
+       * ignored in the `ssim-cie94` comparator.
        */
       threshold?: number;
 

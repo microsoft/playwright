@@ -62,7 +62,9 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   let count;
   if (options.comparator === 'ssim-cie94') {
     count = compare(expected.data, actual.data, diff.data, expected.width, expected.height, {
-      maxColorDeltaE94: (options.threshold ?? 0.01) * 100,
+      // All ΔE* formulae are originally designed to have the difference of 1.0 stand for a "just noticeable difference" (JND).
+      // See https://en.wikipedia.org/wiki/Color_difference#CIELAB_%CE%94E*
+      maxColorDeltaE94: 1.0,
     });
   } else if ((options.comparator ?? 'pixelmatch') === 'pixelmatch') {
     count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, {
