@@ -115,7 +115,7 @@ export class PlaywrightServer {
       const browserName = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
       const proxyHeader = request.headers['x-playwright-proxy'];
       const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
-      const enableSocksProxy = this._options.browserProxyMode !== 'disabled' && proxyValue === '*';
+      const socksProxy = this._options.browserProxyMode !== 'disabled' ? proxyValue : undefined;
 
       const launchOptionsHeader = request.headers['x-playwright-launch-options'] || '';
       let launchOptions: LaunchOptions = {};
@@ -160,7 +160,7 @@ export class PlaywrightServer {
       const connection = new PlaywrightConnection(
           semaphore.aquire(),
           clientType, ws,
-          { enableSocksProxy, browserName, launchOptions },
+          { socksProxy, browserName, launchOptions },
           {
             playwright: this._preLaunchedPlaywright,
             browser: this._options.preLaunchedBrowser,

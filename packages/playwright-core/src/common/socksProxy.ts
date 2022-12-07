@@ -297,6 +297,8 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   private _sockets = new Set<net.Socket>();
   private _closed = false;
   private _port: number | undefined;
+  private _pattern: string | undefined;
+  private _directSockets = new Map<string, net.Socket>();
 
   constructor() {
     super();
@@ -313,6 +315,37 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
       this._sockets.add(socket);
       socket.once('close', () => this._sockets.delete(socket));
     });
+  }
+
+  setProxyPattern(pattern: string | undefined) {
+    this._pattern = pattern;
+  }
+
+  private _matchesPattern(request: SocksSocketRequestedPayload) {
+    return this._pattern === '*' || (this._pattern === 'localhost' && request.host === 'localhost');
+  }
+
+  private async _handleDirect(request: SocksSocketRequestedPayload) {
+    try {
+      // TODO: Node.js 17 does resolve localhost to ipv6
+      const { address } = await dnsLookupAsync(request.host === 'localhost' ? '127.0.0.1' : request.host);
+      const socket = await createSocket(address, request.port);
+      socket.on('data', data => this._connections.get(request.uid)?.sendData(data));
+      socket.on('error', error => {
+        this._connections.get(request.uid)?.error(error.message);
+        this._directSockets.delete(request.uid);
+      });
+      socket.on('end', () => {
+        this._connections.get(request.uid)?.end();
+        this._directSockets.delete(request.uid);
+      });
+      const localAddress = socket.localAddress;
+      const localPort = socket.localPort;
+      this._directSockets.set(request.uid, socket);
+      this._connections.get(request.uid)?.socketConnected(localAddress, localPort);
+    } catch (error) {
+      this._connections.get(request.uid)?.socketFailed(error.code);
+    }
   }
 
   port() {
@@ -339,14 +372,29 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   }
 
   onSocketRequested(payload: SocksSocketRequestedPayload) {
+    if (!this._matchesPattern(payload)) {
+      this._handleDirect(payload);
+      return;
+    }
     this.emit(SocksProxy.Events.SocksRequested, payload);
   }
 
   onSocketData(payload: SocksSocketDataPayload): void {
+    const direct = this._directSockets.get(payload.uid);
+    if (direct) {
+      direct.write(payload.data);
+      return;
+    }
     this.emit(SocksProxy.Events.SocksData, payload);
   }
 
   onSocketClosed(payload: SocksSocketClosedPayload): void {
+    const direct = this._directSockets.get(payload.uid);
+    if (direct) {
+      direct.destroy();
+      this._directSockets.delete(payload.uid);
+      return;
+    }
     this.emit(SocksProxy.Events.SocksClosed, payload);
   }
 

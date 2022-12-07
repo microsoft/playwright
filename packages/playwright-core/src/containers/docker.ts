@@ -299,6 +299,7 @@ async function tetherHostNetwork(endpoint: string) {
   const headers: any = {
     'User-Agent': getUserAgent(),
     'x-playwright-network-tethering': '1',
+    'x-playwright-proxy': '*',
   };
   const transport = await WebSocketTransport.connect(undefined /* progress */, wsEndpoint, headers, true /* followRedirects */);
   const socksInterceptor = new SocksInterceptor(transport, undefined);
