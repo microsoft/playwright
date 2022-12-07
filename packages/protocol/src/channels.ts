@@ -2651,6 +2651,7 @@ export type FrameSelectOptionParams = {
   strict?: boolean,
   elements?: ElementHandleChannel[],
   options?: {
+    valueOrLabel?: string,
     value?: string,
     label?: string,
     index?: number,
@@ -2663,6 +2664,7 @@ export type FrameSelectOptionOptions = {
   strict?: boolean,
   elements?: ElementHandleChannel[],
   options?: {
+    valueOrLabel?: string,
     value?: string,
     label?: string,
     index?: number,
@@ -3275,6 +3277,7 @@ export type ElementHandleScrollIntoViewIfNeededResult = void;
 export type ElementHandleSelectOptionParams = {
   elements?: ElementHandleChannel[],
   options?: {
+    valueOrLabel?: string,
     value?: string,
     label?: string,
     index?: number,
@@ -3286,6 +3289,7 @@ export type ElementHandleSelectOptionParams = {
 export type ElementHandleSelectOptionOptions = {
   elements?: ElementHandleChannel[],
   options?: {
+    valueOrLabel?: string,
     value?: string,
     label?: string,
     index?: number,

@@ -252,7 +252,7 @@ export function convertSelectOptionValues(values: string | api.ElementHandle | S
   if (values[0] instanceof ElementHandle)
     return { elements: (values as ElementHandle[]).map((v: ElementHandle) => v._elementChannel) };
   if (isString(values[0]))
-    return { options: (values as string[]).map(value => ({ value })) };
+    return { options: (values as string[]).map(valueOrLabel => ({ valueOrLabel })) };
   return { options: values as SelectOption[] };
 }
 

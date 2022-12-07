@@ -997,6 +997,10 @@ completely visible as defined by
 * since: v1.14
 - returns: <[Array]<[string]>>
 
+Selects option or options in `<select>`.
+
+**Details**
+
 This method waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
 
 If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
@@ -1007,56 +1011,59 @@ Triggers a `change` and `input` event once all the provided options have been se
 
 **Usage**
 
+```html
+<select multiple>
+  <option value="red">Red</div>
+  <option value="green">Green</div>
+  <option value="blue">Blue</div>
+</select>
+```
+
 ```js
-// single selection matching the value
+// single selection matching the value or label
 element.selectOption('blue');
 
 // single selection matching the label
 element.selectOption({ label: 'Blue' });
 
-// multiple selection
+// multiple selection for red, green and blue options
 element.selectOption(['red', 'green', 'blue']);
 ```
 
 ```java
-// single selection matching the value
+// single selection matching the value or label
 element.selectOption("blue");
 // single selection matching the label
 element.selectOption(new SelectOption().setLabel("Blue"));
-// multiple selection
+// multiple selection for blue, red and second option
 element.selectOption(new String[] {"red", "green", "blue"});
 ```
 
 ```python async
-# single selection matching the value
+# single selection matching the value or label
 await element.select_option("blue")
 # single selection matching the label
 await element.select_option(label="blue")
-# multiple selection
+# multiple selection for blue, red and second option
 await element.select_option(value=["red", "green", "blue"])
 ```
 
 ```python sync
-# single selection matching the value
+# single selection matching the value or label
 element.select_option("blue")
-# single selection matching both the label
+# single selection matching the label
 element.select_option(label="blue")
-# multiple selection
+# multiple selection for blue, red and second option
 element.select_option(value=["red", "green", "blue"])
 ```
 
 ```csharp
-// single selection matching the value
+// single selection matching the value or label
 await element.SelectOptionAsync(new[] { "blue" });
 // single selection matching the label
 await element.SelectOptionAsync(new[] { new SelectOptionValue() { Label = "blue" } });
-// multiple selection
-await element.SelectOptionAsync(new[] { "red", "green", "blue" });
 // multiple selection for blue, red and second option
-await element.SelectOptionAsync(new[] {
-    new SelectOptionValue() { Label = "blue" },
-    new SelectOptionValue() { Index = 2 },
-    new SelectOptionValue() { Value = "red" }});
+await element.SelectOptionAsync(new[] { "red", "green", "blue" });
 ```
 
 ### param: Locator.selectOption.values = %%-select-options-values-%%

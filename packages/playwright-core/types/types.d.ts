@@ -3517,8 +3517,8 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise
-   * only the first option matching one of the passed options is selected. String values are equivalent to
-   * `{value:'string'}`. Option is considered matching if all specified properties match.
+   * only the first option matching one of the passed options is selected. String values are matching both values and
+   * labels. Option is considered matching if all specified properties match.
    * @param options
    */
   selectOption(selector: string, values: null|string|ElementHandle|Array<string>|{
@@ -6389,8 +6389,8 @@ export interface Frame {
    *
    * @param selector A selector to query for.
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise
-   * only the first option matching one of the passed options is selected. String values are equivalent to
-   * `{value:'string'}`. Option is considered matching if all specified properties match.
+   * only the first option matching one of the passed options is selected. String values are matching both values and
+   * labels. Option is considered matching if all specified properties match.
    * @param options
    */
   selectOption(selector: string, values: null|string|ElementHandle|Array<string>|{
@@ -9316,8 +9316,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * ```
    *
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise
-   * only the first option matching one of the passed options is selected. String values are equivalent to
-   * `{value:'string'}`. Option is considered matching if all specified properties match.
+   * only the first option matching one of the passed options is selected. String values are matching both values and
+   * labels. Option is considered matching if all specified properties match.
    * @param options
    */
   selectOption(values: null|string|ElementHandle|Array<string>|{
@@ -10923,6 +10923,10 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Selects option or options in `<select>`.
+   *
+   * **Details**
+   *
    * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, waits until all specified options are present in
    * the `<select>` element and selects these options.
    *
@@ -10937,20 +10941,28 @@ export interface Locator {
    *
    * **Usage**
    *
+   * ```html
+   * <select multiple>
+   *   <option value="red">Red</div>
+   *   <option value="green">Green</div>
+   *   <option value="blue">Blue</div>
+   * </select>
+   * ```
+   *
    * ```js
-   * // single selection matching the value
+   * // single selection matching the value or label
    * element.selectOption('blue');
    *
    * // single selection matching the label
    * element.selectOption({ label: 'Blue' });
    *
-   * // multiple selection
+   * // multiple selection for blue, red and second option
    * element.selectOption(['red', 'green', 'blue']);
    * ```
    *
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise
-   * only the first option matching one of the passed options is selected. String values are equivalent to
-   * `{value:'string'}`. Option is considered matching if all specified properties match.
+   * only the first option matching one of the passed options is selected. String values are matching both values and
+   * labels. Option is considered matching if all specified properties match.
    * @param options
    */
   selectOption(values: null|string|ElementHandle|Array<string>|{
