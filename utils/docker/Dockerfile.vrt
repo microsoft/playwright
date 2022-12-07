@@ -42,7 +42,7 @@ RUN mkdir /ms-playwright && \
     npx playwright docker install-server-deps && \
     rm /tmp/playwright-core.tar.gz && \
     chmod -R 777 /ms-playwright && \
-    && rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /ms-playwright-agent
 ENV DISPLAY_NUM=99
