@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse } from 'playwright-core';
+import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
 export type ReporterDescription =
@@ -2965,7 +2965,7 @@ export interface PlaywrightWorkerOptions {
    *
    * Learn more about [automatic screenshots](https://playwright.dev/docs/test-configuration#automatic-screenshots).
    */
-  screenshot: 'off' | 'on' | 'only-on-failure';
+  screenshot: ScreenshotMode | { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'>;
   /**
    * Whether to record trace for each test. Defaults to `'off'`.
    * - `'off'`: Do not record trace.
@@ -2995,6 +2995,7 @@ export interface PlaywrightWorkerOptions {
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
 }
 
+export type ScreenshotMode = 'off' | 'on' | 'only-on-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 
