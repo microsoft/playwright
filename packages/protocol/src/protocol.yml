@@ -1962,6 +1962,7 @@ Frame:
           items:
             type: object
             properties:
+              valueOrLabel: string?
               value: string?
               label: string?
               index: number?
@@ -2512,6 +2513,7 @@ ElementHandle:
           items:
             type: object
             properties:
+              valueOrLabel: string?
               value: string?
               label: string?
               index: number?

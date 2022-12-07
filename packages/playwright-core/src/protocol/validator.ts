@@ -1465,6 +1465,7 @@ scheme.FrameSelectOptionParams = tObject({
   strict: tOptional(tBoolean),
   elements: tOptional(tArray(tChannel(['ElementHandle']))),
   options: tOptional(tArray(tObject({
+    valueOrLabel: tOptional(tString),
     value: tOptional(tString),
     label: tOptional(tString),
     index: tOptional(tNumber),
@@ -1833,6 +1834,7 @@ scheme.ElementHandleScrollIntoViewIfNeededResult = tOptional(tObject({}));
 scheme.ElementHandleSelectOptionParams = tObject({
   elements: tOptional(tArray(tChannel(['ElementHandle']))),
   options: tOptional(tArray(tObject({
+    valueOrLabel: tOptional(tString),
     value: tOptional(tString),
     label: tOptional(tString),
     index: tOptional(tNumber),

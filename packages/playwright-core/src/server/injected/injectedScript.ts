@@ -621,8 +621,9 @@ export class InjectedScript {
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
 
-  selectOptions(optionsToSelect: (Node | { value?: string, label?: string, index?: number })[],
+  selectOptions(optionsToSelect: (Node | { valueOrLabel?: string, value?: string, label?: string, index?: number })[],
     node: Node, progress: InjectedScriptProgress): string[] | 'error:notconnected' | symbol {
+
     const element = this.retarget(node, 'follow-label');
     if (!element)
       return 'error:notconnected';
@@ -634,10 +635,12 @@ export class InjectedScript {
     let remainingOptionsToSelect = optionsToSelect.slice();
     for (let index = 0; index < options.length; index++) {
       const option = options[index];
-      const filter = (optionToSelect: Node | { value?: string, label?: string, index?: number }) => {
+      const filter = (optionToSelect: Node | { valueOrLabel?: string, value?: string, label?: string, index?: number }) => {
         if (optionToSelect instanceof Node)
           return option === optionToSelect;
         let matches = true;
+        if (optionToSelect.valueOrLabel !== undefined)
+          matches = matches && (optionToSelect.valueOrLabel === option.value || optionToSelect.valueOrLabel === option.label);
         if (optionToSelect.value !== undefined)
           matches = matches && optionToSelect.value === option.value;
         if (optionToSelect.label !== undefined)
