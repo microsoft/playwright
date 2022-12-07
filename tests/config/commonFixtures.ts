@@ -31,7 +31,7 @@ export class TestChildProcess {
   params: TestChildParams;
   process: ChildProcess;
   output = '';
-  onOutput?: () => void;
+  onOutput?: (chunk: string | Buffer) => void;
   exited: Promise<{ exitCode: number, signal: string | null }>;
   exitCode: Promise<number>;
 
@@ -59,7 +59,7 @@ export class TestChildProcess {
       this.output += String(chunk);
       if (process.env.PWTEST_DEBUG)
         process.stdout.write(String(chunk));
-      this.onOutput?.();
+      this.onOutput?.(chunk);
       for (const cb of this._outputCallbacks)
         cb();
       this._outputCallbacks.clear();
