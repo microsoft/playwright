@@ -1026,7 +1026,7 @@ element.selectOption('blue');
 // single selection matching the label
 element.selectOption({ label: 'Blue' });
 
-// multiple selection for blue, red and second option
+// multiple selection for red, green and blue options
 element.selectOption(['red', 'green', 'blue']);
 ```
 
