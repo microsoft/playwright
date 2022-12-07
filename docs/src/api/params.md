@@ -801,7 +801,7 @@ An acceptable amount of pixels that could be different. Default is configurable 
 * langs: js
 - `comparator` <[string]> Either `"pixelmatch"` or `"ssim-cie94"`.
 
-A comparator function to use when comparing images.
+A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
 
 ## assertions-max-diff-pixel-ratio
 * langs: js
@@ -813,7 +813,9 @@ An acceptable ratio of pixels that are different to the total amount of pixels, 
 * langs: js
 - `threshold` <[float]>
 
-An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`. Defaults to `0.2`.
+An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ)
+between the same pixel in compared images, between zero (strict) and one (lax), default is configurable with
+`TestConfig.expect`. Defaults to `0.2`. This option is used by "pixelmatch" image comparator.
 
 ## shared-context-params-list-v1.8
 - %%-context-option-acceptdownloads-%%
