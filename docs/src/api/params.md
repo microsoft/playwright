@@ -815,7 +815,7 @@ An acceptable ratio of pixels that are different to the total amount of pixels, 
 
 An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ)
 between the same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-`TestConfig.expect`. Defaults to `0.2`. This option is ignored by the `ssim-cie94` image comparator.
+`TestConfig.expect`. Defaults to `0.2`. This option is used by "pixelmatch" image comparator.
 
 ## shared-context-params-list-v1.8
 - %%-context-option-acceptdownloads-%%
