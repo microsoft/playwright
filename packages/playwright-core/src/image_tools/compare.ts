@@ -37,22 +37,34 @@ export function compare(actual: Buffer, expected: Buffer, diff: Buffer, width: n
   const {
     maxColorDeltaE94
   } = options;
-  const [r1, g1, b1] = ImageChannel.intoRGB(width, height, expected);
-  const [r2, g2, b2] = ImageChannel.intoRGB(width, height, actual);
 
-  const drawRedPixel = (x: number, y: number) => drawPixel(width, diff, x, y, 255, 0, 0);
-  const drawYellowPixel = (x: number, y: number) => drawPixel(width, diff, x, y, 255, 255, 0);
+  const paddingSize = Math.max(VARIANCE_WINDOW_RADIUS, SSIM_WINDOW_RADIUS);
+  const paddingColorEven = [255, 0, 255];
+  const paddingColorOdd = [0, 255, 0];
+  const [r1, g1, b1] = ImageChannel.intoRGB(width, height, expected, {
+    paddingSize,
+    paddingColorEven,
+    paddingColorOdd,
+  });
+  const [r2, g2, b2] = ImageChannel.intoRGB(width, height, actual, {
+    paddingSize,
+    paddingColorEven,
+    paddingColorOdd,
+  });
+
+  const drawRedPixel = (x: number, y: number) => drawPixel(width, diff, x - paddingSize, y - paddingSize, 255, 0, 0);
+  const drawYellowPixel = (x: number, y: number) => drawPixel(width, diff, x - paddingSize, y - paddingSize, 255, 255, 0);
   const drawGrayPixel = (x: number, y: number) => {
     const gray = rgb2gray(r1.get(x, y), g1.get(x, y), b1.get(x, y));
     const value = blendWithWhite(gray, 0.1);
-    drawPixel(width, diff, x, y, value, value, value);
+    drawPixel(width, diff, x - paddingSize, y - paddingSize, value, value, value);
   };
 
   let fastR, fastG, fastB;
 
   let diffCount = 0;
-  for (let y = 0; y < height; ++y){
-    for (let x = 0; x < width; ++x) {
+  for (let y = paddingSize; y < r1.height - paddingSize; ++y){
+    for (let x = paddingSize; x < r1.width - paddingSize; ++x) {
       // Fast-path: equal pixels.
       if (r1.get(x, y) === r2.get(x, y) && g1.get(x, y) === g2.get(x, y) && b1.get(x, y) === b2.get(x, y)) {
         drawGrayPixel(x, y);
