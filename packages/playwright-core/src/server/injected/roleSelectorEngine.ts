@@ -175,7 +175,7 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
 
   query(scope);
   return result;
-};
+}
 
 export function createRoleEngine(internal: boolean): SelectorEngine {
   return {

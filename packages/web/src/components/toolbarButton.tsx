@@ -37,5 +37,8 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
   let className = `toolbar-button ${icon}`;
   if (toggled)
     className += ' toggled';
-  return <button className={className} onClick={onClick} title={title} disabled={!!disabled}><span className={`codicon codicon-${icon}`}></span>{ children }</button>;
+  return <button className={className} onClick={onClick} title={title} disabled={!!disabled}>
+    <span className={`codicon codicon-${icon}`} style={children ? { marginRight: 5 } : {}}></span>
+    {children}
+  </button>;
 };
