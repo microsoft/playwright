@@ -340,6 +340,7 @@ export function addDockerCLI(program: Command) {
   dockerCommand.command('start')
       .description('start docker container')
       .option('--port <port>', 'port to start container on. Auto-pick by default')
+      .option('--build-if-needed', 'builds docker image for the container if needed before starting')
       .action(async function(options) {
         try {
           const port = options.port ? +options.port : 0;
@@ -347,6 +348,13 @@ export function addDockerCLI(program: Command) {
             console.error(`ERROR: bad port number "${options.port}"`);
             process.exit(1);
           }
+
+          if (options.buildIfNeeded) {
+            const dockerImage = await findDockerImage(VRT_IMAGE_NAME);
+            if (!dockerImage)
+              await buildPlaywrightImage();
+          }
+
           await startPlaywrightContainer(port);
         } catch (e) {
           console.error(e.stack ? e : e.message);
