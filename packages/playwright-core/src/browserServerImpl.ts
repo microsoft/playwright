@@ -26,6 +26,7 @@ import { createPlaywright } from './server/playwright';
 import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
 import { rewriteErrorMessage } from './utils/stackTrace';
+import { SocksProxy } from './common/socksProxy';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserName: 'chromium' | 'firefox' | 'webkit';
@@ -36,6 +37,9 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
     const playwright = createPlaywright('javascript');
+    const socksProxy = new SocksProxy();
+    playwright.options.socksProxyPort = await socksProxy.listen(0);
+
     // 1. Pre-launch the browser
     const metadata = serverSideCallMetadata();
     const browser = await playwright[this._browserName].launch(metadata, {
@@ -52,7 +56,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
 
     // 2. Start the server
-    const server = new PlaywrightServer({ path, maxConnections: Infinity, browserProxyMode: 'disabled', preLaunchedBrowser: browser });
+    const server = new PlaywrightServer({ path, maxConnections: Infinity, browserProxyMode: 'client', preLaunchedBrowser: browser, preLaunchedSocksProxy: socksProxy });
     const wsEndpoint = await server.listen(options.port);
 
     // 3. Return the BrowserServer interface
@@ -63,7 +67,8 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     browserServer.kill = () => browser.options.browserProcess.kill();
     (browserServer as any)._disconnectForTest = () => server.close();
     (browserServer as any)._userDataDirForTest = (browser as any)._userDataDirForTest;
-    browser.options.browserProcess.onclose = async (exitCode, signal) => {
+    browser.options.browserProcess.onclose = (exitCode, signal) => {
+      socksProxy.close().catch(() => {});
       server.close();
       browserServer.emit('close', exitCode, signal);
     };

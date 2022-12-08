@@ -50,7 +50,7 @@ export type RunServerOptions = {
   port?: number,
   path?: string,
   maxConnections?: number,
-  browserProxyMode?: 'client' | 'tether' | 'disabled',
+  browserProxyMode?: 'client' | 'tether',
   ownedByTetherClient?: boolean,
 };
 
