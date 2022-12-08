@@ -48,7 +48,7 @@ export class ImageChannel {
           g[index] = blendWithWhite(data[offset + 1], alpha);
           b[index] = blendWithWhite(data[offset + 2], alpha);
         } else {
-          const color = index % 2 === 0 ? paddingColorEven : paddingColorOdd;
+          const color = (y + x) % 2 === 0 ? paddingColorEven : paddingColorOdd;
           r[index] = color[0];
           g[index] = color[1];
           b[index] = color[2];
