@@ -270,7 +270,7 @@ program
     .option('--port <port>', 'Server port')
     .option('--path <path>', 'Endpoint Path', '/')
     .option('--max-clients <maxClients>', 'Maximum clients')
-    .option('--proxy-mode <mode>', 'Either `client`, `tether` or `disabled`. Defaults to `client`.', 'client')
+    .option('--proxy-mode <mode>', 'Either `client` or `tether`. Defaults to `client`.', 'client')
     .action(function(options) {
       runServer({
         port: options.port ? +options.port : undefined,

@@ -317,7 +317,7 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
     });
   }
 
-  setProxyPattern(pattern: string | undefined) {
+  setPattern(pattern: string | undefined) {
     this._pattern = pattern;
   }
 
@@ -364,6 +364,8 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   }
 
   async close() {
+    if (this._closed)
+      return;
     this._closed = true;
     for (const socket of this._sockets)
       socket.destroy();
