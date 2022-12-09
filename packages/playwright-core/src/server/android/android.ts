@@ -271,7 +271,7 @@ export class AndroidDevice extends SdkObject {
     return await this._connectToBrowser(socketName, options);
   }
 
-  _defaultArgs(options: channels.BrowserNewContextParams, socketName: string): string[] {
+  private _defaultArgs(options: channels.BrowserNewContextParams, socketName: string): string[] {
     const chromeArguments = [
       '_',
       '--disable-fre',
