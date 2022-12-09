@@ -53,7 +53,7 @@ test('androidDevice.launchBrowser should pass proxy config', async ({ androidDev
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
-  const context = await androidDevice.launchBrowser({proxy: { server: `localhost:${server.PORT}` }});
+  const context = await androidDevice.launchBrowser({ proxy: { server: `localhost:${server.PORT}` } });
   const page = await context.newPage();
   await page.goto('http://non-existent.com/target.html');
   expect(await page.title()).toBe('Served by the proxy');
