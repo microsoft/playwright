@@ -446,12 +446,14 @@ export type LocalUtilsHarUnzipResult = void;
 export type LocalUtilsConnectParams = {
   wsEndpoint: string,
   headers?: any,
+  exposeNetwork?: string,
   slowMo?: number,
   timeout?: number,
   socksProxyRedirectPortForTest?: number,
 };
 export type LocalUtilsConnectOptions = {
   headers?: any,
+  exposeNetwork?: string,
   slowMo?: number,
   timeout?: number,
   socksProxyRedirectPortForTest?: number,

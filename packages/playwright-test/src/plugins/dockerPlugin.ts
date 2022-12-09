@@ -35,9 +35,7 @@ export const dockerPlugin: TestRunnerPlugin = {
       throw new Error('ERROR: please launch docker container separately!');
     println('');
     process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.httpEndpoint;
-    process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
-      'x-playwright-proxy': '*',
-    });
+    process.env.PW_TEST_CONNECT_EXPOSE_NETWORK = '*';
   },
 };
 

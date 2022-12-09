@@ -156,11 +156,15 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
     const controller = new ProgressController(metadata, this._object as SdkObject);
     controller.setLogName('browser');
     return await controller.run(async progress => {
-      const paramsHeaders = Object.assign({ 'User-Agent': getUserAgent() }, params.headers || {});
+      const wsHeaders = {
+        'User-Agent': getUserAgent(),
+        'x-playwright-proxy': params.exposeNetwork ?? '',
+        ...params.headers,
+      };
       const wsEndpoint = await urlToWSEndpoint(progress, params.wsEndpoint);
 
-      const transport = await WebSocketTransport.connect(progress, wsEndpoint, paramsHeaders, true);
-      const socksInterceptor = new SocksInterceptor(transport, params.socksProxyRedirectPortForTest);
+      const transport = await WebSocketTransport.connect(progress, wsEndpoint, wsHeaders, true);
+      const socksInterceptor = new SocksInterceptor(transport, params.exposeNetwork, params.socksProxyRedirectPortForTest);
       const pipe = new JsonPipeDispatcher(this);
       transport.onmessage = json => {
         if (socksInterceptor.interceptMessage(json))
