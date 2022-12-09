@@ -104,18 +104,10 @@ export class WorkerRunner extends EventEmitter {
       colors.red(`Failed worker ran ${count}${lastMessage}:`),
       ...this._lastRunningTests.map(testInfo => formatTestTitle(testInfo._test, testInfo.project.name)),
     ].join('\n');
-    if (error.message) {
-      if (error.stack) {
-        let index = error.stack.indexOf(error.message);
-        if (index !== -1) {
-          index += error.message.length;
-          error.stack = error.stack.substring(0, index) + message + error.stack.substring(index);
-        }
-      }
+    if (error.message)
       error.message += message;
-    } else if (error.value) {
+    else if (error.value)
       error.value += message;
-    }
   }
 
   private async _teardownScopes() {

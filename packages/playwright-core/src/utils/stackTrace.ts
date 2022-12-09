@@ -57,16 +57,6 @@ export function captureRawStack(): string {
   return stack;
 }
 
-export function isInternalFileName(file: string, functionName?: string): boolean {
-  // Node 16+ has node:internal.
-  if (file.startsWith('internal') || file.startsWith('node:'))
-    return true;
-  // EventEmitter.emit has 'events.js' file.
-  if (file === 'events.js' && functionName?.endsWith('emit'))
-    return true;
-  return false;
-}
-
 export function captureStackTrace(rawStack?: string): ParsedStackTrace {
   const stack = rawStack || captureRawStack();
 
@@ -79,8 +69,6 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
   let parsedFrames = stack.split('\n').map(line => {
     const { frame, fileName } = parseStackTraceLine(line);
     if (!frame || !frame.file || !fileName)
-      return null;
-    if (!process.env.PWDEBUGIMPL && isInternalFileName(frame.file, frame.function))
       return null;
     if (!process.env.PWDEBUGIMPL && isTesting && fileName.includes(COVERAGE_PATH))
       return null;

@@ -181,7 +181,7 @@ test('should show the codeframe in errors', async ({ runInlineTest, nodeVersion 
         `    >  8 |         expect(1).toBe(2);`,
         `         |                   ^`
       ].join('\n'));
-  expect(result.output).toContain('FooBarError: my-message');
+  expect(result.output).toContain('Error [FooBarError]: my-message');
   expect(result.output).not.toContain('at a.test.ts');
   expect(result.output).toContain(`  12 |       test('foobar', async ({}) => {`);
   expect(result.output).toContain(`> 13 |         const error = new Error('my-message');`);

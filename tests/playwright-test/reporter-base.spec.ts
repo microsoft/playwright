@@ -44,10 +44,10 @@ test('print the error name', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('FooBarError: my-message');
+  expect(result.output).toContain('Error [FooBarError]: my-message');
 });
 
-test('print should print the error name without a message', async ({ runInlineTest }) => {
+test('should print the error name without a message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
     const { test } = pwt;
@@ -78,14 +78,14 @@ test('should print an error in a codeframe', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('FooBarError: my-message');
+  expect(result.output).toContain('Error [FooBarError]: my-message');
   expect(result.output).not.toContain('at a.spec.ts:7');
   expect(result.output).toContain(`   5 |       const { test } = pwt;`);
   expect(result.output).toContain(`   6 |       test('foobar', async ({}) => {`);
   expect(result.output).toContain(`>  7 |         const error = new Error('my-message');`);
 });
 
-test('should filter out node_modules error in a codeframe', async ({ runInlineTest }) => {
+test('should filter out node_modules error in stack trace and codeframe', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'node_modules/utils/utils.js': `
       function assert(value) {
@@ -110,7 +110,7 @@ test('should filter out node_modules error in a codeframe', async ({ runInlineTe
   expect(output).toContain(`   7 |       test('fail', async ({}) => {`);
   expect(output).toContain(`>  8 |         assert(false);`);
   expect(output).toContain(`     |         ^`);
-  expect(output).toContain(`utils.js:6`);
+  expect(output).not.toContain(`utils.js:`);
   expect(output).toContain(`a.spec.ts:8:9`);
 });
 
@@ -137,6 +137,81 @@ test('should print codeframe from a helper', async ({ runInlineTest }) => {
   expect(result.output).toContain(`   4 |       export function ohMy() {`);
   expect(result.output).toContain(` > 5 |         throw new Error('oh my');`);
   expect(result.output).toContain(`     |               ^`);
+});
+
+test('should print custom error properties', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+    const { test } = pwt;
+
+    class MyError extends Error {
+      constructor() {
+        super('hello');
+        this.name = 'CustomName';
+        this.prop = 'some prop';
+      }
+    }
+
+    test('foobar', async ({}) => {
+      throw new MyError();
+    });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('CustomName: hello');
+  expect(result.output).toContain(`prop: 'some prop'`);
+  expect(stripAnsi(result.output)).toContain(`> 16 |       throw new MyError();`);
+});
+
+test('should print custom error cause', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+
+      class MyError extends Error {
+        constructor(inner, options) {
+          super(inner.message, { cause: inner });
+          this.name = 'CustomName';
+          this.prop = options.prop;
+          if (options.stack)
+            this.stack = options.stack;
+        }
+      }
+
+      const inner = new Error('inner-message');
+      const stack = new Error('stack-source-message').stack;
+      const outer = new MyError(inner, { prop: 'some prop', stack });
+
+      test('foobar', async ({}) => {
+        throw outer;
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Error: stack-source-message');
+  expect(result.output).toContain(`name: 'CustomName'`);
+  expect(result.output).toContain(`prop: 'some prop'`);
+  expect(result.output).toContain(`[cause]: Error: inner-message`);
+  expect(result.output).toContain(`a.spec.ts:17:21`);
+  expect(stripAnsi(result.output)).toContain(`> 18 |       const stack = new Error('stack-source-message').stack`);
+  expect(result.output).toContain(`a.spec.ts:18:21`);
+});
+
+test('should not print expect details', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+    const { test } = pwt;
+    test('foobar', async ({}) => {
+      expect(1).toBe(2);
+    });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(stripAnsi(result.output)).toContain('Error: expect(received).toBe(expected)');
+  expect(stripAnsi(result.output)).not.toContain('matcherResult');
 });
 
 test('should print slow tests', async ({ runInlineTest }) => {

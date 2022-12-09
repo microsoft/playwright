@@ -39,9 +39,19 @@ export type { Command } from '../bundles/utils/node_modules/commander';
 export type { WebSocket, WebSocketServer, RawData as WebSocketRawData, EventEmitter as WebSocketEventEmitter } from '../bundles/utils/node_modules/@types/ws';
 
 const StackUtils: typeof import('../bundles/utils/node_modules/@types/stack-utils') = require('./utilsBundleImpl').StackUtils;
+const nodeInternals = StackUtils.nodeInternals();
 const stackUtils = new StackUtils();
 
 export function parseStackTraceLine(line: string): { frame: import('../bundles/utils/node_modules/@types/stack-utils').StackLineData | null, fileName: string | null } {
+  // Stack utils does not recognize the following pattern, which is sometimes produced by Node:
+  //     at async /path/to/file.js:12:15
+  // We wrap the file path:
+  //     at async (/path/to/file.js:12:15)
+  line = line.replace(/^(\s*)at async ([^(]*)$/, '$1at async ($2)');
+
+  if (!process.env.PWDEBUGIMPL && nodeInternals.some(internal => line.match(internal)))
+    return { frame: null, fileName: null };
+
   const frame = stackUtils.parseLine(line);
   if (!frame)
     return { frame: null, fileName: null };

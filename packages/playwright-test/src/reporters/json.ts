@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, Reporter, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportError } from '../../types/testReporter';
-import { formatError, prepareErrorStack } from './base';
+import { formatError, extractLocationFromStack } from './base';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
 import { assert } from 'playwright-core/lib/utils';
 
@@ -197,7 +197,7 @@ class JSONReporter implements Reporter {
       })),
     };
     if (result.error?.stack)
-      jsonResult.errorLocation = prepareErrorStack(result.error.stack).location;
+      jsonResult.errorLocation = extractLocationFromStack(result.error.stack);
     return jsonResult;
   }
 

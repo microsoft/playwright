@@ -376,15 +376,14 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
 }
 
 export function formatError(config: FullConfig, error: TestError, highlightCode: boolean, file?: string): ErrorDetails {
-  const stack = error.stack;
   const tokens = [];
+  if (error.message)
+    tokens.push(error.message);
+  else if (error.value)
+    tokens.push(error.value);
   let location: Location | undefined;
-  if (stack) {
-    // Now that we filter out internals from our stack traces, we can safely render
-    // the helper / original exception locations.
-    const parsed = prepareErrorStack(stack);
-    tokens.push(parsed.message);
-    location = parsed.location;
+  if (error.stack) {
+    location = extractLocationFromStack(error.stack);
     if (location) {
       try {
         const source = fs.readFileSync(location.file, 'utf8');
@@ -401,11 +400,7 @@ export function formatError(config: FullConfig, error: TestError, highlightCode:
       }
     }
     tokens.push('');
-    tokens.push(colors.dim(parsed.stackLines.join('\n')));
-  } else if (error.message) {
-    tokens.push(error.message);
-  } else if (error.value) {
-    tokens.push(error.value);
+    tokens.push(colors.dim(error.stack));
   }
   return {
     location,
@@ -423,28 +418,12 @@ function indent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
-export function prepareErrorStack(stack: string): {
-  message: string;
-  stackLines: string[];
-  location?: Location;
-} {
-  const lines = stack.split('\n');
-  let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
-  if (firstStackLine === -1)
-    firstStackLine = lines.length;
-  const message = lines.slice(0, firstStackLine).join('\n');
-  const stackLines = lines.slice(firstStackLine);
-  let location: Location | undefined;
-  for (const line of stackLines) {
-    const { frame: parsed, fileName: resolvedFile } = parseStackTraceLine(line);
-    if (!parsed || !resolvedFile)
-      continue;
-    if (belongsToNodeModules(resolvedFile))
-      continue;
-    location = { file: resolvedFile, column: parsed.column || 0, line: parsed.line || 0 };
-    break;
-  }
-  return { message, stackLines, location };
+export function extractLocationFromStack(stack: string): Location | undefined {
+  const [line] = stack.split('\n');
+  const { frame, fileName } = parseStackTraceLine(line);
+  if (!fileName || !frame)
+    return;
+  return { file: fileName, column: frame.column || 0, line: frame.line || 0 };
 }
 
 function monotonicTime(): number {
@@ -482,8 +461,4 @@ function fitToWidth(line: string, width: number, prefix?: string): string {
     }
   }
   return taken.reverse().join('');
-}
-
-function belongsToNodeModules(file: string) {
-  return file.includes(`${path.sep}node_modules${path.sep}`);
 }

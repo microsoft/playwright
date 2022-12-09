@@ -15,14 +15,13 @@
  */
 
 import fs from 'fs';
-import { mime } from 'playwright-core/lib/utilsBundle';
+import { mime, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import path from 'path';
 import url from 'url';
 import { colors, debug, minimatch } from 'playwright-core/lib/utilsBundle';
 import type { TestError, Location } from './types';
 import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
-import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
 import { currentTestInfo } from './globals';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
 import { captureStackTrace as coreCaptureStackTrace } from 'playwright-core/lib/utils/stackTrace';
@@ -33,39 +32,6 @@ const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core'));
 const EXPECT_PATH = require.resolve('./expectBundle');
 const EXPECT_PATH_IMPL = require.resolve('./expectBundleImpl');
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
-
-function filterStackTrace(e: Error) {
-  if (process.env.PWDEBUGIMPL)
-    return;
-
-  // This method filters internal stack frames using Error.prepareStackTrace
-  // hook. Read more about the hook: https://v8.dev/docs/stack-trace-api
-  //
-  // NOTE: Error.prepareStackTrace will only be called if `e.stack` has not
-  // been accessed before. This is the case for Jest Expect and simple throw
-  // statements.
-  //
-  // If `e.stack` has been accessed, this method will be NOOP.
-  const oldPrepare = Error.prepareStackTrace;
-  const stackFormatter = oldPrepare || ((error, structuredStackTrace) => [
-    `${error.name}: ${error.message}`,
-    ...structuredStackTrace.map(callSite => '    at ' + callSite.toString()),
-  ].join('\n'));
-  Error.prepareStackTrace = (error, structuredStackTrace) => {
-    return stackFormatter(error, structuredStackTrace.filter(callSite => {
-      const fileName = callSite.getFileName();
-      const functionName = callSite.getFunctionName() || undefined;
-      if (!fileName)
-        return true;
-      return !fileName.startsWith(PLAYWRIGHT_TEST_PATH) &&
-             !fileName.startsWith(PLAYWRIGHT_CORE_PATH) &&
-             !isInternalFileName(fileName, functionName);
-    }));
-  };
-  // eslint-disable-next-line
-  e.stack; // trigger Error.prepareStackTrace
-  Error.prepareStackTrace = oldPrepare;
-}
 
 export function captureStackTrace(customApiName?: string): ParsedStackTrace {
   const stackTrace: ParsedStackTrace = coreCaptureStackTrace();
@@ -86,17 +52,72 @@ export function captureStackTrace(customApiName?: string): ParsedStackTrace {
   };
 }
 
+function findStackRange(lines: string[]): { start: number, end: number } {
+  let start = lines.findIndex(line => line.startsWith('    at '));
+  if (start === -1)
+    start = lines.length;
+  let end = lines.findIndex((line, index) => index > start && !line.startsWith('    at '));
+  if (end === -1)
+    end = lines.length;
+  return { start, end };
+}
+
+function filterStackTrace(error: Error, depth = 10): string | undefined {
+  if (process.env.PWDEBUGIMPL)
+    return;
+
+  if (depth && error.cause instanceof Error)
+    filterStackTrace(error.cause, depth - 1);
+  if (!error.stack)
+    return;
+
+  const lines = error.stack.split('\n');
+  const stackRange = findStackRange(lines);
+  const stackLines = lines.slice(stackRange.start, stackRange.end).filter(line => {
+    const { frame, fileName } = parseStackTraceLine(line);
+    if (!frame || !fileName)
+      return false;
+    if (belongsToNodeModules(fileName))
+      return false;
+    return !fileName.startsWith(PLAYWRIGHT_TEST_PATH) &&
+           !fileName.startsWith(PLAYWRIGHT_CORE_PATH);
+  });
+  const resultLines = lines.slice(0, stackRange.start).concat(stackLines).concat(lines.slice(stackRange.end));
+  // Note that we update the stack trace on the existing error object.
+  error.stack = resultLines.join('\n');
+}
+
 export function serializeError(error: Error | any): TestError {
-  if (error instanceof Error) {
-    filterStackTrace(error);
-    return {
-      message: error.message,
-      stack: error.stack
-    };
+  if (!(error instanceof Error))
+    return { value: util.inspect(error) };
+
+  filterStackTrace(error);
+
+  // We do not want extra details for expect and timeout errors.
+  const isExpectError = !!(error as any).matcherResult;
+  const isTimeoutError = error.name === 'TimeoutError';
+  const description = (isExpectError || isTimeoutError) ? (error.stack || error.message) : util.inspect(error);
+  const lines = description.split('\n');
+  const stackRange = findStackRange(lines);
+
+  // Account for util.inspect() custom properties formatting.
+  const inspectSuffix = ' {';
+  const lastStackLine = lines[stackRange.end - 1];
+  if (lastStackLine && lastStackLine.endsWith(inspectSuffix) && stackRange.start > 0) {
+    lines[stackRange.start - 1] += inspectSuffix;
+    lines[stackRange.end - 1] = lastStackLine.substring(0, lastStackLine.length - inspectSuffix.length);
   }
+
+  const messageLines = lines.slice(0, stackRange.start).concat(lines.slice(stackRange.end));
+  const stackLines = lines.slice(stackRange.start, stackRange.end);
   return {
-    value: util.inspect(error)
+    message: messageLines.join('\n'),
+    stack: stackLines.join('\n'),
   };
+}
+
+function belongsToNodeModules(file: string) {
+  return file.includes(`${path.sep}node_modules${path.sep}`);
 }
 
 export type Matcher = (value: string) => boolean;

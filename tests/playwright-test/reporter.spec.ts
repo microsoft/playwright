@@ -257,7 +257,7 @@ test('should report expect steps', async ({ runInlineTest }) => {
     `%% begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
     `%% end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
     `%% begin {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\"}`,
-    `%% end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{\"message\":\"expect(received).toBeTruthy()\\n\\nReceived: false\",\"stack\":\"<stack>\"}}`,
+    `%% end {\"title\":\"expect.toBeTruthy\",\"category\":\"expect\",\"error\":{\"message\":\"Error: expect(received).toBeTruthy()\\n\\nReceived: false\",\"stack\":\"<stack>\"}}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
@@ -366,7 +366,6 @@ test('should report api steps', async ({ runInlineTest }) => {
     `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"afterAll hook\",\"category\":\"hook\",\"steps\":[{\"title\":\"page.close\",\"category\":\"pw:api\"}]}]}`,
   ]);
 });
-
 
 test('should report api step failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -506,7 +505,7 @@ test('should report require error to reporter', async ({ runInlineTest }) => {
   }, { 'reporter': '' });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`%%got error: Oh my!`);
+  expect(result.output).toContain(`%%got error: Error: Oh my!`);
 });
 
 test('should report global setup error to reporter', async ({ runInlineTest }) => {
@@ -529,7 +528,7 @@ test('should report global setup error to reporter', async ({ runInlineTest }) =
   }, { 'reporter': '' });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`%%got error: Oh my!`);
+  expect(result.output).toContain(`%%got error: Error: Oh my!`);
 });
 
 test('should report correct tests/suites when using grep', async ({ runInlineTest }) => {

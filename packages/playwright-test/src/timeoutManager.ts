@@ -142,7 +142,7 @@ export class TimeoutManager {
     return {
       message,
       // Include location for hooks, modifiers and fixtures to distinguish between them.
-      stack: location ? message + `\n    at ${location.file}:${location.line}:${location.column}` : undefined,
+      stack: location ? `    at ${location.file}:${location.line}:${location.column}` : undefined,
     };
   }
 }
