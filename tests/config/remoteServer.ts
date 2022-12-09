@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import type { BrowserType, Browser, LaunchOptions } from 'playwright-core';
+import type { BrowserType, Browser } from 'playwright-core';
 import type { CommonFixtures, TestChildProcess } from './commonFixtures';
 
 export interface PlaywrightServer {
@@ -79,7 +79,7 @@ export class RemoteServer implements PlaywrightServer {
     const browserOptions = (browserType as any)._defaultLaunchOptions;
     // Copy options to prevent a large JSON string when launching subprocess.
     // Otherwise, we get `Error: spawn ENAMETOOLONG` on Windows.
-    const launchOptions: LaunchOptions = {
+    const launchOptions: Parameters<BrowserType['launchServer']>[0] = {
       args: browserOptions.args,
       headless: browserOptions.headless,
       channel: browserOptions.channel,

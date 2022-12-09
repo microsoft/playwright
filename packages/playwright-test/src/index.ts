@@ -87,8 +87,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
     return use({
       wsEndpoint,
-      headers
-    });
+      headers,
+      _exposeNetwork: process.env.PW_TEST_CONNECT_EXPOSE_NETWORK,
+    } as any);
   }, { scope: 'worker', option: true }],
   screenshot: ['off', { scope: 'worker', option: true }],
   video: ['off', { scope: 'worker', option: true }],

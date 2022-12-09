@@ -679,7 +679,6 @@ for (const kind of ['launchServer', 'run-server'] as const) {
     test.describe('socks proxy', () => {
       test.fixme(({ platform, browserName }) => browserName === 'webkit' && platform === 'win32');
       test.skip(({ mode }) => mode !== 'default');
-      test.skip(kind === 'launchServer', 'This feature is not yet supported in launchServer');
 
       test('should forward non-forwarded requests', async ({ server, startRemoteServer, connect }) => {
         let reachedOriginalTarget = false;
@@ -688,9 +687,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
           res.end('<html><body>original-target</body></html>');
         });
         const remoteServer = await startRemoteServer(kind);
-        const browser = await connect(remoteServer.wsEndpoint(), {
-          headers: { 'x-playwright-proxy': '*' }
-        });
+        const browser = await connect(remoteServer.wsEndpoint(), { _exposeNetwork: '*' } as any);
         const page = await browser.newPage();
         await page.goto(server.PREFIX + '/foo.html');
         expect(await page.content()).toContain('original-target');
@@ -707,9 +704,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         });
         const examplePort = 20_000 + testInfo.workerIndex * 3;
         const remoteServer = await startRemoteServer(kind);
-        const browser = await connect(remoteServer.wsEndpoint(), {
-          headers: { 'x-playwright-proxy': '*' }
-        }, dummyServerPort);
+        const browser = await connect(remoteServer.wsEndpoint(), { _exposeNetwork: '*' } as any, dummyServerPort);
         const page = await browser.newPage();
         await page.goto(`http://127.0.0.1:${examplePort}/foo.html`);
         expect(await page.content()).toContain('from-dummy-server');
@@ -726,9 +721,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         });
         const examplePort = 20_000 + workerInfo.workerIndex * 3;
         const remoteServer = await startRemoteServer(kind);
-        const browser = await connect(remoteServer.wsEndpoint(), {
-          headers: { 'x-playwright-proxy': '*' }
-        }, dummyServerPort);
+        const browser = await connect(remoteServer.wsEndpoint(), { _exposeNetwork: '*' } as any, dummyServerPort);
         const page = await browser.newPage();
         const response = await page.request.get(`http://127.0.0.1:${examplePort}/foo.html`);
         expect(response.status()).toBe(200);
@@ -744,9 +737,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         });
         const examplePort = 20_000 + workerInfo.workerIndex * 3;
         const remoteServer = await startRemoteServer(kind);
-        const browser = await connect(remoteServer.wsEndpoint(), {
-          headers: { 'x-playwright-proxy': '*' }
-        }, dummyServerPort);
+        const browser = await connect(remoteServer.wsEndpoint(), { _exposeNetwork: '*' } as any, dummyServerPort);
         const page = await browser.newPage();
         await page.goto(`http://local.playwright:${examplePort}/foo.html`);
         expect(await page.content()).toContain('from-dummy-server');
@@ -756,9 +747,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       test('should lead to the error page for forwarded requests when the connection is refused', async ({ connect, startRemoteServer, browserName }, workerInfo) => {
         const examplePort = 20_000 + workerInfo.workerIndex * 3;
         const remoteServer = await startRemoteServer(kind);
-        const browser = await connect(remoteServer.wsEndpoint(), {
-          headers: { 'x-playwright-proxy': '*' }
-        });
+        const browser = await connect(remoteServer.wsEndpoint(), { _exposeNetwork: '*' } as any);
         const page = await browser.newPage();
         const error = await page.goto(`http://127.0.0.1:${examplePort}`).catch(e => e);
         if (browserName === 'chromium')
@@ -779,9 +768,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         });
         const examplePort = 20_000 + workerInfo.workerIndex * 3;
         const remoteServer = await startRemoteServer(kind);
-        const browser = await connect(remoteServer.wsEndpoint(), {
-          headers: { 'x-playwright-proxy': 'localhost' }
-        }, dummyServerPort);
+        const browser = await connect(remoteServer.wsEndpoint(), { _exposeNetwork: 'localhost' } as any, dummyServerPort);
         const page = await browser.newPage();
 
         // localhost should be proxied.
@@ -800,6 +787,30 @@ for (const kind of ['launchServer', 'run-server'] as const) {
           failed = true;
         });
         expect(failed).toBe(true);
+      });
+
+      test('should check proxy pattern on the client', async ({ connect, startRemoteServer, server, browserName, platform, dummyServerPort }, workerInfo) => {
+        let reachedOriginalTarget = false;
+        server.setRoute('/foo.html', async (req, res) => {
+          reachedOriginalTarget = true;
+          res.end('<html><body>from-original-server</body></html>');
+        });
+        const remoteServer = await startRemoteServer(kind);
+        const browser = await connect(remoteServer.wsEndpoint(), {
+          _exposeNetwork: 'localhost',
+          headers: {
+            'x-playwright-proxy': '*',
+          },
+        } as any, dummyServerPort);
+        const page = await browser.newPage();
+
+        // 127.0.0.1 should fail on the client side.
+        let failed = false;
+        await page.goto(`http://127.0.0.1:${server.PORT}/foo.html`).catch(e => {
+          failed = true;
+        });
+        expect(failed).toBe(true);
+        expect(reachedOriginalTarget).toBe(false);
       });
     });
   });

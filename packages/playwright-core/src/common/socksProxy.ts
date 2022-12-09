@@ -431,11 +431,17 @@ export class SocksProxyHandler extends EventEmitter {
   };
 
   private _sockets = new Map<string, net.Socket>();
+  private _pattern: string | undefined;
   private _redirectPortForTest: number | undefined;
 
-  constructor(redirectPortForTest?: number) {
+  constructor(pattern: string | undefined, redirectPortForTest?: number) {
     super();
+    this._pattern = pattern;
     this._redirectPortForTest = redirectPortForTest;
+  }
+
+  private _matchesPattern(host: string, port: number) {
+    return this._pattern === '*' || (this._pattern === 'localhost' && host === 'localhost');
   }
 
   cleanup() {
@@ -444,6 +450,12 @@ export class SocksProxyHandler extends EventEmitter {
   }
 
   async socketRequested({ uid, host, port }: SocksSocketRequestedPayload): Promise<void> {
+    if (!this._matchesPattern(host, port)) {
+      const payload: SocksSocketFailedPayload = { uid, errorCode: 'ECONNREFUSED' };
+      this.emit(SocksProxyHandler.Events.SocksFailed, payload);
+      return;
+    }
+
     if (host === 'local.playwright')
       host = '127.0.0.1';
     // Node.js 17 does resolve localhost to ipv6

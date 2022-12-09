@@ -248,6 +248,7 @@ scheme.LocalUtilsHarUnzipResult = tOptional(tObject({}));
 scheme.LocalUtilsConnectParams = tObject({
   wsEndpoint: tString,
   headers: tOptional(tAny),
+  exposeNetwork: tOptional(tString),
   slowMo: tOptional(tNumber),
   timeout: tOptional(tNumber),
   socksProxyRedirectPortForTest: tOptional(tNumber),

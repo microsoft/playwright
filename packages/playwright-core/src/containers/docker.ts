@@ -288,7 +288,7 @@ async function tetherHostNetwork(endpoint: string) {
     'x-playwright-proxy': '*',
   };
   const transport = await WebSocketTransport.connect(undefined /* progress */, wsEndpoint, headers, true /* followRedirects */);
-  const socksInterceptor = new SocksInterceptor(transport, undefined);
+  const socksInterceptor = new SocksInterceptor(transport, '*', undefined);
   transport.onmessage = json => socksInterceptor.interceptMessage(json);
   transport.onclose = () => {
     socksInterceptor.cleanup();
@@ -387,7 +387,7 @@ export function addDockerCLI(program: Command) {
       .option('--browser <name>', 'browser to launch')
       .option('--endpoint <url>', 'server endpoint')
       .action(async function(options: { browser: string, endpoint: string }) {
-        let browserType: any;
+        let browserType: playwright.BrowserType | undefined;
         if (options.browser === 'chromium')
           browserType = playwright.chromium;
         else if (options.browser === 'firefox')
@@ -404,9 +404,9 @@ export function addDockerCLI(program: Command) {
               headless: false,
               viewport: null,
             }),
-            'x-playwright-proxy': '*',
           },
-        });
+          _exposeNetwork: '*',
+        } as any);
         const context = await browser.newContext();
         context.on('page', (page: playwright.Page) => {
           page.on('dialog', () => {});  // Prevent dialogs from being automatically dismissed.

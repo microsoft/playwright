@@ -535,6 +535,7 @@ LocalUtils:
       parameters:
         wsEndpoint: string
         headers: json?
+        exposeNetwork: string?
         slowMo: number?
         timeout: number?
         socksProxyRedirectPortForTest: number?
