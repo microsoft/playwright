@@ -33,7 +33,6 @@ test('androidDevice.launchBrowser', async function({ androidDevice }) {
 });
 
 test('androidDevice.launchBrowser should pass args with spaces', async ({ androidDevice }) => {
-  console.log(androidDevice.model());
   const context = await androidDevice.launchBrowser({ args: ['--user-agent=I am Foo'] });
   const page = await context.newPage();
   const userAgent = await page.evaluate(() => navigator.userAgent);
@@ -42,7 +41,6 @@ test('androidDevice.launchBrowser should pass args with spaces', async ({ androi
 });
 
 test('androidDevice.launchBrowser should throw for bad proxy server value', async ({ androidDevice }) => {
-  console.log(androidDevice.model());
   const error = await androidDevice.launchBrowser({
     // @ts-expect-error server must be a string
     proxy: { server: 123 }
@@ -55,7 +53,6 @@ test('androidDevice.launchBrowser should pass proxy config', async ({ androidDev
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
-  console.log(androidDevice.model());
   const context = await androidDevice.launchBrowser({proxy: { server: `localhost:${server.PORT}` }});
   const page = await context.newPage();
   await page.goto('http://non-existent.com/target.html');
