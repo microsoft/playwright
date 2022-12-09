@@ -48,7 +48,7 @@ test.describe('installed image', () => {
       shell: true,
       cwd: path.join(__dirname, '..', '..'),
     });
-    await dockerProcess.waitForOutput('- Endpoint:');
+    await dockerProcess.waitForOutput('Endpoint:');
   });
 
   test.afterAll(async ({ exec }) => {
