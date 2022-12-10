@@ -709,7 +709,7 @@ await page.Locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").Click
 ```
 
 :::tip When to use this
-CSS and XPath are not recommended as the DOM can often change leading to non resilient tests. Instead, try to come up with a locator that is close to how the user perceives the page such as [role locators](#locate-by-role) or [define an explicit testing contract](#locate-by-testid) using test ids.
+CSS and XPath are not recommended as the DOM can often change leading to non resilient tests. Instead, try to come up with a locator that is close to how the user perceives the page such as [role locators](#locate-by-role) or [define an explicit testing contract](#locate-by-test-id) using test ids.
 :::
 
 ## Locate in Shadow DOM
