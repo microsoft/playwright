@@ -611,7 +611,6 @@ scheme.BrowserNewContextParams = tObject({
     username: tOptional(tString),
     password: tOptional(tString),
   })),
-  args: tOptional(tArray(tString)),
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
     origins: tOptional(tArray(tType('OriginStorage'))),
@@ -2385,6 +2384,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   pkg: tOptional(tString),
+  args: tOptional(tArray(tString)),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),

@@ -1099,7 +1099,6 @@ export type BrowserNewContextParams = {
     username?: string,
     password?: string,
   },
-  args?: string[],
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: OriginStorage[],
@@ -1157,7 +1156,6 @@ export type BrowserNewContextOptions = {
     username?: string,
     password?: string,
   },
-  args?: string[],
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: OriginStorage[],
@@ -4324,6 +4322,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   pkg?: string,
+  args?: string[],
   proxy?: {
     server: string,
     bypass?: string,
@@ -4378,6 +4377,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   pkg?: string,
+  args?: string[],
   proxy?: {
     server: string,
     bypass?: string,

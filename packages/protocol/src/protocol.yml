@@ -867,9 +867,6 @@ Browser:
             bypass: string?
             username: string?
             password: string?
-        args:
-          type: array?
-          items: string
         storageState:
           type: object?
           properties:
@@ -3261,6 +3258,9 @@ AndroidDevice:
       parameters:
         $mixin: ContextOptions
         pkg: string?
+        args:
+          type: array?
+          items: string
         proxy:
           type: object?
           properties:

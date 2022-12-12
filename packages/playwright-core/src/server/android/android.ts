@@ -260,7 +260,7 @@ export class AndroidDevice extends SdkObject {
     this.emit(AndroidDevice.Events.Close);
   }
 
-  async launchBrowser(pkg: string = 'com.android.chrome', options: channels.BrowserNewContextParams): Promise<BrowserContext> {
+  async launchBrowser(pkg: string = 'com.android.chrome', options: channels.AndroidDeviceLaunchBrowserParams): Promise<BrowserContext> {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
     const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright-' + createGuid());
@@ -271,7 +271,7 @@ export class AndroidDevice extends SdkObject {
     return await this._connectToBrowser(socketName, options);
   }
 
-  private _defaultArgs(options: channels.BrowserNewContextParams, socketName: string): string[] {
+  private _defaultArgs(options: channels.AndroidDeviceLaunchBrowserParams, socketName: string): string[] {
     const chromeArguments = [
       '_',
       '--disable-fre',
@@ -283,7 +283,7 @@ export class AndroidDevice extends SdkObject {
     return chromeArguments;
   }
 
-  private _innerDefaultArgs(options: channels.BrowserNewContextParams): string[] {
+  private _innerDefaultArgs(options: channels.AndroidDeviceLaunchBrowserParams): string[] {
     const { args = [], proxy } = options;
     const chromeArguments = [];
     if (proxy) {
