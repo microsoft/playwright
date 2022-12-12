@@ -11830,9 +11830,10 @@ export interface BrowserType<Unused = {}> {
     slowMo?: number;
 
     /**
-     * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on
-     * selectors that imply single target DOM element will throw when more than one element matches the selector. See
-     * [Locator] to learn more about the strict mode.
+     * If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
+     * selectors that imply single target DOM element will throw when more than one element matches the selector. This
+     * option does not affect any Locator APIs (Locators are always strict). See [Locator] to learn more about the strict
+     * mode.
      */
     strictSelectors?: boolean;
 
@@ -13202,9 +13203,10 @@ export interface AndroidDevice {
     serviceWorkers?: "allow"|"block";
 
     /**
-     * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on
-     * selectors that imply single target DOM element will throw when more than one element matches the selector. See
-     * [Locator] to learn more about the strict mode.
+     * If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
+     * selectors that imply single target DOM element will throw when more than one element matches the selector. This
+     * option does not affect any Locator APIs (Locators are always strict). See [Locator] to learn more about the strict
+     * mode.
      */
     strictSelectors?: boolean;
 
@@ -15103,9 +15105,10 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on
-     * selectors that imply single target DOM element will throw when more than one element matches the selector. See
-     * [Locator] to learn more about the strict mode.
+     * If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
+     * selectors that imply single target DOM element will throw when more than one element matches the selector. This
+     * option does not affect any Locator APIs (Locators are always strict). See [Locator] to learn more about the strict
+     * mode.
      */
     strictSelectors?: boolean;
 
@@ -18063,9 +18066,10 @@ export interface BrowserContextOptions {
   };
 
   /**
-   * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on
-   * selectors that imply single target DOM element will throw when more than one element matches the selector. See
-   * [Locator] to learn more about the strict mode.
+   * If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
+   * selectors that imply single target DOM element will throw when more than one element matches the selector. This
+   * option does not affect any Locator APIs (Locators are always strict). See [Locator] to learn more about the strict
+   * mode.
    */
   strictSelectors?: boolean;
 

@@ -677,8 +677,9 @@ contexts override the proxy, global proxy will be never used and can be any stri
 ## context-option-strict
 - `strictSelectors` <[boolean]>
 
-If specified, enables strict selectors mode for this context. In the strict selectors mode all operations
+If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations
 on selectors that imply single target DOM element will throw when more than one element matches the selector.
+This option does not affect any Locator APIs (Locators are always strict).
 See [Locator] to learn more about the strict mode.
 
 ## context-option-service-worker-policy
