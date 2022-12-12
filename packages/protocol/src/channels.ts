@@ -4330,6 +4330,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   pkg?: string,
+  args?: string[],
   proxy?: {
     server: string,
     bypass?: string,
@@ -4384,6 +4385,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   pkg?: string,
+  args?: string[],
   proxy?: {
     server: string,
     bypass?: string,

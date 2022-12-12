@@ -143,6 +143,12 @@ Optional package name to launch instead of default Chrome for Android.
 ### option: AndroidDevice.launchBrowser.-inline- = %%-shared-context-params-list-v1.8-%%
 * since: v1.9
 
+### option: AndroidDevice.launchBrowser.proxy = %%-browser-option-proxy-%%
+* since: v1.29
+
+### option: AndroidDevice.launchBrowser.args = %%-browser-option-args-%%
+* since: v1.29
+
 ## async method: AndroidDevice.longTap
 * since: v1.9
 

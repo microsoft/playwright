@@ -2388,6 +2388,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   pkg: tOptional(tString),
+  args: tOptional(tArray(tString)),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),

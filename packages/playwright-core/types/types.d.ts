@@ -12946,6 +12946,12 @@ export interface AndroidDevice {
     acceptDownloads?: boolean;
 
     /**
+     * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
+     * [here](http://peter.sh/experiments/chromium-command-line-switches/).
+     */
+    args?: Array<string>;
+
+    /**
      * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
      * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
      * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
@@ -13066,6 +13072,32 @@ export interface AndroidDevice {
      * for more details.
      */
     permissions?: Array<string>;
+
+    /**
+     * Network proxy settings.
+     */
+    proxy?: {
+      /**
+       * Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+       * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+       */
+      server: string;
+
+      /**
+       * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+       */
+      bypass?: string;
+
+      /**
+       * Optional username to use if HTTP proxy requires authentication.
+       */
+      username?: string;
+
+      /**
+       * Optional password to use if HTTP proxy requires authentication.
+       */
+      password?: string;
+    };
 
     /**
      * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.

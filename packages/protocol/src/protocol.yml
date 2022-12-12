@@ -3262,6 +3262,9 @@ AndroidDevice:
       parameters:
         $mixin: ContextOptions
         pkg: string?
+        args:
+          type: array?
+          items: string
         proxy:
           type: object?
           properties:
