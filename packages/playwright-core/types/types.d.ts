@@ -17067,7 +17067,7 @@ export interface Route {
     /**
      * If set changes the post data of request.
      */
-    postData?: string|Buffer;
+    postData?: string|Buffer|Serializable;
 
     /**
      * If set changes the request URL. New URL must have same protocol as original one.
@@ -17154,7 +17154,7 @@ export interface Route {
     /**
      * If set changes the post data of request.
      */
-    postData?: string|Buffer;
+    postData?: string|Buffer|Serializable;
 
     /**
      * If set changes the request URL. New URL must have same protocol as original one. Changing the URL won't affect the
@@ -17182,13 +17182,6 @@ export interface Route {
    */
   fetch(options?: {
     /**
-     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
-     * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
-     * header will be set to `application/octet-stream` if not explicitly set.
-     */
-    data?: string|Buffer|Serializable;
-
-    /**
      * If set changes the request HTTP headers. Header values will be converted to a string.
      */
     headers?: { [key: string]: string; };
@@ -17197,6 +17190,13 @@ export interface Route {
      * If set changes the request method (e.g. GET or POST).
      */
     method?: string;
+
+    /**
+     * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
+     * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
+     * header will be set to `application/octet-stream` if not explicitly set.
+     */
+    postData?: string|Buffer|Serializable;
 
     /**
      * If set changes the request URL. New URL must have same protocol as original one.
@@ -17247,18 +17247,6 @@ export interface Route {
 
     /**
      * JSON response. This method will set the content type to `application/json` if not set.
-     *
-     * **Usage**
-     *
-     * ```js
-     * await page.route('https://dog.ceo/api/breeds/list/all', async route => {
-     *   const json = {
-     *     message: { 'test_breed': [] }
-     *   };
-     *   await route.fulfill({ json });
-     * });
-     * ```
-     *
      */
     json?: Serializable;
 
