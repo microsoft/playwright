@@ -389,6 +389,14 @@ Allows to set post data of the request. If the data parameter is an object, it w
 and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will be
 set to `application/octet-stream` if not explicitly set.
 
+## js-python-csharp-fetch-option-post-data
+* langs: js, python, csharp
+- `postData` <[string]|[Buffer]|[Serializable]>
+
+Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
+and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will be
+set to `application/octet-stream` if not explicitly set.
+
 ## js-python-csharp-fetch-option-ignorehttpserrors
 * langs: js, python, csharp
 - `ignoreHTTPSErrors` <[boolean]>

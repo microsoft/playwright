@@ -259,4 +259,22 @@ it.describe('post data', () => {
       expect(postDataBuffer[i]).toBe(arr[i]);
     }
   });
+
+  it('should amend json post data', async ({ page, server }) => {
+    await page.goto(server.EMPTY_PAGE);
+    let postData: string;
+    await page.route('**/*', route => {
+      postData = route.request().postDataJSON();
+      route.continue();
+    });
+    await page.route('**/*', route => {
+      route.fallback({ postData: { foo: 'bar' } });
+    });
+    const [serverRequest] = await Promise.all([
+      server.waitForRequest('/sleep.zzz'),
+      page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
+    ]);
+    expect(postData).toEqual({ foo: 'bar' });
+    expect((await serverRequest.postBody).toString('utf8')).toBe('{"foo":"bar"}');
+  });
 });

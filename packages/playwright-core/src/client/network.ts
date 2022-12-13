@@ -32,6 +32,7 @@ import type { HeadersArray, URLMatch } from '../common/types';
 import { urlMatches } from '../common/netUtils';
 import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
+import type { Serializable } from '../../types/structs';
 
 export type NetworkCookie = {
   name: string,
@@ -56,11 +57,18 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
+type SerializedFallbackOverrides = {
+  url?: string;
+  method?: string;
+  headers?: Headers;
+  postDataBuffer?: Buffer;
+};
+
 type FallbackOverrides = {
   url?: string;
   method?: string;
   headers?: Headers;
-  postData?: string | Buffer;
+  postData?: string | Buffer | Serializable;
 };
 
 export class Request extends ChannelOwner<channels.RequestChannel> implements api.Request {
@@ -71,7 +79,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   private _actualHeadersPromise: Promise<RawHeaders> | undefined;
   private _postData: Buffer | null;
   _timing: ResourceTiming;
-  private _fallbackOverrides: FallbackOverrides = {};
+  private _fallbackOverrides: SerializedFallbackOverrides = {};
 
   static from(request: channels.RequestChannel): Request {
     return (request as any)._object;
@@ -114,17 +122,14 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   postData(): string | null {
-    if (this._fallbackOverrides.postData)
-      return this._fallbackOverrides.postData.toString('utf-8');
+    if (this._fallbackOverrides.postDataBuffer)
+      return this._fallbackOverrides.postDataBuffer.toString('utf-8');
     return this._postData ? this._postData.toString('utf8') : null;
   }
 
   postDataBuffer(): Buffer | null {
-    if (this._fallbackOverrides.postData) {
-      if (isString(this._fallbackOverrides.postData))
-        return Buffer.from(this._fallbackOverrides.postData, 'utf-8');
-      return this._fallbackOverrides.postData;
-    }
+    if (this._fallbackOverrides.postDataBuffer)
+      return this._fallbackOverrides.postDataBuffer;
     return this._postData;
   }
 
@@ -251,7 +256,21 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   _applyFallbackOverrides(overrides: FallbackOverrides) {
-    this._fallbackOverrides = { ...this._fallbackOverrides, ...overrides };
+    const basicOptions = { ...overrides, postData: undefined };
+
+    const postData = overrides.postData;
+    let postDataBuffer = this._fallbackOverrides.postDataBuffer;
+    if (isString(postData))
+      postDataBuffer = Buffer.from(postData, 'utf-8');
+    else if (postData instanceof Buffer)
+      postDataBuffer = postData;
+    else if (postData)
+      postDataBuffer = Buffer.from(JSON.stringify(postData), 'utf-8');
+    this._fallbackOverrides = {
+      ...this._fallbackOverrides,
+      ...basicOptions,
+      postDataBuffer,
+    };
   }
 
   _fallbackOverridesForContinue() {
@@ -400,12 +419,11 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   async _innerContinue(internal = false) {
     const options = this.request()._fallbackOverridesForContinue();
     return await this._wrapApiCall(async () => {
-      const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
       await this._raceWithTargetClose(this._channel.continue({
         url: options.url,
         method: options.method,
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,
-        postData: postDataBuffer,
+        postData: options.postDataBuffer,
       }));
     }, !!internal);
   }
