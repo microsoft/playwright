@@ -264,9 +264,13 @@ export class AndroidDevice extends SdkObject {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
     const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright-' + createGuid());
-    const commandLine = this._defaultArgs(options, socketName).join(' ');
+    const commandLine = this._defaultArgs(options, socketName).map(arg => {
+      if (!arg.includes('\'') && !arg.includes('"'))
+        return `"${arg}"`;
+      return arg;
+    }).join(' ');
     debug('pw:android')('Starting', pkg, commandLine);
-    await this._backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);
+    await this._backend.runCommand(`shell:echo "${commandLine.replace(/"/g, '\\"')}" > /data/local/tmp/chrome-command-line`);
     await this._backend.runCommand(`shell:am start -a android.intent.action.VIEW -d about:blank ${pkg}`);
     return await this._connectToBrowser(socketName, options);
   }
