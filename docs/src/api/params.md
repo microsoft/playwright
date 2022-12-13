@@ -1087,7 +1087,7 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 
 ## locator-get-by-test-id-test-id
 * since: v1.27
-- `testId` <[string]>
+- `testId` <[string]|[RegExp]>
 
 Id to locate the element by.
 
