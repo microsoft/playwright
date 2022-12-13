@@ -81,11 +81,8 @@ if (mode === 'service') {
       PWTEST_UNSAFE_GRID_VERSION: '1',
     },
   };
-  config.use.connectOptions = {
-    wsEndpoint: 'ws://localhost:3333/mysecret/claimWorker?os=linux',
-    // @ts-expect-error
-    _exposeNetwork: '*',
-  };
+  process.env.PW_TEST_CONNECT_WS_ENDPOINT = 'ws://localhost:3333/mysecret/claimWorker?os=linux';
+  process.env.PW_TEST_CONNECT_EXPOSE_NETWORK = '*';
   config.projects = [{
     name: 'Chromium page tests',
     testMatch: /page\/.*spec.ts$/,
