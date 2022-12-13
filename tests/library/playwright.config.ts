@@ -35,9 +35,7 @@ const getExecutablePath = (browserName: BrowserName) => {
 };
 
 let mode: TestModeName = 'default';
-if (process.env.PW_OUT_OF_PROCESS_DRIVER)
-  mode = 'driver';
-else if (process.env.PLAYWRIGHT_DOCKER)
+if (process.env.PLAYWRIGHT_DOCKER)
   mode = 'docker';
 else
   mode = (process.env.PWTEST_MODE ?? 'default') as ('default' | 'driver' | 'service' | 'service2');
