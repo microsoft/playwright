@@ -38,6 +38,7 @@ import {
   toHaveURL,
   toHaveValue,
   toHaveValues,
+  toPass
 } from './matchers/matchers';
 import { toMatchSnapshot, toHaveScreenshot } from './matchers/toMatchSnapshot';
 import type { Expect } from './types';
@@ -103,7 +104,7 @@ function createExpect(actual: unknown, messageOrOptions: ExpectMessageOrOptions,
   return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(messageOrOptions, isSoft, isPoll, generator));
 }
 
-export const expect: Expect = new Proxy(expectLibrary as any, {
+export const expect: Expect = new Proxy(expectLibrary, {
   apply: function(target: any, thisArg: any, argumentsList: [actual: unknown, messageOrOptions: ExpectMessageOrOptions]) {
     const [actual, messageOrOptions] = argumentsList;
     return createExpect(actual, messageOrOptions, false /* isSoft */, false /* isPoll */);
@@ -145,6 +146,7 @@ const customMatchers = {
   toHaveValues,
   toMatchSnapshot,
   toHaveScreenshot,
+  toPass,
 };
 
 type Generator = () => any;

@@ -293,14 +293,20 @@ type MakeMatchers<R, T> = BaseMatchers<R, T> & {
      */
     resolves: MakeMatchers<Promise<R>, Awaited<T>>;
     /**
-    * Unwraps the reason of a rejected promise so any other matcher can be chained.
-    * If the promise is fulfilled the assertion fails.
-    */
+     * Unwraps the reason of a rejected promise so any other matcher can be chained.
+     * If the promise is fulfilled the assertion fails.
+     */
     rejects: MakeMatchers<Promise<R>, Awaited<T>>;
   } & SnapshotAssertions &
   ExtraMatchers<T, Page, PageAssertions> &
   ExtraMatchers<T, Locator, LocatorAssertions> &
-  ExtraMatchers<T, APIResponse, APIResponseAssertions>;
+  ExtraMatchers<T, APIResponse, APIResponseAssertions> &
+  ExtraMatchers<T, Function, {
+    /**
+     * Retries the callback until it passes.
+     */
+    toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
+  }>;
 
 type BaseExpect = {
   // Removed following methods because they rely on a test-runner integration from Jest which we don't support:
