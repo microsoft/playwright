@@ -91,7 +91,18 @@ if (mode === 'service') {
     use: {
       browserName: 'chromium',
       mode
-    }
+    },
+    metadata: {
+      platform: process.platform,
+      docker: !!process.env.INSIDE_DOCKER,
+      dockerIntegration: !!process.env.PLAYWRIGHT_DOCKER,
+      headful: !!headed,
+      browserName: 'chromium',
+      channel,
+      mode,
+      video: !!video,
+      trace: !!trace,
+    },
   }];
 }
 
