@@ -572,7 +572,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this.mainFrame().locator(selector, options);
   }
 
-  getByTestId(testId: string): Locator {
+  getByTestId(testId: string | RegExp): Locator {
     return this.mainFrame().getByTestId(testId);
   }
 

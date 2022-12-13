@@ -2597,7 +2597,7 @@ export interface Page {
    *
    * @param testId Id to locate the element by.
    */
-  getByTestId(testId: string): Locator;
+  getByTestId(testId: string|RegExp): Locator;
 
   /**
    * Allows locating elements that contain given text. Consider the following DOM structure:
@@ -5849,7 +5849,7 @@ export interface Frame {
    *
    * @param testId Id to locate the element by.
    */
-  getByTestId(testId: string): Locator;
+  getByTestId(testId: string|RegExp): Locator;
 
   /**
    * Allows locating elements that contain given text. Consider the following DOM structure:
@@ -10546,7 +10546,7 @@ export interface Locator {
    *
    * @param testId Id to locate the element by.
    */
-  getByTestId(testId: string): Locator;
+  getByTestId(testId: string|RegExp): Locator;
 
   /**
    * Allows locating elements that contain given text. Consider the following DOM structure:
@@ -16114,7 +16114,7 @@ export interface FrameLocator {
    *
    * @param testId Id to locate the element by.
    */
-  getByTestId(testId: string): Locator;
+  getByTestId(testId: string|RegExp): Locator;
 
   /**
    * Allows locating elements that contain given text. Consider the following DOM structure:
