@@ -6,6 +6,40 @@ a way to find element(s) on the page at any moment. Locator can be created with 
 
 [Learn more about locators](../locators.md).
 
+## async method: Locator.all
+* since: v1.14
+- returns: <[Array]<[Locator]>>
+
+When locator points to a list of elements, returns array of locators, pointing
+to respective elements.
+
+**Usage**
+
+```js
+for (const li of await page.getByRole('listitem').all())
+  await li.click();
+```
+
+```python async
+for li in await page.get_by_role('listitem').all():
+  await li.click();
+```
+
+```python sync
+for li in page.get_by_role('listitem').all():
+  li.click();
+```
+
+```java
+for (Locator li : page.getByRole('listitem').all())
+  li.click();
+```
+
+```csharp
+foreach (var li in await page.GetByRole('listitem').AllAsync())
+  await li.ClickAsync();
+```
+
 ## async method: Locator.allInnerTexts
 * since: v1.14
 - returns: <[Array]<[string]>>
@@ -423,6 +457,36 @@ Resolves given locator to the first matching DOM element. If no elements matchin
 - returns: <[Array]<[ElementHandle]>>
 
 Resolves given locator to all matching DOM elements.
+
+## async method: Locator.enumerate
+* since: v1.14
+* langs: js, python, csharp
+- returns: <[Array]<[Tuple]<[Locator],[int]>>>
+
+When locator points to a list of elements, returns array of (locator, index) pairs,
+pointing to respective elements.
+
+**Usage**
+
+```js
+for (const [li, i] of await page.getByRole('listitem').enumerate())
+  await li.click();
+```
+
+```python async
+for (li, index) in await page.get_by_role('listitem').enumerate():
+  await li.click();
+```
+
+```python sync
+for (li, index) in page.get_by_role('listitem').enumerate():
+  li.click();
+```
+
+```csharp
+foreach (var (li, index) in await page.GetByRole('listitem').AllAsync())
+  await li.ClickAsync();
+```
 
 ## async method: Locator.evaluate
 * since: v1.14

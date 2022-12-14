@@ -1360,34 +1360,58 @@ You should now have a "screenshot.png" file in your project's root directory.
 
 ### Rare use cases
 
-#### Get All text contents
+#### Do something with each element in the list
+
+Iterate elements:
 
 ```js
-const rows = page.getByRole('listitem');
-const texts = await rows.allTextContents();
+for (const row of await page.getByRole('listitem').all())
+  console.log(await row.textContent());
 ```
 
 ```python async
-rows = page.get_by_role("listitem")
-texts = await rows.all_text_contents()
+for row in await page.get_by_role("listitem").all():
+    print(await row.text_content())
 ```
 
 ```python sync
-rows = page.get_by_role("listitem")
-texts = rows.all_text_contents()
+for row in page.get_by_role("listitem").all():
+    print(row.text_content())
 ```
 
 ```java
-Locator rows = page.getByRole(AriaRole.LISTITEM);
-List<String> texts = rows.allTextContents();
+for (Locator row : page.getByRole(AriaRole.LISTITEM).all())
+  System.out.println(row.textContent());
 ```
 
 ```csharp
-var rows = page.GetByRole(AriaRole.Listitem);
-var texts = await rows.AllTextContentsAsync();
+foreach (var row in await page.GetByRole(AriaRole.Listitem).AllAsync())
+  Console.WriteLine(await row.TextContentAsync());
 ```
 
-#### Do something with each element in the list
+Iterate elements with their respective indexes:
+
+```js
+for (const [row, index] of await page.getByRole('listitem').enumerate())
+  console.log(index, await row.textContent());
+```
+
+```python async
+for (row, index) in await page.get_by_role('listitem').enumerate():
+    print(index, await row.text_content())
+```
+
+```python sync
+for (row, index) in page.get_by_role('listitem').enumerate():
+    print(index, row.text_content())
+```
+
+```csharp
+foreach (var (row, index) in await page.GetByRole('listitem').AllAsync())
+  Console.WriteLine(index + ' ' + await row.TextContentAsync());
+```
+
+Iterate using regular for loop:
 
 ```js
 const rows = page.getByRole('listitem');

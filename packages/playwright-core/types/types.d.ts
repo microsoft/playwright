@@ -21,6 +21,8 @@ import { ReadStream } from 'fs';
 import { Protocol } from './protocol';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
 
+type Tuple<A,B> = [A,B];
+
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
 };
@@ -9804,6 +9806,19 @@ export interface Locator {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
   /**
+   * When locator points to a list of elements, returns array of locators, pointing to respective elements.
+   *
+   * **Usage**
+   *
+   * ```js
+   * for (const li of await page.getByRole('listitem').all())
+   *   await li.click();
+   * ```
+   *
+   */
+  all(): Promise<Array<Locator>>;
+
+  /**
    * Returns an array of `node.innerText` values for all matching nodes.
    */
   allInnerTexts(): Promise<Array<string>>;
@@ -10238,6 +10253,20 @@ export interface Locator {
    * Resolves given locator to all matching DOM elements.
    */
   elementHandles(): Promise<Array<ElementHandle>>;
+
+  /**
+   * When locator points to a list of elements, returns array of (locator, index) pairs, pointing to respective
+   * elements.
+   *
+   * **Usage**
+   *
+   * ```js
+   * for (const [li, i] of await page.getByRole('listitem').enumerate())
+   *   await li.click();
+   * ```
+   *
+   */
+  enumerate(): Promise<Array<Tuple<Locator, number>>>;
 
   /**
    * Returns the return value of `pageFunction` as a [JSHandle].
