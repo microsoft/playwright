@@ -1362,9 +1362,6 @@ Snapshot name.
 ### option: LocatorAssertions.toHaveScreenshot#1.scale = %%-screenshot-option-scale-default-css-%%
 * since: v1.23
 
-### option: LocatorAssertions.toHaveScreenshot#1.comparator = %%-assertions-comparator-%%
-* since: v1.29
-
 ### option: LocatorAssertions.toHaveScreenshot#1.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 * since: v1.23
 
@@ -1407,9 +1404,6 @@ Note that screenshot assertions only work with Playwright test runner.
 
 ### option: LocatorAssertions.toHaveScreenshot#2.scale = %%-screenshot-option-scale-default-css-%%
 * since: v1.23
-
-### option: LocatorAssertions.toHaveScreenshot#2.comparator = %%-assertions-comparator-%%
-* since: v1.29
 
 ### option: LocatorAssertions.toHaveScreenshot#2.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 * since: v1.23

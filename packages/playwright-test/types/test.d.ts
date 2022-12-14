@@ -531,15 +531,9 @@ interface TestConfig {
      */
     toHaveScreenshot?: {
       /**
-       * a comparator function to use, either `"pixelmatch"` or `"ssim-cie94"`. Defaults to `"pixelmatch"`.
-       */
-      comparator?: string;
-
-      /**
        * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
        * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. This option is used
-       * by `pixelmatch` image comparator.
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
 
@@ -580,15 +574,9 @@ interface TestConfig {
      */
     toMatchSnapshot?: {
       /**
-       * a comparator function to use, either `"pixelmatch"` or `"ssim-cie94"`. Defaults to `"pixelmatch"`.
-       */
-      comparator?: string;
-
-      /**
        * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
        * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. This option is used
-       * by `pixelmatch` image comparator.
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
 
@@ -3826,11 +3814,6 @@ interface LocatorAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
-     */
-    comparator?: string;
-
-    /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
      * box `#FF00FF` that completely covers its bounding box.
      */
@@ -3866,7 +3849,7 @@ interface LocatorAssertions {
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-     * `TestConfig.expect`. Defaults to `0.2`. This option is used by "pixelmatch" image comparator.
+     * `TestConfig.expect`. Defaults to `0.2`.
      */
     threshold?: number;
 
@@ -3908,11 +3891,6 @@ interface LocatorAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
-     */
-    comparator?: string;
-
-    /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
      * box `#FF00FF` that completely covers its bounding box.
      */
@@ -3948,7 +3926,7 @@ interface LocatorAssertions {
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-     * `TestConfig.expect`. Defaults to `0.2`. This option is used by "pixelmatch" image comparator.
+     * `TestConfig.expect`. Defaults to `0.2`.
      */
     threshold?: number;
 
@@ -4161,11 +4139,6 @@ interface PageAssertions {
     };
 
     /**
-     * A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
-     */
-    comparator?: string;
-
-    /**
      * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
      * `false`.
      */
@@ -4207,7 +4180,7 @@ interface PageAssertions {
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-     * `TestConfig.expect`. Defaults to `0.2`. This option is used by "pixelmatch" image comparator.
+     * `TestConfig.expect`. Defaults to `0.2`.
      */
     threshold?: number;
 
@@ -4273,11 +4246,6 @@ interface PageAssertions {
     };
 
     /**
-     * A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
-     */
-    comparator?: string;
-
-    /**
      * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
      * `false`.
      */
@@ -4319,7 +4287,7 @@ interface PageAssertions {
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-     * `TestConfig.expect`. Defaults to `0.2`. This option is used by "pixelmatch" image comparator.
+     * `TestConfig.expect`. Defaults to `0.2`.
      */
     threshold?: number;
 
@@ -4408,11 +4376,6 @@ interface SnapshotAssertions {
    */
   toMatchSnapshot(name: string|Array<string>, options?: {
     /**
-     * A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
-     */
-    comparator?: string;
-
-    /**
      * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
      * configurable with `TestConfig.expect`. Unset by default.
      */
@@ -4427,7 +4390,7 @@ interface SnapshotAssertions {
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-     * `TestConfig.expect`. Defaults to `0.2`. This option is used by "pixelmatch" image comparator.
+     * `TestConfig.expect`. Defaults to `0.2`.
      */
     threshold?: number;
   }): void;
@@ -4461,11 +4424,6 @@ interface SnapshotAssertions {
    */
   toMatchSnapshot(options?: {
     /**
-     * A comparator function to use when comparing images. Defaults to `"pixelmatch"`.
-     */
-    comparator?: string;
-
-    /**
      * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
      * configurable with `TestConfig.expect`. Unset by default.
      */
@@ -4485,7 +4443,7 @@ interface SnapshotAssertions {
     /**
      * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
      * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
-     * `TestConfig.expect`. Defaults to `0.2`. This option is used by "pixelmatch" image comparator.
+     * `TestConfig.expect`. Defaults to `0.2`.
      */
     threshold?: number;
   }): void;
@@ -4591,15 +4549,9 @@ interface TestProject {
      */
     toHaveScreenshot?: {
       /**
-       * a comparator function to use, either `"pixelmatch"` or `"ssim-cie94"`. Defaults to `"pixelmatch"`.
-       */
-      comparator?: string;
-
-      /**
        * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
        * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. This option is used
-       * by `pixelmatch` image comparator.
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
 
@@ -4640,15 +4592,9 @@ interface TestProject {
      */
     toMatchSnapshot?: {
       /**
-       * a comparator function to use, either `"pixelmatch"` or `"ssim-cie94"`. Defaults to `"pixelmatch"`.
-       */
-      comparator?: string;
-
-      /**
        * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
        * `1` (lax). `"pixelmatch"` comparator computes color difference in
-       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. This option is used
-       * by `pixelmatch` image comparator.
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
 
