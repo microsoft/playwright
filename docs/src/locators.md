@@ -806,14 +806,16 @@ await Expect(page.Locator("x-details")).ToContainTextAsync("Details");
 Consider the following DOM structure where we want to click on the buy button of the second product card. We have a few options in order to filter the locators to get the right one.
 
 ```html card
-<div role="listitem">
-  <h3>Product 1</h3>
-  <button>Add to cart</button>
-</div>
-<div role="listitem">
-  <h3>Product 2</h3>
-  <button>Add to cart</button>
-</div>
+<ul>
+  <li>
+    <h3>Product 1</h3>
+    <button>Add to cart</button>
+  </li>
+  <li>
+    <h3>Product 2</h3>
+    <button>Add to cart</button>
+  </li>
+<ul>
 ```
 
 ### Filter by text
@@ -900,14 +902,16 @@ await page
 Locators support an option to only select elements that have a descendant matching another locator. You can therefore filter by any other locator such as a [`method: Locator.getByRole`], [`method: Locator.getByTestId`], [`method: Locator.getByText`] etc.
 
 ```html card
-<div role="listitem">
-  <h3>Product 1</h3>
-  <button>Add to cart</button>
-</div>
-<div role="listitem">
-  <h3>Product 2</h3>
-  <button>Add to cart</button>
-</div>
+<ul>
+  <li>
+    <h3>Product 1</h3>
+    <button>Add to cart</button>
+  </li>
+  <li>
+    <h3>Product 2</h3>
+    <button>Add to cart</button>
+  </li>
+</ul>
 ```
 
 ```js
@@ -924,7 +928,7 @@ page.getByRole(AriaRole.LISTITEM)
         .setHas(page.GetByRole(AriaRole.HEADING, new Page.GetByRoleOptions()
         .setName("Product 2"))))
     .getByRole(AriaRole.BUTTON,
-               new Page.GetByRoleOptions().setName("Add to cart")))
+               new Page.GetByRoleOptions().setName("Add to cart"))
     .click()
 ```
 
@@ -957,7 +961,7 @@ We can also assert the product card to make sure there is only one
 ```js
 await expect(page
     .getByRole('listitem')
-    .filter({ has: page.getByText('Product2') }))
+    .filter({ has: page.getByText('Product 2') }))
     .toHaveCount(1);
 ```
 
