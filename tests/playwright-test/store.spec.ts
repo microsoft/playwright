@@ -54,8 +54,8 @@ test('should share _store state between project setup and tests', async ({ runIn
       };
     `,
     '_store.setup.ts': `
-      const { setup, expect, _store } = pwt;
-      setup('should initialize _store', async ({ }) => {
+      const { _setup, expect, _store } = pwt;
+      _setup('should initialize _store', async ({ }) => {
         expect(await _store.get('number')).toBe(undefined);
         await _store.set('number', 2022)
         expect(await _store.get('number')).toBe(2022);
@@ -135,15 +135,15 @@ test('should isolate _store state between projects', async ({ runInlineTest }) =
       };
     `,
     '_store.setup.ts': `
-      const { setup, expect, _store } = pwt;
-      setup('should initialize _store', async ({ }) => {
+      const { _setup, expect, _store } = pwt;
+      _setup('should initialize _store', async ({ }) => {
         expect(await _store.get('number')).toBe(undefined);
         await _store.set('number', 2022)
         expect(await _store.get('number')).toBe(2022);
 
         expect(await _store.get('name')).toBe(undefined);
-        await _store.set('name', 'str-' + setup.info().project.name)
-        expect(await _store.get('name')).toBe('str-' + setup.info().project.name);
+        await _store.set('name', 'str-' + _setup.info().project.name)
+        expect(await _store.get('name')).toBe('str-' + _setup.info().project.name);
       });
     `,
     'a.test.ts': `
@@ -182,8 +182,8 @@ test('should load context storageState from _store', async ({ runInlineTest, ser
       };
     `,
     '_store.setup.ts': `
-      const { setup, expect, _store } = pwt;
-      setup('should save storageState', async ({ page, context }) => {
+      const { _setup, expect, _store } = pwt;
+      _setup('should save storageState', async ({ page, context }) => {
         expect(await _store.get('user')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
         const state = await page.context().storageState();
@@ -234,11 +234,11 @@ test('should load _storageStateName specified in the project config from _store'
       };
     `,
     '_store.setup.ts': `
-      const { setup, expect, _store } = pwt;
-      setup.use({
+      const { _setup, expect, _store } = pwt;
+      _setup.use({
         _storageStateName: ({}, use) => use(undefined),
       })
-      setup('should save storageState', async ({ page, context }) => {
+      _setup('should save storageState', async ({ page, context }) => {
         expect(await _store.get('stateInStorage')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
         const state = await page.context().storageState();
@@ -278,11 +278,11 @@ test('should load _storageStateName specified in the global config from _store',
       };
     `,
     '_store.setup.ts': `
-      const { setup, expect, _store } = pwt;
-      setup.use({
+      const { _setup, expect, _store } = pwt;
+      _setup.use({
         _storageStateName: ({}, use) => use(undefined),
       })
-      setup('should save _storageStateName', async ({ page, context }) => {
+      _setup('should save _storageStateName', async ({ page, context }) => {
         expect(await _store.get('stateInStorage')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
         const state = await page.context().storageState();
