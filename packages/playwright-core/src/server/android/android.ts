@@ -264,13 +264,7 @@ export class AndroidDevice extends SdkObject {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
     const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright-' + createGuid());
-    const commandLine = this._defaultArgs(options, socketName).map(arg => {
-      // don't double quote, upstream parser takes care of treating arguments with spaces when quoted
-      // https://source.chromium.org/chromium/chromium/src/+/main:base/android/java/src/org/chromium/base/CommandLine.java;l=198;drc=38321ee39cd73ac2d9d4400c56b90613dee5fe29;bpv=1;bpt=1
-      if (!arg.includes('\'') && !arg.includes('"'))
-        return `"${arg}"`;
-      return arg;
-    }).join(' ');
+    const commandLine = this._defaultArgs(options, socketName).join(' ');
     debug('pw:android')('Starting', pkg, commandLine);
     // encode commandLine to base64 to avoid issues (bash encoding) with special characters
     await this._backend.runCommand(`shell:echo "${Buffer.from(commandLine).toString('base64')}" | base64 -d > /data/local/tmp/chrome-command-line`);

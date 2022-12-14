@@ -36,7 +36,6 @@ test('androidDevice.launchBrowser should treat args correctly', async ({ android
   for (const arg of [
     "--user-agent='I am Foo'",
     '--user-agent="I am Foo"',
-    '--user-agent=I am Foo'
   ]) {
     await test.step(`arg: ${arg}`, async () => {
       const context = await androidDevice.launchBrowser({ args: [arg] });
