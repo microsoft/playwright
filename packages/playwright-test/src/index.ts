@@ -27,7 +27,7 @@ import { rootTestType, _setProjectSetup } from './testType';
 export { expect } from './expect';
 export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
-export const store = _baseStore;
+export const _store = _baseStore;
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
@@ -47,6 +47,7 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _reuseContext: boolean,
   _setupContextOptionsAndArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
+  _storageStateName: string | undefined;
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserOptions: LaunchOptions;
@@ -143,7 +144,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true }],
   proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true }],
   storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true }],
-  storageStateName: [undefined, { option: true }],
+  _storageStateName: [undefined, { option: true }],
   timezoneId: [({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true }],
   userAgent: [({ contextOptions }, use) => use(contextOptions.userAgent), { option: true }],
   viewport: [({ contextOptions }, use) => use(contextOptions.viewport === undefined ? { width: 1280, height: 720 } : contextOptions.viewport), { option: true }],
@@ -173,7 +174,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     permissions,
     proxy,
     storageState,
-    storageStateName,
+    _storageStateName,
     viewport,
     timezoneId,
     userAgent,
@@ -212,10 +213,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.permissions = permissions;
     if (proxy !== undefined)
       options.proxy = proxy;
-    if (storageStateName !== undefined) {
-      const value = await store.get(storageStateName);
+    if (_storageStateName !== undefined) {
+      const value = await _store.get(_storageStateName);
       if (!value)
-        throw new Error(`Cannot find value in the store for storageStateName: "${storageStateName}"`);
+        throw new Error(`Cannot find value in the _store for _storageStateName: "${_storageStateName}"`);
       options.storageState = value as any;
     } else if (storageState !== undefined) {
       options.storageState = storageState;
@@ -622,7 +623,7 @@ export function shouldCaptureTrace(traceMode: TraceMode, testInfo: TestInfo) {
 const kTracingStarted = Symbol('kTracingStarted');
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
-export const setup = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
-_setProjectSetup(setup, true);
+export const _setup = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
+_setProjectSetup(_setup, true);
 
 export default test;
