@@ -211,7 +211,6 @@ async function runPlaywrightCommand(childProcess: CommonFixtures['childProcess']
       PW_TEST_REPORTER_WS_ENDPOINT: undefined,
       PW_TEST_SOURCE_TRANSFORM: undefined,
       PW_TEST_SOURCE_TRANSFORM_SCOPE: undefined,
-      PW_OUT_OF_PROCESS_DRIVER: undefined,
       NODE_OPTIONS: undefined,
       ...env,
     },

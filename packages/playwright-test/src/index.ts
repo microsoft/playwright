@@ -18,7 +18,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
-import * as outOfProcess from 'playwright-core/lib/outofprocess';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
@@ -58,18 +57,8 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   defaultBrowserType: ['chromium', { scope: 'worker', option: true }],
   browserName: [({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true }],
-  playwright: [async ({ }, use) => {
-    if (process.env.PW_OUT_OF_PROCESS_DRIVER) {
-      const impl = await outOfProcess.start({
-        NODE_OPTIONS: undefined  // Hide driver process while debugging.
-      });
-      const pw = impl.playwright as any;
-      pw._setSelectors(playwrightLibrary.selectors);
-      await use(pw);
-      await impl.stop();
-    } else {
-      await use(require('playwright-core'));
-    }
+  playwright: [async ({}, use) => {
+    await use(require('playwright-core'));
   }, { scope: 'worker' }],
   headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
   channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
