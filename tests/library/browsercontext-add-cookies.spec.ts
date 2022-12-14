@@ -78,6 +78,7 @@ it('should roundtrip cookie', async ({ context, page, server }) => {
   await context.clearCookies();
   expect(await context.cookies()).toEqual([]);
   await context.addCookies(cookies);
+  // Slightly different rounding on chromium win.
   const normalizedExpires = (cookies: Cookie[]) => cookies.map(c => ({ ...c, expires: Math.floor(c.expires) }));
   expect(normalizedExpires(await context.cookies())).toEqual(normalizedExpires(cookies));
 });
