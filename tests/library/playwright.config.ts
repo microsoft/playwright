@@ -69,14 +69,23 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
     ['html', { open: 'on-failure' }]
   ],
   projects: [],
-  use: {},
+  use: {
+    connectOptions: mode === 'service' ? {
+      wsEndpoint: 'ws://localhost:3333/',
+    } : undefined,
+  },
+  webServer: mode === 'service' ? {
+    command: 'npx playwright run-server --port=3333',
+    port: 3333,
+    reuseExistingServer: !process.env.CI,
+  } : undefined,
 };
 
-if (mode === 'service') {
+if (mode === 'service2') {
   config.webServer = {
     command: 'npx playwright experimental-grid-server --auth-token=mysecret --address=http://localhost:3333 --port=3333',
     port: 3333,
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     env: {
       PWTEST_UNSAFE_GRID_VERSION: '1',
     },
@@ -106,17 +115,6 @@ if (mode === 'service') {
   }];
 }
 
-if (mode === 'service2') {
-  config.webServer = {
-    command: 'npx playwright run-server --port=3333',
-    port: 3333,
-    reuseExistingServer: true,
-  };
-  config.use.connectOptions = {
-    wsEndpoint: 'ws://localhost:3333/',
-  };
-}
-
 const browserNames = ['chromium', 'webkit', 'firefox'] as BrowserName[];
 for (const browserName of browserNames) {
   const executablePath = getExecutablePath(browserName);
@@ -125,6 +123,8 @@ for (const browserName of browserNames) {
   const devtools = process.env.DEVTOOLS === '1';
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
   for (const folder of ['library', 'page']) {
+    if (mode === 'service' && folder === 'library')
+      continue;
     config.projects.push({
       name: browserName,
       testDir: path.join(testDir, folder),
