@@ -309,6 +309,13 @@ function getPseudoContent(pseudoStyle: CSSStyleDeclaration | undefined) {
   return '';
 }
 
+export function getAriaLabelledByElements(element: Element): Element[] | null {
+  const ref = element.getAttribute('aria-labelledby');
+  if (ref === null)
+    return null;
+  return getIdRefs(element, ref);
+}
+
 export function getElementAccessibleName(element: Element, includeHidden: boolean, hiddenCache: Map<Element, boolean>): string {
   // https://w3c.github.io/accname/#computation-steps
 
@@ -360,7 +367,7 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
 
   // step 2b.
   if (options.embeddedInLabelledBy === 'none') {
-    const refs = getIdRefs(element, element.getAttribute('aria-labelledby'));
+    const refs = getAriaLabelledByElements(element) || [];
     const accessibleName = refs.map(ref => getElementAccessibleNameInternal(ref, {
       ...options,
       embeddedInLabelledBy: 'self',

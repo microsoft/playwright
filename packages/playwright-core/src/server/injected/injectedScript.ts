@@ -29,7 +29,7 @@ import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getAriaCheckedStrict, getAriaDisabled, getAriaRole, getElementAccessibleName } from './roleUtils';
+import { getAriaCheckedStrict, getAriaDisabled, getAriaLabelledByElements, getAriaRole, getElementAccessibleName } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../isomorphic/locatorGenerators';
 import type { Language } from '../isomorphic/locatorGenerators';
@@ -296,14 +296,13 @@ export class InjectedScript {
     return {
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
         const { matcher } = createTextMatcher(selector, true);
-        const result: Element[] = [];
-        const labels = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, 'label') as HTMLLabelElement[];
-        for (const label of labels) {
-          const control = label.control;
-          if (control && matcher(elementText(this._evaluator._cacheText, label)))
-            result.push(control);
-        }
-        return result;
+        const allElements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, '*');
+        return allElements.filter(element => {
+          let labels: Element[] | NodeListOf<Element> | null | undefined = getAriaLabelledByElements(element);
+          if (labels === null)
+            labels = (element as HTMLInputElement).labels;
+          return !!labels && [...labels].some(label => matcher(elementText(this._evaluator._cacheText, label)));
+        });
       }
     };
   }
