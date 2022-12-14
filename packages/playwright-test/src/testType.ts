@@ -82,14 +82,14 @@ export class TestTypeImpl {
     if (this._projectSetup !== suite._isProjectSetup) {
       if (this._projectSetup)
         throw errorWithLocation(location, `${title} is called in a file which is not a part of project setup.`);
-      throw errorWithLocation(location, `${title} is called in a project setup file (use 'setup' instead of 'test').`);
+      throw errorWithLocation(location, `${title} is called in a project setup file (use '_setup' instead of 'test').`);
     }
     return suite;
   }
 
   private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
-    const suite = this._ensureCurrentSuite(location, this._projectSetup ? 'setup()' : 'test()');
+    const suite = this._ensureCurrentSuite(location, this._projectSetup ? '_setup()' : 'test()');
     const test = new TestCase(title, fn, this, location);
     test._requireFile = suite._requireFile;
     test._isProjectSetup = suite._isProjectSetup;
@@ -144,13 +144,13 @@ export class TestTypeImpl {
   }
 
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
-    const suite = this._ensureCurrentSuite(location, `${this._projectSetup ? 'setup' : 'test'}.${name}()`);
+    const suite = this._ensureCurrentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.${name}()`);
     suite._hooks.push({ type: name, fn, location });
   }
 
   private _configure(location: Location, options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
-    const suite = this._ensureCurrentSuite(location, `${this._projectSetup ? 'setup' : 'test'}.describe.configure()`);
+    const suite = this._ensureCurrentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.describe.configure()`);
 
     if (options.timeout !== undefined)
       suite._timeout = options.timeout;
@@ -211,14 +211,14 @@ export class TestTypeImpl {
   }
 
   private _use(location: Location, fixtures: Fixtures) {
-    const suite = this._ensureCurrentSuite(location, `${this._projectSetup ? 'setup' : 'test'}.use()`);
+    const suite = this._ensureCurrentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.use()`);
     suite._use.push({ fixtures, location });
   }
 
   private async _step<T>(location: Location, title: string, body: () => Promise<T>): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
-      throw errorWithLocation(location, `${this._projectSetup ? 'setup' : 'test'}.step() can only be called from a test`);
+      throw errorWithLocation(location, `${this._projectSetup ? '_setup' : 'test'}.step() can only be called from a test`);
     const step = testInfo._addStep({
       category: 'test.step',
       title,
