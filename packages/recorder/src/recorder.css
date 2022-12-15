@@ -57,7 +57,7 @@ body.dark-mode .recorder .toolbar-button.toggled.record {
 .recorder .toolbar .cm-wrapper {
   margin-left: 8px;
   display: flex;
-  padding: 5px;
+  padding: 8px;
 }
 
 .recorder .toolbar .CodeMirror {
