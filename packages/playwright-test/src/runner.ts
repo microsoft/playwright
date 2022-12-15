@@ -244,7 +244,7 @@ export class Runner {
     const commandLineFileMatcher = commandLineFileFilters.length ? createFileMatcherFromFilters(commandLineFileFilters) : () => true;
     for (const project of projects) {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
-      const setupMatch = createFileMatcher(project._setup);
+      const setupMatch = createFileMatcher(project._setupMatch);
       const testMatch = createFileMatcher(project.testMatch);
       const testIgnore = createFileMatcher(project.testIgnore);
       const testFiles = allFiles.filter(file => {
@@ -255,13 +255,13 @@ export class Runner {
         if (!isTest && !isSetup)
           return false;
         if (isSetup && isTest)
-          throw new Error(`File "${file}" matches both 'setup' and 'testMatch' filters in project "${project.name}"`);
+          throw new Error(`File "${file}" matches both '_setup' and 'testMatch' filters in project "${project.name}"`);
         if (fileToProjectName.has(file)) {
           if (isSetup) {
             if (!setupFiles.has(file))
-              throw new Error(`File "${file}" matches 'setup' filter in project "${project.name}" and 'testMatch' filter in project "${fileToProjectName.get(file)}"`);
+              throw new Error(`File "${file}" matches '_setup' filter in project "${project.name}" and 'testMatch' filter in project "${fileToProjectName.get(file)}"`);
           } else if (setupFiles.has(file)) {
-            throw new Error(`File "${file}" matches 'setup' filter in project "${fileToProjectName.get(file)}" and 'testMatch' filter in project "${project.name}"`);
+            throw new Error(`File "${file}" matches '_setup' filter in project "${fileToProjectName.get(file)}" and 'testMatch' filter in project "${project.name}"`);
           }
         }
         fileToProjectName.set(file, project.name);
@@ -280,16 +280,16 @@ export class Runner {
     const projects = this._collectProjects(options.projectFilter);
     const { filesByProject, setupFiles } = await this._collectFiles(projects, options.testFileFilters);
 
-    let result = await this._createFilteredRootSuite(options, filesByProject, new Set(), !!setupFiles.size);
+    let result = await this._createFilteredRootSuite(options, filesByProject, new Set(), !!setupFiles.size, setupFiles);
     if (setupFiles.size) {
       const allTests = result.rootSuite.allTests();
-      const tests = allTests.filter(test => !setupFiles.has(test._requireFile));
+      const tests = allTests.filter(test => !test._isProjectSetup);
       // If >0 tests match and
       // - none of the setup files match the filter then we run all setup files,
       // - if the filter also matches some of the setup tests, we'll run only
       //   that maching subset of setup tests.
       if (tests.length > 0 && tests.length === allTests.length)
-        result = await this._createFilteredRootSuite(options, filesByProject, setupFiles, false);
+        result = await this._createFilteredRootSuite(options, filesByProject, setupFiles, false, setupFiles);
     }
 
     fatalErrors.push(...result.fatalErrors);
@@ -299,7 +299,7 @@ export class Runner {
     const projectSetupGroups = [];
     const testGroups = [];
     for (const group of allTestGroups) {
-      if (setupFiles.has(group.requireFile))
+      if (group.isProjectSetup)
         projectSetupGroups.push(group);
       else
         testGroups.push(group);
@@ -307,7 +307,7 @@ export class Runner {
     return { rootSuite, projectSetupGroups, testGroups };
   }
 
-  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>, doNotFilterFiles: Set<string>, shouldCloneTests: boolean): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
+  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>, doNotFilterFiles: Set<string>, shouldCloneTests: boolean, setupFiles: Set<string>): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
     const config = this._loader.fullConfig();
     const fatalErrors: TestError[] = [];
     const allTestFiles = new Set<string>();
@@ -317,7 +317,7 @@ export class Runner {
     // Add all tests.
     const preprocessRoot = new Suite('', 'root');
     for (const file of allTestFiles) {
-      const fileSuite = await this._loader.loadTestFile(file, 'runner');
+      const fileSuite = await this._loader.loadTestFile(file, 'runner', setupFiles.has(file));
       if (fileSuite._loadError)
         fatalErrors.push(fileSuite._loadError);
       // We have to clone only if there maybe subsequent calls of this method.
@@ -824,6 +824,7 @@ function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] 
       projectId: test._projectId,
       tests: [],
       watchMode: false,
+      isProjectSetup: test._isProjectSetup,
     };
   };
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse } from 'playwright-core';
+import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
 export type ReporterDescription =
@@ -196,11 +196,6 @@ type ConnectOptions = {
   timeout?: number;
 };
 
-export interface Storage {
-  get<T>(name: string): Promise<T | undefined>;
-  set<T>(name: string, value: T | undefined): Promise<void>;
-}
-
 export interface PlaywrightWorkerOptions {
   browserName: BrowserName;
   defaultBrowserType: BrowserName;
@@ -208,11 +203,12 @@ export interface PlaywrightWorkerOptions {
   channel: BrowserChannel | undefined;
   launchOptions: LaunchOptions;
   connectOptions: ConnectOptions | undefined;
-  screenshot: 'off' | 'on' | 'only-on-failure';
+  screenshot: ScreenshotMode | { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'>;
   trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean, screenshots?: boolean, sources?: boolean };
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
 }
 
+export type ScreenshotMode = 'off' | 'on' | 'only-on-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 
@@ -233,7 +229,6 @@ export interface PlaywrightTestOptions {
   permissions: string[] | undefined;
   proxy: Proxy | undefined;
   storageState: StorageState | undefined;
-  storageStateName: string | undefined;
   timezoneId: string | undefined;
   userAgent: string | undefined;
   viewport: ViewportSize | null | undefined;
@@ -298,14 +293,20 @@ type MakeMatchers<R, T> = BaseMatchers<R, T> & {
      */
     resolves: MakeMatchers<Promise<R>, Awaited<T>>;
     /**
-    * Unwraps the reason of a rejected promise so any other matcher can be chained.
-    * If the promise is fulfilled the assertion fails.
-    */
+     * Unwraps the reason of a rejected promise so any other matcher can be chained.
+     * If the promise is fulfilled the assertion fails.
+     */
     rejects: MakeMatchers<Promise<R>, Awaited<T>>;
   } & SnapshotAssertions &
   ExtraMatchers<T, Page, PageAssertions> &
   ExtraMatchers<T, Locator, LocatorAssertions> &
-  ExtraMatchers<T, APIResponse, APIResponseAssertions>;
+  ExtraMatchers<T, APIResponse, APIResponseAssertions> &
+  ExtraMatchers<T, Function, {
+    /**
+     * Retries the callback until it passes.
+     */
+    toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
+  }>;
 
 type BaseExpect = {
   // Removed following methods because they rely on a test-runner integration from Jest which we don't support:

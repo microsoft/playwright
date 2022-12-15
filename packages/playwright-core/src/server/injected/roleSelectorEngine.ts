@@ -18,6 +18,21 @@ import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { matchesAttributePart } from './selectorUtils';
 import { getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
 import { parseAttributeSelector, type AttributeSelectorPart, type AttributeSelectorOperator } from '../isomorphic/selectorParser';
+import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
+
+type RoleEngineOptions = {
+  role: string;
+  name?: string | RegExp;
+  nameOp?: '='|'*='|'|='|'^='|'$='|'~=';
+  exact?: boolean;
+  checked?: boolean | 'mixed';
+  pressed?: boolean | 'mixed';
+  selected?: boolean;
+  expanded?: boolean;
+  level?: number;
+  disabled?: boolean;
+  includeHidden?: boolean;
+};
 
 const kSupportedAttributes = ['selected', 'checked', 'pressed', 'expanded', 'level', 'disabled', 'name', 'include-hidden'];
 kSupportedAttributes.sort();
@@ -37,46 +52,36 @@ function validateSupportedOp(attr: AttributeSelectorPart, ops: AttributeSelector
     throw new Error(`"${attr.name}" does not support "${attr.op}" matcher`);
 }
 
-function validateAttributes(attrs: AttributeSelectorPart[], role: string) {
+function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleEngineOptions {
+  const options: RoleEngineOptions = { role };
   for (const attr of attrs) {
     switch (attr.name) {
       case 'checked': {
         validateSupportedRole(attr.name, kAriaCheckedRoles, role);
         validateSupportedValues(attr, [true, false, 'mixed']);
         validateSupportedOp(attr, ['<truthy>', '=']);
-        if (attr.op === '<truthy>') {
-          // Do not match "mixed" in "option[checked]".
-          attr.op = '=';
-          attr.value = true;
-        }
+        options.checked = attr.op === '<truthy>' ? true : attr.value;
         break;
       }
       case 'pressed': {
         validateSupportedRole(attr.name, kAriaPressedRoles, role);
         validateSupportedValues(attr, [true, false, 'mixed']);
         validateSupportedOp(attr, ['<truthy>', '=']);
-        if (attr.op === '<truthy>') {
-          // Do not match "mixed" in "button[pressed]".
-          attr.op = '=';
-          attr.value = true;
-        }
+        options.pressed = attr.op === '<truthy>' ? true : attr.value;
         break;
       }
       case 'selected': {
         validateSupportedRole(attr.name, kAriaSelectedRoles, role);
         validateSupportedValues(attr, [true, false]);
         validateSupportedOp(attr, ['<truthy>', '=']);
+        options.selected = attr.op === '<truthy>' ? true : attr.value;
         break;
       }
       case 'expanded': {
         validateSupportedRole(attr.name, kAriaExpandedRoles, role);
         validateSupportedValues(attr, [true, false]);
         validateSupportedOp(attr, ['<truthy>', '=']);
-        if (attr.op === '<truthy>') {
-          // Do not match "none" in "treeitem[expanded]".
-          attr.op = '=';
-          attr.value = true;
-        }
+        options.expanded = attr.op === '<truthy>' ? true : attr.value;
         break;
       }
       case 'level': {
@@ -86,11 +91,13 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string) {
           attr.value = +attr.value;
         if (attr.op !== '=' || typeof attr.value !== 'number' || Number.isNaN(attr.value))
           throw new Error(`"level" attribute must be compared to a number`);
+        options.level = attr.value;
         break;
       }
       case 'disabled': {
         validateSupportedValues(attr, [true, false]);
         validateSupportedOp(attr, ['<truthy>', '=']);
+        options.disabled = attr.op === '<truthy>' ? true : attr.value;
         break;
       }
       case 'name': {
@@ -98,11 +105,15 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string) {
           throw new Error(`"name" attribute must have a value`);
         if (typeof attr.value !== 'string' && !(attr.value instanceof RegExp))
           throw new Error(`"name" attribute must be a string or a regular expression`);
+        options.name = attr.value;
+        options.nameOp = attr.op;
+        options.exact = attr.caseSensitive;
         break;
       }
       case 'include-hidden': {
         validateSupportedValues(attr, [true, false]);
         validateSupportedOp(attr, ['<truthy>', '=']);
+        options.includeHidden = attr.op === '<truthy>' ? true : attr.value;
         break;
       }
       default: {
@@ -110,77 +121,71 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string) {
       }
     }
   }
+  return options;
+}
+
+function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: boolean): Element[] {
+  const hiddenCache = new Map<Element, boolean>();
+  const result: Element[] = [];
+  const match = (element: Element) => {
+    if (getAriaRole(element) !== options.role)
+      return;
+    if (options.selected !== undefined && getAriaSelected(element) !== options.selected)
+      return;
+    if (options.checked !== undefined && getAriaChecked(element) !== options.checked)
+      return;
+    if (options.pressed !== undefined && getAriaPressed(element) !== options.pressed)
+      return;
+    if (options.expanded !== undefined && getAriaExpanded(element) !== options.expanded)
+      return;
+    if (options.level !== undefined && getAriaLevel(element) !== options.level)
+      return;
+    if (options.disabled !== undefined && getAriaDisabled(element) !== options.disabled)
+      return;
+    if (!options.includeHidden) {
+      const isHidden = isElementHiddenForAria(element, hiddenCache);
+      if (isHidden)
+        return;
+    }
+    if (options.name !== undefined) {
+      // Always normalize whitespace in the accessible name.
+      const accessibleName = normalizeWhiteSpace(getElementAccessibleName(element, !!options.includeHidden, hiddenCache));
+      if (typeof options.name === 'string')
+        options.name = normalizeWhiteSpace(options.name);
+      // internal:role assumes that [name="foo"i] also means substring.
+      if (internal && !options.exact && options.nameOp === '=')
+        options.nameOp = '*=';
+      if (!matchesAttributePart(accessibleName, { name: '', jsonPath: [], op: options.nameOp || '=', value: options.name, caseSensitive: !!options.exact }))
+        return;
+    }
+    result.push(element);
+  };
+
+  const query = (root: Element | ShadowRoot | Document) => {
+    const shadows: ShadowRoot[] = [];
+    if ((root as Element).shadowRoot)
+      shadows.push((root as Element).shadowRoot!);
+    for (const element of root.querySelectorAll('*')) {
+      match(element);
+      if (element.shadowRoot)
+        shadows.push(element.shadowRoot);
+    }
+    shadows.forEach(query);
+  };
+
+  query(scope);
+  return result;
 }
 
 export function createRoleEngine(internal: boolean): SelectorEngine {
-  const queryAll = (scope: SelectorRoot, selector: string): Element[] => {
-    const parsed = parseAttributeSelector(selector, true);
-    const role = parsed.name.toLowerCase();
-    if (!role)
-      throw new Error(`Role must not be empty`);
-    validateAttributes(parsed.attributes, role);
-
-    const hiddenCache = new Map<Element, boolean>();
-    const result: Element[] = [];
-    const match = (element: Element) => {
-      if (getAriaRole(element) !== role)
-        return;
-      let includeHidden = false;  // By default, hidden elements are excluded.
-      let nameAttr: AttributeSelectorPart | undefined;
-      for (const attr of parsed.attributes) {
-        if (attr.name === 'include-hidden') {
-          includeHidden = attr.op === '<truthy>' || !!attr.value;
-          continue;
-        }
-        if (attr.name === 'name') {
-          nameAttr = attr;
-          continue;
-        }
-        let actual;
-        switch (attr.name) {
-          case 'selected': actual = getAriaSelected(element); break;
-          case 'checked': actual = getAriaChecked(element); break;
-          case 'pressed': actual = getAriaPressed(element); break;
-          case 'expanded': actual = getAriaExpanded(element); break;
-          case 'level': actual = getAriaLevel(element); break;
-          case 'disabled': actual = getAriaDisabled(element); break;
-        }
-        if (!matchesAttributePart(actual, attr))
-          return;
-      }
-      if (!includeHidden) {
-        const isHidden = isElementHiddenForAria(element, hiddenCache);
-        if (isHidden)
-          return;
-      }
-      if (nameAttr !== undefined) {
-        // Always normalize whitespace in the accessible name.
-        const accessibleName = getElementAccessibleName(element, includeHidden, hiddenCache).trim().replace(/\s+/g, ' ');
-        if (typeof nameAttr.value === 'string')
-          nameAttr.value = nameAttr.value.trim().replace(/\s+/g, ' ');
-        // internal:role assumes that [name="foo"i] also means substring.
-        if (internal && !nameAttr.caseSensitive && nameAttr.op === '=')
-          nameAttr.op = '*=';
-        if (!matchesAttributePart(accessibleName, nameAttr))
-          return;
-      }
-      result.push(element);
-    };
-
-    const query = (root: Element | ShadowRoot | Document) => {
-      const shadows: ShadowRoot[] = [];
-      if ((root as Element).shadowRoot)
-        shadows.push((root as Element).shadowRoot!);
-      for (const element of root.querySelectorAll('*')) {
-        match(element);
-        if (element.shadowRoot)
-          shadows.push(element.shadowRoot);
-      }
-      shadows.forEach(query);
-    };
-
-    query(scope);
-    return result;
+  return {
+    queryAll: (scope: SelectorRoot, selector: string): Element[] => {
+      const parsed = parseAttributeSelector(selector, true);
+      const role = parsed.name.toLowerCase();
+      if (!role)
+        throw new Error(`Role must not be empty`);
+      const options = validateAttributes(parsed.attributes, role);
+      return queryRole(scope, options, internal);
+    }
   };
-  return { queryAll };
 }

@@ -119,7 +119,7 @@ export class Loader {
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
 
     this._fullConfig._configDir = configDir;
-    this._fullConfig._storageDir = path.resolve(configDir, '.playwright-storage');
+    this._fullConfig._storeDir = path.resolve(configDir, '.playwright-store');
     this._fullConfig.configFile = this._configFile;
     this._fullConfig.rootDir = config.testDir || this._configDir;
     this._fullConfig._globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._globalOutputDir);
@@ -180,11 +180,12 @@ export class Loader {
     }
   }
 
-  async loadTestFile(file: string, environment: 'runner' | 'worker') {
+  async loadTestFile(file: string, environment: 'runner' | 'worker', projectSetup: boolean) {
     if (cachedFileSuites.has(file))
       return cachedFileSuites.get(file)!;
     const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file), 'file');
     suite._requireFile = file;
+    suite._isProjectSetup = projectSetup;
     suite.location = { file, line: 0, column: 0 };
 
     setCurrentlyLoadingFileSuite(suite);
@@ -274,7 +275,7 @@ export class Loader {
     const outputDir = takeFirst(projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
     const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
     const name = takeFirst(projectConfig.name, config.name, '');
-    const _setup = takeFirst(projectConfig.setup, []);
+    const _setupMatch = takeFirst((projectConfig as any)._setupMatch, []);
 
     const defaultSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
     const snapshotPathTemplate = takeFirst(projectConfig.snapshotPathTemplate, config.snapshotPathTemplate, defaultSnapshotPathTemplate);
@@ -291,7 +292,7 @@ export class Loader {
       metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
       name,
       testDir,
-      _setup,
+      _setupMatch,
       _respectGitIgnore: respectGitIgnore,
       snapshotDir,
       snapshotPathTemplate,
@@ -614,7 +615,7 @@ function validateProject(file: string, project: Project, title: string) {
       throw errorWithFile(file, `${title}.testDir must be a string`);
   }
 
-  for (const prop of ['testIgnore', 'testMatch', 'setup'] as const) {
+  for (const prop of ['testIgnore', 'testMatch'] as const) {
     if (prop in project && project[prop] !== undefined) {
       const value = project[prop];
       if (Array.isArray(value)) {
@@ -664,7 +665,7 @@ export const baseFullConfig: FullConfigInternal = {
   _webServers: [],
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
-  _storageDir: '',
+  _storeDir: '',
   _maxConcurrentTestGroups: 0,
   _ignoreSnapshots: false,
   _workerIsolation: 'isolate-pools',

@@ -69,7 +69,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
   async launch(options: LaunchOptions = {}): Promise<Browser> {
     if (this._defaultConnectOptions)
-      return await this._connectInsteadOfLaunching();
+      return await this._connectInsteadOfLaunching(this._defaultConnectOptions);
 
     const logger = options.logger || this._defaultLaunchOptions?.logger;
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
@@ -89,14 +89,15 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     });
   }
 
-  private async _connectInsteadOfLaunching(): Promise<Browser> {
-    const connectOptions = this._defaultConnectOptions!;
-    return this._connect(connectOptions.wsEndpoint, {
+  private async _connectInsteadOfLaunching(connectOptions: ConnectOptions): Promise<Browser> {
+    return this._connect({
+      wsEndpoint: connectOptions.wsEndpoint,
       headers: {
-        'x-playwright-browser': this.name(),
         'x-playwright-launch-options': JSON.stringify(this._defaultLaunchOptions || {}),
         ...connectOptions.headers,
       },
+      _exposeNetwork: connectOptions._exposeNetwork,
+      slowMo: connectOptions.slowMo,
       timeout: connectOptions.timeout ?? 3 * 60 * 1000, // 3 minutes
     });
   }
@@ -132,22 +133,28 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     });
   }
 
-  connect(options: api.ConnectOptions & { wsEndpoint?: string }): Promise<api.Browser>;
+  connect(options: api.ConnectOptions & { wsEndpoint: string }): Promise<api.Browser>;
   connect(wsEndpoint: string, options?: api.ConnectOptions): Promise<api.Browser>;
-  async connect(optionsOrWsEndpoint: string|(api.ConnectOptions & { wsEndpoint?: string }), options?: api.ConnectOptions): Promise<Browser>{
+  async connect(optionsOrWsEndpoint: string | (api.ConnectOptions & { wsEndpoint: string }), options?: api.ConnectOptions): Promise<Browser>{
     if (typeof optionsOrWsEndpoint === 'string')
-      return this._connect(optionsOrWsEndpoint, options);
+      return this._connect({ ...options, wsEndpoint: optionsOrWsEndpoint });
     assert(optionsOrWsEndpoint.wsEndpoint, 'options.wsEndpoint is required');
-    return this._connect(optionsOrWsEndpoint.wsEndpoint, optionsOrWsEndpoint);
+    return this._connect(optionsOrWsEndpoint);
   }
 
-  async _connect(wsEndpoint: string, params: Partial<ConnectOptions> = {}): Promise<Browser> {
+  async _connect(params: ConnectOptions): Promise<Browser> {
     const logger = params.logger;
     return await this._wrapApiCall(async () => {
       const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
       const headers = { 'x-playwright-browser': this.name(), ...params.headers };
       const localUtils = this._connection.localUtils();
-      const connectParams: channels.LocalUtilsConnectParams = { wsEndpoint, headers, slowMo: params.slowMo, timeout: params.timeout };
+      const connectParams: channels.LocalUtilsConnectParams = {
+        wsEndpoint: params.wsEndpoint,
+        headers,
+        exposeNetwork: params._exposeNetwork,
+        slowMo: params.slowMo,
+        timeout: params.timeout,
+      };
       if ((params as any).__testHookRedirectPortForwarding)
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
       const { pipe } = await localUtils._channel.connect(connectParams);

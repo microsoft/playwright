@@ -535,6 +535,7 @@ LocalUtils:
       parameters:
         wsEndpoint: string
         headers: json?
+        exposeNetwork: string?
         slowMo: number?
         timeout: number?
         socksProxyRedirectPortForTest: number?
@@ -1266,6 +1267,7 @@ Page:
         comparatorOptions:
           type: object?
           properties:
+            comparator: string?
             maxDiffPixels: number?
             maxDiffPixelRatio: number?
             threshold: number?
@@ -1961,6 +1963,7 @@ Frame:
           items:
             type: object
             properties:
+              valueOrLabel: string?
               value: string?
               label: string?
               index: number?
@@ -2511,6 +2514,7 @@ ElementHandle:
           items:
             type: object
             properties:
+              valueOrLabel: string?
               value: string?
               label: string?
               index: number?
@@ -3258,6 +3262,9 @@ AndroidDevice:
       parameters:
         $mixin: ContextOptions
         pkg: string?
+        args:
+          type: array?
+          items: string
         proxy:
           type: object?
           properties:

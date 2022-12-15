@@ -258,7 +258,7 @@ await page
     .ClickAsync();
 ```
 
-Role locators include [buttons, checkboxes, headings, links, lists, tables, and many more](https://www.w3.org/TR/html-aria/#docconformance) and follow W3C specifications for [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+Role locators include [buttons, checkboxes, headings, links, lists, tables, and many more](https://www.w3.org/TR/html-aria/#docconformance) and follow W3C specifications for [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that many html elements like `<button>` have an [implicitly defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role locator.
 
 Note that role locators **do not replace** accessibility audits and conformance tests, but rather give early feedback about the ARIA guidelines.
 
@@ -624,7 +624,7 @@ await page.GetByTestId("directions").ClickAsync();
 
 ### Locate by CSS or XPath
 
-If you absolutely must use CSS or XPath locators, you can use [`method: Page.locator`] to create a locator that takes a [selector](./selectors.md) describing how to find an element in the page. Playwright supports CSS and XPath selectors, and auto-detects them if you omit `css=` or `xpath=` prefix.
+If you absolutely must use CSS or XPath locators, you can use [`method: Page.locator`] to create a locator that takes a selector describing how to find an element in the page. Playwright supports CSS and XPath selectors, and auto-detects them if you omit `css=` or `xpath=` prefix.
 
 ```js
 await page.locator('css=button').click();
@@ -709,7 +709,7 @@ await page.Locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").Click
 ```
 
 :::tip When to use this
-CSS and XPath are not recommended as the DOM can often change leading to non resilient tests. Instead, try to come up with a locator that is close to how the user perceives the page such as [role locators](#locate-by-role) or [define an explicit testing contract](#locate-by-testid) using test ids.
+CSS and XPath are not recommended as the DOM can often change leading to non resilient tests. Instead, try to come up with a locator that is close to how the user perceives the page such as [role locators](#locate-by-role) or [define an explicit testing contract](#locate-by-test-id) using test ids.
 :::
 
 ## Locate in Shadow DOM
@@ -806,14 +806,16 @@ await Expect(page.Locator("x-details")).ToContainTextAsync("Details");
 Consider the following DOM structure where we want to click on the buy button of the second product card. We have a few options in order to filter the locators to get the right one.
 
 ```html card
-<div role="listitem">
-  <h3>Product 1</h3>
-  <button>Add to cart</button>
-</div>
-<div role="listitem">
-  <h3>Product 2</h3>
-  <button>Add to cart</button>
-</div>
+<ul>
+  <li>
+    <h3>Product 1</h3>
+    <button>Add to cart</button>
+  </li>
+  <li>
+    <h3>Product 2</h3>
+    <button>Add to cart</button>
+  </li>
+<ul>
 ```
 
 ### Filter by text
@@ -900,14 +902,16 @@ await page
 Locators support an option to only select elements that have a descendant matching another locator. You can therefore filter by any other locator such as a [`method: Locator.getByRole`], [`method: Locator.getByTestId`], [`method: Locator.getByText`] etc.
 
 ```html card
-<div role="listitem">
-  <h3>Product 1</h3>
-  <button>Add to cart</button>
-</div>
-<div role="listitem">
-  <h3>Product 2</h3>
-  <button>Add to cart</button>
-</div>
+<ul>
+  <li>
+    <h3>Product 1</h3>
+    <button>Add to cart</button>
+  </li>
+  <li>
+    <h3>Product 2</h3>
+    <button>Add to cart</button>
+  </li>
+</ul>
 ```
 
 ```js
@@ -924,7 +928,7 @@ page.getByRole(AriaRole.LISTITEM)
         .setHas(page.GetByRole(AriaRole.HEADING, new Page.GetByRoleOptions()
         .setName("Product 2"))))
     .getByRole(AriaRole.BUTTON,
-               new Page.GetByRoleOptions().setName("Add to cart")))
+               new Page.GetByRoleOptions().setName("Add to cart"))
     .click()
 ```
 
@@ -957,7 +961,7 @@ We can also assert the product card to make sure there is only one
 ```js
 await expect(page
     .getByRole('listitem')
-    .filter({ has: page.getByText('Product2') }))
+    .filter({ has: page.getByText('Product 2') }))
     .toHaveCount(1);
 ```
 
@@ -1356,34 +1360,58 @@ You should now have a "screenshot.png" file in your project's root directory.
 
 ### Rare use cases
 
-#### Get All text contents
+#### Do something with each element in the list
+
+Iterate elements:
 
 ```js
-const rows = page.getByRole('listitem');
-const texts = await rows.allTextContents();
+for (const row of await page.getByRole('listitem').all())
+  console.log(await row.textContent());
 ```
 
 ```python async
-rows = page.get_by_role("listitem")
-texts = await rows.all_text_contents()
+for row in await page.get_by_role("listitem").all():
+    print(await row.text_content())
 ```
 
 ```python sync
-rows = page.get_by_role("listitem")
-texts = rows.all_text_contents()
+for row in page.get_by_role("listitem").all():
+    print(row.text_content())
 ```
 
 ```java
-Locator rows = page.getByRole(AriaRole.LISTITEM);
-List<String> texts = rows.allTextContents();
+for (Locator row : page.getByRole(AriaRole.LISTITEM).all())
+  System.out.println(row.textContent());
 ```
 
 ```csharp
-var rows = page.GetByRole(AriaRole.Listitem);
-var texts = await rows.AllTextContentsAsync();
+foreach (var row in await page.GetByRole(AriaRole.Listitem).AllAsync())
+  Console.WriteLine(await row.TextContentAsync());
 ```
 
-#### Do something with each element in the list
+Iterate elements with their respective indexes:
+
+```js
+for (const [row, index] of await page.getByRole('listitem').enumerate())
+  console.log(index, await row.textContent());
+```
+
+```python async
+for (row, index) in await page.get_by_role('listitem').enumerate():
+    print(index, await row.text_content())
+```
+
+```python sync
+for (row, index) in page.get_by_role('listitem').enumerate():
+    print(index, row.text_content())
+```
+
+```csharp
+foreach (var (row, index) in await page.GetByRole('listitem').AllAsync())
+  Console.WriteLine(index + ' ' + await row.TextContentAsync());
+```
+
+Iterate using regular for loop:
 
 ```js
 const rows = page.getByRole('listitem');
@@ -1502,3 +1530,7 @@ await page.GetByRole(AriaRole.Button).CountAsync();
 ```
 
 You can explicitly opt-out from strictness check by telling Playwright which element to use when multiple elements match, through [`method: Locator.first`], [`method: Locator.last`], and [`method: Locator.nth`]. These methods are **not recommended** because when your page changes, Playwright may click on an element you did not intend. Instead, follow best practices above to create a locator that uniquely identifies the target element.
+
+## More Locators
+
+For less commonly used locators, look at the [other locators](./other-locators.md) guide.

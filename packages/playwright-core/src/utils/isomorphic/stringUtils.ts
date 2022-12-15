@@ -63,6 +63,10 @@ function cssEscapeOne(s: string, i: number): string {
   return '\\' + s.charAt(i);
 }
 
+export function normalizeWhiteSpace(text: string): string {
+  return text.replace(/\u200b/g, '').trim().replace(/\s+/g, ' ');
+}
+
 export function escapeForTextSelector(text: string | RegExp, exact: boolean): string {
   if (typeof text !== 'string')
     return String(text);

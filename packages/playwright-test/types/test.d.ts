@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse } from 'playwright-core';
+import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
 export type ReporterDescription =
@@ -193,10 +193,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
    * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally
-   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option. This filter and its command line
-   * counterpart also applies to the setup files. If all
-   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup) tests match the filter
-   * Playwright **will** run all setup files before running the matching tests.
+   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
    *
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
@@ -534,8 +531,9 @@ interface TestConfig {
      */
     toHaveScreenshot?: {
       /**
-       * an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
-       * same pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+       * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
+       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
 
@@ -576,8 +574,9 @@ interface TestConfig {
      */
     toMatchSnapshot?: {
       /**
-       * an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
-       * same pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+       * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
+       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
 
@@ -1874,11 +1873,6 @@ export interface TestInfo {
   stdout: Array<string|Buffer>;
 
   /**
-   * Returns a [Storage] instance for the currently running project.
-   */
-  storage(): Storage;
-
-  /**
    * Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about
    * [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
@@ -2833,24 +2827,6 @@ type ConnectOptions = {
 };
 
 /**
- * Playwright Test provides a [testInfo.storage()](https://playwright.dev/docs/api/class-testinfo#test-info-storage)
- * object for passing values between project setup and tests. TODO: examples
- */
-export interface Storage {
-  /**
-   * Get named item from the storage. Returns undefined if there is no value with given name.
-   * @param name Item name.
-   */
-  get<T>(name: string): Promise<T | undefined>;
-  /**
-   * Set value to the storage.
-   * @param name Item name.
-   * @param value Item value. The value must be serializable to JSON. Passing `undefined` deletes the entry with given name.
-   */
-  set<T>(name: string, value: T | undefined): Promise<void>;
-}
-
-/**
  * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
  *
  * These options are usually provided in the [configuration file](https://playwright.dev/docs/test-configuration) through
@@ -2945,7 +2921,7 @@ export interface PlaywrightWorkerOptions {
    *
    * Learn more about [automatic screenshots](https://playwright.dev/docs/test-configuration#automatic-screenshots).
    */
-  screenshot: 'off' | 'on' | 'only-on-failure';
+  screenshot: ScreenshotMode | { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'>;
   /**
    * Whether to record trace for each test. Defaults to `'off'`.
    * - `'off'`: Do not record trace.
@@ -2975,6 +2951,7 @@ export interface PlaywrightWorkerOptions {
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
 }
 
+export type ScreenshotMode = 'off' | 'on' | 'only-on-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 
@@ -3085,15 +3062,6 @@ export interface PlaywrightTestOptions {
    * Either a path to the file with saved storage, or an object with the following fields:
    */
   storageState: StorageState | undefined;
-  /**
-   * Name of the [Storage] entry that should be used to initialize
-   * [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state). The value
-   * must be written to the storage before creatiion of a browser context that uses it (usually in
-   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup)). If both this property
-   * and [testOptions.storageState](https://playwright.dev/docs/api/class-testoptions#test-options-storage-state) are
-   * specified, this property will always take precedence.
-   */
-  storageStateName: string | undefined;
   /**
    * Changes the timezone of the context. See
    * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
@@ -3319,14 +3287,20 @@ type MakeMatchers<R, T> = BaseMatchers<R, T> & {
      */
     resolves: MakeMatchers<Promise<R>, Awaited<T>>;
     /**
-    * Unwraps the reason of a rejected promise so any other matcher can be chained.
-    * If the promise is fulfilled the assertion fails.
-    */
+     * Unwraps the reason of a rejected promise so any other matcher can be chained.
+     * If the promise is fulfilled the assertion fails.
+     */
     rejects: MakeMatchers<Promise<R>, Awaited<T>>;
   } & SnapshotAssertions &
   ExtraMatchers<T, Page, PageAssertions> &
   ExtraMatchers<T, Locator, LocatorAssertions> &
-  ExtraMatchers<T, APIResponse, APIResponseAssertions>;
+  ExtraMatchers<T, APIResponse, APIResponseAssertions> &
+  ExtraMatchers<T, Function, {
+    /**
+     * Retries the callback until it passes.
+     */
+    toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
+  }>;
 
 type BaseExpect = {
   // Removed following methods because they rely on a test-runner integration from Jest which we don't support:
@@ -4581,8 +4555,9 @@ interface TestProject {
      */
     toHaveScreenshot?: {
       /**
-       * an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
-       * same pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+       * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
+       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
 
@@ -4623,8 +4598,9 @@ interface TestProject {
      */
     toMatchSnapshot?: {
       /**
-       * an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
-       * same pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+       * an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and
+       * `1` (lax). `"pixelmatch"` comparator computes color difference in
+       * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
 
@@ -4663,10 +4639,7 @@ interface TestProject {
   /**
    * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
    * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally
-   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option. This filter and its command line
-   * counterpart also applies to the setup files. If all
-   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup) tests match the filter
-   * Playwright **will** run all setup files before running the matching tests.
+   * and in the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
    *
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
@@ -4681,21 +4654,6 @@ interface TestProject {
    * Project name is visible in the report and during test execution.
    */
   name?: string;
-
-  /**
-   * Project setup files that would be executed before all tests in the project. If project setup fails the tests in
-   * this project will be skipped. All project setup files will run in every shard if the project is sharded.
-   * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep) and
-   * [testProject.grepInvert](https://playwright.dev/docs/api/class-testproject#test-project-grep-invert) and their
-   * command line counterparts also apply to the setup files. If such filters match only tests in the project Playwright
-   * will run all setup files before running the matching tests.
-   *
-   * If there is a file that matches both
-   * [testProject.setup](https://playwright.dev/docs/api/class-testproject#test-project-setup) and
-   * [testProject.testMatch](https://playwright.dev/docs/api/class-testproject#test-project-test-match) filters an error
-   * will be thrown.
-   */
-  setup?: string|RegExp|Array<string|RegExp>;
 
   /**
    * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to

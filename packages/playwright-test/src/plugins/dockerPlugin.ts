@@ -33,12 +33,9 @@ export const dockerPlugin: TestRunnerPlugin = {
     const info = await containerInfo();
     if (!info)
       throw new Error('ERROR: please launch docker container separately!');
-    println(colors.dim(`View screen: ${info.vncSession}`));
     println('');
-    process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.wsEndpoint;
-    process.env.PW_TEST_CONNECT_HEADERS = JSON.stringify({
-      'x-playwright-proxy': '*',
-    });
+    process.env.PW_TEST_CONNECT_WS_ENDPOINT = info.httpEndpoint;
+    process.env.PW_TEST_CONNECT_EXPOSE_NETWORK = '*';
   },
 };
 

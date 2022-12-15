@@ -285,6 +285,61 @@ function parseIP(address: string): number[] {
   return address.split('.', 4).map(t => +t);
 }
 
+type PatternMatcher = (host: string, port: number) => boolean;
+
+function starMatchToRegex(pattern: string) {
+  const source = pattern.split('*').map(s => {
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }).join('.*');
+  return new RegExp('^' + source + '$');
+}
+
+// This follows "Proxy bypass rules" syntax without implicit and negative rules.
+// https://source.chromium.org/chromium/chromium/src/+/main:net/docs/proxy.md;l=331
+export function parsePattern(pattern: string | undefined): PatternMatcher {
+  if (!pattern)
+    return () => false;
+
+  const matchers: PatternMatcher[] = pattern.split(',').map(token => {
+    const match = token.match(/^(.*?)(?::(\d+))?$/);
+    if (!match)
+      throw new Error(`Unsupported token "${token}" in pattern "${pattern}"`);
+    const tokenPort = match[2] ? +match[2] : undefined;
+    const portMatches = (port: number) => tokenPort === undefined || tokenPort === port;
+    let tokenHost = match[1];
+
+    if (tokenHost === '<loopback>') {
+      return (host, port) => {
+        if (!portMatches(port))
+          return false;
+        return host === 'localhost'
+            || host.endsWith('.localhost')
+            || host === '127.0.0.1'
+            || host === '[::1]';
+      };
+    }
+
+    if (tokenHost === '*')
+      return (host, port) => portMatches(port);
+
+    if (net.isIPv4(tokenHost) || net.isIPv6(tokenHost))
+      return (host, port) => host === tokenHost && portMatches(port);
+
+    if (tokenHost[0] === '.')
+      tokenHost = '*' + tokenHost;
+    const tokenRegex = starMatchToRegex(tokenHost);
+    return (host, port) => {
+      if (!portMatches(port))
+        return false;
+      if (net.isIPv4(host) || net.isIPv6(host))
+        return false;
+      return !!host.match(tokenRegex);
+    };
+  });
+  return (host, port) => matchers.some(matcher => matcher(host, port));
+}
+
 export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   static Events = {
     SocksRequested: 'socksRequested',
@@ -297,6 +352,8 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   private _sockets = new Set<net.Socket>();
   private _closed = false;
   private _port: number | undefined;
+  private _patternMatcher: PatternMatcher = () => false;
+  private _directSockets = new Map<string, net.Socket>();
 
   constructor() {
     super();
@@ -315,6 +372,37 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
     });
   }
 
+  setPattern(pattern: string | undefined) {
+    try {
+      this._patternMatcher = parsePattern(pattern);
+    } catch (e) {
+      this._patternMatcher = () => false;
+    }
+  }
+
+  private async _handleDirect(request: SocksSocketRequestedPayload) {
+    try {
+      // TODO: Node.js 17 does resolve localhost to ipv6
+      const { address } = await dnsLookupAsync(request.host === 'localhost' ? '127.0.0.1' : request.host);
+      const socket = await createSocket(address, request.port);
+      socket.on('data', data => this._connections.get(request.uid)?.sendData(data));
+      socket.on('error', error => {
+        this._connections.get(request.uid)?.error(error.message);
+        this._directSockets.delete(request.uid);
+      });
+      socket.on('end', () => {
+        this._connections.get(request.uid)?.end();
+        this._directSockets.delete(request.uid);
+      });
+      const localAddress = socket.localAddress;
+      const localPort = socket.localPort;
+      this._directSockets.set(request.uid, socket);
+      this._connections.get(request.uid)?.socketConnected(localAddress, localPort);
+    } catch (error) {
+      this._connections.get(request.uid)?.socketFailed(error.code);
+    }
+  }
+
   port() {
     return this._port;
   }
@@ -331,6 +419,8 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   }
 
   async close() {
+    if (this._closed)
+      return;
     this._closed = true;
     for (const socket of this._sockets)
       socket.destroy();
@@ -339,14 +429,29 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   }
 
   onSocketRequested(payload: SocksSocketRequestedPayload) {
+    if (!this._patternMatcher(payload.host, payload.port)) {
+      this._handleDirect(payload);
+      return;
+    }
     this.emit(SocksProxy.Events.SocksRequested, payload);
   }
 
   onSocketData(payload: SocksSocketDataPayload): void {
+    const direct = this._directSockets.get(payload.uid);
+    if (direct) {
+      direct.write(payload.data);
+      return;
+    }
     this.emit(SocksProxy.Events.SocksData, payload);
   }
 
   onSocketClosed(payload: SocksSocketClosedPayload): void {
+    const direct = this._directSockets.get(payload.uid);
+    if (direct) {
+      direct.destroy();
+      this._directSockets.delete(payload.uid);
+      return;
+    }
     this.emit(SocksProxy.Events.SocksClosed, payload);
   }
 
@@ -381,10 +486,12 @@ export class SocksProxyHandler extends EventEmitter {
   };
 
   private _sockets = new Map<string, net.Socket>();
+  private _patternMatcher: PatternMatcher = () => false;
   private _redirectPortForTest: number | undefined;
 
-  constructor(redirectPortForTest?: number) {
+  constructor(pattern: string | undefined, redirectPortForTest?: number) {
     super();
+    this._patternMatcher = parsePattern(pattern);
     this._redirectPortForTest = redirectPortForTest;
   }
 
@@ -394,6 +501,12 @@ export class SocksProxyHandler extends EventEmitter {
   }
 
   async socketRequested({ uid, host, port }: SocksSocketRequestedPayload): Promise<void> {
+    if (!this._patternMatcher(host, port)) {
+      const payload: SocksSocketFailedPayload = { uid, errorCode: 'ECONNREFUSED' };
+      this.emit(SocksProxyHandler.Events.SocksFailed, payload);
+      return;
+    }
+
     if (host === 'local.playwright')
       host = '127.0.0.1';
     // Node.js 17 does resolve localhost to ipv6

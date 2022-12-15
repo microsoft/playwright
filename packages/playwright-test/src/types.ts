@@ -44,7 +44,7 @@ export interface TestStepInternal {
 export interface FullConfigInternal extends FullConfigPublic {
   _globalOutputDir: string;
   _configDir: string;
-  _storageDir: string;
+  _storeDir: string;
   _maxConcurrentTestGroups: number;
   _ignoreSnapshots: boolean;
   _workerIsolation: WorkerIsolation;
@@ -68,7 +68,7 @@ export interface FullProjectInternal extends FullProjectPublic {
   _fullyParallel: boolean;
   _expect: Project['expect'];
   _respectGitIgnore: boolean;
-  _setup: string | RegExp | (string | RegExp)[];
+  _setupMatch: string | RegExp | (string | RegExp)[];
   snapshotPathTemplate: string;
 }
 

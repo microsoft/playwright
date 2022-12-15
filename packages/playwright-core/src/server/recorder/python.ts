@@ -22,7 +22,7 @@ import type { Action } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import { escapeWithQuotes, toSnakeCase } from '../../utils/isomorphic/stringUtils';
-import deviceDescriptors from '../deviceDescriptors';
+const deviceDescriptors = require('../deviceDescriptorsSource.json');
 import { asLocator } from '../isomorphic/locatorGenerators';
 
 export class PythonLanguageGenerator implements LanguageGenerator {
@@ -81,17 +81,17 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     let code = `${this._awaitPrefix}${subject}.${actionCall}`;
 
     if (signals.popup) {
-      code = `${this._asyncPrefix}with ${pageAlias}.expect_popup() as popup_info {
+      code = `${this._asyncPrefix}with ${pageAlias}.expect_popup() as ${signals.popup.popupAlias}_info {
         ${code}
       }
-      ${signals.popup.popupAlias} = ${this._awaitPrefix}popup_info.value`;
+      ${signals.popup.popupAlias} = ${this._awaitPrefix}${signals.popup.popupAlias}_info.value`;
     }
 
     if (signals.download) {
-      code = `${this._asyncPrefix}with ${pageAlias}.expect_download() as download_info {
+      code = `${this._asyncPrefix}with ${pageAlias}.expect_download() as download${signals.download.downloadAlias}_info {
         ${code}
       }
-      download = ${this._awaitPrefix}download_info.value`;
+      download${signals.download.downloadAlias} = ${this._awaitPrefix}download${signals.download.downloadAlias}_info.value`;
     }
 
     formatter.add(code);

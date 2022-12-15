@@ -26,6 +26,8 @@ const testTypeSymbol = Symbol('testType');
 export class TestTypeImpl {
   readonly fixtures: FixturesWithLocation[];
   readonly test: TestType<any, any>;
+  // Wether the test is 'setup' which should only be called inside project setup files.
+  _projectSetup: boolean = false;
 
   constructor(fixtures: FixturesWithLocation[]) {
     this.fixtures = fixtures;
@@ -77,14 +79,20 @@ export class TestTypeImpl {
         `  when one of the dependencies in your package.json depends on @playwright/test.`,
       ].join('\n'));
     }
+    if (this._projectSetup !== suite._isProjectSetup) {
+      if (this._projectSetup)
+        throw errorWithLocation(location, `${title} is called in a file which is not a part of project setup.`);
+      throw errorWithLocation(location, `${title} is called in a project setup file (use '_setup' instead of 'test').`);
+    }
     return suite;
   }
 
   private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
-    const suite = this._ensureCurrentSuite(location, 'test()');
+    const suite = this._ensureCurrentSuite(location, this._projectSetup ? '_setup()' : 'test()');
     const test = new TestCase(title, fn, this, location);
     test._requireFile = suite._requireFile;
+    test._isProjectSetup = suite._isProjectSetup;
     suite._addTest(test);
 
     if (type === 'only')
@@ -101,7 +109,7 @@ export class TestTypeImpl {
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, title: string | Function, fn?: Function) {
     throwIfRunningInsideJest();
-    const suite = this._ensureCurrentSuite(location, 'test.describe()');
+    const suite = this._ensureCurrentSuite(location, this._projectSetup ? 'setup.describe()' : 'test.describe()');
 
     if (typeof title === 'function') {
       fn = title;
@@ -110,6 +118,7 @@ export class TestTypeImpl {
 
     const child = new Suite(title, 'describe');
     child._requireFile = suite._requireFile;
+    child._isProjectSetup = suite._isProjectSetup;
     child.location = location;
     suite._addSuite(child);
 
@@ -135,13 +144,13 @@ export class TestTypeImpl {
   }
 
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
-    const suite = this._ensureCurrentSuite(location, `test.${name}()`);
+    const suite = this._ensureCurrentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.${name}()`);
     suite._hooks.push({ type: name, fn, location });
   }
 
   private _configure(location: Location, options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
-    const suite = this._ensureCurrentSuite(location, `test.describe.configure()`);
+    const suite = this._ensureCurrentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.describe.configure()`);
 
     if (options.timeout !== undefined)
       suite._timeout = options.timeout;
@@ -202,14 +211,14 @@ export class TestTypeImpl {
   }
 
   private _use(location: Location, fixtures: Fixtures) {
-    const suite = this._ensureCurrentSuite(location, `test.use()`);
+    const suite = this._ensureCurrentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.use()`);
     suite._use.push({ fixtures, location });
   }
 
   private async _step<T>(location: Location, title: string, body: () => Promise<T>): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
-      throw errorWithLocation(location, `test.step() can only be called from a test`);
+      throw errorWithLocation(location, `${this._projectSetup ? '_setup' : 'test'}.step() can only be called from a test`);
     const step = testInfo._addStep({
       category: 'test.step',
       title,
@@ -252,6 +261,13 @@ function throwIfRunningInsideJest() {
         `See https://playwright.dev/docs/intro for more information about Playwright Test.`,
     );
   }
+}
+
+export function _setProjectSetup(test: TestType<any, any>, projectSetup: boolean) {
+  const testTypeImpl = (test as any)[testTypeSymbol] as TestTypeImpl;
+  if (!testTypeImpl)
+    throw new Error(`Argument is not a TestType`);
+  testTypeImpl._projectSetup = projectSetup;
 }
 
 export const rootTestType = new TestTypeImpl([]);

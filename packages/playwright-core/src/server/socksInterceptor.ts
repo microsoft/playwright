@@ -27,8 +27,8 @@ export class SocksInterceptor {
   private _socksSupportObjectGuid?: string;
   private _ids = new Set<number>();
 
-  constructor(transport: WebSocketTransport, redirectPortForTest: number | undefined) {
-    this._handler = new socks.SocksProxyHandler(redirectPortForTest);
+  constructor(transport: WebSocketTransport, pattern: string | undefined, redirectPortForTest: number | undefined) {
+    this._handler = new socks.SocksProxyHandler(pattern,  redirectPortForTest);
 
     let lastId = -1;
     this._channel = new Proxy(new EventEmitter(), {

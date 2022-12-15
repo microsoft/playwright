@@ -446,12 +446,14 @@ export type LocalUtilsHarUnzipResult = void;
 export type LocalUtilsConnectParams = {
   wsEndpoint: string,
   headers?: any,
+  exposeNetwork?: string,
   slowMo?: number,
   timeout?: number,
   socksProxyRedirectPortForTest?: number,
 };
 export type LocalUtilsConnectOptions = {
   headers?: any,
+  exposeNetwork?: string,
   slowMo?: number,
   timeout?: number,
   socksProxyRedirectPortForTest?: number,
@@ -1825,6 +1827,7 @@ export type PageExpectScreenshotParams = {
     selector: string,
   },
   comparatorOptions?: {
+    comparator?: string,
     maxDiffPixels?: number,
     maxDiffPixelRatio?: number,
     threshold?: number,
@@ -1850,6 +1853,7 @@ export type PageExpectScreenshotOptions = {
     selector: string,
   },
   comparatorOptions?: {
+    comparator?: string,
     maxDiffPixels?: number,
     maxDiffPixelRatio?: number,
     threshold?: number,
@@ -2649,6 +2653,7 @@ export type FrameSelectOptionParams = {
   strict?: boolean,
   elements?: ElementHandleChannel[],
   options?: {
+    valueOrLabel?: string,
     value?: string,
     label?: string,
     index?: number,
@@ -2661,6 +2666,7 @@ export type FrameSelectOptionOptions = {
   strict?: boolean,
   elements?: ElementHandleChannel[],
   options?: {
+    valueOrLabel?: string,
     value?: string,
     label?: string,
     index?: number,
@@ -3273,6 +3279,7 @@ export type ElementHandleScrollIntoViewIfNeededResult = void;
 export type ElementHandleSelectOptionParams = {
   elements?: ElementHandleChannel[],
   options?: {
+    valueOrLabel?: string,
     value?: string,
     label?: string,
     index?: number,
@@ -3284,6 +3291,7 @@ export type ElementHandleSelectOptionParams = {
 export type ElementHandleSelectOptionOptions = {
   elements?: ElementHandleChannel[],
   options?: {
+    valueOrLabel?: string,
     value?: string,
     label?: string,
     index?: number,
@@ -4322,6 +4330,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   pkg?: string,
+  args?: string[],
   proxy?: {
     server: string,
     bypass?: string,
@@ -4376,6 +4385,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
   pkg?: string,
+  args?: string[],
   proxy?: {
     server: string,
     bypass?: string,

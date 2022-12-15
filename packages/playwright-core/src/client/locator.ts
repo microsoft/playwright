@@ -133,7 +133,7 @@ export class Locator implements api.Locator {
     return new Locator(this._frame, this._selector + ' >> ' + selector, options);
   }
 
-  getByTestId(testId: string): Locator {
+  getByTestId(testId: string | RegExp): Locator {
     return this.locator(getByTestIdSelector(testIdAttributeName(), testId));
   }
 
@@ -292,6 +292,14 @@ export class Locator implements api.Locator {
     return this._frame.uncheck(this._selector, { strict: true, ...options });
   }
 
+  async all(): Promise<Locator[]> {
+    return new Array(await this.count()).fill(0).map((e, i) => this.nth(i));
+  }
+
+  async enumerate(): Promise<[Locator, number][]> {
+    return new Array(await this.count()).fill(0).map((e, i) => [this.nth(i), i]);
+  }
+
   async allInnerTexts(): Promise<string[]> {
     return this._frame.$$eval(this._selector, ee => ee.map(e => (e as HTMLElement).innerText));
   }
@@ -339,7 +347,7 @@ export class FrameLocator implements api.FrameLocator {
     return new Locator(this._frame, this._frameSelector + ' >> internal:control=enter-frame >> ' + selector, options);
   }
 
-  getByTestId(testId: string): Locator {
+  getByTestId(testId: string | RegExp): Locator {
     return this.locator(getByTestIdSelector(testIdAttributeName(), testId));
   }
 

@@ -141,9 +141,10 @@ it('should not report text nodes inside controls', async function({ page, browse
   expect(await page.accessibility.snapshot()).toEqual(golden);
 });
 
-it('rich text editable fields should have children', async function({ page, browserName, browserVersion, channel }) {
+it('rich text editable fields should have children', async function({ page, browserName, browserVersion, channel, isWebView2 }) {
   it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
   it.skip(channel && channel.startsWith('msedge'), 'Edge is missing a Chromium fix');
+  it.skip(isWebView2, 'WebView2 is missing a Chromium fix');
 
   await page.setContent(`
   <div contenteditable="true">
@@ -175,9 +176,10 @@ it('rich text editable fields should have children', async function({ page, brow
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('rich text editable fields with role should have children', async function({ page, browserName, browserMajorVersion, browserVersion, channel }) {
+it('rich text editable fields with role should have children', async function({ page, browserName, browserMajorVersion, browserVersion, channel, isWebView2 }) {
   it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
   it.skip(channel && channel.startsWith('msedge'), 'Edge is missing a Chromium fix');
+  it.skip(isWebView2, 'WebView2 is missing a Chromium fix');
 
   await page.setContent(`
   <div contenteditable="true" role='textbox'>

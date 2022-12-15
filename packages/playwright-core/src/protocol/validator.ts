@@ -248,6 +248,7 @@ scheme.LocalUtilsHarUnzipResult = tOptional(tObject({}));
 scheme.LocalUtilsConnectParams = tObject({
   wsEndpoint: tString,
   headers: tOptional(tAny),
+  exposeNetwork: tOptional(tString),
   slowMo: tOptional(tNumber),
   timeout: tOptional(tNumber),
   socksProxyRedirectPortForTest: tOptional(tNumber),
@@ -987,6 +988,7 @@ scheme.PageExpectScreenshotParams = tObject({
     selector: tString,
   })),
   comparatorOptions: tOptional(tObject({
+    comparator: tOptional(tString),
     maxDiffPixels: tOptional(tNumber),
     maxDiffPixelRatio: tOptional(tNumber),
     threshold: tOptional(tNumber),
@@ -1464,6 +1466,7 @@ scheme.FrameSelectOptionParams = tObject({
   strict: tOptional(tBoolean),
   elements: tOptional(tArray(tChannel(['ElementHandle']))),
   options: tOptional(tArray(tObject({
+    valueOrLabel: tOptional(tString),
     value: tOptional(tString),
     label: tOptional(tString),
     index: tOptional(tNumber),
@@ -1832,6 +1835,7 @@ scheme.ElementHandleScrollIntoViewIfNeededResult = tOptional(tObject({}));
 scheme.ElementHandleSelectOptionParams = tObject({
   elements: tOptional(tArray(tChannel(['ElementHandle']))),
   options: tOptional(tArray(tObject({
+    valueOrLabel: tOptional(tString),
     value: tOptional(tString),
     label: tOptional(tString),
     index: tOptional(tNumber),
@@ -2384,6 +2388,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   pkg: tOptional(tString),
+  args: tOptional(tArray(tString)),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),

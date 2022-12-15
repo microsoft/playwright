@@ -67,7 +67,7 @@ assertThat(getStarted).hasAttribute("href", "/docs/intro");
 getStarted.click();
 ```
 
-[Selectors](./selectors.md) are strings that are used to create Locators. Playwright supports many different selectors like [Text](./selectors.md#text-selector), [CSS](./selectors.md#css-selector), [XPath](./selectors.md#xpath-selectors) and many more. Learn more about available selectors and how to pick one in this [in-depth guide](./selectors.md).
+Playwright supports many different locators like [role](./locators.md#locate-by-role) [text](./locators.md#get-by-text), [test id](./locators.md#get-by-test-id) and many more. Learn more about available locators and how to pick one in this [in-depth guide](./locators.md).
 
 
 ```java

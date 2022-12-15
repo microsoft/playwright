@@ -18,15 +18,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
-import * as outOfProcess from 'playwright-core/lib/outofprocess';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
-import type { PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
+import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
+import { store as _baseStore } from './store';
 import type { TestInfoImpl } from './testInfo';
-import { rootTestType } from './testType';
+import { rootTestType, _setProjectSetup } from './testType';
 export { expect } from './expect';
 export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
+export const _store = _baseStore;
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
@@ -46,6 +47,7 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _reuseContext: boolean,
   _setupContextOptionsAndArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
+  _storageStateName: string | undefined;
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserOptions: LaunchOptions;
@@ -53,21 +55,11 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _snapshotSuffix: string;
 };
 
-export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
+const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   defaultBrowserType: ['chromium', { scope: 'worker', option: true }],
   browserName: [({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true }],
-  playwright: [async ({ }, use) => {
-    if (process.env.PW_OUT_OF_PROCESS_DRIVER) {
-      const impl = await outOfProcess.start({
-        NODE_OPTIONS: undefined  // Hide driver process while debugging.
-      });
-      const pw = impl.playwright as any;
-      pw._setSelectors(playwrightLibrary.selectors);
-      await use(pw);
-      await impl.stop();
-    } else {
-      await use(require('playwright-core'));
-    }
+  playwright: [async ({}, use) => {
+    await use(require('playwright-core'));
   }, { scope: 'worker' }],
   headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
   channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
@@ -85,8 +77,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     }
     return use({
       wsEndpoint,
-      headers
-    });
+      headers,
+      _exposeNetwork: process.env.PW_TEST_CONNECT_EXPOSE_NETWORK,
+    } as any);
   }, { scope: 'worker', option: true }],
   screenshot: ['off', { scope: 'worker', option: true }],
   video: ['off', { scope: 'worker', option: true }],
@@ -151,7 +144,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true }],
   proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true }],
   storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true }],
-  storageStateName: [undefined, { option: true }],
+  _storageStateName: [undefined, { option: true }],
   timezoneId: [({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true }],
   userAgent: [({ contextOptions }, use) => use(contextOptions.userAgent), { option: true }],
   viewport: [({ contextOptions }, use) => use(contextOptions.viewport === undefined ? { width: 1280, height: 720 } : contextOptions.viewport), { option: true }],
@@ -181,7 +174,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     permissions,
     proxy,
     storageState,
-    storageStateName,
+    _storageStateName,
     viewport,
     timezoneId,
     userAgent,
@@ -220,10 +213,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       options.permissions = permissions;
     if (proxy !== undefined)
       options.proxy = proxy;
-    if (storageStateName !== undefined) {
-      const value = await test.info().storage().get(storageStateName);
+    if (_storageStateName !== undefined) {
+      const value = await _store.get(_storageStateName);
       if (!value)
-        throw new Error(`Cannot find value in the storage for storageStateName: "${storageStateName}"`);
+        throw new Error(`Cannot find value in the _store for _storageStateName: "${_storageStateName}"`);
       options.storageState = value as any;
     } else if (storageState !== undefined) {
       options.storageState = storageState;
@@ -253,6 +246,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     if (debugMode())
       testInfo.setTimeout(0);
 
+    const screenshotOptions = typeof screenshot !== 'string' ? { fullPage: screenshot.fullPage, omitBackground: screenshot.omitBackground } : undefined;
+    const screenshotMode = typeof screenshot === 'string' ? screenshot : screenshot.mode;
     const traceMode = normalizeTraceMode(trace);
     const defaultTraceOptions = { screenshots: true, snapshots: true, sources: true };
     const traceOptions = typeof trace === 'string' ? defaultTraceOptions : { ...defaultTraceOptions, ...trace, mode: undefined };
@@ -340,7 +335,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       temporaryScreenshots.push(screenshotPath);
       // Pass caret=initial to avoid any evaluations that might slow down the screenshot
       // and let the page modify itself from the problematic state it had at the moment of failure.
-      await page.screenshot({ timeout: 5000, path: screenshotPath, caret: 'initial' }).catch(() => {});
+      await page.screenshot({ ...screenshotOptions, timeout: 5000, path: screenshotPath, caret: 'initial' }).catch(() => {});
     };
 
     const screenshotOnTestFailure = async () => {
@@ -352,7 +347,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
     const onWillCloseContext = async (context: BrowserContext) => {
       await stopTracing(context.tracing);
-      if (screenshot === 'on' || screenshot === 'only-on-failure') {
+      if (screenshotMode === 'on' || screenshotMode === 'only-on-failure') {
         // Capture screenshot for now. We'll know whether we have to preserve them
         // after the test finishes.
         await Promise.all(context.pages().map(screenshotPage));
@@ -378,7 +373,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       const existingApiRequests: APIRequestContext[] =  Array.from((playwright.request as any)._contexts as Set<APIRequestContext>);
       await Promise.all(existingApiRequests.map(onDidCreateRequestContext));
     }
-    if (screenshot === 'on' || screenshot === 'only-on-failure')
+    if (screenshotMode === 'on' || screenshotMode === 'only-on-failure')
       testInfoImpl._onTestFailureImmediateCallbacks.set(screenshotOnTestFailure, 'Screenshot on failure');
 
     // 2. Run the test.
@@ -387,7 +382,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     // 3. Determine whether we need the artifacts.
     const testFailed = testInfo.status !== testInfo.expectedStatus;
     const preserveTrace = captureTrace && (traceMode === 'on' || (testFailed && traceMode === 'retain-on-failure') || (traceMode === 'on-first-retry' && testInfo.retry === 1));
-    const captureScreenshots = (screenshot === 'on' || (screenshot === 'only-on-failure' && testFailed));
+    const captureScreenshots = screenshotMode === 'on' || (screenshotMode === 'only-on-failure' && testFailed);
 
     const traceAttachments: string[] = [];
     const addTraceAttachment = () => {
@@ -444,7 +439,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
             return;
           // Pass caret=initial to avoid any evaluations that might slow down the screenshot
           // and let the page modify itself from the problematic state it had at the moment of failure.
-          await page.screenshot({ timeout: 5000, path: addScreenshotAttachment(), caret: 'initial' }).catch(() => {});
+          await page.screenshot({ ...screenshotOptions, timeout: 5000, path: addScreenshotAttachment(), caret: 'initial' }).catch(() => {});
         }));
       }
     }).concat(leftoverApiRequests.map(async context => {
@@ -626,5 +621,9 @@ export function shouldCaptureTrace(traceMode: TraceMode, testInfo: TestInfo) {
 }
 
 const kTracingStarted = Symbol('kTracingStarted');
+
+export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
+export const _setup = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
+_setProjectSetup(_setup, true);
 
 export default test;

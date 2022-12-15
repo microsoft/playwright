@@ -162,8 +162,7 @@ Learn more about Playwright Test runner:
 
 - [Getting Started](./intro)
 - [Fixtures](./test-fixtures)
-- [Locators](./api/class-locator)
-- [Selectors](./selectors)
+- [Locators](./locators)
 - [Assertions](./test-assertions)
 - [Auto-waiting](./actionability)
 

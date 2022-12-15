@@ -29,7 +29,7 @@ export async function queryObjectCount(type: Function): Promise<number> {
       prototypeObjectId: constructorFunction.objectId
     }, (_, result) => f(result))) as any;
 
-    const { result: { value } } = await new Promise(f => session.post('Runtime.callFunctionOn', {
+    const { result: { value } } = await new Promise<any>(f => session.post('Runtime.callFunctionOn', {
       functionDeclaration: 'function (arr) { return this.length; }',
       objectId: instanceArray.objectId,
       arguments: [{ objectId: instanceArray.objectId }],

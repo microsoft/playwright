@@ -32,6 +32,41 @@ test('androidDevice.launchBrowser', async function({ androidDevice }) {
   await context.close();
 });
 
+test('androidDevice.launchBrowser should treat args correctly', async ({ androidDevice }) => {
+  for (const arg of [
+    "--user-agent='I am Foo'",
+    '--user-agent="I am Foo"',
+  ]) {
+    await test.step(`arg: ${arg}`, async () => {
+      const context = await androidDevice.launchBrowser({ args: [arg] });
+      const page = await context.newPage();
+      const userAgent = await page.evaluate(() => navigator.userAgent);
+      await context.close();
+      expect(userAgent).toBe('I am Foo');
+    });
+  }
+});
+
+test('androidDevice.launchBrowser should throw for bad proxy server value', async ({ androidDevice }) => {
+  const error = await androidDevice.launchBrowser({
+    // @ts-expect-error server must be a string
+    proxy: { server: 123 }
+  }).catch(e => e);
+  expect(error.message).toContain('proxy.server: expected string, got number');
+});
+
+test('androidDevice.launchBrowser should pass proxy config', async ({ androidDevice, server, mode, loopback }) => {
+  test.skip(mode === 'docker', 'proxy is not supported for remote connection');
+  server.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+  const context = await androidDevice.launchBrowser({ proxy: { server: `${loopback}:${server.PORT}` } });
+  const page = await context.newPage();
+  await page.goto('http://non-existent.com/target.html');
+  expect(await page.title()).toBe('Served by the proxy');
+  await context.close();
+});
+
 test('should create new page', async function({ androidDevice }) {
   const context = await androidDevice.launchBrowser();
   const page = await context.newPage();

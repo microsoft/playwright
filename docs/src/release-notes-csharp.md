@@ -317,7 +317,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
   await page.Locator("role=button[name='log in']").ClickAsync();
   ```
 
-  Read more in [our documentation](./selectors#role-selector).
+  Read more in [our documentation](./locators.md#locate-by-role).
 
 - New [`method: Locator.filter`] API to filter an existing locator
 
@@ -339,7 +339,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
   await page.Locator("role=button[name='log in']").ClickAsync();
   ```
 
-  Read more in [our documentation](./selectors#role-selector).
+  Read more in [our documentation](./locators.md#locate-by-role).
 - New `scale` option in [`method: Page.screenshot`] for smaller sized screenshots.
 - New `caret` option in [`method: Page.screenshot`] to control text caret. Defaults to `"hide"`.
 - We now ship a designated .NET docker image `mcr.microsoft.com/playwright/dotnet`. Read more in [our documentation](./docker).
@@ -628,7 +628,7 @@ await locator.ClickAsync();
 
 Learn more in the [documentation](./api/class-locator).
 
-#### 🧩 Experimental [**React**](./selectors#react-selectors) and [**Vue**](./selectors#vue-selectors) selector engines
+#### 🧩 Experimental [**React**](./other-locators.md#react-locator) and [**Vue**](./other-locators.md#vue-locator) selector engines
 
 React and Vue selectors allow selecting elements by its component name and/or property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
@@ -637,12 +637,12 @@ await page.Locator("_react=SubmitButton[enabled=true]").ClickAsync();
 await page.Locator("_vue=submit-button[enabled=true]").ClickAsync();
 ```
 
-Learn more in the [react selectors documentation](./selectors#react-selectors) and the [vue selectors documentation](./selectors#vue-selectors).
+Learn more in the [react selectors documentation](./other-locators.md#react-locator) and the [vue selectors documentation](./other-locators.md#vue-locator).
 
-#### ✨ New [**`nth`**](./selectors#n-th-element-selector) and [**`visible`**](./selectors#selecting-visible-elements) selector engines
+#### ✨ New [**`nth`**](./other-locators.md#n-th-element-locator) and [**`visible`**](./other-locators.md#css-matching-only-visible-elements) selector engines
 
-- [`nth`](./selectors#n-th-element-selector) selector engine is equivalent to the `:nth-match` pseudo class, but could be combined with other selector engines.
-- [`visible`](./selectors#selecting-visible-elements) selector engine is equivalent to the `:visible` pseudo class, but could be combined with other selector engines.
+- [`nth`](./other-locators.md#n-th-element-locator) selector engine is equivalent to the `:nth-match` pseudo class, but could be combined with other selector engines.
+- [`visible`](./other-locators.md#css-matching-only-visible-elements) selector engine is equivalent to the `:visible` pseudo class, but could be combined with other selector engines.
 
 ```csharp
 // select the first button among all buttons

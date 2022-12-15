@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import type { Cookie } from '@playwright/test';
 import { contextTest as it, playwrightTest, expect } from '../config/browserTest';
 
 it('should work @smoke', async ({ context, page, server }) => {
@@ -77,7 +78,9 @@ it('should roundtrip cookie', async ({ context, page, server }) => {
   await context.clearCookies();
   expect(await context.cookies()).toEqual([]);
   await context.addCookies(cookies);
-  expect(await context.cookies()).toEqual(cookies);
+  // Slightly different rounding on chromium win.
+  const normalizedExpires = (cookies: Cookie[]) => cookies.map(c => ({ ...c, expires: Math.floor(c.expires) }));
+  expect(normalizedExpires(await context.cookies())).toEqual(normalizedExpires(cookies));
 });
 
 it('should send cookie header', async ({ server, context }) => {

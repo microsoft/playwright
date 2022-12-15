@@ -36,6 +36,13 @@ it('getByTestId should escape id', async ({ page }) => {
   await expect(page.getByTestId('He"llo')).toHaveText('Hello world');
 });
 
+it('getByTestId should work for regex', async ({ page }) => {
+  await page.setContent('<div><div data-testid="Hello">Hello world</div></div>');
+  await expect(page.getByTestId(/He[l]*o/)).toHaveText('Hello world');
+  await expect(page.mainFrame().getByTestId('Hello')).toHaveText('Hello world');
+  await expect(page.locator('div').getByTestId('Hello')).toHaveText('Hello world');
+});
+
 it('getByText should work', async ({ page }) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.getByText('ye').evaluate(e => e.outerHTML)).toContain('>\nye  </div>');
@@ -71,6 +78,38 @@ it('getByLabel should work with nested elements', async ({ page }) => {
   expect(await page.getByLabel('Name', { exact: true }).elementHandles()).toEqual([]);
   expect(await page.getByLabel('what?').elementHandles()).toEqual([]);
   expect(await page.getByLabel(/last name/).elementHandles()).toEqual([]);
+});
+
+it('getByLabel should work with multiply-labelled input', async ({ page }) => {
+  await page.setContent(`<label for=target>Name</label><input id=target type=text><label for=target>First or Last</label>`);
+  expect(await page.getByLabel('Name').evaluate(e => e.id)).toBe('target');
+  expect(await page.getByLabel('First or Last').evaluate(e => e.id)).toBe('target');
+});
+
+it('getByLabel should work with ancestor label and multiple controls', async ({ page }) => {
+  await page.setContent(`<label>Name<button id=target>Click me</button><input type=text></label>`);
+  expect(await page.getByLabel('Name').evaluate(e => e.id)).toBe('target');
+});
+
+it('getByLabel should work with ancestor label and for', async ({ page }) => {
+  await page.setContent(`
+    <label for=target>Name<input type=text id=nontarget></label>
+    <input type=text id=target>
+  `);
+  expect(await page.getByLabel('Name').evaluate(e => e.id)).toBe('target');
+});
+
+it('getByLabel should work with aria-labelledby', async ({ page }) => {
+  await page.setContent(`<label id=name-label>Name</label><button aria-labelledby=name-label>Click me</button>`);
+  expect(await page.getByLabel('Name').evaluate(e => e.textContent)).toBe('Click me');
+});
+
+it('getByLabel should prioritize aria-labelledby over native label', async ({ page }) => {
+  await page.setContent(`
+    <label id=name-label>Name</label>
+    <label>Wrong<button aria-labelledby=name-label>Click me</button></label>
+  `);
+  expect(await page.getByLabel('Name').evaluate(e => e.textContent)).toBe('Click me');
 });
 
 it('getByPlaceholder should work', async ({ page }) => {

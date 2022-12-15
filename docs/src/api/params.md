@@ -51,20 +51,17 @@ Whether to bypass the [actionability](../actionability.md) checks. Defaults to `
 ## input-selector
 - `selector` <[string]>
 
-A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See
-[working with selectors](../selectors.md) for more details.
+A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used.
 
 ## input-source
 - `source` <[string]>
 
-A selector to search for an element to drag. If there are multiple elements satisfying the selector, the first will be used. See
-[working with selectors](../selectors.md) for more details.
+A selector to search for an element to drag. If there are multiple elements satisfying the selector, the first will be used.
 
 ## input-target
 - `target` <[string]>
 
-A selector to search for an element to drop onto. If there are multiple elements satisfying the selector, the first will be used. See
-[working with selectors](../selectors.md) for more details.
+A selector to search for an element to drop onto. If there are multiple elements satisfying the selector, the first will be used.
 
 ## input-position
 - `position` <[Object]>
@@ -130,12 +127,12 @@ Whether to check or uncheck the checkbox.
 ## query-selector
 - `selector` <[string]>
 
-A selector to query for. See [working with selectors](../selectors.md) for more details.
+A selector to query for.
 
 ## find-selector
 - `selector` <[string]>
 
-A selector to use when resolving DOM element. See [working with selectors](../selectors.md) for more details.
+A selector to use when resolving DOM element.
 
 ## wait-for-selector-state
 - `state` <[WaitForSelectorState]<"attached"|"detached"|"visible"|"hidden">>
@@ -387,6 +384,14 @@ An instance of [FormData] can be created via [`method: APIRequestContext.createF
 ## js-python-csharp-fetch-option-data
 * langs: js, python, csharp
 - `data` <[string]|[Buffer]|[Serializable]>
+
+Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
+and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will be
+set to `application/octet-stream` if not explicitly set.
+
+## js-python-csharp-fetch-option-post-data
+* langs: js, python, csharp
+- `postData` <[string]|[Buffer]|[Serializable]>
 
 Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
 and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will be
@@ -680,8 +685,9 @@ contexts override the proxy, global proxy will be never used and can be any stri
 ## context-option-strict
 - `strictSelectors` <[boolean]>
 
-If specified, enables strict selectors mode for this context. In the strict selectors mode all operations
+If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations
 on selectors that imply single target DOM element will throw when more than one element matches the selector.
+This option does not affect any Locator APIs (Locators are always strict).
 See [Locator] to learn more about the strict mode.
 
 ## context-option-service-worker-policy
@@ -700,7 +706,7 @@ Whether to allow sites to register Service workers. Defaults to `'allow'`.
   - `index` ?<[int]> Matches by the index. Optional.
 
 Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
-first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
+first option matching one of the passed options is selected. String values are matching both values and labels. Option
 is considered matching if all specified properties match.
 
 ## wait-for-navigation-url
@@ -810,7 +816,9 @@ An acceptable ratio of pixels that are different to the total amount of pixels, 
 * langs: js
 - `threshold` <[float]>
 
-An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`. Defaults to `0.2`.
+An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ)
+between the same pixel in compared images, between zero (strict) and one (lax), default is configurable with
+`TestConfig.expect`. Defaults to `0.2`.
 
 ## shared-context-params-list-v1.8
 - %%-context-option-acceptdownloads-%%
@@ -1081,7 +1089,7 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 
 ## locator-get-by-test-id-test-id
 * since: v1.27
-- `testId` <[string]>
+- `testId` <[string]|[RegExp]>
 
 Id to locate the element by.
 

@@ -6,6 +6,40 @@ a way to find element(s) on the page at any moment. Locator can be created with 
 
 [Learn more about locators](../locators.md).
 
+## async method: Locator.all
+* since: v1.14
+- returns: <[Array]<[Locator]>>
+
+When locator points to a list of elements, returns array of locators, pointing
+to respective elements.
+
+**Usage**
+
+```js
+for (const li of await page.getByRole('listitem').all())
+  await li.click();
+```
+
+```python async
+for li in await page.get_by_role('listitem').all():
+  await li.click();
+```
+
+```python sync
+for li in page.get_by_role('listitem').all():
+  li.click();
+```
+
+```java
+for (Locator li : page.getByRole('listitem').all())
+  li.click();
+```
+
+```csharp
+foreach (var li in await page.GetByRole('listitem').AllAsync())
+  await li.ClickAsync();
+```
+
 ## async method: Locator.allInnerTexts
 * since: v1.14
 - returns: <[Array]<[string]>>
@@ -127,6 +161,10 @@ If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` e
 
 ## async method: Locator.click
 * since: v1.14
+
+Click an element.
+
+**Details**
 
 This method clicks the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
@@ -419,6 +457,36 @@ Resolves given locator to the first matching DOM element. If no elements matchin
 - returns: <[Array]<[ElementHandle]>>
 
 Resolves given locator to all matching DOM elements.
+
+## async method: Locator.enumerate
+* since: v1.14
+* langs: js, python, csharp
+- returns: <[Array]<[Tuple]<[Locator],[int]>>>
+
+When locator points to a list of elements, returns array of (locator, index) pairs,
+pointing to respective elements.
+
+**Usage**
+
+```js
+for (const [li, i] of await page.getByRole('listitem').enumerate())
+  await li.click();
+```
+
+```python async
+for (li, index) in await page.get_by_role('listitem').enumerate():
+  await li.click();
+```
+
+```python sync
+for (li, index) in page.get_by_role('listitem').enumerate():
+  li.click();
+```
+
+```csharp
+foreach (var (li, index) in await page.GetByRole('listitem').AllAsync())
+  await li.ClickAsync();
+```
 
 ## async method: Locator.evaluate
 * since: v1.14
@@ -993,6 +1061,10 @@ completely visible as defined by
 * since: v1.14
 - returns: <[Array]<[string]>>
 
+Selects option or options in `<select>`.
+
+**Details**
+
 This method waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
 
 If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
@@ -1003,56 +1075,59 @@ Triggers a `change` and `input` event once all the provided options have been se
 
 **Usage**
 
+```html
+<select multiple>
+  <option value="red">Red</div>
+  <option value="green">Green</div>
+  <option value="blue">Blue</div>
+</select>
+```
+
 ```js
-// single selection matching the value
+// single selection matching the value or label
 element.selectOption('blue');
 
 // single selection matching the label
 element.selectOption({ label: 'Blue' });
 
-// multiple selection
+// multiple selection for red, green and blue options
 element.selectOption(['red', 'green', 'blue']);
 ```
 
 ```java
-// single selection matching the value
+// single selection matching the value or label
 element.selectOption("blue");
 // single selection matching the label
 element.selectOption(new SelectOption().setLabel("Blue"));
-// multiple selection
+// multiple selection for blue, red and second option
 element.selectOption(new String[] {"red", "green", "blue"});
 ```
 
 ```python async
-# single selection matching the value
+# single selection matching the value or label
 await element.select_option("blue")
 # single selection matching the label
 await element.select_option(label="blue")
-# multiple selection
+# multiple selection for blue, red and second option
 await element.select_option(value=["red", "green", "blue"])
 ```
 
 ```python sync
-# single selection matching the value
+# single selection matching the value or label
 element.select_option("blue")
-# single selection matching both the label
+# single selection matching the label
 element.select_option(label="blue")
-# multiple selection
+# multiple selection for blue, red and second option
 element.select_option(value=["red", "green", "blue"])
 ```
 
 ```csharp
-// single selection matching the value
+// single selection matching the value or label
 await element.SelectOptionAsync(new[] { "blue" });
 // single selection matching the label
 await element.SelectOptionAsync(new[] { new SelectOptionValue() { Label = "blue" } });
-// multiple selection
-await element.SelectOptionAsync(new[] { "red", "green", "blue" });
 // multiple selection for blue, red and second option
-await element.SelectOptionAsync(new[] {
-    new SelectOptionValue() { Label = "blue" },
-    new SelectOptionValue() { Index = 2 },
-    new SelectOptionValue() { Value = "red" }});
+await element.SelectOptionAsync(new[] { "red", "green", "blue" });
 ```
 
 ### param: Locator.selectOption.values = %%-select-options-values-%%

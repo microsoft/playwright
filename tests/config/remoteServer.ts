@@ -15,8 +15,44 @@
  */
 
 import path from 'path';
-import type { BrowserType, Browser, LaunchOptions } from 'playwright-core';
+import type { BrowserType, Browser } from 'playwright-core';
 import type { CommonFixtures, TestChildProcess } from './commonFixtures';
+
+export interface PlaywrightServer {
+  wsEndpoint(): string;
+  close(): Promise<void>;
+}
+
+export class RunServer implements PlaywrightServer {
+  private _process: TestChildProcess;
+  _wsEndpoint: string;
+
+  async _start(childProcess: CommonFixtures['childProcess']) {
+    this._process = childProcess({
+      command: ['node', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), 'run-server'],
+    });
+
+    let wsEndpointCallback;
+    const wsEndpointPromise = new Promise<string>(f => wsEndpointCallback = f);
+    this._process.onOutput = data => {
+      const prefix = 'Listening on ';
+      const line = data.toString();
+      if (line.startsWith(prefix))
+        wsEndpointCallback(line.substr(prefix.length));
+    };
+
+    this._wsEndpoint = await wsEndpointPromise;
+  }
+
+  wsEndpoint() {
+    return this._wsEndpoint;
+  }
+
+  async close() {
+    await this._process.close();
+    await this._process.exitCode;
+  }
+}
 
 export type RemoteServerOptions = {
   stallOnClose?: boolean;
@@ -26,7 +62,7 @@ export type RemoteServerOptions = {
   url?: string;
 };
 
-export class RemoteServer {
+export class RemoteServer implements PlaywrightServer {
   private _process: TestChildProcess;
   _output: Map<string, string>;
   _outputCallback: Map<string, () => void>;
@@ -43,7 +79,7 @@ export class RemoteServer {
     const browserOptions = (browserType as any)._defaultLaunchOptions;
     // Copy options to prevent a large JSON string when launching subprocess.
     // Otherwise, we get `Error: spawn ENAMETOOLONG` on Windows.
-    const launchOptions: LaunchOptions = {
+    const launchOptions: Parameters<BrowserType['launchServer']>[0] = {
       args: browserOptions.args,
       headless: browserOptions.headless,
       channel: browserOptions.channel,
@@ -114,6 +150,6 @@ export class RemoteServer {
       this._browser = undefined;
     }
     await this._process.close();
-    return await this.childExitCode();
+    await this.childExitCode();
   }
 }

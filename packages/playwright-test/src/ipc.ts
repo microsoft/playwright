@@ -96,6 +96,7 @@ export type RunPayload = {
   file: string;
   entries: TestEntry[];
   watchMode: boolean;
+  projectSetup: boolean;
 };
 
 export type DonePayload = {

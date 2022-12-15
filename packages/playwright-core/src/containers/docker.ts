@@ -42,13 +42,8 @@ async function startPlaywrightContainer(port: number) {
   const info = await ensurePlaywrightContainerOrDie(port);
   const deltaMs = (Date.now() - time);
   console.log('Done in ' + (deltaMs / 1000).toFixed(1) + 's');
-  await tetherHostNetwork(info.wsEndpoint);
-
-  console.log([
-    `- Endpoint: ${info.httpEndpoint}`,
-    `- View screen:`,
-    `    ${info.vncSession}`,
-  ].join('\n'));
+  await tetherHostNetwork(info.httpEndpoint);
+  console.log('Endpoint:', info.httpEndpoint);
 }
 
 async function stopAllPlaywrightContainers() {
@@ -133,8 +128,6 @@ async function buildPlaywrightImage() {
 
 interface ContainerInfo {
   httpEndpoint: string;
-  wsEndpoint: string;
-  vncSession: string;
 }
 
 async function printDockerStatus() {
@@ -145,8 +138,7 @@ async function printDockerStatus() {
     dockerEngineRunning: isDockerEngine,
     imageName: VRT_IMAGE_NAME,
     imageIsPulled,
-    containerWSEndpoint: info?.wsEndpoint ?? '',
-    containerVNCEndpoint: info?.vncSession ?? '',
+    containerEndpoint: info?.httpEndpoint ?? '',
   }, null, 2));
 }
 
@@ -170,18 +162,13 @@ export async function containerInfo(): Promise<ContainerInfo|undefined> {
   };
 
   const WS_LINE_PREFIX = 'Listening on ws://';
+  const REVERSE_PROXY_LINE_PREFIX = 'Playwright container listening on';
   const webSocketLine = logLines.find(line => line.startsWith(WS_LINE_PREFIX));
-  const NOVNC_LINE_PREFIX = 'novnc is listening on ';
-  const novncLine = logLines.find(line => line.startsWith(NOVNC_LINE_PREFIX));
-  if (!novncLine || !webSocketLine)
+  const reverseProxyLine = logLines.find(line => line.startsWith(REVERSE_PROXY_LINE_PREFIX));
+  if (!webSocketLine || !reverseProxyLine)
     return undefined;
-  const wsEndpoint = containerUrlToHostUrl('ws://' + webSocketLine.substring(WS_LINE_PREFIX.length));
-  const vncSession = containerUrlToHostUrl(novncLine.substring(NOVNC_LINE_PREFIX.length));
-  if (!wsEndpoint || !vncSession)
-    return undefined;
-  const wsUrl = new URL(wsEndpoint);
-  const httpEndpoint = 'http://' + wsUrl.host;
-  return { wsEndpoint, vncSession, httpEndpoint };
+  const httpEndpoint = containerUrlToHostUrl('http://127.0.0.1:' + reverseProxyLine.substring(REVERSE_PROXY_LINE_PREFIX.length).trim());
+  return httpEndpoint ? { httpEndpoint } : undefined;
 }
 
 export async function ensurePlaywrightContainerOrDie(port: number): Promise<ContainerInfo> {
@@ -249,7 +236,6 @@ export async function ensurePlaywrightContainerOrDie(port: number): Promise<Cont
     autoRemove: true,
     ports: [
       { container: 5400, host: port },
-      { container: 7900, host: 0 },
     ],
     labels: {
       [VRT_CONTAINER_LABEL_NAME]: VRT_CONTAINER_LABEL_VALUE,
@@ -299,9 +285,10 @@ async function tetherHostNetwork(endpoint: string) {
   const headers: any = {
     'User-Agent': getUserAgent(),
     'x-playwright-network-tethering': '1',
+    'x-playwright-proxy': '*',
   };
   const transport = await WebSocketTransport.connect(undefined /* progress */, wsEndpoint, headers, true /* followRedirects */);
-  const socksInterceptor = new SocksInterceptor(transport, undefined);
+  const socksInterceptor = new SocksInterceptor(transport, '*', undefined);
   transport.onmessage = json => socksInterceptor.interceptMessage(json);
   transport.onclose = () => {
     socksInterceptor.cleanup();
@@ -400,7 +387,7 @@ export function addDockerCLI(program: Command) {
       .option('--browser <name>', 'browser to launch')
       .option('--endpoint <url>', 'server endpoint')
       .action(async function(options: { browser: string, endpoint: string }) {
-        let browserType: any;
+        let browserType: playwright.BrowserType | undefined;
         if (options.browser === 'chromium')
           browserType = playwright.chromium;
         else if (options.browser === 'firefox')
@@ -417,9 +404,9 @@ export function addDockerCLI(program: Command) {
               headless: false,
               viewport: null,
             }),
-            'x-playwright-proxy': '*',
           },
-        });
+          _exposeNetwork: '*',
+        } as any);
         const context = await browser.newContext();
         context.on('page', (page: playwright.Page) => {
           page.on('dialog', () => {});  // Prevent dialogs from being automatically dismissed.

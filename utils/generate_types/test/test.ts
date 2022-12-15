@@ -567,6 +567,23 @@ playwright.chromium.launch().then(async browser => {
     const value = await handle.jsonValue();
     const assertion: AssertType<number, typeof value> = true;
   }
+  {
+    const handle = await page.evaluateHandle(() => document.body);
+    const tuple = { s: '', n: 23, h: handle };
+    const value = await page.evaluate(([{ s, n, h }]) => {
+      return parseInt(s) + n + parseInt(h.nodeName);
+    }, [tuple]);
+    const assertion: AssertType<number, typeof value> = true;
+  }
+  {
+    type T = ({ s: string } | playwright.ElementHandle)[];
+    const handle = await page.evaluateHandle(() => document.body);
+    const tuple: T = [{ s: '' }, handle];
+    const value = await page.evaluate(([a, b]) => {
+      return (a instanceof Node ? a.nodeName : a.s) + (b instanceof Node ? b.nodeName : b.s);
+    }, tuple);
+    const assertion: AssertType<string, typeof value> = true;
+  }
 
   {
     const handle = await page.evaluateHandle(() => document.createElement('body'));
@@ -861,3 +878,4 @@ import {
   Geolocation,
   HTTPCredentials,
 } from 'playwright';
+

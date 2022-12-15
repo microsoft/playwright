@@ -40,9 +40,10 @@ function newLogger() {
 type ServerOptions = {
   path: string;
   maxConnections: number;
-  preLaunchedBrowser?: Browser
-  preLaunchedAndroidDevice?: AndroidDevice
-  browserProxyMode: 'client' | 'tether' | 'disabled',
+  preLaunchedBrowser?: Browser;
+  preLaunchedAndroidDevice?: AndroidDevice;
+  preLaunchedSocksProxy?: SocksProxy;
+  browserProxyMode: 'client' | 'tether';
   ownedByTetherClient?: boolean;
 };
 
@@ -59,12 +60,6 @@ export class PlaywrightServer {
       this._preLaunchedPlaywright = options.preLaunchedBrowser.options.rootSdkObject as Playwright;
     if (options.preLaunchedAndroidDevice)
       this._preLaunchedPlaywright = options.preLaunchedAndroidDevice._android._playwrightOptions.rootSdkObject as Playwright;
-  }
-
-  preLaunchedPlaywright(): Playwright {
-    if (!this._preLaunchedPlaywright)
-      this._preLaunchedPlaywright = createPlaywright('javascript');
-    return this._preLaunchedPlaywright;
   }
 
   async listen(port: number = 0): Promise<string> {
@@ -115,7 +110,6 @@ export class PlaywrightServer {
       const browserName = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
       const proxyHeader = request.headers['x-playwright-proxy'];
       const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
-      const enableSocksProxy = this._options.browserProxyMode !== 'disabled' && proxyValue === '*';
 
       const launchOptionsHeader = request.headers['x-playwright-launch-options'] || '';
       let launchOptions: LaunchOptions = {};
@@ -131,9 +125,11 @@ export class PlaywrightServer {
       const shouldReuseBrowser = !!request.headers['x-playwright-reuse-context'];
 
       // If we started in the legacy reuse-browser mode, create this._preLaunchedPlaywright.
-      // If we get a reuse-controller request,  create this._preLaunchedPlaywright.
-      if (isDebugControllerClient || shouldReuseBrowser)
-        this.preLaunchedPlaywright();
+      // If we get a reuse-controller request, create this._preLaunchedPlaywright.
+      if (isDebugControllerClient || shouldReuseBrowser) {
+        if (!this._preLaunchedPlaywright)
+          this._preLaunchedPlaywright = createPlaywright('javascript');
+      }
 
       let clientType: ClientType = 'playwright';
       let semaphore: Semaphore = browserSemaphore;
@@ -147,7 +143,7 @@ export class PlaywrightServer {
         clientType = 'reuse-browser';
         semaphore = reuseBrowserSemaphore;
       } else if (this._options.preLaunchedBrowser || this._options.preLaunchedAndroidDevice) {
-        clientType = 'pre-launched-browser';
+        clientType = 'pre-launched-browser-or-android';
         semaphore = browserSemaphore;
       } else if (browserName) {
         clientType = 'launch-browser';
@@ -160,12 +156,13 @@ export class PlaywrightServer {
       const connection = new PlaywrightConnection(
           semaphore.aquire(),
           clientType, ws,
-          { enableSocksProxy, browserName, launchOptions },
+          { socksProxyPattern: proxyValue, browserName, launchOptions },
           {
             playwright: this._preLaunchedPlaywright,
             browser: this._options.preLaunchedBrowser,
             androidDevice: this._options.preLaunchedAndroidDevice,
-            networkTetheringSocksProxy: this._networkTetheringSocksProxy,
+            ownedSocksProxy: this._options.preLaunchedSocksProxy,
+            sharedSocksProxy: this._networkTetheringSocksProxy,
           },
           log, () => {
             semaphore.release();

@@ -224,7 +224,7 @@ it('should intercept with post data override', async ({ page, server, isElectron
   const requestPromise = server.waitForRequest('/empty.html');
   await page.route('**/*.html', async route => {
     const response = await route.fetch({
-      data: { 'foo': 'bar' },
+      postData: { 'foo': 'bar' },
     });
     await route.fulfill({ response });
   });

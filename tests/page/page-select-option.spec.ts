@@ -36,6 +36,13 @@ it('should select single option by value', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'].onChange)).toEqual(['blue']);
 });
 
+it('should fall back to selecting by label', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/select.html');
+  await page.selectOption('select', 'Blue');
+  expect(await page.evaluate(() => window['result'].onInput)).toEqual(['blue']);
+  expect(await page.evaluate(() => window['result'].onChange)).toEqual(['blue']);
+});
+
 it('should select single option by label', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/select.html');
   await page.selectOption('select', { label: 'Indigo' });
