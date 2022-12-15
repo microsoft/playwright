@@ -39,7 +39,3 @@
 .toolbar-button:not(:disabled):active {
   background-color: var(--vscode-toolbar-activeBackground);
 }
-
-.toolbar-button > :not(:last-child) {
-  margin-right: 8px;
-}
