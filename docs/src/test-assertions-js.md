@@ -16,7 +16,7 @@ the expected condition is met. Consider the following example:
 await expect(page.getByTestId('status')).toHaveText('Submitted');
 ```
 
-Playwright Test will be re-testing the node with the test id of `status` until the fetched Node has the `"Submitted"` text. It will re-fetch the node and check it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value in the test config.
+Playwright Test will be re-testing the element with the test id of `status` until the fetched element has the `"Submitted"` text. It will re-fetch the element and check it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value in the test config.
 
 By default, the timeout for assertions is set to 5 seconds. Learn more about [various timeouts](./test-timeouts.md).
 
