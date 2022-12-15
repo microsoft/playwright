@@ -136,9 +136,9 @@ export const Recorder: React.FC<RecorderProps> = ({
       <SourceView text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine}></SourceView>
       <div className='vbox'>
         <Toolbar>
-          <ToolbarButton icon='microscope' title='Explore' toggled={mode === 'inspecting'} onClick={() => {
+          <ToolbarButton icon='microscope' title='Pick locator' toggled={mode === 'inspecting'} onClick={() => {
             window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' } }).catch(() => { });
-          }}>Explore</ToolbarButton>
+          }}>Pick locator</ToolbarButton>
           <CodeMirrorWrapper text={locator} language={source.language} readOnly={false} focusOnChange={true} wrapLines={true} onChange={text => {
             setLocator(text);
             window.dispatch({ event: 'selectorUpdated', params: { selector: text, language: source.language } });
