@@ -16,15 +16,15 @@
 
 .toolbar-button {
   flex: none;
+  border: none;
+  outline: none;
   color: var(--vscode-sideBarTitle-foreground);
   background: transparent;
   margin-left: 10px;
   display: inline-flex;
   align-items: center;
-  border-radius: 6px;
-  border: 1px solid var(--vscode-dropdown-border);
   white-space: nowrap;
-  padding: 5px 8px;
+  padding: 4px;
   cursor: pointer;
 }
 
