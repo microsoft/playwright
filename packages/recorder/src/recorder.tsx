@@ -108,7 +108,7 @@ export const Recorder: React.FC<RecorderProps> = ({
     <Toolbar>
       <ToolbarButton icon='record' title='Record' toggled={mode === 'recording'} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'recording' ? 'none' : 'recording' } });
-      }}><span>Record</span></ToolbarButton>
+      }}>Record</ToolbarButton>
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
         copy(source.text);
       }}></ToolbarButton>
@@ -138,7 +138,7 @@ export const Recorder: React.FC<RecorderProps> = ({
         <Toolbar>
           <ToolbarButton icon='microscope' title='Pick locator' toggled={mode === 'inspecting'} onClick={() => {
             window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'none' : 'inspecting' } }).catch(() => { });
-          }}><span>Pick locator</span></ToolbarButton>
+          }}>Pick locator</ToolbarButton>
           <CodeMirrorWrapper text={locator} language={source.language} readOnly={false} focusOnChange={true} wrapLines={true} onChange={text => {
             setLocator(text);
             window.dispatch({ event: 'selectorUpdated', params: { selector: text, language: source.language } });

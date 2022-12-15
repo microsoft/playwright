@@ -38,7 +38,7 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
   if (toggled)
     className += ' toggled';
   return <button className={className} type='button' onClick={onClick} title={title} disabled={!!disabled}>
-    <span className={`codicon codicon-${icon}`} style={children ? { marginRight: 5 } : {}}></span>
+    <span className={`codicon codicon-${icon}`} style={children ? { marginRight: 8 } : {}}></span>
     {children}
   </button>;
 };
