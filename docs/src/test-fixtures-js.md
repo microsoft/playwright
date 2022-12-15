@@ -353,7 +353,7 @@ exports.test = base.test.extend({
     await page.getByLabel('User Name').fill(username);
     await page.getByLabel('Password').fill(password);
     await page.getByText('Sign in').click();
-    await expect(page.getByTestid('userinfo')).toHaveText(username);
+    await expect(page.getByTestId('userinfo')).toHaveText(username);
 
     // Use signed-in page in the test.
     await use(page);
