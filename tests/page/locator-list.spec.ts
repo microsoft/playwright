@@ -23,13 +23,3 @@ it('locator.all should work', async ({ page }) => {
     texts.push(await p.textContent());
   expect(texts).toEqual(['A', 'B', 'C']);
 });
-
-it('locator.enumerate should work', async ({ page }) => {
-  await page.setContent(`<div><p>0</p><p>1</p><p>2</p><p>3</p></div>`);
-  let items = 0;
-  for (const [p, i] of await page.locator('div >> p').enumerate()) {
-    ++items;
-    expect(await p.textContent()).toBe(String(i));
-  }
-  expect(items).toBe(4);
-});

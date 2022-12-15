@@ -458,36 +458,6 @@ Resolves given locator to the first matching DOM element. If no elements matchin
 
 Resolves given locator to all matching DOM elements.
 
-## async method: Locator.enumerate
-* since: v1.14
-* langs: js, python, csharp
-- returns: <[Array]<[Tuple]<[Locator],[int]>>>
-
-When locator points to a list of elements, returns array of (locator, index) pairs,
-pointing to respective elements.
-
-**Usage**
-
-```js
-for (const [li, i] of await page.getByRole('listitem').enumerate())
-  await li.click();
-```
-
-```python async
-for (li, index) in await page.get_by_role('listitem').enumerate():
-  await li.click();
-```
-
-```python sync
-for (li, index) in page.get_by_role('listitem').enumerate():
-  li.click();
-```
-
-```csharp
-foreach (var (li, index) in await page.GetByRole('listitem').AllAsync())
-  await li.ClickAsync();
-```
-
 ## async method: Locator.evaluate
 * since: v1.14
 - returns: <[Serializable]>
