@@ -77,7 +77,6 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   _failureText: string | null = null;
   private _provisionalHeaders: RawHeaders;
   private _actualHeadersPromise: Promise<RawHeaders> | undefined;
-  private _postData: Buffer | null;
   _timing: ResourceTiming;
   private _fallbackOverrides: SerializedFallbackOverrides = {};
 
@@ -95,7 +94,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
     this._provisionalHeaders = new RawHeaders(initializer.headers);
-    this._postData = initializer.postData ?? null;
+    this._fallbackOverrides.postDataBuffer = initializer.postData;
     this._timing = {
       startTime: 0,
       domainLookupStart: -1,
@@ -122,15 +121,11 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   postData(): string | null {
-    if (this._fallbackOverrides.postDataBuffer)
-      return this._fallbackOverrides.postDataBuffer.toString('utf-8');
-    return this._postData ? this._postData.toString('utf8') : null;
+    return this._fallbackOverrides.postDataBuffer?.toString('utf-8') || null;
   }
 
   postDataBuffer(): Buffer | null {
-    if (this._fallbackOverrides.postDataBuffer)
-      return this._fallbackOverrides.postDataBuffer;
-    return this._postData;
+    return this._fallbackOverrides.postDataBuffer || null;
   }
 
   postDataJSON(): Object | null {
@@ -256,21 +251,19 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   _applyFallbackOverrides(overrides: FallbackOverrides) {
-    const basicOptions = { ...overrides, postData: undefined };
+    if (overrides.url)
+      this._fallbackOverrides.url = overrides.url;
+    if (overrides.method)
+      this._fallbackOverrides.method = overrides.method;
+    if (overrides.headers)
+      this._fallbackOverrides.headers = overrides.headers;
 
-    const postData = overrides.postData;
-    let postDataBuffer = this._fallbackOverrides.postDataBuffer;
-    if (isString(postData))
-      postDataBuffer = Buffer.from(postData, 'utf-8');
-    else if (postData instanceof Buffer)
-      postDataBuffer = postData;
-    else if (postData)
-      postDataBuffer = Buffer.from(JSON.stringify(postData), 'utf-8');
-    this._fallbackOverrides = {
-      ...this._fallbackOverrides,
-      ...basicOptions,
-      postDataBuffer,
-    };
+    if (isString(overrides.postData))
+      this._fallbackOverrides.postDataBuffer = Buffer.from(overrides.postData, 'utf-8');
+    else if (overrides.postData instanceof Buffer)
+      this._fallbackOverrides.postDataBuffer = overrides.postData;
+    else if (overrides.postData)
+      this._fallbackOverrides.postDataBuffer = Buffer.from(JSON.stringify(overrides.postData), 'utf-8');
   }
 
   _fallbackOverridesForContinue() {
