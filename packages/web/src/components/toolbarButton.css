@@ -25,6 +25,7 @@
   border: 1px solid var(--vscode-dropdown-border);
   white-space: nowrap;
   padding: 5px 8px;
+  cursor: pointer;
 }
 
 .toolbar-button:disabled {
