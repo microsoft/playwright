@@ -385,7 +385,7 @@ export const test = base.extend<{}, { account: Account }>({
     await page.getByLabel('Password').fill(password);
     await page.getByText('Sign up').click();
     // Make sure everything is ok.
-    await expect(page.getByTestid('result')).toHaveText('Success');
+    await expect(page.getByTestId('result')).toHaveText('Success');
     // Do not forget to cleanup.
     await page.close();
 
