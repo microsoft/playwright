@@ -23,18 +23,8 @@
   align-items: center;
   border-radius: 6px;
   border: 1px solid var(--vscode-dropdown-border);
-  font-family: inherit;
-  line-height: 20px;
   white-space: nowrap;
-  vertical-align: middle;
-  cursor: pointer;
-  appearance: none;
-  user-select: none;
-  text-decoration: none;
-  text-align: center;
   padding: 5px 8px;
-  font-size: 14px;
-  color: var(--vscode-sideBarTitle-foreground);
 }
 
 .toolbar-button:disabled {
