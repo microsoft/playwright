@@ -20,12 +20,10 @@
   outline: none;
   color: var(--vscode-sideBarTitle-foreground);
   background: transparent;
+  padding: 4px;
   margin-left: 10px;
   display: inline-flex;
   align-items: center;
-  white-space: nowrap;
-  padding: 4px;
-  cursor: pointer;
 }
 
 .toolbar-button:disabled {
