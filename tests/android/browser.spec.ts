@@ -32,12 +32,19 @@ test('androidDevice.launchBrowser', async function({ androidDevice }) {
   await context.close();
 });
 
-test('androidDevice.launchBrowser should pass args with spaces', async ({ androidDevice }) => {
-  const context = await androidDevice.launchBrowser({ args: ['--user-agent=I am Foo'] });
-  const page = await context.newPage();
-  const userAgent = await page.evaluate(() => navigator.userAgent);
-  await context.close();
-  expect(userAgent).toBe('I am Foo');
+test('androidDevice.launchBrowser should treat args correctly', async ({ androidDevice }) => {
+  for (const arg of [
+    "--user-agent='I am Foo'",
+    '--user-agent="I am Foo"',
+  ]) {
+    await test.step(`arg: ${arg}`, async () => {
+      const context = await androidDevice.launchBrowser({ args: [arg] });
+      const page = await context.newPage();
+      const userAgent = await page.evaluate(() => navigator.userAgent);
+      await context.close();
+      expect(userAgent).toBe('I am Foo');
+    });
+  }
 });
 
 test('androidDevice.launchBrowser should throw for bad proxy server value', async ({ androidDevice }) => {
@@ -48,12 +55,12 @@ test('androidDevice.launchBrowser should throw for bad proxy server value', asyn
   expect(error.message).toContain('proxy.server: expected string, got number');
 });
 
-test('androidDevice.launchBrowser should pass proxy config', async ({ androidDevice, server, mode }) => {
+test('androidDevice.launchBrowser should pass proxy config', async ({ androidDevice, server, mode, loopback }) => {
   test.skip(mode === 'docker', 'proxy is not supported for remote connection');
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
-  const context = await androidDevice.launchBrowser({ proxy: { server: `localhost:${server.PORT}` } });
+  const context = await androidDevice.launchBrowser({ proxy: { server: `${loopback}:${server.PORT}` } });
   const page = await context.newPage();
   await page.goto('http://non-existent.com/target.html');
   expect(await page.title()).toBe('Served by the proxy');
