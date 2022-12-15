@@ -4,6 +4,60 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.29
+
+### Test Runner Update
+
+- Retry blocks of code until they are passing successfully:
+
+    ```js
+    await expect(async () => {
+      const response = await page.request.get('https://api.example.com');
+      expect(response.status()).toBe(200);
+    }).toPass();
+    ```
+
+  Read more in [our documentation](./test-assertions.md#retrying).
+
+- Automatic screenshot options to capture full page screenshots or omit background:
+    ```js
+    // playwright.config.ts
+    import type { PlaywrightTestConfig } from '@playwright/test';
+
+    const config: PlaywrightTestConfig = {
+      use: {
+        screenshot: {
+          mode: 'on',
+          fullPage: true,
+          omitBackground: true,
+        }
+      }
+    };
+
+    export default config;
+    ```
+
+- Playwright Test now respects [`jsconfig.json`](https://code.visualstudio.com/docs/languages/jsconfig).
+
+### New APIs
+
+- New option `json` for [`method: Route.fulfill`]
+- [`method: Route.fetch`]
+- [`method: Locator.all`]
+- New options `args` and `proxy` for [`method: AndroidDevice.launchBrowser`]
+- Option `postData` in method [`method: Route.continue`] now supports [serializable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#description) values
+
+### Browser Versions
+
+* Chromium 109.0.5414.46
+* Mozilla Firefox 107.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 108
+* Microsoft Edge 108
+
 ## Version 1.28
 
 <div className="embed-youtube">
