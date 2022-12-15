@@ -25,6 +25,8 @@ import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
 import { isTextualMimeType } from 'playwright-core/lib/utils/mimeType';
+import { monotonicTime } from 'playwright-core/lib/utils';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 
 interface LocatorEx extends Locator {
   _expect(customStackTrace: ParsedStackTrace, expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -308,4 +310,53 @@ export async function toBeOK(
 
   const pass = response.ok();
   return { message, pass };
+}
+
+export async function toPass(
+  this: ReturnType<Expect['getState']>,
+  callback: () => void,
+  options: {
+    intervals?: number[];
+    timeout?: number,
+  } = {},
+) {
+  let matcherError: Error | undefined;
+  const startTime = monotonicTime();
+  const pollIntervals = options.intervals || [100, 250, 500, 1000];
+  const lastPollInterval = pollIntervals[pollIntervals.length - 1] || 1000;
+  const timeout = options.timeout !== undefined ? options.timeout : 0;
+  const isNot = this.isNot;
+
+  while (true) {
+    const elapsed = monotonicTime() - startTime;
+    if (timeout !== 0 && elapsed > timeout)
+      break;
+    try {
+      const wrappedCallback = () => Promise.resolve().then(callback);
+      const received = timeout !== 0 ? await raceAgainstTimeout(wrappedCallback, timeout - elapsed)
+        : await wrappedCallback().then(() => ({ timedOut: false }));
+      if (received.timedOut)
+        break;
+      // The check passed, exit sucessfully.
+      if (isNot)
+        matcherError = new Error('Expected to fail, but passed');
+      else
+        return { message: () => '', pass: true };
+    } catch (e) {
+      if (isNot)
+        return { message: () => '', pass: false };
+      matcherError = e;
+    }
+    await new Promise(x => setTimeout(x, pollIntervals!.shift() ?? lastPollInterval));
+  }
+
+  const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
+  const message = () => matcherError ? [
+    matcherError.message,
+    '',
+    `Call Log:`,
+    `- ${timeoutMessage}`,
+  ].join('\n') : timeoutMessage;
+
+  return { message, pass: false };
 }
