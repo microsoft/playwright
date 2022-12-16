@@ -128,6 +128,26 @@ test.describe('toHaveText with text', () => {
     await expect(page.locator('div')).not.toHaveText('some text', { useInnerText: true });
     await expect(page.locator('div')).not.toContainText('text', { useInnerText: true });
   });
+
+  test('in shadow dom with slots', async ({ page }) => {
+    await page.setContent(`
+      <div>foo</div>
+      <script>
+        (() => {
+          const container = document.querySelector('div');
+          const shadow = container.attachShadow({ mode: 'open' });
+          const button = document.createElement('button');
+          shadow.appendChild(button);
+          const slot = document.createElement('slot');
+          button.appendChild(slot);
+          const span = document.createElement('span');
+          span.textContent = 'pre';
+          slot.appendChild(span);
+        })();
+      </script>
+    `);
+    await expect(page.locator('button')).toHaveText('foo');
+  });
 });
 
 test.describe('not.toHaveText', () => {

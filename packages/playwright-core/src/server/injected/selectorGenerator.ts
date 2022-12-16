@@ -174,7 +174,7 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
       candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder, false)}]`, score: kPlaceholderScore });
     const label = input.labels?.[0];
     if (label) {
-      const labelText = elementText(injectedScript._evaluator._cacheText, label).full.trim();
+      const labelText = elementText(injectedScript._evaluator._cacheText, label, injectedScript.textShadowDomMode()).full.trim();
       candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, false), score: kLabelScore });
     }
   }
@@ -216,7 +216,7 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
 function buildTextCandidates(injectedScript: InjectedScript, element: Element, isTargetNode: boolean, accessibleNameCache: Map<Element, boolean>): SelectorToken[][] {
   if (element.nodeName === 'SELECT')
     return [];
-  const text = normalizeWhiteSpace(elementText(injectedScript._evaluator._cacheText, element).full).substring(0, 80);
+  const text = normalizeWhiteSpace(elementText(injectedScript._evaluator._cacheText, element, injectedScript.textShadowDomMode()).full).substring(0, 80);
   if (!text)
     return [];
   const candidates: SelectorToken[][] = [];

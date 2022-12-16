@@ -414,4 +414,23 @@ it.describe('selector generator', () => {
     </div>`);
     expect(await generate(page, 'button')).toBe('internal:attr=[title=\"Send to\"i]');
   });
+
+  it('should find text in flat (composed) shadow tree', async ({ page }) => {
+    await page.setContent(`
+      <div><span>foo</span></div>
+      <section>non-target</section>
+      <script>
+        (() => {
+          const container = document.querySelector('div');
+          const shadow = container.attachShadow({ mode: 'open' });
+          const section = document.createElement('section');
+          section.setAttribute('attr', 'target');
+          shadow.appendChild(section);
+          const slot = document.createElement('slot');
+          section.appendChild(slot);
+        })();
+      </script>
+    `);
+    expect(await generate(page, '[attr=target]')).toBe('section >> internal:has-text="foo"i');
+  });
 });

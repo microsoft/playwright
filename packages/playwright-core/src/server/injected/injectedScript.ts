@@ -69,23 +69,28 @@ export type HitTargetInterceptionResult = {
   stop: () => 'done' | { hitTargetDescription: string };
 };
 
+type InjectedScriptProps = {
+  isUnderTest: boolean;
+  sdkLanguage: Language;
+  testIdAttributeNameForStrictErrorAndConsoleCodegen: string;
+  stableRafCount: number;
+  browserName: string;
+  textShadowDomMode: 'flat' | 'shadowy';
+};
+
 export class InjectedScript {
   private _engines: Map<string, SelectorEngine>;
   _evaluator: SelectorEvaluatorImpl;
-  private _stableRafCount: number;
-  private _browserName: string;
   onGlobalListenersRemoved = new Set<() => void>();
   private _hitTargetInterceptor: undefined | ((event: MouseEvent | PointerEvent | TouchEvent) => void);
   private _highlight: Highlight | undefined;
   readonly isUnderTest: boolean;
-  private _sdkLanguage: Language;
-  private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
+  private _props: InjectedScriptProps;
 
-  constructor(isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
-    this.isUnderTest = isUnderTest;
-    this._sdkLanguage = sdkLanguage;
-    this._testIdAttributeNameForStrictErrorAndConsoleCodegen = testIdAttributeNameForStrictErrorAndConsoleCodegen;
-    this._evaluator = new SelectorEvaluatorImpl(new Map());
+  constructor(props: InjectedScriptProps, customEngines: { name: string, engine: SelectorEngine }[]) {
+    this._props = props;
+    this.isUnderTest = props.isUnderTest;
+    this._evaluator = new SelectorEvaluatorImpl(new Map(), props.textShadowDomMode);
 
     this._engines = new Map();
     this._engines.set('xpath', XPathEngine);
@@ -118,13 +123,10 @@ export class InjectedScript {
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
 
-    this._stableRafCount = stableRafCount;
-    this._browserName = browserName;
-
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();
 
-    if (isUnderTest)
+    if (props.isUnderTest)
       (window as any).__injectedScript = this;
   }
 
@@ -133,7 +135,11 @@ export class InjectedScript {
   }
 
   testIdAttributeNameForStrictErrorAndConsoleCodegen(): string {
-    return this._testIdAttributeNameForStrictErrorAndConsoleCodegen;
+    return this._props.testIdAttributeNameForStrictErrorAndConsoleCodegen;
+  }
+
+  textShadowDomMode() {
+    return this._props.textShadowDomMode;
   }
 
   parseSelector(selector: string): ParsedSelector {
@@ -262,7 +268,7 @@ export class InjectedScript {
         // TODO: replace contains() with something shadow-dom-aware?
         if (kind === 'lax' && lastDidNotMatchSelf && lastDidNotMatchSelf.contains(element))
           return false;
-        const matches = elementMatchesText(this._evaluator._cacheText, element, matcher);
+        const matches = elementMatchesText(this._evaluator._cacheText, element, matcher, this._props.textShadowDomMode);
         if (matches === 'none')
           lastDidNotMatchSelf = element;
         if (matches === 'self' || (matches === 'selfAndChildren' && kind === 'strict' && !internal))
@@ -285,7 +291,7 @@ export class InjectedScript {
         if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
           return [];
         const element = root as Element;
-        const text = elementText(this._evaluator._cacheText, element);
+        const text = elementText(this._evaluator._cacheText, element, this._props.textShadowDomMode);
         const { matcher } = createTextMatcher(selector, true);
         return matcher(text) ? [element] : [];
       }
@@ -301,7 +307,7 @@ export class InjectedScript {
           let labels: Element[] | NodeListOf<Element> | null | undefined = getAriaLabelledByElements(element);
           if (labels === null)
             labels = (element as HTMLInputElement).labels;
-          return !!labels && [...labels].some(label => matcher(elementText(this._evaluator._cacheText, label)));
+          return !!labels && [...labels].some(label => matcher(elementText(this._evaluator._cacheText, label, this._props.textShadowDomMode)));
         });
       }
     };
@@ -563,7 +569,7 @@ export class InjectedScript {
 
         // Drop frames that are shorter than 16ms - WebKit Win bug.
         const time = performance.now();
-        if (this._stableRafCount > 1 && time - lastTime < 15)
+        if (this._props.stableRafCount > 1 && time - lastTime < 15)
           return progress.continuePolling;
         lastTime = time;
 
@@ -574,7 +580,7 @@ export class InjectedScript {
           ++samePositionCounter;
         else
           samePositionCounter = 0;
-        const isStable = samePositionCounter >= this._stableRafCount;
+        const isStable = samePositionCounter >= this._props.stableRafCount;
         const isStableForLogs = isStable || !lastRect;
         lastRect = rect;
         if (!isStableForLogs)
@@ -1023,16 +1029,16 @@ export class InjectedScript {
   strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
     const infos = matches.slice(0, 10).map(m => ({
       preview: this.previewNode(m),
-      selector: this.generateSelector(m, this._testIdAttributeNameForStrictErrorAndConsoleCodegen),
+      selector: this.generateSelector(m, this._props.testIdAttributeNameForStrictErrorAndConsoleCodegen),
     }));
-    const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka ${asLocator(this._sdkLanguage, info.selector)}`);
+    const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka ${asLocator(this._props.sdkLanguage, info.selector)}`);
     if (infos.length < matches.length)
       lines.push('\n    ...');
-    return this.createStacklessError(`strict mode violation: ${asLocator(this._sdkLanguage, stringifySelector(selector))} resolved to ${matches.length} elements:${lines.join('')}\n`);
+    return this.createStacklessError(`strict mode violation: ${asLocator(this._props.sdkLanguage, stringifySelector(selector))} resolved to ${matches.length} elements:${lines.join('')}\n`);
   }
 
   createStacklessError(message: string): Error {
-    if (this._browserName === 'firefox') {
+    if (this._props.browserName === 'firefox') {
       const error = new Error('Error: ' + message);
       // Firefox cannot delete the stack, so assign to an empty string.
       error.stack = '';
@@ -1184,7 +1190,7 @@ export class InjectedScript {
       } else if (expression === 'to.have.id') {
         received = element.id;
       } else if (expression === 'to.have.text') {
-        received = options.useInnerText ? (element as HTMLElement).innerText : elementText(new Map(), element).full;
+        received = options.useInnerText ? (element as HTMLElement).innerText : elementText(new Map(), element, this._props.textShadowDomMode).full;
       } else if (expression === 'to.have.title') {
         received = document.title;
       } else if (expression === 'to.have.url') {
@@ -1241,7 +1247,7 @@ export class InjectedScript {
     // List of values.
     let received: string[] | undefined;
     if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
-      received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e).full);
+      received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e, this._props.textShadowDomMode).full);
     else if (expression === 'to.have.class.array')
       received = elements.map(e => e.classList.toString());
 

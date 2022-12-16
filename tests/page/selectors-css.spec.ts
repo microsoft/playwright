@@ -422,3 +422,23 @@ it('css on the handle should be relative', async ({ page }) => {
   expect(await div.$eval(`.find-me`, e => e.id)).toBe('target2');
   expect(await page.$eval(`div >> .find-me`, e => e.id)).toBe('target2');
 });
+
+it('should not search in flat (composed) shadow tree', async ({ page }) => {
+  await page.setContent(`
+    <div><span id=target>foo</span></div>
+    <script>
+      (() => {
+        const container = document.querySelector('div');
+        const shadow = container.attachShadow({ mode: 'open' });
+        const button = document.createElement('button');
+        shadow.appendChild(button);
+        const slot = document.createElement('slot');
+        button.appendChild(slot);
+      })();
+    </script>
+  `);
+  expect.soft(await page.locator('div > span').evaluate(e => e.id)).toBe('target');
+  expect.soft(await page.$('slot > span')).toBe(null);
+  expect.soft(await page.$('button span')).toBe(null);
+  expect.soft(await page.$('slot span')).toBe(null);
+});

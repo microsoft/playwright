@@ -55,6 +55,20 @@ export function closestCrossShadow(element: Element | undefined, css: string): E
   }
 }
 
+export function flatTreeChildNodes(node: Node): Node[] {
+  // Note: slots with zero assigned nodes render their children as fallback content.
+  const assignedNodes = node.nodeName === 'SLOT' ? (node as HTMLSlotElement).assignedNodes() : [];
+  if (assignedNodes.length)
+    return assignedNodes;
+  const direct = node.childNodes;
+  const shadow = (node as Element).shadowRoot?.childNodes || [];
+  return [...direct, ...shadow].filter(child => !(child as Element | Text).assignedSlot);
+}
+
+export function flatTreeChildElements(element: Element): Element[] {
+  return flatTreeChildNodes(element).filter(node => node.nodeType === 1 /* Node.ELEMENT_NODE */) as Element[];
+}
+
 export function isElementVisible(element: Element): boolean {
   // Note: this logic should be similar to waitForDisplayedAtStablePosition() to avoid surprises.
   if (!element.ownerDocument || !element.ownerDocument.defaultView)

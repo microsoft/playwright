@@ -101,16 +101,16 @@ export class FrameExecutionContext extends js.ExecutionContext {
       const sdkLanguage = this.frame._page.context()._browser.options.sdkLanguage;
       const source = `
         (() => {
-        const module = {};
-        ${injectedScriptSource.source}
-        return new module.exports(
-          ${isUnderTest()},
-          "${sdkLanguage}",
-          ${JSON.stringify(this.frame._page.selectors.testIdAttributeName())},
-          ${this.frame._page._delegate.rafCountForStablePosition()},
-          "${this.frame._page._browserContext._browser.options.name}",
-          [${custom.join(',\n')}]
-        );
+          const module = {};
+          ${injectedScriptSource.source}
+          return new module.exports({
+            isUnderTest: ${isUnderTest()},
+            sdkLanguage: "${sdkLanguage}",
+            testIdAttributeNameForStrictErrorAndConsoleCodegen: ${JSON.stringify(this.frame._page.selectors.testIdAttributeName())},
+            stableRafCount: ${this.frame._page._delegate.rafCountForStablePosition()},
+            browserName: "${this.frame._page._browserContext._browser.options.name}",
+            textShadowDomMode: "${process.env.PLAYWRIGHT_NO_FLAT_TREE_TEXT ? 'shadowy' : 'flat'}",
+          }, [${custom.join(',\n')}]);
         })();
       `;
       this._injectedScriptPromise = this.rawEvaluateHandle(source).then(objectId => new js.JSHandle(this, 'object', undefined, objectId));

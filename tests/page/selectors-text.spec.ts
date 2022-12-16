@@ -480,3 +480,85 @@ it('hasText and internal:text should match full node text in strict mode', async
   await expect(page.locator('div', { hasText: /^helloworld$/ })).toHaveId('div1');
   await expect(page.locator('div', { hasText: /^hello$/ })).toHaveId('div2');
 });
+
+it('should handle shadow dom slots', async ({ page }) => {
+  // Text "foo" is assigned to the slot, should not be used twice.
+  await page.setContent(`
+    <button><div>foo</div></button>
+    <script>
+      (() => {
+        const container = document.querySelector('div');
+        const shadow = container.attachShadow({ mode: 'open' });
+        const slot = document.createElement('slot');
+        shadow.appendChild(slot);
+      })();
+    </script>
+  `);
+  expect.soft(await page.locator('button').filter({ hasText: /^foo$/ }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button><div>foo</div></button>`,
+  ]);
+
+  // Text "foo" is assigned to the slot, should be used instead of slot content.
+  await page.setContent(`
+    <div>foo</div>
+    <script>
+      (() => {
+        const container = document.querySelector('div');
+        const shadow = container.attachShadow({ mode: 'open' });
+        const button = document.createElement('button');
+        shadow.appendChild(button);
+        const slot = document.createElement('slot');
+        button.appendChild(slot);
+        const span = document.createElement('span');
+        span.textContent = 'pre';
+        slot.appendChild(span);
+      })();
+    </script>
+  `);
+  expect.soft(await page.locator('button').filter({ hasText: 'foo' }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button><slot><span>pre</span></slot></button>`,
+  ]);
+
+  // Nothing is assigned to the slot, should use slot content.
+  await page.setContent(`
+    <div></div>
+    <script>
+      (() => {
+        const container = document.querySelector('div');
+        const shadow = container.attachShadow({ mode: 'open' });
+        const button = document.createElement('button');
+        shadow.appendChild(button);
+        const slot = document.createElement('slot');
+        button.appendChild(slot);
+        const span = document.createElement('span');
+        span.textContent = 'pre';
+        slot.appendChild(span);
+      })();
+    </script>
+  `);
+  expect.soft(await page.locator('button').filter({ hasText: 'pre' }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button><slot><span>pre</span></slot></button>`,
+  ]);
+});
+
+it('should respect PLAYWRIGHT_NO_FLAT_TREE_TEXT', async ({ page, mode }) => {
+  it.skip(mode !== 'default', 'no env vars in subprocess');
+
+  process.env.PLAYWRIGHT_NO_FLAT_TREE_TEXT = '1';
+  // Text "foo" is assigned to the slot, should be used instead of slot content.
+  await page.setContent(`
+    <div>foo</div>
+    <script>
+      (() => {
+        const container = document.querySelector('div');
+        const shadow = container.attachShadow({ mode: 'open' });
+        const button = document.createElement('button');
+        shadow.appendChild(button);
+        const slot = document.createElement('slot');
+        button.appendChild(slot);
+      })();
+    </script>
+  `);
+  expect.soft(await page.locator('button').filter({ hasText: 'foo' }).count()).toBe(0);
+  delete process.env.PLAYWRIGHT_NO_FLAT_TREE_TEXT;
+});

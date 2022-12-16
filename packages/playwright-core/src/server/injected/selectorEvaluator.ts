@@ -47,11 +47,11 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   private _cacheCallMatches: QueryCache = new Map();
   private _cacheCallQuery: QueryCache = new Map();
   private _cacheQuerySimple: QueryCache = new Map();
-  _cacheText = new Map<Element | ShadowRoot, ElementText>();
+  _cacheText = new Map<Element, ElementText>();
   private _scoreMap: Map<Element, number> | undefined;
   private _retainCacheCounter = 0;
 
-  constructor(extraEngines: Map<string, SelectorEngine>) {
+  constructor(extraEngines: Map<string, SelectorEngine>, textShadowDomMode: 'flat' | 'shadowy') {
     for (const [name, engine] of extraEngines)
       this._engines.set(name, engine);
     this._engines.set('not', notEngine);
@@ -61,10 +61,10 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('scope', scopeEngine);
     this._engines.set('light', lightEngine);
     this._engines.set('visible', visibleEngine);
-    this._engines.set('text', textEngine);
-    this._engines.set('text-is', textIsEngine);
-    this._engines.set('text-matches', textMatchesEngine);
-    this._engines.set('has-text', hasTextEngine);
+    this._engines.set('text', createTextEngine(textShadowDomMode));
+    this._engines.set('text-is', createTextIsEngine(textShadowDomMode));
+    this._engines.set('text-matches', createTextMatchesEngine(textShadowDomMode));
+    this._engines.set('has-text', createHasTextEngine(textShadowDomMode));
     this._engines.set('right-of', createLayoutEngine('right-of'));
     this._engines.set('left-of', createLayoutEngine('left-of'));
     this._engines.set('above', createLayoutEngine('above'));
@@ -428,17 +428,17 @@ const visibleEngine: SelectorEngine = {
   }
 };
 
-const textEngine: SelectorEngine = {
+const createTextEngine = (shadowDomMode: 'flat' | 'shadowy'): SelectorEngine => ({
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text" engine expects a single string`);
     const text = normalizeWhiteSpace(args[0]).toLowerCase();
     const matcher = (elementText: ElementText) => normalizeWhiteSpace(elementText.full).toLowerCase().includes(text);
-    return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) === 'self';
+    return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher, shadowDomMode) === 'self';
   },
-};
+});
 
-const textIsEngine: SelectorEngine = {
+const createTextIsEngine = (shadowDomMode: 'flat' | 'shadowy'): SelectorEngine => ({
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text-is" engine expects a single string`);
@@ -448,21 +448,21 @@ const textIsEngine: SelectorEngine = {
         return true;
       return elementText.immediate.some(s => normalizeWhiteSpace(s) === text);
     };
-    return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) !== 'none';
+    return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher, shadowDomMode) !== 'none';
   },
-};
+});
 
-const textMatchesEngine: SelectorEngine = {
+const createTextMatchesEngine = (shadowDomMode: 'flat' | 'shadowy'): SelectorEngine => ({
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
       throw new Error(`"text-matches" engine expects a regexp body and optional regexp flags`);
     const re = new RegExp(args[0], args.length === 2 ? args[1] : undefined);
     const matcher = (elementText: ElementText) => re.test(elementText.full);
-    return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) === 'self';
+    return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher, shadowDomMode) === 'self';
   },
-};
+});
 
-const hasTextEngine: SelectorEngine = {
+const createHasTextEngine = (shadowDomMode: 'flat' | 'shadowy'): SelectorEngine => ({
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"has-text" engine expects a single string`);
@@ -470,9 +470,9 @@ const hasTextEngine: SelectorEngine = {
       return false;
     const text = normalizeWhiteSpace(args[0]).toLowerCase();
     const matcher = (elementText: ElementText) => normalizeWhiteSpace(elementText.full).toLowerCase().includes(text);
-    return matcher(elementText((evaluator as SelectorEvaluatorImpl)._cacheText, element));
+    return matcher(elementText((evaluator as SelectorEvaluatorImpl)._cacheText, element, shadowDomMode));
   },
-};
+});
 
 function createLayoutEngine(name: LayoutSelectorName): SelectorEngine {
   return {

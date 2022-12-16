@@ -15,6 +15,7 @@
  */
 
 import { type AttributeSelectorPart } from '../isomorphic/selectorParser';
+import { flatTreeChildElements, flatTreeChildNodes } from './domUtils';
 
 export function matchesComponentAttribute(obj: any, attr: AttributeSelectorPart) {
   for (const token of attr.jsonPath) {
@@ -57,7 +58,7 @@ export function shouldSkipForTextMatching(element: Element | ShadowRoot) {
 export type ElementText = { full: string, immediate: string[] };
 export type TextMatcher = (text: ElementText) => boolean;
 
-export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root: Element | ShadowRoot): ElementText {
+export function elementText(cache: Map<Element, ElementText>, root: Element, shadowDomMode: 'flat' | 'shadowy'): ElementText {
   let value = cache.get(root);
   if (value === undefined) {
     value = { full: '', immediate: [] };
@@ -66,7 +67,8 @@ export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root:
       if ((root instanceof HTMLInputElement) && (root.type === 'submit' || root.type === 'button')) {
         value = { full: root.value, immediate: [root.value] };
       } else {
-        for (let child = root.firstChild; child; child = child.nextSibling) {
+        const children = shadowDomMode === 'flat' ? flatTreeChildNodes(root) : [...root.childNodes];
+        for (const child of children) {
           if (child.nodeType === Node.TEXT_NODE) {
             value.full += child.nodeValue || '';
             currentImmediate += child.nodeValue || '';
@@ -75,13 +77,11 @@ export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root:
               value.immediate.push(currentImmediate);
             currentImmediate = '';
             if (child.nodeType === Node.ELEMENT_NODE)
-              value.full += elementText(cache, child as Element).full;
+              value.full += elementText(cache, child as Element, shadowDomMode).full;
           }
         }
         if (currentImmediate)
           value.immediate.push(currentImmediate);
-        if ((root as Element).shadowRoot)
-          value.full += elementText(cache, (root as Element).shadowRoot!).full;
       }
     }
     cache.set(root, value);
@@ -89,16 +89,17 @@ export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root:
   return value;
 }
 
-export function elementMatchesText(cache: Map<Element | ShadowRoot, ElementText>, element: Element, matcher: TextMatcher): 'none' | 'self' | 'selfAndChildren' {
+export function elementMatchesText(cache: Map<Element, ElementText>, element: Element, matcher: TextMatcher, shadowDomMode: 'flat' | 'shadowy'): 'none' | 'self' | 'selfAndChildren' {
   if (shouldSkipForTextMatching(element))
     return 'none';
-  if (!matcher(elementText(cache, element)))
+  if (!matcher(elementText(cache, element, shadowDomMode)))
     return 'none';
-  for (let child = element.firstChild; child; child = child.nextSibling) {
-    if (child.nodeType === Node.ELEMENT_NODE && matcher(elementText(cache, child as Element)))
+  const children = shadowDomMode === 'flat' ?
+    flatTreeChildElements(element) :
+    [...element.childNodes].filter(node => node.nodeType === 1 /* Node.ELEMENT_NODE */) as Element[];
+  for (const child of children) {
+    if (matcher(elementText(cache, child, shadowDomMode)))
       return 'selfAndChildren';
   }
-  if (element.shadowRoot && matcher(elementText(cache, element.shadowRoot)))
-    return 'selfAndChildren';
   return 'self';
 }
