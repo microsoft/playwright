@@ -4,6 +4,80 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.29
+
+### New APIs
+
+- New method [`method: Route.fetch`] and new option `json` for [`method: Route.fulfill`]:
+
+    ```js
+    await page.route('**/api/settings', async route => {
+      // Fetch original settings.
+      const response = await route.fetch();
+
+      // Force settings theme to a predefined value.
+      const json = await response.json();
+      json.theme = 'Solorized';
+
+      // Fulfill with modified data.
+      await route.fulfill({ json });
+    });
+    ```
+
+- New method [`method: Locator.all`] to iterate over all matching elements:
+
+    ```js
+    // Check all checkboxes!
+    const checkboxes = page.getByRole('checkbox');
+    for (const checkbox of await checkboxes.all())
+      await checkbox.check();
+    ```
+
+- Retry blocks of code until all assertions pass:
+
+    ```js
+    await expect(async () => {
+      const response = await page.request.get('https://api.example.com');
+      await expect(response).toBeOK();
+    }).toPass();
+    ```
+
+  Read more in [our documentation](./test-assertions.md#retrying).
+
+- Automatically capture **full page screenshot** on test failure:
+    ```js
+    // playwright.config.ts
+    import type { PlaywrightTestConfig } from '@playwright/test';
+
+    const config: PlaywrightTestConfig = {
+      use: {
+        screenshot: {
+          mode: 'only-on-failure',
+          fullPage: true,
+        }
+      }
+    };
+
+    export default config;
+    ```
+
+### Miscellaneous
+
+- Playwright Test now respects [`jsconfig.json`](https://code.visualstudio.com/docs/languages/jsconfig).
+- New options `args` and `proxy` for [`method: AndroidDevice.launchBrowser`].
+- Option `postData` in method [`method: Route.continue`] now supports [serializable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#description) values.
+
+### Browser Versions
+
+* Chromium 109.0.5414.46
+* Mozilla Firefox 107.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 108
+* Microsoft Edge 108
+
 ## Version 1.28
 
 <div className="embed-youtube">
