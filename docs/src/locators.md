@@ -815,7 +815,7 @@ Consider the following DOM structure where we want to click on the buy button of
     <h3>Product 2</h3>
     <button>Add to cart</button>
   </li>
-<ul>
+</ul>
 ```
 
 ### Filter by text
@@ -854,7 +854,7 @@ page.get_by_role("listitem").filter(has_text="Product 2").get_by_role(
 await page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasText = "Product 2" })
-    .GetByRole(AriaRole.Button, new () { Name = "Add to cart" })
+    .GetByRole(AriaRole.Button, new() { Name = "Add to cart" })
     .ClickAsync();
 ```
 
@@ -893,7 +893,7 @@ page.get_by_role("listitem").filter(has_text=re.compile("Product 2")).get_by_rol
 await page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasTextRegex = new Regex("Product 2") })
-    .GetByRole(AriaRole.Button, new () { Name = "Add to cart" })
+    .GetByRole(AriaRole.Button, new() { Name = "Add to cart" })
     .ClickAsync();
 ```
 
@@ -948,11 +948,11 @@ page.get_by_role("listitem").filter(
 await page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
-        Has = page.GetByRole(AriaRole.Heading, new () {
+        Has = page.GetByRole(AriaRole.Heading, new() {
             Name = "Product 2"
         })
     })
-    .GetByRole(AriaRole.Button, new () { Name = "Add to cart" })
+    .GetByRole(AriaRole.Button, new() { Name = "Add to cart" })
     .ClickAsync();
 ```
 
@@ -992,7 +992,7 @@ expect(
 await Expect(page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
-        Has = page.GetByRole(AriaRole.Heading, new () { Name = "Product 2" })
+        Has = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
     })
     .toHaveCountAsync(1);
 ```
