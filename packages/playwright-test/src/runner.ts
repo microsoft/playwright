@@ -45,6 +45,7 @@ import { Suite } from './test';
 import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal } from './types';
 import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher, serializeError } from './util';
 import type { Matcher, TestFileFilter } from './util';
+import { getChangedFilesForRoots } from 'jest-changed-files';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -280,8 +281,9 @@ export class Runner {
     const config = this._loader.fullConfig();
     const projects = this._collectProjects(options.projectFilter);
     const { filesByProject, setupFiles } = await this._collectFiles(projects, options.testFileFilters);
+    const testDirs = projects.map(project => project.testDir);
 
-    let result = await this._createFilteredRootSuite(options, filesByProject, new Set(), !!setupFiles.size, setupFiles);
+    let result = await this._createFilteredRootSuite(options, testDirs, filesByProject, new Set(), !!setupFiles.size, setupFiles);
     if (setupFiles.size) {
       const allTests = result.rootSuite.allTests();
       const tests = allTests.filter(test => !test._isProjectSetup);
@@ -290,7 +292,7 @@ export class Runner {
       // - if the filter also matches some of the setup tests, we'll run only
       //   that maching subset of setup tests.
       if (tests.length > 0 && tests.length === allTests.length)
-        result = await this._createFilteredRootSuite(options, filesByProject, setupFiles, false, setupFiles);
+        result = await this._createFilteredRootSuite(options, testDirs, filesByProject, setupFiles, false, setupFiles);
     }
 
     fatalErrors.push(...result.fatalErrors);
@@ -308,7 +310,7 @@ export class Runner {
     return { rootSuite, projectSetupGroups, testGroups };
   }
 
-  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>, doNotFilterFiles: Set<string>, shouldCloneTests: boolean, setupFiles: Set<string>): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
+  private async _createFilteredRootSuite(options: RunOptions, testDirs: string[], filesByProject: Map<FullProjectInternal, string[]>, doNotFilterFiles: Set<string>, shouldCloneTests: boolean, setupFiles: Set<string>): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
     const config = this._loader.fullConfig();
     const fatalErrors: TestError[] = [];
     const allTestFiles = new Set<string>();
@@ -343,6 +345,14 @@ export class Runner {
     // Filter only.
     if (!options.listOnly)
       filterOnly(preprocessRoot, doNotFilterFiles);
+
+    // Filter uncommited or changed tests on git.
+    if (config.changed) {
+      let commit = 'HEAD';
+      if (typeof config.changed === 'string')
+        commit = config.changed;
+      await filterByChanged(preprocessRoot, testDirs, commit);
+    }
 
     // Generate projects.
     const fileSuites = new Map<string, Suite>();
@@ -680,6 +690,18 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[
   const suiteFilter = (suite: Suite) => doNotFilterFiles.has(suite._requireFile) || !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
   const testFilter = (test: TestCase) => doNotFilterFiles.has(test._requireFile) || testFileLineMatches(test.location.file, test.location.line, test.location.column);
   return filterSuite(suite, suiteFilter, testFilter);
+}
+
+async function filterByChanged(suite: Suite, testDirs: string[], commit: string) {
+  const changedFiles = await getChangedFilesForRoots(testDirs, { changedSince: commit });
+
+  const suiteFilter = (suite: Suite) => {
+    if (!suite.location)
+      return false;
+    return changedFiles.changedFiles.has(suite.location.file);
+  };
+  const testFilter = (test: TestCase) => changedFiles.changedFiles.has(test.location.file);
+  filterSuite(suite, suiteFilter, testFilter);
 }
 
 function filterSuiteWithOnlySemantics(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
