@@ -42,7 +42,7 @@ page.route("https://dog.ceo/api/breeds/list/all", handle)
 await page.RouteAsync("https://dog.ceo/api/breeds/list/all", async route =>
 {
     var json = /* JsonElement with the test payload */;
-    await route.FulfillAsync(new () { Json: json });
+    await route.FulfillAsync(new() { Json: json });
 });
 ```
 

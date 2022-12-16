@@ -566,7 +566,7 @@ page.route("**/*", lambda route: route.fulfill(
 ```
 
 ```csharp
-await page.RouteAsync("**/*", route => route.FulfillAsync(new ()
+await page.RouteAsync("**/*", route => route.FulfillAsync(new()
 {
     Status = 404,
     ContentType = "text/plain",
@@ -638,25 +638,41 @@ Optional response body as raw bytes.
 
 ### option: Route.fulfill.json
 * since: v1.29
-* langs: js, python
+* langs: js, python, csharp
 - `json` <[Serializable]>
-
-JSON response. This method will set the content type to `application/json` if not set.
-
-### option: Route.fulfill.json
-* since: v1.29
-* langs: csharp
-- `json` <[JsonElement]>
 
 JSON response. This method will set the content type to `application/json` if not set.
 
 **Usage**
 
+```js
+await page.route('https://dog.ceo/api/breeds/list/all', route => {
+  route.fulfill({
+    json: {
+      kinds: ['golden', 'labrador'],
+    },
+  });
+});
+```
+
+```python async
+await page.route("https://dog.ceo/api/breeds/list/all", lambda route: route.fulfill(
+    json={"kinds": ["golden", "labrador"]}))
+```
+
+```python sync
+page.route("https://dog.ceo/api/breeds/list/all", lambda route: route.fulfill(
+    json={"kinds": ["golden", "labrador"]}))
+```
+
 ```csharp
 await page.RouteAsync("https://dog.ceo/api/breeds/list/all", async route =>
 {
-    var json = /* JsonElement with test payload */;
-    await route.FulfillAsync(new () { Json: json });
+    var json = new Dictionary<string, object>
+    {
+        ["kinds"] = new[] { "golden", "labrador" }
+    };
+    await route.FulfillAsync(new() { Json = json });
 });
 ```
 

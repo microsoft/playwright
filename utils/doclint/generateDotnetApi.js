@@ -278,6 +278,16 @@ function renderConstructors(name, type, out) {
 }
 
 /**
+ * @param {string|undefined} message 
+ * @returns {string}
+ */
+function prefixDeprecatedMessage(message) {
+  if (!message)
+    return '';
+  return `**DEPRECATED** ${message}`;
+}
+
+/**
  *
  * @param {Documentation.Member} member
  * @param {Documentation.Class|Documentation.Type} parent
@@ -297,7 +307,7 @@ function renderMember(member, parent, options, out) {
       throw new Error(`No Event Type for ${name} in ${parent.name}`);
     out.push('');
     if (member.spec)
-      out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth, prefixDeprecatedMessage(member.deprecated)));
     if (member.deprecated)
       out.push(`[System.Obsolete]`);
     out.push(`event EventHandler<${type}> ${name};`);
@@ -315,7 +325,7 @@ function renderMember(member, parent, options, out) {
       let { type } = overload;
       out.push('');
       if (member.spec)
-        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth, prefixDeprecatedMessage(member.deprecated)));
       if (!member.clazz)
         out.push(`${member.required ? '[Required]\n' : ''}[JsonPropertyName("${jsonName}")]`);
       if (member.deprecated)
@@ -492,8 +502,10 @@ function renderMethod(member, parent, name, options, out) {
     && !name.startsWith('PostDataJSON')
     && !name.startsWith('As')) {
     if (!member.async) {
+      if (member.deprecated)
+        out.push(`**DEPRECATED**: ${member.deprecated}`);
       if (member.spec && !options.nodocs)
-        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth, prefixDeprecatedMessage(member.deprecated)));
       if (member.deprecated)
         out.push(`[System.Obsolete]`);
       out.push(`${type} ${name} { get; }`);
@@ -623,7 +635,7 @@ function renderMethod(member, parent, name, options, out) {
 
   if (!explodedArgs.length) {
     if (!options.nodocs) {
-      out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth, prefixDeprecatedMessage(member.deprecated)));
       paramDocs.forEach((value, i) => printArgDoc(i, value, out));
     }
     if (member.deprecated)
@@ -633,7 +645,7 @@ function renderMethod(member, parent, name, options, out) {
     let containsOptionalExplodedArgs = false;
     explodedArgs.forEach((explodedArg, argIndex) => {
       if (!options.nodocs)
-        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth, prefixDeprecatedMessage(member.deprecated)));
       const overloadedArgs = [];
       for (let i = 0; i < args.length; i++) {
         const arg = args[i];
@@ -662,7 +674,7 @@ function renderMethod(member, parent, name, options, out) {
     if (containsOptionalExplodedArgs) {
       const filteredArgs = args.filter(x => x !== 'OPTIONAL_EXPLODED_ARG');
       if (!options.nodocs)
-        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth, prefixDeprecatedMessage(member.deprecated)));
       filteredArgs.forEach(arg => {
         if (arg === 'EXPLODED_ARG')
           throw new Error(`Unsupported required union arg combined an optional union inside ${member.name}`);

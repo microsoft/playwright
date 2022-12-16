@@ -20,19 +20,29 @@ const { visitAll } = require('../markdown');
 /**
  * @param {Documentation.MarkdownNode[]} nodes
  * @param {number} maxColumns
+ * @param {string} summaryPrefixText
  */
-function renderXmlDoc(nodes, maxColumns = 80, prefix = '/// ') {
+function renderXmlDoc(nodes, maxColumns = 80, summaryPrefixText = '') {
   if (!nodes)
     return [];
 
   const renderResult = _innerRenderNodes(nodes, maxColumns);
 
-  const doc = [];
-  _wrapInNode('summary', renderResult.summary, doc);
-  _wrapInNode('remarks', renderResult.remarks, doc);
-  return doc.map(x => `${prefix}${x}`);
-}
+  if (summaryPrefixText)
+    _wrapInNode('para', wrapLine(summaryPrefixText, maxColumns), renderResult.summary);
 
+  const doc = [];
+  _wrapInNode('summary',  renderResult.summary, doc);
+  _wrapInNode('remarks', renderResult.remarks, doc);
+  return doc.map(x => `/// ${x}`);
+}
+/**
+ * 
+ * @param {Documentation.MarkdownNode[]} nodes 
+ * @param {number} maxColumns 
+ * @param {boolean} wrapParagraphs 
+ * @returns 
+ */
 function _innerRenderNodes(nodes, maxColumns = 80, wrapParagraphs = true) {
   const summary = [];
   const remarks = [];
@@ -86,6 +96,13 @@ function _wrapCode(lines) {
   return out;
 }
 
+/**
+ * @param {string} tag 
+ * @param {string[]} nodes
+ * @param {string[]} target 
+ * @param {string?} closingTag 
+ * @returns 
+ */
 function _wrapInNode(tag, nodes, target, closingTag = null) {
   if (nodes.length === 0)
     return;
@@ -117,7 +134,7 @@ function _wrapAndEscape(node, maxColumns = 0) {
   };
 
 
-  let text = node.text;
+  let text = node.text.replace(/↵/g, ' ');
   text = text.replace(/\[([^\]]*)\]\((.*?)\)/g, (match, linkName, linkUrl) => {
     const isInternal = !linkUrl.startsWith('http://') && !linkUrl.startsWith('https://');
     if (isInternal)
@@ -129,17 +146,30 @@ function _wrapAndEscape(node, maxColumns = 0) {
   text = text.replace(/ITimeoutError/, 'TimeoutException');
   text = text.replace(/Promise/, 'Task');
 
+  for (const line of wrapLine(text, maxColumns))
+    pushLine(line);
+
+  return lines;
+}
+
+/**
+ * @param {string} text 
+ * @param {number} maxColumns 
+ * @returns {string[]}
+ */
+function wrapLine(text, maxColumns) {
+  const lines = [];
   const words = text.split(' ');
   let line = '';
   for (let i = 0; i < words.length; i++) {
     line = line + ' ' + words[i];
     if (line.length >= maxColumns) {
-      pushLine(line);
+      lines.push(line);
       line = '';
     }
   }
-
-  pushLine(line);
+  if (line)
+    lines.push(line);
   return lines;
 }
 
