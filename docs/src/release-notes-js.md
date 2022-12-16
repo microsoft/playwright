@@ -24,7 +24,7 @@ toc_max_heading_level: 2
     });
     ```
 
-- New method [`method: Locator.all`] to iterate over lists:
+- New method [`method: Locator.all`] to iterate over all matching elements:
 
     ```js
     // Check all checkboxes!
