@@ -825,7 +825,7 @@ Get the browser context that the page belongs to.
 Only available for Chromium atm.
 :::
 
-Browser-specific Coverage implementation. See [Coverage](#class-coverage) for more details.
+Browser-specific Coverage implementation. See [Coverage](./class-coverage) for more details.
 
 ## async method: Page.dblclick
 * since: v1.8

@@ -186,7 +186,7 @@ Playwright methods might throw errors if they are unable to fulfill a request. F
 [`method: Locator.waitFor`] might fail if the selector doesn't match any nodes during the given timeframe.
 
 For certain types of errors Playwright uses specific error classes. These classes are available via
-[`playwright.errors`](#playwrighterrors).
+[`playwright.errors`](#playwright-errors).
 
 An example of handling a timeout error:
 

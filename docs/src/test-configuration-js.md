@@ -435,7 +435,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-However, most common ones like `headless` or `viewport` are available directly in the `use` section - see [basic options](#basic-options), [emulation](#emulation) or [network](#network).
+However, most common ones like `headless` or `viewport` are available directly in the `use` section - see [basic options](#basic-options), [emulation](./emulation.md) or [network](#network).
 
 ## Explicit Context Creation and Option Inheritance
 
