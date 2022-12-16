@@ -7,7 +7,7 @@ a way to find element(s) on the page at any moment. Locator can be created with 
 [Learn more about locators](../locators.md).
 
 ## async method: Locator.all
-* since: v1.14
+* since: v1.29
 - returns: <[Array]<[Locator]>>
 
 When locator points to a list of elements, returns array of locators, pointing
