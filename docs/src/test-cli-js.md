@@ -93,6 +93,8 @@ Complete set of Playwright Test options is available in the [configuration file]
 
 - `--output <dir>`: Directory for artifacts produced by tests, defaults to `test-results`.
 
+- `--changed [commit]`: Only run tests changed since commit. You can pass commit hash, branch name, or HEAD for example. Only run uncommitted tests if no commit if provided. By default, it runs all tests.
+
 - `--project <name>`: Only run tests from one of the specified [projects](./test-advanced.md#projects). Defaults to running all projects defined in the configuration file.
 
 - `--quiet`: Whether to suppress stdout and stderr from the tests.

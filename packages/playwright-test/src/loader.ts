@@ -669,6 +669,7 @@ export const baseFullConfig: FullConfigInternal = {
   _maxConcurrentTestGroups: 0,
   _ignoreSnapshots: false,
   _workerIsolation: 'isolate-pools',
+  changed: ''
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {

@@ -39,7 +39,7 @@ export default config;
 - type: ?<[Object]>
   - `timeout` ?<[int]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
   - `toHaveScreenshot` ?<[Object]> Configuration for the [`method: PageAssertions.toHaveScreenshot#1`] method.
-    - `threshold` ?<[float]> an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and `1` (lax). `"pixelmatch"` comparator computes color difference in [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. 
+    - `threshold` ?<[float]> an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and `1` (lax). `"pixelmatch"` comparator computes color difference in [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
     - `maxDiffPixels` ?<[int]> an acceptable amount of pixels that could be different, unset by default.
     - `maxDiffPixelRatio` ?<[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
     - `animations` ?<[ScreenshotAnimations]<"allow"|"disabled">> See [`option: animations`] in [`method: Page.screenshot`]. Defaults to `"disabled"`.
@@ -753,6 +753,15 @@ const config = {
 };
 module.exports = config;
 ```
+
+## property: TestConfig.changed
+* since: v1.30
+- type: ?<[boolean]|[string]>
+
+Only run tests changed since commit. You can pass commit hash, branch name, or HEAD for example. Only run uncommitted tests if `true` is provided. By default, it runs all tests.
+* `'main'` - run new tests e.g. from a Pull Request
+* `true` - run tests with uncommited changes
+* `'HEAD~1'` - run tests new compared to the last commit
 
 ## property: TestConfig.workers
 * since: v1.10

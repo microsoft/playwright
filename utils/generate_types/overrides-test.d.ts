@@ -91,6 +91,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   shard: { total: number, current: number } | null;
   updateSnapshots: 'all' | 'none' | 'missing';
   workers: number;
+  changed: boolean | string;
   webServer: TestConfigWebServer | null;
   configFile?: string;
   // [internal] !!! DO NOT ADD TO THIS !!! See prior note.

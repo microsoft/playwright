@@ -58,6 +58,7 @@ function addTestCommand(program: Command) {
   command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${baseFullConfig.reporter[0]}")`);
   command.option('--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`);
   command.option('--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`);
+  command.option('--changed [commit]', `Only run uncommited tests, or tests changed since commit (default: run all test files)`);
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
   command.option('--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`);
   command.option('--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
@@ -225,6 +226,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
     workers: options.workers,
+    changed: options.changed,
   };
 }
 

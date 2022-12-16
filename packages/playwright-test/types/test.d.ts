@@ -1046,6 +1046,15 @@ interface TestConfig {
   updateSnapshots?: "all"|"none"|"missing";
 
   /**
+   * Only run tests changed since commit. You can pass commit hash, branch name, or HEAD for example. Only run
+   * uncommitted tests if `true` is provided. By default, it runs all tests.
+   * - `'main'` - run new tests e.g. from a Pull Request
+   * - `true` - run tests with uncommited changes
+   * - `'HEAD~1'` - run tests new compared to the last commit
+   */
+  changed?: boolean|string;
+
+  /**
    * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
    * logical CPU cores, e.g. `'50%'.`
    *
@@ -1346,6 +1355,14 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   workers: number;
+  /**
+   * Only run tests changed since commit. You can pass commit hash, branch name, or HEAD for example. Only run
+   * uncommitted tests if `true` is provided. By default, it runs all tests.
+   * - `'main'` - run new tests e.g. from a Pull Request
+   * - `true` - run tests with uncommited changes
+   * - `'HEAD~1'` - run tests new compared to the last commit
+   */
+  changed: boolean | string;
   /**
    * Launch a development web server (or multiple) during the tests.
    *

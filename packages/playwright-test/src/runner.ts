@@ -71,6 +71,7 @@ export type ConfigCLIOverrides = {
   reporter?: string;
   shard?: { current: number, total: number };
   timeout?: number;
+  changed?: string;
   ignoreSnapshots?: boolean;
   updateSnapshots?: 'all'|'none'|'missing';
   workers?: number;
