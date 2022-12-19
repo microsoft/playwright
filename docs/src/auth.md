@@ -44,7 +44,7 @@ test.beforeEach(async ({ page }) => {
   // Runs before each test and signs in each page.
   await page.goto('https://github.com/login');
   await page.getByText('Login').click();
-  await page.getByLabel('User name').fill('username');
+  await page.getByLabel('User Name').fill('username');
   await page.getByLabel('Password').fill('password');
   await page.getByText('Submit').click();
 });
@@ -339,6 +339,7 @@ exports.test = base.extend({
       // Make sure we are not using any other storage state.
       const page = await browser.newPage({ storageState: undefined });
       await page.goto('https://github.com/login');
+      // Create a unique username for each worker.
       await page.getByLabel('User Name').fill(users[testInfo.workerIndex].username);
       await page.getByLabel('Password').fill(users[testInfo.workerIndex].password);
       await page.getByText('Sign in').click();
@@ -463,7 +464,7 @@ const { test } = require('@playwright/test');
 test.use({ storageState: 'adminStorageState.json' });
 
 test('admin test', async ({ page }) => {
-  // page is signed in as amin.
+  // page is signed in as admin.
 });
 
 test.describe(() => {
