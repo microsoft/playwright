@@ -299,9 +299,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this._dispatchEvent('frameDetached', { frame: FrameDispatcher.from(this, frame) });
   }
 
-  override _dispose() {
-    super._dispose();
-    this._page.setClientRequestInterceptor(undefined).catch(() => {});
+  override _onDispose() {
+    // Avoid protocol calls for the closed page.
+    if (!this._page.isClosedOrClosingOrCrashed())
+      this._page.setClientRequestInterceptor(undefined).catch(() => {});
   }
 }
 
