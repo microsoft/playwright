@@ -178,7 +178,8 @@ export class Recorder implements InstrumentationListener {
     });
 
     await this._context.exposeBinding('__pw_recorderSetSelector', false, async (_, selector: string) => {
-      await this._recorderApp?.setSelector(selector, true);
+      const selectorWithFrame = _.frame._parentFrame ? `iframe >> nth=0 >> internal:control=enter-frame >> ${selector}` : selector;
+      await this._recorderApp?.setSelector(selectorWithFrame, true);
     });
 
     await this._context.exposeBinding('__pw_resume', false, () => {
