@@ -526,25 +526,31 @@ export class InjectedScript {
     return element;
   }
 
-  waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[], force: boolean | undefined,
-    callback: (node: Node, progress: InjectedScriptProgress) => T | symbol): InjectedScriptPoll<T | 'error:notconnected'> {
+  waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[], behavior: 'force' | 'wait' | 'check',
+    callback: (node: Node, progress: InjectedScriptProgress) => T | symbol): InjectedScriptPoll<T | 'error:notconnected' | 'error:actionability'> {
     let lastRect: { x: number, y: number, width: number, height: number } | undefined;
     let counter = 0;
     let samePositionCounter = 0;
     let lastTime = 0;
 
     return this.pollRaf(progress => {
-      if (force) {
+      if (behavior === 'force') {
         progress.log(`    forcing action`);
         return callback(node, progress);
       }
 
+      let passedChecks = true;
       for (const state of states) {
         if (state !== 'stable') {
           const result = this.elementState(node, state);
           if (typeof result !== 'boolean')
             return result;
           if (!result) {
+            if (behavior === 'check') {
+              progress.logRepeating(`    element is not ${state}`);
+              passedChecks = false;
+              break;
+            }
             progress.logRepeating(`    element is not ${state} - waiting...`);
             return progress.continuePolling;
           }
@@ -579,10 +585,21 @@ export class InjectedScript {
         lastRect = rect;
         if (!isStableForLogs)
           progress.logRepeating(`    element is not stable - waiting...`);
-        if (!isStable)
+        if (!isStable) {
+          // First iteration we skip, see |++counter === 1| above.
+          // Second iteration we gather the base position.
+          // Third iteration we actually check the stability.
+          if (behavior === 'check' && counter >= this._stableRafCount + 2) {
+            progress.logRepeating(`    element is not stable`);
+            passedChecks = false;
+            break;
+          }
           return progress.continuePolling;
+        }
       }
 
+      if (!passedChecks)
+        return 'error:actionability';
       return callback(node, progress);
     });
   }

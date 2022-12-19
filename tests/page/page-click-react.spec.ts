@@ -127,3 +127,38 @@ it('should not retarget when element is recycled on hover', async ({ page, serve
   expect(await page.evaluate('window.button1')).toBe(undefined);
   expect(await page.evaluate('window.button2')).toBe(true);
 });
+
+it('should retarget when DOM changes during actionability checks', async ({ page, server }) => {
+  await page.setContent(`<button onclick="window.__clicked=1" style="display:none">non-target</button>`);
+  let done = false;
+  const promise = page.locator('button').click({ timeout: 5000 }).then(() => done = true);
+  await page.waitForTimeout(2000);
+  expect(done).toBe(false);
+  await page.evaluate(() => {
+    const button = document.createElement('button');
+    button.addEventListener('click', () => (window as any).__clicked = 2);
+    button.textContent = 'target';
+    document.querySelector('button').replaceWith(button);
+  });
+  await promise;
+  expect(done).toBe(true);
+  expect(await page.evaluate('window.__clicked')).toBe(2);
+});
+
+it('should throw strict violation when DOM changes during actionability checks', async ({ page, server }) => {
+  await page.setContent(`<button onclick="window.__clicked=1" style="display:none">non-target</button>`);
+  let done = false;
+  const promise = page.locator('button').click({ timeout: 5000 }).then(() => done = true).catch(e => e);
+  await page.waitForTimeout(2000);
+  expect(done).toBe(false);
+  await page.evaluate(() => {
+    const button = document.createElement('button');
+    button.addEventListener('click', () => (window as any).__clicked = 2);
+    button.textContent = 'target';
+    document.body.appendChild(button);
+  });
+  const error = await promise;
+  expect(done).toBe(false);
+  expect(await page.evaluate('window.__clicked')).toBe(undefined);
+  expect(error.message).toContain(`strict mode violation: locator('button') resolved to 2 elements`);
+});
