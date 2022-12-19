@@ -496,7 +496,7 @@ let lastWorkerIndex = 0;
 class Worker extends EventEmitter {
   private process: child_process.ChildProcess;
   private _hash: string;
-  public parallelIndex: number;
+  readonly parallelIndex: number;
   readonly workerIndex: number;
   private _didSendStop = false;
   private _didFail = false;

@@ -286,8 +286,7 @@ export interface TestResult {
 
   /**
    * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have
-   * a different `parallelIndex`. When a worker is restarted, for example after a failure, the new worker process has
-   * the same `parallelIndex`.
+   * a different `parallelIndex`.
    */
   parallelIndex: number;}
 
