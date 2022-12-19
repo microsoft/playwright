@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import type { BabelFileResult } from '@babel/core';
+import type { BabelFileResult, NodePath, PluginObj } from '@babel/core';
+import type { TSExportAssignment } from '@babel/types';
+import type { TemplateBuilder } from '@babel/template';
 import * as babel from '@babel/core';
 
 export { codeFrameColumns } from '@babel/code-frame';
@@ -39,7 +41,22 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
         [require('@babel/plugin-syntax-optional-catch-binding')],
         [require('@babel/plugin-syntax-async-generators')],
         [require('@babel/plugin-syntax-object-rest-spread')],
-        [require('@babel/plugin-proposal-export-namespace-from')]
+        [require('@babel/plugin-proposal-export-namespace-from')],
+        [
+          // From https://github.com/G-Rath/babel-plugin-replace-ts-export-assignment/blob/8dfdca32c8aa428574b0cae341444fc5822f2dc6/src/index.ts
+          (
+            { template }: { template: TemplateBuilder<TSExportAssignment> }
+          ): PluginObj => ({
+            name: 'replace-ts-export-assignment',
+            visitor: {
+              TSExportAssignment(path: NodePath<TSExportAssignment>) {
+                path.replaceWith(template('module.exports = ASSIGNMENT;')({
+                  ASSIGNMENT: path.node.expression
+                }));
+              }
+            }
+          })
+        ]
     );
   }
 
