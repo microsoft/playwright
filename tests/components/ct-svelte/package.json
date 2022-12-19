@@ -23,6 +23,7 @@
     "@playwright/test": "^1.22.2"
   },
   "dependencies": {
-    "svelte": "^3.0.0"
+    "svelte": "^3.0.0",
+    "svelte-navigator": "^3.2.2"
   }
 }
