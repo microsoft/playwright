@@ -39,7 +39,8 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
         [require('@babel/plugin-syntax-optional-catch-binding')],
         [require('@babel/plugin-syntax-async-generators')],
         [require('@babel/plugin-syntax-object-rest-spread')],
-        [require('@babel/plugin-proposal-export-namespace-from')]
+        [require('@babel/plugin-proposal-export-namespace-from')],
+        [require('babel-plugin-replace-ts-export-assignment')]
     );
   }
 
