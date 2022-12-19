@@ -65,7 +65,7 @@ toc_max_heading_level: 2
 
 - Playwright Test now respects [`jsconfig.json`](https://code.visualstudio.com/docs/languages/jsconfig).
 - New options `args` and `proxy` for [`method: AndroidDevice.launchBrowser`].
-- Option `postData` in method [`method: Route.continue`] now supports [serializable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#description) values.
+- Option `postData` in method [`method: Route.continue`] now supports [Serializable] values.
 
 ### Browser Versions
 

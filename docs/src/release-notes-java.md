@@ -4,6 +4,30 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.29
+
+### New APIs
+
+- New method [`method: Locator.all`] to iterate over all matching elements:
+
+    ```java
+    // Check all checkboxes!
+    const checkboxes = page.getByRole('checkbox');
+    for (Locator checkbox : checkboxes.all())
+      checkbox.check();
+    ```
+
+### Browser Versions
+
+* Chromium 109.0.5414.46
+* Mozilla Firefox 107.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 108
+* Microsoft Edge 108
+
 ## Version 1.28
 
 ### Playwright Tools
