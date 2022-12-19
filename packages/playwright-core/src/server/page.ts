@@ -612,6 +612,10 @@ export class Page extends SdkObject {
     return this._closedState === 'closed';
   }
 
+  isClosedOrClosingOrCrashed() {
+    return this._closedState !== 'open' || this._crashedPromise.isDone();
+  }
+
   _addWorker(workerId: string, worker: Worker) {
     this._workers.set(workerId, worker);
     this.emit(Page.Events.Worker, worker);
