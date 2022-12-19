@@ -92,6 +92,7 @@ Edit the `UnitTest1.cs` file with the code below to create an example end-to-end
 ```csharp
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 
@@ -129,7 +130,10 @@ public class Tests : PageTest
 
 ```csharp
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Microsoft.Playwright;
 using Microsoft.Playwright.MSTest;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace PlaywrightTests;
 
