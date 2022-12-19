@@ -44,23 +44,18 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
         [require('@babel/plugin-proposal-export-namespace-from')],
         [
           // From https://github.com/G-Rath/babel-plugin-replace-ts-export-assignment/blob/8dfdca32c8aa428574b0cae341444fc5822f2dc6/src/index.ts
-          function replaceTSExportAssignment(
+          (
             { template }: { template: TemplateBuilder<TSExportAssignment> }
-          ): PluginObj {
-            const moduleExportsDeclaration = template(`
-              module.exports = ASSIGNMENT;
-            `);
-            return {
-              name: 'replace-ts-export-assignment',
-              visitor: {
-                TSExportAssignment(path: NodePath<TSExportAssignment>) {
-                  path.replaceWith(moduleExportsDeclaration({
-                    ASSIGNMENT: path.node.expression
-                  }));
-                }
+          ): PluginObj => ({
+            name: 'replace-ts-export-assignment',
+            visitor: {
+              TSExportAssignment(path: NodePath<TSExportAssignment>) {
+                path.replaceWith(template('module.exports = ASSIGNMENT;')({
+                  ASSIGNMENT: path.node.expression
+                }));
               }
-            };
-          }
+            }
+          })
         ]
     );
   }
