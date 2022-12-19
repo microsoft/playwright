@@ -35,6 +35,20 @@ toc_max_heading_level: 2
       checkbox.check()
     ```
 
+- [`method: Locator.selectOption`] matches now by value or label:
+
+  ```html
+  <select multiple>
+    <option value="red">Red</div>
+    <option value="green">Green</div>
+    <option value="blue">Blue</div>
+  </select>
+  ```
+
+  ```python
+  element.select_option("Red")
+  ```
+
 ### Miscellaneous
 
 - Option `postData` in method [`method: Route.continue`] now supports [Serializable] values.

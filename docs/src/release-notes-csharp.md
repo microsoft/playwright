@@ -35,6 +35,20 @@ toc_max_heading_level: 2
     await checkbox.CheckAsync();
   ```
 
+- [`method: Locator.selectOption`] matches now by value or label:
+
+  ```html
+  <select multiple>
+    <option value="red">Red</div>
+    <option value="green">Green</div>
+    <option value="blue">Blue</div>
+  </select>
+  ```
+
+  ```csharp
+  await element.SelectOptionAsync("Red");
+  ```
+
 ### Browser Versions
 
 * Chromium 109.0.5414.46

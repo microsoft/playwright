@@ -33,6 +33,20 @@ toc_max_heading_level: 2
       await checkbox.check();
     ```
 
+- [`method: Locator.selectOption`] matches now by value or label:
+
+  ```html
+  <select multiple>
+    <option value="red">Red</div>
+    <option value="green">Green</div>
+    <option value="blue">Blue</div>
+  </select>
+  ```
+
+  ```js
+  await element.selectOption('Red');
+  ```
+
 - Retry blocks of code until all assertions pass:
 
     ```js
