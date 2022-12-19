@@ -1,15 +1,16 @@
-import { test, expect } from '@playwright/experimental-ct-vue2'
-import Button from './components/Button.vue'
-import Counter from './components/Counter.vue'
-import DefaultSlot from './components/DefaultSlot.vue'
-import NamedSlots from './components/NamedSlots.vue'
-import Component from './components/Component.vue'
-import EmptyTemplate from './components/EmptyTemplate.vue'
-import type { hooksConfig } from '../playwright'
+import { test, expect } from '@playwright/experimental-ct-vue2';
+import App from './App.vue';
+import Button from './components/Button.vue';
+import Counter from './components/Counter.vue';
+import DefaultSlot from './components/DefaultSlot.vue';
+import NamedSlots from './components/NamedSlots.vue';
+import Component from './components/Component.vue';
+import EmptyTemplate from './components/EmptyTemplate.vue';
+import type { HooksConfig } from '../playwright';
 
 test.use({ viewport: { width: 500, height: 500 } })
 
-test('render props', async ({ mount }) => {
+test('render props', async ({ page, mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit'
@@ -123,7 +124,7 @@ test('render a component without options', async ({ mount }) => {
 test('run hooks', async ({ page, mount }) => {
   const messages: string[] = []
   page.on('console', m => messages.push(m.text()))
-  await mount<hooksConfig>(Button, {
+  await mount<HooksConfig>(Button, {
     props: {
       title: 'Submit'
     },
@@ -148,4 +149,13 @@ test('get textContent of the empty template', async ({ mount }) => {
   expect(await component.allTextContents()).toEqual(['']);
   expect(await component.textContent()).toBe('');
   await expect(component).toHaveText('');
+});
+
+test('navigate to a page by clicking a link', async ({ page, mount }) => {
+  const component = await mount(App);
+  await expect(component.getByRole('main')).toHaveText('Login');
+  await expect(page).toHaveURL('/');
+  await component.getByRole('link', { name: 'Dashboard' }).click();
+  await expect(component.getByRole('main')).toHaveText('Dashboard');
+  await expect(page).toHaveURL('/dashboard');
 });
