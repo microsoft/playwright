@@ -57,7 +57,7 @@ async function run() {
     params.set('firefox-version', firefox);
     params.set('webkit-version', webkit);
     params.set('chromium-version-badge', `[![Chromium version](https://img.shields.io/badge/chromium-${chromium}-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)`);
-    params.set('firefox-version-badge', `[![Firefox version](https://img.shields.io/badge/firefox-${firefox}-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)`);
+    params.set('firefox-version-badge', `[![Firefox version](https://img.shields.io/badge/firefox-${firefox}-blue.svg?logo=firefoxbrowser)](https://www.mozilla.org/en-US/firefox/new/)`);
     params.set('webkit-version-badge', `[![WebKit version](https://img.shields.io/badge/webkit-${webkit}-blue.svg?logo=safari)](https://webkit.org/)`);
 
     let content = fs.readFileSync(path.join(PROJECT_DIR, 'README.md')).toString();
