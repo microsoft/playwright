@@ -36,7 +36,6 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
     noInsets={true}
     setExpanded={(expanded => setFileExpanded(file.fileId, expanded))}
     header={<span>
-      <span style={{ float: 'right' }}>{msToString(file.stats.duration)}</span>
       {file.fileName}
     </span>}>
     {file.tests.filter(t => filter.matches(t)).map(test =>
