@@ -16,11 +16,11 @@ toc_max_heading_level: 2
       var response = await route.FetchAsync();
 
       // Force settings theme to a predefined value.
-      var json = await response.JsonAsync();
-      json["theme"] = "Solorized";
+      var json = await response.JsonAsync<MyDataType>();
+      json.Theme = "Solarized";
 
       // Fulfill with modified data.
-      await route.FulfillAsync(new RouteFulfillOptions {
+      await route.FulfillAsync(new() {
         Json = json
       });
     });
@@ -30,7 +30,7 @@ toc_max_heading_level: 2
 
   ```csharp
   // Check all checkboxes!
-  var checkboxes = await Page.LocatorAsync("role=checkbox");
+  var checkboxes = Page.Locator("role=checkbox");
   foreach (var checkbox in await checkboxes.AllAsync())
     await checkbox.CheckAsync();
   ```
