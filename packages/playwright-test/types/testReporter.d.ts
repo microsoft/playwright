@@ -282,7 +282,14 @@ export interface TestResult {
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
    */
-  workerIndex: number;}
+  workerIndex: number;
+
+  /**
+   * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have
+   * a different `parallelIndex`. When a worker is restarted, for example after a failure, the new worker process has
+   * the same `parallelIndex`.
+   */
+  parallelIndex: number;}
 
 /**
  * Result of the full test run.
