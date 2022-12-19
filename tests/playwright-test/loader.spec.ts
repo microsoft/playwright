@@ -507,3 +507,20 @@ test('should resolve .js import to .ts file in non-ESM mode', async ({ runInline
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });
+
+test('should import export assignment from ts', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      import number from './utils.js';
+      test('pass', () => {
+        expect(number).toBe(1);
+      });
+    `,
+    'utils.ts': `
+      export = 1;
+    `
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
