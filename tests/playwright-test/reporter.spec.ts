@@ -607,7 +607,7 @@ var import_test = __toModule(require("@playwright/test"));
   expect(result.output).toContain('a.spec.ts');
 });
 
-test('paralellIndex is presented in onTestEnd', async ({ runInlineTest }) => {
+test('parallelIndex is presented in onTestEnd', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
     class Reporter {
@@ -624,7 +624,7 @@ test('paralellIndex is presented in onTestEnd', async ({ runInlineTest }) => {
     'a.spec.js': `
       pwt.test('test', () => {});
     `,
-  }, { 'reporter': '', 'workers': 0 });
+  }, { 'reporter': '', 'workers': 1 });
 
   expect(result.output).toContain('parallelIndex: 0');
 });
