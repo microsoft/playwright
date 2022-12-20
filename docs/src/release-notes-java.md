@@ -4,6 +4,44 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.29
+
+### New APIs
+
+- New method [`method: Locator.all`] to iterate over all matching elements:
+
+    ```java
+    // Check all checkboxes!
+    Locator checkboxes = page.getByRole(AriaRole.CHECKBOX);
+    for (Locator checkbox : checkboxes.all())
+      checkbox.check();
+    ```
+
+- [`method: Locator.selectOption`] matches now by value or label:
+
+  ```html
+  <select multiple>
+    <option value="red">Red</div>
+    <option value="green">Green</div>
+    <option value="blue">Blue</div>
+  </select>
+  ```
+
+  ```java
+  element.selectOption('Red');
+  ```
+
+### Browser Versions
+
+* Chromium 109.0.5414.46
+* Mozilla Firefox 107.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 108
+* Microsoft Edge 108
+
 ## Version 1.28
 
 ### Playwright Tools

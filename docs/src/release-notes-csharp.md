@@ -4,6 +4,63 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.29
+
+### New APIs
+
+- New method [`method: Route.fetch`] and new option `Json` for [`method: Route.fulfill`]:
+
+    ```csharp
+    await Page.RouteAsync("**/api/settings", async route => {
+      // Fetch original settings.
+      var response = await route.FetchAsync();
+
+      // Force settings theme to a predefined value.
+      var json = await response.JsonAsync<MyDataType>();
+      json.Theme = "Solarized";
+
+      // Fulfill with modified data.
+      await route.FulfillAsync(new() {
+        Json = json
+      });
+    });
+    ```
+
+- New method [`method: Locator.all`] to iterate over all matching elements:
+
+  ```csharp
+  // Check all checkboxes!
+  var checkboxes = Page.GetByRole(AriaRole.Checkbox);
+  foreach (var checkbox in await checkboxes.AllAsync())
+    await checkbox.CheckAsync();
+  ```
+
+- [`method: Locator.selectOption`] matches now by value or label:
+
+  ```html
+  <select multiple>
+    <option value="red">Red</div>
+    <option value="green">Green</div>
+    <option value="blue">Blue</div>
+  </select>
+  ```
+
+  ```csharp
+  await element.SelectOptionAsync("Red");
+  ```
+
+### Browser Versions
+
+* Chromium 109.0.5414.46
+* Mozilla Firefox 107.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 108
+* Microsoft Edge 108
+
+
 ## Version 1.28
 
 ### Playwright Tools
