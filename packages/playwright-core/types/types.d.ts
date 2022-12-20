@@ -286,7 +286,8 @@ export interface Page {
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Page.locator`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [page.locator(selector[, options])](https://playwright.dev/docs/api/class-page#page-locator)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * The method finds an element matching the specified selector within the page. If no elements match the selector, the
    * return value resolves to `null`. To wait for an element on the page, use
@@ -296,7 +297,8 @@ export interface Page {
    */
   $<K extends keyof HTMLElementTagNameMap>(selector: K, options?: { strict: boolean }): Promise<ElementHandleForTag<K> | null>;
   /**
-   * **NOTE** Use locator-based [`method: Page.locator`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [page.locator(selector[, options])](https://playwright.dev/docs/api/class-page#page-locator)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * The method finds an element matching the specified selector within the page. If no elements match the selector, the
    * return value resolves to `null`. To wait for an element on the page, use
@@ -307,7 +309,8 @@ export interface Page {
   $(selector: string, options?: { strict: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
 
   /**
-   * **NOTE** Use locator-based [`method: Page.locator`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [page.locator(selector[, options])](https://playwright.dev/docs/api/class-page#page-locator)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * The method finds all elements matching the specified selector within the page. If no elements match the selector,
    * the return value resolves to `[]`.
@@ -315,7 +318,8 @@ export interface Page {
    */
   $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
   /**
-   * **NOTE** Use locator-based [`method: Page.locator`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [page.locator(selector[, options])](https://playwright.dev/docs/api/class-page#page-locator)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * The method finds all elements matching the specified selector within the page. If no elements match the selector,
    * the return value resolves to `[]`.
@@ -325,7 +329,9 @@ export interface Page {
 
   /**
    * **NOTE** This method does not wait for the element to pass actionability checks and therefore can lead to the flaky tests.
-   * Use [`method: Locator.evaluate`], other [Locator] helper methods or web-first assertions instead.
+   * Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate),
+   * other [Locator] helper methods or web-first assertions instead.
    *
    * The method finds an element matching the specified selector within the page and passes it as a first argument to
    * `pageFunction`. If no elements match the selector, the method throws an error. Returns the value of `pageFunction`.
@@ -352,7 +358,9 @@ export interface Page {
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass actionability checks and therefore can lead to the flaky tests.
-   * Use [`method: Locator.evaluate`], other [Locator] helper methods or web-first assertions instead.
+   * Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate),
+   * other [Locator] helper methods or web-first assertions instead.
    *
    * The method finds an element matching the specified selector within the page and passes it as a first argument to
    * `pageFunction`. If no elements match the selector, the method throws an error. Returns the value of `pageFunction`.
@@ -379,7 +387,9 @@ export interface Page {
   $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass actionability checks and therefore can lead to the flaky tests.
-   * Use [`method: Locator.evaluate`], other [Locator] helper methods or web-first assertions instead.
+   * Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate),
+   * other [Locator] helper methods or web-first assertions instead.
    *
    * The method finds an element matching the specified selector within the page and passes it as a first argument to
    * `pageFunction`. If no elements match the selector, the method throws an error. Returns the value of `pageFunction`.
@@ -406,7 +416,9 @@ export interface Page {
   $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass actionability checks and therefore can lead to the flaky tests.
-   * Use [`method: Locator.evaluate`], other [Locator] helper methods or web-first assertions instead.
+   * Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate),
+   * other [Locator] helper methods or web-first assertions instead.
    *
    * The method finds an element matching the specified selector within the page and passes it as a first argument to
    * `pageFunction`. If no elements match the selector, the method throws an error. Returns the value of `pageFunction`.
@@ -433,8 +445,9 @@ export interface Page {
   $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any): Promise<R>;
 
   /**
-   * **NOTE** In most cases, [`method: Locator.evaluateAll`], other [Locator] helper methods and web-first assertions do a better
-   * job.
+   * **NOTE** In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * other [Locator] helper methods and web-first assertions do a better job.
    *
    * The method finds all elements matching the specified selector within the page and passes an array of matched
    * elements as a first argument to `pageFunction`. Returns the result of `pageFunction` invocation.
@@ -455,8 +468,9 @@ export interface Page {
    */
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
   /**
-   * **NOTE** In most cases, [`method: Locator.evaluateAll`], other [Locator] helper methods and web-first assertions do a better
-   * job.
+   * **NOTE** In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * other [Locator] helper methods and web-first assertions do a better job.
    *
    * The method finds all elements matching the specified selector within the page and passes an array of matched
    * elements as a first argument to `pageFunction`. Returns the result of `pageFunction` invocation.
@@ -477,8 +491,9 @@ export interface Page {
    */
   $$eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg): Promise<R>;
   /**
-   * **NOTE** In most cases, [`method: Locator.evaluateAll`], other [Locator] helper methods and web-first assertions do a better
-   * job.
+   * **NOTE** In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * other [Locator] helper methods and web-first assertions do a better job.
    *
    * The method finds all elements matching the specified selector within the page and passes an array of matched
    * elements as a first argument to `pageFunction`. Returns the result of `pageFunction` invocation.
@@ -499,8 +514,9 @@ export interface Page {
    */
   $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
   /**
-   * **NOTE** In most cases, [`method: Locator.evaluateAll`], other [Locator] helper methods and web-first assertions do a better
-   * job.
+   * **NOTE** In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * other [Locator] helper methods and web-first assertions do a better job.
    *
    * The method finds all elements matching the specified selector within the page and passes an array of matched
    * elements as a first argument to `pageFunction`. Returns the result of `pageFunction` invocation.
@@ -1797,7 +1813,8 @@ export interface Page {
   bringToFront(): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.check`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.check([options])](https://playwright.dev/docs/api/class-locator#locator-check) instead.
+   * Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method checks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -1862,7 +1879,8 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.click`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.click([options])](https://playwright.dev/docs/api/class-locator#locator-click) instead.
+   * Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method clicks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -1980,7 +1998,8 @@ export interface Page {
   coverage: Coverage;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.dblclick`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.dblclick([options])](https://playwright.dev/docs/api/class-locator#locator-dblclick)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method double clicks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -2061,7 +2080,9 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.dispatchEvent`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.dispatchEvent(type[, eventInit, options])](https://playwright.dev/docs/api/class-locator#locator-dispatch-event)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element,
    * `click` is dispatched. This is equivalent to calling
@@ -2298,7 +2319,8 @@ export interface Page {
   exposeFunction(name: string, callback: Function): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.fill`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks,
    * focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string
@@ -2345,7 +2367,8 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.focus`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.focus([options])](https://playwright.dev/docs/api/class-locator#locator-focus) instead.
+   * Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method fetches an element with `selector` and focuses it. If there's no element matching `selector`, the
    * method waits until a matching element appears in the DOM.
@@ -2420,7 +2443,9 @@ export interface Page {
   frames(): Array<Frame>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.getAttribute`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.getAttribute(name[, options])](https://playwright.dev/docs/api/class-locator#locator-get-attribute)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns element attribute value.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -2779,7 +2804,8 @@ export interface Page {
   }): Promise<null|Response>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.hover`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.hover([options])](https://playwright.dev/docs/api/class-locator#locator-hover) instead.
+   * Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method hovers over an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -2847,7 +2873,8 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.innerHTML`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.innerHTML([options])](https://playwright.dev/docs/api/class-locator#locator-inner-html)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns `element.innerHTML`.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -2871,7 +2898,8 @@ export interface Page {
   }): Promise<string>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.innerText`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.innerText([options])](https://playwright.dev/docs/api/class-locator#locator-inner-text)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns `element.innerText`.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -2895,7 +2923,9 @@ export interface Page {
   }): Promise<string>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.inputValue`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.inputValue([options])](https://playwright.dev/docs/api/class-locator#locator-input-value) instead. Read
+   * more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
    *
@@ -2923,7 +2953,8 @@ export interface Page {
   }): Promise<string>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.isChecked([options])](https://playwright.dev/docs/api/class-locator#locator-is-checked)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -2952,7 +2983,9 @@ export interface Page {
   isClosed(): boolean;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.isDisabled`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.isDisabled([options])](https://playwright.dev/docs/api/class-locator#locator-is-disabled) instead. Read
+   * more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns whether the element is disabled, the opposite of [enabled](https://playwright.dev/docs/actionability#enabled).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -2976,7 +3009,9 @@ export interface Page {
   }): Promise<boolean>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.isEditable`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.isEditable([options])](https://playwright.dev/docs/api/class-locator#locator-is-editable) instead. Read
+   * more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -3000,7 +3035,8 @@ export interface Page {
   }): Promise<boolean>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.isEnabled`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.isEnabled([options])](https://playwright.dev/docs/api/class-locator#locator-is-enabled)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns whether the element is [enabled](https://playwright.dev/docs/actionability#enabled).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -3024,7 +3060,8 @@ export interface Page {
   }): Promise<boolean>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.isHidden([options])](https://playwright.dev/docs/api/class-locator#locator-is-hidden)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).  `selector` that
    * does not match any elements is considered hidden.
@@ -3040,14 +3077,16 @@ export interface Page {
     strict?: boolean;
 
     /**
-     * @deprecated This option is ignored. [`method: Page.isHidden`] does not wait for the element to become hidden and returns
-     * immediately.
+     * @deprecated This option is ignored.
+     * [page.isHidden(selector[, options])](https://playwright.dev/docs/api/class-page#page-is-hidden) does not wait for
+     * the element to become hidden and returns immediately.
      */
     timeout?: number;
   }): Promise<boolean>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.isVisible([options])](https://playwright.dev/docs/api/class-locator#locator-is-visible)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible). `selector` that does not match any elements
    * is considered not visible.
@@ -3063,8 +3102,9 @@ export interface Page {
     strict?: boolean;
 
     /**
-     * @deprecated This option is ignored. [`method: Page.isVisible`] does not wait for the element to become visible and returns
-     * immediately.
+     * @deprecated This option is ignored.
+     * [page.isVisible(selector[, options])](https://playwright.dev/docs/api/class-page#page-is-visible) does not wait for
+     * the element to become visible and returns immediately.
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -3269,7 +3309,8 @@ export interface Page {
   }): Promise<Buffer>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.press`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Focuses the element, and then uses
    * [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
@@ -3486,7 +3527,9 @@ export interface Page {
   screenshot(options?: PageScreenshotOptions): Promise<Buffer>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.selectOption`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.selectOption(values[, options])](https://playwright.dev/docs/api/class-locator#locator-select-option)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, waits
    * until all specified options are present in the `<select>` element and selects these options.
@@ -3580,7 +3623,9 @@ export interface Page {
   }): Promise<Array<string>>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.setChecked(checked[, options])](https://playwright.dev/docs/api/class-locator#locator-set-checked)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method checks or unchecks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -3715,7 +3760,9 @@ export interface Page {
   setExtraHTTPHeaders(headers: { [key: string]: string; }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.setInputFiles`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.setInputFiles(files[, options])](https://playwright.dev/docs/api/class-locator#locator-set-input-files)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then
    * they are resolved relative to the current working directory. For empty array, clears the selected files.
@@ -3821,7 +3868,8 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.tap`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.tap([options])](https://playwright.dev/docs/api/class-locator#locator-tap) instead. Read
+   * more about [locators](https://playwright.dev/docs/locators).
    *
    * This method taps an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -3892,7 +3940,9 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.textContent`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.textContent([options])](https://playwright.dev/docs/api/class-locator#locator-text-content) instead. Read
+   * more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns `element.textContent`.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -3923,7 +3973,8 @@ export interface Page {
   touchscreen: Touchscreen;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.type`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.type(text[, options])](https://playwright.dev/docs/api/class-locator#locator-type)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `page.type` can be used to
    * send fine-grained keyboard events. To fill values in form fields, use
@@ -3973,7 +4024,8 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.uncheck`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.uncheck([options])](https://playwright.dev/docs/api/class-locator#locator-uncheck)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method unchecks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -4692,7 +4744,8 @@ export interface Frame {
   evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<SmartHandle<R>>;
 
   /**
-   * **NOTE** Use locator-based [`method: Frame.locator`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [frame.locator(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-locator)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns the ElementHandle pointing to the frame element.
    *
@@ -4705,7 +4758,8 @@ export interface Frame {
    */
   $<K extends keyof HTMLElementTagNameMap>(selector: K, options?: { strict: boolean }): Promise<ElementHandleForTag<K> | null>;
   /**
-   * **NOTE** Use locator-based [`method: Frame.locator`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [frame.locator(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-locator)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns the ElementHandle pointing to the frame element.
    *
@@ -4719,7 +4773,8 @@ export interface Frame {
   $(selector: string, options?: { strict: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
 
   /**
-   * **NOTE** Use locator-based [`method: Frame.locator`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [frame.locator(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-locator)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns the ElementHandles pointing to the frame elements.
    *
@@ -4731,7 +4786,8 @@ export interface Frame {
    */
   $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
   /**
-   * **NOTE** Use locator-based [`method: Frame.locator`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [frame.locator(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-locator)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns the ElementHandles pointing to the frame elements.
    *
@@ -4745,7 +4801,9 @@ export interface Frame {
 
   /**
    * **NOTE** This method does not wait for the element to pass the actionability checks and therefore can lead to the flaky
-   * tests. Use [`method: Locator.evaluate`], other [Locator] helper methods or web-first assertions instead.
+   * tests. Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate),
+   * other [Locator] helper methods or web-first assertions instead.
    *
    * Returns the return value of `pageFunction`.
    *
@@ -4772,7 +4830,9 @@ export interface Frame {
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass the actionability checks and therefore can lead to the flaky
-   * tests. Use [`method: Locator.evaluate`], other [Locator] helper methods or web-first assertions instead.
+   * tests. Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate),
+   * other [Locator] helper methods or web-first assertions instead.
    *
    * Returns the return value of `pageFunction`.
    *
@@ -4799,7 +4859,9 @@ export interface Frame {
   $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass the actionability checks and therefore can lead to the flaky
-   * tests. Use [`method: Locator.evaluate`], other [Locator] helper methods or web-first assertions instead.
+   * tests. Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate),
+   * other [Locator] helper methods or web-first assertions instead.
    *
    * Returns the return value of `pageFunction`.
    *
@@ -4826,7 +4888,9 @@ export interface Frame {
   $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass the actionability checks and therefore can lead to the flaky
-   * tests. Use [`method: Locator.evaluate`], other [Locator] helper methods or web-first assertions instead.
+   * tests. Use
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate),
+   * other [Locator] helper methods or web-first assertions instead.
    *
    * Returns the return value of `pageFunction`.
    *
@@ -4853,8 +4917,9 @@ export interface Frame {
   $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any): Promise<R>;
 
   /**
-   * **NOTE** In most cases, [`method: Locator.evaluateAll`], other [Locator] helper methods and web-first assertions do a better
-   * job.
+   * **NOTE** In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * other [Locator] helper methods and web-first assertions do a better job.
    *
    * Returns the return value of `pageFunction`.
    *
@@ -4877,8 +4942,9 @@ export interface Frame {
    */
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
   /**
-   * **NOTE** In most cases, [`method: Locator.evaluateAll`], other [Locator] helper methods and web-first assertions do a better
-   * job.
+   * **NOTE** In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * other [Locator] helper methods and web-first assertions do a better job.
    *
    * Returns the return value of `pageFunction`.
    *
@@ -4901,8 +4967,9 @@ export interface Frame {
    */
   $$eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg): Promise<R>;
   /**
-   * **NOTE** In most cases, [`method: Locator.evaluateAll`], other [Locator] helper methods and web-first assertions do a better
-   * job.
+   * **NOTE** In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * other [Locator] helper methods and web-first assertions do a better job.
    *
    * Returns the return value of `pageFunction`.
    *
@@ -4925,8 +4992,9 @@ export interface Frame {
    */
   $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
   /**
-   * **NOTE** In most cases, [`method: Locator.evaluateAll`], other [Locator] helper methods and web-first assertions do a better
-   * job.
+   * **NOTE** In most cases,
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * other [Locator] helper methods and web-first assertions do a better job.
    *
    * Returns the return value of `pageFunction`.
    *
@@ -5210,7 +5278,8 @@ export interface Frame {
   }): Promise<ElementHandle>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.check`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.check([options])](https://playwright.dev/docs/api/class-locator#locator-check) instead.
+   * Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method checks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -5277,7 +5346,8 @@ export interface Frame {
   childFrames(): Array<Frame>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.click`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.click([options])](https://playwright.dev/docs/api/class-locator#locator-click) instead.
+   * Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method clicks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -5365,7 +5435,8 @@ export interface Frame {
   content(): Promise<string>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.dblclick`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.dblclick([options])](https://playwright.dev/docs/api/class-locator#locator-dblclick)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method double clicks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -5446,7 +5517,9 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.dispatchEvent`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.dispatchEvent(type[, eventInit, options])](https://playwright.dev/docs/api/class-locator#locator-dispatch-event)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element,
    * `click` is dispatched. This is equivalent to calling
@@ -5562,7 +5635,8 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.fill`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks,
    * focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string
@@ -5609,7 +5683,8 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.focus`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.focus([options])](https://playwright.dev/docs/api/class-locator#locator-focus) instead.
+   * Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method fetches an element with `selector` and focuses it. If there's no element matching `selector`, the
    * method waits until a matching element appears in the DOM.
@@ -5672,7 +5747,9 @@ export interface Frame {
   frameLocator(selector: string): FrameLocator;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.getAttribute`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.getAttribute(name[, options])](https://playwright.dev/docs/api/class-locator#locator-get-attribute)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns element attribute value.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -5969,7 +6046,8 @@ export interface Frame {
   }): Promise<null|Response>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.hover`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.hover([options])](https://playwright.dev/docs/api/class-locator#locator-hover) instead.
+   * Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method hovers over an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -6037,7 +6115,8 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.innerHTML`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.innerHTML([options])](https://playwright.dev/docs/api/class-locator#locator-inner-html)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns `element.innerHTML`.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -6061,7 +6140,8 @@ export interface Frame {
   }): Promise<string>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.innerText`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.innerText([options])](https://playwright.dev/docs/api/class-locator#locator-inner-text)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns `element.innerText`.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -6085,7 +6165,9 @@ export interface Frame {
   }): Promise<string>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.inputValue`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.inputValue([options])](https://playwright.dev/docs/api/class-locator#locator-input-value) instead. Read
+   * more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
    *
@@ -6113,7 +6195,8 @@ export interface Frame {
   }): Promise<string>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.isChecked([options])](https://playwright.dev/docs/api/class-locator#locator-is-checked)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -6142,7 +6225,9 @@ export interface Frame {
   isDetached(): boolean;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.isDisabled`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.isDisabled([options])](https://playwright.dev/docs/api/class-locator#locator-is-disabled) instead. Read
+   * more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns whether the element is disabled, the opposite of [enabled](https://playwright.dev/docs/actionability#enabled).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -6166,7 +6251,9 @@ export interface Frame {
   }): Promise<boolean>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.isEditable`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.isEditable([options])](https://playwright.dev/docs/api/class-locator#locator-is-editable) instead. Read
+   * more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable).
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -6212,7 +6299,8 @@ export interface Frame {
   }): Promise<boolean>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.isHidden([options])](https://playwright.dev/docs/api/class-locator#locator-is-hidden)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).  `selector` that
    * does not match any elements is considered hidden.
@@ -6228,14 +6316,16 @@ export interface Frame {
     strict?: boolean;
 
     /**
-     * @deprecated This option is ignored. [`method: Frame.isHidden`] does not wait for the element to become hidden and returns
-     * immediately.
+     * @deprecated This option is ignored.
+     * [frame.isHidden(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-is-hidden) does not wait
+     * for the element to become hidden and returns immediately.
      */
     timeout?: number;
   }): Promise<boolean>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.isVisible([options])](https://playwright.dev/docs/api/class-locator#locator-is-visible)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible). `selector` that does not match any elements
    * is considered not visible.
@@ -6251,8 +6341,9 @@ export interface Frame {
     strict?: boolean;
 
     /**
-     * @deprecated This option is ignored. [`method: Frame.isVisible`] does not wait for the element to become visible and returns
-     * immediately.
+     * @deprecated This option is ignored.
+     * [frame.isVisible(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-is-visible) does not wait
+     * for the element to become visible and returns immediately.
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -6306,7 +6397,8 @@ export interface Frame {
   parentFrame(): null|Frame;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.press`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * `key` can specify the intended
    * [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character
@@ -6360,7 +6452,9 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.selectOption`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.selectOption(values[, options])](https://playwright.dev/docs/api/class-locator#locator-select-option)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, waits
    * until all specified options are present in the `<select>` element and selects these options.
@@ -6452,7 +6546,9 @@ export interface Frame {
   }): Promise<Array<string>>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.setChecked(checked[, options])](https://playwright.dev/docs/api/class-locator#locator-set-checked)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method checks or unchecks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -6545,7 +6641,9 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.setInputFiles`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.setInputFiles(files[, options])](https://playwright.dev/docs/api/class-locator#locator-set-input-files)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then
    * they are resolved relative to the current working directory. For empty array, clears the selected files.
@@ -6613,7 +6711,8 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.tap`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.tap([options])](https://playwright.dev/docs/api/class-locator#locator-tap) instead. Read
+   * more about [locators](https://playwright.dev/docs/locators).
    *
    * This method taps an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -6683,7 +6782,9 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.textContent`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based
+   * [locator.textContent([options])](https://playwright.dev/docs/api/class-locator#locator-text-content) instead. Read
+   * more about [locators](https://playwright.dev/docs/locators).
    *
    * Returns `element.textContent`.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
@@ -6712,7 +6813,8 @@ export interface Frame {
   title(): Promise<string>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.type`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.type(text[, options])](https://playwright.dev/docs/api/class-locator#locator-type)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used
    * to send fine-grained keyboard events. To fill values in form fields, use
@@ -6762,7 +6864,8 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * **NOTE** Use locator-based [`method: Locator.uncheck`] instead. Read more about [locators](https://playwright.dev/docs/locators).
+   * **NOTE** Use locator-based [locator.uncheck([options])](https://playwright.dev/docs/api/class-locator#locator-uncheck)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
    * This method checks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -10798,8 +10901,9 @@ export interface Locator {
    */
   isHidden(options?: {
     /**
-     * @deprecated This option is ignored. [`method: Locator.isHidden`] does not wait for the element to become hidden and returns
-     * immediately.
+     * @deprecated This option is ignored.
+     * [locator.isHidden([options])](https://playwright.dev/docs/api/class-locator#locator-is-hidden) does not wait for
+     * the element to become hidden and returns immediately.
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -10810,8 +10914,9 @@ export interface Locator {
    */
   isVisible(options?: {
     /**
-     * @deprecated This option is ignored. [`method: Locator.isVisible`] does not wait for the element to become visible and returns
-     * immediately.
+     * @deprecated This option is ignored.
+     * [locator.isVisible([options])](https://playwright.dev/docs/api/class-locator#locator-is-visible) does not wait for
+     * the element to become visible and returns immediately.
      */
     timeout?: number;
   }): Promise<boolean>;
@@ -11874,7 +11979,7 @@ export interface BrowserType<Unused = {}> {
     userAgent?: string;
 
     /**
-     * @deprecated Use [`option: recordVideo`] instead.
+     * @deprecated Use `recordVideo` instead.
      */
     videoSize?: {
       /**
@@ -11889,7 +11994,7 @@ export interface BrowserType<Unused = {}> {
     };
 
     /**
-     * @deprecated Use [`option: recordVideo`] instead.
+     * @deprecated Use `recordVideo` instead.
      */
     videosPath?: string;
 
@@ -12133,8 +12238,9 @@ export namespace errors {
 /**
  * - extends: [Error]
  *
- * TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [`method: Locator.waitFor`]
- * or [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
+ * TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g.
+ * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for) or
+ * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
  *
  * ```js
  * const playwright = require('playwright');
@@ -13236,7 +13342,7 @@ export interface AndroidDevice {
     userAgent?: string;
 
     /**
-     * @deprecated Use [`option: recordVideo`] instead.
+     * @deprecated Use `recordVideo` instead.
      */
     videoSize?: {
       /**
@@ -13251,7 +13357,7 @@ export interface AndroidDevice {
     };
 
     /**
-     * @deprecated Use [`option: recordVideo`] instead.
+     * @deprecated Use `recordVideo` instead.
      */
     videosPath?: string;
 
@@ -15138,7 +15244,7 @@ export interface Browser extends EventEmitter {
     userAgent?: string;
 
     /**
-     * @deprecated Use [`option: recordVideo`] instead.
+     * @deprecated Use `recordVideo` instead.
      */
     videoSize?: {
       /**
@@ -15153,7 +15259,7 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * @deprecated Use [`option: recordVideo`] instead.
+     * @deprecated Use `recordVideo` instead.
      */
     videosPath?: string;
 
@@ -18087,7 +18193,7 @@ export interface BrowserContextOptions {
   userAgent?: string;
 
   /**
-   * @deprecated Use [`option: recordVideo`] instead.
+   * @deprecated Use `recordVideo` instead.
    */
   videoSize?: {
     /**
@@ -18102,7 +18208,7 @@ export interface BrowserContextOptions {
   };
 
   /**
-   * @deprecated Use [`option: recordVideo`] instead.
+   * @deprecated Use `recordVideo` instead.
    */
   videosPath?: string;
 
