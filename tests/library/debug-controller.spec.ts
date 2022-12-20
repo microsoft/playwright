@@ -20,10 +20,12 @@ import { createGuid } from '../../packages/playwright-core/lib/utils';
 import { Backend } from '../config/debugControllerBackend';
 import type { Browser, BrowserContext } from '@playwright/test';
 
+type BrowserWithReuse = Browser & { _newContextForReuse: () => Promise<BrowserContext> };
 type Fixtures = {
   wsEndpoint: string;
   backend: Backend;
-  connectedBrowser: Browser & { _newContextForReuse: () => Promise<BrowserContext> };
+  connectedBrowserFactory: () => Promise<BrowserWithReuse>;
+  connectedBrowser: BrowserWithReuse;
 };
 
 const test = baseTest.extend<Fixtures>({
@@ -41,16 +43,24 @@ const test = baseTest.extend<Fixtures>({
     await use(backend);
     await backend.close();
   },
-  connectedBrowser: async ({ wsEndpoint, browserType }, use) => {
-    const oldValue = (browserType as any)._defaultConnectOptions;
-    (browserType as any)._defaultConnectOptions = {
-      wsEndpoint,
-      headers: { 'x-playwright-reuse-context': '1', },
-    };
-    const browser = await browserType.launch();
-    (browserType as any)._defaultConnectOptions = oldValue;
-    await use(browser as any);
-    await browser.close();
+  connectedBrowserFactory: async ({ wsEndpoint, browserType }, use) => {
+    const browsers: BrowserWithReuse [] = [];
+    await use(async () => {
+      const oldValue = (browserType as any)._defaultConnectOptions;
+      (browserType as any)._defaultConnectOptions = {
+        wsEndpoint,
+        headers: { 'x-playwright-reuse-context': '1', },
+      };
+      const browser = await browserType.launch() as BrowserWithReuse;
+      (browserType as any)._defaultConnectOptions = oldValue;
+      browsers.push(browser);
+      return browser;
+    });
+    for (const browser of browsers)
+      await browser.close();
+  },
+  connectedBrowser: async ({ connectedBrowserFactory }, use) => {
+    await use(await connectedBrowserFactory());
   },
 });
 
@@ -230,4 +240,28 @@ test('should pause and resume', async ({ backend, connectedBrowser }) => {
   await expect.poll(() => events[events.length - 1]).toEqual({ paused: true });
   await backend.resume();
   await pausePromise;
+});
+
+test('should reset routes before reuse', async ({ server, connectedBrowserFactory }) => {
+  const browser1 = await connectedBrowserFactory();
+  const context1 = await browser1._newContextForReuse();
+  await context1.route(server.PREFIX + '/title.html', route => route.fulfill({ body: '<title>Hello</title>', contentType: 'text/html' }));
+  const page1 = await context1.newPage();
+  await page1.route(server.PREFIX + '/consolelog.html', route => route.fulfill({ body: '<title>World</title>', contentType: 'text/html' }));
+
+  await page1.goto(server.PREFIX + '/title.html');
+  await expect(page1).toHaveTitle('Hello');
+  await page1.goto(server.PREFIX + '/consolelog.html');
+  await expect(page1).toHaveTitle('World');
+  await browser1.close();
+
+  const browser2 = await connectedBrowserFactory();
+  const context2 = await browser2._newContextForReuse();
+  const page2 = await context2.newPage();
+
+  await page2.goto(server.PREFIX + '/title.html');
+  await expect(page2).toHaveTitle('Woof-Woof');
+  await page2.goto(server.PREFIX + '/consolelog.html');
+  await expect(page2).toHaveTitle('console.log test');
+  await browser2.close();
 });

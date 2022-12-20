@@ -199,6 +199,7 @@ export class Dispatcher {
       const data = this._testById.get(params.testId)!;
       const result = data.test._appendTestResult();
       data.resultByWorkerIndex.set(worker.workerIndex, { result, stepStack: new Set(), steps: new Map() });
+      result.parallelIndex = worker.parallelIndex;
       result.workerIndex = worker.workerIndex;
       result.startTime = new Date(params.startWallTime);
       this._reporter.onTestBegin?.(data.test, result);
@@ -495,7 +496,7 @@ let lastWorkerIndex = 0;
 class Worker extends EventEmitter {
   private process: child_process.ChildProcess;
   private _hash: string;
-  private parallelIndex: number;
+  readonly parallelIndex: number;
   readonly workerIndex: number;
   private _didSendStop = false;
   private _didFail = false;

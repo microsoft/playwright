@@ -79,8 +79,7 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
     await this._object.closeAllBrowsers();
   }
 
-  override _dispose() {
-    super._dispose();
+  override _onDispose() {
     this._object.dispose();
   }
 }

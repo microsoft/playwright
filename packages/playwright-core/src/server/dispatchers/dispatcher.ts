@@ -102,8 +102,12 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     this._connection.sendDispose(this);
   }
 
+  protected _onDispose() {
+  }
+
   private _disposeRecursively() {
     assert(!this._disposed, `${this._guid} is disposed more than once`);
+    this._onDispose();
     this._disposed = true;
     eventsHelper.removeEventListeners(this._eventListeners);
 

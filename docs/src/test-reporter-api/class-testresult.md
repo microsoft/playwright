@@ -78,3 +78,9 @@ List of steps inside this test run.
 Index of the worker where the test was run. If the test was not run a single time, for example when the user interrupted testing, the only result will have a `workerIndex` equal to `-1`.
 
 Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
+
+## property: TestResult.parallelIndex
+* since: v1.30
+- type: <[int]>
+
+The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have a different `parallelIndex`.

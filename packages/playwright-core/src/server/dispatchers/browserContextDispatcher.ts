@@ -270,8 +270,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._subscriptions.delete(params.event);
   }
 
-  override _dispose() {
-    super._dispose();
+  override _onDispose() {
     // Avoid protocol calls for the closed context.
     if (!this._context.isClosingOrClosed())
       this._context.setRequestInterceptor(undefined).catch(() => {});

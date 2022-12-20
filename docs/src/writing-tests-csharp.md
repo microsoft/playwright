@@ -19,7 +19,10 @@ Take a look at the example test below to see how to write a test using using [lo
 
 ```csharp
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
 namespace PlaywrightTests;
 
@@ -55,7 +58,10 @@ public class Tests : PageTest
 
 ```csharp
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Microsoft.Playwright;
 using Microsoft.Playwright.MSTest;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace PlaywrightTests;
 
@@ -145,7 +151,9 @@ public class Tests : PageTest
 <TabItem value="mstest">
 
 ```csharp
+using System.Threading.Tasks;
 using Microsoft.Playwright.MSTest;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace PlaywrightTests;
 
@@ -207,7 +215,9 @@ public class Tests : PageTest
 <TabItem value="mstest">
 
 ```csharp
+using System.Threading.Tasks;
 using Microsoft.Playwright.MSTest;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace PlaywrightTests;
 
