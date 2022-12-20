@@ -1719,3 +1719,19 @@ Expected options currently selected.
 
 ### option: LocatorAssertions.toHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.23
+
+## async method: LocatorAssertions.toIntersectViewport
+* since: v1.30
+* langs: js
+
+Ensures the [Locator] points to an element that intersects viewport, according to the [intersection observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
+
+**Usage**
+
+```js
+const locator = page.locator('button.submit');
+await expect(locator).toIntersectViewport();
+```
+
+### option: LocatorAssertions.toIntersectViewport.timeout = %%-js-assertions-timeout-%%
+* since: v1.30

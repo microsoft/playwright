@@ -19,7 +19,7 @@ import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils';
 import type { Expect } from '../types';
-import { expectTypes, callLogText } from '../util';
+import { expectTypes, callLogText, currentExpectTimeout, captureStackTrace } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
@@ -310,6 +310,39 @@ export async function toBeOK(
 
   const pass = response.ok();
   return { message, pass };
+}
+
+export function toIntersectViewport(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  options?: { timeout?: number },
+) {
+  const customStackTrace = captureStackTrace(`expect.${this.isNot ? 'not.' : ''}toIntersectViewport`);
+  return (locator.page() as any)._wrapApiCall(async () => {
+    const result = await toPass.call(this, () => locator.evaluate(async element => {
+      const visibleRatio: number = await new Promise(resolve => {
+        const observer = new IntersectionObserver(entries => {
+          resolve(entries[0].intersectionRatio);
+          observer.disconnect();
+        });
+        observer.observe(element);
+        // Firefox doesn't call IntersectionObserver callback unless
+        // there are rafs.
+        requestAnimationFrame(() => {});
+      });
+      if (visibleRatio === 0)
+        throw 'not intersecting';
+    }), { timeout: currentExpectTimeout(options ?? {}) });
+    if (result.pass === this.isNot) {
+      result.message = () => [
+        `Element ${this.isNot ? 'is' : 'is not'} intersecting viewport`,
+        ``,
+        `Call Log:`,
+        `- Timeout 5000ms exceeded while waiting`,
+      ].join('\n');
+    }
+    return result;
+  }, false /* internal */, customStackTrace);
 }
 
 export async function toPass(
