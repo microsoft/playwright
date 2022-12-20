@@ -358,5 +358,5 @@ export async function toPass(
     `- ${timeoutMessage}`,
   ].join('\n') : timeoutMessage;
 
-  return { message, pass: false };
+  return { message, pass: isNot ? true : false };
 }
