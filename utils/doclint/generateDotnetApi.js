@@ -94,14 +94,16 @@ classNameMap.set('Readable', 'Stream');
  * @param {Documentation.MarkdownNode[]} spec
  * @param {string[]} body
  * @param {string} folder
- * @param {string} extendsName
+ * @param {string|null} extendsName
  */
-function writeFile(kind, name, spec, body, folder, extendsName = null) {
+function writeFile(kind, name, spec, body, folder, extendsName = null, prefix = '') {
   const out = [];
-  // console.log(`Generating ${name}`);
 
   if (spec) {
-    out.push(...XmlDoc.renderXmlDoc(spec, maxDocumentationColumnWidth));
+    if (prefix)
+      debugger
+
+    out.push(...XmlDoc.renderXmlDoc(spec, maxDocumentationColumnWidth, prefix));
   } else {
     const ownDocumentation = documentedResults.get(name);
     if (ownDocumentation) {
@@ -150,7 +152,7 @@ function renderClass(clazz) {
       clazz.spec,
       body,
       apiDir,
-      clazz.extends ? `I${toTitleCase(clazz.extends)}` : null);
+      clazz.extends ? `I${toTitleCase(clazz.extends)}` : null, prefixDeprecatedMessage(clazz.deprecated));
 }
 
 /**
