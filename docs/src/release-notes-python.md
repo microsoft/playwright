@@ -4,6 +4,66 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.29
+
+### New APIs
+
+- New method [`method: Route.fetch`] and new option `json` for [`method: Route.fulfill`]:
+
+    ```python
+    def handle_route(route: Route):
+      # Fetch original settings.
+      response = route.fetch()
+
+      # Force settings theme to a predefined value.
+      json = response.json()
+      json["theme"] = "Solorized"
+
+      # Fulfill with modified data.
+      route.fulfill(json=json)
+
+
+    page.route("**/api/settings", handle_route)
+    ```
+
+- New method [`method: Locator.all`] to iterate over all matching elements:
+
+    ```python
+    # Check all checkboxes!
+    checkboxes = page.get_by_role("checkbox")
+    for checkbox in checkboxes.all():
+      checkbox.check()
+    ```
+
+- [`method: Locator.selectOption`] matches now by value or label:
+
+  ```html
+  <select multiple>
+    <option value="red">Red</div>
+    <option value="green">Green</div>
+    <option value="blue">Blue</div>
+  </select>
+  ```
+
+  ```python
+  element.select_option("Red")
+  ```
+
+### Miscellaneous
+
+- Option `postData` in method [`method: Route.continue`] now supports [Serializable] values.
+
+### Browser Versions
+
+* Chromium 109.0.5414.46
+* Mozilla Firefox 107.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 108
+* Microsoft Edge 108
+
 ## Version 1.28
 
 ### Playwright Tools
