@@ -2,8 +2,7 @@
 * since: v1.8
 * extends: [Error]
 
-TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [`method:
-Locator.waitFor`] or [`method: BrowserType.launch`].
+TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [`method: Locator.waitFor`] or [`method: BrowserType.launch`].
 
 ```js
 const playwright = require('playwright');

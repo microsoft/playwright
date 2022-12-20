@@ -12238,8 +12238,9 @@ export namespace errors {
 /**
  * - extends: [Error]
  *
- * TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [`method: Locator.waitFor`]
- * or [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
+ * TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g.
+ * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for) or
+ * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
  *
  * ```js
  * const playwright = require('playwright');
