@@ -30,7 +30,7 @@ toc_max_heading_level: 2
 
   ```csharp
   // Check all checkboxes!
-  var checkboxes = Page.GetByRole(AriaRole.CHECKBOX);
+  var checkboxes = Page.GetByRole(AriaRole.Checkbox);
   foreach (var checkbox in await checkboxes.AllAsync())
     await checkbox.CheckAsync();
   ```
