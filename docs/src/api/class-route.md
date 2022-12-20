@@ -643,39 +643,6 @@ Optional response body as raw bytes.
 
 JSON response. This method will set the content type to `application/json` if not set.
 
-**Usage**
-
-```js
-await page.route('https://dog.ceo/api/breeds/list/all', route => {
-  route.fulfill({
-    json: {
-      kinds: ['golden', 'labrador'],
-    },
-  });
-});
-```
-
-```python async
-await page.route("https://dog.ceo/api/breeds/list/all", lambda route: route.fulfill(
-    json={"kinds": ["golden", "labrador"]}))
-```
-
-```python sync
-page.route("https://dog.ceo/api/breeds/list/all", lambda route: route.fulfill(
-    json={"kinds": ["golden", "labrador"]}))
-```
-
-```csharp
-await page.RouteAsync("https://dog.ceo/api/breeds/list/all", async route =>
-{
-    var json = new Dictionary<string, object>
-    {
-        ["kinds"] = new[] { "golden", "labrador" }
-    };
-    await route.FulfillAsync(new() { Json = json });
-});
-```
-
 ### option: Route.fulfill.path
 * since: v1.8
 - `path` <[path]>
