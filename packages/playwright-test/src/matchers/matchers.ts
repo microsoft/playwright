@@ -119,6 +119,16 @@ export function toBeVisible(
   }, options);
 }
 
+export function toIntersectViewport(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  options?: { timeout?: number },
+) {
+  return toBeTruthy.call(this, 'toIntersectViewport', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.intersect.viewport', { isNot, timeout });
+  }, options);
+}
+
 export function toContainText(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
