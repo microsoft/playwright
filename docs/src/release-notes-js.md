@@ -33,6 +33,20 @@ toc_max_heading_level: 2
       await checkbox.check();
     ```
 
+- [`method: Locator.selectOption`] matches now by value or label:
+
+  ```html
+  <select multiple>
+    <option value="red">Red</div>
+    <option value="green">Green</div>
+    <option value="blue">Blue</div>
+  </select>
+  ```
+
+  ```js
+  await element.selectOption('Red');
+  ```
+
 - Retry blocks of code until all assertions pass:
 
     ```js
@@ -65,7 +79,7 @@ toc_max_heading_level: 2
 
 - Playwright Test now respects [`jsconfig.json`](https://code.visualstudio.com/docs/languages/jsconfig).
 - New options `args` and `proxy` for [`method: AndroidDevice.launchBrowser`].
-- Option `postData` in method [`method: Route.continue`] now supports [serializable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#description) values.
+- Option `postData` in method [`method: Route.continue`] now supports [Serializable] values.
 
 ### Browser Versions
 
