@@ -70,7 +70,7 @@ test('should generate report', async ({ runInlineTest, showReport, page }) => {
   await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toBeVisible();
   await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toBeVisible();
 
-  await expect(page.getByTestId('overall-duration')).toContainText(/^\d+(\.\d+)?(ms|s|m)$/); // e.g. 1.2s
+  await expect(page.getByTestId('overall-duration')).toContainText(/^Total time: \d+(\.\d+)?(ms|s|m)$/); // e.g. 1.2s
 
   await expect(page.locator('.metadata-view')).not.toBeVisible();
 });

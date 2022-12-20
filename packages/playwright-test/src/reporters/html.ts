@@ -52,7 +52,6 @@ type HtmlReporterOptions = {
 class HtmlReporter implements ReporterInternal {
   private config!: FullConfigInternal;
   private suite!: Suite;
-  private _duration: number = 0;
   private _montonicStartTime: number = 0;
   private _options: HtmlReporterOptions;
   private _outputFolder!: string;
@@ -103,7 +102,7 @@ class HtmlReporter implements ReporterInternal {
   }
 
   async onEnd() {
-    this._duration = monotonicTime() - this._montonicStartTime;
+    const duration = monotonicTime() - this._montonicStartTime;
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();
@@ -112,7 +111,7 @@ class HtmlReporter implements ReporterInternal {
     });
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this._outputFolder);
-    this._buildResult = await builder.build({ ...this.config.metadata, duration: this._duration }, reports);
+    this._buildResult = await builder.build({ ...this.config.metadata, duration }, reports);
   }
 
   async _onExit() {

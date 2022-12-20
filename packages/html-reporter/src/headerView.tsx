@@ -56,7 +56,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
         }}></input>
       </form>
     </div>
-    <div className='pt-2'><span data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)', paddingRight: '10px', float: 'right' }}>{msToString(stats.duration)}</span></div>
+    <div className='pt-2'><span data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)', paddingRight: '10px', float: 'right' }}>Total time: {msToString(stats.duration)}</span></div>
   </>);
 };
 
