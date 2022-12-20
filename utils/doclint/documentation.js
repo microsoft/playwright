@@ -170,18 +170,19 @@ class Documentation {
     this._patchLinksInText = (classOrMember, text) => patchLinksInText(classOrMember, text, classesMap, membersMap, linkRenderer);
 
     for (const clazz of this.classesArray)
-      clazz.visit(item => this.renderLinksInNodes(item));
+      clazz.visit(item => item.spec && this.renderLinksInNodes(item.spec, item));
   }
 
   /**
+   * @param {MarkdownNode[]} nodes
    * @param {Class|Member=} classOrMember
    */
-  renderLinksInNodes(classOrMember) {
-    if (!classOrMember?.spec)
-      return;
+  renderLinksInNodes(nodes, classOrMember) {
+    if (classOrMember) {
     classOrMember.discouraged = this.renderLinksInText(classOrMember.discouraged || '', classOrMember);
     classOrMember.deprecated = this.renderLinksInText(classOrMember.deprecated || '', classOrMember);
-    md.visitAll(classOrMember.spec, node => {
+    }
+    md.visitAll(nodes, node => {
       if (!node.text)
         return;
       node.text = this.renderLinksInText(node.text, classOrMember);
