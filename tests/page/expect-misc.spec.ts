@@ -29,6 +29,30 @@ test.describe('toHaveCount', () => {
     expect(done).toBe(true);
   });
 
+  test('toHaveCountGreaterThan pass', async ({ page }) => {
+    await page.setContent('<select><option>One</option></select>');
+    const locator = page.locator('option');
+    let done = false;
+    const promise = expect(locator).toHaveCountGreaterThan(1).then(() => { done = true; });
+    await page.waitForTimeout(1000);
+    expect(done).toBe(false);
+    await page.setContent('<select><option>One</option><option>Two</option></select>');
+    await promise;
+    expect(done).toBe(true);
+  });
+
+  test('toHaveCountLessThan pass', async ({ page }) => {
+    await page.setContent('<select><option>One</option><option>Two</option></select>');
+    const locator = page.locator('option');
+    let done = false;
+    const promise = expect(locator).toHaveCountLessThan(2).then(() => { done = true; });
+    await page.waitForTimeout(1000);
+    expect(done).toBe(false);
+    await page.setContent('<select><option>One</option></select>');
+    await promise;
+    expect(done).toBe(true);
+  });
+
   test('pass zero', async ({ page }) => {
     await page.setContent('<div></div>');
     const locator = page.locator('span');

@@ -1238,6 +1238,18 @@ export class InjectedScript {
       return { received, matches };
     }
 
+    if (expression === 'to.have.count.greater.than') {
+      const received = elements.length;
+      const matches = received > options.expectedNumber!;
+      return { received, matches };
+    }
+
+    if (expression === 'to.have.count.less.than') {
+      const received = elements.length;
+      const matches = received < options.expectedNumber!;
+      return { received, matches };
+    }
+
     // List of values.
     let received: string[] | undefined;
     if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')

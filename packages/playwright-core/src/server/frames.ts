@@ -1364,7 +1364,10 @@ export class Frame extends SdkObject {
 
   private async _expectInternal(metadata: CallMetadata, selector: string, options: FrameExpectParams, oneShot: boolean, timeout: number): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     const controller = new ProgressController(metadata, this);
-    const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
+    const isArray = options.expression === 'to.have.count'
+        || options.expression === 'to.have.count.greater.than'
+        || options.expression === 'to.have.count.less.than'
+        || options.expression.endsWith('.array');
     const mainWorld = options.expression === 'to.have.property';
 
     // List all combinations that are satisfied with the detached node(s).

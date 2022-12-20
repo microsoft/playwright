@@ -3725,6 +3725,46 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
+   * Ensures the [Locator] resolves strictly to more DOM nodes than expected.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const list = page.locator('list > .component');
+   * await expect(list).toHaveCountGreaterThan(3);
+   * ```
+   *
+   * @param count Expected count.
+   * @param options
+   */
+  toHaveCountGreaterThan(count: number, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] resolves strictly to less DOM nodes than expected.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const list = page.locator('list > .component');
+   * await expect(list).toHaveCountLessThan(3);
+   * ```
+   *
+   * @param count Expected count.
+   * @param options
+   */
+  toHaveCountLessThan(count: number, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Ensures the [Locator] resolves to an element with the given computed CSS style.
    *
    * **Usage**

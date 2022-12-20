@@ -182,6 +182,28 @@ export function toHaveCount(
   }, expected, options);
 }
 
+export function toHaveCountGreaterThan(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  expected: number,
+  options?: { timeout?: number },
+) {
+  return toEqual.call(this, 'toHaveCountGreaterThan', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.have.count.greater.than', { expectedNumber: expected, isNot, timeout });
+  }, expected, options);
+}
+
+export function toHaveCountLessThan(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  expected: number,
+  options?: { timeout?: number },
+) {
+  return toEqual.call(this, 'toHaveCountLessThan', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.have.count.less.than', { expectedNumber: expected, isNot, timeout });
+  }, expected, options);
+}
+
 export function toHaveCSS(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
