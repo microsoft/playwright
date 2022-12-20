@@ -31,27 +31,30 @@ for (const arg of chromiumSwitches) {
   app.commandLine.appendSwitch(match[1], match[2]);
 }
 
+// Defer ready event.
+const originalWhenReady = app.whenReady();
+const originalEmit = app.emit.bind(app);
+let readyEventArgs: any[];
+app.emit = (event: string | symbol, ...args: any[]): boolean => {
+  if (event === 'ready') {
+    readyEventArgs = args;
+    return app.listenerCount('ready') > 0;
+  }
+  return originalEmit(event, ...args);
+};
 app.getAppPath = () => path.dirname(appPath);
+let isReady = false;
+let whenReadyCallback: (event: any) => any;
+const whenReadyPromise = new Promise<void>(f => whenReadyCallback = f);
+app.isReady = () => isReady;
+app.whenReady = () => whenReadyPromise;
 
-let launchInfoEventPayload: any;
-app.on('ready', launchInfo => launchInfoEventPayload = launchInfo);
+require(appPath);
 
 (globalThis as any).__playwright_run = async () => {
   // Wait for app to be ready to avoid browser initialization races.
-  await app.whenReady();
-
-  // Override isReady pipeline.
-  let isReady = false;
-  let whenReadyCallback: () => void;
-  const whenReadyPromise = new Promise<void>(f => whenReadyCallback = f);
-  app.isReady = () => isReady;
-  app.whenReady = () => whenReadyPromise;
-
-  require(appPath);
-
-  // Trigger isReady.
+  const event = await originalWhenReady;
   isReady = true;
-  whenReadyCallback!();
-  app.emit('will-finish-launching');
-  app.emit('ready', launchInfoEventPayload);
+  whenReadyCallback(event);
+  originalEmit('ready', ...readyEventArgs);
 };
