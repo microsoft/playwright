@@ -15,6 +15,7 @@
  */
 
 const { app } = require('electron');
+const fs = require('fs');
 const path = require('path');
 const { chromiumSwitches } = require('../chromium/chromiumSwitches');
 
@@ -42,7 +43,13 @@ app.emit = (event: string | symbol, ...args: any[]): boolean => {
   }
   return originalEmit(event, ...args);
 };
-app.getAppPath = () => path.dirname(appPath);
+
+app.getAppPath = () => {
+  if (fs.statSync(appPath).isFile())
+    return path.dirname(appPath);
+  return appPath;
+};
+
 let isReady = false;
 let whenReadyCallback: (event: any) => any;
 const whenReadyPromise = new Promise<void>(f => whenReadyCallback = f);
