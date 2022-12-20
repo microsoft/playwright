@@ -1,6 +1,9 @@
 const { app, protocol } = require('electron');
 const path = require('path');
 
+// Test using pre-ready apis.
+protocol.registerSchemesAsPrivileged([]);
+
 app.on('window-all-closed', e => e.preventDefault());
 
 app.whenReady().then(() => {
