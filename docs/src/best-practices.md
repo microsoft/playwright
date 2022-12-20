@@ -27,10 +27,42 @@ Playwright has a [test generator](./codegen.md) that can generate locators for y
 npx playwright codegen
 ```
 
-## Use web assertions
+## Use web first assertions
 
-##
 
+## Don't test implementation details
+
+Implementation details are things which users of your code will not typically use, see, or even know about such as name of a function or if it's. The end user will see/interact with what we render. The developer will see/interact with the props they pass to the component. So our test should typically only see/interact with the props that are passed, and the rendered output. Automated tests should verify that the application code works for the end users.
+
+## Use the trace viewer
+
+Use playwright trace viewer for post mortem debugging instead of videos and screenshots. The trace viewer gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
+
+
+## Use TypeScript
+
+TypeScript in Playwright works out of the box, better ide integrations, refactoring tools,
+
+## Test across all browsers
+
+Playwright makes it easy to test your site across all browser engines no matter what platform you are on. Testing across all browsers ensures your app works for all users.
+
+
+## Set a global baseURL
+
+https://docs.cypress.io/guides/references/best-practices#Setting-a-global-baseUrl
+
+
+
+## Run tests in stable reproducible environments
+
+- If working with a database then make sure you control the data. Test against a staging environment and make sure it doesn't change. 
+- For visual regression tests make sure the operating system and browser versions are the same.
+
+
+## Don't test third party servers
+
+Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you can not control the content of the page you are linking to, if there are cookie banners or overlay pages or anything else that might cause your test to fail. See our testing external links guide for more information.
 ## Never check manually for `isVisible()`
 
 Use `toBeVisible()` instead. Web assertions such as `toBeVisible()` will wait and retry whereas `isVisible()` wont wait a single second, it will just check the locator is there and return immediately.
@@ -44,38 +76,6 @@ that are not awaiting the expect such as `expect(await page.locator(â€œtext=meâ€
 
 `toBe` is a jest assertion not a web assertion (Playwright assertion)
 
-## Use Playwright test runner
-
-Dont use the library
-
-
-## Use the trace viewer
-
-Use playwright trace viewer for post mortem debugging instead of videos and screenshots. The trace viewer gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
-
-
-## Use TypeScript
-
-works out of the box, better ide integrations, refactoring tools,
-
-## Test across all browsers
-
-
-
-### Don't use videos for debugging
-
-Videos are heavy and although you can record videos should you wish we believe the trace viewer will give you a much better debugging experience.
-
-
-
-## Don't test third party servers
-
-Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you can not control the content of the page you are linking to, if there are cookie banners or overlay pages or anything else that might cause your test to fail. See our testing external links guide for more information.
-
-
-
-
-## Use test isolation
 
 
 # Testing Links
