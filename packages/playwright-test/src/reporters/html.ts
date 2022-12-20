@@ -22,7 +22,7 @@ import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
 import type { FullConfig, Suite } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/lib/utils/httpServer';
-import { assert, calculateSha1 } from 'playwright-core/lib/utils';
+import { assert, calculateSha1, monotonicTime } from 'playwright-core/lib/utils';
 import { copyFileAndMakeWritable, removeFolders } from 'playwright-core/lib/utils/fileUtils';
 import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import RawReporter from './raw';
@@ -52,6 +52,7 @@ type HtmlReporterOptions = {
 class HtmlReporter implements ReporterInternal {
   private config!: FullConfigInternal;
   private suite!: Suite;
+  private _montonicStartTime: number = 0;
   private _options: HtmlReporterOptions;
   private _outputFolder!: string;
   private _open: string | undefined;
@@ -66,6 +67,7 @@ class HtmlReporter implements ReporterInternal {
   }
 
   onBegin(config: FullConfig, suite: Suite) {
+    this._montonicStartTime = monotonicTime();
     this.config = config as FullConfigInternal;
     const { outputFolder, open } = this._resolveOptions();
     this._outputFolder = outputFolder;
@@ -100,6 +102,7 @@ class HtmlReporter implements ReporterInternal {
   }
 
   async onEnd() {
+    const duration = monotonicTime() - this._montonicStartTime;
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();
@@ -108,7 +111,7 @@ class HtmlReporter implements ReporterInternal {
     });
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this._outputFolder);
-    this._buildResult = await builder.build(this.config.metadata, reports);
+    this._buildResult = await builder.build({ ...this.config.metadata, duration }, reports);
   }
 
   async _onExit() {
@@ -201,7 +204,7 @@ class HtmlBuilder {
     this._dataZipFile = new yazl.ZipFile();
   }
 
-  async build(metadata: Metadata, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: Metadata & { duration: number }, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {
@@ -260,7 +263,7 @@ class HtmlBuilder {
       metadata,
       files: [...data.values()].map(e => e.testFileSummary),
       projectNames: rawReports.map(r => r.project.name),
-      stats: [...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats())
+      stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()), duration: metadata.duration }
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;

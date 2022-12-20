@@ -20,6 +20,7 @@ import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
 import type { FullConfigInternal, ReporterInternal } from '../types';
 import { codeFrameColumns } from '../babelBundle';
+import { monotonicTime } from 'playwright-core/lib/utils';
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
@@ -445,11 +446,6 @@ export function prepareErrorStack(stack: string): {
     break;
   }
   return { message, stackLines, location };
-}
-
-function monotonicTime(): number {
-  const [seconds, nanoseconds] = process.hrtime();
-  return seconds * 1000 + (nanoseconds / 1000000 | 0);
 }
 
 const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');

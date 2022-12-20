@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Metadata } from '@protocol/channels';
+import type { Metadata } from '@playwright/test';
 
 export type Stats = {
   total: number;
