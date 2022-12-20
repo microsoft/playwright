@@ -12,7 +12,7 @@ toc_max_heading_level: 2
 
     ```java
     // Check all checkboxes!
-    Locator checkboxes = page.getByRole('checkbox');
+    Locator checkboxes = page.getByRole(AriaRole.CHECKBOX);
     for (Locator checkbox : checkboxes.all())
       checkbox.check();
     ```
