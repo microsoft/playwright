@@ -178,7 +178,7 @@ const DOWNLOAD_PATHS = {
     '<unknown>': undefined,
     'generic-linux': 'builds/webkit/%s/webkit-ubuntu-20.04.zip',
     'generic-linux-arm64': 'builds/webkit/%s/webkit-ubuntu-20.04-arm64.zip',
-    'ubuntu18.04': 'builds/webkit/%s/webkit-ubuntu-18.04.zip',
+    'ubuntu18.04': 'builds/deprecated-webkit-ubuntu-18.04/%s/deprecated-webkit-ubuntu-18.04.zip',
     'ubuntu20.04': 'builds/webkit/%s/webkit-ubuntu-20.04.zip',
     'ubuntu22.04': 'builds/webkit/%s/webkit-ubuntu-22.04.zip',
     'ubuntu18.04-arm64': undefined,
