@@ -43,12 +43,10 @@ export type InjectedScriptProgress = {
   aborted: boolean;
   log: (message: string) => void;
   logRepeating: (message: string) => void;
-  setIntermediateResult: (intermediateResult: any) => void;
 };
 
 export type LogEntry = {
   message?: string;
-  intermediateResult?: string;
 };
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
@@ -439,7 +437,6 @@ export class InjectedScript {
     });
 
     let lastMessage = '';
-    let lastIntermediateResult: any = undefined;
     const progress: InjectedScriptProgress = {
       injectedScript: this,
       aborted: false,
@@ -452,13 +449,6 @@ export class InjectedScript {
       logRepeating: (message: string) => {
         if (message !== lastMessage)
           progress.log(message);
-      },
-      setIntermediateResult: (intermediateResult: any) => {
-        if (lastIntermediateResult === intermediateResult)
-          return;
-        lastIntermediateResult = intermediateResult;
-        unsentLog.push({ intermediateResult });
-        logReady();
       },
     };
 
@@ -1118,39 +1108,21 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  expect(progress: InjectedScriptProgress, element: Element | undefined, options: FrameExpectParams & { oneShot: boolean }, elements: Element[]) {
+  expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]) {
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
-
-    let result: { matches: boolean, received?: any };
-
-    if (isArray) {
-      result = this.expectArray(elements, options);
-    } else {
-      if (!element) {
-        // expect(locator).toBeHidden() passes when there is no element.
-        if (!options.isNot && options.expression === 'to.be.hidden')
-          return { matches: true };
-        // expect(locator).not.toBeVisible() passes when there is no element.
-        if (options.isNot && options.expression === 'to.be.visible')
-          return { matches: false };
-        // When none of the above applies, keep waiting for the element.
-        return options.oneShot ? { matches: options.isNot } : progress.continuePolling;
-      }
-      result = this.expectSingleElement(element, options);
+    if (isArray)
+      return this.expectArray(elements, options);
+    if (!element) {
+      // expect(locator).toBeHidden() passes when there is no element.
+      if (!options.isNot && options.expression === 'to.be.hidden')
+        return { matches: true };
+      // expect(locator).not.toBeVisible() passes when there is no element.
+      if (options.isNot && options.expression === 'to.be.visible')
+        return { matches: false };
+      // When none of the above applies, expect does not match.
+      return { matches: options.isNot };
     }
-
-    if (result.matches === options.isNot) {
-      // Keep waiting in these cases:
-      // expect(locator).conditionThatDoesNotMatch
-      // expect(locator).not.conditionThatDoesMatch
-      progress.setIntermediateResult(result.received);
-      if (!Array.isArray(result.received))
-        progress.log(`  unexpected value "${this.renderUnexpectedValue(options.expression, result.received)}"`);
-      return options.oneShot ? result : progress.continuePolling;
-    }
-
-    // Reached the expected state!
-    return result;
+    return this.expectSingleElement(element, options);
   }
 
   private expectSingleElement(element: Element, options: FrameExpectParams): { matches: boolean, received?: any } {
@@ -1250,30 +1222,6 @@ export class InjectedScript {
     }
 
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
-  }
-
-  private renderUnexpectedValue(expression: string, received: any): string {
-    if (expression === 'to.be.checked')
-      return received ? 'checked' : 'unchecked';
-    if (expression === 'to.be.unchecked')
-      return received ? 'unchecked' : 'checked';
-    if (expression === 'to.be.visible')
-      return received ? 'visible' : 'hidden';
-    if (expression === 'to.be.hidden')
-      return received ? 'hidden' : 'visible';
-    if (expression === 'to.be.enabled')
-      return received ? 'enabled' : 'disabled';
-    if (expression === 'to.be.disabled')
-      return received ? 'disabled' : 'enabled';
-    if (expression === 'to.be.editable')
-      return received ? 'editable' : 'readonly';
-    if (expression === 'to.be.readonly')
-      return received ? 'readonly' : 'editable';
-    if (expression === 'to.be.empty')
-      return received ? 'empty' : 'not empty';
-    if (expression === 'to.be.focused')
-      return received ? 'focused' : 'not focused';
-    return received;
   }
 
   private expectArray(elements: Element[], options: FrameExpectParams): { matches: boolean, received?: any } {
