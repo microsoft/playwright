@@ -100,9 +100,6 @@ function writeFile(kind, name, spec, body, folder, extendsName = null, prefix = 
   const out = [];
 
   if (spec) {
-    if (prefix)
-      debugger
-
     out.push(...XmlDoc.renderXmlDoc(spec, maxDocumentationColumnWidth, prefix));
   } else {
     const ownDocumentation = documentedResults.get(name);
@@ -286,7 +283,7 @@ function renderConstructors(name, type, out) {
 function prefixDeprecatedMessage(message) {
   if (!message)
     return '';
-  return `**DEPRECATED** ${message}`;
+  return `**DEPRECATED** ${message.replace(/↵/g, ' ')}`;
 }
 
 /**
