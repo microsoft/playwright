@@ -17,7 +17,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { MultiMap } from 'playwright-core/lib/utils/multimap';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { colors, minimatch, rimraf } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
@@ -177,7 +176,8 @@ export class Runner {
     const result = await raceAgainstTimeout(() => this._run(options), config.globalTimeout);
     let fullResult: FullResult;
     if (result.timedOut) {
-      this._reporter.onError?.(createStacklessError(`Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
+      this._reporter.onError?.(createStacklessError(
+          `Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
       fullResult = { status: 'timedout' };
     } else {
       fullResult = result.result;
@@ -325,9 +325,7 @@ export class Runner {
     }
 
     // Complain about duplicate titles.
-    const duplicateTitlesError = createDuplicateTitlesError(config, preprocessRoot);
-    if (duplicateTitlesError)
-      fatalErrors.push(duplicateTitlesError);
+    fatalErrors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
 
     // Filter tests to respect line/column filter.
     filterByFocusedLine(preprocessRoot, options.testFileFilters, doNotFilterFiles);
@@ -336,7 +334,7 @@ export class Runner {
     if (config.forbidOnly) {
       const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
       if (onlyTestsAndSuites.length > 0)
-        fatalErrors.push(createForbidOnlyError(config, onlyTestsAndSuites));
+        fatalErrors.push(...createForbidOnlyErrors(config, onlyTestsAndSuites));
     }
 
     // Filter only.
@@ -782,7 +780,6 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
   return files;
 }
 
-
 function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
   if (!testOrSuite.location)
     return '';
@@ -927,53 +924,46 @@ class ListModeReporter implements Reporter {
   }
 }
 
-function createForbidOnlyError(config: FullConfigInternal, onlyTestsAndSuites: (TestCase | Suite)[]): TestError {
-  const errorMessage = [
-    '=====================================',
-    ' --forbid-only found a focused test.',
-  ];
+function createForbidOnlyErrors(config: FullConfigInternal, onlyTestsAndSuites: (TestCase | Suite)[]): TestError[] {
+  const errors: TestError[] = [];
   for (const testOrSuite of onlyTestsAndSuites) {
     // Skip root and file.
     const title = testOrSuite.titlePath().slice(2).join(' ');
-    errorMessage.push(` - ${buildItemLocation(config.rootDir, testOrSuite)} > ${title}`);
+    const error: TestError = {
+      message: `Error: focused item found in the --forbid-only mode: "${title}"`,
+      location: testOrSuite.location!,
+    };
+    errors.push(error);
   }
-  errorMessage.push('=====================================');
-  return createStacklessError(errorMessage.join('\n'));
+  return errors;
 }
 
-function createDuplicateTitlesError(config: FullConfigInternal, rootSuite: Suite): TestError | undefined {
-  const lines: string[] = [];
+function createDuplicateTitlesErrors(config: FullConfigInternal, rootSuite: Suite): TestError[] {
+  const errors: TestError[] = [];
   for (const fileSuite of rootSuite.suites) {
-    const testsByFullTitle = new MultiMap<string, TestCase>();
+    const testsByFullTitle = new Map<string, TestCase>();
     for (const test of fileSuite.allTests()) {
       const fullTitle = test.titlePath().slice(2).join('\x1e');
+      const existingTest = testsByFullTitle.get(fullTitle);
+      if (existingTest) {
+        const error: TestError = {
+          message: `Error: duplicate test title "${fullTitle}", first declared in ${buildItemLocation(config.rootDir, existingTest)}`,
+          location: test.location,
+        };
+        errors.push(error);
+      }
       testsByFullTitle.set(fullTitle, test);
     }
-    for (const fullTitle of testsByFullTitle.keys()) {
-      const tests = testsByFullTitle.get(fullTitle);
-      if (tests.length > 1) {
-        lines.push(` - title: ${fullTitle.replace(/\u001e/g, ' › ')}`);
-        for (const test of tests)
-          lines.push(`   - ${buildItemLocation(config.rootDir, test)}`);
-      }
-    }
   }
-  if (!lines.length)
-    return;
-  return createStacklessError([
-    '========================================',
-    ' duplicate test titles are not allowed.',
-    ...lines,
-    '========================================',
-  ].join('\n'));
+  return errors;
 }
 
 function createNoTestsError(): TestError {
   return createStacklessError(`=================\n no tests found.\n=================`);
 }
 
-function createStacklessError(message: string): TestError {
-  return { message, __isNotAFatalError: true } as any;
+function createStacklessError(message: string, location?: TestError['location']): TestError {
+  return { message, location };
 }
 
 function sanitizeConfigForJSON(object: any, visited: Set<any>): any {

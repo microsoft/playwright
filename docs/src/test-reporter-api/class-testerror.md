@@ -21,3 +21,9 @@ Error stack. Set when [Error] (or its subclass) has been thrown.
 - type: ?<[string]>
 
 The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
+
+## property: TestError.location
+* since: v1.30
+- type: ?<[Location]>
+
+Error location in the source code.

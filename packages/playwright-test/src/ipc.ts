@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import type { TestError } from '../types/testReporter';
 import type { ConfigCLIOverrides } from './runner';
-import type { TestStatus } from './types';
+import type { TestInfoError, TestStatus } from './types';
 
 export type SerializedLoaderData = {
   configFile: string | undefined;
@@ -61,7 +60,7 @@ export type TestEndPayload = {
   testId: string;
   duration: number;
   status: TestStatus;
-  errors: TestError[];
+  errors: TestInfoError[];
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
   timeout: number;
@@ -84,7 +83,7 @@ export type StepEndPayload = {
   stepId: string;
   refinedTitle?: string;
   wallTime: number;  // milliseconds since unix epoch
-  error?: TestError;
+  error?: TestInfoError;
 };
 
 export type TestEntry = {
@@ -100,7 +99,7 @@ export type RunPayload = {
 };
 
 export type DonePayload = {
-  fatalErrors: TestError[];
+  fatalErrors: TestInfoError[];
   skipTestsDueToSetupFailure: string[];  // test ids
   fatalUnknownTestIds?: string[];
 };
@@ -112,5 +111,5 @@ export type TestOutputPayload = {
 };
 
 export type TeardownErrorsPayload = {
-  fatalErrors: TestError[];
+  fatalErrors: TestInfoError[];
 };
