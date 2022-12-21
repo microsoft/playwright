@@ -516,7 +516,7 @@ test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
       test('times out waiting for text', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
         const promise = expect(page.locator('#node')).toHaveText('Text 2');
-        await new Promise(f => setTimeout(f, 500));
+        await new Promise(f => setTimeout(f, 1000));
         console.log('\\n%%SEND-SIGINT%%');
         await promise;
       });
