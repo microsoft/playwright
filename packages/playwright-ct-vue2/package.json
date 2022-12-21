@@ -1,6 +1,6 @@
 {
   "name": "@playwright/experimental-ct-vue2",
-  "version": "1.29.0",
+  "version": "1.29.1",
   "description": "Playwright Component Testing for Vue2",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -26,7 +26,7 @@
     }
   },
   "dependencies": {
-    "@playwright/test": "1.29.0",
+    "@playwright/test": "1.29.1",
     "@vitejs/plugin-vue2": "^2.0.0",
     "vite": "^3.2.1"
   },
