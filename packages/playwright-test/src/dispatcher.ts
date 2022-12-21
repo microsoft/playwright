@@ -350,7 +350,9 @@ export class Dispatcher {
           const test = this._testById.get(testId)!.test;
           return test.titlePath().slice(1).join(' > ');
         });
-        massSkipTestsFromRemaining(new Set(params.fatalUnknownTestIds), [{ message: `Unknown test(s) in worker:\n${titles.join('\n')}` }]);
+        massSkipTestsFromRemaining(new Set(params.fatalUnknownTestIds), [{
+          message: `Internal error: unknown test(s) in worker:\n${titles.join('\n')}`
+        }]);
       }
       if (params.fatalErrors.length) {
         // In case of fatal errors, report first remaining test as failing with these errors,
@@ -423,7 +425,9 @@ export class Dispatcher {
     worker.on('done', onDone);
 
     const onExit = (data: WorkerExitData) => {
-      const unexpectedExitError = data.unexpectedly ? { value: `Worker process exited unexpectedly (code=${data.code}, signal=${data.signal})` } : undefined;
+      const unexpectedExitError: TestError | undefined = data.unexpectedly ? {
+        message: `Internal error: worker process exited unexpectedly (code=${data.code}, signal=${data.signal})`
+      } : undefined;
       onDone({ skipTestsDueToSetupFailure: [], fatalErrors: [], unexpectedExitError });
     };
     worker.on('exit', onExit);

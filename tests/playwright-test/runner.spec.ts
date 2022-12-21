@@ -29,10 +29,10 @@ test('it should not allow multiple tests with the same name per suite', async ({
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('duplicate test titles are not allowed');
-  expect(result.output).toContain(`- title: suite › i-am-a-duplicate`);
-  expect(result.output).toContain(`  - tests${path.sep}example.spec.js:7`);
-  expect(result.output).toContain(`  - tests${path.sep}example.spec.js:10`);
+  expect(result.output).toContain(`Error: duplicate test title`);
+  expect(result.output).toContain(`i-am-a-duplicate`);
+  expect(result.output).toContain(`tests${path.sep}example.spec.js:7`);
+  expect(result.output).toContain(`tests${path.sep}example.spec.js:10`);
 });
 
 test('it should not allow multiple tests with the same name in multiple files', async ({ runInlineTest }) => {
@@ -49,13 +49,12 @@ test('it should not allow multiple tests with the same name in multiple files', 
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('duplicate test titles are not allowed');
-  expect(result.output).toContain(`- title: i-am-a-duplicate`);
-  expect(result.output).toContain(`  - tests${path.sep}example1.spec.js:6`);
-  expect(result.output).toContain(`  - tests${path.sep}example1.spec.js:7`);
-  expect(result.output).toContain(`- title: i-am-a-duplicate`);
-  expect(result.output).toContain(`  - tests${path.sep}example2.spec.js:6`);
-  expect(result.output).toContain(`  - tests${path.sep}example2.spec.js:7`);
+  expect(result.output).toContain('Error: duplicate test title');
+  expect(stripAnsi(result.output)).toContain(`test('i-am-a-duplicate'`);
+  expect(result.output).toContain(`tests${path.sep}example1.spec.js:6`);
+  expect(result.output).toContain(`tests${path.sep}example1.spec.js:7`);
+  expect(result.output).toContain(`tests${path.sep}example2.spec.js:6`);
+  expect(result.output).toContain(`tests${path.sep}example2.spec.js:7`);
 });
 
 test('it should not allow a focused test when forbid-only is used', async ({ runInlineTest }) => {
@@ -66,8 +65,9 @@ test('it should not allow a focused test when forbid-only is used', async ({ run
     `
   }, { 'forbid-only': true });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('--forbid-only found a focused test.');
-  expect(result.output).toContain(`- tests${path.sep}focused-test.spec.js:6 > i-am-focused`);
+  expect(result.output).toContain('Error: focused item found in the --forbid-only mode');
+  expect(stripAnsi(result.output)).toContain(`test.only('i-am-focused'`);
+  expect(result.output).toContain(`tests${path.sep}focused-test.spec.js:6`);
 });
 
 test('should continue with other tests after worker process suddenly exits', async ({ runInlineTest }) => {
@@ -85,7 +85,7 @@ test('should continue with other tests after worker process suddenly exits', asy
   expect(result.passed).toBe(4);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(0);
-  expect(result.output).toContain('Worker process exited unexpectedly');
+  expect(result.output).toContain('Internal error: worker process exited unexpectedly');
 });
 
 test('sigint should stop workers', async ({ runInlineTest }) => {
@@ -321,7 +321,7 @@ test('should not hang if test suites in worker are inconsistent with runner', as
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
-  expect(result.report.suites[0].specs[1].tests[0].results[0].error!.message).toBe('Unknown test(s) in worker:\nproject-name > a.spec.js > Test 1 - bar\nproject-name > a.spec.js > Test 2 - baz');
+  expect(result.report.suites[0].specs[1].tests[0].results[0].error!.message).toBe('Internal error: unknown test(s) in worker:\nproject-name > a.spec.js > Test 1 - bar\nproject-name > a.spec.js > Test 2 - baz');
 });
 
 test('sigint should stop global setup', async ({ runInlineTest }) => {
@@ -452,13 +452,13 @@ test('should not crash with duplicate titles and .only', async ({ runInlineTest 
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain([
-    ` duplicate test titles are not allowed.`,
-    ` - title: non unique title`,
-    `   - example.spec.ts:6`,
-    `   - example.spec.ts:7`,
-    `   - example.spec.ts:8`,
-  ].join('\n'));
+  expect(result.output).toContain(`Error: duplicate test title`);
+  expect(stripAnsi(result.output)).toContain(`test('non unique title'`);
+  expect(stripAnsi(result.output)).toContain(`test.skip('non unique title'`);
+  expect(stripAnsi(result.output)).toContain(`test.only('non unique title'`);
+  expect(result.output).toContain(`example.spec.ts:6`);
+  expect(result.output).toContain(`example.spec.ts:7`);
+  expect(result.output).toContain(`example.spec.ts:8`);
 });
 
 test('should not crash with duplicate titles and line filter', async ({ runInlineTest }) => {
@@ -471,13 +471,11 @@ test('should not crash with duplicate titles and line filter', async ({ runInlin
     `
   }, {}, {}, { additionalArgs: ['example.spec.ts:8'] });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain([
-    ` duplicate test titles are not allowed.`,
-    ` - title: non unique title`,
-    `   - example.spec.ts:6`,
-    `   - example.spec.ts:7`,
-    `   - example.spec.ts:8`,
-  ].join('\n'));
+  expect(result.output).toContain(`Error: duplicate test title`);
+  expect(stripAnsi(result.output)).toContain(`test('non unique title'`);
+  expect(result.output).toContain(`example.spec.ts:6`);
+  expect(result.output).toContain(`example.spec.ts:7`);
+  expect(result.output).toContain(`example.spec.ts:8`);
 });
 
 test('should not load tests not matching filter', async ({ runInlineTest }) => {

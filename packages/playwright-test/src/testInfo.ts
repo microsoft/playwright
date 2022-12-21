@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
-import type { TestError, TestInfo, TestStatus } from '../types/test';
+import type { TestInfoError, TestInfo, TestStatus } from '../types/test';
 import type { WorkerInitParams } from './ipc';
 import type { Loader } from './loader';
 import type { TestCase } from './test';
@@ -58,14 +58,14 @@ export class TestInfoImpl implements TestInfo {
   snapshotSuffix: string = '';
   readonly outputDir: string;
   readonly snapshotDir: string;
-  errors: TestError[] = [];
+  errors: TestInfoError[] = [];
   currentStep: TestStepInternal | undefined;
 
-  get error(): TestError | undefined {
+  get error(): TestInfoError | undefined {
     return this.errors[0];
   }
 
-  set error(e: TestError | undefined) {
+  set error(e: TestInfoError | undefined) {
     if (e === undefined)
       throw new Error('Cannot assign testInfo.error undefined value!');
     this.errors[0] = e;
@@ -168,7 +168,7 @@ export class TestInfoImpl implements TestInfo {
     this.duration = this._timeoutManager.defaultSlotTimings().elapsed | 0;
   }
 
-  async _runFn(fn: Function, skips?: 'allowSkips'): Promise<TestError | undefined> {
+  async _runFn(fn: Function, skips?: 'allowSkips'): Promise<TestInfoError | undefined> {
     try {
       await fn();
     } catch (error) {
@@ -187,7 +187,7 @@ export class TestInfoImpl implements TestInfo {
     return this._addStepImpl(data);
   }
 
-  _failWithError(error: TestError, isHardError: boolean) {
+  _failWithError(error: TestInfoError, isHardError: boolean) {
     // Do not overwrite any previous hard errors.
     // Some (but not all) scenarios include:
     //   - expect() that fails after uncaught exception.

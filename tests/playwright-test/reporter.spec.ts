@@ -475,7 +475,7 @@ test('should report forbid-only error to reporter', async ({ runInlineTest }) =>
   }, { 'reporter': '', 'forbid-only': true });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`%%got error: =====================================\n --forbid-only found a focused test.`);
+  expect(result.output).toContain(`%%got error: Error: focused item found in the --forbid-only mode`);
 });
 
 test('should report no-tests error to reporter', async ({ runInlineTest }) => {

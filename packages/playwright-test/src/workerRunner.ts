@@ -22,7 +22,7 @@ import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerI
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import type { Suite, TestCase } from './test';
-import type { Annotation, FullProjectInternal, TestError, TestStepInternal } from './types';
+import type { Annotation, FullProjectInternal, TestInfoError, TestStepInternal } from './types';
 import { FixtureRunner } from './fixtures';
 import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
 import { TestInfoImpl } from './testInfo';
@@ -38,7 +38,7 @@ export class WorkerRunner extends EventEmitter {
   private _fixtureRunner: FixtureRunner;
 
   // Accumulated fatal errors that cannot be attributed to a test.
-  private _fatalErrors: TestError[] = [];
+  private _fatalErrors: TestInfoError[] = [];
   // Whether we should skip running remaining tests in this suite because
   // of a setup error, usually beforeAll hook.
   private _skipRemainingTestsInSuite: Suite | undefined;
@@ -91,7 +91,7 @@ export class WorkerRunner extends EventEmitter {
     }
   }
 
-  appendWorkerTeardownDiagnostics(error: TestError) {
+  appendWorkerTeardownDiagnostics(error: TestInfoError) {
     if (!this._lastRunningTests.length)
       return;
     const count = this._totalRunningTests === 1 ? '1 test' : `${this._totalRunningTests} tests`;
@@ -408,7 +408,7 @@ export class WorkerRunner extends EventEmitter {
       canHaveChildren: true,
       forceNoParent: true
     });
-    let firstAfterHooksError: TestError | undefined;
+    let firstAfterHooksError: TestInfoError | undefined;
 
     let afterHooksSlot: TimeSlot | undefined;
     if (testInfo._didTimeout) {
@@ -561,7 +561,7 @@ export class WorkerRunner extends EventEmitter {
     if (!this._activeSuites.has(suite))
       return;
     this._activeSuites.delete(suite);
-    let firstError: TestError | undefined;
+    let firstError: TestInfoError | undefined;
     for (const hook of suite._hooks) {
       if (hook.type !== 'afterAll')
         continue;

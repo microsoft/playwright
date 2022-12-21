@@ -1615,12 +1615,12 @@ export interface TestInfo {
    * First error thrown during test execution, if any. This is equal to the first element in
    * [testInfo.errors](https://playwright.dev/docs/api/class-testinfo#test-info-errors).
    */
-  error?: TestError;
+  error?: TestInfoError;
 
   /**
    * Errors thrown during test execution, if any.
    */
-  errors: Array<TestError>;
+  errors: Array<TestInfoError>;
 
   /**
    * Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
@@ -4458,7 +4458,7 @@ interface SnapshotAssertions {
 /**
  * Information about an error thrown during test execution.
  */
-export interface TestError {
+export interface TestInfoError {
   /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
