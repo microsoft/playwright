@@ -73,7 +73,8 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   let App = () => render(component);
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || []) {
     const wrapper = await hook({ App, hooksConfig });
-    if (wrapper) App = () => wrapper;
+    if (wrapper)
+      App = () => wrapper;
   }
 
   ReactDOM.render(App(), rootElement);
