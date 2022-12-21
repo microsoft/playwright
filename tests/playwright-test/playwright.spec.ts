@@ -605,6 +605,7 @@ test('should not throw with many fixtures set to undefined', async ({ runInlineT
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { use: {
+        browserName: undefined,
         headless: undefined,
         channel: undefined,
         launchOptions: undefined,
@@ -642,6 +643,7 @@ test('should not throw with many fixtures set to undefined', async ({ runInlineT
     'a.spec.ts': `
       const { test } = pwt;
       test.use({
+        browserName: undefined,
         headless: undefined,
         channel: undefined,
         launchOptions: undefined,
@@ -676,6 +678,7 @@ test('should not throw with many fixtures set to undefined', async ({ runInlineT
         contextOptions: undefined,
       });
       test('passes', async ({ page }) => {
+        await page.setContent('text');
       });
     `,
   }, { workers: 1 });
