@@ -172,17 +172,13 @@ it('should report logs while waiting for hidden', async ({ page, server }) => {
 it('should report logs when the selector resolves to multiple elements', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
-    <button style="display: none; position: absolute; top: 0px; left: 0px; width: 100%;">
-      Reset
-    </button>
-    <button>
-      Reset
-    </button>
+    <button style="display: none; position: absolute; top: 0px; left: 0px; width: 100%;">Reset</button>
+    <button>Reset</button>
   `);
   const error = await page.click('text=Reset', {
     timeout: 1000
   }).catch(e => e);
-  expect(error.toString()).toContain('locator resolved to 2 elements. Proceeding with the first one.');
+  expect(error.toString()).toContain('locator resolved to 2 elements. Proceeding with the first one: <button>Reset</button>');
 });
 
 it('should resolve promise when node is added in shadow dom', async ({ page, server }) => {

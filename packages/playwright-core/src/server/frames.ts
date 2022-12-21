@@ -1134,19 +1134,51 @@ export class Frame extends SdkObject {
     return false;
   }
 
+  private async _resolveInjectedForSelector(progress: Progress, selector: string, strict: boolean | undefined): Promise<{ injected: js.JSHandle<InjectedScript>, info: SelectorInfo } | undefined> {
+    const selectorInFrame = await this.resolveFrameForSelectorNoWait(selector, { strict });
+    if (!selectorInFrame)
+      return;
+    progress.throwIfAborted();
+
+    // Be careful, |this| can be different from |selectorInFrame.frame|.
+    const context = await selectorInFrame.frame._context(selectorInFrame.info.world);
+    const injected = await context.injectedScript();
+    progress.throwIfAborted();
+    return { injected, info: selectorInFrame.info };
+  }
+
   private async _retryWithProgressIfNotConnected<R>(
     progress: Progress,
     selector: string,
     strict: boolean | undefined,
     action: (handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
-    return this.retryWithProgress(progress, selector, { strict }, async (selectorInFrame, continuePolling) => {
-      // We did not pass omitAttached, so selectorInFrame is not null.
-      const { frame, info } = selectorInFrame!;
-      // Be careful, |this| can be different from |frame|.
-      const task = dom.waitForSelectorTask(info, 'attached');
-      progress.log(`waiting for ${this._asLocator(selector)}`);
-      const handle = await frame._scheduleRerunnableHandleTask(progress, info.world, task);
-      const element = handle.asElement() as dom.ElementHandle<Element>;
+    progress.log(`waiting for ${this._asLocator(selector)}`);
+    return this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
+      const resolved = await this._resolveInjectedForSelector(progress, selector, strict);
+      if (!resolved)
+        return continuePolling;
+      const result = await resolved.injected.evaluateHandle((injected, { info }) => {
+        const elements = injected.querySelectorAll(info.parsed, document);
+        const element = elements[0] as Element | undefined;
+        let log = '';
+        if (elements.length > 1) {
+          if (info.strict)
+            throw injected.strictModeViolationError(info.parsed, elements);
+          log = `  locator resolved to ${elements.length} elements. Proceeding with the first one: ${injected.previewNode(elements[0])}`;
+        } else if (element) {
+          log = `  locator resolved to ${injected.previewNode(element)}`;
+        }
+        return { log, success: !!element, element };
+      }, { info: resolved.info });
+      const { log, success } = await result.evaluate(r => ({ log: r.log, success: r.success }));
+      if (log)
+        progress.log(log);
+      if (!success) {
+        result.dispose();
+        return continuePolling;
+      }
+      const element = await result.evaluateHandle(r => r.element) as dom.ElementHandle<Element>;
+      result.dispose();
       try {
         const result = await action(element);
         if (result === 'error:notconnected') {

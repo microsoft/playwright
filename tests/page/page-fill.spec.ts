@@ -40,7 +40,7 @@ it('should throw on unsupported inputs', async ({ page, server }) => {
     await page.$eval('input', (input, type) => input.setAttribute('type', type), type);
     let error = null;
     await page.fill('input', '').catch(e => error = e);
-    expect(error.message).toContain(`input of type "${type}" cannot be filled`);
+    expect(error.message).toContain(`Input of type "${type}" cannot be filled`);
   }
 });
 
