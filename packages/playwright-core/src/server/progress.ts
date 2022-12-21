@@ -43,7 +43,6 @@ export class ProgressController {
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
   private _deadline: number = 0;
   private _timeout: number = 0;
-  private _lastIntermediateResult: { value: any } | undefined;
   readonly metadata: CallMetadata;
   readonly instrumentation: Instrumentation;
   readonly sdkObject: SdkObject;
@@ -57,10 +56,6 @@ export class ProgressController {
 
   setLogName(logName: LogName) {
     this._logName = logName;
-  }
-
-  lastIntermediateResult(): { value: any } | undefined {
-    return this._lastIntermediateResult;
   }
 
   abort(error: Error) {
@@ -89,8 +84,6 @@ export class ProgressController {
           // Note: we might be sending logs after progress has finished, for example browser logs.
           this.instrumentation.onCallLog(this.sdkObject, this.metadata, this._logName, message);
         }
-        if ('intermediateResult' in entry)
-          this._lastIntermediateResult = { value: entry.intermediateResult };
       },
       timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
       isRunning: () => this._state === 'running',
