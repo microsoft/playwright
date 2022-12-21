@@ -20,7 +20,7 @@ import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOp
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
-import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
+import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import { store as _baseStore } from './store';
 import type { TestInfoImpl } from './testInfo';
 import { rootTestType, _setProjectSetup } from './testType';
@@ -246,8 +246,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (debugMode())
       testInfo.setTimeout(0);
 
-    const screenshotOptions = typeof screenshot !== 'string' ? { fullPage: screenshot.fullPage, omitBackground: screenshot.omitBackground } : undefined;
-    const screenshotMode = typeof screenshot === 'string' ? screenshot : screenshot.mode;
+    const screenshotMode = normalizeScreenshotMode(screenshot);
+    const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     const traceMode = normalizeTraceMode(trace);
     const defaultTraceOptions = { screenshots: true, snapshots: true, sources: true };
     const traceOptions = typeof trace === 'string' ? defaultTraceOptions : { ...defaultTraceOptions, ...trace, mode: undefined };
@@ -618,6 +618,12 @@ export function normalizeTraceMode(trace: TraceMode | 'retry-with-trace' | { mod
 
 export function shouldCaptureTrace(traceMode: TraceMode, testInfo: TestInfo) {
   return traceMode === 'on' || traceMode === 'retain-on-failure' || (traceMode === 'on-first-retry' && testInfo.retry === 1);
+}
+
+function normalizeScreenshotMode(screenshot: PlaywrightWorkerOptions['screenshot'] | undefined): ScreenshotMode {
+  if (!screenshot)
+    return 'off';
+  return typeof screenshot === 'string' ? screenshot : screenshot.mode;
 }
 
 const kTracingStarted = Symbol('kTracingStarted');
