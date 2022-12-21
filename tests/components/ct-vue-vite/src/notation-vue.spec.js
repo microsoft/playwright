@@ -159,7 +159,7 @@ test('get textContent of the empty template', async ({ mount }) => {
   await expect(component).toHaveText('');
 });
 
-test('render app and navigate to a page', async ({ page, mount }) => {
+test('navigate to a page by clicking a link', async ({ page, mount }) => {
   const component = await mount(App, {
     hooksConfig: { routing: true }
   });
