@@ -1386,37 +1386,8 @@ export class Frame extends SdkObject {
       if (oneShot)
         outerProgress.log(`${metadata.apiName}${timeout ? ` with timeout ${timeout}ms` : ''}`);
       return await this._scheduleRerunnableTaskWithProgress(outerProgress, selector, (progress, element, options, elements) => {
-        let result: { matches: boolean, received?: any };
-
-        if (options.isArray) {
-          result = progress.injectedScript.expectArray(elements, options);
-        } else {
-          if (!element) {
-            // expect(locator).toBeHidden() passes when there is no element.
-            if (!options.isNot && options.expression === 'to.be.hidden')
-              return { matches: true };
-            // expect(locator).not.toBeVisible() passes when there is no element.
-            if (options.isNot && options.expression === 'to.be.visible')
-              return { matches: false };
-            // When none of the above applies, keep waiting for the element.
-            return options.oneShot ? { matches: options.isNot } : progress.continuePolling;
-          }
-          result = progress.injectedScript.expectSingleElement(progress, element, options);
-        }
-
-        if (result.matches === options.isNot) {
-          // Keep waiting in these cases:
-          // expect(locator).conditionThatDoesNotMatch
-          // expect(locator).not.conditionThatDoesMatch
-          progress.setIntermediateResult(result.received);
-          if (!Array.isArray(result.received))
-            progress.log(`  unexpected value "${progress.injectedScript.renderUnexpectedValue(options.expression, result.received)}"`);
-          return options.oneShot ? result : progress.continuePolling;
-        }
-
-        // Reached the expected state!
-        return result;
-      }, { ...options, isArray, oneShot }, { strict: true, querySelectorAll: isArray, mainWorld, omitAttached, logScale: true, ...options });
+        return progress.injectedScript.expect(progress, element, options, elements);
+      }, { ...options, oneShot }, { strict: true, querySelectorAll: isArray, mainWorld, omitAttached, logScale: true, ...options });
     }, oneShot ? 0 : timeout).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly message containing the last intermediate result.
@@ -1545,7 +1516,6 @@ export class Frame extends SdkObject {
         return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale, omitAttached, snapshotName }) => {
           const callback = injected.eval(callbackText) as DomTaskBody<T, R, Element | undefined>;
           const poller = logScale ? injected.pollLogScale.bind(injected) : injected.pollRaf.bind(injected);
-          let markedElements = new Set<Element>();
           return poller(progress => {
             let element: Element | undefined;
             let elements: Element[] = [];
@@ -1563,19 +1533,8 @@ export class Frame extends SdkObject {
             if (!element && !omitAttached)
               return progress.continuePolling;
 
-            if (snapshotName) {
-              const previouslyMarkedElements = markedElements;
-              markedElements = new Set(elements);
-              for (const e of previouslyMarkedElements) {
-                if (!markedElements.has(e))
-                  e.removeAttribute('__playwright_target__');
-              }
-              for (const e of markedElements) {
-                if (!previouslyMarkedElements.has(e))
-                  e.setAttribute('__playwright_target__', snapshotName);
-              }
-            }
-
+            if (snapshotName)
+              injected.markTargetElements(new Set(elements), snapshotName);
             return callback(progress, element, taskData as T, elements);
           });
         }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached, snapshotName: progress.metadata.afterSnapshot });

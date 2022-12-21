@@ -80,6 +80,7 @@ export class InjectedScript {
   readonly isUnderTest: boolean;
   private _sdkLanguage: Language;
   private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
+  private _markedTargetElements = new Set<Element>();
 
   constructor(isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
     this.isUnderTest = isUnderTest;
@@ -1070,6 +1071,18 @@ export class InjectedScript {
     }
   }
 
+  markTargetElements(markedElements: Set<Element>, snapshotName: string) {
+    for (const e of this._markedTargetElements) {
+      if (!markedElements.has(e))
+        e.removeAttribute('__playwright_target__');
+    }
+    for (const e of markedElements) {
+      if (!this._markedTargetElements.has(e))
+        e.setAttribute('__playwright_target__', snapshotName);
+    }
+    this._markedTargetElements = markedElements;
+  }
+
   private _setupGlobalListenersRemovalDetection() {
     const customEventName = '__playwright_global_listeners_check__';
 
@@ -1105,43 +1118,77 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  expectSingleElement(progress: InjectedScriptProgress, element: Element, options: FrameExpectParams): { matches: boolean, received?: any } {
-    const injected = progress.injectedScript;
+  expect(progress: InjectedScriptProgress, element: Element | undefined, options: FrameExpectParams & { oneShot: boolean }, elements: Element[]) {
+    const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
+
+    let result: { matches: boolean, received?: any };
+
+    if (isArray) {
+      result = this.expectArray(elements, options);
+    } else {
+      if (!element) {
+        // expect(locator).toBeHidden() passes when there is no element.
+        if (!options.isNot && options.expression === 'to.be.hidden')
+          return { matches: true };
+        // expect(locator).not.toBeVisible() passes when there is no element.
+        if (options.isNot && options.expression === 'to.be.visible')
+          return { matches: false };
+        // When none of the above applies, keep waiting for the element.
+        return options.oneShot ? { matches: options.isNot } : progress.continuePolling;
+      }
+      result = this.expectSingleElement(element, options);
+    }
+
+    if (result.matches === options.isNot) {
+      // Keep waiting in these cases:
+      // expect(locator).conditionThatDoesNotMatch
+      // expect(locator).not.conditionThatDoesMatch
+      progress.setIntermediateResult(result.received);
+      if (!Array.isArray(result.received))
+        progress.log(`  unexpected value "${this.renderUnexpectedValue(options.expression, result.received)}"`);
+      return options.oneShot ? result : progress.continuePolling;
+    }
+
+    // Reached the expected state!
+    return result;
+  }
+
+  private expectSingleElement(element: Element, options: FrameExpectParams): { matches: boolean, received?: any } {
     const expression = options.expression;
 
     {
       // Element state / boolean values.
       let elementState: boolean | 'error:notconnected' | 'error:notcheckbox' | undefined;
       if (expression === 'to.be.checked') {
-        elementState = progress.injectedScript.elementState(element, 'checked');
+        elementState = this.elementState(element, 'checked');
       } else if (expression === 'to.be.unchecked') {
-        elementState = progress.injectedScript.elementState(element, 'unchecked');
+        elementState = this.elementState(element, 'unchecked');
       } else if (expression === 'to.be.disabled') {
-        elementState = progress.injectedScript.elementState(element, 'disabled');
+        elementState = this.elementState(element, 'disabled');
       } else if (expression === 'to.be.editable') {
-        elementState = progress.injectedScript.elementState(element, 'editable');
+        elementState = this.elementState(element, 'editable');
       } else if (expression === 'to.be.readonly') {
-        elementState = !progress.injectedScript.elementState(element, 'editable');
+        elementState = !this.elementState(element, 'editable');
       } else if (expression === 'to.be.empty') {
         if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
           elementState = !(element as HTMLInputElement).value;
         else
           elementState = !element.textContent?.trim();
       } else if (expression === 'to.be.enabled') {
-        elementState = progress.injectedScript.elementState(element, 'enabled');
+        elementState = this.elementState(element, 'enabled');
       } else if (expression === 'to.be.focused') {
         elementState = this._activelyFocused(element).isFocused;
       } else if (expression === 'to.be.hidden') {
-        elementState = progress.injectedScript.elementState(element, 'hidden');
+        elementState = this.elementState(element, 'hidden');
       } else if (expression === 'to.be.visible') {
-        elementState = progress.injectedScript.elementState(element, 'visible');
+        elementState = this.elementState(element, 'visible');
       }
 
       if (elementState !== undefined) {
         if (elementState === 'error:notcheckbox')
-          throw injected.createStacklessError('Element is not a checkbox');
+          throw this.createStacklessError('Element is not a checkbox');
         if (elementState === 'error:notconnected')
-          throw injected.createStacklessError('Element is not connected');
+          throw this.createStacklessError('Element is not connected');
         return { received: elementState, matches: elementState };
       }
     }
@@ -1205,7 +1252,7 @@ export class InjectedScript {
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
   }
 
-  renderUnexpectedValue(expression: string, received: any): string {
+  private renderUnexpectedValue(expression: string, received: any): string {
     if (expression === 'to.be.checked')
       return received ? 'checked' : 'unchecked';
     if (expression === 'to.be.unchecked')
@@ -1229,7 +1276,7 @@ export class InjectedScript {
     return received;
   }
 
-  expectArray(elements: Element[], options: FrameExpectParams): { matches: boolean, received?: any } {
+  private expectArray(elements: Element[], options: FrameExpectParams): { matches: boolean, received?: any } {
     const expression = options.expression;
 
     if (expression === 'to.have.count') {
