@@ -28,8 +28,11 @@ function renderXmlDoc(nodes, maxColumns = 80, summaryPrefixText = '') {
 
   const renderResult = _innerRenderNodes(nodes, maxColumns);
 
-  if (summaryPrefixText)
-    _wrapInNode('para', wrapLine(summaryPrefixText, maxColumns), renderResult.summary);
+  if (summaryPrefixText) {
+    const prefixSummary = [];
+    _wrapInNode('para', wrapLine(summaryPrefixText, maxColumns), prefixSummary);
+    renderResult.summary = [...prefixSummary, ...renderResult.summary];
+  }
 
   const doc = [];
   _wrapInNode('summary',  renderResult.summary, doc);
