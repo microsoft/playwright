@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should merge options', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -89,8 +89,8 @@ test('should throw when setting worker options in describe', async ({ runInlineT
   expect(result.output).toContain([
     `Cannot use({ foo }) in a describe group, because it forces a new worker.`,
     `Make it top-level in the test file or put in the configuration file.`,
-    `  "foo" defined at a.test.ts:9:14`,
   ].join('\n'));
+  expect(stripAnsi(result.output)).toContain(`{ foo: 'bar' }`);
 });
 
 test('should run tests with different worker options', async ({ runInlineTest }) => {

@@ -27,7 +27,8 @@ test('test.describe.parallel should throw inside test.describe.serial', async ({
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('a.test.ts:7:23: describe.parallel cannot be nested inside describe.serial');
+  expect(result.output).toContain('Error: describe.parallel cannot be nested inside describe.serial');
+  expect(result.output).toContain('a.test.ts:7');
 });
 
 test('test.describe.parallel should work', async ({ runInlineTest }) => {
