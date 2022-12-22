@@ -36,9 +36,6 @@ export const mime = mimeLibrary;
 import minimatchLibrary from 'minimatch';
 export const minimatch = minimatchLibrary;
 
-import msLibrary from 'ms';
-export const ms = msLibrary;
-
 export { PNG } from 'pngjs';
 
 export { program } from 'commander';
