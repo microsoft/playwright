@@ -34,11 +34,7 @@ const getExecutablePath = (browserName: BrowserName) => {
     return process.env.WKPATH;
 };
 
-let mode: TestModeName = 'default';
-if (process.env.PLAYWRIGHT_DOCKER)
-  mode = 'docker';
-else
-  mode = (process.env.PWTEST_MODE ?? 'default') as ('default' | 'driver' | 'service' | 'service2');
+const mode: TestModeName = (process.env.PWTEST_MODE ?? 'default') as ('default' | 'driver' | 'service' | 'service2');
 const headed = process.argv.includes('--headed');
 const channel = process.env.PWTEST_CHANNEL as any;
 const video = !!process.env.PWTEST_VIDEO;
@@ -104,7 +100,6 @@ if (mode === 'service2') {
     metadata: {
       platform: process.platform,
       docker: !!process.env.INSIDE_DOCKER,
-      dockerIntegration: !!process.env.PLAYWRIGHT_DOCKER,
       headful: !!headed,
       browserName: 'chromium',
       channel,
@@ -146,7 +141,6 @@ for (const browserName of browserNames) {
       metadata: {
         platform: process.platform,
         docker: !!process.env.INSIDE_DOCKER,
-        dockerIntegration: !!process.env.PLAYWRIGHT_DOCKER,
         headful: !!headed,
         browserName,
         channel,
