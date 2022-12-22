@@ -59,6 +59,8 @@ function serializeClass(clazz) {
   }
   if (clazz.comment)
     result.comment = clazz.comment;
+  if (clazz.since)
+    result.since = clazz.since;
   result.members = clazz.membersArray.map(serializeMember);
   return result;
 }
