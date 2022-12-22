@@ -421,6 +421,13 @@ it('should calculate time', async ({ contextFactory, server }, testInfo) => {
   expect(log.entries[0].time).toBeGreaterThan(0);
 });
 
+it('should return receive time', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.PREFIX + '/har.html');
+  const log = await getLog();
+  expect(log.entries[0].timings.receive).toBeGreaterThan(0);
+});
+
 it('should report the correct _transferSize with PNG files', async ({ contextFactory, server, asset }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
