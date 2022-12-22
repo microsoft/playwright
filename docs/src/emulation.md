@@ -425,7 +425,7 @@ Allow notifications for a specific domain.
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
   use: {
-    permissions: ['notifications'], {origin: 'https://skype.com'},
+    permissions: ['notifications'],
   },
 };
 
@@ -436,7 +436,7 @@ module.exports = config;
 import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   use: {
-    permissions: ['notifications'], {origin: 'https://skype.com'},
+    permissions: ['notifications'],
   },
 };
 export default config;
@@ -563,7 +563,7 @@ test.use({
 
 test('my test with geolocation', async ({ page, context }) => {
   // overwrite the location for this test
-  context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
+  await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 });
 ```
 
@@ -577,7 +577,7 @@ test.use({
 
 test('my test with geolocation', async ({ page, context }) => {
   // overwrite the location for this test
-  context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
+  await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 });
 ```
 
