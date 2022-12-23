@@ -414,4 +414,44 @@ it.describe('selector generator', () => {
     </div>`);
     expect(await generate(page, 'button')).toBe('internal:attr=[title=\"Send to\"i]');
   });
+
+  it('should generate exact text when necessary', async ({ page }) => {
+    await page.setContent(`
+      <span>Text</span>
+      <span>Text and more</span>
+    `);
+    expect(await generate(page, 'span')).toBe('internal:text=\"Text\"s');
+  });
+
+  it('should generate exact title when necessary', async ({ page }) => {
+    await page.setContent(`
+      <span title="Text"></span>
+      <span title="Text and more"></span>
+    `);
+    expect(await generate(page, 'span')).toBe('internal:attr=[title=\"Text\"s]');
+  });
+
+  it('should generate exact placeholder when necessary', async ({ page }) => {
+    await page.setContent(`
+      <input placeholder="Text"></input>
+      <input placeholder="Text and more"></input>
+    `);
+    expect(await generate(page, 'input')).toBe('internal:attr=[placeholder=\"Text\"s]');
+  });
+
+  it('should generate exact role when necessary', async ({ page }) => {
+    await page.setContent(`
+      <img alt="Text"></img>
+      <img alt="Text and more"></img>
+    `);
+    expect(await generate(page, 'img')).toBe('internal:role=img[name=\"Text\"s]');
+  });
+
+  it('should generate exact label when necessary', async ({ page }) => {
+    await page.setContent(`
+      <label>Text <input></input></label>
+      <label>Text and more <input></input></label>
+    `);
+    expect(await generate(page, 'input')).toBe('internal:label=\"Text\"s');
+  });
 });
