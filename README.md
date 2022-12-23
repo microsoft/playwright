@@ -12,7 +12,7 @@ Playwright is a framework for Web Testing and Automation. It allows testing [Chr
 | WebKit <!-- GEN:webkit-version -->16.4<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | Firefox <!-- GEN:firefox-version -->107.0<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
-Headless execution is supported for all browsers on all platforms. Check out [system requirements](https://playwright.dev/docs/library#system-requirements) for details.
+Headless execution is supported for all browsers on all platforms. Check out [system requirements](https://playwright.dev/docs/troubleshooting#system-requirements) for details.
 
 Looking for Playwright for [Python](https://playwright.dev/python/docs/intro), [.NET](https://playwright.dev/dotnet/docs/intro), or [Java](https://playwright.dev/java/docs/intro)?
 
