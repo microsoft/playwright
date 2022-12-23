@@ -33,6 +33,7 @@ import { ConnectedBrowserDispatcher } from './browserDispatcher';
 import { createGuid } from '../../utils';
 import type { AndroidDevice } from '../android/android';
 import { AndroidDeviceDispatcher } from './androidDispatcher';
+import { eventsHelper, type RegisteredListener } from '../../utils/eventsHelper';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightChannel, RootDispatcher> implements channels.PlaywrightChannel {
   _type_Playwright;
@@ -76,14 +77,17 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
 class SocksSupportDispatcher extends Dispatcher<{ guid: string }, channels.SocksSupportChannel, RootDispatcher> implements channels.SocksSupportChannel {
   _type_SocksSupport: boolean;
   private _socksProxy: SocksProxy;
+  private _socksListeners: RegisteredListener[];
 
   constructor(scope: RootDispatcher, socksProxy: SocksProxy) {
     super(scope, { guid: 'socksSupport@' + createGuid() }, 'SocksSupport', {});
     this._type_SocksSupport = true;
     this._socksProxy = socksProxy;
-    socksProxy.on(SocksProxy.Events.SocksRequested, (payload: SocksSocketRequestedPayload) => this._dispatchEvent('socksRequested', payload));
-    socksProxy.on(SocksProxy.Events.SocksData, (payload: SocksSocketDataPayload) => this._dispatchEvent('socksData', payload));
-    socksProxy.on(SocksProxy.Events.SocksClosed, (payload: SocksSocketClosedPayload) => this._dispatchEvent('socksClosed', payload));
+    this._socksListeners = [
+      eventsHelper.addEventListener(socksProxy, SocksProxy.Events.SocksRequested, (payload: SocksSocketRequestedPayload) => this._dispatchEvent('socksRequested', payload)),
+      eventsHelper.addEventListener(socksProxy, SocksProxy.Events.SocksData, (payload: SocksSocketDataPayload) => this._dispatchEvent('socksData', payload)),
+      eventsHelper.addEventListener(socksProxy, SocksProxy.Events.SocksClosed, (payload: SocksSocketClosedPayload) => this._dispatchEvent('socksClosed', payload)),
+    ];
   }
 
   async socksConnected(params: channels.SocksSupportSocksConnectedParams): Promise<void> {
@@ -104,5 +108,9 @@ class SocksSupportDispatcher extends Dispatcher<{ guid: string }, channels.Socks
 
   async socksEnd(params: channels.SocksSupportSocksEndParams): Promise<void> {
     this._socksProxy?.sendSocketEnd(params);
+  }
+
+  override _onDispose() {
+    eventsHelper.removeEventListeners(this._socksListeners);
   }
 }
