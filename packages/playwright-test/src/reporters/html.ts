@@ -18,8 +18,6 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import { open } from '../utilsBundle';
 import path from 'path';
-import type { TransformCallback } from 'stream';
-import { Transform } from 'stream';
 import type { FullConfig, Suite } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/lib/utils/httpServer';
 import { assert, calculateSha1, monotonicTime } from 'playwright-core/lib/utils';
@@ -103,6 +101,7 @@ class HtmlReporter implements ReporterInternal {
 
   async onEnd() {
     const duration = monotonicTime() - this._montonicStartTime;
+    const shard = this.config.shard;
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();
@@ -111,7 +110,7 @@ class HtmlReporter implements ReporterInternal {
     });
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this._outputFolder);
-    this._buildResult = await builder.build({ ...this.config.metadata, duration }, reports);
+    this._buildResult = await builder.build({ ...this.config.metadata, duration, shard }, reports);
   }
 
   async _onExit() {
@@ -204,7 +203,7 @@ class HtmlBuilder {
     this._dataZipFile = new yazl.ZipFile();
   }
 
-  async build(metadata: Metadata & { duration: number }, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: Metadata & { duration: number, shard: FullConfigInternal['shard'] }, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {
@@ -271,7 +270,8 @@ class HtmlBuilder {
       return w2 - w1;
     });
 
-    this._addDataFile('report.json', htmlReport);
+    const reportName = metadata.shard ? `report-${metadata.shard.current}` : 'report';
+    this._addDataFile(`${reportName}.json`, htmlReport);
 
     // Copy app.
     const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'webpack', 'htmlReport');
@@ -289,17 +289,19 @@ class HtmlBuilder {
       }
     }
 
-    // Inline report data.
+    // Inline metadata.
     const indexFile = path.join(this._reportFolder, 'index.html');
-    fs.appendFileSync(indexFile, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
+    fs.appendFileSync(indexFile, `<script>\nwindow.playwrightMetadata = ${JSON.stringify(metadata)}\n</script>`);
+
+    // Write report data.
+    const reportFolder = path.join(this._reportFolder, 'report');
+    fs.mkdirSync(reportFolder, { recursive: true });
     await new Promise(f => {
       this._dataZipFile!.end(undefined, () => {
         this._dataZipFile!.outputStream
-            .pipe(new Base64Encoder())
-            .pipe(fs.createWriteStream(indexFile, { flags: 'a' })).on('close', f);
+            .pipe(fs.createWriteStream(path.join(reportFolder, `${reportName}.zip`))).on('close', f);
       });
     });
-    fs.appendFileSync(indexFile, '";</script>');
 
     let singleTestId: string | undefined;
     if (htmlReport.stats.total === 1) {
@@ -485,31 +487,6 @@ const addStats = (stats: Stats, delta: Stats): Stats => {
   return stats;
 };
 
-class Base64Encoder extends Transform {
-  private _remainder: Buffer | undefined;
-
-  override _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
-    if (this._remainder) {
-      chunk = Buffer.concat([this._remainder, chunk]);
-      this._remainder = undefined;
-    }
-
-    const remaining = chunk.length % 3;
-    if (remaining) {
-      this._remainder = chunk.slice(chunk.length - remaining);
-      chunk = chunk.slice(0, chunk.length - remaining);
-    }
-    chunk = chunk.toString('base64');
-    this.push(Buffer.from(chunk));
-    callback();
-  }
-
-  override _flush(callback: TransformCallback): void {
-    if (this._remainder)
-      this.push(Buffer.from(this._remainder.toString('base64')));
-    callback();
-  }
-}
 
 function isTextContentType(contentType: string) {
   return contentType.startsWith('text/') || contentType.startsWith('application/json');

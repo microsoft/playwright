@@ -23,6 +23,7 @@ import * as ReactDOM from 'react-dom';
 import './colors.css';
 import type { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
+import { mergeReports } from './mergeReports';
 // @ts-ignore
 const zipjs = zipImport as typeof zip;
 
@@ -46,10 +47,27 @@ class ZipReport implements LoadedReport {
   private _json!: HTMLReport;
 
   async load() {
-    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader((window as any).playwrightReportBase64), { useWebWorkers: false }) as zip.ZipReader;
-    for (const entry of await zipReader.getEntries())
-      this._entries.set(entry.filename, entry);
-    this._json = await this.entry('report.json') as HTMLReport;
+    const metadata = (window as any).playwrightMetadata;
+    if (metadata.shard) {
+      const reports: HTMLReport[] = [];
+      for (let index = 1; index <= metadata.shard.total; index += 1) {
+        try {
+          const zipReader = new zipjs.ZipReader(new zipjs.HttpReader(`/report/report-${index}.zip`), { useWebWorkers: false }) as zip.ZipReader;
+          for (const entry of await zipReader.getEntries())
+            this._entries.set(entry.filename, entry);
+          const currentJson = await this.entry(`report-${index}.json`) as HTMLReport;
+          reports.push(currentJson);
+        } catch (error) {
+          // Ignore not found error for viewing individual shard report.
+        }
+      }
+      this._json = mergeReports(reports);
+    } else {
+      const zipReader = new zipjs.ZipReader(new zipjs.HttpReader('/report/report.zip'), { useWebWorkers: false }) as zip.ZipReader;
+      for (const entry of await zipReader.getEntries())
+        this._entries.set(entry.filename, entry);
+      this._json = await this.entry('report.json') as HTMLReport;
+    }
   }
 
   json(): HTMLReport {
