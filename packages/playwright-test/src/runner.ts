@@ -44,6 +44,7 @@ import { Suite } from './test';
 import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal } from './types';
 import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher, serializeError } from './util';
 import type { Matcher, TestFileFilter } from './util';
+import { setFatalErrorSink } from './globals';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -81,10 +82,12 @@ export class Runner {
   private _loader: Loader;
   private _reporter!: ReporterInternal;
   private _plugins: TestRunnerPlugin[] = [];
+  private _fatalErrors: TestError[] = [];
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
     this._loader = new Loader(configCLIOverrides);
     setRunnerToAddPluginsTo(this);
+    setFatalErrorSink(this._fatalErrors);
   }
 
   addPlugin(plugin: TestRunnerPlugin) {
@@ -275,7 +278,7 @@ export class Runner {
     return { filesByProject, setupFiles };
   }
 
-  private async _collectTestGroups(options: RunOptions, fatalErrors: TestError[]): Promise<{ rootSuite: Suite, projectSetupGroups: TestGroup[], testGroups: TestGroup[] }> {
+  private async _collectTestGroups(options: RunOptions): Promise<{ rootSuite: Suite, projectSetupGroups: TestGroup[], testGroups: TestGroup[] }> {
     const config = this._loader.fullConfig();
     const projects = this._collectProjects(options.projectFilter);
     const { filesByProject, setupFiles } = await this._collectFiles(projects, options.testFileFilters);
@@ -292,7 +295,7 @@ export class Runner {
         result = await this._createFilteredRootSuite(options, filesByProject, setupFiles, false, setupFiles);
     }
 
-    fatalErrors.push(...result.fatalErrors);
+    this._fatalErrors.push(...result.fatalErrors);
     const { rootSuite } = result;
 
     const allTestGroups = createTestGroups(rootSuite.suites, config.workers);
@@ -442,14 +445,13 @@ export class Runner {
 
   private async _run(options: RunOptions): Promise<FullResult> {
     const config = this._loader.fullConfig();
-    const fatalErrors: TestError[] = [];
     // Each entry is an array of test groups that can be run concurrently. All
     // test groups from the previos entries must finish before entry starts.
-    const { rootSuite, projectSetupGroups, testGroups } = await this._collectTestGroups(options, fatalErrors);
+    const { rootSuite, projectSetupGroups, testGroups } = await this._collectTestGroups(options);
 
     // Fail when no tests.
     if (!rootSuite.allTests().length && !options.passWithNoTests)
-      fatalErrors.push(createNoTestsError());
+      this._fatalErrors.push(createNoTestsError());
 
     this._filterForCurrentShard(rootSuite, projectSetupGroups, testGroups);
 
@@ -459,8 +461,8 @@ export class Runner {
     this._reporter.onBegin?.(config, rootSuite);
 
     // Bail out on errors prior to running global setup.
-    if (fatalErrors.length) {
-      for (const error of fatalErrors)
+    if (this._fatalErrors.length) {
+      for (const error of this._fatalErrors)
         this._reporter.onError?.(error);
       return { status: 'failed' };
     }

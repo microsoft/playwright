@@ -16,6 +16,8 @@
 
 import type { TestInfoImpl } from './testInfo';
 import type { Suite } from './test';
+import type { TestError, Location } from '../types/testReporter';
+import { formatLocation } from './util';
 
 let currentTestInfoValue: TestInfoImpl | null = null;
 export function setCurrentTestInfo(testInfo: TestInfoImpl | null) {
@@ -31,4 +33,16 @@ export function setCurrentlyLoadingFileSuite(suite: Suite | undefined) {
 }
 export function currentlyLoadingFileSuite() {
   return currentFileSuite;
+}
+
+let _fatalErrors: TestError[] | undefined;
+export function setFatalErrorSink(fatalErrors: TestError[]) {
+  _fatalErrors = fatalErrors;
+}
+
+export function addFatalError(message: string, location: Location) {
+  if (_fatalErrors)
+    _fatalErrors.push({ message: `Error: ${message}`, location });
+  else
+    throw new Error(`${formatLocation(location)}: ${message}`);
 }

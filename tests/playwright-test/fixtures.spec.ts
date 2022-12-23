@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should work', async ({ runInlineTest }) => {
   const { results } = await runInlineTest({
@@ -167,7 +167,8 @@ test('should fail if parameters are not destructured', async ({ runInlineTest })
     `,
   });
   expect(result.output).toContain('First argument must use the object destructuring pattern: abc');
-  expect(result.output).toContain('a.test.js:11:7');
+  expect(result.output).toContain('a.test.js:11');
+  expect(stripAnsi(result.output)).toContain('function (abc)');
   expect(result.results.length).toBe(0);
 });
 
@@ -180,7 +181,8 @@ test('should fail with an unknown fixture', async ({ runInlineTest }) => {
     `,
   });
   expect(result.output).toContain('Test has unknown parameter "asdf".');
-  expect(result.output).toContain('a.test.js:5:11');
+  expect(result.output).toContain('a.test.js:5');
+  expect(stripAnsi(result.output)).toContain('async ({asdf})');
   expect(result.results.length).toBe(0);
 });
 

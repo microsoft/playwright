@@ -193,10 +193,6 @@ export function errorWithFile(file: string, message: string) {
   return new Error(`${relativeFilePath(file)}: ${message}`);
 }
 
-export function errorWithLocation(location: Location, message: string) {
-  return new Error(`${formatLocation(location)}: ${message}`);
-}
-
 export function expectTypes(receiver: any, types: string[], matcherName: string) {
   if (typeof receiver !== 'object' || !types.includes(receiver.constructor.name)) {
     const commaSeparated = types.slice();

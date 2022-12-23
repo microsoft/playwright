@@ -15,11 +15,11 @@
  */
 
 import { expect } from './expect';
-import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
+import { currentlyLoadingFileSuite, currentTestInfo, addFatalError, setCurrentlyLoadingFileSuite } from './globals';
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
-import { errorWithLocation, serializeError } from './util';
+import { serializeError } from './util';
 
 const testTypeSymbol = Symbol('testType');
 
@@ -67,29 +67,33 @@ export class TestTypeImpl {
     this.test = test;
   }
 
-  private _ensureCurrentSuite(location: Location, title: string): Suite {
+  private _currentSuite(location: Location, title: string): Suite | undefined {
     const suite = currentlyLoadingFileSuite();
     if (!suite) {
-      throw errorWithLocation(location, [
+      addFatalError([
         `Playwright Test did not expect ${title} to be called here.`,
         `Most common reasons include:`,
         `- You are calling ${title} in a configuration file.`,
         `- You are calling ${title} in a file that is imported by the configuration file.`,
         `- You have two different versions of @playwright/test. This usually happens`,
         `  when one of the dependencies in your package.json depends on @playwright/test.`,
-      ].join('\n'));
+      ].join('\n'), location);
+      return;
     }
     if (this._projectSetup !== suite._isProjectSetup) {
       if (this._projectSetup)
-        throw errorWithLocation(location, `${title} is called in a file which is not a part of project setup.`);
-      throw errorWithLocation(location, `${title} is called in a project setup file (use '_setup' instead of 'test').`);
+        addFatalError(`${title} is called in a file which is not a part of project setup.`, location);
+      else
+        addFatalError(`${title} is called in a project setup file (use '_setup' instead of 'test').`, location);
     }
     return suite;
   }
 
   private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
-    const suite = this._ensureCurrentSuite(location, this._projectSetup ? '_setup()' : 'test()');
+    const suite = this._currentSuite(location, this._projectSetup ? '_setup()' : 'test()');
+    if (!suite)
+      return;
     const test = new TestCase(title, fn, this, location);
     test._requireFile = suite._requireFile;
     test._isProjectSetup = suite._isProjectSetup;
@@ -109,7 +113,9 @@ export class TestTypeImpl {
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, title: string | Function, fn?: Function) {
     throwIfRunningInsideJest();
-    const suite = this._ensureCurrentSuite(location, this._projectSetup ? 'setup.describe()' : 'test.describe()');
+    const suite = this._currentSuite(location, this._projectSetup ? 'setup.describe()' : 'test.describe()');
+    if (!suite)
+      return;
 
     if (typeof title === 'function') {
       fn = title;
@@ -135,7 +141,7 @@ export class TestTypeImpl {
 
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
-        throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
+        addFatalError('describe.parallel cannot be nested inside describe.serial', location);
     }
 
     setCurrentlyLoadingFileSuite(child);
@@ -144,13 +150,17 @@ export class TestTypeImpl {
   }
 
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
-    const suite = this._ensureCurrentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.${name}()`);
+    const suite = this._currentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.${name}()`);
+    if (!suite)
+      return;
     suite._hooks.push({ type: name, fn, location });
   }
 
   private _configure(location: Location, options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
-    const suite = this._ensureCurrentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.describe.configure()`);
+    const suite = this._currentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.describe.configure()`);
+    if (!suite)
+      return;
 
     if (options.timeout !== undefined)
       suite._timeout = options.timeout;
@@ -160,11 +170,11 @@ export class TestTypeImpl {
 
     if (options.mode !== undefined) {
       if (suite._parallelMode !== 'default')
-        throw errorWithLocation(location, 'Parallel mode is already assigned for the enclosing scope.');
+        addFatalError('Parallel mode is already assigned for the enclosing scope.', location);
       suite._parallelMode = options.mode;
       for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
         if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
-          throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
+          addFatalError('describe.parallel cannot be nested inside describe.serial', location);
       }
     }
   }
@@ -190,10 +200,12 @@ export class TestTypeImpl {
     }
 
     const testInfo = currentTestInfo();
-    if (!testInfo)
-      throw errorWithLocation(location, `test.${type}() can only be called inside test, describe block or fixture`);
+    if (!testInfo) {
+      addFatalError(`test.${type}() can only be called inside test, describe block or fixture`, location);
+      return;
+    }
     if (typeof modifierArgs[0] === 'function')
-      throw errorWithLocation(location, `test.${type}() with a function can only be called inside describe block`);
+      addFatalError(`test.${type}() with a function can only be called inside describe block`, location);
     testInfo[type](...modifierArgs as [any, any]);
   }
 
@@ -205,20 +217,26 @@ export class TestTypeImpl {
     }
 
     const testInfo = currentTestInfo();
-    if (!testInfo)
-      throw errorWithLocation(location, `test.setTimeout() can only be called from a test`);
+    if (!testInfo) {
+      addFatalError(`test.setTimeout() can only be called from a test`, location);
+      return;
+    }
     testInfo.setTimeout(timeout);
   }
 
   private _use(location: Location, fixtures: Fixtures) {
-    const suite = this._ensureCurrentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.use()`);
+    const suite = this._currentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.use()`);
+    if (!suite)
+      return;
     suite._use.push({ fixtures, location });
   }
 
   private async _step<T>(location: Location, title: string, body: () => Promise<T>): Promise<T> {
     const testInfo = currentTestInfo();
-    if (!testInfo)
-      throw errorWithLocation(location, `${this._projectSetup ? '_setup' : 'test'}.step() can only be called from a test`);
+    if (!testInfo) {
+      addFatalError(`${this._projectSetup ? '_setup' : 'test'}.step() can only be called from a test`, location);
+      return undefined as any;
+    }
     const step = testInfo._addStep({
       category: 'test.step',
       title,

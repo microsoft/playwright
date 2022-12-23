@@ -20,6 +20,7 @@ import type { FixturesWithLocation, Location, WorkerInfo } from './types';
 import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
 import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription, TimeoutManager } from './timeoutManager';
+import { addFatalError } from './globals';
 
 type FixtureScope = 'test' | 'worker';
 type FixtureAuto = boolean | 'all-hooks-included';
@@ -209,20 +210,28 @@ export class FixturePool {
 
         const previous = this.registrations.get(name);
         if (previous && options) {
-          if (previous.scope !== options.scope)
-            throw errorWithLocations(`Fixture "${name}" has already been registered as a { scope: '${previous.scope}' } fixture.`, { location, name }, previous);
-          if (previous.auto !== options.auto)
-            throw errorWithLocations(`Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture.`, { location, name }, previous);
+          if (previous.scope !== options.scope) {
+            addFatalError(`Fixture "${name}" has already been registered as a { scope: '${previous.scope}' } fixture defined in ${formatLocation(previous.location)}.`, location);
+            continue;
+          }
+          if (previous.auto !== options.auto) {
+            addFatalError(`Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture defined in ${formatLocation(previous.location)}.`, location);
+            continue;
+          }
         } else if (previous) {
           options = { auto: previous.auto, scope: previous.scope, option: previous.option, timeout: previous.timeout, customTitle: previous.customTitle };
         } else if (!options) {
           options = { auto: false, scope: 'test', option: false, timeout: undefined, customTitle: undefined };
         }
 
-        if (!kScopeOrder.includes(options.scope))
-          throw errorWithLocations(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, { location, name });
-        if (options.scope === 'worker' && disallowWorkerFixtures)
-          throw errorWithLocations(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, { location, name });
+        if (!kScopeOrder.includes(options.scope)) {
+          addFatalError(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, location);
+          continue;
+        }
+        if (options.scope === 'worker' && disallowWorkerFixtures) {
+          addFatalError(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, location);
+          continue;
+        }
 
         // Overriding option with "undefined" value means setting it to the default value
         // from the config or from the original declaration of the option.
@@ -253,19 +262,23 @@ export class FixturePool {
         const dep = this.resolveDependency(registration, name);
         if (!dep) {
           if (name === registration.name)
-            throw errorWithLocations(`Fixture "${registration.name}" references itself, but does not have a base implementation.`, registration);
+            addFatalError(`Fixture "${registration.name}" references itself, but does not have a base implementation.`, registration.location);
           else
-            throw errorWithLocations(`Fixture "${registration.name}" has unknown parameter "${name}".`, registration);
+            addFatalError(`Fixture "${registration.name}" has unknown parameter "${name}".`, registration.location);
+          continue;
         }
-        if (kScopeOrder.indexOf(registration.scope) > kScopeOrder.indexOf(dep.scope))
-          throw errorWithLocations(`${registration.scope} fixture "${registration.name}" cannot depend on a ${dep.scope} fixture "${name}".`, registration, dep);
+        if (kScopeOrder.indexOf(registration.scope) > kScopeOrder.indexOf(dep.scope)) {
+          addFatalError(`${registration.scope} fixture "${registration.name}" cannot depend on a ${dep.scope} fixture "${name}" defined in ${formatLocation(dep.location)}.`, registration.location);
+          continue;
+        }
         if (!markers.has(dep)) {
           visit(dep);
         } else if (markers.get(dep) === 'visiting') {
           const index = stack.indexOf(dep);
           const regs = stack.slice(index, stack.length);
           const names = regs.map(r => `"${r.name}"`);
-          throw errorWithLocations(`Fixtures ${names.join(' -> ')} -> "${dep.name}" form a dependency cycle.`, ...regs);
+          addFatalError(`Fixtures ${names.join(' -> ')} -> "${dep.name}" form a dependency cycle: ${regs.map(r => formatLocation(r.location)).join(' -> ')}`, dep.location);
+          continue;
         }
       }
       markers.set(registration, 'visited');
@@ -287,7 +300,7 @@ export class FixturePool {
     for (const name of fixtureParameterNames(fn, location)) {
       const registration = this.registrations.get(name);
       if (!registration)
-        throw errorWithLocations(`${prefix} has unknown parameter "${name}".`, { location, name: prefix, quoted: false });
+        addFatalError(`${prefix} has unknown parameter "${name}".`, location);
     }
   }
 
@@ -421,7 +434,7 @@ function innerFixtureParameterNames(fn: Function, location: Location): string[] 
     return [];
   const [firstParam] = splitByComma(trimmedParams);
   if (firstParam[0] !== '{' || firstParam[firstParam.length - 1] !== '}')
-    throw errorWithLocations('First argument must use the object destructuring pattern: '  + firstParam, { location });
+    addFatalError('First argument must use the object destructuring pattern: '  + firstParam, location);
   const props = splitByComma(firstParam.substring(1, firstParam.length - 1)).map(prop => {
     const colon = prop.indexOf(':');
     return colon === -1 ? prop : prop.substring(0, colon).trim();
@@ -468,16 +481,4 @@ function registrationId(registration: FixtureRegistration): string {
     map.set(registration.fn, String(lastId++));
   registration.id = map.get(registration.fn)!;
   return registration.id;
-}
-
-function errorWithLocations(message: string, ...defined: { location: Location, name?: string, quoted?: boolean }[]): Error {
-  for (const { name, location, quoted } of defined) {
-    let prefix = '';
-    if (name && quoted === false)
-      prefix = name + ' ';
-    else if (name)
-      prefix = `"${name}" `;
-    message += `\n  ${prefix}defined at ${formatLocation(location)}`;
-  }
-  return new Error(message);
 }
