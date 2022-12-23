@@ -2,13 +2,15 @@ const fs = require('fs');
 const cluster = require('cluster');
 
 async function start() {
-  const { browserTypeName, launchOptions, stallOnClose, disconnectOnSIGHUP, exitOnFile } = JSON.parse(process.argv[2]);
+  const { browserTypeName, launchOptions, stallOnClose, disconnectOnSIGHUP, exitOnFile, exitOnWarning } = JSON.parse(process.argv[2]);
   if (stallOnClose) {
     launchOptions.__testHookGracefullyClose = () => {
       console.log(`(stalled=>true)`);
       return new Promise(() => { });
     };
   }
+  if (exitOnWarning)
+    process.on('warning', () => process.exit(43));
 
   const playwright = require('playwright-core');
 

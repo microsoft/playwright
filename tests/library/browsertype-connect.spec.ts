@@ -845,4 +845,20 @@ test.describe('launchServer only', () => {
     expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
     expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
   });
+
+  test('should be able to reconnect to a browser 12 times without warnings', async ({ connect, startRemoteServer, server }) => {
+    test.slow();
+    const remoteServer = await startRemoteServer('launchServer', { exitOnWarning: true });
+    for (let i = 0; i < 12; i++) {
+      await test.step('connect #' + i, async () => {
+        const browser = await connect(remoteServer.wsEndpoint());
+        const browserContext = await browser.newContext();
+        expect(browserContext.pages().length).toBe(0);
+        const page = await browserContext.newPage();
+        expect(await page.evaluate('11 * 11')).toBe(121);
+        await page.goto(server.EMPTY_PAGE);
+        await browser.close();
+      });
+    }
+  });
 });
