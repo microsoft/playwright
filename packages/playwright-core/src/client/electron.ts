@@ -108,7 +108,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   async close() {
     if (this._isClosed)
       return;
-    await this._channel.close();
+    await this._channel.close().catch(() => {});
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {

@@ -15,17 +15,11 @@
  */
 
 const { app } = require('electron');
-const fs = require('fs');
-const path = require('path');
 const { chromiumSwitches } = require('../chromium/chromiumSwitches');
 
-// Command line is like:
-// [Electron, loader.js, --inspect=0, --remote-debugging-port=0, options.cwd, app.js, ...args]
-const appPath = path.resolve(process.argv[4], process.argv[5]);
-process.argv.splice(2, 4);
-process.argv[1] = appPath;
-// Now it is like
-// [Electron, app.js, ...args]
+// [Electron, -r, loader.js, --inspect=0, --remote-debugging-port=0, ...args]
+process.argv.splice(1, 4);
+
 
 for (const arg of chromiumSwitches) {
   const match = arg.match(/--([^=]*)=?(.*)/)!;
@@ -44,19 +38,11 @@ app.emit = (event: string | symbol, ...args: any[]): boolean => {
   return originalEmit(event, ...args);
 };
 
-app.getAppPath = () => {
-  if (fs.statSync(appPath).isFile())
-    return path.dirname(appPath);
-  return appPath;
-};
-
 let isReady = false;
 let whenReadyCallback: (event: any) => any;
 const whenReadyPromise = new Promise<void>(f => whenReadyCallback = f);
 app.isReady = () => isReady;
 app.whenReady = () => whenReadyPromise;
-
-require(appPath);
 
 (globalThis as any).__playwright_run = async () => {
   // Wait for app to be ready to avoid browser initialization races.
