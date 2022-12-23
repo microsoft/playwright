@@ -332,6 +332,11 @@ export class HarTracer {
     });
     this._addBarrier(page || request.serviceWorker(), promise);
 
+    // Respose end timing is only available after the response event was received.
+    const timing = response.timing();
+    harEntry.timings.receive = response.request()._responseEndTiming !== -1 ? helper.millisToRoundishMillis(response.request()._responseEndTiming - timing.responseStart) : -1;
+    this._computeHarEntryTotalTime(harEntry);
+
     if (!this._options.omitSizes) {
       this._addBarrier(page || request.serviceWorker(), response.sizes().then(sizes => {
         harEntry.response.bodySize = sizes.responseBodySize;
@@ -417,7 +422,7 @@ export class HarTracer {
       const connect = timing.connectEnd !== -1 ? helper.millisToRoundishMillis(timing.connectEnd - timing.connectStart) : -1;
       const ssl = timing.connectEnd !== -1 ? helper.millisToRoundishMillis(timing.connectEnd - timing.secureConnectionStart) : -1;
       const wait = timing.responseStart !== -1 ? helper.millisToRoundishMillis(timing.responseStart - timing.requestStart) : -1;
-      const receive = response.request()._responseEndTiming !== -1 ? helper.millisToRoundishMillis(response.request()._responseEndTiming - timing.responseStart) : -1;
+      const receive = -1;
 
       harEntry.timings = {
         dns,
@@ -427,7 +432,7 @@ export class HarTracer {
         wait,
         receive,
       };
-      harEntry.time = [dns, connect, ssl, wait, receive].reduce((pre, cur) => cur > 0 ? cur + pre : pre, 0);
+      this._computeHarEntryTotalTime(harEntry);
     }
 
     if (!this._options.omitServerIP) {
@@ -458,6 +463,16 @@ export class HarTracer {
       if (contentType)
         harEntry.response.content.mimeType = contentType.value;
     }));
+  }
+
+  private _computeHarEntryTotalTime(harEntry: har.Entry) {
+    harEntry.time = [
+      harEntry.timings.dns,
+      harEntry.timings.connect,
+      harEntry.timings.ssl,
+      harEntry.timings.wait,
+      harEntry.timings.receive
+    ].reduce((pre, cur) => (cur || -1) > 0 ? cur! + pre! : pre, 0)!;
   }
 
   async flush() {
