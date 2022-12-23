@@ -420,30 +420,33 @@ await context.GrantPermissionsAsync(new[] { "geolocation" });
 Allow notifications for a specific domain.
 
 ```js tab=js-js
-// @ts-check
+const { test } = require('@playwright/test');
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  use: {
-    permissions: ['notifications'], {origin: 'https://skype.com'},
-  },
-};
+test.beforeEach(async ({ context }) => {
+  // Runs before each test and signs in each page.
+  await context.grantPermissions(['notifications'], { origin: 'https://skype.com' });
+});
 
-module.exports = config;
+test('first', async ({ page }) => {
+  // page has notifications permission for https://skype.com.
+});
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
-  use: {
-    permissions: ['notifications'], {origin: 'https://skype.com'},
-  },
-};
-export default config;
+import { test } from '@playwright/test';
+
+test.beforeEach(async ({ context }) => {
+  // Runs before each test and signs in each page.
+  await context.grantPermissions(['notifications'], { origin: 'https://skype.com' });
+});
+
+test('first', async ({ page }) => {
+  // page has notifications permission for https://skype.com.
+});
 ```
 
 ```js tab=js-library
-await context.grantPermissions(['notifications'], {origin: 'https://skype.com'} );
+await context.grantPermissions(['notifications'], { origin: 'https://skype.com' });
 ```
 
 ```java
@@ -563,7 +566,7 @@ test.use({
 
 test('my test with geolocation', async ({ page, context }) => {
   // overwrite the location for this test
-  context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
+  await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 });
 ```
 
@@ -577,7 +580,7 @@ test.use({
 
 test('my test with geolocation', async ({ page, context }) => {
   // overwrite the location for this test
-  context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
+  await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 });
 ```
 
