@@ -197,12 +197,25 @@ test('should detach debugger on app-initiated exit', async ({ launchElectronApp 
 });
 
 test('should run pre-ready apis', async ({ launchElectronApp }) => {
-  await launchElectronApp('electron-pre-ready-app.js');
+  await launchElectronApp('electron-app-pre-ready.js');
 });
 
 test('should resolve app path for folder apps', async ({ launchElectronApp }) => {
   const electronApp = await launchElectronApp('.');
   const appPath = await electronApp.evaluate(async ({ app }) => app.getAppPath());
   expect(appPath).toBe(path.resolve(__dirname));
-  await electronApp.close();
+});
+
+test('should return app name / version from manifest', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('.');
+  const data = await electronApp.evaluate(async ({ app }) => {
+    return {
+      name: app.getName(),
+      version: app.getVersion(),
+    };
+  });
+  expect(data).toEqual({
+    name: 'my-electron-app',
+    version: '1.0.0'
+  });
 });
