@@ -84,7 +84,7 @@ for (let range = 0; range <= ranges.length; range++) {
           return result;
         });
         for (const { selector, expected, received } of result)
-          expect(received, `checking "${selector}"`).toBe(expected);
+          expect.soft(received, `checking "${selector}" in ${testFile}`).toBe(expected);
       });
     }
   });
@@ -107,7 +107,7 @@ test('axe-core implicit-role', async ({ page, asset, server }) => {
           throw new Error(`Unable to resolve "${selector}"`);
         return (window as any).__injectedScript.getAriaRole(element);
       }, testCase.target);
-      expect(received, `checking ${JSON.stringify(testCase)}`).toBe(testCase.role);
+      expect.soft(received, `checking ${JSON.stringify(testCase)}`).toBe(testCase.role);
     });
   }
 });
@@ -141,9 +141,80 @@ test('axe-core accessible-text', async ({ page, asset, server }) => {
           return injected.getElementAccessibleName(element);
         });
       }, targets);
-      expect(received, `checking ${JSON.stringify(testCase)}`).toEqual(expected);
+      expect.soft(received, `checking ${JSON.stringify(testCase)}`).toEqual(expected);
     });
   }
+});
+
+test('accessible name with slots', async ({ page }) => {
+  // Text "foo" is assigned to the slot, should not be used twice.
+  await page.setContent(`
+    <button><div>foo</div></button>
+    <script>
+      (() => {
+        const container = document.querySelector('div');
+        const shadow = container.attachShadow({ mode: 'open' });
+        const slot = document.createElement('slot');
+        shadow.appendChild(slot);
+      })();
+    </script>
+  `);
+  const name1 = await page.$eval('button', e => (window as any).__injectedScript.getElementAccessibleName(e));
+  expect.soft(name1).toBe('foo');
+
+  // Text "foo" is assigned to the slot, should be used instead of slot content.
+  await page.setContent(`
+    <div>foo</div>
+    <script>
+      (() => {
+        const container = document.querySelector('div');
+        const shadow = container.attachShadow({ mode: 'open' });
+        const button = document.createElement('button');
+        shadow.appendChild(button);
+        const slot = document.createElement('slot');
+        button.appendChild(slot);
+        const span = document.createElement('span');
+        span.textContent = 'pre';
+        slot.appendChild(span);
+      })();
+    </script>
+  `);
+  const name2 = await page.$eval('button', e => (window as any).__injectedScript.getElementAccessibleName(e));
+  expect.soft(name2).toBe('foo');
+
+  // Nothing is assigned to the slot, should use slot content.
+  await page.setContent(`
+    <div></div>
+    <script>
+      (() => {
+        const container = document.querySelector('div');
+        const shadow = container.attachShadow({ mode: 'open' });
+        const button = document.createElement('button');
+        shadow.appendChild(button);
+        const slot = document.createElement('slot');
+        button.appendChild(slot);
+        const span = document.createElement('span');
+        span.textContent = 'pre';
+        slot.appendChild(span);
+      })();
+    </script>
+  `);
+  const name3 = await page.$eval('button', e => (window as any).__injectedScript.getElementAccessibleName(e));
+  expect.soft(name3).toBe('pre');
+});
+
+test('accessible name nested treeitem', async ({ page }) => {
+  await page.setContent(`
+    <div role=treeitem id=target>
+      <span>Top-level</span>
+      <div role=group>
+        <div role=treeitem><span>Nested 1</span></div>
+        <div role=treeitem><span>Nested 2</span></div>
+      </div>
+    </div>
+  `);
+  const name = await page.$eval('#target', e => (window as any).__injectedScript.getElementAccessibleName(e));
+  expect.soft(name).toBe('Top-level');
 });
 
 function toArray(x: any): any[] {

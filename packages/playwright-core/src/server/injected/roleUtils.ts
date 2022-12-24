@@ -316,6 +316,19 @@ export function getAriaLabelledByElements(element: Element): Element[] | null {
   return getIdRefs(element, ref);
 }
 
+function allowsNameFromContent(role: string, targetDescendant: boolean) {
+  // SPEC: https://w3c.github.io/aria/#namefromcontent
+  //
+  // Note: there is a spec proposal https://github.com/w3c/aria/issues/1821 that
+  // is roughly aligned with what Chrome/Firefox do, and we follow that.
+  //
+  // See chromium implementation here:
+  // https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/accessibility/ax_object.cc;l=6338;drc=3decef66bc4c08b142a19db9628e9efe68973e64;bpv=0;bpt=1
+  const alwaysAllowsNameFromContent = ['button', 'cell', 'checkbox', 'columnheader', 'gridcell', 'heading', 'link', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'option', 'radio', 'row', 'rowheader', 'switch', 'tab', 'tooltip', 'treeitem'].includes(role);
+  const descendantAllowsNameFromContent = targetDescendant && ['', 'caption', 'code', 'contentinfo', 'definition', 'deletion', 'emphasis', 'insertion', 'list', 'listitem', 'mark', 'none', 'paragraph', 'presentation', 'region', 'row', 'rowgroup', 'section', 'strong', 'subscript', 'superscript', 'table', 'term', 'time'].includes(role);
+  return alwaysAllowsNameFromContent || descendantAllowsNameFromContent;
+}
+
 export function getElementAccessibleName(element: Element, includeHidden: boolean, hiddenCache: Map<Element, boolean>): string {
   // https://w3c.github.io/accname/#computation-steps
 
@@ -581,9 +594,9 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
   }
 
   // step 2f + step 2h.
-  // https://w3c.github.io/aria/#namefromcontent
-  const allowsNameFromContent = ['button', 'cell', 'checkbox', 'columnheader', 'gridcell', 'heading', 'link', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'option', 'radio', 'row', 'rowheader', 'switch', 'tab', 'tooltip', 'treeitem'].includes(role);
-  if (allowsNameFromContent || options.embeddedInLabelledBy !== 'none' || options.embeddedInLabel !== 'none' || options.embeddedInTextAlternativeElement || options.embeddedInTargetElement === 'descendant') {
+  if (allowsNameFromContent(role, options.embeddedInTargetElement === 'descendant') ||
+      options.embeddedInLabelledBy !== 'none' || options.embeddedInLabel !== 'none' ||
+      options.embeddedInTextAlternativeElement) {
     options.visitedElements.add(element);
     const tokens: string[] = [];
     const visit = (node: Node, skipSlotted: boolean) => {
