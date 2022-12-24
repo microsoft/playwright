@@ -53,16 +53,18 @@ export function createPlugin(
       configDir = configDirectory;
       const use = config.projects[0].use as CtConfig;
       const port = use.ctPort || 3100;
-      const viteConfig: InlineConfig = use.ctViteConfig || {};
+      const ctViteConfig: InlineConfig = use.ctViteConfig || {};
       const relativeTemplateDir = use.ctTemplateDir || 'playwright';
 
-      const rootDir = viteConfig.root || configDir;
+      const rootDir = ctViteConfig.root || configDir;
       const templateDir = path.join(rootDir, relativeTemplateDir);
-      const outDir = viteConfig?.build?.outDir || (use.ctCacheDir ? path.resolve(rootDir, use.ctCacheDir) : path.resolve(templateDir, '.cache'));
+      const outDir = ctViteConfig?.build?.outDir || (use.ctCacheDir ? path.resolve(rootDir, use.ctCacheDir) : path.resolve(templateDir, '.cache'));
 
       const buildInfoFile = path.join(outDir, 'metainfo.json');
       let buildExists = false;
       let buildInfo: BuildInfo;
+
+      const viteConfig = await mergeViteConfig(rootDir, ctViteConfig);
 
       const registerSource = await fs.promises.readFile(registerSourceFile, 'utf-8');
       const registerSourceHash = calculateSha1(registerSource);
@@ -115,10 +117,13 @@ export function createPlugin(
         };
       }
       const { build, preview } = require('vite');
+
       // Build config unconditionally, either build or build & preview will use it.
-      viteConfig.plugins = viteConfig.plugins || [
-        frameworkPluginFactory()
-      ];
+      viteConfig.plugins = viteConfig.plugins || [];
+      const frameworkPlugin = frameworkPluginFactory();
+      if (!viteConfig.configFile && !viteConfig.plugins.includes(frameworkPlugin))
+        viteConfig.plugins.push(frameworkPlugin);
+
       // But only add out own plugin when we actually build / transform.
       if (sourcesDirty)
         viteConfig.plugins.push(vitePlugin(registerSource, relativeTemplateDir, buildInfo, componentRegistry));
@@ -326,4 +331,22 @@ function hasJSComponents(components: ComponentInfo[]): boolean {
       return true;
   }
   return false;
+}
+
+async function mergeViteConfig(rootDir: string, overrides: InlineConfig): Promise<InlineConfig> {
+  const { findUp } = await import('find-up');
+  const { mergeConfig } = require('vite');
+
+  const viteConfig: InlineConfig = {
+    configFile: await findUp([
+      'vite.config.ts',
+      'vite.config.mts',
+      'vite.config.cts',
+      'vite.config.js',
+      'vite.config.mjs',
+      'vite.config.cjs',
+    ], { cwd: rootDir }),
+  };
+
+  return mergeConfig(viteConfig, overrides);
 }

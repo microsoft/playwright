@@ -297,3 +297,152 @@ test('should not use global config for preview', async ({ runInlineTest }) => {
   expect(result2.exitCode).toBe(0);
   expect(result2.passed).toBe(1);
 });
+
+test('should not inject framework vite plugin when vite.config.ts is found', async ({ runInlineTest }) => {
+  // build should fail anyway when framework plugin (e.g. @vitejs/plugin-react) is not defined in vite.config.ts
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'vite.config.ts': `
+      export default {};
+    `,
+    'button.tsx': `
+      //@no-header
+      export const Button = () => <button>Submit</button>;
+    `,
+    'alias.test.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button.tsx';
+
+      test('pass updated', async ({ mount }) => {
+        await mount(<Button />);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('ReferenceError: React is not defined');
+});
+
+test('should inject framework vite plugin when not defined', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'playwright.config.ts': `
+      export default {
+        use: {
+          ctViteConfig: {
+            plugins: [{
+              fakePlugin: () => {}
+            }]
+          }
+        },
+      };
+    `,
+    'button.tsx': `
+      //@no-header
+      export const Button = () => <button>Submit</button>;
+    `,
+    'config.test.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button.tsx';
+
+      test('pass updated', async ({ mount }) => {
+        const component = await mount(<Button />);
+        await expect(component).toHaveText('Submit');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+
+test('should reuse vite.config.ts when exists', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'vite.config.ts': `
+      import react from '@vitejs/plugin-react';
+      import { fileURLToPath, URL } from 'url';
+      export default {
+        plugins: [react()],
+        resolve: {
+          alias: {
+            '@': fileURLToPath(new URL('./src', import.meta.url))
+          }
+        },
+      };
+    `,
+    'src/button.tsx': `
+      //@no-header
+      export const Button = () => <button>Submit</button>;
+    `,
+    'config.test.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from '@/button.tsx';
+
+      test('pass updated', async ({ mount }) => {
+        const component = await mount(<Button />);
+        await expect(component).toHaveText('Submit');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should override vite.config.ts configuration', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'vite.config.ts': `
+      import react from '@vitejs/plugin-react';
+      import { fileURLToPath, URL } from 'url';
+      export default {
+        plugins: [react()],
+        resolve: {
+          alias: {
+            '@': fileURLToPath(new URL('./path-that-gets-overridden', import.meta.url))
+          }
+        },
+      };
+    `,
+    'playwright.config.ts': `
+      import { resolve } from "path";
+      import react from '@vitejs/plugin-react';
+      export default {
+        use: {
+          ctViteConfig: {
+            plugins: [react()],
+            resolve: {
+              alias: {
+                "@": resolve(__dirname, "./src"),
+              }
+            },
+          }
+        },
+      };
+    `,
+    'src/button.tsx': `
+      //@no-header
+      export const Button = () => <button>Submit</button>;
+    `,
+    'config.test.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from '@/button.tsx';
+
+      test('pass updated', async ({ mount }) => {
+        const component = await mount(<Button />);
+        await expect(component).toHaveText('Submit');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+

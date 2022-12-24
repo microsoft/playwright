@@ -83,6 +83,7 @@
     "eslint": "^8.8.0",
     "eslint-plugin-notice": "^0.9.10",
     "eslint-plugin-react-hooks": "^4.3.0",
+    "find-up": "^6.3.0",
     "formidable": "^2.1.1",
     "license-checker": "^25.0.1",
     "mime": "^3.0.0",

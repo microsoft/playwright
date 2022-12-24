@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/experimental-ct-react';
 import { BrowserRouter } from 'react-router-dom';
-import App from './App';
-import Button from './components/Button';
-import DefaultChildren from './components/DefaultChildren';
-import MultipleChildren from './components/MultipleChildren';
-import MultiRoot from './components/MultiRoot';
-import Counter from './components/Counter';
-import EmptyFragment from './components/EmptyFragment';
+import App from '@/App';
+import Button from '@/components/Button';
+import DefaultChildren from '@/components/DefaultChildren';
+import MultipleChildren from '@/components/MultipleChildren';
+import MultiRoot from '@/components/MultiRoot';
+import Counter from '@/components/Counter';
+import EmptyFragment from '@/components/EmptyFragment';
 import type { HooksConfig } from '../playwright';
 
 test.use({ viewport: { width: 500, height: 500 } });
