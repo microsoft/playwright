@@ -44,7 +44,7 @@ const compiledReactRE = /(const|var)\s+React\s*=/;
 
 export function createPlugin(
   registerSourceFile: string,
-  frameworkPluginFactory: () => Plugin): TestRunnerPlugin {
+  frameworkPluginFactory: () => Promise<Plugin>): TestRunnerPlugin {
   let configDir: string;
   return {
     name: 'playwright-vite-plugin',
@@ -117,7 +117,7 @@ export function createPlugin(
       const { build, preview } = require('vite');
       // Build config unconditionally, either build or build & preview will use it.
       viteConfig.plugins = viteConfig.plugins || [
-        frameworkPluginFactory()
+        await frameworkPluginFactory()
       ];
       // But only add out own plugin when we actually build / transform.
       if (sourcesDirty)

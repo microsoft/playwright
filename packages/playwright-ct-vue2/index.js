@@ -23,7 +23,7 @@ _addRunnerPlugin(() => {
   const { createPlugin } = require('@playwright/test/lib/plugins/vitePlugin');
   return createPlugin(
     path.join(__dirname, 'registerSource.mjs'),
-    () => require('@vitejs/plugin-vue2')());
+    () => import('@vitejs/plugin-vue2').then(plugin => plugin.default()));
 });
 
 const test = baseTest.extend(fixtures);

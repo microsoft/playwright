@@ -16,9 +16,9 @@
   "devDependencies": {
     "@types/react": "^17.0.33",
     "@types/react-dom": "^17.0.10",
-    "@vitejs/plugin-react": "^2.2.0",
+    "@vitejs/plugin-react": "^3.0.0",
     "typescript": "^4.5.4",
-    "vite": "^3.2.1"
+    "vite": "^4.0.3"
   },
   "@standaloneDevDependencies": {
     "@playwright/experimental-ct-react": "^1.22.2",

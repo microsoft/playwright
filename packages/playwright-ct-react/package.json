@@ -26,8 +26,8 @@
     }
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^2.2.0",
+    "@vitejs/plugin-react": "^3.0.0",
     "@playwright/test": "1.30.0-next",
-    "vite": "^3.2.1"
+    "vite": "^4.0.3"
   }
 }
