@@ -476,7 +476,6 @@ test('should warn user when viewing via file:// protocol', async ({ runInlineTes
   await test.step('view via local file://', async () => {
     const reportFolder = testInfo.outputPath('playwright-report');
     await page.goto(url.pathToFileURL(path.join(reportFolder, 'index.html')).toString());
-    await page.locator('[title="View trace"]').click();
     await expect(page.locator('dialog')).toBeVisible();
     await expect(page.locator('dialog')).toContainText('must be loaded over');
   });
