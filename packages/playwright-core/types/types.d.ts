@@ -4447,12 +4447,12 @@ export interface Page {
    *
    * ```js
    * // Start waiting for response before clicking. Note no await.
-   * const responsePromise = page.waitForRequest('https://example.com/resource');
+   * const responsePromise = page.waitForResponse('https://example.com/resource');
    * await page.getByText('trigger response').click();
    * const response = await responsePromise;
    *
    * // Alternative way with a predicate. Note no await.
-   * const responsePromise = page.waitForRequest(response => response.url() === 'https://example.com' && response.status() === 200);
+   * const responsePromise = page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200);
    * await page.getByText('trigger response').click();
    * const response = await responsePromise;
    * ```
