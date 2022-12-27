@@ -112,6 +112,16 @@ it('getByLabel should prioritize aria-labelledby over native label', async ({ pa
   expect(await page.getByLabel('Name').evaluate(e => e.textContent)).toBe('Click me');
 });
 
+it('getByLabel should work with aria-label', async ({ page }) => {
+  await page.setContent(`<input id=target aria-label="Name">`);
+  expect(await page.getByLabel('Name').evaluate(e => e.id)).toBe('target');
+});
+
+it('getByLabel should prioritize aria-labelledby over aria-label', async ({ page }) => {
+  await page.setContent(`<label id=other-label>Other</label><input id=target aria-label="Name" aria-labelledby=other-label>`);
+  expect(await page.getByLabel('Other').evaluate(e => e.id)).toBe('target');
+});
+
 it('getByPlaceholder should work', async ({ page }) => {
   await page.setContent(`<div>
     <input placeholder='Hello'>
