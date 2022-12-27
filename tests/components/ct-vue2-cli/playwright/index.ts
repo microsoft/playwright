@@ -4,13 +4,17 @@ import { router } from '../src/router';
 import '../src/assets/index.css';
 
 export type HooksConfig = {
-  route: string;
+  route?: string;
+  routing?: boolean;
 }
 
 beforeMount<HooksConfig>(async ({ Vue, hooksConfig }) => {
   console.log(`Before mount: ${JSON.stringify(hooksConfig)}`);
-  Vue.use(Router as any); // TODO: remove any and fix the various installed conflicting Vue versions
-  return { router }
+
+  if (hooksConfig?.routing) {
+    Vue.use(Router as any); // TODO: remove any and fix the various installed conflicting Vue versions
+    return { router }
+  }
 });
 
 afterMount<HooksConfig>(async ({ instance }) => {

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/experimental-ct-solid';
+import App from './App';
 import Button from './components/Button';
 import Counter from './components/Counter';
 import DefaultChildren from './components/DefaultChildren';
@@ -81,19 +82,15 @@ test('execute callback when the button is clicked', async ({ mount }) => {
 });
 
 test('render a default child', async ({ mount }) => {
-  const component = await mount(
-    <DefaultChildren>Main Content</DefaultChildren>
-  );
+  const component = await mount(<DefaultChildren>Main Content</DefaultChildren>);
   await expect(component).toContainText('Main Content');
 });
 
 test('render multiple children', async ({ mount }) => {
-  const component = await mount(
-    <DefaultChildren>
-      <div id="one">One</div>
-      <div id="two">Two</div>
-    </DefaultChildren>
-  );
+  const component = await mount(<DefaultChildren>
+    <div id="one">One</div>
+    <div id="two">Two</div>
+  </DefaultChildren>);
   await expect(component.locator('#one')).toContainText('One');
   await expect(component.locator('#two')).toContainText('Two');
 });
@@ -107,13 +104,11 @@ test('render a component as slot', async ({ mount }) => {
 });
 
 test('render named children', async ({ mount }) => {
-  const component = await mount(
-    <MultipleChildren>
-      <div>Header</div>
-      <div>Main Content</div>
-      <div>Footer</div>
-    </MultipleChildren>
-  );
+  const component = await mount(<MultipleChildren>
+    <div>Header</div>
+    <div>Main Content</div>
+    <div>Footer</div>
+  </MultipleChildren>);
   await expect(component).toContainText('Header');
   await expect(component).toContainText('Main Content');
   await expect(component).toContainText('Footer');
@@ -121,11 +116,9 @@ test('render named children', async ({ mount }) => {
 
 test('execute callback when a child node is clicked', async ({ mount }) => {
   let clickFired = false;
-  const component = await mount(
-    <DefaultChildren>
-      <span onClick={() => (clickFired = true)}>Main Content</span>
-    </DefaultChildren>
-  );
+  const component = await mount(<DefaultChildren>
+    <span onClick={() => (clickFired = true)}>Main Content</span>
+  </DefaultChildren>);
   await component.locator('text=Main Content').click();
   expect(clickFired).toBeTruthy();
 });
@@ -162,4 +155,15 @@ test('get textContent of the empty fragment', async ({ mount }) => {
   expect(await component.allTextContents()).toEqual(['']);
   expect(await component.textContent()).toBe('');
   await expect(component).toHaveText('');
+});
+
+test('navigate to a page by clicking a link', async ({ page, mount }) => {
+  const component = await mount<HooksConfig>(<App />, {
+    hooksConfig: { routing: true }
+  });
+  await expect(component.getByRole('main')).toHaveText('Login');
+  await expect(page).toHaveURL('/');
+  await component.getByRole('link', { name: 'Dashboard' }).click();
+  await expect(component.getByRole('main')).toHaveText('Dashboard');
+  await expect(page).toHaveURL('/dashboard');
 });
