@@ -474,9 +474,10 @@ test.describe(() => {
   });
 
   test('toBeOK fail with promise', async ({ page, server }) => {
-    const res = page.request.get(server.EMPTY_PAGE).catch(e => {});
+    const res = page.request.get(server.EMPTY_PAGE);
     const error = await (expect(res) as any).toBeOK().catch(e => e);
     expect(error.message).toContain('toBeOK can be only used with APIResponse object');
+    await res;
   });
 
   test.describe('toBeOK should print response with text content type when fails', () => {
