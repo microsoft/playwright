@@ -22,6 +22,7 @@ export type Stats = {
   unexpected: number;
   flaky: number;
   skipped: number;
+  fixme: number;
   ok: boolean;
   duration: number;
 };

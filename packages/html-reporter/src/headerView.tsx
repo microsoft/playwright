@@ -79,5 +79,8 @@ const StatsNavView: React.FC<{
     <Link className='subnav-item' href='#?q=s:skipped'>
       Skipped <span className='d-inline counter'>{stats.skipped}</span>
     </Link>
+    <Link className='subnav-item' href='#?q=s:fixme'>
+      Fixme <span className='d-inline counter'>{stats.fixme}</span>
+    </Link>
   </nav>;
 };

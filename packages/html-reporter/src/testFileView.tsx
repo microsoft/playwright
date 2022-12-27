@@ -39,7 +39,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
       {file.fileName}
     </span>}>
     {file.tests.filter(t => filter.matches(t)).map(test =>
-      <div key={`test-${test.testId}`} className={'test-file-test test-file-test-outcome-' + test.outcome}>
+      <div key={`test-${test.testId}`} className={'test-file-test test-file-test-outcome-' + (test.annotations.some(a => a.type === 'fixme') ? 'fixme' : test.outcome)}>
         <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
           <span style={{ float: 'right', minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
           {report.projectNames.length > 1 && !!test.projectName &&

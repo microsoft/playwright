@@ -54,27 +54,79 @@ test('should generate report', async ({ runInlineTest, showReport, page }) => {
       test('flaky', async ({}, testInfo) => {
         expect(testInfo.retry).toBe(1);
       });
+      test('fixme', async ({}) => {
+        test.fixme();
+      });
     `,
   }, { reporter: 'dot,html', retries: 1 }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
 
   await showReport();
 
-  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('4');
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('5');
   await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('1');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
   await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('1');
+  await expect(page.locator('.subnav-item:has-text("Fixme") .counter')).toHaveText('1');
 
   await expect(page.locator('.test-file-test-outcome-unexpected >> text=fails')).toBeVisible();
   await expect(page.locator('.test-file-test-outcome-flaky >> text=flaky')).toBeVisible();
   await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toBeVisible();
   await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toBeVisible();
+  await expect(page.locator('.test-file-test-outcome-fixme >> text=fixme')).toBeVisible();
 
   await expect(page.getByTestId('overall-duration'), 'should contain humanized total time with at most 1 decimal place').toContainText(/^Total time: \d+(\.\d)?(ms|s|m)$/);
 
   await expect(page.locator('.metadata-view')).not.toBeVisible();
 });
 
+test('should filter tests by status', async ({ runInlineTest, showReport, page }) => {
+  await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { name: 'project-name' };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('passes', async ({}) => {});
+      test('fails', async ({}) => {
+        expect(1).toBe(2);
+      });
+      test('skipped', async ({}) => {
+        test.skip('Does not work')
+      });
+      test('flaky', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+      test('fixme', async ({}) => {
+        test.fixme();
+      });
+    `,
+  }, { reporter: 'dot,html', retries: 1 }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+  await showReport();
+
+  const testCases = page.locator('.test-file-test');
+
+  await page.getByRole('navigation').getByText('Passed').click();
+  await expect(testCases.getByText('passes')).toBeVisible();
+  await expect(testCases).toHaveCount(1);
+
+  await page.getByRole('navigation').getByText('Failed').click();
+  await expect(testCases.getByText('fails')).toBeVisible();
+  await expect(testCases).toHaveCount(1);
+
+  await page.getByRole('navigation').getByText('Flaky').click();
+  await expect(testCases.getByText('flaky')).toBeVisible();
+  await expect(testCases).toHaveCount(1);
+
+  await page.getByRole('navigation').getByText('Skipped').click();
+  await expect(testCases.getByText('skipped')).toBeVisible();
+  await expect(testCases).toHaveCount(1);
+
+  await page.getByRole('navigation').getByText('Fixme').click();
+  await expect(testCases.getByText('fixme')).toBeVisible();
+  await expect(testCases).toHaveCount(1);
+});
 
 test('should not throw when attachment is missing', async ({ runInlineTest, page, showReport }, testInfo) => {
   const result = await runInlineTest({

@@ -97,8 +97,12 @@ export class Filter {
         status = 'failed';
       if (test.outcome === 'flaky')
         status = 'flaky';
-      if (test.outcome === 'skipped')
-        status = 'skipped';
+      if (test.outcome === 'skipped') {
+        if (test.annotations.some(a => a.type === 'fixme'))
+          status = 'fixme';
+        else
+          status = 'skipped';
+      }
       const searchValues: SearchValues = {
         text: (status + ' ' + test.projectName + ' ' + test.path.join(' ') + test.title).toLowerCase(),
         project: test.projectName.toLowerCase(),
@@ -132,6 +136,6 @@ export class Filter {
 type SearchValues = {
   text: string;
   project: string;
-  status: 'passed' | 'failed' | 'flaky' | 'skipped';
+  status: 'passed' | 'failed' | 'flaky' | 'skipped' | 'fixme';
 };
 

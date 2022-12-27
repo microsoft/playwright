@@ -26,6 +26,7 @@ test('should render counters', async ({ mount }) => {
     unexpected: 31,
     flaky: 17,
     skipped: 10,
+    fixme: 47,
     ok: false,
     duration: 100000
   }} filterText='' setFilterText={() => {}}></HeaderView>);
@@ -34,6 +35,7 @@ test('should render counters', async ({ mount }) => {
   await expect(component.locator('a', { hasText: 'Failed' }).locator('.counter')).toHaveText('31');
   await expect(component.locator('a', { hasText: 'Flaky' }).locator('.counter')).toHaveText('17');
   await expect(component.locator('a', { hasText: 'Skipped' }).locator('.counter')).toHaveText('10');
+  await expect(component.locator('a', { hasText: 'Fixme' }).locator('.counter')).toHaveText('47');
 });
 
 test('should toggle filters', async ({ page, mount: mount }) => {
@@ -45,6 +47,7 @@ test('should toggle filters', async ({ page, mount: mount }) => {
       unexpected: 31,
       flaky: 17,
       skipped: 10,
+      fixme: 47,
       ok: false,
       duration: 100000
     }}
@@ -60,5 +63,7 @@ test('should toggle filters', async ({ page, mount: mount }) => {
   await expect(page).toHaveURL(/#\?q=s:flaky/);
   await component.locator('a', { hasText: 'Skipped' }).click();
   await expect(page).toHaveURL(/#\?q=s:skipped/);
-  expect(filters).toEqual(['', 's:passed', 's:failed', 's:flaky', 's:skipped']);
+  await component.locator('a', { hasText: 'Fixme' }).click();
+  await expect(page).toHaveURL(/#\?q=s:fixme/);
+  expect(filters).toEqual(['', 's:passed', 's:failed', 's:flaky', 's:skipped', 's:fixme']);
 });

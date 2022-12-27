@@ -235,8 +235,12 @@ class HtmlBuilder {
       for (const test of testFileSummary.tests) {
         if (test.outcome === 'expected')
           ++stats.expected;
-        if (test.outcome === 'skipped')
-          ++stats.skipped;
+        if (test.outcome === 'skipped') {
+          if (test.annotations.some(a => a.type === 'fixme'))
+            ++stats.fixme;
+          else
+            ++stats.skipped;
+        }
         if (test.outcome === 'unexpected')
           ++stats.unexpected;
         if (test.outcome === 'flaky')
@@ -469,6 +473,7 @@ const emptyStats = (): Stats => {
     unexpected: 0,
     flaky: 0,
     skipped: 0,
+    fixme: 0,
     ok: true,
     duration: 0,
   };
@@ -477,6 +482,7 @@ const emptyStats = (): Stats => {
 const addStats = (stats: Stats, delta: Stats): Stats => {
   stats.total += delta.total;
   stats.skipped += delta.skipped;
+  stats.fixme += delta.fixme;
   stats.expected += delta.expected;
   stats.unexpected += delta.unexpected;
   stats.flaky += delta.flaky;

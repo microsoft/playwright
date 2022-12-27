@@ -64,6 +64,6 @@
   fill: var(--color-fg-muted);
 }
 
-.test-file-test-outcome-skipped {
+.test-file-test-outcome-skipped, .test-file-test-outcome-fixme {
   color: var(--color-fg-muted);
 }
