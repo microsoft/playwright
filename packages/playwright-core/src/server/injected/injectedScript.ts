@@ -486,7 +486,7 @@ export class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  describeIFrameStyle(iframe: Element): 'error:notconnected' | 'transformed' | { borderLeft: number, borderTop: number } {
+  describeIFrameStyle(iframe: Element): 'error:notconnected' | 'transformed' | { left: number, top: number } {
     if (!iframe.ownerDocument || !iframe.ownerDocument.defaultView)
       return 'error:notconnected';
     const defaultView = iframe.ownerDocument.defaultView;
@@ -495,7 +495,10 @@ export class InjectedScript {
         return 'transformed';
     }
     const iframeStyle = defaultView.getComputedStyle(iframe);
-    return { borderLeft: parseInt(iframeStyle.borderLeftWidth || '', 10), borderTop: parseInt(iframeStyle.borderTopWidth || '', 10) };
+    return {
+      left: parseInt(iframeStyle.borderLeftWidth || '', 10) + parseInt(iframeStyle.paddingLeft || '', 10),
+      top: parseInt(iframeStyle.borderTopWidth || '', 10) + parseInt(iframeStyle.paddingTop || '', 10),
+    };
   }
 
   retarget(node: Node, behavior: 'none' | 'follow-label' | 'no-follow-label' | 'button-link'): Element | null {

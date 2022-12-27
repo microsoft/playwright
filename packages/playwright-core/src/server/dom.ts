@@ -877,7 +877,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return { framePoint: undefined };
       }
       // Translate from viewport coordinates to frame coordinates.
-      const pointInFrame = { x: point.x - box.x - style.borderLeft, y: point.y - box.y - style.borderTop };
+      const pointInFrame = { x: point.x - box.x - style.left, y: point.y - box.y - style.top };
       data.push({ frame, frameElement, pointInFrame });
       frame = frame.parentFrame()!;
     }
