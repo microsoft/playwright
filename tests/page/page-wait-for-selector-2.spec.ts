@@ -326,5 +326,5 @@ it('should fail when navigating while on handle', async ({ page, mode, server })
 
   const body = await page.waitForSelector('body');
   const error = await body.waitForSelector('div', { __testHookBeforeAdoptNode } as any).catch(e => e);
-  expect(error.message).toContain('Error: frame navigated while waiting for locator(\'div\')');
+  expect(error.message).toContain(`waiting for locator('div') to be visible`);
 });
