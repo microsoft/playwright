@@ -286,9 +286,9 @@ function hexToNumber(hex: string): number {
     const code = digit.charCodeAt(0);
     if (code >= 48 && code <= 57) // 0..9
       return value + code;
-    if (code >= 97 && code <= 122) // a..z
+    if (code >= 97 && code <= 102) // a..f
       return value + (code - 97) + 10;
-    if (code >= 65 && code <= 90) // A..Z
+    if (code >= 65 && code <= 70) // A..F
       return value + (code - 65) + 10;
     throw new Error('Invalid IPv6 token ' + hex);
   }, 0);
