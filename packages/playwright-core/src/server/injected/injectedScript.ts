@@ -298,6 +298,11 @@ export class InjectedScript {
         const allElements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, '*');
         return allElements.filter(element => {
           let labels: Element[] | NodeListOf<Element> | null | undefined = getAriaLabelledByElements(element);
+          if (labels === null) {
+            const ariaLabel = element.getAttribute('aria-label');
+            if (ariaLabel !== null)
+              return matcher({ full: ariaLabel, immediate: [ariaLabel] });
+          }
           if (labels === null)
             labels = (element as HTMLInputElement).labels;
           return !!labels && [...labels].some(label => matcher(elementText(this._evaluator._cacheText, label)));
