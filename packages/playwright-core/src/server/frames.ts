@@ -45,7 +45,6 @@ import { asLocator } from './isomorphic/locatorGenerators';
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;
   context: dom.FrameExecutionContext | null;
-  rerunnableTasks: Set<RerunnableTask<any>>;
 };
 
 type DocumentInfo = {
@@ -509,8 +508,8 @@ export class Frame extends SdkObject {
 
     this._detachedPromise = new Promise<void>(x => this._detachedCallback = x);
 
-    this._contextData.set('main', { contextPromise: new ManualPromise(), context: null, rerunnableTasks: new Set() });
-    this._contextData.set('utility', { contextPromise: new ManualPromise(), context: null, rerunnableTasks: new Set() });
+    this._contextData.set('main', { contextPromise: new ManualPromise(), context: null });
+    this._contextData.set('utility', { contextPromise: new ManualPromise(), context: null });
     this._setContext('main', null);
     this._setContext('utility', null);
 
@@ -1477,27 +1476,55 @@ export class Frame extends SdkObject {
     if (typeof options.pollingInterval === 'number')
       assert(options.pollingInterval > 0, 'Cannot poll with non-positive interval: ' + options.pollingInterval);
     expression = js.normalizeEvaluationExpression(expression, isFunction);
-    const task: dom.SchedulableTask<R> = injectedScript => injectedScript.evaluateHandle((injectedScript, { expression, isFunction, polling, arg }) => {
-      const predicate = (arg: any): R => {
-        let result = self.eval(expression);
-        if (isFunction === true) {
-          result = result(arg);
-        } else if (isFunction === false) {
-          result = result;
-        } else {
-          // auto detect.
-          if (typeof result === 'function')
-            result = result(arg);
-        }
-        return result;
-      };
-      if (typeof polling !== 'number')
-        return injectedScript.pollRaf(progress => predicate(arg) || progress.continuePolling);
-      return injectedScript.pollInterval(polling, progress => predicate(arg) || progress.continuePolling);
-    }, { expression, isFunction, polling: options.pollingInterval, arg });
-    return controller.run(
-        progress => this._scheduleRerunnableHandleTask(progress, world, task),
-        this._page._timeoutSettings.timeout(options));
+    return controller.run(async progress => {
+      return this.retryWithProgressAndTimeouts(progress, [100], async () => {
+        const context = await this._mainContext();
+        const injectedScript = await context.injectedScript();
+        const handle = await injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
+          const predicate = (): R => {
+            let result = self.eval(expression);
+            if (isFunction === true) {
+              result = result(arg);
+            } else if (isFunction === false) {
+              result = result;
+            } else {
+              // auto detect.
+              if (typeof result === 'function')
+                result = result(arg);
+            }
+            return result;
+          };
+
+          let fulfill: (result: R) => void;
+          let reject: (error: Error) => void;
+          let aborted = false;
+          const result = new Promise<R>((f, r) => { fulfill = f; reject = r; });
+
+          const next = () => {
+            if (aborted)
+              return;
+            try {
+              const success = predicate();
+              if (success) {
+                fulfill(success);
+                return;
+              }
+              if (typeof polling !== 'number')
+                requestAnimationFrame(next);
+              else
+                setTimeout(next, polling);
+            } catch (e) {
+              reject(e);
+            }
+          };
+
+          next();
+          return { result, abort: () => aborted = true };
+        }, { expression, isFunction, polling: options.pollingInterval, arg });
+        progress.cleanupWhenAborted(() => handle.evaluate(h => h.abort()).catch(() => {}));
+        return handle.evaluateHandle(h => h.result);
+      });
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   async waitForFunctionValueInUtility<R>(progress: Progress, pageFunction: js.Func1<any, R>) {
@@ -1540,8 +1567,6 @@ export class Frame extends SdkObject {
       if (data.context)
         data.context.contextDestroyed(error);
       data.contextPromise.resolve(error);
-      for (const rerunnableTask of data.rerunnableTasks)
-        rerunnableTask.terminate(error);
     }
     if (this._parentFrame)
       this._parentFrame._childFrames.delete(this);
@@ -1577,26 +1602,13 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  private _scheduleRerunnableHandleTask<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<js.SmartHandle<T>> {
-    const data = this._contextData.get(world)!;
-    const rerunnableTask = new RerunnableTask<T>(data, progress, task, false /* returnByValue */);
-    if (this._detached)
-      rerunnableTask.terminate(new Error('waitForFunction failed: frame got detached.'));
-    if (data.context)
-      rerunnableTask.rerun(data.context);
-    return rerunnableTask.handlePromise!;
-  }
-
   private _setContext(world: types.World, context: dom.FrameExecutionContext | null) {
     const data = this._contextData.get(world)!;
     data.context = context;
-    if (context) {
+    if (context)
       data.contextPromise.resolve(context);
-      for (const rerunnableTask of data.rerunnableTasks)
-        rerunnableTask.rerun(context);
-    } else {
+    else
       data.contextPromise = new ManualPromise();
-    }
   }
 
   _contextCreated(world: types.World, context: dom.FrameExecutionContext) {
@@ -1703,66 +1715,6 @@ export class Frame extends SdkObject {
 
   private _asLocator(selector: string) {
     return asLocator(this._page.context()._browser.options.sdkLanguage, selector);
-  }
-}
-
-class RerunnableTask<T> {
-  readonly promise: ManualPromise<T> | undefined;
-  readonly handlePromise: ManualPromise<js.SmartHandle<T>> | undefined;
-  private _task: dom.SchedulableTask<T>;
-  private _progress: Progress;
-  private _returnByValue: boolean;
-  private _contextData: ContextData;
-
-  constructor(data: ContextData, progress: Progress, task: dom.SchedulableTask<T>, returnByValue: boolean) {
-    this._task = task;
-    this._progress = progress;
-    this._returnByValue = returnByValue;
-    if (returnByValue)
-      this.promise = new ManualPromise<T>();
-    else
-      this.handlePromise = new ManualPromise<js.SmartHandle<T>>();
-    this._contextData = data;
-    this._contextData.rerunnableTasks.add(this);
-  }
-
-  terminate(error: Error) {
-    this._reject(error);
-  }
-
-  private _resolve(value: T | js.SmartHandle<T>) {
-    if (this.promise)
-      this.promise.resolve(value as T);
-    if (this.handlePromise)
-      this.handlePromise.resolve(value as js.SmartHandle<T>);
-  }
-
-  private _reject(error: Error) {
-    if (this.promise)
-      this.promise.reject(error);
-    if (this.handlePromise)
-      this.handlePromise.reject(error);
-  }
-
-  async rerun(context: dom.FrameExecutionContext) {
-    try {
-      const injectedScript = await context.injectedScript();
-      const pollHandler = new dom.InjectedScriptPollHandler(this._progress, await this._task(injectedScript));
-      const result = this._returnByValue ? await pollHandler.finish() : await pollHandler.finishHandle();
-      this._contextData.rerunnableTasks.delete(this);
-      this._resolve(result);
-    } catch (e) {
-      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e)) {
-        this._contextData.rerunnableTasks.delete(this);
-        this._reject(e);
-      }
-
-      // Unlike other places, we don't check frame for being detached since the whole scope of this
-      // evaluation is within the frame's execution context. So we only let JavaScript errors and
-      // session termination errors go through.
-
-      // We will try again in the new execution context.
-    }
   }
 }
 
