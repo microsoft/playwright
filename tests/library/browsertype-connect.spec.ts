@@ -138,7 +138,6 @@ for (const kind of ['launchServer', 'run-server'] as const) {
     });
 
     test('should be able to visit ipv6', async ({ connect, startRemoteServer, ipV6ServerUrl }) => {
-      test.fixme(kind === 'run-server', 'socks proxy does not support ipv6 yet');
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const page = await browser.newPage();
