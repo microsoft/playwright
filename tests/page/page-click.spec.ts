@@ -1009,3 +1009,47 @@ it('should click in a nested transformed iframe', async ({ page }) => {
   await locator.click();
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
+
+it('ensure events are dispatched in the individual tasks', async ({ page, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19685' });
+  it.fixme(browserName === 'firefox');
+  await page.setContent(`
+    <div id="outer" style="background: #d4d4d4; width: 60px; height: 60px;">
+      <div id="inner" style="background: #adadad; width: 46px; height: 46px;"></div>
+    </div>
+  `);
+
+  await page.evaluate(() => {
+    function onClick(name) {
+      console.log(`click ${name}`);
+
+      setTimeout(function() {
+        console.log(`timeout ${name}`);
+      }, 0);
+
+      Promise.resolve().then(function() {
+        console.log(`promise ${name}`);
+      });
+    }
+
+    document.getElementById('inner').addEventListener('click', () => onClick('inner'));
+    document.getElementById('outer').addEventListener('click', () => onClick('outer'));
+  });
+
+  // Capture console messages
+  const messages: Array<string> = [];
+  page.on('console', msg => messages.push(msg.text()));
+
+  // Click on the inner div element
+  await page.locator('#inner').click();
+
+  // await new Promise(() => {});
+  expect(messages).toEqual([
+    'click inner',
+    'promise inner',
+    'click outer',
+    'promise outer',
+    'timeout inner',
+    'timeout outer',
+  ]);
+});
