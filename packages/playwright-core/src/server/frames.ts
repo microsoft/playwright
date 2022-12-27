@@ -84,6 +84,7 @@ export type NavigationEvent = {
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
 export type DomTaskBody<T, R, E> = (progress: InjectedScriptProgress, element: E, data: T, elements: Element[]) => R | symbol;
+type ElementCallback<T, R> = (injected: InjectedScript, element: Element, data: T) => R;
 
 export class NavigationAbortedError extends Error {
   readonly documentId?: string;
@@ -823,8 +824,8 @@ export class Frame extends SdkObject {
   }
 
   async dispatchEvent(metadata: CallMetadata, selector: string, type: string, eventInit: Object = {}, options: types.QueryOnSelectorOptions = {}): Promise<void> {
-    await this._scheduleRerunnableTask(metadata, selector, (progress, element, data) => {
-      progress.injectedScript.dispatchEvent(element, data.type, data.eventInit);
+    await this._callOnElementOnceMatches(metadata, selector, (injectedScript, element, data) => {
+      injectedScript.dispatchEvent(element, data.type, data.eventInit);
     }, { type, eventInit }, { mainWorld: true, ...options });
   }
 
@@ -1134,14 +1135,14 @@ export class Frame extends SdkObject {
     return false;
   }
 
-  private async _resolveInjectedForSelector(progress: Progress, selector: string, strict: boolean | undefined): Promise<{ injected: js.JSHandle<InjectedScript>, info: SelectorInfo } | undefined> {
-    const selectorInFrame = await this.resolveFrameForSelectorNoWait(selector, { strict });
+  private async _resolveInjectedForSelector(progress: Progress, selector: string, options: { strict?: boolean, mainWorld?: boolean }): Promise<{ injected: js.JSHandle<InjectedScript>, info: SelectorInfo } | undefined> {
+    const selectorInFrame = await this.resolveFrameForSelectorNoWait(selector, options);
     if (!selectorInFrame)
       return;
     progress.throwIfAborted();
 
     // Be careful, |this| can be different from |selectorInFrame.frame|.
-    const context = await selectorInFrame.frame._context(selectorInFrame.info.world);
+    const context = await selectorInFrame.frame._context(options.mainWorld ? 'main' : selectorInFrame.info.world);
     const injected = await context.injectedScript();
     progress.throwIfAborted();
     return { injected, info: selectorInFrame.info };
@@ -1154,7 +1155,7 @@ export class Frame extends SdkObject {
     action: (handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
     progress.log(`waiting for ${this._asLocator(selector)}`);
     return this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
-      const resolved = await this._resolveInjectedForSelector(progress, selector, strict);
+      const resolved = await this._resolveInjectedForSelector(progress, selector, { strict });
       if (!resolved)
         return continuePolling;
       const result = await resolved.injected.evaluateHandle((injected, { info }) => {
@@ -1268,30 +1269,30 @@ export class Frame extends SdkObject {
   }
 
   async textContent(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<string | null> {
-    return this._scheduleRerunnableTask(metadata, selector, (progress, element) => element.textContent, undefined, options);
+    return this._callOnElementOnceMatches(metadata, selector, (injected, element) => element.textContent, undefined, options);
   }
 
   async innerText(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<string> {
-    return this._scheduleRerunnableTask(metadata, selector, (progress, element) => {
+    return this._callOnElementOnceMatches(metadata, selector, (injectedScript, element) => {
       if (element.namespaceURI !== 'http://www.w3.org/1999/xhtml')
-        throw progress.injectedScript.createStacklessError('Node is not an HTMLElement');
+        throw injectedScript.createStacklessError('Node is not an HTMLElement');
       return (element as HTMLElement).innerText;
     }, undefined, options);
   }
 
   async innerHTML(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}): Promise<string> {
-    return this._scheduleRerunnableTask(metadata, selector, (progress, element) => element.innerHTML, undefined, options);
+    return this._callOnElementOnceMatches(metadata, selector, (injected, element) => element.innerHTML, undefined, options);
   }
 
   async getAttribute(metadata: CallMetadata, selector: string, name: string, options: types.QueryOnSelectorOptions = {}): Promise<string | null> {
-    return this._scheduleRerunnableTask(metadata, selector, (progress, element, data) => element.getAttribute(data.name), { name }, options);
+    return this._callOnElementOnceMatches(metadata, selector, (injected, element, data) => element.getAttribute(data.name), { name }, options);
   }
 
   async inputValue(metadata: CallMetadata, selector: string, options: types.TimeoutOptions & types.StrictOptions = {}): Promise<string> {
-    return this._scheduleRerunnableTask(metadata, selector, (progress, node) => {
-      const element = progress.injectedScript.retarget(node, 'follow-label');
+    return this._callOnElementOnceMatches(metadata, selector, (injectedScript, node) => {
+      const element = injectedScript.retarget(node, 'follow-label');
       if (!element || (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT'))
-        throw progress.injectedScript.createStacklessError('Node is not an <input>, <textarea> or <select> element');
+        throw injectedScript.createStacklessError('Node is not an <input>, <textarea> or <select> element');
       return (element as any).value;
     }, undefined, options);
   }
@@ -1318,8 +1319,7 @@ export class Frame extends SdkObject {
   }
 
   private async _elementState(metadata: CallMetadata, selector: string, state: ElementStateWithoutStable, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
-    const result = await this._scheduleRerunnableTask(metadata, selector, (progress, element, data) => {
-      const injected = progress.injectedScript;
+    const result = await this._callOnElementOnceMatches(metadata, selector, (injected, element, data) => {
       return injected.elementState(element, data.state);
     }, { state }, options);
     return dom.throwRetargetableDOMError(result);
@@ -1571,72 +1571,33 @@ export class Frame extends SdkObject {
     this._parentFrame = null;
   }
 
-  private async _scheduleRerunnableTask<T, R>(metadata: CallMetadata, selector: string, body: DomTaskBody<T, R, Element>, taskData: T, options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean } = {}): Promise<R> {
+  private async _callOnElementOnceMatches<T, R>(metadata: CallMetadata, selector: string, body: ElementCallback<T, R>, taskData: T, options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean } = {}): Promise<R> {
+    const callbackText = body.toString();
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return await this._scheduleRerunnableTaskWithProgress(progress, selector, body as DomTaskBody<T, R, Element | undefined>, taskData, options);
-    }, this._page._timeoutSettings.timeout(options));
-  }
-
-  private async _scheduleRerunnableTaskWithProgress<T, R>(
-    progress: Progress,
-    selector: string,
-    body: DomTaskBody<T, R, Element | undefined>,
-    taskData: T,
-    options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, querySelectorAll?: boolean, logScale?: boolean, omitAttached?: boolean } = {}): Promise<R> {
-
-    const callbackText = body.toString();
-    return this.retryWithProgress(progress, selector, options, async selectorInFrame => {
-      // Be careful, |this| can be different from |frame|.
       progress.log(`waiting for ${this._asLocator(selector)}`);
-      const { frame, info } = selectorInFrame || { frame: this, info: { parsed: { parts: [{ name: 'internal:control', body: 'return-empty', source: 'internal:control=return-empty' }] }, world: 'utility', strict: !!options.strict } };
-      return await frame._scheduleRerunnableTaskInFrame(progress, info, callbackText, taskData, options);
-    });
-  }
+      return this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
+        const resolved = await this._resolveInjectedForSelector(progress, selector, options);
+        if (!resolved)
+          return continuePolling;
+        const { log, success, value } = await resolved.injected.evaluate((injected, { info, callbackText, taskData, snapshotName }) => {
+          const callback = injected.eval(callbackText) as ElementCallback<T, R>;
+          const element = injected.querySelector(info.parsed, document, info.strict);
+          if (!element)
+            return { success: false };
+          const log = `  locator resolved to ${injected.previewNode(element)}`;
+          if (snapshotName)
+            injected.markTargetElements(new Set([element]), snapshotName);
+          return { log, success: true, value: callback(injected, element, taskData as T) };
+        }, { info: resolved.info, callbackText, taskData, snapshotName: progress.metadata.afterSnapshot });
 
-  private async _scheduleRerunnableTaskInFrame<T, R>(
-    progress: Progress,
-    info: SelectorInfo,
-    callbackText: string,
-    taskData: T,
-    options: types.TimeoutOptions & types.StrictOptions & { mainWorld?: boolean, querySelectorAll?: boolean, logScale?: boolean, omitAttached?: boolean }): Promise<R> {
-    progress.throwIfAborted();
-    const data = this._contextData.get(options.mainWorld ? 'main' : info!.world)!;
-    // This potentially runs in a sub-frame.
-    {
-      const rerunnableTask = new RerunnableTask<R>(data, progress, injectedScript => {
-        return injectedScript.evaluateHandle((injected, { info, taskData, callbackText, querySelectorAll, logScale, omitAttached, snapshotName }) => {
-          const callback = injected.eval(callbackText) as DomTaskBody<T, R, Element | undefined>;
-          const poller = logScale ? injected.pollLogScale.bind(injected) : injected.pollRaf.bind(injected);
-          return poller(progress => {
-            let element: Element | undefined;
-            let elements: Element[] = [];
-            if (querySelectorAll) {
-              elements = injected.querySelectorAll(info.parsed, document);
-              element = elements[0];
-              progress.logRepeating(`  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`);
-            } else {
-              element = injected.querySelector(info.parsed, document, info.strict);
-              elements = element ? [element] : [];
-              if (element)
-                progress.logRepeating(`  locator resolved to ${injected.previewNode(element)}`);
-            }
-
-            if (!element && !omitAttached)
-              return progress.continuePolling;
-
-            if (snapshotName)
-              injected.markTargetElements(new Set(elements), snapshotName);
-            return callback(progress, element, taskData as T, elements);
-          });
-        }, { info, taskData, callbackText, querySelectorAll: options.querySelectorAll, logScale: options.logScale, omitAttached: options.omitAttached, snapshotName: progress.metadata.afterSnapshot });
-      }, true);
-      if (this._detached)
-        rerunnableTask.terminate(new Error('Frame got detached.'));
-      if (data.context)
-        rerunnableTask.rerun(data.context);
-      return await rerunnableTask.promise!;
-    }
+        if (log)
+          progress.log(log);
+        if (!success)
+          return continuePolling;
+        return value!;
+      });
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   private _scheduleRerunnableHandleTask<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<js.SmartHandle<T>> {
