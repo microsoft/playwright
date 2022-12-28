@@ -29,8 +29,9 @@ other WebKit-based browsers. This gives a lot of lead time to react on the poten
 ## Google Chrome & Microsoft Edge
 
 While Playwright can download and use the recent Chromium build, it can operate against the stock Google
-Chrome and Microsoft Edge browsers available on the machine. In particular, current Playwright version will
-support Stable and Beta channels of these browsers. Here is how you can opt into using the stock browser:
+Chrome and Microsoft Edge browsers available on the machine (note that Playwright doesn't install them by
+default). In particular, current Playwright version will support Stable and Beta channels of these browsers.
+Here is how you can opt into using the stock browser:
 
 ```js tab=js-js
 // @ts-check
@@ -94,6 +95,17 @@ var chromium = playwright.Chromium;
 // Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
 var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel = "chrome" });
 ```
+
+### Installing Google Chrome & Microsoft Edge
+
+If stock Google Chrome or Microsoft Edge is not available on your machine, you can install
+them using Playwright command line tool:
+
+```bash
+npx playwright install msedge
+```
+
+Run `npx playwright install --help` to see full list of the browsers that can be installed this way.
 
 ### When to use Google Chrome & Microsoft Edge and when not to?
 
