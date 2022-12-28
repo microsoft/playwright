@@ -107,6 +107,11 @@ npx playwright install msedge
 
 Run `npx playwright install --help` to see full list of the browsers that can be installed this way.
 
+:::warning
+Google Chrome or Microsoft Edge installations will not be isolated. They will be installed at the
+default global location that depends on your operating system.
+:::
+
 ### When to use Google Chrome & Microsoft Edge and when not to?
 
 **Defaults**
@@ -345,6 +350,10 @@ npx playwright install
 $env:PLAYWRIGHT_BROWSERS_PATH=0
 npx playwright install
 ```
+
+:::note
+`PLAYWRIGHT_BROWSERS_PATH` does not change installation path for Google Chrome and Microsoft Edge.
+:::
 
 ## Install behind a firewall or a proxy
 
