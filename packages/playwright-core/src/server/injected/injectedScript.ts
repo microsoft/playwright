@@ -387,17 +387,7 @@ export class InjectedScript {
     return this.poll(predicate, next => requestAnimationFrame(next));
   }
 
-  pollInterval<T>(pollInterval: number, predicate: Predicate<T>): InjectedScriptPoll<T> {
-    return this.poll(predicate, next => setTimeout(next, pollInterval));
-  }
-
-  pollLogScale<T>(predicate: Predicate<T>): InjectedScriptPoll<T> {
-    const pollIntervals = [100, 250, 500];
-    let attempts = 0;
-    return this.poll(predicate, next => setTimeout(next, pollIntervals[attempts++] || 1000));
-  }
-
-  poll<T>(predicate: Predicate<T>, scheduleNext: (next: () => void) => void): InjectedScriptPoll<T> {
+  private poll<T>(predicate: Predicate<T>, scheduleNext: (next: () => void) => void): InjectedScriptPoll<T> {
     return this._runAbortableTask(progress => {
       let fulfill: (result: T) => void;
       let reject: (error: Error) => void;
