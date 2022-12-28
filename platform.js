@@ -2,6 +2,7 @@ const os = require('os');
 const fs = require('fs');
 
 let didFailToReadOSRelease = false;
+let osRelease;
 // let osRelease: {
 //   id: string,
 //   version: string,
