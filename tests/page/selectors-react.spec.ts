@@ -39,7 +39,6 @@ for (const [name, url] of Object.entries(reacts)) {
 
     it('should work with multi-root elements (fragments)', async ({ page }) => {
       it.skip(name === 'react15', 'React 15 does not support fragments');
-      await expect(page.locator(`_react=App`)).toHaveCount(15);
       await expect(page.locator(`_react=AppHeader`)).toHaveCount(2);
       await expect(page.locator(`_react=NewBook`)).toHaveCount(2);
     });
@@ -156,6 +155,16 @@ for (const [name, url] of Object.entries(reacts)) {
       });
       await expect(page.locator(`_react=BookItem`)).toHaveCount(6);
     });
+
+
+    it('should support React.memo & React.forwardRef with correct displayName', async ({ page }) => {
+      it.skip(name === 'react15', 'React 15 does not support functional components, let alone this');
+      await page.locator(`_react=BookItem`).first().waitFor();
+      await expect(page.locator(`_react=MemoizedForwardRef`)).toHaveCount(1);
+      await expect(page.locator(`_react=Memoized`)).toHaveCount(1);
+      await expect(page.locator(`_react=ReactLazy`)).toHaveCount(1);
+    });
+
   });
 }
 

@@ -91,6 +91,9 @@ class App extends React.Component {
       e(BookList, {books: this.state.books}, null),
       e(ButtonGrid, null, null),
       e('div', {ref: this.mountPoint}, null),
+      e(Memoized, null, null),
+      e(MemoizedForwardRef, null, null),
+      e(React.Suspense, { fallback: null }, e(Lazy, null, null)),
     );
   }
 
@@ -100,6 +103,20 @@ class App extends React.Component {
     });
   }
 }
+
+const MemoizedForwardRef = React.memo(React.forwardRef(() => {
+  return e('div', null, 'MemoizedForwardRef');
+}));
+
+MemoizedForwardRef.displayName = 'MemoizedForwardRef';
+
+const Memoized = React.memo(() => {
+  return e('div', null, 'Memoized');
+});
+
+Memoized.displayName = 'Memoized';
+
+const Lazy = React.lazy(() => import('./react-lazy.js'));
 
 window.mountApp = element => ReactDOM.render(e(App, null, null), element);
 window.app = window.mountApp(document.getElementById('root'));

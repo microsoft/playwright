@@ -31,6 +31,7 @@ type ReactVNode = {
   key?: any,
   // React 16+
   type: any,
+  elementType: any,
   child?: ReactVNode,
   sibling?: ReactVNode,
   stateNode?: Node,
@@ -43,13 +44,60 @@ type ReactVNode = {
   _renderedChildren?: any[],
 };
 
+function getWrappedName(
+  outerType: any,
+  innerType: any,
+  wrapperName: string,
+): string {
+  const displayName = outerType.displayName;
+  if (displayName)
+    return displayName;
+
+  const functionName = innerType.displayName || innerType.name || '';
+  return functionName !== '' ? `${wrapperName}(${functionName})` : wrapperName;
+}
+
+function getComponentNameFromType(type: any): string | undefined {
+  // @see https://github.com/facebook/react/blob/main/packages/shared/getComponentNameFromType.js
+  if (typeof type === 'function')
+    return type.displayName || type.name || 'Anonymous';
+  if (typeof type === 'string')
+    return type;
+
+
+  if (typeof type === 'object' && type) {
+    const { $$typeof } = type;
+
+    if (typeof $$typeof === 'symbol') {
+      switch ($$typeof.description) {
+        case 'react.forward_ref':
+          return getWrappedName(type, type.render, 'ForwardRef');
+        case 'react.memo':
+          const outerName = type.displayName || null;
+          if (outerName !== null)
+            return outerName;
+
+          return getComponentNameFromType(type.type);
+        case 'react.lazy':
+          const payload = type._payload;
+          const init = type._init;
+
+          if (payload && init)
+            return getComponentName(init(payload));
+
+      }
+    }
+  }
+}
+
 function getComponentName(reactElement: ReactVNode): string {
   // React 16+
   // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L16
-  if (typeof reactElement.type === 'function')
-    return reactElement.type.displayName || reactElement.type.name || 'Anonymous';
-  if (typeof reactElement.type === 'string')
-    return reactElement.type;
+
+  if (reactElement.elementType || reactElement.type) {
+    const name = getComponentNameFromType(reactElement.elementType) || getComponentNameFromType(reactElement.type);
+    if (name) return name;
+  }
 
   // React 15
   // @see https://github.com/facebook/react/blob/2edf449803378b5c58168727d4f123de3ba5d37f/packages/react-devtools-shared/src/backend/legacy/renderer.js#L59
@@ -181,6 +229,7 @@ export const ReactEngine: SelectorEngine = {
 
     const reactRoots = findReactRoots(document);
     const trees = reactRoots.map(reactRoot => buildComponentsTree(reactRoot));
+
     const treeNodes = trees.map(tree => filterComponentsTree(tree, treeNode => {
       const props = treeNode.props ?? {};
 
