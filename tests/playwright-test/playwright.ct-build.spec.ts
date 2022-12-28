@@ -297,3 +297,35 @@ test('should not use global config for preview', async ({ runInlineTest }) => {
   expect(result2.exitCode).toBe(0);
   expect(result2.passed).toBe(1);
 });
+
+test('should work with https enabled', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
+    'playwright/index.js': `//@no-header`,
+    'playwright.config.js': `
+      //@no-header
+      import basicSsl from '@vitejs/plugin-basic-ssl';
+      export default {
+        use: {
+          ignoreHTTPSErrors: true,
+          ctViteConfig: {
+            plugins: [basicSsl()],
+            preview: {
+              https: true
+            }
+          }
+        },
+      };
+    `,
+    'http.test.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+
+      test('pass', async ({ page }) => {
+        await expect(page).toHaveURL(/https:.*/);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

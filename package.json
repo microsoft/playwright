@@ -66,6 +66,7 @@
     "@types/xml2js": "^0.4.9",
     "@typescript-eslint/eslint-plugin": "^5.10.2",
     "@typescript-eslint/parser": "^5.10.2",
+    "@vitejs/plugin-basic-ssl": "^1.0.1",
     "@vitejs/plugin-react": "^3.0.0",
     "@zip.js/zip.js": "^2.4.2",
     "ansi-to-html": "^0.7.2",
