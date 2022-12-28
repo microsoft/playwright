@@ -258,13 +258,13 @@ export class Runner {
         if (!isTest && !isSetup)
           return false;
         if (isSetup && isTest)
-          throw new Error(`File "${file}" matches both '_setup' and 'testMatch' filters in project "${project.name}"`);
+          throw new Error(`File "${file}" matches both 'setup' and 'testMatch' filters in project "${project.name}"`);
         if (fileToProjectName.has(file)) {
           if (isSetup) {
             if (!setupFiles.has(file))
-              throw new Error(`File "${file}" matches '_setup' filter in project "${project.name}" and 'testMatch' filter in project "${fileToProjectName.get(file)}"`);
+              throw new Error(`File "${file}" matches 'setup' filter in project "${project.name}" and 'testMatch' filter in project "${fileToProjectName.get(file)}"`);
           } else if (setupFiles.has(file)) {
-            throw new Error(`File "${file}" matches '_setup' filter in project "${fileToProjectName.get(file)}" and 'testMatch' filter in project "${project.name}"`);
+            throw new Error(`File "${file}" matches 'setup' filter in project "${fileToProjectName.get(file)}" and 'testMatch' filter in project "${project.name}"`);
           }
         }
         fileToProjectName.set(file, project.name);
