@@ -29,7 +29,7 @@ import * as types from './types';
 import { BrowserContext } from './browserContext';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime } from '../utils';
+import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../common/debugLogger';
 import type { CallMetadata } from './instrumentation';
@@ -1396,28 +1396,21 @@ export class Frame extends SdkObject {
   }
 
   async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
-    let timeout = this._page._timeoutSettings.timeout(options);
-    const start = timeout > 0 ? monotonicTime() : 0;
-    const lastIntermediateResult: { received?: any, isSet: boolean } = { isSet: false };
-    const resultOneShot = await this._expectInternal(metadata, selector, options, true, timeout, lastIntermediateResult);
-    if (resultOneShot.matches !== options.isNot)
-      return resultOneShot;
-    if (timeout > 0) {
-      const elapsed = monotonicTime() - start;
-      timeout -= elapsed;
-    }
-    if (timeout < 0)
-      return { matches: options.isNot, log: metadata.log, timedOut: true };
-    return await this._expectInternal(metadata, selector, options, false, timeout, lastIntermediateResult);
-  }
-
-  private async _expectInternal(metadata: CallMetadata, selector: string, options: FrameExpectParams, oneShot: boolean, timeout: number, lastIntermediateResult: { received?: any, isSet: boolean }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
+    let lastIntermediateResult: { received: any } | undefined;
     const controller = new ProgressController(metadata, this);
+    const timeout = this._page._timeoutSettings.timeout(options);
+    let iteration = 0;
     return controller.run(async progress => {
-      if (oneShot)
-        progress.log(`${metadata.apiName}${timeout ? ` with timeout ${timeout}ms` : ''}`);
+      // Make sure we have enough time to finish at least a single iteration.
+      controller.setTimerPaused(true);
+
+      progress.log(`${metadata.apiName}${timeout ? ` with timeout ${timeout}ms` : ''}`);
       progress.log(`waiting for ${this._asLocator(selector)}`);
       return await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
+        // Unpause on the second iteration.
+        if (++iteration === 2)
+          controller.setTimerPaused(false);
+
         const selectorInFrame = await this.resolveFrameForSelectorNoWait(selector, { strict: true });
         progress.throwIfAborted();
 
@@ -1445,12 +1438,11 @@ export class Frame extends SdkObject {
         if (log)
           progress.log(log);
         if (matches === options.isNot) {
-          lastIntermediateResult.received = received;
-          lastIntermediateResult.isSet = true;
+          lastIntermediateResult = { received };
           if (!Array.isArray(received))
             progress.log(`  unexpected value "${renderUnexpectedValue(options.expression, received)}"`);
         }
-        if (!oneShot && matches === options.isNot) {
+        if (matches === options.isNot) {
           // Keep waiting in these cases:
           // expect(locator).conditionThatDoesNotMatch
           // expect(locator).not.conditionThatDoesMatch
@@ -1458,13 +1450,13 @@ export class Frame extends SdkObject {
         }
         return { matches, received };
       });
-    }, oneShot ? 0 : timeout).catch(e => {
+    }, timeout).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly message containing the last intermediate result.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
       const result: { matches: boolean, received?: any, log?: string[], timedOut?: boolean } = { matches: options.isNot, log: metadata.log };
-      if (lastIntermediateResult.isSet)
+      if (lastIntermediateResult)
         result.received = lastIntermediateResult.received;
       else
         result.timedOut = true;
