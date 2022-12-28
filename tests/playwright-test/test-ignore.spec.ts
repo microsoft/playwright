@@ -371,3 +371,26 @@ test('should always work with unix separators', async ({ runInlineTest }) => {
   expect(result.report.suites.map(s => s.file).sort()).toEqual(['a.test.ts']);
   expect(result.exitCode).toBe(0);
 });
+
+test('should match against relative path only', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'dir/playwright.config.ts': `
+      module.exports = {
+        testMatch: /dir/,
+        testDir: './tests'
+      };
+    `,
+    'dir/package.json': `{ "name": "test-project" }`,
+    'dir/tests/a.test.ts': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'dir/tests/dir/b.test.ts': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+  }, { config: 'dir/playwright.config.ts' });
+  expect(result.report.suites.map(s => s.file).sort()).toEqual(['dir/b.test.ts']);
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});

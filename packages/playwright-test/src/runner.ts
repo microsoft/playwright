@@ -253,8 +253,9 @@ export class Runner {
       const testFiles = allFiles.filter(file => {
         if (!testFileExtension(file))
           return false;
-        const isSetup = setupMatch(file);
-        const isTest = !testIgnore(file) && testMatch(file) && commandLineFileMatcher(file);
+        const relativeFilePath = path.relative(project.testDir, file);
+        const isSetup = setupMatch(relativeFilePath);
+        const isTest = !testIgnore(relativeFilePath) && testMatch(relativeFilePath) && commandLineFileMatcher(relativeFilePath);
         if (!isTest && !isSetup)
           return false;
         if (isSetup && isTest)

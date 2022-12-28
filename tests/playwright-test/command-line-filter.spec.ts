@@ -161,3 +161,26 @@ test('should focus a single test suite', async ({ runInlineTest }) => {
   expect(result.report.suites[0].suites[0].suites[0].specs[0].title).toEqual('pass2');
   expect(result.report.suites[0].suites[0].suites[0].specs[1].title).toEqual('pass3');
 });
+
+test('should match against relative path', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'parent/playwright.config.ts': `
+      module.exports = {
+        testDir: './tests'
+      };
+    `,
+    'parent/package.json': `{ "name": "test-project" }`,
+    'parent/tests/a.test.ts': `
+      const { test } = pwt;
+      test('test1', ({}) => {});
+    `,
+    'parent/tests/parent/b.test.ts': `
+      const { test } = pwt;
+      test('test2', ({}) => {});
+    `,
+  }, { config: 'parent/playwright.config.ts' }, {}, { additionalArgs: ['parent'] });
+  expect(result.exitCode).toBe(0);
+  expect(result.report.suites.map(s => s.file).sort()).toEqual(['parent/b.test.ts']);
+  expect(result.passed).toBe(1);
+  expect(result.skipped).toBe(0);
+});
