@@ -84,14 +84,14 @@ export class TestTypeImpl {
       if (this._projectSetup)
         addFatalError(`${title} is called in a file which is not a part of project setup.`, location);
       else
-        addFatalError(`${title} is called in a project setup file (use '_setup' instead of 'test').`, location);
+        addFatalError(`${title} is called in a project setup file (use 'setup' instead of 'test').`, location);
     }
     return suite;
   }
 
   private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite(location, this._projectSetup ? '_setup()' : 'test()');
+    const suite = this._currentSuite(location, this._projectSetup ? 'setup()' : 'test()');
     if (!suite)
       return;
     const test = new TestCase(title, fn, this, location);
@@ -150,7 +150,7 @@ export class TestTypeImpl {
   }
 
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
-    const suite = this._currentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.${name}()`);
+    const suite = this._currentSuite(location, `${this._projectSetup ? 'setup' : 'test'}.${name}()`);
     if (!suite)
       return;
     suite._hooks.push({ type: name, fn, location });
@@ -158,7 +158,7 @@ export class TestTypeImpl {
 
   private _configure(location: Location, options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.describe.configure()`);
+    const suite = this._currentSuite(location, `${this._projectSetup ? 'setup' : 'test'}.describe.configure()`);
     if (!suite)
       return;
 
@@ -225,7 +225,7 @@ export class TestTypeImpl {
   }
 
   private _use(location: Location, fixtures: Fixtures) {
-    const suite = this._currentSuite(location, `${this._projectSetup ? '_setup' : 'test'}.use()`);
+    const suite = this._currentSuite(location, `${this._projectSetup ? 'setup' : 'test'}.use()`);
     if (!suite)
       return;
     suite._use.push({ fixtures, location });
@@ -234,7 +234,7 @@ export class TestTypeImpl {
   private async _step<T>(location: Location, title: string, body: () => Promise<T>): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo) {
-      addFatalError(`${this._projectSetup ? '_setup' : 'test'}.step() can only be called from a test`, location);
+      addFatalError(`${this._projectSetup ? 'setup' : 'test'}.step() can only be called from a test`, location);
       return undefined as any;
     }
     const step = testInfo._addStep({
