@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/experimental-ct-vue';
 import Button from '@/components/Button.vue';
 
-test('emit an submit event when the button is clicked', async ({ mount }) => {
+test('emit a submit event when the button is clicked', async ({ mount }) => {
   const messages = [];
   const component = await mount(Button, {
     props: {
