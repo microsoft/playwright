@@ -101,11 +101,39 @@ var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel 
 If stock Google Chrome or Microsoft Edge is not available on your machine, you can install
 them using Playwright command line tool:
 
-```bash
+```bash lang=js
 npx playwright install msedge
 ```
 
-Run `npx playwright install --help` to see full list of the browsers that can be installed this way.
+```powershell lang=js
+npx playwright install msedge
+```
+
+```bash lang=python
+playwright install msedge
+```
+
+```powershell lang=python
+playwright install msedge
+```
+
+```bash lang=csharp
+pwsh bin/Debug/netX/playwright.ps1 install msedge
+```
+
+```powershell lang=csharp
+pwsh bin/Debug/netX/playwright.ps1 install msedge
+```
+
+```batch lang=java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install msedge"
+```
+
+```powershell lang=java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install msedge"
+```
+
+Run with `--help` option to see full list of the browsers that can be installed this way.
 
 :::warning
 Google Chrome or Microsoft Edge installations will not be isolated. They will be installed at the
