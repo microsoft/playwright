@@ -114,29 +114,52 @@ test('should reuse context and disable video if mode=force', async ({ runInlineT
   expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-two', 'video.webm'))).toBeFalsy();
 });
 
-test('should not reuse context with trace if mode=when-possible', async ({ runInlineTest }) => {
+test('should reuse context with trace if mode=when-possible', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
         use: { trace: 'on' },
       };
     `,
-    'src/reuse.test.ts': `
+    'reuse.spec.ts': `
       const { test } = pwt;
       let lastContextGuid;
 
-      test('one', async ({ context }) => {
+      test('one', async ({ context, page }) => {
         lastContextGuid = context._guid;
+        await page.setContent('<button>Click</button>');
+        await page.click('button');
       });
 
-      test('two', async ({ context }) => {
-        expect(context._guid).not.toBe(lastContextGuid);
+      test('two', async ({ context, page }) => {
+        expect(context._guid).toBe(lastContextGuid);
+        await page.setContent('<input>');
+        await page.fill('input', 'value');
+        await page.locator('input').click();
       });
     `,
   }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: 'when-possible' });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
+
+  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'reuse-one', 'trace.zip'));
+  expect(trace1.actions).toEqual([
+    'browserContext.newPage',
+    'page.setContent',
+    'page.click',
+  ]);
+  expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'trace-1.zip'))).toBe(false);
+
+  const trace2 = await parseTrace(testInfo.outputPath('test-results', 'reuse-two', 'trace.zip'));
+  expect(trace2.actions).toEqual([
+    'page.setContent',
+    'page.fill',
+    'locator.click',
+  ]);
+  expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-two', 'trace-1.zip'))).toBe(false);
 });
 
 test('should work with manually closed pages', async ({ runInlineTest }) => {

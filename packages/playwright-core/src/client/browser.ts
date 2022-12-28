@@ -64,7 +64,9 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
 
   async _newContextForReuse(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     for (const context of this._contexts) {
-      await this._browserType._onWillCloseContext?.(context);
+      await this._wrapApiCall(async () => {
+        await this._browserType._onWillCloseContext?.(context);
+      }, true);
       for (const page of context.pages())
         page._onClose();
       context._onClose();
