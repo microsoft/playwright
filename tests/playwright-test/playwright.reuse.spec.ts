@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
+import fs from 'fs';
 
 test('should reuse context', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -56,7 +57,7 @@ test('should reuse context', async ({ runInlineTest }) => {
   expect(result.passed).toBe(5);
 });
 
-test('should not reuse context with video', async ({ runInlineTest }) => {
+test('should not reuse context with video if mode=when-possible', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
@@ -65,23 +66,54 @@ test('should not reuse context with video', async ({ runInlineTest }) => {
     `,
     'src/reuse.test.ts': `
       const { test } = pwt;
-      let lastContext;
+      let lastContextGuid;
 
       test('one', async ({ context }) => {
-        lastContext = context;
+        lastContextGuid = context._guid;
       });
 
       test('two', async ({ context }) => {
-        expect(context).not.toBe(lastContext);
+        expect(context._guid).not.toBe(lastContextGuid);
+      });
+    `,
+  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: 'when-possible' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'video.webm'))).toBeFalsy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-two', 'video.webm'))).toBeFalsy();
+});
+
+test('should reuse context and disable video if mode=force', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        use: { video: 'on' },
+      };
+    `,
+    'reuse.test.ts': `
+      const { test } = pwt;
+      let lastContextGuid;
+
+      test('one', async ({ context, page }) => {
+        lastContextGuid = context._guid;
+        await page.waitForTimeout(2000);
+      });
+
+      test('two', async ({ context, page }) => {
+        expect(context._guid).toBe(lastContextGuid);
+        await page.waitForTimeout(2000);
       });
     `,
   }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'video.webm'))).toBeFalsy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-two', 'video.webm'))).toBeFalsy();
 });
 
-test('should not reuse context with trace', async ({ runInlineTest }) => {
+test('should not reuse context with trace if mode=when-possible', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
@@ -90,17 +122,17 @@ test('should not reuse context with trace', async ({ runInlineTest }) => {
     `,
     'src/reuse.test.ts': `
       const { test } = pwt;
-      let lastContext;
+      let lastContextGuid;
 
       test('one', async ({ context }) => {
-        lastContext = context;
+        lastContextGuid = context._guid;
       });
 
       test('two', async ({ context }) => {
-        expect(context).not.toBe(lastContext);
+        expect(context._guid).not.toBe(lastContextGuid);
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: 'when-possible' });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
