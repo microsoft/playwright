@@ -94,7 +94,7 @@ export function createPlugin(
       const sourcesDirty = !buildExists || hasNewComponents || await checkSources(buildInfo);
 
       viteConfig.root = rootDir;
-      viteConfig.preview = { port };
+      viteConfig.preview = { port, ...viteConfig.preview };
       viteConfig.build = {
         outDir
       };
@@ -152,9 +152,10 @@ export function createPlugin(
       stoppableServer = stoppable(previewServer.httpServer, 0);
       const isAddressInfo = (x: any): x is AddressInfo => x?.address;
       const address = previewServer.httpServer.address();
-      if (isAddressInfo(address))
-        process.env.PLAYWRIGHT_TEST_BASE_URL = `http://localhost:${address.port}`;
-
+      if (isAddressInfo(address)) {
+        const protocol = viteConfig.preview.https ? 'https:' : 'http:';
+        process.env.PLAYWRIGHT_TEST_BASE_URL = `${protocol}//localhost:${address.port}`;
+      }
     },
 
     teardown: async () => {
