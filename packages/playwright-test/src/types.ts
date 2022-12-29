@@ -76,3 +76,5 @@ export interface FullProjectInternal extends FullProjectPublic {
 export interface ReporterInternal extends Reporter {
   _onExit?(): void | Promise<void>;
 }
+
+export type ContextReuseMode = 'none' | 'force' | 'when-possible';
