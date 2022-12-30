@@ -30,12 +30,12 @@ function drawPixel(width: number, data: Buffer, x: number, y: number, r: number,
 }
 
 type CompareOptions = {
-  maxColorDeltaE94: number;
+  maxColorDeltaE94?: number;
 };
 
-export function compare(actual: Buffer, expected: Buffer, diff: Buffer, width: number, height: number, options: CompareOptions) {
+export function compare(actual: Buffer, expected: Buffer, diff: Buffer|null, width: number, height: number, options: CompareOptions = {}) {
   const {
-    maxColorDeltaE94
+    maxColorDeltaE94 = 1.0,
   } = options;
 
   const paddingSize = Math.max(VARIANCE_WINDOW_RADIUS, SSIM_WINDOW_RADIUS);
@@ -52,13 +52,14 @@ export function compare(actual: Buffer, expected: Buffer, diff: Buffer, width: n
     paddingColorOdd,
   });
 
-  const drawRedPixel = (x: number, y: number) => drawPixel(width, diff, x - paddingSize, y - paddingSize, 255, 0, 0);
-  const drawYellowPixel = (x: number, y: number) => drawPixel(width, diff, x - paddingSize, y - paddingSize, 255, 255, 0);
-  const drawGrayPixel = (x: number, y: number) => {
+  const noop = (x: number, y: number) => {};
+  const drawRedPixel = diff ? (x: number, y: number) => drawPixel(width, diff, x - paddingSize, y - paddingSize, 255, 0, 0) : noop;
+  const drawYellowPixel = diff ? (x: number, y: number) => drawPixel(width, diff, x - paddingSize, y - paddingSize, 255, 255, 0) : noop;
+  const drawGrayPixel = diff ? (x: number, y: number) => {
     const gray = rgb2gray(r1.get(x, y), g1.get(x, y), b1.get(x, y));
     const value = blendWithWhite(gray, 0.1);
     drawPixel(width, diff, x - paddingSize, y - paddingSize, value, value, value);
-  };
+  } : noop;
 
   let fastR, fastG, fastB;
 
