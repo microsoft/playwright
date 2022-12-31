@@ -61,7 +61,7 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
   }
 
   // Support JSX/TSX at all times, regardless of the file extension.
-  plugins.push([require('@babel/plugin-syntax-jsx')]);
+  plugins.push([require('@babel/plugin-transform-react-jsx')]);
 
   if (!isModule) {
     plugins.push([require('@babel/plugin-transform-modules-commonjs')]);

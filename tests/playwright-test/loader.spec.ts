@@ -472,6 +472,40 @@ test('should load a jsx/tsx files', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
 });
 
+test('should load a jsx/tsx files with fragments', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    'helper.tsx': `
+      export const component = () => <><div></div></>;
+      export function add(a: number, b: number) {
+        return a + b;
+      }
+    `,
+    'helper2.jsx': `
+      const component = () => <><div></div></>;
+      function add(a, b) {
+        return a + b;
+      }
+      module.exports = { add, component }
+    `,
+    'a.spec.ts': `
+      import { add } from './helper';
+      const { test } = pwt;
+      test('succeeds', () => {
+        expect(add(1, 1)).toBe(2);
+      });
+    `,
+    'b.spec.js': `
+      const { add } = require('./helper2');
+      const { test } = pwt;
+      test('succeeds', () => {
+        expect(add(1, 1)).toBe(2);
+      });
+    `
+  });
+  expect(passed).toBe(2);
+  expect(exitCode).toBe(0);
+});
+
 test('should remove type imports from ts', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
