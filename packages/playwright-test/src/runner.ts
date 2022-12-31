@@ -472,7 +472,7 @@ export class Runner {
       return { status: 'passed' };
 
     // Remove output directores.
-    if (!this._removeOutputDirs(options))
+    if (!await this._removeOutputDirs(options))
       return { status: 'failed' };
 
     // Run Global setup.
