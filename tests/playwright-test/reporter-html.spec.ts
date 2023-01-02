@@ -130,6 +130,7 @@ test('should include image diff', async ({ runInlineTest, page, showReport }) =>
   const set = new Set();
 
   const imageDiff = page.locator('data-testid=test-result-image-mismatch');
+  await imageDiff.locator('text="Actual"').click();
   const expectedImage = imageDiff.locator('img').first();
   const actualImage = imageDiff.locator('img').last();
   await expect(expectedImage).toHaveAttribute('src', /.*png/);
