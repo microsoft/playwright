@@ -38,9 +38,9 @@ const imageDiff: ImageDiff = {
 test('should render links', async ({ mount }) => {
   const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
   await expect(component.locator('a')).toHaveText([
+    'screenshot-diff.png',
     'screenshot-actual.png',
     'screenshot-expected.png',
-    'screenshot-diff.png',
   ]);
 });
 
