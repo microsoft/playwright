@@ -17,7 +17,7 @@
 import type { HTMLReport } from './types';
 import type zip from '@zip.js/zip.js';
 // @ts-ignore
-import zipImport from '@zip.js/zip.js/dist/zip-no-worker-inflate.min.js';
+import * as zipImport from '@zip.js/zip.js/lib/zip-no-worker-inflate.js';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import './colors.css';
