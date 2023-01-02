@@ -92,9 +92,9 @@ export const ImageDiffView: React.FunctionComponent<{
   }
   return <div className='vbox image-diff-view' data-testid='test-result-image-mismatch' ref={diffElement}>
     <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
+    {diff.diff && <AttachmentLink attachment={diff.diff.attachment}></AttachmentLink>}
     <AttachmentLink attachment={diff.actual!.attachment}></AttachmentLink>
     <AttachmentLink attachment={diff.expected!.attachment}></AttachmentLink>
-    {diff.diff && <AttachmentLink attachment={diff.diff.attachment}></AttachmentLink>}
   </div>;
 };
 
