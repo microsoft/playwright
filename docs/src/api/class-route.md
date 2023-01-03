@@ -454,7 +454,7 @@ page.route("https://dog.ceo/api/breeds/list/all", route -> {
 
 ```python async
 async def handle(route):
-    response = await route.fulfill()
+    response = await route.fetch()
     json = await response.json()
     json["message"]["big_red_dog"] = []
     await route.fulfill(response=response, json=json)
@@ -464,7 +464,7 @@ await page.route("https://dog.ceo/api/breeds/list/all", handle)
 
 ```python sync
 def handle(route):
-    response = route.fulfill()
+    response = route.fetch()
     json = response.json()
     json["message"]["big_red_dog"] = []
     route.fulfill(response=response, json=json)
