@@ -40,7 +40,7 @@ To pick a locator you can run the codegen command and click on the pick locator 
 ```bash
 npx playwright codegen
 ```
-#### Use the VS Code extension to generator locators
+#### Use the VS Code extension to generate locators
 
 You can also use the [VS Code Extension](./getting-started-vscode.md) to generate locators as well as record a test. The VS Code extension also gives you a great developer experience when writing, running and debugging tests.
 
@@ -65,7 +65,7 @@ Use web first assertions such as `toBeVisible()` instead.
 ```js
 👍 await expect(page.getByText('welcome')).toBeVisible();
 ```
-## Configure post-mortem dubugging
+## Configure post-mortem debugging
 
 Use the playwright [trace viewer](./trace-viewer.md) for local debugging and post mortem debugging instead of videos and screenshots. The trace viewer gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
 
