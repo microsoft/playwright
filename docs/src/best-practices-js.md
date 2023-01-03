@@ -88,7 +88,7 @@ test('github link works', async ({ page }) => {
 
     const [page1] = await Promise.all([
       page.waitForEvent('popup'),
-      await page.getByRole('link', { name: 'linkedIn' }).click()
+      page.getByRole('link', { name: 'linkedIn' }).click()
     ]);
     await expect(page1).toHaveURL('https://www.github.com/microsoft/playwright');
   });
