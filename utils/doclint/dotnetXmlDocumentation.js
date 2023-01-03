@@ -117,7 +117,7 @@ function _wrapAndEscape(node, maxColumns = 0) {
   };
 
 
-  let text = node.text;
+  let text = (node.text || '').replace(/↵/g, ' ');
   text = text.replace(/\[([^\]]*)\]\((.*?)\)/g, (match, linkName, linkUrl) => {
     const isInternal = !linkUrl.startsWith('http://') && !linkUrl.startsWith('https://');
     if (isInternal)
