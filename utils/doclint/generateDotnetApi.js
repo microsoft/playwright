@@ -25,7 +25,6 @@ const fs = require('fs');
 const { parseApi } = require('./api_parser');
 const { Type } = require('./documentation');
 const { EOL } = require('os');
-const { execSync } = require('child_process');
 
 const maxDocumentationColumnWidth = 80;
 Error.stackTraceLimit = 100;
@@ -91,10 +90,10 @@ classNameMap.set('Readable', 'Stream');
  *
  * @param {string} kind
  * @param {string} name
- * @param {Documentation.MarkdownNode[]} spec
+ * @param {Documentation.MarkdownNode[]|null} spec
  * @param {string[]} body
  * @param {string} folder
- * @param {string} extendsName
+ * @param {string|null} extendsName
  */
 function writeFile(kind, name, spec, body, folder, extendsName = null) {
   const out = [];
@@ -144,10 +143,19 @@ function renderClass(clazz) {
     renderMember(member, clazz, {}, body);
   }
 
+  /** @type {Documentation.MarkdownNode[]} */
+  const spec = [];
+  if (clazz.deprecated)
+    spec.push({ type: 'text', text: '**DEPRECATED** ' + clazz.deprecated });
+  if (clazz.discouraged)
+    spec.push({ type: 'text', text: clazz.discouraged });
+  if (clazz.spec)
+    spec.push(...clazz.spec);
+
   writeFile(
       'public partial interface',
       name,
-      clazz.spec,
+      spec,
       body,
       apiDir,
       clazz.extends ? `I${toTitleCase(clazz.extends)}` : null);
@@ -278,7 +286,22 @@ function renderConstructors(name, type, out) {
 }
 
 /**
- *
+ * @param {Documentation.Member} member
+ * @param {string[]} out
+ */
+function renderMemberDoc(member, out) {
+  /** @type {Documentation.MarkdownNode[]} */
+  const nodes = [];
+  if (member.deprecated)
+    nodes.push({ type: 'text', text: '**DEPRECATED** ' + member.deprecated });
+  if (member.discouraged)
+    nodes.push({ type: 'text', text: member.discouraged });
+  if (member.spec)
+    nodes.push(...member.spec);
+  out.push(...XmlDoc.renderXmlDoc(nodes, maxDocumentationColumnWidth));
+}
+
+/**
  * @param {Documentation.Member} member
  * @param {Documentation.Class|Documentation.Type} parent
  * @param {{nojson?: boolean, trimRunAndPrefix?: boolean}} options
@@ -296,8 +319,7 @@ function renderMember(member, parent, options, out) {
     if (!member.type)
       throw new Error(`No Event Type for ${name} in ${parent.name}`);
     out.push('');
-    if (member.spec)
-      out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+    renderMemberDoc(member, out);
     if (member.deprecated)
       out.push(`[System.Obsolete]`);
     out.push(`event EventHandler<${type}> ${name};`);
@@ -314,8 +336,7 @@ function renderMember(member, parent, options, out) {
       const { name, jsonName } = overload;
       let { type } = overload;
       out.push('');
-      if (member.spec)
-        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      renderMemberDoc(member, out);
       if (!member.clazz)
         out.push(`${member.required ? '[Required]\n' : ''}[JsonPropertyName("${jsonName}")]`);
       if (member.deprecated)
@@ -623,7 +644,7 @@ function renderMethod(member, parent, name, options, out) {
 
   if (!explodedArgs.length) {
     if (!options.nodocs) {
-      out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+      renderMemberDoc(member, out);
       paramDocs.forEach((value, i) => printArgDoc(i, value, out));
     }
     if (member.deprecated)
@@ -633,7 +654,7 @@ function renderMethod(member, parent, name, options, out) {
     let containsOptionalExplodedArgs = false;
     explodedArgs.forEach((explodedArg, argIndex) => {
       if (!options.nodocs)
-        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+        renderMemberDoc(member, out);
       const overloadedArgs = [];
       for (let i = 0; i < args.length; i++) {
         const arg = args[i];
@@ -662,7 +683,7 @@ function renderMethod(member, parent, name, options, out) {
     if (containsOptionalExplodedArgs) {
       const filteredArgs = args.filter(x => x !== 'OPTIONAL_EXPLODED_ARG');
       if (!options.nodocs)
-        out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
+        renderMemberDoc(member, out);
       filteredArgs.forEach(arg => {
         if (arg === 'EXPLODED_ARG')
           throw new Error(`Unsupported required union arg combined an optional union inside ${member.name}`);
