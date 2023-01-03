@@ -30,6 +30,7 @@ import type { Browser, ConnectOptions } from 'playwright-core';
 type ExtraFixtures = {
   connect: (wsEndpoint: string, options?: ConnectOptions, redirectPortForTest?: number) => Promise<Browser>,
   dummyServerPort: number,
+  ipV6ServerUrl: string,
 };
 const test = playwrightTest.extend<ExtraFixtures>({
   connect: async ({ browserType }, use) => {
@@ -52,6 +53,16 @@ const test = playwrightTest.extend<ExtraFixtures>({
     });
     await new Promise<void>(resolve => server.listen(0, resolve));
     await use((server.address() as net.AddressInfo).port);
+    await new Promise<Error>(resolve => server.close(resolve));
+  },
+
+  ipV6ServerUrl: async ({}, use) => {
+    const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
+      res.end('<html><body>from-ipv6-server</body></html>');
+    });
+    await new Promise<void>(resolve => server.listen(0, '::1', resolve));
+    const address = server.address() as net.AddressInfo;
+    await use('http://[::1]:' + address.port);
     await new Promise<Error>(resolve => server.close(resolve));
   },
 });
@@ -124,6 +135,15 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         await page.goto(server.EMPTY_PAGE);
         await browser.close();
       }
+    });
+
+    test('should be able to visit ipv6', async ({ connect, startRemoteServer, ipV6ServerUrl }) => {
+      const remoteServer = await startRemoteServer(kind);
+      const browser = await connect(remoteServer.wsEndpoint());
+      const page = await browser.newPage();
+      await page.goto(ipV6ServerUrl);
+      expect(await page.content()).toContain('from-ipv6-server');
+      await browser.close();
     });
 
     test('should be able to connect two browsers at the same time', async ({ connect, startRemoteServer }) => {
@@ -679,6 +699,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
     test.describe('socks proxy', () => {
       test.fixme(({ platform, browserName }) => browserName === 'webkit' && platform === 'win32');
       test.skip(({ mode }) => mode !== 'default');
+      test.skip(kind === 'launchServer', 'not supported yet');
 
       test('should forward non-forwarded requests', async ({ server, startRemoteServer, connect }) => {
         let reachedOriginalTarget = false;
@@ -844,5 +865,21 @@ test.describe('launchServer only', () => {
     expect((await waitForNavigationPromise).message).toContain('Navigation failed because page was closed');
     expect((await page.goto(server.EMPTY_PAGE).catch(e => e)).message).toContain('has been closed');
     expect((await page.waitForNavigation().catch(e => e)).message).toContain('Navigation failed because page was closed');
+  });
+
+  test('should be able to reconnect to a browser 12 times without warnings', async ({ connect, startRemoteServer, server }) => {
+    test.slow();
+    const remoteServer = await startRemoteServer('launchServer', { exitOnWarning: true });
+    for (let i = 0; i < 12; i++) {
+      await test.step('connect #' + i, async () => {
+        const browser = await connect(remoteServer.wsEndpoint());
+        const browserContext = await browser.newContext();
+        expect(browserContext.pages().length).toBe(0);
+        const page = await browserContext.newPage();
+        expect(await page.evaluate('11 * 11')).toBe(121);
+        await page.goto(server.EMPTY_PAGE);
+        await browser.close();
+      });
+    }
   });
 });

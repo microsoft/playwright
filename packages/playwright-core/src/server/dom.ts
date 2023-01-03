@@ -26,7 +26,6 @@ import * as js from './javascript';
 import type { Page } from './page';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import type { SelectorInfo } from './selectors';
 import type * as types from './types';
 import type { TimeoutOptions } from '../common/types';
 import { isUnderTest } from '../utils';
@@ -878,7 +877,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return { framePoint: undefined };
       }
       // Translate from viewport coordinates to frame coordinates.
-      const pointInFrame = { x: point.x - box.x - style.borderLeft, y: point.y - box.y - style.borderTop };
+      const pointInFrame = { x: point.x - box.x - style.left, y: point.y - box.y - style.top };
       data.push({ frame, frameElement, pointInFrame });
       frame = frame.parentFrame()!;
     }
@@ -1003,47 +1002,6 @@ function compensateHalfIntegerRoundingError(point: types.Point) {
 }
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
-
-export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 'detached' | 'visible' | 'hidden', omitReturnValue?: boolean, root?: ElementHandle): SchedulableTask<Element | undefined> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, strict, state, omitReturnValue, root }) => {
-    let lastElement: Element | undefined;
-
-    return injected.pollRaf(progress => {
-      const elements = injected.querySelectorAll(parsed, root || document);
-      let element: Element | undefined  = elements[0];
-      const visible = element ? injected.isVisible(element) : false;
-
-      if (lastElement !== element) {
-        lastElement = element;
-        if (!element) {
-          progress.log(`  locator did not resolve to any element`);
-        } else {
-          if (elements.length > 1) {
-            if (strict)
-              throw injected.strictModeViolationError(parsed, elements);
-            progress.log(`  locator resolved to ${elements.length} elements. Proceeding with the first one.`);
-          }
-          progress.log(`  locator resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`);
-        }
-      }
-
-      const hasElement = !!element;
-      if (omitReturnValue)
-        element = undefined;
-
-      switch (state) {
-        case 'attached':
-          return hasElement ? element : progress.continuePolling;
-        case 'detached':
-          return !hasElement ? undefined : progress.continuePolling;
-        case 'visible':
-          return visible ? element : progress.continuePolling;
-        case 'hidden':
-          return !visible ? undefined : progress.continuePolling;
-      }
-    });
-  }, { parsed: selector.parsed, strict: selector.strict, state, omitReturnValue, root });
-}
 
 function joinWithAnd(strings: string[]): string {
   if (strings.length < 1)

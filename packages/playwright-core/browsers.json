@@ -3,31 +3,31 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1039",
+      "revision": "1042",
       "installByDefault": true,
-      "browserVersion": "109.0.5414.36"
+      "browserVersion": "109.0.5414.61"
     },
     {
       "name": "chromium-with-symbols",
-      "revision": "1039",
+      "revision": "1042",
       "installByDefault": false,
-      "browserVersion": "109.0.5414.36"
+      "browserVersion": "109.0.5414.61"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1068",
+      "revision": "1069",
       "installByDefault": false,
-      "browserVersion": "110.0.5475.0"
+      "browserVersion": "110.0.5479.0"
     },
     {
       "name": "firefox",
-      "revision": "1367",
+      "revision": "1369",
       "installByDefault": true,
       "browserVersion": "107.0"
     },
     {
       "name": "firefox-beta",
-      "revision": "1370",
+      "revision": "1372",
       "installByDefault": false,
       "browserVersion": "108.0b5"
     },

@@ -72,4 +72,26 @@ it('should support playwright.getBy*', async ({ page }) => {
   expect(await page.evaluate(`playwright.getByText('hello').element.innerHTML`)).toContain('Hello');
   expect(await page.evaluate(`playwright.getByTitle('world').element.innerHTML`)).toContain('World');
   expect(await page.evaluate(`playwright.locator('span').filter({ hasText: 'hello' }).element.innerHTML`)).toContain('Hello');
+  expect(await page.evaluate(`playwright.locator('span').first().element.innerHTML`)).toContain('Hello');
+  expect(await page.evaluate(`playwright.locator('span').last().element.innerHTML`)).toContain('World');
+  expect(await page.evaluate(`playwright.locator('span').nth(1).element.innerHTML`)).toContain('World');
+});
+
+it('expected properties on playwright object', async ({ page }) => {
+  expect(await page.evaluate(`Object.keys(playwright)`)).toEqual([
+    '$',
+    '$$',
+    'inspect',
+    'selector',
+    'generateLocator',
+    'resume',
+    'locator',
+    'getByTestId',
+    'getByAltText',
+    'getByLabel',
+    'getByPlaceholder',
+    'getByText',
+    'getByTitle',
+    'getByRole',
+  ]);
 });

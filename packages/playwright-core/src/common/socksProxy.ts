@@ -177,9 +177,9 @@ class SocksConnection {
         break;
       case SocksAddressType.IPv6:
         const bytes = await this._readBytes(16);
-        const tokens = [];
+        const tokens: string[] = [];
         for (let i = 0; i < 8; ++i)
-          tokens.push(bytes.readUInt16BE(i * 2));
+          tokens.push(bytes.readUInt16BE(i * 2).toString(16));
         host = tokens.join(':');
         break;
     }
@@ -232,9 +232,8 @@ class SocksConnection {
       0x05,
       SocksReply.Succeeded,
       0x00, // RSV
-      0x01, // IPv4
-      ...parseIP(host), // Address
-      port << 8, port & 0xFF // Port
+      ...ipToSocksAddress(host), // ATYP, Address
+      port >> 8, port & 0xFF // Port
     ]));
     this._socket.on('data', data => this._client.onSocketData({ uid: this._uid, data }));
   }
@@ -244,8 +243,7 @@ class SocksConnection {
       0x05,
       0,
       0x00, // RSV
-      0x01, // IPv4
-      ...parseIP('0.0.0.0'), // Address
+      ...ipToSocksAddress('0.0.0.0'), // ATYP, Address
       0, 0 // Port
     ]);
     switch (errorCode) {
@@ -260,6 +258,9 @@ class SocksConnection {
         break;
       case 'ECONNREFUSED':
         buffer[1] = SocksReply.ConnectionRefused;
+        break;
+      case 'ERULESET':
+        buffer[1] = SocksReply.NotAllowedByRuleSet;
         break;
     }
     this._writeBytes(buffer);
@@ -279,10 +280,39 @@ class SocksConnection {
   }
 }
 
-function parseIP(address: string): number[] {
-  if (!net.isIPv4(address))
-    throw new Error('IPv6 is not supported');
-  return address.split('.', 4).map(t => +t);
+function hexToNumber(hex: string): number {
+  // Note: parseInt has a few issues including ignoring trailing characters and allowing leading 0x.
+  return [...hex].reduce((value, digit) => {
+    const code = digit.charCodeAt(0);
+    if (code >= 48 && code <= 57) // 0..9
+      return value + code;
+    if (code >= 97 && code <= 102) // a..f
+      return value + (code - 97) + 10;
+    if (code >= 65 && code <= 70) // A..F
+      return value + (code - 65) + 10;
+    throw new Error('Invalid IPv6 token ' + hex);
+  }, 0);
+}
+
+function ipToSocksAddress(address: string): number[] {
+  if (net.isIPv4(address)) {
+    return [
+      0x01, // IPv4
+      ...address.split('.', 4).map(t => (+t) & 0xFF), // Address
+    ];
+  }
+  if (net.isIPv6(address)) {
+    const result = [0x04]; // IPv6
+    const tokens = address.split(':', 8);
+    while (tokens.length < 8)
+      tokens.unshift('');
+    for (const token of tokens) {
+      const value = hexToNumber(token);
+      result.push((value >> 8) & 0xFF, value & 0xFF);  // Big-endian
+    }
+    return result;
+  }
+  throw new Error('Only IPv4 and IPv6 addresses are supported');
 }
 
 type PatternMatcher = (host: string, port: number) => boolean;
@@ -502,7 +532,7 @@ export class SocksProxyHandler extends EventEmitter {
 
   async socketRequested({ uid, host, port }: SocksSocketRequestedPayload): Promise<void> {
     if (!this._patternMatcher(host, port)) {
-      const payload: SocksSocketFailedPayload = { uid, errorCode: 'ECONNREFUSED' };
+      const payload: SocksSocketFailedPayload = { uid, errorCode: 'ERULESET' };
       this.emit(SocksProxyHandler.Events.SocksFailed, payload);
       return;
     }

@@ -20,6 +20,7 @@ import type { ActionTraceEvent } from '@trace/trace';
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './callTab.css';
+import { CopyToClipboard } from './copyToClipboard';
 
 export const CallTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
@@ -42,8 +43,8 @@ export const CallTab: React.FunctionComponent<{
     <div className='call-line'>{action.metadata.apiName}</div>
     {<>
       <div className='call-section'>Time</div>
-      {action.metadata.wallTime && <div className='call-line'>wall time: <span className='datetime' title={wallTime}>{wallTime}</span></div>}
-      <div className='call-line'>duration: <span className='datetime' title={duration}>{duration}</span></div>
+      {action.metadata.wallTime && <div className='call-line'>wall time: <span className='call-value datetime' title={wallTime}>{wallTime}</span></div>}
+      <div className='call-line'>duration: <span className='call-value datetime' title={duration}>{duration}</span></div>
     </>}
     { !!paramKeys.length && <div className='call-section'>Parameters</div> }
     {
@@ -66,12 +67,29 @@ export const CallTab: React.FunctionComponent<{
   </div>;
 };
 
+function shouldCopy(type: string): boolean {
+  return !!({
+    'string': true,
+    'number': true,
+    'object': true,
+  }[type]);
+}
+
 function renderLine(metadata: CallMetadata, name: string, value: any, key: string) {
   const { title, type } = toString(metadata, name, value);
   let text = title.replace(/\n/g, '↵');
   if (type === 'string')
     text = `"${text}"`;
-  return <div key={key} className='call-line'>{name}: <span className={type} title={title}>{text}</span></div>;
+  return (
+    <div key={key} className='call-line'>
+      {name}: <span className={`call-value ${type}`} title={title}>{text}</span>
+      { shouldCopy(type) && (
+        <span className='call-line__copy-icon'>
+          <CopyToClipboard value={title} />
+        </span>
+      )}
+    </div>
+  );
 }
 
 function toString(metadata: CallMetadata, name: string, value: any): { title: string, type: string } {

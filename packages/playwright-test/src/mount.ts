@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext } from './types';
+import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext, ContextReuseMode } from './types';
 import type { Component, JsxComponent, MountOptions } from '../types/component';
 
 let boundCallbacksForMount: Function[] = [];
@@ -29,9 +29,9 @@ export const fixtures: Fixtures<
     mount: (component: any, options: any) => Promise<MountResult>;
   },
   PlaywrightWorkerArgs & PlaywrightWorkerOptions & { _ctWorker: { context: BrowserContext | undefined, hash: string } },
-  { _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, _contextReuseEnabled: boolean }> = {
+  { _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, _contextReuseMode: ContextReuseMode }> = {
 
-    _contextReuseEnabled: true,
+    _contextReuseMode: 'when-possible',
 
     serviceWorkers: 'block',
 

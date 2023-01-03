@@ -149,14 +149,14 @@ The number of milliseconds the test took to finish. Always zero before the test 
 
 ## property: TestInfo.error
 * since: v1.10
-- type: ?<[TestError]>
+- type: ?<[TestInfoError]>
 
 First error thrown during test execution, if any. This is equal to the first
 element in [`property: TestInfo.errors`].
 
 ## property: TestInfo.errors
 * since: v1.10
-- type: <[Array]<[TestError]>>
+- type: <[Array]<[TestInfoError]>>
 
 Errors thrown during test execution, if any.
 

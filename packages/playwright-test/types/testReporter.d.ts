@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import type { FullConfig, FullProject, TestStatus, TestError, Metadata } from './test';
-export type { FullConfig, TestStatus, TestError } from './test';
+import type { FullConfig, FullProject, TestStatus, Metadata } from './test';
+export type { FullConfig, TestStatus } from './test';
 
 /**
  * `Suite` is a group of tests. All tests in Playwright Test form the following hierarchy:
@@ -282,7 +282,13 @@ export interface TestResult {
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
    */
-  workerIndex: number;}
+  workerIndex: number;
+
+  /**
+   * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have
+   * a different `parallelIndex`.
+   */
+  parallelIndex: number;}
 
 /**
  * Result of the full test run.
@@ -555,6 +561,31 @@ export interface Location {
    * Column number in the source file.
    */
   column: number;
+}
+
+/**
+ * Information about an error thrown during test execution.
+ */
+export interface TestError {
+  /**
+   * Error message. Set when [Error] (or its subclass) has been thrown.
+   */
+  message?: string;
+
+  /**
+   * Error stack. Set when [Error] (or its subclass) has been thrown.
+   */
+  stack?: string;
+
+  /**
+   * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
+   */
+  value?: string;
+
+  /**
+   * Error location in the source code.
+   */
+  location?: Location;
 }
 
 /**

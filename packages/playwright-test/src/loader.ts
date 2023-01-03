@@ -275,7 +275,7 @@ export class Loader {
     const outputDir = takeFirst(projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
     const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
     const name = takeFirst(projectConfig.name, config.name, '');
-    const _setupMatch = takeFirst((projectConfig as any)._setupMatch, []);
+    const _setupMatch = takeFirst(projectConfig.setupMatch, []);
 
     const defaultSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
     const snapshotPathTemplate = takeFirst(projectConfig.snapshotPathTemplate, config.snapshotPathTemplate, defaultSnapshotPathTemplate);
@@ -435,18 +435,17 @@ class ProjectSuiteBuilder {
       return testType.fixtures;
     const result: FixturesWithLocation[] = [];
     for (const f of testType.fixtures) {
+      result.push(f);
       const optionsFromConfig: Fixtures = {};
-      const originalFixtures: Fixtures = {};
       for (const [key, value] of Object.entries(f.fixtures)) {
         if (isFixtureOption(value) && configKeys.has(key))
           (optionsFromConfig as any)[key] = [(configUse as any)[key], value[1]];
-        else
-          (originalFixtures as any)[key] = value;
       }
-      if (Object.entries(optionsFromConfig).length)
-        result.push({ fixtures: optionsFromConfig, location: { file: `project#${this._project._id}`, line: 1, column: 1 } });
-      if (Object.entries(originalFixtures).length)
-        result.push({ fixtures: originalFixtures, location: f.location });
+      if (Object.entries(optionsFromConfig).length) {
+        // Add config options immediately after original option definition,
+        // so that any test.use() override it.
+        result.push({ fixtures: optionsFromConfig, location: { file: `project#${this._project._id}`, line: 1, column: 1 }, fromConfig: true });
+      }
     }
     return result;
   }
@@ -615,7 +614,7 @@ function validateProject(file: string, project: Project, title: string) {
       throw errorWithFile(file, `${title}.testDir must be a string`);
   }
 
-  for (const prop of ['testIgnore', 'testMatch'] as const) {
+  for (const prop of ['testIgnore', 'testMatch', 'setupMatch'] as const) {
     if (prop in project && project[prop] !== undefined) {
       const value = project[prop];
       if (Array.isArray(value)) {

@@ -475,7 +475,7 @@ test('should report forbid-only error to reporter', async ({ runInlineTest }) =>
   }, { 'reporter': '', 'forbid-only': true });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`%%got error: =====================================\n --forbid-only found a focused test.`);
+  expect(result.output).toContain(`%%got error: Error: focused item found in the --forbid-only mode`);
 });
 
 test('should report no-tests error to reporter', async ({ runInlineTest }) => {
@@ -606,6 +606,29 @@ var import_test = __toModule(require("@playwright/test"));
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain('a.spec.ts');
 });
+
+test('parallelIndex is presented in onTestEnd', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+    class Reporter {
+      onTestEnd(test, result) {
+        console.log('parallelIndex: ' + result.parallelIndex)
+      }
+    }
+    module.exports = Reporter;`,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.spec.js': `
+      pwt.test('test', () => {});
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  expect(result.output).toContain('parallelIndex: 0');
+});
+
 
 function stripEscapedAscii(str: string) {
   return str.replace(/\\u00[a-z0-9][a-z0-9]\[[^m]+m/g, '');

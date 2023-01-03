@@ -19,10 +19,8 @@ import path from 'path';
 import fs from 'fs';
 import { electronTest as test, expect } from './electronTest';
 
-test('should fire close event', async ({ playwright }) => {
-  const electronApp = await playwright._electron.launch({
-    args: [path.join(__dirname, 'electron-app.js')],
-  });
+test('should fire close event', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app.js');
   const events = [];
   electronApp.on('close', () => events.push('application'));
   electronApp.context().on('close', () => events.push('context'));
@@ -33,22 +31,16 @@ test('should fire close event', async ({ playwright }) => {
   expect(events.join('|')).toBe('context|application');
 });
 
-test('should dispatch ready event', async ({ playwright }) => {
-  const electronApp = await playwright._electron.launch({
-    args: [path.join(__dirname, 'electron-app-ready-event.js')],
-  });
-  try {
-    const events = await electronApp.evaluate(() => globalThis.__playwrightLog);
-    expect(events).toEqual([
-      'isReady == false',
-      'will-finish-launching fired',
-      'ready fired',
-      'whenReady resolved',
-      'isReady == true',
-    ]);
-  } finally {
-    await electronApp.close();
-  }
+test('should dispatch ready event', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app-ready-event.js');
+  const events = await electronApp.evaluate(() => globalThis.__playwrightLog);
+  expect(events).toEqual([
+    'isReady == false',
+    'will-finish-launching fired',
+    'ready fired',
+    'whenReady resolved',
+    'isReady == true',
+  ]);
 });
 
 test('should script application', async ({ electronApp }) => {
@@ -114,28 +106,19 @@ test('should have a clipboard instance', async ({ electronApp }) => {
   expect(clipboardContentRead).toEqual(clipboardContentToWrite);
 });
 
-test('should test app that opens window fast', async ({ playwright }) => {
-  const electronApp = await playwright._electron.launch({
-    args: [path.join(__dirname, 'electron-window-app.js')],
-  });
-  await electronApp.close();
+test('should test app that opens window fast', async ({ launchElectronApp }) => {
+  await launchElectronApp('electron-window-app.js');
 });
 
-test('should return browser window', async ({ playwright }) => {
-  const electronApp = await playwright._electron.launch({
-    args: [path.join(__dirname, 'electron-window-app.js')],
-  });
+test('should return browser window', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-window-app.js');
   const page = await electronApp.firstWindow();
   const bwHandle = await electronApp.browserWindow(page);
   expect(await bwHandle.evaluate((bw: BrowserWindow) => bw.title)).toBe('Electron');
-  await electronApp.close();
 });
 
-test('should bypass csp', async ({ playwright, server }) => {
-  const app = await playwright._electron.launch({
-    args: [require('path').join(__dirname, 'electron-app.js')],
-    bypassCSP: true,
-  });
+test('should bypass csp', async ({ launchElectronApp, server }) => {
+  const app = await launchElectronApp('electron-app.js', { bypassCSP: true });
   await app.evaluate(electron => {
     const window = new electron.BrowserWindow({
       width: 800,
@@ -147,13 +130,10 @@ test('should bypass csp', async ({ playwright, server }) => {
   await page.goto(server.PREFIX + '/csp.html');
   await page.addScriptTag({ content: 'window["__injected"] = 42;' });
   expect(await page.evaluate('window["__injected"]')).toBe(42);
-  await app.close();
 });
 
-test('should create page for browser view', async ({ playwright }) => {
-  const app = await playwright._electron.launch({
-    args: [path.join(__dirname, 'electron-window-app.js')],
-  });
+test('should create page for browser view', async ({ launchElectronApp }) => {
+  const app = await launchElectronApp('electron-window-app.js');
   await app.firstWindow();
   await app.evaluate(async electron => {
     const window = electron.BrowserWindow.getAllWindows()[0];
@@ -163,13 +143,10 @@ test('should create page for browser view', async ({ playwright }) => {
     view.setBounds({ x: 0, y: 0, width: 256, height: 256 });
   });
   await expect.poll(() => app.windows().length).toBe(2);
-  await app.close();
 });
 
-test('should return same browser window for browser view pages', async ({ playwright }) => {
-  const app = await playwright._electron.launch({
-    args: [path.join(__dirname, 'electron-window-app.js')],
-  });
+test('should return same browser window for browser view pages', async ({ launchElectronApp }) => {
+  const app = await launchElectronApp('electron-window-app.js');
   await app.firstWindow();
   await app.evaluate(async electron => {
     const window = electron.BrowserWindow.getAllWindows()[0];
@@ -187,12 +164,10 @@ test('should return same browser window for browser view pages', async ({ playwr
       })
   );
   expect(firstWindowId).toEqual(secondWindowId);
-  await app.close();
 });
 
-test('should record video', async ({ playwright }, testInfo) => {
-  const app = await playwright._electron.launch({
-    args: [path.join(__dirname, 'electron-window-app.js')],
+test('should record video', async ({ launchElectronApp }, testInfo) => {
+  const app = await launchElectronApp('electron-window-app.js', {
     recordVideo: { dir: testInfo.outputPath('video') }
   });
   const page = await app.firstWindow();
@@ -203,25 +178,44 @@ test('should record video', async ({ playwright }, testInfo) => {
   expect(fs.statSync(videoPath).size).toBeGreaterThan(0);
 });
 
-test('should be able to get the first window when with a delayed navigation', async ({ playwright }) => {
+test('should be able to get the first window when with a delayed navigation', async ({ launchElectronApp }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17765' });
 
-  const app = await playwright._electron.launch({
-    args: [path.join(__dirname, 'electron-window-app-delayed-loadURL.js')],
-  });
+  const app = await launchElectronApp('electron-window-app-delayed-loadURL.js');
   const page = await app.firstWindow();
   await expect(page).toHaveURL('data:text/html,<h1>Foobar</h1>');
   await expect(page.locator('h1')).toHaveText('Foobar');
-  await app.close();
 });
 
-test('should detach debugger on app-initiated exit', async ({ playwright }) => {
-  const electronApp = await playwright._electron.launch({
-    args: [path.join(__dirname, 'electron-app.js')],
-  });
+test('should detach debugger on app-initiated exit', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app.js');
   const closePromise = new Promise(f => electronApp.process().on('close', f));
   await electronApp.evaluate(({ app }) => {
     app.quit();
   });
   await closePromise;
+});
+
+test('should run pre-ready apis', async ({ launchElectronApp }) => {
+  await launchElectronApp('electron-app-pre-ready.js');
+});
+
+test('should resolve app path for folder apps', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('.');
+  const appPath = await electronApp.evaluate(async ({ app }) => app.getAppPath());
+  expect(appPath).toBe(path.resolve(__dirname));
+});
+
+test('should return app name / version from manifest', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('.');
+  const data = await electronApp.evaluate(async ({ app }) => {
+    return {
+      name: app.getName(),
+      version: app.getVersion(),
+    };
+  });
+  expect(data).toEqual({
+    name: 'my-electron-app',
+    version: '1.0.0'
+  });
 });

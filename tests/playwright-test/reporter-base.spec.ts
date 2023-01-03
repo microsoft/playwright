@@ -347,3 +347,15 @@ test('should report fatal errors at the end', async ({ runInlineTest }) => {
   expect(result.passed).toBe(2);
   expect(stripAnsi(result.output)).toContain('2 errors were not a part of any test, see above for details');
 });
+
+test('should contain at most 1 decimal for humanized timing', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('should work', () => {});
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(stripAnsi(result.output)).toMatch(/\d+ passed \(\d+(\.\d)?(ms|s)\)/);
+});

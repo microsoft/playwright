@@ -188,3 +188,18 @@ test('config should allow void/empty options', async ({ runTSC }) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should provide store interface', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      const { test, store } = pwt;
+      test('my test', async () => {
+        await store.set('foo', 'bar');
+        const val = await store.get('foo');
+        // @ts-expect-error
+        await store.unknown();
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});

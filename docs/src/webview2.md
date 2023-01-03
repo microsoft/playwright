@@ -428,6 +428,6 @@ public class Tests : WebView2Test
 
 ## Debugging
 
-Inside your webview2 control, you can just right-click to open the context menu and select "Inspect" to open the DevTools or press <kbd>F12</kbd>. You can also use the [WebView2.OpenDevToolsWindow](https://docs.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.wpf.webview2.opendevtoolswindow?view=webview2-dotnet-1.0.1343.22) method to open the DevTools programmatically.
+Inside your webview2 control, you can just right-click to open the context menu and select "Inspect" to open the DevTools or press <kbd>F12</kbd>. You can also use the [WebView2.CoreWebView2.OpenDevToolsWindow](https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.opendevtoolswindow?view=webview2-dotnet-1.0.1462.37) method to open the DevTools programmatically.
 
 For debugging tests, see the Playwright [Debugging guide](./debug).

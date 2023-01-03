@@ -73,7 +73,7 @@ export class ExecutionContext extends SdkObject {
     this._destroyedPromise.resolve(error);
   }
 
-  private _raceAgainstContextDestroyed<T>(promise: Promise<T>): Promise<T> {
+  _raceAgainstContextDestroyed<T>(promise: Promise<T>): Promise<T> {
     return Promise.race([
       this._destroyedPromise.then(e => { throw e; }),
       promise,

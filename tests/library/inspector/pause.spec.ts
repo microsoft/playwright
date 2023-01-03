@@ -299,7 +299,6 @@ it.describe('pause', () => {
       'page.pause- XXms',
       'page.getByRole(\'button\').isChecked()- XXms',
       'waiting for getByRole(\'button\')',
-      'locator resolved to <button onclick=\"console.log(1)\">Submit</button>',
       'error: Error: Not a checkbox or radio button',
     ]);
     const error = await scriptPromise;

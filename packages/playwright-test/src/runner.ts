@@ -17,7 +17,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { MultiMap } from 'playwright-core/lib/utils/multimap';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { colors, minimatch, rimraf } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
@@ -45,6 +44,7 @@ import { Suite } from './test';
 import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal } from './types';
 import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher, serializeError } from './util';
 import type { Matcher, TestFileFilter } from './util';
+import { setFatalErrorSink } from './globals';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -82,10 +82,12 @@ export class Runner {
   private _loader: Loader;
   private _reporter!: ReporterInternal;
   private _plugins: TestRunnerPlugin[] = [];
+  private _fatalErrors: TestError[] = [];
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
     this._loader = new Loader(configCLIOverrides);
     setRunnerToAddPluginsTo(this);
+    setFatalErrorSink(this._fatalErrors);
   }
 
   addPlugin(plugin: TestRunnerPlugin) {
@@ -177,7 +179,8 @@ export class Runner {
     const result = await raceAgainstTimeout(() => this._run(options), config.globalTimeout);
     let fullResult: FullResult;
     if (result.timedOut) {
-      this._reporter.onError?.(createStacklessError(`Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
+      this._reporter.onError?.(createStacklessError(
+          `Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
       fullResult = { status: 'timedout' };
     } else {
       fullResult = result.result;
@@ -255,13 +258,13 @@ export class Runner {
         if (!isTest && !isSetup)
           return false;
         if (isSetup && isTest)
-          throw new Error(`File "${file}" matches both '_setup' and 'testMatch' filters in project "${project.name}"`);
+          throw new Error(`File "${file}" matches both 'setup' and 'testMatch' filters in project "${project.name}"`);
         if (fileToProjectName.has(file)) {
           if (isSetup) {
             if (!setupFiles.has(file))
-              throw new Error(`File "${file}" matches '_setup' filter in project "${project.name}" and 'testMatch' filter in project "${fileToProjectName.get(file)}"`);
+              throw new Error(`File "${file}" matches 'setup' filter in project "${project.name}" and 'testMatch' filter in project "${fileToProjectName.get(file)}"`);
           } else if (setupFiles.has(file)) {
-            throw new Error(`File "${file}" matches '_setup' filter in project "${fileToProjectName.get(file)}" and 'testMatch' filter in project "${project.name}"`);
+            throw new Error(`File "${file}" matches 'setup' filter in project "${fileToProjectName.get(file)}" and 'testMatch' filter in project "${project.name}"`);
           }
         }
         fileToProjectName.set(file, project.name);
@@ -275,7 +278,7 @@ export class Runner {
     return { filesByProject, setupFiles };
   }
 
-  private async _collectTestGroups(options: RunOptions, fatalErrors: TestError[]): Promise<{ rootSuite: Suite, projectSetupGroups: TestGroup[], testGroups: TestGroup[] }> {
+  private async _collectTestGroups(options: RunOptions): Promise<{ rootSuite: Suite, projectSetupGroups: TestGroup[], testGroups: TestGroup[] }> {
     const config = this._loader.fullConfig();
     const projects = this._collectProjects(options.projectFilter);
     const { filesByProject, setupFiles } = await this._collectFiles(projects, options.testFileFilters);
@@ -292,7 +295,7 @@ export class Runner {
         result = await this._createFilteredRootSuite(options, filesByProject, setupFiles, false, setupFiles);
     }
 
-    fatalErrors.push(...result.fatalErrors);
+    this._fatalErrors.push(...result.fatalErrors);
     const { rootSuite } = result;
 
     const allTestGroups = createTestGroups(rootSuite.suites, config.workers);
@@ -325,9 +328,7 @@ export class Runner {
     }
 
     // Complain about duplicate titles.
-    const duplicateTitlesError = createDuplicateTitlesError(config, preprocessRoot);
-    if (duplicateTitlesError)
-      fatalErrors.push(duplicateTitlesError);
+    fatalErrors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
 
     // Filter tests to respect line/column filter.
     filterByFocusedLine(preprocessRoot, options.testFileFilters, doNotFilterFiles);
@@ -336,7 +337,7 @@ export class Runner {
     if (config.forbidOnly) {
       const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
       if (onlyTestsAndSuites.length > 0)
-        fatalErrors.push(createForbidOnlyError(config, onlyTestsAndSuites));
+        fatalErrors.push(...createForbidOnlyErrors(config, onlyTestsAndSuites));
     }
 
     // Filter only.
@@ -444,14 +445,13 @@ export class Runner {
 
   private async _run(options: RunOptions): Promise<FullResult> {
     const config = this._loader.fullConfig();
-    const fatalErrors: TestError[] = [];
     // Each entry is an array of test groups that can be run concurrently. All
     // test groups from the previos entries must finish before entry starts.
-    const { rootSuite, projectSetupGroups, testGroups } = await this._collectTestGroups(options, fatalErrors);
+    const { rootSuite, projectSetupGroups, testGroups } = await this._collectTestGroups(options);
 
     // Fail when no tests.
     if (!rootSuite.allTests().length && !options.passWithNoTests)
-      fatalErrors.push(createNoTestsError());
+      this._fatalErrors.push(createNoTestsError());
 
     this._filterForCurrentShard(rootSuite, projectSetupGroups, testGroups);
 
@@ -461,8 +461,8 @@ export class Runner {
     this._reporter.onBegin?.(config, rootSuite);
 
     // Bail out on errors prior to running global setup.
-    if (fatalErrors.length) {
-      for (const error of fatalErrors)
+    if (this._fatalErrors.length) {
+      for (const error of this._fatalErrors)
         this._reporter.onError?.(error);
       return { status: 'failed' };
     }
@@ -472,7 +472,7 @@ export class Runner {
       return { status: 'passed' };
 
     // Remove output directores.
-    if (!this._removeOutputDirs(options))
+    if (!await this._removeOutputDirs(options))
       return { status: 'failed' };
 
     // Run Global setup.
@@ -782,7 +782,6 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
   return files;
 }
 
-
 function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
   if (!testOrSuite.location)
     return '';
@@ -927,53 +926,46 @@ class ListModeReporter implements Reporter {
   }
 }
 
-function createForbidOnlyError(config: FullConfigInternal, onlyTestsAndSuites: (TestCase | Suite)[]): TestError {
-  const errorMessage = [
-    '=====================================',
-    ' --forbid-only found a focused test.',
-  ];
+function createForbidOnlyErrors(config: FullConfigInternal, onlyTestsAndSuites: (TestCase | Suite)[]): TestError[] {
+  const errors: TestError[] = [];
   for (const testOrSuite of onlyTestsAndSuites) {
     // Skip root and file.
     const title = testOrSuite.titlePath().slice(2).join(' ');
-    errorMessage.push(` - ${buildItemLocation(config.rootDir, testOrSuite)} > ${title}`);
+    const error: TestError = {
+      message: `Error: focused item found in the --forbid-only mode: "${title}"`,
+      location: testOrSuite.location!,
+    };
+    errors.push(error);
   }
-  errorMessage.push('=====================================');
-  return createStacklessError(errorMessage.join('\n'));
+  return errors;
 }
 
-function createDuplicateTitlesError(config: FullConfigInternal, rootSuite: Suite): TestError | undefined {
-  const lines: string[] = [];
+function createDuplicateTitlesErrors(config: FullConfigInternal, rootSuite: Suite): TestError[] {
+  const errors: TestError[] = [];
   for (const fileSuite of rootSuite.suites) {
-    const testsByFullTitle = new MultiMap<string, TestCase>();
+    const testsByFullTitle = new Map<string, TestCase>();
     for (const test of fileSuite.allTests()) {
       const fullTitle = test.titlePath().slice(2).join('\x1e');
+      const existingTest = testsByFullTitle.get(fullTitle);
+      if (existingTest) {
+        const error: TestError = {
+          message: `Error: duplicate test title "${fullTitle}", first declared in ${buildItemLocation(config.rootDir, existingTest)}`,
+          location: test.location,
+        };
+        errors.push(error);
+      }
       testsByFullTitle.set(fullTitle, test);
     }
-    for (const fullTitle of testsByFullTitle.keys()) {
-      const tests = testsByFullTitle.get(fullTitle);
-      if (tests.length > 1) {
-        lines.push(` - title: ${fullTitle.replace(/\u001e/g, ' › ')}`);
-        for (const test of tests)
-          lines.push(`   - ${buildItemLocation(config.rootDir, test)}`);
-      }
-    }
   }
-  if (!lines.length)
-    return;
-  return createStacklessError([
-    '========================================',
-    ' duplicate test titles are not allowed.',
-    ...lines,
-    '========================================',
-  ].join('\n'));
+  return errors;
 }
 
 function createNoTestsError(): TestError {
   return createStacklessError(`=================\n no tests found.\n=================`);
 }
 
-function createStacklessError(message: string): TestError {
-  return { message, __isNotAFatalError: true } as any;
+function createStacklessError(message: string, location?: TestError['location']): TestError {
+  return { message, location };
 }
 
 function sanitizeConfigForJSON(object: any, visited: Set<any>): any {

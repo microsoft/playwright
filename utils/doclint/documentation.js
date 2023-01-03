@@ -178,6 +178,10 @@ class Documentation {
    * @param {Class|Member=} classOrMember
    */
   renderLinksInNodes(nodes, classOrMember) {
+    if (classOrMember instanceof Member) {
+      classOrMember.discouraged = classOrMember.discouraged ? this.renderLinksInText(classOrMember.discouraged, classOrMember) : undefined;
+      classOrMember.deprecated = classOrMember.deprecated ? this.renderLinksInText(classOrMember.deprecated, classOrMember) : undefined
+    }
     md.visitAll(nodes, node => {
       if (!node.text)
         return;

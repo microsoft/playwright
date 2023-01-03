@@ -23,6 +23,10 @@ title: "Community Showcase"
   * [GitHub repo](https://github.com/naqvis/playwright-cr)
   * [Documentation](https://naqvis.github.io/playwright-cr/)
 
+* Playwright for Ruby
+  * [GitHub repo](https://github.com/YusukeIwaki/playwright-ruby-client)
+  * [Documentation](https://playwright-ruby-client.vercel.app/docs/article/getting_started)
+
 ## Tools
 
 * [Applitools](https://applitools.com): Add AI-powered visual assertions and run your Playwright tests on all browser, device, and viewport combinations in parallel, without requiring any setup.

@@ -70,6 +70,8 @@ test('should generate report', async ({ runInlineTest, showReport, page }) => {
   await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toBeVisible();
   await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toBeVisible();
 
+  await expect(page.getByTestId('overall-duration'), 'should contain humanized total time with at most 1 decimal place').toContainText(/^Total time: \d+(\.\d)?(ms|s|m)$/);
+
   await expect(page.locator('.metadata-view')).not.toBeVisible();
 });
 

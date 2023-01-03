@@ -128,7 +128,8 @@ test('should throw when using non-defined super worker fixture', async ({ runInl
     `
   });
   expect(result.output).toContain(`Fixture "foo" references itself, but does not have a base implementation.`);
-  expect(result.output).toContain('a.spec.ts:5:29');
+  expect(result.output).toContain('a.spec.ts:5');
+  expect(stripAnsi(result.output)).toContain('const test = pwt.test.extend');
   expect(result.exitCode).toBe(1);
 });
 
@@ -149,9 +150,9 @@ test('should throw when defining test fixture with the same name as a worker fix
       test2('works', async ({foo}) => {});
     `,
   });
-  expect(result.output).toContain(`Fixture "foo" has already been registered as a { scope: 'worker' } fixture.`);
+  expect(result.output).toContain(`Fixture "foo" has already been registered as a { scope: 'worker' } fixture defined in e.spec.ts:5:30.`);
   expect(result.output).toContain(`e.spec.ts:10`);
-  expect(result.output).toContain(`e.spec.ts:5`);
+  expect(stripAnsi(result.output)).toContain('const test2 = test1.extend');
   expect(result.exitCode).toBe(1);
 });
 
@@ -172,9 +173,9 @@ test('should throw when defining worker fixture with the same name as a test fix
       test2('works', async ({foo}) => {});
     `,
   });
-  expect(result.output).toContain(`Fixture "foo" has already been registered as a { scope: 'test' } fixture.`);
+  expect(result.output).toContain(`Fixture "foo" has already been registered as a { scope: 'test' } fixture defined in e.spec.ts:5:30.`);
   expect(result.output).toContain(`e.spec.ts:10`);
-  expect(result.output).toContain(`e.spec.ts:5`);
+  expect(stripAnsi(result.output)).toContain('const test2 = test1.extend');
   expect(result.exitCode).toBe(1);
 });
 
@@ -194,8 +195,7 @@ test('should throw when worker fixture depends on a test fixture', async ({ runI
       test('works', async ({bar}) => {});
     `,
   });
-  expect(result.output).toContain('worker fixture "bar" cannot depend on a test fixture "foo".');
-  expect(result.output).toContain(`f.spec.ts:5`);
+  expect(result.output).toContain('worker fixture "bar" cannot depend on a test fixture "foo" defined in f.spec.ts:5:29.');
   expect(result.exitCode).toBe(1);
 });
 
@@ -239,12 +239,8 @@ test('should detect fixture dependency cycle', async ({ runInlineTest }) => {
       test('works', async ({foo}) => {});
     `,
   });
-  expect(result.output).toContain('Fixtures "bar" -> "baz" -> "qux" -> "foo" -> "bar" form a dependency cycle.');
-  expect(result.output).toContain('"foo" defined at');
-  expect(result.output).toContain('"bar" defined at');
-  expect(result.output).toContain('"baz" defined at');
-  expect(result.output).toContain('"qux" defined at');
-  expect(result.output).toContain('x.spec.ts:5:29');
+  expect(result.output).toContain('Fixtures "bar" -> "baz" -> "qux" -> "foo" -> "bar" form a dependency cycle:');
+  expect(result.output).toContain('x.spec.ts:5:29 -> x.spec.ts:5:29 -> x.spec.ts:5:29 -> x.spec.ts:5:29');
   expect(result.exitCode).toBe(1);
 });
 
@@ -261,7 +257,8 @@ test('should not reuse fixtures from one file in another one', async ({ runInlin
     `,
   });
   expect(result.output).toContain('Test has unknown parameter "foo".');
-  expect(result.output).toContain('b.spec.ts:7:7');
+  expect(result.output).toContain('b.spec.ts:7');
+  expect(stripAnsi(result.output)).toContain(`test('test2', async ({foo}) => {})`);
 });
 
 test('should throw for cycle in two overrides', async ({ runInlineTest }) => {
@@ -283,9 +280,8 @@ test('should throw for cycle in two overrides', async ({ runInlineTest }) => {
       });
     `,
   });
-  expect(result.output).toContain('Fixtures "bar" -> "foo" -> "bar" form a dependency cycle.');
-  expect(result.output).toContain('a.test.js:9');
-  expect(result.output).toContain('a.test.js:12');
+  expect(result.output).toContain('Fixtures "bar" -> "foo" -> "bar" form a dependency cycle:');
+  expect(result.output).toContain('a.test.js:12:27 -> a.test.js:9:27');
 });
 
 test('should throw when overridden worker fixture depends on a test fixture', async ({ runInlineTest }) => {
@@ -302,7 +298,8 @@ test('should throw when overridden worker fixture depends on a test fixture', as
       test2('works', async ({bar}) => {});
     `,
   });
-  expect(result.output).toContain('worker fixture "bar" cannot depend on a test fixture "foo".');
+  expect(result.output).toContain('worker fixture "bar" cannot depend on a test fixture "foo" defined in f.spec.ts:5:30.');
+  expect(result.output).toContain('f.spec.ts:9');
   expect(result.exitCode).toBe(1);
 });
 
@@ -317,7 +314,8 @@ test('should throw for unknown fixture parameter', async ({ runInlineTest }) => 
     `,
   });
   expect(result.output).toContain('Fixture "foo" has unknown parameter "bar".');
-  expect(result.output).toContain('f.spec.ts:5:29');
+  expect(result.output).toContain('f.spec.ts:5');
+  expect(stripAnsi(result.output)).toContain('const test = pwt.test.extend');
   expect(result.exitCode).toBe(1);
 });
 
@@ -386,7 +384,7 @@ test('should error for unsupported scope', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Error: Fixture "failure" has unknown { scope: 'foo' }`);
+  expect(result.output).toContain(`Fixture "failure" has unknown { scope: 'foo' }`);
 });
 
 test('should give enough time for fixture teardown', async ({ runInlineTest }) => {

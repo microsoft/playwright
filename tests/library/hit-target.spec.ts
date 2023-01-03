@@ -394,3 +394,51 @@ it('should detect overlayed element in a transformed iframe', async ({ page }) =
   const error = await locator.click({ timeout: 2000 }).catch(e => e);
   expect(error.message).toContain('<section>Overlay</section> intercepts pointer events');
 });
+
+it('should click in iframe with padding', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      body, html, iframe { margin: 0; padding: 0; border: none; box-sizing: border-box; }
+      iframe { background: gray; width: 200px; height: 200px; padding-top: 100px; }
+    </style>
+    <iframe srcdoc="
+      <style>
+        body, html { margin: 0; padding: 0; }
+        div { height: 100px; }
+      </style>
+      <div>Non-target</div>
+      <div id=target>Target</div>
+      <div>Non-target</div>
+      <script>
+        document.querySelector('#target').addEventListener('click', () => window.top._clicked = true);
+      </script>
+    "></iframe>
+  `);
+  const locator = page.frameLocator('iframe').locator('#target');
+  await locator.click();
+  expect(await page.evaluate('window._clicked')).toBe(true);
+});
+
+it('should click in iframe with padding 2', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      body, html, iframe { margin: 0; padding: 0; border: none; box-sizing: content-box; }
+      iframe { background: gray; width: 200px; height: 200px; padding-top: 100px; }
+    </style>
+    <iframe srcdoc="
+      <style>
+        body, html { margin: 0; padding: 0; }
+        div { height: 100px; }
+      </style>
+      <div>Non-target</div>
+      <div id=target>Target</div>
+      <div>Non-target</div>
+      <script>
+        document.querySelector('#target').addEventListener('click', () => window.top._clicked = true);
+      </script>
+    "></iframe>
+  `);
+  const locator = page.frameLocator('iframe').locator('#target');
+  await locator.click();
+  expect(await page.evaluate('window._clicked')).toBe(true);
+});

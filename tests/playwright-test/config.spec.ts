@@ -480,3 +480,41 @@ test('should have correct types for the config', async ({ runTSC }) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should throw when project.setupMatch has wrong type', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          projects: [
+            { name: 'a', setupMatch: 100 },
+          ],
+        };
+    `,
+    'a.test.ts': `
+        const { test } = pwt;
+        test('pass', async () => {});
+      `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Error: playwright.config.ts: config.projects[0].setupMatch must be a string or a RegExp`);
+});
+
+test('should throw when project.setupMatch has wrong array type', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          projects: [
+            { name: 'a', setupMatch: [/100/, 100] },
+          ],
+        };
+    `,
+    'a.test.ts': `
+        const { test } = pwt;
+        test('pass', async () => {});
+      `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Error: playwright.config.ts: config.projects[0].setupMatch[1] must be a string or a RegExp`);
+});

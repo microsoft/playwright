@@ -58,6 +58,7 @@ export type RemoteServerOptions = {
   stallOnClose?: boolean;
   disconnectOnSIGHUP?: boolean;
   exitOnFile?: string;
+  exitOnWarning?: boolean;
   inCluster?: boolean;
   url?: string;
 };

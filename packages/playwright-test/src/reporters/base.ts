@@ -20,6 +20,7 @@ import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
 import type { FullConfigInternal, ReporterInternal } from '../types';
 import { codeFrameColumns } from '../babelBundle';
+import { monotonicTime } from 'playwright-core/lib/utils';
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
@@ -159,7 +160,7 @@ export class BaseReporter implements ReporterInternal  {
       tokens.push(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
     if (this.result.status === 'timedout')
       tokens.push(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
-    if (fatalErrors.length)
+    if (fatalErrors.length && expected + unexpected.length + interrupted.length + flaky.length > 0)
       tokens.push(colors.red(`  ${fatalErrors.length === 1 ? '1 error was not a part of any test' : fatalErrors.length + ' errors were not a part of any test'}, see above for details`));
 
     return tokens.join('\n');
@@ -376,37 +377,42 @@ function formatTestHeader(config: FullConfig, test: TestCase, indent: string, in
 }
 
 export function formatError(config: FullConfig, error: TestError, highlightCode: boolean, file?: string): ErrorDetails {
+  const message = error.message || error.value || '';
   const stack = error.stack;
+  if (!stack && !error.location)
+    return { message };
+
   const tokens = [];
-  let location: Location | undefined;
-  if (stack) {
-    // Now that we filter out internals from our stack traces, we can safely render
-    // the helper / original exception locations.
-    const parsed = prepareErrorStack(stack);
-    tokens.push(parsed.message);
-    location = parsed.location;
-    if (location) {
-      try {
-        const source = fs.readFileSync(location.file, 'utf8');
-        const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode });
-        // Convert /var/folders to /private/var/folders on Mac.
-        if (!file || fs.realpathSync(file) !== location.file) {
-          tokens.push('');
-          tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, location.file)}:${location.line}`);
-        }
+
+  // Now that we filter out internals from our stack traces, we can safely render
+  // the helper / original exception locations.
+  const parsedStack = stack ? prepareErrorStack(stack) : undefined;
+  tokens.push(parsedStack?.message || message);
+
+  let location = error.location;
+  if (parsedStack && !location)
+    location = parsedStack.location;
+
+  if (location) {
+    try {
+      const source = fs.readFileSync(location.file, 'utf8');
+      const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode });
+      // Convert /var/folders to /private/var/folders on Mac.
+      if (!file || fs.realpathSync(file) !== location.file) {
         tokens.push('');
-        tokens.push(codeFrame);
-      } catch (e) {
-        // Failed to read the source file - that's ok.
+        tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, location.file)}:${location.line}`);
       }
+      tokens.push('');
+      tokens.push(codeFrame);
+    } catch (e) {
+      // Failed to read the source file - that's ok.
     }
-    tokens.push('');
-    tokens.push(colors.dim(parsed.stackLines.join('\n')));
-  } else if (error.message) {
-    tokens.push(error.message);
-  } else if (error.value) {
-    tokens.push(error.value);
   }
+  if (parsedStack) {
+    tokens.push('');
+    tokens.push(colors.dim(parsedStack.stackLines.join('\n')));
+  }
+
   return {
     location,
     message: tokens.join('\n'),
@@ -445,11 +451,6 @@ export function prepareErrorStack(stack: string): {
     break;
   }
   return { message, stackLines, location };
-}
-
-function monotonicTime(): number {
-  const [seconds, nanoseconds] = process.hrtime();
-  return seconds * 1000 + (nanoseconds / 1000000 | 0);
 }
 
 const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');

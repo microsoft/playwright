@@ -169,7 +169,10 @@ module.exports = [
       '<label for="t1">HTML Label</label>' +
       '<input type="text" id="t2" aria-labelledby="t2label">',
     target: '#t2label',
-    accessibleText: 'This is This is a label of everything',
+    // accessibleText: 'This is This is a label of everything',
+    // Chrome and axe-core disagree, we follow Chrome and spec proposal
+    // https://github.com/w3c/aria/issues/1821.
+    accessibleText: 'This is This is a label of',
   },
 
   {

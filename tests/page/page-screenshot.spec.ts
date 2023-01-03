@@ -272,7 +272,7 @@ it.describe('page screenshot', () => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
-    expect(screenshot).toMatchSnapshot('screenshot-canvas.png', { threshold: 0.4 });
+    expect(screenshot).toMatchSnapshot('screenshot-canvas.png');
   });
 
   it('should capture canvas changes', async ({ page, isElectron, browserName, isMac, isWebView2 }) => {
@@ -625,7 +625,7 @@ it.describe('page screenshot animations', () => {
     const buffer1 = await page.screenshot();
     await rafraf(page);
     const buffer2 = await page.screenshot();
-    expect(comparePNGs(buffer1, buffer2, { threshold: 0.2, maxDiffPixels: 50 })).not.toBe(null);
+    expect(comparePNGs(buffer1, buffer2, { maxDiffPixels: 50 })).not.toBe(null);
   });
 
   it('should not capture infinite web animations', async ({ page, server }) => {
@@ -645,7 +645,7 @@ it.describe('page screenshot animations', () => {
     const buffer1 = await page.screenshot();
     await rafraf(page);
     const buffer2 = await page.screenshot();
-    expect(comparePNGs(buffer1, buffer2, { threshold: 0.2, maxDiffPixels: 50 })).not.toBe(null);
+    expect(comparePNGs(buffer1, buffer2, { maxDiffPixels: 50 })).not.toBe(null);
   });
 
   it('should fire transitionend for finite transitions', async ({ page, server }) => {

@@ -14,8 +14,8 @@ const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
-  const title = page.locator('.navbar__inner .navbar__title');
-  await expect(title).toHaveText('Playwright');
+
+  await expect(page).toHaveTitle(/Playwright/);
 });
 ```
 
@@ -24,8 +24,8 @@ import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
-  const title = page.locator('.navbar__inner .navbar__title');
-  await expect(title).toHaveText('Playwright');
+
+  await expect(page).toHaveTitle(/Playwright/);
 });
 ```
 
@@ -234,7 +234,7 @@ test.beforeEach(async ({ settingsPage }) => {
 
 test('basic test', async ({ todoPage, page }) => {
   await todoPage.addToDo('something nice');
-  await expect(page.locator('.todo-item')).toContainText(['something nice']);
+  await expect(page.getByTestId('todo-title')).toContainText(['something nice']);
 });
 ```
 
@@ -247,7 +247,7 @@ test.beforeEach(async ({ settingsPage }) => {
 
 test('basic test', async ({ todoPage, page }) => {
   await todoPage.addToDo('something nice');
-  await expect(page.locator('.todo-item')).toContainText(['something nice']);
+  await expect(page.getByTestId('todo-title')).toContainText(['something nice']);
 });
 ```
 
@@ -353,7 +353,7 @@ exports.test = base.test.extend({
     await page.getByLabel('User Name').fill(username);
     await page.getByLabel('Password').fill(password);
     await page.getByText('Sign in').click();
-    await expect(page.locator('#userinfo')).toHaveText(username);
+    await expect(page.getByTestId('userinfo')).toHaveText(username);
 
     // Use signed-in page in the test.
     await use(page);
@@ -385,7 +385,7 @@ export const test = base.extend<{}, { account: Account }>({
     await page.getByLabel('Password').fill(password);
     await page.getByText('Sign up').click();
     // Make sure everything is ok.
-    await expect(page.locator('#result')).toHaveText('Success');
+    await expect(page.getByTestId('result')).toHaveText('Success');
     // Do not forget to cleanup.
     await page.close();
 
@@ -400,7 +400,7 @@ export const test = base.extend<{}, { account: Account }>({
     await page.getByLabel('User Name').fill(username);
     await page.getByLabel('Password').fill(password);
     await page.getByText('Sign in').click();
-    await expect(page.locator('#userinfo')).toHaveText(username);
+    await expect(page.getByTestId('userinfo')).toHaveText(username);
 
     // Use signed-in page in the test.
     await use(page);

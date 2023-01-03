@@ -16,10 +16,11 @@
 
 import fs from 'fs';
 import path from 'path';
+import type { TestStore } from '../types/test';
 import { currentTestInfo } from './globals';
 import { sanitizeForFilePath, trimLongString } from './util';
 
-class JsonStore {
+class JsonStore implements TestStore {
   private _toFilePath(name: string) {
     const testInfo = currentTestInfo();
     if (!testInfo)

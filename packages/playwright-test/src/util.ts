@@ -20,7 +20,7 @@ import util from 'util';
 import path from 'path';
 import url from 'url';
 import { colors, debug, minimatch } from 'playwright-core/lib/utilsBundle';
-import type { TestError, Location } from './types';
+import type { TestInfoError, Location } from './types';
 import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
 import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
 import { currentTestInfo } from './globals';
@@ -86,7 +86,7 @@ export function captureStackTrace(customApiName?: string): ParsedStackTrace {
   };
 }
 
-export function serializeError(error: Error | any): TestError {
+export function serializeError(error: Error | any): TestInfoError {
   if (error instanceof Error) {
     filterStackTrace(error);
     return {
@@ -191,10 +191,6 @@ export function formatLocation(location: Location) {
 
 export function errorWithFile(file: string, message: string) {
   return new Error(`${relativeFilePath(file)}: ${message}`);
-}
-
-export function errorWithLocation(location: Location, message: string) {
-  return new Error(`${formatLocation(location)}: ${message}`);
 }
 
 export function expectTypes(receiver: any, types: string[], matcherName: string) {

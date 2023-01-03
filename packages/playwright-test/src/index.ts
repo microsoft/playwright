@@ -20,14 +20,15 @@ import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOp
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
-import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
+import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import { store as _baseStore } from './store';
 import type { TestInfoImpl } from './testInfo';
 import { rootTestType, _setProjectSetup } from './testType';
+import { type ContextReuseMode } from './types';
 export { expect } from './expect';
 export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
-export const _store = _baseStore;
+export const store = _baseStore;
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
@@ -43,11 +44,10 @@ if ((process as any)['__pw_initiator__']) {
 
 type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
-  _contextReuseEnabled: boolean,
+  _contextReuseMode: ContextReuseMode,
   _reuseContext: boolean,
   _setupContextOptionsAndArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
-  _storageStateName: string | undefined;
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _browserOptions: LaunchOptions;
@@ -144,7 +144,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true }],
   proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true }],
   storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true }],
-  _storageStateName: [undefined, { option: true }],
+  storageStateName: [undefined, { option: true }],
   timezoneId: [({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true }],
   userAgent: [({ contextOptions }, use) => use(contextOptions.userAgent), { option: true }],
   viewport: [({ contextOptions }, use) => use(contextOptions.viewport === undefined ? { width: 1280, height: 720 } : contextOptions.viewport), { option: true }],
@@ -174,7 +174,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     permissions,
     proxy,
     storageState,
-    _storageStateName,
+    storageStateName,
     viewport,
     timezoneId,
     userAgent,
@@ -213,10 +213,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.permissions = permissions;
     if (proxy !== undefined)
       options.proxy = proxy;
-    if (_storageStateName !== undefined) {
-      const value = await _store.get(_storageStateName);
+    if (storageStateName !== undefined) {
+      const value = await store.get(storageStateName);
       if (!value)
-        throw new Error(`Cannot find value in the _store for _storageStateName: "${_storageStateName}"`);
+        throw new Error(`Cannot find value in the store for storageStateName: "${storageStateName}"`);
       options.storageState = value as any;
     } else if (storageState !== undefined) {
       options.storageState = storageState;
@@ -239,19 +239,19 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _snapshotSuffix: [process.platform, { scope: 'worker' }],
 
-  _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _browserOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+  _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _reuseContext, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = _snapshotSuffix;
     if (debugMode())
       testInfo.setTimeout(0);
 
-    const screenshotOptions = typeof screenshot !== 'string' ? { fullPage: screenshot.fullPage, omitBackground: screenshot.omitBackground } : undefined;
-    const screenshotMode = typeof screenshot === 'string' ? screenshot : screenshot.mode;
+    const screenshotMode = normalizeScreenshotMode(screenshot);
+    const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     const traceMode = normalizeTraceMode(trace);
     const defaultTraceOptions = { screenshots: true, snapshots: true, sources: true };
     const traceOptions = typeof trace === 'string' ? defaultTraceOptions : { ...defaultTraceOptions, ...trace, mode: undefined };
-    const captureTrace = shouldCaptureTrace(traceMode, testInfo);
+    const captureTrace = shouldCaptureTrace(traceMode, testInfo) && !_reuseContext;
     const temporaryTraceFiles: string[] = [];
     const temporaryScreenshots: string[] = [];
     const testInfoImpl = testInfo as TestInfoImpl;
@@ -463,9 +463,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }));
   }, { auto: 'all-hooks-included',  _title: 'playwright configuration' } as any],
 
-  _contextFactory: [async ({ browser, video, _artifactsDir }, use, testInfo) => {
+  _contextFactory: [async ({ browser, video, _artifactsDir, _reuseContext }, use, testInfo) => {
     const videoMode = normalizeVideoMode(video);
-    const captureVideo = shouldCaptureVideo(videoMode, testInfo);
+    const captureVideo = shouldCaptureVideo(videoMode, testInfo) && !_reuseContext;
     const contexts = new Map<BrowserContext, { pages: Page[] }>();
 
     await use(async options => {
@@ -519,10 +519,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       testInfo.errors.push({ message: prependToError });
   }, { scope: 'test',  _title: 'context' } as any],
 
-  _contextReuseEnabled: !!process.env.PW_TEST_REUSE_CONTEXT,
+  _contextReuseMode: process.env.PW_TEST_REUSE_CONTEXT === 'when-possible' ? 'when-possible' : (process.env.PW_TEST_REUSE_CONTEXT ? 'force' : 'none'),
 
-  _reuseContext: async ({ video, trace, _contextReuseEnabled }, use, testInfo) => {
-    const reuse = _contextReuseEnabled && !shouldCaptureVideo(normalizeVideoMode(video), testInfo) && !shouldCaptureTrace(normalizeTraceMode(trace), testInfo);
+  _reuseContext: async ({ video, trace, _contextReuseMode }, use, testInfo) => {
+    const reuse = _contextReuseMode === 'force' ||
+      (_contextReuseMode === 'when-possible' && !shouldCaptureVideo(normalizeVideoMode(video), testInfo) && !shouldCaptureTrace(normalizeTraceMode(trace), testInfo));
     await use(reuse);
   },
 
@@ -603,7 +604,7 @@ export function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mod
   return videoMode;
 }
 
-export function shouldCaptureVideo(videoMode: VideoMode, testInfo: TestInfo) {
+function shouldCaptureVideo(videoMode: VideoMode, testInfo: TestInfo) {
   return (videoMode === 'on' || videoMode === 'retain-on-failure' || (videoMode === 'on-first-retry' && testInfo.retry === 1));
 }
 
@@ -616,14 +617,20 @@ export function normalizeTraceMode(trace: TraceMode | 'retry-with-trace' | { mod
   return traceMode;
 }
 
-export function shouldCaptureTrace(traceMode: TraceMode, testInfo: TestInfo) {
+function shouldCaptureTrace(traceMode: TraceMode, testInfo: TestInfo) {
   return traceMode === 'on' || traceMode === 'retain-on-failure' || (traceMode === 'on-first-retry' && testInfo.retry === 1);
+}
+
+function normalizeScreenshotMode(screenshot: PlaywrightWorkerOptions['screenshot'] | undefined): ScreenshotMode {
+  if (!screenshot)
+    return 'off';
+  return typeof screenshot === 'string' ? screenshot : screenshot.mode;
 }
 
 const kTracingStarted = Symbol('kTracingStarted');
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
-export const _setup = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
-_setProjectSetup(_setup, true);
+export const setup = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
+_setProjectSetup(setup, true);
 
 export default test;

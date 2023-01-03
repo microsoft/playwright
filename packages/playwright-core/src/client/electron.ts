@@ -62,6 +62,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   readonly _context: BrowserContext;
   private _windows = new Set<Page>();
   private _timeoutSettings = new TimeoutSettings();
+  private _isClosed = false;
 
   static from(electronApplication: channels.ElectronApplicationChannel): ElectronApplication {
     return (electronApplication as any)._object;
@@ -73,7 +74,10 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     for (const page of this._context._pages)
       this._onPage(page);
     this._context.on(Events.BrowserContext.Page, page => this._onPage(page));
-    this._channel.on('close', () => this.emit(Events.ElectronApplication.Close));
+    this._channel.on('close', () => {
+      this._isClosed = true;
+      this.emit(Events.ElectronApplication.Close);
+    });
   }
 
   process(): childProcess.ChildProcess {
@@ -102,7 +106,9 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   async close() {
-    await this._channel.close();
+    if (this._isClosed)
+      return;
+    await this._channel.close().catch(() => {});
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {

@@ -36,6 +36,7 @@ export function register(components) {
 
 /**
  * @param {Component} component
+ * @returns {JSX.Element}
  */
 function render(component) {
   let componentFunc = registry.get(component.type);
@@ -69,10 +70,14 @@ function render(component) {
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
-    await hook({ hooksConfig });
+  let App = () => render(component);
+  for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || []) {
+    const wrapper = await hook({ App, hooksConfig });
+    if (wrapper)
+      App = () => wrapper;
+  }
 
-  ReactDOM.render(render(component), rootElement);
+  ReactDOM.render(App(), rootElement);
 
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
     await hook({ hooksConfig });

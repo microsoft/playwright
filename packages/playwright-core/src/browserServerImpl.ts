@@ -37,8 +37,9 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
     const playwright = createPlaywright('javascript');
-    const socksProxy = new SocksProxy();
-    playwright.options.socksProxyPort = await socksProxy.listen(0);
+    // TODO: enable socks proxy once ipv6 is supported.
+    const socksProxy = false ? new SocksProxy() : undefined;
+    playwright.options.socksProxyPort = await socksProxy?.listen(0);
 
     // 1. Pre-launch the browser
     const metadata = serverSideCallMetadata();
@@ -68,7 +69,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     (browserServer as any)._disconnectForTest = () => server.close();
     (browserServer as any)._userDataDirForTest = (browser as any)._userDataDirForTest;
     browser.options.browserProcess.onclose = (exitCode, signal) => {
-      socksProxy.close().catch(() => {});
+      socksProxy?.close().catch(() => {});
       server.close();
       browserServer.emit('close', exitCode, signal);
     };

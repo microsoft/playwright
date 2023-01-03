@@ -23,7 +23,7 @@ _addRunnerPlugin(() => {
   const { createPlugin } = require('@playwright/test/lib/plugins/vitePlugin');
   return createPlugin(
     path.join(__dirname, 'registerSource.mjs'),
-    () => require('@sveltejs/vite-plugin-svelte').svelte());
+    () => import('@sveltejs/vite-plugin-svelte').then(plugin => plugin.svelte()));
 });
 
 const test = baseTest.extend(fixtures);

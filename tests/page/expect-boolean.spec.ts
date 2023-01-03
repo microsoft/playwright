@@ -311,6 +311,41 @@ test.describe('toBeVisible', () => {
     await page.setContent('<div id=node>Text content</div>');
     await expect(page.locator('no-such-thing')).not.toBeVisible({ timeout: 1 });
   });
+
+  test('with frameLocator', async ({ page }) => {
+    await page.setContent('<div></div>');
+    const locator = page.frameLocator('iframe').locator('input');
+    let done = false;
+    const promise = expect(locator).toBeVisible().then(() => done = true);
+    await page.waitForTimeout(1000);
+    expect(done).toBe(false);
+    await page.setContent('<iframe srcdoc="<input>"></iframe>');
+    await promise;
+    expect(done).toBe(true);
+  });
+
+  test('with frameLocator 2', async ({ page }) => {
+    await page.setContent('<iframe></iframe>');
+    const locator = page.frameLocator('iframe').locator('input');
+    let done = false;
+    const promise = expect(locator).toBeVisible().then(() => done = true);
+    await page.waitForTimeout(1000);
+    expect(done).toBe(false);
+    await page.setContent('<iframe srcdoc="<input>"></iframe>');
+    await promise;
+    expect(done).toBe(true);
+  });
+
+  test('over navigation', async ({ page, server }) => {
+    await page.goto(server.EMPTY_PAGE);
+    let done = false;
+    const promise = expect(page.locator('input')).toBeVisible().then(() => done = true);
+    await page.waitForTimeout(1000);
+    expect(done).toBe(false);
+    await page.goto(server.PREFIX + '/input/checkbox.html');
+    await promise;
+    expect(done).toBe(true);
+  });
 });
 
 test.describe('toBeHidden', () => {
@@ -439,9 +474,10 @@ test.describe(() => {
   });
 
   test('toBeOK fail with promise', async ({ page, server }) => {
-    const res = page.request.get(server.EMPTY_PAGE).catch(e => {});
+    const res = page.request.get(server.EMPTY_PAGE);
     const error = await (expect(res) as any).toBeOK().catch(e => e);
     expect(error.message).toContain('toBeOK can be only used with APIResponse object');
+    await res;
   });
 
   test.describe('toBeOK should print response with text content type when fails', () => {

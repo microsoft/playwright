@@ -167,3 +167,16 @@ test('should work with soft', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 });
+
+test('should not accept TimeoutError', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('should fail', async () => {
+        await test.expect(() => {}).not.toPass({ timeout: 1 });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+});

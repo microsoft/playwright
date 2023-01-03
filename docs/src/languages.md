@@ -28,7 +28,7 @@ You can choose any testing framework such as JUnit or TestNG based on your proje
 
 ## .NET
 
-Playwright for .NET comes with [NUnit base classes](./test-runners.md#nunit) and [MSTest base classes](./test-runners.md#nunit) for writing end-to-end tests.
+Playwright for .NET comes with [NUnit base classes](https://playwright.dev/dotnet/docs/test-runners#nunit) and [MSTest base classes](https://playwright.dev/dotnet/docs/test-runners#mstest) for writing end-to-end tests.
 
 * [Documentation](https://playwright.dev/dotnet/docs/intro)
 * [GitHub repo](https://github.com/microsoft/playwright-dotnet)

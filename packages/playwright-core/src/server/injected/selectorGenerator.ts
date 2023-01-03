@@ -28,19 +28,33 @@ type SelectorToken = {
 const cacheAllowText = new Map<Element, SelectorToken[] | null>();
 const cacheDisallowText = new Map<Element, SelectorToken[] | null>();
 
+const kTextScoreRange = 10;
+const kExactPenalty = kTextScoreRange / 2;
+
 const kTestIdScore = 1;        // testIdAttributeName
 const kOtherTestIdScore = 2;   // other data-test* attributes
-const kPlaceholderScore = 3;
-const kLabelScore = 3;
-const kRoleWithNameScore = 5;
-const kAltTextScore = 10;
-const kTextScore = 15;
-const kTitleScore = 20;
-const kCSSIdScore = 100;
-const kRoleWithoutNameScore = 140;
-const kCSSInputTypeNameScore = 150;
-const kCSSTagNameScore = 200;
-const kNthScore = 1000;
+
+
+const kBeginPenalizedScore = 50;
+const kPlaceholderScore = 100;
+const kLabelScore = 120;
+const kRoleWithNameScore = 140;
+const kAltTextScore = 160;
+const kTextScore = 180;
+const kTitleScore = 200;
+const kPlaceholderScoreExact = kPlaceholderScore + kExactPenalty;
+const kLabelScoreExact = kLabelScore + kExactPenalty;
+const kRoleWithNameScoreExact = kRoleWithNameScore + kExactPenalty;
+const kAltTextScoreExact = kAltTextScore + kExactPenalty;
+const kTextScoreExact = kTextScore + kExactPenalty;
+const kTitleScoreExact = kTitleScore + kExactPenalty;
+const kEndPenalizedScore = 300;
+
+const kCSSIdScore = 500;
+const kRoleWithoutNameScore = 510;
+const kCSSInputTypeNameScore = 520;
+const kCSSTagNameScore = 530;
+const kNthScore = 10000;
 const kCSSFallbackScore = 10000000;
 
 export function querySelector(injectedScript: InjectedScript, selector: string, ownerDocument: Document): { selector: string, elements: Element[] } {
@@ -170,32 +184,41 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
 
   if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
     const input = element as HTMLInputElement | HTMLTextAreaElement;
-    if (input.placeholder)
+    if (input.placeholder) {
       candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder, false)}]`, score: kPlaceholderScore });
+      candidates.push({ engine: 'internal:attr', selector: `[placeholder=${escapeForAttributeSelector(input.placeholder, true)}]`, score: kPlaceholderScoreExact });
+    }
     const label = input.labels?.[0];
     if (label) {
       const labelText = elementText(injectedScript._evaluator._cacheText, label).full.trim();
       candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, false), score: kLabelScore });
+      candidates.push({ engine: 'internal:label', selector: escapeForTextSelector(labelText, true), score: kLabelScoreExact });
     }
   }
 
   const ariaRole = getAriaRole(element);
   if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
     const ariaName = getElementAccessibleName(element, false, accessibleNameCache);
-    if (ariaName)
+    if (ariaName) {
       candidates.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, false)}]`, score: kRoleWithNameScore });
-    else
+      candidates.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact });
+    } else {
       candidates.push({ engine: 'internal:role', selector: ariaRole, score: kRoleWithoutNameScore });
+    }
   }
 
-  if (element.getAttribute('alt') && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName))
+  if (element.getAttribute('alt') && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName)) {
     candidates.push({ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(element.getAttribute('alt')!, false)}]`, score: kAltTextScore });
+    candidates.push({ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(element.getAttribute('alt')!, true)}]`, score: kAltTextScoreExact });
+  }
 
   if (element.getAttribute('name') && ['BUTTON', 'FORM', 'FIELDSET', 'FRAME', 'IFRAME', 'INPUT', 'KEYGEN', 'OBJECT', 'OUTPUT', 'SELECT', 'TEXTAREA', 'MAP', 'META', 'PARAM'].includes(element.nodeName))
     candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[name=${quoteAttributeValue(element.getAttribute('name')!)}]`, score: kCSSInputTypeNameScore });
 
-  if (element.getAttribute('title'))
+  if (element.getAttribute('title')) {
     candidates.push({ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(element.getAttribute('title')!, false)}]`, score: kTitleScore });
+    candidates.push({ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(element.getAttribute('title')!, true)}]`, score: kTitleScoreExact });
+  }
 
   if (['INPUT', 'TEXTAREA'].includes(element.nodeName) && element.getAttribute('type') !== 'hidden') {
     if (element.getAttribute('type'))
@@ -210,6 +233,7 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
     candidates.push({ engine: 'css', selector: makeSelectorForId(idAttr), score: kCSSIdScore });
 
   candidates.push({ engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore });
+  penalizeScoreForLength([candidates]);
   return candidates;
 }
 
@@ -222,23 +246,29 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
   const candidates: SelectorToken[][] = [];
 
   const escaped = escapeForTextSelector(text, false);
+  const exactEscaped = escapeForTextSelector(text, true);
 
-  if (isTargetNode)
+  if (isTargetNode) {
     candidates.push([{ engine: 'internal:text', selector: escaped, score: kTextScore }]);
+    candidates.push([{ engine: 'internal:text', selector: exactEscaped, score: kTextScoreExact }]);
+  }
 
   const ariaRole = getAriaRole(element);
   const candidate: SelectorToken[] = [];
   if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
     const ariaName = getElementAccessibleName(element, false, accessibleNameCache);
-    if (ariaName)
+    if (ariaName) {
       candidate.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, false)}]`, score: kRoleWithNameScore });
-    else
+      candidate.push({ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact });
+    } else {
       candidate.push({ engine: 'internal:role', selector: ariaRole, score: kRoleWithoutNameScore });
+    }
   } else {
     candidate.push({ engine: 'css', selector: element.nodeName.toLowerCase(), score: kCSSTagNameScore });
   }
-  candidate.push({ engine: 'internal:has-text', selector: escaped, score: kTextScore });
-  candidates.push(candidate);
+  candidates.push([...candidate, { engine: 'internal:has-text', selector: escaped, score: kTextScore }]);
+  candidates.push([...candidate, { engine: 'internal:has-text', selector: exactEscaped, score: kTextScoreExact }]);
+  penalizeScoreForLength(candidates);
   return candidates;
 }
 
@@ -330,6 +360,15 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element): Se
 
 function quoteAttributeValue(text: string): string {
   return `"${cssEscape(text).replace(/\\ /g, ' ')}"`;
+}
+
+function penalizeScoreForLength(groups: SelectorToken[][]) {
+  for (const group of groups) {
+    for (const token of group) {
+      if (token.score > kBeginPenalizedScore && token.score < kEndPenalizedScore)
+        token.score += Math.min(kTextScoreRange, (token.selector.length / 10) | 0);
+    }
+  }
 }
 
 function joinTokens(tokens: SelectorToken[]): string {

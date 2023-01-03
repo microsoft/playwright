@@ -22,6 +22,7 @@ import './headerView.css';
 import * as icons from './icons';
 import { Link, navigate } from './links';
 import { statusIcon } from './statusIcon';
+import { msToString } from './uiUtils';
 
 export const HeaderView: React.FC<React.PropsWithChildren<{
   stats: Stats,
@@ -37,23 +38,26 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
     })();
   });
 
-  return <div className='pt-3'>
-    <div className='header-view-status-container ml-2 pl-2 d-flex'>
-      <StatsNavView stats={stats}></StatsNavView>
+  return (<>
+    <div className='pt-3'>
+      <div className='header-view-status-container ml-2 pl-2 d-flex'>
+        <StatsNavView stats={stats}></StatsNavView>
+      </div>
+      <form className='subnav-search' onSubmit={
+        event => {
+          event.preventDefault();
+          navigate(`#?q=${filterText ? encodeURIComponent(filterText) : ''}`);
+        }
+      }>
+        {icons.search()}
+        {/* Use navigationId to reset defaultValue */}
+        <input type='search' spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => {
+          setFilterText(e.target.value);
+        }}></input>
+      </form>
     </div>
-    <form className='subnav-search' onSubmit={
-      event => {
-        event.preventDefault();
-        navigate(`#?q=${filterText ? encodeURIComponent(filterText) : ''}`);
-      }
-    }>
-      {icons.search()}
-      {/* Use navigationId to reset defaultValue */}
-      <input type='search' spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => {
-        setFilterText(e.target.value);
-      }}></input>
-    </form>
-  </div>;
+    <div className='pt-2'><span data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)', paddingRight: '10px', float: 'right' }}>Total time: {msToString(stats.duration)}</span></div>
+  </>);
 };
 
 const StatsNavView: React.FC<{

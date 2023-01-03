@@ -15,43 +15,39 @@
  */
 
 const { app } = require('electron');
-const path = require('path');
 const { chromiumSwitches } = require('../chromium/chromiumSwitches');
 
-// Command line is like:
-// [Electron, loader.js, --inspect=0, --remote-debugging-port=0, options.cwd, app.js, ...args]
-const appPath = path.resolve(process.argv[4], process.argv[5]);
-process.argv.splice(2, 4);
-process.argv[1] = appPath;
-// Now it is like
-// [Electron, app.js, ...args]
+// [Electron, -r, loader.js, --inspect=0, --remote-debugging-port=0, ...args]
+process.argv.splice(1, 4);
+
 
 for (const arg of chromiumSwitches) {
   const match = arg.match(/--([^=]*)=?(.*)/)!;
   app.commandLine.appendSwitch(match[1], match[2]);
 }
 
-app.getAppPath = () => path.dirname(appPath);
+// Defer ready event.
+const originalWhenReady = app.whenReady();
+const originalEmit = app.emit.bind(app);
+let readyEventArgs: any[];
+app.emit = (event: string | symbol, ...args: any[]): boolean => {
+  if (event === 'ready') {
+    readyEventArgs = args;
+    return app.listenerCount('ready') > 0;
+  }
+  return originalEmit(event, ...args);
+};
 
-let launchInfoEventPayload: any;
-app.on('ready', launchInfo => launchInfoEventPayload = launchInfo);
+let isReady = false;
+let whenReadyCallback: (event: any) => any;
+const whenReadyPromise = new Promise<void>(f => whenReadyCallback = f);
+app.isReady = () => isReady;
+app.whenReady = () => whenReadyPromise;
 
 (globalThis as any).__playwright_run = async () => {
   // Wait for app to be ready to avoid browser initialization races.
-  await app.whenReady();
-
-  // Override isReady pipeline.
-  let isReady = false;
-  let whenReadyCallback: () => void;
-  const whenReadyPromise = new Promise<void>(f => whenReadyCallback = f);
-  app.isReady = () => isReady;
-  app.whenReady = () => whenReadyPromise;
-
-  require(appPath);
-
-  // Trigger isReady.
+  const event = await originalWhenReady;
   isReady = true;
-  whenReadyCallback!();
-  app.emit('will-finish-launching');
-  app.emit('ready', launchInfoEventPayload);
+  whenReadyCallback(event);
+  originalEmit('ready', ...readyEventArgs);
 };

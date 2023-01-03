@@ -25,7 +25,6 @@ export const jpegjs: typeof import('../bundles/utils/node_modules/jpeg-js') = re
 export const lockfile: typeof import('../bundles/utils/node_modules/@types/proper-lockfile') = require('./utilsBundleImpl').lockfile;
 export const mime: typeof import('../bundles/utils/node_modules/@types/mime') = require('./utilsBundleImpl').mime;
 export const minimatch: typeof import('../bundles/utils/node_modules/@types/minimatch') = require('./utilsBundleImpl').minimatch;
-export const ms: typeof import('../bundles/utils/node_modules/@types/ms') = require('./utilsBundleImpl').ms;
 export const PNG: typeof import('../bundles/utils/node_modules/@types/pngjs').PNG = require('./utilsBundleImpl').PNG;
 export const program: typeof import('../bundles/utils/node_modules/commander').program = require('./utilsBundleImpl').program;
 export const progress: typeof import('../bundles/utils/node_modules/@types/progress') = require('./utilsBundleImpl').progress;
@@ -54,4 +53,30 @@ export function parseStackTraceLine(line: string): { frame: import('../bundles/u
     frame,
     fileName,
   };
+}
+
+export function ms(ms: number): string {
+  if (!isFinite(ms))
+    return '-';
+
+  if (ms === 0)
+    return '0ms';
+
+  if (ms < 1000)
+    return ms.toFixed(0) + 'ms';
+
+  const seconds = ms / 1000;
+  if (seconds < 60)
+    return seconds.toFixed(1) + 's';
+
+  const minutes = seconds / 60;
+  if (minutes < 60)
+    return minutes.toFixed(1) + 'm';
+
+  const hours = minutes / 60;
+  if (hours < 24)
+    return hours.toFixed(1) + 'h';
+
+  const days = hours / 24;
+  return days.toFixed(1) + 'd';
 }

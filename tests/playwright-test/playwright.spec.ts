@@ -600,3 +600,89 @@ test('should pass fixture defaults to tests', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should not throw with many fixtures set to undefined', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: {
+        browserName: undefined,
+        headless: undefined,
+        channel: undefined,
+        launchOptions: undefined,
+        connectOptions: undefined,
+        screenshot: undefined,
+        video: undefined,
+        trace: undefined,
+        acceptDownloads: undefined,
+        bypassCSP: undefined,
+        colorScheme: undefined,
+        deviceScaleFactor: undefined,
+        extraHTTPHeaders: undefined,
+        geolocation: undefined,
+        hasTouch: undefined,
+        httpCredentials: undefined,
+        ignoreHTTPSErrors: undefined,
+        isMobile: undefined,
+        javaScriptEnabled: undefined,
+        locale: undefined,
+        offline: undefined,
+        permissions: undefined,
+        proxy: undefined,
+        storageState: undefined,
+        timezoneId: undefined,
+        userAgent: undefined,
+        viewport: undefined,
+        actionTimeout: undefined,
+        testIdAttribute: undefined,
+        navigationTimeout: undefined,
+        baseURL: undefined,
+        serviceWorkers: undefined,
+        contextOptions: undefined,
+      } };
+    `,
+    'a.spec.ts': `
+      const { test } = pwt;
+      test.use({
+        browserName: undefined,
+        headless: undefined,
+        channel: undefined,
+        launchOptions: undefined,
+        connectOptions: undefined,
+        screenshot: undefined,
+        video: undefined,
+        trace: undefined,
+        acceptDownloads: undefined,
+        bypassCSP: undefined,
+        colorScheme: undefined,
+        deviceScaleFactor: undefined,
+        extraHTTPHeaders: undefined,
+        geolocation: undefined,
+        hasTouch: undefined,
+        httpCredentials: undefined,
+        ignoreHTTPSErrors: undefined,
+        isMobile: undefined,
+        javaScriptEnabled: undefined,
+        locale: undefined,
+        offline: undefined,
+        permissions: undefined,
+        proxy: undefined,
+        storageState: undefined,
+        timezoneId: undefined,
+        userAgent: undefined,
+        viewport: undefined,
+        actionTimeout: undefined,
+        testIdAttribute: undefined,
+        navigationTimeout: undefined,
+        baseURL: undefined,
+        serviceWorkers: undefined,
+        contextOptions: undefined,
+      });
+      test('passes', async ({ page }) => {
+        await page.setContent('text');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

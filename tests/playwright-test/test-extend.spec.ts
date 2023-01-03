@@ -276,3 +276,31 @@ test('test.use() with undefined should not be ignored', async ({ runInlineTest }
   expect(result.output).toContain('test4: option1=config');
   expect(result.output).toContain('test4: option2=default');
 });
+
+test('undefined values in config and test.use should be reverted to default', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: { option1: undefined, option2: undefined },
+      };
+    `,
+    'a.test.js': `
+      const test = pwt.test.extend({
+        option1: [ 'default1', { option: true } ],
+        option2: [ 'default2', { option: true } ],
+        option3: [ 'default3', { option: true } ],
+      });
+      test.use({ option2: undefined, option3: undefined });
+      test('my test', async ({ option1, option2, option3 }) => {
+        console.log('option1=' + option1);
+        console.log('option2=' + option2);
+        console.log('option3=' + option3);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('option1=default1');
+  expect(result.output).toContain('option2=default2');
+  expect(result.output).toContain('option3=default3');
+});

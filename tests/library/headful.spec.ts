@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import pixelmatch from '../../packages/playwright-core/src/third_party/pixelmatch';
+import { compare } from 'playwright-core/lib/image_tools/compare';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import { expect, playwrightTest as it } from '../config/browserTest';
 
@@ -280,7 +280,7 @@ it('headless and headful should use same default fonts', async ({ page, headless
     const [image1, image2] = (await Promise.all([
       page.screenshot(), headedPage.screenshot()
     ])).map(buffer => PNG.sync.read(buffer));
-    const count = pixelmatch(image1.data, image2.data, null, image1.width, image2.height, { threshold: 0.01 });
+    const count = compare(image1.data, image2.data, null, image1.width, image2.height);
     expect(count).toBe(0);
   }
   await headedBrowser.close();

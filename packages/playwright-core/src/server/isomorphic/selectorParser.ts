@@ -59,25 +59,25 @@ export function parseSelector(selector: string): ParsedSelector {
       try {
         const unescaped = JSON.parse('[' + part.body + ']');
         if (!Array.isArray(unescaped) || unescaped.length < 1 || unescaped.length > 2 || typeof unescaped[0] !== 'string')
-          throw new Error(`Malformed selector: ${part.name}=` + part.body);
+          throw new InvalidSelectorError(`Malformed selector: ${part.name}=` + part.body);
         innerSelector = unescaped[0];
         if (unescaped.length === 2) {
           if (typeof unescaped[1] !== 'number' || !kNestedSelectorNamesWithDistance.has(part.name))
-            throw new Error(`Malformed selector: ${part.name}=` + part.body);
+            throw new InvalidSelectorError(`Malformed selector: ${part.name}=` + part.body);
           distance = unescaped[1];
         }
       } catch (e) {
-        throw new Error(`Malformed selector: ${part.name}=` + part.body);
+        throw new InvalidSelectorError(`Malformed selector: ${part.name}=` + part.body);
       }
       const result = { name: part.name, source: part.body, body: { parsed: parseSelector(innerSelector), distance } };
       if (result.body.parsed.parts.some(part => part.name === 'internal:control' && part.body === 'enter-frame'))
-        throw new Error(`Frames are not allowed inside "${part.name}" selectors`);
+        throw new InvalidSelectorError(`Frames are not allowed inside "${part.name}" selectors`);
       return result;
     }
     return { ...part, source: part.body };
   });
   if (kNestedSelectorNames.has(parts[0].name))
-    throw new Error(`"${parts[0].name}" selector cannot be first`);
+    throw new InvalidSelectorError(`"${parts[0].name}" selector cannot be first`);
   return {
     capture: result.capture,
     parts
@@ -241,8 +241,8 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
 
   const syntaxError = (stage: string|undefined) => {
     if (EOL)
-      throw new Error(`Unexpected end of selector while parsing selector \`${selector}\``);
-    throw new Error(`Error while parsing selector \`${selector}\` - unexpected symbol "${next()}" at position ${wp}` + (stage ? ' during ' + stage : ''));
+      throw new InvalidSelectorError(`Unexpected end of selector while parsing selector \`${selector}\``);
+    throw new InvalidSelectorError(`Error while parsing selector \`${selector}\` - unexpected symbol "${next()}" at position ${wp}` + (stage ? ' during ' + stage : ''));
   };
 
   function skipSpaces() {
@@ -313,7 +313,7 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
     try {
       return new RegExp(source, flags);
     } catch (e) {
-      throw new Error(`Error while parsing selector \`${selector}\`: ${e.message}`);
+      throw new InvalidSelectorError(`Error while parsing selector \`${selector}\`: ${e.message}`);
     }
   }
 
@@ -369,7 +369,7 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
     skipSpaces();
     if (next() === '/') {
       if (operator !== '=')
-        throw new Error(`Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with regular expression`);
+        throw new InvalidSelectorError(`Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with regular expression`);
       value = readRegularExpression();
     } else if (next() === `'` || next() === `"`) {
       value = readQuotedString(next()).slice(1, -1);
@@ -403,7 +403,7 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
 
     eat1();
     if (operator !== '=' && typeof value !== 'string')
-      throw new Error(`Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with non-string matching value - ${value}`);
+      throw new InvalidSelectorError(`Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with non-string matching value - ${value}`);
     return { name: jsonPath.join('.'), jsonPath, op: operator, value, caseSensitive };
   }
 
@@ -420,6 +420,6 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
   if (!EOL)
     syntaxError(undefined);
   if (!result.name && !result.attributes.length)
-    throw new Error(`Error while parsing selector \`${selector}\` - selector cannot be empty`);
+    throw new InvalidSelectorError(`Error while parsing selector \`${selector}\` - selector cannot be empty`);
   return result;
 }

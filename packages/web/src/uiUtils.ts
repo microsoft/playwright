@@ -19,7 +19,7 @@ export function msToString(ms: number): string {
     return '-';
 
   if (ms === 0)
-    return '0';
+    return '0ms';
 
   if (ms < 1000)
     return ms.toFixed(0) + 'ms';

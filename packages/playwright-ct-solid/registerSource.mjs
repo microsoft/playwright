@@ -78,10 +78,14 @@ function createComponent(component) {
 const unmountKey = Symbol('unmountKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
-    await hook({ hooksConfig });
+  let App = () => createComponent(component);
+  for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || []) {
+    const wrapper = await hook({ App, hooksConfig });
+    if (wrapper)
+      App = () => wrapper;
+  }
 
-  const unmount = solidRender(() => createComponent(component), rootElement);
+  const unmount = solidRender(App, rootElement);
   rootElement[unmountKey] = unmount;
 
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])

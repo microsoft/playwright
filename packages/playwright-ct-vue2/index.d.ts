@@ -48,17 +48,14 @@ export interface MountOptions<
   props?: Props;
   slots?: Record<string, Slot> & { default?: Slot };
   on?: Record<string, Function>;
-  hooksConfig?: JsonObject;
+  hooksConfig?: HooksConfig;
 }
 
 interface MountResult<
-  HooksConfig extends JsonObject,
   Props extends Record<string, unknown>
 > extends Locator {
   unmount(): Promise<void>;
-  update(
-    options: Omit<MountOptions<HooksConfig, Props>, 'hooksConfig'>
-  ): Promise<void>;
+  update(options: Omit<MountOptions<never, Props>, 'hooksConfig'>): Promise<void>;
 }
 
 interface MountResultJsx extends Locator {
@@ -70,15 +67,15 @@ export interface ComponentFixtures {
   mount(component: JSX.Element): Promise<MountResultJsx>;
   mount<HooksConfig extends JsonObject>(
     component: any,
-    options?: MountOptions<HooksConfig, any>
-  ): Promise<MountResult<HooksConfig, any>>;
+    options?: MountOptions<HooksConfig, Record<string, unknown>>
+  ): Promise<MountResult<Record<string, unknown>>>;
   mount<
     HooksConfig extends JsonObject,
     Props extends Record<string, unknown> = Record<string, unknown>
   >(
     component: any,
-    options: MountOptions<HooksConfig, any> & { props: Props }
-  ): Promise<MountResult<HooksConfig, Props>>;
+    options: MountOptions<HooksConfig, never> & { props: Props }
+  ): Promise<MountResult<Props>>;
 }
 
 export const test: TestType<

@@ -8,9 +8,22 @@ Playwright provides APIs to **monitor** and **modify** network traffic, both HTT
 
 ## HTTP Authentication
 
-Perform HTTP Authentication with [`method: Browser.newContext`].
+Perform HTTP Authentication.
 
-```js
+```js tab=js-ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  use: {
+    httpCredentials: {
+      username: 'bill',
+      password: 'pa55w0rd',
+    }
+  }
+};
+export default config;
+```
+
+```js tab=js-library
 const context = await browser.newContext({
   httpCredentials: {
     username: 'bill',
@@ -66,7 +79,21 @@ bypass proxy for.
 
 Here is an example of a global proxy:
 
-```js
+```js tab=js-ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  use: {
+    proxy: {
+      server: 'http://myproxy.com:3128',
+      username: 'usr',
+      password: 'pwd'
+    }
+  }
+};
+export default config;
+```
+
+```js tab=js-library
 const browser = await chromium.launch({
   proxy: {
     server: 'http://myproxy.com:3128',
@@ -114,7 +141,23 @@ await using var browser = await BrowserType.LaunchAsync(new()
 
 When specifying proxy for each context individually, **Chromium on Windows** needs a hint that proxy will be set. This is done via passing a non-empty proxy server to the browser itself. Here is an example of a context-specific proxy:
 
-```js
+```js tab=js-ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  use: {
+    launchOptions: {
+      // Browser proxy option is required for Chromium on Windows.
+      proxy: { server: 'per-context' }
+    },
+    proxy: {
+      server: 'http://myproxy.com:3128',
+    }
+  }
+};
+export default config;
+```
+
+```js tab=js-library
 const browser = await chromium.launch({
   // Browser proxy option is required for Chromium on Windows.
   proxy: { server: 'per-context' }
@@ -162,21 +205,11 @@ using var context = await Browser.NewContextAsync(new()
 You can monitor all the [Request]s and [Response]s:
 
 ```js
-const { chromium, webkit, firefox } = require('playwright');
+// Subscribe to 'request' and 'response' events.
+page.on('request', request => console.log('>>', request.method(), request.url()));
+page.on('response', response => console.log('<<', response.status(), response.url()));
 
-(async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-
-  // Subscribe to 'request' and 'response' events.
-  page.on('request', request =>
-      console.log('>>', request.method(), request.url()));
-  page.on('response', response =>
-      console.log('<<', response.status(), response.url()));
-  await page.goto('https://example.com');
-
-  await browser.close();
-})();
+await page.goto('https://example.com');
 ```
 
 ```java
@@ -426,11 +459,11 @@ await page.GotoAsync("https://example.com");
 await page.route('**/*', route => {
   const headers = route.request().headers();
   delete headers['X-Secret'];
-  route.continue({headers});
+  route.continue({ headers });
 });
 
 // Continue requests as POST.
-await page.route('**/*', route => route.continue({method: 'POST'}));
+await page.route('**/*', route => route.continue({ method: 'POST' }));
 ```
 
 ```java

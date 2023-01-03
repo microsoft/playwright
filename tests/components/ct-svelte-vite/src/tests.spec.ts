@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from '@playwright/experimental-ct-svelte';
+import App from './App.svelte';
 import Button from './components/Button.svelte';
 import Counter from './components/Counter.svelte';
 import DefaultSlot from './components/DefaultSlot.svelte';
@@ -137,4 +138,13 @@ test('get textContent of the empty component', async ({ mount }) => {
   expect(await component.allTextContents()).toEqual(['']);
   expect(await component.textContent()).toBe('');
   await expect(component).toHaveText('');
+});
+
+test('navigate to a page by clicking a link', async ({ page, mount }) => {
+  const component = await mount(App);
+  await expect(component.getByRole('main')).toHaveText('Login');
+  await expect(page).toHaveURL('/');
+  await component.getByRole('link', { name: 'Dashboard' }).click();
+  await expect(component.getByRole('main')).toHaveText('Dashboard');
+  await expect(page).toHaveURL('/dashboard');
 });
