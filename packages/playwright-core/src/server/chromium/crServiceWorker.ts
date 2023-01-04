@@ -121,6 +121,6 @@ export class CRServiceWorker extends Worker {
   }
 
   private _isNetworkInspectionEnabled(): boolean {
-    return this._browserContext._options.serviceWorkers === 'allow';
+    return this._browserContext._options.serviceWorkers !== 'block';
   }
 }
