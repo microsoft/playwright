@@ -42,7 +42,7 @@ jobs:
               console.log(process.argv[1]);
               process.exit(0);
             }
-            console.log(`chery-pick${match[2]}: ${match[1]}`);
+            console.log(`cherry-pick${match[2]}: ${match[1]}`);
           ' "$COMMIT_MESSAGE")
 
           git commit -m "$COMMIT_MESSAGE"
