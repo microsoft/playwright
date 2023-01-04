@@ -36,6 +36,7 @@ export async function detachFrame(page: Page, frameId: string) {
 }
 
 export async function verifyViewport(page: Page, width: number, height: number) {
+  // `expect` may clash in test runner tests if imported eagerly.
   const { expect } = require('@playwright/test');
   expect(page.viewportSize().width).toBe(width);
   expect(page.viewportSize().height).toBe(height);
