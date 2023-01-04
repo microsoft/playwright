@@ -19,6 +19,7 @@ import type { Page } from 'playwright-core';
 import * as path from 'path';
 import type { Source } from '../../../packages/recorder/src/recorderTypes';
 import type { CommonFixtures, TestChildProcess } from '../../config/commonFixtures';
+import { expect } from '@playwright/test';
 export { expect } from '@playwright/test';
 
 type CLITestArgs = {
@@ -154,6 +155,8 @@ class Recorder {
     await action();
     await this.page.locator('x-pw-highlight').waitFor();
     await this.page.locator('x-pw-tooltip').waitFor();
+    await expect(this.page.locator('x-pw-tooltip')).not.toHaveText('');
+    await expect(this.page.locator('x-pw-tooltip')).not.toHaveText(`locator('body')`);
     return this.page.locator('x-pw-tooltip').textContent();
   }
 
