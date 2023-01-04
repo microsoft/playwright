@@ -110,6 +110,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     }
   }
 
+  resetForReuse() {
+    this._snapshotter?.resetForReuse();
+  }
+
   async start(options: TracerOptions) {
     if (this._isStopping)
       throw new Error('Cannot start tracing while stopping');

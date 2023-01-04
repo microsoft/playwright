@@ -173,6 +173,7 @@ export abstract class BrowserContext extends SdkObject {
   async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams | null) {
     this.setDefaultNavigationTimeout(undefined);
     this.setDefaultTimeout(undefined);
+    this.tracing.resetForReuse();
 
     if (params) {
       for (const key of paramsThatAllowContextReuse)

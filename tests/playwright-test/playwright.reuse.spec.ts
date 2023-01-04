@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
+import { parseTrace } from '../config/utils';
 import fs from 'fs';
 
 test('should reuse context', async ({ runInlineTest }) => {
@@ -429,4 +430,45 @@ test('should cancel pending operations upon reuse', async ({ runInlineTest }) =>
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
+});
+
+test('should reset tracing', async ({ runInlineTest }, testInfo) => {
+  const traceFile1 = testInfo.outputPath('trace1.zip');
+  const traceFile2 = testInfo.outputPath('trace2.zip');
+  const result = await runInlineTest({
+    'reuse.spec.ts': `
+      const { test } = pwt;
+      test('one', async ({ page }) => {
+        await page.context().tracing.start({ snapshots: true });
+        await page.setContent('<button>Click</button>');
+        await page.click('button');
+        await page.context().tracing.stopChunk({ path: ${JSON.stringify(traceFile1)} });
+      });
+      test('two', async ({ page }) => {
+        await page.context().tracing.start({ snapshots: true });
+        await page.setContent('<input>');
+        await page.fill('input', 'value');
+        await page.locator('input').click();
+        await page.context().tracing.stopChunk({ path: ${JSON.stringify(traceFile2)} });
+      });
+    `,
+  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+
+  const trace1 = await parseTrace(traceFile1);
+  expect(trace1.actions).toEqual([
+    'page.setContent',
+    'page.click',
+  ]);
+  expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBe(true);
+
+  const trace2 = await parseTrace(traceFile2);
+  expect(trace2.actions).toEqual([
+    'page.setContent',
+    'page.fill',
+    'locator.click',
+  ]);
+  expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBe(true);
 });
