@@ -74,6 +74,11 @@ export class Snapshotter {
     this._started = false;
   }
 
+  resetForReuse() {
+    // Next time we start recording, we will call addInitScript again.
+    this._initialized = false;
+  }
+
   async _initialize() {
     for (const page of this._context.pages())
       this._onPage(page);
