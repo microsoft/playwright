@@ -37,9 +37,9 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   await page.close();
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
 
-  const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
+  const { events, actions } = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(events[0].type).toBe('context-options');
-  expect(eventsToActions(events)).toEqual([
+  expect(actions).toEqual([
     'page.goto',
     'page.setContent',
     'page.click',
@@ -48,7 +48,6 @@ test('should collect trace with resources, but no js', async ({ context, page, s
     'keyboard.insertText',
     'page.waitForTimeout',
     'page.close',
-    'tracing.stop',
   ]);
 
   expect(events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
@@ -79,9 +78,9 @@ test('should use the correct apiName for event driven callbacks', async ({ conte
   await page.evaluate(() => alert('yo'));
 
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
-  const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
+  const { events, actions } = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(events[0].type).toBe('context-options');
-  expect(eventsToActions(events)).toEqual([
+  expect(actions).toEqual([
     'page.route',
     'page.goto',
     'route.continue',
@@ -90,7 +89,6 @@ test('should use the correct apiName for event driven callbacks', async ({ conte
     'page.reload',
     'page.evaluate',
     'dialog.accept',
-    'tracing.stop',
   ]);
 });
 
@@ -165,23 +163,21 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
   await context.tracing.stop({ path: testInfo.outputPath('trace2.zip') });
 
   {
-    const { events } = await parseTrace(testInfo.outputPath('trace1.zip'));
+    const { events, actions } = await parseTrace(testInfo.outputPath('trace1.zip'));
     expect(events[0].type).toBe('context-options');
-    expect(eventsToActions(events)).toEqual([
+    expect(actions).toEqual([
       'page.goto',
       'page.setContent',
       'page.click',
-      'tracing.stop',
     ]);
   }
 
   {
-    const { events } = await parseTrace(testInfo.outputPath('trace2.zip'));
+    const { events, actions } = await parseTrace(testInfo.outputPath('trace2.zip'));
     expect(events[0].type).toBe('context-options');
-    expect(eventsToActions(events)).toEqual([
+    expect(actions).toEqual([
       'page.dblclick',
       'page.close',
-      'tracing.stop',
     ]);
   }
 });
@@ -396,11 +392,10 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
 
   const trace1 = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(trace1.events[0].type).toBe('context-options');
-  expect(eventsToActions(trace1.events)).toEqual([
+  expect(trace1.actions).toEqual([
     'page.setContent',
     'page.click',
     'page.click',
-    'tracing.stopChunk',
   ]);
   expect(trace1.events.find(e => e.metadata?.apiName === 'page.click' && !!e.metadata.error)).toBeTruthy();
   expect(trace1.events.find(e => e.metadata?.apiName === 'page.click' && e.metadata?.error?.error?.message === 'Action was interrupted')).toBeTruthy();
@@ -409,9 +404,8 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
 
   const trace2 = await parseTrace(testInfo.outputPath('trace2.zip'));
   expect(trace2.events[0].type).toBe('context-options');
-  expect(eventsToActions(trace2.events)).toEqual([
+  expect(trace2.actions).toEqual([
     'page.hover',
-    'tracing.stopChunk',
   ]);
   expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(trace2.events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();
@@ -459,9 +453,8 @@ test('should ignore iframes in head', async ({ context, page, server }, testInfo
   await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') });
 
   const trace = await parseTrace(testInfo.outputPath('trace.zip'));
-  expect(eventsToActions(trace.events)).toEqual([
+  expect(trace.actions).toEqual([
     'page.click',
-    'tracing.stopChunk',
   ]);
   expect(trace.events.find(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(trace.events.find(e => e.type === 'frame-snapshot' && JSON.stringify(e.snapshot.html).includes('IFRAME'))).toBeFalsy();
@@ -617,10 +610,4 @@ function expectBlue(pixels: Buffer, offset: number) {
 
 function relativeStack(action: any): string[] {
   return action.metadata.stack.map(f => f.file.replace(__dirname + path.sep, ''));
-}
-
-function eventsToActions(events: any[]): string[] {
-  return events.filter(e => e.type === 'action' && !e.metadata.internal)
-      .sort((a, b) => a.metadata.startTime - b.metadata.startTime)
-      .map(e => e.metadata.apiName);
 }

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { expect } from '@playwright/test';
 import type { Frame, Page } from 'playwright-core';
 import { ZipFile } from '../../packages/playwright-core/lib/utils/zipFile';
 
@@ -37,6 +36,8 @@ export async function detachFrame(page: Page, frameId: string) {
 }
 
 export async function verifyViewport(page: Page, width: number, height: number) {
+  // `expect` may clash in test runner tests if imported eagerly.
+  const { expect } = require('@playwright/test');
   expect(page.viewportSize().width).toBe(width);
   expect(page.viewportSize().height).toBe(height);
   expect(await page.evaluate('window.innerWidth')).toBe(width);
@@ -90,7 +91,7 @@ export function suppressCertificateWarning() {
   };
 }
 
-export async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
+export async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer>, actions: string[] }> {
   const zipFS = new ZipFile(file);
   const resources = new Map<string, Buffer>();
   for (const entry of await zipFS.entries())
@@ -109,7 +110,15 @@ export async function parseTrace(file: string): Promise<{ events: any[], resourc
   return {
     events,
     resources,
+    actions: eventsToActions(events)
   };
+}
+
+function eventsToActions(events: any[]): string[] {
+  // Trace viewer only shows non-internal non-tracing actions.
+  return events.filter(e => e.type === 'action' && !e.metadata.internal && !e.metadata.method.startsWith('tracing'))
+      .sort((a, b) => a.metadata.startTime - b.metadata.startTime)
+      .map(e => e.metadata.apiName);
 }
 
 export async function parseHar(file: string): Promise<Map<string, Buffer>> {
