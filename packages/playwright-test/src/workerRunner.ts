@@ -289,6 +289,7 @@ export class WorkerRunner extends EventEmitter {
 
     const suites = getSuites(test);
     const reversedSuites = suites.slice().reverse();
+    const nextSuites = new Set(getSuites(nextTest));
 
     // Inherit test.setTimeout() from parent suites, deepest has the priority.
     for (const suite of reversedSuites) {
@@ -312,8 +313,11 @@ export class WorkerRunner extends EventEmitter {
     this.emit('testBegin', buildTestBeginPayload(testInfo));
 
     const isSkipped = testInfo.expectedStatus === 'skipped';
-    if (isSkipped && nextTest) {
-      // Fast path - this test and skipped, and there are more tests that will handle cleanup.
+    const hasAfterAllToRunBeforeNextTest = reversedSuites.some(suite => {
+      return this._activeSuites.has(suite) && !nextSuites.has(suite) && suite._hooks.some(hook => hook.type === 'afterAll');
+    });
+    if (isSkipped && nextTest && !hasAfterAllToRunBeforeNextTest) {
+      // Fast path - this test is skipped, and there are more tests that will handle cleanup.
       testInfo.status = 'skipped';
       this.emit('testEnd', buildTestEndPayload(testInfo));
       return;
@@ -445,7 +449,6 @@ export class WorkerRunner extends EventEmitter {
       }
 
       // Run "afterAll" hooks for suites that are not shared with the next test.
-      const nextSuites = new Set(getSuites(nextTest));
       // In case of failure the worker will be stopped and we have to make sure that afterAll
       // hooks run before test fixtures teardown.
       for (const suite of reversedSuites) {

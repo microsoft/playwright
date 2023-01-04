@@ -844,3 +844,31 @@ test('afterEach exception after skipped test should be reported', async ({ runIn
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Error: oh my!');
 });
+
+test('afterAll should be run for test.skip', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.describe('suite1', () => {
+        test.beforeAll(() => console.log('\\n%%beforeAll1'));
+        test.afterAll(() => console.log('\\n%%afterAll1'));
+        test('test1', () => console.log('\\n%%test1'));
+        test.skip('test2', () => {});
+        test.skip('test2.5', () => {});
+      });
+      test.describe('suite2', () => {
+        test.beforeAll(() => console.log('\\n%%beforeAll2'));
+        test.afterAll(() => console.log('\\n%%afterAll2'));
+        test('test3', () => console.log('\\n%%test3'));
+      });
+    `,
+  });
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%beforeAll1',
+    '%%test1',
+    '%%afterAll1',
+    '%%beforeAll2',
+    '%%test3',
+    '%%afterAll2',
+  ]);
+});
