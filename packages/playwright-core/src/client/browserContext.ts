@@ -421,7 +421,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
     storageState: await prepareStorageState(options),
-    serviceWorkers: options.serviceWorkers === null ? 'allow' : options.serviceWorkers,
+    serviceWorkers: options.serviceWorkers,
     recordHar: prepareRecordHarOptions(options.recordHar),
     colorScheme: options.colorScheme === null ? 'no-override' : options.colorScheme,
     reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
