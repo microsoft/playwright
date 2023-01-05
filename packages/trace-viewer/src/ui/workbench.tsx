@@ -144,7 +144,7 @@ export const Workbench: React.FunctionComponent<{
   const networkCount = selectedAction ? modelUtil.resourcesForAction(selectedAction).length : 0;
 
   const tabs = [
-    { id: 'logs', title: 'Call', count: 0, render: () => <CallTab action={selectedAction} /> },
+    { id: 'logs', title: 'Call', count: 0, render: () => <CallTab action={selectedAction} sdkLanguage={model.sdkLanguage} /> },
     { id: 'console', title: 'Console', count: consoleCount, render: () => <ConsoleTab action={selectedAction} /> },
     { id: 'network', title: 'Network', count: networkCount, render: () => <NetworkTab action={selectedAction} /> },
   ];

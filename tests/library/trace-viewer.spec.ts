@@ -151,6 +151,18 @@ test('should show params and return value', async ({ showTraceViewer, browserNam
     'arg: {"a":"paramA","b":4}',
     'value: "return paramA"'
   ]);
+
+  await traceViewer.selectAction(`locator('button')`);
+  await expect(traceViewer.callLines).toContainText([
+    /expect.toHaveText/,
+    /wall time: [0-9/:,APM ]+/,
+    /duration: [\d]+ms/,
+    /locator: locator\('button'\)/,
+    /expression: "to.have.text"/,
+    /timeout: 10000/,
+    /matches: true/,
+    /received: "Click"/,
+  ]);
 });
 
 test('should show null as a param', async ({ showTraceViewer, browserName }) => {

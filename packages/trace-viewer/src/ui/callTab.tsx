@@ -21,10 +21,13 @@ import { msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './callTab.css';
 import { CopyToClipboard } from './copyToClipboard';
+import { asLocator } from '@isomorphic/locatorGenerators';
+import type { Language } from '@isomorphic/locatorGenerators';
 
 export const CallTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
-}> = ({ action }) => {
+  sdkLanguage: Language | undefined,
+}> = ({ action, sdkLanguage }) => {
   if (!action)
     return null;
   const logs = action.metadata.log;
@@ -48,12 +51,12 @@ export const CallTab: React.FunctionComponent<{
     </>}
     { !!paramKeys.length && <div className='call-section'>Parameters</div> }
     {
-      !!paramKeys.length && paramKeys.map((name, index) => renderLine(action.metadata, name, params[name], 'param-' + index))
+      !!paramKeys.length && paramKeys.map((name, index) => renderProperty(propertyToString(action.metadata, name, params[name], sdkLanguage), 'param-' + index))
     }
     { !!action.metadata.result && <div className='call-section'>Return value</div> }
     {
       !!action.metadata.result && Object.keys(action.metadata.result).map((name, index) =>
-        renderLine(action.metadata, name, action.metadata.result[name], 'result-' + index)
+        renderProperty(propertyToString(action.metadata, name, action.metadata.result[name], sdkLanguage), 'result-' + index)
       )
     }
     <div className='call-section'>Log</div>
@@ -67,44 +70,42 @@ export const CallTab: React.FunctionComponent<{
   </div>;
 };
 
-function shouldCopy(type: string): boolean {
-  return !!({
-    'string': true,
-    'number': true,
-    'object': true,
-  }[type]);
-}
+type Property = {
+  name: string;
+  type: 'string' | 'number' | 'object' | 'locator' | 'handle' | 'bigint' | 'boolean' | 'symbol' | 'undefined' | 'function';
+  text: string;
+};
 
-function renderLine(metadata: CallMetadata, name: string, value: any, key: string) {
-  const { title, type } = toString(metadata, name, value);
-  let text = title.replace(/\n/g, '↵');
-  if (type === 'string')
+function renderProperty(property: Property, key: string) {
+  let text = property.text.replace(/\n/g, '↵');
+  if (property.type === 'string')
     text = `"${text}"`;
   return (
     <div key={key} className='call-line'>
-      {name}: <span className={`call-value ${type}`} title={title}>{text}</span>
-      { shouldCopy(type) && (
+      {property.name}: <span className={`call-value ${property.type}`} title={property.text}>{text}</span>
+      { ['string', 'number', 'object', 'locator'].includes(property.type) &&
         <span className='call-line__copy-icon'>
-          <CopyToClipboard value={title} />
+          <CopyToClipboard value={property.text} />
         </span>
-      )}
+      }
     </div>
   );
 }
 
-function toString(metadata: CallMetadata, name: string, value: any): { title: string, type: string } {
-  if (metadata.method.includes('eval')) {
-    if (name === 'arg')
-      value = parseSerializedValue(value.value, new Array(10).fill({ handle: '<handle>' }));
-    if (name === 'value')
-      value = parseSerializedValue(value, new Array(10).fill({ handle: '<handle>' }));
-  }
+function propertyToString(metadata: CallMetadata, name: string, value: any, sdkLanguage: Language | undefined): Property {
+  const isEval = metadata.method.includes('eval') || metadata.method === 'waitForFunction';
+  if (name === 'eventInit' || name === 'expectedValue' || (name === 'arg' && isEval))
+    value = parseSerializedValue(value.value, new Array(10).fill({ handle: '<handle>' }));
+  if ((name === 'value' && isEval) || (name === 'received' && metadata.method === 'expect'))
+    value = parseSerializedValue(value, new Array(10).fill({ handle: '<handle>' }));
+  if (name === 'selector')
+    return { text: asLocator(sdkLanguage || 'javascript', metadata.params.selector), type: 'locator', name: 'locator' };
   const type = typeof value;
   if (type !== 'object' || value === null)
-    return { title: String(value), type };
+    return { text: String(value), type, name };
   if (value.guid)
-    return { title: '<handle>', type: 'handle' };
-  return { title: JSON.stringify(value), type: 'object' };
+    return { text: '<handle>', type: 'handle', name };
+  return { text: JSON.stringify(value), type: 'object', name };
 }
 
 function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {
