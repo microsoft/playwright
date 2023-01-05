@@ -46,7 +46,7 @@ You can also use the [VS Code Extension](./getting-started-vscode.md) to generat
 
 ## Use web first assertions
 
-Assertions are a way to verify that the expected result and the actual result matched or not. By using [web first assertions](./test-assertions.md) Playwright will wait until the expected condition is met. For Example when testing a toast message, if you click a button that makes a toast message appear you can test the toast message is there. If the toast takes half a second to appear Playwright will wait. Web assertions such as `toBeVisible()` will wait and retry.
+Assertions are a way to verify that the expected result and the actual result matched or not. By using [web first assertions](./test-assertions.md) Playwright will wait until the expected condition is met. For example, when testing a toast message, a test would click a button that makes a toast message appear and check that the toast message is there. If the toast takes half a second to appear, assertions such as `toBeVisible()` will wait and retry if needed.
 
 ```js
 👍 await expect(page.getByText('welcome')).toBeVisible();
