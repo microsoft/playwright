@@ -69,7 +69,9 @@ Use web first assertions such as `toBeVisible()` instead.
 ```
 ## Configure post-mortem debugging
 
-Use the playwright [trace viewer](./trace-viewer.md) for local debugging and post mortem debugging instead of videos and screenshots. The trace viewer gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
+Debug your tests live in VSCode. <add a link/text here>
+
+For CI failures, use the playwright [trace viewer](./trace-viewer.md) instead of videos and screenshots. The trace viewer gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
 
 Traces are set to run on CI on the first retry of a failed test. However you can also run a trace locally when developing.
 
