@@ -23,7 +23,7 @@ npx playwright show-trace trace.zip
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="show-trace trace.zip"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace trace.zip"
 ```
 
 ```bash python
@@ -263,7 +263,7 @@ npx playwright show-trace trace.zip
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="show-trace trace.zip"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace trace.zip"
 ```
 
 ```bash python
@@ -290,7 +290,7 @@ npx playwright show-trace https://example.com/trace.zip
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="show-trace https://example.com/trace.zip"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace https://example.com/trace.zip"
 ```
 
 ```bash python

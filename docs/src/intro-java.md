@@ -84,7 +84,7 @@ public class App {
 With the Example.java and pom.xml above, compile and execute your new program as follows:
 
 ```bash
-mvn compile exec:java -Dexec.mainClass="org.example.App"
+mvn compile exec:java -D exec.mainClass="org.example.App"
 ```
 
 Running it downloads the Playwright package and installs browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](./browsers.md#installing-browsers).
@@ -120,7 +120,7 @@ playwright.firefox().launch(new BrowserType.LaunchOptions().setHeadless(false).s
 ## Running the Example script
 
 ```bash
-mvn compile exec:java -Dexec.mainClass="org.example.App"
+mvn compile exec:java -D exec.mainClass="org.example.App"
 ```
 
 By default browsers launched with Playwright run headless, meaning no browser UI will open up when running the script. To change that you can pass `new BrowserType.LaunchOptions().setHeadless(false)` when launching the browser.

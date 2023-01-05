@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
+import { pollAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import path from 'path';
 import {
   toBeChecked,
@@ -44,7 +44,6 @@ import { toMatchSnapshot, toHaveScreenshot } from './matchers/toMatchSnapshot';
 import type { Expect } from './types';
 import { currentTestInfo } from './globals';
 import { serializeError, captureStackTrace, currentExpectTimeout } from './util';
-import { monotonicTime } from 'playwright-core/lib/utils';
 import {
   expect as expectLibrary,
   INVERTED_COLOR,
@@ -253,38 +252,30 @@ class ExpectMetaInfoProxyHandler {
 }
 
 async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: number[] | undefined, timeout: number, generator: () => any, ...args: any[]) {
-  let matcherError;
-  const startTime = monotonicTime();
-  pollIntervals = pollIntervals || [100, 250, 500, 1000];
-  const lastPollInterval = pollIntervals[pollIntervals.length - 1] || 1000;
-  while (true) {
-    const elapsed = monotonicTime() - startTime;
-    if (timeout !== 0 && elapsed > timeout)
-      break;
-    const received = timeout !== 0 ? await raceAgainstTimeout(generator, timeout - elapsed) : await generator();
-    if (received.timedOut)
-      break;
+  const result = await pollAgainstTimeout<Error|undefined>(async () => {
+    const value = await generator();
+    let expectInstance = expectLibrary(value) as any;
+    if (isNot)
+      expectInstance = expectInstance.not;
     try {
-      let expectInstance = expectLibrary(received.result) as any;
-      if (isNot)
-        expectInstance = expectInstance.not;
       expectInstance[matcherName].call(expectInstance, ...args);
-      return;
-    } catch (e) {
-      matcherError = e;
+      return { continuePolling: false, result: undefined };
+    } catch (error) {
+      return { continuePolling: true, result: error };
     }
-    await new Promise(x => setTimeout(x, pollIntervals!.shift() ?? lastPollInterval));
+  }, timeout, pollIntervals ?? [100, 250, 500, 1000]);
+
+  if (result.timedOut) {
+    const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
+    const message = result.result ? [
+      result.result.message,
+      '',
+      `Call Log:`,
+      `- ${timeoutMessage}`,
+    ].join('\n') : timeoutMessage;
+
+    throw new Error(message);
   }
-
-  const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
-  const message = matcherError ? [
-    matcherError.message,
-    '',
-    `Call Log:`,
-    `- ${timeoutMessage}`,
-  ].join('\n') : timeoutMessage;
-
-  throw new Error(message);
 }
 
 expectLibrary.extend(customMatchers);

@@ -25,8 +25,7 @@ import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
 import { isTextualMimeType } from 'playwright-core/lib/utils/mimeType';
-import { monotonicTime } from 'playwright-core/lib/utils';
-import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
+import { pollAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 
 interface LocatorEx extends Locator {
   _expect(customStackTrace: ParsedStackTrace, expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -320,43 +319,27 @@ export async function toPass(
     timeout?: number,
   } = {},
 ) {
-  let matcherError: Error | undefined;
-  const startTime = monotonicTime();
-  const pollIntervals = options.intervals || [100, 250, 500, 1000];
-  const lastPollInterval = pollIntervals[pollIntervals.length - 1] || 1000;
   const timeout = options.timeout !== undefined ? options.timeout : 0;
-  const isNot = this.isNot;
 
-  while (true) {
-    const elapsed = monotonicTime() - startTime;
-    if (timeout !== 0 && elapsed > timeout)
-      break;
+  const result = await pollAgainstTimeout<Error|undefined>(async () => {
     try {
-      const wrappedCallback = () => Promise.resolve().then(callback);
-      const received = timeout !== 0 ? await raceAgainstTimeout(wrappedCallback, timeout - elapsed)
-        : await wrappedCallback().then(() => ({ timedOut: false }));
-      if (received.timedOut)
-        break;
-      // The check passed, exit sucessfully.
-      if (isNot)
-        matcherError = new Error('Expected to fail, but passed');
-      else
-        return { message: () => '', pass: true };
+      await callback();
+      return { continuePolling: this.isNot, result: undefined };
     } catch (e) {
-      if (isNot)
-        return { message: () => '', pass: false };
-      matcherError = e;
+      return { continuePolling: !this.isNot, result: e };
     }
-    await new Promise(x => setTimeout(x, pollIntervals!.shift() ?? lastPollInterval));
+  }, timeout, options.intervals || [100, 250, 500, 1000]);
+
+  if (result.timedOut) {
+    const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
+    const message = () => result.result ? [
+      result.result.message,
+      '',
+      `Call Log:`,
+      `- ${timeoutMessage}`,
+    ].join('\n') : timeoutMessage;
+
+    return { message, pass: this.isNot };
   }
-
-  const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
-  const message = () => matcherError ? [
-    matcherError.message,
-    '',
-    `Call Log:`,
-    `- ${timeoutMessage}`,
-  ].join('\n') : timeoutMessage;
-
-  return { message, pass: isNot ? true : false };
+  return { pass: !this.isNot, message: () => '' };
 }

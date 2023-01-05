@@ -2196,6 +2196,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   isEnabled(params: FrameIsEnabledParams, metadata?: Metadata): Promise<FrameIsEnabledResult>;
   isHidden(params: FrameIsHiddenParams, metadata?: Metadata): Promise<FrameIsHiddenResult>;
   isVisible(params: FrameIsVisibleParams, metadata?: Metadata): Promise<FrameIsVisibleResult>;
+  viewportRatio(params: FrameViewportRatioParams, metadata?: Metadata): Promise<FrameViewportRatioResult>;
   isEditable(params: FrameIsEditableParams, metadata?: Metadata): Promise<FrameIsEditableResult>;
   press(params: FramePressParams, metadata?: Metadata): Promise<FramePressResult>;
   querySelector(params: FrameQuerySelectorParams, metadata?: Metadata): Promise<FrameQuerySelectorResult>;
@@ -2592,6 +2593,16 @@ export type FrameIsVisibleOptions = {
 };
 export type FrameIsVisibleResult = {
   value: boolean,
+};
+export type FrameViewportRatioParams = {
+  selector: string,
+  strict?: boolean,
+};
+export type FrameViewportRatioOptions = {
+  strict?: boolean,
+};
+export type FrameViewportRatioResult = {
+  value: number,
 };
 export type FrameIsEditableParams = {
   selector: string,

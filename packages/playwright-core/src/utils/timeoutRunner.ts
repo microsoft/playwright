@@ -109,3 +109,24 @@ export async function raceAgainstTimeout<T>(cb: () => Promise<T>, timeout: numbe
     throw e;
   }
 }
+
+export async function pollAgainstTimeout<T>(callback: () => Promise<{ continuePolling: boolean, result: T }>, timeout: number, pollIntervals: number[] = [100, 250, 500, 1000]): Promise<{ result?: T, timedOut: boolean }> {
+  const startTime = monotonicTime();
+  const lastPollInterval = pollIntervals.pop() ?? 1000;
+  let lastResult: T|undefined;
+  const wrappedCallback = () => Promise.resolve().then(callback);
+  while (true) {
+    const elapsed = monotonicTime() - startTime;
+    if (timeout !== 0 && elapsed > timeout)
+      break;
+    const received = timeout !== 0 ? await raceAgainstTimeout(wrappedCallback, timeout - elapsed)
+      : await wrappedCallback().then(value => ({ result: value, timedOut: false }));
+    if (received.timedOut)
+      break;
+    lastResult = received.result.result;
+    if (!received.result.continuePolling)
+      return { result: received.result.result, timedOut: false };
+    await new Promise(x => setTimeout(x, pollIntervals!.shift() ?? lastPollInterval));
+  }
+  return { timedOut: true, result: lastResult };
+}

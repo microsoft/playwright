@@ -137,6 +137,24 @@ test('should show error that is thrown from predicate', async ({ runInlineTest }
   expect(stripAnsi(result.output)).toContain('foo bar baz');
 });
 
+test('should not retry predicate that threw an error', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('should fail', async ({ page }) => {
+        let iteration = 0;
+        await test.expect.poll(() => {
+          if (iteration++ === 0)
+            throw new Error('foo bar baz');
+          return 42;
+        }).toBe(42);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toContain('foo bar baz');
+});
+
 test('should support .not predicate', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `

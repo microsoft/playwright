@@ -19,7 +19,7 @@ test('codegen should print the right install command without browsers', async ({
   await exec('npm i --foreground-scripts playwright', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
 
   const pwLangName2InstallCommand = {
-    'java': 'mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"',
+    'java': 'mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"',
     'python': 'playwright install',
     'csharp': 'pwsh bin/Debug/netX/playwright.ps1 install',
     '': 'npx playwright install',

@@ -1318,6 +1318,31 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout({}));
   }
 
+  async viewportRatio(metadata: CallMetadata, selector: string, options: types.StrictOptions = {}): Promise<number> {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(async progress => {
+      progress.log(`  calculating viewport ratio of ${this._asLocator(selector)}`);
+      const resolved = await this._resolveInjectedForSelector(progress, selector, options);
+      if (!resolved)
+        return 0;
+      return await resolved.injected.evaluate(async (injected, { info }) => {
+        const element = injected.querySelector(info.parsed, document, info.strict);
+        if (!element)
+          return 0;
+        return await new Promise(resolve => {
+          const observer = new IntersectionObserver(entries => {
+            resolve(entries[0].intersectionRatio);
+            observer.disconnect();
+          });
+          observer.observe(element);
+          // Firefox doesn't call IntersectionObserver callback unless
+          // there are rafs.
+          requestAnimationFrame(() => {});
+        });
+      }, { info: resolved.info });
+    }, this._page._timeoutSettings.timeout({}));
+  }
+
   async isHidden(metadata: CallMetadata, selector: string, options: types.StrictOptions = {}): Promise<boolean> {
     return !(await this.isVisible(metadata, selector, options));
   }

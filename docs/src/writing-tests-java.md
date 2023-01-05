@@ -29,6 +29,9 @@ public class App {
             // create a locator
             Locator getStarted = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Get Started"));
 
+            // Expect an attribute "to be strictly equal" to the value.
+            assertThat(getStarted).hasAttribute("href", "/docs/intro");
+
             // Click the get started link.
             getStarted.click();
 
