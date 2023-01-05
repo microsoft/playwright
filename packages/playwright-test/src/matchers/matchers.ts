@@ -319,17 +319,16 @@ export async function toPass(
     timeout?: number,
   } = {},
 ) {
-  const pollIntervals = options.intervals || [100, 250, 500, 1000];
   const timeout = options.timeout !== undefined ? options.timeout : 0;
 
-  const result = await pollAgainstTimeout(async () => {
+  const result = await pollAgainstTimeout<Error|undefined>(async () => {
     try {
       await callback();
       return { continuePolling: this.isNot, result: undefined };
     } catch (e) {
       return { continuePolling: !this.isNot, result: e };
     }
-  }, timeout, pollIntervals);
+  }, timeout, options.intervals || [100, 250, 500, 1000]);
 
   if (result.timedOut) {
     const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
@@ -340,7 +339,7 @@ export async function toPass(
       `- ${timeoutMessage}`,
     ].join('\n') : timeoutMessage;
 
-    return { message, pass: this.isNot ? true : false };
+    return { message, pass: this.isNot };
   }
-  return { pass: this.isNot ? false : true, message: () => '' };
+  return { pass: !this.isNot, message: () => '' };
 }

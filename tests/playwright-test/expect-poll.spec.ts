@@ -137,7 +137,7 @@ test('should show error that is thrown from predicate', async ({ runInlineTest }
   expect(stripAnsi(result.output)).toContain('foo bar baz');
 });
 
-test('should not retry predicate that throwed an error', async ({ runInlineTest }) => {
+test('should not retry predicate that threw an error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
       const { test } = pwt;

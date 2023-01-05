@@ -252,7 +252,7 @@ class ExpectMetaInfoProxyHandler {
 }
 
 async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: number[] | undefined, timeout: number, generator: () => any, ...args: any[]) {
-  const result = await pollAgainstTimeout(async () => {
+  const result = await pollAgainstTimeout<Error|undefined>(async () => {
     const value = await generator();
     let expectInstance = expectLibrary(value) as any;
     if (isNot)
