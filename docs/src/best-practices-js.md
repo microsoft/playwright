@@ -50,6 +50,8 @@ Assertions are a way to verify that the expected result and the actual result ma
 
 ```js
 👍 await expect(page.getByText('welcome')).toBeVisible();
+
+👎 expect(await page.getByText('welcome').isVisible()).toBe(true);
 ```
 
 #### Don't use manual assertions
