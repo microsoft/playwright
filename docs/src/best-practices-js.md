@@ -7,7 +7,7 @@ title: "Best Practices"
 This guide should help you to make sure you are following our best practices and writing tests that are more resilient.
 ## Use locators
 
-In order to write end to end tests we need to first find elements on the webpage. Automated tests should verify that the application code works for the end users. Implementation details are things which users of your code will not typically use, see, or even know about such as the name of a function or if it's an array. The end user will see or interact with what we render so our test should typically only see/interact with the rendered output.
+In order to write end to end tests we need to first find elements on the webpage. Automated tests should verify that the application code works for the end users, and avoid relying on implementation details. Things which users will not typically use, see, or even know about such as the name of a function, whether something is an array, or the CSS class of some element. The end user will see or interact with what is rendered on the page, so test should typically only see/interact with the same rendered output.
 
 Use Playwright's built in [locators](./locators.md) to find element(s) on the page. Locators come with auto waiting and retry-ability. Auto waiting means that Playwright performs a range of actionability checks on the elements, such as ensuring the element is visible and enabled before it performs the click. To make tests resilient, we recommend prioritizing user-facing attributes and explicit contracts.
 
