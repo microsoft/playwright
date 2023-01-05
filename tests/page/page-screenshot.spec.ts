@@ -227,9 +227,8 @@ it.describe('page screenshot', () => {
     await verifyViewport(page, 500, 500);
   });
 
-  it('should allow transparency', async ({ page, browserName, platform }) => {
+  it('should allow transparency', async ({ page, browserName }) => {
     it.fail(browserName === 'firefox');
-    it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/18452');
 
     await page.setViewportSize({ width: 50, height: 150 });
     await page.setContent(`
