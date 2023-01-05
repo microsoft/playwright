@@ -162,7 +162,7 @@ export default config;
 
 ## Keep your Playwright dependency up to date
 
-By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public. Check the [release notes](./release-notes.md) to see what the latest version is and what changes have been released. Releases happen on a monthly basis.
+By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public. Check the [release notes](./release-notes.md) to see what the latest version is and what changes have been released.
 
 ```js
 npm install -D @playwright/test@latest
