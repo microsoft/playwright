@@ -12,6 +12,7 @@ package org.example;
 
 import java.util.regex.Pattern;
 import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.AriaRole;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
@@ -26,10 +27,7 @@ public class App {
             assertThat(page).hasTitle(Pattern.compile("Playwright"));
 
             // create a locator
-            Locator getStarted = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Get Started"))
-
-            // Expect an attribute "to be strictly equal" to the value.
-            assertThat(getStarted).hasAttribute("href", "/docs/intro");
+            Locator getStarted = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Get Started"));
 
             // Click the get started link.
             getStarted.click();
