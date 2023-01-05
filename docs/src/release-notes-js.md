@@ -306,7 +306,7 @@ This version was also tested against the following stable channels:
 
 ### Announcements
 
-* 🎁 We now ship Ubuntu 22.04 Jammy Jellyfish docker image: `mcr.microsoft.com/playwright:v1.29.1-jammy`.
+* 🎁 We now ship Ubuntu 22.04 Jammy Jellyfish docker image: `mcr.microsoft.com/playwright:v1.29.2-jammy`.
 * 🪦 This is the last release with macOS 10.15 support (deprecated as of 1.21).
 * 🪦 This is the last release with Node.js 12 support, we recommend upgrading to Node.js LTS (16).
 * ⚠️ Ubuntu 18 is now deprecated and will not be supported as of Dec 2022.
@@ -556,7 +556,7 @@ Read more about [component testing with Playwright](./test-components).
     }
   });
   ```
-* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright:v1.29.1-jammy`.
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright:v1.29.2-jammy`.
 
 ### ⚠️ Breaking Changes ⚠️
 
