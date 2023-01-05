@@ -210,6 +210,10 @@ it('should exclude patterns', async ({ browserType, server, browserName, headles
     expect(error.message).toBeTruthy();
   }
 
+  // Make sure error page commits.
+  if (browserName === 'chromium')
+    await page.waitForURL('chrome-error://chromewebdata/');
+
   {
     await page.goto('http://3.non.existent.domain.for.the.test/target.html');
     expect(await page.title()).toBe('Served by the proxy');
