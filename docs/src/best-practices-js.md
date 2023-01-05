@@ -67,7 +67,7 @@ Use web first assertions such as `toBeVisible()` instead.
 ```js
 👍 await expect(page.getByText('welcome')).toBeVisible();
 ```
-## Configure post-mortem debugging
+## Configure debugging
 
 Debug your tests live in VSCode. <add a link/text here>
 
