@@ -100,10 +100,8 @@ it.describe('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it('should trigger permission onchange', async ({ page, context, server, browserName, headless, browserMajorVersion }) => {
+  it('should trigger permission onchange', async ({ page, context, server, browserName, browserMajorVersion }) => {
     it.fail(browserName === 'webkit');
-    it.fail(browserName === 'chromium' && !headless && browserMajorVersion <= 102, 'Fixed on ToT, remove once Beta rolls');
-    it.fixme(browserName === 'chromium' && browserMajorVersion >= 110, 'https://github.com/microsoft/playwright/issues/19180');
 
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
@@ -121,7 +119,12 @@ it.describe('permissions', () => {
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
     expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted']);
     await context.clearPermissions();
-    expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted', 'prompt']);
+
+    // Note: Chromium 110 stopped triggering "onchange" when clearing permissions.
+    expect(await page.evaluate(() => window['events'])).toEqual(
+        (browserName === 'chromium' && browserMajorVersion >= 110) ?
+          ['prompt', 'denied', 'granted'] :
+          ['prompt', 'denied', 'granted', 'prompt']);
   });
 
   it('should isolate permissions between browser contexts', async ({ server, browser }) => {
