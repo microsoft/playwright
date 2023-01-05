@@ -52,10 +52,12 @@ export const httpHappyEyeballsAgent = new HttpHappyEyeballsAgent();
 async function createConnectionAsync(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void) {
   const lookup = (options as SendRequestOptions).__testHookLookup || lookupAddresses;
   const addresses = await lookup(options.hostname!);
-  const sockets: net.Socket[] = [];
+  const sockets = new Set<net.Socket>();
   let firstError;
   let errorCount = 0;
-  const handleError = (err: Error) => {
+  const handleError = (socket: net.Socket, err: Error) => {
+    if (!sockets.delete(socket))
+      return;
     ++errorCount;
     firstError ??= err;
     if (errorCount === addresses.length)
@@ -75,22 +77,25 @@ async function createConnectionAsync(options: http.ClientRequestArgs, oncreate?:
         port: options.port as number,
         host: address });
 
+    // Each socket may fire only one of 'connect', 'timeout' or 'error' events.
+    // None of these events are fired after socket.destroy() is called.
     socket.on('connect', () => {
       connected.resolve();
       oncreate?.(null, socket);
       // TODO: Cache the result?
       // Close other outstanding sockets.
-      for (const s of sockets) {
-        if (s !== socket)
-          s.destroy();
-      }
+      sockets.delete(socket);
+      for (const s of sockets)
+        s.destroy();
+      sockets.clear();
     });
     socket.on('timeout', () => {
-      handleError(new Error('Connection timeout'));
+      // Timeout is not an error, so we have to manually close the socket.
       socket.destroy();
+      handleError(socket, new Error('Connection timeout'));
     });
-    socket.on('error', handleError);
-    sockets.push(socket);
+    socket.on('error', e => handleError(socket, e));
+    sockets.add(socket);
     await Promise.race([
       connected,
       new Promise(f => setTimeout(f, connectionAttemptDelayMs))
