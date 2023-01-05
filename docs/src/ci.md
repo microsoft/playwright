@@ -370,8 +370,6 @@ Running Playwright on CircleCI is very similar to running on GitHub Actions. In 
       pw-focal-development:
         docker:
           - image: mcr.microsoft.com/playwright:v1.30.0-focal
-      environment:
-        NODE_ENV: development # Needed if playwright is in `devDependencies`
    ```
 
 Note: When using the docker agent definition, you are specifying the resource class of where playwright runs to the 'medium' tier [here](https://circleci.com/docs/configuration-reference?#docker-execution-environment). The default behavior of Playwright is to set the number of workers to the detected core count (2 in the case of the medium tier). Overriding the number of workers to greater than this number will cause unnecessary timeouts and failures.
