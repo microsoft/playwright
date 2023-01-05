@@ -73,7 +73,7 @@ function addTestCommand(program: Command) {
   });
   command.addHelpText('afterAll', `
 Arguments [test-filter...]:
-  Pass arguments to filter test files. Each argument is treated as a regular expression.
+  Pass arguments to filter test files. Each argument is treated as a regular expression. Matching is performed against the absolute file paths.
 
 Examples:
   $ npx playwright test my.spec.ts
