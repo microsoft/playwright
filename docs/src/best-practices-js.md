@@ -5,9 +5,44 @@ title: "Best Practices"
 
 
 This guide should help you to make sure you are following our best practices and writing tests that are more resilient.
-## Use locators
+
+## Testing philosophy
+
+### Test user-visible behavior
 
 In order to write end to end tests we need to first find elements on the webpage. Automated tests should verify that the application code works for the end users, and avoid relying on implementation details. Things which users will not typically use, see, or even know about such as the name of a function, whether something is an array, or the CSS class of some element. The end user will see or interact with what is rendered on the page, so test should typically only see/interact with the same rendered output.
+
+### Make tests as isolated as possible
+
+Each test should be completely isolated from another test. Every test should run independently from any other test with it's own local storage, session storage, cookies etc.
+
+### Mock API responses
+
+Only test what you control. Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you can not control the content of the page you are linking to, if there are cookie banners or overlay pages or anything else that might cause your test to fail.
+
+Here is an example of testing an external link.
+
+Intercepting the route with a mock response ensures the link is visible and clickable. Before hitting the link the route gets intercepted and a mock response is returned. Clicking the link results in a new page being opened containing the mock response rather than the actual page. We can then check this has the URL we expect.
+
+```js
+test('github link works', async ({ page }) => {
+    await page.context().route('https://www.github.com/**', route => route.fulfill({
+      body: '<html><body><h1>Github - Playwright</h1></body></html>'
+    }));
+
+    const [page1] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.getByRole('link', { name: 'GitHub' }).click()
+    ]);
+    await expect(page1).toHaveURL('https://www.github.com/microsoft/playwright');
+  });
+```
+
+### Testing with a database
+
+If working with a database then make sure you control the data. Test against a staging environment and make sure it doesn't change. For visual regression tests make sure the operating system and browser versions are the same.
+
+## Use locators
 
 Use Playwright's built in [locators](./locators.md) to find element(s) on the page. Locators come with auto waiting and retry-ability. Auto waiting means that Playwright performs a range of actionability checks on the elements, such as ensuring the element is visible and enabled before it performs the click. To make tests resilient, we recommend prioritizing user-facing attributes and explicit contracts.
 
@@ -69,7 +104,7 @@ Use web first assertions such as `toBeVisible()` instead.
 ```
 ## Configure debugging
 
-Debug your tests live in VSCode. <add a link/text here>
+[Debug your tests live in VSCode.](/getting-started-vscode#live-debugging)
 
 For CI failures, use the playwright [trace viewer](./trace-viewer.md) instead of videos and screenshots. The trace viewer gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
 
@@ -77,27 +112,6 @@ Traces are set to run on CI on the first retry of a failed test. However you can
 
 ```js
 npx playwright test --trace on
-```
-## Mock API responses
-
-Only test what you control. Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you can not control the content of the page you are linking to, if there are cookie banners or overlay pages or anything else that might cause your test to fail.
-
-Here is an example of testing an external link.
-
-Intercepting the route with a mock response ensures the link is visible and clickable. Before hitting the link the route gets intercepted and a mock response is returned. Clicking the link results in a new page being opened containing the mock response rather than the actual page. We can then check this has the URL we expect.
-
-```js
-test('github link works', async ({ page }) => {
-    await page.context().route('https://www.github.com/**', route => route.fulfill({
-      body: '<html><body><h1>Github - Playwright</h1></body></html>'
-    }));
-
-    const [page1] = await Promise.all([
-      page.waitForEvent('popup'),
-      page.getByRole('link', { name: 'linkedIn' }).click()
-    ]);
-    await expect(page1).toHaveURL('https://www.github.com/microsoft/playwright');
-  });
 ```
 ## Use Playwright's Tooling
 
@@ -173,5 +187,3 @@ npm install -D @playwright/test@latest
 Setup CI/CD and run your tests frequently. The more often you run your tests the better. Ideally you should run your tests on each commit and pull request. Use [parallelism and sharding](./test-parallel.md).
 
 Use linux when running your tests on CI as it is cheaper. Developers can use whatever environment when running locally but use linux on CI.
-
-If working with a database then make sure you control the data. Test against a staging environment and make sure it doesn't change. For visual regression tests make sure the operating system and browser versions are the same.
