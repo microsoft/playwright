@@ -29,7 +29,7 @@ configurations for common CI providers.
    playwright install --with-deps
    ```
    ```bash java
-   mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
+   mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
    ```
    ```bash csharp
    pwsh bin/Debug/netX/playwright.ps1 install --with-deps
@@ -103,7 +103,7 @@ steps:
   - name: Build & Install
     run: mvn -B install -D skipTests --no-transfer-progress
   - name: Install Playwright
-    run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
+    run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
   - name: Run tests
     run: mvn test
 ```
@@ -228,7 +228,7 @@ steps:
       - name: Build & Install
         run: mvn -B install -D skipTests --no-transfer-progress
       - name: Install Playwright
-        run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
+        run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
       - name: Run tests
         run: mvn test
 ```

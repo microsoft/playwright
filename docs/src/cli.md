@@ -12,7 +12,7 @@ npx playwright --help
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI
 ```
 
 ```bash python
@@ -44,7 +44,7 @@ npx playwright install
 
 ```bash java
 # Running without arguments will install default browsers
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
 ```
 
 ```bash python
@@ -66,7 +66,7 @@ npx playwright install webkit
 
 ```bash java
 # Install WebKit
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install webkit"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install webkit"
 ```
 
 ```bash python
@@ -86,7 +86,7 @@ npx playwright install --help
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --help"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --help"
 ```
 
 ```bash python
@@ -108,7 +108,7 @@ npx playwright install-deps
 
 ```bash java
 # See command help
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps"
 ```
 
 ```bash python
@@ -128,7 +128,7 @@ npx playwright install-deps chromium
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps chromium"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps chromium"
 ```
 
 ```bash python
@@ -146,7 +146,7 @@ npx playwright install --with-deps chromium
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps chromium"
 ```
 
 ```bash python
@@ -164,7 +164,7 @@ npx playwright codegen wikipedia.org
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen wikipedia.org"
 ```
 
 ```bash python
@@ -190,7 +190,7 @@ npx playwright codegen --save-storage=auth.json
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen  --save-storage=auth.json"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen  --save-storage=auth.json"
 # Perform authentication and exit.
 # auth.json will contain the storage state.
 ```
@@ -216,8 +216,8 @@ npx playwright codegen --load-storage=auth.json my.web.app
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open --load-storage=auth.json my.web.app"
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen --load-storage=auth.json my.web.app"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="open --load-storage=auth.json my.web.app"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen --load-storage=auth.json my.web.app"
 # Perform authentication and exit.
 # auth.json will contain the storage state.
 ```
@@ -339,7 +339,7 @@ npx playwright open example.com
 
 ```bash java
 # Open page in Chromium
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open example.com"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="open example.com"
 ```
 
 ```bash python
@@ -359,7 +359,7 @@ npx playwright wk example.com
 
 ```bash java
 # Open page in WebKit
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="wk example.com"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="wk example.com"
 ```
 
 ```bash python
@@ -382,7 +382,7 @@ npx playwright open --device="iPhone 11" wikipedia.org
 
 ```bash java
 # Emulate iPhone 11.
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='open --device="iPhone 11" wikipedia.org'
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args='open --device="iPhone 11" wikipedia.org'
 ```
 
 ```bash python
@@ -404,7 +404,7 @@ npx playwright open --viewport-size=800,600 --color-scheme=dark twitter.com
 
 ```bash java
 # Emulate screen size and color scheme.
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open --viewport-size=800,600 --color-scheme=dark twitter.com"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="open --viewport-size=800,600 --color-scheme=dark twitter.com"
 ```
 
 ```bash python
@@ -428,7 +428,7 @@ npx playwright open --timezone="Europe/Rome" --geolocation="41.890221,12.492348"
 ```bash java
 # Emulate timezone, language & location
 # Once page opens, click the "my location" button to see geolocation in action
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='open --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com'
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args='open --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com'
 ```
 
 ```bash python
@@ -507,7 +507,7 @@ npx playwright screenshot --help
 
 ```bash java
 # See command help
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="screenshot --help"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="screenshot --help"
 ```
 
 ```bash python
@@ -526,7 +526,7 @@ npx playwright screenshot \
 
 ```bash java
 # Wait 3 seconds before capturing a screenshot after page loads ('load' event fires)
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='screenshot --device="iPhone 11" --color-scheme=dark --wait-for-timeout=3000 twitter.com twitter-iphone.png'
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args='screenshot --device="iPhone 11" --color-scheme=dark --wait-for-timeout=3000 twitter.com twitter-iphone.png'
 ```
 
 ```bash python
@@ -554,7 +554,7 @@ npx playwright screenshot --full-page en.wikipedia.org wiki-full.png
 
 ```bash java
 # Capture a full page screenshot
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='screenshot --full-page en.wikipedia.org wiki-full.png'
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args='screenshot --full-page en.wikipedia.org wiki-full.png'
 ```
 
 ```bash python
@@ -578,7 +578,7 @@ npx playwright pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
 
 ```bash java
 # See command help
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="pdf https://en.wikipedia.org/wiki/PDF wiki.pdf"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="pdf https://en.wikipedia.org/wiki/PDF wiki.pdf"
 ```
 
 ```bash python

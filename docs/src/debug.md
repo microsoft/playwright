@@ -187,7 +187,7 @@ npx playwright codegen wikipedia.org
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen wikipedia.org"
 ```
 
 ```bash python
