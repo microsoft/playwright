@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import type * as channels from '@protocol/channels';
+import type { LookupAddress } from 'dns';
 import * as http from 'http';
 import * as https from 'https';
 import type { Readable, TransformCallback } from 'stream';
@@ -21,13 +23,14 @@ import { pipeline, Transform } from 'stream';
 import url from 'url';
 import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
-import type * as channels from '@protocol/channels';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../common/userAgent';
 import { assert, createGuid, monotonicTime } from '../utils';
+import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happy-eyeballs';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import type { Playwright } from './playwright';
@@ -36,7 +39,6 @@ import { ProgressController } from './progress';
 import { Tracing } from './trace/recorder/tracing';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
-import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -65,6 +67,12 @@ export type APIRequestFinishedEvent = {
   statusCode: number;
   statusMessage: string;
   body?: Buffer;
+};
+
+export type SendRequestOptions = https.RequestOptions & {
+  maxRedirects: number,
+  deadline: number,
+  __testHookLookup?: (hostname: string) => LookupAddress[]
 };
 
 export abstract class APIRequestContext extends SdkObject {
@@ -159,13 +167,14 @@ export abstract class APIRequestContext extends SdkObject {
     const timeout = defaults.timeoutSettings.timeout(params);
     const deadline = timeout && (monotonicTime() + timeout);
 
-    const options: https.RequestOptions & { maxRedirects: number, deadline: number } = {
+    const options: SendRequestOptions = {
       method,
       headers,
       agent,
       maxRedirects: params.maxRedirects === 0 ? -1 : params.maxRedirects === undefined ? 20 : params.maxRedirects,
       timeout,
-      deadline
+      deadline,
+      __testHookLookup: (params as any).__testHookLookup,
     };
     // rejectUnauthorized = undefined is treated as true in node 12.
     if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors)
@@ -228,7 +237,7 @@ export abstract class APIRequestContext extends SdkObject {
     }
   }
 
-  private async _sendRequest(progress: Progress, url: URL, options: https.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
+  private async _sendRequest(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
     await this._updateRequestCookieHeader(url, options);
 
     const requestCookies = (options.headers!['cookie'] as (string | undefined))?.split(';').map(p => {
@@ -247,7 +256,10 @@ export abstract class APIRequestContext extends SdkObject {
     return new Promise((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
-      const request = requestConstructor(url, options, async response => {
+      // If we have a proxy agent already, do not override it.
+      const agent = options.agent || (url.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent);
+      const requestOptions = { ...options, agent };
+      const request = requestConstructor(url, requestOptions as any, async response => {
         const notifyRequestFinished = (body?: Buffer) => {
           const requestFinishedEvent: APIRequestFinishedEvent = {
             requestEvent,
@@ -292,13 +304,14 @@ export abstract class APIRequestContext extends SdkObject {
             delete headers[`content-type`];
           }
 
-          const redirectOptions: https.RequestOptions & { maxRedirects: number, deadline: number } = {
+          const redirectOptions: SendRequestOptions = {
             method,
             headers,
             agent: options.agent,
             maxRedirects: options.maxRedirects - 1,
             timeout: options.timeout,
-            deadline: options.deadline
+            deadline: options.deadline,
+            __testHookLookup: options.__testHookLookup,
           };
           // rejectUnauthorized = undefined is treated as true in node 12.
           if (options.rejectUnauthorized === false)

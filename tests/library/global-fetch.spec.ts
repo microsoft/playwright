@@ -14,31 +14,12 @@
  * limitations under the License.
  */
 
-import http from 'http';
 import os from 'os';
 import * as util from 'util';
 import { getPlaywrightVersion } from '../../packages/playwright-core/lib/common/userAgent';
 import { expect, playwrightTest as it } from '../config/browserTest';
 
 it.skip(({ mode }) => mode !== 'default');
-
-let prevAgent: http.Agent;
-it.beforeAll(() => {
-  prevAgent = http.globalAgent;
-  http.globalAgent = new http.Agent({
-    // @ts-expect-error
-    lookup: (hostname, options, callback) => {
-      if (hostname === 'localhost' || hostname.endsWith('playwright.dev'))
-        callback(null, '127.0.0.1', 4);
-      else
-        throw new Error(`Failed to resolve hostname: ${hostname}`);
-    }
-  });
-});
-
-it.afterAll(() => {
-  http.globalAgent = prevAgent;
-});
 
 for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] as const) {
   it(`${method} should work @smoke`, async ({ playwright, server }) => {

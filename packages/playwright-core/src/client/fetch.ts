@@ -195,6 +195,9 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       }
       if (postDataBuffer === undefined && jsonData === undefined && formData === undefined && multipartData === undefined)
         postDataBuffer = options.request?.postDataBuffer() || undefined;
+      const fixtures = {
+        __testHookLookup: (options as any).__testHookLookup
+      };
       const result = await this._channel.fetch({
         url,
         params,
@@ -208,6 +211,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         failOnStatusCode: options.failOnStatusCode,
         ignoreHTTPSErrors: options.ignoreHTTPSErrors,
         maxRedirects: maxRedirects,
+        ...fixtures
       });
       return new APIResponse(this, result.response);
     });

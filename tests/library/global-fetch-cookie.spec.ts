@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import type { LookupAddress } from 'dns';
 import fs from 'fs';
-import http from 'http';
 import type { APIRequestContext } from 'playwright-core';
 import { expect, playwrightTest } from '../config/browserTest';
 
@@ -36,33 +36,22 @@ type StorageStateType = PromiseArg<ReturnType<APIRequestContext['storageState']>
 
 it.skip(({ mode }) => mode !== 'default');
 
-let prevAgent: http.Agent;
-it.beforeAll(() => {
-  prevAgent = http.globalAgent;
-  http.globalAgent = new http.Agent({
-    // @ts-expect-error
-    lookup: (hostname, options, callback) => {
-      if (hostname === 'localhost' || hostname.endsWith('one.com') || hostname.endsWith('two.com'))
-        callback(null, '127.0.0.1', 4);
-      else
-        throw new Error(`Failed to resolve hostname: ${hostname}`);
-    }
-  });
-});
-
-it.afterAll(() => {
-  http.globalAgent = prevAgent;
-});
+const __testHookLookup = (hostname: string): LookupAddress[] => {
+  if (hostname === 'localhost' || hostname.endsWith('one.com') || hostname.endsWith('two.com'))
+    return [{ address: '127.0.0.1', family: 4 }];
+  else
+    throw new Error(`Failed to resolve hostname: ${hostname}`);
+};
 
 it('should store cookie from Set-Cookie header', async ({ request, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=b', 'c=d; max-age=3600; domain=b.one.com; path=/input', 'e=f; domain=b.one.com; path=/input/subfolder']);
     res.end();
   });
-  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`);
+  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`, {  __testHookLookup } as any);
   const [serverRequest] = await Promise.all([
     server.waitForRequest('/input/button.html'),
-    request.get(`http://b.one.com:${server.PORT}/input/button.html`)
+    request.get(`http://b.one.com:${server.PORT}/input/button.html`, {  __testHookLookup } as any)
   ]);
   expect(serverRequest.headers.cookie).toBe('c=d');
 });
@@ -85,16 +74,16 @@ it('should filter outgoing cookies by domain', async ({ request, server }) => {
     res.setHeader('Set-Cookie', ['a=v; domain=one.com', 'b=v; domain=.b.one.com', 'c=v; domain=other.com']);
     res.end();
   });
-  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`);
+  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`, {  __testHookLookup } as any);
   const [serverRequest] = await Promise.all([
     server.waitForRequest('/empty.html'),
-    request.get(`http://www.b.one.com:${server.PORT}/empty.html`)
+    request.get(`http://www.b.one.com:${server.PORT}/empty.html`, {  __testHookLookup } as any)
   ]);
   expect(serverRequest.headers.cookie).toBe('a=v; b=v');
 
   const [serverRequest2] = await Promise.all([
     server.waitForRequest('/empty.html'),
-    request.get(`http://two.com:${server.PORT}/empty.html`)
+    request.get(`http://two.com:${server.PORT}/empty.html`, {  __testHookLookup } as any)
   ]);
   expect(serverRequest2.headers.cookie).toBeFalsy();
 });
@@ -104,10 +93,10 @@ it('should do case-insensitive match of cookie domain', async ({ request, server
     res.setHeader('Set-Cookie', ['a=v; domain=One.com', 'b=v; domain=.B.oNe.com']);
     res.end();
   });
-  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`);
+  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`, {  __testHookLookup } as any);
   const [serverRequest] = await Promise.all([
     server.waitForRequest('/empty.html'),
-    request.get(`http://www.b.one.com:${server.PORT}/empty.html`)
+    request.get(`http://www.b.one.com:${server.PORT}/empty.html`, {  __testHookLookup } as any)
   ]);
   expect(serverRequest.headers.cookie).toBe('a=v; b=v');
 });
@@ -117,10 +106,10 @@ it('should do case-insensitive match of request domain', async ({ request, serve
     res.setHeader('Set-Cookie', ['a=v; domain=one.com', 'b=v; domain=.b.one.com']);
     res.end();
   });
-  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`);
+  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`, {  __testHookLookup } as any);
   const [serverRequest] = await Promise.all([
     server.waitForRequest('/empty.html'),
-    request.get(`http://WWW.B.ONE.COM:${server.PORT}/empty.html`)
+    request.get(`http://WWW.B.ONE.COM:${server.PORT}/empty.html`, {  __testHookLookup } as any)
   ]);
   expect(serverRequest.headers.cookie).toBe('a=v; b=v');
 });
@@ -187,7 +176,7 @@ it('should store cookie from Set-Cookie header even if it contains equal signs',
     res.end();
   });
 
-  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`);
+  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`, {  __testHookLookup } as any);
   const state = await request.storageState();
   expect(state).toEqual({
     'cookies': [
@@ -266,7 +255,7 @@ it('should export cookies to storage state', async ({ request, server }) => {
     res.setHeader('Set-Cookie', ['a=b', `c=d; expires=${expires.toUTCString()}; domain=b.one.com; path=/input`, 'e=f; domain=b.one.com; path=/input/subfolder']);
     res.end();
   });
-  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`);
+  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`, {  __testHookLookup } as any);
   const state = await request.storageState();
   expect(state).toEqual({
     'cookies': [
@@ -376,7 +365,7 @@ it('should send cookies from storage state', async ({ playwright, server }) => {
   const request = await playwright.request.newContext({ storageState });
   const [serverRequest] = await Promise.all([
     server.waitForRequest('/first/second/third/not_found.html'),
-    request.get(`http://www.a.b.one.com:${server.PORT}/first/second/third/not_found.html`)
+    request.get(`http://www.a.b.one.com:${server.PORT}/first/second/third/not_found.html`, {  __testHookLookup } as any)
   ]);
   expect(serverRequest.headers.cookie).toBe('c=d; e=f');
 });
