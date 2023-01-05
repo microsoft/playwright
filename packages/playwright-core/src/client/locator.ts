@@ -257,6 +257,10 @@ export class Locator implements api.Locator {
     return this._withElement((h, timeout) => h.scrollIntoViewIfNeeded({ ...options, timeout }), options.timeout);
   }
 
+  async viewportRatio(): Promise<number> {
+    return (await this._frame._channel.viewportRatio({ selector: this._selector, strict: true })).value;
+  }
+
   async selectOption(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
     return this._frame.selectOption(this._selector, values, { strict: true, ...options });
   }

@@ -203,6 +203,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Pa
     return { value: await this._frame.isVisible(metadata, params.selector, params) };
   }
 
+  async viewportRatio(params: channels.FrameViewportRatioParams, metadata: CallMetadata): Promise<channels.FrameViewportRatioResult> {
+    return { value: await this._frame.viewportRatio(metadata, params.selector, params) };
+  }
+
   async hover(params: channels.FrameHoverParams, metadata: CallMetadata): Promise<void> {
     return await this._frame.hover(metadata, params.selector, params);
   }
