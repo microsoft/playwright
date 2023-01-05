@@ -251,10 +251,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const traceMode = normalizeTraceMode(trace);
     const defaultTraceOptions = { screenshots: true, snapshots: true, sources: true };
     const traceOptions = typeof trace === 'string' ? defaultTraceOptions : { ...defaultTraceOptions, ...trace, mode: undefined };
-    const captureTrace = shouldCaptureTrace(traceMode, testInfo) && !_reuseContext;
+    const captureTrace = shouldCaptureTrace(traceMode, testInfo);
     const temporaryTraceFiles: string[] = [];
     const temporaryScreenshots: string[] = [];
     const testInfoImpl = testInfo as TestInfoImpl;
+    const reusedContexts = new Set<BrowserContext>();
 
     const createInstrumentationListener = (context?: BrowserContext) => {
       return {
@@ -282,7 +283,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       };
     };
 
-    const startTracing = async (tracing: Tracing) => {
+    const startTraceChunkOnContextCreation = async (tracing: Tracing) => {
       if (captureTrace) {
         const title = [path.relative(testInfo.project.testDir, testInfo.file) + ':' + testInfo.line, ...testInfo.titlePath.slice(1)].join(' › ');
         if (!(tracing as any)[kTracingStarted]) {
@@ -302,20 +303,19 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const onDidCreateBrowserContext = async (context: BrowserContext) => {
       context.setDefaultTimeout(actionTimeout || 0);
       context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
-      await startTracing(context.tracing);
+      await startTraceChunkOnContextCreation(context.tracing);
       const listener = createInstrumentationListener(context);
       (context as any)._instrumentation.addListener(listener);
       (context.request as any)._instrumentation.addListener(listener);
     };
     const onDidCreateRequestContext = async (context: APIRequestContext) => {
       const tracing = (context as any)._tracing as Tracing;
-      await startTracing(tracing);
+      await startTraceChunkOnContextCreation(tracing);
       (context as any)._instrumentation.addListener(createInstrumentationListener());
     };
 
     const startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
-
-    const stopTracing = async (tracing: Tracing) => {
+    const stopTraceChunkOnContextClosure = async (tracing: Tracing) => {
       (tracing as any)[startedCollectingArtifacts] = true;
       if (captureTrace) {
         // Export trace for now. We'll know whether we have to preserve it
@@ -346,7 +346,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     };
 
     const onWillCloseContext = async (context: BrowserContext) => {
-      await stopTracing(context.tracing);
+      // When reusing context, we get all previous contexts closed at the start of next test.
+      // Do not record empty traces and useless screenshots for them.
+      if (reusedContexts.has(context))
+        return;
+      await stopTraceChunkOnContextClosure(context.tracing);
       if (screenshotMode === 'on' || screenshotMode === 'only-on-failure') {
         // Capture screenshot for now. We'll know whether we have to preserve them
         // after the test finishes.
@@ -356,7 +360,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     const onWillCloseRequestContext =  async (context: APIRequestContext) => {
       const tracing = (context as any)._tracing as Tracing;
-      await stopTracing(tracing);
+      await stopTraceChunkOnContextClosure(tracing);
     };
 
     // 1. Setup instrumentation and process existing contexts.
@@ -365,7 +369,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (browserType as any)._onWillCloseContext = onWillCloseContext;
       (browserType as any)._defaultContextOptions = _combinedContextOptions;
       const existingContexts = Array.from((browserType as any)._contexts) as BrowserContext[];
-      await Promise.all(existingContexts.map(onDidCreateBrowserContext));
+      if (_reuseContext)
+        existingContexts.forEach(c => reusedContexts.add(c));
+      else
+        await Promise.all(existingContexts.map(onDidCreateBrowserContext));
     }
     {
       (playwright.request as any)._onDidCreateContext = onDidCreateRequestContext;
@@ -416,23 +423,21 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     (playwright.request as any)._onWillCloseContext = undefined;
     testInfoImpl._onTestFailureImmediateCallbacks.delete(screenshotOnTestFailure);
 
-    const stopTraceChunk = async (tracing: Tracing): Promise<boolean> => {
+    const stopTraceChunkOnTestFinish = async (tracing: Tracing) => {
       // When we timeout during context.close(), we might end up with context still alive
       // but artifacts being already collected. In this case, do not collect artifacts
       // for the second time.
       if ((tracing as any)[startedCollectingArtifacts])
-        return false;
+        return;
       if (preserveTrace)
         await tracing.stopChunk({ path: addTraceAttachment() });
       else if (captureTrace)
         await tracing.stopChunk();
-      return true;
     };
 
     // 5. Collect artifacts from any non-closed contexts.
     await Promise.all(leftoverContexts.map(async context => {
-      if (!await stopTraceChunk(context.tracing))
-        return;
+      await stopTraceChunkOnTestFinish(context.tracing);
       if (captureScreenshots) {
         await Promise.all(context.pages().map(async page => {
           if ((page as any)[screenshottedSymbol])
@@ -444,7 +449,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       }
     }).concat(leftoverApiRequests.map(async context => {
       const tracing = (context as any)._tracing as Tracing;
-      await stopTraceChunk(tracing);
+      await stopTraceChunkOnTestFinish(tracing);
     })));
 
     // 6. Either remove or attach temporary traces and screenshots for contexts closed
@@ -464,12 +469,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   }, { auto: 'all-hooks-included',  _title: 'playwright configuration' } as any],
 
   _contextFactory: [async ({ browser, video, _artifactsDir, _reuseContext }, use, testInfo) => {
+    const testInfoImpl = testInfo as TestInfoImpl;
     const videoMode = normalizeVideoMode(video);
     const captureVideo = shouldCaptureVideo(videoMode, testInfo) && !_reuseContext;
     const contexts = new Map<BrowserContext, { pages: Page[] }>();
 
     await use(async options => {
-      const hook = hookType(testInfo);
+      const hook = hookType(testInfoImpl);
       if (hook) {
         throw new Error([
           `"context" and "page" fixtures are not supported in "${hook}" since they are created on a per-test basis.`,
@@ -490,7 +496,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       return context;
     });
 
-    const prependToError = (testInfo as any)._didTimeout ?
+    const prependToError = testInfoImpl._didTimeout ?
       formatPendingCalls((browser as any)._connection.pendingProtocolCalls()) : '';
 
     let counter = 0;
@@ -521,9 +527,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _contextReuseMode: process.env.PW_TEST_REUSE_CONTEXT === 'when-possible' ? 'when-possible' : (process.env.PW_TEST_REUSE_CONTEXT ? 'force' : 'none'),
 
-  _reuseContext: async ({ video, trace, _contextReuseMode }, use, testInfo) => {
-    const reuse = _contextReuseMode === 'force' ||
-      (_contextReuseMode === 'when-possible' && !shouldCaptureVideo(normalizeVideoMode(video), testInfo) && !shouldCaptureTrace(normalizeTraceMode(trace), testInfo));
+  _reuseContext: async ({ video, _contextReuseMode }, use, testInfo) => {
+    const reuse = _contextReuseMode === 'force' || (_contextReuseMode === 'when-possible' && !shouldCaptureVideo(normalizeVideoMode(video), testInfo));
     await use(reuse);
   },
 
@@ -575,11 +580,10 @@ function formatStackFrame(frame: StackFrame) {
   return `${file}:${frame.line || 1}:${frame.column || 1}`;
 }
 
-function hookType(testInfo: TestInfo): 'beforeAll' | 'afterAll' | undefined {
-  if ((testInfo as any)._timeoutManager._runnable?.type === 'beforeAll')
-    return 'beforeAll';
-  if ((testInfo as any)._timeoutManager._runnable?.type === 'afterAll')
-    return 'afterAll';
+function hookType(testInfo: TestInfoImpl): 'beforeAll' | 'afterAll' | undefined {
+  const type = testInfo._timeoutManager.currentRunnableType();
+  if (type === 'beforeAll' || type === 'afterAll')
+    return type;
 }
 
 type StackFrame = {

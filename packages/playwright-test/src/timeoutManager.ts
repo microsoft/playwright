@@ -89,6 +89,10 @@ export class TimeoutManager {
     this._timeoutRunner.updateTimeout(timeout);
   }
 
+  currentRunnableType() {
+    return this._runnable.type;
+  }
+
   private _currentSlot() {
     return this._fixture?.slot || this._runnable.slot || this._defaultSlot;
   }
