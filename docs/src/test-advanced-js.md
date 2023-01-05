@@ -410,12 +410,12 @@ async function globalSetup(config: FullConfig) {
     await context.tracing.stop({
       path: './test-results/setup-trace.zip',
     })
-    await page.close();
+    await browser.close();
   } catch (error) {
     await context.tracing.stop({
       path: './test-results/failed-setup-trace.zip',
     });
-    await page.close();
+    await browser.close();
     throw error;
   }
 }
