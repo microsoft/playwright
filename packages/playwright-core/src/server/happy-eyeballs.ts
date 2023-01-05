@@ -20,7 +20,7 @@ import * as https from 'https';
 import * as net from 'net';
 import * as tls from 'tls';
 import { ManualPromise } from '../utils/manualPromise';
-import { SendRequestOptions } from './fetch';
+import type { SendRequestOptions } from './fetch';
 
 // Implementation(partial) of Happy Eyeballs 2 algorithm described in
 // https://www.rfc-editor.org/rfc/rfc8305
@@ -59,7 +59,7 @@ async function createConnectionAsync(options: http.ClientRequestArgs, oncreate?:
     ++errorCount;
     firstError ??= err;
     if (errorCount === addresses.length)
-      oncreate?.(err);
+      oncreate?.(firstError);
   };
 
   const connected = new ManualPromise();
@@ -89,7 +89,7 @@ async function createConnectionAsync(options: http.ClientRequestArgs, oncreate?:
       handleError(new Error('Connection timeout'));
       socket.destroy();
     });
-    socket.on('error', handleError)
+    socket.on('error', handleError);
     sockets.push(socket);
     await Promise.race([
       connected,
@@ -102,8 +102,8 @@ async function createConnectionAsync(options: http.ClientRequestArgs, oncreate?:
 
 async function lookupAddresses(hostname: string): Promise<dns.LookupAddress[]> {
   const addresses = await dns.promises.lookup(hostname, { all: true, family: 0, verbatim: true });
-  let firstFamily = addresses.filter(({family}) => family === 6);
-  let secondFamily = addresses.filter(({family}) => family === 4);
+  let firstFamily = addresses.filter(({ family }) => family === 6);
+  let secondFamily = addresses.filter(({ family }) => family === 4);
   // Make sure first address in the list is the same as in the original order.
   if (firstFamily.length && firstFamily[0] !== addresses[0]) {
     const tmp = firstFamily;

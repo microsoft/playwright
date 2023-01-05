@@ -15,9 +15,9 @@
  */
 
 import type * as channels from '@protocol/channels';
+import type { LookupAddress } from 'dns';
 import * as http from 'http';
 import * as https from 'https';
-import * as dns from 'dns';
 import type { Readable, TransformCallback } from 'stream';
 import { pipeline, Transform } from 'stream';
 import url from 'url';
@@ -72,7 +72,7 @@ export type APIRequestFinishedEvent = {
 export type SendRequestOptions = https.RequestOptions & {
   maxRedirects: number,
   deadline: number,
-  __testHookLookup?: (hostname: string) => dns.LookupAddress[]
+  __testHookLookup?: (hostname: string) => LookupAddress[]
 };
 
 export abstract class APIRequestContext extends SdkObject {

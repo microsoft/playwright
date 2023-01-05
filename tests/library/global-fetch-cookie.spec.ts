@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import type { LookupAddress } from 'dns';
 import fs from 'fs';
-import dns from 'dns';
 import type { APIRequestContext } from 'playwright-core';
 import { expect, playwrightTest } from '../config/browserTest';
 
@@ -36,7 +36,7 @@ type StorageStateType = PromiseArg<ReturnType<APIRequestContext['storageState']>
 
 it.skip(({ mode }) => mode !== 'default');
 
-const __testHookLookup = (hostname: string): dns.LookupAddress[] => {
+const __testHookLookup = (hostname: string): LookupAddress[] => {
   if (hostname === 'localhost' || hostname.endsWith('one.com') || hostname.endsWith('two.com'))
     return [{ address: '127.0.0.1', family: 4 }];
   else

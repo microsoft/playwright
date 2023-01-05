@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
+import type { LookupAddress } from 'dns';
 import formidable from 'formidable';
-import http from 'http';
-import zlib from 'zlib';
 import fs from 'fs';
-import dns from 'dns';
+import type { IncomingMessage } from 'http';
 import { pipeline } from 'stream';
+import zlib from 'zlib';
 import { contextTest as it, expect } from '../config/browserTest';
 import { suppressCertificateWarning } from '../config/utils';
 
 it.skip(({ mode }) => mode !== 'default');
 
-const __testHookLookup = (hostname: string): dns.LookupAddress[] => {
+const __testHookLookup = (hostname: string): LookupAddress[] => {
   if (hostname === 'localhost' || hostname.endsWith('playwright.dev'))
     return [{ address: '127.0.0.1', family: 4 }];
   else
@@ -851,7 +851,7 @@ it('should encode to application/json by default', async function({ context, pag
 });
 
 it('should support multipart/form-data', async function({ context, server }) {
-  const formReceived = new Promise<{error: any, fields: formidable.Fields, files: Record<string, formidable.File>, serverRequest: http.IncomingMessage}>(resolve => {
+  const formReceived = new Promise<{error: any, fields: formidable.Fields, files: Record<string, formidable.File>, serverRequest: IncomingMessage}>(resolve => {
     server.setRoute('/empty.html', async (serverRequest, res) => {
       const form = new formidable.IncomingForm();
       form.parse(serverRequest, (error, fields, files) => {
@@ -888,7 +888,7 @@ it('should support multipart/form-data', async function({ context, server }) {
 });
 
 it('should support multipart/form-data with ReadSream values', async function({ context, page, asset, server }) {
-  const formReceived = new Promise<{error: any, fields: formidable.Fields, files: Record<string, formidable.File>, serverRequest: http.IncomingMessage}>(resolve => {
+  const formReceived = new Promise<{error: any, fields: formidable.Fields, files: Record<string, formidable.File>, serverRequest: IncomingMessage}>(resolve => {
     server.setRoute('/empty.html', async (serverRequest, res) => {
       const form = new formidable.IncomingForm();
       form.parse(serverRequest, (error, fields, files) => {
