@@ -13,7 +13,7 @@ npx playwright codegen demo.playwright.dev/todomvc
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen demo.playwright.dev/todomvc"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen demo.playwright.dev/todomvc"
 ```
 
 ```bash python
@@ -40,7 +40,7 @@ npx playwright codegen --viewport-size=800,600 playwright.dev
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen --viewport-size=800,600 playwright.dev"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen --viewport-size=800,600 playwright.dev"
 ```
 
 ```bash python
@@ -64,7 +64,7 @@ npx playwright codegen --device="iPhone 11" playwright.dev
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='codegen --device="iPhone 11" playwright.dev'
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args='codegen --device="iPhone 11" playwright.dev'
 ```
 
 ```bash python
@@ -86,7 +86,7 @@ npx playwright codegen --color-scheme=dark playwright.dev
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen --color-scheme=dark playwright.dev"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen --color-scheme=dark playwright.dev"
 ```
 
 ```bash python
@@ -108,7 +108,7 @@ npx playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.4923
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com'
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args='codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com'
 ```
 
 ```bash python
@@ -132,7 +132,7 @@ npx playwright codegen --save-storage=auth.json
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen  --save-storage=auth.json"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen  --save-storage=auth.json"
 ```
 
 ```bash python
@@ -152,7 +152,7 @@ npx playwright codegen --load-storage=auth.json github.com/microsoft/playwright
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen --load-storage=auth.json github.com/microsoft/playwright"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen --load-storage=auth.json github.com/microsoft/playwright"
 ```
 
 ```bash python
@@ -172,7 +172,7 @@ npx playwright open --load-storage=auth.json github.com/microsoft/playwright
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open --load-storage=auth.json github.com/microsoft/playwright"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="open --load-storage=auth.json github.com/microsoft/playwright"
 ```
 
 ```bash python

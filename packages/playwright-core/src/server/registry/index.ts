@@ -913,7 +913,7 @@ export function buildPlaywrightCLICommand(sdkLanguage: string, parameters: strin
     case 'python':
       return `playwright ${parameters}`;
     case 'java':
-      return `mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="${parameters}"`;
+      return `mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="${parameters}"`;
     case 'csharp':
       return `pwsh bin/Debug/netX/playwright.ps1 ${parameters}`;
     default:

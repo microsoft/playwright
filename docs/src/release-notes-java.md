@@ -206,7 +206,7 @@ Now you can record network traffic into a HAR file and re-use this traffic in yo
 To record network into HAR file:
 
 ```bash
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open --save-har=example.har --save-har-glob='**/api/**' https://example.com"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="open --save-har=example.har --save-har-glob='**/api/**' https://example.com"
 ```
 
 Alternatively, you can record HAR programmatically:
@@ -520,7 +520,7 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 - Playwright now supports **Ubuntu 20.04 ARM64**. You can now run Playwright tests inside Docker on Apple M1 and on Raspberry Pi.
 - You can now use Playwright to install stable version of Edge on Linux:
     ```bash
-    mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install msedge"
+    mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install msedge"
     ```
 
 
@@ -547,7 +547,7 @@ Read more about [`method: Locator.waitFor`].
 
 ### 🎭 Playwright Trace Viewer
 
-- run trace viewer with `mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="show-trace"` and drop trace files to the trace viewer PWA
+- run trace viewer with `mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace"` and drop trace files to the trace viewer PWA
 - better visual attribution of action targets
 
 Read more about [Trace Viewer](./trace-viewer).
@@ -725,7 +725,7 @@ Traces are examined later with the Playwright CLI:
 
 
 ```sh
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="show-trace trace.zip"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace trace.zip"
 ```
 
 That will open the following GUI:
@@ -836,7 +836,7 @@ This version of Playwright was also tested against the following stable channels
 - [Selecting elements based on layout](./other-locators.md#css-matching-elements-based-on-layout) with `:left-of()`, `:right-of()`, `:above()` and `:below()`.
 - Playwright now includes [command line interface](./cli.md), former playwright-cli.
   ```bash java
-  mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="--help"
+  mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="--help"
   ```
 - [`method: Page.selectOption`] now waits for the options to be present.
 - New methods to [assert element state](./actionability#assertions) like [`method: Page.isEditable`].

@@ -692,7 +692,7 @@ npx playwright open --save-har=example.har --save-har-glob="**/api/**" https://e
 
 ```bash java
 # Save API requests from example.com as "example.har" archive.
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open --save-har=example.har --save-har-glob='**/api/**' https://example.com"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="open --save-har=example.har --save-har-glob='**/api/**' https://example.com"
 ```
 
 ```bash python
