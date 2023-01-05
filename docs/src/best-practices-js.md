@@ -103,7 +103,7 @@ Playwright comes with a range of tooling to help you write tests.
 - The [VS Code extension](./getting-started-vscode.md) gives you a great developer experience when writing, running and debugging tests. 
 - The [test generator](./codegen.md) can generate tests and pick locators for you.
 - The [trace viewer](./trace-viewer.md) gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
-- [Typescript](./test-typescript) in Playwright works out of the box and gives you better IDE integrations. When using VS Code it will show you everything you can do and highlight when you do something wrong. No TypeScript experience is needed and it is not necessary for your code to be in TypeScript, all you need to do is create your tests with a `.ts` extension.
+- [Typescript](./test-typescript) in Playwright works out of the box and gives you better IDE integrations. Your IDE will show you everything you can do and highlight when you do something wrong. No TypeScript experience is needed and it is not necessary for your code to be in TypeScript, all you need to do is create your tests with a `.ts` extension.
 
 ## Test across all browsers
 
