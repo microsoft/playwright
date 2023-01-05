@@ -758,6 +758,22 @@ it('should respect timeout after redirects', async function({ context, server })
   expect(error.message).toContain(`Request timed out after 100ms`);
 });
 
+it('should throw on a redirect with an invalid URL', async ({ context, server }) => {
+  server.setRedirect('/redirect', '/test');
+  server.setRoute('/test', (req, res) => {
+    // Node.js prevents us from responding with an invalid header, therefore we manually write the response.
+    const conn = res.connection;
+    conn.write('HTTP/1.1 302\r\n');
+    conn.write('Location: https://здравствуйте/\r\n');
+    conn.write('\r\n');
+    conn.uncork();
+    conn.end();
+  });
+  console.log(server.PREFIX + '/test');
+  const error = await context.request.get(server.PREFIX + '/redirect').catch(e => e);
+  expect(error.message).toContain('apiRequestContext.get: uri requested responds with an invalid redirect URL');
+});
+
 it('should not hang on a brotli encoded Range request', async ({ context, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18190' });
   it.skip(+process.versions.node.split('.')[0] < 18);
