@@ -354,6 +354,10 @@ it('should exclude patterns', async ({ contextFactory, server, browserName, head
     expect(error.message).toBeTruthy();
   }
 
+  // Make sure error page commits.
+  if (browserName === 'chromium')
+    await page.waitForURL('chrome-error://chromewebdata/');
+
   {
     await page.goto('http://3.non.existent.domain.for.the.test/target.html');
     expect(proxyServer.requestUrls).toContain('http://3.non.existent.domain.for.the.test/target.html');
