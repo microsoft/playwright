@@ -626,7 +626,7 @@ module.exports = MyReporter;
 
 ```js tab=js-ts
 // my-awesome-reporter.ts
-import { FullConfig, FullResult, Reporter, Suite, TestCase, TestResult } from "@playwright/test/reporter";
+import { FullConfig, FullResult, Reporter, Suite, TestCase, TestResult } from '@playwright/test/reporter';
 
 class MyReporter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {
