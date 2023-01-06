@@ -77,12 +77,17 @@
 }
 
 .call-line .datetime,
-.call-line .string {
+.call-line .string,
+.call-line .locator {
   color: var(--orange);
 }
 
 .call-line .number,
+.call-line .bigint,
 .call-line .boolean,
+.call-line .symbol,
+.call-line .undefined,
+.call-line .function,
 .call-line .object {
   color: var(--blue);
 }
