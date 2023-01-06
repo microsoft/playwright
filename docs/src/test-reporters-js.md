@@ -626,25 +626,26 @@ module.exports = MyReporter;
 
 ```js tab=js-ts
 // my-awesome-reporter.ts
-import { Reporter } from '@playwright/test/reporter';
+import { FullConfig, FullResult, Reporter, Suite, TestCase, TestResult } from '@playwright/test/reporter';
 
 class MyReporter implements Reporter {
-  onBegin(config, suite) {
+  onBegin(config: FullConfig, suite: Suite) {
     console.log(`Starting the run with ${suite.allTests().length} tests`);
   }
 
-  onTestBegin(test) {
+  onTestBegin(test: TestCase, result: TestResult) {
     console.log(`Starting test ${test.title}`);
   }
 
-  onTestEnd(test, result) {
+  onTestEnd(test: TestCase, result: TestResult) {
     console.log(`Finished test ${test.title}: ${result.status}`);
   }
 
-  onEnd(result) {
+  onEnd(result: FullResult) {
     console.log(`Finished the run: ${result.status}`);
   }
 }
+
 export default MyReporter;
 ```
 
