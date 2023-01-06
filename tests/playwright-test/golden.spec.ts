@@ -631,13 +631,13 @@ test('should respect comparator name', async ({ runInlineTest }) => {
       test('should pass', ({}) => {
         expect(Buffer.from('${actual.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
           threshold: 0,
-          _comparator: 'ssim-cie94',
+          comparator: 'ssim-cie94',
         });
       });
       test('should fail', ({}) => {
         expect(Buffer.from('${actual.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
           threshold: 0,
-          _comparator: 'pixelmatch',
+          comparator: 'pixelmatch',
         });
       });
     `
@@ -662,7 +662,7 @@ test('should respect comparator in config', async ({ runInlineTest }) => {
             name: 'should-pass',
             expect: {
               toMatchSnapshot: {
-                _comparator: 'ssim-cie94',
+                comparator: 'ssim-cie94',
               }
             },
           },
@@ -670,7 +670,7 @@ test('should respect comparator in config', async ({ runInlineTest }) => {
             name: 'should-fail',
             expect: {
               toMatchSnapshot: {
-                _comparator: 'pixelmatch',
+                comparator: 'pixelmatch',
               }
             },
           },

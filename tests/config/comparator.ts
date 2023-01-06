@@ -22,5 +22,5 @@ type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxD
 
 export function comparePNGs(actual: Buffer, expected: Buffer, options: ImageComparatorOptions = {}): ComparatorResult {
   // Strict threshold by default in our tests.
-  return pngComparator(actual, expected, { _comparator: 'ssim-cie94', threshold: 0, ...options });
+  return pngComparator(actual, expected, { comparator: 'ssim-cie94', threshold: 0, ...options });
 }
