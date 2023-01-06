@@ -34,11 +34,29 @@ Playwright Test comes with builtin fixtures listed below, and you can add your o
 
 Learn how to [configure browser](../test-configuration.md) and see [available options][TestOptions].
 
+**Usage**
+
+```js tab=js-js
+test.beforeAll(async ({ browser }) => {
+  const page = await browser.newPage();
+  // ...
+});
+```
+
+```js tab=js-ts
+test.beforeAll(async ({ browser }) => {
+  const page = await browser.newPage();
+  // ...
+});
+```
+
 ## property: Fixtures.browserName
 * since: v1.10
 - type: <[BrowserName]<"chromium"|"firefox"|"webkit">>
 
 Name of the browser that runs tests. Defaults to `'chromium'`. Useful to [annotate tests](../test-annotations.md) based on the browser.
+
+**Usage**
 
 ```js tab=js-js
 test('skip this test in Firefox', async ({ page, browserName }) => {
@@ -64,6 +82,22 @@ Learn how to [configure context](../test-configuration.md) and see [available op
 
 Default [`property: Fixtures.page`] belongs to this context.
 
+**Usage**
+
+```js tab=js-js
+test('example test', async ({ page, context }) => {
+  await context.route('*external.com/*', route => route.abort());
+  // ...
+});
+```
+
+```js tab=js-ts
+test('example test', async ({ page, context }) => {
+  await context.route('*external.com/*', route => route.abort());
+  // ...
+});
+```
+
 ## property: Fixtures.page
 * since: v1.10
 - type: <[Page]>
@@ -71,6 +105,8 @@ Default [`property: Fixtures.page`] belongs to this context.
 Isolated [Page] instance, created for each test. Pages are isolated between tests due to [`property: Fixtures.context`] isolation.
 
 This is the most common fixture used in a test.
+
+**Usage**
 
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
@@ -101,6 +137,8 @@ test('basic test', async ({ page }) => {
 - type: <[APIRequestContext]>
 
 Isolated [APIRequestContext] instance for each test.
+
+**Usage**
 
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');

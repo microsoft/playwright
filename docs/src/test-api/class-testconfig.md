@@ -39,7 +39,7 @@ export default config;
 - type: ?<[Object]>
   - `timeout` ?<[int]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
   - `toHaveScreenshot` ?<[Object]> Configuration for the [`method: PageAssertions.toHaveScreenshot#1`] method.
-    - `threshold` ?<[float]> an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and `1` (lax). `"pixelmatch"` comparator computes color difference in [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`. 
+    - `threshold` ?<[float]> an acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and `1` (lax). `"pixelmatch"` comparator computes color difference in [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
     - `maxDiffPixels` ?<[int]> an acceptable amount of pixels that could be different, unset by default.
     - `maxDiffPixelRatio` ?<[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
     - `animations` ?<[ScreenshotAnimations]<"allow"|"disabled">> See [`option: animations`] in [`method: Page.screenshot`]. Defaults to `"disabled"`.
@@ -51,6 +51,8 @@ export default config;
     - `maxDiffPixelRatio` ?<[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
 
 Configuration for the `expect` assertion library. Learn more about [various timeouts](../test-timeouts.md).
+
+**Usage**
 
 ```js tab=js-js
 // playwright.config.js
@@ -90,6 +92,8 @@ export default config;
 
 Whether to exit with an error if any tests or groups are marked as [`method: Test.only`] or [`method: Test.describe.only`]. Useful on CI.
 
+**Usage**
+
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
@@ -121,6 +125,30 @@ By default, **test files** are run in parallel. Tests in a single file are run i
 
 You can configure entire test run to concurrently execute all tests in all files using this option.
 
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  fullyParallel: true,
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  fullyParallel: true,
+};
+export default config;
+```
+
 ## property: TestConfig.globalSetup
 * since: v1.10
 - type: ?<[string]>
@@ -128,6 +156,8 @@ You can configure entire test run to concurrently execute all tests in all files
 Path to the global setup file. This file will be required and run before all the tests. It must export a single function that takes a [`TestConfig`] argument.
 
 Learn more about [global setup and teardown](../test-advanced.md#global-setup-and-teardown).
+
+**Usage**
 
 ```js tab=js-js
 // playwright.config.js
@@ -159,6 +189,8 @@ Path to the global teardown file. This file will be required and run after all t
 
 Learn more about [global setup and teardown](../test-advanced.md#global-setup-and-teardown).
 
+**Usage**
+
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
@@ -186,6 +218,8 @@ export default config;
 - type: ?<[int]>
 
 Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI to prevent broken setup from running too long and wasting resources. Learn more about [various timeouts](../test-timeouts.md).
+
+**Usage**
 
 ```js tab=js-js
 // playwright.config.js
@@ -217,6 +251,29 @@ Filter to only run tests with a title matching one of the patterns. For example,
 
 `grep` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  grep: /smoke/,
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  grep: /smoke/,
+};
+export default config;
+```
 
 ## property: TestConfig.grepInvert
 * since: v1.10
@@ -226,11 +283,59 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 
 `grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  grepInvert: /manual/,
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  grepInvert: /manual/,
+};
+export default config;
+```
+
 ## property: TestConfig.ignoreSnapshots
 * since: v1.26
 - type: ?<[boolean]>
 
 Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await expect(page).toHaveScreenshot()`.
+
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  ignoreSnapshots: !process.env.CI,
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  ignoreSnapshots: !process.env.CI,
+};
+export default config;
+```
 
 ## property: TestConfig.maxFailures
 * since: v1.10
@@ -239,6 +344,8 @@ Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()`
 The maximum number of test failures for the whole test suite run. After reaching this number, testing will stop and exit with an error. Setting to zero (default) disables this behavior.
 
 Also available in the [command line](../test-cli.md) with the `--max-failures` and `-x` options.
+
+**Usage**
 
 ```js tab=js-js
 // playwright.config.js
@@ -268,17 +375,67 @@ export default config;
 
 Metadata that will be put directly to the test report serialized as JSON.
 
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  metadata: 'acceptance tests',
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  metadata: 'acceptance tests',
+};
+export default config;
+```
+
 ## property: TestConfig.name
 * since: v1.10
 - type: ?<[string]>
 
 Config name is visible in the report and during test execution, unless overridden by [`property: TestProject.name`].
 
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  name: 'acceptance tests',
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  name: 'acceptance tests',
+};
+export default config;
+```
+
 ## property: TestConfig.outputDir
 * since: v1.10
 - type: ?<[string]>
 
 The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
+
+**Usage**
 
 ```js tab=js-js
 // playwright.config.js
@@ -301,6 +458,8 @@ const config: PlaywrightTestConfig = {
 };
 export default config;
 ```
+
+**Details**
 
 This directory is cleaned at the start. When running a test, a unique subdirectory inside the [`property: TestConfig.outputDir`] is created, guaranteeing that test running in parallel do not conflict. This directory can be accessed by [`property: TestInfo.outputDir`] and [`method: TestInfo.outputPath`].
 
@@ -329,14 +488,36 @@ test('example test', async ({}, testInfo) => {
 
 ## property: TestConfig.snapshotDir
 * since: v1.10
+* discouraged: Use [`property: TestConfig.snapshotPathTemplate`] to configure snapshot paths.
 - type: ?<[string]>
 
-:::note
-Use of [`property: TestConfig.snapshotDir`] is discouraged. Please use [`property: TestConfig.snapshotPathTemplate`] to configure
-snapshot paths.
-:::
-
 The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to [`property: TestConfig.testDir`].
+
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  snapshotDir: './snapshots',
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { type PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  snapshotDir: './snapshots',
+};
+export default config;
+```
+
+**Details**
 
 The directory for each test can be accessed by [`property: TestInfo.snapshotDir`] and [`method: TestInfo.snapshotPath`].
 
@@ -355,6 +536,30 @@ Whether to preserve test output in the [`property: TestConfig.outputDir`]. Defau
 * `'failures-only'` - only preserve output for failed tests.
 
 
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  preserveOutput: 'always',
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { type PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  preserveOutput: 'always',
+};
+export default config;
+```
+
 ## property: TestConfig.projects
 * since: v1.10
 - type: ?<[Array]<[TestProject]>>
@@ -362,17 +567,94 @@ Whether to preserve test output in the [`property: TestConfig.outputDir`]. Defau
 Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
 
 
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+const { devices } = require('@playwright/test');
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  projects: [
+    { name: 'chromium', use: devices['Desktop Chrome'] }
+  ]
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { type PlaywrightTestConfig, devices } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  projects: [
+    { name: 'chromium', use: devices['Desktop Chrome'] }
+  ]
+};
+export default config;
+```
+
 ## property: TestConfig.quiet
 * since: v1.10
 - type: ?<[boolean]>
 
 Whether to suppress stdio and stderr output from the tests.
 
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  quiet: !!process.env.CI,
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { type PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  quiet: !!process.env.CI,
+};
+export default config;
+```
+
 ## property: TestConfig.repeatEach
 * since: v1.10
 - type: ?<[int]>
 
 The number of times to repeat each test, useful for debugging flaky tests.
+
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  repeatEach: 3,
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { type PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  repeatEach: 3,
+};
+export default config;
+```
 
 ## property: TestConfig.reporter
 * since: v1.10
@@ -388,6 +670,8 @@ The list of reporters to use. Each reporter can be:
 You can pass options to the reporter in a tuple like `['json', { outputFile: './report.json' }]`.
 
 Learn more in the [reporters guide](../test-reporters.md).
+
+**Usage**
 
 ```js tab=js-js
 // playwright.config.js
@@ -419,6 +703,32 @@ export default config;
 
 Whether to report slow test files. Pass `null` to disable this feature.
 
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  reportSlowTests: null,
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { type PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  reportSlowTests: null,
+};
+export default config;
+```
+
+**Details**
+
 Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
 
 ## property: TestConfig.retries
@@ -426,6 +736,8 @@ Test files that took more than `threshold` milliseconds are considered slow, and
 - type: ?<[int]>
 
 The maximum number of retry attempts given to failed tests. By default failing tests are not retried. Learn more about [test retries](../test-retries.md#retries).
+
+**Usage**
 
 ```js tab=js-js
 // playwright.config.js
@@ -459,11 +771,37 @@ Shard tests and execute only the selected shard. Specify in the one-based form l
 
 Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
 
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  shard: { total: 10, current: 3 },
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { type PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  shard: { total: 10, current: 3 },
+};
+export default config;
+```
+
 ## property: TestConfig.testDir
 * since: v1.10
 - type: ?<[string]>
 
 Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
+
+**Usage**
 
 ```js tab=js-js
 // playwright.config.js
@@ -495,6 +833,8 @@ Files matching one of these patterns are not executed as test files. Matching is
 
 For example, `'**/test-assets/**'` will ignore any files in the `test-assets` directory.
 
+**Usage**
+
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
@@ -525,6 +865,8 @@ Only the files matching one of these patterns are executed as test files. Matchi
 
 By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
 
+**Usage**
+
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
@@ -554,6 +896,8 @@ export default config;
 Timeout for each test in milliseconds. Defaults to 30 seconds.
 
 This is a base timeout for all tests. In addition, each test can configure its own timeout with [`method: Test.setTimeout`]. Learn more about [various timeouts](../test-timeouts.md).
+
+**Usage**
 
 ```js tab=js-js
 // playwright.config.js
@@ -588,11 +932,37 @@ Whether to update expected snapshots with the actual results produced by the tes
 
 Learn more about [snapshots](../test-snapshots.md).
 
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  updateSnapshots: 'missing',
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { type PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  updateSnapshots: 'missing',
+};
+export default config;
+```
+
 ## property: TestConfig.use
 * since: v1.10
 - type: ?<[TestOptions]>
 
 Global options for all tests, for example [`property: TestOptions.browserName`]. Learn more about [configuration](../test-configuration.md) and see [available options][TestOptions].
+
+**Usage**
 
 ```js tab=js-js
 // playwright.config.js
@@ -634,6 +1004,8 @@ export default config;
 
 Launch a development web server (or multiple) during the tests.
 
+**Details**
+
 If the port is specified, Playwright Test will wait for it to be available on `127.0.0.1` or `::1`, before running the tests. If the url is specified, Playwright Test will wait for the URL to return a 2xx, 3xx, 400, 401, 402, or 403 status code before running the tests.
 
 For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
@@ -643,6 +1015,8 @@ The `port` (but not the `url`) gets passed over to Playwright as a [`property: T
 :::note
 It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.
 :::
+
+**Usage**
 
 ```js tab=js-ts
 // playwright.config.ts
@@ -763,6 +1137,8 @@ The maximum number of concurrent worker processes to use for parallelizing tests
 Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to speed up test execution.
 
 Defaults to half of the number of logical CPU cores. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
+
+**Usage**
 
 ```js tab=js-js
 // playwright.config.js

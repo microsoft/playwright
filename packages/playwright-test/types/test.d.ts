@@ -413,6 +413,8 @@ interface TestConfig {
    *
    * Learn more in the [reporters guide](https://playwright.dev/docs/test-reporters).
    *
+   * **Usage**
+   *
    * ```js
    * // playwright.config.ts
    * import type { PlaywrightTestConfig } from '@playwright/test';
@@ -427,6 +429,8 @@ interface TestConfig {
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
   /**
    * Launch a development web server (or multiple) during the tests.
+   *
+   * **Details**
    *
    * If the port is specified, Playwright Test will wait for it to be available on `127.0.0.1` or `::1`, before running
    * the tests. If the url is specified, Playwright Test will wait for the URL to return a 2xx, 3xx, 400, 401, 402, or
@@ -443,6 +447,8 @@ interface TestConfig {
    * **NOTE** It is also recommended to specify
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so
    * that tests could use relative urls.
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -504,6 +510,8 @@ interface TestConfig {
   webServer?: TestConfigWebServer | TestConfigWebServer[];
   /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -601,6 +609,8 @@ interface TestConfig {
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
    * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
    *
+   * **Usage**
+   *
    * ```js
    * // playwright.config.ts
    * import type { PlaywrightTestConfig } from '@playwright/test';
@@ -620,6 +630,19 @@ interface TestConfig {
    * worker process.
    *
    * You can configure entire test run to concurrently execute all tests in all files using this option.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   fullyParallel: true,
+   * };
+   * export default config;
+   * ```
+   *
    */
   fullyParallel?: boolean;
 
@@ -628,6 +651,8 @@ interface TestConfig {
    * function that takes a [`TestConfig`] argument.
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -649,6 +674,8 @@ interface TestConfig {
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
    *
+   * **Usage**
+   *
    * ```js
    * // playwright.config.ts
    * import { type PlaywrightTestConfig } from '@playwright/test';
@@ -666,6 +693,8 @@ interface TestConfig {
    * Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on
    * CI to prevent broken setup from running too long and wasting resources. Learn more about
    * [various timeouts](https://playwright.dev/docs/test-timeouts).
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -685,6 +714,19 @@ interface TestConfig {
    * run tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
    *
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   grep: /smoke/,
+   * };
+   * export default config;
+   * ```
+   *
    */
   grep?: RegExp|Array<RegExp>;
 
@@ -694,12 +736,38 @@ interface TestConfig {
    * [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
    *
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   grepInvert: /manual/,
+   * };
+   * export default config;
+   * ```
+   *
    */
   grepInvert?: RegExp|Array<RegExp>;
 
   /**
    * Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()` and `await
    * expect(page).toHaveScreenshot()`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   ignoreSnapshots: !process.env.CI,
+   * };
+   * export default config;
+   * ```
+   *
    */
   ignoreSnapshots?: boolean;
 
@@ -708,6 +776,8 @@ interface TestConfig {
    * exit with an error. Setting to zero (default) disables this behavior.
    *
    * Also available in the [command line](https://playwright.dev/docs/test-cli) with the `--max-failures` and `-x` options.
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -724,17 +794,45 @@ interface TestConfig {
 
   /**
    * Metadata that will be put directly to the test report serialized as JSON.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   metadata: 'acceptance tests',
+   * };
+   * export default config;
+   * ```
+   *
    */
   metadata?: Metadata;
 
   /**
    * Config name is visible in the report and during test execution, unless overridden by
    * [testProject.name](https://playwright.dev/docs/api/class-testproject#test-project-name).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   name: 'acceptance tests',
+   * };
+   * export default config;
+   * ```
+   *
    */
   name?: string;
 
   /**
    * The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -745,6 +843,8 @@ interface TestConfig {
    * };
    * export default config;
    * ```
+   *
+   * **Details**
    *
    * This directory is cleaned at the start. When running a test, a unique subdirectory inside the
    * [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir) is created,
@@ -770,13 +870,26 @@ interface TestConfig {
   outputDir?: string;
 
   /**
-   * **NOTE** Use of [testConfig.snapshotDir](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-dir)
-   * is discouraged. Please use
+   * **NOTE** Use
    * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
    * to configure snapshot paths.
    *
    * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
    * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   snapshotDir: './snapshots',
+   * };
+   * export default config;
+   * ```
+   *
+   * **Details**
    *
    * The directory for each test can be accessed by
    * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
@@ -794,6 +907,8 @@ interface TestConfig {
    * and
    * [snapshotAssertions.toMatchSnapshot(name[, options])](https://playwright.dev/docs/api/class-snapshotassertions#snapshot-assertions-to-match-snapshot-1).
    *
+   * **Usage**
+   *
    * ```js
    * // playwright.config.ts
    * import type { PlaywrightTestConfig } from '@playwright/test';
@@ -805,6 +920,8 @@ interface TestConfig {
    *
    * export default config;
    * ```
+   *
+   * **Details**
    *
    * The value might include some "tokens" that will be replaced with actual values during test execution.
    *
@@ -892,26 +1009,94 @@ interface TestConfig {
    * - `'always'` - preserve output for all tests;
    * - `'never'` - do not preserve output for any tests;
    * - `'failures-only'` - only preserve output for failed tests.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   preserveOutput: 'always',
+   * };
+   * export default config;
+   * ```
+   *
    */
   preserveOutput?: "always"|"never"|"failures-only";
 
   /**
    * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   projects: [
+   *     { name: 'chromium', use: devices['Desktop Chrome'] }
+   *   ]
+   * };
+   * export default config;
+   * ```
+   *
    */
   projects?: Array<TestProject>;
 
   /**
    * Whether to suppress stdio and stderr output from the tests.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   quiet: !!process.env.CI,
+   * };
+   * export default config;
+   * ```
+   *
    */
   quiet?: boolean;
 
   /**
    * The number of times to repeat each test, useful for debugging flaky tests.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   repeatEach: 3,
+   * };
+   * export default config;
+   * ```
+   *
    */
   repeatEach?: number;
 
   /**
    * Whether to report slow test files. Pass `null` to disable this feature.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   reportSlowTests: null,
+   * };
+   * export default config;
+   * ```
+   *
+   * **Details**
    *
    * Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no
    * more than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
@@ -932,6 +1117,8 @@ interface TestConfig {
    * The maximum number of retry attempts given to failed tests. By default failing tests are not retried. Learn more
    * about [test retries](https://playwright.dev/docs/test-retries#retries).
    *
+   * **Usage**
+   *
    * ```js
    * // playwright.config.ts
    * import type { PlaywrightTestConfig } from '@playwright/test';
@@ -949,6 +1136,19 @@ interface TestConfig {
    * Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   shard: { total: 10, current: 3 },
+   * };
+   * export default config;
+   * ```
+   *
    */
   shard?: null|{
     /**
@@ -964,6 +1164,8 @@ interface TestConfig {
 
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -984,6 +1186,8 @@ interface TestConfig {
    *
    * For example, `'**\/test-assets/**'` will ignore any files in the `test-assets` directory.
    *
+   * **Usage**
+   *
    * ```js
    * // playwright.config.ts
    * import { type PlaywrightTestConfig } from '@playwright/test';
@@ -1002,6 +1206,8 @@ interface TestConfig {
    * absolute file path. Strings are treated as glob patterns.
    *
    * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -1022,6 +1228,8 @@ interface TestConfig {
    * This is a base timeout for all tests. In addition, each test can configure its own timeout with
    * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout). Learn more about
    * [various timeouts](https://playwright.dev/docs/test-timeouts).
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -1045,6 +1253,19 @@ interface TestConfig {
    *   time. This is the default.
    *
    * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   updateSnapshots: 'missing',
+   * };
+   * export default config;
+   * ```
+   *
    */
   updateSnapshots?: "all"|"none"|"missing";
 
@@ -1057,6 +1278,8 @@ interface TestConfig {
    *
    * Defaults to half of the number of logical CPU cores. Learn more about
    * [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -1097,12 +1320,29 @@ interface TestConfig {
 export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   /**
    * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   projects: [
+   *     { name: 'chromium', use: devices['Desktop Chrome'] }
+   *   ]
+   * };
+   * export default config;
+   * ```
+   *
    */
   projects?: Project<TestArgs, WorkerArgs>[];
   /**
    * Global options for all tests, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more
    * about [configuration](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -1151,6 +1391,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
    * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
    *
+   * **Usage**
+   *
    * ```js
    * // playwright.config.ts
    * import type { PlaywrightTestConfig } from '@playwright/test';
@@ -1169,6 +1411,19 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * worker process.
    *
    * You can configure entire test run to concurrently execute all tests in all files using this option.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   fullyParallel: true,
+   * };
+   * export default config;
+   * ```
+   *
    */
   fullyParallel: boolean;
   /**
@@ -1176,6 +1431,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * function that takes a [`TestConfig`] argument.
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -1196,6 +1453,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
    *
+   * **Usage**
+   *
    * ```js
    * // playwright.config.ts
    * import { type PlaywrightTestConfig } from '@playwright/test';
@@ -1212,6 +1471,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on
    * CI to prevent broken setup from running too long and wasting resources. Learn more about
    * [various timeouts](https://playwright.dev/docs/test-timeouts).
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -1230,6 +1491,19 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * run tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
    *
    * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   grep: /smoke/,
+   * };
+   * export default config;
+   * ```
+   *
    */
   grep: RegExp | RegExp[];
   /**
@@ -1238,6 +1512,19 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
    *
    * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   grepInvert: /manual/,
+   * };
+   * export default config;
+   * ```
+   *
    */
   grepInvert: RegExp | RegExp[] | null;
   /**
@@ -1245,6 +1532,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * exit with an error. Setting to zero (default) disables this behavior.
    *
    * Also available in the [command line](https://playwright.dev/docs/test-cli) with the `--max-failures` and `-x` options.
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -1260,6 +1549,19 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   maxFailures: number;
   /**
    * Metadata that will be put directly to the test report serialized as JSON.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   metadata: 'acceptance tests',
+   * };
+   * export default config;
+   * ```
+   *
    */
   metadata: Metadata;
   version: string;
@@ -1270,10 +1572,38 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * - `'always'` - preserve output for all tests;
    * - `'never'` - do not preserve output for any tests;
    * - `'failures-only'` - only preserve output for failed tests.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   preserveOutput: 'always',
+   * };
+   * export default config;
+   * ```
+   *
    */
   preserveOutput: 'always' | 'never' | 'failures-only';
   /**
    * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   projects: [
+   *     { name: 'chromium', use: devices['Desktop Chrome'] }
+   *   ]
+   * };
+   * export default config;
+   * ```
+   *
    */
   projects: FullProject<TestArgs, WorkerArgs>[];
   /**
@@ -1285,6 +1615,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * You can pass options to the reporter in a tuple like `['json', { outputFile: './report.json' }]`.
    *
    * Learn more in the [reporters guide](https://playwright.dev/docs/test-reporters).
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -1301,6 +1633,20 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Whether to report slow test files. Pass `null` to disable this feature.
    *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   reportSlowTests: null,
+   * };
+   * export default config;
+   * ```
+   *
+   * **Details**
+   *
    * Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no
    * more than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
    */
@@ -1308,12 +1654,38 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   rootDir: string;
   /**
    * Whether to suppress stdio and stderr output from the tests.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   quiet: !!process.env.CI,
+   * };
+   * export default config;
+   * ```
+   *
    */
   quiet: boolean;
   /**
    * Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   shard: { total: 10, current: 3 },
+   * };
+   * export default config;
+   * ```
+   *
    */
   shard: { total: number, current: number } | null;
   /**
@@ -1325,6 +1697,19 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *   time. This is the default.
    *
    * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   updateSnapshots: 'missing',
+   * };
+   * export default config;
+   * ```
+   *
    */
   updateSnapshots: 'all' | 'none' | 'missing';
   /**
@@ -1336,6 +1721,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * Defaults to half of the number of logical CPU cores. Learn more about
    * [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -1352,6 +1739,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Launch a development web server (or multiple) during the tests.
    *
+   * **Details**
+   *
    * If the port is specified, Playwright Test will wait for it to be available on `127.0.0.1` or `::1`, before running
    * the tests. If the url is specified, Playwright Test will wait for the URL to return a 2xx, 3xx, 400, 401, 402, or
    * 403 status code before running the tests.
@@ -1367,6 +1756,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * **NOTE** It is also recommended to specify
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so
    * that tests could use relative urls.
+   *
+   * **Usage**
    *
    * ```js
    * // playwright.config.ts
@@ -1916,6 +2307,8 @@ interface SuiteFunction {
   /**
    * Declares a group of tests.
    *
+   * **Usage**
+   *
    * ```js
    * test.describe('two tests', () => {
    *   test('one', async ({ page }) => {
@@ -1937,6 +2330,8 @@ interface SuiteFunction {
   /**
    * Declares an anonymous group of tests. This is convenient to give a group of tests a common option with
    * [test.use(options)](https://playwright.dev/docs/api/class-test#test-use).
+   *
+   * **Usage**
    *
    * ```js
    * test.describe(() => {
@@ -1982,6 +2377,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares a focused test. If there are some focused tests or suites, all of them will be run but nothing else.
    *
+   * **Usage**
+   *
    * ```js
    * test.only('focus this test', async ({ page }) => {
    *   // Run only focused tests in the entire project.
@@ -1994,6 +2391,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   only: TestFunction<TestArgs & WorkerArgs>;
   /**
    * Declares a group of tests.
+   *
+   * **Usage**
    *
    * ```js
    * test.describe('two tests', () => {
@@ -2017,6 +2416,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares a focused group of tests. If there are some focused tests or suites, all of them will be run but nothing
    * else.
    *
+   * **Usage**
+   *
    * ```js
    * test.describe.only('focused group', () => {
    *   test('in the focused group', async ({ page }) => {
@@ -2039,6 +2440,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Tests in the skipped
    * group are never run.
    *
+   * **Usage**
+   *
    * ```js
    * test.describe.skip('skipped group', () => {
    *   test('example', async ({ page }) => {
@@ -2058,6 +2461,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Tests in this group
    * are marked as "fixme" and will not be executed.
    *
+   * **Usage**
+   *
    * ```js
    * test.describe.fixme('broken tests', () => {
    *   test('example', async ({ page }) => {
@@ -2073,15 +2478,16 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   fixme: SuiteFunction;
     /**
+   * **NOTE** See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+   * the preferred way of configuring the execution mode.
+   *
    * Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are
    * skipped. All tests in a group are retried together.
    *
-   * **NOTE** See
-   * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for the
-   * preferred way of configuring the execution mode.
-   *
    * **NOTE** Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
+   *
+   * **Usage**
    *
    * ```js
    * test.describe.serial('group', () => {
@@ -2097,12 +2503,17 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   serial: SuiteFunction & {
       /**
+   * **NOTE** See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+   * the preferred way of configuring the execution mode.
+   *
    * Declares a focused group of tests that should always be run serially. If one of the tests fails, all subsequent
    * tests are skipped. All tests in a group are retried together. If there are some focused tests or suites, all of
    * them will be run but nothing else.
    *
    * **NOTE** Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
+   *
+   * **Usage**
    *
    * ```js
    * test.describe.serial.only('group', () => {
@@ -2121,14 +2532,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   only: SuiteFunction;
     };
     /**
+   * **NOTE** See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+   * the preferred way of configuring the execution mode.
+   *
    * Declares a group of tests that could be run in parallel. By default, tests in a single test file run one after
    * another, but using
    * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel) allows
    * them to run in parallel.
    *
-   * **NOTE** See
-   * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for the
-   * preferred way of configuring the execution mode.
+   * **Usage**
    *
    * ```js
    * test.describe.parallel('group', () => {
@@ -2146,9 +2558,22 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   parallel: SuiteFunction & {
       /**
+   * **NOTE** See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+   * the preferred way of configuring the execution mode.
+   *
    * Declares a focused group of tests that could be run in parallel. This is similar to
    * [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel), but
    * focuses the group. If there are some focused tests or suites, all of them will be run but nothing else.
+   *
+   * **Usage**
+   *
+   * ```js
+   * test.describe.parallel.only('group', () => {
+   *   test('runs in parallel 1', async ({ page }) => {});
+   *   test('runs in parallel 2', async ({ page }) => {});
+   * });
+   * ```
+   *
    * @param title Group title.
    * @param callback A callback that is run immediately when calling
    * [test.describe.parallel.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel-only).
@@ -2162,32 +2587,36 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * Learn more about the execution modes [here](https://playwright.dev/docs/test-parallel).
    *
-   * Running tests in parallel:
+   * **Usage**
+   * - Running tests in parallel.
    *
-   * ```js
-   * // Run all the tests in the file concurrently using parallel workers.
-   * test.describe.configure({ mode: 'parallel' });
-   * test('runs in parallel 1', async ({ page }) => {});
-   * test('runs in parallel 2', async ({ page }) => {});
-   * ```
+   *   ```js
+   *   // Run all the tests in the file concurrently using parallel workers.
+   *   test.describe.configure({ mode: 'parallel' });
+   *   test('runs in parallel 1', async ({ page }) => {});
+   *   test('runs in parallel 2', async ({ page }) => {});
+   *   ```
    *
-   * Running tests sequentially:
+   * - Running tests serially, retrying from the start.
    *
-   * ```js
-   * // Annotate tests as inter-dependent.
-   * test.describe.configure({ mode: 'serial' });
-   * test('runs first', async ({ page }) => {});
-   * test('runs second', async ({ page }) => {});
-   * ```
+   *   **NOTE** Running serially is not recommended. It is usually better to make your tests isolated, so they can be
+   *   run independently.
    *
-   * Configuring retries and timeout for each test:
+   *   ```js
+   *   // Annotate tests as inter-dependent.
+   *   test.describe.configure({ mode: 'serial' });
+   *   test('runs first', async ({ page }) => {});
+   *   test('runs second', async ({ page }) => {});
+   *   ```
    *
-   * ```js
-   * // Each test in the file will be retried twice and have a timeout of 20 seconds.
-   * test.describe.configure({ retries: 2, timeout: 20_000 });
-   * test('runs first', async ({ page }) => {});
-   * test('runs second', async ({ page }) => {});
-   * ```
+   * - Configuring retries and timeout for each test.
+   *
+   *   ```js
+   *   // Each test in the file will be retried twice and have a timeout of 20 seconds.
+   *   test.describe.configure({ retries: 2, timeout: 20_000 });
+   *   test('runs first', async ({ page }) => {});
+   *   test('runs second', async ({ page }) => {});
+   *   ```
    *
    * @param options
    */
@@ -2197,6 +2626,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares a skipped test, similarly to
    * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call). Skipped test is never
    * run.
+   *
+   * **Usage**
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2213,6 +2644,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Unconditionally skip a test. Test is immediately aborted when you call
    * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
+   *
+   * **Usage**
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2244,6 +2677,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Conditionally skip a test with an optional description.
    *
+   * **Usage**
+   *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
@@ -2272,6 +2707,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditionally skips all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group.
    *
+   * **Usage**
+   *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
@@ -2295,6 +2732,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call). This test will not be
    * run.
    *
+   * **Usage**
+   *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
@@ -2310,6 +2749,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Mark a test as "fixme", with the intention to fix it. Test is immediately aborted when you call
    * [test.fixme()](https://playwright.dev/docs/api/class-test#test-fixme-2).
+   *
+   * **Usage**
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2341,6 +2782,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Conditionally mark a test as "fixme" with an optional description.
    *
+   * **Usage**
+   *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
@@ -2357,6 +2800,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Conditionally mark all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group as "fixme".
+   *
+   * **Usage**
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2381,6 +2826,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is
    * fixed.
    *
+   * **Usage**
+   *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
@@ -2394,6 +2841,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   fail(): void;
   /**
    * Conditionally mark a test as "should fail" with an optional description.
+   *
+   * **Usage**
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2412,6 +2861,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditionally mark all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group as "should
    * fail".
+   *
+   * **Usage**
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2434,6 +2885,13 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Unconditionally marks a test as "slow". Slow test will be given triple the default timeout.
    *
+   * **Details**
+   *
+   * [test.slow()](https://playwright.dev/docs/api/class-test#test-slow-1) cannot be used in a `beforeAll` or `afterAll`
+   * hook. Use [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout) instead.
+   *
+   * **Usage**
+   *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
@@ -2443,14 +2901,13 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * **NOTE** [test.slow()](https://playwright.dev/docs/api/class-test#test-slow-1) cannot be used in a `beforeAll` or
-   * `afterAll` hook. Use [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout)
-   * instead.
    */
   slow(): void;
   /**
    * Conditionally mark a test as "slow" with an optional description. Slow test will be given triple the default
    * timeout.
+   *
+   * **Usage**
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2469,6 +2926,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Conditionally mark all tests in a file or
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group as "slow". Slow
    * tests will be given triple the default timeout.
+   *
+   * **Usage**
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2491,68 +2950,73 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Changes the timeout for the test. Zero means no timeout. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('very slow test', async ({ page }) => {
-   *   test.setTimeout(120000);
-   *   // ...
-   * });
-   * ```
-   *
-   * Changing timeout from a slow `beforeEach` or `afterEach` hook. Note that this affects the test timeout that is
-   * shared with `beforeEach`/`afterEach` hooks.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeEach(async ({ page }, testInfo) => {
-   *   // Extend timeout for all tests running this hook by 30 seconds.
-   *   test.setTimeout(testInfo.timeout + 30000);
-   * });
-   * ```
-   *
-   * Changing timeout for a `beforeAll` or `afterAll` hook. Note this affects the hook's timeout, not the test timeout.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeAll(async () => {
-   *   // Set timeout for this hook.
-   *   test.setTimeout(60000);
-   * });
-   * ```
-   *
-   * Changing timeout for all tests in a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.describe('group', () => {
-   *   // Applies to all tests in this group.
-   *   test.describe.configure({ timeout: 60000 });
-   *
-   *   test('test one', async () => { /* ... *\/ });
-   *   test('test two', async () => { /* ... *\/ });
-   *   test('test three', async () => { /* ... *\/ });
-   * });
-   * ```
-   *
    * Timeout for the currently running test is available through
    * [testInfo.timeout](https://playwright.dev/docs/api/class-testinfo#test-info-timeout).
+   *
+   * **Usage**
+   * - Changing test timeout.
+   *
+   *   ```js
+   *   test('very slow test', async ({ page }) => {
+   *     test.setTimeout(120000);
+   *     // ...
+   *   });
+   *   ```
+   *
+   * - Changing timeout from a slow `beforeEach` or `afterEach` hook. Note that this affects the test timeout that is
+   *   shared with `beforeEach`/`afterEach` hooks.
+   *
+   *   ```js
+   *   test.beforeEach(async ({ page }, testInfo) => {
+   *     // Extend timeout for all tests running this hook by 30 seconds.
+   *     test.setTimeout(testInfo.timeout + 30000);
+   *   });
+   *   ```
+   *
+   * - Changing timeout for a `beforeAll` or `afterAll` hook. Note this affects the hook's timeout, not the test
+   *   timeout.
+   *
+   *   ```js
+   *   test.beforeAll(async () => {
+   *     // Set timeout for this hook.
+   *     test.setTimeout(60000);
+   *   });
+   *   ```
+   *
+   * - Changing timeout for all tests in a
+   *   [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group.
+   *
+   *   ```js
+   *   test.describe('group', () => {
+   *     // Applies to all tests in this group.
+   *     test.describe.configure({ timeout: 60000 });
+   *
+   *     test('test one', async () => { /* ... *\/ });
+   *     test('test two', async () => { /* ... *\/ });
+   *     test('test three', async () => { /* ... *\/ });
+   *   });
+   *   ```
+   *
    * @param timeout Timeout in milliseconds.
    */
   setTimeout(timeout: number): void;
   /**
-   * Declares a `beforeEach` hook that is executed before each test. When called in the scope of a test file, runs
-   * before each test in the file. When called inside a
+   * Declares a `beforeEach` hook that is executed before each test.
+   *
+   * **Details**
+   *
+   * When called in the scope of a test file, runs before each test in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs before
    * each test in the group.  If multiple `beforeEach` hooks are added, they will run in the order of their
    * registration.
    *
    * You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot
    * of useful information. For example, you can navigate the page before starting the test.
+   *
+   * You can use [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each) to teardown
+   * any resources set up in `beforeEach`.
+   *
+   * **Usage**
    *
    * ```js
    * // example.spec.ts
@@ -2568,19 +3032,22 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * You can use [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each) to teardown
-   * any resources set up in `beforeEach`.
    * @param hookFunction Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
    */
   beforeEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
-   * Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after
-   * each test in the file. When called inside a
+   * Declares an `afterEach` hook that is executed after each test.
+   *
+   * **Details**
+   *
+   * When called in the scope of a test file, runs after each test in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs after each
    * test in the group. If multiple `afterEach` hooks are added, they will run in the order of their registration.
    *
    * You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot
    * of useful information. For example, you can check whether the test succeeded or failed.
+   *
+   * **Usage**
    *
    * ```js
    * // example.spec.ts
@@ -2602,10 +3069,21 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   afterEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
-   * Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of
-   * a test file, runs before all tests in the file. When called inside a
+   * Declares a `beforeAll` hook that is executed once per worker process before all tests.
+   *
+   * **Details**
+   *
+   * When called in the scope of a test file, runs before all tests in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs before all
    * tests in the group. If multiple `beforeAll` hooks are added, they will run in the order of their registration.
+   *
+   * Note that worker process is restarted on test failures, and `beforeAll` hook runs again in the new worker. Learn
+   * more about [workers and failures](https://playwright.dev/docs/test-retries).
+   *
+   * You can use [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) to teardown
+   * any resources set up in `beforeAll`.
+   *
+   * **Usage**
    *
    * ```js
    * // example.spec.ts
@@ -2624,30 +3102,39 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * Note that worker process is restarted on test failures, and `beforeAll` hook runs again in the new worker. Learn
-   * more about [workers and failures](https://playwright.dev/docs/test-retries).
-   *
-   * You can use [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) to teardown
-   * any resources set up in `beforeAll`.
    * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
    */
   beforeAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
-   * Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test
-   * file, runs after all tests in the file. When called inside a
+   * Declares an `afterAll` hook that is executed once per worker after all tests.
+   *
+   * **Details**
+   *
+   * When called in the scope of a test file, runs after all tests in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs after all
    * tests in the group. If multiple `afterAll` hooks are added, they will run in the order of their registration.
    *
    * Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn
    * more about [workers and failures](https://playwright.dev/docs/test-retries).
+   *
+   * **Usage**
+   *
+   * ```js
+   * test.afterAll(async () => {
+   *   console.log('Done with tests');
+   *   // ...
+   * });
+   * ```
+   *
    * @param hookFunction Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
    */
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
    * Specifies options or fixtures to use in a single test file or a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group. Most useful to
-   * set an option, for example set `locale` to configure `context` fixture. `test.use` can be called either in the
-   * global scope or inside `test.describe`. It is an error to call it within `beforeEach` or `beforeAll`.
+   * set an option, for example set `locale` to configure `context` fixture.
+   *
+   * **Usage**
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2658,6 +3145,11 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *   // Default context and page have locale as specified
    * });
    * ```
+   *
+   * **Details**
+   *
+   * `test.use` can be called either in the global scope or inside `test.describe`. It is an error to call it within
+   * `beforeEach` or `beforeAll`.
    *
    * It is also possible to override a fixture by providing a function.
    *
@@ -2683,6 +3175,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares a test step.
    *
+   * **Usage**
+   *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
@@ -2693,7 +3187,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * The method returns value retuned by the step callback.
+   * **Details**
+   *
+   * The method returns the value retuned by the step callback.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2712,12 +3208,22 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   step<T>(title: string, body: () => Promise<T>): Promise<T>;
   /**
-   * `expect` function can be used to create test assertions. Read
-   * [expect library documentation](https://jestjs.io/docs/expect) for more details.
+   * `expect` function can be used to create test assertions. Read more about [test assertions](https://playwright.dev/docs/test-assertions).
+   *
+   * **Usage**
+   *
+   * ```js
+   * test('example', async ({ page }) => {
+   *   await test.expect(page).toHaveTitle('Title');
+   * });
+   * ```
+   *
    */
   expect: Expect;
   /**
    * Extends the `test` object by defining fixtures and/or options that can be used in the tests.
+   *
+   * **Usage**
    *
    * First define a fixture and/or an option.
    *
@@ -2786,6 +3292,16 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Returns information about the currently running test. This method can only be called during the test execution,
    * otherwise it throws.
+   *
+   * **Usage**
+   *
+   * ```js
+   * test('example test', async ({ page }) => {
+   *   // ...
+   *   await test.info().attach('screenshot', { body: await page.screenshot(), contentType: 'image/png' });
+   * });
+   * ```
+   *
    */
   info(): TestInfo;
 }
@@ -3208,6 +3724,16 @@ export interface PlaywrightWorkerArgs {
    * efficient. However, each test runs in an isolated [BrowserContext]  and gets a fresh environment.
    *
    * Learn how to [configure browser](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
+   *
+   * **Usage**
+   *
+   * ```js
+   * test.beforeAll(async ({ browser }) => {
+   *   const page = await browser.newPage();
+   *   // ...
+   * });
+   * ```
+   *
    */
   browser: Browser;
 }
@@ -3245,6 +3771,16 @@ export interface PlaywrightTestArgs {
    * Learn how to [configure context](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
    *
    * Default [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page) belongs to this context.
+   *
+   * **Usage**
+   *
+   * ```js
+   * test('example test', async ({ page, context }) => {
+   *   await context.route('*external.com/*', route => route.abort());
+   *   // ...
+   * });
+   * ```
+   *
    */
   context: BrowserContext;
   /**
@@ -3252,6 +3788,8 @@ export interface PlaywrightTestArgs {
    * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) isolation.
    *
    * This is the most common fixture used in a test.
+   *
+   * **Usage**
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -3269,6 +3807,8 @@ export interface PlaywrightTestArgs {
   page: Page;
   /**
    * Isolated [APIRequestContext] instance for each test.
+   *
+   * **Usage**
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -4739,6 +5279,8 @@ interface TestProject {
    * and
    * [snapshotAssertions.toMatchSnapshot(name[, options])](https://playwright.dev/docs/api/class-snapshotassertions#snapshot-assertions-to-match-snapshot-1).
    *
+   * **Usage**
+   *
    * ```js
    * // playwright.config.ts
    * import type { PlaywrightTestConfig } from '@playwright/test';
@@ -4750,6 +5292,8 @@ interface TestProject {
    *
    * export default config;
    * ```
+   *
+   * **Details**
    *
    * The value might include some "tokens" that will be replaced with actual values during test execution.
    *
