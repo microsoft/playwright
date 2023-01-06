@@ -319,7 +319,14 @@ export abstract class APIRequestContext extends SdkObject {
 
           // HTTP-redirect fetch step 4: If locationURL is null, then return response.
           if (response.headers.location) {
-            const locationURL = new URL(response.headers.location, url);
+            let locationURL;
+            try {
+              locationURL = new URL(response.headers.location, url);
+            } catch (error) {
+              reject(new Error(`uri requested responds with an invalid redirect URL: ${response.headers.location}`));
+              request.destroy();
+              return;
+            }
             notifyRequestFinished();
             fulfill(this._sendRequest(progress, locationURL, redirectOptions, postData));
             request.destroy();
