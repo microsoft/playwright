@@ -4641,6 +4641,26 @@ interface LocatorAssertions {
      */
     timeout?: number;
   }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element that intersects viewport, according to the
+   * [intersection observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.locator('button.submit');
+   * await expect(locator).toIntersectViewport();
+   * ```
+   *
+   * @param options
+   */
+  toIntersectViewport(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
 }
 
 /**

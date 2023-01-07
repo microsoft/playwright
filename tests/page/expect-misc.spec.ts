@@ -285,3 +285,38 @@ test.describe('toHaveId', () => {
     await expect(locator).toHaveId('node');
   });
 });
+
+test.describe('toIntersectViewport', () => {
+  test('should work', async ({ page }) => {
+    await page.setContent(`
+      <div id=big style="height: 10000px;"></div>
+      <span id=small>foo</span>
+    `);
+    await expect(page.locator('#big')).toIntersectViewport();
+    await expect(page.locator('#small')).not.toIntersectViewport();
+    await page.locator('#small').scrollIntoViewIfNeeded();
+    await expect(page.locator('#small')).toIntersectViewport();
+  });
+
+  test('should have good stack', async ({ page }) => {
+    let error;
+    try {
+      await expect(page.locator('body')).not.toIntersectViewport({ timeout: 100 });
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeTruthy();
+    expect(/unexpected value "viewport ratio \d+/.test(error.stack)).toBe(true);
+    const stackFrames = error.stack.split('\n').filter(line => line.trim().startsWith('at '));
+    expect(stackFrames.length).toBe(1);
+    expect(stackFrames[0]).toContain(__filename);
+  });
+
+  test('should report intersection even if fully covered by other element', async ({ page }) => {
+    await page.setContent(`
+      <h1>hello</h1>
+      <div style="position: relative; height: 10000px; top: -5000px;></div>
+    `);
+    await expect(page.locator('h1')).toIntersectViewport();
+  });
+});
