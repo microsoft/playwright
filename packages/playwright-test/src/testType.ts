@@ -81,7 +81,7 @@ export class TestTypeImpl {
       return;
     }
     if (allowedContext === 'projectSetup' && !suite._isProjectSetup)
-      addFatalError(`${title} is called in a file which is not a part of project setup.`, location);
+      addFatalError(`${title} is only allowed in a project setup file.`, location);
     else if (allowedContext === 'test' && suite._isProjectSetup)
       addFatalError(`${title} is not allowed in a project setup file.`, location);
     return suite;
