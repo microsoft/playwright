@@ -870,7 +870,7 @@ test('should prohibit setup in test files', async ({ runGroups }, testInfo) => {
 
   const { exitCode, output } =  await runGroups(files);
   expect(exitCode).toBe(1);
-  expect(output).toContain('test.projectSetup() is called in a file which is not a part of project setup.');
+  expect(output).toContain('test.projectSetup() is only allowed in a project setup file.');
 });
 
 test('should prohibit beforeAll hooks in setup files', async ({ runGroups }, testInfo) => {
@@ -892,7 +892,7 @@ test('should prohibit beforeAll hooks in setup files', async ({ runGroups }, tes
 
   const { exitCode, output } =  await runGroups(files);
   expect(exitCode).toBe(1);
-  expect(output).toContain('test.beforeAll() is called in a project setup file');
+  expect(output).toContain('test.beforeAll() is not allowed in a project setup file');
 });
 
 test('should prohibit test in setup files', async ({ runGroups }, testInfo) => {
@@ -914,7 +914,7 @@ test('should prohibit test in setup files', async ({ runGroups }, testInfo) => {
 
   const { exitCode, output } =  await runGroups(files);
   expect(exitCode).toBe(1);
-  expect(output).toContain('test() is called in a project setup file');
+  expect(output).toContain('test() is not allowed in a project setup file');
 });
 
 test('should prohibit test hooks in setup files', async ({ runGroups }, testInfo) => {
@@ -936,5 +936,5 @@ test('should prohibit test hooks in setup files', async ({ runGroups }, testInfo
 
   const { exitCode, output } =  await runGroups(files);
   expect(exitCode).toBe(1);
-  expect(output).toContain('test.beforeEach() is called in a project setup file');
+  expect(output).toContain('test.beforeEach() is not allowed in a project setup file');
 });

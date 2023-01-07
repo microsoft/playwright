@@ -56,7 +56,7 @@ export class TestTypeImpl {
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
     test.projectSetup = wrapFunctionWithLocation(this._createTest.bind(this, 'projectSetup'));
-    (test.projectSetup as any).only = wrapFunctionWithLocation(this._createTest.bind(this, 'only'));
+    (test.projectSetup as any).only = wrapFunctionWithLocation(this._createTest.bind(this, 'projectSetupOnly'));
     test._extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
     test.info = () => {
       const result = currentTestInfo();
@@ -87,33 +87,29 @@ export class TestTypeImpl {
     return suite;
   }
 
-  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'projectSetup', location: Location, title: string, fn: Function) {
+  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'projectSetup' | 'projectSetupOnly', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
     let functionTitle = 'test()';
     let allowedContext: 'test' | 'projectSetup' | 'any' = 'any';
     switch (type) {
       case 'projectSetup':
+      case 'projectSetupOnly':
         functionTitle = 'test.projectSetup()';
         allowedContext = 'projectSetup';
         break;
       case 'default':
         allowedContext = 'test';
-        break
+        break;
     }
     const suite = this._currentSuite(location, functionTitle, allowedContext);
     if (!suite)
       return;
-    if (type === 'projectSetup' && !suite._isProjectSetup)
-      addFatalError(`${functionTitle} is called in a file which is not a part of project setup.`, location);
-    else if (type === 'default' && suite._isProjectSetup)
-      addFatalError(`${functionTitle} is called in a project setup file (use 'test.projectSetup' instead of 'test').`, location);
-
     const test = new TestCase(title, fn, this, location);
     test._requireFile = suite._requireFile;
     test._isProjectSetup = suite._isProjectSetup;
     suite._addTest(test);
 
-    if (type === 'only')
+    if (type === 'only' || type === 'projectSetupOnly')
       test._only = true;
     if (type === 'skip' || type === 'fixme') {
       test.annotations.push({ type });
