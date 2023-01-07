@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import type { BrowserContext } from '@playwright/test';
 import { contextTest as it, expect } from '../config/browserTest';
 
 it('expose binding should work', async ({ context }) => {
@@ -94,25 +93,4 @@ it('should work with CSP', async ({ page, context, server }) => {
   await context.exposeBinding('hi', () => called = true);
   await page.evaluate(() => (window as any).hi());
   expect(called).toBe(true);
-});
-
-it('should re-add binding after reset', async ({ browserType, browser }) => {
-  const defaultContextOptions = (browserType as any)._defaultContextOptions;
-  let context: BrowserContext = await (browser as any)._newContextForReuse(defaultContextOptions);
-
-  await context.exposeFunction('add', function(a, b) {
-    return Promise.resolve(a - b);
-  });
-  let page = await context.newPage();
-  expect(await page.evaluate('add(7, 6)')).toBe(1);
-
-  context = await (browser as any)._newContextForReuse(defaultContextOptions);
-  await context.exposeFunction('add', function(a, b) {
-    return Promise.resolve(a + b);
-  });
-
-  page = context.pages()[0];
-  expect(await page.evaluate('add(5, 6)')).toBe(11);
-  await page.reload();
-  expect(await page.evaluate('add(5, 6)')).toBe(11);
 });

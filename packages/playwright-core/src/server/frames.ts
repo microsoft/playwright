@@ -1727,7 +1727,17 @@ export class Frame extends SdkObject {
 
       // Clean Service Workers
       const registrations = navigator.serviceWorker ? await navigator.serviceWorker.getRegistrations() : [];
-      await Promise.all(registrations.map(r => r.unregister())).catch(() => {});
+      await Promise.all(registrations.map(async r => {
+        // Heuristic for service workers that stalled during main script fetch or importScripts:
+        // Waiting for them to finish unregistering takes ages so we do not await.
+        // However, they will unregister immediately after fetch finishes and should not affect next page load.
+        // Unfortunately, loading next page in Chromium still takes 5 seconds waiting for
+        // some operation on this bogus service worker to finish.
+        if (!r.installing && !r.waiting && !r.active)
+          r.unregister().catch(() => {});
+        else
+          await r.unregister().catch(() => {});
+      }));
 
       // Clean IndexedDB
       for (const db of await indexedDB.databases?.() || []) {
