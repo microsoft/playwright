@@ -873,7 +873,7 @@ test('should prohibit setup in test files', async ({ runGroups }, testInfo) => {
   expect(output).toContain('test.projectSetup() is called in a file which is not a part of project setup.');
 });
 
-test('should prohibit beforeAll hooks in test files', async ({ runGroups }, testInfo) => {
+test('should prohibit beforeAll hooks in setup files', async ({ runGroups }, testInfo) => {
   const files = {
     'playwright.config.ts': `
       module.exports = {
