@@ -945,7 +945,7 @@ function createDuplicateTitlesErrors(config: FullConfigInternal, rootSuite: Suit
   for (const fileSuite of rootSuite.suites) {
     const testsByFullTitle = new Map<string, TestCase>();
     for (const test of fileSuite.allTests()) {
-      const fullTitle = test.titlePath().slice(2).join('\x1e');
+      const fullTitle = test.titlePath().slice(2).join(' › ');
       const existingTest = testsByFullTitle.get(fullTitle);
       if (existingTest) {
         const error: TestError = {
