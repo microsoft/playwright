@@ -15779,9 +15779,12 @@ export interface Download {
  * - v13.4.0+
  * - v14+
  *
- * **Trouble shooting:**
+ * **Known issues:**
  *
  * If you are not able to launch Electron and it will end up in timeouts during launch, try the following:
+ * - Ensure that `nodeCliInspect`
+ *   ([FuseV1Options.EnableNodeCliInspectArguments](https://www.electronjs.org/docs/latest/tutorial/fuses#nodecliinspect))
+ *   fuse is **not** set to `false`.
  */
 export interface Electron {
   /**
