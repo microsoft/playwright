@@ -23,7 +23,7 @@ import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import { store as _baseStore } from './store';
 import type { TestInfoImpl } from './testInfo';
-import { rootTestType, _setProjectSetup } from './testType';
+import { rootTestType } from './testType';
 import { type ContextReuseMode } from './types';
 export { expect } from './expect';
 export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
@@ -634,7 +634,5 @@ function normalizeScreenshotMode(screenshot: PlaywrightWorkerOptions['screenshot
 const kTracingStarted = Symbol('kTracingStarted');
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
-export const setup = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
-_setProjectSetup(setup, true);
 
 export default test;
