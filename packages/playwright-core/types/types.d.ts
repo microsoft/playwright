@@ -2470,10 +2470,18 @@ export interface Page {
   }): Promise<null|string>;
 
   /**
-   * Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+   * Allows locating elements by their alt text.
+   *
+   * **Usage**
+   *
+   * For example, this method will find the image by alt text "Playwright logo":
    *
    * ```html
-   * <img alt='Castle'>
+   * <img alt='Playwright logo'>
+   * ```
+   *
+   * ```js
+   * await page.getByAltText('Playwright logo').click();
    * ```
    *
    * @param text Text to locate the element for.
@@ -2488,12 +2496,19 @@ export interface Page {
   }): Locator;
 
   /**
-   * Allows locating input elements by the text of the associated label. For example, this method will find the input by
-   * label text "Password" in the following DOM:
+   * Allows locating input elements by the text of the associated label.
+   *
+   * **Usage**
+   *
+   * For example, this method will find the input by label text "Password" in the following DOM:
    *
    * ```html
    * <label for="password-input">Password:</label>
    * <input id="password-input">
+   * ```
+   *
+   * ```js
+   * await page.getByLabel('Password').fill('secret');
    * ```
    *
    * @param text Text to locate the element for.
@@ -2508,11 +2523,22 @@ export interface Page {
   }): Locator;
 
   /**
-   * Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder
-   * "Country":
+   * Allows locating input elements by the placeholder text.
+   *
+   * **Usage**
+   *
+   * For example, consider the following DOM structure.
    *
    * ```html
-   * <input placeholder="Country">
+   * <input type="email" placeholder="name@example.com" />
+   * ```
+   *
+   * You can fill the input after locating it by the placeholder text:
+   *
+   * ```js
+   * await page
+   *     .getByPlaceholder("name@example.com")
+   *     .fill("playwright@microsoft.com");
    * ```
    *
    * @param text Text to locate the element for.
@@ -2529,14 +2555,40 @@ export interface Page {
   /**
    * Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles),
    * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and
-   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace**
-   * accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
    *
-   * Note that many html elements have an implicitly
-   * [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector.
-   * You can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines
-   * **do not recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to
-   * default values.
+   * **Usage**
+   *
+   * Consider the following DOM structure.
+   *
+   * ```html
+   * <h3>Sign up</h3>
+   * <label>
+   *   <input type="checkbox" /> Subscribe
+   * </label>
+   * <br/>
+   * <button>Submit</button>
+   * ```
+   *
+   * You can locate each element by it's implicit role:
+   *
+   * ```js
+   * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
+   *
+   * await page.getByRole('checkbox', { name: 'Subscribe' }).check();
+   *
+   * await page.getByRole('button', { name: /submit/i }).click();
+   * ```
+   *
+   * **Details**
+   *
+   * Role selector **does not replace** accessibility audits and conformance tests, but rather gives early feedback
+   * about the ARIA guidelines.
+   *
+   * Many html elements have an implicitly [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings)
+   * that is recognized by the role selector. You can find all the
+   * [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not recommend**
+   * duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
    * @param role Required aria role.
    * @param options
    */
@@ -2609,7 +2661,25 @@ export interface Page {
   }): Locator;
 
   /**
-   * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
+   * Locate element by the test id.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure.
+   *
+   * ```html
+   * <button data-testid="directions">Itinéraire</button>
+   * ```
+   *
+   * You can locate the element by it's test id:
+   *
+   * ```js
+   * await page.getByTestId('directions').click();
+   * ```
+   *
+   * **Details**
+   *
+   * By default, the `data-testid` attribute is used as a test id. Use
    * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
    * to configure a different test id attribute if necessary.
    *
@@ -2625,7 +2695,14 @@ export interface Page {
   getByTestId(testId: string|RegExp): Locator;
 
   /**
-   * Allows locating elements that contain given text. Consider the following DOM structure:
+   * Allows locating elements that contain given text.
+   *
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to
+   * match by another criteria, like an accessible role, and then filter by the text content.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure:
    *
    * ```html
    * <div>Hello <span>world</span></div>
@@ -2651,14 +2728,13 @@ export interface Page {
    * page.getByText(/^hello$/i)
    * ```
    *
-   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to
-   * match by another criteria, like an accessible role, and then filter by the text content.
+   * **Details**
    *
-   * **NOTE** Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple
-   * spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+   * Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into
+   * one, turns line breaks into spaces and ignores leading and trailing whitespace.
    *
-   * **NOTE** Input elements of the type `button` and `submit` are matched by their `value` instead of the text content.
-   * For example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
+   * Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For
+   * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
    */
@@ -2671,11 +2747,20 @@ export interface Page {
   }): Locator;
 
   /**
-   * Allows locating elements by their title. For example, this method will find the button by its title "Place the
-   * order":
+   * Allows locating elements by their title attribute.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure.
    *
    * ```html
-   * <button title='Place the order'>Order Now</button>
+   * <span title='Issues count'>25 issues</span>
+   * ```
+   *
+   * You can check the issues count after locating it by the title text:
+   *
+   * ```js
+   * await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
    * ```
    *
    * @param text Text to locate the element for.
@@ -5774,10 +5859,18 @@ export interface Frame {
   }): Promise<null|string>;
 
   /**
-   * Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+   * Allows locating elements by their alt text.
+   *
+   * **Usage**
+   *
+   * For example, this method will find the image by alt text "Playwright logo":
    *
    * ```html
-   * <img alt='Castle'>
+   * <img alt='Playwright logo'>
+   * ```
+   *
+   * ```js
+   * await page.getByAltText('Playwright logo').click();
    * ```
    *
    * @param text Text to locate the element for.
@@ -5792,12 +5885,19 @@ export interface Frame {
   }): Locator;
 
   /**
-   * Allows locating input elements by the text of the associated label. For example, this method will find the input by
-   * label text "Password" in the following DOM:
+   * Allows locating input elements by the text of the associated label.
+   *
+   * **Usage**
+   *
+   * For example, this method will find the input by label text "Password" in the following DOM:
    *
    * ```html
    * <label for="password-input">Password:</label>
    * <input id="password-input">
+   * ```
+   *
+   * ```js
+   * await page.getByLabel('Password').fill('secret');
    * ```
    *
    * @param text Text to locate the element for.
@@ -5812,11 +5912,22 @@ export interface Frame {
   }): Locator;
 
   /**
-   * Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder
-   * "Country":
+   * Allows locating input elements by the placeholder text.
+   *
+   * **Usage**
+   *
+   * For example, consider the following DOM structure.
    *
    * ```html
-   * <input placeholder="Country">
+   * <input type="email" placeholder="name@example.com" />
+   * ```
+   *
+   * You can fill the input after locating it by the placeholder text:
+   *
+   * ```js
+   * await page
+   *     .getByPlaceholder("name@example.com")
+   *     .fill("playwright@microsoft.com");
    * ```
    *
    * @param text Text to locate the element for.
@@ -5833,14 +5944,40 @@ export interface Frame {
   /**
    * Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles),
    * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and
-   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace**
-   * accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
    *
-   * Note that many html elements have an implicitly
-   * [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector.
-   * You can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines
-   * **do not recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to
-   * default values.
+   * **Usage**
+   *
+   * Consider the following DOM structure.
+   *
+   * ```html
+   * <h3>Sign up</h3>
+   * <label>
+   *   <input type="checkbox" /> Subscribe
+   * </label>
+   * <br/>
+   * <button>Submit</button>
+   * ```
+   *
+   * You can locate each element by it's implicit role:
+   *
+   * ```js
+   * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
+   *
+   * await page.getByRole('checkbox', { name: 'Subscribe' }).check();
+   *
+   * await page.getByRole('button', { name: /submit/i }).click();
+   * ```
+   *
+   * **Details**
+   *
+   * Role selector **does not replace** accessibility audits and conformance tests, but rather gives early feedback
+   * about the ARIA guidelines.
+   *
+   * Many html elements have an implicitly [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings)
+   * that is recognized by the role selector. You can find all the
+   * [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not recommend**
+   * duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
    * @param role Required aria role.
    * @param options
    */
@@ -5913,7 +6050,25 @@ export interface Frame {
   }): Locator;
 
   /**
-   * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
+   * Locate element by the test id.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure.
+   *
+   * ```html
+   * <button data-testid="directions">Itinéraire</button>
+   * ```
+   *
+   * You can locate the element by it's test id:
+   *
+   * ```js
+   * await page.getByTestId('directions').click();
+   * ```
+   *
+   * **Details**
+   *
+   * By default, the `data-testid` attribute is used as a test id. Use
    * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
    * to configure a different test id attribute if necessary.
    *
@@ -5929,7 +6084,14 @@ export interface Frame {
   getByTestId(testId: string|RegExp): Locator;
 
   /**
-   * Allows locating elements that contain given text. Consider the following DOM structure:
+   * Allows locating elements that contain given text.
+   *
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to
+   * match by another criteria, like an accessible role, and then filter by the text content.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure:
    *
    * ```html
    * <div>Hello <span>world</span></div>
@@ -5955,14 +6117,13 @@ export interface Frame {
    * page.getByText(/^hello$/i)
    * ```
    *
-   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to
-   * match by another criteria, like an accessible role, and then filter by the text content.
+   * **Details**
    *
-   * **NOTE** Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple
-   * spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+   * Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into
+   * one, turns line breaks into spaces and ignores leading and trailing whitespace.
    *
-   * **NOTE** Input elements of the type `button` and `submit` are matched by their `value` instead of the text content.
-   * For example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
+   * Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For
+   * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
    */
@@ -5975,11 +6136,20 @@ export interface Frame {
   }): Locator;
 
   /**
-   * Allows locating elements by their title. For example, this method will find the button by its title "Place the
-   * order":
+   * Allows locating elements by their title attribute.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure.
    *
    * ```html
-   * <button title='Place the order'>Order Now</button>
+   * <span title='Issues count'>25 issues</span>
+   * ```
+   *
+   * You can check the issues count after locating it by the title text:
+   *
+   * ```js
+   * await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
    * ```
    *
    * @param text Text to locate the element for.
@@ -9817,12 +9987,16 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
  */
 export interface Locator {
   /**
-   * Returns the return value of `pageFunction`.
+   * Execute JavaScript code in the page, taking the matching element as an argument.
    *
-   * This method passes this handle as the first argument to `pageFunction`.
+   * **Details**
    *
-   * If `pageFunction` returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and return its
-   * value.
+   * Returns the return value of `pageFunction`, called with the matching element as a first argument, and `arg` as a
+   * second argument.
+   *
+   * If `pageFunction` returns a [Promise], this method will wait for the promise to resolve and return its value.
+   *
+   * If `pageFunction` throws or rejects, this method throws.
    *
    * **Usage**
    *
@@ -9839,12 +10013,16 @@ export interface Locator {
     timeout?: number;
   }): Promise<R>;
   /**
-   * Returns the return value of `pageFunction`.
+   * Execute JavaScript code in the page, taking the matching element as an argument.
    *
-   * This method passes this handle as the first argument to `pageFunction`.
+   * **Details**
    *
-   * If `pageFunction` returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and return its
-   * value.
+   * Returns the return value of `pageFunction`, called with the matching element as a first argument, and `arg` as a
+   * second argument.
+   *
+   * If `pageFunction` returns a [Promise], this method will wait for the promise to resolve and return its value.
+   *
+   * If `pageFunction` throws or rejects, this method throws.
    *
    * **Usage**
    *
@@ -9861,18 +10039,22 @@ export interface Locator {
     timeout?: number;
   }): Promise<R>;
   /**
-   * The method finds all elements matching the specified locator and passes an array of matched elements as a first
-   * argument to `pageFunction`. Returns the result of `pageFunction` invocation.
+   * Execute JavaScript code in the page, taking all matching elements as an argument.
    *
-   * If `pageFunction` returns a [Promise], then
-   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all)
-   * would wait for the promise to resolve and return its value.
+   * **Details**
+   *
+   * Returns the return value of `pageFunction`, called with an array of all matching elements as a first argument, and
+   * `arg` as a second argument.
+   *
+   * If `pageFunction` returns a [Promise], this method will wait for the promise to resolve and return its value.
+   *
+   * If `pageFunction` throws or rejects, this method throws.
    *
    * **Usage**
    *
    * ```js
-   * const elements = page.locator('div');
-   * const divCounts = await elements.evaluateAll((divs, min) => divs.length >= min, 10);
+   * const locator = page.locator('div');
+   * const moreThanTen = await locator.evaluateAll((divs, min) => divs.length > min, 10);
    * ```
    *
    * @param pageFunction Function to be evaluated in the page context.
@@ -9880,18 +10062,22 @@ export interface Locator {
    */
   evaluateAll<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg): Promise<R>;
   /**
-   * The method finds all elements matching the specified locator and passes an array of matched elements as a first
-   * argument to `pageFunction`. Returns the result of `pageFunction` invocation.
+   * Execute JavaScript code in the page, taking all matching elements as an argument.
    *
-   * If `pageFunction` returns a [Promise], then
-   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all)
-   * would wait for the promise to resolve and return its value.
+   * **Details**
+   *
+   * Returns the return value of `pageFunction`, called with an array of all matching elements as a first argument, and
+   * `arg` as a second argument.
+   *
+   * If `pageFunction` returns a [Promise], this method will wait for the promise to resolve and return its value.
+   *
+   * If `pageFunction` throws or rejects, this method throws.
    *
    * **Usage**
    *
    * ```js
-   * const elements = page.locator('div');
-   * const divCounts = await elements.evaluateAll((divs, min) => divs.length >= min, 10);
+   * const locator = page.locator('div');
+   * const moreThanTen = await locator.evaluateAll((divs, min) => divs.length > min, 10);
    * ```
    *
    * @param pageFunction Function to be evaluated in the page context.
@@ -9899,8 +10085,8 @@ export interface Locator {
    */
   evaluateAll<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], void, R>): Promise<R>;
   /**
-   * Resolves given locator to the first matching DOM element. If no elements matching the query are visible, waits for
-   * them up to a given timeout. If multiple elements match the selector, throws.
+   * Resolves given locator to the first matching DOM element. If there are no matching elements, waits for one. If
+   * multiple elements match the locator, throws.
    * @param options
    */
   elementHandle(options?: {
@@ -9921,11 +10107,25 @@ export interface Locator {
 
   /**
    * Returns an array of `node.innerText` values for all matching nodes.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const texts = await page.getByRole('link').allInnerTexts();
+   * ```
+   *
    */
   allInnerTexts(): Promise<Array<string>>;
 
   /**
    * Returns an array of `node.textContent` values for all matching nodes.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const texts = await page.getByRole('link').allTextContents();
+   * ```
+   *
    */
   allTextContents(): Promise<Array<string>>;
 
@@ -9944,8 +10144,11 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * This method returns the bounding box of the element, or `null` if the element is not visible. The bounding box is
-   * calculated relative to the main frame viewport - which is usually the same as the browser window.
+   * This method returns the bounding box of the element matching the locator, or `null` if the element is not visible.
+   * The bounding box is calculated relative to the main frame viewport - which is usually the same as the browser
+   * window.
+   *
+   * **Details**
    *
    * Scrolling affects the returned bounding box, similarly to
    * [Element.getBoundingClientRect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
@@ -9960,7 +10163,7 @@ export interface Locator {
    * **Usage**
    *
    * ```js
-   * const box = await element.boundingBox();
+   * const box = await page.getByRole('button').boundingBox();
    * await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
    * ```
    *
@@ -9997,7 +10200,11 @@ export interface Locator {
   }>;
 
   /**
-   * This method checks the element by performing the following steps:
+   * Ensure that checkbox or radio element is checked.
+   *
+   * **Details**
+   *
+   * Performs the following steps:
    * 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
    *    checked, this method returns immediately.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
@@ -10011,6 +10218,13 @@ export interface Locator {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError].
    * Passing zero timeout disables this.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.getByRole('checkbox').check();
+   * ```
+   *
    * @param options
    */
   check(options?: {
@@ -10052,6 +10266,10 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Clear the input field.
+   *
+   * **Details**
+   *
    * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the element, clears it and triggers an
    * `input` event after clearing.
    *
@@ -10059,6 +10277,13 @@ export interface Locator {
    * error. However, if the element is inside the `<label>` element that has an associated
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be cleared
    * instead.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.getByRole('textbox').clear();
+   * ```
+   *
    * @param options
    */
   clear(options?: {
@@ -10099,6 +10324,25 @@ export interface Locator {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError].
    * Passing zero timeout disables this.
+   *
+   * **Usage**
+   *
+   * Click a button:
+   *
+   * ```js
+   * await page.getByRole('button').click();
+   * ```
+   *
+   * Shift-right-click at a specific position on a canvas:
+   *
+   * ```js
+   * await page.locator('canvas').click({
+   *   button: 'right',
+   *   modifiers: ['Shift'],
+   *   position: { x: 23, y: 32 },
+   * });
+   * ```
+   *
    * @param options
    */
   click(options?: {
@@ -10161,11 +10405,22 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * Returns the number of elements matching given selector.
+   * Returns the number of elements matching the locator.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const count = await page.getByRole('listitem').count();
+   * ```
+   *
    */
   count(): Promise<number>;
 
   /**
+   * Double-click an element.
+   *
+   * **Details**
+   *
    * This method double clicks the element by performing the following steps:
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
@@ -10237,15 +10492,19 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element,
-   * `click` is dispatched. This is equivalent to calling
-   * [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
+   * Programmaticaly dispatch an event on the matching element.
    *
    * **Usage**
    *
    * ```js
-   * await element.dispatchEvent('click');
+   * await locator.dispatchEvent('click');
    * ```
+   *
+   * **Details**
+   *
+   * The snippet above dispatches the `click` event on the element. Regardless of the visibility state of the element,
+   * `click` is dispatched. This is equivalent to calling
+   * [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
    *
    * Under the hood, it creates an instance of an event based on the given `type`, initializes it with `eventInit`
    * properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
@@ -10259,12 +10518,12 @@ export interface Locator {
    * - [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)
    * - [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event)
    *
-   * You can also specify `JSHandle` as the property value if you want live objects to be passed into the event:
+   * You can also specify [JSHandle] as the property value if you want live objects to be passed into the event:
    *
    * ```js
    * // Note you can only create DataTransfer in Chromium and Firefox
    * const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
-   * await element.dispatchEvent('dragstart', { dataTransfer });
+   * await locator.dispatchEvent('dragstart', { dataTransfer });
    * ```
    *
    * @param type DOM event type: `"click"`, `"dragstart"`, etc.
@@ -10282,6 +10541,10 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Drag the source element towards the target element and drop it.
+   *
+   * **Details**
+   *
    * This method drags the locator to another target locator or target position. It will first move to the source
    * element, perform a `mousedown`, then move to the target element or position and perform a `mouseup`.
    *
@@ -10351,14 +10614,18 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * Resolves given locator to all matching DOM elements.
+   * Resolves given locator to all matching DOM elements. If there are no matching elements, returns an empty list.
    */
   elementHandles(): Promise<Array<ElementHandle>>;
 
   /**
-   * Returns the return value of `pageFunction` as a [JSHandle].
+   * Execute JavaScript code in the page, taking the matching element as an argument, and return a [JSHandle] with the
+   * result.
    *
-   * This method passes this handle as the first argument to `pageFunction`.
+   * **Details**
+   *
+   * Returns the return value of `pageFunction` as a[JSHandle], called with the matching element as a first argument,
+   * and `arg` as a second argument.
    *
    * The only difference between
    * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate)
@@ -10368,11 +10635,9 @@ export interface Locator {
    * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
    * returns [JSHandle].
    *
-   * If the function passed to the
-   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
-   * returns a [Promise], then
-   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
-   * would wait for the promise to resolve and return its value.
+   * If `pageFunction` returns a [Promise], this method will wait for the promise to resolve and return its value.
+   *
+   * If `pageFunction` throws or rejects, this method throws.
    *
    * See [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) for
    * more details.
@@ -10391,6 +10656,16 @@ export interface Locator {
   }): Promise<JSHandle>;
 
   /**
+   * Set a value to the input field.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.getByRole('textbox').fill('example value');
+   * ```
+   *
+   * **Details**
+   *
    * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the element, fills it and triggers an
    * `input` event after filling. Note that you can pass an empty string to clear the input field.
    *
@@ -10466,7 +10741,7 @@ export interface Locator {
   first(): Locator;
 
   /**
-   * Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) on the element.
+   * Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) on the matching element.
    * @param options
    */
   focus(options?: {
@@ -10480,10 +10755,10 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * **Usage**
+   * When working with iframes, you can create a frame locator that will enter the iframe and allow locating elements in
+   * that iframe:
    *
-   * When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
-   * in that iframe:
+   * **Usage**
    *
    * ```js
    * const locator = page.frameLocator('iframe').getByText('Submit');
@@ -10495,7 +10770,7 @@ export interface Locator {
   frameLocator(selector: string): FrameLocator;
 
   /**
-   * Returns element attribute value.
+   * Returns the matching element's attribute value.
    * @param name Attribute name to get the value for.
    * @param options
    */
@@ -10510,10 +10785,18 @@ export interface Locator {
   }): Promise<null|string>;
 
   /**
-   * Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+   * Allows locating elements by their alt text.
+   *
+   * **Usage**
+   *
+   * For example, this method will find the image by alt text "Playwright logo":
    *
    * ```html
-   * <img alt='Castle'>
+   * <img alt='Playwright logo'>
+   * ```
+   *
+   * ```js
+   * await page.getByAltText('Playwright logo').click();
    * ```
    *
    * @param text Text to locate the element for.
@@ -10528,12 +10811,19 @@ export interface Locator {
   }): Locator;
 
   /**
-   * Allows locating input elements by the text of the associated label. For example, this method will find the input by
-   * label text "Password" in the following DOM:
+   * Allows locating input elements by the text of the associated label.
+   *
+   * **Usage**
+   *
+   * For example, this method will find the input by label text "Password" in the following DOM:
    *
    * ```html
    * <label for="password-input">Password:</label>
    * <input id="password-input">
+   * ```
+   *
+   * ```js
+   * await page.getByLabel('Password').fill('secret');
    * ```
    *
    * @param text Text to locate the element for.
@@ -10548,11 +10838,22 @@ export interface Locator {
   }): Locator;
 
   /**
-   * Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder
-   * "Country":
+   * Allows locating input elements by the placeholder text.
+   *
+   * **Usage**
+   *
+   * For example, consider the following DOM structure.
    *
    * ```html
-   * <input placeholder="Country">
+   * <input type="email" placeholder="name@example.com" />
+   * ```
+   *
+   * You can fill the input after locating it by the placeholder text:
+   *
+   * ```js
+   * await page
+   *     .getByPlaceholder("name@example.com")
+   *     .fill("playwright@microsoft.com");
    * ```
    *
    * @param text Text to locate the element for.
@@ -10569,14 +10870,40 @@ export interface Locator {
   /**
    * Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles),
    * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and
-   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace**
-   * accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
    *
-   * Note that many html elements have an implicitly
-   * [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector.
-   * You can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines
-   * **do not recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to
-   * default values.
+   * **Usage**
+   *
+   * Consider the following DOM structure.
+   *
+   * ```html
+   * <h3>Sign up</h3>
+   * <label>
+   *   <input type="checkbox" /> Subscribe
+   * </label>
+   * <br/>
+   * <button>Submit</button>
+   * ```
+   *
+   * You can locate each element by it's implicit role:
+   *
+   * ```js
+   * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
+   *
+   * await page.getByRole('checkbox', { name: 'Subscribe' }).check();
+   *
+   * await page.getByRole('button', { name: /submit/i }).click();
+   * ```
+   *
+   * **Details**
+   *
+   * Role selector **does not replace** accessibility audits and conformance tests, but rather gives early feedback
+   * about the ARIA guidelines.
+   *
+   * Many html elements have an implicitly [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings)
+   * that is recognized by the role selector. You can find all the
+   * [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not recommend**
+   * duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
    * @param role Required aria role.
    * @param options
    */
@@ -10649,7 +10976,25 @@ export interface Locator {
   }): Locator;
 
   /**
-   * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
+   * Locate element by the test id.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure.
+   *
+   * ```html
+   * <button data-testid="directions">Itinéraire</button>
+   * ```
+   *
+   * You can locate the element by it's test id:
+   *
+   * ```js
+   * await page.getByTestId('directions').click();
+   * ```
+   *
+   * **Details**
+   *
+   * By default, the `data-testid` attribute is used as a test id. Use
    * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
    * to configure a different test id attribute if necessary.
    *
@@ -10665,7 +11010,14 @@ export interface Locator {
   getByTestId(testId: string|RegExp): Locator;
 
   /**
-   * Allows locating elements that contain given text. Consider the following DOM structure:
+   * Allows locating elements that contain given text.
+   *
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to
+   * match by another criteria, like an accessible role, and then filter by the text content.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure:
    *
    * ```html
    * <div>Hello <span>world</span></div>
@@ -10691,14 +11043,13 @@ export interface Locator {
    * page.getByText(/^hello$/i)
    * ```
    *
-   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to
-   * match by another criteria, like an accessible role, and then filter by the text content.
+   * **Details**
    *
-   * **NOTE** Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple
-   * spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+   * Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into
+   * one, turns line breaks into spaces and ignores leading and trailing whitespace.
    *
-   * **NOTE** Input elements of the type `button` and `submit` are matched by their `value` instead of the text content.
-   * For example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
+   * Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For
+   * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
    */
@@ -10711,11 +11062,20 @@ export interface Locator {
   }): Locator;
 
   /**
-   * Allows locating elements by their title. For example, this method will find the button by its title "Place the
-   * order":
+   * Allows locating elements by their title attribute.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure.
    *
    * ```html
-   * <button title='Place the order'>Order Now</button>
+   * <span title='Issues count'>25 issues</span>
+   * ```
+   *
+   * You can check the issues count after locating it by the title text:
+   *
+   * ```js
+   * await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
    * ```
    *
    * @param text Text to locate the element for.
@@ -10736,6 +11096,16 @@ export interface Locator {
   highlight(): Promise<void>;
 
   /**
+   * Hover over the matching element.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.getByRole('link').hover();
+   * ```
+   *
+   * **Details**
+   *
    * This method hovers over the element by performing the following steps:
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
@@ -10794,7 +11164,7 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * Returns the `element.innerHTML`.
+   * Returns the [`element.innerHTML`](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML).
    * @param options
    */
   innerHTML(options?: {
@@ -10808,7 +11178,7 @@ export interface Locator {
   }): Promise<string>;
 
   /**
-   * Returns the `element.innerText`.
+   * Returns the [`element.innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText).
    * @param options
    */
   innerText(options?: {
@@ -10822,9 +11192,18 @@ export interface Locator {
   }): Promise<string>;
 
   /**
-   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
+   * Returns the value for the matching `<input>` or `<textarea>` or `<select>` element.
    *
-   * Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated
+   * **Usage**
+   *
+   * ```js
+   * const value = await page.getByRole('textbox').inputValue();
+   * ```
+   *
+   * **Details**
+   *
+   * Throws elements that are not an input, textarea or a select. However, if the element is inside the `<label>`
+   * element that has an associated
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the
    * control.
    * @param options
@@ -10841,6 +11220,13 @@ export interface Locator {
 
   /**
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const checked = await page.getByRole('checkbox').isChecked();
+   * ```
+   *
    * @param options
    */
   isChecked(options?: {
@@ -10855,6 +11241,13 @@ export interface Locator {
 
   /**
    * Returns whether the element is disabled, the opposite of [enabled](https://playwright.dev/docs/actionability#enabled).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const disabled = await page.getByRole('button').isDisabled();
+   * ```
+   *
    * @param options
    */
   isDisabled(options?: {
@@ -10869,6 +11262,13 @@ export interface Locator {
 
   /**
    * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const editable = await page.getByRole('textbox').isEditable();
+   * ```
+   *
    * @param options
    */
   isEditable(options?: {
@@ -10883,6 +11283,13 @@ export interface Locator {
 
   /**
    * Returns whether the element is [enabled](https://playwright.dev/docs/actionability#enabled).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const enabled = await page.getByRole('button').isEnabled();
+   * ```
+   *
    * @param options
    */
   isEnabled(options?: {
@@ -10897,6 +11304,13 @@ export interface Locator {
 
   /**
    * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const hidden = await page.getByRole('button').isHidden();
+   * ```
+   *
    * @param options
    */
   isHidden(options?: {
@@ -10910,6 +11324,13 @@ export interface Locator {
 
   /**
    * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const visible = await page.getByRole('button').isVisible();
+   * ```
+   *
    * @param options
    */
   isVisible(options?: {
@@ -10923,6 +11344,13 @@ export interface Locator {
 
   /**
    * Returns locator to the last matching element.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const banana = await page.getByRole('listitem').last();
+   * ```
+   *
    */
   last(): Locator;
 
@@ -10954,6 +11382,13 @@ export interface Locator {
 
   /**
    * Returns locator to the n-th matching element. It's zero based, `nth(0)` selects the first element.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const banana = await page.getByRole('listitem').nth(2);
+   * ```
+   *
    * @param index
    */
   nth(index: number): Locator;
@@ -10964,6 +11399,16 @@ export interface Locator {
   page(): Page;
 
   /**
+   * Focuses the mathing element and presses a combintation of the keys.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.getByRole('textbox').press('Backspace');
+   * ```
+   *
+   * **Details**
+   *
    * Focuses the element, and then uses
    * [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down) and
    * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
@@ -11012,6 +11457,22 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Take a screenshot of the element matching the locator.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.getByRole('link').screenshot();
+   * ```
+   *
+   * Disable animations and save screenshot to a file:
+   *
+   * ```js
+   * await page.getByRole('link').screenshot({ animations: 'disabled', path: 'link.png' });
+   * ```
+   *
+   * **Details**
+   *
    * This method captures a screenshot of the page, clipped to the size and position of a particular element matching
    * the locator. If the element is covered by other elements, it will not be actually visible on the screenshot. If the
    * element is a scrollable container, only the currently scrolled content will be visible on the screenshot.
@@ -11160,6 +11621,16 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Set the state of a checkbox or a radio element.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.getByRole('checkbox').setChecked(true);
+   * ```
+   *
+   * **Details**
+   *
    * This method checks or unchecks an element by performing the following steps:
    * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
    * 1. If the element already has the right checked state, this method returns immediately.
@@ -11215,6 +11686,30 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Upload file or multiple files into `<input type=file>`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // Select one file
+   * await page.getByLabel('Upload file').setInputFiles('myfile.pdf');
+   *
+   * // Select multiple files
+   * await page.getByLabel('Upload files').setInputFiles(['file1.txt', 'file2.txt']);
+   *
+   * // Remove all the selected files
+   * await page.getByLabel('Upload file').setInputFiles([]);
+   *
+   * // Upload buffer from memory
+   * await page.getByLabel('Upload file').setInputFiles({
+   *   name: 'file.txt',
+   *   mimeType: 'text/plain',
+   *   buffer: Buffer.from('this is test')
+   * });
+   * ```
+   *
+   * **Details**
+   *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then
    * they are resolved relative to the current working directory. For empty array, clears the selected files.
    *
@@ -11273,6 +11768,10 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Perform a tap gesture on the element matching the locator.
+   *
+   * **Details**
+   *
    * This method taps the element by performing the following steps:
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
@@ -11333,7 +11832,7 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * Returns the `node.textContent`.
+   * Returns the [`node.textContent`](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent).
    * @param options
    */
   textContent(options?: {
@@ -11394,7 +11893,17 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * This method checks the element by performing the following steps:
+   * Ensure that checkbox or radio element is unchecked.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.getByRole('checkbox').uncheck();
+   * ```
+   *
+   * **Details**
+   *
+   * This method unchecks the element by performing the following steps:
    * 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
    *    unchecked, this method returns immediately.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
@@ -16094,10 +16603,18 @@ export interface FrameLocator {
   frameLocator(selector: string): FrameLocator;
 
   /**
-   * Allows locating elements by their alt text. For example, this method will find the image by alt text "Castle":
+   * Allows locating elements by their alt text.
+   *
+   * **Usage**
+   *
+   * For example, this method will find the image by alt text "Playwright logo":
    *
    * ```html
-   * <img alt='Castle'>
+   * <img alt='Playwright logo'>
+   * ```
+   *
+   * ```js
+   * await page.getByAltText('Playwright logo').click();
    * ```
    *
    * @param text Text to locate the element for.
@@ -16112,12 +16629,19 @@ export interface FrameLocator {
   }): Locator;
 
   /**
-   * Allows locating input elements by the text of the associated label. For example, this method will find the input by
-   * label text "Password" in the following DOM:
+   * Allows locating input elements by the text of the associated label.
+   *
+   * **Usage**
+   *
+   * For example, this method will find the input by label text "Password" in the following DOM:
    *
    * ```html
    * <label for="password-input">Password:</label>
    * <input id="password-input">
+   * ```
+   *
+   * ```js
+   * await page.getByLabel('Password').fill('secret');
    * ```
    *
    * @param text Text to locate the element for.
@@ -16132,11 +16656,22 @@ export interface FrameLocator {
   }): Locator;
 
   /**
-   * Allows locating input elements by the placeholder text. For example, this method will find the input by placeholder
-   * "Country":
+   * Allows locating input elements by the placeholder text.
+   *
+   * **Usage**
+   *
+   * For example, consider the following DOM structure.
    *
    * ```html
-   * <input placeholder="Country">
+   * <input type="email" placeholder="name@example.com" />
+   * ```
+   *
+   * You can fill the input after locating it by the placeholder text:
+   *
+   * ```js
+   * await page
+   *     .getByPlaceholder("name@example.com")
+   *     .fill("playwright@microsoft.com");
    * ```
    *
    * @param text Text to locate the element for.
@@ -16153,14 +16688,40 @@ export interface FrameLocator {
   /**
    * Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles),
    * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and
-   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace**
-   * accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
    *
-   * Note that many html elements have an implicitly
-   * [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector.
-   * You can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines
-   * **do not recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to
-   * default values.
+   * **Usage**
+   *
+   * Consider the following DOM structure.
+   *
+   * ```html
+   * <h3>Sign up</h3>
+   * <label>
+   *   <input type="checkbox" /> Subscribe
+   * </label>
+   * <br/>
+   * <button>Submit</button>
+   * ```
+   *
+   * You can locate each element by it's implicit role:
+   *
+   * ```js
+   * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
+   *
+   * await page.getByRole('checkbox', { name: 'Subscribe' }).check();
+   *
+   * await page.getByRole('button', { name: /submit/i }).click();
+   * ```
+   *
+   * **Details**
+   *
+   * Role selector **does not replace** accessibility audits and conformance tests, but rather gives early feedback
+   * about the ARIA guidelines.
+   *
+   * Many html elements have an implicitly [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings)
+   * that is recognized by the role selector. You can find all the
+   * [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not recommend**
+   * duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
    * @param role Required aria role.
    * @param options
    */
@@ -16233,7 +16794,25 @@ export interface FrameLocator {
   }): Locator;
 
   /**
-   * Locate element by the test id. By default, the `data-testid` attribute is used as a test id. Use
+   * Locate element by the test id.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure.
+   *
+   * ```html
+   * <button data-testid="directions">Itinéraire</button>
+   * ```
+   *
+   * You can locate the element by it's test id:
+   *
+   * ```js
+   * await page.getByTestId('directions').click();
+   * ```
+   *
+   * **Details**
+   *
+   * By default, the `data-testid` attribute is used as a test id. Use
    * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
    * to configure a different test id attribute if necessary.
    *
@@ -16249,7 +16828,14 @@ export interface FrameLocator {
   getByTestId(testId: string|RegExp): Locator;
 
   /**
-   * Allows locating elements that contain given text. Consider the following DOM structure:
+   * Allows locating elements that contain given text.
+   *
+   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to
+   * match by another criteria, like an accessible role, and then filter by the text content.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure:
    *
    * ```html
    * <div>Hello <span>world</span></div>
@@ -16275,14 +16861,13 @@ export interface FrameLocator {
    * page.getByText(/^hello$/i)
    * ```
    *
-   * See also [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) that allows to
-   * match by another criteria, like an accessible role, and then filter by the text content.
+   * **Details**
    *
-   * **NOTE** Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple
-   * spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+   * Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into
+   * one, turns line breaks into spaces and ignores leading and trailing whitespace.
    *
-   * **NOTE** Input elements of the type `button` and `submit` are matched by their `value` instead of the text content.
-   * For example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
+   * Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For
+   * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
    */
@@ -16295,11 +16880,20 @@ export interface FrameLocator {
   }): Locator;
 
   /**
-   * Allows locating elements by their title. For example, this method will find the button by its title "Place the
-   * order":
+   * Allows locating elements by their title attribute.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure.
    *
    * ```html
-   * <button title='Place the order'>Order Now</button>
+   * <span title='Issues count'>25 issues</span>
+   * ```
+   *
+   * You can check the issues count after locating it by the title text:
+   *
+   * ```js
+   * await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
    * ```
    *
    * @param text Text to locate the element for.
