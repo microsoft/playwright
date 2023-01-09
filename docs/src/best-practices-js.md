@@ -10,17 +10,27 @@ This guide should help you to make sure you are following our best practices and
 
 ### Test user-visible behavior
 
-In order to write end to end tests we need to first find elements on the webpage. Automated tests should verify that the application code works for the end users, and avoid relying on implementation details. Things which users will not typically use, see, or even know about such as the name of a function, whether something is an array, or the CSS class of some element. The end user will see or interact with what is rendered on the page, so test should typically only see/interact with the same rendered output.
+Automated tests should verify that the application code works for the end users, and avoid relying on implementation details. Things which users will not typically use, see, or even know about such as the name of a function, whether something is an array, or the CSS class of some element. The end user will see or interact with what is rendered on the page, so your test should typically only see/interact with the same rendered output.
 
 ### Make tests as isolated as possible
 
-Each test should be completely isolated from another test. Every test should run independently from any other test with it's own local storage, session storage, cookies etc.
+Each test should be completely isolated from another test and should run independently with it's own local storage, session storage, cookies etc. [Test isolation](./browser-contexts.md) improves reproducibility, makes debugging easier and prevents cascading test failures.
+
+In order to avoid repetition for a particular part of your test you can use [before and after hooks](/api/class-test.md). Within your test file add a before hook to run a part of your test before each test such as going to a particular URL or logging in to a part of your app. This keeps your tests isolated as no test relies on another. However it is also ok to have a little duplication when tests are simple enough especially if it keeps your tests clearer and easier to read and maintain.
+
+### Make your tests fail
+
+Visually seeing your test pass is a great way to gain confidence in your tests. But sometimes you can't follow everything as your tests run too fast or perhaps you are running in headless mode and therefore not visually seeing anything. Making your tests fail ensures you understand what the test is not expecting. The error message should tell you what it received and what it expected. It's very easy to write a test that never fails which isn't much use at all.
+
+### Write less tests but longer tests
+
+When it comes to end to end testing having long tests is not a bad thing. It's ok to have multiple actions and assertions in your test. You should avoid separating your assertions into individual test blocks as it doesn't really bring much value and just slows down the running of your tests. If your test does fail Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report or the trace viewer.
 
 ### Mock API responses
 
 Only test what you control. Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you can not control the content of the page you are linking to, if there are cookie banners or overlay pages or anything else that might cause your test to fail.
 
-Here is an example of testing an external link.
+Here is an example of testing an external link:
 
 Intercepting the route with a mock response ensures the link is visible and clickable. Before hitting the link the route gets intercepted and a mock response is returned. Clicking the link results in a new page being opened containing the mock response rather than the actual page. We can then check this has the URL we expect.
 
@@ -42,9 +52,11 @@ test('github link works', async ({ page }) => {
 
 If working with a database then make sure you control the data. Test against a staging environment and make sure it doesn't change. For visual regression tests make sure the operating system and browser versions are the same.
 
-## Use locators
+## Best Practices
 
-Use Playwright's built in [locators](./locators.md) to find element(s) on the page. Locators come with auto waiting and retry-ability. Auto waiting means that Playwright performs a range of actionability checks on the elements, such as ensuring the element is visible and enabled before it performs the click. To make tests resilient, we recommend prioritizing user-facing attributes and explicit contracts.
+### Use locators
+
+In order to write end to end tests we need to first find elements on the webpage. We can do this by using Playwright's built in [locators](./locators.md). Locators come with auto waiting and retry-ability. Auto waiting means that Playwright performs a range of actionability checks on the elements, such as ensuring the element is visible and enabled before it performs the click. To make tests resilient, we recommend prioritizing user-facing attributes and explicit contracts.
 
 ```js
 👍 page.getByRole('button', { name: 'submit' })
@@ -64,7 +76,7 @@ Use locators that are resilient to changes in the DOM.
 ```js
 👍 page.getByRole('button', { name: 'submit' })
 ```
-## Generate locators
+### Generate locators
 
 Playwright has a [test generator](./codegen.md) that can generate tests and pick locators for you. It will look at your page and figure out the best locator, prioritizing role, text and test id locators. If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
 
@@ -79,7 +91,7 @@ npx playwright codegen
 
 You can also use the [VS Code Extension](./getting-started-vscode.md) to generate locators as well as record a test. The VS Code extension also gives you a great developer experience when writing, running and debugging tests.
 
-## Use web first assertions
+### Use web first assertions
 
 Assertions are a way to verify that the expected result and the actual result matched or not. By using [web first assertions](./test-assertions.md) Playwright will wait until the expected condition is met. For example, when testing a toast message, a test would click a button that makes a toast message appear and check that the toast message is there. If the toast takes half a second to appear, assertions such as `toBeVisible()` will wait and retry if needed.
 
@@ -102,7 +114,7 @@ Use web first assertions such as `toBeVisible()` instead.
 ```js
 👍 await expect(page.getByText('welcome')).toBeVisible();
 ```
-## Configure debugging
+### Configure debugging
 
 [Debug your tests live in VSCode.](/getting-started-vscode#live-debugging)
 
@@ -113,7 +125,7 @@ Traces are set to run on CI on the first retry of a failed test. However you can
 ```js
 npx playwright test --trace on
 ```
-## Use Playwright's Tooling
+### Use Playwright's Tooling
 
 Playwright comes with a range of tooling to help you write tests. 
 - The [VS Code extension](./getting-started-vscode.md) gives you a great developer experience when writing, running and debugging tests. 
@@ -121,7 +133,7 @@ Playwright comes with a range of tooling to help you write tests.
 - The [trace viewer](./trace-viewer.md) gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
 - [Typescript](./test-typescript) in Playwright works out of the box and gives you better IDE integrations. Your IDE will show you everything you can do and highlight when you do something wrong. No TypeScript experience is needed and it is not necessary for your code to be in TypeScript, all you need to do is create your tests with a `.ts` extension.
 
-## Test across all browsers
+### Test across all browsers
 
 Playwright makes it easy to test your site across all [browsers](./test-configuration#multiple-browsers) no matter what platform you are on. Testing across all browsers ensures your app works for all users. In your config file you can set up projects adding the name and which browser or device to use.
 
@@ -174,7 +186,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-## Keep your Playwright dependency up to date
+### Keep your Playwright dependency up to date
 
 By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public. Check the [release notes](./release-notes.md) to see what the latest version is and what changes have been released.
 
@@ -182,7 +194,7 @@ By keeping your Playwright version up to date you will be able to test your app 
 npm install -D @playwright/test@latest
 ```
 
-## Run tests on CI
+### Run tests on CI
 
 Setup CI/CD and run your tests frequently. The more often you run your tests the better. Ideally you should run your tests on each commit and pull request. Use [parallelism and sharding](./test-parallel.md).
 
