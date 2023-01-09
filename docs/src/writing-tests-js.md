@@ -77,8 +77,7 @@ Performing actions starts with locating the elements. Playwright uses
 [Locators API](./locators.md) for that. Locators represent a way to find
 element(s) on the page at any moment, learn more about the
 [different types](./locators.md) of locators available. Playwright will wait for the element to be [actionable](./actionability.md)
-prior to performing the action, so there is no need to need wait for it to become
-available.
+prior to performing the action, so there is no need to wait for it to become available.
 
 
 ```js
