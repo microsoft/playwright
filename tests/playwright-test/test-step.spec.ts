@@ -35,6 +35,7 @@ class Reporter {
         column: step.location.column ? typeof step.location.column : 0
       } : undefined,
       steps: step.steps.length ? step.steps.map(s => this.distillStep(s)) : undefined,
+      error: step.error ? '<error>' : undefined,
     };
   }
 
@@ -400,4 +401,58 @@ test('should return value from step', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.output).toContain('v1 = 10');
   expect(result.output).toContain('v2 = 20');
+});
+
+test('should mark step as failed when soft expect fails', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({}) => {
+        await test.step('outer', async () => {
+          await test.step('inner', async () => {
+            expect.soft(1).toBe(2);
+          });
+        });
+        await test.step('passing', () => {});
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  const objects = result.output.split('\n').filter(line => line.startsWith('%% ')).map(line => line.substring(3).trim()).filter(Boolean).map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    { title: 'Before Hooks', category: 'hook' },
+    {
+      title: 'outer',
+      category: 'test.step',
+      error: '<error>',
+      steps: [{
+        title: 'inner',
+        category: 'test.step',
+        error: '<error>',
+        steps: [
+          {
+            title: 'expect.soft.toBe',
+            category: 'expect',
+            location: { file: 'a.test.ts', line: 'number', column: 'number' },
+            error: '<error>'
+          }
+        ],
+        location: { file: 'a.test.ts', line: 'number', column: 'number' }
+      }],
+      location: { file: 'a.test.ts', line: 'number', column: 'number' }
+    },
+    {
+      title: 'passing',
+      category: 'test.step',
+      location: { file: 'a.test.ts', line: 'number', column: 'number' }
+    },
+    { title: 'After Hooks', category: 'hook' }
+  ]);
 });

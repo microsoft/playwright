@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus } from '../types/test';
-import type { WorkerInitParams } from './ipc';
+import type { StepBeginPayload, StepEndPayload, WorkerInitParams } from './ipc';
 import type { Loader } from './loader';
 import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
@@ -26,7 +26,8 @@ import type { Annotation, FullConfigInternal, FullProjectInternal, TestStepInter
 import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
 
 export class TestInfoImpl implements TestInfo {
-  private _addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
+  private _onStepBegin: (payload: StepBeginPayload) => void;
+  private _onStepEnd: (payload: StepEndPayload) => void;
   readonly _test: TestCase;
   readonly _timeoutManager: TimeoutManager;
   readonly _startTime: number;
@@ -34,6 +35,7 @@ export class TestInfoImpl implements TestInfo {
   private _hasHardError: boolean = false;
   readonly _onTestFailureImmediateCallbacks = new Map<() => Promise<void>, string>(); // fn -> title
   _didTimeout = false;
+  _lastStepId = 0;
 
   // ------------ TestInfo fields ------------
   readonly repeatEachIndex: number;
@@ -85,10 +87,12 @@ export class TestInfoImpl implements TestInfo {
     workerParams: WorkerInitParams,
     test: TestCase,
     retry: number,
-    addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal,
+    onStepBegin: (payload: StepBeginPayload) => void,
+    onStepEnd: (payload: StepEndPayload) => void,
   ) {
     this._test = test;
-    this._addStepImpl = addStepImpl;
+    this._onStepBegin = onStepBegin;
+    this._onStepEnd = onStepEnd;
     this._startTime = monotonicTime();
     this._startWallTime = Date.now();
 
@@ -183,8 +187,50 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete'>) {
-    return this._addStepImpl(data);
+  _addStep(data: Omit<TestStepInternal, 'complete'>): TestStepInternal {
+    const stepId = `${data.category}@${data.title}@${++this._lastStepId}`;
+    let callbackHandled = false;
+    const firstErrorIndex = this.errors.length;
+    const step: TestStepInternal = {
+      ...data,
+      complete: result => {
+        if (callbackHandled)
+          return;
+        callbackHandled = true;
+        let error: TestInfoError | undefined;
+        if (result.error instanceof Error) {
+          // Step function threw an error.
+          error = serializeError(result.error);
+        } else if (result.error) {
+          // Internal API step reported an error.
+          error = result.error;
+        } else {
+          // There was some other error (porbably soft expect) during step execution.
+          // Report step as failed to make it easier to spot.
+          error = this.errors[firstErrorIndex];
+        }
+        const payload: StepEndPayload = {
+          testId: this._test.id,
+          refinedTitle: step.refinedTitle,
+          stepId,
+          wallTime: Date.now(),
+          error,
+        };
+        this._onStepEnd(payload);
+      }
+    };
+    const hasLocation = data.location && !data.location.file.includes('@playwright');
+    // Sanitize location that comes from user land, it might have extra properties.
+    const location = data.location && hasLocation ? { file: data.location.file, line: data.location.line, column: data.location.column } : undefined;
+    const payload: StepBeginPayload = {
+      testId: this._test.id,
+      stepId,
+      ...data,
+      location,
+      wallTime: Date.now(),
+    };
+    this._onStepBegin(payload);
+    return step;
   }
 
   _failWithError(error: TestInfoError, isHardError: boolean) {
