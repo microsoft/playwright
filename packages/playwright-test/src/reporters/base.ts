@@ -99,8 +99,7 @@ export class BaseReporter implements ReporterInternal  {
   }
 
   onError(error: TestError) {
-    if (!(error as any).__isNotAFatalError)
-      this._fatalErrors.push(error);
+    this._fatalErrors.push(error);
   }
 
   async onEnd(result: FullResult) {
