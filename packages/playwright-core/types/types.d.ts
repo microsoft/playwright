@@ -15778,6 +15778,10 @@ export interface Download {
  * - v12.2.0+
  * - v13.4.0+
  * - v14+
+ *
+ * **Trouble shooting:**
+ *
+ * If you are not able to launch Electron and it will end up in timeouts during launch, try the following:
  */
 export interface Electron {
   /**
