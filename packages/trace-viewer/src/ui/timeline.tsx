@@ -33,6 +33,7 @@ type TimelineBar = {
   rightTime: number;
   type: string;
   label: string;
+  title: string;
   className: string;
 };
 
@@ -67,6 +68,7 @@ export const Timeline: React.FunctionComponent<{
         leftPosition: timeToPosition(measure.width, boundaries, entry.metadata.startTime),
         rightPosition: timeToPosition(measure.width, boundaries, entry.metadata.endTime),
         label: entry.metadata.apiName + ' ' + detail,
+        title: entry.metadata.endTime ? msToString(entry.metadata.endTime - entry.metadata.startTime) : 'Timed Out',
         type: entry.metadata.type + '.' + entry.metadata.method,
         className: `${entry.metadata.type}_${entry.metadata.method}`.toLowerCase()
       });
@@ -81,6 +83,7 @@ export const Timeline: React.FunctionComponent<{
         leftPosition: timeToPosition(measure.width, boundaries, startTime),
         rightPosition: timeToPosition(measure.width, boundaries, startTime),
         label: event.metadata.method,
+        title: event.metadata.endTime ? msToString(event.metadata.endTime - event.metadata.startTime) : 'Timed Out',
         type: event.metadata.type + '.' + event.metadata.method,
         className: `${event.metadata.type}_${event.metadata.method}`.toLowerCase()
       });
@@ -183,6 +186,7 @@ export const Timeline: React.FunctionComponent<{
             width: Math.max(1, bar.rightPosition - bar.leftPosition) + 'px',
             top: barTop(bar) + 'px',
           }}
+          title={bar.title}
         ></div>;
       })
     }</div>

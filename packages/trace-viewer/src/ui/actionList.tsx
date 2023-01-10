@@ -81,33 +81,60 @@ export const ActionList: React.FC<ActionListProps> = ({
       ref={actionListRef}
     >
       {actions.length === 0 && <div className='no-actions-entry'>No actions recorded</div>}
-      {actions.map(action => {
-        const { metadata } = action;
-        const selectedSuffix = action === selectedAction ? ' selected' : '';
-        const highlightedSuffix = action === highlightedAction ? ' highlighted' : '';
-        const error = metadata.error?.error?.message;
-        const { errors, warnings } = modelUtil.stats(action);
-        const locator = metadata.params.selector ? asLocator(sdkLanguage || 'javascript', metadata.params.selector) : undefined;
-        return <div
-          className={'action-entry' + selectedSuffix + highlightedSuffix}
-          key={metadata.id}
-          onClick={() => onSelected(action)}
-          onMouseEnter={() => onHighlighted(action)}
-          onMouseLeave={() => (highlightedAction === action) && onHighlighted(undefined)}
-        >
-          <div className='action-title'>
-            <span>{metadata.apiName}</span>
-            {locator && <div className='action-selector' title={locator}>{locator}</div>}
-            {metadata.method === 'goto' && metadata.params.url && <div className='action-url' title={metadata.params.url}>{metadata.params.url}</div>}
-          </div>
-          <div className='action-duration' style={{ flex: 'none' }}>{metadata.endTime ? msToString(metadata.endTime - metadata.startTime) : 'Timed Out'}</div>
-          <div className='action-icons' onClick={() => setSelectedTab('console')}>
-            {!!errors && <div className='action-icon'><span className={'codicon codicon-error'}></span><span className="action-icon-value">{errors}</span></div>}
-            {!!warnings && <div className='action-icon'><span className={'codicon codicon-warning'}></span><span className="action-icon-value">{warnings}</span></div>}
-          </div>
-          {error && <div className='codicon codicon-issues' title={error} />}
-        </div>;
-      })}
+      {actions.map(action => <Action
+        action={action}
+        highlightedAction={highlightedAction}
+        onSelected={onSelected}
+        onHighlighted={onHighlighted}
+        selectedAction={selectedAction}
+        sdkLanguage={sdkLanguage}
+        setSelectedTab={setSelectedTab}
+      />)}
     </div>
+  </div>;
+};
+
+const Action: React.FC<{
+  action: ActionTraceEvent,
+  highlightedAction: ActionTraceEvent | undefined,
+  onSelected: (action: ActionTraceEvent) => void,
+  onHighlighted: (action: ActionTraceEvent | undefined) => void,
+  selectedAction: ActionTraceEvent | undefined,
+  sdkLanguage: Language | undefined,
+  setSelectedTab: (tab: string) => void,
+}> = ({ action, onSelected, onHighlighted, highlightedAction, selectedAction, sdkLanguage, setSelectedTab }) => {
+  const { metadata } = action;
+  const selectedSuffix = action === selectedAction ? ' selected' : '';
+  const highlightedSuffix = action === highlightedAction ? ' highlighted' : '';
+  const error = metadata.error?.error?.message;
+  const { errors, warnings } = modelUtil.stats(action);
+  const locator = metadata.params.selector ? asLocator(sdkLanguage || 'javascript', metadata.params.selector) : undefined;
+
+  const divRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (selectedAction === action)
+      divRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [selectedAction, action]);
+
+  return <div
+    className={'action-entry' + selectedSuffix + highlightedSuffix}
+    key={metadata.id}
+    onClick={() => onSelected(action)}
+    onMouseEnter={() => onHighlighted(action)}
+    onMouseLeave={() => (highlightedAction === action) && onHighlighted(undefined)}
+    ref={divRef}
+  >
+    <div className='action-title'>
+      <span>{metadata.apiName}</span>
+      {locator && <div className='action-selector' title={locator}>{locator}</div>}
+      {metadata.method === 'goto' && metadata.params.url && <div className='action-url' title={metadata.params.url}>{metadata.params.url}</div>}
+    </div>
+    <div className='action-duration' style={{ flex: 'none' }}>{metadata.endTime ? msToString(metadata.endTime - metadata.startTime) : 'Timed Out'}</div>
+    <div className='action-icons' onClick={() => setSelectedTab('console')}>
+      {!!errors && <div className='action-icon'><span className={'codicon codicon-error'}></span><span className="action-icon-value">{errors}</span></div>}
+      {!!warnings && <div className='action-icon'><span className={'codicon codicon-warning'}></span><span className="action-icon-value">{warnings}</span></div>}
+    </div>
+    {error && <div className='codicon codicon-issues' title={error} />}
   </div>;
 };
