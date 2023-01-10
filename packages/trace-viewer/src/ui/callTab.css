@@ -57,13 +57,14 @@
   white-space: nowrap;
 }
 
-.call-line__copy-icon {
-  visibility: hidden;
+.copy-icon {
+  display: none;
   margin-right: 4px;
 }
 
-.call-line:hover .call-line__copy-icon {
-  visibility: visible;
+.call-line:hover .copy-icon {
+  display: block;
+  cursor: pointer;
 }
 
 .call-value {

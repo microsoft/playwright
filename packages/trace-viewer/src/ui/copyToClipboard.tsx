@@ -17,27 +17,21 @@
 import * as React from 'react';
 import './copyToClipboard.css';
 
-const TIMEOUT = 3000;
-const DEFAULT_ICON = 'codicon-clippy';
-const COPIED_ICON = 'codicon-check';
-const FAILED_ICON = 'codicon-close';
-
 export const CopyToClipboard: React.FunctionComponent<{
   value: string,
 }> = ({ value }) => {
-  const [iconClassName, setIconClassName] = React.useState(DEFAULT_ICON);
+  const [iconClassName, setIconClassName] = React.useState('codicon-clippy');
 
   const handleCopy = React.useCallback(() => {
     navigator.clipboard.writeText(value).then(() => {
-      setIconClassName(COPIED_ICON);
+      setIconClassName('codicon-check');
       setTimeout(() => {
-        setIconClassName(DEFAULT_ICON);
-      }, TIMEOUT);
+        setIconClassName('codicon-clippy');
+      }, 3000);
     }, () => {
-      setIconClassName(FAILED_ICON);
+      setIconClassName('codicon-close');
     });
 
   }, [value]);
-
-  return <span className={`codicon ${iconClassName}`} onClick={handleCopy}/>;
+  return <span className={`copy-icon codicon ${iconClassName}`} onClick={handleCopy}/>;
 };
