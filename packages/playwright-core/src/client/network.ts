@@ -422,7 +422,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 }
 
-export type RouteHandlerCallback = (route: Route, request: Request) => void;
+export type RouteHandlerCallback = (route: Route, request: Request) => Promise<any> | void;
 
 export type ResourceTiming = {
   startTime: number;

@@ -1060,7 +1060,7 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 ### param: BrowserContext.route.handler
 * since: v1.8
 * langs: js, python
-- `handler` <[function]\([Route], [Request]\)>
+- `handler` <[function]\([Route], [Request]\): [Promise<any>|any]>
 
 handler function to route the request.
 
