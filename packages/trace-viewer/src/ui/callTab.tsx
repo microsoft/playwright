@@ -84,9 +84,7 @@ function renderProperty(property: Property, key: string) {
     <div key={key} className='call-line'>
       {property.name}: <span className={`call-value ${property.type}`} title={property.text}>{text}</span>
       { ['string', 'number', 'object', 'locator'].includes(property.type) &&
-        <span className='call-line__copy-icon'>
-          <CopyToClipboard value={property.text} />
-        </span>
+        <CopyToClipboard value={property.text} />
       }
     </div>
   );
