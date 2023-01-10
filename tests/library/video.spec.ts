@@ -19,9 +19,10 @@ import fs from 'fs';
 import path from 'path';
 import type { Page } from 'playwright-core';
 import { spawnSync } from 'child_process';
-import { PNG } from 'playwright-core/lib/utilsBundle';
+import { PNG, jpegjs } from 'playwright-core/lib/utilsBundle';
 import { registry } from '../../packages/playwright-core/lib/server';
 import { rewriteErrorMessage } from '../../packages/playwright-core/lib/utils/stackTrace';
+import { parseTrace } from '../config/utils';
 
 const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath('javascript');
 
@@ -162,7 +163,6 @@ it.describe('screencast', () => {
   });
 
   it('should work with old options', async ({ browser, browserName, trace }, testInfo) => {
-    it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
     const videosPath = testInfo.outputPath('');
     // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
     const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
@@ -187,7 +187,6 @@ it.describe('screencast', () => {
   });
 
   it('should capture static page', async ({ browser, browserName, trace }, testInfo) => {
-    it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
     // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
     const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -315,7 +314,6 @@ it.describe('screencast', () => {
   });
 
   it('should capture navigation', async ({ browser, browserName, server, trace }, testInfo) => {
-    it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -349,7 +347,6 @@ it.describe('screencast', () => {
   it('should capture css transformation', async ({ browser, server, headless, browserName, platform, trace }, testInfo) => {
     it.fixme(!headless, 'Fails on headed');
     it.fixme(browserName === 'webkit' && platform === 'win32');
-    it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
 
     const size = { width: 600, height: 400 };
     // Set viewport equal to screencast frame size to avoid scaling.
@@ -378,7 +375,6 @@ it.describe('screencast', () => {
   });
 
   it('should work for popups', async ({ browser, server, browserName, trace }, testInfo) => {
-    it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
     it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/14557');
     const videosPath = testInfo.outputPath('');
     const size = { width: 600, height: 400 };
@@ -414,7 +410,6 @@ it.describe('screencast', () => {
 
   it('should scale frames down to the requested size ', async ({ browser, browserName, server, headless, trace }, testInfo) => {
     it.fixme(!headless, 'Fails on headed');
-    it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
 
     const context = await browser.newContext({
       recordVideo: {
@@ -518,7 +513,6 @@ it.describe('screencast', () => {
   });
 
   it('should capture static page in persistent context @smoke', async ({ launchPersistent, browserName, trace }, testInfo) => {
-    it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
     const size = { width: 600, height: 400 };
     const { context, page } = await launchPersistent({
       recordVideo: {
@@ -664,7 +658,6 @@ it.describe('screencast', () => {
   it('should capture full viewport', async ({ browserType, browserName, headless, isWindows, trace }, testInfo) => {
     it.fixme(browserName === 'chromium' && !headless, 'The square is not on the video');
     it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
-    it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
     const size = { width: 600, height: 400 };
     const browser = await browserType.launch();
 
@@ -699,7 +692,6 @@ it.describe('screencast', () => {
   it('should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows, trace }, testInfo) => {
     it.fixme(browserName === 'chromium' && !headless, 'The square is not on the video');
     it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
-    it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
     const size = { width: 600, height: 400 };
     const browser = await browserType.launch();
 
@@ -730,6 +722,40 @@ it.describe('screencast', () => {
     // However, headed browsers on mac have rounded corners, so offset by 10.
     const pixels = videoPlayer.seekLastFrame({ x: size.width - 20, y: size.height - 20 }).data;
     expectAll(pixels, almostRed);
+  });
+
+  it('should work with video+trace', async ({ browser, trace }, testInfo) => {
+    it.skip(trace === 'on');
+
+    const size = { width: 500, height: 400 };
+    const traceFile = testInfo.outputPath('trace.zip');
+
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: testInfo.outputPath(''),
+        size
+      },
+      viewport: size,
+    });
+    await context.tracing.start({ screenshots: true });
+    const page = await context.newPage();
+
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await waitForRafs(page, 100);
+    await context.tracing.stop({ path: traceFile });
+    await context.close();
+
+    const videoFile = await page.video().path();
+    expectRedFrames(videoFile, size);
+
+    const { events, resources } = await parseTrace(traceFile);
+    const frame = events.filter(e => e.type === 'screencast-frame').pop();
+    const buffer = resources.get('resources/' + frame.sha1);
+    const image = jpegjs.decode(buffer);
+    expect(image.width).toBe(size.width);
+    expect(image.height).toBe(size.height);
+    const offset = size.width * size.height / 2 * 4 + size.width * 4 / 2; // Center should be red.
+    almostRed(image.data.readUInt8(offset), image.data.readUInt8(offset + 1), image.data.readUInt8(offset + 2), image.data.readUInt8(offset + 3));
   });
 });
 
