@@ -643,6 +643,7 @@ Locator of the element to drag to.
 
 ## async method: Locator.elementHandle
 * since: v1.14
+* discouraged: Always prefer using [Locator]s and web assertions over [ElementHandle]s because latter are inherently racy.
 - returns: <[ElementHandle]>
 
 Resolves given locator to the first matching DOM element. If there are no matching elements, waits for one. If multiple elements match the locator, throws.
@@ -652,6 +653,7 @@ Resolves given locator to the first matching DOM element. If there are no matchi
 
 ## async method: Locator.elementHandles
 * since: v1.14
+* discouraged: Always prefer using [Locator]s and web assertions over [ElementHandle]s because latter are inherently racy.
 - returns: <[Array]<[ElementHandle]>>
 
 Resolves given locator to all matching DOM elements. If there are no matching elements, returns an empty list.

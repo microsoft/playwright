@@ -4031,6 +4031,7 @@ Console.WriteLine(await popup.TitleAsync()); // popup is ready to use.
 
 ## async method: Page.waitForNavigation
 * since: v1.8
+* deprecated: This method is inherently racy, please use [`method: Page.waitForURL`] instead.
 * langs:
   * alias-python: expect_navigation
   * alias-csharp: RunAndWaitForNavigation
