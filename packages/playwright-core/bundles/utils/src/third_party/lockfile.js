@@ -382,15 +382,23 @@ function toPromise(method) {
 
 // Remove acquired locks on exit
 /* istanbul ignore next */
-onExit(() => {
-    for (const file in locks) {
-        const options = locks[file].options;
-
-        try { options.fs.rmdirSync(getLockFile(file, options)); } catch (e) { /* Empty */ }
+let cleanupInitialized = false;
+function ensureCleanup() {
+    if (cleanupInitialized) {
+        return;
     }
-});
+    cleanupInitialized = true;
+    onExit(() => {
+        for (const file in locks) {
+            const options = locks[file].options;
+
+            try { options.fs.rmdirSync(getLockFile(file, options)); } catch (e) { /* Empty */ }
+        }
+    });
+}
 
 module.exports.lock = async (file, options) => {
+    ensureCleanup();
     const release = await toPromise(lock)(file, options);
     return toPromise(release);
 }
