@@ -139,6 +139,8 @@ playwright.chromium.launch().then(async browser => {
     else route.continue();
   });
 
+  await page.route('**/*', route => route.continue());
+
   await page.route(str => {
     return true;
   }, (route, request) => {

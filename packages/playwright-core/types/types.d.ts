@@ -3564,7 +3564,7 @@ export interface Page {
    * @param handler handler function to route the request.
    * @param options
    */
-  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void), options?: {
+  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => Promise<any>|any), options?: {
     /**
      * How often a route should be used. By default it will be used every time.
      */
@@ -8041,7 +8041,7 @@ export interface BrowserContext {
    * @param handler handler function to route the request.
    * @param options
    */
-  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => void), options?: {
+  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => Promise<any>|any), options?: {
     /**
      * How often a route should be used. By default it will be used every time.
      */
