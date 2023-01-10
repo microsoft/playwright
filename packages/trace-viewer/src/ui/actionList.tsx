@@ -72,10 +72,7 @@ export const ActionList: React.FC<ActionListProps> = ({
             newIndex = Math.max(index - 1, 0);
         }
         const element = actionListRef.current?.children.item(newIndex);
-        if ((element as any)?.scrollIntoViewIfNeeded)
-          (element as any).scrollIntoViewIfNeeded(false);
-        else
-          element?.scrollIntoView();
+        scrollIntoViewIfNeeded(element);
         onSelected(actions[newIndex]);
       }}
       ref={actionListRef}
@@ -113,8 +110,8 @@ const Action: React.FC<{
   const divRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    if (selectedAction === action)
-      divRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (divRef.current && selectedAction === action)
+      scrollIntoViewIfNeeded(divRef.current);
   }, [selectedAction, action]);
 
   return <div
@@ -138,3 +135,12 @@ const Action: React.FC<{
     {error && <div className='codicon codicon-issues' title={error} />}
   </div>;
 };
+
+function scrollIntoViewIfNeeded(element?: Element | null) {
+  if (!element)
+    return;
+  if ((element as any)?.scrollIntoViewIfNeeded)
+    (element as any).scrollIntoViewIfNeeded(false);
+  else
+    element?.scrollIntoView();
+}
