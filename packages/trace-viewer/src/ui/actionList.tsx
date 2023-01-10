@@ -78,7 +78,7 @@ export const ActionList: React.FC<ActionListProps> = ({
       ref={actionListRef}
     >
       {actions.length === 0 && <div className='no-actions-entry'>No actions recorded</div>}
-      {actions.map(action => <Action
+      {actions.map(action => <ActionListItem
         action={action}
         highlightedAction={highlightedAction}
         onSelected={onSelected}
@@ -91,7 +91,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   </div>;
 };
 
-const Action: React.FC<{
+const ActionListItem: React.FC<{
   action: ActionTraceEvent,
   highlightedAction: ActionTraceEvent | undefined,
   onSelected: (action: ActionTraceEvent) => void,
