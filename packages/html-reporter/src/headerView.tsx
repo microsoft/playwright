@@ -28,7 +28,8 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
   stats: Stats,
   filterText: string,
   setFilterText: (filterText: string) => void,
-}>> = ({ stats, filterText, setFilterText }) => {
+  projectNames: string[],
+}>> = ({ stats, filterText, setFilterText, projectNames }) => {
   React.useEffect(() => {
     (async () => {
       window.addEventListener('popstate', () => {
@@ -56,7 +57,10 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
         }}></input>
       </form>
     </div>
-    <div className='pt-2'><span data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)', paddingRight: '10px', float: 'right' }}>Total time: {msToString(stats.duration)}</span></div>
+    <div className='pt-2'>
+      {projectNames.length === 1 && <span data-testid="project-name" style={{ color: 'var(--color-fg-subtle)', float: 'left' }}>Project: {projectNames[0]}</span>}
+      <span data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)', paddingRight: '10px', float: 'right' }}>Total time: {msToString(stats.duration)}</span>
+    </div>
   </>);
 };
 

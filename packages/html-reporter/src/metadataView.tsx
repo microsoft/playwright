@@ -74,13 +74,13 @@ const InnerMetadataView: React.FC<Metainfo> = metadata => {
         {metadata['revision.subject'] || 'Commit Metainfo'}
       </span>} initialExpanded={false} dataTestId='metadata-chip'>
       {metadata['revision.subject'] &&
-        <MetadatViewItem
+        <MetadataViewItem
           testId='revision.subject'
           content={<span>{metadata['revision.subject']}</span>}
         />
       }
       {metadata['revision.id'] &&
-        <MetadatViewItem
+        <MetadataViewItem
           testId='revision.id'
           content={<span>{metadata['revision.id']}</span>}
           href={metadata['revision.link']}
@@ -88,13 +88,13 @@ const InnerMetadataView: React.FC<Metainfo> = metadata => {
         />
       }
       {(metadata['revision.author'] || metadata['revision.email']) &&
-        <MetadatViewItem
+        <MetadataViewItem
           content={`${metadata['revision.author']} ${metadata['revision.email']}`}
           icon='person'
         />
       }
       {metadata['revision.timestamp'] &&
-        <MetadatViewItem
+        <MetadataViewItem
           testId='revision.timestamp'
           content={
             <>
@@ -107,23 +107,23 @@ const InnerMetadataView: React.FC<Metainfo> = metadata => {
         />
       }
       {metadata['ci.link'] &&
-        <MetadatViewItem
+        <MetadataViewItem
           content='CI/CD Logs'
           href={metadata['ci.link']}
           icon='externalLink'
         />
       }
       {metadata['timestamp'] &&
-        <MetadatViewItem
+        <MetadataViewItem
           content={<span style={{ color: 'var(--color-fg-subtle)' }}>
             Report generated on {Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(metadata['timestamp'])}
-          </span>}></MetadatViewItem>
+          </span>}></MetadataViewItem>
       }
     </AutoChip>
   );
 };
 
-const MetadatViewItem: React.FC<{ content: JSX.Element | string; icon?: keyof typeof icons, href?: string, testId?: string }> = ({ content, icon, href, testId }) => {
+const MetadataViewItem: React.FC<{ content: JSX.Element | string; icon?: keyof typeof icons, href?: string, testId?: string }> = ({ content, icon, href, testId }) => {
   return (
     <div className='my-1 hbox' data-test-id={testId} >
       <div className='mr-2'>
