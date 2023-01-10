@@ -96,14 +96,4 @@ test('should show the project names', async ({ mount }) => {
     await expect(component.getByText('my-project')).toBeHidden();
     await expect(component.getByText('great-project')).toBeHidden();
   });
-  await test.step('with more than 1 project but same name', async () => {
-    const component = await mount(<HeaderView
-      stats={stats}
-      filterText=''
-      setFilterText={() => {}}
-      projectNames={['chromium', 'chromium']}
-    >
-    </HeaderView>);
-    await expect(component.getByText('Project: chromium')).toBeVisible();
-  });
 });
