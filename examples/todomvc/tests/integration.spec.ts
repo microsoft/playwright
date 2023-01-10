@@ -1,6 +1,7 @@
 /* eslint-disable notice/notice */
 
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -396,8 +397,7 @@ test.describe('Routing', () => {
     await expect(page.getByRole('link', { name: 'All' })).toHaveClass('selected');
     await page.getByRole('link', { name: 'Active' }).click();
     // Page change - active items.
-    await expect(page.getByRole('link', { name: 'Active' })).
-    toHaveClass('selected');
+    await expect(page.getByRole('link', { name: 'Active' })).toHaveClass('selected');
     await page.getByRole('link', { name: 'Completed' }).click();
     // Page change - completed items.
     await expect(page.getByRole('link', { name: 'Completed' })).toHaveClass('selected');

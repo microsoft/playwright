@@ -697,8 +697,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async pause() {
-    if (!require('inspector').url())
-      await this.context()._channel.pause();
+    if (require('inspector').url())
+      return;
+    await Promise.race([
+      this.context()._channel.pause(),
+      this._closedOrCrashedPromise
+    ]);
   }
 
   async pdf(options: PDFOptions = {}): Promise<Buffer> {
