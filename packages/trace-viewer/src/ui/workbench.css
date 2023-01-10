@@ -118,3 +118,9 @@
 .workbench .spacer {
   flex: auto;
 }
+
+.workbench .home {
+  display: flex;
+  text-decoration: none;
+  color: inherit;
+}

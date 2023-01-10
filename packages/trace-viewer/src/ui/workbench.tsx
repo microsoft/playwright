@@ -154,8 +154,10 @@ export const Workbench: React.FunctionComponent<{
 
   return <div className='vbox workbench' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
     <div className='hbox header'>
-      <div className='logo'>🎭</div>
-      <div className='product'>Playwright</div>
+      <a href="/" className='home'>
+        <div className='logo'>🎭</div>
+        <div className='product'>Playwright</div>
+      </a>
       {model.title && <div className='title'>{model.title}</div>}
       <div className='spacer'></div>
       <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
