@@ -25,7 +25,7 @@ const { workspace } = require('../workspace');
 /**
  * @typedef {{
  *   command: string,
- *   args: string[],
+ *   args?: string[],
  *   shell: boolean,
  *   env?: NodeJS.ProcessEnv,
  *   cwd?: string,
@@ -62,6 +62,7 @@ const copyFiles = [];
 
 const watchMode = process.argv.slice(2).includes('--watch');
 const lintMode = process.argv.slice(2).includes('--lint');
+const skipBundles = process.argv.slice(2).includes('--skip-bundles');
 const ROOT = path.join(__dirname, '..', '..');
 
 /**
@@ -94,7 +95,7 @@ async function runWatch() {
       }
       if (onChange.script)
         child_process.spawnSync('node', [onChange.script], { stdio: 'inherit' });
-      else
+      else if (onChange.command)
         child_process.spawnSync(onChange.command, onChange.args || [], { stdio: 'inherit', cwd: onChange.cwd, shell: true });
     }
     // chokidar will report all files as added in a sync loop, throttle those.
@@ -103,7 +104,8 @@ async function runWatch() {
         clearTimeout(timeout);
       timeout = setTimeout(callback, 500);
     };
-    chokidar.watch([...paths, ...mustExist, onChange.script].filter(Boolean).map(filePath)).on('all', reschedule);
+   
+    chokidar.watch((/** @type {string[]} */ ([...paths, ...mustExist, onChange.script].filter(Boolean))).map(filePath)).on('all', reschedule);
     callback();
   }
 
@@ -116,7 +118,7 @@ async function runWatch() {
   /** @type{import('child_process').ChildProcess[]} */
   const spawns = [];
   for (const step of steps) {
-    spawns.push(child_process.spawn(step.command, step.args, {
+    spawns.push(child_process.spawn(step.command, step.args ?? [], {
       stdio: 'inherit',
       shell: step.shell,
       env: {
@@ -166,7 +168,7 @@ async function runBuild() {
       continue;
     if (onChange.script)
       runStep({ command: 'node', args: [filePath(onChange.script)], shell: false });
-    else
+    else if (onChange.command)
       runStep({ command: onChange.command, args: onChange.args, shell: true, cwd: onChange.cwd });
   }
 }
@@ -213,17 +215,19 @@ for (const pkg of workspace.packages()) {
     shell: true,
   });
 
-  // Build bundles.
-  const bundlesDir = path.join(pkg.path, 'bundles');
-  if (!fs.existsSync(bundlesDir))
-    continue;
-  for (const bundle of fs.readdirSync(bundlesDir)) {
-    steps.push({
-      command: 'npm',
-      args: ['run', 'build'],
-      shell: true,
-      cwd: path.join(bundlesDir, bundle)
-    });
+  if (!skipBundles) {
+    // Build bundles.
+    const bundlesDir = path.join(pkg.path, 'bundles');
+    if (!fs.existsSync(bundlesDir))
+      continue;
+    for (const bundle of fs.readdirSync(bundlesDir)) {
+      steps.push({
+        command: 'npm',
+        args: ['run', 'build'],
+        shell: true,
+        cwd: path.join(bundlesDir, bundle)
+      });
+    }
   }
 }
 
