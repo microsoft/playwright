@@ -4462,6 +4462,8 @@ export interface Page {
    *
    * **NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL
    * is considered a navigation.
+   * @deprecated This method is inherently racy, please use
+   * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url) instead.
    * @param options
    */
   waitForNavigation(options?: {
@@ -10085,6 +10087,8 @@ export interface Locator {
    */
   evaluateAll<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], void, R>): Promise<R>;
   /**
+   * **NOTE** Always prefer using [Locator]s and web assertions over [ElementHandle]s because latter are inherently racy.
+   *
    * Resolves given locator to the first matching DOM element. If there are no matching elements, waits for one. If
    * multiple elements match the locator, throws.
    * @param options
@@ -10614,6 +10618,8 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * **NOTE** Always prefer using [Locator]s and web assertions over [ElementHandle]s because latter are inherently racy.
+   *
    * Resolves given locator to all matching DOM elements. If there are no matching elements, returns an empty list.
    */
   elementHandles(): Promise<Array<ElementHandle>>;
