@@ -34,6 +34,7 @@ const kExactPenalty = kTextScoreRange / 2;
 const kTestIdScore = 1;        // testIdAttributeName
 const kOtherTestIdScore = 2;   // other data-test* attributes
 
+const kIframeByAttributeScore = 10;
 
 const kBeginPenalizedScore = 50;
 const kPlaceholderScore = 100;
@@ -174,13 +175,39 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
 
 function buildCandidates(injectedScript: InjectedScript, element: Element, testIdAttributeName: string, accessibleNameCache: Map<Element, boolean>): SelectorToken[] {
   const candidates: SelectorToken[] = [];
-  if (element.getAttribute(testIdAttributeName))
-    candidates.push({ engine: 'internal:testid', selector: `[${testIdAttributeName}=${escapeForAttributeSelector(element.getAttribute(testIdAttributeName)!, true)}]`, score: kTestIdScore });
+
+  // Start of generic candidates which are compatible for Locators and FrameLocators:
 
   for (const attr of ['data-testid', 'data-test-id', 'data-test']) {
     if (attr !== testIdAttributeName && element.getAttribute(attr))
       candidates.push({ engine: 'css', selector: `[${attr}=${quoteAttributeValue(element.getAttribute(attr)!)}]`, score: kOtherTestIdScore });
   }
+
+  const idAttr = element.getAttribute('id');
+  if (idAttr && !isGuidLike(idAttr))
+    candidates.push({ engine: 'css', selector: makeSelectorForId(idAttr), score: kCSSIdScore });
+
+  candidates.push({ engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore });
+
+  if (element.nodeName === 'IFRAME') {
+    for (const attribute of ['name', 'title']) {
+      if (element.getAttribute(attribute))
+        candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[${attribute}=${quoteAttributeValue(element.getAttribute(attribute)!)}]`, score: kIframeByAttributeScore });
+    }
+
+    // Get via testIdAttributeName via CSS selector.
+    if (element.getAttribute(testIdAttributeName))
+      candidates.push({ engine: 'css', selector: `[${testIdAttributeName}=${escapeForAttributeSelector(element.getAttribute(testIdAttributeName)!, true!)}]`, score: kTestIdScore });
+
+    penalizeScoreForLength([candidates]);
+    return candidates;
+  }
+
+  // Everything after that are candidates that are not applicable to iframes and designed for Locators only(getBy* methods):
+
+  // Get via testIdAttributeName via GetByTestId().
+  if (element.getAttribute(testIdAttributeName))
+    candidates.push({ engine: 'internal:testid', selector: `[${testIdAttributeName}=${escapeForAttributeSelector(element.getAttribute(testIdAttributeName)!, true)}]`, score: kTestIdScore });
 
   if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
     const input = element as HTMLInputElement | HTMLTextAreaElement;
@@ -228,11 +255,6 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(element.nodeName) && element.getAttribute('type') !== 'hidden')
     candidates.push({ engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSInputTypeNameScore + 1 });
 
-  const idAttr = element.getAttribute('id');
-  if (idAttr && !isGuidLike(idAttr))
-    candidates.push({ engine: 'css', selector: makeSelectorForId(idAttr), score: kCSSIdScore });
-
-  candidates.push({ engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore });
   penalizeScoreForLength([candidates]);
   return candidates;
 }
