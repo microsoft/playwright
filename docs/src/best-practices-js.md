@@ -167,7 +167,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-### Mock 3rd party API responses
+### Mock third-party API responses
 
 If you want to test links to third party API's then you should intercept the route with a mock response. This ensures the link is visible and clickable. Before hitting the link the route gets intercepted and a mock response is returned. Clicking the link results in a new page being opened containing the mock response rather than the actual page. We can then check this has the URL we expect.
 
