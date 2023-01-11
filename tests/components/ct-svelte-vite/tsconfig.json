@@ -15,8 +15,11 @@
     "allowJs": true,
     "checkJs": true,
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "src/**/*.spec.*/*"],
+  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "src/**/*.spec.*/*", "tests/**/*.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
