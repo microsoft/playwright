@@ -50,18 +50,14 @@ it('should work with both domcontentloaded and load', async ({ page, server }) =
 });
 
 it('should work with commit', async ({ page, server }) => {
+  server.setRoute('/script.js', (req, res) => {});
   server.setRoute('/empty.html', (req, res) => {
-    res.writeHead(200, {
-      'content-type': 'text/html',
-      'content-length': '8192'
-    });
-    // Write enought bytes of the body to trigge response received event.
-    res.write('<title>' + 'A'.repeat(4100));
-    res.uncork();
+    res.setHeader('content-type', 'text/html');
+    res.end('<title>Hello</title><script src="script.js"></script>');
   });
-
   page.goto(server.EMPTY_PAGE).catch(e => {});
   await page.waitForURL('**/empty.html', { waitUntil: 'commit' });
+  expect(await page.title()).toBe('Hello');
 });
 
 it('should work with commit and about:blank', async ({ page, server }) => {
