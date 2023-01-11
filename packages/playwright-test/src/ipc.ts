@@ -95,7 +95,7 @@ export type RunPayload = {
   file: string;
   entries: TestEntry[];
   watchMode: boolean;
-  projectSetup: boolean;
+  phase: 'test' | 'projectSetup' | 'globalSetup';
 };
 
 export type DonePayload = {

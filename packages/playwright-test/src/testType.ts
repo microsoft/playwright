@@ -80,10 +80,10 @@ export class TestTypeImpl {
       ].join('\n'), location);
       return;
     }
-    if (allowedContext === 'projectSetup' && !suite._isProjectSetup)
+    if (allowedContext === 'projectSetup' && suite._phase !== 'projectSetup')
       addFatalError(`${title} is only allowed in a project setup file.`, location);
-    else if (allowedContext === 'test' && suite._isProjectSetup)
-      addFatalError(`${title} is not allowed in a project setup file.`, location);
+    else if (allowedContext === 'test' && suite._phase !== 'test' && suite._phase !== 'globalSetup')
+      addFatalError(`${title} is not allowed in a setup file.`, location);
     return suite;
   }
 
@@ -106,7 +106,7 @@ export class TestTypeImpl {
       return;
     const test = new TestCase(title, fn, this, location);
     test._requireFile = suite._requireFile;
-    test._isProjectSetup = suite._isProjectSetup;
+    test._phase = suite._phase;
     suite._addTest(test);
 
     if (type === 'only' || type === 'projectSetupOnly')
@@ -134,7 +134,7 @@ export class TestTypeImpl {
 
     const child = new Suite(title, 'describe');
     child._requireFile = suite._requireFile;
-    child._isProjectSetup = suite._isProjectSetup;
+    child._phase = suite._phase;
     child.location = location;
     suite._addSuite(child);
 

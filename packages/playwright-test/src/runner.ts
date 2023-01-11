@@ -238,13 +238,29 @@ export class Runner {
     return projects;
   }
 
-  private async _collectFiles(projects: FullProjectInternal[], commandLineFileFilters: TestFileFilter[]): Promise<{filesByProject: Map<FullProjectInternal, string[]>; setupFiles: Set<string>}> {
+  private async _collectFiles(projects: FullProjectInternal[], commandLineFileFilters: TestFileFilter[]): Promise<{filesByProject: Map<FullProjectInternal, string[]>; setupFiles: Set<string>, globalSetupFiles: Set<string>}> {
     const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
     const testFileExtension = (file: string) => extensions.includes(path.extname(file));
     const filesByProject = new Map<FullProjectInternal, string[]>();
     const setupFiles = new Set<string>();
     const fileToProjectName = new Map<string, string>();
     const commandLineFileMatcher = commandLineFileFilters.length ? createFileMatcherFromFilters(commandLineFileFilters) : () => true;
+
+    const config = this._loader.fullConfig();
+    const globalSetupFiles = new Set<string>();
+    if (config._globalScripts) {
+      const allFiles = await collectFiles(config.rootDir, true);
+      const globalScriptMatch = createFileMatcher(config._globalScripts);
+      const globalScripts = allFiles.filter(file => {
+        if (!testFileExtension(file) || !globalScriptMatch(file))
+          return false;
+        fileToProjectName.set(file, config._globalProject.name);
+        globalSetupFiles.add(file);
+        return true;
+      });
+      filesByProject.set(config._globalProject, globalScripts);
+    }
+
     for (const project of projects) {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
       const setupMatch = createFileMatcher(project._setupMatch);
@@ -275,42 +291,45 @@ export class Runner {
       filesByProject.set(project, testFiles);
     }
 
-    return { filesByProject, setupFiles };
+    return { filesByProject, setupFiles, globalSetupFiles };
   }
 
-  private async _collectTestGroups(options: RunOptions): Promise<{ rootSuite: Suite, projectSetupGroups: TestGroup[], testGroups: TestGroup[] }> {
+  private async _collectTestGroups(options: RunOptions): Promise<{ rootSuite: Suite, globalSetupGroups: TestGroup[], projectSetupGroups: TestGroup[], testGroups: TestGroup[] }> {
     const config = this._loader.fullConfig();
     const projects = this._collectProjects(options.projectFilter);
-    const { filesByProject, setupFiles } = await this._collectFiles(projects, options.testFileFilters);
+    const { filesByProject, setupFiles, globalSetupFiles } = await this._collectFiles(projects, options.testFileFilters);
 
-    let result = await this._createFilteredRootSuite(options, filesByProject, new Set(), !!setupFiles.size, setupFiles);
+    let result = await this._createFilteredRootSuite(options, filesByProject, new Set(), !!setupFiles.size, setupFiles, globalSetupFiles);
     if (setupFiles.size) {
       const allTests = result.rootSuite.allTests();
-      const tests = allTests.filter(test => !test._isProjectSetup);
+      const tests = allTests.filter(test => test._phase === 'test');
       // If >0 tests match and
       // - none of the setup files match the filter then we run all setup files,
       // - if the filter also matches some of the setup tests, we'll run only
       //   that maching subset of setup tests.
       if (tests.length > 0 && tests.length === allTests.length)
-        result = await this._createFilteredRootSuite(options, filesByProject, setupFiles, false, setupFiles);
+        result = await this._createFilteredRootSuite(options, filesByProject, setupFiles, false, setupFiles, globalSetupFiles);
     }
 
     this._fatalErrors.push(...result.fatalErrors);
     const { rootSuite } = result;
 
     const allTestGroups = createTestGroups(rootSuite.suites, config.workers);
+    const globalSetupGroups = [];
     const projectSetupGroups = [];
     const testGroups = [];
     for (const group of allTestGroups) {
-      if (group.isProjectSetup)
+      if (group.phase === 'projectSetup')
         projectSetupGroups.push(group);
+      else if (group.phase === 'globalSetup')
+        globalSetupGroups.push(group);
       else
         testGroups.push(group);
     }
-    return { rootSuite, projectSetupGroups, testGroups };
+    return { rootSuite, globalSetupGroups, projectSetupGroups, testGroups };
   }
 
-  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>, doNotFilterFiles: Set<string>, shouldCloneTests: boolean, setupFiles: Set<string>): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
+  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>, doNotFilterFiles: Set<string>, shouldCloneTests: boolean, setupFiles: Set<string>, globalSetupFiles: Set<string>): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
     const config = this._loader.fullConfig();
     const fatalErrors: TestError[] = [];
     const allTestFiles = new Set<string>();
@@ -320,7 +339,12 @@ export class Runner {
     // Add all tests.
     const preprocessRoot = new Suite('', 'root');
     for (const file of allTestFiles) {
-      const fileSuite = await this._loader.loadTestFile(file, 'runner', setupFiles.has(file));
+      let type: 'test' | 'projectSetup' | 'globalSetup' = 'test';
+      if (globalSetupFiles.has(file))
+        type = 'globalSetup';
+      else if (setupFiles.has(file))
+        type = 'projectSetup';
+      const fileSuite = await this._loader.loadTestFile(file, 'runner', type);
       if (fileSuite._loadError)
         fatalErrors.push(fileSuite._loadError);
       // We have to clone only if there maybe subsequent calls of this method.
@@ -439,7 +463,7 @@ export class Runner {
       rootSuite.suites = [];
       rootSuite.tests = [];
     } else {
-      filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
+      filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test) || test._phase === 'globalSetup');
     }
   }
 
@@ -447,7 +471,7 @@ export class Runner {
     const config = this._loader.fullConfig();
     // Each entry is an array of test groups that can be run concurrently. All
     // test groups from the previos entries must finish before entry starts.
-    const { rootSuite, projectSetupGroups, testGroups } = await this._collectTestGroups(options);
+    const { rootSuite, globalSetupGroups, projectSetupGroups, testGroups } = await this._collectTestGroups(options);
 
     // Fail when no tests.
     if (!rootSuite.allTests().length && !options.passWithNoTests)
@@ -455,7 +479,7 @@ export class Runner {
 
     this._filterForCurrentShard(rootSuite, projectSetupGroups, testGroups);
 
-    config._maxConcurrentTestGroups = Math.max(projectSetupGroups.length, testGroups.length);
+    config._maxConcurrentTestGroups = Math.max(globalSetupGroups.length, projectSetupGroups.length, testGroups.length);
 
     // Report begin
     this._reporter.onBegin?.(config, rootSuite);
@@ -492,15 +516,23 @@ export class Runner {
 
     // Run tests.
     try {
-      let dispatchResult = await this._dispatchToWorkers(projectSetupGroups);
+      // TODO: run only setups, keep workers alive
+      let dispatchResult = await this._dispatchToWorkers(globalSetupGroups);
       if (dispatchResult === 'success') {
-        const failedSetupProjectIds = new Set<string>();
-        for (const testGroup of projectSetupGroups) {
-          if (testGroup.tests.some(test => !test.ok()))
-            failedSetupProjectIds.add(testGroup.projectId);
+        if (globalSetupGroups.some(group => group.tests.some(test => !test.ok()))) {
+          this._skipTestsFromMatchingGroups(testGroups, () => true);
+        } else {
+          dispatchResult = await this._dispatchToWorkers(projectSetupGroups);
+          if (dispatchResult === 'success') {
+            const failedSetupProjectIds = new Set<string>();
+            for (const testGroup of projectSetupGroups) {
+              if (testGroup.tests.some(test => !test.ok()))
+                failedSetupProjectIds.add(testGroup.projectId);
+            }
+            const testGroupsToRun = this._skipTestsFromMatchingGroups(testGroups, group => failedSetupProjectIds.has(group.projectId));
+            dispatchResult = await this._dispatchToWorkers(testGroupsToRun);
+          }
         }
-        const testGroupsToRun = this._skipTestsFromFailedProjects(testGroups, failedSetupProjectIds);
-        dispatchResult = await this._dispatchToWorkers(testGroupsToRun);
       }
       if (dispatchResult === 'signal') {
         result.status = 'interrupted';
@@ -534,10 +566,10 @@ export class Runner {
     return 'success';
   }
 
-  private _skipTestsFromFailedProjects(testGroups: TestGroup[], failedProjects: Set<string>): TestGroup[] {
+  private _skipTestsFromMatchingGroups(testGroups: TestGroup[], groupFilter: (g: TestGroup) => boolean): TestGroup[] {
     const result = [];
     for (const group of testGroups) {
-      if (failedProjects.has(group.projectId)) {
+      if (groupFilter(group)) {
         for (const test of group.tests) {
           const result = test._appendTestResult();
           this._reporter.onTestBegin?.(test, result);
@@ -823,7 +855,7 @@ function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] 
       projectId: test._projectId,
       tests: [],
       watchMode: false,
-      isProjectSetup: test._isProjectSetup,
+      phase: test._phase,
     };
   };
 

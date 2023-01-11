@@ -647,6 +647,22 @@ interface TestConfig {
   fullyParallel?: boolean;
 
   /**
+   * Files that contain global setup/teardown hooks.
+   *
+   * **Details**
+   *
+   * [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all) hooks in the matching
+   * files will run before all tests.
+   * [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) hooks in the matching
+   * files will run after all tests.
+   *
+   * If global setup fails, test execution will be skipped.
+   * [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) hooks will run in the same
+   * process as [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all).
+   */
+  globalScripts?: string|RegExp|Array<string|RegExp>;
+
+  /**
    * Path to the global setup file. This file will be required and run before all the tests. It must export a single
    * function that takes a [`TestConfig`] argument.
    *
