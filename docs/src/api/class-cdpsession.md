@@ -1,6 +1,6 @@
 # class: CDPSession
 * since: v1.8
-* langs: js, python
+* langs: js, python, csharp
 * extends: [EventEmitter]
 
 The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:
@@ -45,6 +45,16 @@ client.send("Animation.setPlaybackRate", {
     playbackRate: response["playbackRate"] / 2
 })
 ```
+```csharp
+var client = await Page.Context.NewCDPSessionAsync(Page);
+await client.SendAsync("Runtime.enable");
+client.On("Animation.animationCreated", () => Console.WriteLine("Animation created!"));
+var response = await client.SendAsync("Animation.getPlaybackRate");
+var playbackRate = (int)response.Value.Deserialize<JsonNode>()["result"]["result"]["value"];
+Console.WriteLine("playback rate is " + response.playbackRate);
+await client.SendAsync("Animation.setPlaybackRate", new() { {"playbackRate", response.playbackRate / 2 } });
+await client.SendAsync("Animation.setPlaybackRate", new() { {"playbackRate", response.playbackRate / 2 } });
+```
 
 ## async method: CDPSession.detach
 * since: v1.8
@@ -64,6 +74,15 @@ Protocol method name.
 
 ### param: CDPSession.send.params
 * since: v1.8
+* langs: js, python
 - `params` ?<[Object]>
+
+Optional method parameters.
+
+### param: CDPSession.send.params
+* since: v1.8
+* langs: csharp
+  - alias-csharp: args
+- `params` ?<[Dictionary<string, Object>]>
 
 Optional method parameters.
