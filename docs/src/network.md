@@ -575,7 +575,7 @@ To modify a response use [APIRequestContext] to get the original response and th
 ```js
 await page.route('**/title.html', async route => {
   // Fetch original response.
-  const response = await page.request.fetch();
+  const response = await route.fetch();
   // Add a prefix to the title.
   let body = await response.text();
   body = body.replace('<title>', '<title>My prefix:');
@@ -596,7 +596,7 @@ await page.route('**/title.html', async route => {
 ```java
 page.route("**/title.html", route -> {
   // Fetch original response.
-  APIResponse response = page.request().fetch();
+  APIResponse response = route.fetch();
   // Add a prefix to the title.
   String body = response.text();
   body = body.replace("<title>", "<title>My prefix:");
@@ -615,7 +615,7 @@ page.route("**/title.html", route -> {
 ```python async
 async def handle_route(route: Route) -> None:
     # Fetch original response.
-    response = await page.request.fetch()
+    response = await route.fetch()
     # Add a prefix to the title.
     body = await response.text()
     body = body.replace("<title>", "<title>My prefix:")
@@ -634,7 +634,7 @@ await page.route("**/title.html", handle_route)
 ```python sync
 def handle_route(route: Route) -> None:
     # Fetch original response.
-    response = page.request.fetch()
+    response = route.fetch()
     # Add a prefix to the title.
     body = response.text()
     body = body.replace("<title>", "<title>My prefix:")
