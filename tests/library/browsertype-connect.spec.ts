@@ -110,11 +110,18 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       }
     });
 
-    test('should print HTTP error', async ({ connect, server, mode }) => {
-      test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.
+    test('should print HTTP error', async ({ connect, server }) => {
       const error = await connect(`ws://localhost:${server.PORT}/ws-401`).catch(e => e);
       expect(error.message).toContain('401');
       expect(error.message).toContain('Unauthorized body');
+    });
+
+    test('should print ws error', async ({ connect, server }) => {
+      const error = await connect(`ws://does-not-exist.problem-domain:10987?secret=MYSECRET`).catch(e => e);
+      expect(error.message).toContain('<ws connecting> ws://does-not-exist.problem-domain:10987/');
+      expect(error.message).toContain('<ws error>');
+      expect(error.message).toContain('getaddrinfo');
+      expect(error.message).not.toContain('secret=MYSECRET');
     });
 
     test('should be able to reconnect to a browser', async ({ connect, startRemoteServer, server }) => {
