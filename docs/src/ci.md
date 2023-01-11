@@ -171,7 +171,7 @@ Suggested configuration
 GitHub Actions support [running jobs in a container](https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container) by using the [`jobs.<job_id>.container`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idcontainer) option.
 
 ```yml js
-steps:
+jobs:
   playwright:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
@@ -189,7 +189,7 @@ steps:
 ```
 
 ```yml python
-steps:
+jobs:
   playwright:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
@@ -213,7 +213,7 @@ steps:
 ```
 
 ```yml java
-steps:
+jobs:
   playwright:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
@@ -234,7 +234,7 @@ steps:
 ```
 
 ```yml csharp
-steps:
+jobs:
   playwright:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
