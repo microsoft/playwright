@@ -171,7 +171,7 @@ Suggested configuration
 GitHub Actions support [running jobs in a container](https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container) by using the [`jobs.<job_id>.container`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idcontainer) option.
 
 ```yml js
-steps:
+jobs:
   playwright:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
@@ -189,7 +189,7 @@ steps:
 ```
 
 ```yml python
-steps:
+jobs:
   playwright:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
@@ -213,7 +213,7 @@ steps:
 ```
 
 ```yml java
-steps:
+jobs:
   playwright:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
@@ -234,7 +234,7 @@ steps:
 ```
 
 ```yml csharp
-steps:
+jobs:
   playwright:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
@@ -259,7 +259,7 @@ steps:
 GitHub Actions supports [sharding tests between multiple jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs) using the [`jobs.<job_id>.strategy.matrix`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategymatrix) option. The `matrix` option will run a separate job for every possible combination of the provided options. In the example below, we have 2 `project` values, 10 `shardIndex` values and 1 `shardTotal` value, resulting in a total of 20 jobs to be run.
 
 ```yml js
-steps:
+jobs:
   playwright:
     name: 'Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shardIndex }} of ${{ matrix.shardTotal }}'
     runs-on: ubuntu-latest
