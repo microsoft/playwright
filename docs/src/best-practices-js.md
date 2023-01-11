@@ -16,37 +16,17 @@ Automated tests should verify that the application code works for the end users,
 
 Each test should be completely isolated from another test and should run independently with it's own local storage, session storage, cookies etc. [Test isolation](./browser-contexts.md) improves reproducibility, makes debugging easier and prevents cascading test failures.
 
-In order to avoid repetition for a particular part of your test you can use [before and after hooks](/api/class-test.md). Within your test file add a before hook to run a part of your test before each test such as going to a particular URL or logging in to a part of your app. This keeps your tests isolated as no test relies on another. However it is also ok to have a little duplication when tests are simple enough especially if it keeps your tests clearer and easier to read and maintain.
-
-### Make your tests fail
-
-Visually seeing your test pass is a great way to gain confidence in your tests. But sometimes you can't follow everything as your tests run too fast or perhaps you are running in headless mode and therefore not visually seeing anything. Making your tests fail ensures you understand what the test is not expecting. The error message should tell you what it received and what it expected. It's very easy to write a test that never fails which isn't much use at all.
+In order to avoid repetition for a particular part of your test you can use [before and after hooks](/api/class-test.md) or [global setup](/auth.md#reuse-signed-in-state). Within your test file add a before hook to run a part of your test before each test such as going to a particular URL or logging in to a part of your app. This keeps your tests isolated as no test relies on another. However it is also ok to have a little duplication when tests are simple enough especially if it keeps your tests clearer and easier to read and maintain.
 
 ### Write less tests but longer tests
 
-When it comes to end to end testing having long tests is not a bad thing. It's ok to have multiple actions and assertions in your test. You should avoid separating your assertions into individual test blocks as it doesn't really bring much value and just slows down the running of your tests. If your test does fail Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report or the trace viewer.
+When it comes to end to end testing having long tests is not a bad thing. It's ok to have multiple actions and assertions in your test. You should avoid separating your assertions into individual test blocks as it doesn't really bring much value and just slows down the running of your tests. 
 
-### Mock API responses
+If your test does fail, Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report or the trace viewer. You can also use [soft assertions](/test-assertions.md#soft-assertions) which do not terminate test execution but mark the test as failed.
+
+### Avoid testing third-party dependencies
 
 Only test what you control. Don't try to test links to external sites or third party servers that you do not control. Not only is it time consuming and can slow down your tests but also you can not control the content of the page you are linking to, if there are cookie banners or overlay pages or anything else that might cause your test to fail.
-
-Here is an example of testing an external link:
-
-Intercepting the route with a mock response ensures the link is visible and clickable. Before hitting the link the route gets intercepted and a mock response is returned. Clicking the link results in a new page being opened containing the mock response rather than the actual page. We can then check this has the URL we expect.
-
-```js
-test('github link works', async ({ page }) => {
-    await page.context().route('https://www.github.com/**', route => route.fulfill({
-      body: '<html><body><h1>Github - Playwright</h1></body></html>'
-    }));
-
-    const [page1] = await Promise.all([
-      page.waitForEvent('popup'),
-      page.getByRole('link', { name: 'GitHub' }).click()
-    ]);
-    await expect(page1).toHaveURL('https://www.github.com/microsoft/playwright');
-  });
-```
 
 ### Testing with a database
 
@@ -80,7 +60,7 @@ Use locators that are resilient to changes in the DOM.
 
 Playwright has a [test generator](./codegen.md) that can generate tests and pick locators for you. It will look at your page and figure out the best locator, prioritizing role, text and test id locators. If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
 
-#### Use the codegen to generate locators
+#### Use codegen to generate locators
 
 To pick a locator you can run the codegen command and click on the pick locator button. Then hover over your page in the browser window and click on the element you want to pick. You can then copy and paste this locator into your code. You can also use the codegen to record a test for you.
 
@@ -114,13 +94,14 @@ Use web first assertions such as `toBeVisible()` instead.
 ```js
 👍 await expect(page.getByText('welcome')).toBeVisible();
 ```
+
 ### Configure debugging
 
 [Debug your tests live in VSCode.](/getting-started-vscode#live-debugging)
 
-For CI failures, use the playwright [trace viewer](./trace-viewer.md) instead of videos and screenshots. The trace viewer gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
+For CI failures, use the playwright [trace viewer](./trace-viewer.md) instead of videos and screenshots. The trace viewer gives you a full trace of your tests as a local Progressive Web App (PWA) that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
 
-Traces are set to run on CI on the first retry of a failed test. However you can also run a trace locally when developing.
+Traces are set to run on CI on the first retry of a failed test. We don't recommend setting this to 'on' so that traces are run on every test as it's very performance heavy. However you can run a trace locally when developing with the `--trace` flag.
 
 ```js
 npx playwright test --trace on
@@ -184,6 +165,24 @@ const config: PlaywrightTestConfig = {
   ],
 };
 export default config;
+```
+
+### Mock 3rd party API responses
+
+If you want to test links to third party API's then you should intercept the route with a mock response. This ensures the link is visible and clickable. Before hitting the link the route gets intercepted and a mock response is returned. Clicking the link results in a new page being opened containing the mock response rather than the actual page. We can then check this has the URL we expect.
+
+```js
+test('github link works', async ({ page }) => {
+    await page.context().route('https://www.github.com/**', route => route.fulfill({
+      body: '<html><body><h1>Github - Playwright</h1></body></html>'
+    }));
+
+    const [page1] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.getByRole('link', { name: 'GitHub' }).click()
+    ]);
+    await expect(page1).toHaveURL('https://www.github.com/microsoft/playwright');
+  });
 ```
 
 ### Keep your Playwright dependency up to date
