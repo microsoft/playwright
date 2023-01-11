@@ -663,17 +663,14 @@ it('should return from goto if new navigation is started', async ({ page, server
 });
 
 it('should return when navigation is committed if commit is specified', async ({ page, server }) => {
+  server.setRoute('/script.js', (req, res) => {});
   server.setRoute('/empty.html', (req, res) => {
-    res.writeHead(200, {
-      'content-type': 'text/html',
-      'content-length': '8192'
-    });
-    // Write enought bytes of the body to trigge response received event.
-    res.write('<title>' + 'A'.repeat(4100));
-    res.uncork();
+    res.setHeader('content-type', 'text/html');
+    res.end('<title>Hello</title><script src="script.js"></script>');
   });
   const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'commit' });
   expect(response.status()).toBe(200);
+  expect(await page.title()).toBe('Hello');
 });
 
 it('should wait for load when iframe attaches and detaches', async ({ page, server }) => {
