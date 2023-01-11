@@ -33,12 +33,13 @@ The `{ page }` argument tells Playwright Test to setup the `page` fixture and pr
 
 Here is a list of the pre-defined fixtures that you are likely to use most of the time:
 
-|Fixture    |Type             |Description                      |
-|:----------|:----------------|:--------------------------------|
-|page       |[Page]           |Isolated page for this test run. |
-|context    |[BrowserContext] |Isolated context for this test run. The `page` fixture belongs to this context as well. Learn how to [configure context](./test-configuration.md). |
-|browser    |[Browser]        |Browsers are shared across tests to optimize resources. Learn how to [configure browser](./test-configuration.md). |
-|browserName|[string]         |The name of the browser currently running the test. Either `chromium`, `firefox` or `webkit`.|
+|Fixture    |Type               |Description                      |
+|:----------|:------------------|:--------------------------------|
+|page       |[Page]             |Isolated page for this test run. |
+|context    |[BrowserContext]   |Isolated context for this test run. The `page` fixture belongs to this context as well. Learn how to [configure context](./test-configuration.md). |
+|browser    |[Browser]          |Browsers are shared across tests to optimize resources. Learn how to [configure browser](./test-configuration.md). |
+|browserName|[string]           |The name of the browser currently running the test. Either `chromium`, `firefox` or `webkit`.|
+|request    |[APIRequestContext]|Isolated [APIRequestContext](./api/class-apirequestcontext.md) instance for this test run.|
 
 ### Without fixtures
 
