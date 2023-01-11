@@ -654,7 +654,7 @@ page.route("**/title.html", handle_route)
 await Page.RouteAsync("**/title.html", async route =>
 {
     // Fetch original response.
-    var response = await Page.APIRequest.FetchAsync();
+    var response = await route.FetchAsync();
     // Add a prefix to the title.
     var body = await response.TextAsync();
     body = body.Replace("<title>", "<title>My prefix:");
