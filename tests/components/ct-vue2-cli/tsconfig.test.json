@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.app.json",
-  "include": ["playwright", "src/**/*"],
+  "include": ["tests/**/*", "src/shims-vue.d.ts"],
   "compilerOptions": {
     "allowJs": true,
     "composite": true,
