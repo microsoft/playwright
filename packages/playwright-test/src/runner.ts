@@ -516,7 +516,7 @@ export class Runner {
 
     // Run tests.
     try {
-      // TODO: run only setups, keep workers alive
+      // TODO: run only setups, keep workers alive, inherit process.env from global setup workers
       let dispatchResult = await this._dispatchToWorkers(globalSetupGroups);
       if (dispatchResult === 'success') {
         if (globalSetupGroups.some(group => group.tests.some(test => !test.ok()))) {
