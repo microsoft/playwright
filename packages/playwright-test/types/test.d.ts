@@ -652,13 +652,13 @@ interface TestConfig {
    * **Details**
    *
    * [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all) hooks in the matching
-   * files will run before all tests.
+   * files will run before testing starts.
    * [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) hooks in the matching
-   * files will run after all tests.
+   * files will run after testing finishes.
    *
    * If global setup fails, test execution will be skipped.
    * [test.afterAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-all) hooks will run in the same
-   * process as [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all).
+   * worker process as [test.beforeAll(hookFunction)](https://playwright.dev/docs/api/class-test#test-before-all).
    */
   globalScripts?: string|RegExp|Array<string|RegExp>;
 

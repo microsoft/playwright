@@ -463,6 +463,9 @@ export class Runner {
       rootSuite.suites = [];
       rootSuite.tests = [];
     } else {
+      // Unlike project setup files global setup always run regardless of the selected tests.
+      // Because of that we don't add global setup entries to shardTests to avoid running empty
+      // shards which have only global setup.
       filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test) || test._phase === 'globalSetup');
     }
   }
