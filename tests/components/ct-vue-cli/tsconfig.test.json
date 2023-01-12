@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.app.json",
-  "include": ["playwright", "src/**/*"],
+  "include": ["playwright", "src/**/*", "tests/**/*"],
   "compilerOptions": {
     "allowJs": true,
     "composite": true,
