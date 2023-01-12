@@ -520,7 +520,7 @@ export class Runner {
       let dispatchResult = await this._dispatchToWorkers(globalSetupGroups);
       if (dispatchResult === 'success') {
         if (globalSetupGroups.some(group => group.tests.some(test => !test.ok()))) {
-          this._skipTestsFromMatchingGroups(testGroups, () => true);
+          this._skipTestsFromMatchingGroups([...testGroups, ...projectSetupGroups], () => true);
         } else {
           dispatchResult = await this._dispatchToWorkers(projectSetupGroups);
           if (dispatchResult === 'success') {
