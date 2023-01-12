@@ -74,24 +74,22 @@ npx playwright test --retries=3
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   // Give failing tests 3 retry attempts
   retries: 3,
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   // Give failing tests 3 retry attempts
   retries: 3,
-};
-export default config;
+});
 ```
 
 Playwright Test will categorize tests as follows:

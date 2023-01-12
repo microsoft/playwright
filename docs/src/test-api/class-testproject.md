@@ -13,8 +13,9 @@ Here is an example configuration that runs every test in Chromium, Firefox and W
 // @ts-check
 const { devices } = require('@playwright/test');
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   // Options shared for all projects.
   timeout: 30000,
   use: {
@@ -53,16 +54,14 @@ const config = {
       use: devices['iPhone 12'],
     },
   ],
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   // Options shared for all projects.
   timeout: 30000,
   use: {
@@ -101,8 +100,7 @@ const config: PlaywrightTestConfig = {
       use: devices['iPhone 12'],
     },
   ],
-};
-export default config;
+});
 ```
 
 ## property: TestProject.expect
@@ -249,8 +247,9 @@ Each project can use a different directory. Here is an example that runs smoke t
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   projects: [
     {
       name: 'Smoke Chromium',
@@ -282,16 +281,14 @@ const config = {
       }
     },
   ],
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   projects: [
     {
       name: 'Smoke Chromium',
@@ -323,8 +320,7 @@ const config: PlaywrightTestConfig = {
       }
     },
   ],
-};
-export default config;
+});
 ```
 
 Use [`property: TestConfig.testDir`] to change this option for all projects.
@@ -369,8 +365,9 @@ Options for all tests in this project, for example [`property: TestOptions.brows
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   projects: [
     {
       name: 'Chromium',
@@ -379,16 +376,14 @@ const config = {
       },
     },
   ],
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   projects: [
     {
       name: 'Chromium',
@@ -397,8 +392,7 @@ const config: PlaywrightTestConfig = {
       },
     },
   ],
-};
-export default config;
+});
 ```
 
 Use [`property: TestConfig.use`] to change this option for all projects.

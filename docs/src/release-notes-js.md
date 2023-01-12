@@ -61,18 +61,15 @@ toc_max_heading_level: 2
 - Automatically capture **full page screenshot** on test failure:
     ```js
     // playwright.config.ts
-    import type { PlaywrightTestConfig } from '@playwright/test';
-
-    const config: PlaywrightTestConfig = {
+    import { defineConfig } from '@playwright/test';
+    export default defineConfig({
       use: {
         screenshot: {
           mode: 'only-on-failure',
           fullPage: true,
         }
       }
-    };
-
-    export default config;
+    });
     ```
 
 ### Miscellaneous
@@ -129,14 +126,11 @@ This version was also tested against the following stable channels:
 
     ```js
     // playwright.config.ts
-    import type { PlaywrightTestConfig } from '@playwright/test';
-
-    const config: PlaywrightTestConfig = {
+    import { defineConfig } from '@playwright/test';
+    export default defineConfig({
       testDir: './tests',
       snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
-    };
-
-    export default config;
+    });
     ```
 
 ### New APIs
@@ -335,8 +329,8 @@ Launch multiple web servers, databases, or other processes by passing an array o
 
 ```ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   webServer: [
     {
       command: 'npm run start',
@@ -354,8 +348,7 @@ const config: PlaywrightTestConfig = {
   use: {
     baseURL: 'http://localhost:3000/',
   },
-};
-export default config;
+});
 ```
 
 ### 🐂 Debian 11 Bullseye Support
@@ -1350,16 +1343,15 @@ To launch a server during the tests, use the [`webServer`](./test-advanced#launc
 
 ```ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   webServer: {
     command: 'npm run start', // command to launch
     port: 3000, // port to await for
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
-};
-export default config;
+});
 ```
 
 Learn more in the [documentation](./test-advanced#launching-a-development-web-server-during-the-tests).

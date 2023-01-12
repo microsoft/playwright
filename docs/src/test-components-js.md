@@ -261,14 +261,13 @@ As per above, you can only import your components from your test file. If you ha
 At this point, Playwright is bundler-agnostic, so it is not reusing your existing Vite config. Your config might have a lot of things we won't be able to reuse. So for now, you would copy your path mappings and other high level settings into the `ctViteConfig` property of Playwright config.
 
 ```js
-import type { PlaywrightTestConfig } from '@playwright/experimental-ct-react';
+import { defineConfig } from '@playwright/experimental-ct-react';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   use: {
     ctViteConfig: { ... },
   },
-};
-export default config
+});
 ```
 
 ### Q) What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue,solid}`?
@@ -399,14 +398,14 @@ await mount(<App />);
 You can specify plugins via Vite config for testing settings. Note that once you start specifying plugins, you are responsible for specifying the framework plugin as well, `vue()` in this case:
 
 ```js
-import { type PlaywrightTestConfig, devices } from '@playwright/experimental-ct-vue'
+import { defineConfig, devices } from '@playwright/experimental-ct-vue'
 
 import { resolve } from 'path'
 import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   testDir: './tests/component',
   use: {
     trace: 'on-first-retry',
@@ -439,7 +438,8 @@ const config: PlaywrightTestConfig = {
         },
       },
     },
-  },
+  }
+});
 ```
 
 don't forget to initialize your plugins, for example if you are using Pinia, add init code into your `playwright/index.js`:

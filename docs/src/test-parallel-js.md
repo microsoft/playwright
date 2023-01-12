@@ -34,24 +34,22 @@ In the configuration file:
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   // Limit the number of workers on CI, use default locally
   workers: process.env.CI ? 2 : undefined,
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   // Limit the number of workers on CI, use default locally
   workers: process.env.CI ? 2 : undefined,
-};
-export default config;
+});
 ```
 
 ## Disable parallelism
@@ -92,22 +90,20 @@ Alternatively, you can opt-in all tests (or just a few projects) into this fully
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  fullyParallel: true,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  fullyParallel: true,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   fullyParallel: true,
-};
-export default config;
+});
 ```
 
 ## Serial mode
@@ -201,24 +197,22 @@ Setting in the configuration file:
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   // Limit the number of failures on CI to save resources
   maxFailures: process.env.CI ? 10 : undefined,
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   // Limit the number of failures on CI to save resources
   maxFailures: process.env.CI ? 10 : undefined,
-};
-export default config;
+});
 ```
 
 ## Worker index and parallel index
@@ -313,24 +307,22 @@ Now **disable parallel execution** by setting workers to one, and specify your t
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   workers: 1,
   testMatch: 'test.list.js',
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   workers: 1,
   testMatch: 'test.list.ts',
-};
-export default config;
+});
 ```
 
 :::note

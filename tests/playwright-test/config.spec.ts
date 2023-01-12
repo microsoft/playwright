@@ -450,9 +450,9 @@ test('should work with undefined values and base', async ({ runInlineTest }) => 
 test('should have correct types for the config', async ({ runTSC }) => {
   const result = await runTSC({
     'playwright.config.ts': `
-      import type { PlaywrightTestConfig } from '@playwright/test';
+      import { defineConfig } from '@playwright/test';
 
-      const config: PlaywrightTestConfig = {
+      export default defineConfig({
         webServer: [
           {
             command: 'echo 123',
@@ -473,9 +473,7 @@ test('should have correct types for the config', async ({ runTSC }) => {
             name: 'project name',
           }
         ],
-      };
-
-      export default config;
+      });
   `
   });
   expect(result.exitCode).toBe(0);

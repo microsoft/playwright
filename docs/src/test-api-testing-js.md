@@ -31,9 +31,8 @@ GitHub API requires authorization, so we'll configure the token once for all tes
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     // All requests we send go to this API endpoint.
     baseURL: 'https://api.github.com',
@@ -45,15 +44,15 @@ const config: PlaywrightTestConfig = {
       'Authorization': `token ${process.env.API_TOKEN}`,
     },
   }
-};
-export default config;
+});
 ```
 
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     // All requests we send go to this API endpoint.
     baseURL: 'https://api.github.com',
@@ -65,8 +64,7 @@ const config = {
       'Authorization': `token ${process.env.API_TOKEN}`,
     },
   }
-};
-module.exports = config;
+});
 ```
 
 ### Writing tests

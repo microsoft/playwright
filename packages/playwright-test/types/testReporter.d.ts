@@ -341,12 +341,11 @@ export interface FullResult {
  *
  * ```js
  * // playwright.config.ts
- * import type { PlaywrightTestConfig } from '@playwright/test';
+ * import { defineConfig } from '@playwright/test';
  *
- * const config: PlaywrightTestConfig = {
+ * export default defineConfig({
  *   reporter: './my-awesome-reporter.ts',
- * };
- * export default config;
+ * });
  * ```
  *
  * Here is a typical order of reporter calls:

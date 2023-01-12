@@ -10,28 +10,26 @@ Playwright Test supports running multiple test projects at the same time. Projec
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   timeout: 30000,
   globalTimeout: 600000,
   reporter: 'list',
   testDir: './tests',
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   timeout: 30000,
   globalTimeout: 600000,
   reporter: 'list',
   testDir: './tests',
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.expect
@@ -58,32 +56,30 @@ Configuration for the `expect` assertion library. Learn more about [various time
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   expect: {
     timeout: 10000,
     toMatchSnapshot: {
       maxDiffPixels: 10,
     },
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   expect: {
     timeout: 10000,
     toMatchSnapshot: {
       maxDiffPixels: 10,
     },
   },
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.forbidOnly
@@ -98,22 +94,20 @@ Whether to exit with an error if any tests or groups are marked as [`method: Tes
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  forbidOnly: !!process.env.CI,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  forbidOnly: !!process.env.CI,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   forbidOnly: !!process.env.CI,
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.fullyParallel
@@ -131,22 +125,20 @@ You can configure entire test run to concurrently execute all tests in all files
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  fullyParallel: true,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  fullyParallel: true,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   fullyParallel: true,
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.globalSetup
@@ -163,22 +155,20 @@ Learn more about [global setup and teardown](../test-advanced.md#global-setup-an
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  globalSetup: './global-setup',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  globalSetup: './global-setup',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   globalSetup: './global-setup',
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.globalTeardown
@@ -195,22 +185,20 @@ Learn more about [global setup and teardown](../test-advanced.md#global-setup-an
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  globalTeardown: './global-teardown',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  globalTeardown: './global-teardown',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   globalTeardown: './global-teardown',
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.globalTimeout
@@ -225,22 +213,20 @@ Maximum time in milliseconds the whole test suite can run. Zero timeout (default
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.grep
@@ -257,22 +243,20 @@ Filter to only run tests with a title matching one of the patterns. For example,
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  grep: /smoke/,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  grep: /smoke/,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   grep: /smoke/,
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.grepInvert
@@ -289,22 +273,20 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  grepInvert: /manual/,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  grepInvert: /manual/,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   grepInvert: /manual/,
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.ignoreSnapshots
@@ -319,22 +301,20 @@ Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()`
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  ignoreSnapshots: !process.env.CI,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  ignoreSnapshots: !process.env.CI,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   ignoreSnapshots: !process.env.CI,
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.maxFailures
@@ -351,22 +331,20 @@ Also available in the [command line](../test-cli.md) with the `--max-failures` a
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  maxFailures: process.env.CI ? 1 : 0,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  maxFailures: process.env.CI ? 1 : 0,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   maxFailures: process.env.CI ? 1 : 0,
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.metadata
@@ -381,22 +359,20 @@ Metadata that will be put directly to the test report serialized as JSON.
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  metadata: 'acceptance tests',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  metadata: 'acceptance tests',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   metadata: 'acceptance tests',
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.name
@@ -411,22 +387,20 @@ Config name is visible in the report and during test execution, unless overridde
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  name: 'acceptance tests',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  name: 'acceptance tests',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   name: 'acceptance tests',
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.outputDir
@@ -441,22 +415,20 @@ The output directory for files created during test execution. Defaults to `<pack
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  outputDir: './test-results',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  outputDir: './test-results',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   outputDir: './test-results',
-};
-export default config;
+});
 ```
 
 **Details**
@@ -499,22 +471,20 @@ The base directory, relative to the config file, for snapshot files created with
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  snapshotDir: './snapshots',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  snapshotDir: './snapshots',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   snapshotDir: './snapshots',
-};
-export default config;
+});
 ```
 
 **Details**
@@ -542,22 +512,20 @@ Whether to preserve test output in the [`property: TestConfig.outputDir`]. Defau
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  preserveOutput: 'always',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  preserveOutput: 'always',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   preserveOutput: 'always',
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.projects
@@ -574,26 +542,24 @@ Playwright Test supports running multiple test projects at the same time. See [T
 // @ts-check
 const { devices } = require('@playwright/test');
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   projects: [
     { name: 'chromium', use: devices['Desktop Chrome'] }
   ]
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   projects: [
     { name: 'chromium', use: devices['Desktop Chrome'] }
   ]
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.quiet
@@ -608,22 +574,20 @@ Whether to suppress stdio and stderr output from the tests.
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  quiet: !!process.env.CI,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  quiet: !!process.env.CI,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   quiet: !!process.env.CI,
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.repeatEach
@@ -638,22 +602,20 @@ The number of times to repeat each test, useful for debugging flaky tests.
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  repeatEach: 3,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  repeatEach: 3,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   repeatEach: 3,
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.reporter
@@ -677,22 +639,20 @@ Learn more in the [reporters guide](../test-reporters.md).
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: 'line',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reporter: 'line',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: 'line',
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.reportSlowTests
@@ -709,22 +669,20 @@ Whether to report slow test files. Pass `null` to disable this feature.
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reportSlowTests: null,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reportSlowTests: null,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reportSlowTests: null,
-};
-export default config;
+});
 ```
 
 **Details**
@@ -743,22 +701,20 @@ The maximum number of retry attempts given to failed tests. By default failing t
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  retries: 2,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  retries: 2,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   retries: 2,
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.shard
@@ -777,22 +733,20 @@ Learn more about [parallelism and sharding](../test-parallel.md) with Playwright
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  shard: { total: 10, current: 3 },
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  shard: { total: 10, current: 3 },
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   shard: { total: 10, current: 3 },
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.testDir
@@ -807,22 +761,20 @@ Directory that will be recursively scanned for test files. Defaults to the direc
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  testDir: './tests/playwright',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  testDir: './tests/playwright',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   testDir: './tests/playwright',
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.testIgnore
@@ -839,22 +791,20 @@ For example, `'**/test-assets/**'` will ignore any files in the `test-assets` di
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  testIgnore: '**/test-assets/**',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  testIgnore: '**/test-assets/**',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   testIgnore: '**/test-assets/**',
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.testMatch
@@ -871,22 +821,20 @@ By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  testMatch: /.*\.e2e\.js/,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  testMatch: /.*\.e2e\.js/,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   testMatch: /.*\.e2e\.js/,
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.timeout
@@ -903,22 +851,20 @@ This is a base timeout for all tests. In addition, each test can configure its o
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  timeout: 5 * 60 * 1000,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  timeout: 5 * 60 * 1000,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   timeout: 5 * 60 * 1000,
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.updateSnapshots
@@ -938,22 +884,20 @@ Learn more about [snapshots](../test-snapshots.md).
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  updateSnapshots: 'missing',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  updateSnapshots: 'missing',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   updateSnapshots: 'missing',
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.use
@@ -968,26 +912,24 @@ Global options for all tests, for example [`property: TestOptions.browserName`].
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     browserName: 'chromium',
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   use: {
     browserName: 'chromium',
   },
-};
-export default config;
+});
 ```
 
 ## property: TestConfig.webServer
@@ -1020,8 +962,8 @@ It is also recommended to specify [`property: TestOptions.baseURL`] in the confi
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   webServer: {
     command: 'npm run start',
     port: 3000,
@@ -1031,15 +973,15 @@ const config: PlaywrightTestConfig = {
   use: {
     baseURL: 'http://localhost:3000/',
   },
-};
-export default config;
+});
 ```
 
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   webServer: {
     command: 'npm run start',
     port: 3000,
@@ -1049,8 +991,7 @@ const config = {
   use: {
     baseURL: 'http://localhost:3000/',
   },
-};
-module.exports = config;
+});
 ```
 
 Now you can use a relative path when navigating the page:
@@ -1079,8 +1020,8 @@ Multiple web servers (or background processes) can be launched:
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   webServer: [
     {
       command: 'npm run start',
@@ -1098,15 +1039,15 @@ const config: PlaywrightTestConfig = {
   use: {
     baseURL: 'http://localhost:3000/',
   },
-};
-export default config;
+});
 ```
 
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   webServer: [
     {
       command: 'npm run start',
@@ -1124,8 +1065,7 @@ const config = {
   use: {
     baseURL: 'http://localhost:3000/',
   },
-};
-module.exports = config;
+});
 ```
 
 ## property: TestConfig.workers
@@ -1144,20 +1084,18 @@ Defaults to half of the number of logical CPU cores. Learn more about [paralleli
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  workers: 3,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  workers: 3,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   workers: 3,
-};
-export default config;
+});
 ```

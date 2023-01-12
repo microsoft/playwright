@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const { test: baseTest, expect, devices, _addRunnerPlugin } = require('@playwright/test');
+const { test: baseTest, expect, devices, _addRunnerPlugin, defineConfig } = require('@playwright/test');
 const { fixtures } = require('@playwright/test/lib/mount');
 const path = require('path');
 
@@ -28,4 +28,4 @@ _addRunnerPlugin(() => {
 
 const test = baseTest.extend(fixtures);
 
-module.exports = { test, expect, devices };
+module.exports = { test, expect, devices, defineConfig };

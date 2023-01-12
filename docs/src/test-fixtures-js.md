@@ -574,8 +574,8 @@ We can now use `todoPage` fixture as usual, and set the `defaultItem` option in 
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig<{ defaultItem: string }>} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+module.exports = defineConfig({
   projects: [
     {
       name: 'shopping',
@@ -586,17 +586,15 @@ const config = {
       use: { defaultItem: 'Exercise!' },
     },
   ]
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 import { MyOptions } from './my-test';
 
-const config: PlaywrightTestConfig<MyOptions> = {
+export default defineConfig({
   projects: [
     {
       name: 'shopping',
@@ -607,8 +605,7 @@ const config: PlaywrightTestConfig<MyOptions> = {
       use: { defaultItem: 'Exercise!' },
     },
   ]
-};
-export default config;
+});
 ```
 
 ## Execution order
