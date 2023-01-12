@@ -138,6 +138,7 @@ export class Loader {
     this._fullConfig.shard = takeFirst(config.shard, baseFullConfig.shard);
     this._fullConfig._ignoreSnapshots = takeFirst(config.ignoreSnapshots, baseFullConfig._ignoreSnapshots);
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
+    this._fullConfig._globalScripts = takeFirst(config.globalScripts, null);
 
     const workers = takeFirst(config.workers, '50%');
     if (typeof workers === 'string') {
@@ -161,8 +162,9 @@ export class Loader {
       this._fullConfig._webServers = [webServers];
     }
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
+    this._fullConfig._globalProject = this._resolveProject(config, this._fullConfig, globalScriptsProject, throwawayArtifactsPath);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
-    this._assignUniqueProjectIds(this._fullConfig.projects);
+    this._assignUniqueProjectIds([...this._fullConfig.projects, this._fullConfig._globalProject]);
   }
 
   private _assignUniqueProjectIds(projects: FullProjectInternal[]) {
@@ -180,12 +182,12 @@ export class Loader {
     }
   }
 
-  async loadTestFile(file: string, environment: 'runner' | 'worker', projectSetup: boolean) {
+  async loadTestFile(file: string, environment: 'runner' | 'worker', phase: 'test' | 'projectSetup' | 'globalSetup') {
     if (cachedFileSuites.has(file))
       return cachedFileSuites.get(file)!;
     const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file), 'file');
     suite._requireFile = file;
-    suite._isProjectSetup = projectSetup;
+    suite._phase = phase;
     suite.location = { file, line: 0, column: 0 };
 
     setCurrentlyLoadingFileSuite(suite);
@@ -639,6 +641,11 @@ function validateProject(file: string, project: Project, title: string) {
   }
 }
 
+const globalScriptsProject: Project = {
+  name: 'Global Scripts',
+  repeatEach: 1,
+};
+
 export const baseFullConfig: FullConfigInternal = {
   forbidOnly: false,
   fullyParallel: false,
@@ -668,6 +675,8 @@ export const baseFullConfig: FullConfigInternal = {
   _maxConcurrentTestGroups: 0,
   _ignoreSnapshots: false,
   _workerIsolation: 'isolate-pools',
+  _globalScripts: null,
+  _globalProject: { } as FullProjectInternal,
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {

@@ -32,7 +32,7 @@ export type TestGroup = {
   projectId: string;
   tests: TestCase[];
   watchMode: boolean;
-  isProjectSetup: boolean;
+  phase: 'test' | 'projectSetup' | 'globalSetup';
 };
 
 type TestResultData = {
@@ -573,7 +573,7 @@ class Worker extends EventEmitter {
         return { testId: test.id, retry: test.results.length };
       }),
       watchMode: testGroup.watchMode,
-      projectSetup: testGroup.isProjectSetup,
+      phase: testGroup.phase,
     };
     this.send({ method: 'run', params: runPayload });
   }

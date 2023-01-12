@@ -160,7 +160,11 @@ export class WorkerRunner extends EventEmitter {
       return;
 
     this._loader = await Loader.deserialize(this._params.loader);
-    this._project = this._loader.fullConfig().projects.find(p => p._id === this._params.projectId)!;
+    const globalProject = this._loader.fullConfig()._globalProject;
+    if (this._params.projectId === globalProject._id)
+      this._project = globalProject;
+    else
+      this._project = this._loader.fullConfig().projects.find(p => p._id === this._params.projectId)!;
   }
 
   async runTestGroup(runPayload: RunPayload) {
@@ -169,7 +173,7 @@ export class WorkerRunner extends EventEmitter {
     let fatalUnknownTestIds;
     try {
       await this._loadIfNeeded();
-      const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker', runPayload.projectSetup);
+      const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker', runPayload.phase);
       const suite = this._loader.buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex, test => {
         if (runPayload.watchMode) {
           const testResolvedPayload: WatchTestResolvedPayload = {
