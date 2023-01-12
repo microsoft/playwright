@@ -130,7 +130,7 @@ export abstract class BrowserContext extends SdkObject {
     if (debugMode() === 'console')
       await this.extendInjectedScript(consoleApiSource.source);
     if (this._options.serviceWorkers === 'block')
-      await this.addInitScript(`\nnavigator.serviceWorker.register = () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
+      await this.addInitScript(`\nnavigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
 
     if (this._options.permissions)
       await this.grantPermissions(this._options.permissions);
