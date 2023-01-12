@@ -10,19 +10,19 @@ This guide should help you to make sure you are following our best practices and
 
 ### Test user-visible behavior
 
-Automated tests should verify that the application code works for the end users, and avoid relying on implementation details. Things which users will not typically use, see, or even know about such as the name of a function, whether something is an array, or the CSS class of some element. The end user will see or interact with what is rendered on the page, so your test should typically only see/interact with the same rendered output.
+Automated tests should verify that the application code works for the end users, and avoid relying on implementation details such as things which users will not typically use, see, or even know about such as the name of a function, whether something is an array, or the CSS class of some element. The end user will see or interact with what is rendered on the page, so your test should typically only see/interact with the same rendered output.
 
 ### Make tests as isolated as possible
 
-Each test should be completely isolated from another test and should run independently with it's own local storage, session storage, cookies etc. [Test isolation](./browser-contexts.md) improves reproducibility, makes debugging easier and prevents cascading test failures.
+Each test should be completely isolated from another test and should run independently with its own local storage, session storage, data, cookies etc. [Test isolation](./browser-contexts.md) improves reproducibility, makes debugging easier and prevents cascading test failures.
 
 In order to avoid repetition for a particular part of your test you can use [before and after hooks](/api/class-test.md) or [global setup](/auth.md#reuse-signed-in-state). Within your test file add a before hook to run a part of your test before each test such as going to a particular URL or logging in to a part of your app. This keeps your tests isolated as no test relies on another. However it is also ok to have a little duplication when tests are simple enough especially if it keeps your tests clearer and easier to read and maintain.
 
-### Write less tests but longer tests
+### Write fewer tests but longer tests
 
-When it comes to end to end testing having long tests is not a bad thing. It's ok to have multiple actions and assertions in your test. You should avoid separating your assertions into individual test blocks as it doesn't really bring much value and just slows down the running of your tests. 
+When it comes to end to end testing having long tests is not a bad thing. It's ok to have multiple actions and assertions in your test so you can test complete App flows. You should avoid separating your assertions into individual test blocks as it doesn't really bring much value and just slows down the running of your tests. 
 
-If your test does fail, Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report or the trace viewer. You can also use [soft assertions](/test-assertions.md#soft-assertions) which do not terminate test execution but mark the test as failed.
+If your test does fail, Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report, or the trace viewer. You can also use [soft assertions](/test-assertions.md#soft-assertions) which do not terminate test execution but mark the test as failed.
 
 ### Avoid testing third-party dependencies
 
@@ -42,7 +42,25 @@ In order to write end to end tests we need to first find elements on the webpage
 👍 page.getByRole('button', { name: 'submit' })
 ```
 
-#### Prefer user-facing attributes to xpath or css selectors
+#### Use chaining and filtering
+
+Locators can be [chained](./locators.md#chaining-locators) to narrow down the search to a particular part of the page.
+
+```js
+const product = page.getByRole('listitem').filter({ hasText: 'Product 2' });
+```
+
+You can also [filter locators](./locators.md#filtering-locators) by text or by another locator.
+
+```js
+await page
+    .getByRole('listitem')
+    .filter({ hasText: 'Product 2' })
+    .getByRole('button', { name: 'Add to cart' })
+    .click();
+```
+
+#### Prefer user-facing attributes to XPath or CSS selectors
 
 Your DOM can easily change so having your tests depend on your DOM structure can lead to failing tests. For example consider selecting this button by its CSS classes. Should the designer change something then the class might change breaking your test. 
 
@@ -60,20 +78,20 @@ Use locators that are resilient to changes in the DOM.
 
 Playwright has a [test generator](./codegen.md) that can generate tests and pick locators for you. It will look at your page and figure out the best locator, prioritizing role, text and test id locators. If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
 
-#### Use codegen to generate locators
+#### Use `codegen` to generate locators
 
-To pick a locator you can run the codegen command and click on the pick locator button. Then hover over your page in the browser window and click on the element you want to pick. You can then copy and paste this locator into your code. You can also use the codegen to record a test for you.
+To pick a locator you can run the `codegen` command and click on the pick locator button. Then hover over your page in the browser window and click on the element you want to pick. You can then copy and paste this locator into your code. You can also use `codegen` to record a test for you.
 
 ```bash
 npx playwright codegen
 ```
 #### Use the VS Code extension to generate locators
 
-You can also use the [VS Code Extension](./getting-started-vscode.md) to generate locators as well as record a test. The VS Code extension also gives you a great developer experience when writing, running and debugging tests.
+You can also use the [VS Code Extension](./getting-started-vscode.md) to generate locators as well as record a test. The VS Code extension also gives you a great developer experience when writing, running, and debugging tests.
 
 ### Use web first assertions
 
-Assertions are a way to verify that the expected result and the actual result matched or not. By using [web first assertions](./test-assertions.md) Playwright will wait until the expected condition is met. For example, when testing a toast message, a test would click a button that makes a toast message appear and check that the toast message is there. If the toast takes half a second to appear, assertions such as `toBeVisible()` will wait and retry if needed.
+Assertions are a way to verify that the expected result and the actual result matched or not. By using [web first assertions](./test-assertions.md) Playwright will wait until the expected condition is met. For example, when testing an alert message, a test would click a button that makes a message appear and check that the alert message is there. If the alert message takes half a second to appear, assertions such as `toBeVisible()` will wait and retry if needed.
 
 ```js
 👍 await expect(page.getByText('welcome')).toBeVisible();
@@ -97,11 +115,26 @@ Use web first assertions such as `toBeVisible()` instead.
 
 ### Configure debugging
 
-[Debug your tests live in VSCode.](/getting-started-vscode#live-debugging)
+#### Local debugging
 
-For CI failures, use the playwright [trace viewer](./trace-viewer.md) instead of videos and screenshots. The trace viewer gives you a full trace of your tests as a local Progressive Web App (PWA) that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
+For local debugging we recommend you [debug your tests live in VSCode.](/getting-started-vscode.md#live-debugging) by installing the [VS Code extension](./getting-started-vscode.md). Running the tests in debug mode by right clicking on the line next to the test you want to run will open a browser window and pause at where the breakpoint is set. You can then modify your test right in VS Code while debugging.
 
-Traces are set to run on CI on the first retry of a failed test. We don't recommend setting this to 'on' so that traces are run on every test as it's very performance heavy. However you can run a trace locally when developing with the `--trace` flag.
+You can also debug your tests with the Playwright inspector by running your tests with the `--debug` flag. You can then step through your test as well as view actionability logs, or use the pick locator button to explore other available locators on the page.
+
+```js
+npx playwright test --debug
+```
+
+To debug a specific test at a specific point add the name of the test followed by the line number before the `--debug` flag.
+
+```js
+npx playwright test example.spec.ts:42 --debug
+```
+#### Debugging on CI
+
+For CI failures, use the Playwright [trace viewer](./trace-viewer.md) instead of videos and screenshots. The trace viewer gives you a full trace of your tests as a local Progressive Web App (PWA) that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
+
+Traces are set to run on CI on the first retry of a failed test. We don't recommend setting this to `on` so that traces are run on every test as it's very performance heavy. However you can run a trace locally when developing with the `--trace` flag.
 
 ```js
 npx playwright test --trace on
@@ -109,7 +142,7 @@ npx playwright test --trace on
 ### Use Playwright's Tooling
 
 Playwright comes with a range of tooling to help you write tests. 
-- The [VS Code extension](./getting-started-vscode.md) gives you a great developer experience when writing, running and debugging tests. 
+- The [VS Code extension](./getting-started-vscode.md) gives you a great developer experience when writing, running, and debugging tests. 
 - The [test generator](./codegen.md) can generate tests and pick locators for you.
 - The [trace viewer](./trace-viewer.md) gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
 - [Typescript](./test-typescript) in Playwright works out of the box and gives you better IDE integrations. Your IDE will show you everything you can do and highlight when you do something wrong. No TypeScript experience is needed and it is not necessary for your code to be in TypeScript, all you need to do is create your tests with a `.ts` extension.
@@ -167,7 +200,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-### Mock third-party API responses
+### Mock third-party Links
 
 If you want to test links to third party API's then you should intercept the route with a mock response. This ensures the link is visible and clickable. Before hitting the link the route gets intercepted and a mock response is returned. Clicking the link results in a new page being opened containing the mock response rather than the actual page. We can then check this has the URL we expect.
 
@@ -195,6 +228,8 @@ npm install -D @playwright/test@latest
 
 ### Run tests on CI
 
-Setup CI/CD and run your tests frequently. The more often you run your tests the better. Ideally you should run your tests on each commit and pull request. Use [parallelism and sharding](./test-parallel.md).
+Setup CI/CD and run your tests frequently. The more often you run your tests the better. Ideally you should run your tests on each commit and pull request. Playwright comes with a [GitHub actions workflow](/ci-intro.md) already setup so that tests will run on CI for you with no setup required. Playwright can also be setup on the [CI environment](/ci.md) of your choice. 
 
-Use linux when running your tests on CI as it is cheaper. Developers can use whatever environment when running locally but use linux on CI.
+Use [parallelism and sharding](./test-parallel.md). Playwright runs tests in parallel by default. Tests in a single file are run in order, in the same worker process. Playwright can [shard]./test-parallel.md##shard-tests-between-multiple-machines) a test suite, so that it can be executed on multiple machines
+
+Use Linux when running your tests on CI as it is cheaper. Developers can use whatever environment when running locally but use linux on CI.
