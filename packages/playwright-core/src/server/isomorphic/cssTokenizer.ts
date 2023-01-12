@@ -130,8 +130,8 @@ export function tokenize(str1: string): CSSTokenInterface[] {
   };
   const donothing = function() { };
   const parseerror = function() {
-    // eslint-disable-next-line no-console
-    console.log('Parse error at index ' + i + ', processing codepoint 0x' + code.toString(16) + '.'); return true;
+    // Language bindings don't like writing to stdout!
+    // console.log('Parse error at index ' + i + ', processing codepoint 0x' + code.toString(16) + '.'); return true;
   };
 
   const consumeAToken = function(): CSSTokenInterface {
