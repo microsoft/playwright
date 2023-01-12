@@ -35,22 +35,20 @@ The same timeout value also applies to `beforeAll` and `afterAll` hooks, but the
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  timeout: 5 * 60 * 1000,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  timeout: 5 * 60 * 1000,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   timeout: 5 * 60 * 1000,
-};
-export default config;
+});
 ```
 
 API reference: [`property: TestConfig.timeout`].
@@ -155,26 +153,24 @@ Call log:
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   expect: {
     timeout: 10 * 1000,
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   expect: {
     timeout: 10 * 1000,
   },
-};
-export default config;
+});
 ```
 
 API reference: [`property: TestConfig.expect`].
@@ -218,28 +214,26 @@ Playwright also allows to set a separate timeout for navigation actions like `pa
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     actionTimeout: 10 * 1000,
     navigationTimeout: 30 * 1000,
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   use: {
     actionTimeout: 10 * 1000,
     navigationTimeout: 30 * 1000,
   },
-};
-export default config;
+});
 ```
 
 API reference: [`property: TestOptions.actionTimeout`] and [`property: TestOptions.navigationTimeout`].
@@ -282,22 +276,20 @@ You can set global timeout in the config.
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  globalTimeout: 60 * 60 * 1000,
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  globalTimeout: 60 * 60 * 1000,
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   globalTimeout: 60 * 60 * 1000,
-};
-export default config;
+});
 ```
 
 API reference: [`property: TestConfig.globalTimeout`].

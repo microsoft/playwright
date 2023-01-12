@@ -557,25 +557,23 @@ Set the test id to use a custom data attribute for your tests.
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+module.exports = defineConfig({
   use: {
     testIdAttribute: 'data-pw'
   },
-};
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   use: {
     testIdAttribute: 'data-pw'
   }
-};
-export default config;
+});
 ```
 
 ```java

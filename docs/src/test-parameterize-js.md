@@ -91,8 +91,7 @@ Now, we can run tests in multiple configurations by using projects.
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig<{ person: string }>} */
-const config = {
+module.exports = defineConfig({
   projects: [
     {
       name: 'alice',
@@ -103,17 +102,15 @@ const config = {
       use: { person: 'Bob' },
     },
   ]
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { defineConfig } from '@playwright/test';
 import { TestOptions } from './my-test';
 
-const config: PlaywrightTestConfig<TestOptions> = {
+export default defineConfig({
   projects: [
     {
       name: 'alice',
@@ -124,8 +121,7 @@ const config: PlaywrightTestConfig<TestOptions> = {
       use: { person: 'Bob' },
     },
   ]
-};
-export default config;
+});
 ```
 
 We can also use the option in a fixture. Learn more about [fixtures](./test-fixtures.md).
@@ -229,26 +225,24 @@ Similarly, configuration file can also read environment variables passed through
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     baseURL: process.env.STAGING === '1' ? 'http://staging.example.test/' : 'http://example.test/',
   }
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   use: {
     baseURL: process.env.STAGING === '1' ? 'http://staging.example.test/' : 'http://example.test/',
   }
-};
-export default config;
+});
 ```
 
 Now, you can run tests against a staging or a production environment:
@@ -281,19 +275,18 @@ require('dotenv').config();
 // Alternatively, read from "../my.env" file.
 require('dotenv').config({ path: path.resolve(__dirname, '..', 'my.env') });
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     baseURL: process.env.STAGING === '1' ? 'http://staging.example.test/' : 'http://example.test/',
   }
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -303,12 +296,11 @@ dotenv.config();
 // Alternatively, read from "../my.env" file.
 dotenv.config({ path: path.resolve(__dirname, '..', 'my.env') });
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   use: {
     baseURL: process.env.STAGING === '1' ? 'http://staging.example.test/' : 'http://example.test/',
   }
-};
-export default config;
+});
 ```
 
 Now, you can just edit `.env` file to set any variables you'd like.

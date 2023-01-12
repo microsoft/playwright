@@ -12,9 +12,9 @@ Playwright comes with a [registry of device parameters](https://github.com/micro
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig, devices } from '@playwright/test'; // import devices
+import { defineConfig, devices } from '@playwright/test'; // import devices
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   projects: [
     {
       name: 'chromium',
@@ -29,17 +29,15 @@ const config: PlaywrightTestConfig = {
       },
     },
   ],
-};
-export default config;
+});
 ```
 
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
-const { devices } = require('@playwright/test'); // require devices
+const { devices, defineConfig } = require('@playwright/test'); // require devices
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */ 
-const config = {
+module.exports = defineConfig({
   projects: [
     {
       name: 'chromium',
@@ -54,9 +52,7 @@ const config = {
       },
     },
   ],
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-library
@@ -329,24 +325,21 @@ Allow app to show system notifications.
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+module.exports = defineConfig({
   use: {
     permissions: ['notifications'],
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   use: {
     permissions: ['notifications'],
   },
-};
-export default config;
+});
 ```
 
 ```js tab=js-library
@@ -377,24 +370,21 @@ Allow test to request current location.
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+module.exports = defineConfig({
   use: {
     permissions: ['geolocation'],
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import type { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     permissions: ['geolocation'],
   },
-};
-export default config;
+});
 ```
 
 ```js tab=js-library

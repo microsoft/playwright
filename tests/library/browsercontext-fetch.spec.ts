@@ -762,7 +762,6 @@ it('should throw on a redirect with an invalid URL', async ({ context, server })
     conn.uncork();
     conn.end();
   });
-  console.log(server.PREFIX + '/test');
   const error = await context.request.get(server.PREFIX + '/redirect').catch(e => e);
   expect(error.message).toContain('apiRequestContext.get: uri requested responds with an invalid redirect URL');
 });

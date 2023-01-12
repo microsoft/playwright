@@ -22,24 +22,22 @@ Videos are saved upon [browser context](./browser-contexts.md) closure at the en
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     video: 'on-first-retry',
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     video: 'on-first-retry',
   },
-};
-export default config;
+});
 ```
 
 ```js tab=js-library
@@ -53,30 +51,28 @@ You can also specify video size. The video size defaults to the viewport size sc
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     video: {
       mode: 'on-first-retry', 
       size: { width: 640, height: 480 }
     }
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     video: {
       mode: 'on-first-retry', 
       size: { width: 640, height: 480 }
     }
   },
-};
-export default config;
+});
 ```
 
 ```js tab=js-library

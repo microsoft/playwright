@@ -19,28 +19,26 @@ By default the [playwright.config](/test-configuration.md#record-test-trace) fil
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   retries: process.env.CI ? 2 : 0, // set to 2 when running on CI
   ...
   use: {
     trace: 'on-first-retry', // record traces on first retry of each test
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   retries: process.env.CI ? 2 : 0, // set to 2 when running on CI
   ...
   use: {
     trace: 'on-first-retry', // record traces on first retry of each test
   },
-};
-export default config;
+});
 ```
 
 To learn more about available options to record a trace check out our detailed guide on [Trace Viewer](/trace-viewer.md).

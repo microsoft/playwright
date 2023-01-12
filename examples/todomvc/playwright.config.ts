@@ -1,11 +1,11 @@
 /* eslint-disable notice/notice */
 
-import { type PlaywrightTestConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
-const config: PlaywrightTestConfig = {
+export default defineConfig({
 
   testDir: './tests',
 
@@ -108,5 +108,4 @@ const config: PlaywrightTestConfig = {
   //   command: 'npm run start',
   //   port: 3000,
   // },
-};
-export default config;
+});

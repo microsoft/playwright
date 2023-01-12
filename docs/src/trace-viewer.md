@@ -134,26 +134,24 @@ by setting the `trace: 'on-first-retry'` option in the test configuration file. 
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   retries: 1,
   use: {
     trace: 'on-first-retry',
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   retries: 1,
   use: {
     trace: 'on-first-retry',
   },
-};
-export default config;
+});
 ```
 
 ```js tab=js-library

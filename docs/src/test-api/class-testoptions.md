@@ -9,30 +9,28 @@ These options are usually provided in the [configuration file](../test-configura
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     headless: false,
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
     video: 'on-first-retry',
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   use: {
     headless: false,
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
     video: 'on-first-retry',
   },
-};
-export default config;
+});
 ```
 
 Alternatively, with [`method: Test.use`] you can override some options for a file.
@@ -77,26 +75,24 @@ Name of the browser that runs tests. Defaults to `'chromium'`. Most of the time 
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     browserName: 'firefox',
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   use: {
     browserName: 'firefox',
   },
-};
-export default config;
+});
 ```
 
 ## property: TestOptions.actionTimeout

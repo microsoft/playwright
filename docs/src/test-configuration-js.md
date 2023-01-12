@@ -18,30 +18,28 @@ Create a `playwright.config.js` (or `playwright.config.ts`) and specify options 
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     headless: false,
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
     video: 'on-first-retry',
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     headless: false,
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
     video: 'on-first-retry',
   },
-};
-export default config;
+});
 ```
 
 Now run tests as usual, Playwright Test will pick up the configuration file automatically.
@@ -129,28 +127,26 @@ Here are some of the commonly used options for various scenarios. You usually se
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     baseURL: 'http://localhost:3000',
     browserName: 'firefox',
     headless: true,
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     baseURL: 'http://localhost:3000',
     browserName: 'firefox',
     headless: true,
   },
-};
-export default config;
+});
 ```
 
 ## Multiple browsers
@@ -162,8 +158,9 @@ Playwright Test supports multiple "projects" that can run your tests in multiple
 // @ts-check
 const { devices } = require('@playwright/test');
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   projects: [
     {
       name: 'chromium',
@@ -178,16 +175,14 @@ const config = {
       use: { ...devices['Desktop Safari'] },
     },
   ],
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   projects: [
     {
       name: 'chromium',
@@ -202,8 +197,7 @@ const config: PlaywrightTestConfig = {
       use: { ...devices['Desktop Safari'] },
     },
   ],
-};
-export default config;
+});
 ```
 
 You can specify [different options][TestProject] for each project, for example set specific command-line arguments for Chromium.
@@ -316,24 +310,22 @@ Screenshots will appear in the test output directory, typically `test-results`.
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     screenshot: 'only-on-failure',
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     screenshot: 'only-on-failure',
   },
-};
-export default config;
+});
 ```
 
 ## Record video
@@ -350,24 +342,22 @@ Video files will appear in the test output directory, typically `test-results`. 
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     video: 'on-first-retry',
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     video: 'on-first-retry',
   },
-};
-export default config;
+});
 ```
 
 ## Record test trace
@@ -384,24 +374,22 @@ Trace files will appear in the test output directory, typically `test-results`. 
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     trace: 'retain-on-failure',
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     trace: 'retain-on-failure',
   },
-};
-export default config;
+});
 ```
 
 ## More browser and context options
@@ -411,28 +399,26 @@ Any options accepted by [`method: BrowserType.launch`] or [`method: Browser.newC
 ```js tab=js-js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     launchOptions: {
       slowMo: 50,
     },
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     launchOptions: {
       slowMo: 50,
     },
   },
-};
-export default config;
+});
 ```
 
 However, most common ones like `headless` or `viewport` are available directly in the `use` section - see [basic options](#basic-options), [emulation](./emulation.md) or [network](#network).
@@ -443,31 +429,27 @@ If using the built-in `browser` fixture, calling [`method: Browser.newContext`] 
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from "@playwright/test";
-
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     userAgent: 'some custom ua',
     viewport: { width: 100, height: 100 },
   },
-};
-
-export default config;
+});
 ```
 
 ```js tab=js-js
 // @ts-check
 // example.spec.js
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   use: {
     userAgent: 'some custom ua',
     viewport: { width: 100, height: 100 },
   },
-};
-
-module.exports = config;
+});
 ```
 
 An example test illustrating the initial context options are set:
@@ -525,8 +507,9 @@ You can specify these options in the configuration file. Note that testing optio
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   // Look for test files in the "tests" directory, relative to this configuration file
   testDir: 'tests',
 
@@ -548,16 +531,14 @@ const config = {
   use: {
     // Configure browser and context here
   },
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   // Look for test files in the "tests" directory, relative to this configuration file
   testDir: 'tests',
 
@@ -576,6 +557,5 @@ const config: PlaywrightTestConfig = {
   use: {
     // Configure browser and context here
   },
-};
-export default config;
+});
 ```

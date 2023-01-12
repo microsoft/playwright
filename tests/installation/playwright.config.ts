@@ -15,12 +15,12 @@
  */
 
 import path from 'path';
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   globalSetup: path.join(__dirname, 'globalSetup'),
   outputDir,
   testIgnore: '**\/fixture-scripts/**',
@@ -40,6 +40,4 @@ const config: PlaywrightTestConfig = {
       },
     },
   ],
-};
-
-export default config;
+});

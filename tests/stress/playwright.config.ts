@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { PlaywrightTestConfig } from '@playwright/experimental-ct-react';
+import { defineConfig } from '@playwright/experimental-ct-react';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   forbidOnly: !!process.env.CI,
   reporter: 'html',
   projects: [
@@ -41,6 +41,4 @@ const config: PlaywrightTestConfig = {
       },
     },
   ]
-};
-
-export default config;
+});

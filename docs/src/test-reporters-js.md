@@ -16,22 +16,20 @@ For more control, you can specify reporters programmatically in the [configurati
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: 'line',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reporter: 'line',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: 'line',
-};
-export default config;
+});
 ```
 
 ### Multiple reporters
@@ -42,28 +40,26 @@ You can use multiple reporters at the same time. For example  you can use `'list
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   reporter: [
     ['list'],
     ['json', {  outputFile: 'test-results.json' }]
   ],
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: [
     ['list'],
     ['json', {  outputFile: 'test-results.json' }]
   ],
-};
-export default config;
+});
 ```
 
 ### Reporters on CI
@@ -74,24 +70,22 @@ You can use different reporters locally and on CI. For example, using concise `'
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   // Concise 'dot' for CI, default 'list' when running locally
   reporter: process.env.CI ? 'dot' : 'list',
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   // Concise 'dot' for CI, default 'list' when running locally
   reporter: process.env.CI ? 'dot' : 'list',
-};
-export default config;
+});
 ```
 
 ## Built-in reporters
@@ -110,22 +104,20 @@ npx playwright test --reporter=list
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: 'list',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reporter: 'list',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: 'list',
-};
-export default config;
+});
 ```
 
 Here is an example output in the middle of a test run. Failures will be listed at the end.
@@ -151,22 +143,20 @@ You can opt into the step rendering via passing the following config option:
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: [['list', { printSteps: true }]],
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reporter: [['list', { printSteps: true }]],
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: [['list', { printSteps: true }]],
-};
-export default config;
+});
 ```
 
 ### Line reporter
@@ -181,22 +171,20 @@ npx playwright test --reporter=line
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: 'line',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reporter: 'line',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: 'line',
-};
-export default config;
+});
 ```
 
 Here is an example output in the middle of a test run. Failures are reported inline.
@@ -225,22 +213,20 @@ npx playwright test --reporter=dot
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: 'dot',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reporter: 'dot',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: 'dot',
-};
-export default config;
+});
 ```
 
 Here is an example output in the middle of a test run. Failures will be listed at the end.
@@ -268,26 +254,24 @@ You can also configure `host` and `port` that are used to serve the HTML report.
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   reporter: [['html', {
     open: 'never',
     host: '0.0.0.0',
     port: 9223,
   }]],
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: [['html', { open: 'never' }]],
-};
-export default config;
+});
 ```
 
 By default, report is written into the `playwright-report` folder in the current working directory. One can override
@@ -298,22 +282,20 @@ In configuration file, pass options directly:
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: [['html', { outputFolder: 'my-report' }]],
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reporter: [['html', { outputFolder: 'my-report' }]],
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: [['html', { outputFolder: 'my-report' }]],
-};
-export default config;
+});
 ```
 
 A quick way of opening the last test run report is:
@@ -356,22 +338,20 @@ In configuration file, pass options directly:
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: [['json', { outputFile: 'results.json' }]],
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reporter: [['json', { outputFile: 'results.json' }]],
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: [['json', { outputFile: 'results.json' }]],
-};
-export default config;
+});
 ```
 
 ### JUnit reporter
@@ -399,22 +379,20 @@ In configuration file, pass options directly:
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: [['junit', { outputFile: 'results.xml' }]],
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reporter: [['junit', { outputFile: 'results.xml' }]],
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: [['junit', { outputFile: 'results.xml' }]],
-};
-export default config;
+});
 ```
 
 The JUnit reporter provides support for embedding additional information on the `testcase` elements using inner `properties`. This is based on an [evolved JUnit XML format](https://docs.getxray.app/display/XRAYCLOUD/Taking+advantage+of+JUnit+XML+reports) from Xray Test Management, but can also be used by other tools if they support this way of embedding additional information for test results; please check it first.
@@ -425,8 +403,6 @@ In configuration file, a set of options can be used to configure this behavior. 
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-
 // JUnit reporter config for Xray
 const xrayOptions = {
   // Whether to add <properties> with all annotations; default is false
@@ -444,16 +420,14 @@ const xrayOptions = {
   outputFile: './xray-report.xml'
 };
 
-const config = {
+module.exports = defineConfig({
   reporter: [['junit', xrayOptions]]
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
 // JUnit reporter config for Xray
 const xrayOptions = {
@@ -472,11 +446,9 @@ const xrayOptions = {
   outputFile: './xray-report.xml'
 };
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: [['junit', xrayOptions]]
-};
-
-export default config;
+});
 ```
 
 In the previous configuration sample, all annotations will be added as `<property>` elements on the JUnit XML report. The annotation type is mapped to the `name` attribute of the `<property>`, and the annotation description will be added as a `value` attribute. In this case, the exception will be the annotation type `testrun_evidence` whose description will be added as inner content on the respective `<property>`.
@@ -518,23 +490,20 @@ The following configuration sample enables embedding attachments by using the `t
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: [['junit', { embedAttachmentsAsProperty: 'testrun_evidence', outputFile: 'results.xml' }]],
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reporter: [['junit', { embedAttachmentsAsProperty: 'testrun_evidence', outputFile: 'results.xml' }]],
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.js
 
-import { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   reporter: [['junit', { embedAttachmentsAsProperty: 'testrun_evidence', outputFile: 'results.xml' }]],
-};
-
-export default config;
+});
 ```
 
 The following test adds attachments:
@@ -572,26 +541,24 @@ Note that all other reporters work on GitHub Actions as well, but do not provide
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   // 'github' for GitHub Actions CI to generate annotations, plus a concise 'dot'
   // default 'list' when running locally
   reporter: process.env.CI ? 'github' : 'list',
-};
-
-module.exports = config;
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   // 'github' for GitHub Actions CI to generate annotations, plus a concise 'dot'
   // default 'list' when running locally
   reporter: process.env.CI ? 'github' : 'list',
-};
-export default config;
+});
 ```
 
 ## Custom reporters
@@ -655,22 +622,20 @@ Now use this reporter with [`property: TestConfig.reporter`].
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: './my-awesome-reporter.js',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reporter: './my-awesome-reporter.js',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: './my-awesome-reporter.ts',
-};
-export default config;
+});
 ```
 
 

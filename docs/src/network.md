@@ -11,16 +11,15 @@ Playwright provides APIs to **monitor** and **modify** network traffic, both HTT
 Perform HTTP Authentication.
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     httpCredentials: {
       username: 'bill',
       password: 'pa55w0rd',
     }
   }
-};
-export default config;
+});
 ```
 
 ```js tab=js-library
@@ -80,8 +79,8 @@ bypass proxy for.
 Here is an example of a global proxy:
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     proxy: {
       server: 'http://myproxy.com:3128',
@@ -89,8 +88,7 @@ const config: PlaywrightTestConfig = {
       password: 'pwd'
     }
   }
-};
-export default config;
+});
 ```
 
 ```js tab=js-library
@@ -142,8 +140,8 @@ await using var browser = await BrowserType.LaunchAsync(new()
 When specifying proxy for each context individually, **Chromium on Windows** needs a hint that proxy will be set. This is done via passing a non-empty proxy server to the browser itself. Here is an example of a context-specific proxy:
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   use: {
     launchOptions: {
       // Browser proxy option is required for Chromium on Windows.
@@ -153,8 +151,7 @@ const config: PlaywrightTestConfig = {
       server: 'http://myproxy.com:3128',
     }
   }
-};
-export default config;
+});
 ```
 
 ```js tab=js-library

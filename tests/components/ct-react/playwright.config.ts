@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { type PlaywrightTestConfig, devices } from '@playwright/experimental-ct-react';
+import { defineConfig, devices } from '@playwright/experimental-ct-react';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   testDir: 'src',
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -38,6 +38,4 @@ const config: PlaywrightTestConfig = {
       use: { ...devices['Desktop Safari'] },
     },
   ],
-};
-
-export default config;
+});

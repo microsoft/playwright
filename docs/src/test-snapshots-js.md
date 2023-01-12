@@ -103,13 +103,12 @@ module.exports = {
 ```
 
 ```js tab=js-ts
-import type { PlaywrightTestConfig } from '@playwright/test';
-const config: PlaywrightTestConfig = {
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
   expect: {
     toHaveScreenshot: { maxDiffPixels: 100 },
   },
-};
-export default config;
+});
 ```
 
 Apart from screenshots, you can use `expect(value).toMatchSnapshot(snapshotName)` to compare text or arbitrary binary data. Playwright Test auto-detects the content type and uses the appropriate comparison algorithm.

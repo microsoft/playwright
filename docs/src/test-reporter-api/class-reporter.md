@@ -62,22 +62,20 @@ Now use this reporter with [`property: TestConfig.reporter`]. Learn more about [
 // playwright.config.js
 // @ts-check
 
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: './my-awesome-reporter.js',
-};
+const { defineConfig } = require('@playwright/test');
 
-module.exports = config;
+module.exports = defineConfig({
+  reporter: './my-awesome-reporter.js',
+});
 ```
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   reporter: './my-awesome-reporter.ts',
-};
-export default config;
+});
 ```
 
 Here is a typical order of reporter calls:

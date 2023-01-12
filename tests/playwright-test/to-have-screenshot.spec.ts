@@ -375,8 +375,8 @@ test('should compile with different option combinations', async ({ runTSC }) => 
   const result = await runTSC({
     'playwright.config.ts': `
       //@no-header
-      import type { PlaywrightTestConfig } from '@playwright/test';
-      const config: PlaywrightTestConfig = {
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
         expect: {
           timeout: 10000,
           toHaveScreenshot: {
@@ -388,8 +388,7 @@ test('should compile with different option combinations', async ({ runTSC }) => 
             scale: "css",
           },
         },
-      };
-      export default config;
+      });
     `,
     'a.spec.ts': `
       const { test } = pwt;

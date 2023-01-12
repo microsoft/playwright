@@ -26,4 +26,5 @@ export const _electron = playwright._electron;
 export const _android = playwright._android;
 export const test = playwright.test;
 export const expect = playwright.expect;
+export const defineConfig = playwright.defineConfig;
 export default playwright.test;

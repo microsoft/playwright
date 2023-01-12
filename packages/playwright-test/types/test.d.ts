@@ -45,9 +45,9 @@ type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K
  *
  * ```js
  * // playwright.config.ts
- * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+ * import { defineConfig, devices } from '@playwright/test';
  *
- * const config: PlaywrightTestConfig = {
+ * export default defineConfig({
  *   // Options shared for all projects.
  *   timeout: 30000,
  *   use: {
@@ -86,8 +86,7 @@ type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K
  *       use: devices['iPhone 12'],
  *     },
  *   ],
- * };
- * export default config;
+ * });
  * ```
  *
  */
@@ -99,9 +98,9 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   projects: [
    *     {
    *       name: 'Chromium',
@@ -110,8 +109,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
    *       },
    *     },
    *   ],
-   * };
-   * export default config;
+   * });
    * ```
    *
    * Use [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) to change this option for
@@ -134,9 +132,9 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
  *
  * ```js
  * // playwright.config.ts
- * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+ * import { defineConfig, devices } from '@playwright/test';
  *
- * const config: PlaywrightTestConfig = {
+ * export default defineConfig({
  *   // Options shared for all projects.
  *   timeout: 30000,
  *   use: {
@@ -175,8 +173,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
  *       use: devices['iPhone 12'],
  *     },
  *   ],
- * };
- * export default config;
+ * });
  * ```
  *
  */
@@ -275,9 +272,9 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   projects: [
    *     {
    *       name: 'Smoke Chromium',
@@ -309,8 +306,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    *       }
    *     },
    *   ],
-   * };
-   * export default config;
+   * });
    * ```
    *
    * Use [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) to change this
@@ -356,9 +352,9 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   projects: [
    *     {
    *       name: 'Chromium',
@@ -367,8 +363,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    *       },
    *     },
    *   ],
-   * };
-   * export default config;
+   * });
    * ```
    *
    * Use [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) to change this option for
@@ -390,15 +385,14 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
  *
  * ```js
  * // playwright.config.ts
- * import type { PlaywrightTestConfig } from '@playwright/test';
+ * import { defineConfig } from '@playwright/test';
  *
- * const config: PlaywrightTestConfig = {
+ * export default defineConfig({
  *   timeout: 30000,
  *   globalTimeout: 600000,
  *   reporter: 'list',
  *   testDir: './tests',
- * };
- * export default config;
+ * });
  * ```
  *
  */
@@ -417,12 +411,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   reporter: 'line',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -452,8 +445,8 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
-   * const config: PlaywrightTestConfig = {
+   * import { defineConfig } from '@playwright/test';
+   * export default defineConfig({
    *   webServer: {
    *     command: 'npm run start',
    *     port: 3000,
@@ -463,8 +456,7 @@ interface TestConfig {
    *   use: {
    *     baseURL: 'http://localhost:3000/',
    *   },
-   * };
-   * export default config;
+   * });
    * ```
    *
    * Now you can use a relative path when navigating the page:
@@ -483,8 +475,8 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
-   * const config: PlaywrightTestConfig = {
+   * import { defineConfig } from '@playwright/test';
+   * export default defineConfig({
    *   webServer: [
    *     {
    *       command: 'npm run start',
@@ -502,8 +494,7 @@ interface TestConfig {
    *   use: {
    *     baseURL: 'http://localhost:3000/',
    *   },
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -515,17 +506,16 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   expect: {
    *     timeout: 10000,
    *     toMatchSnapshot: {
    *       maxDiffPixels: 10,
    *     },
    *   },
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -613,12 +603,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   forbidOnly: !!process.env.CI,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -635,12 +624,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   fullyParallel: true,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -672,12 +660,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   globalSetup: './global-setup',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -694,12 +681,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   globalTeardown: './global-teardown',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -714,12 +700,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -735,12 +720,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   grep: /smoke/,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -757,12 +741,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   grepInvert: /manual/,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -776,12 +759,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   ignoreSnapshots: !process.env.CI,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -797,12 +779,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   maxFailures: process.env.CI ? 1 : 0,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -815,12 +796,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   metadata: 'acceptance tests',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -834,12 +814,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   name: 'acceptance tests',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -852,12 +831,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   outputDir: './test-results',
-   * };
-   * export default config;
+   * });
    * ```
    *
    * **Details**
@@ -897,12 +875,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   snapshotDir: './snapshots',
-   * };
-   * export default config;
+   * });
    * ```
    *
    * **Details**
@@ -927,14 +904,12 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   testDir: './tests',
    *   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
-   * };
-   *
-   * export default config;
+   * });
    * ```
    *
    * **Details**
@@ -995,17 +970,16 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   snapshotPathTemplate: '__screenshots__{/projectName}/{testFilePath}/{arg}{ext}',
    *   testMatch: 'example.spec.ts',
    *   projects: [
    *     { use: { browserName: 'firefox' } },
    *     { name: 'chromium', use: { browserName: 'chromium' } },
    *   ],
-   * };
-   * export default config;
+   * });
    * ```
    *
    * In this config:
@@ -1030,12 +1004,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   preserveOutput: 'always',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1048,14 +1021,13 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { defineConfig, devices } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   projects: [
    *     { name: 'chromium', use: devices['Desktop Chrome'] }
    *   ]
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1068,12 +1040,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   quiet: !!process.env.CI,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1086,12 +1057,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   repeatEach: 3,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1104,12 +1074,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   reportSlowTests: null,
-   * };
-   * export default config;
+   * });
    * ```
    *
    * **Details**
@@ -1137,12 +1106,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   retries: 2,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1157,12 +1125,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   shard: { total: 10, current: 3 },
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1185,12 +1152,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   testDir: './tests/playwright',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1206,12 +1172,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   testIgnore: '**\/test-assets/**',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1227,12 +1192,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   testMatch: /.*\.e2e\.js/,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1249,12 +1213,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   timeout: 5 * 60 * 1000,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1274,12 +1237,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   updateSnapshots: 'missing',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1299,12 +1261,11 @@ interface TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   workers: 3,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1321,15 +1282,14 @@ interface TestConfig {
  *
  * ```js
  * // playwright.config.ts
- * import type { PlaywrightTestConfig } from '@playwright/test';
+ * import { defineConfig } from '@playwright/test';
  *
- * const config: PlaywrightTestConfig = {
+ * export default defineConfig({
  *   timeout: 30000,
  *   globalTimeout: 600000,
  *   reporter: 'list',
  *   testDir: './tests',
- * };
- * export default config;
+ * });
  * ```
  *
  */
@@ -1341,14 +1301,13 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { defineConfig, devices } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   projects: [
    *     { name: 'chromium', use: devices['Desktop Chrome'] }
    *   ]
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1362,14 +1321,13 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   use: {
    *     browserName: 'chromium',
    *   },
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1389,15 +1347,14 @@ export type Metadata = { [key: string]: any };
  *
  * ```js
  * // playwright.config.ts
- * import type { PlaywrightTestConfig } from '@playwright/test';
+ * import { defineConfig } from '@playwright/test';
  *
- * const config: PlaywrightTestConfig = {
+ * export default defineConfig({
  *   timeout: 30000,
  *   globalTimeout: 600000,
  *   reporter: 'list',
  *   testDir: './tests',
- * };
- * export default config;
+ * });
  * ```
  *
  */
@@ -1411,12 +1368,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   forbidOnly: !!process.env.CI,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1432,12 +1388,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   fullyParallel: true,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1452,12 +1407,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   globalSetup: './global-setup',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1473,12 +1427,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   globalTeardown: './global-teardown',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1492,12 +1445,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1512,12 +1464,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   grep: /smoke/,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1533,12 +1484,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   grepInvert: /manual/,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1553,12 +1503,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   maxFailures: process.env.CI ? 1 : 0,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1570,12 +1519,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   metadata: 'acceptance tests',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1593,12 +1541,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   preserveOutput: 'always',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1610,14 +1557,13 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { defineConfig, devices } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   projects: [
    *     { name: 'chromium', use: devices['Desktop Chrome'] }
    *   ]
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1636,12 +1582,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   reporter: 'line',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1653,12 +1598,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   reportSlowTests: null,
-   * };
-   * export default config;
+   * });
    * ```
    *
    * **Details**
@@ -1675,12 +1619,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   quiet: !!process.env.CI,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1694,12 +1637,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   shard: { total: 10, current: 3 },
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1718,12 +1660,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   updateSnapshots: 'missing',
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1742,12 +1683,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   workers: 3,
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -1777,8 +1717,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
-   * const config: PlaywrightTestConfig = {
+   * import { defineConfig } from '@playwright/test';
+   * export default defineConfig({
    *   webServer: {
    *     command: 'npm run start',
    *     port: 3000,
@@ -1788,8 +1728,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *   use: {
    *     baseURL: 'http://localhost:3000/',
    *   },
-   * };
-   * export default config;
+   * });
    * ```
    *
    * Now you can use a relative path when navigating the page:
@@ -1808,8 +1747,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
-   * const config: PlaywrightTestConfig = {
+   * import { defineConfig } from '@playwright/test';
+   * export default defineConfig({
    *   webServer: [
    *     {
    *       command: 'npm run start',
@@ -1827,8 +1766,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *   use: {
    *     baseURL: 'http://localhost:3000/',
    *   },
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -3283,10 +3221,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    * import { Options } from './my-test';
    *
-   * const config: PlaywrightTestConfig<Options> = {
+   * export default defineConfig<Options>({
    *   projects: [
    *     {
    *       name: 'shopping',
@@ -3297,8 +3235,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *       use: { defaultItem: 'Exercise!' },
    *     },
    *   ]
-   * };
-   * export default config;
+   * });
    * ```
    *
    * Learn more about [fixtures](https://playwright.dev/docs/test-fixtures) and [parametrizing tests](https://playwright.dev/docs/test-parameterize).
@@ -3399,15 +3336,14 @@ export interface TestStore {
  *
  * ```js
  * import type { PlaywrightTestConfig } from '@playwright/test';
- * const config: PlaywrightTestConfig = {
+ * export default defineConfig({
  *   use: {
  *     headless: false,
  *     viewport: { width: 1280, height: 720 },
  *     ignoreHTTPSErrors: true,
  *     video: 'on-first-retry',
  *   },
- * };
- * export default config;
+ * });
  * ```
  *
  * Alternatively, with [test.use(options)](https://playwright.dev/docs/api/class-test#test-use) you can override some
@@ -3433,14 +3369,13 @@ export interface PlaywrightWorkerOptions {
    *
    * ```js
    * // playwright.config.ts
-   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { defineConfig, devices } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   use: {
    *     browserName: 'firefox',
    *   },
-   * };
-   * export default config;
+   * });
    * ```
    *
    */
@@ -3528,15 +3463,14 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
  *
  * ```js
  * import type { PlaywrightTestConfig } from '@playwright/test';
- * const config: PlaywrightTestConfig = {
+ * export default defineConfig({
  *   use: {
  *     headless: false,
  *     viewport: { width: 1280, height: 720 },
  *     ignoreHTTPSErrors: true,
  *     video: 'on-first-retry',
  *   },
- * };
- * export default config;
+ * });
  * ```
  *
  * Alternatively, with [test.use(options)](https://playwright.dev/docs/api/class-test#test-use) you can override some
@@ -3944,6 +3878,13 @@ export default test;
 export const _baseTest: TestType<{}, {}>;
 export const expect: Expect;
 export const store: TestStore;
+
+/**
+ * Defines Playwright config
+ */
+export function defineConfig(config: PlaywrightTestConfig): PlaywrightTestConfig;
+export function defineConfig<T>(config: PlaywrightTestConfig<T>): PlaywrightTestConfig<T>;
+export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>): PlaywrightTestConfig<T, W>;
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
@@ -5108,9 +5049,9 @@ export interface TestInfoError {
  *
  * ```js
  * // playwright.config.ts
- * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+ * import { defineConfig, devices } from '@playwright/test';
  *
- * const config: PlaywrightTestConfig = {
+ * export default defineConfig({
  *   // Options shared for all projects.
  *   timeout: 30000,
  *   use: {
@@ -5149,8 +5090,7 @@ export interface TestInfoError {
  *       use: devices['iPhone 12'],
  *     },
  *   ],
- * };
- * export default config;
+ * });
  * ```
  *
  */
@@ -5319,14 +5259,12 @@ interface TestProject {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   testDir: './tests',
    *   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
-   * };
-   *
-   * export default config;
+   * });
    * ```
    *
    * **Details**
@@ -5387,17 +5325,16 @@ interface TestProject {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   snapshotPathTemplate: '__screenshots__{/projectName}/{testFilePath}/{arg}{ext}',
    *   testMatch: 'example.spec.ts',
    *   projects: [
    *     { use: { browserName: 'firefox' } },
    *     { name: 'chromium', use: { browserName: 'chromium' } },
    *   ],
-   * };
-   * export default config;
+   * });
    * ```
    *
    * In this config:
@@ -5466,9 +5403,9 @@ interface TestProject {
    *
    * ```js
    * // playwright.config.ts
-   * import type { PlaywrightTestConfig } from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
-   * const config: PlaywrightTestConfig = {
+   * export default defineConfig({
    *   projects: [
    *     {
    *       name: 'Smoke Chromium',
@@ -5500,8 +5437,7 @@ interface TestProject {
    *       }
    *     },
    *   ],
-   * };
-   * export default config;
+   * });
    * ```
    *
    * Use [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) to change this

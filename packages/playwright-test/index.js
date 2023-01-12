@@ -16,9 +16,11 @@
 
 const pwt = require('./lib/index');
 const playwright = require('playwright-core');
+const defineConfig = config => config;
 const combinedExports = {
   ...playwright,
   ...pwt,
+  defineConfig,
 };
 
 Object.defineProperty(combinedExports, '__esModule', { value: true });

@@ -221,30 +221,27 @@ Register global setup script in the Playwright configuration file:
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
-const config: PlaywrightTestConfig = {
+export default defineConfig({
   globalSetup: require.resolve('./global-setup'),
   use: {
     // Tell all tests to load signed-in state from 'storageState.json'.
     storageState: 'storageState.json'
   }
-};
-export default config;
+});
 ```
 
 ```js tab=js-js
-// playwright.config.js
-// @ts-check
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
   globalSetup: require.resolve('./global-setup'),
   use: {
     // Tell all tests to load signed-in state from 'storageState.json'.
     storageState: 'storageState.json'
   }
-};
-module.exports = config;
+});
 ```
 
 Tests start already authenticated because we specify `storageState` that was populated by global setup.
