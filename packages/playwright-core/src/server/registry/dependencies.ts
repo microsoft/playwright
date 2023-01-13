@@ -23,7 +23,7 @@ import { spawnAsync } from '../../utils/spawnAsync';
 import { hostPlatform } from '../../utils/hostPlatform';
 import { buildPlaywrightCLICommand } from '.';
 import { deps } from './nativeDeps';
-import { getPlaywrightVersion } from '../../common/userAgent';
+import { getPlaywrightVersion } from '../../utils/userAgent';
 
 const BIN_DIRECTORY = path.join(__dirname, '..', '..', '..', 'bin');
 const languageBindingVersion = process.env.PW_CLI_DISPLAY_VERSION || require('../../../package.json').version;

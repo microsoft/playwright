@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { createGuid } from 'playwright-core/lib/utils';
-import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
+import { createGuid, spawnAsync } from 'playwright-core/lib/utils';
 import type { TestRunnerPlugin } from './';
 import type { FullConfig } from '../../types/testReporter';
 

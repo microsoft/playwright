@@ -19,8 +19,7 @@ import path from 'path';
 import net from 'net';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
-import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
-import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
+import { raceAgainstTimeout, launchProcess } from 'playwright-core/lib/utils';
 
 import type { FullConfig, Reporter, Suite } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';

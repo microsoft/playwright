@@ -16,7 +16,7 @@
 
 import os from 'os';
 import * as util from 'util';
-import { getPlaywrightVersion } from '../../packages/playwright-core/lib/common/userAgent';
+import { getPlaywrightVersion } from '../../packages/playwright-core/lib/utils/userAgent';
 import { expect, playwrightTest as it } from '../config/browserTest';
 
 it.skip(({ mode }) => mode !== 'default');

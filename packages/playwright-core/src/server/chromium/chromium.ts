@@ -18,6 +18,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import type stream from 'stream';
 import { CRBrowser } from './crBrowser';
 import type { Env } from '../../utils/processLauncher';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
@@ -31,11 +32,12 @@ import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../brows
 import { Browser } from '../browser';
 import type * as types from '../types';
 import type * as channels from '@protocol/channels';
-import type { HTTPRequestParams } from '../../common/netUtils';
-import { NET_DEFAULT_TIMEOUT } from '../../common/netUtils';
-import { fetchData } from '../../common/netUtils';
-import { getUserAgent } from '../../common/userAgent';
-import { debugMode, headersArrayToObject, streamToString, wrapInASCIIBox } from '../../utils';
+import type { HTTPRequestParams } from '../../utils/network';
+import { NET_DEFAULT_TIMEOUT } from '../../utils/network';
+import { fetchData } from '../../utils/network';
+import { getUserAgent } from '../../utils/userAgent';
+import { wrapInASCIIBox } from '../../utils/ascii';
+import { debugMode, headersArrayToObject,  } from '../../utils';
 import { removeFolders } from '../../utils/fileUtils';
 import { RecentLogsCollector } from '../../common/debugLogger';
 import type { Progress } from '../progress';
@@ -363,4 +365,13 @@ function addProtocol(url: string) {
   if (!['ws://', 'wss://', 'http://', 'https://'].some(protocol => url.startsWith(protocol)))
     return 'http://' + url;
   return url;
+}
+
+function streamToString(stream: stream.Readable): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    stream.on('data', chunk => chunks.push(Buffer.from(chunk)));
+    stream.on('error', reject);
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+  });
 }

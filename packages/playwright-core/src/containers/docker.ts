@@ -18,7 +18,7 @@
 import path from 'path';
 import { spawnAsync } from '../utils/spawnAsync';
 import * as utils from '../utils';
-import { getPlaywrightVersion, getUserAgent } from '../common/userAgent';
+import { getPlaywrightVersion, getUserAgent } from '../utils/userAgent';
 import { urlToWSEndpoint } from '../server/dispatchers/localUtilsDispatcher';
 import { WebSocketTransport } from '../server/transport';
 import { SocksInterceptor } from '../server/socksInterceptor';

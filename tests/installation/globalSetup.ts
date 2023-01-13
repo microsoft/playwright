@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import path from 'path';
-import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
+import { spawnAsync } from '../../packages/playwright-core/lib/utils/spawnAsync';
 import { rimraf } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import fs from 'fs';

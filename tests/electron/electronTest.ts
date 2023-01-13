@@ -22,7 +22,7 @@ import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
 export { expect } from '@playwright/test';
 import e2c from 'electron-to-chromium';
-import { assert } from 'playwright-core/lib/utils';
+import { assert } from '../../packages/playwright-core/lib/utils/debug';
 
 type ElectronTestFixtures = PageTestFixtures & {
   electronApp: ElectronApplication;
