@@ -528,6 +528,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    hostname: tOptional(tString),
   })),
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
@@ -599,6 +600,7 @@ scheme.BrowserNewContextParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    hostname: tOptional(tString),
   })),
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
@@ -659,6 +661,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    hostname: tOptional(tString),
   })),
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),
@@ -830,6 +833,7 @@ scheme.BrowserContextSetHTTPCredentialsParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    hostname: tOptional(tString),
   })),
 });
 scheme.BrowserContextSetHTTPCredentialsResult = tOptional(tObject({}));
@@ -2388,6 +2392,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   httpCredentials: tOptional(tObject({
     username: tString,
     password: tString,
+    hostname: tOptional(tString),
   })),
   deviceScaleFactor: tOptional(tNumber),
   isMobile: tOptional(tBoolean),

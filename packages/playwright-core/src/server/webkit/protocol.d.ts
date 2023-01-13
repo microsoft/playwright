@@ -4377,6 +4377,7 @@ might return multiple quads for inline nodes.
     export type setAuthCredentialsParameters = {
       username?: string;
       password?: string;
+      hostname?: string;
     }
     export type setAuthCredentialsReturnValue = {
     }

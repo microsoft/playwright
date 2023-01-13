@@ -448,6 +448,7 @@ ContextOptions:
       properties:
         username: string
         password: string
+        hostname: string?
     deviceScaleFactor: number?
     isMobile: boolean?
     hasTouch: boolean?
@@ -1052,6 +1053,7 @@ BrowserContext:
           properties:
             username: string
             password: string
+            hostname: string?
 
     setNetworkInterceptionPatterns:
       parameters:
