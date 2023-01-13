@@ -542,6 +542,47 @@ test('should resolve .js import to .ts file in non-ESM mode', async ({ runInline
   expect(result.exitCode).toBe(0);
 });
 
+test('should resolve .js import to .tsx file in non-ESM mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      import { gimmeAOne } from './playwright-utils.js';
+      test('pass', ({}) => {
+        expect(gimmeAOne()).toBe(1);
+      });
+    `,
+    'playwright-utils.tsx': `
+      export function gimmeAOne() {
+        return 1;
+      }
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve .js import to .tsx file in non-ESM mode for components', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+
+    'src/button.tsx': `
+      export const Button = () => <button>Button</button>;
+    `,
+
+    'src/test.spec.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button.js';
+      test('pass', async ({ mount }) => {
+        await mount(<Button></Button>);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
 test('should import export assignment from ts', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
