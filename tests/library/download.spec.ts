@@ -678,6 +678,25 @@ it('should save to user-specified path', async ({ browser, server, mode }, testI
   await page.close();
 });
 
+it('should download even if there is no "attachment" value', async ({ browser, server, mode, browserName }, testInfo) => {
+  it.fixme(browserName === 'webkit');
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19939' });
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    // Do not set the "attachment" value.
+    res.setHeader('Content-Disposition', 'filename=foo.txt');
+    res.end(`Hello world`);
+  });
+
+  const page = await browser.newPage();
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  await page.close();
+});
+
 async function assertDownloadToPDF(download: Download, filePath: string) {
   expect(download.suggestedFilename()).toBe(path.basename(filePath));
   const stream = await download.createReadStream();
