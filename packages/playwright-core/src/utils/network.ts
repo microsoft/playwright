@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
+
 import http from 'http';
 import https from 'https';
 import net from 'net';
 import { getProxyForUrl } from '../utilsBundle';
 import { HttpsProxyAgent } from '../utilsBundle';
 import * as URL from 'url';
-import type { URLMatch } from './types';
-import { isString, constructURLBasedOnBaseURL, isRegExp } from '../utils';
+import type { URLMatch } from '../common/types';
+import { isString, isRegExp } from './rtti';
+import { globToRegex } from './glob';
 
 export async function createSocket(host: string, port: number): Promise<net.Socket> {
   return new Promise((resolve, reject) => {
@@ -137,61 +139,10 @@ function parsedURL(url: string): URL | null {
   }
 }
 
-const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|']);
-
-// Note: this function is exported so it can be unit-tested.
-export function globToRegex(glob: string): RegExp {
-  const tokens = ['^'];
-  let inGroup;
-  for (let i = 0; i < glob.length; ++i) {
-    const c = glob[i];
-    if (escapeGlobChars.has(c)) {
-      tokens.push('\\' + c);
-      continue;
-    }
-    if (c === '*') {
-      const beforeDeep = glob[i - 1];
-      let starCount = 1;
-      while (glob[i + 1] === '*') {
-        starCount++;
-        i++;
-      }
-      const afterDeep = glob[i + 1];
-      const isDeep = starCount > 1 &&
-          (beforeDeep === '/' || beforeDeep === undefined) &&
-          (afterDeep === '/' || afterDeep === undefined);
-      if (isDeep) {
-        tokens.push('((?:[^/]*(?:\/|$))*)');
-        i++;
-      } else {
-        tokens.push('([^/]*)');
-      }
-      continue;
-    }
-
-    switch (c) {
-      case '?':
-        tokens.push('.');
-        break;
-      case '{':
-        inGroup = true;
-        tokens.push('(');
-        break;
-      case '}':
-        inGroup = false;
-        tokens.push(')');
-        break;
-      case ',':
-        if (inGroup) {
-          tokens.push('|');
-          break;
-        }
-        tokens.push('\\' + c);
-        break;
-      default:
-        tokens.push(c);
-    }
+export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL: string): string {
+  try {
+    return (new URL.URL(givenURL, baseURL)).toString();
+  } catch (e) {
+    return givenURL;
   }
-  tokens.push('$');
-  return new RegExp(tokens.join(''));
 }

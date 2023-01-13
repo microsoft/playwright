@@ -18,9 +18,9 @@ import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import { test as baseTest, expect, createImage, stripAnsi } from './playwright-test-fixtures';
-import type { HttpServer } from '../../packages/playwright-core/lib/utils/httpServer';
+import type { HttpServer } from '../../packages/playwright-core/lib/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
-import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
+import { spawnAsync } from 'playwright-core/lib/utils';
 
 const test = baseTest.extend<{ showReport: () => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {

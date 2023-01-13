@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, Reporter, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportError } from '../../types/testReporter';
 import { formatError, prepareErrorStack } from './base';
-import { MultiMap } from 'playwright-core/lib/utils/multimap';
+import { MultiMap } from 'playwright-core/lib/utils';
 import { assert } from 'playwright-core/lib/utils';
 
 export function toPosixPath(aPath: string): string {

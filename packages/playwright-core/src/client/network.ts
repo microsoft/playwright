@@ -29,7 +29,7 @@ import type { Page } from './page';
 import { Waiter } from './waiter';
 import type * as api from '../../types/types';
 import type { HeadersArray, URLMatch } from '../common/types';
-import { urlMatches } from '../common/netUtils';
+import { urlMatches } from '../utils/network';
 import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
 import type { Serializable } from '../../types/structs';

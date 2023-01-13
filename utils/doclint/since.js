@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { ZipFile } = require('../../packages/playwright-core/lib/utils/zipFile');
+const { ZipFile } = require('../../packages/playwright-core/lib/utils');
 
 (async () => {
   // Extract API.json

@@ -20,7 +20,7 @@ import os from 'os';
 import http from 'http';
 import type net from 'net';
 import * as path from 'path';
-import { getUserAgent } from '../../packages/playwright-core/lib/common/userAgent';
+import { getUserAgent } from '../../packages/playwright-core/lib/utils/userAgent';
 import WebSocket from 'ws';
 import { expect, playwrightTest } from '../config/browserTest';
 import { parseTrace, suppressCertificateWarning } from '../config/utils';
