@@ -52,9 +52,6 @@ await expect.soft(page.getByTestId('status')).toHaveText('Success');
 
 // ... and continue the test to check more things.
 await page.getByRole('link', { name: 'next page' }).click();
-
-// Avoid running further if there were soft assertion failures.
-expect(test.info().errors).toHaveLength(0);
 ```
 
 ### Avoid testing third-party dependencies
