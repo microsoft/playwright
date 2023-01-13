@@ -120,6 +120,6 @@ Removes a listener for a named CDP event
 - `eventName` <[string]>
 
 ### param: CDPSession.removeEventListener.eventHandler
-* since: v1.830
+* since: v1.30
 * langs: csharp
 - `eventHandler` <[Action<JsonElement?>]>
