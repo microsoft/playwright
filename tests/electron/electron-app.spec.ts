@@ -219,3 +219,13 @@ test('should return app name / version from manifest', async ({ launchElectronAp
     version: '1.0.0'
   });
 });
+
+test('should connect to external electron', async ({ playwright, launchExternalElectronApp }) => {
+  const app = await playwright._electron.connectOverCDP({
+    nodeEndpointURL: launchExternalElectronApp.nodeEndpointURL,
+    chromiumEndpointURL: launchExternalElectronApp.chromiumEndpointURL,
+  });
+  const window = await app.firstWindow();
+  const bwHandle = await app.browserWindow(window);
+  expect(await bwHandle.evaluate((bw: BrowserWindow) => bw.title)).toBe('Electron');
+});

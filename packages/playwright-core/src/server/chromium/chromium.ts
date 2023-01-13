@@ -326,7 +326,7 @@ export class Chromium extends BrowserType {
   }
 }
 
-async function urlToWSEndpoint(progress: Progress, endpointURL: string) {
+export async function urlToWSEndpoint(progress: Progress, endpointURL: string) {
   if (endpointURL.startsWith('ws'))
     return endpointURL;
   progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);

@@ -23,10 +23,18 @@ import { traceViewerFixtures } from '../config/traceViewerFixtures';
 export { expect } from '@playwright/test';
 import e2c from 'electron-to-chromium';
 import { assert } from 'playwright-core/lib/utils';
+import { spawn } from 'child_process';
+import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
+
+type LaunchedElectronProcessInfo = {
+  chromiumEndpointURL: string,
+  nodeEndpointURL: string,
+};
 
 type ElectronTestFixtures = PageTestFixtures & {
   electronApp: ElectronApplication;
   launchElectronApp: (appFile: string, options?: any) => Promise<ElectronApplication>;
+  launchExternalElectronApp: LaunchedElectronProcessInfo;
   newWindow: () => Promise<Page>;
 };
 
@@ -52,6 +60,24 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
     });
     for (const app of apps)
       await app.close();
+  },
+
+  launchExternalElectronApp: async ({ playwright }, use) => {
+    // This env prevents 'Electron Security Policy' console message.
+    process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
+    const command = require('electron/index.js');
+    const electronArguments = [path.join(__dirname, 'electron-window-app.js'), '--inspect=0', '--remote-debugging-port=0'];
+    const electronProcess = spawn(command, electronArguments);
+    const nodeEndpointPromise = new ManualPromise();
+    const chromiumEndpointPromise = new ManualPromise();
+    electronProcess.stderr.on('data', data => {
+      const matchNode = data.toString().match(/Debugger listening on (ws:\/\/.*)/);
+      if (matchNode) nodeEndpointPromise.resolve(matchNode[1]);
+      const matchChromium = data.toString().match(/DevTools listening on (ws:\/\/.*)/);
+      if (matchChromium) chromiumEndpointPromise.resolve(matchChromium[1]);
+    });
+    await use({ chromiumEndpointURL: await chromiumEndpointPromise, nodeEndpointURL: await nodeEndpointPromise });
+    electronProcess.kill();
   },
 
   electronApp: async ({ launchElectronApp }, use) => {

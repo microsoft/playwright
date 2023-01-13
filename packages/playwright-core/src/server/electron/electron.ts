@@ -41,6 +41,12 @@ import * as readline from 'readline';
 import { RecentLogsCollector } from '../../common/debugLogger';
 import { serverSideCallMetadata, SdkObject } from '../instrumentation';
 import type * as channels from '@protocol/channels';
+import { urlToWSEndpoint } from '../chromium/chromium';
+import { NET_DEFAULT_TIMEOUT } from '../../common/netUtils';
+import http from 'http';
+import https from 'https';
+import { ManualPromise } from '../../utils/manualPromise';
+import { Browser } from '../browser';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -55,9 +61,9 @@ export class ElectronApplication extends SdkObject {
   private _nodeExecutionContext: js.ExecutionContext | undefined;
   _nodeElectronHandlePromise: Promise<js.JSHandle<any>>;
   readonly _timeoutSettings = new TimeoutSettings();
-  private _process: childProcess.ChildProcess;
+  private _process?: childProcess.ChildProcess;
 
-  constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection, process: childProcess.ChildProcess) {
+  constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection, process?: childProcess.ChildProcess) {
     super(parent, 'electron-app');
     this._process = process;
     this._browserContext = browser._defaultContext as CRBrowserContext;
@@ -87,7 +93,7 @@ export class ElectronApplication extends SdkObject {
     await this._nodeSession.send('Runtime.evaluate', { expression: '__playwright_run()' });
   }
 
-  process(): childProcess.ChildProcess {
+  process(): childProcess.ChildProcess | undefined {
     return this._process;
   }
 
@@ -112,6 +118,28 @@ export class ElectronApplication extends SdkObject {
       return BrowserWindow.fromWebContents(wc);
     }, targetId);
   }
+}
+
+async function urlToNodeWSEndpoint(progress: Progress, endpointURL: string) {
+  if (endpointURL.startsWith('ws'))
+    return endpointURL;
+  progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
+  const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/` : `${endpointURL}/json/`;
+  const request = endpointURL.startsWith('https') ? https : http;
+  const json = await new Promise<string>((resolve, reject) => {
+    request.get(httpURL, {
+      timeout: NET_DEFAULT_TIMEOUT,
+    }, resp => {
+      if (resp.statusCode! < 200 || resp.statusCode! >= 400) {
+        reject(new Error(`Unexpected status ${resp.statusCode} when connecting to ${httpURL}.\n` +
+        `This does not look like a node debugger server, try connecting via ws://.`));
+      }
+      let data = '';
+      resp.on('data', chunk => data += chunk);
+      resp.on('end', () => resolve(data));
+    }).on('error', reject);
+  });
+  return JSON.parse(json)[0].webSocketDebuggerUrl;
 }
 
 export class Electron extends SdkObject {
@@ -240,6 +268,59 @@ export class Electron extends SdkObject {
       return app;
     }, TimeoutSettings.timeout(options));
   }
+
+  async connectOverCDP(options: channels.ElectronConnectOverCDPParams): Promise<ElectronApplication> {
+    const controller = new ProgressController(serverSideCallMetadata(), this);
+    controller.setLogName('browser');
+    return controller.run(async progress => {
+      const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
+      const browserLogsCollector = new RecentLogsCollector();
+      const nodeEndpointURL = await urlToNodeWSEndpoint(progress, options.nodeEndpointURL);
+      progress.throwIfAborted();
+      const chromiumEndpointURL = await urlToWSEndpoint(progress, options.chromiumEndpointURL);
+      progress.throwIfAborted();
+
+      const nodeTransport = await WebSocketTransport.connect(progress, nodeEndpointURL);
+      const nodeConnection = new CRConnection(nodeTransport, helper.debugProtocolLogger(), browserLogsCollector);
+      const chromeTransport = await WebSocketTransport.connect(progress, chromiumEndpointURL);
+
+      const cleanedUp = new ManualPromise<void>();
+      const doCleanup = async () => {
+        cleanedUp.resolve();
+      };
+      const doClose = async () => {
+        await chromeTransport.closeAndWait();
+        await cleanedUp;
+      };
+      const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
+
+      const contextOptions: channels.BrowserNewContextParams = {
+        ...options,
+        noDefaultViewport: true,
+      };
+      const browserOptions: BrowserOptions = {
+        ...this._playwrightOptions,
+        name: 'electron',
+        isChromium: true,
+        headful: true,
+        persistent: contextOptions,
+        browserProcess,
+        protocolLogger: helper.debugProtocolLogger(),
+        browserLogsCollector,
+        artifactsDir,
+        downloadsPath: artifactsDir,
+        tracesDir: artifactsDir,
+        originalLaunchOptions: {},
+      };
+      validateBrowserContextOptions(contextOptions, browserOptions);
+      const browser = await CRBrowser.connect(chromeTransport, browserOptions);
+      browser.on(Browser.Events.Disconnected, doCleanup);
+      const app = new ElectronApplication(this, browser, nodeConnection);
+      await app.initialize();
+      return app;
+    }, TimeoutSettings.timeout(options));
+  }
+
 }
 
 function waitForLine(progress: Progress, process: childProcess.ChildProcess, regex: RegExp): Promise<RegExpMatchArray> {

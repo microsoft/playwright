@@ -28,6 +28,7 @@ import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import type { Page } from './page';
 import type { Env, WaitForEventOptions, Headers, BrowserContextOptions } from './types';
 import { Waiter } from './waiter';
+import type { ElectronConnectOverCDPParams } from '@protocol/channels';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'> & {
   env?: Env,
@@ -54,6 +55,11 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
     };
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
     app._context._options = params;
+    return app;
+  }
+
+  async connectOverCDP(options: ElectronConnectOverCDPParams): Promise<ElectronApplication> {
+    const app = ElectronApplication.from((await this._channel.connectOverCDP(options)).electronApplication);
     return app;
   }
 }

@@ -16476,6 +16476,31 @@ export interface Electron {
      */
     timezoneId?: string;
   }): Promise<ElectronApplication>;
+
+  /**
+   * This method attaches Playwright to an existing electron application instance using the Chrome DevTools Protocol.
+   * Electron application must be started with '--inspect' and '--remote-debugging-port' command line arguments.
+   * @param options
+   */
+  connectOverCDP(options?: {
+    /**
+     * A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or
+     * `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
+     */
+    chromiumEndpointURL?: string;
+
+    /**
+     * A node websocket endpoint or http url to connect to. For example `http://localhost:9221/` or
+     * `ws://127.0.0.1:9221/0b100c59-cc44-44e7-862f-b37e337a6145`.
+     */
+    nodeEndpointURL?: string;
+
+    /**
+     * Maximum time in milliseconds to wait for the application to connect. Defaults to `30000` (30 seconds). Pass `0` to
+     * disable timeout.
+     */
+    timeout?: number;
+  }): Promise<ElectronApplication>;
 }
 
 /**

@@ -35,6 +35,11 @@ export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronCh
     const electronApplication = await this._object.launch(params);
     return { electronApplication: new ElectronApplicationDispatcher(this, electronApplication) };
   }
+
+  async connectOverCDP(params: channels.ElectronConnectOverCDPParams): Promise<channels.ElectronLaunchResult> {
+    const electronApplication = await this._object.connectOverCDP(params);
+    return { electronApplication: new ElectronApplicationDispatcher(this, electronApplication) };
+  }
 }
 
 export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplication, channels.ElectronApplicationChannel, ElectronDispatcher> implements channels.ElectronApplicationChannel {

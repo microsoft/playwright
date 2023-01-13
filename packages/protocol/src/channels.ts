@@ -3900,6 +3900,7 @@ export interface ElectronEventTarget {
 export interface ElectronChannel extends ElectronEventTarget, Channel {
   _type_Electron: boolean;
   launch(params: ElectronLaunchParams, metadata?: Metadata): Promise<ElectronLaunchResult>;
+  connectOverCDP(params: ElectronConnectOverCDPParams, metadata?: Metadata): Promise<ElectronConnectOverCDPResult>;
 }
 export type ElectronLaunchParams = {
   executablePath?: string,
@@ -3968,6 +3969,17 @@ export type ElectronLaunchOptions = {
   timezoneId?: string,
 };
 export type ElectronLaunchResult = {
+  electronApplication: ElectronApplicationChannel,
+};
+export type ElectronConnectOverCDPParams = {
+  nodeEndpointURL: string,
+  chromiumEndpointURL: string,
+  timeout?: number,
+};
+export type ElectronConnectOverCDPOptions = {
+  timeout?: number,
+};
+export type ElectronConnectOverCDPResult = {
   electronApplication: ElectronApplicationChannel,
 };
 

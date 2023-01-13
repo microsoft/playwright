@@ -3060,6 +3060,15 @@ Electron:
       returns:
         electronApplication: ElectronApplication
 
+    connectOverCDP:
+      parameters:
+        nodeEndpointURL: string
+        chromiumEndpointURL: string
+        timeout: number?
+
+      returns:
+        electronApplication: ElectronApplication
+
 
 ElectronApplication:
   type: interface

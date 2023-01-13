@@ -2185,6 +2185,14 @@ scheme.ElectronLaunchParams = tObject({
 scheme.ElectronLaunchResult = tObject({
   electronApplication: tChannel(['ElectronApplication']),
 });
+scheme.ElectronConnectOverCDPParams = tObject({
+  nodeEndpointURL: tString,
+  chromiumEndpointURL: tString,
+  timeout: tOptional(tNumber),
+});
+scheme.ElectronConnectOverCDPResult = tObject({
+  electronApplication: tChannel(['ElectronApplication']),
+});
 scheme.ElectronApplicationInitializer = tObject({
   context: tChannel(['BrowserContext']),
 });
