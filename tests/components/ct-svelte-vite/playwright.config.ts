@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { defineConfig } from '@playwright/experimental-ct-svelte';
-import { devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/experimental-ct-svelte';
 import { resolve } from 'path';
 
 export default defineConfig({
