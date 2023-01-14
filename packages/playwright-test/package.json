@@ -17,7 +17,6 @@
     },
     "./cli": "./cli.js",
     "./package.json": "./package.json",
-    "./lib/ci": "./lib/ci.js",
     "./lib/cli": "./lib/cli.js",
     "./lib/experimentalLoader": "./lib/experimentalLoader.js",
     "./lib/mount": "./lib/mount.js",
