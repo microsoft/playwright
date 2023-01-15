@@ -32,7 +32,7 @@ timeouts and racy checks in their tests altogether.
 Take a look at the following example to see how to write a test.
 
 ```js
-import { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
 
 test('has title', async ({ page }) => {
   await page.goto('https://playwright.dev/');
