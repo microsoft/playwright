@@ -36,9 +36,11 @@ export function register(components) {
 
 /**
  * @param {Component} component
- * @returns {JSX.Element}
  */
 function render(component) {
+  if (typeof component !== 'object' || Array.isArray(component))
+    return component;
+
   let componentFunc = registry.get(component.type);
   if (!componentFunc) {
     // Lookup by shorthand.
