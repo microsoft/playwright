@@ -239,18 +239,18 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('#input').fill('John');`);
+  await page.getById('input').fill('John');`);
     expect(sources.get('Java').text).toContain(`
-      page.locator("#input").fill("John");`);
+      page.getById('input').fill("John");`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator("#input").fill(\"John\")`);
+    page.get_by_id("#input").fill(\"John\")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator("#input").fill(\"John\")`);
+    await page.get_by_id("#input").fill(\"John\")`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator("#input").FillAsync(\"John\");`);
+        await page.GetById("input").FillAsync(\"John\");`);
 
     expect(message.text()).toBe('John');
   });
@@ -273,18 +273,18 @@ test.describe('cli codegen', () => {
       })()
     ]);
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('#input').fill('てすと');`);
+  await page.getById('input').fill('てすと');`);
     expect(sources.get('Java').text).toContain(`
-      page.locator("#input").fill("てすと");`);
+      page.getById("input").fill("てすと");`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator("#input").fill(\"てすと\")`);
+    page.get_by_id("input").fill(\"てすと\")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator("#input").fill(\"てすと\")`);
+    await page.get_by_id("input").fill(\"てすと\")`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator("#input").FillAsync(\"てすと\");`);
+        await page.GetById("input").FillAsync(\"てすと\");`);
 
     expect(message.text()).toBe('てすと');
   });
@@ -302,7 +302,7 @@ test.describe('cli codegen', () => {
       page.fill('textarea', 'John')
     ]);
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('#textarea').fill('John');`);
+  await page.getById('textarea').fill('John');`);
     expect(message.text()).toBe('John');
   });
 
@@ -319,7 +319,7 @@ test.describe('cli codegen', () => {
       page.fill('div', 'John Doe')
     ]);
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('#content').fill('John Doe');`);
+  await page.getById('content').fill('John Doe');`);
     expect(message.text()).toBe('John Doe');
   });
 
@@ -448,19 +448,19 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('#checkbox').check();`);
+  await page.getById('checkbox').check();`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("#checkbox").check();`);
+      page.getById("checkbox").check();`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator("#checkbox").check()`);
+    page.get_by_id("checkbox").check()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator("#checkbox").check()`);
+    await page.get_by_id("checkbox").check()`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator("#checkbox").CheckAsync();`);
+        await page.GetById("checkbox").CheckAsync();`);
 
     expect(message.text()).toBe('true');
   });
@@ -480,7 +480,7 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('#checkbox').check();`);
+  await page.getById('checkbox').check();`);
     expect(message.text()).toBe('true');
   });
 
@@ -499,7 +499,7 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('#checkbox').check();`);
+  await page.getById('checkbox').check();`);
     expect(message.text()).toBe('true');
   });
 
@@ -518,19 +518,19 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('#checkbox').uncheck();`);
+  await page.getById('checkbox').uncheck();`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("#checkbox").uncheck();`);
+      page.getById("checkbox").uncheck();`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator("#checkbox").uncheck()`);
+    page.get_by_id("checkbox").uncheck()`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator("#checkbox").uncheck()`);
+    await page.get_by_id("checkbox").uncheck()`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator("#checkbox").UncheckAsync();`);
+        await page.GetById("checkbox").UncheckAsync();`);
 
     expect(message.text()).toBe('false');
   });
@@ -550,19 +550,19 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('#age').selectOption('2');`);
+  await page.getById('age').selectOption('2');`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("#age").selectOption("2");`);
+      page.getById("age").selectOption("2");`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator("#age").select_option("2")`);
+    page.get_by_id("age").select_option("2")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator("#age").select_option("2")`);
+    await page.get_by_id("age").select_option("2")`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator("#age").SelectOptionAsync(new[] { "2" });`);
+        await page.GetById("age").SelectOptionAsync(new[] { "2" });`);
 
     expect(message.text()).toBe('2');
   });
@@ -591,19 +591,19 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('#age').selectOption('2');`);
+  await page.getById('age').selectOption('2');`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("#age").selectOption("2");`);
+      page.getById("age").selectOption("2");`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator(\"#age\").select_option(\"2\")`);
+    page.get_by_id(\"age\").select_option(\"2\")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator(\"#age\").select_option(\"2\")`);
+    await page.get_by_id(\"age\").select_option(\"2\")`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
+        await page.GetById(\"age\").SelectOptionAsync(new[] { \"2\" });`);
 
     expect(message.text()).toBe('2');
   });

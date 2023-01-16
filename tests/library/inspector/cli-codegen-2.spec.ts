@@ -396,17 +396,17 @@ test.describe('cli codegen', () => {
     expect(sources.get('JavaScript').text).toContain(`await page1.getById('name').fill('TextA');`);
     expect(sources.get('JavaScript').text).toContain(`await page2.getById('name').fill('TextB');`);
 
-    expect(sources.get('Java').text).toContain(`page1.locator("#name").fill("TextA");`);
-    expect(sources.get('Java').text).toContain(`page2.locator("#name").fill("TextB");`);
+    expect(sources.get('Java').text).toContain(`page1.getById("name").fill("TextA");`);
+    expect(sources.get('Java').text).toContain(`page2.getById("name").fill("TextB");`);
 
-    expect(sources.get('Python').text).toContain(`page1.locator("#name").fill("TextA")`);
-    expect(sources.get('Python').text).toContain(`page2.locator("#name").fill("TextB")`);
+    expect(sources.get('Python').text).toContain(`page1.get_by_id("name").fill("TextA")`);
+    expect(sources.get('Python').text).toContain(`page2.get_by_id("name").fill("TextB")`);
 
-    expect(sources.get('Python Async').text).toContain(`await page1.locator("#name").fill("TextA")`);
-    expect(sources.get('Python Async').text).toContain(`await page2.locator("#name").fill("TextB")`);
+    expect(sources.get('Python Async').text).toContain(`await page1.get_by_id("name").fill("TextA")`);
+    expect(sources.get('Python Async').text).toContain(`await page2.get_by_id("name").fill("TextB")`);
 
-    expect(sources.get('C#').text).toContain(`await page1.Locator("#name").FillAsync("TextA");`);
-    expect(sources.get('C#').text).toContain(`await page2.Locator("#name").FillAsync("TextB");`);
+    expect(sources.get('C#').text).toContain(`await page1.GetById("name").FillAsync("TextA");`);
+    expect(sources.get('C#').text).toContain(`await page2.GetById("name").FillAsync("TextB");`);
   });
 
   test('click should emit events in order', async ({ page, openRecorder }) => {
@@ -523,19 +523,19 @@ test.describe('cli codegen', () => {
     ]);
 
     expect(sources.get('JavaScript').text).toContain(`
-  await page.locator('#textarea').fill('Hello\\'"\`\\nWorld');`);
+  await page.getById('textarea').fill('Hello\\'"\`\\nWorld');`);
 
     expect(sources.get('Java').text).toContain(`
-      page.locator("#textarea").fill("Hello'\\"\`\\nWorld");`);
+      page.getById("textarea").fill("Hello'\\"\`\\nWorld");`);
 
     expect(sources.get('Python').text).toContain(`
-    page.locator("#textarea").fill(\"Hello'\\"\`\\nWorld\")`);
+    page.get_by_id("textarea").fill(\"Hello'\\"\`\\nWorld\")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.locator("#textarea").fill(\"Hello'\\"\`\\nWorld\")`);
+    await page.get_by_id("textarea").fill(\"Hello'\\"\`\\nWorld\")`);
 
     expect(sources.get('C#').text).toContain(`
-        await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
+        await page.GetById("textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
 
     expect(message.text()).toBe('Hello\'\"\`\nWorld');
   });
