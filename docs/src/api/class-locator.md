@@ -2031,12 +2031,6 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.uncheck.trial = %%-input-trial-%%
 * since: v1.14
 
-## async method: Locator.viewportRatio
-* since: v1.30
-- returns: <[float]>
-
-Returns the ratio of intersection between viewport and the element, according to the [intersection observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
-
 ## async method: Locator.waitFor
 * since: v1.16
 

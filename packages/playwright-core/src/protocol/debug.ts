@@ -66,7 +66,6 @@ export const commandsWithTracingSnapshots = new Set([
   'Frame.isEnabled',
   'Frame.isHidden',
   'Frame.isVisible',
-  'Frame.viewportRatio',
   'Frame.isEditable',
   'Frame.press',
   'Frame.selectOption',

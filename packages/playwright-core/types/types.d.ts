@@ -11964,12 +11964,6 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * Returns the ratio of intersection between viewport and the element, according to the
-   * [intersection observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
-   */
-  viewportRatio(): Promise<number>;
-
-  /**
    * Returns when element specified by locator satisfies the `state` option.
    *
    * If target element already satisfies the condition, the method returns immediately. Otherwise, waits for up to
