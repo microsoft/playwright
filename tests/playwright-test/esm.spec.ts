@@ -36,6 +36,28 @@ test('should load nested as esm when package.json has type module', async ({ run
   expect(result.passed).toBe(1);
 });
 
+test('should support import assertions', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import packageJSON from './package.json' assert { type: 'json' };
+      export default { };
+    `,
+    'package.json': JSON.stringify({ type: 'module' }),
+    'a.esm.test.ts': `
+      const { test } = pwt;
+
+      test('check project name', ({}, testInfo) => {
+        expect(1).toBe(1);
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should import esm from ts when package.json has type module in experimental mode', async ({ runInlineTest, nodeVersion }) => {
   // We only support experimental esm mode on Node 16+
   test.skip(nodeVersion.major < 16);

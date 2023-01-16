@@ -66,6 +66,8 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
   if (!isModule) {
     plugins.push([require('@babel/plugin-transform-modules-commonjs')]);
     plugins.push([require('@babel/plugin-proposal-dynamic-import')]);
+  } else {
+    plugins.push([require('@babel/plugin-syntax-import-assertions')]);
   }
 
   plugins.unshift(additionalPlugin);
