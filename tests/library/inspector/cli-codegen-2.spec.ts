@@ -393,8 +393,8 @@ test.describe('cli codegen', () => {
     await recorder.waitForOutput('JavaScript', 'TextB');
 
     const sources = recorder.sources();
-    expect(sources.get('JavaScript').text).toContain(`await page1.locator('#name').fill('TextA');`);
-    expect(sources.get('JavaScript').text).toContain(`await page2.locator('#name').fill('TextB');`);
+    expect(sources.get('JavaScript').text).toContain(`await page1.getById('name').fill('TextA');`);
+    expect(sources.get('JavaScript').text).toContain(`await page2.getById('name').fill('TextB');`);
 
     expect(sources.get('Java').text).toContain(`page1.locator("#name").fill("TextA");`);
     expect(sources.get('Java').text).toContain(`page2.locator("#name").fill("TextB");`);
@@ -514,7 +514,7 @@ test.describe('cli codegen', () => {
 
     await recorder.setContentAndWait(`<textarea spellcheck=false id="textarea" name="name" oninput="console.log(textarea.value)"></textarea>`);
     const locator = await recorder.focusElement('textarea');
-    expect(locator).toBe(`locator('#textarea')`);
+    expect(locator).toBe(`getById('textarea')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),

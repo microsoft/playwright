@@ -230,7 +230,7 @@ test.describe('cli codegen', () => {
 
     await recorder.setContentAndWait(`<input id="input" name="name" oninput="console.log(input.value)"></input>`);
     const locator = await recorder.focusElement('input');
-    expect(locator).toBe(`locator('#input')`);
+    expect(locator).toBe(`getById('input')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -261,7 +261,7 @@ test.describe('cli codegen', () => {
     // In Japanese, "てすと" or "テスト" means "test".
     await recorder.setContentAndWait(`<input id="input" name="name" oninput="input.value === 'てすと' && console.log(input.value)"></input>`);
     const locator = await recorder.focusElement('input');
-    expect(locator).toBe(`locator('#input')`);
+    expect(locator).toBe(`getById('input')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -294,7 +294,7 @@ test.describe('cli codegen', () => {
 
     await recorder.setContentAndWait(`<textarea id="textarea" name="name" oninput="console.log(textarea.value)"></textarea>`);
     const locator = await recorder.focusElement('textarea');
-    expect(locator).toBe(`locator('#textarea')`);
+    expect(locator).toBe(`getById('textarea')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -311,7 +311,7 @@ test.describe('cli codegen', () => {
 
     await recorder.setContentAndWait(`<div id="content" contenteditable="" oninput="console.log(content.innerText)"/>`);
     const locator = await recorder.focusElement('div');
-    expect(locator).toBe(`locator('#content')`);
+    expect(locator).toBe(`getById('content')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -439,7 +439,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="console.log(checkbox.checked)"></input>`);
 
     const locator = await recorder.focusElement('input');
-    expect(locator).toBe(`locator('#checkbox')`);
+    expect(locator).toBe(`getById('checkbox')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -471,7 +471,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<input id="checkbox" type="radio" name="accept" onchange="console.log(checkbox.checked)"></input>`);
 
     const locator = await recorder.focusElement('input');
-    expect(locator).toBe(`locator('#checkbox')`);
+    expect(locator).toBe(`getById('checkbox')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -490,7 +490,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="console.log(checkbox.checked)"></input>`);
 
     const locator = await recorder.focusElement('input');
-    expect(locator).toBe(`locator('#checkbox')`);
+    expect(locator).toBe(`getById('checkbox')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -509,7 +509,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" checked name="accept" onchange="console.log(checkbox.checked)"></input>`);
 
     const locator = await recorder.focusElement('input');
-    expect(locator).toBe(`locator('#checkbox')`);
+    expect(locator).toBe(`getById('checkbox')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -541,7 +541,7 @@ test.describe('cli codegen', () => {
     await recorder.setContentAndWait('<select id="age" onchange="console.log(age.selectedOptions[0].value)"><option value="1"><option value="2"></select>');
 
     const locator = await recorder.hoverOverElement('select');
-    expect(locator).toBe(`locator('#age')`);
+    expect(locator).toBe(`getById('age')`);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
@@ -583,7 +583,7 @@ test.describe('cli codegen', () => {
     `);
 
     const locator = await recorder.hoverOverElement('select');
-    expect(locator).toBe(`locator('#age')`);
+    expect(locator).toBe(`getById('age')`);
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error'),
       recorder.waitForOutput('JavaScript', 'select'),

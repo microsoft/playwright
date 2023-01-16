@@ -87,6 +87,7 @@ it('expected properties on playwright object', async ({ page }) => {
     'resume',
     'locator',
     'getByTestId',
+    'getById',
     'getByAltText',
     'getByLabel',
     'getByPlaceholder',
