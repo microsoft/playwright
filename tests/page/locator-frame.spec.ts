@@ -30,7 +30,7 @@ async function routeIframe(page: Page) {
       body: `
         <html>
           <div>
-            <button data-testid="buttonId">Hello iframe</button>
+            <button id="buttonId" data-testid="buttonId">Hello iframe</button>
             <iframe src="iframe-2.html"></iframe>
           </div>
           <span>1</span>
@@ -239,15 +239,18 @@ it('locator.frameLocator should not throw on first/last/nth', async ({ page, ser
   await expect(button3).toHaveText('Hello from iframe-3.html');
 });
 
-it('getBy coverage', async ({ page, server }) => {
+it.only('getBy coverage', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button1 = page.frameLocator('iframe').getByRole('button');
   const button2 = page.frameLocator('iframe').getByText('Hello');
   const button3 = page.frameLocator('iframe').getByTestId('buttonId');
+  const button4 = page.frameLocator('iframe').getById('buttonId');
   await expect(button1).toHaveText('Hello iframe');
   await expect(button2).toHaveText('Hello iframe');
   await expect(button3).toHaveText('Hello iframe');
+  await expect(button4).toHaveText('Hello iframe');
+
   const input1 = page.frameLocator('iframe').getByLabel('Name');
   await expect(input1).toHaveValue('');
   const input2 = page.frameLocator('iframe').getByPlaceholder('Placeholder');
