@@ -110,7 +110,7 @@ Playwright has a [test generator](./codegen.md) that can generate tests and pick
 
 #### Use `codegen` to generate locators
 
-To pick a locator run the `codegen` command followed by the URL you would like to pick a locator from.
+To pick a locator run the `codegen` command followed by the URL that you would like to pick a locator from.
 
 ```bash
 npx playwright codegen playwright.dev
