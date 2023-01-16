@@ -36,7 +36,7 @@ test('should load nested as esm when package.json has type module', async ({ run
   expect(result.passed).toBe(1);
 });
 
-test('should support import assertions', async ({ runInlineTest }) => {
+test('should support import assertions', async ({ runInlineTest, nodeVersion }) => {
   // We only support experimental esm mode on Node 16+
   test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
