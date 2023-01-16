@@ -42,7 +42,7 @@ import { RecentLogsCollector } from '../../common/debugLogger';
 import { serverSideCallMetadata, SdkObject } from '../instrumentation';
 import type * as channels from '@protocol/channels';
 import { urlToWSEndpoint } from '../chromium/chromium';
-import { NET_DEFAULT_TIMEOUT } from '../../common/netUtils';
+import { NET_DEFAULT_TIMEOUT } from '../../utils/network';
 import http from 'http';
 import https from 'https';
 import { ManualPromise } from '../../utils/manualPromise';
