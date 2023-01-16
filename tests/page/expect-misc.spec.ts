@@ -290,7 +290,7 @@ test.describe('toIntersectViewport', () => {
   test('should work', async ({ page }) => {
     await page.setContent(`
       <div id=big style="height: 10000px;"></div>
-      <span id=small>foo</span>
+      <div id=small>foo</div>
     `);
     await expect(page.locator('#big')).toIntersectViewport();
     await expect(page.locator('#small')).not.toIntersectViewport();
