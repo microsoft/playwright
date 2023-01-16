@@ -241,13 +241,13 @@ test.describe('cli codegen', () => {
     expect(sources.get('JavaScript').text).toContain(`
   await page.getById('input').fill('John');`);
     expect(sources.get('Java').text).toContain(`
-      page.getById('input').fill("John");`);
+      page.getById("input").fill("John");`);
 
     expect(sources.get('Python').text).toContain(`
-    page.get_by_id("#input").fill(\"John\")`);
+    page.get_by_id("input").fill(\"John\")`);
 
     expect(sources.get('Python Async').text).toContain(`
-    await page.get_by_id("#input").fill(\"John\")`);
+    await page.get_by_id("input").fill(\"John\")`);
 
     expect(sources.get('C#').text).toContain(`
         await page.GetById("input").FillAsync(\"John\");`);

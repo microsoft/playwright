@@ -183,10 +183,6 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
       candidates.push({ engine: 'css', selector: `[${attr}=${quoteAttributeValue(element.getAttribute(attr)!)}]`, score: kOtherTestIdScore });
   }
 
-  const idAttr = element.getAttribute('id');
-  if (idAttr && !isGuidLike(idAttr))
-    candidates.push({ engine: 'internal:id', selector: `[id=${escapeForAttributeSelector(element.getAttribute('id')!, true)}]`, score: kCSSIdScore });
-
   candidates.push({ engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore });
 
   if (element.nodeName === 'IFRAME') {
@@ -194,6 +190,10 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
       if (element.getAttribute(attribute))
         candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[${attribute}=${quoteAttributeValue(element.getAttribute(attribute)!)}]`, score: kIframeByAttributeScore });
     }
+
+    const idAttr = element.getAttribute('id');
+    if (idAttr && !isGuidLike(idAttr))
+      candidates.push({ engine: 'css', selector: makeSelectorForId(idAttr), score: kCSSIdScore });
 
     // Get via testIdAttributeName via CSS selector.
     if (element.getAttribute(testIdAttributeName))
