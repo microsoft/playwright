@@ -61,6 +61,27 @@ it('reverse engineer locators', async ({ page }) => {
     csharp: 'GetByTestId("He\\"llo")'
   });
 
+  expect.soft(generate(page.getById('Hello'))).toEqual({
+    javascript: "getById('Hello')",
+    python: 'get_by_id("Hello")',
+    java: 'getById("Hello")',
+    csharp: 'GetById("Hello")'
+  });
+
+  expect.soft(generate(page.getById('He"llo'))).toEqual({
+    javascript: 'getById(\'He"llo\')',
+    python: 'get_by_id("He\\"llo")',
+    java: 'getById("He\\"llo")',
+    csharp: 'GetById("He\\"llo")'
+  });
+
+  expect.soft(generate(page.getByTestId('He"llo'))).toEqual({
+    javascript: 'getByTestId(\'He"llo\')',
+    python: 'get_by_test_id("He\\"llo")',
+    java: 'getByTestId("He\\"llo")',
+    csharp: 'GetByTestId("He\\"llo")'
+  });
+
   expect.soft(generate(page.getByText('Hello', { exact: true }))).toEqual({
     csharp: 'GetByText("Hello", new() { Exact = true })',
     java: 'getByText("Hello", new Page.GetByTextOptions().setExact(true))',
