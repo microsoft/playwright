@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-import child_process from 'child_process';
-import path from 'path';
-import { EventEmitter } from 'events';
-import type { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload, WatchTestResolvedPayload, WorkerIsolation } from './ipc';
+import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, WatchTestResolvedPayload, RunPayload, SerializedLoaderData } from './ipc';
 import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
 import type { Suite } from './test';
 import type { Loader } from './loader';
+import type { ProcessExitData } from './processHost';
 import { TestCase } from './test';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import { TestTypeImpl } from './testType';
+import { WorkerHost } from './workerHost';
 
 export type TestGroup = {
   workerHash: string;
@@ -45,14 +44,8 @@ type TestData = {
   resultByWorkerIndex: Map<number, TestResultData>;
 };
 
-type WorkerExitData = {
-  unexpectedly: boolean;
-  code: number | null;
-  signal: NodeJS.Signals | null;
-};
-
 export class Dispatcher {
-  private _workerSlots: { busy: boolean, worker?: Worker }[] = [];
+  private _workerSlots: { busy: boolean, worker?: WorkerHost }[] = [];
   private _queue: TestGroup[] = [];
   private _queuedOrRunningHashCount = new Map<string, number>();
   private _finished = new ManualPromise<void>();
@@ -115,10 +108,10 @@ export class Dispatcher {
 
     // 2. Start the worker if it is down.
     if (!worker) {
-      worker = this._createWorker(job.workerHash, index);
+      worker = this._createWorker(job, index, this._loader.serialize());
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
-      await worker.init(job, this._loader.serialize());
+      await worker.init();
       if (this._isStopped) // Check stopped signal after async hop.
         return;
     }
@@ -147,7 +140,7 @@ export class Dispatcher {
     this._finished.resolve();
   }
 
-  private _isWorkerRedundant(worker: Worker) {
+  private _isWorkerRedundant(worker: WorkerHost) {
     let workersWithSameHash = 0;
     for (const slot of this._workerSlots) {
       if (slot.worker && !slot.worker.didSendStop() && slot.worker.hash() === worker.hash())
@@ -170,8 +163,16 @@ export class Dispatcher {
     await this._finished;
   }
 
-  async _runJob(worker: Worker, testGroup: TestGroup) {
-    worker.run(testGroup);
+  async _runJob(worker: WorkerHost, testGroup: TestGroup) {
+    const runPayload: RunPayload = {
+      file: testGroup.requireFile,
+      entries: testGroup.tests.map(test => {
+        return { testId: test.id, retry: test.results.length };
+      }),
+      watchMode: testGroup.watchMode,
+      phase: testGroup.phase,
+    };
+    worker.runTestGroup(runPayload);
 
     let doneCallback = () => {};
     const result = new Promise<void>(f => doneCallback = f);
@@ -203,6 +204,7 @@ export class Dispatcher {
       result.workerIndex = worker.workerIndex;
       result.startTime = new Date(params.startWallTime);
       this._reporter.onTestBegin?.(data.test, result);
+      worker.currentTestId = params.testId;
     };
     worker.addListener('testBegin', onTestBegin);
 
@@ -235,6 +237,7 @@ export class Dispatcher {
       if (isFailure)
         failedTestIds.add(params.testId);
       this._reportTestEnd(test, result);
+      worker.currentTestId = null;
     };
     worker.addListener('testEnd', onTestEnd);
 
@@ -424,7 +427,7 @@ export class Dispatcher {
     };
     worker.on('done', onDone);
 
-    const onExit = (data: WorkerExitData) => {
+    const onExit = (data: ProcessExitData) => {
       const unexpectedExitError: TestError | undefined = data.unexpectedly ? {
         message: `Internal error: worker process exited unexpectedly (code=${data.code}, signal=${data.signal})`
       } : undefined;
@@ -435,8 +438,8 @@ export class Dispatcher {
     return result;
   }
 
-  _createWorker(hash: string, parallelIndex: number) {
-    const worker = new Worker(hash, parallelIndex, this._loader.fullConfig()._workerIsolation);
+  _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedLoaderData) {
+    const worker = new WorkerHost(testGroup, parallelIndex, this._loader.fullConfig()._workerIsolation, loaderData);
     const handleOutput = (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail()) {
@@ -445,9 +448,9 @@ export class Dispatcher {
         // the next retry.
         return { chunk };
       }
-      if (!params.testId)
+      if (!worker.currentTestId)
         return { chunk };
-      const data = this._testById.get(params.testId)!;
+      const data = this._testById.get(worker.currentTestId)!;
       return { chunk, test: data.test, result: data.resultByWorkerIndex.get(worker.workerIndex)?.result };
     };
     worker.on('stdOut', (params: TestOutputPayload) => {
@@ -492,119 +495,6 @@ export class Dispatcher {
 
   hasWorkerErrors(): boolean {
     return this._hasWorkerErrors;
-  }
-}
-
-let lastWorkerIndex = 0;
-
-class Worker extends EventEmitter {
-  private process: child_process.ChildProcess;
-  private _hash: string;
-  readonly parallelIndex: number;
-  readonly workerIndex: number;
-  private _didSendStop = false;
-  private _didFail = false;
-  private didExit = false;
-  private _ready: Promise<void>;
-  workerIsolation: WorkerIsolation;
-
-  constructor(hash: string, parallelIndex: number, workerIsolation: WorkerIsolation) {
-    super();
-    this.workerIndex = lastWorkerIndex++;
-    this._hash = hash;
-    this.parallelIndex = parallelIndex;
-    this.workerIsolation = workerIsolation;
-
-    this.process = child_process.fork(path.join(__dirname, 'worker.js'), {
-      detached: false,
-      env: {
-        FORCE_COLOR: '1',
-        DEBUG_COLORS: '1',
-        TEST_WORKER_INDEX: String(this.workerIndex),
-        TEST_PARALLEL_INDEX: String(this.parallelIndex),
-        ...process.env
-      },
-      // Can't pipe since piping slows down termination for some reason.
-      stdio: ['ignore', 'ignore', process.env.PW_RUNNER_DEBUG ? 'inherit' : 'ignore', 'ipc']
-    });
-    this.process.on('exit', (code, signal) => {
-      this.didExit = true;
-      this.emit('exit', { unexpectedly: !this._didSendStop, code, signal } as WorkerExitData);
-    });
-    this.process.on('error', e => {});  // do not yell at a send to dead process.
-    this.process.on('message', (message: any) => {
-      const { method, params } = message;
-      this.emit(method, params);
-    });
-
-    this._ready = new Promise((resolve, reject) => {
-      this.process.once('exit', (code, signal) => reject(new Error(`worker exited with code "${code}" and signal "${signal}" before it became ready`)));
-      this.once('ready', () => resolve());
-    });
-  }
-
-  async init(testGroup: TestGroup, loaderData: SerializedLoaderData) {
-    await this._ready;
-    const params: WorkerInitParams = {
-      workerIsolation: this.workerIsolation,
-      workerIndex: this.workerIndex,
-      parallelIndex: this.parallelIndex,
-      repeatEachIndex: testGroup.repeatEachIndex,
-      projectId: testGroup.projectId,
-      loader: loaderData,
-      stdoutParams: {
-        rows: process.stdout.rows,
-        columns: process.stdout.columns,
-        colorDepth: process.stdout.getColorDepth?.() || 8
-      },
-      stderrParams: {
-        rows: process.stderr.rows,
-        columns: process.stderr.columns,
-        colorDepth: process.stderr.getColorDepth?.() || 8
-      },
-    };
-    this.send({ method: 'init', params });
-  }
-
-  run(testGroup: TestGroup) {
-    const runPayload: RunPayload = {
-      file: testGroup.requireFile,
-      entries: testGroup.tests.map(test => {
-        return { testId: test.id, retry: test.results.length };
-      }),
-      watchMode: testGroup.watchMode,
-      phase: testGroup.phase,
-    };
-    this.send({ method: 'run', params: runPayload });
-  }
-
-  didFail() {
-    return this._didFail;
-  }
-
-  didSendStop() {
-    return this._didSendStop;
-  }
-
-  hash() {
-    return this._hash;
-  }
-
-  async stop(didFail?: boolean) {
-    if (didFail)
-      this._didFail = true;
-    if (this.didExit)
-      return;
-    if (!this._didSendStop) {
-      this.send({ method: 'stop' });
-      this._didSendStop = true;
-    }
-    await new Promise(f => this.once('exit', f));
-  }
-
-  private send(message: any) {
-    // This is a great place for debug logging.
-    this.process.send(message);
   }
 }
 

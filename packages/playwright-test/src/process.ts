@@ -16,31 +16,55 @@
 
 import type { WriteStream } from 'tty';
 import * as util from 'util';
-import type { RunPayload, TeardownErrorsPayload, TestOutputPayload, TtyParams, WorkerInitParams } from './ipc';
+import type { ProcessInitParams, TeardownErrorsPayload, TestOutputPayload, TtyParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
+import type { TestInfoError } from './types';
 import { serializeError } from './util';
-import { WorkerRunner } from './workerRunner';
+
+export type ProtocolRequest = {
+  id: number;
+  method: string;
+  params?: any;
+};
+
+export type ProtocolResponse = {
+  id?: number;
+  error?: string;
+  method?: string;
+  params?: any;
+  result?: any;
+};
+
+export class ProcessRunner {
+  appendProcessTeardownDiagnostics(error: TestInfoError) { }
+  unhandledError(reason: any) { }
+  async cleanup(): Promise<void> { }
+  async stop(): Promise<void> { }
+
+  protected dispatchEvent(method: string, params: any) {
+    const response: ProtocolResponse = { method, params };
+    sendMessageToParent({ method: '__dispatch__', params: response });
+  }
+}
 
 let closed = false;
 
-sendMessageToParent('ready');
+sendMessageToParent({ method: 'ready' });
 
 process.stdout.write = (chunk: string | Buffer) => {
   const outPayload: TestOutputPayload = {
-    testId: workerRunner?._currentTest?._test.id,
     ...chunkToParams(chunk)
   };
-  sendMessageToParent('stdOut', outPayload);
+  sendMessageToParent({ method: 'stdOut', params: outPayload });
   return true;
 };
 
 if (!process.env.PW_RUNNER_DEBUG) {
   process.stderr.write = (chunk: string | Buffer) => {
     const outPayload: TestOutputPayload = {
-      testId: workerRunner?._currentTest?._test.id,
       ...chunkToParams(chunk)
     };
-    sendMessageToParent('stdErr', outPayload);
+    sendMessageToParent({ method: 'stdErr', params: outPayload });
     return true;
   };
 }
@@ -49,37 +73,43 @@ process.on('disconnect', gracefullyCloseAndExit);
 process.on('SIGINT', () => {});
 process.on('SIGTERM', () => {});
 
-let workerRunner: WorkerRunner;
+let processRunner: ProcessRunner;
 let workerIndex: number | undefined;
 
 process.on('unhandledRejection', (reason, promise) => {
-  if (workerRunner)
-    workerRunner.unhandledError(reason);
+  if (processRunner)
+    processRunner.unhandledError(reason);
 });
 
 process.on('uncaughtException', error => {
-  if (workerRunner)
-    workerRunner.unhandledError(error);
+  if (processRunner)
+    processRunner.unhandledError(error);
 });
 
 process.on('message', async message => {
   if (message.method === 'init') {
-    const initParams = message.params as WorkerInitParams;
+    const initParams = message.params as ProcessInitParams;
     workerIndex = initParams.workerIndex;
     initConsoleParameters(initParams);
     startProfiling();
-    workerRunner = new WorkerRunner(initParams);
-    for (const event of ['watchTestResolved', 'testBegin', 'testEnd', 'stepBegin', 'stepEnd', 'done', 'teardownErrors'])
-      workerRunner.on(event, sendMessageToParent.bind(null, event));
+    const { create } = require(process.env.PW_PROCESS_RUNNER_SCRIPT!);
+    processRunner = create(initParams) as ProcessRunner;
     return;
   }
   if (message.method === 'stop') {
     await gracefullyCloseAndExit();
     return;
   }
-  if (message.method === 'run') {
-    const runPayload = message.params as RunPayload;
-    await workerRunner!.runTestGroup(runPayload);
+  if (message.method === '__dispatch__') {
+    const { id, method, params } = message.params as ProtocolRequest;
+    try {
+      const result = await (processRunner as any)[method](params);
+      const response: ProtocolResponse = { id, result };
+      sendMessageToParent({ method: '__dispatch__', params: response });
+    } catch (e) {
+      const response: ProtocolResponse = { id, error: e.toString() };
+      sendMessageToParent({ method: '__dispatch__', params: response });
+    }
   }
 });
 
@@ -91,27 +121,27 @@ async function gracefullyCloseAndExit() {
   setTimeout(() => process.exit(0), 30000);
   // Meanwhile, try to gracefully shutdown.
   try {
-    if (workerRunner) {
-      await workerRunner.stop();
-      await workerRunner.cleanup();
+    if (processRunner) {
+      await processRunner.stop();
+      await processRunner.cleanup();
     }
     if (workerIndex !== undefined)
       await stopProfiling(workerIndex);
   } catch (e) {
     try {
       const error = serializeError(e);
-      workerRunner.appendWorkerTeardownDiagnostics(error);
+      processRunner.appendProcessTeardownDiagnostics(error);
       const payload: TeardownErrorsPayload = { fatalErrors: [error] };
-      process.send!({ method: 'teardownErrors', params: payload });
+      sendMessageToParent({ method: 'teardownErrors', params: payload });
     } catch {
     }
   }
   process.exit(0);
 }
 
-function sendMessageToParent(method: string, params = {}) {
+function sendMessageToParent(message: { method: string, params?: any }) {
   try {
-    process.send!({ method, params });
+    process.send!(message);
   } catch (e) {
     // Can throw when closing.
   }
@@ -125,7 +155,7 @@ function chunkToParams(chunk: Buffer | string):  { text?: string, buffer?: strin
   return { text: chunk };
 }
 
-function initConsoleParameters(initParams: WorkerInitParams) {
+function initConsoleParameters(initParams: ProcessInitParams) {
   // Make sure the output supports colors.
   setTtyParams(process.stdout, initParams.stdoutParams);
   setTtyParams(process.stderr, initParams.stderrParams);
