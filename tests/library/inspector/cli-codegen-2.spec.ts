@@ -441,7 +441,7 @@ test.describe('cli codegen', () => {
       recorder.waitForActionPerformed(),
       page.click('input')
     ]);
-    expect(models.hovered).toBe('#checkbox');
+    expect(models.hovered).toBe('internal:id=[id=\"checkbox\"s]');
   });
 
   test('should update active model on action', async ({ page, openRecorder, browserName, headless }) => {
@@ -453,7 +453,7 @@ test.describe('cli codegen', () => {
       recorder.waitForActionPerformed(),
       page.click('input')
     ]);
-    expect(models.active).toBe('#checkbox');
+    expect(models.active).toBe('internal:id=[id=\"checkbox\"s]');
   });
 
   test('should check input with chaning id', async ({ page, openRecorder }) => {

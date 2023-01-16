@@ -209,8 +209,9 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
   if (element.getAttribute(testIdAttributeName))
     candidates.push({ engine: 'internal:testid', selector: `[${testIdAttributeName}=${escapeForAttributeSelector(element.getAttribute(testIdAttributeName)!, true)}]`, score: kTestIdScore });
 
-  if (element.getAttribute('id'))
-    candidates.push({ engine: 'internal:id', selector: `[id=${escapeForAttributeSelector(element.getAttribute('id')!, true)}]`, score: kCSSIdScore });
+  const idAttr = element.getAttribute('id');
+  if (idAttr && !isGuidLike(idAttr))
+    candidates.push({ engine: 'internal:id', selector: `[id=${escapeForAttributeSelector(idAttr, true)}]`, score: kCSSIdScore });
 
   if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
     const input = element as HTMLInputElement | HTMLTextAreaElement;

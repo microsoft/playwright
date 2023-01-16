@@ -30,7 +30,7 @@ it.describe('selector generator', () => {
 
   it('should prefer button over inner span', async ({ page }) => {
     await page.setContent(`<button id=clickme><span></span></button>`);
-    expect(await generate(page, 'button')).toBe('#clickme');
+    expect(await generate(page, 'button')).toBe('internal:id=[id=\"clickme\"s]');
   });
 
   it('should prefer role=button over inner span', async ({ page }) => {
@@ -142,7 +142,7 @@ it.describe('selector generator', () => {
       <div></div>
       <div id=first-item mark=1></div>
     `);
-    expect(await generate(page, 'div[mark="1"]')).toBe('#first-item');
+    expect(await generate(page, 'div[mark="1"]')).toBe('internal:id=[id=\"first-item\"s]');
   });
 
   it('should not use generated id', async ({ page }) => {
@@ -187,7 +187,7 @@ it.describe('selector generator', () => {
         <div>Text</div>
       </div>
     `);
-    expect(await generate(page, '#id > div')).toBe('#id >> internal:text="Text"i');
+    expect(await generate(page, '#id > div')).toBe('internal:id=[id=\"id\"s] >> internal:text=\"Text\"i');
   });
 
   it('should trim long text', async ({ page }) => {
@@ -199,7 +199,7 @@ it.describe('selector generator', () => {
       <div>Text that goes on and on and on and on and on and on and on and on and on and on and on and on and on and on and on</div>
       </div>
     `);
-    expect(await generate(page, '#id > div')).toBe(`#id >> internal:text="Text that goes on and on and on and on and on and on and on and on and on and on"i`);
+    expect(await generate(page, '#id > div')).toBe(`internal:id=[id=\"id\"s] >> internal:text="Text that goes on and on and on and on and on and on and on and on and on and on"i`);
   });
 
   it('should use nested ordinals', async ({ page }) => {
@@ -340,7 +340,7 @@ it.describe('selector generator', () => {
 
   it('should work with tricky attributes', async ({ page }) => {
     await page.setContent(`<button id="this:is-my-tricky.id"><span></span></button>`);
-    expect(await generate(page, 'button')).toBe('[id="this\\:is-my-tricky\\.id"]');
+    expect(await generate(page, 'button')).toBe('internal:id=[id=\"this:is-my-tricky.id\"s]');
 
     await page.setContent(`<ng:switch><span></span></ng:switch>`);
     expect(await generate(page, 'ng\\:switch')).toBe('ng\\:switch');
@@ -366,7 +366,7 @@ it.describe('selector generator', () => {
 
   it('should ignore empty aria-label for candidate consideration', async ({ page }) => {
     await page.setContent(`<button aria-label="" id="buttonId"></button>`);
-    expect(await generate(page, 'button')).toBe('#buttonId');
+    expect(await generate(page, 'button')).toBe('internal:id=[id=\"buttonId\"s]');
   });
 
   it('should accept valid aria-label for candidate consideration', async ({ page }) => {
@@ -376,17 +376,17 @@ it.describe('selector generator', () => {
 
   it('should ignore empty role for candidate consideration', async ({ page }) => {
     await page.setContent(`<button role="" id="buttonId"></button>`);
-    expect(await generate(page, 'button')).toBe('#buttonId');
+    expect(await generate(page, 'button')).toBe('internal:id=[id=\"buttonId\"s]');
   });
 
   it('should not accept invalid role for candidate consideration', async ({ page }) => {
     await page.setContent(`<button role="roleDescription" id="buttonId"></button>`);
-    expect(await generate(page, 'button')).toBe('#buttonId');
+    expect(await generate(page, 'button')).toBe('internal:id=[id=\"buttonId\"s]');
   });
 
   it('should ignore empty data-test-id for candidate consideration', async ({ page }) => {
     await page.setContent(`<button data-test-id="" id="buttonId"></button>`);
-    expect(await generate(page, 'button')).toBe('#buttonId');
+    expect(await generate(page, 'button')).toBe('internal:id=[id=\"buttonId\"s]');
   });
 
   it('should accept valid data-test-id for candidate consideration', async ({ page }) => {
