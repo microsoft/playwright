@@ -352,7 +352,7 @@ it.describe('selector generator', () => {
 
     await page.setContent(`<div><span></span></div>`);
     await page.$eval('div', div => div.id = `!#'!?:`);
-    expect(await generate(page, 'div')).toBe("[id=\"\\!\\#\\'\\!\\?\\:\"]");
+    expect(await generate(page, 'div')).toBe("internal:id=[id=\"!#'!?:\"s]");
   });
 
   it('should work without CSS.escape', async ({ page }) => {
