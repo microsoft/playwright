@@ -3668,7 +3668,7 @@ A glob pattern, regex pattern or predicate receiving [URL] to match while routin
 ### param: Page.unroute.handler
 * since: v1.8
 * langs: js, python
-- `handler` ?<[function]\([Route], [Request]\)>
+- `handler` ?<[function]\([Route], [Request]\): [Promise<any>|any]>
 
 Optional handler function to route the request.
 

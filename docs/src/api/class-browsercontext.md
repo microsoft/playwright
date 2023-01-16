@@ -1287,7 +1287,7 @@ A glob pattern, regex pattern or predicate receiving [URL] used to register a ro
 ### param: BrowserContext.unroute.handler
 * since: v1.8
 * langs: js, python
-- `handler` ?<[function]\([Route], [Request]\)>
+- `handler` ?<[function]\([Route], [Request]\): [Promise<any>|any]>
 
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
