@@ -22,9 +22,9 @@ import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
 export { expect } from '@playwright/test';
 import e2c from 'electron-to-chromium';
-import { assert } from 'playwright-core/lib/utils';
+import { assert } from '../../packages/playwright-core/lib/utils/debug';
 import { spawn } from 'child_process';
-import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
+import { ManualPromise } from '../../packages/playwright-core/lib/utils/manualPromise';
 
 type LaunchedElectronProcessInfo = {
   chromiumEndpointURL: string,

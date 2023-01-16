@@ -17,7 +17,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils';
 import { colors, minimatch, rimraf } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import type { FullResult, Reporter, TestError } from '../types/testReporter';

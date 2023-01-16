@@ -20,8 +20,8 @@ import type { AddressInfo } from 'net';
 import net from 'net';
 import util from 'util';
 import { debugLogger } from './debugLogger';
-import { createSocket } from './netUtils';
-import { assert, createGuid } from '../utils';
+import { createSocket } from '../utils/network';
+import { assert, createGuid,  } from '../utils';
 
 const dnsLookupAsync = util.promisify(dns.lookup);
 

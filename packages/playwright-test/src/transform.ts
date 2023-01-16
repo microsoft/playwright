@@ -169,11 +169,14 @@ export function resolveHook(filename: string, specifier: string): string | undef
 
 export function js2ts(resolved: string): string | undefined {
   const match = resolved.match(/(.*)(\.js|\.jsx|\.mjs)$/);
-  if (match) {
-    const tsResolved = match[1] + match[2].replace('j', 't');
-    if (!fs.existsSync(resolved) && fs.existsSync(tsResolved))
-      return tsResolved;
-  }
+  if (!match || fs.existsSync(resolved))
+    return;
+  const tsResolved = match[1] + match[2].replace('js', 'ts');
+  if (fs.existsSync(tsResolved))
+    return tsResolved;
+  const tsxResolved = match[1] + match[2].replace('js', 'tsx');
+  if (fs.existsSync(tsxResolved))
+    return tsxResolved;
 }
 
 export function transformHook(code: string, filename: string, moduleUrl?: string): string {

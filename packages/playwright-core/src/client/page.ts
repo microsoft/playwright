@@ -20,7 +20,7 @@ import path from 'path';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import { isSafeCloseError } from '../common/errors';
-import { urlMatches } from '../common/netUtils';
+import { urlMatches } from '../utils/network';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import type * as channels from '@protocol/channels';
 import { parseError, serializeError } from '../protocol/serializers';

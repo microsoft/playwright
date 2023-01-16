@@ -26,7 +26,7 @@ import { collectComponentUsages, componentInfo } from '../tsxTransform';
 import type { FullConfig } from '../types';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import type { AddressInfo } from 'net';
-import { getPlaywrightVersion } from 'playwright-core/lib/common/userAgent';
+import { getPlaywrightVersion } from 'playwright-core/lib/utils';
 import type { PlaywrightTestConfig as BasePlaywrightTestConfig } from '@playwright/test';
 
 let stoppableServer: any;

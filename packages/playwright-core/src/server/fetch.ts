@@ -24,7 +24,7 @@ import url from 'url';
 import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
 import { TimeoutSettings } from '../common/timeoutSettings';
-import { getUserAgent } from '../common/userAgent';
+import { getUserAgent } from '../utils/userAgent';
 import { assert, createGuid, monotonicTime } from '../utils';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext } from './browserContext';

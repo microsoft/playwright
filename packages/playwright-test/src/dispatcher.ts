@@ -22,7 +22,7 @@ import type { TestResult, Reporter, TestStep, TestError } from '../types/testRep
 import type { Suite } from './test';
 import type { Loader } from './loader';
 import { TestCase } from './test';
-import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
+import { ManualPromise } from 'playwright-core/lib/utils';
 import { TestTypeImpl } from './testType';
 
 export type TestGroup = {

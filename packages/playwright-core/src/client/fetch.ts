@@ -19,10 +19,10 @@ import path from 'path';
 import * as util from 'util';
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
-import type { HeadersArray } from '../common/types';
+import type { HeadersArray, NameValue } from '../common/types';
 import type * as channels from '@protocol/channels';
 import { kBrowserOrContextClosedError } from '../common/errors';
-import { assert, headersObjectToArray, isFilePayload, isString, objectToArray } from '../utils';
+import { assert, headersObjectToArray, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { ChannelOwner } from './channelOwner';
 import { RawHeaders } from './network';
@@ -336,4 +336,17 @@ function isJsonContentType(headers?: HeadersArray): boolean {
       return value === 'application/json';
   }
   return false;
+}
+
+function objectToArray(map?:  { [key: string]: any }): NameValue[] | undefined {
+  if (!map)
+    return undefined;
+  const result = [];
+  for (const [name, value] of Object.entries(map))
+    result.push({ name, value: String(value) });
+  return result;
+}
+
+function isFilePayload(value: any): boolean {
+  return typeof value === 'object' && value['name'] && value['mimeType'] && value['buffer'];
 }

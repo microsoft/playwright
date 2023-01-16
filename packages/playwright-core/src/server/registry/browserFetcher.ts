@@ -19,7 +19,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import childProcess from 'child_process';
-import { getUserAgent } from '../../common/userAgent';
+import { getUserAgent } from '../../utils/userAgent';
 import { existsAsync } from '../../utils/fileUtils';
 import { debugLogger } from '../../common/debugLogger';
 import { extract } from '../../zipBundle';

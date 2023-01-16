@@ -20,7 +20,7 @@ import { URL } from 'url';
 import type { WebSocketServer, WebSocket, WebSocketRawData } from '../utilsBundle';
 import { HttpServer } from '../utils/httpServer';
 import { assert, createGuid } from '../utils';
-import { getPlaywrightVersion } from '../common/userAgent';
+import { getPlaywrightVersion } from '../utils/userAgent';
 
 const defaultOS = 'linux';
 

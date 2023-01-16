@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { pollAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
+import { pollAgainstTimeout } from 'playwright-core/lib/utils';
 import path from 'path';
 import {
   toBeChecked,

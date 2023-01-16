@@ -32,7 +32,7 @@ import { Waiter } from './waiter';
 import { Events } from './events';
 import type { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, StrictOptions } from './types';
 import { kLifecycleEvents } from './types';
-import { urlMatches } from '../common/netUtils';
+import { urlMatches } from '../utils/network';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
 import { debugLogger } from '../common/debugLogger';

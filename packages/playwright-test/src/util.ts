@@ -21,11 +21,10 @@ import path from 'path';
 import url from 'url';
 import { colors, debug, minimatch } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoError, Location } from './types';
-import { calculateSha1, isRegExp, isString } from 'playwright-core/lib/utils';
-import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
+import { calculateSha1, isRegExp, isString, captureStackTrace as coreCaptureStackTrace } from 'playwright-core/lib/utils';
+import { isInternalFileName } from 'playwright-core/lib/utils';
 import { currentTestInfo } from './globals';
-import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
-import { captureStackTrace as coreCaptureStackTrace } from 'playwright-core/lib/utils/stackTrace';
+import type { ParsedStackTrace } from 'playwright-core/lib/utils';
 
 export type { ParsedStackTrace };
 
