@@ -239,7 +239,7 @@ it('locator.frameLocator should not throw on first/last/nth', async ({ page, ser
   await expect(button3).toHaveText('Hello from iframe-3.html');
 });
 
-it.only('getBy coverage', async ({ page, server }) => {
+it('getBy coverage', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button1 = page.frameLocator('iframe').getByRole('button');
