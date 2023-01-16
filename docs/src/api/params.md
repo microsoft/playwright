@@ -1079,6 +1079,12 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-mask-%%
 - %%-input-timeout-%%
 
+## locator-get-by-id-id
+* since: v1.30
+- `id` <[string]|[RegExp]>
+
+Id to locate the element by.
+
 ## locator-get-by-test-id-test-id
 * since: v1.27
 - `testId` <[string]|[RegExp]>
@@ -1242,6 +1248,40 @@ By default, the `data-testid` attribute is used as a test id. Use [`method: Sele
 use: {
   testIdAttribute: 'data-pw'
 }
+```
+
+## template-locator-get-by-id
+
+Locate element by the id.
+
+**Usage**
+
+Consider the following DOM structure.
+
+```html
+<button id="directions">Itinéraire</button>
+```
+
+You can locate the element by it's id:
+
+```js
+await page.getById('directions').click();
+```
+
+```java
+page.getById("directions").click();
+```
+
+```python async
+await page.get_by_id("directions").click()
+```
+
+```python sync
+page.get_by_id("directions").click()
+```
+
+```csharp
+await page.GetById("directions").ClickAsync();
 ```
 
 ## template-locator-get-by-text

@@ -978,6 +978,14 @@ Attribute name to get the value for.
 
 ### option: Locator.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
+## method: Locator.getById
+* since: v1.30
+- returns: <[Locator]>
+
+%%-template-locator-get-by-id-%%
+
+### param: Locator.getById.id = %%-locator-get-by-id-id-%%
+
 ## method: Locator.getByLabel
 * since: v1.27
 - returns: <[Locator]>

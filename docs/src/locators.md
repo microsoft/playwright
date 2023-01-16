@@ -17,6 +17,7 @@ These are the recommended built in locators.
 - [`method: Page.getByAltText`](#locate-by-alt-text) to locate an element, usually image, by its text alternative.
 - [`method: Page.getByTitle`](#locate-by-title) to locate an element by its title attribute.
 - [`method: Page.getByTestId`](#locate-by-test-id) to locate an element based on its `data-testid` attribute (other attributes can be configured).
+- [`method: Page.getById`](#locate-by-id) to locate an element based on its `id` attribute.
 
 ```js
 await page.getByLabel('User Name').fill('John');
@@ -618,6 +619,38 @@ page.get_by_test_id("directions").click()
 
 ```csharp
 await page.GetByTestId("directions").ClickAsync();
+```
+
+### Locate by id
+
+Locate an element with a matching id using [`method: Page.getById`].
+
+For example, consider the following DOM structure.
+
+```html card
+<button id="directions">Itinéraire</button>
+```
+
+You can locate the element by it's id:
+
+```js
+await page.getById('directions').click();
+```
+
+```java
+page.getById("directions").click();
+```
+
+```python async
+await page.get_by_id("directions").click()
+```
+
+```python sync
+page.get_by_id("directions").click()
+```
+
+```csharp
+await page.GetById("directions").ClickAsync();
 ```
 
 ### Locate by CSS or XPath

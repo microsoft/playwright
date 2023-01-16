@@ -962,6 +962,14 @@ Attribute name to get the value for.
 
 ### option: Frame.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
+## method: Frame.getById
+* since: v1.30
+- returns: <[Locator]>
+
+%%-template-locator-get-by-id-%%
+
+### param: Frame.getById.id = %%-locator-get-by-id-id-%%
+
 ## method: Frame.getByLabel
 * since: v1.27
 - returns: <[Locator]>

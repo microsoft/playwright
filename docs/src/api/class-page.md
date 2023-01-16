@@ -2230,6 +2230,14 @@ Attribute name to get the value for.
 
 ### option: Page.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
+## method: Page.getById
+* since: v1.30
+- returns: <[Locator]>
+
+%%-template-locator-get-by-id-%%
+
+### param: Page.getById.id = %%-locator-get-by-id-id-%%
+
 ## method: Page.getByLabel
 * since: v1.27
 - returns: <[Locator]>

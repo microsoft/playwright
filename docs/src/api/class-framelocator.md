@@ -122,6 +122,14 @@ in that iframe.
 
 ### option: FrameLocator.getByAltText.exact = %%-locator-get-by-text-exact-%%
 
+## method: FrameLocator.getById
+* since: v1.30
+- returns: <[Locator]>
+
+%%-template-locator-get-by-id-%%
+
+### param: FrameLocator.getById.id = %%-locator-get-by-id-id-%%
+
 ## method: FrameLocator.getByLabel
 * since: v1.27
 - returns: <[Locator]>
