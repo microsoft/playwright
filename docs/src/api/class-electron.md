@@ -57,6 +57,31 @@ If you are not able to launch Electron and it will end up in timeouts during lau
 
 * Ensure that `nodeCliInspect` ([FuseV1Options.EnableNodeCliInspectArguments](https://www.electronjs.org/docs/latest/tutorial/fuses#nodecliinspect)) fuse is **not** set to `false`.
 
+## async method: Electron.connectOverCDP
+* since: v1.30
+- returns: <[ElectronApplication]>
+
+This method attaches Playwright to an existing electron application instance using the Chrome DevTools Protocol.
+Electron application must be started with '--inspect' and '--remote-debugging-port' command line arguments.
+
+### option: Electron.connectOverCDP.nodeEndpointURL
+* since: v1.30
+- `nodeEndpointURL` <[string]>
+
+A node websocket endpoint or http url to connect to. For example `http://localhost:9221/` or `ws://127.0.0.1:9221/0b100c59-cc44-44e7-862f-b37e337a6145`.
+
+### option: Electron.connectOverCDP.chromiumEndpointURL
+* since: v1.30
+- `chromiumEndpointURL` <[string]>
+
+A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
+
+### option: Electron.connectOverCDP.timeout
+* since: v1.30
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the application to connect. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+
 ## async method: Electron.launch
 * since: v1.9
 - returns: <[ElectronApplication]>
@@ -142,28 +167,3 @@ Maximum time in milliseconds to wait for the application to start. Defaults to `
 
 ### option: Electron.launch.timezoneId = %%-context-option-timezoneid-%%
 * since: v1.12
-
-## async method: Electron.connectOverCDP
-* since: v1.30
-- returns: <[ElectronApplication]>
-
-This method attaches Playwright to an existing electron application instance using the Chrome DevTools Protocol.
-Electron application must be started with '--inspect' and '--remote-debugging-port' command line arguments.
-
-### option: Electron.connectOverCDP.nodeEndpointURL
-* since: v1.30
-- `nodeEndpointURL` <[string]>
-
-A node websocket endpoint or http url to connect to. For example `http://localhost:9221/` or `ws://127.0.0.1:9221/0b100c59-cc44-44e7-862f-b37e337a6145`.
-
-### option: Electron.connectOverCDP.chromiumEndpointURL
-* since: v1.30
-- `chromiumEndpointURL` <[string]>
-
-A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
-
-### option: Electron.connectOverCDP.timeout
-* since: v1.30
-- `timeout` <[float]>
-
-Maximum time in milliseconds to wait for the application to connect. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
