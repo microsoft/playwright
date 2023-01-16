@@ -185,7 +185,7 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
 
   const idAttr = element.getAttribute('id');
   if (idAttr && !isGuidLike(idAttr))
-    candidates.push({ engine: 'css', selector: makeSelectorForId(idAttr), score: kCSSIdScore });
+    candidates.push({ engine: 'internal:id', selector: `[id=${escapeForAttributeSelector(element.getAttribute('id')!, true)}]`, score: kCSSIdScore });
 
   candidates.push({ engine: 'css', selector: cssEscape(element.nodeName.toLowerCase()), score: kCSSTagNameScore });
 
@@ -208,6 +208,9 @@ function buildCandidates(injectedScript: InjectedScript, element: Element, testI
   // Get via testIdAttributeName via GetByTestId().
   if (element.getAttribute(testIdAttributeName))
     candidates.push({ engine: 'internal:testid', selector: `[${testIdAttributeName}=${escapeForAttributeSelector(element.getAttribute(testIdAttributeName)!, true)}]`, score: kTestIdScore });
+
+  if (element.getAttribute('id'))
+    candidates.push({ engine: 'internal:id', selector: `[id=${escapeForAttributeSelector(element.getAttribute('id')!, true)}]`, score: kCSSIdScore });
 
   if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
     const input = element as HTMLInputElement | HTMLTextAreaElement;

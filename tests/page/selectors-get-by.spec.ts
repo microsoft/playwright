@@ -43,6 +43,25 @@ it('getByTestId should work for regex', async ({ page }) => {
   await expect(page.locator('div').getByTestId('Hello')).toHaveText('Hello world');
 });
 
+it('getById should work', async ({ page }) => {
+  await page.setContent('<div><div id="Hello">Hello world</div></div>');
+  await expect(page.getById('Hello')).toHaveText('Hello world');
+  await expect(page.mainFrame().getById('Hello')).toHaveText('Hello world');
+  await expect(page.locator('div').getById('Hello')).toHaveText('Hello world');
+});
+
+it('getById should work for regex', async ({ page }) => {
+  await page.setContent('<div><div id="Hello">Hello world</div></div>');
+  await expect(page.getById(/He[l]*o/)).toHaveText('Hello world');
+  await expect(page.mainFrame().getById('Hello')).toHaveText('Hello world');
+  await expect(page.locator('div').getById('Hello')).toHaveText('Hello world');
+});
+
+it('getById should escape id', async ({ page }) => {
+  await page.setContent(`<div><div id='He"llo'>Hello world</div></div>`);
+  await expect(page.getById('He"llo')).toHaveText('Hello world');
+});
+
 it('getByText should work', async ({ page }) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.getByText('ye').evaluate(e => e.outerHTML)).toContain('>\nye  </div>');

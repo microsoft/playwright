@@ -19,7 +19,7 @@ import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringi
 import type { ParsedSelector } from '../isomorphic/selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has' | 'frame';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'id' | 'nth' | 'first' | 'last' | 'has-text' | 'has' | 'frame';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 
 type LocatorOptions = { attrs?: { name: string, value: string | boolean | number}[], exact?: boolean, name?: string | RegExp };
@@ -99,6 +99,12 @@ function innerAsLocator(factory: LocatorFactory, parsed: ParsedSelector, isFrame
       const attrSelector = parseAttributeSelector(part.body as string, true);
       const { value } = attrSelector.attributes[0];
       tokens.push(factory.generateLocator(base, 'test-id', value));
+      continue;
+    }
+    if (part.name === 'internal:id') {
+      const attrSelector = parseAttributeSelector(part.body as string, true);
+      const { value } = attrSelector.attributes[0];
+      tokens.push(factory.generateLocator(base, 'id', value));
       continue;
     }
     if (part.name === 'internal:attr') {
@@ -185,6 +191,8 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         return `filter({ has: ${body} })`;
       case 'test-id':
         return `getByTestId(${this.quote(body as string)})`;
+      case 'id':
+        return `getById(${this.quote(body as string)})`;
       case 'text':
         return this.toCallWithExact('getByText', body, !!options.exact);
       case 'alt':
@@ -253,6 +261,8 @@ export class PythonLocatorFactory implements LocatorFactory {
         return `filter(has=${body})`;
       case 'test-id':
         return `get_by_test_id(${this.quote(body as string)})`;
+      case 'id':
+        return `get_by_id(${this.quote(body as string)})`;
       case 'text':
         return this.toCallWithExact('get_by_text', body, !!options.exact);
       case 'alt':
@@ -330,6 +340,8 @@ export class JavaLocatorFactory implements LocatorFactory {
         return `filter(new ${clazz}.FilterOptions().setHas(${body}))`;
       case 'test-id':
         return `getByTestId(${this.quote(body as string)})`;
+      case 'id':
+        return `getById(${this.quote(body as string)})`;
       case 'text':
         return this.toCallWithExact(clazz, 'getByText', body, !!options.exact);
       case 'alt':
@@ -401,6 +413,8 @@ export class CSharpLocatorFactory implements LocatorFactory {
         return `Filter(new() { Has = ${body} })`;
       case 'test-id':
         return `GetByTestId(${this.quote(body as string)})`;
+      case 'id':
+        return `GetById(${this.quote(body as string)})`;
       case 'text':
         return this.toCallWithExact('GetByText', body, !!options.exact);
       case 'alt':

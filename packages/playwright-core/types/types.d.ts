@@ -2496,6 +2496,27 @@ export interface Page {
   }): Locator;
 
   /**
+   * Locate element by the id.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure.
+   *
+   * ```html
+   * <button id="directions">Itinéraire</button>
+   * ```
+   *
+   * You can locate the element by it's id:
+   *
+   * ```js
+   * await page.getById('directions').click();
+   * ```
+   *
+   * @param id Id to locate the element by.
+   */
+  getById(id: string|RegExp): Locator;
+
+  /**
    * Allows locating input elements by the text of the associated label.
    *
    * **Usage**
@@ -5885,6 +5906,27 @@ export interface Frame {
      */
     exact?: boolean;
   }): Locator;
+
+  /**
+   * Locate element by the id.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure.
+   *
+   * ```html
+   * <button id="directions">Itinéraire</button>
+   * ```
+   *
+   * You can locate the element by it's id:
+   *
+   * ```js
+   * await page.getById('directions').click();
+   * ```
+   *
+   * @param id Id to locate the element by.
+   */
+  getById(id: string|RegExp): Locator;
 
   /**
    * Allows locating input elements by the text of the associated label.
@@ -10815,6 +10857,27 @@ export interface Locator {
      */
     exact?: boolean;
   }): Locator;
+
+  /**
+   * Locate element by the id.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure.
+   *
+   * ```html
+   * <button id="directions">Itinéraire</button>
+   * ```
+   *
+   * You can locate the element by it's id:
+   *
+   * ```js
+   * await page.getById('directions').click();
+   * ```
+   *
+   * @param id Id to locate the element by.
+   */
+  getById(id: string|RegExp): Locator;
 
   /**
    * Allows locating input elements by the text of the associated label.
@@ -16633,6 +16696,27 @@ export interface FrameLocator {
      */
     exact?: boolean;
   }): Locator;
+
+  /**
+   * Locate element by the id.
+   *
+   * **Usage**
+   *
+   * Consider the following DOM structure.
+   *
+   * ```html
+   * <button id="directions">Itinéraire</button>
+   * ```
+   *
+   * You can locate the element by it's id:
+   *
+   * ```js
+   * await page.getById('directions').click();
+   * ```
+   *
+   * @param id Id to locate the element by.
+   */
+  getById(id: string|RegExp): Locator;
 
   /**
    * Allows locating input elements by the text of the associated label.

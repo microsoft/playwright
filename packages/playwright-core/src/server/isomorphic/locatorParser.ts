@@ -70,6 +70,7 @@ function parseLocator(locator: string, testIdAttributeName: string): string {
   template = template.toLowerCase()
       .replace(/get_by_alt_text/g, 'getbyalttext')
       .replace(/get_by_test_id/g, 'getbytestid')
+      .replace(/get_by_id/g, 'getbyid')
       .replace(/get_by_([\w]+)/g, 'getby$1')
       .replace(/has_text/g, 'hastext')
       .replace(/frame_locator/g, 'framelocator')
@@ -142,6 +143,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
       .replace(/getbytext\(([^)]+)\)/g, 'internal:text=$1')
       .replace(/getbylabel\(([^)]+)\)/g, 'internal:label=$1')
       .replace(/getbytestid\(([^)]+)\)/g, `internal:testid=[${testIdAttributeName}=$1s]`)
+      .replace(/getbyid\(([^)]+)\)/g, `internal:id=[id=$1s]`)
       .replace(/getby(placeholder|alt|title)(?:text)?\(([^)]+)\)/g, 'internal:attr=[$1=$2]')
       .replace(/first(\(\))?/g, 'nth=0')
       .replace(/last(\(\))?/g, 'nth=-1')
@@ -171,7 +173,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
     t = t
         .replace(/(?:r)\$(\d+)(i)?/g, (_, ordinal, suffix) => {
           const param = params[+ordinal - 1];
-          if (t.startsWith('internal:attr') || t.startsWith('internal:testid') || t.startsWith('internal:role'))
+          if (t.startsWith('internal:attr') || t.startsWith('internal:testid') || t.startsWith('internal:id') || t.startsWith('internal:role'))
             return new RegExp(param.text) + (suffix || '');
           return escapeForTextSelector(new RegExp(param.text, suffix), false);
         })
@@ -179,7 +181,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
           const param = params[+ordinal - 1];
           if (t.startsWith('internal:has='))
             return param.text;
-          if (t.startsWith('internal:attr') || t.startsWith('internal:testid') || t.startsWith('internal:role'))
+          if (t.startsWith('internal:attr') || t.startsWith('internal:testid') || t.startsWith('internal:id') || t.startsWith('internal:role'))
             return escapeForAttributeSelector(param.text, suffix === 's');
           return escapeForTextSelector(param.text, suffix === 's');
         });

@@ -40,6 +40,12 @@ export function getByTestIdSelector(testIdAttributeName: string, testId: string 
   return `internal:testid=[${testIdAttributeName}=${escapeForAttributeSelector(testId, true)}]`;
 }
 
+export function getByIdSelector(id: string | RegExp): string {
+  if (!isString(id))
+    return `internal:id=[id=${id}]`;
+  return `internal:id=[id=${escapeForAttributeSelector(id, true)}]`;
+}
+
 export function getByLabelSelector(text: string | RegExp, options?: { exact?: boolean }): string {
   return 'internal:label=' + escapeForTextSelector(text, !!options?.exact);
 }

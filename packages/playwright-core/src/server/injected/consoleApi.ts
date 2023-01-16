@@ -15,6 +15,7 @@
  */
 
 import type { ByRoleOptions } from '../../utils/isomorphic/locatorUtils';
+import { getByIdSelector } from '../../utils/isomorphic/locatorUtils';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../../utils/isomorphic/locatorUtils';
 import { escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
 import { asLocator } from '../isomorphic/locatorGenerators';
@@ -47,6 +48,7 @@ class Locator {
       return new Locator(injectedScript, selectorBase ? selectorBase + ' >> ' + selector : selector, options);
     };
     self.getByTestId = (testId: string): Locator => self.locator(getByTestIdSelector(injectedScript.testIdAttributeNameForStrictErrorAndConsoleCodegen(), testId));
+    self.getById = (id: string): Locator => self.locator(getByIdSelector(id));
     self.getByAltText = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByAltTextSelector(text, options));
     self.getByLabel = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByLabelSelector(text, options));
     self.getByPlaceholder = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByPlaceholderSelector(text, options));

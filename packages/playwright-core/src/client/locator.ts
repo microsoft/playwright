@@ -26,7 +26,7 @@ import type { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionO
 import { parseResult, serializeArgument } from './jsHandle';
 import { escapeForTextSelector } from '../utils/isomorphic/stringUtils';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
-import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
+import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector, getByIdSelector } from '../utils/isomorphic/locatorUtils';
 
 export type LocatorOptions = {
   hasText?: string | RegExp;
@@ -135,6 +135,10 @@ export class Locator implements api.Locator {
 
   getByTestId(testId: string | RegExp): Locator {
     return this.locator(getByTestIdSelector(testIdAttributeName(), testId));
+  }
+
+  getById(id: string | RegExp): Locator {
+    return this.locator(getByIdSelector(id));
   }
 
   getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
@@ -349,6 +353,10 @@ export class FrameLocator implements api.FrameLocator {
 
   getByTestId(testId: string | RegExp): Locator {
     return this.locator(getByTestIdSelector(testIdAttributeName(), testId));
+  }
+
+  getById(id: string | RegExp): Locator {
+    return this.locator(getByIdSelector(id));
   }
 
   getByAltText(text: string | RegExp, options?: { exact?: boolean }): Locator {
