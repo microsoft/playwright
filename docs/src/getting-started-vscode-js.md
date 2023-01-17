@@ -11,7 +11,7 @@ Get started by installing Playwright and generating a test to see it in action. 
 
 Install the [VS Code extension from the marketplace](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright) or from the extensions tab in VS Code.
 
-<img width="1100" alt="VS Code extension for Playwright" src="https://user-images.githubusercontent.com/13063165/197744119-5ed72385-2037-450b-b988-83b2f7554cf1.png" />
+<img width="1111" alt="VS Code extension for Playwright" src="https://user-images.githubusercontent.com/13063165/212734786-e8054b73-6f3b-41fe-bec9-16112a3d0aac.png" />
 
 Once installed, open the command panel and type:
 
@@ -19,23 +19,24 @@ Once installed, open the command panel and type:
 Install Playwright
 ```
 
-<img width="1100" alt="Install Playwright" src="https://user-images.githubusercontent.com/13063165/197744677-edd437e7-15b2-4e3a-8c6b-e728cfe7b65c.png" />
+<img width="1111" alt="Install Playwright" src="https://user-images.githubusercontent.com/13063165/212735039-4fd84b61-c1ca-4296-90de-e5fb307304d8.png" />
+
 
 Select **Test: Install Playwright** and Choose the browsers you would like to run your tests on. These can be later configured in the [playwright.config](./test-configuration.md) file. You can also choose if you would like to have a GitHub Actions setup to [run your tests on CI](./ci-intro.md).
 
-<img width="1115" alt="Choose Browsers" src="https://user-images.githubusercontent.com/13063165/197704489-72744c50-81ea-4716-a5f1-52ca801edf1f.png" />
+<img width="1119" alt="Choose Browsers" src="https://user-images.githubusercontent.com/13063165/212735257-de837172-676f-4c31-8527-7b4b9b34266f.png" />
 
 ## Running Tests
 
 You can run a single test by clicking the green triangle next to your test block to run your test. Playwright will run through each line of the test and when it finishes you will see a green tick next to your test block as well as the time it took to run the test.
 
-<img width="1114" alt="Run a single test" src="https://user-images.githubusercontent.com/13063165/197712138-f4593c0d-ec7e-4a61-b2cd-59fc2af39c6a.png" />
+<img width="1314" alt="Run a single test" src="https://user-images.githubusercontent.com/13063165/212735762-51bae36b-8c91-46f1-bd3a-24bd29f853d2.png" />
 
 ### Run Tests and Show Browsers
 
-You can also run your tests and show the browsers by selecting the option **Show Browsers** in the testing sidebar. Then when you click the green triangle to run your test the browser will open and you will visually see it run through your test. Leave this selected if you want browsers open for all your tests or uncheck it if you prefer your tests to run in headless mode with no browser open. 
+You can also run your tests and show the browsers by selecting the option **Show Browsers** in the testing sidebar. Then when you click the green triangle to run your test the browser will open and you will visually see it run through your test. Leave this selected if you want browsers open for all your tests or uncheck it if you prefer your tests to run in headless mode with no browser open.
 
-<img width="1350" alt="Show browsers while running tests" src="https://user-images.githubusercontent.com/13063165/197714311-1d8c0955-9c5b-44ec-b429-160fa3d6b7a4.png" />
+<img width="1394" alt="Show browsers while running tests" src="https://user-images.githubusercontent.com/13063165/212736666-955bbb68-9fa9-4de3-baf3-1eab289c96a4.png" />
 
 Use the **Close all browsers** button to close all browsers.
 
@@ -43,18 +44,17 @@ Use the **Close all browsers** button to close all browsers.
 
 View all tests in the testing sidebar and extend the tests by clicking on each test. Tests that have not been run will not have the green check next to them. Run all tests by clicking on the white triangle as you hover over the tests in the testing sidebar.
 
-<img width="1114" alt="Run all tests in file" src="https://user-images.githubusercontent.com/13063165/197712455-496f5300-79ed-4eae-9cc1-52cc9f3c019b.png" />
+<img width="1314" alt="Run all tests in file" src="https://user-images.githubusercontent.com/13063165/212737059-0c52cda1-829d-4cda-9ca8-33741c87dfff.png" />
 
 ### Run Tests on Specific Browsers
 
 The VS Code test runner runs your tests on the default browser of Chrome. To run on other/multiple browsers click the play button's dropdown and choose another profile or modify the default profile by clicking **Select Default Profile** and select the browsers you wish to run your tests on.
 
-<img width="1116" alt="selecting browsers" src="https://user-images.githubusercontent.com/13063165/197728519-5381efc0-30d4-490e-82a8-e43eb35daf9f.png" />
-
+<img width="1067" alt="selecting browsers" src="https://user-images.githubusercontent.com/13063165/212737627-bcfd0cf1-0c84-4d63-bee1-ac4a09ab765f.png" />
 
 Choose various or all profiles to run tests on multiple profiles. These profiles are read from the [playwright.config](./test-configuration.md) file. To add more profiles such as a mobile profile, first add it to your config file and it will then be available here.
 
-<img width="1012" alt="choosing default profiles" src="https://user-images.githubusercontent.com/13063165/197710323-ec752f91-86c5-45c8-81b3-eac2e8ed0bfb.png" />
+<img width="1067" alt="choosing default profiles" src="https://user-images.githubusercontent.com/13063165/212737795-dcb93b2d-dc4e-4cb2-abc5-9eff58cf48ac.png" />
 
 ## Debugging Tests
 
@@ -64,27 +64,37 @@ With the VS Code extension you can debug your tests right in VS Code see error m
 
 If your test fails VS Code will show you error messages right in the editor showing what was expected, what was received as well as a complete call log.
 
-<img width="1339" alt="error messaging in vs code" src="https://user-images.githubusercontent.com/13063165/197967016-b4c35689-0c04-4ea3-a288-35b98056efec.png" />
-
-### Run in Debug Mode
-
-To set a breakpoint click next to the line number where you want the breakpoint to be until a red dot appears. Run the tests in debug mode by right clicking on the line next to the test you want to run. A browser window will open and the test will run and pause at where the breakpoint is set.
-
-<img width="1149" alt="setting debug test mode" src="https://user-images.githubusercontent.com/13063165/197715919-98f32957-2ae1-478b-9588-d93cc4548c67.png" />
-
+<img width="1269" alt="error messaging in vs code" src="https://user-images.githubusercontent.com/13063165/212738654-b573b7c9-05be-476f-ab4c-201bf4265bc0.png" />
 
 ### Live Debugging
 
-You can modify your test right in VS Code while debugging and Playwright will highlight the selector in the browser. This is a great way of seeing if the selector exits or if there is more than one result. You can step through the tests, pause the test and rerun the tests from the menu in VS Code.
+You can debug your test live in VS Code. After running a test with the `Show Browser` option checked, click on any of the locators in VS Code and it will be highlighted in the Browser window. Playwright will highlight it if it exits and show you if there is more than one result
 
+<img width="1394" alt="live debugging in VS Code" src="https://user-images.githubusercontent.com/13063165/212884329-0755b007-0d69-4987-b084-38fd5bfb577d.png" />
 
-<img width="1350" alt="Live Debugging in VS Code" src="https://user-images.githubusercontent.com/13063165/197967885-512df81f-12e3-45e5-b90f-42ed0f064eac.png" />
+You can also edit the locators in VS Code and Playwright will show you the changes live in the browser window.
+
+<img width="1394" alt="live debugging in VS Code" src="https://user-images.githubusercontent.com/13063165/212884772-5022d4b1-6fab-456f-88e3-506f2354e238.png" />
+
+### Run in Debug Mode
+
+To set a breakpoint click next to the line number where you want the breakpoint to be until a red dot appears. Run the tests in debug mode by right clicking on the line next to the test you want to run. 
+
+<img width="1269" alt="setting debug test mode" src="https://user-images.githubusercontent.com/13063165/212739847-ecb7dcfe-8929-45f3-b24e-f9c4b592f430.png" />
+
+A browser window will open and the test will run and pause at where the breakpoint is set. You can step through the tests, pause the test and rerun the tests from the menu in VS Code.
+
+<img width="1269" alt="running test in debug mode" src="https://user-images.githubusercontent.com/13063165/212740233-3f278825-13e7-4a88-a118-dd4478d43a16.png" />
 
 ### Debug in different Browsers
 
-Debug your tests on specific browsers by selecting a profile from the dropdown. Set the default profile or select more than one profile to debug various profiles. Playwright will launch the first profile and once finished debugging it will then launch the next one.
+By default debugging is done using the Chromium profile. You can debug your tests on different browsers by right clicking on the debug icon in the testing sidebar and clicking on the 'Select Default Profile' option from the dropdown.
 
-<img width="1221" alt="debugging on specific profile" src="https://user-images.githubusercontent.com/13063165/197738552-06aa8a83-6a6b-4aad-ab23-d449640e1f5f.png" />
+<img width="1312" alt="debugging on specific profile" src="https://user-images.githubusercontent.com/13063165/212879469-436f8130-c62a-49e1-9d67-c1903b478d5f.png" />
+
+Then choose the test profile you would like to use for debugging your tests. Each time you run your test in debug mode it will use the profile you selected. You can run tests in debug mode by right clicking the line number where your test is and selecting 'Debug Test' from the menu.
+
+<img width="1312" alt="choosing a profile for debugging" src="https://user-images.githubusercontent.com/13063165/212880198-eac22c3e-68ce-47da-9163-d6b376ae7575.png" />
 
 To learn more about debugging, see [Debugging in Visual Studio Code](https://code.visualstudio.com/docs/editor/debugging).
 
@@ -108,10 +118,11 @@ To record from a specific point in your test file click the **Record at cursor**
 
 ### Picking a Locator
 
-Pick a locator and copy it into your test file by clicking the **Pick locator** button form the testing sidebar. Then in the browser click the element you require and it will now show up in the **Pick locator** box in VS Code. Press 'enter' on your keyboard to copy the locator into the clipboard and then paste anywhere in your code. Or press 'escape' if you want to cancel.
+Pick a [locator](./locators.md) and copy it into your test file by clicking the **Pick locator** button form the testing sidebar. Then in the browser click the element you require and it will now show up in the **Pick locator** box in VS Code. Press 'enter' on your keyboard to copy the locator into the clipboard and then paste anywhere in your code. Or press 'escape' if you want to cancel.
 
-<img width="1394" alt="Pick locators" src="https://user-images.githubusercontent.com/13063165/201847977-6ca501d0-96b4-4775-ade9-d6269a5d03f9.png" />
+<img width="1394" alt="Pick locators" src="https://user-images.githubusercontent.com/13063165/212741666-6479a702-2517-44a3-9eca-e719e13b379c.png" />
 
+Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md). If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
 
 ## What's next
 
