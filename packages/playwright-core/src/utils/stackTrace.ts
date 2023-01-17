@@ -30,9 +30,12 @@ export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): 
 const CORE_DIR = path.resolve(__dirname, '..', '..');
 const CORE_LIB = path.join(CORE_DIR, 'lib');
 const CORE_SRC = path.join(CORE_DIR, 'src');
-const TEST_DIR_SRC = path.resolve(CORE_DIR, '..', 'playwright-test');
-const TEST_DIR_LIB = path.resolve(CORE_DIR, '..', '@playwright', 'test');
 const COVERAGE_PATH = path.join(CORE_DIR, '..', '..', 'tests', 'config', 'coverage.js');
+
+const stackIgnoreFilters = [
+  (frame: StackFrame) => frame.file.startsWith(CORE_DIR),
+];
+export const addStackIgnoreFilter = (filter: (frame: StackFrame) => boolean) => stackIgnoreFilters.push(filter);
 
 export type StackFrame = {
   file: string,
@@ -125,9 +128,7 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
   parsedFrames = parsedFrames.filter((f, i) => {
     if (process.env.PWDEBUGIMPL)
       return true;
-    if (f.frame.file.startsWith(TEST_DIR_SRC) || f.frame.file.startsWith(TEST_DIR_LIB))
-      return false;
-    if (f.frame.file.startsWith(CORE_DIR))
+    if (stackIgnoreFilters.some(filter => filter(f.frame)))
       return false;
     return true;
   });
