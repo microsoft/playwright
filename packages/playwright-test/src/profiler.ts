@@ -34,14 +34,14 @@ export async function startProfiling() {
   });
 }
 
-export async function stopProfiling(workerIndex: number | undefined) {
+export async function stopProfiling(processName: string | undefined) {
   if (!profileDir)
     return;
 
   await new Promise<void>(f => session.post('Profiler.stop', (err, { profile }) => {
     if (!err) {
       fs.mkdirSync(profileDir, { recursive: true });
-      fs.writeFileSync(path.join(profileDir, workerIndex === undefined ? 'runner.json' : 'worker' + workerIndex + '.json'), JSON.stringify(profile));
+      fs.writeFileSync(path.join(profileDir, (processName || 'runner') + '.json'), JSON.stringify(profile));
     }
     f();
   }));

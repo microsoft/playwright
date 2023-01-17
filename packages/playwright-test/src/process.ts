@@ -37,9 +37,7 @@ export type ProtocolResponse = {
 
 export class ProcessRunner {
   appendProcessTeardownDiagnostics(error: TestInfoError) { }
-  unhandledError(reason: any) { }
-  async cleanup(): Promise<void> { }
-  async stop(): Promise<void> { }
+  async gracefullyClose(): Promise<void> { }
 
   protected dispatchEvent(method: string, params: any) {
     const response: ProtocolResponse = { method, params };
@@ -74,29 +72,18 @@ process.on('SIGINT', () => {});
 process.on('SIGTERM', () => {});
 
 let processRunner: ProcessRunner;
-let workerIndex: number | undefined;
-
-process.on('unhandledRejection', (reason, promise) => {
-  if (processRunner)
-    processRunner.unhandledError(reason);
-});
-
-process.on('uncaughtException', error => {
-  if (processRunner)
-    processRunner.unhandledError(error);
-});
-
+let processName: string | undefined;
 process.on('message', async message => {
-  if (message.method === 'init') {
-    const initParams = message.params as ProcessInitParams;
-    workerIndex = initParams.workerIndex;
-    initConsoleParameters(initParams);
+  if (message.method === '__init__') {
+    const { processParams, runnerParams, runnerScript } = message.params as { processParams: ProcessInitParams, runnerParams: any, runnerScript: string };
+    setTtyParams(process.stdout, processParams.stdoutParams);
+    setTtyParams(process.stderr, processParams.stderrParams);
     startProfiling();
-    const { create } = require(process.env.PW_PROCESS_RUNNER_SCRIPT!);
-    processRunner = create(initParams) as ProcessRunner;
+    const { create } = require(runnerScript);
+    processRunner = create(runnerParams) as ProcessRunner;
     return;
   }
-  if (message.method === 'stop') {
+  if (message.method === '__stop__') {
     await gracefullyCloseAndExit();
     return;
   }
@@ -121,12 +108,10 @@ async function gracefullyCloseAndExit() {
   setTimeout(() => process.exit(0), 30000);
   // Meanwhile, try to gracefully shutdown.
   try {
-    if (processRunner) {
-      await processRunner.stop();
-      await processRunner.cleanup();
-    }
-    if (workerIndex !== undefined)
-      await stopProfiling(workerIndex);
+    if (processRunner)
+      await processRunner.gracefullyClose();
+    if (processName)
+      await stopProfiling(processName);
   } catch (e) {
     try {
       const error = serializeError(e);
@@ -153,12 +138,6 @@ function chunkToParams(chunk: Buffer | string):  { text?: string, buffer?: strin
   if (typeof chunk !== 'string')
     return { text: util.inspect(chunk) };
   return { text: chunk };
-}
-
-function initConsoleParameters(initParams: ProcessInitParams) {
-  // Make sure the output supports colors.
-  setTtyParams(process.stdout, initParams.stdoutParams);
-  setTtyParams(process.stderr, initParams.stderrParams);
 }
 
 function setTtyParams(stream: WriteStream, params: TtyParams) {

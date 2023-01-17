@@ -25,15 +25,16 @@ export class WorkerHost extends ProcessHost<WorkerInitParams> {
   readonly workerIndex: number;
   private _hash: string;
   currentTestId: string | null = null;
-  private _initParams: WorkerInitParams;
+  private _params: WorkerInitParams;
 
   constructor(testGroup: TestGroup, parallelIndex: number, workerIsolation: WorkerIsolation, loader: SerializedLoaderData) {
-    super(require.resolve('./workerRunner.js'));
-    this.workerIndex = lastWorkerIndex++;
+    const workerIndex = lastWorkerIndex++;
+    super(require.resolve('./workerRunner.js'), `worker-${workerIndex}`);
+    this.workerIndex = workerIndex;
     this.parallelIndex = parallelIndex;
     this._hash = testGroup.workerHash;
 
-    this._initParams = {
+    this._params = {
       workerIsolation,
       workerIndex: this.workerIndex,
       parallelIndex,
@@ -43,8 +44,8 @@ export class WorkerHost extends ProcessHost<WorkerInitParams> {
     };
   }
 
-  async init() {
-    await this.doInit(this._initParams);
+  async start() {
+    await this.startRunner(this._params);
   }
 
   runTestGroup(runPayload: RunPayload) {
