@@ -32,10 +32,10 @@ const CORE_LIB = path.join(CORE_DIR, 'lib');
 const CORE_SRC = path.join(CORE_DIR, 'src');
 const COVERAGE_PATH = path.join(CORE_DIR, '..', '..', 'tests', 'config', 'coverage.js');
 
-const stackFilters = [
+const stackIgnoreFilters = [
   (frame: StackFrame) => frame.file.startsWith(CORE_DIR),
 ];
-export const addStackFilter = (filter: (frame: StackFrame) => boolean) => stackFilters.push(filter);
+export const addStackIgnoreFilter = (filter: (frame: StackFrame) => boolean) => stackIgnoreFilters.push(filter);
 
 export type StackFrame = {
   file: string,
