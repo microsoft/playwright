@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { defineConfig } from '@playwright/experimental-ct-react';
+import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   forbidOnly: !!process.env.CI,
