@@ -109,7 +109,7 @@ You can open a detailed view of each test by clicking on the test name. You can 
 <img width="1247" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/212868173-2bf680bb-274a-4aec-932b-d07255adcc74.png" />
 
 
-For projects created with `create-playwright` the HTML report is enabled by default. If you have a config which does not use the HTML report or running the show-report command yields to no reports, you can run it with `--reporter=HTML`.
+For projects created with `create-playwright` the HTML report is enabled by default. If you have a config which does not use the HTML report or running the show-report command yields to no reports, you can run it with `--reporter=html`.
 
 ```bash
 npx playwright show-report --reporter=HTML
