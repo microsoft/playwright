@@ -111,7 +111,7 @@ export class Dispatcher {
       worker = this._createWorker(job, index, this._loader.serialize());
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
-      await worker.init();
+      await worker.start();
       if (this._isStopped) // Check stopped signal after async hop.
         return;
     }

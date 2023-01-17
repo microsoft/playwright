@@ -33,13 +33,15 @@ export class ProcessHost<InitParams> extends EventEmitter {
   private _runnerScript: string;
   private _lastMessageId = 0;
   private _callbacks = new Map<number, { resolve: (result: any) => void, reject: (error: Error) => void }>();
+  private _processName: string;
 
-  constructor(runnerScript: string) {
+  constructor(runnerScript: string, processName: string) {
     super();
     this._runnerScript = runnerScript;
+    this._processName = processName;
   }
 
-  async doInit(params: InitParams) {
+  protected async startRunner(runnerParams: InitParams) {
     this.process = child_process.fork(require.resolve('./process'), {
       detached: false,
       env: {
@@ -90,9 +92,16 @@ export class ProcessHost<InitParams> extends EventEmitter {
         columns: process.stderr.columns,
         colorDepth: process.stderr.getColorDepth?.() || 8
       },
+      processName: this._processName
     };
 
-    this.send({ method: 'init', params: { ...processParams, ...params } });
+    this.send({
+      method: '__init__', params: {
+        processParams,
+        runnerScript: this._runnerScript,
+        runnerParams
+      }
+    });
   }
 
   protected sendMessage(message: { method: string, params?: any }) {
@@ -116,7 +125,7 @@ export class ProcessHost<InitParams> extends EventEmitter {
     if (this.didExit)
       return;
     if (!this._didSendStop) {
-      this.send({ method: 'stop' });
+      this.send({ method: '__stop__' });
       this._didSendStop = true;
     }
     await new Promise(f => this.once('exit', f));

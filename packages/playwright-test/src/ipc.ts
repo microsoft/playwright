@@ -35,9 +35,9 @@ export type WorkerIsolation =
 
 
 export type ProcessInitParams = {
-  workerIndex?: number;
   stdoutParams: TtyParams;
   stderrParams: TtyParams;
+  processName: string;
 };
 
 export type WorkerInitParams = {

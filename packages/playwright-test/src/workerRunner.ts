@@ -68,9 +68,12 @@ export class WorkerRunner extends ProcessRunner {
     // Resolve this promise, so worker does not stall waiting for the non-existent run to finish,
     // when it was sopped before running any test group.
     this._runFinished.resolve();
+
+    process.on('unhandledRejection', reason => this.unhandledError(reason));
+    process.on('uncaughtException', error => this.unhandledError(error));
   }
 
-  override stop(): Promise<void> {
+  private _stop(): Promise<void> {
     if (!this._isStopped) {
       this._isStopped = true;
 
@@ -83,7 +86,9 @@ export class WorkerRunner extends ProcessRunner {
     return this._runFinished;
   }
 
-  override async cleanup() {
+  override async gracefullyClose() {
+    await this._stop();
+
     // We have to load the project to get the right deadline below.
     await this._loadIfNeeded();
     await this._teardownScopes();
@@ -133,7 +138,7 @@ export class WorkerRunner extends ProcessRunner {
       this._fatalErrors.push(timeoutError);
   }
 
-  override unhandledError(error: Error | any) {
+  unhandledError(error: Error | any) {
     // Usually, we do not differentiate between errors in the control flow
     // and unhandled errors - both lead to the test failing. This is good for regular tests,
     // so that you can, e.g. expect() from inside an event handler. The test fails,
@@ -155,7 +160,7 @@ export class WorkerRunner extends ProcessRunner {
       if (!this._fatalErrors.length)
         this._fatalErrors.push(serializeError(error));
     }
-    this.stop();
+    this._stop();
   }
 
   private async _loadIfNeeded() {
@@ -208,7 +213,7 @@ export class WorkerRunner extends ProcessRunner {
         }
       } else {
         fatalUnknownTestIds = runPayload.entries.map(e => e.testId);
-        this.stop();
+        this._stop();
       }
     } catch (e) {
       // In theory, we should run above code without any errors.
