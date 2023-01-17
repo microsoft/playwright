@@ -30,11 +30,9 @@ export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): 
 const CORE_DIR = path.resolve(__dirname, '..', '..');
 const CORE_LIB = path.join(CORE_DIR, 'lib');
 const CORE_SRC = path.join(CORE_DIR, 'src');
-const TEST_DIR_SRC = path.resolve(CORE_DIR, '..', 'playwright-test');
 const COVERAGE_PATH = path.join(CORE_DIR, '..', '..', 'tests', 'config', 'coverage.js');
 
 const stackFilters = [
-  (frame: StackFrame) => frame.file.startsWith(TEST_DIR_SRC),
   (frame: StackFrame) => frame.file.startsWith(CORE_DIR),
 ];
 export const addStackFilter = (filter: (frame: StackFrame) => boolean) => stackFilters.push(filter);
