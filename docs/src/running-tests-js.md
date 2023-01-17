@@ -88,7 +88,15 @@ Check out our [debugging guide](./debug.md) to learn more about the [Playwright 
 
 ## Test Reports
 
-The [HTML Reporter](././test-reporters.md#html-reporter) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. By default, the HTML report is opened automatically if some of the tests failed.
+The HTML Reporter is a built in reporter which shows you a full report of all your tests that have been ran. It shows the name of the test as well as the file name with the line number of the test next to it as well as how long each test took to run and what browsers they were ran on. You can filter the report by passed tests, failed tests, skipped tests or flaky tests. You can also filter by browsers by clicking on the name of the browser next to a test. You can also search for a particular test or browser using the search bar.
+
+To open the report first run your tests:
+
+```bash
+npx playwright test
+```
+
+By default, the HTML report is opened automatically if some of the tests failed. If you need to open the report manually you can use the following command:
 
 ```bash
 npx playwright show-report
@@ -96,7 +104,7 @@ npx playwright show-report
 
 <img width="1392" alt="HTML Report > Test Reports view" src="https://user-images.githubusercontent.com/13063165/212744633-826cce1b-fab1-455a-8ca7-68867c4d4698.png" />
 
-You can click on each test and explore the tests errors as well as each step of the test.
+You can open a detailed view of each test by clicking on the test name. You can then explore the tests errors as well as expand each step of the test to see the code for that step and how long each step took to run.
 
 <img width="1392" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/212744710-c48a327c-fb68-4c85-adca-2bdedbfcf504.png" />
 
