@@ -102,12 +102,11 @@ To learn more about reports check out our detailed guide on [HTML Reporter](/tes
 
 Once you have served the report using `npx playwright show-report`, click on the trace icon next to the test's file name as seen in the image above. You can then view the trace of your tests and inspect each action to try to find out why the tests are failing.
 
-<img width="2005" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/212746021-c3c5dabb-c5dd-4e4e-adf5-54b225d78dc8.png" />
+<img width="1976" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/212869694-61368b16-f176-4083-bbc2-fc85b95131f0.png" />
 
 To learn more about traces check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 
 To learn more about running tests on CI check out our detailed guide on [Continuous Integration](/ci.md).
-
 
 ## What's Next
 

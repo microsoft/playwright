@@ -106,7 +106,7 @@ npx playwright show-report
 
 You can open a detailed view of each test by clicking on the test name. You can then explore the tests errors as well as expand each step of the test to see the code for that step and how long each step took to run.
 
-<img width="1392" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/212744710-c48a327c-fb68-4c85-adca-2bdedbfcf504.png" />
+<img width="1247" alt="HTML Reporter > Test Reports detailed view" src="https://user-images.githubusercontent.com/13063165/212868173-2bf680bb-274a-4aec-932b-d07255adcc74.png" />
 
 ## What's Next
 
