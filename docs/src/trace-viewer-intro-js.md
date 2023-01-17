@@ -55,19 +55,19 @@ The `trace-on` flag was introduced in Playwright v1.25. Check your `package.json
 
 ## Opening the HTML Report
 
-If you have a failed test then tests will run a total of 3 times. On the first retry the trace will be recorded. After the second retry the tests will stop running and a HTML report is available to view.
+The HTML report shows you a report of all your tests that have been ran and on which browsers as well as how long they took. Tests can be filtered by passed tests, failed, flakey or skipped tests. You can also search for a particular test. Clicking on a test will open the detailed view where you can see more information on your tests such as the errors, the test steps and the trace.
 
 ```bash
 npx playwright show-report
 ```
 
-In the HTML report click on the trace icon to directly open the trace file.
+In the HTML report click on the trace icon next to the test name file name to directly open the trace for the required test.
 
-<img width="960" alt="Playwright HTML Report" src="https://user-images.githubusercontent.com/13063165/189138532-bbb95411-3167-4f5f-985a-8886082fa7ab.png" />
+<img width="1404" alt="Playwright HTML Report" src="https://user-images.githubusercontent.com/13063165/212745273-c19487d2-bc5e-483f-9f67-f9c9e5413ff4.png" />
 
-You can also click on the test file and scroll down to the `'Traces'` tab and open the trace by clicking on the trace screenshot.
+You can also click open the detailed view of the test and scroll down to the `'Traces'` tab and open the trace by clicking on the trace screenshot.
 
-<img width="978" alt="Playwright HTML Report" src="https://user-images.githubusercontent.com/13063165/189139117-8c3a9979-0289-4ae9-8a76-cb8ff1e76539.png" />
+<img width="1404" alt="Playwright HTML Report detailed view" src="https://user-images.githubusercontent.com/13063165/212745663-124dd56a-5bd3-4eac-94f4-971790587b13.png" />
 
 
 To learn more about reporters check out our detailed guide on reporters including the [HTML Reporter](/test-reporters.md#html-reporter).
@@ -76,6 +76,6 @@ To learn more about reporters check out our detailed guide on reporters includin
 
 View traces of your test by clicking through each action or hovering using the timeline and see the state of the page before and after the action. Inspect the log, source and network during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it, open devtools etc.
 
-<img width="1386" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/189136442-4fc6d7a3-6f0c-4a5f-9d36-2650018b018a.png" />
+<img width="1976" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/212869694-61368b16-f176-4083-bbc2-fc85b95131f0.png" />
 
 To learn more about traces check out our detailed guide on [Trace Viewer](/trace-viewer.md).

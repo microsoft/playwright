@@ -127,6 +127,7 @@ You can then open the HTML report and click on the trace icon to open the trace.
 npx playwright show-report
 ```
 ## Recording a trace on CI
+* langs: js
 
 Traces should be run on continuous integration on the first retry of a failed test
 by setting the `trace: 'on-first-retry'` option in the test configuration file. This will produce a `trace.zip` file for each test that was retried.

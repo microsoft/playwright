@@ -109,6 +109,6 @@ pwsh bin/Debug/netX/playwright.ps1 show-trace trace.zip
 
 View traces of your test by clicking through each action or hovering using the timeline and see the state of the page before and after the action. Inspect the log, source and network during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it, open devtools etc.
 
-<img width="1386" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/189136442-4fc6d7a3-6f0c-4a5f-9d36-2650018b018a.png" />
+<img width="1976" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/212869694-61368b16-f176-4083-bbc2-fc85b95131f0.png" />
 
 To learn more check out our detailed guide on [Trace Viewer](/trace-viewer.md).
