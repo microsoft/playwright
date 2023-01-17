@@ -70,7 +70,7 @@ If your test fails VS Code will show you error messages right in the editor show
 
 You can debug your test live in VS Code. After running a test with the `Show Browser` option checked, click on any of the locators in VS Code and it will be highlighted in the Browser window. You can also edit the locators in VS Code and Playwright will highlight it if it exits and show you if there is more than one result.
 
-<img width="1394" alt="Screenshot 2023-01-16 at 18 43 10" src="https://user-images.githubusercontent.com/13063165/212738833-5f9bcbb2-0f58-4664-b6ea-fccbb6f26666.png" />
+<img width="1394" alt="live debugging in VS Code" src="https://user-images.githubusercontent.com/13063165/212738833-5f9bcbb2-0f58-4664-b6ea-fccbb6f26666.png" />
 
 ### Run in Debug Mode
 
@@ -84,9 +84,13 @@ A browser window will open and the test will run and pause at where the breakpoi
 
 ### Debug in different Browsers
 
-Debug your tests on specific browsers by selecting a profile from the dropdown. Set the default profile or select more than one profile to debug various profiles. Playwright will launch the first profile and once finished debugging it will then launch the next one.
+By default debugging is done using the Chromium profile. You can debug your tests on different browsers by right clicking on the debug icon in the testing sidebar and clicking on the 'Select Default Profile' option from the dropdown.
 
-<img width="1269" alt="debugging on specific profile" src="https://user-images.githubusercontent.com/13063165/212740442-5c19331a-5de7-4bc5-a98d-d5f465d42c42.png" />
+<img width="1312" alt="debugging on specific profile" src="https://user-images.githubusercontent.com/13063165/212879469-436f8130-c62a-49e1-9d67-c1903b478d5f.png" />
+
+Then choose the test profile you would like to use for debugging your tests. Each time you run your test in debug mode it will use the profile you selected. You can run tests in debug mode by right clicking the line number where your test is and selecting 'Debug Test' from the menu.
+
+<img width="1312" alt="choosing a profile for debugging" src="https://user-images.githubusercontent.com/13063165/212880198-eac22c3e-68ce-47da-9163-d6b376ae7575.png" />
 
 To learn more about debugging, see [Debugging in Visual Studio Code](https://code.visualstudio.com/docs/editor/debugging).
 
