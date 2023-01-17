@@ -6,14 +6,41 @@ title: "Debugging Tests"
 ## VS Code debugger
 * langs: js
 
-Use [VS Code Extension](./getting-started-vscode.md) for debugging.
+We recommend using the [VS Code Extension](./getting-started-vscode.md) for debugging for a better developer experience. With the VS Code extension you can debug your tests right in VS Code, see error messages, set breakpoints and live debug your tests.
+
+<img width="1269" alt="running test in debug mode" src="https://user-images.githubusercontent.com/13063165/212740233-3f278825-13e7-4a88-a118-dd4478d43a16.png" />
 
 ## Playwright Inspector
 
-Playwright Inspector is a GUI tool that helps authoring and debugging Playwright scripts. That's our default recommended tool for scripts troubleshooting.
+The Playwright Inspector is a GUI tool to help you author and debug Playwright scripts. 
 
-<img width="712" alt="Playwright Inspector" src="https://user-images.githubusercontent.com/883973/108614092-8c478a80-73ac-11eb-9597-67dfce110e00.png"></img>
+<img width="864" alt="Playwright Inspector" src="https://user-images.githubusercontent.com/13063165/212924587-4b84e5f6-b147-40e9-8c75-d7b9ab6b7ca1.png" />
 
+### Stepping through the Playwright script
+
+You can play, pause or step through each line of your test using the toolbar at the top of the Inspector. Underneath the toolbar the code of your test is shown and as you step through each line, the line of code that is being run is highlighted in the Inspector as well as in the browser window.
+
+<img width="1340" alt="Playwright Inspector and browser" src="https://user-images.githubusercontent.com/13063165/212936618-84b87acc-bc2e-46ed-994b-32b2ef742e60.png" />
+
+### Live editing locators
+
+Next to the 'Pick Locator' button is a field showing the [locator](./locators.md) that the test is paused on. You can edit this locator and it will show you if any elements or more than one element has been found on the page. This allows you to easily tweak and improve your locators.
+
+<img width="1348" alt="live editing locators" src="https://user-images.githubusercontent.com/13063165/212980815-1cf6ef7b-e69a-496c-898a-ec603a3bc562.png" />
+
+### Picking locators
+
+You can also click on the 'Pick Locator' button and then hover over any element on the page to see the locator highlighted underneath. Clicking an element in the browser will add the locator into the field where you can then either tweak it or copy it into your code.
+
+<img width="1392" alt="Picking locators" src="https://user-images.githubusercontent.com/13063165/212968640-ce82a027-9277-4bdf-b0a9-6282fb2becb7.png" />
+
+### Actionability logs
+
+By the time Playwright has paused on a click action, it has already performed [actionability checks](./actionability.md) that can be found in the log. This can help you understand what happened during your test and what Playwright did or tried to do. The log tells you if the element was visible, enabled and stable, if the locator resolved to an element, scrolled into view and so much more. If actionability can't be reached, it will show action as pending.
+
+<img width="883" alt="Actionability Logs" src="https://user-images.githubusercontent.com/13063165/212968907-5dede739-e0e3-482a-91cd-726a0f5b0b6d.png" />
+
+### Opening the Inspector
 There are several ways of opening Playwright Inspector:
 
 #### --debug
@@ -25,10 +52,16 @@ There are several ways of opening Playwright Inspector:
   npx playwright test --debug
   ```
 
-* Debugging one test
+* Debugging one test on a specific line
 
   ```bash
-  npx playwright test example --debug
+  npx playwright test example.spec.ts:10 --debug
+  ```
+
+* Debugging one test on a specific browser
+
+  ```bash
+  npx playwright test example.spec.ts:10 --project=webkit --debug
   ```
 
 #### PWDEBUG
@@ -99,7 +132,7 @@ dotnet test
 
 Additional useful defaults are configured when `PWDEBUG=1` is set:
 
-- Browsers launch in the headed mode
+- Browsers launch in headed mode
 - Default timeout is set to 0 (= no timeout)
 
 Using `PWDEBUG=console` will configure the browser for debugging in Developer tools console:
@@ -198,34 +231,7 @@ playwright codegen wikipedia.org
 pwsh bin/Debug/netX/playwright.ps1 codegen wikipedia.org
 ```
 
-### Stepping through the Playwright script
 
-The Inspector opens up a browser window highlighting the elements as you step through each line of the test. Use the explore button to pick a [locator](./locators.md) which you can then copy into your test file and rerun your tests to see if they pass.
-
-<img width="557" alt="Paused on line" src="https://user-images.githubusercontent.com/883973/108614337-71761580-73ae-11eb-9f61-3d29c52c9520.png"></img>
-
-Use the toolbar to play the test or step over each action using the "Step over" action (keyboard shortcut: `F10`) or resume script without further pauses (`F8`):
-
-<center><img width="98" alt="Stepping toolbar" src="https://user-images.githubusercontent.com/883973/108614389-f9f4b600-73ae-11eb-8df2-8d9ce9da5d5c.png"></img></center>
-
-Now we know what action is about to be performed and we can look into the details on that
-action. For example, when stopped on an input action such as `click`, the exact point Playwright is about to click is highlighted with the large red dot on the inspected page:
-
-<img width="344" alt="Red dot on inspected page" src="https://user-images.githubusercontent.com/883973/108614363-b69a4780-73ae-11eb-8f5e-51f9c91ec9b4.png"></img>
-
-### Actionability Logs
-
-By the time Playwright has paused on that click action, it has already performed [actionability checks](./actionability.md) that can be found in the log:
-
-<img width="712" alt="Action log" src="https://user-images.githubusercontent.com/883973/108614564-72a84200-73b0-11eb-9de2-828b28d78b36.png"></img>
-
-If actionability can't be reached, it'll show action as pending:
-
-<img width="712" alt="Pending action" src="https://user-images.githubusercontent.com/883973/108614840-e6e3e500-73b2-11eb-998f-0cf31b2aa9a2.png"></img>
-
-### Exploring selectors
-
-Use the Explore button to hover over an element on the page and explore it's selector by clicking on it. You can then copy this selector into your tests and rerun your tests to see if they now pass with this selector. You can also debug selectors, checkout our [debugging selectors](./debug-selectors.md) guide for more details.
 
 ## Browser Developer Tools
 
