@@ -94,8 +94,7 @@ Once your test has finished running a [HTML Reporter](./test-reporters.md#html-r
 npx playwright show-report
 ```
 
-<img width="739" alt="HTML Reporter" src="https://user-images.githubusercontent.com/13063165/181803518-1f554349-f72a-4ad3-a7aa-4d3d1b4cad13.png" />
-
+<img width="1392" alt="HTML Reporter" src="https://user-images.githubusercontent.com/13063165/212743312-edf1e8ed-3fc2-48aa-9c93-24ae3e36504d.png" />
 
 ## What's next
 

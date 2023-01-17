@@ -7,13 +7,15 @@ When installing Playwright you are given the option to add a [GitHub Actions](ht
 
 **What you will learn:**
 
-- [How to use GitHub Actions to run your tests](#github-actions)
-- [How to create a repo and push to GitHub](#create-a-repo-and-push-to-github)
-- [How to open the workflows](#opening-the-workflows)
-- [How to view the test logs](#viewing-test-logs)
-- [How to download the report from GitHub](#downloading-the-html-report)
-- [How to view the report](#viewing-the-html-report)
-- [How to view the trace](#viewing-the-trace)
+- [GitHub Actions](#github-actions)
+  - [Create a Repo and Push to GitHub](#create-a-repo-and-push-to-github)
+  - [Opening the Workflows](#opening-the-workflows)
+  - [Viewing Test Logs](#viewing-test-logs)
+- [HTML Report](#html-report)
+  - [Downloading the HTML Report](#downloading-the-html-report)
+  - [Viewing the HTML Report](#viewing-the-html-report)
+  - [Viewing the Trace](#viewing-the-trace)
+- [What's Next](#whats-next)
 
 ## GitHub Actions
 
@@ -92,7 +94,7 @@ Locally opening the report will not work as expected as you need a web server in
 npx playwright show-report name-of-my-extracted-playwright-report
 ```
 
-<img width="752" alt="Viewing the HTML Report" src="https://user-images.githubusercontent.com/13063165/183437645-b47dd175-2e07-4ecc-a469-27d5b150b7ed.png" />
+<img width="1404" alt="Playwright HTML Report" src="https://user-images.githubusercontent.com/13063165/212745273-c19487d2-bc5e-483f-9f67-f9c9e5413ff4.png" />
 
 To learn more about reports check out our detailed guide on [HTML Reporter](/test-reporters.md#html-reporter)
 
@@ -100,13 +102,11 @@ To learn more about reports check out our detailed guide on [HTML Reporter](/tes
 
 Once you have served the report using `npx playwright show-report`, click on the trace icon next to the test's file name as seen in the image above. You can then view the trace of your tests and inspect each action to try to find out why the tests are failing.
 
-
-<img width="1907" alt="Viewing the Trace" src="https://user-images.githubusercontent.com/13063165/183879653-d442e6b4-14f5-4d0e-99f3-9ba19f82c7cf.png"/>
+<img width="1976" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/13063165/212869694-61368b16-f176-4083-bbc2-fc85b95131f0.png" />
 
 To learn more about traces check out our detailed guide on [Trace Viewer](/trace-viewer.md).
 
 To learn more about running tests on CI check out our detailed guide on [Continuous Integration](/ci.md).
-
 
 ## What's Next
 
