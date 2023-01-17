@@ -68,7 +68,7 @@ If your test fails VS Code will show you error messages right in the editor show
 
 ### Live Debugging
 
-You can debug your test live in VS Code. After running a test with the 'show browser' option checked, click on any of the locators in VS Code and it will be highlighted in the Browser window. You can also edit the locators in VS Code and Playwright will highlight it if it exits and show you if there is more than one result.
+You can debug your test live in VS Code. After running a test with the `Show Browser` option checked, click on any of the locators in VS Code and it will be highlighted in the Browser window. You can also edit the locators in VS Code and Playwright will highlight it if it exits and show you if there is more than one result.
 
 <img width="1394" alt="Screenshot 2023-01-16 at 18 43 10" src="https://user-images.githubusercontent.com/13063165/212738833-5f9bcbb2-0f58-4664-b6ea-fccbb6f26666.png" />
 
