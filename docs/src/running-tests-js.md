@@ -112,7 +112,7 @@ You can open a detailed view of each test by clicking on the test name. You can 
 For projects created with `create-playwright` the HTML report is enabled by default. If you have a config which does not use the HTML report or running the show-report command yields to no reports, you can run it with `--reporter=html`.
 
 ```bash
-npx playwright show-report --reporter=HTML
+npx playwright show-report --reporter=html
 ```
 
 ## What's Next
