@@ -29,7 +29,7 @@ export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 export const store = _baseStore;
 
-addStackIgnoreFilter((frame: StackFrame) => frame.file.startsWith(path.join(__dirname, '..')));
+addStackIgnoreFilter((frame: StackFrame) => frame.file.startsWith(path.dirname(require.resolve('../package.json'))));
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;

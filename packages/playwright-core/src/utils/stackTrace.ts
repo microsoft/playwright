@@ -128,7 +128,7 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
   parsedFrames = parsedFrames.filter((f, i) => {
     if (process.env.PWDEBUGIMPL)
       return true;
-    if (stackFilters.some(filter => filter(f.frame)))
+    if (stackIgnoreFilters.some(filter => filter(f.frame)))
       return false;
     return true;
   });
