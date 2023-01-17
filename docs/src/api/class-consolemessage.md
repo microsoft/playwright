@@ -28,16 +28,16 @@ await msg.args[1].jsonValue() // 42
 ```
 
 ```java
-// Listen for all System.out.printlns
+// Listen for all console messages and print them to the standard output.
 page.onConsoleMessage(msg -> System.out.println(msg.text()));
 
-// Listen for all console events and handle errors
+// Listen for all console messages and print errors to the standard output.
 page.onConsoleMessage(msg -> {
   if ("error".equals(msg.type()))
     System.out.println("Error text: " + msg.text());
 });
 
-// Get the next System.out.println
+// Get the next console message
 ConsoleMessage msg = page.waitForConsoleMessage(() -> {
   // Issue console.log inside the page
   page.evaluate("console.log('hello', 42, { foo: 'bar' });");
