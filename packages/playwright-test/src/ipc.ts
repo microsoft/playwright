@@ -34,6 +34,12 @@ export type WorkerIsolation =
   'isolate-pools';      // create new worker for new worker fixture pool digest
 
 
+export type ProcessInitParams = {
+  workerIndex?: number;
+  stdoutParams: TtyParams;
+  stderrParams: TtyParams;
+};
+
 export type WorkerInitParams = {
   workerIsolation: WorkerIsolation;
   workerIndex: number;
@@ -41,8 +47,6 @@ export type WorkerInitParams = {
   repeatEachIndex: number;
   projectId: string;
   loader: SerializedLoaderData;
-  stdoutParams: TtyParams;
-  stderrParams: TtyParams;
 };
 
 export type WatchTestResolvedPayload = {
@@ -105,7 +109,6 @@ export type DonePayload = {
 };
 
 export type TestOutputPayload = {
-  testId?: string;
   text?: string;
   buffer?: string;
 };

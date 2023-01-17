@@ -16,7 +16,6 @@
 
 import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
-import { EventEmitter } from 'events';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from './util';
 import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, WatchTestResolvedPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
@@ -28,10 +27,11 @@ import { ManualPromise } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from './testInfo';
 import type { TimeSlot } from './timeoutManager';
 import { TimeoutManager } from './timeoutManager';
+import { ProcessRunner } from './process';
 
 const removeFolderAsync = util.promisify(rimraf);
 
-export class WorkerRunner extends EventEmitter {
+export class WorkerRunner extends ProcessRunner {
   private _params: WorkerInitParams;
   private _loader!: Loader;
   private _project!: FullProjectInternal;
@@ -48,7 +48,7 @@ export class WorkerRunner extends EventEmitter {
   private _isStopped = false;
   // This promise resolves once the single "run test group" call finishes.
   private _runFinished = new ManualPromise<void>();
-  _currentTest: TestInfoImpl | null = null;
+  private _currentTest: TestInfoImpl | null = null;
   private _lastRunningTests: TestInfoImpl[] = [];
   private _totalRunningTests = 0;
   // Dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
@@ -59,6 +59,9 @@ export class WorkerRunner extends EventEmitter {
 
   constructor(params: WorkerInitParams) {
     super();
+    process.env.TEST_WORKER_INDEX = String(params.workerIndex);
+    process.env.TEST_PARALLEL_INDEX = String(params.parallelIndex);
+
     this._params = params;
     this._fixtureRunner = new FixtureRunner();
 
@@ -67,7 +70,7 @@ export class WorkerRunner extends EventEmitter {
     this._runFinished.resolve();
   }
 
-  stop(): Promise<void> {
+  override stop(): Promise<void> {
     if (!this._isStopped) {
       this._isStopped = true;
 
@@ -80,18 +83,18 @@ export class WorkerRunner extends EventEmitter {
     return this._runFinished;
   }
 
-  async cleanup() {
+  override async cleanup() {
     // We have to load the project to get the right deadline below.
     await this._loadIfNeeded();
     await this._teardownScopes();
     if (this._fatalErrors.length) {
-      this.appendWorkerTeardownDiagnostics(this._fatalErrors[this._fatalErrors.length - 1]);
+      this.appendProcessTeardownDiagnostics(this._fatalErrors[this._fatalErrors.length - 1]);
       const payload: TeardownErrorsPayload = { fatalErrors: this._fatalErrors };
-      this.emit('teardownErrors', payload);
+      this.dispatchEvent('teardownErrors', payload);
     }
   }
 
-  appendWorkerTeardownDiagnostics(error: TestInfoError) {
+  override appendProcessTeardownDiagnostics(error: TestInfoError) {
     if (!this._lastRunningTests.length)
       return;
     const count = this._totalRunningTests === 1 ? '1 test' : `${this._totalRunningTests} tests`;
@@ -130,7 +133,7 @@ export class WorkerRunner extends EventEmitter {
       this._fatalErrors.push(timeoutError);
   }
 
-  unhandledError(error: Error | any) {
+  override unhandledError(error: Error | any) {
     // Usually, we do not differentiate between errors in the control flow
     // and unhandled errors - both lead to the test failing. This is good for regular tests,
     // so that you can, e.g. expect() from inside an event handler. The test fails,
@@ -181,7 +184,7 @@ export class WorkerRunner extends EventEmitter {
             title: test.title,
             location: test.location
           };
-          this.emit('watchTestResolved', testResolvedPayload);
+          this.dispatchEvent('watchTestResolved', testResolvedPayload);
           entries.set(test.id, { testId: test.id, retry: 0 });
         }
         if (!entries.has(test.id))
@@ -222,7 +225,7 @@ export class WorkerRunner extends EventEmitter {
         if (entries.has(test.id))
           donePayload.skipTestsDueToSetupFailure.push(test.id);
       }
-      this.emit('done', donePayload);
+      this.dispatchEvent('done', donePayload);
       this._fatalErrors = [];
       this._skipRemainingTestsInSuite = undefined;
       this._runFinished.resolve();
@@ -231,8 +234,8 @@ export class WorkerRunner extends EventEmitter {
 
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
     const testInfo = new TestInfoImpl(this._loader, this._project, this._params, test, retry,
-        stepBeginPayload => this.emit('stepBegin', stepBeginPayload),
-        stepEndPayload => this.emit('stepEnd', stepEndPayload));
+        stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
+        stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload));
 
     const processAnnotation = (annotation: Annotation) => {
       testInfo.annotations.push(annotation);
@@ -283,7 +286,7 @@ export class WorkerRunner extends EventEmitter {
 
     this._currentTest = testInfo;
     setCurrentTestInfo(testInfo);
-    this.emit('testBegin', buildTestBeginPayload(testInfo));
+    this.dispatchEvent('testBegin', buildTestBeginPayload(testInfo));
 
     const isSkipped = testInfo.expectedStatus === 'skipped';
     const hasAfterAllToRunBeforeNextTest = reversedSuites.some(suite => {
@@ -292,7 +295,7 @@ export class WorkerRunner extends EventEmitter {
     if (isSkipped && nextTest && !hasAfterAllToRunBeforeNextTest) {
       // Fast path - this test is skipped, and there are more tests that will handle cleanup.
       testInfo.status = 'skipped';
-      this.emit('testEnd', buildTestEndPayload(testInfo));
+      this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
       return;
     }
 
@@ -474,7 +477,7 @@ export class WorkerRunner extends EventEmitter {
     afterHooksStep.complete({ error: firstAfterHooksError });
     this._currentTest = null;
     setCurrentTestInfo(null);
-    this.emit('testEnd', buildTestEndPayload(testInfo));
+    this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
 
     const preserveOutput = this._loader.fullConfig().preserveOutput === 'always' ||
       (this._loader.fullConfig().preserveOutput === 'failures-only' && testInfo._isFailure());
@@ -623,3 +626,5 @@ function formatTestTitle(test: TestCase, projectName: string) {
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   return `${projectTitle}${location} › ${titles.join(' › ')}`;
 }
+
+export const create = (params: WorkerInitParams) => new WorkerRunner(params);
