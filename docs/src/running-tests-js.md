@@ -90,11 +90,20 @@ Check out our [debugging guide](./debug.md) to learn more about the [Playwright 
 
 ## Test Reports
 
-The [HTML Reporter](././test-reporters.md#html-reporter) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. By default, the HTML report is opened automatically if some of the tests failed.
+The [HTML Reporter](././test-reporters.md#html-reporter) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests.
 
-```bash
-npx playwright show-report
-```
+* Running the test with the HTML reporter:
+
+  ```bash
+  npx playwright test --reporter=html
+  ```
+
+* Viewing the HTML report (by default, the HTML report is opened automatically if some of the
+  tests failed):
+
+  ```bash
+  npx playwright show-report
+  ```
 
 <img width="963" alt="HTML Report > Test Reports view" src="https://user-images.githubusercontent.com/13063165/189140120-71a6bc41-f921-40be-a7a4-61d44da33b20.png" />
 
