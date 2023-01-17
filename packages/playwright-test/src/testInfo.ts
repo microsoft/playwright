@@ -19,7 +19,6 @@ import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus } from '../types/test';
 import type { StepBeginPayload, StepEndPayload, WorkerInitParams } from './ipc';
-import type { Loader } from './loader';
 import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal, TestStepInternal } from './types';
@@ -82,7 +81,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   constructor(
-    loader: Loader,
+    config: FullConfigInternal,
     project: FullProjectInternal,
     workerParams: WorkerInitParams,
     test: TestCase,
@@ -101,7 +100,7 @@ export class TestInfoImpl implements TestInfo {
     this.workerIndex = workerParams.workerIndex;
     this.parallelIndex =  workerParams.parallelIndex;
     this.project = project;
-    this.config = loader.fullConfig();
+    this.config = config;
     this.title = test.title;
     this.titlePath = test.titlePath();
     this.file = test.location.file;

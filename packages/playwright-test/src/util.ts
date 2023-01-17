@@ -297,3 +297,19 @@ export async function normalizeAndSaveAttachment(outputPath: string, name: strin
     return { name, contentType, body: typeof options.body === 'string' ? Buffer.from(options.body) : options.body };
   }
 }
+
+export function fileIsModule(file: string): boolean {
+  if (file.endsWith('.mjs'))
+    return true;
+
+  const folder = path.dirname(file);
+  return folderIsModule(folder);
+}
+
+export function folderIsModule(folder: string): boolean {
+  const packageJsonPath = getPackageJsonPath(folder);
+  if (!packageJsonPath)
+    return false;
+  // Rely on `require` internal caching logic.
+  return require(packageJsonPath).type === 'module';
+}
