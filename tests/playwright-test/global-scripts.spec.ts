@@ -16,6 +16,8 @@
 import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
+test.fixme(true, 'Restore this');
+
 type Timeline = { titlePath: string[], event: 'begin' | 'end' }[];
 
 function formatTimeline(timeline: Timeline) {

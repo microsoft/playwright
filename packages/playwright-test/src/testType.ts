@@ -55,8 +55,6 @@ export class TestTypeImpl {
     test.step = wrapFunctionWithLocation(this._step.bind(this));
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
-    test.projectSetup = wrapFunctionWithLocation(this._createTest.bind(this, 'projectSetup'));
-    (test.projectSetup as any).only = wrapFunctionWithLocation(this._createTest.bind(this, 'projectSetupOnly'));
     test._extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
     test.info = () => {
       const result = currentTestInfo();
@@ -67,7 +65,7 @@ export class TestTypeImpl {
     this.test = test;
   }
 
-  private _currentSuite(location: Location, title: string, allowedContext: 'test' | 'projectSetup' | 'any'): Suite | undefined {
+  private _currentSuite(location: Location, title: string): Suite | undefined {
     const suite = currentlyLoadingFileSuite();
     if (!suite) {
       addFatalError([
@@ -80,36 +78,19 @@ export class TestTypeImpl {
       ].join('\n'), location);
       return;
     }
-    if (allowedContext === 'projectSetup' && suite._phase !== 'projectSetup')
-      addFatalError(`${title} is only allowed in a project setup file.`, location);
-    else if (allowedContext === 'test' && suite._phase !== 'test' && suite._phase !== 'globalSetup')
-      addFatalError(`${title} is not allowed in a setup file.`, location);
     return suite;
   }
 
-  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'projectSetup' | 'projectSetupOnly', location: Location, title: string, fn: Function) {
+  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
-    let functionTitle = 'test()';
-    let allowedContext: 'test' | 'projectSetup' | 'any' = 'any';
-    switch (type) {
-      case 'projectSetup':
-      case 'projectSetupOnly':
-        functionTitle = 'test.projectSetup()';
-        allowedContext = 'projectSetup';
-        break;
-      case 'default':
-        allowedContext = 'test';
-        break;
-    }
-    const suite = this._currentSuite(location, functionTitle, allowedContext);
+    const suite = this._currentSuite(location, 'test()');
     if (!suite)
       return;
     const test = new TestCase(title, fn, this, location);
     test._requireFile = suite._requireFile;
-    test._phase = suite._phase;
     suite._addTest(test);
 
-    if (type === 'only' || type === 'projectSetupOnly')
+    if (type === 'only')
       test._only = true;
     if (type === 'skip' || type === 'fixme') {
       test.annotations.push({ type });
@@ -123,7 +104,7 @@ export class TestTypeImpl {
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, title: string | Function, fn?: Function) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite(location, 'test.describe()', 'any');
+    const suite = this._currentSuite(location, 'test.describe()');
     if (!suite)
       return;
 
@@ -134,7 +115,6 @@ export class TestTypeImpl {
 
     const child = new Suite(title, 'describe');
     child._requireFile = suite._requireFile;
-    child._phase = suite._phase;
     child.location = location;
     suite._addSuite(child);
 
@@ -160,7 +140,7 @@ export class TestTypeImpl {
   }
 
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
-    const suite = this._currentSuite(location, `test.${name}()`, 'test');
+    const suite = this._currentSuite(location, `test.${name}()`);
     if (!suite)
       return;
     suite._hooks.push({ type: name, fn, location });
@@ -168,7 +148,7 @@ export class TestTypeImpl {
 
   private _configure(location: Location, options: { mode?: 'parallel' | 'serial', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite(location, `test.describe.configure()`, 'any');
+    const suite = this._currentSuite(location, `test.describe.configure()`);
     if (!suite)
       return;
 
@@ -235,7 +215,7 @@ export class TestTypeImpl {
   }
 
   private _use(location: Location, fixtures: Fixtures) {
-    const suite = this._currentSuite(location, `test.use()`, 'any');
+    const suite = this._currentSuite(location, `test.use()`);
     if (!suite)
       return;
     suite._use.push({ fixtures, location });

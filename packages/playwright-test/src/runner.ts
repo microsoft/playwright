@@ -200,7 +200,7 @@ export class Runner {
 
   async listTestFiles(projectNames: string[] | undefined): Promise<any> {
     const projects = this._collectProjects(projectNames);
-    const { filesByProject } = await this._collectFiles(projects, []);
+    const filesByProject = await this._collectFiles(projects, []);
     const report: any = {
       projects: []
     };
@@ -239,98 +239,45 @@ export class Runner {
     return projects;
   }
 
-  private async _collectFiles(projects: FullProjectInternal[], commandLineFileFilters: TestFileFilter[]): Promise<{filesByProject: Map<FullProjectInternal, string[]>; setupFiles: Set<string>, globalSetupFiles: Set<string>}> {
+  private async _collectFiles(projects: FullProjectInternal[], commandLineFileFilters: TestFileFilter[]): Promise<Map<FullProjectInternal, string[]>> {
     const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
     const testFileExtension = (file: string) => extensions.includes(path.extname(file));
     const filesByProject = new Map<FullProjectInternal, string[]>();
-    const setupFiles = new Set<string>();
     const fileToProjectName = new Map<string, string>();
     const commandLineFileMatcher = commandLineFileFilters.length ? createFileMatcherFromFilters(commandLineFileFilters) : () => true;
 
-    const config = this._configLoader.fullConfig();
-    const globalSetupFiles = new Set<string>();
-    if (config._globalScripts) {
-      const allFiles = await collectFiles(config.rootDir, true);
-      const globalScriptMatch = createFileMatcher(config._globalScripts);
-      const globalScripts = allFiles.filter(file => {
-        if (!testFileExtension(file) || !globalScriptMatch(file))
-          return false;
-        fileToProjectName.set(file, config._globalProject.name);
-        globalSetupFiles.add(file);
-        return true;
-      });
-      filesByProject.set(config._globalProject, globalScripts);
-    }
-
     for (const project of projects) {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
-      const setupMatch = createFileMatcher(project._setupMatch);
       const testMatch = createFileMatcher(project.testMatch);
       const testIgnore = createFileMatcher(project.testIgnore);
       const testFiles = allFiles.filter(file => {
         if (!testFileExtension(file))
           return false;
-        const isSetup = setupMatch(file);
         const isTest = !testIgnore(file) && testMatch(file) && commandLineFileMatcher(file);
-        if (!isTest && !isSetup)
+        if (!isTest)
           return false;
-        if (isSetup && isTest)
-          throw new Error(`File "${file}" matches both 'setup' and 'testMatch' filters in project "${project.name}"`);
-        if (fileToProjectName.has(file)) {
-          if (isSetup) {
-            if (!setupFiles.has(file))
-              throw new Error(`File "${file}" matches 'setup' filter in project "${project.name}" and 'testMatch' filter in project "${fileToProjectName.get(file)}"`);
-          } else if (setupFiles.has(file)) {
-            throw new Error(`File "${file}" matches 'setup' filter in project "${fileToProjectName.get(file)}" and 'testMatch' filter in project "${project.name}"`);
-          }
-        }
         fileToProjectName.set(file, project.name);
-        if (isSetup)
-          setupFiles.add(file);
         return true;
       });
       filesByProject.set(project, testFiles);
     }
 
-    return { filesByProject, setupFiles, globalSetupFiles };
+    return filesByProject;
   }
 
-  private async _collectTestGroups(options: RunOptions): Promise<{ rootSuite: Suite, globalSetupGroups: TestGroup[], projectSetupGroups: TestGroup[], testGroups: TestGroup[] }> {
+  private async _collectTestGroups(options: RunOptions): Promise<{ rootSuite: Suite, testGroups: TestGroup[] }> {
     const config = this._configLoader.fullConfig();
     const projects = this._collectProjects(options.projectFilter);
-    const { filesByProject, setupFiles, globalSetupFiles } = await this._collectFiles(projects, options.testFileFilters);
-
-    let result = await this._createFilteredRootSuite(options, filesByProject, new Set(), !!setupFiles.size, setupFiles, globalSetupFiles);
-    if (setupFiles.size) {
-      const allTests = result.rootSuite.allTests();
-      const tests = allTests.filter(test => test._phase === 'test');
-      // If >0 tests match and
-      // - none of the setup files match the filter then we run all setup files,
-      // - if the filter also matches some of the setup tests, we'll run only
-      //   that maching subset of setup tests.
-      if (tests.length > 0 && tests.length === allTests.length)
-        result = await this._createFilteredRootSuite(options, filesByProject, setupFiles, false, setupFiles, globalSetupFiles);
-    }
-
+    const filesByProject = await this._collectFiles(projects, options.testFileFilters);
+    const result = await this._createFilteredRootSuite(options, filesByProject);
     this._fatalErrors.push(...result.fatalErrors);
     const { rootSuite } = result;
 
-    const allTestGroups = createTestGroups(rootSuite.suites, config.workers);
-    const globalSetupGroups = [];
-    const projectSetupGroups = [];
-    const testGroups = [];
-    for (const group of allTestGroups) {
-      if (group.phase === 'projectSetup')
-        projectSetupGroups.push(group);
-      else if (group.phase === 'globalSetup')
-        globalSetupGroups.push(group);
-      else
-        testGroups.push(group);
-    }
-    return { rootSuite, globalSetupGroups, projectSetupGroups, testGroups };
+    const testGroups = createTestGroups(rootSuite.suites, config.workers);
+    return { rootSuite, testGroups };
   }
 
-  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>, doNotFilterFiles: Set<string>, shouldCloneTests: boolean, setupFiles: Set<string>, globalSetupFiles: Set<string>): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
+  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
     const config = this._configLoader.fullConfig();
     const fatalErrors: TestError[] = [];
     const allTestFiles = new Set<string>();
@@ -341,23 +288,18 @@ export class Runner {
     // Add all tests.
     const preprocessRoot = new Suite('', 'root');
     for (const file of allTestFiles) {
-      let type: 'test' | 'projectSetup' | 'globalSetup' = 'test';
-      if (globalSetupFiles.has(file))
-        type = 'globalSetup';
-      else if (setupFiles.has(file))
-        type = 'projectSetup';
-      const fileSuite = await testLoader.loadTestFile(file, 'runner', type);
+      const fileSuite = await testLoader.loadTestFile(file, 'runner');
       if (fileSuite._loadError)
         fatalErrors.push(fileSuite._loadError);
       // We have to clone only if there maybe subsequent calls of this method.
-      preprocessRoot._addSuite(shouldCloneTests ? fileSuite._deepClone() : fileSuite);
+      preprocessRoot._addSuite(fileSuite);
     }
 
     // Complain about duplicate titles.
     fatalErrors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
 
     // Filter tests to respect line/column filter.
-    filterByFocusedLine(preprocessRoot, options.testFileFilters, doNotFilterFiles);
+    filterByFocusedLine(preprocessRoot, options.testFileFilters);
 
     // Complain about only.
     if (config.forbidOnly) {
@@ -368,7 +310,7 @@ export class Runner {
 
     // Filter only.
     if (!options.listOnly)
-      filterOnly(preprocessRoot, doNotFilterFiles);
+      filterOnly(preprocessRoot);
 
     // Generate projects.
     const fileSuites = new Map<string, Suite>();
@@ -381,8 +323,6 @@ export class Runner {
       const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
 
       const titleMatcher = (test: TestCase) => {
-        if (doNotFilterFiles.has(test._requireFile))
-          return true;
         const grepTitle = test.titlePath().join(' ');
         if (grepInvertMatcher?.(grepTitle))
           return false;
@@ -408,7 +348,7 @@ export class Runner {
     return { rootSuite, fatalErrors };
   }
 
-  private _filterForCurrentShard(rootSuite: Suite, projectSetupGroups: TestGroup[], testGroups: TestGroup[]) {
+  private _filterForCurrentShard(rootSuite: Suite, testGroups: TestGroup[]) {
     const shard = this._configLoader.fullConfig().shard;
     if (!shard)
       return;
@@ -447,17 +387,6 @@ export class Runner {
     testGroups.length = 0;
     testGroups.push(...shardTestGroups);
 
-    const shardSetupGroups = [];
-    for (const group of projectSetupGroups) {
-      if (!shardProjects.has(group.projectId))
-        continue;
-      shardSetupGroups.push(group);
-      for (const test of group.tests)
-        shardTests.add(test);
-    }
-    projectSetupGroups.length = 0;
-    projectSetupGroups.push(...shardSetupGroups);
-
     if (!shardTests.size) {
       // Filtering with "only semantics" does not work when we have zero tests - it leaves all the tests.
       // We need an empty suite in this case.
@@ -465,10 +394,7 @@ export class Runner {
       rootSuite.suites = [];
       rootSuite.tests = [];
     } else {
-      // Unlike project setup files global setup always run regardless of the selected tests.
-      // Because of that we don't add global setup entries to shardTests to avoid running empty
-      // shards which have only global setup.
-      filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test) || test._phase === 'globalSetup');
+      filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
     }
   }
 
@@ -476,15 +402,15 @@ export class Runner {
     const config = this._configLoader.fullConfig();
     // Each entry is an array of test groups that can be run concurrently. All
     // test groups from the previos entries must finish before entry starts.
-    const { rootSuite, globalSetupGroups, projectSetupGroups, testGroups } = await this._collectTestGroups(options);
+    const { rootSuite, testGroups } = await this._collectTestGroups(options);
 
     // Fail when no tests.
     if (!rootSuite.allTests().length && !options.passWithNoTests)
       this._fatalErrors.push(createNoTestsError());
 
-    this._filterForCurrentShard(rootSuite, projectSetupGroups, testGroups);
+    this._filterForCurrentShard(rootSuite, testGroups);
 
-    config._maxConcurrentTestGroups = Math.max(globalSetupGroups.length, projectSetupGroups.length, testGroups.length);
+    config._maxConcurrentTestGroups = testGroups.length;
 
     // Report begin
     this._reporter.onBegin?.(config, rootSuite);
@@ -521,24 +447,7 @@ export class Runner {
 
     // Run tests.
     try {
-      // TODO: run only setups, keep workers alive, inherit process.env from global setup workers
-      let dispatchResult = await this._dispatchToWorkers(globalSetupGroups);
-      if (dispatchResult === 'success') {
-        if (globalSetupGroups.some(group => group.tests.some(test => !test.ok()))) {
-          this._skipTestsFromMatchingGroups([...testGroups, ...projectSetupGroups], () => true);
-        } else {
-          dispatchResult = await this._dispatchToWorkers(projectSetupGroups);
-          if (dispatchResult === 'success') {
-            const failedSetupProjectIds = new Set<string>();
-            for (const testGroup of projectSetupGroups) {
-              if (testGroup.tests.some(test => !test.ok()))
-                failedSetupProjectIds.add(testGroup.projectId);
-            }
-            const testGroupsToRun = this._skipTestsFromMatchingGroups(testGroups, group => failedSetupProjectIds.has(group.projectId));
-            dispatchResult = await this._dispatchToWorkers(testGroupsToRun);
-          }
-        }
-      }
+      const dispatchResult = await this._dispatchToWorkers(testGroups);
       if (dispatchResult === 'signal') {
         result.status = 'interrupted';
       } else {
@@ -694,11 +603,11 @@ export class Runner {
   }
 }
 
-function filterOnly(suite: Suite, doNotFilterFiles: Set<string>) {
+function filterOnly(suite: Suite) {
   if (!suite._getOnlyItems().length)
     return;
-  const suiteFilter = (suite: Suite) => suite._only || doNotFilterFiles.has(suite._requireFile);
-  const testFilter = (test: TestCase) => test._only || doNotFilterFiles.has(test._requireFile);
+  const suiteFilter = (suite: Suite) => suite._only;
+  const testFilter = (test: TestCase) => test._only;
   return filterSuiteWithOnlySemantics(suite, suiteFilter, testFilter);
 }
 
@@ -708,13 +617,13 @@ function createFileMatcherFromFilter(filter: TestFileFilter) {
     fileMatcher(testFileName) && (filter.line === testLine || filter.line === null) && (filter.column === testColumn || filter.column === null);
 }
 
-function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[], doNotFilterFiles: Set<string>) {
+function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[]) {
   if (!focusedTestFileLines.length)
     return;
   const matchers = focusedTestFileLines.map(createFileMatcherFromFilter);
   const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => matchers.some(m => m(testFileName, testLine, testColumn));
-  const suiteFilter = (suite: Suite) => doNotFilterFiles.has(suite._requireFile) || !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
-  const testFilter = (test: TestCase) => doNotFilterFiles.has(test._requireFile) || testFileLineMatches(test.location.file, test.location.line, test.location.column);
+  const suiteFilter = (suite: Suite) => !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
+  const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line, test.location.column);
   return filterSuite(suite, suiteFilter, testFilter);
 }
 
@@ -859,8 +768,6 @@ function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] 
       repeatEachIndex: test.repeatEachIndex,
       projectId: test._projectId,
       tests: [],
-      watchMode: false,
-      phase: test._phase,
     };
   };
 

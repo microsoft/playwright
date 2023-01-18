@@ -141,18 +141,6 @@ export default defineConfig({
 });
 ```
 
-## property: TestConfig.globalScripts
-* since: v1.30
-- type: ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>>
-
-Files that contain global setup/teardown hooks.
-
-**Details**
-
-[`method: Test.beforeAll`] hooks in the matching files will run before testing starts. [`method: Test.afterAll`] hooks in the matching files will run after testing finishes.
-
-If global setup fails, test execution will be skipped. [`method: Test.afterAll`] hooks will run in the same worker process as [`method: Test.beforeAll`].
-
 ## property: TestConfig.globalSetup
 * since: v1.10
 - type: ?<[string]>
