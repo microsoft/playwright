@@ -636,14 +636,14 @@ export class WKPage implements PageDelegate {
       case 'dark': appearance = 'Dark'; break;
       case 'no-override': appearance = undefined; break;
     }
-    promises.push(session.send('Page.setForcedAppearance', { appearance }));
+    promises.push(session.send('Page.overrideUserPreference', { name: 'PrefersColorScheme', value: appearance }));
     let reducedMotionWk: any = undefined;
     switch (reducedMotion) {
       case 'reduce': reducedMotionWk = 'Reduce'; break;
       case 'no-preference': reducedMotionWk = 'NoPreference'; break;
       case 'no-override': reducedMotionWk = undefined; break;
     }
-    promises.push(session.send('Page.setForcedReducedMotion', { reducedMotion: reducedMotionWk }));
+    promises.push(session.send('Page.overrideUserPreference', { name: 'PrefersReducedMotion', value: reducedMotionWk }));
     let forcedColorsWk: any = undefined;
     switch (forcedColors) {
       case 'active': forcedColorsWk = 'Active'; break;
