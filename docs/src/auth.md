@@ -22,10 +22,9 @@ import { test } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
   // Runs before each test and signs in each page.
   await page.goto('https://github.com/login');
-  await page.getByText('Login').click();
-  await page.getByLabel('User Name').fill('username');
+  await page.getByLabel('Username or email address').fill('username');
   await page.getByLabel('Password').fill('password');
-  await page.getByText('Submit').click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
 });
 
 test('first', async ({ page }) => {
@@ -43,10 +42,9 @@ const { test } = require('@playwright/test');
 test.beforeEach(async ({ page }) => {
   // Runs before each test and signs in each page.
   await page.goto('https://github.com/login');
-  await page.getByText('Login').click();
-  await page.getByLabel('User name').fill('username');
+  await page.getByLabel('Username or email address').fill('username');
   await page.getByLabel('Password').fill('password');
-  await page.getByText('Submit').click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
 });
 
 test('first', async ({ page }) => {
@@ -63,10 +61,9 @@ const page = await context.newPage();
 await page.goto('https://github.com/login');
 
 // Interact with login form
-await page.getByText('Login').click();
-await page.getByLabel('User Name').fill(USERNAME);
-await page.getByLabel('Password').fill(PASSWORD);
-await page.getByText('Submit').click();
+await page.getByLabel('Username or email address').fill("username");
+await page.getByLabel('Password').fill("password");
+await page.getByRole('button', { name: 'Sign in' }).click();
 // Continue with the test
 ```
 
@@ -74,10 +71,10 @@ await page.getByText('Submit').click();
 Page page = context.newPage();
 page.navigate("https://github.com/login");
 // Interact with login form
-page.getByText("Login").click();
-page.getByLabel("User Name").fill(USERNAME);
-page.getByLabel("Password").fill(PASSWORD);
-page.locator("text=Submit").click();
+page.getByLabel("Username or email address").fill("username");
+page.getByLabel("Password").fill("password");
+page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in"))
+    .click();
 // Continue with the test
 ```
 
@@ -86,10 +83,9 @@ page = await context.new_page()
 await page.goto('https://github.com/login')
 
 # Interact with login form
-await page.get_by_text("Login").click()
-await page.get_by_label("User Name").fill(USERNAME)
-await page.get_by_label("Password").fill(PASSWORD)
-await page.get_by_text('Submit').click()
+await page.get_by_label("Username or email address").fill("username")
+await page.get_by_label("Password").fill("password")
+await page.page.get_by_role("button", name="Sign in").click()
 # Continue with the test
 ```
 
@@ -98,10 +94,9 @@ page = context.new_page()
 page.goto('https://github.com/login')
 
 # Interact with login form
-page.get_by_text("Login").click()
-page.get_by_label("User Name").fill(USERNAME)
-page.get_by_label("Password").fill(PASSWORD)
-page.get_by_text('Submit').click()
+page.get_by_label("Username or email address").fill("username")
+page.get_by_label("Password").fill("password")
+page.get_by_role("button", name="Sign in").click()
 # Continue with the test
 ```
 
@@ -109,10 +104,9 @@ page.get_by_text('Submit').click()
 var page = await context.NewPageAsync();
 await page.GotoAsync("https://github.com/login");
 // Interact with login form
-await page.GetByText("Login").ClickAsync();
-await page.GetByLabel("User Name").FillAsync(USERNAME);
-await page.GetByLabel("Password").FillAsync(PASSWORD);
-await page.GetByText("Submit").ClickAsync();
+await page.GetByLabel("Username or email address").FillAsync("username");
+await page.GetByLabel("Password").FillAsync("password");
+await page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync();
 // Continue with the test
 ```
 
@@ -125,7 +119,7 @@ existing authentication state instead.
 Playwright provides a way to reuse the signed-in state in the tests. That way you can log
 in only once and then skip the log in step for all of the tests.
 
-Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). Playwright provides [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state) method that can be used to retrieve storage state from authenticated contexts and then create new contexts with prepopulated state.
+Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). Playwright provides [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state) method that can be used to retrieve storage state from authenticated contexts and then create new contexts with pre-populated state.
 
 Cookies and local storage state can be used across different browsers. They depend on your application's authentication model: some apps might require both cookies and local storage.
 
@@ -175,7 +169,7 @@ var context = await browser.NewContextAsync(new()
 Playwright provides a way to reuse the signed-in state in the tests. That way you can log
 in only once and then skip the log in step for all of the tests.
 
-Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). Playwright provides [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state) method that can be used to retrieve storage state from authenticated contexts and then create new contexts with prepopulated state.
+Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). Playwright provides [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state) method that can be used to retrieve storage state from authenticated contexts and then create new contexts with pre-populated state.
 
 Cookies and local storage state can be used across different browsers. They depend on your application's authentication model: some apps might require both cookies and local storage.
 
@@ -189,9 +183,9 @@ module.exports = async config => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Username or email address').fill('username');
   await page.getByLabel('Password').fill('password');
-  await page.getByText('Sign in').click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
   // Save signed-in state to 'storageState.json'.
   await page.context().storageState({ path: 'storageState.json' });
   await browser.close();
@@ -206,9 +200,9 @@ async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Username or email address').fill('username');
   await page.getByLabel('Password').fill('password');
-  await page.getByText('Sign in').click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
   // Save signed-in state to 'storageState.json'.
   await page.context().storageState({ path: 'storageState.json' });
   await browser.close();
@@ -338,9 +332,9 @@ export const test = baseTest.extend({
       const page = await browser.newPage({ storageState: undefined });
       await page.goto('https://github.com/login');
       // Create a unique username for each worker.
-      await page.getByLabel('User Name').fill(users[testInfo.parallelIndex].username);
+      await page.getByLabel('Username or email address').fill(users[testInfo.parallelIndex].username);
       await page.getByLabel('Password').fill(users[testInfo.parallelIndex].password);
-      await page.getByText('Sign in').click();
+      await page.getByRole('button', { name: 'Sign in' }).click();
       await page.context().storageState({ path: fileName });
       await page.close();
     }
@@ -635,9 +629,9 @@ test.beforeAll(async ({ browser }) => {
   // Create page yourself and sign in.
   page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Username or email address').fill('user');
   await page.getByLabel('Password').fill('password');
-  await page.getByText('Sign in').click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
 });
 
 test.afterAll(async () => {
@@ -666,9 +660,9 @@ test.beforeAll(async ({ browser }) => {
   // Create page once and sign in.
   page = await browser.newPage();
   await page.goto('https://github.com/login');
-  await page.getByLabel('User Name').fill('user');
+  await page.getByLabel('Username or email address').fill('user');
   await page.getByLabel('Password').fill('password');
-  await page.getByText('Sign in').click();
+  await page.getByRole('button', { name: 'Sign in' }).click();
 });
 
 test.afterAll(async () => {
