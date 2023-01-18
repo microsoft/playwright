@@ -1,9 +1,9 @@
 ---
 id: test-parameterize
-title: "Parametrize tests"
+title: "Parameterize tests"
 ---
 
-You can either parametrize tests on a test level or on a project level.
+You can either parameterize tests on a test level or on a project level.
 
 ## Parameterized Tests
 
@@ -173,7 +173,7 @@ export const test = base.extend<TestOptions>({
 ```
 
 :::note
-Parametrized projects behavior has changed in version 1.18. [Learn more](./release-notes#breaking-change-custom-config-options).
+Parameterized projects behavior has changed in version 1.18. [Learn more](./release-notes#breaking-change-custom-config-options).
 :::
 
 ## Passing Environment Variables
