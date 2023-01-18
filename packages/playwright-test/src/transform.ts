@@ -229,7 +229,7 @@ export async function requireOrImport(file: string) {
   }
 }
 
-export function installTransform(): () => void {
+function installTransform(): () => void {
   let reverted = false;
 
   const originalResolveFilename = (Module as any)._resolveFilename;

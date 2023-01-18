@@ -439,7 +439,7 @@ export class Dispatcher {
   }
 
   _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedLoaderData) {
-    const worker = new WorkerHost(testGroup, parallelIndex, this._configLoader.fullConfig()._workerIsolation, loaderData);
+    const worker = new WorkerHost(testGroup, parallelIndex, loaderData);
     const handleOutput = (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail()) {
