@@ -857,11 +857,11 @@ export module Protocol {
      */
     export interface Grouping {
       /**
-       * Source of the media query: "media-rule" if specified by a @media rule, "media-import-rule" if specified by an @import rule, "media-link-node" if specified by a "media" attribute in a linked style sheet's LINK tag, "media-style-node" if specified by a "media" attribute in an inline style sheet's STYLE tag, "supports-rule" if specified by an @supports rule, "layer-rule" if specified by an @layer rule, "container-rule" if specified by an @container rule.
+       * Source of the media query: "media-rule" if specified by a @media rule, "media-import-rule" if specified by an @import rule, "media-link-node" if specified by a "media" attribute in a linked style sheet's LINK tag, "media-style-node" if specified by a "media" attribute in an inline style sheet's STYLE tag, "supports-rule" if specified by an @supports rule, "layer-rule" if specified by an @layer rule, "container-rule" if specified by an @container rule, "style-rule" if specified by a CSSStyleRule containing the rule inside this grouping.
        */
-      type: "media-rule"|"media-import-rule"|"media-link-node"|"media-style-node"|"supports-rule"|"layer-rule"|"layer-import-rule"|"container-rule";
+      type: "media-rule"|"media-import-rule"|"media-link-node"|"media-style-node"|"supports-rule"|"layer-rule"|"layer-import-rule"|"container-rule"|"style-rule";
       /**
-       * The CSS rule identifier for the `@rule` (absent for non-editable grouping rules). In CSSOM terms, this is the parent rule of either the previous Grouping for a CSSRule, or of a CSSRule itself.
+       * The CSS rule identifier for the `@rule` (absent for non-editable grouping rules) or the nesting parent style rule's selector. In CSSOM terms, this is the parent rule of either the previous Grouping for a CSSRule, or of a CSSRule itself.
        */
       ruleId?: CSSRuleId;
       /**
@@ -1658,6 +1658,10 @@ export module Protocol {
        * New repeat count value.
        */
       count: number;
+      /**
+       * Timestamp of the latest message.
+       */
+      timestamp?: number;
     }
     /**
      * Issued when console is cleared. This happens either upon <code>clearMessages</code> command or after page navigation.
@@ -6209,6 +6213,27 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type Setting = "PrivateClickMeasurementDebugModeEnabled"|"AuthorAndUserStylesEnabled"|"ICECandidateFilteringEnabled"|"ITPDebugModeEnabled"|"ImagesEnabled"|"MediaCaptureRequiresSecureConnection"|"MockCaptureDevicesEnabled"|"NeedsSiteSpecificQuirks"|"ScriptEnabled"|"ShowDebugBorders"|"ShowRepaintCounter"|"WebRTCEncryptionEnabled"|"WebSecurityEnabled"|"DeviceOrientationEventEnabled"|"SpeechRecognitionEnabled"|"PointerLockEnabled"|"NotificationsEnabled"|"FullScreenEnabled"|"InputTypeMonthEnabled"|"InputTypeWeekEnabled";
     /**
+     * A user preference that can be overriden by Web Inspector, like an accessibility preference.
+     */
+    export interface UserPreference {
+      /**
+       * Preference name.
+       */
+      name: UserPreferenceName;
+      /**
+       * Preference value.
+       */
+      value: UserPreferenceValue;
+    }
+    /**
+     * User preference name.
+     */
+    export type UserPreferenceName = "PrefersReducedMotion"|"PrefersContrast"|"PrefersColorScheme";
+    /**
+     * User preference value.
+     */
+    export type UserPreferenceValue = "NoPreference"|"Reduce"|"More"|"Light"|"Dark";
+    /**
      * Resource type as it was perceived by the rendering engine.
      */
     export type ResourceType = "Document"|"StyleSheet"|"Image"|"Font"|"Script"|"XHR"|"Fetch"|"Ping"|"Beacon"|"WebSocket"|"EventSource"|"Other";
@@ -6220,10 +6245,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      * Same-Site policy of a cookie.
      */
     export type CookieSameSitePolicy = "None"|"Lax"|"Strict";
-    /**
-     * Page appearance name.
-     */
-    export type Appearance = "Light"|"Dark";
     /**
      * Page reduced-motion media query override.
      */
@@ -6597,13 +6618,13 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       url: string;
     }
     /**
-     * Fired when page's default appearance changes, even if there is a forced appearance.
+     * Fired when the default value of a user preference changes at the system level.
      */
-    export type defaultAppearanceDidChangePayload = {
+    export type defaultUserPreferencesDidChangePayload = {
       /**
-       * Name of the appearance that is active (not considering any forced appearance.)
+       * List of user preferences that can be overriden and their new system (default) values.
        */
-      appearance: Appearance;
+      preferences: UserPreference[];
     }
     /**
      * Fired when page is about to check policy for newly triggered navigation.
@@ -6728,6 +6749,18 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       value?: boolean;
     }
     export type overrideSettingReturnValue = {
+    }
+    /**
+     * Allows the frontend to override the user's preferences on the inspected page.
+     */
+    export type overrideUserPreferenceParameters = {
+      name: UserPreferenceName;
+      /**
+       * Value to override the user preference with. If this value is not provided, the override is removed. Overrides are removed when Web Inspector closes/disconnects.
+       */
+      value?: UserPreferenceValue;
+    }
+    export type overrideUserPreferenceReturnValue = {
     }
     /**
      * Returns all browser cookies. Depending on the backend support, will return detailed cookie information in the <code>cookies</code> field.
@@ -6899,14 +6932,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       media: string;
     }
     export type setEmulatedMediaReturnValue = {
-    }
-    /**
-     * Forces the given appearance for the page.
-     */
-    export type setForcedAppearanceParameters = {
-      appearance?: Appearance;
-    }
-    export type setForcedAppearanceReturnValue = {
     }
     /**
      * Forces the reduced-motion media query for the page.
@@ -9022,7 +9047,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.frameScheduledNavigation": Page.frameScheduledNavigationPayload;
     "Page.frameClearedScheduledNavigation": Page.frameClearedScheduledNavigationPayload;
     "Page.navigatedWithinDocument": Page.navigatedWithinDocumentPayload;
-    "Page.defaultAppearanceDidChange": Page.defaultAppearanceDidChangePayload;
+    "Page.defaultUserPreferencesDidChange": Page.defaultUserPreferencesDidChangePayload;
     "Page.willCheckNavigationPolicy": Page.willCheckNavigationPolicyPayload;
     "Page.didCheckNavigationPolicy": Page.didCheckNavigationPolicyPayload;
     "Page.fileChooserOpened": Page.fileChooserOpenedPayload;
@@ -9269,6 +9294,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.overrideUserAgent": Page.overrideUserAgentParameters;
     "Page.overridePlatform": Page.overridePlatformParameters;
     "Page.overrideSetting": Page.overrideSettingParameters;
+    "Page.overrideUserPreference": Page.overrideUserPreferenceParameters;
     "Page.getCookies": Page.getCookiesParameters;
     "Page.setCookie": Page.setCookieParameters;
     "Page.deleteCookie": Page.deleteCookieParameters;
@@ -9280,7 +9306,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setShowRulers": Page.setShowRulersParameters;
     "Page.setShowPaintRects": Page.setShowPaintRectsParameters;
     "Page.setEmulatedMedia": Page.setEmulatedMediaParameters;
-    "Page.setForcedAppearance": Page.setForcedAppearanceParameters;
     "Page.setForcedReducedMotion": Page.setForcedReducedMotionParameters;
     "Page.setForcedColors": Page.setForcedColorsParameters;
     "Page.setTimeZone": Page.setTimeZoneParameters;
@@ -9578,6 +9603,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.overrideUserAgent": Page.overrideUserAgentReturnValue;
     "Page.overridePlatform": Page.overridePlatformReturnValue;
     "Page.overrideSetting": Page.overrideSettingReturnValue;
+    "Page.overrideUserPreference": Page.overrideUserPreferenceReturnValue;
     "Page.getCookies": Page.getCookiesReturnValue;
     "Page.setCookie": Page.setCookieReturnValue;
     "Page.deleteCookie": Page.deleteCookieReturnValue;
@@ -9589,7 +9615,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setShowRulers": Page.setShowRulersReturnValue;
     "Page.setShowPaintRects": Page.setShowPaintRectsReturnValue;
     "Page.setEmulatedMedia": Page.setEmulatedMediaReturnValue;
-    "Page.setForcedAppearance": Page.setForcedAppearanceReturnValue;
     "Page.setForcedReducedMotion": Page.setForcedReducedMotionReturnValue;
     "Page.setForcedColors": Page.setForcedColorsReturnValue;
     "Page.setTimeZone": Page.setTimeZoneReturnValue;
