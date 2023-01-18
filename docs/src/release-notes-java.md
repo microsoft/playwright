@@ -8,6 +8,20 @@ toc_max_heading_level: 2
 
 ### New APIs
 
+- New method [`method: Route.fetch`]:
+
+    ```java
+    page.route("**/api/settings", route -> {
+      // Fetch original settings.
+      APIResponse response = route.fetch();
+      // Force settings theme to a predefined value.
+      String body = response.text().replace("\"theme\":\"default\"",
+        "\"theme\":\"Solorized\"");
+      // Fulfill with modified data.
+      route.fulfill(new Route.FulfillOptions().setResponse(response).setBody(body));
+    });
+    ```
+
 - New method [`method: Locator.all`] to iterate over all matching elements:
 
     ```java
