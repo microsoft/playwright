@@ -18,7 +18,6 @@ import * as path from 'path';
 import { calculateSha1 } from 'playwright-core/lib/utils';
 import { FixturePool, isFixtureOption } from './fixtures';
 import { setCurrentlyLoadingFileSuite } from './globals';
-import type { WorkerIsolation } from './ipc';
 import { Suite, type TestCase } from './test';
 import type { TestTypeImpl } from './testType';
 import { requireOrImport } from './transform';
@@ -86,7 +85,7 @@ export class TestLoader {
     if (!this._projectSuiteBuilders.has(project))
       this._projectSuiteBuilders.set(project, new ProjectSuiteBuilder(project));
     const builder = this._projectSuiteBuilders.get(project)!;
-    return builder.cloneFileSuite(suite, 'isolate-pools', repeatEachIndex, filter);
+    return builder.cloneFileSuite(suite, repeatEachIndex, filter);
   }
 }
 
@@ -133,14 +132,14 @@ class ProjectSuiteBuilder {
     return this._testPools.get(test)!;
   }
 
-  private _cloneEntries(from: Suite, to: Suite, workerIsolation: WorkerIsolation, repeatEachIndex: number, filter: (test: TestCase) => boolean): boolean {
+  private _cloneEntries(from: Suite, to: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): boolean {
     for (const entry of from._entries) {
       if (entry instanceof Suite) {
         const suite = entry._clone();
         suite._fileId = to._fileId;
         to._addSuite(suite);
         // Ignore empty titles, similar to Suite.titlePath().
-        if (!this._cloneEntries(entry, suite, workerIsolation, repeatEachIndex, filter)) {
+        if (!this._cloneEntries(entry, suite, repeatEachIndex, filter)) {
           to._entries.pop();
           to.suites.pop();
         }
@@ -166,10 +165,7 @@ class ProjectSuiteBuilder {
           to.tests.pop();
         } else {
           const pool = this._buildPool(entry);
-          if (this._project._fullConfig._workerIsolation === 'isolate-pools')
-            test._workerHash = `run${this._project._id}-${pool.digest}-repeat${repeatEachIndex}`;
-          else
-            test._workerHash = `run${this._project._id}-repeat${repeatEachIndex}`;
+          test._workerHash = `run${this._project._id}-${pool.digest}-repeat${repeatEachIndex}`;
           test._pool = pool;
         }
       }
@@ -179,11 +175,11 @@ class ProjectSuiteBuilder {
     return true;
   }
 
-  cloneFileSuite(suite: Suite, workerIsolation: WorkerIsolation, repeatEachIndex: number, filter: (test: TestCase) => boolean): Suite | undefined {
+  cloneFileSuite(suite: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): Suite | undefined {
     const result = suite._clone();
     const relativeFile = path.relative(this._project.testDir, suite.location!.file).split(path.sep).join('/');
     result._fileId = calculateSha1(relativeFile).slice(0, 20);
-    return this._cloneEntries(suite, result, workerIsolation, repeatEachIndex, filter) ? result : undefined;
+    return this._cloneEntries(suite, result, repeatEachIndex, filter) ? result : undefined;
   }
 
   private _applyConfigUseOptions(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
