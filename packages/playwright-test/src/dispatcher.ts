@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, WatchTestResolvedPayload, RunPayload, SerializedLoaderData } from './ipc';
+import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedLoaderData } from './ipc';
 import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
 import type { Suite } from './test';
 import type { ConfigLoader } from './configLoader';
 import type { ProcessExitData } from './processHost';
-import { TestCase } from './test';
+import type { TestCase } from './test';
 import { ManualPromise } from 'playwright-core/lib/utils';
-import { TestTypeImpl } from './testType';
 import { WorkerHost } from './workerHost';
 
 export type TestGroup = {
@@ -30,8 +29,6 @@ export type TestGroup = {
   repeatEachIndex: number;
   projectId: string;
   tests: TestCase[];
-  watchMode: boolean;
-  phase: 'test' | 'projectSetup' | 'globalSetup';
 };
 
 type TestResultData = {
@@ -169,15 +166,12 @@ export class Dispatcher {
       entries: testGroup.tests.map(test => {
         return { testId: test.id, retry: test.results.length };
       }),
-      watchMode: testGroup.watchMode,
-      phase: testGroup.phase,
     };
     worker.runTestGroup(runPayload);
 
     let doneCallback = () => {};
     const result = new Promise<void>(f => doneCallback = f);
     const doneWithJob = () => {
-      worker.removeListener('watchTestResolved', onWatchTestResolved);
       worker.removeListener('testBegin', onTestBegin);
       worker.removeListener('testEnd', onTestEnd);
       worker.removeListener('stepBegin', onStepBegin);
@@ -189,12 +183,6 @@ export class Dispatcher {
 
     const remainingByTestId = new Map(testGroup.tests.map(e => [e.id, e]));
     const failedTestIds = new Set<string>();
-
-    const onWatchTestResolved = (params: WatchTestResolvedPayload) => {
-      const test = new TestCase(params.title, () => {}, new TestTypeImpl([]), params.location);
-      this._testById.set(params.testId, { test, resultByWorkerIndex: new Map() });
-    };
-    worker.addListener('watchTestResolved', onWatchTestResolved);
 
     const onTestBegin = (params: TestBeginPayload) => {
       const data = this._testById.get(params.testId)!;

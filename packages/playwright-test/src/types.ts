@@ -52,10 +52,6 @@ export interface FullConfigInternal extends FullConfigPublic {
    */
   webServer: FullConfigPublic['webServer'];
   _webServers: Exclude<FullConfigPublic['webServer'], null>[];
-  _globalScripts: string | RegExp | (string | RegExp)[] | null;
-
-  // This is an ephemeral project that is not added to `projects` list below.
-  _globalProject:  FullProjectInternal;
 
   // Overrides the public field.
   projects: FullProjectInternal[];
@@ -71,7 +67,6 @@ export interface FullProjectInternal extends FullProjectPublic {
   _fullyParallel: boolean;
   _expect: Project['expect'];
   _respectGitIgnore: boolean;
-  _setupMatch: string | RegExp | (string | RegExp)[];
   snapshotPathTemplate: string;
 }
 

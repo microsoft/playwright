@@ -38,12 +38,11 @@ export class TestLoader {
     this._fullConfig = fullConfig;
   }
 
-  async loadTestFile(file: string, environment: 'runner' | 'worker', phase: 'test' | 'projectSetup' | 'globalSetup') {
+  async loadTestFile(file: string, environment: 'runner' | 'worker') {
     if (cachedFileSuites.has(file))
       return cachedFileSuites.get(file)!;
     const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file), 'file');
     suite._requireFile = file;
-    suite._phase = phase;
     suite.location = { file, line: 0, column: 0 };
 
     setCurrentlyLoadingFileSuite(suite);

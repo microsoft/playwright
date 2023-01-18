@@ -128,7 +128,6 @@ export class ConfigLoader {
     this._fullConfig.shard = takeFirst(config.shard, baseFullConfig.shard);
     this._fullConfig._ignoreSnapshots = takeFirst(config.ignoreSnapshots, baseFullConfig._ignoreSnapshots);
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
-    this._fullConfig._globalScripts = takeFirst(config.globalScripts, null);
 
     const workers = takeFirst(config.workers, '50%');
     if (typeof workers === 'string') {
@@ -152,9 +151,8 @@ export class ConfigLoader {
       this._fullConfig._webServers = [webServers];
     }
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
-    this._fullConfig._globalProject = this._resolveProject(config, this._fullConfig, globalScriptsProject, throwawayArtifactsPath);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
-    this._assignUniqueProjectIds([...this._fullConfig.projects, this._fullConfig._globalProject]);
+    this._assignUniqueProjectIds(this._fullConfig.projects);
   }
 
   private _assignUniqueProjectIds(projects: FullProjectInternal[]) {
@@ -217,7 +215,6 @@ export class ConfigLoader {
     const outputDir = takeFirst(projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
     const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
     const name = takeFirst(projectConfig.name, config.name, '');
-    const _setupMatch = takeFirst(projectConfig.setupMatch, []);
 
     const defaultSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
     const snapshotPathTemplate = takeFirst(projectConfig.snapshotPathTemplate, config.snapshotPathTemplate, defaultSnapshotPathTemplate);
@@ -234,7 +231,6 @@ export class ConfigLoader {
       metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
       name,
       testDir,
-      _setupMatch,
       _respectGitIgnore: respectGitIgnore,
       snapshotDir,
       snapshotPathTemplate,
@@ -425,7 +421,7 @@ function validateProject(file: string, project: Project, title: string) {
       throw errorWithFile(file, `${title}.testDir must be a string`);
   }
 
-  for (const prop of ['testIgnore', 'testMatch', 'setupMatch'] as const) {
+  for (const prop of ['testIgnore', 'testMatch'] as const) {
     if (prop in project && project[prop] !== undefined) {
       const value = project[prop];
       if (Array.isArray(value)) {
@@ -449,11 +445,6 @@ function validateProject(file: string, project: Project, title: string) {
       throw errorWithFile(file, `${title}.use must be an object`);
   }
 }
-
-const globalScriptsProject: Project = {
-  name: 'Global Scripts',
-  repeatEach: 1,
-};
 
 export const baseFullConfig: FullConfigInternal = {
   forbidOnly: false,
@@ -483,8 +474,6 @@ export const baseFullConfig: FullConfigInternal = {
   _storeDir: '',
   _maxConcurrentTestGroups: 0,
   _ignoreSnapshots: false,
-  _globalScripts: null,
-  _globalProject: { } as FullProjectInternal,
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {

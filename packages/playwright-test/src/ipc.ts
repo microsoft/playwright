@@ -43,12 +43,6 @@ export type WorkerInitParams = {
   loader: SerializedLoaderData;
 };
 
-export type WatchTestResolvedPayload = {
-  testId: string;
-  title: string;
-  location: { file: string, line: number, column: number };
-};
-
 export type TestBeginPayload = {
   testId: string;
   startWallTime: number;  // milliseconds since unix epoch
@@ -92,8 +86,6 @@ export type TestEntry = {
 export type RunPayload = {
   file: string;
   entries: TestEntry[];
-  watchMode: boolean;
-  phase: 'test' | 'projectSetup' | 'globalSetup';
 };
 
 export type DonePayload = {

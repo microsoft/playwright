@@ -17,7 +17,7 @@
 import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from './util';
-import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, WatchTestResolvedPayload } from './ipc';
+import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { ConfigLoader } from './configLoader';
 import type { Suite, TestCase } from './test';
@@ -171,11 +171,7 @@ export class WorkerRunner extends ProcessRunner {
 
     this._configLoader = await ConfigLoader.deserialize(this._params.loader);
     this._testLoader = new TestLoader(this._configLoader.fullConfig());
-    const globalProject = this._configLoader.fullConfig()._globalProject;
-    if (this._params.projectId === globalProject._id)
-      this._project = globalProject;
-    else
-      this._project = this._configLoader.fullConfig().projects.find(p => p._id === this._params.projectId)!;
+    this._project = this._configLoader.fullConfig().projects.find(p => p._id === this._params.projectId)!;
   }
 
   async runTestGroup(runPayload: RunPayload) {
@@ -184,17 +180,8 @@ export class WorkerRunner extends ProcessRunner {
     let fatalUnknownTestIds;
     try {
       await this._loadIfNeeded();
-      const fileSuite = await this._testLoader.loadTestFile(runPayload.file, 'worker', runPayload.phase);
+      const fileSuite = await this._testLoader.loadTestFile(runPayload.file, 'worker');
       const suite = this._testLoader.buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex, test => {
-        if (runPayload.watchMode) {
-          const testResolvedPayload: WatchTestResolvedPayload = {
-            testId: test.id,
-            title: test.title,
-            location: test.location
-          };
-          this.dispatchEvent('watchTestResolved', testResolvedPayload);
-          entries.set(test.id, { testId: test.id, retry: 0 });
-        }
         if (!entries.has(test.id))
           return false;
         return true;

@@ -1170,24 +1170,6 @@ Test title.
 Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
 
-## method: Test.projectSetup
-* since: v1.30
-
-Declares a project setup function. The function will be run before all other tests in the same project and if it fails the project execution will be aborted.
-
-### param: Test.projectSetup.title
-* since: v1.30
-- `title` <[string]>
-
-Project setup title.
-
-### param: Test.projectSetup.testFunction
-* since: v1.30
-- `testFunction` <[function]\([Fixtures], [TestInfo]\)>
-
-Project setup function that takes one or two arguments: an object with fixtures and optional [TestInfo].
-
-
 ## method: Test.setTimeout
 * since: v1.10
 

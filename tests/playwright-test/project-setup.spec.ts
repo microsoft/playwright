@@ -17,6 +17,8 @@ import type { PlaywrightTestConfig, TestInfo, PlaywrightTestProject } from '@pla
 import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
+test.fixme(true, 'Restore this');
+
 function createConfigWithProjects(names: string[], testInfo: TestInfo, projectTemplates?: { [name: string]: PlaywrightTestProject }): Record<string, string> {
   const config: PlaywrightTestConfig = {
     projects: names.map(name => ({ ...projectTemplates?.[name], name, testDir: testInfo.outputPath(name) })),

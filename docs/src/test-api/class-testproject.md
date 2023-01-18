@@ -144,7 +144,7 @@ Filter to only run tests with a title matching one of the patterns. For example,
 * since: v1.10
 - type: ?<[RegExp]|[Array]<[RegExp]>>
 
-Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestProject.grep`]. Also available globally and in the [command line](../test-cli.md) with the `--grep-invert` option. This filter and its command line counterpart also applies to the setup files. If all [`property: TestProject.setupMatch`] tests match the filter Playwright **will** run all setup files before running the matching tests.
+Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestProject.grep`]. Also available globally and in the [command line](../test-cli.md) with the `--grep-invert` option.
 
 `grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
@@ -159,18 +159,6 @@ Metadata that will be put directly to the test report serialized as JSON.
 - type: ?<[string]>
 
 Project name is visible in the report and during test execution.
-
-## property: TestProject.setupMatch
-* since: v1.29
-- type: ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>>
-
-Project setup files that will be executed before all tests in the project.
-
-**Details**
-
-If project setup fails the tests in this project will be skipped. All project setup files will run in every shard if the project is sharded. [`property: TestProject.grep`] and [`property: TestProject.grepInvert`] and their command line counterparts also apply to the setup files. If such filters match only tests in the project, Playwright will run **all** setup files before running the matching tests.
-
-If there is a file that matches both [`property: TestProject.setupMatch`] and [`property: TestProject.testMatch`] filters an error will be thrown.
 
 ## property: TestProject.snapshotDir
 * since: v1.10
