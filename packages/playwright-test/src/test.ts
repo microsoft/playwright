@@ -115,6 +115,15 @@ export class Suite extends Base implements reporterTypes.Suite {
     return suite;
   }
 
+  forEachTest(visitor: (test: TestCase, suite: Suite) => void) {
+    for (const entry of this._entries) {
+      if (entry instanceof Suite)
+        entry.forEachTest(visitor);
+      else
+        visitor(entry, this);
+    }
+  }
+
   _clone(): Suite {
     const suite = new Suite(this.title, this._type);
     suite._only = this._only;
