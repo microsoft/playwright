@@ -23,10 +23,11 @@ import path from 'path';
 import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
 import type { ConfigCLIOverrides } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
+import { fileIsModule } from './util';
 import type { TestFileFilter } from './util';
 import { createTitleMatcher } from './util';
 import { showHTMLReport } from './reporters/html';
-import { baseFullConfig, defaultTimeout, fileIsModule } from './loader';
+import { baseFullConfig, defaultTimeout } from './configLoader';
 import type { TraceMode } from './types';
 
 export function addTestCommands(program: Command) {

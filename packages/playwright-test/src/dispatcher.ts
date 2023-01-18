@@ -17,7 +17,7 @@
 import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, WatchTestResolvedPayload, RunPayload, SerializedLoaderData } from './ipc';
 import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
 import type { Suite } from './test';
-import type { Loader } from './loader';
+import type { ConfigLoader } from './configLoader';
 import type { ProcessExitData } from './processHost';
 import { TestCase } from './test';
 import { ManualPromise } from 'playwright-core/lib/utils';
@@ -52,13 +52,13 @@ export class Dispatcher {
   private _isStopped = false;
 
   private _testById = new Map<string, TestData>();
-  private _loader: Loader;
+  private _configLoader: ConfigLoader;
   private _reporter: Reporter;
   private _hasWorkerErrors = false;
   private _failureCount = 0;
 
-  constructor(loader: Loader, testGroups: TestGroup[], reporter: Reporter) {
-    this._loader = loader;
+  constructor(configLoader: ConfigLoader, testGroups: TestGroup[], reporter: Reporter) {
+    this._configLoader = configLoader;
     this._reporter = reporter;
     this._queue = testGroups;
     for (const group of testGroups) {
@@ -108,7 +108,7 @@ export class Dispatcher {
 
     // 2. Start the worker if it is down.
     if (!worker) {
-      worker = this._createWorker(job, index, this._loader.serialize());
+      worker = this._createWorker(job, index, this._configLoader.serialize());
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
       await worker.start();
@@ -152,7 +152,7 @@ export class Dispatcher {
   async run() {
     this._workerSlots = [];
     // 1. Allocate workers.
-    for (let i = 0; i < this._loader.fullConfig().workers; i++)
+    for (let i = 0; i < this._configLoader.fullConfig().workers; i++)
       this._workerSlots.push({ busy: false });
     // 2. Schedule enough jobs.
     for (let i = 0; i < this._workerSlots.length; i++)
@@ -439,7 +439,7 @@ export class Dispatcher {
   }
 
   _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedLoaderData) {
-    const worker = new WorkerHost(testGroup, parallelIndex, this._loader.fullConfig()._workerIsolation, loaderData);
+    const worker = new WorkerHost(testGroup, parallelIndex, this._configLoader.fullConfig()._workerIsolation, loaderData);
     const handleOutput = (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail()) {
@@ -480,7 +480,7 @@ export class Dispatcher {
   }
 
   private _hasReachedMaxFailures() {
-    const maxFailures = this._loader.fullConfig().maxFailures;
+    const maxFailures = this._configLoader.fullConfig().maxFailures;
     return maxFailures > 0 && this._failureCount >= maxFailures;
   }
 
@@ -488,7 +488,7 @@ export class Dispatcher {
     if (result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
     this._reporter.onTestEnd?.(test, result);
-    const maxFailures = this._loader.fullConfig().maxFailures;
+    const maxFailures = this._configLoader.fullConfig().maxFailures;
     if (maxFailures && this._failureCount === maxFailures)
       this.stop().catch(e => {});
   }

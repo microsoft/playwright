@@ -19,7 +19,7 @@ import util from 'util';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from './util';
 import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, WatchTestResolvedPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
-import { Loader } from './loader';
+import { ConfigLoader } from './configLoader';
 import type { Suite, TestCase } from './test';
 import type { Annotation, FullProjectInternal, TestInfoError } from './types';
 import { FixtureRunner } from './fixtures';
@@ -28,12 +28,14 @@ import { TestInfoImpl } from './testInfo';
 import type { TimeSlot } from './timeoutManager';
 import { TimeoutManager } from './timeoutManager';
 import { ProcessRunner } from './process';
+import { TestLoader } from './testLoader';
 
 const removeFolderAsync = util.promisify(rimraf);
 
 export class WorkerRunner extends ProcessRunner {
   private _params: WorkerInitParams;
-  private _loader!: Loader;
+  private _configLoader!: ConfigLoader;
+  private _testLoader!: TestLoader;
   private _project!: FullProjectInternal;
   private _fixtureRunner: FixtureRunner;
 
@@ -164,15 +166,16 @@ export class WorkerRunner extends ProcessRunner {
   }
 
   private async _loadIfNeeded() {
-    if (this._loader)
+    if (this._configLoader)
       return;
 
-    this._loader = await Loader.deserialize(this._params.loader);
-    const globalProject = this._loader.fullConfig()._globalProject;
+    this._configLoader = await ConfigLoader.deserialize(this._params.loader);
+    this._testLoader = new TestLoader(this._configLoader.fullConfig());
+    const globalProject = this._configLoader.fullConfig()._globalProject;
     if (this._params.projectId === globalProject._id)
       this._project = globalProject;
     else
-      this._project = this._loader.fullConfig().projects.find(p => p._id === this._params.projectId)!;
+      this._project = this._configLoader.fullConfig().projects.find(p => p._id === this._params.projectId)!;
   }
 
   async runTestGroup(runPayload: RunPayload) {
@@ -181,8 +184,8 @@ export class WorkerRunner extends ProcessRunner {
     let fatalUnknownTestIds;
     try {
       await this._loadIfNeeded();
-      const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker', runPayload.phase);
-      const suite = this._loader.buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex, test => {
+      const fileSuite = await this._testLoader.loadTestFile(runPayload.file, 'worker', runPayload.phase);
+      const suite = this._testLoader.buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex, test => {
         if (runPayload.watchMode) {
           const testResolvedPayload: WatchTestResolvedPayload = {
             testId: test.id,
@@ -238,7 +241,7 @@ export class WorkerRunner extends ProcessRunner {
   }
 
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
-    const testInfo = new TestInfoImpl(this._loader, this._project, this._params, test, retry,
+    const testInfo = new TestInfoImpl(this._configLoader.fullConfig(), this._project, this._params, test, retry,
         stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload));
 
@@ -484,8 +487,8 @@ export class WorkerRunner extends ProcessRunner {
     setCurrentTestInfo(null);
     this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
 
-    const preserveOutput = this._loader.fullConfig().preserveOutput === 'always' ||
-      (this._loader.fullConfig().preserveOutput === 'failures-only' && testInfo._isFailure());
+    const preserveOutput = this._configLoader.fullConfig().preserveOutput === 'always' ||
+      (this._configLoader.fullConfig().preserveOutput === 'failures-only' && testInfo._isFailure());
     if (!preserveOutput)
       await removeFolderAsync(testInfo.outputDir).catch(e => {});
   }

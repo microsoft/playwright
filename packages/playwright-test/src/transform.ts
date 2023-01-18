@@ -25,6 +25,7 @@ import type { TsConfigLoaderResult } from './third_party/tsconfig-loader';
 import { tsConfigLoader } from './third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelTransformFunction } from './babelBundle';
+import { fileIsModule } from './util';
 
 const version = 13;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
@@ -212,6 +213,19 @@ export function transformHook(code: string, filename: string, moduleUrl?: string
     // Re-throw error with a playwright-test stack
     // that could be filtered out.
     throw new Error(e.message);
+  }
+}
+
+export async function requireOrImport(file: string) {
+  const revertBabelRequire = installTransform();
+  const isModule = fileIsModule(file);
+  try {
+    const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
+    if (isModule)
+      return await esmImport();
+    return require(file);
+  } finally {
+    revertBabelRequire();
   }
 }
 

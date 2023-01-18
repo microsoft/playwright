@@ -23,7 +23,7 @@ import { promisify } from 'util';
 import type { FullResult, Reporter, TestError } from '../types/testReporter';
 import type { TestGroup } from './dispatcher';
 import { Dispatcher } from './dispatcher';
-import { Loader } from './loader';
+import { ConfigLoader } from './configLoader';
 import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
 import { dockerPlugin } from './plugins/dockerPlugin';
@@ -45,6 +45,7 @@ import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal 
 import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher, serializeError } from './util';
 import type { Matcher, TestFileFilter } from './util';
 import { setFatalErrorSink } from './globals';
+import { TestLoader } from './testLoader';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -79,13 +80,13 @@ export type ConfigCLIOverrides = {
 };
 
 export class Runner {
-  private _loader: Loader;
+  private _configLoader: ConfigLoader;
   private _reporter!: ReporterInternal;
   private _plugins: TestRunnerPlugin[] = [];
   private _fatalErrors: TestError[] = [];
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
-    this._loader = new Loader(configCLIOverrides);
+    this._configLoader = new ConfigLoader(configCLIOverrides);
     setRunnerToAddPluginsTo(this);
     setFatalErrorSink(this._fatalErrors);
   }
@@ -95,11 +96,11 @@ export class Runner {
   }
 
   async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<FullConfigInternal> {
-    return await this._loader.loadConfigFile(resolvedConfigFile);
+    return await this._configLoader.loadConfigFile(resolvedConfigFile);
   }
 
   loadEmptyConfig(configFileOrDirectory: string): Promise<Config> {
-    return this._loader.loadEmptyConfig(configFileOrDirectory);
+    return this._configLoader.loadEmptyConfig(configFileOrDirectory);
   }
 
   static resolveConfigFile(configFileOrDirectory: string): string | null {
@@ -144,17 +145,17 @@ export class Runner {
       html: HtmlReporter,
     };
     const reporters: Reporter[] = [];
-    for (const r of this._loader.fullConfig().reporter) {
+    for (const r of this._configLoader.fullConfig().reporter) {
       const [name, arg] = r;
       if (name in defaultReporters) {
         reporters.push(new defaultReporters[name as keyof typeof defaultReporters](arg));
       } else {
-        const reporterConstructor = await this._loader.loadReporter(name);
+        const reporterConstructor = await this._configLoader.loadReporter(name);
         reporters.push(new reporterConstructor(arg));
       }
     }
     if (process.env.PW_TEST_REPORTER) {
-      const reporterConstructor = await this._loader.loadReporter(process.env.PW_TEST_REPORTER);
+      const reporterConstructor = await this._configLoader.loadReporter(process.env.PW_TEST_REPORTER);
       reporters.push(new reporterConstructor());
     }
 
@@ -175,7 +176,7 @@ export class Runner {
 
   async runAllTests(options: RunOptions): Promise<FullResult> {
     this._reporter = await this._createReporter(!!options.listOnly);
-    const config = this._loader.fullConfig();
+    const config = this._configLoader.fullConfig();
     const result = await raceAgainstTimeout(() => this._run(options), config.globalTimeout);
     let fullResult: FullResult;
     if (result.timedOut) {
@@ -213,7 +214,7 @@ export class Runner {
   }
 
   private _collectProjects(projectNames?: string[]): FullProjectInternal[] {
-    const fullConfig = this._loader.fullConfig();
+    const fullConfig = this._configLoader.fullConfig();
     if (!projectNames)
       return [...fullConfig.projects];
     const projectsToFind = new Set<string>();
@@ -246,7 +247,7 @@ export class Runner {
     const fileToProjectName = new Map<string, string>();
     const commandLineFileMatcher = commandLineFileFilters.length ? createFileMatcherFromFilters(commandLineFileFilters) : () => true;
 
-    const config = this._loader.fullConfig();
+    const config = this._configLoader.fullConfig();
     const globalSetupFiles = new Set<string>();
     if (config._globalScripts) {
       const allFiles = await collectFiles(config.rootDir, true);
@@ -295,7 +296,7 @@ export class Runner {
   }
 
   private async _collectTestGroups(options: RunOptions): Promise<{ rootSuite: Suite, globalSetupGroups: TestGroup[], projectSetupGroups: TestGroup[], testGroups: TestGroup[] }> {
-    const config = this._loader.fullConfig();
+    const config = this._configLoader.fullConfig();
     const projects = this._collectProjects(options.projectFilter);
     const { filesByProject, setupFiles, globalSetupFiles } = await this._collectFiles(projects, options.testFileFilters);
 
@@ -330,9 +331,10 @@ export class Runner {
   }
 
   private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>, doNotFilterFiles: Set<string>, shouldCloneTests: boolean, setupFiles: Set<string>, globalSetupFiles: Set<string>): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
-    const config = this._loader.fullConfig();
+    const config = this._configLoader.fullConfig();
     const fatalErrors: TestError[] = [];
     const allTestFiles = new Set<string>();
+    const testLoader = new TestLoader(config);
     for (const files of filesByProject.values())
       files.forEach(file => allTestFiles.add(file));
 
@@ -344,7 +346,7 @@ export class Runner {
         type = 'globalSetup';
       else if (setupFiles.has(file))
         type = 'projectSetup';
-      const fileSuite = await this._loader.loadTestFile(file, 'runner', type);
+      const fileSuite = await testLoader.loadTestFile(file, 'runner', type);
       if (fileSuite._loadError)
         fatalErrors.push(fileSuite._loadError);
       // We have to clone only if there maybe subsequent calls of this method.
@@ -397,7 +399,7 @@ export class Runner {
         if (!fileSuite)
           continue;
         for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
-          const builtSuite = this._loader.buildFileSuiteForProject(project, fileSuite, repeatEachIndex, titleMatcher);
+          const builtSuite = testLoader.buildFileSuiteForProject(project, fileSuite, repeatEachIndex, titleMatcher);
           if (builtSuite)
             projectSuite._addSuite(builtSuite);
         }
@@ -407,7 +409,7 @@ export class Runner {
   }
 
   private _filterForCurrentShard(rootSuite: Suite, projectSetupGroups: TestGroup[], testGroups: TestGroup[]) {
-    const shard = this._loader.fullConfig().shard;
+    const shard = this._configLoader.fullConfig().shard;
     if (!shard)
       return;
 
@@ -471,7 +473,7 @@ export class Runner {
   }
 
   private async _run(options: RunOptions): Promise<FullResult> {
-    const config = this._loader.fullConfig();
+    const config = this._configLoader.fullConfig();
     // Each entry is an array of test groups that can be run concurrently. All
     // test groups from the previos entries must finish before entry starts.
     const { rootSuite, globalSetupGroups, projectSetupGroups, testGroups } = await this._collectTestGroups(options);
@@ -553,7 +555,7 @@ export class Runner {
   }
 
   private async _dispatchToWorkers(stageGroups: TestGroup[]): Promise<'success'|'signal'|'workererror'> {
-    const dispatcher = new Dispatcher(this._loader, [...stageGroups], this._reporter);
+    const dispatcher = new Dispatcher(this._configLoader, [...stageGroups], this._reporter);
     const sigintWatcher = new SigIntWatcher();
     await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
     if (!sigintWatcher.hadSignal()) {
@@ -587,7 +589,7 @@ export class Runner {
   }
 
   private async _removeOutputDirs(options: RunOptions): Promise<boolean> {
-    const config = this._loader.fullConfig();
+    const config = this._configLoader.fullConfig();
     const outputDirs = new Set<string>();
     for (const p of config.projects) {
       if (!options.projectFilter || options.projectFilter.includes(p.name))
@@ -622,12 +624,12 @@ export class Runner {
     const tearDown = async () => {
       await this._runAndReportError(async () => {
         if (globalSetupResult && typeof globalSetupResult === 'function')
-          await globalSetupResult(this._loader.fullConfig());
+          await globalSetupResult(this._configLoader.fullConfig());
       }, result);
 
       await this._runAndReportError(async () => {
         if (globalSetupResult && config.globalTeardown)
-          await (await this._loader.loadGlobalHook(config.globalTeardown))(this._loader.fullConfig());
+          await (await this._configLoader.loadGlobalHook(config.globalTeardown))(this._configLoader.fullConfig());
       }, result);
 
       for (const plugin of pluginsThatWereSetUp.reverse()) {
@@ -659,9 +661,9 @@ export class Runner {
       // Then do global setup.
       if (!sigintWatcher.hadSignal()) {
         if (config.globalSetup) {
-          const hook = await this._loader.loadGlobalHook(config.globalSetup);
+          const hook = await this._configLoader.loadGlobalHook(config.globalSetup);
           await Promise.race([
-            Promise.resolve().then(() => hook(this._loader.fullConfig())).then((r: any) => globalSetupResult = r || '<noop>'),
+            Promise.resolve().then(() => hook(this._configLoader.fullConfig())).then((r: any) => globalSetupResult = r || '<noop>'),
             sigintWatcher.promise(),
           ]);
         } else {
