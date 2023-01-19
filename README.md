@@ -165,6 +165,5 @@ test('Intercept network requests', async ({ page }) => {
 
 * [Documentation](https://playwright.dev/docs/intro)
 * [API reference](https://playwright.dev/docs/api/class-playwright/)
-* [Community showcase](https://playwright.dev/docs/showcase/)
 * [Contribution guide](CONTRIBUTING.md)
 * [Changelog](https://github.com/microsoft/playwright/releases)
