@@ -54,35 +54,35 @@ export const ImageDiffView: React.FunctionComponent<{
       id: 'actual',
       title: 'Actual',
       render: () => <ImageDiffSlider sliderPosition={sliderPosition} setSliderPosition={setSliderPosition}>
-        <img src={diff.expected!.attachment.path!} onLoad={() => onImageLoaded('right')} ref={imageElement} />
-        <img src={diff.actual!.attachment.path!} />
+        <ImageWithSize src={diff.expected!.attachment.path!} onLoad={() => onImageLoaded('right')} imageRef={imageElement} style={{ boxShadow: 'none' }} />
+        <ImageWithSize src={diff.actual!.attachment.path!} />
       </ImageDiffSlider>,
     });
     tabs.push({
       id: 'expected',
       title: diff.expected!.title,
       render: () => <ImageDiffSlider sliderPosition={sliderPosition} setSliderPosition={setSliderPosition}>
-        <img src={diff.expected!.attachment.path!} onLoad={() => onImageLoaded('left')} ref={imageElement} />
-        <img src={diff.actual!.attachment.path!} style={{ boxShadow: 'none' }} />
+        <ImageWithSize src={diff.expected!.attachment.path!} onLoad={() => onImageLoaded('left')} imageRef={imageElement} />
+        <ImageWithSize src={diff.actual!.attachment.path!} style={{ boxShadow: 'none' }} />
       </ImageDiffSlider>,
     });
   } else {
     tabs.push({
       id: 'actual',
       title: 'Actual',
-      render: () => <img src={diff.actual!.attachment.path!} onLoad={() => onImageLoaded()} />
+      render: () => <ImageWithSize src={diff.actual!.attachment.path!} onLoad={() => onImageLoaded()} />
     });
     tabs.push({
       id: 'expected',
       title: diff.expected!.title,
-      render: () => <img src={diff.expected!.attachment.path!} onLoad={() => onImageLoaded()} />
+      render: () => <ImageWithSize src={diff.expected!.attachment.path!} onLoad={() => onImageLoaded()} />
     });
   }
   if (diff.diff) {
     tabs.push({
       id: 'diff',
       title: 'Diff',
-      render: () => <img src={diff.diff!.attachment.path} onLoad={() => onImageLoaded()} />
+      render: () => <ImageWithSize src={diff.diff!.attachment.path!} onLoad={() => onImageLoaded()} />
     });
   }
   return <div className='vbox image-diff-view' data-testid='test-result-image-mismatch' ref={diffElement}>
@@ -165,6 +165,29 @@ export const ImageDiffSlider: React.FC<React.PropsWithChildren<{
       </div>
     </div>
   </>;
+};
+
+const ImageWithSize: React.FunctionComponent<{
+  src: string,
+  onLoad?: () => void,
+  imageRef?: React.RefObject<HTMLImageElement>,
+  style?: React.CSSProperties,
+}> = ({ src, onLoad, imageRef, style }) => {
+  const newRef = React.useRef<HTMLImageElement>(null);
+  const ref = imageRef ?? newRef;
+  const [size, setSize] = React.useState<{ width: number, height: number } | null>(null);
+  return <div className='image-wrapper'>
+    <div>
+      <span style={{ flex: '1 1 0', textAlign: 'end' }}>{ size ? size.width : ''}</span>
+      <span style={{ flex: 'none', margin: '0 5px' }}>x</span>
+      <span style={{ flex: '1 1 0', textAlign: 'start' }}>{ size ? size.height : ''}</span>
+    </div>
+    <img src={src} onLoad={() => {
+      onLoad?.();
+      if (ref.current)
+        setSize({ width: ref.current.naturalWidth, height: ref.current.naturalHeight });
+    }} ref={ref} style={style} />
+  </div>;
 };
 
 const absolute: React.CSSProperties = {

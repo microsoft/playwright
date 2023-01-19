@@ -927,7 +927,7 @@ test('should attach expected/actual/diff', async ({ runInlineTest }, testInfo) =
   ]);
 });
 
-test('should attach expected/actual and no diff', async ({ runInlineTest }, testInfo) => {
+test('should attach expected/actual/diff for different sizes', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.png':
@@ -945,6 +945,7 @@ test('should attach expected/actual and no diff', async ({ runInlineTest }, test
 
   const outputText = stripAnsi(result.output);
   expect(outputText).toContain('Expected an image 2px by 2px, received 1px by 1px.');
+  expect(outputText).toContain('4 pixels (ratio 1.00 of all image pixels) are different.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments)
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
@@ -958,6 +959,11 @@ test('should attach expected/actual and no diff', async ({ runInlineTest }, test
       name: 'snapshot-actual.png',
       contentType: 'image/png',
       path: 'a-is-a-test/snapshot-actual.png'
+    },
+    {
+      name: 'snapshot-diff.png',
+      contentType: 'image/png',
+      path: 'a-is-a-test/snapshot-diff.png'
     },
   ]);
 });

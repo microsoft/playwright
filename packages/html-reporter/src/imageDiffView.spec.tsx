@@ -54,7 +54,7 @@ test('should show actual by default', async ({ mount }) => {
   for (let i = 0; i < imageCount; ++i) {
     const image = images.nth(i);
     const box = await image.boundingBox();
-    expect(box).toEqual({ x: 400, y: 80, width: 200, height: 200 });
+    expect(box).toEqual({ x: 400, y: 108, width: 200, height: 200 });
   }
 });
 
@@ -69,7 +69,7 @@ test('should switch to expected', async ({ mount }) => {
   for (let i = 0; i < imageCount; ++i) {
     const image = images.nth(i);
     const box = await image.boundingBox();
-    expect(box).toEqual({ x: 400, y: 80, width: 200, height: 200 });
+    expect(box).toEqual({ x: 400, y: 108, width: 200, height: 200 });
   }
 });
 
@@ -79,5 +79,5 @@ test('should switch to diff', async ({ mount }) => {
 
   const image = component.locator('img');
   const box = await image.boundingBox();
-  expect(box).toEqual({ x: 400, y: 80, width: 200, height: 200 });
+  expect(box).toEqual({ x: 400, y: 108, width: 200, height: 200 });
 });

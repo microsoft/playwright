@@ -47,27 +47,31 @@ function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: 
   return null;
 }
 
+type ImageData = { width: number, height: number, data: Buffer };
+
 function compareImages(mimeType: string, actualBuffer: Buffer | string, expectedBuffer: Buffer, options: ImageComparatorOptions = {}): ComparatorResult {
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
     return { errorMessage: 'Actual result should be a Buffer.' };
 
-  const actual = mimeType === 'image/png' ? PNG.sync.read(actualBuffer) : jpegjs.decode(actualBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
-  const expected = mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpegjs.decode(expectedBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
+  let actual: ImageData = mimeType === 'image/png' ? PNG.sync.read(actualBuffer) : jpegjs.decode(actualBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
+  let expected: ImageData = mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpegjs.decode(expectedBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
+  const size = { width: Math.max(expected.width, actual.width), height: Math.max(expected.height, actual.height) };
+  let sizesMismatchError = '';
   if (expected.width !== actual.width || expected.height !== actual.height) {
-    return {
-      errorMessage: `Expected an image ${expected.width}px by ${expected.height}px, received ${actual.width}px by ${actual.height}px. `
-    };
+    sizesMismatchError = `Expected an image ${expected.width}px by ${expected.height}px, received ${actual.width}px by ${actual.height}px. `;
+    actual = resizeImage(actual, size);
+    expected = resizeImage(expected, size);
   }
-  const diff = new PNG({ width: expected.width, height: expected.height });
+  const diff = new PNG({ width: size.width, height: size.height });
   let count;
   if (options._comparator === 'ssim-cie94') {
-    count = compare(expected.data, actual.data, diff.data, expected.width, expected.height, {
+    count = compare(expected.data, actual.data, diff.data, size.width, size.height, {
       // All ΔE* formulae are originally designed to have the difference of 1.0 stand for a "just noticeable difference" (JND).
       // See https://en.wikipedia.org/wiki/Color_difference#CIELAB_%CE%94E*
       maxColorDeltaE94: 1.0,
     });
   } else if ((options._comparator ?? 'pixelmatch') === 'pixelmatch') {
-    count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, {
+    count = pixelmatch(expected.data, actual.data, diff.data, size.width, size.height, {
       threshold: options.threshold ?? 0.2,
     });
   } else {
@@ -82,10 +86,10 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   else
     maxDiffPixels = maxDiffPixels1 ?? maxDiffPixels2 ?? 0;
   const ratio = Math.ceil(count / (expected.width * expected.height) * 100) / 100;
-  return count > maxDiffPixels ? {
-    errorMessage: `${count} pixels (ratio ${ratio.toFixed(2)} of all image pixels) are different`,
-    diff: PNG.sync.write(diff),
-  } : null;
+  const pixelsMismatchError = count > maxDiffPixels ? `${count} pixels (ratio ${ratio.toFixed(2)} of all image pixels) are different.` : '';
+  if (pixelsMismatchError || sizesMismatchError)
+    return { errorMessage: sizesMismatchError + pixelsMismatchError, diff: PNG.sync.write(diff) };
+  return null;
 }
 
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
@@ -121,4 +125,28 @@ function diff_prettyTerminal(diffs: [number, string][]) {
     }
   }
   return html.join('');
+}
+
+function resizeImage(image: ImageData, size: { width: number, height: number }): ImageData {
+  if (image.width === size.width && image.height === size.height)
+    return image;
+  const buffer = new Uint8Array(size.width * size.height * 4);
+  for (let y = 0; y < size.height; y++) {
+    for (let x = 0; x < size.width; x++) {
+      const to = (y * size.width + x) * 4;
+      if (y < image.height && x < image.width) {
+        const from = (y * image.width + x) * 4;
+        buffer[to] = image.data[from];
+        buffer[to + 1] = image.data[from + 1];
+        buffer[to + 2] = image.data[from + 2];
+        buffer[to + 3] = image.data[from + 3];
+      } else {
+        buffer[to] = 0;
+        buffer[to + 1] = 0;
+        buffer[to + 2] = 0;
+        buffer[to + 3] = 0;
+      }
+    }
+  }
+  return { data: Buffer.from(buffer), width: size.width, height: size.height };
 }
