@@ -6246,10 +6246,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type CookieSameSitePolicy = "None"|"Lax"|"Strict";
     /**
-     * Page reduced-motion media query override.
-     */
-    export type ReducedMotion = "Reduce"|"NoPreference";
-    /**
      * Page forced-colors media query override.
      */
     export type ForcedColors = "Active"|"None";
@@ -6932,14 +6928,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       media: string;
     }
     export type setEmulatedMediaReturnValue = {
-    }
-    /**
-     * Forces the reduced-motion media query for the page.
-     */
-    export type setForcedReducedMotionParameters = {
-      reducedMotion?: ReducedMotion;
-    }
-    export type setForcedReducedMotionReturnValue = {
     }
     /**
      * Forces the forced-colors media query for the page.
@@ -9306,7 +9294,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setShowRulers": Page.setShowRulersParameters;
     "Page.setShowPaintRects": Page.setShowPaintRectsParameters;
     "Page.setEmulatedMedia": Page.setEmulatedMediaParameters;
-    "Page.setForcedReducedMotion": Page.setForcedReducedMotionParameters;
     "Page.setForcedColors": Page.setForcedColorsParameters;
     "Page.setTimeZone": Page.setTimeZoneParameters;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledParameters;
@@ -9615,7 +9602,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.setShowRulers": Page.setShowRulersReturnValue;
     "Page.setShowPaintRects": Page.setShowPaintRectsReturnValue;
     "Page.setEmulatedMedia": Page.setEmulatedMediaReturnValue;
-    "Page.setForcedReducedMotion": Page.setForcedReducedMotionReturnValue;
     "Page.setForcedColors": Page.setForcedColorsReturnValue;
     "Page.setTimeZone": Page.setTimeZoneReturnValue;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledReturnValue;
