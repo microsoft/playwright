@@ -151,7 +151,7 @@ it('isChecked should work for indeterminate input', async ({ page }) => {
   await page.locator('input').evaluate((e: HTMLInputElement) => e.indeterminate = true);
   // a11y considers such elements as checked: mixed.
   expect(await page.locator('input').isChecked()).toBe(false);
-})
+});
 
 it('allTextContents should work', async ({ page }) => {
   await page.setContent(`<div>A</div><div>B</div><div>C</div>`);
