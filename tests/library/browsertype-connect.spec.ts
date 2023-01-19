@@ -825,16 +825,16 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         });
         const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), {
-          _exposeNetwork: 'localhost',
+          _exposeNetwork: '127.0.0.1',
           headers: {
             'x-playwright-proxy': '*',
           },
         } as any, dummyServerPort);
         const page = await browser.newPage();
 
-        // 127.0.0.1 should fail on the client side.
+        // local.playwright should fail on the client side.
         let failed = false;
-        await page.goto(`http://127.0.0.1:${server.PORT}/foo.html`).catch(e => {
+        await page.goto(`http://local.playwright:${server.PORT}/foo.html`).catch(e => {
           failed = true;
         });
         expect(failed).toBe(true);
