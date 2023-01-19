@@ -29,6 +29,8 @@ import type { TimeSlot } from './timeoutManager';
 import { TimeoutManager } from './timeoutManager';
 import { ProcessRunner } from './process';
 import { TestLoader } from './testLoader';
+import { buildFileSuiteForProject, filterTests } from './suiteUtils';
+import { PoolBuilder } from './poolBuilder';
 
 const removeFolderAsync = util.promisify(rimraf);
 
@@ -37,6 +39,7 @@ export class WorkerRunner extends ProcessRunner {
   private _configLoader!: ConfigLoader;
   private _testLoader!: TestLoader;
   private _project!: FullProjectInternal;
+  private _poolBuilder!: PoolBuilder;
   private _fixtureRunner: FixtureRunner;
 
   // Accumulated fatal errors that cannot be attributed to a test.
@@ -169,9 +172,10 @@ export class WorkerRunner extends ProcessRunner {
     if (this._configLoader)
       return;
 
-    this._configLoader = await ConfigLoader.deserialize(this._params.loader);
+    this._configLoader = await ConfigLoader.deserialize(this._params.config);
     this._testLoader = new TestLoader(this._configLoader.fullConfig());
     this._project = this._configLoader.fullConfig().projects.find(p => p._id === this._params.projectId)!;
+    this._poolBuilder = new PoolBuilder(this._project);
   }
 
   async runTestGroup(runPayload: RunPayload) {
@@ -181,12 +185,10 @@ export class WorkerRunner extends ProcessRunner {
     try {
       await this._loadIfNeeded();
       const fileSuite = await this._testLoader.loadTestFile(runPayload.file, 'worker');
-      const suite = this._testLoader.buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex, test => {
-        if (!entries.has(test.id))
-          return false;
-        return true;
-      });
-      if (suite) {
+      const suite = buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex);
+      const hasEntries = filterTests(suite, test => entries.has(test.id));
+      if (hasEntries) {
+        this._poolBuilder.buildPools(suite, this._params.repeatEachIndex);
         this._extraSuiteAnnotations = new Map();
         this._activeSuites = new Set();
         this._didRunFullCleanup = false;

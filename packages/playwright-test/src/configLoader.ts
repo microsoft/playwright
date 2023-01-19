@@ -19,7 +19,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { isRegExp } from 'playwright-core/lib/utils';
 import type { Reporter } from '../types/testReporter';
-import type { SerializedLoaderData } from './ipc';
+import type { SerializedConfig } from './ipc';
 import type { BuiltInReporter, ConfigCLIOverrides } from './runner';
 import { builtInReporters } from './runner';
 import { requireOrImport } from './transform';
@@ -39,7 +39,7 @@ export class ConfigLoader {
     this._fullConfig = { ...baseFullConfig };
   }
 
-  static async deserialize(data: SerializedLoaderData): Promise<ConfigLoader> {
+  static async deserialize(data: SerializedConfig): Promise<ConfigLoader> {
     const loader = new ConfigLoader(data.configCLIOverrides);
     if (data.configFile)
       await loader.loadConfigFile(data.configFile);
@@ -182,8 +182,8 @@ export class ConfigLoader {
     return this._fullConfig;
   }
 
-  serialize(): SerializedLoaderData {
-    const result: SerializedLoaderData = {
+  serializedConfig(): SerializedConfig {
+    const result: SerializedConfig = {
       configFile: this._configFile,
       configDir: this._configDir,
       configCLIOverrides: this._configCLIOverrides,

@@ -15,7 +15,7 @@
  */
 
 import type { TestGroup } from './dispatcher';
-import type { RunPayload, SerializedLoaderData, WorkerInitParams } from './ipc';
+import type { RunPayload, SerializedConfig, WorkerInitParams } from './ipc';
 import { ProcessHost } from './processHost';
 
 let lastWorkerIndex = 0;
@@ -27,7 +27,7 @@ export class WorkerHost extends ProcessHost<WorkerInitParams> {
   currentTestId: string | null = null;
   private _params: WorkerInitParams;
 
-  constructor(testGroup: TestGroup, parallelIndex: number, loader: SerializedLoaderData) {
+  constructor(testGroup: TestGroup, parallelIndex: number, config: SerializedConfig) {
     const workerIndex = lastWorkerIndex++;
     super(require.resolve('./workerRunner.js'), `worker-${workerIndex}`);
     this.workerIndex = workerIndex;
@@ -39,7 +39,7 @@ export class WorkerHost extends ProcessHost<WorkerInitParams> {
       parallelIndex,
       repeatEachIndex: testGroup.repeatEachIndex,
       projectId: testGroup.projectId,
-      loader,
+      config,
     };
   }
 

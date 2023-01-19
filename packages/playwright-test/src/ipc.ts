@@ -17,7 +17,7 @@
 import type { ConfigCLIOverrides } from './runner';
 import type { TestInfoError, TestStatus } from './types';
 
-export type SerializedLoaderData = {
+export type SerializedConfig = {
   configFile: string | undefined;
   configDir: string;
   configCLIOverrides: ConfigCLIOverrides;
@@ -40,7 +40,7 @@ export type WorkerInitParams = {
   parallelIndex: number;
   repeatEachIndex: number;
   projectId: string;
-  loader: SerializedLoaderData;
+  config: SerializedConfig;
 };
 
 export type TestBeginPayload = {

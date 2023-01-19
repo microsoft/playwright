@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedLoaderData } from './ipc';
+import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedConfig } from './ipc';
 import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
 import type { Suite } from './test';
 import type { ConfigLoader } from './configLoader';
@@ -105,7 +105,7 @@ export class Dispatcher {
 
     // 2. Start the worker if it is down.
     if (!worker) {
-      worker = this._createWorker(job, index, this._configLoader.serialize());
+      worker = this._createWorker(job, index, this._configLoader.serializedConfig());
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
       await worker.start();
@@ -426,7 +426,7 @@ export class Dispatcher {
     return result;
   }
 
-  _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedLoaderData) {
+  _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedConfig) {
     const worker = new WorkerHost(testGroup, parallelIndex, loaderData);
     const handleOutput = (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);

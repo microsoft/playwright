@@ -46,6 +46,8 @@ import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher, se
 import type { Matcher, TestFileFilter } from './util';
 import { setFatalErrorSink } from './globals';
 import { TestLoader } from './testLoader';
+import { buildFileSuiteForProject, filterTests } from './suiteUtils';
+import { PoolBuilder } from './poolBuilder';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -319,6 +321,7 @@ export class Runner {
 
     const rootSuite = new Suite('', 'root');
     for (const [project, files] of filesByProject) {
+      const poolBuilder = new PoolBuilder(project);
       const grepMatcher = createTitleMatcher(project.grep);
       const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
 
@@ -339,9 +342,11 @@ export class Runner {
         if (!fileSuite)
           continue;
         for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
-          const builtSuite = testLoader.buildFileSuiteForProject(project, fileSuite, repeatEachIndex, titleMatcher);
-          if (builtSuite)
-            projectSuite._addSuite(builtSuite);
+          const builtSuite = buildFileSuiteForProject(project, fileSuite, repeatEachIndex);
+          if (!filterTests(builtSuite, titleMatcher))
+            continue;
+          projectSuite._addSuite(builtSuite);
+          poolBuilder.buildPools(builtSuite, repeatEachIndex);
         }
       }
     }
