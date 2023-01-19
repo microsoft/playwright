@@ -1908,15 +1908,6 @@ Frame:
       tracing:
         snapshot: true
 
-    viewportRatio:
-      parameters:
-        selector: string
-        strict: boolean?
-      returns:
-        value: number
-      tracing:
-        snapshot: true
-
     isEditable:
       parameters:
         selector: string

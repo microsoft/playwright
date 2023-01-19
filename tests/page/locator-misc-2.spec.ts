@@ -155,17 +155,3 @@ it('locator.count should work with deleted Map in main world', async ({ page }) 
   await expect(page.locator('#searchResultTableDiv .x-grid3-row')).toHaveCount(0);
 });
 
-it('locator.viewportRatio', async ({ page }) => {
-  await page.setContent(`
-    <style>body { overflow: hidden; padding: 0; margin: 0; } div { position: absolute; left: 0; top: 0 }</style>
-    <div id=fills-viewport style='width: 100vw; height: 100vh;'></div>
-    <div id=half-viewport style='width: 50vw; height: 100vh;'></div>
-    <div id=twice-viewport style='width: 200vw; height: 100vh;'></div>
-    <div id=off-viewport style='left:100vw; width: 100vw; height: 100vh;'></div>
-  `);
-  expect.soft(await page.locator('#fills-viewport').viewportRatio()).toBe(1);
-  expect.soft(await page.locator('#half-viewport').viewportRatio()).toBe(1);
-  expect.soft(await page.locator('#twice-viewport').viewportRatio()).toBe(0.5);
-  expect.soft(await page.locator('#off-viewport').viewportRatio()).toBe(0);
-  expect.soft(await page.locator('#does-not-exist').viewportRatio()).toBe(0);
-});
