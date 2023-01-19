@@ -1119,7 +1119,7 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]) {
+  expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]) {
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     if (isArray)
       return this.expectArray(elements, options);
@@ -1130,16 +1130,13 @@ export class InjectedScript {
       // expect(locator).not.toBeVisible() passes when there is no element.
       if (options.isNot && options.expression === 'to.be.visible')
         return { matches: false };
-      // expect(locator).not.toIntersectViewport() passes when there is no element.
-      if (options.isNot && options.expression === 'to.intersect.viewport')
-        return { matches: false };
       // When none of the above applies, expect does not match.
       return { matches: options.isNot };
     }
-    return await this.expectSingleElement(element, options);
+    return this.expectSingleElement(element, options);
   }
 
-  private async expectSingleElement(element: Element, options: FrameExpectParams): Promise<{ matches: boolean, received?: any }> {
+  private expectSingleElement(element: Element, options: FrameExpectParams): { matches: boolean, received?: any } {
     const expression = options.expression;
 
     {
@@ -1185,13 +1182,6 @@ export class InjectedScript {
         const received = (element as any)[options.expressionArg];
         const matches = deepEquals(received, options.expectedValue);
         return { received, matches };
-      }
-    }
-    {
-      // Viewport intersection
-      if (expression === 'to.intersect.viewport') {
-        const ratio = await this.viewportRatio(element);
-        return { received: `viewport ratio ${ratio}`, matches: ratio > 0 };
       }
     }
 
