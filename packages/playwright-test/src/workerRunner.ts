@@ -175,7 +175,7 @@ export class WorkerRunner extends ProcessRunner {
     this._configLoader = await ConfigLoader.deserialize(this._params.config);
     this._testLoader = new TestLoader(this._configLoader.fullConfig());
     this._project = this._configLoader.fullConfig().projects.find(p => p._id === this._params.projectId)!;
-    this._poolBuilder = new PoolBuilder(this._project);
+    this._poolBuilder = PoolBuilder.createForWorker(this._project);
   }
 
   async runTestGroup(runPayload: RunPayload) {
@@ -188,7 +188,7 @@ export class WorkerRunner extends ProcessRunner {
       const suite = buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex);
       const hasEntries = filterTests(suite, test => entries.has(test.id));
       if (hasEntries) {
-        this._poolBuilder.buildPools(suite, this._params.repeatEachIndex);
+        this._poolBuilder.buildPools(suite);
         this._extraSuiteAnnotations = new Map();
         this._activeSuites = new Set();
         this._didRunFullCleanup = false;

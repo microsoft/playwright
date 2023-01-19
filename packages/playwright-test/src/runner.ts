@@ -283,19 +283,12 @@ export class Runner {
     const config = this._configLoader.fullConfig();
     const fatalErrors: TestError[] = [];
     const allTestFiles = new Set<string>();
-    const testLoader = new TestLoader(config);
     for (const files of filesByProject.values())
       files.forEach(file => allTestFiles.add(file));
 
-    // Add all tests.
-    const preprocessRoot = new Suite('', 'root');
-    for (const file of allTestFiles) {
-      const fileSuite = await testLoader.loadTestFile(file, 'runner');
-      if (fileSuite._loadError)
-        fatalErrors.push(fileSuite._loadError);
-      // We have to clone only if there maybe subsequent calls of this method.
-      preprocessRoot._addSuite(fileSuite);
-    }
+    // Load all tests.
+    const { rootSuite: preprocessRoot, loadErrors } = await this._loadTests(allTestFiles);
+    fatalErrors.push(...loadErrors);
 
     // Complain about duplicate titles.
     fatalErrors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
@@ -321,7 +314,6 @@ export class Runner {
 
     const rootSuite = new Suite('', 'root');
     for (const [project, files] of filesByProject) {
-      const poolBuilder = new PoolBuilder(project);
       const grepMatcher = createTitleMatcher(project.grep);
       const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
 
@@ -346,11 +338,27 @@ export class Runner {
           if (!filterTests(builtSuite, titleMatcher))
             continue;
           projectSuite._addSuite(builtSuite);
-          poolBuilder.buildPools(builtSuite, repeatEachIndex);
         }
       }
     }
     return { rootSuite, fatalErrors };
+  }
+
+  private async _loadTests(testFiles: Set<string>): Promise<{ rootSuite: Suite, loadErrors: TestError[] }> {
+    const config = this._configLoader.fullConfig();
+    const testLoader = new TestLoader(config);
+    const loadErrors: TestError[] = [];
+    const rootSuite = new Suite('', 'root');
+    for (const file of testFiles) {
+      const fileSuite = await testLoader.loadTestFile(file, 'loader');
+      if (fileSuite._loadError)
+        loadErrors.push(fileSuite._loadError);
+      // We have to clone only if there maybe subsequent calls of this method.
+      rootSuite._addSuite(fileSuite);
+    }
+    // Generate hashes.
+    PoolBuilder.buildForLoader(rootSuite);
+    return { rootSuite, loadErrors };
   }
 
   private _filterForCurrentShard(rootSuite: Suite, testGroups: TestGroup[]) {
