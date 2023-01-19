@@ -88,7 +88,7 @@ Optional method parameters.
 * since: v1.30
 * langs: csharp
   - alias-csharp: args
-- `params` ?<[Dictionary<string, Object>]>
+- `params` ?<[Map<string, Object>]>
 
 Optional method parameters.
 
