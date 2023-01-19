@@ -38,7 +38,6 @@ import {
   toHaveURL,
   toHaveValue,
   toHaveValues,
-  toIntersectViewport,
   toPass
 } from './matchers/matchers';
 import { toMatchSnapshot, toHaveScreenshot } from './matchers/toMatchSnapshot';
@@ -144,7 +143,6 @@ const customMatchers = {
   toHaveURL,
   toHaveValue,
   toHaveValues,
-  toIntersectViewport,
   toMatchSnapshot,
   toHaveScreenshot,
   toPass,

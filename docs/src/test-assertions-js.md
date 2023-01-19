@@ -43,7 +43,6 @@ By default, the timeout for assertions is set to 5 seconds. Learn more about [va
 | [`method: LocatorAssertions.toHaveText`] | Element matches text |
 | [`method: LocatorAssertions.toHaveValue`] | Input has a value |
 | [`method: LocatorAssertions.toHaveValues`] | Select has options selected |
-| [`method: LocatorAssertions.toIntersectViewport`] | Element intersects viewport |
 | [`method: PageAssertions.toHaveScreenshot#1`] | Page has a screenshot |
 | [`method: PageAssertions.toHaveTitle`] | Page has a title |
 | [`method: PageAssertions.toHaveURL`] | Page has a URL |
