@@ -48,7 +48,7 @@ client.send("Animation.setPlaybackRate", {
 ```csharp
 var client = await Page.Context.NewCDPSessionAsync(Page);
 await client.SendAsync("Runtime.enable");
-client.AddEventListener("Animation.animationCreated", (_) => Console.WriteLine("Animation created!"));
+client.Event("Animation.animationCreated").OnEvent += (_, _) => Console.WriteLine("Animation created!"));
 var response = await client.SendAsync("Animation.getPlaybackRate");
 var playbackRate = response.Value.Deserialize<JsonNode>()["result"]["playbackRate"].GetValue<decimal>();
 Console.WriteLine("playback rate is " + playbackRate);
@@ -92,34 +92,24 @@ Optional method parameters.
 
 Optional method parameters.
 
-## method: CDPSession.addEventListener
-* since: v1.30
+## method: CDPSession.event
+* since: v.1.30
 * langs: csharp
+- returns: <[CDPNamedEvent]>
 
-Adds a listener for a named CDP event
-
-### param: CDPSession.addEventListener.eventName
-* since: v1.30
-* langs: csharp
-- `eventName` <[string]>
-
-### param: CDPSession.addEventListener.eventHandler
-* since: v1.30
-* langs: csharp
-- `eventHandler` <[Action<JsonElement?>]>
-
-## method: CDPSession.removeEventListener
-* since: v1.30
-* langs: csharp
-
-Removes a listener for a named CDP event
-
-### param: CDPSession.removeEventListener.eventName
+### param: CDPSession.event.eventName
 * since: v1.30
 * langs: csharp
 - `eventName` <[string]>
 
-### param: CDPSession.removeEventListener.eventHandler
+# class: CDPNamedEvent
 * since: v1.30
+
+## property: CDPNamedEvent.eventName
+* since: 1.30
 * langs: csharp
-- `eventHandler` <[Action<JsonElement?>]>
+- returns: <[string]>
+
+## event: CDPNamedEvent.onEvent
+* since: v1.30
+- argument: <[JsonElement?]>
