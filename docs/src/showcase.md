@@ -50,6 +50,7 @@ title: "Community Showcase"
 * [Testim Playground](https://www.testim.io/playground/): Record Playwright UI tests as code
 * [Tesults](https://www.tesults.com/docs/playwright): Test automation reporting application and dashboard with Playwright integration
 * [Try Playwright](https://try.playwright.tech/): Interactive playground for Playwright to run examples directly from your browser
+* [Testmo](https://www.testmo.com/tools/playwright-test-management): Test management tool with Playwright reporting and test result integration
 
 ## Frameworks
 
