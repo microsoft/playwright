@@ -146,11 +146,11 @@ it('isChecked should work', async ({ page }) => {
 
 it('isChecked should work for indeterminate input', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20190' });
-  it.fixme()
   await page.setContent(`<input type="checkbox" checked >`);
   expect(await page.locator('input').isChecked()).toBe(true);
   await page.locator('input').evaluate((e: HTMLInputElement) => e.indeterminate = true);
-  expect(await page.locator('input').isChecked()).toBe(true);
+  // a11y considers such elements as checked: mixed.
+  expect(await page.locator('input').isChecked()).toBe(false);
 })
 
 it('allTextContents should work', async ({ page }) => {
