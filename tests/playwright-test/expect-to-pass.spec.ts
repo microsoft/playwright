@@ -100,12 +100,14 @@ test('should respect interval', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('should fail', async () => {
         let probes = 0;
+        const startTime = Date.now();
         await test.expect(() => {
-          ++probes
+          ++probes;
           expect(1).toBe(2);
-        }).toPass({ timeout: 1000, intervals: [600] }).catch(() => {});
-        // Probe at 0s, at 0.6s.
+        }).toPass({ timeout: 1000, intervals: [0, 10000] }).catch(() => {});
+        // Probe at 0 and epsilon.
         expect(probes).toBe(2);
+        expect(Date.now() - startTime).toBeLessThan(5000);
       });
     `
   });
@@ -157,7 +159,7 @@ test('should work with soft', async ({ runInlineTest }) => {
       test('should respect soft', async () => {
         await test.expect.soft(() => {
           expect(1).toBe(3);
-        }).toPass({ timeout: 1 });
+        }).toPass({ timeout: 1000 });
         expect.soft(2).toBe(3);
       });
     `

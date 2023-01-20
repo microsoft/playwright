@@ -311,7 +311,7 @@ export async function toBeOK(
 
 export async function toPass(
   this: ReturnType<Expect['getState']>,
-  callback: () => void,
+  callback: () => any,
   options: {
     intervals?: number[];
     timeout?: number,

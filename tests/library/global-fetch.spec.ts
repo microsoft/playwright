@@ -56,10 +56,10 @@ it('should support global userAgent option', async ({ playwright, server }) => {
 });
 
 it('should support global timeout option', async ({ playwright, server }) => {
-  const request = await playwright.request.newContext({ timeout: 1 });
+  const request = await playwright.request.newContext({ timeout: 100 });
   server.setRoute('/empty.html', (req, res) => {});
   const error = await request.get(server.EMPTY_PAGE).catch(e => e);
-  expect(error.message).toContain('Request timed out after 1ms');
+  expect(error.message).toContain('Request timed out after 100ms');
 });
 
 it('should propagate extra http headers with redirects', async ({ playwright, server }) => {
