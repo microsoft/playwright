@@ -15,6 +15,7 @@
 */
 
 import type { TestCase } from './types';
+import { CopyToClipboard } from '@web/components/copyToClipboard';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
@@ -34,7 +35,7 @@ export const TestCaseView: React.FC<{
 
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
-    {test && <div className='test-case-title'>{test?.title}</div>}
+    {test && <div className='test-case-title'>{test.title} <CopyToClipboard value={test.title} /></div>}
     {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
     {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
     {test && !!test.annotations.length && <AutoChip header='Annotations'>

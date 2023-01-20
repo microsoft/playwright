@@ -21,3 +21,7 @@
 .codicon-close {
   color: var(--red);
 }
+
+.copy-icon {
+  cursor: pointer;
+}

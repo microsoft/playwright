@@ -40,6 +40,19 @@
   font-weight: 400;
   font-size: 32px !important;
   line-height: 1.25 !important;
+  display: flex;
+  align-items: center;
+}
+
+.test-case-title .copy-icon {
+  flex: none;
+  font-size: inherit;
+  margin-left: 8px;
+  opacity: 0;
+}
+
+.test-case-title:hover .copy-icon {
+  opacity: 1;
 }
 
 .test-case-location {

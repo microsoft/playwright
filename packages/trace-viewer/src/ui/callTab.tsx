@@ -17,10 +17,10 @@
 import type { CallMetadata } from '@protocol/callMetadata';
 import type { SerializedValue } from '@protocol/channels';
 import type { ActionTraceEvent } from '@trace/trace';
+import { CopyToClipboard } from '@web/components/copyToClipboard';
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './callTab.css';
-import { CopyToClipboard } from './copyToClipboard';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 

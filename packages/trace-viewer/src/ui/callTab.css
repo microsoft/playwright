@@ -64,7 +64,6 @@
 
 .call-line:hover .copy-icon {
   display: block;
-  cursor: pointer;
 }
 
 .call-value {

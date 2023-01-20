@@ -18,6 +18,8 @@ import type { HTMLReport } from './types';
 import type zip from '@zip.js/zip.js';
 // @ts-ignore
 import zipImport from '@zip.js/zip.js/dist/zip-no-worker-inflate.min.js';
+import '@web/common.css';
+import '@web/third_party/vscode/codicon.css';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import './colors.css';
