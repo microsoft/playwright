@@ -20,18 +20,30 @@ import type { TestTypeImpl } from './testType';
 import type { Fixtures, FixturesWithLocation, FullProjectInternal } from './types';
 
 export class PoolBuilder {
-  private _project: FullProjectInternal;
+  private _project: FullProjectInternal | undefined;
   private _testTypePools = new Map<TestTypeImpl, FixturePool>();
+  private _type: 'loader' | 'worker';
 
-  constructor(project: FullProjectInternal) {
+  static buildForLoader(suite: Suite) {
+    new PoolBuilder('loader').buildPools(suite);
+  }
+
+  static createForWorker(project: FullProjectInternal) {
+    return new PoolBuilder('worker', project);
+  }
+
+  private constructor(type: 'loader' | 'worker', project?: FullProjectInternal) {
+    this._type = type;
     this._project = project;
   }
 
-  buildPools(suite: Suite, repeatEachIndex: number) {
+  buildPools(suite: Suite) {
     suite.forEachTest(test => {
       const pool = this._buildPoolForTest(test);
-      test._workerHash = `run${this._project._id}-${pool.digest}-repeat${repeatEachIndex}`;
-      test._pool = pool;
+      if (this._type === 'loader')
+        test._poolDigest = pool.digest;
+      if (this._type === 'worker')
+        test._pool = pool;
     });
   }
 
@@ -58,15 +70,16 @@ export class PoolBuilder {
 
   private _buildTestTypePool(testType: TestTypeImpl): FixturePool {
     if (!this._testTypePools.has(testType)) {
-      const fixtures = this._applyConfigUseOptions(testType, this._project.use || {});
+      const fixtures = this._project ? this._applyConfigUseOptions(this._project, testType) : testType.fixtures;
       const pool = new FixturePool(fixtures);
       this._testTypePools.set(testType, pool);
     }
     return this._testTypePools.get(testType)!;
   }
 
-  private _applyConfigUseOptions(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
-    const configKeys = new Set(Object.keys(configUse));
+  private _applyConfigUseOptions(project: FullProjectInternal, testType: TestTypeImpl): FixturesWithLocation[] {
+    const projectUse = project.use || {};
+    const configKeys = new Set(Object.keys(projectUse));
     if (!configKeys.size)
       return testType.fixtures;
     const result: FixturesWithLocation[] = [];
@@ -75,12 +88,12 @@ export class PoolBuilder {
       const optionsFromConfig: Fixtures = {};
       for (const [key, value] of Object.entries(f.fixtures)) {
         if (isFixtureOption(value) && configKeys.has(key))
-          (optionsFromConfig as any)[key] = [(configUse as any)[key], value[1]];
+          (optionsFromConfig as any)[key] = [(projectUse as any)[key], value[1]];
       }
       if (Object.entries(optionsFromConfig).length) {
         // Add config options immediately after original option definition,
         // so that any test.use() override it.
-        result.push({ fixtures: optionsFromConfig, location: { file: `project#${this._project._id}`, line: 1, column: 1 }, fromConfig: true });
+        result.push({ fixtures: optionsFromConfig, location: { file: `project#${project._id}`, line: 1, column: 1 }, fromConfig: true });
       }
     }
     return result;

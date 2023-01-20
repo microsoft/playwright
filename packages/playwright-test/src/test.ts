@@ -160,8 +160,9 @@ export class TestCase extends Base implements reporterTypes.TestCase {
 
   _testType: TestTypeImpl;
   id = '';
-  _workerHash = '';
   _pool: FixturePool | undefined;
+  _poolDigest = '';
+  _workerHash = '';
   _projectId = '';
   // Annotations that are not added from within a test (like fixme and skip), should not
   // be re-added each time we retry a test.
@@ -200,6 +201,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     const test = new TestCase(this.title, this.fn, this._testType, this.location);
     test._only = this._only;
     test._requireFile = this._requireFile;
+    test._poolDigest = this._poolDigest;
     test.expectedStatus = this.expectedStatus;
     test.annotations = this.annotations.slice();
     test._annotateWithInheritence = this._annotateWithInheritence;

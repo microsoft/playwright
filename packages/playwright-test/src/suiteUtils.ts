@@ -52,6 +52,9 @@ export function buildFileSuiteForProject(project: FullProjectInternal, suite: Su
         break;
       }
     }
+    // We only compute / set digest in the runner.
+    if (test._poolDigest)
+      test._workerHash = `${project._id}-${test._poolDigest}-${repeatEachIndex}`;
   });
 
   return result;

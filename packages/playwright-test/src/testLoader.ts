@@ -34,7 +34,7 @@ export class TestLoader {
     this._fullConfig = fullConfig;
   }
 
-  async loadTestFile(file: string, environment: 'runner' | 'worker'): Promise<Suite> {
+  async loadTestFile(file: string, environment: 'loader' | 'worker'): Promise<Suite> {
     if (cachedFileSuites.has(file))
       return cachedFileSuites.get(file)!;
     const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file), 'file');

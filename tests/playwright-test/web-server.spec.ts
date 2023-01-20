@@ -279,7 +279,7 @@ test('should be able to specify the baseURL without the server', async ({ runInl
 });
 
 test('should be able to specify a custom baseURL with the server', async ({ runInlineTest }, { workerIndex }) => {
-  const customWebServerPort = workerIndex + 10500;
+  const customWebServerPort = workerIndex * 2 + 10500;
   const webServerPort = customWebServerPort + 1;
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
@@ -458,7 +458,7 @@ test('should send Accept header', async ({ runInlineTest, server }) => {
 });
 
 test('should create multiple servers', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex + 10500;
+  const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
         const { test } = pwt;
@@ -533,7 +533,7 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
 
 test.describe('baseURL with plugins', () => {
   test('plugins do not set it', async ({ runInlineTest }, { workerIndex }) => {
-    const port = workerIndex + 10500;
+    const port = workerIndex * 2 + 10500;
     const result = await runInlineTest({
       'test.spec.ts': `
           import { webServer } from '@playwright/test/lib/plugins';
@@ -553,7 +553,7 @@ test.describe('baseURL with plugins', () => {
   });
 
   test('legacy config sets it alongside plugin', async ({ runInlineTest }, { workerIndex }) => {
-    const port = workerIndex + 10500;
+    const port = workerIndex * 2 + 10500;
     const result = await runInlineTest({
       'test.spec.ts': `
           import { webServer } from '@playwright/test/lib/plugins';
