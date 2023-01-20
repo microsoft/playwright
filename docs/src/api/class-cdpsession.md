@@ -95,21 +95,9 @@ Optional method parameters.
 ## method: CDPSession.event
 * since: v.1.30
 * langs: csharp
-- returns: <[CDPNamedEvent]>
+- returns: <[CDPSessionEvent]>
 
 ### param: CDPSession.event.eventName
 * since: v1.30
 * langs: csharp
 - `eventName` <[string]>
-
-# class: CDPNamedEvent
-* since: v1.30
-
-## property: CDPNamedEvent.eventName
-* since: 1.30
-* langs: csharp
-- returns: <[string]>
-
-## event: CDPNamedEvent.onEvent
-* since: v1.30
-- argument: <[JsonElement?]>
