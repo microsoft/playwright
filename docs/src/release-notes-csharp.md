@@ -4,6 +4,20 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.30
+
+### Browser Versions
+
+* Chromium 110.0.5481.38
+* Mozilla Firefox 108.0.2
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 109
+* Microsoft Edge 109
+
+
 ## Version 1.29
 
 ### New APIs
