@@ -208,9 +208,11 @@ test('should respect interval', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('should fail', async () => {
         let probes = 0;
-        await test.expect.poll(() => ++probes, { timeout: 1000, intervals: [600] }).toBe(3).catch(() => {});
-        // Probe at 0s, at 0.6s.
+        const startTime = Date.now();
+        await test.expect.poll(() => ++probes, { timeout: 1000, intervals: [0, 10000] }).toBe(3).catch(() => {});
+        // Probe at 0 and epsilon.
         expect(probes).toBe(2);
+        expect(Date.now() - startTime).toBeLessThan(5000);
       });
     `
   });
