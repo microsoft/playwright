@@ -38,7 +38,7 @@ PW_UUID=$(cat /proc/sys/kernel/random/uuid)
 # Make sure to re-start playwright server if something goes wrong.
 # The approach taken from: https://stackoverflow.com/a/697064/314883
 
-until npx playwright run-server --port=5200 --path=/$PW_UUID --proxy-mode=tether; do
+until npx playwright run-server --port=5200 --path=/$PW_UUID; do
   echo "Server crashed with exit code $?. Respawning.." >&2
   sleep 1
 done

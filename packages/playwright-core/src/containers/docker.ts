@@ -223,7 +223,6 @@ export async function ensurePlaywrightContainerOrDie(port: number): Promise<Cont
   }
 
   const env: Record<string, string | undefined> = {
-    PW_OWNED_BY_TETHER_CLIENT: '1',
     DEBUG: process.env.DEBUG,
   };
   for (const [key, value] of Object.entries(process.env)) {
