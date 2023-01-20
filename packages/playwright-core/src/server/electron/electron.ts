@@ -124,7 +124,7 @@ async function urlToNodeWSEndpoint(progress: Progress, endpointURL: string) {
   if (endpointURL.startsWith('ws'))
     return endpointURL;
   progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
-  const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/` : `${endpointURL}/json/`;
+  const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json` : `${endpointURL}/json`;
   const request = endpointURL.startsWith('https') ? https : http;
   const json = await new Promise<string>((resolve, reject) => {
     request.get(httpURL, {

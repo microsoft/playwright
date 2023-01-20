@@ -227,5 +227,8 @@ test('should connect to external electron', async ({ playwright, launchExternalE
   });
   const window = await app.firstWindow();
   const bwHandle = await app.browserWindow(window);
+  expect(await app.evaluate(() => {
+    return 1 + 2;
+  })).toBe(3);
   expect(await bwHandle.evaluate((bw: BrowserWindow) => bw.title)).toBe('Electron');
 });
