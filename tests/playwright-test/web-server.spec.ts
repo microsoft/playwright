@@ -21,7 +21,7 @@ import { test, expect } from './playwright-test-fixtures';
 const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
 
 test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex + 10500;
+  const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
       const { test } = pwt;
@@ -87,7 +87,7 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
 });
 
 test('should create a server with environment variables', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex + 10500;
+  const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
       const { test } = pwt;
@@ -117,7 +117,7 @@ test('should create a server with environment variables', async ({ runInlineTest
 });
 
 test('should default cwd to config directory', async ({ runInlineTest }, testInfo) => {
-  const port = testInfo.workerIndex + 10500;
+  const port = testInfo.workerIndex * 2 + 10500;
   const configDir = testInfo.outputPath('foo');
   const relativeSimpleServerPath = path.relative(configDir, SIMPLE_SERVER_PATH);
   const result = await runInlineTest({
@@ -145,7 +145,7 @@ test('should default cwd to config directory', async ({ runInlineTest }, testInf
 });
 
 test('should resolve cwd wrt config directory', async ({ runInlineTest }, testInfo) => {
-  const port = testInfo.workerIndex + 10500;
+  const port = testInfo.workerIndex * 2 + 10500;
   const testdir = testInfo.outputPath();
   const relativeSimpleServerPath = path.relative(testdir, SIMPLE_SERVER_PATH);
   const result = await runInlineTest({
@@ -175,7 +175,7 @@ test('should resolve cwd wrt config directory', async ({ runInlineTest }, testIn
 
 
 test('should create a server with url', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex + 10500;
+  const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
       const { test } = pwt;
@@ -200,7 +200,7 @@ test('should create a server with url', async ({ runInlineTest }, { workerIndex 
 });
 
 test('should time out waiting for a server', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex + 10500;
+  const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
       const { test } = pwt;
@@ -225,7 +225,7 @@ test('should time out waiting for a server', async ({ runInlineTest }, { workerI
 });
 
 test('should time out waiting for a server with url', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex + 10500;
+  const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
       const { test } = pwt;
@@ -250,7 +250,7 @@ test('should time out waiting for a server with url', async ({ runInlineTest }, 
 });
 
 test('should be able to specify the baseURL without the server', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex + 10500;
+  const port = workerIndex * 2 + 10500;
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
@@ -313,7 +313,7 @@ test('should be able to specify a custom baseURL with the server', async ({ runI
 });
 
 test('should be able to use an existing server when reuseExistingServer:true', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex + 10500;
+  const port = workerIndex * 2 + 10500;
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
@@ -346,7 +346,7 @@ test('should be able to use an existing server when reuseExistingServer:true', a
 });
 
 test('should throw when a server is already running on the given port and strict is true', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex + 10500;
+  const port = workerIndex * 2 + 10500;
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
@@ -378,7 +378,7 @@ test('should throw when a server is already running on the given port and strict
 
 for (const host of ['localhost', '127.0.0.1', '0.0.0.0']) {
   test(`should detect the server if a web-server is already running on ${host}`, async ({ runInlineTest }, { workerIndex }) => {
-    const port = workerIndex + 10500;
+    const port = workerIndex * 2 + 10500;
     const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.end('<html><body>hello</body></html>');
     });
@@ -581,7 +581,7 @@ test.describe('baseURL with plugins', () => {
 });
 
 test('should treat 3XX as available server', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex + 10500;
+  const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
       const { test } = pwt;

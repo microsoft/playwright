@@ -45,9 +45,9 @@ import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal 
 import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher, serializeError } from './util';
 import type { Matcher, TestFileFilter } from './util';
 import { setFatalErrorSink } from './globals';
-import { TestLoader } from './testLoader';
-import { buildFileSuiteForProject, filterTests } from './suiteUtils';
-import { PoolBuilder } from './poolBuilder';
+import { buildFileSuiteForProject, filterOnly, filterSuite, filterSuiteWithOnlySemantics, filterTestsRemoveEmptySuites } from './suiteUtils';
+import { LoaderHost } from './loaderHost';
+import { loadTestFilesInProcess } from './testLoader';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -271,27 +271,23 @@ export class Runner {
     const config = this._configLoader.fullConfig();
     const projects = this._collectProjects(options.projectFilter);
     const filesByProject = await this._collectFiles(projects, options.testFileFilters);
-    const result = await this._createFilteredRootSuite(options, filesByProject);
-    this._fatalErrors.push(...result.fatalErrors);
-    const { rootSuite } = result;
+    const rootSuite = await this._createFilteredRootSuite(options, filesByProject);
 
     const testGroups = createTestGroups(rootSuite.suites, config.workers);
     return { rootSuite, testGroups };
   }
 
-  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>): Promise<{rootSuite: Suite, fatalErrors: TestError[]}> {
+  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>): Promise<Suite> {
     const config = this._configLoader.fullConfig();
-    const fatalErrors: TestError[] = [];
     const allTestFiles = new Set<string>();
     for (const files of filesByProject.values())
       files.forEach(file => allTestFiles.add(file));
 
     // Load all tests.
-    const { rootSuite: preprocessRoot, loadErrors } = await this._loadTests(allTestFiles);
-    fatalErrors.push(...loadErrors);
+    const preprocessRoot = await this._loadTests(allTestFiles);
 
     // Complain about duplicate titles.
-    fatalErrors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
+    this._fatalErrors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
 
     // Filter tests to respect line/column filter.
     filterByFocusedLine(preprocessRoot, options.testFileFilters);
@@ -300,7 +296,7 @@ export class Runner {
     if (config.forbidOnly) {
       const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
       if (onlyTestsAndSuites.length > 0)
-        fatalErrors.push(...createForbidOnlyErrors(config, onlyTestsAndSuites));
+        this._fatalErrors.push(...createForbidOnlyErrors(config, onlyTestsAndSuites));
     }
 
     // Filter only.
@@ -335,30 +331,26 @@ export class Runner {
           continue;
         for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
           const builtSuite = buildFileSuiteForProject(project, fileSuite, repeatEachIndex);
-          if (!filterTests(builtSuite, titleMatcher))
+          if (!filterTestsRemoveEmptySuites(builtSuite, titleMatcher))
             continue;
           projectSuite._addSuite(builtSuite);
         }
       }
     }
-    return { rootSuite, fatalErrors };
+    return rootSuite;
   }
 
-  private async _loadTests(testFiles: Set<string>): Promise<{ rootSuite: Suite, loadErrors: TestError[] }> {
-    const config = this._configLoader.fullConfig();
-    const testLoader = new TestLoader(config);
-    const loadErrors: TestError[] = [];
-    const rootSuite = new Suite('', 'root');
-    for (const file of testFiles) {
-      const fileSuite = await testLoader.loadTestFile(file, 'loader');
-      if (fileSuite._loadError)
-        loadErrors.push(fileSuite._loadError);
-      // We have to clone only if there maybe subsequent calls of this method.
-      rootSuite._addSuite(fileSuite);
+  private async _loadTests(testFiles: Set<string>): Promise<Suite> {
+    if (process.env.PWTEST_OOP_LOADER) {
+      const loaderHost = new LoaderHost();
+      await loaderHost.start(this._configLoader.serializedConfig());
+      try {
+        return await loaderHost.loadTestFiles([...testFiles], this._fatalErrors);
+      } finally {
+        await loaderHost.stop();
+      }
     }
-    // Generate hashes.
-    PoolBuilder.buildForLoader(rootSuite);
-    return { rootSuite, loadErrors };
+    return loadTestFilesInProcess(this._configLoader.fullConfig(), [...testFiles], this._fatalErrors);
   }
 
   private _filterForCurrentShard(rootSuite: Suite, testGroups: TestGroup[]) {
@@ -404,8 +396,6 @@ export class Runner {
       // Filtering with "only semantics" does not work when we have zero tests - it leaves all the tests.
       // We need an empty suite in this case.
       rootSuite._entries = [];
-      rootSuite.suites = [];
-      rootSuite.tests = [];
     } else {
       filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
     }
@@ -491,23 +481,6 @@ export class Runner {
     if (dispatcher.hasWorkerErrors())
       return 'workererror';
     return 'success';
-  }
-
-  private _skipTestsFromMatchingGroups(testGroups: TestGroup[], groupFilter: (g: TestGroup) => boolean): TestGroup[] {
-    const result = [];
-    for (const group of testGroups) {
-      if (groupFilter(group)) {
-        for (const test of group.tests) {
-          const result = test._appendTestResult();
-          this._reporter.onTestBegin?.(test, result);
-          result.status = 'skipped';
-          this._reporter.onTestEnd?.(test, result);
-        }
-      } else {
-        result.push(group);
-      }
-    }
-    return result;
   }
 
   private async _removeOutputDirs(options: RunOptions): Promise<boolean> {
@@ -616,14 +589,6 @@ export class Runner {
   }
 }
 
-function filterOnly(suite: Suite) {
-  if (!suite._getOnlyItems().length)
-    return;
-  const suiteFilter = (suite: Suite) => suite._only;
-  const testFilter = (test: TestCase) => test._only;
-  return filterSuiteWithOnlySemantics(suite, suiteFilter, testFilter);
-}
-
 function createFileMatcherFromFilter(filter: TestFileFilter) {
   const fileMatcher = createFileMatcher(filter.re || filter.exact || '');
   return (testFileName: string, testLine: number, testColumn: number) =>
@@ -638,29 +603,6 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[
   const suiteFilter = (suite: Suite) => !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
   const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line, test.location.column);
   return filterSuite(suite, suiteFilter, testFilter);
-}
-
-function filterSuiteWithOnlySemantics(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
-  const onlySuites = suite.suites.filter(child => filterSuiteWithOnlySemantics(child, suiteFilter, testFilter) || suiteFilter(child));
-  const onlyTests = suite.tests.filter(testFilter);
-  const onlyEntries = new Set([...onlySuites, ...onlyTests]);
-  if (onlyEntries.size) {
-    suite.suites = onlySuites;
-    suite.tests = onlyTests;
-    suite._entries = suite._entries.filter(e => onlyEntries.has(e)); // Preserve the order.
-    return true;
-  }
-  return false;
-}
-
-function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
-  for (const child of suite.suites) {
-    if (!suiteFilter(child))
-      filterSuite(child, suiteFilter, testFilter);
-  }
-  suite.tests = suite.tests.filter(testFilter);
-  const entries = new Set([...suite.suites, ...suite.tests]);
-  suite._entries = suite._entries.filter(e => entries.has(e)); // Preserve the order.
 }
 
 async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise<string[]> {

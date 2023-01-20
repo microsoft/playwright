@@ -17,7 +17,7 @@
 import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from './util';
-import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload } from './ipc';
+import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestOutputPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { ConfigLoader } from './configLoader';
 import type { Suite, TestCase } from './test';
@@ -29,7 +29,7 @@ import type { TimeSlot } from './timeoutManager';
 import { TimeoutManager } from './timeoutManager';
 import { ProcessRunner } from './process';
 import { TestLoader } from './testLoader';
-import { buildFileSuiteForProject, filterTests } from './suiteUtils';
+import { buildFileSuiteForProject, filterTestsRemoveEmptySuites } from './suiteUtils';
 import { PoolBuilder } from './poolBuilder';
 
 const removeFolderAsync = util.promisify(rimraf);
@@ -76,6 +76,23 @@ export class WorkerRunner extends ProcessRunner {
 
     process.on('unhandledRejection', reason => this.unhandledError(reason));
     process.on('uncaughtException', error => this.unhandledError(error));
+    process.stdout.write = (chunk: string | Buffer) => {
+      const outPayload: TestOutputPayload = {
+        ...chunkToParams(chunk)
+      };
+      this.dispatchEvent('stdOut', outPayload);
+      return true;
+    };
+
+    if (!process.env.PW_RUNNER_DEBUG) {
+      process.stderr.write = (chunk: string | Buffer) => {
+        const outPayload: TestOutputPayload = {
+          ...chunkToParams(chunk)
+        };
+        this.dispatchEvent('stdErr', outPayload);
+        return true;
+      };
+    }
   }
 
   private _stop(): Promise<void> {
@@ -184,9 +201,9 @@ export class WorkerRunner extends ProcessRunner {
     let fatalUnknownTestIds;
     try {
       await this._loadIfNeeded();
-      const fileSuite = await this._testLoader.loadTestFile(runPayload.file, 'worker');
+      const fileSuite = await this._testLoader.loadTestFile(runPayload.file, 'worker', []);
       const suite = buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex);
-      const hasEntries = filterTests(suite, test => entries.has(test.id));
+      const hasEntries = filterTestsRemoveEmptySuites(suite, test => entries.has(test.id));
       if (hasEntries) {
         this._poolBuilder.buildPools(suite);
         this._extraSuiteAnnotations = new Map();
@@ -616,6 +633,14 @@ function formatTestTitle(test: TestCase, projectName: string) {
   const location = `${relativeFilePath(test.location.file)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   return `${projectTitle}${location} › ${titles.join(' › ')}`;
+}
+
+function chunkToParams(chunk: Buffer | string):  { text?: string, buffer?: string } {
+  if (chunk instanceof Buffer)
+    return { buffer: chunk.toString('base64') };
+  if (typeof chunk !== 'string')
+    return { text: util.inspect(chunk) };
+  return { text: chunk };
 }
 
 export const create = (params: WorkerInitParams) => new WorkerRunner(params);

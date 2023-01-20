@@ -16,6 +16,7 @@
 
 import child_process from 'child_process';
 import { EventEmitter } from 'events';
+import { debug } from 'playwright-core/lib/utilsBundle';
 import type { ProcessInitParams } from './ipc';
 import type { ProtocolResponse } from './process';
 
@@ -41,17 +42,11 @@ export class ProcessHost<InitParams> extends EventEmitter {
     this._processName = processName;
   }
 
-  protected async startRunner(runnerParams: InitParams) {
+  protected async startRunner(runnerParams: InitParams, inheritStdio: boolean, env: NodeJS.ProcessEnv) {
     this.process = child_process.fork(require.resolve('./process'), {
       detached: false,
-      env: {
-        FORCE_COLOR: '1',
-        DEBUG_COLORS: '1',
-        PW_PROCESS_RUNNER_SCRIPT: this._runnerScript,
-        ...process.env
-      },
-      // Can't pipe since piping slows down termination for some reason.
-      stdio: ['ignore', 'ignore', process.env.PW_RUNNER_DEBUG ? 'inherit' : 'ignore', 'ipc']
+      env: { ...process.env, ...env },
+      stdio: inheritStdio ? ['ignore', 'inherit', 'inherit', 'ipc'] : ['ignore', 'ignore', process.env.PW_RUNNER_DEBUG ? 'inherit' : 'ignore', 'ipc'],
     });
     this.process.on('exit', (code, signal) => {
       this.didExit = true;
@@ -59,15 +54,20 @@ export class ProcessHost<InitParams> extends EventEmitter {
     });
     this.process.on('error', e => {});  // do not yell at a send to dead process.
     this.process.on('message', (message: any) => {
+      if (debug.enabled('pw:test:protocol'))
+        debug('pw:test:protocol')('◀ RECV ' + JSON.stringify(message));
       if (message.method === '__dispatch__') {
         const { id, error, method, params, result } = message.params as ProtocolResponse;
         if (id && this._callbacks.has(id)) {
           const { resolve, reject } = this._callbacks.get(id)!;
           this._callbacks.delete(id);
-          if (error)
-            reject(new Error(error));
-          else
+          if (error) {
+            const errorObject = new Error(error.message);
+            errorObject.stack = error.stack;
+            reject(errorObject);
+          } else {
             resolve(result);
+          }
         } else {
           this.emit(method!, params);
         }
@@ -140,7 +140,8 @@ export class ProcessHost<InitParams> extends EventEmitter {
   }
 
   private send(message: { method: string, params?: any }) {
-    // This is a great place for debug logging.
+    if (debug.enabled('pw:test:protocol'))
+      debug('pw:test:protocol')('SEND ► ' + JSON.stringify(message));
     this.process.send(message);
   }
 }

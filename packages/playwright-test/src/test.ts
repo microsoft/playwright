@@ -17,6 +17,7 @@
 import type { FixturePool } from './fixtures';
 import type * as reporterTypes from '../types/testReporter';
 import type { TestTypeImpl } from './testType';
+import { rootTestType } from './testType';
 import type { Annotation, FixturesWithLocation, FullProject, FullProjectInternal, Location } from './types';
 
 class Base {
@@ -37,8 +38,6 @@ export type Modifier = {
 };
 
 export class Suite extends Base implements reporterTypes.Suite {
-  suites: Suite[] = [];
-  tests: TestCase[] = [];
   location?: Location;
   parent?: Suite;
   _use: FixturesWithLocation[] = [];
@@ -51,7 +50,6 @@ export class Suite extends Base implements reporterTypes.Suite {
   _modifiers: Modifier[] = [];
   _parallelMode: 'default' | 'serial' | 'parallel' = 'default';
   _projectConfig: FullProjectInternal | undefined;
-  _loadError?: reporterTypes.TestError;
   _fileId: string | undefined;
   readonly _type: 'root' | 'project' | 'file' | 'describe';
 
@@ -60,15 +58,21 @@ export class Suite extends Base implements reporterTypes.Suite {
     this._type = type;
   }
 
+  get suites(): Suite[] {
+    return this._entries.filter(entry => entry instanceof Suite) as Suite[];
+  }
+
+  get tests(): TestCase[] {
+    return this._entries.filter(entry => entry instanceof TestCase) as TestCase[];
+  }
+
   _addTest(test: TestCase) {
     test.parent = this;
-    this.tests.push(test);
     this._entries.push(test);
   }
 
   _addSuite(suite: Suite) {
     suite.parent = this;
-    this.suites.push(suite);
     this._entries.push(suite);
   }
 
@@ -115,6 +119,29 @@ export class Suite extends Base implements reporterTypes.Suite {
     return suite;
   }
 
+  _deepSerialize(): any {
+    const suite = this._serialize();
+    suite.entries = [];
+    for (const entry of this._entries) {
+      if (entry instanceof Suite)
+        suite.entries.push(entry._deepSerialize());
+      else
+        suite.entries.push(entry._serialize());
+    }
+    return suite;
+  }
+
+  static _deepParse(data: any): Suite {
+    const suite = Suite._parse(data);
+    for (const entry of data.entries) {
+      if (entry.kind === 'suite')
+        suite._addSuite(Suite._deepParse(entry));
+      else
+        suite._addTest(TestCase._parse(entry));
+    }
+    return suite;
+  }
+
   forEachTest(visitor: (test: TestCase, suite: Suite) => void) {
     for (const entry of this._entries) {
       if (entry instanceof Suite)
@@ -124,20 +151,45 @@ export class Suite extends Base implements reporterTypes.Suite {
     }
   }
 
+  _serialize(): any {
+    return {
+      kind: 'suite',
+      title: this.title,
+      type: this._type,
+      location: this.location,
+      only: this._only,
+      requireFile: this._requireFile,
+      timeout: this._timeout,
+      retries: this._retries,
+      annotations: this._annotations.slice(),
+      modifiers: this._modifiers.slice(),
+      parallelMode: this._parallelMode,
+      skipped: this._skipped,
+      hooks: this._hooks.map(h => ({ type: h.type, location: h.location })),
+    };
+  }
+
+  static _parse(data: any): Suite {
+    const suite = new Suite(data.title, data.type);
+    suite.location = data.location;
+    suite._only = data.only;
+    suite._requireFile = data.requireFile;
+    suite._timeout = data.timeout;
+    suite._retries = data.retries;
+    suite._annotations = data.annotations;
+    suite._modifiers = data.modifiers;
+    suite._parallelMode = data.parallelMode;
+    suite._skipped = data.skipped;
+    suite._hooks = data.hooks.map((h: any) => ({ type: h.type, location: h.location, fn: () => { } }));
+    return suite;
+  }
+
   _clone(): Suite {
-    const suite = new Suite(this.title, this._type);
-    suite._only = this._only;
-    suite.location = this.location;
-    suite._requireFile = this._requireFile;
+    const data = this._serialize();
+    const suite = Suite._parse(data);
     suite._use = this._use.slice();
     suite._hooks = this._hooks.slice();
-    suite._timeout = this._timeout;
-    suite._retries = this._retries;
-    suite._annotations = this._annotations.slice();
-    suite._modifiers = this._modifiers.slice();
-    suite._parallelMode = this._parallelMode;
     suite._projectConfig = this._projectConfig;
-    suite._skipped = this._skipped;
     return suite;
   }
 
@@ -197,14 +249,34 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     return status === 'expected' || status === 'flaky' || status === 'skipped';
   }
 
+  _serialize(): any {
+    return {
+      kind: 'test',
+      title: this.title,
+      location: this.location,
+      only: this._only,
+      requireFile: this._requireFile,
+      poolDigest: this._poolDigest,
+      expectedStatus: this.expectedStatus,
+      annotations: this.annotations.slice(),
+    };
+  }
+
+  static _parse(data: any): TestCase {
+    const test = new TestCase(data.title, () => {}, rootTestType, data.location);
+    test._only = data.only;
+    test._requireFile = data.requireFile;
+    test._poolDigest = data.poolDigest;
+    test.expectedStatus = data.expectedStatus;
+    test.annotations = data.annotations;
+    return test;
+  }
+
   _clone(): TestCase {
-    const test = new TestCase(this.title, this.fn, this._testType, this.location);
-    test._only = this._only;
-    test._requireFile = this._requireFile;
-    test._poolDigest = this._poolDigest;
-    test.expectedStatus = this.expectedStatus;
-    test.annotations = this.annotations.slice();
-    test._annotateWithInheritence = this._annotateWithInheritence;
+    const data = this._serialize();
+    const test = TestCase._parse(data);
+    test._testType = this._testType;
+    test.fn = this.fn;
     return test;
   }
 

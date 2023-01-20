@@ -44,7 +44,10 @@ export class WorkerHost extends ProcessHost<WorkerInitParams> {
   }
 
   async start() {
-    await this.startRunner(this._params);
+    await this.startRunner(this._params, false, {
+      FORCE_COLOR: '1',
+      DEBUG_COLORS: '1',
+    });
   }
 
   runTestGroup(runPayload: RunPayload) {
