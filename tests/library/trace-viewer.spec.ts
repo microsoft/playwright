@@ -80,10 +80,16 @@ test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => 
 
 test('should open two trace viewers', async ({ showTraceViewer }, testInfo) => {
   const preferredPort = testInfo.workerIndex + 48321;
-  const traceViewer1 = await showTraceViewer([testInfo.outputPath()], preferredPort);
+  const traceViewer1 = await showTraceViewer([testInfo.outputPath()], 'localhost', preferredPort);
   await expect(traceViewer1.page).toHaveTitle('Playwright Trace Viewer');
-  const traceViewer2 = await showTraceViewer([testInfo.outputPath()], preferredPort);
+  const traceViewer2 = await showTraceViewer([testInfo.outputPath()], 'localhost', preferredPort);
   await expect(traceViewer2.page).toHaveTitle('Playwright Trace Viewer');
+});
+
+test('should open trace viewer on specific host', async ({ showTraceViewer }, testInfo) => {
+  const traceViewer = await showTraceViewer([testInfo.outputPath()], '127.0.0.1');
+  await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
+  await expect(traceViewer.page).toHaveURL(/127.0.0.1/);
 });
 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
