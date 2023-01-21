@@ -15,8 +15,7 @@
  */
 
 import type { WriteStream } from 'tty';
-import * as util from 'util';
-import type { ProcessInitParams, TeardownErrorsPayload, TestOutputPayload, TtyParams } from './ipc';
+import type { ProcessInitParams, TeardownErrorsPayload, TtyParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
 import type { TestInfoError } from './types';
 import { serializeError } from './util';
@@ -29,7 +28,7 @@ export type ProtocolRequest = {
 
 export type ProtocolResponse = {
   id?: number;
-  error?: string;
+  error?: TestInfoError;
   method?: string;
   params?: any;
   result?: any;
@@ -48,24 +47,6 @@ export class ProcessRunner {
 let closed = false;
 
 sendMessageToParent({ method: 'ready' });
-
-process.stdout.write = (chunk: string | Buffer) => {
-  const outPayload: TestOutputPayload = {
-    ...chunkToParams(chunk)
-  };
-  sendMessageToParent({ method: 'stdOut', params: outPayload });
-  return true;
-};
-
-if (!process.env.PW_RUNNER_DEBUG) {
-  process.stderr.write = (chunk: string | Buffer) => {
-    const outPayload: TestOutputPayload = {
-      ...chunkToParams(chunk)
-    };
-    sendMessageToParent({ method: 'stdErr', params: outPayload });
-    return true;
-  };
-}
 
 process.on('disconnect', gracefullyCloseAndExit);
 process.on('SIGINT', () => {});
@@ -94,7 +75,7 @@ process.on('message', async message => {
       const response: ProtocolResponse = { id, result };
       sendMessageToParent({ method: '__dispatch__', params: response });
     } catch (e) {
-      const response: ProtocolResponse = { id, error: e.toString() };
+      const response: ProtocolResponse = { id, error: serializeError(e) };
       sendMessageToParent({ method: '__dispatch__', params: response });
     }
   }
@@ -130,14 +111,6 @@ function sendMessageToParent(message: { method: string, params?: any }) {
   } catch (e) {
     // Can throw when closing.
   }
-}
-
-function chunkToParams(chunk: Buffer | string):  { text?: string, buffer?: string } {
-  if (chunk instanceof Buffer)
-    return { buffer: chunk.toString('base64') };
-  if (typeof chunk !== 'string')
-    return { text: util.inspect(chunk) };
-  return { text: chunk };
 }
 
 function setTtyParams(stream: WriteStream, params: TtyParams) {

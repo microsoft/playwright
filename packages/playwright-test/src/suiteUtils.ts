@@ -19,10 +19,20 @@ import { calculateSha1 } from 'playwright-core/lib/utils';
 import type { Suite, TestCase } from './test';
 import type { FullProjectInternal } from './types';
 
-export function filterTests(suite: Suite, filter: (test: TestCase) => boolean): boolean {
-  suite.suites = suite.suites.filter(child => filterTests(child, filter));
-  suite.tests = suite.tests.filter(filter);
-  const entries = new Set([...suite.suites, ...suite.tests]);
+export function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
+  for (const child of suite.suites) {
+    if (!suiteFilter(child))
+      filterSuite(child, suiteFilter, testFilter);
+  }
+  const filteredTests = suite.tests.filter(testFilter);
+  const entries = new Set([...suite.suites, ...filteredTests]);
+  suite._entries = suite._entries.filter(e => entries.has(e)); // Preserve the order.
+}
+
+export function filterTestsRemoveEmptySuites(suite: Suite, filter: (test: TestCase) => boolean): boolean {
+  const filteredSuites = suite.suites.filter(child => filterTestsRemoveEmptySuites(child, filter));
+  const filteredTests = suite.tests.filter(filter);
+  const entries = new Set([...filteredSuites, ...filteredTests]);
   suite._entries = suite._entries.filter(e => entries.has(e)); // Preserve the order.
   return !!suite._entries.length;
 }
@@ -58,4 +68,23 @@ export function buildFileSuiteForProject(project: FullProjectInternal, suite: Su
   });
 
   return result;
+}
+
+export function filterOnly(suite: Suite) {
+  if (!suite._getOnlyItems().length)
+    return;
+  const suiteFilter = (suite: Suite) => suite._only;
+  const testFilter = (test: TestCase) => test._only;
+  return filterSuiteWithOnlySemantics(suite, suiteFilter, testFilter);
+}
+
+export function filterSuiteWithOnlySemantics(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
+  const onlySuites = suite.suites.filter(child => filterSuiteWithOnlySemantics(child, suiteFilter, testFilter) || suiteFilter(child));
+  const onlyTests = suite.tests.filter(testFilter);
+  const onlyEntries = new Set([...onlySuites, ...onlyTests]);
+  if (onlyEntries.size) {
+    suite._entries = suite._entries.filter(e => onlyEntries.has(e)); // Preserve the order.
+    return true;
+  }
+  return false;
 }

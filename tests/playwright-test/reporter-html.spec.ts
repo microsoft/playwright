@@ -775,11 +775,14 @@ test.describe('gitCommitInfo plugin', () => {
 
     const result = await runInlineTest({
       'uncommitted.txt': `uncommitted file`,
-      'playwright.config.ts': `export default {};`,
-      'example.spec.ts': `
+      'playwright.config.ts': `
         import { gitCommitInfo } from '@playwright/test/lib/plugins';
         const { test, _addRunnerPlugin } = pwt;
         _addRunnerPlugin(gitCommitInfo());
+        export default {};
+      `,
+      'example.spec.ts': `
+        const { test } = pwt;
         test('sample', async ({}) => { expect(2).toBe(2); });
       `,
     }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined, beforeRunPlaywrightTest);
@@ -805,9 +808,6 @@ test.describe('gitCommitInfo plugin', () => {
     const result = await runInlineTest({
       'uncommitted.txt': `uncommitted file`,
       'playwright.config.ts': `
-        export default {};
-      `,
-      'example.spec.ts': `
         import { gitCommitInfo } from '@playwright/test/lib/plugins';
         const { test, _addRunnerPlugin } = pwt;
         _addRunnerPlugin(gitCommitInfo({
@@ -819,6 +819,11 @@ test.describe('gitCommitInfo plugin', () => {
             'revision.email': 'shakespeare@example.local',
           },
         }));
+        export default {};
+      `,
+      'example.spec.ts': `
+        import { gitCommitInfo } from '@playwright/test/lib/plugins';
+        const { test } = pwt;
         test('sample', async ({}) => { expect(2).toBe(2); });
       `,
     }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined);

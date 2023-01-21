@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
+import path from 'path';
+import type { TestError } from '../reporter';
+import type { FullConfigInternal } from './types';
 import { setCurrentlyLoadingFileSuite } from './globals';
+import { PoolBuilder } from './poolBuilder';
 import { Suite } from './test';
 import { requireOrImport } from './transform';
-import type { FullConfigInternal } from './types';
 import { serializeError } from './util';
 
 export const defaultTimeout = 30000;
@@ -34,7 +36,7 @@ export class TestLoader {
     this._fullConfig = fullConfig;
   }
 
-  async loadTestFile(file: string, environment: 'loader' | 'worker'): Promise<Suite> {
+  async loadTestFile(file: string, environment: 'loader' | 'worker', loadErrors: TestError[]): Promise<Suite> {
     if (cachedFileSuites.has(file))
       return cachedFileSuites.get(file)!;
     const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file), 'file');
@@ -48,7 +50,7 @@ export class TestLoader {
     } catch (e) {
       if (environment === 'worker')
         throw e;
-      suite._loadError = serializeError(e);
+      loadErrors.push(serializeError(e));
     } finally {
       setCurrentlyLoadingFileSuite(undefined);
     }
@@ -75,4 +77,16 @@ export class TestLoader {
 
     return suite;
   }
+}
+
+export async function loadTestFilesInProcess(config: FullConfigInternal, testFiles: string[], loadErrors: TestError[]): Promise<Suite> {
+  const testLoader = new TestLoader(config);
+  const rootSuite = new Suite('', 'root');
+  for (const file of testFiles) {
+    const fileSuite = await testLoader.loadTestFile(file, 'loader', loadErrors);
+    rootSuite._addSuite(fileSuite);
+  }
+  // Generate hashes.
+  PoolBuilder.buildForLoader(rootSuite);
+  return rootSuite;
 }
