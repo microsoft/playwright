@@ -306,6 +306,11 @@ type MakeMatchers<R, T> = BaseMatchers<R, T> & {
      * Retries the callback until it passes.
      */
     toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
+    /**
+     * Runs the function and checks that it executes faster than `threshold`.
+     * Warns if the function is slower than `warnThreshold`.
+     */
+    toBeFast(options?: { threshold?: number, warnThreshold?: string, description?: string }): Promise<void>;
   }>;
 
 type BaseExpect = {
