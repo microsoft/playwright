@@ -545,3 +545,31 @@ test('should print timed out error message', async ({ runInlineTest }) => {
   const output = stripAnsi(result.output);
   expect(output).toContain('Timed out 1ms waiting for expect(received).toBeChecked()');
 });
+
+test('should pass a performance test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('perf', async ({ page }) => {
+        let outer = 0;
+        await expect(async () => {
+          outer = 1;
+        }).toBeFast();
+        await expect(async () => {
+          await new Promise(x => setTimeout(x, 100));
+          outer++;
+        }).not.toBeFast({ threshold: 50 });
+        await expect(async () => {
+          await new Promise(x => setTimeout(x, 100));
+          outer++;
+        }).toBeFast({ threshold: 500, warnThreshold: 50, description: 'Hello' });
+        expect(outer).toBe(3);
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+  expect(result.warned).toBe(1);
+  expect(result.output).toContain('Hello:');
+});

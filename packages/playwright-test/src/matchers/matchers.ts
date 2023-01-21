@@ -24,6 +24,7 @@ import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils';
 import { constructURLBasedOnBaseURL, isTextualMimeType, pollAgainstTimeout } from 'playwright-core/lib/utils';
+import { currentTestInfo } from '../globals';
 
 interface LocatorEx extends Locator {
   _expect(customStackTrace: ParsedStackTrace, expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -340,4 +341,32 @@ export async function toPass(
     return { message, pass: this.isNot };
   }
   return { pass: !this.isNot, message: () => '' };
+}
+
+export async function toBeFast(
+  this: ReturnType<Expect['getState']>,
+  predicate: () => any,
+  options: {
+    threshold?: number,
+    warnThreshold?: number,
+    description?: string,
+  } = {},
+) {
+  const start = performance.now();
+  await predicate();
+  const elapsed = performance.now() - start;
+  const {
+    threshold = 1000,
+    warnThreshold = threshold / 2,
+    description = 'Task',
+  } = options;
+  if (elapsed > warnThreshold && !this.isNot) {
+    currentTestInfo()?.annotations.push({
+      type: 'warning',
+      description: `${description}: ${Math.round(elapsed)}ms`,
+    });
+  }
+  if (elapsed > threshold)
+    return { pass: false, message: () => `${description} too slow: ${Math.round(elapsed)}ms` };
+  return { pass: true, message: () => `${description} too fast: ${Math.round(elapsed)}ms` };
 }

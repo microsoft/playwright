@@ -36,6 +36,10 @@ type ErrorDetails = {
   location?: Location;
 };
 
+type TestWarnings = {
+  test: TestCase,
+  warnings: string[],
+};
 type TestSummary = {
   skipped: number;
   expected: number;
@@ -44,6 +48,7 @@ type TestSummary = {
   flaky: TestCase[];
   failuresToPrint: TestCase[];
   fatalErrors: TestError[];
+  warned: TestWarnings[];
 };
 
 export class BaseReporter implements ReporterInternal  {
@@ -136,7 +141,7 @@ export class BaseReporter implements ReporterInternal  {
     return fileDurations.filter(([, duration]) => duration > threshold).slice(0, count);
   }
 
-  protected generateSummaryMessage({ skipped, expected, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {
+  protected generateSummaryMessage({ skipped, expected, interrupted, unexpected, flaky, fatalErrors, warned }: TestSummary) {
     const tokens: string[] = [];
     if (unexpected.length) {
       tokens.push(colors.red(`  ${unexpected.length} failed`));
@@ -157,6 +162,8 @@ export class BaseReporter implements ReporterInternal  {
       tokens.push(colors.yellow(`  ${skipped} skipped`));
     if (expected)
       tokens.push(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
+    if (warned.length)
+      tokens.push(colors.yellow(`  ${warned.length} warned`));
     if (this.result.status === 'timedout')
       tokens.push(colors.red(`  Timed out waiting ${this.config.globalTimeout / 1000}s for the entire test run`));
     if (fatalErrors.length && expected + unexpected.length + interrupted.length + flaky.length > 0)
@@ -172,6 +179,7 @@ export class BaseReporter implements ReporterInternal  {
     const interruptedToPrint: TestCase[] = [];
     const unexpected: TestCase[] = [];
     const flaky: TestCase[] = [];
+    const warned: TestWarnings[] = [];
 
     this.suite.allTests().forEach(test => {
       switch (test.outcome()) {
@@ -189,6 +197,9 @@ export class BaseReporter implements ReporterInternal  {
         case 'unexpected': unexpected.push(test); break;
         case 'flaky': flaky.push(test); break;
       }
+      const warnings: TestWarnings['warnings'] = test.annotations.filter(x => x.type === 'warning').map(x => x.description!);
+      if (warnings.length)
+        warned.push({ test, warnings });
     });
 
     const failuresToPrint = [...unexpected, ...flaky, ...interruptedToPrint];
@@ -200,12 +211,15 @@ export class BaseReporter implements ReporterInternal  {
       flaky,
       failuresToPrint,
       fatalErrors: this._fatalErrors,
+      warned,
     };
   }
 
   epilogue(full: boolean) {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
+    if (full)
+      this._printWarnings(summary.warned);
     if (full && summary.failuresToPrint.length && !this._omitFailures)
       this._printFailures(summary.failuresToPrint);
     this._printSlowTests();
@@ -219,6 +233,15 @@ export class BaseReporter implements ReporterInternal  {
         index: index + 1,
       }).message);
     });
+  }
+
+  private _printWarnings(warned: TestWarnings[]) {
+    for (const { test, warnings } of warned) {
+      for (const warning of warnings) {
+        console.log(colors.yellow(`  ${formatTestTitle(this.config, test)}`));
+        console.log(`    ${warning}`);
+      }
+    }
   }
 
   private _printSlowTests() {

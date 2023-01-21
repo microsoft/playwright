@@ -45,6 +45,7 @@ export type RunResult = {
   interrupted: number,
   report: JSONReport,
   results: any[],
+  warned: number
 };
 
 type TSCResult = {
@@ -151,6 +152,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   const flaky = summary(/(\d+) flaky/g);
   const skipped = summary(/(\d+) skipped/g);
   const interrupted = summary(/(\d+) interrupted/g);
+  const warned = summary(/(\d+) warned/g);
   let report;
   try {
     report = JSON.parse(fs.readFileSync(reportFile).toString());
@@ -183,6 +185,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
     interrupted,
     report,
     results,
+    warned,
   };
 }
 
