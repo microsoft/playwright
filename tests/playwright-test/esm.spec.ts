@@ -280,7 +280,10 @@ test('should resolve .js import to .tsx file in ESM mode for components', async 
   test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,
-    'playwright.config.ts': `export default { projects: [{name: 'foo'}] };`,
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/experimental-ct-react';
+      export default defineConfig({ projects: [{name: 'foo'}] });
+    `,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': ``,
 

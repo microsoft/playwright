@@ -34,7 +34,7 @@ import { PoolBuilder } from './poolBuilder';
 
 const removeFolderAsync = util.promisify(rimraf);
 
-export class WorkerRunner extends ProcessRunner {
+export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
   private _configLoader!: ConfigLoader;
   private _testLoader!: TestLoader;
@@ -109,19 +109,23 @@ export class WorkerRunner extends ProcessRunner {
   }
 
   override async gracefullyClose() {
-    await this._stop();
+    try {
+      await this._stop();
+      // We have to load the project to get the right deadline below.
+      await this._loadIfNeeded();
+      await this._teardownScopes();
+    } catch (e) {
+      this._fatalErrors.push(serializeError(e));
+    }
 
-    // We have to load the project to get the right deadline below.
-    await this._loadIfNeeded();
-    await this._teardownScopes();
     if (this._fatalErrors.length) {
-      this.appendProcessTeardownDiagnostics(this._fatalErrors[this._fatalErrors.length - 1]);
+      this._appendProcessTeardownDiagnostics(this._fatalErrors[this._fatalErrors.length - 1]);
       const payload: TeardownErrorsPayload = { fatalErrors: this._fatalErrors };
       this.dispatchEvent('teardownErrors', payload);
     }
   }
 
-  override appendProcessTeardownDiagnostics(error: TestInfoError) {
+  private _appendProcessTeardownDiagnostics(error: TestInfoError) {
     if (!this._lastRunningTests.length)
       return;
     const count = this._totalRunningTests === 1 ? '1 test' : `${this._totalRunningTests} tests`;
@@ -643,4 +647,4 @@ function chunkToParams(chunk: Buffer | string):  { text?: string, buffer?: strin
   return { text: chunk };
 }
 
-export const create = (params: WorkerInitParams) => new WorkerRunner(params);
+export const create = (params: WorkerInitParams) => new WorkerMain(params);

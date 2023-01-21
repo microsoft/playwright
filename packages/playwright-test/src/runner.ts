@@ -341,7 +341,7 @@ export class Runner {
   }
 
   private async _loadTests(testFiles: Set<string>): Promise<Suite> {
-    if (process.env.PWTEST_OOP_LOADER) {
+    if (process.env.PW_TEST_OOP_LOADER) {
       const loaderHost = new LoaderHost();
       await loaderHost.start(this._configLoader.serializedConfig());
       try {

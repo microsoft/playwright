@@ -20,7 +20,7 @@ import { ProcessHost } from './processHost';
 
 let lastWorkerIndex = 0;
 
-export class WorkerHost extends ProcessHost<WorkerInitParams> {
+export class WorkerHost extends ProcessHost {
   readonly parallelIndex: number;
   readonly workerIndex: number;
   private _hash: string;
@@ -29,7 +29,7 @@ export class WorkerHost extends ProcessHost<WorkerInitParams> {
 
   constructor(testGroup: TestGroup, parallelIndex: number, config: SerializedConfig) {
     const workerIndex = lastWorkerIndex++;
-    super(require.resolve('./workerRunner.js'), `worker-${workerIndex}`);
+    super(require.resolve('./workerMain.js'), `worker-${workerIndex}`);
     this.workerIndex = workerIndex;
     this.parallelIndex = parallelIndex;
     this._hash = testGroup.workerHash;

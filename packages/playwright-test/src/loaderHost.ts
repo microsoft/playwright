@@ -19,9 +19,9 @@ import type { SerializedConfig } from './ipc';
 import { ProcessHost } from './processHost';
 import { Suite } from './test';
 
-export class LoaderHost extends ProcessHost<SerializedConfig> {
+export class LoaderHost extends ProcessHost {
   constructor() {
-    super(require.resolve('./loaderRunner.js'), 'loader');
+    super(require.resolve('./loaderMain.js'), 'loader');
   }
 
   async start(config: SerializedConfig) {

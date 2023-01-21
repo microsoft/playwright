@@ -26,7 +26,7 @@ export type ProcessExitData = {
   signal: NodeJS.Signals | null;
 };
 
-export class ProcessHost<InitParams> extends EventEmitter {
+export class ProcessHost extends EventEmitter {
   private process!: child_process.ChildProcess;
   private _didSendStop = false;
   private _didFail = false;
@@ -42,7 +42,7 @@ export class ProcessHost<InitParams> extends EventEmitter {
     this._processName = processName;
   }
 
-  protected async startRunner(runnerParams: InitParams, inheritStdio: boolean, env: NodeJS.ProcessEnv) {
+  protected async startRunner(runnerParams: any, inheritStdio: boolean, env: NodeJS.ProcessEnv) {
     this.process = child_process.fork(require.resolve('./process'), {
       detached: false,
       env: { ...process.env, ...env },
