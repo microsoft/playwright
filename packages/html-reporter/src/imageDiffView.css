@@ -21,10 +21,27 @@
   position: relative;
 }
 
-.image-diff-view img {
-  flex: none;
+.image-diff-view .image-wrapper img {
+  flex: auto;
   box-shadow: var(--box-shadow-thick);
   margin: 24px auto;
   min-width: 200px;
   max-width: 80%;
+}
+
+.image-diff-view .image-wrapper {
+  flex: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.image-diff-view .image-wrapper div {
+  flex: none;
+  align-self: stretch;
+  height: 2em;
+  font-weight: 500;
+  padding-top: 1em;
+  display: flex;
+  flex-direction: row;
 }
