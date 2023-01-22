@@ -25,7 +25,7 @@ import type { ClientType } from './playwrightConnection';
 import type  { LaunchOptions } from '../server/types';
 import { ManualPromise } from '../utils/manualPromise';
 import type { AndroidDevice } from '../server/android/android';
-import { SocksProxy } from '../common/socksProxy';
+import { type SocksProxy } from '../common/socksProxy';
 
 const debugLog = debug('pw:server');
 
@@ -43,16 +43,12 @@ type ServerOptions = {
   preLaunchedBrowser?: Browser;
   preLaunchedAndroidDevice?: AndroidDevice;
   preLaunchedSocksProxy?: SocksProxy;
-  browserProxyMode: 'client' | 'tether';
-  ownedByTetherClient?: boolean;
 };
 
 export class PlaywrightServer {
   private _preLaunchedPlaywright: Playwright | undefined;
   private _wsServer: WebSocketServer | undefined;
-  private _networkTetheringSocksProxy: SocksProxy | undefined;
   private _options: ServerOptions;
-  private _networkTetheringClientTimeout: NodeJS.Timeout | undefined;
 
   constructor(options: ServerOptions) {
     this._options = options;
@@ -86,24 +82,12 @@ export class PlaywrightServer {
         resolve(wsEndpoint);
       }).on('error', reject);
     });
-    if (this._options.browserProxyMode === 'tether') {
-      this._networkTetheringSocksProxy = new SocksProxy();
-      await this._networkTetheringSocksProxy.listen(0);
-      debugLog('Launched tethering proxy at ' + this._networkTetheringSocksProxy.port());
-    }
 
     debugLog('Listening at ' + wsEndpoint);
-    if (this._options.ownedByTetherClient) {
-      this._networkTetheringClientTimeout = setTimeout(() => {
-        this.close();
-      }, 30_000);
-    }
-
     this._wsServer = new wsServer({ server, path: this._options.path });
     const browserSemaphore = new Semaphore(this._options.maxConnections);
     const controllerSemaphore = new Semaphore(1);
     const reuseBrowserSemaphore = new Semaphore(1);
-    const networkTetheringSemaphore = new Semaphore(1);
     this._wsServer.on('connection', (ws, request) => {
       const url = new URL('http://localhost' + (request.url || ''));
       const browserHeader = request.headers['x-playwright-browser'];
@@ -121,11 +105,10 @@ export class PlaywrightServer {
       const log = newLogger();
       log(`serving connection: ${request.url}`);
       const isDebugControllerClient = !!request.headers['x-playwright-debug-controller'];
-      const isNetworkTetheringClient = !!request.headers['x-playwright-network-tethering'];
       const shouldReuseBrowser = !!request.headers['x-playwright-reuse-context'];
 
       // If we started in the legacy reuse-browser mode, create this._preLaunchedPlaywright.
-      // If we get a reuse-controller request, create this._preLaunchedPlaywright.
+      // If we get a debug-controller request, create this._preLaunchedPlaywright.
       if (isDebugControllerClient || shouldReuseBrowser) {
         if (!this._preLaunchedPlaywright)
           this._preLaunchedPlaywright = createPlaywright('javascript');
@@ -133,10 +116,7 @@ export class PlaywrightServer {
 
       let clientType: ClientType = 'playwright';
       let semaphore: Semaphore = browserSemaphore;
-      if (isNetworkTetheringClient) {
-        clientType = 'network-tethering';
-        semaphore = networkTetheringSemaphore;
-      } else if (isDebugControllerClient) {
+      if (isDebugControllerClient) {
         clientType = 'controller';
         semaphore = controllerSemaphore;
       } else if (shouldReuseBrowser) {
@@ -150,9 +130,6 @@ export class PlaywrightServer {
         semaphore = browserSemaphore;
       }
 
-      if (clientType === 'network-tethering' && this._options.ownedByTetherClient)
-        clearTimeout(this._networkTetheringClientTimeout);
-
       const connection = new PlaywrightConnection(
           semaphore.aquire(),
           clientType, ws,
@@ -161,14 +138,9 @@ export class PlaywrightServer {
             playwright: this._preLaunchedPlaywright,
             browser: this._options.preLaunchedBrowser,
             androidDevice: this._options.preLaunchedAndroidDevice,
-            ownedSocksProxy: this._options.preLaunchedSocksProxy,
-            sharedSocksProxy: this._networkTetheringSocksProxy,
+            socksProxy: this._options.preLaunchedSocksProxy,
           },
-          log, () => {
-            semaphore.release();
-            if (this._options.ownedByTetherClient && clientType === 'network-tethering')
-              this.close();
-          });
+          log, () => semaphore.release());
       (ws as any)[kConnectionSymbol] = connection;
     });
 
@@ -179,7 +151,6 @@ export class PlaywrightServer {
     const server = this._wsServer;
     if (!server)
       return;
-    await this._networkTetheringSocksProxy?.close();
     debugLog('closing websocket server');
     const waitForClose = new Promise(f => server.close(f));
     // First disconnect all remaining clients.

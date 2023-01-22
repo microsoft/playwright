@@ -59,10 +59,8 @@ export async function runServer(options: RunServerOptions) {
     port,
     path = '/',
     maxConnections = Infinity,
-    browserProxyMode = 'client',
-    ownedByTetherClient = false,
   } = options;
-  const server = new PlaywrightServer({ path, maxConnections, browserProxyMode, ownedByTetherClient });
+  const server = new PlaywrightServer({ path, maxConnections });
   const wsEndpoint = await server.listen(port);
   process.on('exit', () => server.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console
