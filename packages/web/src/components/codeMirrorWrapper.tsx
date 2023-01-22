@@ -27,9 +27,16 @@ export type SourceHighlight = {
   type: 'running' | 'paused' | 'error';
 };
 
+export enum Language {
+  javascript = 'javascript',
+  python = 'python',
+  java = 'java',
+  csharp = 'csharp'
+}
+
 export interface SourceProps {
   text: string;
-  language: string;
+  language: keyof typeof Language;
   readOnly: boolean;
   // 1-based
   highlight?: SourceHighlight[];
@@ -56,13 +63,13 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
 
   React.useEffect(() => {
     let mode;
-    if (language === 'javascript')
+    if (language === Language.javascript)
       mode = 'javascript';
-    if (language === 'python')
+    if (language === Language.python)
       mode = 'python';
-    if (language === 'java')
+    if (language === Language.java)
       mode = 'text/x-java';
-    if (language === 'csharp')
+    if (language === Language.csharp)
       mode = 'text/x-csharp';
 
     if (codemirror && codemirror.getOption('mode') === mode)

@@ -59,11 +59,18 @@ export type TestCaseSummary = {
   projectName: string;
   location: Location;
   annotations: { type: string, description?: string }[];
-  outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
+  outcome: keyof typeof Outcome;
   duration: number;
   ok: boolean;
   results: TestResultSummary[];
 };
+
+export enum Outcome {
+  skipped = 'skipped',
+  expected = 'expected',
+  unexpected = 'unexpected',
+  flaky = 'flaky'
+}
 
 export type TestResultSummary = {
   attachments: { name: string, contentType: string, path?: string }[];
