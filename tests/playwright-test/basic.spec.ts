@@ -63,7 +63,7 @@ test('should succeed', async ({ runInlineTest }) => {
 test('should report suite errors', async ({ runInlineTest }) => {
   const { exitCode, failed, output } = await runInlineTest({
     'suite-error.spec.js': `
-      if (new Error().stack.includes('workerRunner'))
+      if (new Error().stack.includes('workerMain'))
         throw new Error('Suite error');
 
       const { test } = pwt;

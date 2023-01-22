@@ -19,8 +19,14 @@ import fs from 'fs';
 
 test.describe.configure({ mode: 'parallel' });
 
+const playwrightConfig = `
+  import { defineConfig } from '@playwright/experimental-ct-react';
+  export default defineConfig({ projects: [{name: 'foo'}] });
+`;
+
 test('should work with the empty component list', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': ``,
 
@@ -45,6 +51,7 @@ test('should work with the empty component list', async ({ runInlineTest }, test
 
 test('should extract component list', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': ``,
 
@@ -206,6 +213,7 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
 
   await test.step('original test', async () => {
     const result = await runInlineTest({
+      'playwright.config.ts': playwrightConfig,
       'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
       'playwright/index.ts': ``,
 
@@ -232,7 +240,9 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
   });
 
   await test.step('re-run same test', async () => {
-    const result = await runInlineTest({}, { workers: 1 });
+    const result = await runInlineTest({
+      'playwright.config.ts': playwrightConfig,
+    }, { workers: 1 });
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(1);
     const output = stripAnsi(result.output);
@@ -241,6 +251,7 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
 
   await test.step('modify test', async () => {
     const result = await runInlineTest({
+      'playwright.config.ts': playwrightConfig,
       'src/button.test.tsx': `
         //@no-header
         import { test, expect } from '@playwright/experimental-ct-react';
@@ -260,6 +271,7 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
 
   await test.step('modify source', async () => {
     const result = await runInlineTest({
+      'playwright.config.ts': playwrightConfig,
       'src/button.tsx': `
         export const Button = () => <button>Button 2</button>;
       `,
@@ -273,6 +285,7 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
 
 test('should not use global config for preview', async ({ runInlineTest }) => {
   const result1 = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': ``,
     'vite.config.js': `
@@ -293,7 +306,9 @@ test('should not use global config for preview', async ({ runInlineTest }) => {
   expect(result1.exitCode).toBe(0);
   expect(result1.passed).toBe(1);
 
-  const result2 = await runInlineTest({}, { workers: 1 });
+  const result2 = await runInlineTest({
+    'playwright.config.ts': playwrightConfig,
+  }, { workers: 1 });
   expect(result2.exitCode).toBe(0);
   expect(result2.passed).toBe(1);
 });
@@ -304,8 +319,9 @@ test('should work with https enabled', async ({ runInlineTest }) => {
     'playwright/index.js': `//@no-header`,
     'playwright.config.js': `
       //@no-header
+      import { defineConfig } from '@playwright/experimental-ct-react';
       import basicSsl from '@vitejs/plugin-basic-ssl';
-      export default {
+      export default defineConfig({
         use: {
           ignoreHTTPSErrors: true,
           ctViteConfig: {
@@ -315,7 +331,7 @@ test('should work with https enabled', async ({ runInlineTest }) => {
             }
           }
         },
-      };
+      });
     `,
     'http.test.tsx': `
       //@no-header

@@ -15,7 +15,7 @@
  */
 
 import type { WriteStream } from 'tty';
-import type { ProcessInitParams, TeardownErrorsPayload, TtyParams } from './ipc';
+import type { ProcessInitParams, TtyParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
 import type { TestInfoError } from './types';
 import { serializeError } from './util';
@@ -35,7 +35,6 @@ export type ProtocolResponse = {
 };
 
 export class ProcessRunner {
-  appendProcessTeardownDiagnostics(error: TestInfoError) { }
   async gracefullyClose(): Promise<void> { }
 
   protected dispatchEvent(method: string, params: any) {
@@ -53,7 +52,7 @@ process.on('SIGINT', () => {});
 process.on('SIGTERM', () => {});
 
 let processRunner: ProcessRunner;
-let processName: string | undefined;
+let processName: string;
 process.on('message', async message => {
   if (message.method === '__init__') {
     const { processParams, runnerParams, runnerScript } = message.params as { processParams: ProcessInitParams, runnerParams: any, runnerScript: string };
@@ -62,6 +61,7 @@ process.on('message', async message => {
     startProfiling();
     const { create } = require(runnerScript);
     processRunner = create(runnerParams) as ProcessRunner;
+    processName = processParams.processName;
     return;
   }
   if (message.method === '__stop__') {
@@ -88,20 +88,8 @@ async function gracefullyCloseAndExit() {
   // Force exit after 30 seconds.
   setTimeout(() => process.exit(0), 30000);
   // Meanwhile, try to gracefully shutdown.
-  try {
-    if (processRunner)
-      await processRunner.gracefullyClose();
-    if (processName)
-      await stopProfiling(processName);
-  } catch (e) {
-    try {
-      const error = serializeError(e);
-      processRunner.appendProcessTeardownDiagnostics(error);
-      const payload: TeardownErrorsPayload = { fatalErrors: [error] };
-      sendMessageToParent({ method: 'teardownErrors', params: payload });
-    } catch {
-    }
-  }
+  await processRunner.gracefullyClose().catch(() => {});
+  await stopProfiling(processName).catch(() => {});
   process.exit(0);
 }
 

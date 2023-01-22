@@ -21,7 +21,7 @@ import { ProcessRunner } from './process';
 import { loadTestFilesInProcess } from './testLoader';
 import { setFatalErrorSink } from './globals';
 
-export class LoaderRunner extends ProcessRunner {
+export class LoaderMain extends ProcessRunner {
   private _config: SerializedConfig;
   private _configLoaderPromise: Promise<ConfigLoader> | undefined;
 
@@ -45,4 +45,4 @@ export class LoaderRunner extends ProcessRunner {
   }
 }
 
-export const create = (config: SerializedConfig) => new LoaderRunner(config);
+export const create = (config: SerializedConfig) => new LoaderMain(config);
