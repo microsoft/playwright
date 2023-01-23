@@ -15,7 +15,7 @@
 */
 
 import type { CallLog, Mode, Source } from './recorderTypes';
-import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
+import { CodeMirrorWrapper, Language } from '@web/components/codeMirrorWrapper';
 import { Source as SourceView } from '@web/components/source';
 import { SplitView } from '@web/components/splitView';
 import { Toolbar } from '@web/components/toolbar';
@@ -58,7 +58,7 @@ export const Recorder: React.FC<RecorderProps> = ({
     id: 'default',
     isRecorded: false,
     text: '',
-    language: 'javascript',
+    language: Language.javascript,
     label: '',
     highlight: []
   };
