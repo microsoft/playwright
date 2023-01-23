@@ -367,7 +367,7 @@ class ExecutionContext {
     try {
       this._debuggee.executeInGlobal(script);
     } catch (e) {
-      dump(`ERROR: ${e.message}\n${e.stack}\n`);
+      dump(`WARNING: ${e.message}\n${e.stack}\n`);
     }
   }
 
@@ -450,7 +450,7 @@ class ExecutionContext {
         subtype = 'array';
       else if (Object.is(rawObj, null))
         subtype = 'null';
-      else if (this._instanceOf(debuggerObj, rawObj, 'Node'))
+      else if (typeof Node !== 'undefined' && Node.isInstance(rawObj))
         subtype = 'node';
       else if (this._instanceOf(debuggerObj, rawObj, 'RegExp'))
         subtype = 'regexp';

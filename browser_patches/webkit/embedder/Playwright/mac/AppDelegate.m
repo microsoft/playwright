@@ -229,6 +229,7 @@ const NSActivityOptions ActivityOptions =
     if (!configuration) {
         configuration = [[WKWebViewConfiguration alloc] init];
         configuration.websiteDataStore = [self persistentDataStore];
+        configuration._controlledByAutomation = true;
         configuration.preferences._fullScreenEnabled = YES;
         configuration.preferences._developerExtrasEnabled = YES;
         configuration.preferences._mediaDevicesEnabled = YES;
@@ -494,6 +495,12 @@ const NSActivityOptions ActivityOptions =
 - (void)webView:(WKWebView *)webView navigationResponse:(WKNavigationResponse *)navigationResponse didBecomeDownload:(WKDownload *)download
 {
     download.delegate = self;
+}
+
+// Always automatically accept requestStorageAccess dialog.
+- (void)_webView:(WKWebView *)webView requestStorageAccessPanelForDomain:(NSString *)requestingDomain underCurrentDomain:(NSString *)currentDomain completionHandler:(void (^)(BOOL result))completionHandler
+{
+    completionHandler(true);
 }
 
 #pragma mark WKDownloadDelegate

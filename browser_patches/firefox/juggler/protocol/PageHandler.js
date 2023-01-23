@@ -89,6 +89,11 @@ class PageHandler {
     // to be ignored by the protocol clients.
     this._isPageReady = false;
 
+    // Whether the page is about to go cross-process after navigation.
+    this._isTransferringCrossProcessNavigation = false;
+    this._mainFrameId = undefined;
+    this._lastMainFrameNavigationId = undefined;
+
     if (this._pageTarget.videoRecordingInfo())
       this._onVideoRecordingStarted();
 
@@ -100,6 +105,7 @@ class PageHandler {
       }),
       helper.on(this._pageTarget, PageTarget.Events.ScreencastStarted, this._onVideoRecordingStarted.bind(this)),
       helper.on(this._pageTarget, PageTarget.Events.ScreencastFrame, this._onScreencastFrame.bind(this)),
+      helper.on(this._pageTarget, PageTarget.Events.TopBrowsingContextReplaced, this._onTopBrowsingContextReplaced.bind(this)),
       helper.on(this._pageNetwork, PageNetwork.Events.Request, this._handleNetworkEvent.bind(this, 'Network.requestWillBeSent')),
       helper.on(this._pageNetwork, PageNetwork.Events.Response, this._handleNetworkEvent.bind(this, 'Network.responseReceived')),
       helper.on(this._pageNetwork, PageNetwork.Events.RequestFinished, this._handleNetworkEvent.bind(this, 'Network.requestFinished')),
@@ -113,9 +119,9 @@ class PageHandler {
         pageFrameDetached: emitProtocolEvent('Page.frameDetached'),
         pageLinkClicked: emitProtocolEvent('Page.linkClicked'),
         pageWillOpenNewWindowAsynchronously: emitProtocolEvent('Page.willOpenNewWindowAsynchronously'),
-        pageNavigationAborted: emitProtocolEvent('Page.navigationAborted'),
-        pageNavigationCommitted: emitProtocolEvent('Page.navigationCommitted'),
-        pageNavigationStarted: emitProtocolEvent('Page.navigationStarted'),
+        pageNavigationAborted: params => this._handleNavigationEvent('Page.navigationAborted', params),
+        pageNavigationCommitted: params => this._handleNavigationEvent('Page.navigationCommitted', params),
+        pageNavigationStarted: params => this._handleNavigationEvent('Page.navigationStarted', params),
         pageReady: this._onPageReady.bind(this),
         pageSameDocumentNavigation: emitProtocolEvent('Page.sameDocumentNavigation'),
         pageUncaughtError: emitProtocolEvent('Page.uncaughtError'),
@@ -129,10 +135,11 @@ class PageHandler {
               return;
             }
           }
-          emitProtocolEvent('Runtime.console')(params);
+          this._session.emitEvent('Runtime.console', params);
         },
         runtimeExecutionContextCreated: emitProtocolEvent('Runtime.executionContextCreated'),
         runtimeExecutionContextDestroyed: emitProtocolEvent('Runtime.executionContextDestroyed'),
+        runtimeExecutionContextsCleared: emitProtocolEvent('Runtime.executionContextsCleared'),
 
         webSocketCreated: emitProtocolEvent('Page.webSocketCreated'),
         webSocketOpened: emitProtocolEvent('Page.webSocketOpened'),
@@ -155,6 +162,28 @@ class PageHandler {
 
   _onScreencastFrame(params) {
     this._session.emitEvent('Page.screencastFrame', params);
+  }
+
+  _onTopBrowsingContextReplaced() {
+    this._isTransferringCrossProcessNavigation = true;
+  }
+
+  _handleNavigationEvent(event, params) {
+    if (this._isTransferringCrossProcessNavigation && params.frameId === this._mainFrameId) {
+      // During a cross-process navigation, http channel in the new process might not be
+      // the same as the original one in the old process, for example after a redirect/interception.
+      // Therefore, the new proces has a new navigationId.
+      //
+      // To preserve protocol consistency, we replace the new navigationId with
+      // the old navigationId.
+      params.navigationId = this._lastMainFrameNavigationId || params.navigationId;
+      if (event === 'Page.navigationCommitted' || event === 'Page.navigationAborted')
+        this._isTransferringCrossProcessNavigation = false;
+    }
+
+    if (event === 'Page.navigationStarted' && params.frameId === this._mainFrameId)
+      this._lastMainFrameNavigationId = params.navigationId;
+    this._session.emitEvent(event, params);
   }
 
   _onPageReady(event) {
@@ -210,6 +239,8 @@ class PageHandler {
   }
 
   _onFrameAttached({frameId, parentFrameId}) {
+    if (!parentFrameId)
+      this._mainFrameId = frameId;
     this._session.emitEvent('Page.frameAttached', {frameId, parentFrameId});
     this._reportedFrameIds.add(frameId);
     const events = this._networkEventsForUnreportedFrameIds.get(frameId) || [];
@@ -295,8 +326,8 @@ class PageHandler {
     return await this._contentPage.send('setCacheDisabled', options);
   }
 
-  async ['Page.addBinding'](options) {
-    return await this._contentPage.send('addBinding', options);
+  async ['Page.addBinding']({ worldName, name, script }) {
+    return await this._pageTarget.addBinding(worldName, name, script);
   }
 
   async ['Page.adoptNode'](options) {
@@ -358,16 +389,25 @@ class PageHandler {
     return await this._contentPage.send('navigate', options);
   }
 
-  async ['Page.goBack'](options) {
-    return await this._contentPage.send('goBack', options);
+  async ['Page.goBack']({}) {
+    const browsingContext = this._pageTarget.linkedBrowser().browsingContext;
+    if (!browsingContext.embedderElement?.canGoBack)
+      return { success: false };
+    browsingContext.goBack();
+    return { success: true };
   }
 
-  async ['Page.goForward'](options) {
-    return await this._contentPage.send('goForward', options);
+  async ['Page.goForward']({}) {
+    const browsingContext = this._pageTarget.linkedBrowser().browsingContext;
+    if (!browsingContext.embedderElement?.canGoForward)
+      return { success: false };
+    browsingContext.goForward();
+    return { success: true };
   }
 
-  async ['Page.reload'](options) {
-    return await this._contentPage.send('reload', options);
+  async ['Page.reload']({}) {
+    const browsingContext = this._pageTarget.linkedBrowser().browsingContext;
+    browsingContext.reload(Ci.nsIWebNavigation.LOAD_FLAGS_NONE);
   }
 
   async ['Page.describeNode'](options) {
@@ -438,8 +478,8 @@ class PageHandler {
       dialog.dismiss();
   }
 
-  async ['Page.setInterceptFileChooserDialog'](options) {
-    return await this._contentPage.send('setInterceptFileChooserDialog', options);
+  async ['Page.setInterceptFileChooserDialog']({ enabled }) {
+    return await this._pageTarget.setInterceptFileChooserDialog(enabled);
   }
 
   async ['Page.startScreencast'](options) {

@@ -67,10 +67,22 @@ static void* keyValueObservingContext = &keyValueObservingContext;
 
 - (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen *)screen
 {
-    // Retain the frame size, but make sure that
-    // the top of the window is always visible.
-    CGFloat yPos = NSHeight(self.screen.frame) - 100 - NSHeight(self.frame);
-    return NSMakeRect(frameRect.origin.x, yPos, frameRect.size.width, frameRect.size.height);
+    float kWindowControlBarHeight = 35;
+
+    CGFloat screenHeight = screen.frame.size.height; // e.g. 1080
+    CGFloat windowHeight = self.frame.size.height; // e.g. 5000
+    CGFloat screenYOffset = screen.frame.origin.y; // screen arrangement offset
+
+    bool exceedsAtTheTop = (NSMaxY(frameRect) - screenYOffset) > screenHeight;
+    bool exceedsAtTheBottom = (frameRect.origin.y + windowHeight + -screenYOffset - kWindowControlBarHeight) < 0;
+    CGFloat newOriginY = frameRect.origin.y;
+    // if it exceeds the height, then we move it to the top of the screen
+    if (screenHeight > 0 && exceedsAtTheTop)
+        newOriginY = screenHeight - windowHeight - kWindowControlBarHeight + screenYOffset;
+    // if it exceeds the bottom, then we move it to the bottom of the screen but make sure that the control bar is still visible
+    else if (screenHeight > 0 && exceedsAtTheBottom)
+        newOriginY = -windowHeight + screenYOffset + kWindowControlBarHeight;
+    return NSMakeRect(frameRect.origin.x, newOriginY, frameRect.size.width, frameRect.size.height);
 }
 
 @end
@@ -668,6 +680,12 @@ static BOOL areEssentiallyEqual(double a, double b)
         [alert release];
         _alert = nil;
     }];
+}
+
+// Always automatically accept requestStorageAccess dialog.
+- (void)_webView:(WKWebView *)webView requestStorageAccessPanelForDomain:(NSString *)requestingDomain underCurrentDomain:(NSString *)currentDomain completionHandler:(void (^)(BOOL result))completionHandler
+{
+    completionHandler(true);
 }
 
 - (WKDragDestinationAction)_webView:(WKWebView *)webView dragDestinationActionMaskForDraggingInfo:(id)draggingInfo

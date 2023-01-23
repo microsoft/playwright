@@ -12,12 +12,34 @@ const {BrowserHandler} = ChromeUtils.import("chrome://juggler/content/protocol/B
 const {NetworkObserver} = ChromeUtils.import("chrome://juggler/content/NetworkObserver.js");
 const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
+const {ActorManagerParent} = ChromeUtils.import('resource://gre/modules/ActorManagerParent.jsm');
 const helper = new Helper();
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 
-const FRAME_SCRIPT = "chrome://juggler/content/content/main.js";
+// Register JSWindowActors that will be instantiated for each frame.
+ActorManagerParent.addJSWindowActors({
+  JugglerFrame: {
+    parent: {
+      moduleURI: 'chrome://juggler/content/JugglerFrameParent.jsm',
+    },
+    child: {
+      moduleURI: 'chrome://juggler/content/content/JugglerFrameChild.jsm',
+      events: {
+        // Normally, we instantiate an actor when a new window is created.
+        DOMWindowCreated: {},
+        // However, for same-origin iframes, the navigation from about:blank
+        // to the URL will share the same window, so we need to also create
+        // an actor for a new document via DOMDocElementInserted.
+        DOMDocElementInserted: {},
+        // Also, listening to DOMContentLoaded.
+        DOMContentLoaded: {},
+      },
+    },
+    allFrames: true,
+  },
+});
 
 let browserStartupFinishedCallback;
 let browserStartupFinishedPromise = new Promise(x => browserStartupFinishedCallback = x);
@@ -72,8 +94,7 @@ class Juggler {
         const targetRegistry = new TargetRegistry();
         new NetworkObserver(targetRegistry);
 
-        const loadFrameScript = () => {
-          Services.mm.loadFrameScript(FRAME_SCRIPT, true /* aAllowDelayedLoad */);
+        const loadStyleSheet = () => {
           if (Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo).isHeadless) {
             const styleSheetService = Cc["@mozilla.org/content/style-sheet-service;1"].getService(Components.interfaces.nsIStyleSheetService);
             const ioService = Cc["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
@@ -118,7 +139,7 @@ class Juggler {
           pipeStopped = true;
         }, () => browserStartupFinishedPromise);
         dispatcher.rootSession().setHandler(browserHandler);
-        loadFrameScript();
+        loadStyleSheet();
         dump(`\nJuggler listening to the pipe\n`);
         break;
     }

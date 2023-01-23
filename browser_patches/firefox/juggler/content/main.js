@@ -8,111 +8,110 @@ const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTr
 const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
 const {PageAgent} = ChromeUtils.import('chrome://juggler/content/content/PageAgent.js');
 
-let frameTree;
+const browsingContextToAgents = new Map();
 const helper = new Helper();
-const messageManager = this;
 
-let pageAgent;
+function initialize(browsingContext, docShell, actor) {
+  if (browsingContext.parent) {
+    // For child frames, return agents from the main frame.
+    return browsingContextToAgents.get(browsingContext.top);
+  }
 
-let failedToOverrideTimezone = false;
+  let data = browsingContextToAgents.get(browsingContext);
+  if (data) {
+    // Rebind from one main frame actor to another one.
+    data.channel.bindToActor(actor);
+    return data;
+  }
 
-const applySetting = {
-  geolocation: (geolocation) => {
-    if (geolocation) {
-      docShell.setGeolocationOverride({
-        coords: {
-          latitude: geolocation.latitude,
-          longitude: geolocation.longitude,
-          accuracy: geolocation.accuracy,
-          altitude: NaN,
-          altitudeAccuracy: NaN,
-          heading: NaN,
-          speed: NaN,
-        },
-        address: null,
-        timestamp: Date.now()
-      });
-    } else {
-      docShell.setGeolocationOverride(null);
-    }
-  },
+  data = { channel: undefined, pageAgent: undefined, frameTree: undefined, failedToOverrideTimezone: false };
+  browsingContextToAgents.set(browsingContext, data);
 
-  onlineOverride: (onlineOverride) => {
-    if (!onlineOverride) {
-      docShell.onlineOverride = Ci.nsIDocShell.ONLINE_OVERRIDE_NONE;
-      return;
-    }
-    docShell.onlineOverride = onlineOverride === 'online' ?
-        Ci.nsIDocShell.ONLINE_OVERRIDE_ONLINE : Ci.nsIDocShell.ONLINE_OVERRIDE_OFFLINE;
-  },
+  const applySetting = {
+    geolocation: (geolocation) => {
+      if (geolocation) {
+        docShell.setGeolocationOverride({
+          coords: {
+            latitude: geolocation.latitude,
+            longitude: geolocation.longitude,
+            accuracy: geolocation.accuracy,
+            altitude: NaN,
+            altitudeAccuracy: NaN,
+            heading: NaN,
+            speed: NaN,
+          },
+          address: null,
+          timestamp: Date.now()
+        });
+      } else {
+        docShell.setGeolocationOverride(null);
+      }
+    },
 
-  bypassCSP: (bypassCSP) => {
-    docShell.bypassCSPEnabled = bypassCSP;
-  },
+    onlineOverride: (onlineOverride) => {
+      if (!onlineOverride) {
+        docShell.onlineOverride = Ci.nsIDocShell.ONLINE_OVERRIDE_NONE;
+        return;
+      }
+      docShell.onlineOverride = onlineOverride === 'online' ?
+          Ci.nsIDocShell.ONLINE_OVERRIDE_ONLINE : Ci.nsIDocShell.ONLINE_OVERRIDE_OFFLINE;
+    },
 
-  timezoneId: (timezoneId) => {
-    failedToOverrideTimezone = !docShell.overrideTimezone(timezoneId);
-  },
+    bypassCSP: (bypassCSP) => {
+      docShell.bypassCSPEnabled = bypassCSP;
+    },
 
-  locale: (locale) => {
-    docShell.languageOverride = locale;
-  },
+    timezoneId: (timezoneId) => {
+      data.failedToOverrideTimezone = !docShell.overrideTimezone(timezoneId);
+    },
 
-  scrollbarsHidden: (hidden) => {
-    frameTree.setScrollbarsHidden(hidden);
-  },
+    locale: (locale) => {
+      docShell.languageOverride = locale;
+    },
 
-  colorScheme: (colorScheme) => {
-    frameTree.setColorScheme(colorScheme);
-  },
+    scrollbarsHidden: (hidden) => {
+      data.frameTree.setScrollbarsHidden(hidden);
+    },
 
-  reducedMotion: (reducedMotion) => {
-    frameTree.setReducedMotion(reducedMotion);
-  },
+    javaScriptDisabled: (javaScriptDisabled) => {
+      data.frameTree.setJavaScriptDisabled(javaScriptDisabled);
+    },
+  };
 
-  forcedColors: (forcedColors) => {
-    frameTree.setForcedColors(forcedColors);
-  },
-};
+  const contextCrossProcessCookie = Services.cpmm.sharedData.get('juggler:context-cookie-' + browsingContext.originAttributes.userContextId) || { initScripts: [], bindings: [], settings: {} };
+  const pageCrossProcessCookie = Services.cpmm.sharedData.get('juggler:page-cookie-' + browsingContext.browserId) || { initScripts: [], bindings: [], interceptFileChooserDialog: false };
 
-const channel = SimpleChannel.createForMessageManager('content::page', messageManager);
-
-function initialize() {
-  const response = sendSyncMessage('juggler:content-ready')[0];
-  // If we didn't get a response, then we don't want to do anything
-  // as a part of this frame script.
-  if (!response)
-    return;
-  const {
-    initScripts = [],
-    bindings = [],
-    settings = {}
-  } = response || {};
   // Enforce focused state for all top level documents.
   docShell.overrideHasFocus = true;
   docShell.forceActiveState = true;
-  frameTree = new FrameTree(docShell);
-  for (const [name, value] of Object.entries(settings)) {
+  docShell.disallowBFCache = true;
+  data.frameTree = new FrameTree(docShell);
+  for (const [name, value] of Object.entries(contextCrossProcessCookie.settings)) {
     if (value !== undefined)
       applySetting[name](value);
   }
-  for (const { worldName, name, script } of bindings)
-    frameTree.addBinding(worldName, name, script);
-  frameTree.setInitScripts(initScripts);
+  for (const { worldName, name, script } of [...contextCrossProcessCookie.bindings, ...pageCrossProcessCookie.bindings])
+    data.frameTree.addBinding(worldName, name, script);
+  data.frameTree.setInitScripts([...contextCrossProcessCookie.initScripts, ...pageCrossProcessCookie.initScripts]);
+  data.channel = SimpleChannel.createForActor(actor);
+  data.pageAgent = new PageAgent(data.channel, data.frameTree);
+  docShell.fileInputInterceptionEnabled = !!pageCrossProcessCookie.interceptFileChooserDialog;
 
-  pageAgent = new PageAgent(messageManager, channel, frameTree);
-
-  channel.register('', {
+  data.channel.register('', {
     setInitScripts(scripts) {
-      frameTree.setInitScripts(scripts);
+      data.frameTree.setInitScripts(scripts);
     },
 
     addBinding({worldName, name, script}) {
-      frameTree.addBinding(worldName, name, script);
+      data.frameTree.addBinding(worldName, name, script);
     },
 
     applyContextSetting({name, value}) {
       applySetting[name](value);
+    },
+
+    setInterceptFileChooserDialog(enabled) {
+      docShell.fileInputInterceptionEnabled = !!enabled;
     },
 
     ensurePermissions() {
@@ -120,7 +119,7 @@ function initialize() {
     },
 
     hasFailedToOverrideTimezone() {
-      return failedToOverrideTimezone;
+      return data.failedToOverrideTimezone;
     },
 
     async awaitViewportDimensions({width, height, deviceSizeIsPageSize}) {
@@ -142,14 +141,8 @@ function initialize() {
     },
   });
 
-  const gListeners = [
-    helper.addEventListener(messageManager, 'unload', msg => {
-      helper.removeListeners(gListeners);
-      pageAgent.dispose();
-      frameTree.dispose();
-      channel.dispose();
-    }),
-  ];
+  return data;
 }
 
-initialize();
+var EXPORTED_SYMBOLS = ['initialize'];
+this.initialize = initialize;

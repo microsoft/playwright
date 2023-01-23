@@ -55,7 +55,7 @@ rtc::scoped_refptr<webrtc::VideoCaptureModuleEx> CreateWindowCapturer(nsIWidget*
   windowId.AppendPrintf("%" PRIuPTR, rawWindowId);
   bool captureCursor = false;
   static int moduleId = 0;
-  return webrtc::DesktopCaptureImpl::Create(++moduleId, windowId.get(), CaptureDeviceType::Window, captureCursor);
+  return rtc::scoped_refptr<webrtc::VideoCaptureModuleEx>(webrtc::DesktopCaptureImpl::Create(++moduleId, windowId.get(), CaptureDeviceType::Window, captureCursor));
 }
 
 nsresult generateUid(nsString& uid) {
