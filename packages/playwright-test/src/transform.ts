@@ -38,8 +38,7 @@ type ParsedTsConfigData = {
 };
 const cachedTSConfigs = new Map<string, ParsedTsConfigData | undefined>();
 
-const kStackTraceLimit = 15;
-Error.stackTraceLimit = kStackTraceLimit;
+Error.stackTraceLimit = 200;
 
 sourceMapSupport.install({
   environment: 'node',
@@ -270,11 +269,12 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
         column: frame.getColumnNumber(),
       };
     };
+    const oldStackTraceLimit = Error.stackTraceLimit;
     Error.stackTraceLimit = 2;
     const obj: { stack: Location } = {} as any;
     Error.captureStackTrace(obj);
     const location = obj.stack;
-    Error.stackTraceLimit = kStackTraceLimit;
+    Error.stackTraceLimit = oldStackTraceLimit;
     Error.prepareStackTrace = oldPrepareStackTrace;
     return func(location, ...args);
   };
