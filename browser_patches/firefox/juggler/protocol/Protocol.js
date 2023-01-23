@@ -227,6 +227,7 @@ const Browser = {
       uuid: t.String,
       browserContextId: t.Optional(t.String),
       pageTargetId: t.String,
+      frameId: t.String,
       url: t.String,
       suggestedFileName: t.String,
     },
@@ -573,6 +574,8 @@ const Runtime = {
     'executionContextDestroyed': {
       executionContextId: t.String,
     },
+    'executionContextsCleared': {
+    },
     'console': {
       executionContextId: t.String,
       args: t.Array(runtimeTypes.RemoteObject),
@@ -847,7 +850,8 @@ const Page = {
     'adoptNode': {
       params: {
         frameId: t.String,
-        objectId: t.String,
+        // Missing objectId adopts frame owner.
+        objectId: t.Optional(t.String),
         executionContextId: t.String,
       },
       returns: {

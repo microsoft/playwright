@@ -50,8 +50,7 @@ class WorkerData {
 }
 
 class PageAgent {
-  constructor(messageManager, browserChannel, frameTree) {
-    this._messageManager = messageManager;
+  constructor(browserChannel, frameTree) {
     this._browserChannel = browserChannel;
     this._browserPage = browserChannel.connect('page');
     this._frameTree = frameTree;
@@ -78,6 +77,7 @@ class PageAgent {
       this._onWorkerCreated(worker);
 
     // Report execution contexts.
+    this._browserPage.emit('runtimeExecutionContextsCleared', {});
     for (const context of this._runtime.executionContexts())
       this._onExecutionContextCreated(context);
 
@@ -99,9 +99,7 @@ class PageAgent {
       helper.addObserver(this._linkClicked.bind(this, true), 'juggler-link-click-sync'),
       helper.addObserver(this._onWindowOpenInNewContext.bind(this), 'juggler-window-open-in-new-context'),
       helper.addObserver(this._filePickerShown.bind(this), 'juggler-file-picker-shown'),
-      helper.addEventListener(this._messageManager, 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
       helper.addObserver(this._onDocumentOpenLoad.bind(this), 'juggler-document-open-loaded'),
-      helper.on(this._frameTree, 'load', this._onLoad.bind(this)),
       helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
       helper.on(this._frameTree, 'framedetached', this._onFrameDetached.bind(this)),
       helper.on(this._frameTree, 'navigationstarted', this._onNavigationStarted.bind(this)),
@@ -133,7 +131,6 @@ class PageAgent {
       this._runtime.events.onExecutionContextDestroyed(this._onExecutionContextDestroyed.bind(this)),
       this._runtime.events.onBindingCalled(this._onBindingCalled.bind(this)),
       browserChannel.register('page', {
-        addBinding: ({ worldName, name, script }) => this._frameTree.addBinding(worldName, name, script),
         adoptNode: this._adoptNode.bind(this),
         crash: this._crash.bind(this),
         describeNode: this._describeNode.bind(this),
@@ -143,15 +140,11 @@ class PageAgent {
         dispatchTapEvent: this._dispatchTapEvent.bind(this),
         getContentQuads: this._getContentQuads.bind(this),
         getFullAXTree: this._getFullAXTree.bind(this),
-        goBack: this._goBack.bind(this),
-        goForward: this._goForward.bind(this),
         insertText: this._insertText.bind(this),
         navigate: this._navigate.bind(this),
-        reload: this._reload.bind(this),
         scrollIntoViewIfNeeded: this._scrollIntoViewIfNeeded.bind(this),
         setCacheDisabled: this._setCacheDisabled.bind(this),
         setFileInputFiles: this._setFileInputFiles.bind(this),
-        setInterceptFileChooserDialog: this._setInterceptFileChooserDialog.bind(this),
         evaluate: this._runtime.evaluate.bind(this._runtime),
         callFunction: this._runtime.callFunction.bind(this._runtime),
         getObjectProperties: this._runtime.getObjectProperties.bind(this._runtime),
@@ -224,10 +217,6 @@ class PageAgent {
       this._emitAllEvents(this._frameTree.mainFrame());
   }
 
-  _setInterceptFileChooserDialog({enabled}) {
-    this._docShell.fileInputInterceptionEnabled = !!enabled;
-  }
-
   _linkClicked(sync, anchorElement) {
     if (anchorElement.ownerGlobal.docShell !== this._docShell)
       return;
@@ -259,7 +248,9 @@ class PageAgent {
     });
   }
 
-  _onDOMContentLoaded(event) {
+  onWindowEvent(event) {
+    if (event.type !== 'DOMContentLoaded' && event.type !== 'load')
+      return;
     if (!event.target.ownerGlobal)
       return;
     const docShell = event.target.ownerGlobal.docShell;
@@ -268,7 +259,7 @@ class PageAgent {
       return;
     this._browserPage.emit('pageEventFired', {
       frameId: frame.id(),
-      name: 'DOMContentLoaded',
+      name: event.type,
     });
   }
 
@@ -285,13 +276,6 @@ class PageAgent {
     const frame = this._frameTree.frameForDocShell(docShell);
     if (!frame)
       return;
-    this._browserPage.emit('pageEventFired', {
-      frameId: frame.id(),
-      name: 'load'
-    });
-  }
-
-  _onLoad(frame) {
     this._browserPage.emit('pageEventFired', {
       frameId: frame.id(),
       name: 'load'
@@ -395,35 +379,16 @@ class PageAgent {
     return {navigationId: frame.pendingNavigationId(), navigationURL: frame.pendingNavigationURL()};
   }
 
-  async _reload({frameId, url}) {
-    const frame = this._frameTree.frame(frameId);
-    const docShell = frame.docShell().QueryInterface(Ci.nsIWebNavigation);
-    docShell.reload(Ci.nsIWebNavigation.LOAD_FLAGS_NONE);
-  }
-
-  async _goBack({frameId, url}) {
-    const frame = this._frameTree.frame(frameId);
-    const docShell = frame.docShell();
-    if (!docShell.canGoBack)
-      return {success: false};
-    docShell.goBack();
-    return {success: true};
-  }
-
-  async _goForward({frameId, url}) {
-    const frame = this._frameTree.frame(frameId);
-    const docShell = frame.docShell();
-    if (!docShell.canGoForward)
-      return {success: false};
-    docShell.goForward();
-    return {success: true};
-  }
-
   async _adoptNode({frameId, objectId, executionContextId}) {
     const frame = this._frameTree.frame(frameId);
     if (!frame)
       throw new Error('Failed to find frame with id = ' + frameId);
-    const unsafeObject = frame.unsafeObject(objectId);
+    let unsafeObject;
+    if (!objectId) {
+      unsafeObject = frame.domWindow().frameElement;
+    } else {
+      unsafeObject = frame.unsafeObject(objectId);
+    }
     const context = this._runtime.findExecutionContext(executionContextId);
     const fromPrincipal = unsafeObject.nodePrincipal;
     const toFrame = this._frameTree.frame(context.auxData().frameId);
@@ -655,30 +620,23 @@ class PageAgent {
   }
 
   _simulateDragEvent(type, x, y, modifiers) {
-    const window = this._frameTree.mainFrame().domWindow();
-    const element = window.windowUtils.elementFromPoint(x, y, false, false);
-    const event = window.document.createEvent('DragEvent');
-
-    event.initDragEvent(
-      type,
-      true /* bubble */,
-      true /* cancelable */,
-      window,
-      0 /* clickCount */,
-      window.mozInnerScreenX + x,
-      window.mozInnerScreenY + y,
-      x,
-      y,
-      modifiers & 2 /* ctrlkey */,
-      modifiers & 1 /* altKey */,
-      modifiers & 4 /* shiftKey */,
-      modifiers & 8 /* metaKey */,
-      0 /* button */, // firefox always has the button as 0 on drops, regardless of which was pressed
-      null /* relatedTarget */,
-      null,
-    );
-    if (type !== 'drop' || dragService.dragAction)
-      window.windowUtils.dispatchDOMEventViaPresShellForTesting(element, event);
+    if (type !== 'drop' || dragService.dragAction) {
+      const window = this._frameTree.mainFrame().domWindow();
+      window.windowUtils.sendMouseEvent(
+        type,
+        x,
+        y,
+        0, /*button*/
+        0, /*clickCount*/
+        modifiers,
+        false /*aIgnoreRootScrollFrame*/,
+        undefined /*pressure*/,
+        undefined /*inputSource*/,
+        undefined /*isDOMEventSynthesized*/,
+        undefined /*isWidgetEventSynthesized*/,
+        0, /*buttons*/
+      );
+    }
     if (type === 'drop')
       this._cancelDragIfNeeded();
   }

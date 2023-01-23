@@ -34,6 +34,7 @@
 #include <WebKit/WKCredential.h>
 #include <WebKit/WKFramePolicyListener.h>
 #include <WebKit/WKInspector.h>
+#include <WebKit/WKPagePrivate.h>
 #include <WebKit/WKProtectionSpace.h>
 #include <WebKit/WKProtectionSpaceCurl.h>
 #include <WebKit/WKWebsiteDataStoreRef.h>
@@ -102,6 +103,8 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, HWND mainW
     policyClient.decidePolicyForResponse_deprecatedForUseWithV0 = decidePolicyForResponse;
     policyClient.decidePolicyForNavigationAction = decidePolicyForNavigationAction;
     WKPageSetPagePolicyClient(page, &policyClient.base);
+
+    WKPageSetControlledByAutomation(page, true);
     resetZoom();
 }
 
