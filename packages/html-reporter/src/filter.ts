@@ -15,7 +15,6 @@
 */
 
 import type { TestCaseSummary } from './types';
-import { Outcome } from './types';
 
 export class Filter {
   project: string[] = [];
@@ -94,11 +93,11 @@ export class Filter {
   matches(test: TestCaseSummary): boolean {
     if (!(test as any).searchValues) {
       let status = 'passed';
-      if (test.outcome === Outcome.unexpected)
+      if (test.outcome === 'unexpected')
         status = 'failed';
-      if (test.outcome === Outcome.flaky)
+      if (test.outcome === 'flaky')
         status = 'flaky';
-      if (test.outcome === Outcome.skipped)
+      if (test.outcome === 'skipped')
         status = 'skipped';
       const searchValues: SearchValues = {
         text: (status + ' ' + test.projectName + ' ' + test.path.join(' ') + test.title).toLowerCase(),
