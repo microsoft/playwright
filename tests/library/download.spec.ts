@@ -678,8 +678,7 @@ it('should save to user-specified path', async ({ browser, server, mode }, testI
   await page.close();
 });
 
-it('should download even if there is no "attachment" value', async ({ browser, server, mode, browserName }, testInfo) => {
-  it.fixme(browserName === 'webkit');
+it.only('should download even if there is no "attachment" value', async ({ browser, server, mode, browserName }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19939' });
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
