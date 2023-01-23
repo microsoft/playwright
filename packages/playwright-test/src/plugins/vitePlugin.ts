@@ -36,7 +36,7 @@ type CtConfig = BasePlaywrightTestConfig['use'] & {
   ctPort?: number;
   ctTemplateDir?: string;
   ctCacheDir?: string;
-  ctViteConfig?: InlineConfig;
+  ctViteConfig?: InlineConfig | (() => Promise<InlineConfig>);
 };
 
 const importReactRE = /(^|\n)import\s+(\*\s+as\s+)?React(,|\s+)/;
@@ -53,7 +53,7 @@ export function createPlugin(
       configDir = configDirectory;
       const use = config.projects[0].use as CtConfig;
       const port = use.ctPort || 3100;
-      const viteConfig: InlineConfig = use.ctViteConfig || {};
+      const viteConfig = typeof use.ctViteConfig === 'function' ? await use.ctViteConfig() : (use.ctViteConfig || {});
       const relativeTemplateDir = use.ctTemplateDir || 'playwright';
 
       const rootDir = viteConfig.root || configDir;
