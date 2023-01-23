@@ -11225,7 +11225,8 @@ export interface Locator {
   }): Promise<string>;
 
   /**
-   * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
+   * Returns whether the element is checked. Throws if the element is not a checkbox or radio input. Returns false for
+   * [indeterminate](https://developer.mozilla.org/en-US/docs/Web/CSS/:indeterminate) elements.
    *
    * **Usage**
    *

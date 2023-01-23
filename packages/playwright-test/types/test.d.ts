@@ -3902,6 +3902,8 @@ interface LocatorAssertions {
 
   /**
    * Ensures the [Locator] points to a checked input.
+   * [indeterminate](https://developer.mozilla.org/en-US/docs/Web/CSS/:indeterminate) elements are always considered
+   * unchecked.
    *
    * **Usage**
    *

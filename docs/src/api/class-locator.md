@@ -1160,7 +1160,7 @@ Throws elements that are not an input, textarea or a select. However, if the ele
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
+Returns whether the element is checked. Throws if the element is not a checkbox or radio input. Returns false for [indeterminate](https://developer.mozilla.org/en-US/docs/Web/CSS/:indeterminate) elements.
 
 **Usage**
 

@@ -617,7 +617,10 @@ export class InjectedScript {
       const checked = getAriaCheckedStrict(element);
       if (checked === 'error')
         throw this.createStacklessError('Not a checkbox or radio button');
-      return need === checked;
+      if (state === 'checked')
+        return checked === true;
+      // Both mixed and false are considered unchecked.
+      return checked !== true;
     }
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
