@@ -26,7 +26,7 @@ export type HostPlatform = 'win64' |
                            'ubuntu18.04' | 'ubuntu18.04-arm64' |
                            'ubuntu20.04' | 'ubuntu20.04-arm64' |
                            'ubuntu22.04' | 'ubuntu22.04-arm64' |
-                           'debian11' |
+                           'debian11' | 'debian11-arm64' |
                            'generic-linux' | 'generic-linux-arm64' |
                            '<unknown>';
 
@@ -65,8 +65,8 @@ export const hostPlatform = ((): HostPlatform => {
         return ('ubuntu20.04' + archSuffix) as HostPlatform;
       return ('ubuntu22.04' + archSuffix) as HostPlatform;
     }
-    if (distroInfo?.id === 'debian' && distroInfo?.version === '11' && !archSuffix)
-      return 'debian11';
+    if (distroInfo?.id === 'debian' && distroInfo?.version === '11')
+      return ('debian11' + archSuffix) as HostPlatform;
     return ('generic-linux' + archSuffix) as HostPlatform;
   }
   if (platform === 'win32')

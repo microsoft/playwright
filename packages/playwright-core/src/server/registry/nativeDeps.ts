@@ -852,3 +852,17 @@ deps['ubuntu22.04-arm64'] = {
   },
 };
 
+deps['debian11-arm64'] = {
+  tools: [...deps['debian11'].tools],
+  chromium: [...deps['debian11'].chromium],
+  firefox: [
+    ...deps['debian11'].firefox,
+  ],
+  webkit: [
+    ...deps['debian11'].webkit,
+  ],
+  lib2package: {
+    ...deps['debian11'].lib2package,
+  },
+};
+
