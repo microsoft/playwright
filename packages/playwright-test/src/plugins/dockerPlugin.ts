@@ -15,14 +15,14 @@
  */
 
 import type { TestRunnerPlugin } from '.';
-import type { FullConfig, Reporter, Suite } from '../../types/testReporter';
+import type { FullConfig, Reporter } from '../../types/testReporter';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { checkDockerEngineIsRunningOrDie, containerInfo } from 'playwright-core/lib/containers/docker';
 
 export const dockerPlugin: TestRunnerPlugin = {
   name: 'playwright:docker',
 
-  async setup(config: FullConfig, configDir: string, rootSuite: Suite, reporter: Reporter) {
+  async setup(config: FullConfig, configDir: string, reporter: Reporter) {
     if (!process.env.PLAYWRIGHT_DOCKER)
       return;
 

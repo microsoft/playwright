@@ -44,6 +44,7 @@ export interface FullResult {
 }
 
 export interface Reporter {
+  onConfigure?(config: FullConfig): void;
   onBegin?(config: FullConfig, suite: Suite): void;
   onEnd?(result: FullResult): void | Promise<void>;
 }

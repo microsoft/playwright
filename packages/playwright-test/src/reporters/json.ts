@@ -39,8 +39,11 @@ class JSONReporter implements Reporter {
     return !this._outputFile;
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  onConfigure(config: FullConfig) {
     this.config = config;
+  }
+
+  onBegin(config: FullConfig, suite: Suite) {
     this.suite = suite;
   }
 

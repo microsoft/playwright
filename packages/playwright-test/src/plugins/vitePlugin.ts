@@ -46,11 +46,16 @@ export function createPlugin(
   registerSourceFile: string,
   frameworkPluginFactory: () => Promise<Plugin>): TestRunnerPlugin {
   let configDir: string;
+  let config: FullConfig;
   return {
     name: 'playwright-vite-plugin',
 
-    setup: async (config: FullConfig, configDirectory: string, suite: Suite) => {
+    setup: async (configObject: FullConfig, configDirectory: string) => {
+      config = configObject;
       configDir = configDirectory;
+    },
+
+    begin: async (suite: Suite) => {
       const use = config.projects[0].use as CtConfig;
       const port = use.ctPort || 3100;
       const viteConfig: InlineConfig = use.ctViteConfig || {};

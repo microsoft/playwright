@@ -17,7 +17,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { raceAgainstTimeout } from 'playwright-core/lib/utils';
+import { monotonicTime, raceAgainstTimeout } from 'playwright-core/lib/utils';
 import { colors, minimatch, rimraf } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import type { FullResult, Reporter, TestError } from '../types/testReporter';
@@ -41,7 +41,7 @@ import { Multiplexer } from './reporters/multiplexer';
 import { SigIntWatcher } from './sigIntWatcher';
 import type { TestCase } from './test';
 import { Suite } from './test';
-import type { Config, FullConfigInternal, FullProjectInternal, ReporterInternal } from './types';
+import type { Config, FullConfigInternal, FullProjectInternal } from './types';
 import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher, serializeError } from './util';
 import type { Matcher, TestFileFilter } from './util';
 import { setFatalErrorSink } from './globals';
@@ -83,7 +83,7 @@ export type ConfigCLIOverrides = {
 
 export class Runner {
   private _configLoader: ConfigLoader;
-  private _reporter!: ReporterInternal;
+  private _reporter!: Reporter;
   private _plugins: TestRunnerPlugin[] = [];
   private _fatalErrors: TestError[] = [];
 
@@ -174,30 +174,6 @@ export class Runner {
         reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
     }
     return new Multiplexer(reporters);
-  }
-
-  async runAllTests(options: RunOptions): Promise<FullResult> {
-    this._reporter = await this._createReporter(!!options.listOnly);
-    const config = this._configLoader.fullConfig();
-    const result = await raceAgainstTimeout(() => this._run(options), config.globalTimeout);
-    let fullResult: FullResult;
-    if (result.timedOut) {
-      this._reporter.onError?.(createStacklessError(
-          `Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
-      fullResult = { status: 'timedout' };
-    } else {
-      fullResult = result.result;
-    }
-    await this._reporter.onEnd?.(fullResult);
-
-    // Calling process.exit() might truncate large stdout/stderr output.
-    // See https://github.com/nodejs/node/issues/6456.
-    // See https://github.com/nodejs/node/issues/12921
-    await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
-    await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
-
-    await this._reporter._onExit?.();
-    return fullResult;
   }
 
   async listTestFiles(projectNames: string[] | undefined): Promise<any> {
@@ -401,7 +377,77 @@ export class Runner {
     }
   }
 
-  private async _run(options: RunOptions): Promise<FullResult> {
+  async runAllTests(options: RunOptions): Promise<FullResult> {
+    this._reporter = await this._createReporter(!!options.listOnly);
+    const config = this._configLoader.fullConfig();
+    const deadline = config.globalTimeout ? monotonicTime() + config.globalTimeout : 1 << 30;
+
+    // Run configure.
+    this._reporter.onConfigure?.(config);
+
+    // Run global setup.
+    let globalTearDown: (() => Promise<void>) | undefined;
+    {
+      const remainingTime = deadline - monotonicTime();
+      const raceResult = await raceAgainstTimeout(async () => {
+        const result: FullResult = { status: 'passed' };
+        globalTearDown = await this._performGlobalSetup(config, result);
+        return result;
+      }, remainingTime);
+
+      let result: FullResult;
+      if (raceResult.timedOut) {
+        this._reporter.onError?.(createStacklessError(
+            `Timed out waiting ${config.globalTimeout / 1000}s for the global setup to run`));
+        result = { status: 'timedout' } as FullResult;
+      } else {
+        result = raceResult.result;
+      }
+      if (result.status !== 'passed')
+        return result;
+    }
+
+    // Run the tests.
+    let fullResult: FullResult;
+    {
+      const remainingTime = deadline - monotonicTime();
+      const raceResult = await raceAgainstTimeout(async () => {
+        try {
+          return await this._innerRun(options);
+        } catch (e) {
+          this._reporter.onError?.(serializeError(e));
+          return { status: 'failed' } as FullResult;
+        } finally {
+          await globalTearDown?.();
+        }
+      }, remainingTime);
+
+      // If timed out, bail.
+      let result: FullResult;
+      if (raceResult.timedOut) {
+        this._reporter.onError?.(createStacklessError(
+            `Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
+        result = { status: 'timedout' };
+      } else {
+        result = raceResult.result;
+      }
+
+      // Report end.
+      await this._reporter.onEnd?.(result);
+      fullResult = result;
+    }
+
+    // Calling process.exit() might truncate large stdout/stderr output.
+    // See https://github.com/nodejs/node/issues/6456.
+    // See https://github.com/nodejs/node/issues/12921
+    await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
+    await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
+
+    await this._reporter.onExit?.();
+    return fullResult;
+  }
+
+  private async _innerRun(options: RunOptions): Promise<FullResult> {
     const config = this._configLoader.fullConfig();
     // Each entry is an array of test groups that can be run concurrently. All
     // test groups from the previos entries must finish before entry starts.
@@ -414,6 +460,10 @@ export class Runner {
     this._filterForCurrentShard(rootSuite, testGroups);
 
     config._maxConcurrentTestGroups = testGroups.length;
+
+    const result: FullResult = { status: 'passed' };
+    for (const plugin of this._plugins)
+      await plugin.begin?.(rootSuite);
 
     // Report begin
     this._reporter.onBegin?.(config, rootSuite);
@@ -433,12 +483,6 @@ export class Runner {
     if (!await this._removeOutputDirs(options))
       return { status: 'failed' };
 
-    // Run Global setup.
-    const result: FullResult = { status: 'passed' };
-    const globalTearDown = await this._performGlobalSetup(config, rootSuite, result);
-    if (result.status !== 'passed')
-      return result;
-
     if (config._ignoreSnapshots) {
       this._reporter.onStdOut?.(colors.dim([
         'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
@@ -449,19 +493,12 @@ export class Runner {
     }
 
     // Run tests.
-    try {
-      const dispatchResult = await this._dispatchToWorkers(testGroups);
-      if (dispatchResult === 'signal') {
-        result.status = 'interrupted';
-      } else {
-        const failed = dispatchResult === 'workererror' || rootSuite.allTests().some(test => !test.ok());
-        result.status = failed ? 'failed' : 'passed';
-      }
-    } catch (e) {
-      this._reporter.onError?.(serializeError(e));
-      return { status: 'failed' };
-    } finally {
-      await globalTearDown?.();
+    const dispatchResult = await this._dispatchToWorkers(testGroups);
+    if (dispatchResult === 'signal') {
+      result.status = 'interrupted';
+    } else {
+      const failed = dispatchResult === 'workererror' || rootSuite.allTests().some(test => !test.ok());
+      result.status = failed ? 'failed' : 'passed';
     }
     return result;
   }
@@ -510,7 +547,7 @@ export class Runner {
     return true;
   }
 
-  private async _performGlobalSetup(config: FullConfigInternal, rootSuite: Suite, result: FullResult): Promise<(() => Promise<void>) | undefined> {
+  private async _performGlobalSetup(config: FullConfigInternal, result: FullResult): Promise<(() => Promise<void>) | undefined> {
     let globalSetupResult: any = undefined;
 
     const pluginsThatWereSetUp: TestRunnerPlugin[] = [];
@@ -545,7 +582,7 @@ export class Runner {
       // config's global setup.
       for (const plugin of this._plugins) {
         await Promise.race([
-          plugin.setup?.(config, config._configDir, rootSuite, this._reporter),
+          plugin.setup?.(config, config._configDir, this._reporter),
           sigintWatcher.promise(),
         ]);
         if (sigintWatcher.hadSignal())

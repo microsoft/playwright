@@ -17,8 +17,8 @@
 import { colors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
-import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
-import type { FullConfigInternal, ReporterInternal } from '../types';
+import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location, Reporter } from '../../types/testReporter';
+import type { FullConfigInternal } from '../types';
 import { codeFrameColumns } from '../babelBundle';
 import { monotonicTime } from 'playwright-core/lib/utils';
 
@@ -46,7 +46,7 @@ type TestSummary = {
   fatalErrors: TestError[];
 };
 
-export class BaseReporter implements ReporterInternal  {
+export class BaseReporter implements Reporter {
   duration = 0;
   config!: FullConfigInternal;
   suite!: Suite;
@@ -63,9 +63,12 @@ export class BaseReporter implements ReporterInternal  {
     this._ttyWidthForTest = parseInt(process.env.PWTEST_TTY_WIDTH || '', 10);
   }
 
-  onBegin(config: FullConfig, suite: Suite) {
+  onConfigure(config: FullConfig) {
     this.monotonicStartTime = monotonicTime();
     this.config = config as FullConfigInternal;
+  }
+
+  onBegin(config: FullConfig, suite: Suite) {
     this.suite = suite;
     this.totalTestCount = suite.allTests().length;
   }

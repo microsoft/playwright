@@ -20,7 +20,8 @@ import type { FullConfig } from '../types';
 
 export interface TestRunnerPlugin {
   name: string;
-  setup?(config: FullConfig, configDir: string, rootSuite: Suite, reporter: Reporter): Promise<void>;
+  setup?(config: FullConfig, configDir: string, reporter: Reporter): Promise<void>;
+  begin?(suite: Suite): Promise<void>;
   teardown?(): Promise<void>;
 }
 

@@ -137,11 +137,7 @@ test('globalTeardown does not run when globalSetup times out', async ({ runInlin
       });
     `,
   });
-  // We did not run tests, so we should only have 1 skipped test.
-  expect(result.skipped).toBe(1);
-  expect(result.passed).toBe(0);
-  expect(result.failed).toBe(0);
-  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Timed out waiting 1s for the global setup to run');
   expect(result.output).not.toContain('teardown=');
 });
 

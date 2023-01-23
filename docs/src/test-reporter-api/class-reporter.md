@@ -79,11 +79,13 @@ export default defineConfig({
 ```
 
 Here is a typical order of reporter calls:
+* [`method: Reporter.onConfigure`] is called once config has been resolved.
 * [`method: Reporter.onBegin`] is called once with a root suite that contains all other suites and tests. Learn more about [suites hierarchy][Suite].
 * [`method: Reporter.onTestBegin`] is called for each test run. It is given a [TestCase] that is executed, and a [TestResult] that is almost empty. Test result will be populated while the test runs (for example, with steps and stdio) and will get final `status` once the test finishes.
 * [`method: Reporter.onStepBegin`] and [`method: Reporter.onStepEnd`] are called for each executed step inside the test. When steps are executed, test run has not finished yet.
 * [`method: Reporter.onTestEnd`] is called when test run has finished. By this time, [TestResult] is complete and you can use [`property: TestResult.status`], [`property: TestResult.error`] and more.
 * [`method: Reporter.onEnd`] is called once after all tests that should run had finished.
+* [`method: Reporter.onExit`] is called before test runner exits.
 
 Additionally, [`method: Reporter.onStdOut`] and [`method: Reporter.onStdErr`] are called when standard output is produced in the worker process, possibly during a test execution,
 and [`method: Reporter.onError`] is called when something went wrong outside of the test execution.
@@ -107,7 +109,16 @@ Resolved configuration.
 
 The root suite that contains all projects, files and test cases.
 
+## optional method: Reporter.onConfigure
+* since: v1.30
 
+Called once config is resolved.
+
+### param: Reporter.onConfigure.config
+* since: v1.30
+- `config` <[TestConfig]>
+
+Resolved configuration.
 
 ## optional async method: Reporter.onEnd
 * since: v1.10
@@ -125,8 +136,10 @@ Result of the full test run.
 * `'timedout'` - The [`property: TestConfig.globalTimeout`] has been reached.
 * `'interrupted'` - Interrupted by the user.
 
+## optional method: Reporter.onExit
+* since: v1.30
 
-
+Called before test runner exits.
 
 ## optional method: Reporter.onError
 * since: v1.10

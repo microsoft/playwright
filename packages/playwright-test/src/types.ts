@@ -15,7 +15,7 @@
  */
 
 import type { Fixtures, TestInfoError, Project } from '../types/test';
-import type { Location, Reporter } from '../types/testReporter';
+import type { Location } from '../types/testReporter';
 import type { FullConfig as FullConfigPublic, FullProject as FullProjectPublic } from './types';
 export * from '../types/test';
 export type { Location } from '../types/testReporter';
@@ -68,10 +68,6 @@ export interface FullProjectInternal extends FullProjectPublic {
   _expect: Project['expect'];
   _respectGitIgnore: boolean;
   snapshotPathTemplate: string;
-}
-
-export interface ReporterInternal extends Reporter {
-  _onExit?(): void | Promise<void>;
 }
 
 export type ContextReuseMode = 'none' | 'force' | 'when-possible';
