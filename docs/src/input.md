@@ -707,9 +707,9 @@ await page.mouse.up();
 
 ```java
 page.locator("#item-to-be-dragged").hover();
-page.mouse.down();
+page.mouse().down();
 page.locator("#item-to-drop-at").hover();
-page.mouse.up();
+page.mouse().up();
 ```
 
 ```python async
