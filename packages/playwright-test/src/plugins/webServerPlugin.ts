@@ -21,7 +21,7 @@ import net from 'net';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { raceAgainstTimeout, launchProcess } from 'playwright-core/lib/utils';
 
-import type { FullConfig, Reporter, Suite } from '../../types/testReporter';
+import type { FullConfig, Reporter } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';
 import type { FullConfigInternal } from '../types';
 import { envWithoutExperimentalLoaderOptions } from '../cli';
@@ -57,7 +57,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
     this._checkPortOnly = checkPortOnly;
   }
 
-  public async setup(config: FullConfig, configDir: string, rootSuite: Suite, reporter: Reporter) {
+  public async setup(config: FullConfig, configDir: string, reporter: Reporter) {
     this._reporter = reporter;
     this._isAvailable = getIsAvailableFunction(this._options.url, this._checkPortOnly, !!this._options.ignoreHTTPSErrors, this._reporter.onStdErr?.bind(this._reporter));
     this._options.cwd = this._options.cwd ? path.resolve(configDir, this._options.cwd) : configDir;

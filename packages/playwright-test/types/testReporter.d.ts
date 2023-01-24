@@ -349,6 +349,8 @@ export interface FullResult {
  * ```
  *
  * Here is a typical order of reporter calls:
+ * - [reporter.onConfigure(config)](https://playwright.dev/docs/api/class-reporter#reporter-on-configure) is called
+ *   once config has been resolved.
  * - [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin) is called
  *   once with a root suite that contains all other suites and tests. Learn more about [suites hierarchy][Suite].
  * - [reporter.onTestBegin(test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-test-begin) is
@@ -365,6 +367,8 @@ export interface FullResult {
  *   [testResult.error](https://playwright.dev/docs/api/class-testresult#test-result-error) and more.
  * - [reporter.onEnd(result)](https://playwright.dev/docs/api/class-reporter#reporter-on-end) is called once after
  *   all tests that should run had finished.
+ * - [reporter.onExit()](https://playwright.dev/docs/api/class-reporter#reporter-on-exit) is called before test
+ *   runner exits.
  *
  * Additionally,
  * [reporter.onStdOut(chunk, test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-std-out) and
@@ -379,6 +383,11 @@ export interface FullResult {
  * to enhance user experience.
  */
 export interface Reporter {
+  /**
+   * Called once config is resolved.
+   * @param config Resolved configuration.
+   */
+  onConfigure?(config: FullConfig): void;
   /**
    * Called once before running tests. All tests have been already discovered and put into a hierarchy of [Suite]s.
    * @param config Resolved configuration.
@@ -397,6 +406,11 @@ export interface Reporter {
    * - `'interrupted'` - Interrupted by the user.
    */
   onEnd?(result: FullResult): void | Promise<void>;
+  /**
+   * Called before test runner exits.
+   */
+  onExit?(): void;
+
   /**
    * Called on some global error, for example unhandled exception in the worker process.
    * @param error The error.
