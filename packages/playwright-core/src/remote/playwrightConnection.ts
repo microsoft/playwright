@@ -192,7 +192,10 @@ export class PlaywrightConnection {
     }
 
     if (!browser) {
-      browser = await playwright[(this._options.browserName || 'chromium') as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
+      browser = await playwright[(this._options.browserName || 'chromium') as 'chromium'].launch(serverSideCallMetadata(), {
+        ...this._options.launchOptions,
+        headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS,
+      });
       browser.on(Browser.Events.Disconnected, () => {
         // Underlying browser did close for some reason - force disconnect the client.
         this.close({ code: 1001, reason: 'Browser closed' });
@@ -256,6 +259,8 @@ function launchOptionsHash(options: LaunchOptions) {
     if (copy[key] === defaultLaunchOptions[key])
       delete copy[key];
   }
+  for (const key of optionsThatAllowBrowserReuse)
+    delete copy[key];
   return JSON.stringify(copy);
 }
 
@@ -267,3 +272,7 @@ const defaultLaunchOptions: LaunchOptions = {
   headless: true,
   devtools: false,
 };
+
+const optionsThatAllowBrowserReuse: (keyof LaunchOptions)[] = [
+  'headless',
+];
