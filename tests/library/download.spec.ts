@@ -697,6 +697,21 @@ it('should download even if there is no "attachment" value', async ({ browser, s
   await page.close();
 });
 
+it('should convert navigation to a resource with unsupported mime type into download', async ({ browser, server, mode, browserName }, testInfo) => {
+  it.fixme(browserName === 'webkit');
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19939' });
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.end(`Hello world`);
+  });
+  const page = await browser.newPage();
+  await Promise.all([
+    page.waitForEvent('download'),
+    page.goto(`${server.PREFIX}/download`).catch(() => {})
+  ]);
+  await page.close();
+});
+
 async function assertDownloadToPDF(download: Download, filePath: string) {
   expect(download.suggestedFilename()).toBe(path.basename(filePath));
   const stream = await download.createReadStream();
