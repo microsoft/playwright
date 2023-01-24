@@ -38,7 +38,7 @@ export class LoaderMain extends ProcessRunner {
 
   async loadTestFiles(params: { files: string[] }) {
     const loadErrors: TestError[] = [];
-    setFatalErrorSink(loadErrors);
+    setFatalErrorSink(error => loadErrors.push(error));
     const configLoader = await this._configLoader();
     const rootSuite = await loadTestFilesInProcess(configLoader.fullConfig(), params.files, loadErrors);
     return { rootSuite: rootSuite._deepSerialize(), loadErrors };

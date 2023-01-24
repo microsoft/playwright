@@ -48,11 +48,8 @@ class JUnitReporter implements Reporter {
     return !this.outputFile;
   }
 
-  onConfigure(config: FullConfig) {
-    this.config = config;
-  }
-
   onBegin(config: FullConfig, suite: Suite) {
+    this.config = config;
     this.suite = suite;
     this.timestamp = Date.now();
     this.startTime = monotonicTime();

@@ -130,7 +130,7 @@ test('should respect global timeout', async ({ runInlineTest }) => {
     `
   }, { 'timeout': 100000, 'global-timeout': 3000 });
   expect(exitCode).toBe(1);
-  expect(output).toContain('Timed out waiting 3s for the entire test run');
+  expect(output).toContain('Timed out waiting 3s for the test suite to run');
   expect(monotonicTime() - now).toBeGreaterThan(2900);
 });
 

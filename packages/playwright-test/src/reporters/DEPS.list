@@ -1,4 +1,5 @@
 [*]
-../util.ts
 ../babelBundle.ts
+../test.ts
+../util.ts
 ../utilsBundle.ts

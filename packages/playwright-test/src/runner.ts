@@ -17,7 +17,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { monotonicTime, raceAgainstTimeout } from 'playwright-core/lib/utils';
+import { monotonicTime } from 'playwright-core/lib/utils';
 import { colors, minimatch, rimraf } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import type { FullResult, Reporter, TestError } from '../types/testReporter';
@@ -38,7 +38,6 @@ import JUnitReporter from './reporters/junit';
 import LineReporter from './reporters/line';
 import ListReporter from './reporters/list';
 import { Multiplexer } from './reporters/multiplexer';
-import { SigIntWatcher } from './sigIntWatcher';
 import type { TestCase } from './test';
 import { Suite } from './test';
 import type { Config, FullConfigInternal, FullProjectInternal } from './types';
@@ -48,6 +47,7 @@ import { setFatalErrorSink } from './globals';
 import { buildFileSuiteForProject, filterOnly, filterSuite, filterSuiteWithOnlySemantics, filterTestsRemoveEmptySuites } from './suiteUtils';
 import { LoaderHost } from './loaderHost';
 import { loadTestFilesInProcess } from './testLoader';
+import { TaskRunner } from './taskRunner';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -55,7 +55,7 @@ const readFileAsync = promisify(fs.readFile);
 export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.js', 'playwright.config.mjs'];
 
 type RunOptions = {
-  listOnly?: boolean;
+  listOnly: boolean;
   testFileFilters: TestFileFilter[];
   testTitleMatcher: Matcher;
   projectFilter?: string[];
@@ -83,14 +83,12 @@ export type ConfigCLIOverrides = {
 
 export class Runner {
   private _configLoader: ConfigLoader;
-  private _reporter!: Reporter;
+  private _reporter!: Multiplexer;
   private _plugins: TestRunnerPlugin[] = [];
-  private _fatalErrors: TestError[] = [];
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
     this._configLoader = new ConfigLoader(configCLIOverrides);
     setRunnerToAddPluginsTo(this);
-    setFatalErrorSink(this._fatalErrors);
   }
 
   addPlugin(plugin: TestRunnerPlugin) {
@@ -223,7 +221,6 @@ export class Runner {
     const filesByProject = new Map<FullProjectInternal, string[]>();
     const fileToProjectName = new Map<string, string>();
     const commandLineFileMatcher = commandLineFileFilters.length ? createFileMatcherFromFilters(commandLineFileFilters) : () => true;
-
     for (const project of projects) {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
       const testMatch = createFileMatcher(project.testMatch);
@@ -243,18 +240,10 @@ export class Runner {
     return filesByProject;
   }
 
-  private async _collectTestGroups(options: RunOptions): Promise<{ rootSuite: Suite, testGroups: TestGroup[] }> {
+  private async _loadAllTests(options: RunOptions): Promise<{ rootSuite: Suite, testGroups: TestGroup[] }> {
     const config = this._configLoader.fullConfig();
     const projects = this._collectProjects(options.projectFilter);
     const filesByProject = await this._collectFiles(projects, options.testFileFilters);
-    const rootSuite = await this._createFilteredRootSuite(options, filesByProject);
-
-    const testGroups = createTestGroups(rootSuite.suites, config.workers);
-    return { rootSuite, testGroups };
-  }
-
-  private async _createFilteredRootSuite(options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>): Promise<Suite> {
-    const config = this._configLoader.fullConfig();
     const allTestFiles = new Set<string>();
     for (const files of filesByProject.values())
       files.forEach(file => allTestFiles.add(file));
@@ -263,7 +252,7 @@ export class Runner {
     const preprocessRoot = await this._loadTests(allTestFiles);
 
     // Complain about duplicate titles.
-    this._fatalErrors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
+    createDuplicateTitlesErrors(config, preprocessRoot).forEach(e => this._reporter.onError(e));
 
     // Filter tests to respect line/column filter.
     filterByFocusedLine(preprocessRoot, options.testFileFilters);
@@ -272,13 +261,24 @@ export class Runner {
     if (config.forbidOnly) {
       const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
       if (onlyTestsAndSuites.length > 0)
-        this._fatalErrors.push(...createForbidOnlyErrors(config, onlyTestsAndSuites));
+        createForbidOnlyErrors(config, onlyTestsAndSuites).forEach(e => this._reporter.onError(e));
     }
 
     // Filter only.
     if (!options.listOnly)
       filterOnly(preprocessRoot);
 
+    const rootSuite = await this._createRootSuite(preprocessRoot, options, filesByProject);
+
+    // Do not create test groups when listing.
+    if (options.listOnly)
+      return { rootSuite, testGroups: [] };
+
+    const testGroups = createTestGroups(rootSuite.suites, config.workers);
+    return { rootSuite, testGroups };
+  }
+
+  private async _createRootSuite(preprocessRoot: Suite, options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>): Promise<Suite> {
     // Generate projects.
     const fileSuites = new Map<string, Suite>();
     for (const fileSuite of preprocessRoot.suites)
@@ -321,12 +321,17 @@ export class Runner {
       const loaderHost = new LoaderHost();
       await loaderHost.start(this._configLoader.serializedConfig());
       try {
-        return await loaderHost.loadTestFiles([...testFiles], this._fatalErrors);
+        return await loaderHost.loadTestFiles([...testFiles], this._reporter);
       } finally {
         await loaderHost.stop();
       }
     }
-    return loadTestFilesInProcess(this._configLoader.fullConfig(), [...testFiles], this._fatalErrors);
+    const loadErrors: TestError[] = [];
+    try {
+      return await loadTestFilesInProcess(this._configLoader.fullConfig(), [...testFiles], loadErrors);
+    } finally {
+      loadErrors.forEach(e => this._reporter.onError(e));
+    }
   }
 
   private _filterForCurrentShard(rootSuite: Suite, testGroups: TestGroup[]) {
@@ -377,147 +382,131 @@ export class Runner {
     }
   }
 
-  async runAllTests(options: RunOptions): Promise<FullResult> {
-    this._reporter = await this._createReporter(!!options.listOnly);
+  async runAllTests(options: RunOptions): Promise<FullResult['status']> {
     const config = this._configLoader.fullConfig();
-    const deadline = config.globalTimeout ? monotonicTime() + config.globalTimeout : 1 << 30;
+    // Legacy webServer support.
+    this._plugins.push(...webServerPluginsForConfig(config));
+    // Docker support.
+    this._plugins.push(dockerPlugin);
 
-    // Run configure.
-    this._reporter.onConfigure?.(config);
+    this._reporter = await this._createReporter(options.listOnly);
+    setFatalErrorSink(error => this._reporter.onError(error));
+    const taskRunner = new TaskRunner(this._reporter, config.globalTimeout);
 
-    // Run global setup.
-    let globalTearDown: (() => Promise<void>) | undefined;
-    {
-      const remainingTime = deadline - monotonicTime();
-      const raceResult = await raceAgainstTimeout(async () => {
-        const result: FullResult = { status: 'passed' };
-        globalTearDown = await this._performGlobalSetup(config, result);
-        return result;
-      }, remainingTime);
-
-      let result: FullResult;
-      if (raceResult.timedOut) {
-        this._reporter.onError?.(createStacklessError(
-            `Timed out waiting ${config.globalTimeout / 1000}s for the global setup to run`));
-        result = { status: 'timedout' } as FullResult;
-      } else {
-        result = raceResult.result;
-      }
-      if (result.status !== 'passed')
-        return result;
+    // Setup the plugins.
+    for (const plugin of this._plugins) {
+      taskRunner.addTask('plugin setup', async () => {
+        await plugin.setup?.(config, config._configDir, this._reporter);
+        return () => plugin.teardown?.();
+      });
     }
 
-    // Run the tests.
-    let fullResult: FullResult;
-    {
-      const remainingTime = deadline - monotonicTime();
-      const raceResult = await raceAgainstTimeout(async () => {
-        try {
-          return await this._innerRun(options);
-        } catch (e) {
-          this._reporter.onError?.(serializeError(e));
-          return { status: 'failed' } as FullResult;
-        } finally {
-          await globalTearDown?.();
+    // Run global setup & teardown.
+    if (config.globalSetup || config.globalTeardown) {
+      taskRunner.addTask('global setup', async () => {
+        const setupHook = config.globalSetup ? await this._configLoader.loadGlobalHook(config.globalSetup) : undefined;
+        const teardownHook = config.globalTeardown ? await this._configLoader.loadGlobalHook(config.globalTeardown) : undefined;
+        const globalSetupResult = setupHook ? await setupHook(this._configLoader.fullConfig()) : undefined;
+        return async () => {
+          if (typeof globalSetupResult === 'function')
+            await globalSetupResult();
+          await teardownHook?.(config);
+        };
+      });
+    }
+
+    let status: FullResult['status'] = 'passed';
+
+    // Load tests.
+    let loadedTests!: { rootSuite: Suite, testGroups: TestGroup[] };
+    taskRunner.addTask('load tests', async () => {
+      loadedTests = await this._loadAllTests(options);
+      if (this._reporter.hasErrors) {
+        status = 'failed';
+        taskRunner.stop();
+        return;
+      }
+
+      // Fail when no tests.
+      if (!loadedTests.rootSuite.allTests().length && !options.passWithNoTests) {
+        this._reporter.onError(createNoTestsError());
+        status = 'failed';
+        taskRunner.stop();
+        return;
+      }
+
+      if (!options.listOnly) {
+        this._filterForCurrentShard(loadedTests.rootSuite, loadedTests.testGroups);
+        config._maxConcurrentTestGroups = loadedTests.testGroups.length;
+      }
+    });
+
+    if (!options.listOnly) {
+      taskRunner.addTask('prepare to run', async () => {
+        // Remove output directores.
+        if (!await this._removeOutputDirs(options)) {
+          status = 'failed';
+          taskRunner.stop();
+          return;
         }
-      }, remainingTime);
+      });
 
-      // If timed out, bail.
-      let result: FullResult;
-      if (raceResult.timedOut) {
-        this._reporter.onError?.(createStacklessError(
-            `Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
-        result = { status: 'timedout' };
-      } else {
-        result = raceResult.result;
-      }
-
-      // Report end.
-      await this._reporter.onEnd?.(result);
-      fullResult = result;
+      taskRunner.addTask('plugin begin', async () => {
+        for (const plugin of this._plugins)
+          await plugin.begin?.(loadedTests.rootSuite);
+      });
     }
 
+    taskRunner.addTask('report begin', async () => {
+      this._reporter.onBegin?.(config, loadedTests.rootSuite);
+      return async () => {
+        await this._reporter.onEnd();
+      };
+    });
+
+    if (!options.listOnly) {
+      let dispatcher: Dispatcher;
+
+      taskRunner.addTask('setup workers', async () => {
+        const { rootSuite, testGroups } = loadedTests;
+
+        if (config._ignoreSnapshots) {
+          this._reporter.onStdOut(colors.dim([
+            'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
+            '- expect().toMatchSnapshot()',
+            '- expect().toHaveScreenshot()',
+            '',
+          ].join('\n')));
+        }
+
+        dispatcher = new Dispatcher(this._configLoader, testGroups, this._reporter);
+
+        return async () => {
+          // Stop will stop workers and mark some tests as interrupted.
+          await dispatcher.stop();
+          if (dispatcher.hasWorkerErrors() || rootSuite.allTests().some(test => !test.ok()))
+            status = 'failed';
+        };
+      });
+
+      taskRunner.addTask('test suite', async () => {
+        await dispatcher.run();
+      });
+    }
+
+    const deadline = config.globalTimeout ? monotonicTime() + config.globalTimeout : 0;
+
+    this._reporter.onConfigure(config);
+    const taskStatus = await taskRunner.run(deadline);
+    if (status === 'passed' && taskStatus !== 'passed')
+      status = taskStatus;
+    await this._reporter.onExit({ status });
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.
     // See https://github.com/nodejs/node/issues/12921
     await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
     await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
-
-    await this._reporter.onExit?.();
-    return fullResult;
-  }
-
-  private async _innerRun(options: RunOptions): Promise<FullResult> {
-    const config = this._configLoader.fullConfig();
-    // Each entry is an array of test groups that can be run concurrently. All
-    // test groups from the previos entries must finish before entry starts.
-    const { rootSuite, testGroups } = await this._collectTestGroups(options);
-
-    // Fail when no tests.
-    if (!rootSuite.allTests().length && !options.passWithNoTests)
-      this._fatalErrors.push(createNoTestsError());
-
-    this._filterForCurrentShard(rootSuite, testGroups);
-
-    config._maxConcurrentTestGroups = testGroups.length;
-
-    const result: FullResult = { status: 'passed' };
-    for (const plugin of this._plugins)
-      await plugin.begin?.(rootSuite);
-
-    // Report begin
-    this._reporter.onBegin?.(config, rootSuite);
-
-    // Bail out on errors prior to running global setup.
-    if (this._fatalErrors.length) {
-      for (const error of this._fatalErrors)
-        this._reporter.onError?.(error);
-      return { status: 'failed' };
-    }
-
-    // Bail out if list mode only, don't do any work.
-    if (options.listOnly)
-      return { status: 'passed' };
-
-    // Remove output directores.
-    if (!await this._removeOutputDirs(options))
-      return { status: 'failed' };
-
-    if (config._ignoreSnapshots) {
-      this._reporter.onStdOut?.(colors.dim([
-        'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
-        '- expect().toMatchSnapshot()',
-        '- expect().toHaveScreenshot()',
-        '',
-      ].join('\n')));
-    }
-
-    // Run tests.
-    const dispatchResult = await this._dispatchToWorkers(testGroups);
-    if (dispatchResult === 'signal') {
-      result.status = 'interrupted';
-    } else {
-      const failed = dispatchResult === 'workererror' || rootSuite.allTests().some(test => !test.ok());
-      result.status = failed ? 'failed' : 'passed';
-    }
-    return result;
-  }
-
-  private async _dispatchToWorkers(stageGroups: TestGroup[]): Promise<'success'|'signal'|'workererror'> {
-    const dispatcher = new Dispatcher(this._configLoader, [...stageGroups], this._reporter);
-    const sigintWatcher = new SigIntWatcher();
-    await Promise.race([dispatcher.run(), sigintWatcher.promise()]);
-    if (!sigintWatcher.hadSignal()) {
-      // We know for sure there was no Ctrl+C, so we remove custom SIGINT handler
-      // as soon as we can.
-      sigintWatcher.disarm();
-    }
-    await dispatcher.stop();
-    if (sigintWatcher.hadSignal())
-      return 'signal';
-    if (dispatcher.hasWorkerErrors())
-      return 'workererror';
-    return 'success';
+    return status;
   }
 
   private async _removeOutputDirs(options: RunOptions): Promise<boolean> {
@@ -541,88 +530,10 @@ export class Runner {
         }
       })));
     } catch (e) {
-      this._reporter.onError?.(serializeError(e));
+      this._reporter.onError(serializeError(e));
       return false;
     }
     return true;
-  }
-
-  private async _performGlobalSetup(config: FullConfigInternal, result: FullResult): Promise<(() => Promise<void>) | undefined> {
-    let globalSetupResult: any = undefined;
-
-    const pluginsThatWereSetUp: TestRunnerPlugin[] = [];
-    const sigintWatcher = new SigIntWatcher();
-
-    const tearDown = async () => {
-      await this._runAndReportError(async () => {
-        if (globalSetupResult && typeof globalSetupResult === 'function')
-          await globalSetupResult(this._configLoader.fullConfig());
-      }, result);
-
-      await this._runAndReportError(async () => {
-        if (globalSetupResult && config.globalTeardown)
-          await (await this._configLoader.loadGlobalHook(config.globalTeardown))(this._configLoader.fullConfig());
-      }, result);
-
-      for (const plugin of pluginsThatWereSetUp.reverse()) {
-        await this._runAndReportError(async () => {
-          await plugin.teardown?.();
-        }, result);
-      }
-    };
-
-    // Legacy webServer support.
-    this._plugins.push(...webServerPluginsForConfig(config));
-
-    // Docker support.
-    this._plugins.push(dockerPlugin);
-
-    await this._runAndReportError(async () => {
-      // First run the plugins, if plugin is a web server we want it to run before the
-      // config's global setup.
-      for (const plugin of this._plugins) {
-        await Promise.race([
-          plugin.setup?.(config, config._configDir, this._reporter),
-          sigintWatcher.promise(),
-        ]);
-        if (sigintWatcher.hadSignal())
-          break;
-        pluginsThatWereSetUp.push(plugin);
-      }
-
-      // Then do global setup.
-      if (!sigintWatcher.hadSignal()) {
-        if (config.globalSetup) {
-          const hook = await this._configLoader.loadGlobalHook(config.globalSetup);
-          await Promise.race([
-            Promise.resolve().then(() => hook(this._configLoader.fullConfig())).then((r: any) => globalSetupResult = r || '<noop>'),
-            sigintWatcher.promise(),
-          ]);
-        } else {
-          // Make sure we run the teardown.
-          globalSetupResult = '<noop>';
-        }
-      }
-    }, result);
-
-    sigintWatcher.disarm();
-
-    if (result.status !== 'passed' || sigintWatcher.hadSignal()) {
-      await tearDown();
-      result.status = sigintWatcher.hadSignal() ? 'interrupted' : 'failed';
-      return;
-    }
-
-    return tearDown;
-  }
-
-  private async _runAndReportError(callback: () => Promise<void>, result: FullResult) {
-    try {
-      await callback();
-    } catch (e) {
-      result.status = 'failed';
-      this._reporter.onError?.(serializeError(e));
-    }
   }
 }
 

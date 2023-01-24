@@ -64,12 +64,9 @@ class HtmlReporter implements Reporter {
     return false;
   }
 
-  onConfigure(config: FullConfig) {
+  onBegin(config: FullConfig, suite: Suite) {
     this._montonicStartTime = monotonicTime();
     this.config = config as FullConfigInternal;
-  }
-
-  onBegin(config: FullConfig, suite: Suite) {
     const { outputFolder, open } = this._resolveOptions();
     this._outputFolder = outputFolder;
     this._open = open;
@@ -116,10 +113,10 @@ class HtmlReporter implements Reporter {
   }
 
   async onExit() {
-    if (process.env.CI)
+    if (process.env.CI || !this._buildResult)
       return;
 
-    const { ok, singleTestId } = this._buildResult!;
+    const { ok, singleTestId } = this._buildResult;
     const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._options.host, this._options.port, singleTestId);

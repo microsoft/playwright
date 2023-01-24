@@ -63,12 +63,9 @@ export class BaseReporter implements Reporter {
     this._ttyWidthForTest = parseInt(process.env.PWTEST_TTY_WIDTH || '', 10);
   }
 
-  onConfigure(config: FullConfig) {
+  onBegin(config: FullConfig, suite: Suite) {
     this.monotonicStartTime = monotonicTime();
     this.config = config as FullConfigInternal;
-  }
-
-  onBegin(config: FullConfig, suite: Suite) {
     this.suite = suite;
     this.totalTestCount = suite.allTests().length;
   }
