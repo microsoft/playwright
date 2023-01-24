@@ -32,6 +32,42 @@ test('should return the location of a syntax error', async ({ runInlineTest }) =
   expect(result.output).toContain('(6:18)');
 });
 
+test('should return the location of a syntax error with deep stack', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'error.ts': `
+      const x = {
+        foo: 'bar';
+      };
+    `,
+    'qux.ts': `
+      import { error } from './error';
+      export function qux() { error() }
+    `,
+    'baz.ts': `
+      import { qux } from './qux';
+      export function baz() { qux() }
+    `,
+    'bar.ts': `
+      import { baz } from './baz';
+      export function bar() { baz() }
+    `,
+    'foo.ts': `
+      import { bar } from './bar';
+      export function foo() { bar() }
+    `,
+    'test.spec.ts': `
+      import { foo } from './foo';
+      foo();
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('qux.ts:4:7');
+  expect(result.output).toContain('baz.ts:4:7');
+  expect(result.output).toContain('bar.ts:4:7');
+  expect(result.output).toContain('foo.ts:4:7');
+  expect(result.output).toContain('test.spec.ts:5:7');
+});
+
 test('should print an improper error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'error.spec.js': `
