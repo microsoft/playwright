@@ -41,7 +41,6 @@ export class Suite extends Base implements reporterTypes.Suite {
   location?: Location;
   parent?: Suite;
   _use: FixturesWithLocation[] = [];
-  _skipped = false;
   _entries: (Suite | TestCase)[] = [];
   _hooks: { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function, location: Location }[] = [];
   _timeout: number | undefined;
@@ -164,7 +163,6 @@ export class Suite extends Base implements reporterTypes.Suite {
       staticAnnotations: this._staticAnnotations.slice(),
       modifiers: this._modifiers.slice(),
       parallelMode: this._parallelMode,
-      skipped: this._skipped,
       hooks: this._hooks.map(h => ({ type: h.type, location: h.location })),
     };
   }
@@ -179,7 +177,6 @@ export class Suite extends Base implements reporterTypes.Suite {
     suite._staticAnnotations = data.staticAnnotations;
     suite._modifiers = data.modifiers;
     suite._parallelMode = data.parallelMode;
-    suite._skipped = data.skipped;
     suite._hooks = data.hooks.map((h: any) => ({ type: h.type, location: h.location, fn: () => { } }));
     return suite;
   }

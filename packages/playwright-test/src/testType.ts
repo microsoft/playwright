@@ -92,14 +92,8 @@ export class TestTypeImpl {
 
     if (type === 'only')
       test._only = true;
-    if (type === 'skip' || type === 'fixme') {
+    if (type === 'skip' || type === 'fixme')
       test._staticAnnotations.push({ type });
-      test.expectedStatus = 'skipped';
-    }
-    for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
-      if (parent._skipped)
-        test.expectedStatus = 'skipped';
-    }
   }
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, title: string | Function, fn?: Function) {
@@ -124,10 +118,8 @@ export class TestTypeImpl {
       child._parallelMode = 'serial';
     if (type === 'parallel' || type === 'parallel.only')
       child._parallelMode = 'parallel';
-    if (type === 'skip' || type === 'fixme') {
-      child._skipped = true;
+    if (type === 'skip' || type === 'fixme')
       child._staticAnnotations.push({ type });
-    }
 
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')

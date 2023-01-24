@@ -65,7 +65,34 @@ export class Dispatcher {
     }
   }
 
+  private _processFullySkippedJobs() {
+    // If all the tests in a group are skipped, we report them immediately
+    // without sending anything to a worker. This avoids creating unnecessary worker processes.
+    //
+    // However, if there is at least one non-skipped test in a group, we'll send
+    // the whole group to the worker process and report tests in the natural order,
+    // with skipped tests mixed in-between non-skipped. This makes
+    // for a better reporter experience.
+    while (!this._isStopped && this._queue.length) {
+      const group = this._queue[0];
+      const allTestsSkipped = group.tests.every(test => test.expectedStatus === 'skipped');
+      if (!allTestsSkipped)
+        break;
+
+      for (const test of group.tests) {
+        const result = test._appendTestResult();
+        result.status = 'skipped';
+        this._reporter.onTestBegin?.(test, result);
+        test.annotations = [...test._staticAnnotations];
+        this._reportTestEnd(test, result);
+      }
+      this._queue.shift();
+    }
+  }
+
   private async _scheduleJob() {
+    this._processFullySkippedJobs();
+
     // 1. Find a job to run.
     if (this._isStopped || !this._queue.length)
       return;

@@ -279,16 +279,10 @@ export class WorkerMain extends ProcessRunner {
     const reversedSuites = suites.slice().reverse();
     const nextSuites = new Set(getSuites(nextTest));
 
-    // Inherit test.setTimeout() from parent suites, deepest has the priority.
-    for (const suite of reversedSuites) {
-      if (suite._timeout !== undefined) {
-        testInfo._timeoutManager.setTimeout(suite._timeout);
-        break;
-      }
-    }
-
+    testInfo._timeoutManager.setTimeout(test.timeout);
     for (const annotation of test._staticAnnotations)
       processAnnotation(annotation);
+
     // Process existing annotations dynamically set for parent suites.
     for (const suite of suites) {
       const extraAnnotations = this._extraSuiteAnnotations.get(suite) || [];
