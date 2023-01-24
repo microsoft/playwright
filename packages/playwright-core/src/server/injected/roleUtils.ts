@@ -667,13 +667,10 @@ export function getAriaChecked(element: Element): boolean | 'mixed' {
   return result === 'error' ? false : result;
 }
 export function getAriaCheckedStrict(element: Element): boolean | 'mixed' | 'error' {
-  // https://www.w3.org/TR/wai-aria-1.2/#aria-checked
-  // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
-  if (element.tagName === 'INPUT' && (element as HTMLInputElement).indeterminate)
-    return 'mixed';
-  if (element.tagName === 'INPUT' && ['checkbox', 'radio'].includes((element as HTMLInputElement).type))
-    return (element as HTMLInputElement).checked;
-  if (kAriaCheckedRoles.includes(getAriaRole(element) || '')) {
+  if (!kAriaCheckedRoles.includes(getAriaRole(element) || ''))
+    return 'error';
+  // DevTools prioritize 'aria-checked' above others, do the same even though spec disagrees.
+  if (element.hasAttribute('aria-checked')) {
     const checked = element.getAttribute('aria-checked');
     if (checked === 'true')
       return true;
@@ -681,7 +678,13 @@ export function getAriaCheckedStrict(element: Element): boolean | 'mixed' | 'err
       return 'mixed';
     return false;
   }
-  return 'error';
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-checked
+  // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
+  if (element.tagName === 'INPUT' && (element as HTMLInputElement).indeterminate)
+    return 'mixed';
+  if (element.tagName === 'INPUT' && ['checkbox', 'radio'].includes((element as HTMLInputElement).type))
+    return (element as HTMLInputElement).checked;
+  return false;
 }
 
 export const kAriaPressedRoles = ['button'];

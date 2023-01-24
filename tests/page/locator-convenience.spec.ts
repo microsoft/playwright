@@ -157,6 +157,29 @@ it('isChecked should work for indeterminate input', async ({ page }) => {
   await expect(page.locator('input')).toBeChecked({ checked: false });
 });
 
+it('isChecked should work with aria-checked attribued', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20190' });
+  await page.setContent(`<input type="checkbox" aria-checked=false>`);
+  expect(await page.locator('input').isChecked()).toBe(false);
+  await expect(page.locator('input')).toBeChecked({ checked: false });
+  await expect(page.locator('input')).not.toBeChecked();
+  await page.locator('input').evaluate((e: HTMLInputElement) => e.indeterminate = true);
+  // a11y considers such elements as checked: mixed.
+  expect(await page.locator('input').isChecked()).toBe(false);
+  await expect(page.locator('input')).not.toBeChecked();
+  await expect(page.locator('input')).toBeChecked({ checked: false });
+
+  await page.setContent(`<input type="checkbox" aria-checked=true>`);
+  expect(await page.locator('input').isChecked()).toBe(true);
+  await expect(page.locator('input')).toBeChecked();
+  await expect(page.locator('input')).not.toBeChecked({ checked: false });
+  await page.locator('input').evaluate((e: HTMLInputElement) => e.indeterminate = true);
+  // a11y considers such elements as checked: true.
+  expect(await page.locator('input').isChecked()).toBe(true);
+  await expect(page.locator('input')).toBeChecked();
+  await expect(page.locator('input')).not.toBeChecked({ checked: false });
+});
+
 it('allTextContents should work', async ({ page }) => {
   await page.setContent(`<div>A</div><div>B</div><div>C</div>`);
   expect(await page.locator('div').allTextContents()).toEqual(['A', 'B', 'C']);
