@@ -55,13 +55,13 @@ export function buildFileSuiteForProject(project: FullProjectInternal, suite: Su
     test.id = testId;
     test.repeatEachIndex = repeatEachIndex;
     test._projectId = project._id;
-    test.retries = project.retries;
+    let inheritedRetries: number | undefined;
     for (let parentSuite: Suite | undefined = suite; parentSuite; parentSuite = parentSuite.parent) {
-      if (parentSuite._retries !== undefined) {
-        test.retries = parentSuite._retries;
-        break;
-      }
+      test._staticAnnotations.push(...parentSuite._staticAnnotations);
+      if (inheritedRetries === undefined && parentSuite._retries !== undefined)
+        inheritedRetries = parentSuite._retries;
     }
+    test.retries = inheritedRetries ?? project.retries;
     // We only compute / set digest in the runner.
     if (test._poolDigest)
       test._workerHash = `${project._id}-${test._poolDigest}-${repeatEachIndex}`;

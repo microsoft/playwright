@@ -46,7 +46,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   _hooks: { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function, location: Location }[] = [];
   _timeout: number | undefined;
   _retries: number | undefined;
-  _annotations: Annotation[] = [];
+  _staticAnnotations: Annotation[] = [];
   _modifiers: Modifier[] = [];
   _parallelMode: 'default' | 'serial' | 'parallel' = 'default';
   _projectConfig: FullProjectInternal | undefined;
@@ -161,7 +161,7 @@ export class Suite extends Base implements reporterTypes.Suite {
       requireFile: this._requireFile,
       timeout: this._timeout,
       retries: this._retries,
-      annotations: this._annotations.slice(),
+      staticAnnotations: this._staticAnnotations.slice(),
       modifiers: this._modifiers.slice(),
       parallelMode: this._parallelMode,
       skipped: this._skipped,
@@ -176,7 +176,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     suite._requireFile = data.requireFile;
     suite._timeout = data.timeout;
     suite._retries = data.retries;
-    suite._annotations = data.annotations;
+    suite._staticAnnotations = data.staticAnnotations;
     suite._modifiers = data.modifiers;
     suite._parallelMode = data.parallelMode;
     suite._skipped = data.skipped;
@@ -216,9 +216,8 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _poolDigest = '';
   _workerHash = '';
   _projectId = '';
-  // Annotations that are not added from within a test (like fixme and skip), should not
-  // be re-added each time we retry a test.
-  _alreadyInheritedAnnotations: boolean = false;
+  // Annotations known statically before running the test, e.g. `test.skip()` or `test.describe.skip()`.
+  _staticAnnotations: Annotation[] = [];
 
   constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
     super(title);
@@ -258,7 +257,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       requireFile: this._requireFile,
       poolDigest: this._poolDigest,
       expectedStatus: this.expectedStatus,
-      annotations: this.annotations.slice(),
+      staticAnnotations: this._staticAnnotations.slice(),
     };
   }
 
@@ -268,7 +267,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     test._requireFile = data.requireFile;
     test._poolDigest = data.poolDigest;
     test.expectedStatus = data.expectedStatus;
-    test.annotations = data.annotations;
+    test._staticAnnotations = data.staticAnnotations;
     return test;
   }
 
@@ -278,15 +277,6 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     test._testType = this._testType;
     test.fn = this.fn;
     return test;
-  }
-
-  _annotateWithInheritence(annotations: Annotation[]) {
-    if (this._alreadyInheritedAnnotations) {
-      this.annotations = annotations;
-    } else {
-      this._alreadyInheritedAnnotations = true;
-      this.annotations = [...this.annotations, ...annotations];
-    }
   }
 
   _appendTestResult(): reporterTypes.TestResult {

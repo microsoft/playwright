@@ -287,10 +287,10 @@ export class WorkerMain extends ProcessRunner {
       }
     }
 
-    // Process existing annotations defined on parent suites.
+    for (const annotation of test._staticAnnotations)
+      processAnnotation(annotation);
+    // Process existing annotations dynamically set for parent suites.
     for (const suite of suites) {
-      for (const annotation of suite._annotations)
-        processAnnotation(annotation);
       const extraAnnotations = this._extraSuiteAnnotations.get(suite) || [];
       for (const annotation of extraAnnotations)
         processAnnotation(annotation);
