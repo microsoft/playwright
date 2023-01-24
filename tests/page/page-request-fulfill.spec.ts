@@ -52,10 +52,10 @@ it('should work', async ({ page, server }) => {
 });
 
 it('should work with buffer as body', async ({ page, server, browserName, isLinux }) => {
-  it.fail(browserName === 'webkit' && isLinux, 'Loading of application/octet-stream resource fails');
   await page.route('**/*', route => {
     route.fulfill({
       status: 200,
+      contentType: 'text/plain',
       body: Buffer.from('Yo, page!')
     });
   });
