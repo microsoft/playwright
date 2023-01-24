@@ -144,14 +144,7 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: npx playwright install --with-deps
-    - run: |
-        ./utils/docker/build.sh --amd64 focal $PWTEST_DOCKER_BASE_IMAGE
-        npx playwright docker build
-        nohup npx playwright docker start &
-        xvfb-run npm run test-html-reporter
-      env:
-        PLAYWRIGHT_DOCKER: 1
-        PWTEST_DOCKER_BASE_IMAGE: playwright:localbuild
+    - run: xvfb-run npm run test-html-reporter
     - run: xvfb-run npm run test-web
       if: always()
 

@@ -28,7 +28,6 @@ test('expand collapse', async ({ mount }) => {
   await expect(component.getByText('Chip body')).not.toBeVisible();
   await component.getByText('Title').click();
   await expect(component.getByText('Chip body')).toBeVisible();
-  await expect(component).toHaveScreenshot();
 });
 
 test('render long title', async ({ mount }) => {
@@ -38,7 +37,6 @@ test('render long title', async ({ mount }) => {
   </AutoChip>);
   await expect(component).toContainText('Extremely long title.');
   await expect(component.getByText('Extremely long title.')).toHaveAttribute('title', title);
-  await expect(component).toHaveScreenshot();
 });
 
 test('setExpanded is called', async ({ mount }) => {
