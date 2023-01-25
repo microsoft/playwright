@@ -55,7 +55,7 @@ Terminates this instance of Playwright, will also close all created browsers if 
 Launches new Playwright driver process and connects to it. [`method: Playwright.close`] should be called when the instance is no longer needed.
 
 ```java
-Playwright playwright = Playwright.create()) {
+Playwright playwright = Playwright.create();
 Browser browser = playwright.webkit().launch();
 Page page = browser.newPage();
 page.navigate("https://www.w3.org/");
