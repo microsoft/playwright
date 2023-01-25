@@ -33,6 +33,8 @@ import { urlMatches } from '../utils/network';
 import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
 import type { Serializable } from '../../types/structs';
+import type { BrowserContext } from './browserContext';
+import { HarRouter } from './harRouter';
 
 export type NetworkCookie = {
   name: string,
@@ -617,7 +619,56 @@ export function validateHeaders(headers: Headers) {
   }
 }
 
-export class RouteHandler {
+export class NetworkRouter {
+  private _owner: Page | BrowserContext;
+  private _baseURL: string | undefined;
+  private _routes: RouteHandler[] = [];
+
+  constructor(owner: Page | BrowserContext, baseURL: string | undefined) {
+    this._owner = owner;
+    this._baseURL = baseURL;
+  }
+
+  async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
+    this._routes.unshift(new RouteHandler(this._baseURL, url, handler, options.times));
+    if (this._routes.length === 1)
+      await this._owner._channel.setNetworkInterceptionEnabled({ enabled: true });
+  }
+
+  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback' } = {}): Promise<void> {
+    const harRouter = await HarRouter.create(this._owner._connection.localUtils(), har, options.notFound || 'abort');
+    await this.route(options.url || '**/*', route => harRouter.handleRoute(route));
+    this._owner.once('close', () => harRouter.dispose());
+  }
+
+  async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
+    this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
+    if (!this._routes.length)
+      await this._disableInterception();
+  }
+
+  async handleRoute(route: Route) {
+    const routeHandlers = this._routes.slice();
+    for (const routeHandler of routeHandlers) {
+      if (!routeHandler.matches(route.request().url()))
+        continue;
+      if (routeHandler.willExpire())
+        this._routes.splice(this._routes.indexOf(routeHandler), 1);
+      const handled = await routeHandler.handle(route);
+      if (!this._routes.length)
+        this._owner._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+      if (handled)
+        return true;
+    }
+    return false;
+  }
+
+  private async _disableInterception() {
+    await this._owner._channel.setNetworkInterceptionEnabled({ enabled: false });
+  }
+}
+
+class RouteHandler {
   private handledCount = 0;
   private readonly _baseURL: string | undefined;
   private readonly _times: number;
