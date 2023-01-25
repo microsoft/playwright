@@ -328,3 +328,19 @@ export class JavaScriptErrorInEvaluate extends Error {
 export function isJavaScriptErrorInEvaluate(error: Error) {
   return error instanceof JavaScriptErrorInEvaluate;
 }
+
+export function sparseArrayToString(entries: { index: number, value: any }[]): string {
+  let lastIndex = 0;
+  const tokens = [];
+  for (const { index, value } of entries) {
+    const emptyItems = index - lastIndex - 1;
+    if (emptyItems === 1)
+      tokens.push(`<1 empty item>`);
+    else if (emptyItems > 1)
+      tokens.push(`<${emptyItems} empty items>`);
+    tokens.push(String(value));
+    lastIndex = index;
+  }
+
+  return '[' + tokens.join(',') + ']';
+}
