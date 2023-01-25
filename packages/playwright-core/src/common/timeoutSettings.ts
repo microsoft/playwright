@@ -38,7 +38,7 @@ export class TimeoutSettings {
   }
 
   navigationTimeout(options: { timeout?: number }): number {
-    if (typeof options.timeout === 'number')
+    if (typeof options.timeout === 'number' && options.timeout > 0)
       return options.timeout;
     if (this._defaultNavigationTimeout !== undefined)
       return this._defaultNavigationTimeout;
@@ -52,7 +52,7 @@ export class TimeoutSettings {
   }
 
   timeout(options: { timeout?: number }): number {
-    if (typeof options.timeout === 'number')
+    if (typeof options.timeout === 'number' && options.timeout > 0)
       return options.timeout;
     if (debugMode())
       return 0;
@@ -64,7 +64,7 @@ export class TimeoutSettings {
   }
 
   static timeout(options: { timeout?: number }): number {
-    if (typeof options.timeout === 'number')
+    if (typeof options.timeout === 'number' && options.timeout > 0)
       return options.timeout;
     if (debugMode())
       return 0;
@@ -72,7 +72,7 @@ export class TimeoutSettings {
   }
 
   static launchTimeout(options: { timeout?: number }): number {
-    if (typeof options.timeout === 'number')
+    if (typeof options.timeout === 'number' && options.timeout > 0)
       return options.timeout;
     if (debugMode())
       return 0;
