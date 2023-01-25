@@ -20,7 +20,6 @@ import type { FixturesWithLocation, Location, WorkerInfo } from './types';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription, TimeoutManager } from './timeoutManager';
-import { addFatalError } from './globals';
 
 type FixtureScope = 'test' | 'worker';
 type FixtureAuto = boolean | 'all-hooks-included';
@@ -51,6 +50,10 @@ type FixtureRegistration = {
   super?: FixtureRegistration;
   // Whether this fixture is an option value set from the config.
   fromConfig?: boolean;
+};
+export type LoadError = {
+  message: string;
+  location: Location;
 };
 
 class Fixture {
@@ -187,9 +190,11 @@ export function isFixtureOption(value: any): value is FixtureTuple {
 export class FixturePool {
   readonly digest: string;
   readonly registrations: Map<string, FixtureRegistration>;
+  private _onLoadError: (error: LoadError) => void;
 
-  constructor(fixturesList: FixturesWithLocation[], parentPool?: FixturePool, disallowWorkerFixtures?: boolean) {
+  constructor(fixturesList: FixturesWithLocation[], onLoadError: (error: LoadError) => void, parentPool?: FixturePool, disallowWorkerFixtures?: boolean) {
     this.registrations = new Map(parentPool ? parentPool.registrations : []);
+    this._onLoadError = onLoadError;
 
     for (const { fixtures, location, fromConfig } of fixturesList) {
       for (const entry of Object.entries(fixtures)) {
@@ -211,11 +216,11 @@ export class FixturePool {
         const previous = this.registrations.get(name);
         if (previous && options) {
           if (previous.scope !== options.scope) {
-            addFatalError(`Fixture "${name}" has already been registered as a { scope: '${previous.scope}' } fixture defined in ${formatLocation(previous.location)}.`, location);
+            this._addLoadError(`Fixture "${name}" has already been registered as a { scope: '${previous.scope}' } fixture defined in ${formatLocation(previous.location)}.`, location);
             continue;
           }
           if (previous.auto !== options.auto) {
-            addFatalError(`Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture defined in ${formatLocation(previous.location)}.`, location);
+            this._addLoadError(`Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture defined in ${formatLocation(previous.location)}.`, location);
             continue;
           }
         } else if (previous) {
@@ -225,11 +230,11 @@ export class FixturePool {
         }
 
         if (!kScopeOrder.includes(options.scope)) {
-          addFatalError(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, location);
+          this._addLoadError(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, location);
           continue;
         }
         if (options.scope === 'worker' && disallowWorkerFixtures) {
-          addFatalError(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, location);
+          this._addLoadError(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, location);
           continue;
         }
 
@@ -242,7 +247,7 @@ export class FixturePool {
           fn = original.fn;
         }
 
-        const deps = fixtureParameterNames(fn, location);
+        const deps = fixtureParameterNames(fn, location, e => this._onLoadError(e));
         const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, deps, super: previous, fromConfig };
         registrationId(registration);
         this.registrations.set(name, registration);
@@ -262,13 +267,13 @@ export class FixturePool {
         const dep = this.resolveDependency(registration, name);
         if (!dep) {
           if (name === registration.name)
-            addFatalError(`Fixture "${registration.name}" references itself, but does not have a base implementation.`, registration.location);
+            this._addLoadError(`Fixture "${registration.name}" references itself, but does not have a base implementation.`, registration.location);
           else
-            addFatalError(`Fixture "${registration.name}" has unknown parameter "${name}".`, registration.location);
+            this._addLoadError(`Fixture "${registration.name}" has unknown parameter "${name}".`, registration.location);
           continue;
         }
         if (kScopeOrder.indexOf(registration.scope) > kScopeOrder.indexOf(dep.scope)) {
-          addFatalError(`${registration.scope} fixture "${registration.name}" cannot depend on a ${dep.scope} fixture "${name}" defined in ${formatLocation(dep.location)}.`, registration.location);
+          this._addLoadError(`${registration.scope} fixture "${registration.name}" cannot depend on a ${dep.scope} fixture "${name}" defined in ${formatLocation(dep.location)}.`, registration.location);
           continue;
         }
         if (!markers.has(dep)) {
@@ -277,7 +282,7 @@ export class FixturePool {
           const index = stack.indexOf(dep);
           const regs = stack.slice(index, stack.length);
           const names = regs.map(r => `"${r.name}"`);
-          addFatalError(`Fixtures ${names.join(' -> ')} -> "${dep.name}" form a dependency cycle: ${regs.map(r => formatLocation(r.location)).join(' -> ')}`, dep.location);
+          this._addLoadError(`Fixtures ${names.join(' -> ')} -> "${dep.name}" form a dependency cycle: ${regs.map(r => formatLocation(r.location)).join(' -> ')}`, dep.location);
           continue;
         }
       }
@@ -297,10 +302,10 @@ export class FixturePool {
   }
 
   validateFunction(fn: Function, prefix: string, location: Location) {
-    for (const name of fixtureParameterNames(fn, location)) {
+    for (const name of fixtureParameterNames(fn, location, e => this._onLoadError(e))) {
       const registration = this.registrations.get(name);
       if (!registration)
-        addFatalError(`${prefix} has unknown parameter "${name}".`, location);
+        this._addLoadError(`${prefix} has unknown parameter "${name}".`, location);
     }
   }
 
@@ -308,6 +313,10 @@ export class FixturePool {
     if (name === registration.name)
       return registration.super;
     return this.registrations.get(name);
+  }
+
+  private _addLoadError(message: string, location: Location) {
+    this._onLoadError({ message, location });
   }
 }
 
@@ -368,7 +377,7 @@ export class FixtureRunner {
     }
 
     // Install used fixtures.
-    const names = fixtureParameterNames(fn, { file: '<unused>', line: 1, column: 1 });
+    const names = fixtureParameterNames(fn, { file: '<unused>', line: 1, column: 1 }, serializeAndThrowError);
     const params: { [key: string]: any } = {};
     for (const name of names) {
       const registration = this.pool!.registrations.get(name)!;
@@ -404,7 +413,7 @@ export class FixtureRunner {
   }
 
   dependsOnWorkerFixturesOnly(fn: Function, location: Location): boolean {
-    const names = fixtureParameterNames(fn, location);
+    const names = fixtureParameterNames(fn, location, serializeAndThrowError);
     for (const name of names) {
       const registration = this.pool!.registrations.get(name)!;
       if (registration.scope !== 'worker')
@@ -414,17 +423,21 @@ export class FixtureRunner {
   }
 }
 
+function serializeAndThrowError(e: LoadError) {
+  throw new Error(`${formatLocation(e.location!)}: ${e.message}`);
+}
+
 const signatureSymbol = Symbol('signature');
 
-function fixtureParameterNames(fn: Function | any, location: Location): string[] {
+function fixtureParameterNames(fn: Function | any, location: Location, onError: (error: LoadError) => void): string[] {
   if (typeof fn !== 'function')
     return [];
   if (!fn[signatureSymbol])
-    fn[signatureSymbol] = innerFixtureParameterNames(fn, location);
+    fn[signatureSymbol] = innerFixtureParameterNames(fn, location, onError);
   return fn[signatureSymbol];
 }
 
-function innerFixtureParameterNames(fn: Function, location: Location): string[] {
+function innerFixtureParameterNames(fn: Function, location: Location, onError: (error: LoadError) => void): string[] {
   const text = fn.toString();
   const match = text.match(/(?:async)?(?:\s+function)?[^(]*\(([^)]*)/);
   if (!match)
@@ -434,7 +447,7 @@ function innerFixtureParameterNames(fn: Function, location: Location): string[] 
     return [];
   const [firstParam] = splitByComma(trimmedParams);
   if (firstParam[0] !== '{' || firstParam[firstParam.length - 1] !== '}')
-    addFatalError('First argument must use the object destructuring pattern: '  + firstParam, location);
+    onError({ message: 'First argument must use the object destructuring pattern: '  + firstParam, location });
   const props = splitByComma(firstParam.substring(1, firstParam.length - 1)).map(prop => {
     const colon = prop.indexOf(':');
     return colon === -1 ? prop : prop.substring(0, colon).trim();

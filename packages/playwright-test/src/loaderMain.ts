@@ -15,11 +15,10 @@
  */
 
 import type { SerializedConfig } from './ipc';
-import type { TestError } from '../reporter';
 import { ConfigLoader } from './configLoader';
 import { ProcessRunner } from './process';
 import { loadTestFilesInProcess } from './testLoader';
-import { setFatalErrorSink } from './globals';
+import type { LoadError } from './fixtures';
 
 export class LoaderMain extends ProcessRunner {
   private _config: SerializedConfig;
@@ -37,8 +36,7 @@ export class LoaderMain extends ProcessRunner {
   }
 
   async loadTestFiles(params: { files: string[] }) {
-    const loadErrors: TestError[] = [];
-    setFatalErrorSink(error => loadErrors.push(error));
+    const loadErrors: LoadError[] = [];
     const configLoader = await this._configLoader();
     const rootSuite = await loadTestFilesInProcess(configLoader.fullConfig(), params.files, loadErrors);
     return { rootSuite: rootSuite._deepSerialize(), loadErrors };

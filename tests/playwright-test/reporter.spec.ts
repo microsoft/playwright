@@ -489,7 +489,7 @@ test('should report no-tests error to reporter', async ({ runInlineTest }) => {
   }, { 'reporter': '' });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`%%got error: =================\n no tests found.`);
+  expect(result.output).toContain(`%%got error: No tests found`);
 });
 
 test('should report require error to reporter', async ({ runInlineTest }) => {

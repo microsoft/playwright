@@ -17,6 +17,7 @@
 import path from 'path';
 import type { TestError } from '../reporter';
 import type { FullConfigInternal } from './types';
+import type { LoadError } from './fixtures';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { PoolBuilder } from './poolBuilder';
 import { Suite } from './test';
@@ -79,7 +80,7 @@ export class TestLoader {
   }
 }
 
-export async function loadTestFilesInProcess(config: FullConfigInternal, testFiles: string[], loadErrors: TestError[]): Promise<Suite> {
+export async function loadTestFilesInProcess(config: FullConfigInternal, testFiles: string[], loadErrors: LoadError[]): Promise<Suite> {
   const testLoader = new TestLoader(config);
   const rootSuite = new Suite('', 'root');
   for (const file of testFiles) {
@@ -87,6 +88,6 @@ export async function loadTestFilesInProcess(config: FullConfigInternal, testFil
     rootSuite._addSuite(fileSuite);
   }
   // Generate hashes.
-  PoolBuilder.buildForLoader(rootSuite);
+  PoolBuilder.buildForLoader(rootSuite, loadErrors);
   return rootSuite;
 }
