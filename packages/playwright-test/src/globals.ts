@@ -35,14 +35,14 @@ export function currentlyLoadingFileSuite() {
   return currentFileSuite;
 }
 
-let _fatalErrors: TestError[] | undefined;
-export function setFatalErrorSink(fatalErrors: TestError[]) {
-  _fatalErrors = fatalErrors;
+let _fatalErrorSink: ((fatalError: TestError) => void) | undefined;
+export function setFatalErrorSink(fatalErrorSink: (fatalError: TestError) => void) {
+  _fatalErrorSink = fatalErrorSink;
 }
 
 export function addFatalError(message: string, location: Location) {
-  if (_fatalErrors)
-    _fatalErrors.push({ message: `Error: ${message}`, location });
+  if (_fatalErrorSink)
+    _fatalErrorSink({ message: `Error: ${message}`, location });
   else
     throw new Error(`${formatLocation(location)}: ${message}`);
 }

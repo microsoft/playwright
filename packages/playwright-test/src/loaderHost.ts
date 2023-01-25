@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestError } from '../reporter';
+import type { Reporter, TestError } from '../reporter';
 import type { SerializedConfig } from './ipc';
 import { ProcessHost } from './processHost';
 import { Suite } from './test';
@@ -28,9 +28,9 @@ export class LoaderHost extends ProcessHost {
     await this.startRunner(config, true, {});
   }
 
-  async loadTestFiles(files: string[], loadErrors: TestError[]): Promise<Suite> {
+  async loadTestFiles(files: string[], reporter: Reporter): Promise<Suite> {
     const result = await this.sendMessage({ method: 'loadTestFiles', params: { files } }) as any;
-    loadErrors.push(...result.loadErrors);
+    result.loadErrors.forEach((e: TestError) => reporter.onError?.(e));
     return Suite._deepParse(result.rootSuite);
   }
 }

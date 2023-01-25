@@ -170,7 +170,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   const grepInvertMatcher = opts.grepInvert ? createTitleMatcher(forceRegExp(opts.grepInvert)) : () => false;
   const testTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
 
-  const result = await runner.runAllTests({
+  const status = await runner.runAllTests({
     listOnly: !!opts.list,
     testFileFilters,
     testTitleMatcher,
@@ -179,9 +179,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   });
   await stopProfiling(undefined);
 
-  if (result.status === 'interrupted')
+  if (status === 'interrupted')
     process.exit(130);
-  process.exit(result.status === 'passed' ? 0 : 1);
+  process.exit(status === 'passed' ? 0 : 1);
 }
 
 
