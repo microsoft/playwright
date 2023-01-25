@@ -145,6 +145,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
     });
 
     test('should be able to visit ipv6', async ({ connect, startRemoteServer, ipV6ServerUrl }) => {
+      test.fail(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const page = await browser.newPage();
