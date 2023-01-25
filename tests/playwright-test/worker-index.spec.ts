@@ -219,3 +219,23 @@ test('parallelIndex should be in 0..workers-1', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(20);
 });
+
+test('should not spawn workers for statically skipped tests', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20156' });
+
+  const result = await runInlineTest({
+    'a.test.js': `
+      console.log('%%workerIndex=' + process.env.TEST_WORKER_INDEX);
+      const { test } = pwt;
+      test.describe.configure({ mode: 'parallel' });
+      test('success', () => {});
+      test.skip('skipped', () => {});
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.skipped).toBe(1);
+  expect(result.output).toContain('workerIndex=undefined');
+  expect(result.output).toContain('workerIndex=0');
+  expect(result.output).not.toContain('workerIndex=1');
+});

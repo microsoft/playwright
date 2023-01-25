@@ -543,3 +543,54 @@ test('should not run hooks if modifier throws', async ({ runInlineTest }) => {
     '%%modifier',
   ]);
 });
+
+test('should report skipped tests in-order with correct properties', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        onTestBegin(test) {
+          console.log('\\n%%begin-' + test.title);
+        }
+        onTestEnd(test, result) {
+          console.log('\\n%%end-' + test.title);
+          console.log('\\n%%expectedStatus-' + test.expectedStatus);
+          console.log('\\n%%timeout-' + test.timeout);
+          console.log('\\n%%retries-' + test.retries);
+        }
+      }
+      export default Reporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = { reporter: [['./reporter.ts']] };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test.describe.configure({ timeout: 1234, retries: 3 });
+      test('test1', async ({}) => {
+      });
+      test.skip('test2', async ({}) => {
+      });
+      test('test3', async ({}) => {
+      });
+    `,
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%begin-test1',
+    '%%end-test1',
+    '%%expectedStatus-passed',
+    '%%timeout-1234',
+    '%%retries-3',
+    '%%begin-test2',
+    '%%end-test2',
+    '%%expectedStatus-skipped',
+    '%%timeout-1234',
+    '%%retries-3',
+    '%%begin-test3',
+    '%%end-test3',
+    '%%expectedStatus-passed',
+    '%%timeout-1234',
+    '%%retries-3',
+  ]);
+});

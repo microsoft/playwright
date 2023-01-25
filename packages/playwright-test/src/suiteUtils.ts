@@ -49,19 +49,31 @@ export function buildFileSuiteForProject(project: FullProjectInternal, suite: Su
   result.forEachTest((test, suite) => {
     suite._fileId = fileId;
     const repeatEachIndexSuffix = repeatEachIndex ? ` (repeat:${repeatEachIndex})` : '';
+
     // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
     const testIdExpression = `[project=${project._id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
     const testId = fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
     test.id = testId;
     test.repeatEachIndex = repeatEachIndex;
     test._projectId = project._id;
+
+    // Inherit properties from parent suites.
     let inheritedRetries: number | undefined;
+    let inheritedTimeout: number | undefined;
     for (let parentSuite: Suite | undefined = suite; parentSuite; parentSuite = parentSuite.parent) {
       test._staticAnnotations.push(...parentSuite._staticAnnotations);
       if (inheritedRetries === undefined && parentSuite._retries !== undefined)
         inheritedRetries = parentSuite._retries;
+      if (inheritedTimeout === undefined && parentSuite._timeout !== undefined)
+        inheritedTimeout = parentSuite._timeout;
     }
     test.retries = inheritedRetries ?? project.retries;
+    test.timeout = inheritedTimeout ?? project.timeout;
+
+    // Skip annotations imply skipped expectedStatus.
+    if (test._staticAnnotations.some(a => a.type === 'skip' || a.type === 'fixme'))
+      test.expectedStatus = 'skipped';
+
     // We only compute / set digest in the runner.
     if (test._poolDigest)
       test._workerHash = `${project._id}-${test._poolDigest}-${repeatEachIndex}`;
