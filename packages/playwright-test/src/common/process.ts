@@ -18,7 +18,7 @@ import type { WriteStream } from 'tty';
 import type { ProcessInitParams, TtyParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
 import type { TestInfoError } from './types';
-import { serializeError } from './util';
+import { serializeError } from '../util';
 
 export type ProtocolRequest = {
   id: number;

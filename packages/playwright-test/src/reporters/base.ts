@@ -18,8 +18,8 @@ import { colors, ms as milliseconds, parseStackTraceLine } from 'playwright-core
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location, Reporter } from '../../types/testReporter';
-import type { FullConfigInternal } from '../types';
-import { codeFrameColumns } from '../babelBundle';
+import type { FullConfigInternal } from '../common/types';
+import { codeFrameColumns } from '../common/babelBundle';
 import { monotonicTime } from 'playwright-core/lib/utils';
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };

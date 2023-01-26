@@ -1,0 +1,11 @@
+[*]
+../common/
+../matchers/
+../util.ts
+../utilsBundle.ts
+
+[transform.ts]
+../third_party/tsconfig-loader.ts
+
+[configLoader.ts]
+../runner/reporters.ts

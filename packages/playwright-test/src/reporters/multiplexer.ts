@@ -15,7 +15,7 @@
  */
 
 import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep, Reporter } from '../../types/testReporter';
-import { Suite } from '../test';
+import { Suite } from '../common/test';
 
 type StdIOChunk = {
   type: 'stdout' | 'stderr';

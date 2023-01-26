@@ -19,8 +19,8 @@ import { calculateSha1 } from 'playwright-core/lib/utils';
 import type { TestCase } from './test';
 import { Suite } from './test';
 import type { FullProjectInternal } from './types';
-import type { Matcher } from './util';
-import { createTitleMatcher } from './util';
+import type { Matcher } from '../util';
+import { createTitleMatcher } from '../util';
 
 export async function createRootSuite(preprocessRoot: Suite, testTitleMatcher: Matcher, filesByProject: Map<FullProjectInternal, string[]>): Promise<Suite> {
   // Generate projects.

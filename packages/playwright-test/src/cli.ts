@@ -18,18 +18,17 @@
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
-import url from 'url';
 import path from 'path';
-import { Runner } from './runner';
-import type { ConfigCLIOverrides } from './runner';
-import { stopProfiling, startProfiling } from './profiler';
-import { fileIsModule } from './util';
+import { Runner } from './runner/runner';
+import { stopProfiling, startProfiling } from './common/profiler';
+import { experimentalLoaderOption, fileIsModule } from './util';
 import type { TestFileFilter } from './util';
 import { createTitleMatcher } from './util';
 import { showHTMLReport } from './reporters/html';
-import { baseFullConfig, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './configLoader';
-import type { TraceMode } from './types';
+import { baseFullConfig, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
+import type { TraceMode } from './common/types';
 import { builtInReporters } from './runner/reporters';
+import type { ConfigCLIOverrides } from './common/ipc';
 
 export function addTestCommands(program: Command) {
   addTestCommand(program);
@@ -265,18 +264,6 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
       process.exit(code);
   });
   return true;
-}
-
-export function experimentalLoaderOption() {
-  return ` --no-warnings --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
-}
-
-export function envWithoutExperimentalLoaderOptions(): NodeJS.ProcessEnv {
-  const substring = experimentalLoaderOption();
-  const result = { ...process.env };
-  if (result.NODE_OPTIONS)
-    result.NODE_OPTIONS = result.NODE_OPTIONS.replace(substring, '').trim() || undefined;
-  return result;
 }
 
 const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'retain-on-failure'];

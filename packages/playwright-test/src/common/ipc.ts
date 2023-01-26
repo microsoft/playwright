@@ -14,8 +14,26 @@
  * limitations under the License.
  */
 
-import type { ConfigCLIOverrides } from './runner';
 import type { TestInfoError, TestStatus } from './types';
+
+export type ConfigCLIOverrides = {
+  forbidOnly?: boolean;
+  fullyParallel?: boolean;
+  globalTimeout?: number;
+  maxFailures?: number;
+  outputDir?: string;
+  quiet?: boolean;
+  repeatEach?: number;
+  retries?: number;
+  reporter?: string;
+  shard?: { current: number, total: number };
+  timeout?: number;
+  ignoreSnapshots?: boolean;
+  updateSnapshots?: 'all'|'none'|'missing';
+  workers?: number;
+  projects?: { name: string, use?: any }[],
+  use?: any;
+};
 
 export type SerializedConfig = {
   configFile: string | undefined;

@@ -16,9 +16,9 @@
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
-import type { FullResult, Reporter, TestError } from '../reporter';
+import type { FullResult, Reporter, TestError } from '../../reporter';
 import { SigIntWatcher } from './sigIntWatcher';
-import { serializeError } from './util';
+import { serializeError } from '../util';
 
 type TaskTeardown = () => Promise<any> | undefined;
 export type Task<Context> = (context: Context, errors: TestError[]) => Promise<TaskTeardown | void> | undefined;

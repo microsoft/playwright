@@ -16,14 +16,14 @@
 
 import path from 'path';
 import type { TestError } from '../../types/testReporter';
-import type { ConfigLoader } from '../configLoader';
-import type { LoadError } from '../fixtures';
-import { LoaderHost } from '../loaderHost';
+import type { ConfigLoader } from '../common/configLoader';
+import type { LoadError } from '../common/fixtures';
+import { LoaderHost } from './loaderHost';
 import type { Multiplexer } from '../reporters/multiplexer';
-import { createRootSuite, filterOnly, filterSuite } from '../suiteUtils';
-import type { Suite, TestCase } from '../test';
-import { loadTestFilesInProcess } from '../testLoader';
-import type { FullConfigInternal } from '../types';
+import { createRootSuite, filterOnly, filterSuite } from '../common/suiteUtils';
+import type { Suite, TestCase } from '../common/test';
+import { loadTestFilesInProcess } from '../common/testLoader';
+import type { FullConfigInternal } from '../common/types';
 import type { Matcher, TestFileFilter } from '../util';
 import { createFileMatcher } from '../util';
 import { collectFilesForProjects, collectProjects } from './projectUtils';

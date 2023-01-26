@@ -15,8 +15,8 @@
  */
 
 import type { Suite, Reporter } from '../../types/testReporter';
-import type { Runner } from '../runner';
-import type { FullConfig } from '../types';
+import type { Runner } from '../runner/runner';
+import type { FullConfig } from '../common/types';
 
 export interface TestRunnerPlugin {
   name: string;

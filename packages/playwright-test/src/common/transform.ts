@@ -18,14 +18,14 @@ import crypto from 'crypto';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
-import { sourceMapSupport, pirates } from './utilsBundle';
+import { sourceMapSupport, pirates } from '../utilsBundle';
 import url from 'url';
 import type { Location } from './types';
-import type { TsConfigLoaderResult } from './third_party/tsconfig-loader';
-import { tsConfigLoader } from './third_party/tsconfig-loader';
+import type { TsConfigLoaderResult } from '../third_party/tsconfig-loader';
+import { tsConfigLoader } from '../third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelTransformFunction } from './babelBundle';
-import { fileIsModule } from './util';
+import { fileIsModule } from '../util';
 
 const version = 13;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
@@ -281,8 +281,8 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
 }
 
 // This will catch the playwright-test package as well
-const kPlaywrightInternalPrefix = path.resolve(__dirname, '../../playwright');
-const kPlaywrightCoveragePrefix = path.resolve(__dirname, '../../../tests/config/coverage.js');
+const kPlaywrightInternalPrefix = path.resolve(__dirname, '../../../playwright');
+const kPlaywrightCoveragePrefix = path.resolve(__dirname, '../../../../tests/config/coverage.js');
 
 export function belongsToNodeModules(file: string) {
   if (file.includes(`${path.sep}node_modules${path.sep}`))

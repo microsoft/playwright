@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { filterSuiteWithOnlySemantics } from '../suiteUtils';
-import type { Suite, TestCase } from '../test';
+import { filterSuiteWithOnlySemantics } from '../common/suiteUtils';
+import type { Suite, TestCase } from '../common/test';
 
 export type TestGroup = {
   workerHash: string;

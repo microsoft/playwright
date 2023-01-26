@@ -17,8 +17,8 @@
 import type { Locator, Page } from 'playwright-core';
 import type { Page as PageEx } from 'playwright-core/lib/client/page';
 import type { Locator as LocatorEx } from 'playwright-core/lib/client/locator';
-import type { Expect } from '../types';
-import { currentTestInfo } from '../globals';
+import type { Expect } from '../common/types';
+import { currentTestInfo } from '../common/globals';
 import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils';
 import { getComparator } from 'playwright-core/lib/utils';
 import type { PageScreenshotOptions } from 'playwright-core/types/types';
@@ -30,8 +30,8 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
 import { mime } from 'playwright-core/lib/utilsBundle';
-import type { TestInfoImpl } from '../testInfo';
-import type { SyncExpectationResult } from '../expect';
+import type { TestInfoImpl } from '../common/testInfo';
+import type { SyncExpectationResult } from './expect';
 
 type NameOrSegments = string | string[];
 const snapshotNamesSymbol = Symbol('snapshotNames');

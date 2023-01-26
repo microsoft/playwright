@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type { Fixtures, TestInfoError, Project } from '../types/test';
-import type { Location } from '../types/testReporter';
+import type { Fixtures, TestInfoError, Project } from '../../types/test';
+import type { Location } from '../../types/testReporter';
 import type { FullConfig as FullConfigPublic, FullProject as FullProjectPublic } from './types';
-export * from '../types/test';
-export type { Location } from '../types/testReporter';
+export * from '../../types/test';
+export type { Location } from '../../types/testReporter';
 
 export type FixturesWithLocation = {
   fixtures: Fixtures;

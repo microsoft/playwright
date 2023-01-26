@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedConfig } from './ipc';
-import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
-import type { Suite } from './test';
-import type { ConfigLoader } from './configLoader';
+import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedConfig } from '../common/ipc';
+import type { TestResult, Reporter, TestStep, TestError } from '../../types/testReporter';
+import type { Suite } from '../common/test';
+import type { ConfigLoader } from '../common/configLoader';
 import type { ProcessExitData } from './processHost';
-import type { TestCase } from './test';
+import type { TestCase } from '../common/test';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import { WorkerHost } from './workerHost';
-import type { TestGroup } from './runner/testGroups';
+import type { TestGroup } from './testGroups';
 
 type TestResultData = {
   result: TestResult;

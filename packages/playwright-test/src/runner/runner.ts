@@ -16,37 +16,19 @@
  */
 
 import { monotonicTime } from 'playwright-core/lib/utils';
-import type { FullResult } from '../types/testReporter';
-import { ConfigLoader } from './configLoader';
-import type { TestRunnerPlugin } from './plugins';
-import { setRunnerToAddPluginsTo } from './plugins';
-import { dockerPlugin } from './plugins/dockerPlugin';
-import { webServerPluginsForConfig } from './plugins/webServerPlugin';
-import { collectFilesForProjects, collectProjects } from './runner/projectUtils';
-import { createReporter } from './runner/reporters';
-import { createTaskRunner } from './runner/tasks';
-import type { TaskRunnerState } from './runner/tasks';
-import type { Config, FullConfigInternal } from './types';
-import type { Matcher, TestFileFilter } from './util';
-
-export type ConfigCLIOverrides = {
-  forbidOnly?: boolean;
-  fullyParallel?: boolean;
-  globalTimeout?: number;
-  maxFailures?: number;
-  outputDir?: string;
-  quiet?: boolean;
-  repeatEach?: number;
-  retries?: number;
-  reporter?: string;
-  shard?: { current: number, total: number };
-  timeout?: number;
-  ignoreSnapshots?: boolean;
-  updateSnapshots?: 'all'|'none'|'missing';
-  workers?: number;
-  projects?: { name: string, use?: any }[],
-  use?: any;
-};
+import type { FullResult } from '../../types/testReporter';
+import { ConfigLoader } from '../common/configLoader';
+import type { TestRunnerPlugin } from '../plugins';
+import { setRunnerToAddPluginsTo } from '../plugins';
+import { dockerPlugin } from '../plugins/dockerPlugin';
+import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
+import { collectFilesForProjects, collectProjects } from './projectUtils';
+import { createReporter } from './reporters';
+import { createTaskRunner } from './tasks';
+import type { TaskRunnerState } from './tasks';
+import type { Config, FullConfigInternal } from '../common/types';
+import type { Matcher, TestFileFilter } from '../util';
+import type { ConfigCLIOverrides } from '../common/ipc';
 
 export type RunOptions = {
   listOnly: boolean;

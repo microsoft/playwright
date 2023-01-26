@@ -15,7 +15,7 @@
  */
 
 import type { FixturePool } from './fixtures';
-import type * as reporterTypes from '../types/testReporter';
+import type * as reporterTypes from '../../types/testReporter';
 import type { TestTypeImpl } from './testType';
 import { rootTestType } from './testType';
 import type { Annotation, FixturesWithLocation, FullProject, FullProjectInternal, Location } from './types';
