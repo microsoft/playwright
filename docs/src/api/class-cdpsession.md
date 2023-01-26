@@ -48,9 +48,9 @@ client.send("Animation.setPlaybackRate", {
 ```csharp
 var client = await Page.Context.NewCDPSessionAsync(Page);
 await client.SendAsync("Runtime.enable");
-client.Event("Animation.animationCreated").OnEvent += (_, _) => Console.WriteLine("Animation created!"));
+client.Event("Animation.animationCreated").OnEvent += (_, _) => Console.WriteLine("Animation created!");
 var response = await client.SendAsync("Animation.getPlaybackRate");
-var playbackRate = response.Value.Deserialize<JsonNode>()["result"]["playbackRate"].GetValue<decimal>();
+var playbackRate = response.Value.GetProperty("playbackRate").GetDouble();
 Console.WriteLine("playback rate is " + playbackRate);
 await client.SendAsync("Animation.setPlaybackRate", new() { { "playbackRate", playbackRate / 2 } });
 ```
@@ -70,6 +70,7 @@ send messages.
 * since: v1.30
 * langs: csharp
 - returns: <[JsonElement?]>
+
 ### param: CDPSession.send.method
 * since: v1.8
 * langs: js, python, csharp
@@ -97,7 +98,11 @@ Optional method parameters.
 * langs: csharp
 - returns: <[CDPSessionEvent]>
 
+Returns an event emitter for the given CDP event name.
+
 ### param: CDPSession.event.eventName
 * since: v1.30
 * langs: csharp
 - `eventName` <[string]>
+
+CDP event name.
