@@ -461,6 +461,7 @@ export abstract class BrowserContext extends SdkObject {
       const page = await this.newPage(internalMetadata);
       await page._setServerRequestInterceptor(handler => {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
+        return true;
       });
       for (const origin of this._origins) {
         const originStorage: channels.OriginStorage = { origin, localStorage: [] };
@@ -489,6 +490,7 @@ export abstract class BrowserContext extends SdkObject {
     page = page || await this.newPage(internalMetadata);
     await page._setServerRequestInterceptor(handler => {
       handler.fulfill({ body: '<html></html>' }).catch(() => {});
+      return true;
     });
 
     for (const origin of new Set([...oldOrigins, ...newOrigins.keys()])) {
@@ -523,6 +525,7 @@ export abstract class BrowserContext extends SdkObject {
         const page = await this.newPage(internalMetadata);
         await page._setServerRequestInterceptor(handler => {
           handler.fulfill({ body: '<html></html>' }).catch(() => {});
+          return true;
         });
         for (const originState of state.origins) {
           const frame = page.mainFrame();
