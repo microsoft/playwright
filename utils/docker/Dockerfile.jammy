@@ -9,7 +9,7 @@ ARG DOCKER_IMAGE_NAME_TEMPLATE="mcr.microsoft.com/playwright:v%version%-jammy"
 RUN apt-get update && \
     # Install node16
     apt-get install -y curl wget gpg && \
-    curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
+    curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs && \
     # Feature-parity with node.js base images.
     apt-get install -y --no-install-recommends git openssh-client && \
