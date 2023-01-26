@@ -548,8 +548,7 @@ it('should trigger listener added before navigation', async ({ page, server, bro
   expect(chooser).toBeTruthy();
 });
 
-it('input should trigger events when files changed second time', async ({ page, asset, browserName }) => {
-  it.fixme(browserName === 'webkit');
+it('input should trigger events when files changed second time', async ({ page, asset }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20079' });
   await page.setContent(`<input type=file multiple=true/>`);
 
