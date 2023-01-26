@@ -679,7 +679,6 @@ it('should save to user-specified path', async ({ browser, server, mode }, testI
 });
 
 it('should download even if there is no "attachment" value', async ({ browser, server, mode, browserName }, testInfo) => {
-  it.fixme(browserName === 'webkit');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19939' });
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
@@ -698,7 +697,6 @@ it('should download even if there is no "attachment" value', async ({ browser, s
 });
 
 it('should convert navigation to a resource with unsupported mime type into download', async ({ browser, server, mode, browserName }, testInfo) => {
-  it.fixme(browserName === 'webkit');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19939' });
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
