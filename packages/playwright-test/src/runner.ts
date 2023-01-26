@@ -47,6 +47,7 @@ import { buildFileSuiteForProject, filterOnly, filterSuite, filterSuiteWithOnlyS
 import { LoaderHost } from './loaderHost';
 import { loadTestFilesInProcess } from './testLoader';
 import { TaskRunner } from './taskRunner';
+import type { Task } from './taskRunner';
 import type { LoadError } from './fixtures';
 
 const removeFolderAsync = promisify(rimraf);
@@ -81,9 +82,18 @@ export type ConfigCLIOverrides = {
   use?: any;
 };
 
+type TaskRunnerContext = {
+  reporter: Multiplexer;
+  config: FullConfigInternal;
+  configLoader: ConfigLoader;
+  options: RunOptions;
+  rootSuite?: Suite;
+  testGroups?: TestGroup[];
+  dispatcher?: Dispatcher;
+};
+
 export class Runner {
   private _configLoader: ConfigLoader;
-  private _reporter!: Multiplexer;
   private _plugins: TestRunnerPlugin[] = [];
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
@@ -103,80 +113,9 @@ export class Runner {
     return this._configLoader.loadEmptyConfig(configFileOrDirectory);
   }
 
-  static resolveConfigFile(configFileOrDirectory: string): string | null {
-    const resolveConfig = (configFile: string) => {
-      if (fs.existsSync(configFile))
-        return configFile;
-    };
-
-    const resolveConfigFileFromDirectory = (directory: string) => {
-      for (const configName of kDefaultConfigFiles) {
-        const configFile = resolveConfig(path.resolve(directory, configName));
-        if (configFile)
-          return configFile;
-      }
-    };
-
-    if (!fs.existsSync(configFileOrDirectory))
-      throw new Error(`${configFileOrDirectory} does not exist`);
-    if (fs.statSync(configFileOrDirectory).isDirectory()) {
-      // When passed a directory, look for a config file inside.
-      const configFile = resolveConfigFileFromDirectory(configFileOrDirectory);
-      if (configFile)
-        return configFile;
-      // If there is no config, assume this as a root testing directory.
-      return null;
-    } else {
-      // When passed a file, it must be a config file.
-      const configFile = resolveConfig(configFileOrDirectory);
-      return configFile!;
-    }
-  }
-
-  private async _createReporter(list: boolean) {
-    const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
-      dot: list ? ListModeReporter : DotReporter,
-      line: list ? ListModeReporter : LineReporter,
-      list: list ? ListModeReporter : ListReporter,
-      github: GitHubReporter,
-      json: JSONReporter,
-      junit: JUnitReporter,
-      null: EmptyReporter,
-      html: HtmlReporter,
-    };
-    const reporters: Reporter[] = [];
-    for (const r of this._configLoader.fullConfig().reporter) {
-      const [name, arg] = r;
-      if (name in defaultReporters) {
-        reporters.push(new defaultReporters[name as keyof typeof defaultReporters](arg));
-      } else {
-        const reporterConstructor = await this._configLoader.loadReporter(name);
-        reporters.push(new reporterConstructor(arg));
-      }
-    }
-    if (process.env.PW_TEST_REPORTER) {
-      const reporterConstructor = await this._configLoader.loadReporter(process.env.PW_TEST_REPORTER);
-      reporters.push(new reporterConstructor());
-    }
-
-    const someReporterPrintsToStdio = reporters.some(r => {
-      const prints = r.printsToStdio ? r.printsToStdio() : true;
-      return prints;
-    });
-    if (reporters.length && !someReporterPrintsToStdio) {
-      // Add a line/dot/list-mode reporter for convenience.
-      // Important to put it first, jsut in case some other reporter stalls onEnd.
-      if (list)
-        reporters.unshift(new ListModeReporter());
-      else
-        reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
-    }
-    return new Multiplexer(reporters);
-  }
-
   async listTestFiles(projectNames: string[] | undefined): Promise<any> {
-    const projects = this._collectProjects(projectNames);
-    const filesByProject = await this._collectFiles(projects, []);
+    const projects = collectProjects(this._configLoader, projectNames);
+    const filesByProject = await collectFilesForProjects(projects, []);
     const report: any = {
       projects: []
     };
@@ -189,306 +128,34 @@ export class Runner {
     return report;
   }
 
-  private _collectProjects(projectNames?: string[]): FullProjectInternal[] {
-    const fullConfig = this._configLoader.fullConfig();
-    if (!projectNames)
-      return [...fullConfig.projects];
-    const projectsToFind = new Set<string>();
-    const unknownProjects = new Map<string, string>();
-    projectNames.forEach(n => {
-      const name = n.toLocaleLowerCase();
-      projectsToFind.add(name);
-      unknownProjects.set(name, n);
-    });
-    const projects = fullConfig.projects.filter(project => {
-      const name = project.name.toLocaleLowerCase();
-      unknownProjects.delete(name);
-      return projectsToFind.has(name);
-    });
-    if (unknownProjects.size) {
-      const names = fullConfig.projects.map(p => p.name).filter(name => !!name);
-      if (!names.length)
-        throw new Error(`No named projects are specified in the configuration file`);
-      const unknownProjectNames = Array.from(unknownProjects.values()).map(n => `"${n}"`).join(', ');
-      throw new Error(`Project(s) ${unknownProjectNames} not found. Available named projects: ${names.map(name => `"${name}"`).join(', ')}`);
-    }
-    return projects;
-  }
-
-  private async _collectFiles(projects: FullProjectInternal[], commandLineFileFilters: TestFileFilter[]): Promise<Map<FullProjectInternal, string[]>> {
-    const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
-    const testFileExtension = (file: string) => extensions.includes(path.extname(file));
-    const filesByProject = new Map<FullProjectInternal, string[]>();
-    const fileToProjectName = new Map<string, string>();
-    const commandLineFileMatcher = commandLineFileFilters.length ? createFileMatcherFromFilters(commandLineFileFilters) : () => true;
-    for (const project of projects) {
-      const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
-      const testMatch = createFileMatcher(project.testMatch);
-      const testIgnore = createFileMatcher(project.testIgnore);
-      const testFiles = allFiles.filter(file => {
-        if (!testFileExtension(file))
-          return false;
-        const isTest = !testIgnore(file) && testMatch(file) && commandLineFileMatcher(file);
-        if (!isTest)
-          return false;
-        fileToProjectName.set(file, project.name);
-        return true;
-      });
-      filesByProject.set(project, testFiles);
-    }
-
-    return filesByProject;
-  }
-
-  private async _loadAllTests(options: RunOptions, errors: TestError[]): Promise<{ rootSuite: Suite, testGroups: TestGroup[] }> {
-    const config = this._configLoader.fullConfig();
-    const projects = this._collectProjects(options.projectFilter);
-    const filesByProject = await this._collectFiles(projects, options.testFileFilters);
-    const allTestFiles = new Set<string>();
-    for (const files of filesByProject.values())
-      files.forEach(file => allTestFiles.add(file));
-
-    // Load all tests.
-    const preprocessRoot = await this._loadTests(allTestFiles, errors);
-
-    // Complain about duplicate titles.
-    errors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
-
-    // Filter tests to respect line/column filter.
-    filterByFocusedLine(preprocessRoot, options.testFileFilters);
-
-    // Complain about only.
-    if (config.forbidOnly) {
-      const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
-      if (onlyTestsAndSuites.length > 0)
-        errors.push(...createForbidOnlyErrors(config, onlyTestsAndSuites));
-    }
-
-    // Filter only.
-    if (!options.listOnly)
-      filterOnly(preprocessRoot);
-
-    const rootSuite = await this._createRootSuite(preprocessRoot, options, filesByProject);
-
-    // Do not create test groups when listing.
-    if (options.listOnly)
-      return { rootSuite, testGroups: [] };
-
-    const testGroups = createTestGroups(rootSuite.suites, config.workers);
-    return { rootSuite, testGroups };
-  }
-
-  private async _createRootSuite(preprocessRoot: Suite, options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>): Promise<Suite> {
-    // Generate projects.
-    const fileSuites = new Map<string, Suite>();
-    for (const fileSuite of preprocessRoot.suites)
-      fileSuites.set(fileSuite._requireFile, fileSuite);
-
-    const rootSuite = new Suite('', 'root');
-    for (const [project, files] of filesByProject) {
-      const grepMatcher = createTitleMatcher(project.grep);
-      const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
-
-      const titleMatcher = (test: TestCase) => {
-        const grepTitle = test.titlePath().join(' ');
-        if (grepInvertMatcher?.(grepTitle))
-          return false;
-        return grepMatcher(grepTitle) && options.testTitleMatcher(grepTitle);
-      };
-
-      const projectSuite = new Suite(project.name, 'project');
-      projectSuite._projectConfig = project;
-      if (project._fullyParallel)
-        projectSuite._parallelMode = 'parallel';
-      rootSuite._addSuite(projectSuite);
-      for (const file of files) {
-        const fileSuite = fileSuites.get(file);
-        if (!fileSuite)
-          continue;
-        for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
-          const builtSuite = buildFileSuiteForProject(project, fileSuite, repeatEachIndex);
-          if (!filterTestsRemoveEmptySuites(builtSuite, titleMatcher))
-            continue;
-          projectSuite._addSuite(builtSuite);
-        }
-      }
-    }
-    return rootSuite;
-  }
-
-  private async _loadTests(testFiles: Set<string>, errors: TestError[]): Promise<Suite> {
-    if (process.env.PW_TEST_OOP_LOADER) {
-      const loaderHost = new LoaderHost();
-      await loaderHost.start(this._configLoader.serializedConfig());
-      try {
-        return await loaderHost.loadTestFiles([...testFiles], this._reporter);
-      } finally {
-        await loaderHost.stop();
-      }
-    }
-    const loadErrors: LoadError[] = [];
-    try {
-      return await loadTestFilesInProcess(this._configLoader.fullConfig(), [...testFiles], loadErrors);
-    } finally {
-      errors.push(...loadErrors);
-    }
-  }
-
-  private _filterForCurrentShard(rootSuite: Suite, testGroups: TestGroup[]) {
-    const shard = this._configLoader.fullConfig().shard;
-    if (!shard)
-      return;
-
-    // Each shard includes:
-    // - its portion of the regular tests
-    // - project setup tests for the projects that have regular tests in this shard
-    let shardableTotal = 0;
-    for (const group of testGroups)
-      shardableTotal += group.tests.length;
-
-    const shardTests = new Set<TestCase>();
-
-    // Each shard gets some tests.
-    const shardSize = Math.floor(shardableTotal / shard.total);
-    // First few shards get one more test each.
-    const extraOne = shardableTotal - shardSize * shard.total;
-
-    const currentShard = shard.current - 1; // Make it zero-based for calculations.
-    const from = shardSize * currentShard + Math.min(extraOne, currentShard);
-    const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
-    let current = 0;
-    const shardProjects = new Set<string>();
-    const shardTestGroups = [];
-    for (const group of testGroups) {
-      // Any test group goes to the shard that contains the first test of this group.
-      // So, this shard gets any group that starts at [from; to)
-      if (current >= from && current < to) {
-        shardProjects.add(group.projectId);
-        shardTestGroups.push(group);
-        for (const test of group.tests)
-          shardTests.add(test);
-      }
-      current += group.tests.length;
-    }
-    testGroups.length = 0;
-    testGroups.push(...shardTestGroups);
-
-    if (!shardTests.size) {
-      // Filtering with "only semantics" does not work when we have zero tests - it leaves all the tests.
-      // We need an empty suite in this case.
-      rootSuite._entries = [];
-    } else {
-      filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
-    }
-  }
-
   async runAllTests(options: RunOptions): Promise<FullResult['status']> {
     const config = this._configLoader.fullConfig();
+    const deadline = config.globalTimeout ? monotonicTime() + config.globalTimeout : 0;
+
     // Legacy webServer support.
     this._plugins.push(...webServerPluginsForConfig(config));
     // Docker support.
     this._plugins.push(dockerPlugin);
 
-    this._reporter = await this._createReporter(options.listOnly);
-    const taskRunner = new TaskRunner(this._reporter, config.globalTimeout);
+    const reporter = await createReporter(this._configLoader, options.listOnly);
+    const taskRunner = createTaskRunner(config, reporter, this._plugins, options);
 
-    // Setup the plugins.
-    for (const plugin of this._plugins) {
-      taskRunner.addTask('plugin setup', async () => {
-        await plugin.setup?.(config, config._configDir, this._reporter);
-        return () => plugin.teardown?.();
-      });
-    }
+    const context: TaskRunnerContext = {
+      config,
+      configLoader: this._configLoader,
+      options,
+      reporter,
+    };
 
-    // Run global setup & teardown.
-    if (config.globalSetup || config.globalTeardown) {
-      taskRunner.addTask('global setup', async () => {
-        const setupHook = config.globalSetup ? await this._configLoader.loadGlobalHook(config.globalSetup) : undefined;
-        const teardownHook = config.globalTeardown ? await this._configLoader.loadGlobalHook(config.globalTeardown) : undefined;
-        const globalSetupResult = setupHook ? await setupHook(this._configLoader.fullConfig()) : undefined;
-        return async () => {
-          if (typeof globalSetupResult === 'function')
-            await globalSetupResult();
-          await teardownHook?.(config);
-        };
-      });
-    }
-
+    reporter.onConfigure(config);
+    const taskStatus = await taskRunner.run(context, deadline);
     let status: FullResult['status'] = 'passed';
-
-    // Load tests.
-    let loadedTests!: { rootSuite: Suite, testGroups: TestGroup[] };
-    taskRunner.addTask('load tests', async ({ errors }) => {
-      loadedTests = await this._loadAllTests(options, errors);
-      if (errors.length)
-        return;
-
-      // Fail when no tests.
-      if (!loadedTests.rootSuite.allTests().length && !options.passWithNoTests)
-        throw new Error(`No tests found`);
-
-      if (!options.listOnly) {
-        this._filterForCurrentShard(loadedTests.rootSuite, loadedTests.testGroups);
-        config._maxConcurrentTestGroups = loadedTests.testGroups.length;
-      }
-    });
-
-    if (!options.listOnly) {
-      taskRunner.addTask('prepare to run', async () => {
-        // Remove output directores.
-        await this._removeOutputDirs(options);
-      });
-
-      taskRunner.addTask('plugin begin', async () => {
-        for (const plugin of this._plugins)
-          await plugin.begin?.(loadedTests.rootSuite);
-      });
-    }
-
-    taskRunner.addTask('report begin', async () => {
-      this._reporter.onBegin?.(config, loadedTests.rootSuite);
-      return async () => {
-        await this._reporter.onEnd();
-      };
-    });
-
-    if (!options.listOnly) {
-      let dispatcher: Dispatcher;
-
-      taskRunner.addTask('setup workers', async () => {
-        const { rootSuite, testGroups } = loadedTests;
-
-        if (config._ignoreSnapshots) {
-          this._reporter.onStdOut(colors.dim([
-            'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
-            '- expect().toMatchSnapshot()',
-            '- expect().toHaveScreenshot()',
-            '',
-          ].join('\n')));
-        }
-
-        dispatcher = new Dispatcher(this._configLoader, testGroups, this._reporter);
-
-        return async () => {
-          // Stop will stop workers and mark some tests as interrupted.
-          await dispatcher.stop();
-          if (dispatcher.hasWorkerErrors() || rootSuite.allTests().some(test => !test.ok()))
-            status = 'failed';
-        };
-      });
-
-      taskRunner.addTask('test suite', async () => {
-        await dispatcher.run();
-      });
-    }
-
-    const deadline = config.globalTimeout ? monotonicTime() + config.globalTimeout : 0;
-
-    this._reporter.onConfigure(config);
-    const taskStatus = await taskRunner.run(deadline);
+    if (context.dispatcher?.hasWorkerErrors() || context.rootSuite?.allTests().some(test => !test.ok()))
+      status = 'failed';
     if (status === 'passed' && taskStatus !== 'passed')
       status = taskStatus;
-    await this._reporter.onExit({ status });
+    await reporter.onExit({ status });
+
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.
     // See https://github.com/nodejs/node/issues/12921
@@ -496,9 +163,365 @@ export class Runner {
     await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
     return status;
   }
+}
 
-  private async _removeOutputDirs(options: RunOptions) {
-    const config = this._configLoader.fullConfig();
+export function resolveConfigFile(configFileOrDirectory: string): string | null {
+  const resolveConfig = (configFile: string) => {
+    if (fs.existsSync(configFile))
+      return configFile;
+  };
+
+  const resolveConfigFileFromDirectory = (directory: string) => {
+    for (const configName of kDefaultConfigFiles) {
+      const configFile = resolveConfig(path.resolve(directory, configName));
+      if (configFile)
+        return configFile;
+    }
+  };
+
+  if (!fs.existsSync(configFileOrDirectory))
+    throw new Error(`${configFileOrDirectory} does not exist`);
+  if (fs.statSync(configFileOrDirectory).isDirectory()) {
+    // When passed a directory, look for a config file inside.
+    const configFile = resolveConfigFileFromDirectory(configFileOrDirectory);
+    if (configFile)
+      return configFile;
+    // If there is no config, assume this as a root testing directory.
+    return null;
+  } else {
+    // When passed a file, it must be a config file.
+    const configFile = resolveConfig(configFileOrDirectory);
+    return configFile!;
+  }
+}
+
+async function createReporter(configLoader: ConfigLoader, list: boolean) {
+  const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
+    dot: list ? ListModeReporter : DotReporter,
+    line: list ? ListModeReporter : LineReporter,
+    list: list ? ListModeReporter : ListReporter,
+    github: GitHubReporter,
+    json: JSONReporter,
+    junit: JUnitReporter,
+    null: EmptyReporter,
+    html: HtmlReporter,
+  };
+  const reporters: Reporter[] = [];
+  for (const r of configLoader.fullConfig().reporter) {
+    const [name, arg] = r;
+    if (name in defaultReporters) {
+      reporters.push(new defaultReporters[name as keyof typeof defaultReporters](arg));
+    } else {
+      const reporterConstructor = await configLoader.loadReporter(name);
+      reporters.push(new reporterConstructor(arg));
+    }
+  }
+  if (process.env.PW_TEST_REPORTER) {
+    const reporterConstructor = await configLoader.loadReporter(process.env.PW_TEST_REPORTER);
+    reporters.push(new reporterConstructor());
+  }
+
+  const someReporterPrintsToStdio = reporters.some(r => {
+    const prints = r.printsToStdio ? r.printsToStdio() : true;
+    return prints;
+  });
+  if (reporters.length && !someReporterPrintsToStdio) {
+    // Add a line/dot/list-mode reporter for convenience.
+    // Important to put it first, jsut in case some other reporter stalls onEnd.
+    if (list)
+      reporters.unshift(new ListModeReporter());
+    else
+      reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
+  }
+  return new Multiplexer(reporters);
+}
+
+function collectProjects(configLoader: ConfigLoader, projectNames?: string[]): FullProjectInternal[] {
+  const fullConfig = configLoader.fullConfig();
+  if (!projectNames)
+    return [...fullConfig.projects];
+  const projectsToFind = new Set<string>();
+  const unknownProjects = new Map<string, string>();
+  projectNames.forEach(n => {
+    const name = n.toLocaleLowerCase();
+    projectsToFind.add(name);
+    unknownProjects.set(name, n);
+  });
+  const projects = fullConfig.projects.filter(project => {
+    const name = project.name.toLocaleLowerCase();
+    unknownProjects.delete(name);
+    return projectsToFind.has(name);
+  });
+  if (unknownProjects.size) {
+    const names = fullConfig.projects.map(p => p.name).filter(name => !!name);
+    if (!names.length)
+      throw new Error(`No named projects are specified in the configuration file`);
+    const unknownProjectNames = Array.from(unknownProjects.values()).map(n => `"${n}"`).join(', ');
+    throw new Error(`Project(s) ${unknownProjectNames} not found. Available named projects: ${names.map(name => `"${name}"`).join(', ')}`);
+  }
+  return projects;
+}
+
+async function collectFilesForProjects(projects: FullProjectInternal[], commandLineFileFilters: TestFileFilter[]): Promise<Map<FullProjectInternal, string[]>> {
+  const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
+  const testFileExtension = (file: string) => extensions.includes(path.extname(file));
+  const filesByProject = new Map<FullProjectInternal, string[]>();
+  const fileToProjectName = new Map<string, string>();
+  const commandLineFileMatcher = commandLineFileFilters.length ? createFileMatcherFromFilters(commandLineFileFilters) : () => true;
+  for (const project of projects) {
+    const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
+    const testMatch = createFileMatcher(project.testMatch);
+    const testIgnore = createFileMatcher(project.testIgnore);
+    const testFiles = allFiles.filter(file => {
+      if (!testFileExtension(file))
+        return false;
+      const isTest = !testIgnore(file) && testMatch(file) && commandLineFileMatcher(file);
+      if (!isTest)
+        return false;
+      fileToProjectName.set(file, project.name);
+      return true;
+    });
+    filesByProject.set(project, testFiles);
+  }
+
+  return filesByProject;
+}
+
+async function loadAllTests(configLoader: ConfigLoader, reporter: Multiplexer, options: RunOptions, errors: TestError[]): Promise<{ rootSuite: Suite, testGroups: TestGroup[] }> {
+  const config = configLoader.fullConfig();
+  const projects = collectProjects(configLoader, options.projectFilter);
+  const filesByProject = await collectFilesForProjects(projects, options.testFileFilters);
+  const allTestFiles = new Set<string>();
+  for (const files of filesByProject.values())
+    files.forEach(file => allTestFiles.add(file));
+
+  // Load all tests.
+  const preprocessRoot = await loadTests(configLoader, reporter, allTestFiles, errors);
+
+  // Complain about duplicate titles.
+  errors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
+
+  // Filter tests to respect line/column filter.
+  filterByFocusedLine(preprocessRoot, options.testFileFilters);
+
+  // Complain about only.
+  if (config.forbidOnly) {
+    const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
+    if (onlyTestsAndSuites.length > 0)
+      errors.push(...createForbidOnlyErrors(onlyTestsAndSuites));
+  }
+
+  // Filter only.
+  if (!options.listOnly)
+    filterOnly(preprocessRoot);
+
+  const rootSuite = await createRootSuite(preprocessRoot, options, filesByProject);
+
+  // Do not create test groups when listing.
+  if (options.listOnly)
+    return { rootSuite, testGroups: [] };
+
+  const testGroups = createTestGroups(rootSuite.suites, config.workers);
+  return { rootSuite, testGroups };
+}
+
+async function createRootSuite(preprocessRoot: Suite, options: RunOptions, filesByProject: Map<FullProjectInternal, string[]>): Promise<Suite> {
+  // Generate projects.
+  const fileSuites = new Map<string, Suite>();
+  for (const fileSuite of preprocessRoot.suites)
+    fileSuites.set(fileSuite._requireFile, fileSuite);
+
+  const rootSuite = new Suite('', 'root');
+  for (const [project, files] of filesByProject) {
+    const grepMatcher = createTitleMatcher(project.grep);
+    const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
+
+    const titleMatcher = (test: TestCase) => {
+      const grepTitle = test.titlePath().join(' ');
+      if (grepInvertMatcher?.(grepTitle))
+        return false;
+      return grepMatcher(grepTitle) && options.testTitleMatcher(grepTitle);
+    };
+
+    const projectSuite = new Suite(project.name, 'project');
+    projectSuite._projectConfig = project;
+    if (project._fullyParallel)
+      projectSuite._parallelMode = 'parallel';
+    rootSuite._addSuite(projectSuite);
+    for (const file of files) {
+      const fileSuite = fileSuites.get(file);
+      if (!fileSuite)
+        continue;
+      for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
+        const builtSuite = buildFileSuiteForProject(project, fileSuite, repeatEachIndex);
+        if (!filterTestsRemoveEmptySuites(builtSuite, titleMatcher))
+          continue;
+        projectSuite._addSuite(builtSuite);
+      }
+    }
+  }
+  return rootSuite;
+}
+
+async function loadTests(configLoader: ConfigLoader, reporter: Multiplexer, testFiles: Set<string>, errors: TestError[]): Promise<Suite> {
+  if (process.env.PW_TEST_OOP_LOADER) {
+    const loaderHost = new LoaderHost();
+    await loaderHost.start(configLoader.serializedConfig());
+    try {
+      return await loaderHost.loadTestFiles([...testFiles], reporter);
+    } finally {
+      await loaderHost.stop();
+    }
+  }
+  const loadErrors: LoadError[] = [];
+  try {
+    return await loadTestFilesInProcess(configLoader.fullConfig(), [...testFiles], loadErrors);
+  } finally {
+    errors.push(...loadErrors);
+  }
+}
+
+async function filterForCurrentShard(configLoader: ConfigLoader, rootSuite: Suite, testGroups: TestGroup[]) {
+  const shard = configLoader.fullConfig().shard;
+  if (!shard)
+    return;
+
+  // Each shard includes:
+  // - its portion of the regular tests
+  // - project setup tests for the projects that have regular tests in this shard
+  let shardableTotal = 0;
+  for (const group of testGroups)
+    shardableTotal += group.tests.length;
+
+  const shardTests = new Set<TestCase>();
+
+  // Each shard gets some tests.
+  const shardSize = Math.floor(shardableTotal / shard.total);
+  // First few shards get one more test each.
+  const extraOne = shardableTotal - shardSize * shard.total;
+
+  const currentShard = shard.current - 1; // Make it zero-based for calculations.
+  const from = shardSize * currentShard + Math.min(extraOne, currentShard);
+  const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
+  let current = 0;
+  const shardProjects = new Set<string>();
+  const shardTestGroups = [];
+  for (const group of testGroups) {
+    // Any test group goes to the shard that contains the first test of this group.
+    // So, this shard gets any group that starts at [from; to)
+    if (current >= from && current < to) {
+      shardProjects.add(group.projectId);
+      shardTestGroups.push(group);
+      for (const test of group.tests)
+        shardTests.add(test);
+    }
+    current += group.tests.length;
+  }
+  testGroups.length = 0;
+  testGroups.push(...shardTestGroups);
+
+  if (!shardTests.size) {
+    // Filtering with "only semantics" does not work when we have zero tests - it leaves all the tests.
+    // We need an empty suite in this case.
+    rootSuite._entries = [];
+  } else {
+    filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
+  }
+}
+
+function createPluginSetupTask(plugin: TestRunnerPlugin): Task<TaskRunnerContext> {
+  return async ({ config, reporter }) => {
+    await plugin.setup?.(config, config._configDir, reporter);
+    return () => plugin.teardown?.();
+  };
+}
+
+function createGlobalSetupTask(): Task<TaskRunnerContext> {
+  return async ({ config, configLoader }) => {
+    const setupHook = config.globalSetup ? await configLoader.loadGlobalHook(config.globalSetup) : undefined;
+    const teardownHook = config.globalTeardown ? await configLoader.loadGlobalHook(config.globalTeardown) : undefined;
+    const globalSetupResult = setupHook ? await setupHook(configLoader.fullConfig()) : undefined;
+    return async () => {
+      if (typeof globalSetupResult === 'function')
+        await globalSetupResult();
+      await teardownHook?.(config);
+    };
+  };
+}
+
+function createLoadTask(): Task<TaskRunnerContext> {
+  return async (context, errors) => {
+    const { reporter, options, configLoader } = context;
+    const { rootSuite, testGroups } = await loadAllTests(configLoader, reporter, options, errors);
+    context.rootSuite = rootSuite;
+    context.testGroups = testGroups;
+    if (errors.length)
+      return;
+
+    // Fail when no tests.
+    if (!rootSuite.allTests().length && !context.options.passWithNoTests)
+      throw new Error(`No tests found`);
+
+    if (!context.options.listOnly) {
+      filterForCurrentShard(context.configLoader, rootSuite, testGroups);
+      context.config._maxConcurrentTestGroups = testGroups.length;
+    }
+  };
+}
+
+function createSetupWorkersTask(): Task<TaskRunnerContext> {
+  return async params => {
+    const { config, configLoader, testGroups, reporter } = params;
+    if (config._ignoreSnapshots) {
+      reporter.onStdOut(colors.dim([
+        'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
+        '- expect().toMatchSnapshot()',
+        '- expect().toHaveScreenshot()',
+        '',
+      ].join('\n')));
+    }
+
+    const dispatcher = new Dispatcher(configLoader, testGroups!, reporter);
+    params.dispatcher = dispatcher;
+    return async () => {
+      await dispatcher.stop();
+    };
+  };
+}
+
+function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer, plugins: TestRunnerPlugin[], options: RunOptions): TaskRunner<TaskRunnerContext> {
+  const taskRunner = new TaskRunner<TaskRunnerContext>(reporter, config.globalTimeout);
+
+  for (const plugin of plugins)
+    taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
+  if (config.globalSetup || config.globalTeardown)
+    taskRunner.addTask('global setup', createGlobalSetupTask());
+  taskRunner.addTask('load tests', createLoadTask());
+
+  if (!options.listOnly) {
+    taskRunner.addTask('prepare to run', createRemoveOutputDirsTask());
+    taskRunner.addTask('plugin begin', async ({ rootSuite }) => {
+      for (const plugin of plugins)
+        await plugin.begin?.(rootSuite!);
+    });
+  }
+
+  taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
+    reporter.onBegin?.(config, rootSuite!);
+    return () => reporter.onEnd();
+  });
+
+  if (!options.listOnly) {
+    taskRunner.addTask('setup workers', createSetupWorkersTask());
+    taskRunner.addTask('test suite', async ({ dispatcher }) => dispatcher!.run());
+  }
+
+  return taskRunner;
+}
+
+function createRemoveOutputDirsTask(): Task<TaskRunnerContext> {
+  return async ({ options, configLoader }) => {
+    const config = configLoader.fullConfig();
     const outputDirs = new Set<string>();
     for (const p of config.projects) {
       if (!options.projectFilter || options.projectFilter.includes(p.name))
@@ -516,7 +539,7 @@ export class Runner {
         throw error;
       }
     })));
-  }
+  };
 }
 
 function createFileMatcherFromFilter(filter: TestFileFilter) {
@@ -755,7 +778,7 @@ class ListModeReporter implements Reporter {
   }
 }
 
-function createForbidOnlyErrors(config: FullConfigInternal, onlyTestsAndSuites: (TestCase | Suite)[]): TestError[] {
+function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[]): TestError[] {
   const errors: TestError[] = [];
   for (const testOrSuite of onlyTestsAndSuites) {
     // Skip root and file.

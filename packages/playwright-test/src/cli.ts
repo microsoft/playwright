@@ -20,7 +20,7 @@ import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
-import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
+import { Runner, builtInReporters, kDefaultConfigFiles, resolveConfigFile } from './runner';
 import type { ConfigCLIOverrides } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import { fileIsModule } from './util';
@@ -147,7 +147,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   // When no --config option is passed, let's look for the config file in the current directory.
   const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
-  const resolvedConfigFile = Runner.resolveConfigFile(configFileOrDirectory);
+  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 
@@ -190,7 +190,7 @@ async function listTestFiles(opts: { [key: string]: any }) {
   const write = process.stdout.write.bind(process.stdout);
   process.stdout.write = (() => {}) as any;
   const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
-  const resolvedConfigFile = Runner.resolveConfigFile(configFileOrDirectory)!;
+  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory)!;
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 
