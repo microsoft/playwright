@@ -84,8 +84,13 @@ class Helper {
     return (direction: 'send' | 'receive', message: object) => {
       if (protocolLogger)
         protocolLogger(direction, message);
-      if (debugLogger.isEnabled('protocol'))
-        debugLogger.log('protocol', (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(message));
+      if (debugLogger.isEnabled('protocol')) {
+        let text = JSON.stringify(message);
+        const MAX_LENGTH = 80 * 10;
+        if (text.length > MAX_LENGTH)
+          text = text.substring(0, MAX_LENGTH / 2) + ' <<<<<( LOG TRUNCATED )>>>>> ' + text.substring(text.length - MAX_LENGTH / 2);
+        debugLogger.log('protocol', (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + text);
+      }
     };
   }
 
