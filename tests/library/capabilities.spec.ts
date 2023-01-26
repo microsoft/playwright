@@ -158,3 +158,9 @@ it('should not crash on storage.getDirectory()', async ({ page, server, browserN
     expect(error).toBeFalsy();
   }
 });
+
+it('navigator.clipboard should be present', async ({ page, server, browserName, browserMajorVersion }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18901' });
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => navigator.clipboard)).toBeTruthy();
+});
