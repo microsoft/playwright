@@ -548,6 +548,21 @@ playwrightTest('should use proxy with connectOverCDP', async ({ browserType, ser
   }
 });
 
+playwrightTest('should be able to connect via localhost', async ({ browserType }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP(`http://localhost:${port}`);
+    const contexts = cdpBrowser.contexts();
+    expect(contexts.length).toBe(1);
+    await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
 playwrightTest('should pass args with spaces', async ({ browserType, createUserDataDir }, testInfo) => {
   const browser = await browserType.launchPersistentContext(await createUserDataDir(), {
     args: ['--user-agent=I am Foo']
