@@ -72,7 +72,7 @@ it('should play video @smoke', async ({ page, asset, browserName, platform, mode
   // Also the test is very flaky on Linux WebKit.
   it.fixme(browserName === 'webkit' && platform !== 'darwin');
   it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/5721');
-  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) == 20, 'Does not work on BigSur');
+  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 20, 'Does not work on BigSur');
 
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.
   const fileName = browserName === 'webkit' ? 'video_mp4.html' : 'video.html';
