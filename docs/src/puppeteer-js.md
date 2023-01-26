@@ -143,8 +143,6 @@ Playwright Test creates an isolated [Page] object for each test. However, if you
 
 ## Testing
 
-With a few lines of code, you can hook up Playwright to your existing JavaScript [test runner](./test-runners).
-
 To improve testing, it is advised to use [Locators](./api/class-locator) and web-first [Assertions](./test-assertions). See [Writing Tests](./writing-tests)
 
 It is common with Puppeteer to use `page.evaluate()` or `page.$eval()` to inspect an [ElementHandle] and extract the value of text content, attribute, class... Web-first [Assertions](./test-assertions) offers several matchers for this purpose, it is more reliable and readable.
