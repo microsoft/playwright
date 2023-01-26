@@ -65,14 +65,14 @@ it('should respect CSP @smoke', async ({ page, server }) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it('should play video @smoke', async ({ page, asset, browserName, platform, mode }) => {
+it.only('should play video @smoke', async ({ page, asset, browserName, platform, mode }) => {
   it.skip(mode === 'docker', 'local paths do not work with remote setup');
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
   // Also the test is very flaky on Linux WebKit.
   it.fixme(browserName === 'webkit' && platform !== 'darwin');
   it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/5721');
-  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) >= 20, 'Does not work on BigSur');
+  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) == 20, 'Does not work on BigSur');
 
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.
   const fileName = browserName === 'webkit' ? 'video_mp4.html' : 'video.html';
