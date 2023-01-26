@@ -7,11 +7,6 @@ Playwright Library provides unified APIs for launching and interacting with brow
 
 Under most circumstances, for end-to-end testing, you'll want to use `@playwright/test` (Playwright Test), and not `playwright` (Playwright Library) directly. To get started with Playwright Test, follow the [Getting Started Guide](./intro.md).
 
-## When Should Playwright Library Be Used Directly?
-
-- Creating an integration for a third party test runner. For example, third-party runner plugins listed [here](./test-runners.md) are built on top of the Playwright Library.
-- Automation and scraping.
-
 ## Differences when using library
 
 ### Library Example
