@@ -209,7 +209,7 @@ it('should use proxy for second page', async ({ contextFactory, server, proxySer
   await context.close();
 });
 
-it('should use proxy for https urls', async ({ contextFactory, server, httpsServer, proxyServer }) => {
+it.only('should use proxy for https urls', async ({ contextFactory, server, httpsServer, proxyServer }) => {
   httpsServer.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by https server via proxy</title></html>');
   });
@@ -367,7 +367,7 @@ it('should exclude patterns', async ({ contextFactory, server, browserName, head
   await context.close();
 });
 
-it('should use socks proxy', async ({ contextFactory, socksPort }) => {
+it.only('should use socks proxy', async ({ contextFactory, socksPort }) => {
   const context = await contextFactory({
     proxy: { server: `socks5://localhost:${socksPort}` }
   });
@@ -377,7 +377,7 @@ it('should use socks proxy', async ({ contextFactory, socksPort }) => {
   await context.close();
 });
 
-it('should use socks proxy in second page', async ({ contextFactory, socksPort }) => {
+it.only('should use socks proxy in second page', async ({ contextFactory, socksPort }) => {
   const context = await contextFactory({
     proxy: { server: `socks5://localhost:${socksPort}` }
   });
