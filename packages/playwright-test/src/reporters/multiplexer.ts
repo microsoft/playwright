@@ -28,7 +28,6 @@ export class Multiplexer implements Reporter {
   private _reporters: Reporter[];
   private _deferredErrors: TestError[] | null = [];
   private _deferredStdIO: StdIOChunk[] | null = [];
-  hasErrors = false;
   private _config!: FullConfig;
 
   constructor(reporters: Reporter[]) {
@@ -107,8 +106,6 @@ export class Multiplexer implements Reporter {
   }
 
   onError(error: TestError) {
-    this.hasErrors = true;
-
     if (this._deferredErrors) {
       this._deferredErrors.push(error);
       return;

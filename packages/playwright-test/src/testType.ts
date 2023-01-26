@@ -15,7 +15,7 @@
  */
 
 import { expect } from './expect';
-import { currentlyLoadingFileSuite, currentTestInfo, addFatalError, setCurrentlyLoadingFileSuite } from './globals';
+import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
@@ -68,15 +68,14 @@ export class TestTypeImpl {
   private _currentSuite(location: Location, title: string): Suite | undefined {
     const suite = currentlyLoadingFileSuite();
     if (!suite) {
-      addFatalError([
+      throw new Error([
         `Playwright Test did not expect ${title} to be called here.`,
         `Most common reasons include:`,
         `- You are calling ${title} in a configuration file.`,
         `- You are calling ${title} in a file that is imported by the configuration file.`,
         `- You have two different versions of @playwright/test. This usually happens`,
         `  when one of the dependencies in your package.json depends on @playwright/test.`,
-      ].join('\n'), location);
-      return;
+      ].join('\n'));
     }
     return suite;
   }
@@ -123,7 +122,7 @@ export class TestTypeImpl {
 
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
-        addFatalError('describe.parallel cannot be nested inside describe.serial', location);
+        throw new Error('describe.parallel cannot be nested inside describe.serial');
     }
 
     setCurrentlyLoadingFileSuite(child);
@@ -152,11 +151,11 @@ export class TestTypeImpl {
 
     if (options.mode !== undefined) {
       if (suite._parallelMode !== 'default')
-        addFatalError('Parallel mode is already assigned for the enclosing scope.', location);
+        throw new Error('Parallel mode is already assigned for the enclosing scope.');
       suite._parallelMode = options.mode;
       for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
         if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
-          addFatalError('describe.parallel cannot be nested inside describe.serial', location);
+          throw new Error('describe.parallel cannot be nested inside describe.serial');
       }
     }
   }
@@ -182,12 +181,10 @@ export class TestTypeImpl {
     }
 
     const testInfo = currentTestInfo();
-    if (!testInfo) {
-      addFatalError(`test.${type}() can only be called inside test, describe block or fixture`, location);
-      return;
-    }
+    if (!testInfo)
+      throw new Error(`test.${type}() can only be called inside test, describe block or fixture`);
     if (typeof modifierArgs[0] === 'function')
-      addFatalError(`test.${type}() with a function can only be called inside describe block`, location);
+      throw new Error(`test.${type}() with a function can only be called inside describe block`);
     testInfo[type](...modifierArgs as [any, any]);
   }
 
@@ -199,10 +196,8 @@ export class TestTypeImpl {
     }
 
     const testInfo = currentTestInfo();
-    if (!testInfo) {
-      addFatalError(`test.setTimeout() can only be called from a test`, location);
-      return;
-    }
+    if (!testInfo)
+      throw new Error(`test.setTimeout() can only be called from a test`);
     testInfo.setTimeout(timeout);
   }
 
@@ -215,10 +210,8 @@ export class TestTypeImpl {
 
   private async _step<T>(location: Location, title: string, body: () => Promise<T>): Promise<T> {
     const testInfo = currentTestInfo();
-    if (!testInfo) {
-      addFatalError(`test.step() can only be called from a test`, location);
-      return undefined as any;
-    }
+    if (!testInfo)
+      throw new Error(`test.step() can only be called from a test`);
     const step = testInfo._addStep({
       category: 'test.step',
       title,

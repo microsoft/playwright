@@ -298,7 +298,7 @@ test('should print errors with inconsistent message/stack', async ({ runInlineTe
 test('should print "no tests found" error', async ({ runInlineTest }) => {
   const result = await runInlineTest({ });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('no tests found.');
+  expect(result.output).toContain('No tests found');
 });
 
 test('should not crash on undefined body with manual attachments', async ({ runInlineTest }) => {

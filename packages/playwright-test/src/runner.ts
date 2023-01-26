@@ -41,13 +41,13 @@ import { Multiplexer } from './reporters/multiplexer';
 import type { TestCase } from './test';
 import { Suite } from './test';
 import type { Config, FullConfigInternal, FullProjectInternal } from './types';
-import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher, serializeError } from './util';
+import { createFileMatcher, createFileMatcherFromFilters, createTitleMatcher } from './util';
 import type { Matcher, TestFileFilter } from './util';
-import { setFatalErrorSink } from './globals';
 import { buildFileSuiteForProject, filterOnly, filterSuite, filterSuiteWithOnlySemantics, filterTestsRemoveEmptySuites } from './suiteUtils';
 import { LoaderHost } from './loaderHost';
 import { loadTestFilesInProcess } from './testLoader';
 import { TaskRunner } from './taskRunner';
+import type { LoadError } from './fixtures';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -240,7 +240,7 @@ export class Runner {
     return filesByProject;
   }
 
-  private async _loadAllTests(options: RunOptions): Promise<{ rootSuite: Suite, testGroups: TestGroup[] }> {
+  private async _loadAllTests(options: RunOptions, errors: TestError[]): Promise<{ rootSuite: Suite, testGroups: TestGroup[] }> {
     const config = this._configLoader.fullConfig();
     const projects = this._collectProjects(options.projectFilter);
     const filesByProject = await this._collectFiles(projects, options.testFileFilters);
@@ -249,10 +249,10 @@ export class Runner {
       files.forEach(file => allTestFiles.add(file));
 
     // Load all tests.
-    const preprocessRoot = await this._loadTests(allTestFiles);
+    const preprocessRoot = await this._loadTests(allTestFiles, errors);
 
     // Complain about duplicate titles.
-    createDuplicateTitlesErrors(config, preprocessRoot).forEach(e => this._reporter.onError(e));
+    errors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
 
     // Filter tests to respect line/column filter.
     filterByFocusedLine(preprocessRoot, options.testFileFilters);
@@ -261,7 +261,7 @@ export class Runner {
     if (config.forbidOnly) {
       const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
       if (onlyTestsAndSuites.length > 0)
-        createForbidOnlyErrors(config, onlyTestsAndSuites).forEach(e => this._reporter.onError(e));
+        errors.push(...createForbidOnlyErrors(config, onlyTestsAndSuites));
     }
 
     // Filter only.
@@ -316,7 +316,7 @@ export class Runner {
     return rootSuite;
   }
 
-  private async _loadTests(testFiles: Set<string>): Promise<Suite> {
+  private async _loadTests(testFiles: Set<string>, errors: TestError[]): Promise<Suite> {
     if (process.env.PW_TEST_OOP_LOADER) {
       const loaderHost = new LoaderHost();
       await loaderHost.start(this._configLoader.serializedConfig());
@@ -326,11 +326,11 @@ export class Runner {
         await loaderHost.stop();
       }
     }
-    const loadErrors: TestError[] = [];
+    const loadErrors: LoadError[] = [];
     try {
       return await loadTestFilesInProcess(this._configLoader.fullConfig(), [...testFiles], loadErrors);
     } finally {
-      loadErrors.forEach(e => this._reporter.onError(e));
+      errors.push(...loadErrors);
     }
   }
 
@@ -390,7 +390,6 @@ export class Runner {
     this._plugins.push(dockerPlugin);
 
     this._reporter = await this._createReporter(options.listOnly);
-    setFatalErrorSink(error => this._reporter.onError(error));
     const taskRunner = new TaskRunner(this._reporter, config.globalTimeout);
 
     // Setup the plugins.
@@ -419,21 +418,14 @@ export class Runner {
 
     // Load tests.
     let loadedTests!: { rootSuite: Suite, testGroups: TestGroup[] };
-    taskRunner.addTask('load tests', async () => {
-      loadedTests = await this._loadAllTests(options);
-      if (this._reporter.hasErrors) {
-        status = 'failed';
-        taskRunner.stop();
+    taskRunner.addTask('load tests', async ({ errors }) => {
+      loadedTests = await this._loadAllTests(options, errors);
+      if (errors.length)
         return;
-      }
 
       // Fail when no tests.
-      if (!loadedTests.rootSuite.allTests().length && !options.passWithNoTests) {
-        this._reporter.onError(createNoTestsError());
-        status = 'failed';
-        taskRunner.stop();
-        return;
-      }
+      if (!loadedTests.rootSuite.allTests().length && !options.passWithNoTests)
+        throw new Error(`No tests found`);
 
       if (!options.listOnly) {
         this._filterForCurrentShard(loadedTests.rootSuite, loadedTests.testGroups);
@@ -444,11 +436,7 @@ export class Runner {
     if (!options.listOnly) {
       taskRunner.addTask('prepare to run', async () => {
         // Remove output directores.
-        if (!await this._removeOutputDirs(options)) {
-          status = 'failed';
-          taskRunner.stop();
-          return;
-        }
+        await this._removeOutputDirs(options);
       });
 
       taskRunner.addTask('plugin begin', async () => {
@@ -509,7 +497,7 @@ export class Runner {
     return status;
   }
 
-  private async _removeOutputDirs(options: RunOptions): Promise<boolean> {
+  private async _removeOutputDirs(options: RunOptions) {
     const config = this._configLoader.fullConfig();
     const outputDirs = new Set<string>();
     for (const p of config.projects) {
@@ -517,23 +505,17 @@ export class Runner {
         outputDirs.add(p.outputDir);
     }
 
-    try {
-      await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir).catch(async (error: any) => {
-        if ((error as any).code === 'EBUSY') {
-          // We failed to remove folder, might be due to the whole folder being mounted inside a container:
-          //   https://github.com/microsoft/playwright/issues/12106
-          // Do a best-effort to remove all files inside of it instead.
-          const entries = await readDirAsync(outputDir).catch(e => []);
-          await Promise.all(entries.map(entry => removeFolderAsync(path.join(outputDir, entry))));
-        } else {
-          throw error;
-        }
-      })));
-    } catch (e) {
-      this._reporter.onError(serializeError(e));
-      return false;
-    }
-    return true;
+    await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir).catch(async (error: any) => {
+      if ((error as any).code === 'EBUSY') {
+        // We failed to remove folder, might be due to the whole folder being mounted inside a container:
+        //   https://github.com/microsoft/playwright/issues/12106
+        // Do a best-effort to remove all files inside of it instead.
+        const entries = await readDirAsync(outputDir).catch(e => []);
+        await Promise.all(entries.map(entry => removeFolderAsync(path.join(outputDir, entry))));
+      } else {
+        throw error;
+      }
+    })));
   }
 }
 
@@ -805,14 +787,6 @@ function createDuplicateTitlesErrors(config: FullConfigInternal, rootSuite: Suit
     }
   }
   return errors;
-}
-
-function createNoTestsError(): TestError {
-  return createStacklessError(`=================\n no tests found.\n=================`);
-}
-
-function createStacklessError(message: string, location?: TestError['location']): TestError {
-  return { message, location };
 }
 
 function sanitizeConfigForJSON(object: any, visited: Set<any>): any {

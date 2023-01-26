@@ -16,12 +16,12 @@
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
-import type { FullResult, Reporter } from '../reporter';
+import type { FullResult, Reporter, TestError } from '../reporter';
 import { SigIntWatcher } from './sigIntWatcher';
 import { serializeError } from './util';
 
 type TaskTeardown = () => Promise<any> | undefined;
-type Task = () => Promise<TaskTeardown | void> | undefined;
+type Task = (params: { errors: TestError[] }) => Promise<TaskTeardown | void> | undefined;
 
 export class TaskRunner {
   private _tasks: { name: string, task: Task }[] = [];
@@ -58,16 +58,22 @@ export class TaskRunner {
           if (this._interrupted)
             break;
           debug('pw:test:task')(`"${name}" started`);
+          const errors: TestError[] = [];
           try {
-            const teardown = await task();
+            const teardown = await task({ errors });
             if (teardown)
               teardownRunner._tasks.unshift({ name: `teardown for ${name}`, task: teardown });
           } catch (e) {
             debug('pw:test:task')(`error in "${name}": `, e);
-            this._reporter.onError?.(serializeError(e));
-            if (!this._isTearDown)
-              this._interrupted = true;
-            this._hasErrors = true;
+            errors.push(serializeError(e));
+          } finally {
+            for (const error of errors)
+              this._reporter.onError?.(error);
+            if (errors.length) {
+              if (!this._isTearDown)
+                this._interrupted = true;
+              this._hasErrors = true;
+            }
           }
           debug('pw:test:task')(`"${name}" finished`);
         }
