@@ -20,15 +20,16 @@ import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
-import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
+import { Runner } from './runner';
 import type { ConfigCLIOverrides } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import { fileIsModule } from './util';
 import type { TestFileFilter } from './util';
 import { createTitleMatcher } from './util';
 import { showHTMLReport } from './reporters/html';
-import { baseFullConfig, defaultTimeout } from './configLoader';
+import { baseFullConfig, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './configLoader';
 import type { TraceMode } from './types';
+import { builtInReporters } from './runner/reporters';
 
 export function addTestCommands(program: Command) {
   addTestCommand(program);
@@ -147,7 +148,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   // When no --config option is passed, let's look for the config file in the current directory.
   const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
-  const resolvedConfigFile = Runner.resolveConfigFile(configFileOrDirectory);
+  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory);
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 
@@ -184,13 +185,12 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   process.exit(status === 'passed' ? 0 : 1);
 }
 
-
 async function listTestFiles(opts: { [key: string]: any }) {
   // Redefine process.stdout.write in case config decides to pollute stdio.
   const write = process.stdout.write.bind(process.stdout);
   process.stdout.write = (() => {}) as any;
   const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
-  const resolvedConfigFile = Runner.resolveConfigFile(configFileOrDirectory)!;
+  const resolvedConfigFile = resolveConfigFile(configFileOrDirectory)!;
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 

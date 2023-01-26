@@ -20,8 +20,8 @@ import * as path from 'path';
 import { isRegExp } from 'playwright-core/lib/utils';
 import type { Reporter } from '../types/testReporter';
 import type { SerializedConfig } from './ipc';
-import type { BuiltInReporter, ConfigCLIOverrides } from './runner';
-import { builtInReporters } from './runner';
+import type { ConfigCLIOverrides } from './runner';
+import { builtInReporters, toReporters } from './runner/reporters';
 import { requireOrImport } from './transform';
 import type { Config, FullConfigInternal, FullProjectInternal, Project, ReporterDescription } from './types';
 import { errorWithFile, getPackageJsonPath, mergeObjects } from './util';
@@ -266,14 +266,6 @@ function takeFirst<T>(...args: (T | undefined)[]): T {
   return undefined as any as T;
 }
 
-function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
-  if (!reporters)
-    return;
-  if (typeof reporters === 'string')
-    return [[reporters]];
-  return reporters;
-}
-
 function validateConfig(file: string, config: Config) {
   if (typeof config !== 'object' || !config)
     throw errorWithFile(file, `Configuration file must export a single object`);
@@ -489,4 +481,36 @@ function resolveScript(id: string, rootDir: string) {
   if (fs.existsSync(localPath))
     return localPath;
   return require.resolve(id, { paths: [rootDir] });
+}
+
+export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.js', 'playwright.config.mjs'];
+
+export function resolveConfigFile(configFileOrDirectory: string): string | null {
+  const resolveConfig = (configFile: string) => {
+    if (fs.existsSync(configFile))
+      return configFile;
+  };
+
+  const resolveConfigFileFromDirectory = (directory: string) => {
+    for (const configName of kDefaultConfigFiles) {
+      const configFile = resolveConfig(path.resolve(directory, configName));
+      if (configFile)
+        return configFile;
+    }
+  };
+
+  if (!fs.existsSync(configFileOrDirectory))
+    throw new Error(`${configFileOrDirectory} does not exist`);
+  if (fs.statSync(configFileOrDirectory).isDirectory()) {
+    // When passed a directory, look for a config file inside.
+    const configFile = resolveConfigFileFromDirectory(configFileOrDirectory);
+    if (configFile)
+      return configFile;
+    // If there is no config, assume this as a root testing directory.
+    return null;
+  } else {
+    // When passed a file, it must be a config file.
+    const configFile = resolveConfig(configFileOrDirectory);
+    return configFile!;
+  }
 }

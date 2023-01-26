@@ -22,14 +22,7 @@ import type { ProcessExitData } from './processHost';
 import type { TestCase } from './test';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import { WorkerHost } from './workerHost';
-
-export type TestGroup = {
-  workerHash: string;
-  requireFile: string;
-  repeatEachIndex: number;
-  projectId: string;
-  tests: TestCase[];
-};
+import type { TestGroup } from './runner/testGroups';
 
 type TestResultData = {
   result: TestResult;
