@@ -222,7 +222,7 @@ it('should exclude patterns', async ({ browserType, server, browserName, headles
   await browser.close();
 });
 
-it('should use socks proxy', async ({ browserType, socksPort }) => {
+it.only('should use socks proxy', async ({ browserType, socksPort }) => {
   const browser = await browserType.launch({
     proxy: { server: `socks5://localhost:${socksPort}` }
   });
@@ -232,7 +232,7 @@ it('should use socks proxy', async ({ browserType, socksPort }) => {
   await browser.close();
 });
 
-it('should use socks proxy in second page', async ({ browserType, socksPort }) => {
+it.only('should use socks proxy in second page', async ({ browserType, socksPort }) => {
   const browser = await browserType.launch({
     proxy: { server: `socks5://localhost:${socksPort}` }
   });
