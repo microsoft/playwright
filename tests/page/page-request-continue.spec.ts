@@ -406,6 +406,6 @@ it('should intercept css variable with background url', async ({ page, server, b
   await page.goto(server.PREFIX + '/test.html');
   expect(await page.locator('div').textContent()).toBe('Yo!');
   await interceptPromise;
-  await page.waitForTimeout(1000)
+  await page.waitForTimeout(1000);
   expect(interceptedRequests).toBe(1);
 });
