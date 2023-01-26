@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestGroup } from './dispatcher';
+import type { TestGroup } from './runner/testGroups';
 import type { RunPayload, SerializedConfig, WorkerInitParams } from './ipc';
 import { ProcessHost } from './processHost';
 

@@ -1,6 +1,7 @@
 [*]
 ../types.ts
 ./utilsBundle.ts
+runner/
 matchers/
 reporters/
 third_party/

@@ -21,10 +21,10 @@ import { SigIntWatcher } from './sigIntWatcher';
 import { serializeError } from './util';
 
 type TaskTeardown = () => Promise<any> | undefined;
-type Task = (params: { errors: TestError[] }) => Promise<TaskTeardown | void> | undefined;
+export type Task<Context> = (context: Context, errors: TestError[]) => Promise<TaskTeardown | void> | undefined;
 
-export class TaskRunner {
-  private _tasks: { name: string, task: Task }[] = [];
+export class TaskRunner<Context> {
+  private _tasks: { name: string, task: Task<Context> }[] = [];
   private _reporter: Reporter;
   private _hasErrors = false;
   private _interrupted = false;
@@ -36,7 +36,7 @@ export class TaskRunner {
     this._globalTimeoutForError = globalTimeoutForError;
   }
 
-  addTask(name: string, task: Task) {
+  addTask(name: string, task: Task<Context>) {
     this._tasks.push({ name, task });
   }
 
@@ -44,7 +44,7 @@ export class TaskRunner {
     this._interrupted = true;
   }
 
-  async run(deadline: number): Promise<FullResult['status']> {
+  async run(context: Context, deadline: number): Promise<FullResult['status']> {
     const sigintWatcher = new SigIntWatcher();
     const timeoutWatcher = new TimeoutWatcher(deadline);
     const teardownRunner = new TaskRunner(this._reporter, this._globalTimeoutForError);
@@ -60,7 +60,7 @@ export class TaskRunner {
           debug('pw:test:task')(`"${name}" started`);
           const errors: TestError[] = [];
           try {
-            const teardown = await task({ errors });
+            const teardown = await task(context, errors);
             if (teardown)
               teardownRunner._tasks.unshift({ name: `teardown for ${name}`, task: teardown });
           } catch (e) {
@@ -103,7 +103,7 @@ export class TaskRunner {
       sigintWatcher.disarm();
       timeoutWatcher.disarm();
       if (!this._isTearDown)
-        await teardownRunner.run(deadline);
+        await teardownRunner.run(context, deadline);
     }
   }
 }

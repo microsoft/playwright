@@ -1,0 +1,7 @@
+[*]
+../
+../../types.ts
+../matchers/
+../reporters/
+../third_party/
+../plugins/
