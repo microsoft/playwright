@@ -105,8 +105,6 @@ test.describe('cli codegen', () => {
   });
 
   test('should upload a single file', async ({ page, openRecorder, browserName, asset }) => {
-    test.fixme(browserName === 'firefox', 'Hangs');
-
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
@@ -137,8 +135,6 @@ test.describe('cli codegen', () => {
   });
 
   test('should upload multiple files', async ({ page, openRecorder, browserName, asset }) => {
-    test.fixme(browserName === 'firefox', 'Hangs');
-
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
@@ -169,8 +165,6 @@ test.describe('cli codegen', () => {
   });
 
   test('should clear files', async ({ page, openRecorder, browserName, asset }) => {
-    test.fixme(browserName === 'firefox', 'Hangs');
-
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
@@ -371,8 +365,6 @@ test.describe('cli codegen', () => {
   });
 
   test('should not clash pages', async ({ page, openRecorder, browserName }) => {
-    test.fixme(browserName === 'firefox', 'Times out on Firefox, maybe the focus issue');
-
     const recorder = await openRecorder();
     const [popup1] = await Promise.all([
       page.context().waitForEvent('page'),
@@ -445,7 +437,7 @@ test.describe('cli codegen', () => {
   });
 
   test('should update active model on action', async ({ page, openRecorder, browserName, headless }) => {
-    test.fixme(browserName !== 'chromium');
+    test.fixme(browserName === 'webkit');
 
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name='updated'"></input>`);

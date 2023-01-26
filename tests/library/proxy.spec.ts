@@ -92,7 +92,7 @@ it.describe('should proxy local network requests', () => {
         }
       ]) {
         it(`${params.description}`, async ({ platform, browserName, browserType, server, proxyServer }) => {
-          it.fixme(browserName === 'webkit' && platform === 'darwin' && ['localhost', '127.0.0.1'].includes(params.target), 'Flaky on macOS; needs investigation.');
+          it.skip(browserName === 'webkit' && platform === 'darwin' && ['localhost', '127.0.0.1'].includes(params.target), 'Mac webkit does not proxy localhost.');
 
           const path = `/target-${additionalBypass}-${params.target}.html`;
           server.setRoute(path, async (req, res) => {
@@ -178,8 +178,6 @@ it('should work with authenticate followed by redirect', async ({ browserName, b
 });
 
 it('should exclude patterns', async ({ browserType, server, browserName, headless }) => {
-  it.fixme(browserName === 'chromium' && !headless, 'Chromium headed crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.');
-
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });

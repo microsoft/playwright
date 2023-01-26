@@ -251,7 +251,7 @@ it.describe('post data', () => {
 
   it('should use content-type from original request', async ({ page, server, browserName }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16736' });
-    it.fixme(browserName === 'firefox');
+
     await page.goto(server.EMPTY_PAGE);
     await page.route(`${server.PREFIX}/title.html`, route => route.continue({ postData: '{"b":2}' }));
     const [request] = await Promise.all([

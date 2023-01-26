@@ -120,7 +120,6 @@ test('should render events', async ({ showTraceViewer }) => {
 });
 
 test('should render console', async ({ showTraceViewer, browserName }) => {
-  test.fixme(browserName === 'firefox', 'Firefox generates stray console message for page error');
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('page.evaluate');
   await traceViewer.showConsoleTab();
@@ -131,7 +130,6 @@ test('should render console', async ({ showTraceViewer, browserName }) => {
 });
 
 test('should open console errors on click', async ({ showTraceViewer, browserName }) => {
-  test.fixme(browserName === 'firefox', 'Firefox generates stray console message for page error');
   const traceViewer = await showTraceViewer([traceFile]);
   expect(await traceViewer.actionIconsText('page.evaluate')).toEqual(['2', '1']);
   expect(await traceViewer.page.isHidden('.console-tab')).toBeTruthy();

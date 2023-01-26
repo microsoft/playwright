@@ -193,7 +193,7 @@ it('should report different frame instance when frame re-attaches', async ({ pag
 });
 
 it('should refuse to display x-frame-options:deny iframe', async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'firefox');
+  it.skip(browserName === 'firefox');
 
   server.setRoute('/x-frame-options-deny.html', async (req, res) => {
     res.setHeader('Content-Type', 'text/html');
