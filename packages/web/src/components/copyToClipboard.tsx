@@ -20,13 +20,13 @@ import './copyToClipboard.css';
 export const CopyToClipboard: React.FunctionComponent<{
   value: string,
 }> = ({ value }) => {
-  const [iconClassName, setIconClassName] = React.useState('codicon-clippy');
+  const [iconClassName, setIconClassName] = React.useState('codicon-copy');
 
   const handleCopy = React.useCallback(() => {
     navigator.clipboard.writeText(value).then(() => {
       setIconClassName('codicon-check');
       setTimeout(() => {
-        setIconClassName('codicon-clippy');
+        setIconClassName('codicon-copy');
       }, 3000);
     }, () => {
       setIconClassName('codicon-close');
