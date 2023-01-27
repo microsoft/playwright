@@ -33,9 +33,8 @@ it('should work with cross-process _blank target', async ({ page, server }) => {
   await page.click('"Click me"');
 });
 
-it('should work with _blank target in form', async ({ page, server, browserName }) => {
+it('should work with _blank target in form', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18392' });
-  it.fixme(browserName === 'webkit');
   server.setRoute('/done.html?', (req, res) => {
     res.end(`Done`);
   });
