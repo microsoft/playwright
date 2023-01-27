@@ -84,6 +84,19 @@ it('should play video @smoke', async ({ page, asset, browserName, platform, mode
   await page.$eval('video', v => v.pause());
 });
 
+it('should play webm video @smoke', async ({ page, asset, browserName, platform, mode }) => {
+  it.skip(mode === 'docker', 'local paths do not work with remote setup');
+  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 20, 'Does not work on BigSur');
+  it.fixme(browserName === 'webkit' && platform === 'win32');
+
+  const absolutePath = asset('video_webm.html');
+  // Our test server doesn't support range requests required to play on Mac,
+  // so we load the page using a file url.
+  await page.goto(url.pathToFileURL(absolutePath).href);
+  await page.$eval('video', v => v.play());
+  await page.$eval('video', v => v.pause());
+});
+
 it('should play audio @smoke', async ({ page, server, browserName, platform }) => {
   it.fixme(browserName === 'firefox' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10887');
   it.fixme(browserName === 'firefox' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/10887');
