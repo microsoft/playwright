@@ -35,6 +35,7 @@ import { APIResponse } from './fetch';
 import type { Serializable } from '../../types/structs';
 import type { BrowserContext } from './browserContext';
 import { HarRouter } from './harRouter';
+import { kBrowserOrContextClosedError } from '../common/errors';
 
 export type NetworkCookie = {
   name: string,
@@ -271,6 +272,10 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   _fallbackOverridesForContinue() {
     return this._fallbackOverrides;
   }
+
+  _targetClosedPromise(): Promise<void> {
+    return this.serviceWorker()?._closedPromise || this.frame()._page?._closedOrCrashedPromise || new Promise(() => {});
+  }
 }
 
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
@@ -294,7 +299,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     // does not have a Page initialized just yet.
     return Promise.race([
       promise,
-      this.request().serviceWorker()?._closedPromise || this.request().frame()._page?._closedOrCrashedPromise || Promise.resolve(),
+      this.request()._targetClosedPromise(),
     ]);
   }
 
@@ -520,7 +525,12 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 
   async finished(): Promise<null> {
-    return this._finishedPromise.then(() => null);
+    return Promise.race([
+      this._finishedPromise.then(() => null),
+      this.request()._targetClosedPromise().then(() => {
+        throw new Error(kBrowserOrContextClosedError);
+      }),
+    ]);
   }
 
   async body(): Promise<Buffer> {
