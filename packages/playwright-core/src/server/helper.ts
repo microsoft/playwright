@@ -22,7 +22,7 @@ import { debugLogger } from '../common/debugLogger';
 import type { RegisteredListener } from '../utils/eventsHelper';
 import { eventsHelper } from '../utils/eventsHelper';
 
-const MAX_LOG_LENGTH = process.env.MAX_LOG_LENGTH ? parseInt(process.env.MAX_LOG_LENGTH) : Infinity;
+const MAX_LOG_LENGTH = process.env.MAX_LOG_LENGTH ? +process.env.MAX_LOG_LENGTH : Infinity;
 
 class Helper {
   static completeUserURL(urlString: string): string {
