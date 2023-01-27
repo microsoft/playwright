@@ -28,6 +28,15 @@ it('should work @smoke', async ({ page, server }) => {
 it('should work with file URL', async ({ page, asset, isAndroid }) => {
   it.skip(isAndroid, 'No files on Android');
 
+  const fileurl = url.pathToFileURL(asset('empty.html')).href;
+  await page.goto(fileurl);
+  expect(page.url().toLowerCase()).toBe(fileurl.toLowerCase());
+  expect(page.frames().length).toBe(1);
+});
+
+it('should work with file URL with subframes', async ({ page, asset, isAndroid }) => {
+  it.skip(isAndroid, 'No files on Android');
+
   const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
   await page.goto(fileurl);
   expect(page.url().toLowerCase()).toBe(fileurl.toLowerCase());
@@ -404,10 +413,8 @@ it('should fail when replaced by another navigation', async ({ page, server, bro
   await anotherPromise;
   if (browserName === 'chromium')
     expect(error.message).toContain('net::ERR_ABORTED');
-  else if (browserName === 'webkit')
+  else if (browserName === 'webkit' || browserName === 'firefox')
     expect(error.message).toContain('Navigation interrupted by another one');
-  else
-    expect(error.message).toContain('NS_BINDING_ABORTED');
 });
 
 it('should work when navigating to valid url', async ({ page, server }) => {
