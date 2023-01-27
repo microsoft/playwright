@@ -32,7 +32,7 @@ it('should work for complicated objects', async ({ page, browserName }) => {
     expect(aHandle.toString()).toBe('JSHandle@object');
 });
 
-it.only('should beutifully render sparse arrays', async ({ page, browserName }) => {
+it('should beautifully render sparse arrays', async ({ page, browserName }) => {
   const [msg] = await Promise.all([
     page.waitForEvent('console'),
     page.evaluateHandle(() => {
