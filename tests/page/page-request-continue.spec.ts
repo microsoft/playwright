@@ -375,8 +375,7 @@ it('should continue preload link requests', async ({ page, server, browserName }
   expect(color).toBe('rgb(255, 192, 203)');
 });
 
-it('should intercept css variable with background url', async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'webkit');
+it('should intercept css variable with background url', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19158' });
 
   server.setRoute('/test.html', (request, response) => {
