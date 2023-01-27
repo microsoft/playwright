@@ -778,9 +778,8 @@ test.describe('gitCommitInfo plugin', () => {
       'uncommitted.txt': `uncommitted file`,
       'playwright.config.ts': `
         import { gitCommitInfo } from '@playwright/test/lib/plugins';
-        const { test, _addRunnerPlugin } = pwt;
-        _addRunnerPlugin(gitCommitInfo());
-        export default {};
+        const { test } = pwt;
+        export default { _plugins: [gitCommitInfo()] };
       `,
       'example.spec.ts': `
         const { test } = pwt;
@@ -810,8 +809,8 @@ test.describe('gitCommitInfo plugin', () => {
       'uncommitted.txt': `uncommitted file`,
       'playwright.config.ts': `
         import { gitCommitInfo } from '@playwright/test/lib/plugins';
-        const { test, _addRunnerPlugin } = pwt;
-        _addRunnerPlugin(gitCommitInfo({
+        const { test } = pwt;
+        const plugin = gitCommitInfo({
           info: {
             'revision.id': '1234567890',
             'revision.subject': 'a better subject',
@@ -819,8 +818,8 @@ test.describe('gitCommitInfo plugin', () => {
             'revision.author': 'William',
             'revision.email': 'shakespeare@example.local',
           },
-        }));
-        export default {};
+        });
+        export default { _plugins: [plugin] };
       `,
       'example.spec.ts': `
         import { gitCommitInfo } from '@playwright/test/lib/plugins';

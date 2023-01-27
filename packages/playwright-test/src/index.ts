@@ -24,7 +24,6 @@ import type { TestInfoImpl } from './common/testInfo';
 import { rootTestType } from './common/testType';
 import { type ContextReuseMode } from './common/types';
 export { expect } from './matchers/expect';
-export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
 addStackIgnoreFilter((frame: StackFrame) => frame.file.startsWith(path.dirname(require.resolve('../package.json'))));

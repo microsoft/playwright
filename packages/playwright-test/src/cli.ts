@@ -151,11 +151,11 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     return;
 
   const configLoader = new ConfigLoader(overrides);
-  const runner = new Runner(configLoader.fullConfig());
   if (resolvedConfigFile)
     await configLoader.loadConfigFile(resolvedConfigFile);
   else
     await configLoader.loadEmptyConfig(configFileOrDirectory);
+  const runner = new Runner(configLoader.fullConfig());
 
   const testFileFilters: TestFileFilter[] = args.map(arg => {
     const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);

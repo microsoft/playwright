@@ -18,16 +18,16 @@ import fs from 'fs';
 import path from 'path';
 import { minimatch } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
-import type { FullConfigInternal, FullProjectInternal } from '../common/types';
+import type { FullProjectInternal } from '../common/types';
 import type { TestFileFilter } from '../util';
 import { createFileMatcher, createFileMatcherFromFilters } from '../util';
 
 const readFileAsync = promisify(fs.readFile);
 const readDirAsync = promisify(fs.readdir);
 
-export function collectProjects(config: FullConfigInternal, projectNames?: string[]): FullProjectInternal[] {
+export function filterProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
   if (!projectNames)
-    return [...config.projects];
+    return [...projects];
   const projectsToFind = new Set<string>();
   const unknownProjects = new Map<string, string>();
   projectNames.forEach(n => {
@@ -35,19 +35,19 @@ export function collectProjects(config: FullConfigInternal, projectNames?: strin
     projectsToFind.add(name);
     unknownProjects.set(name, n);
   });
-  const projects = config.projects.filter(project => {
+  const result = projects.filter(project => {
     const name = project.name.toLocaleLowerCase();
     unknownProjects.delete(name);
     return projectsToFind.has(name);
   });
   if (unknownProjects.size) {
-    const names = config.projects.map(p => p.name).filter(name => !!name);
+    const names = projects.map(p => p.name).filter(name => !!name);
     if (!names.length)
       throw new Error(`No named projects are specified in the configuration file`);
     const unknownProjectNames = Array.from(unknownProjects.values()).map(n => `"${n}"`).join(', ');
     throw new Error(`Project(s) ${unknownProjectNames} not found. Available named projects: ${names.map(name => `"${name}"`).join(', ')}`);
   }
-  return projects;
+  return result;
 }
 
 export async function collectFilesForProjects(projects: FullProjectInternal[], commandLineFileFilters: TestFileFilter[]): Promise<Map<FullProjectInternal, string[]>> {

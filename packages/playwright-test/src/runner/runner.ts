@@ -17,13 +17,11 @@
 
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../types/testReporter';
-import type { TestRunnerPlugin } from '../plugins';
-import { setRunnerToAddPluginsTo } from '../plugins';
 import { dockerPlugin } from '../plugins/dockerPlugin';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
-import { collectFilesForProjects, collectProjects } from './projectUtils';
+import { collectFilesForProjects, filterProjects } from './projectUtils';
 import { createReporter } from './reporters';
-import { createTaskRunner } from './tasks';
+import { createTaskRunner, createTaskRunnerForList } from './tasks';
 import type { TaskRunnerState } from './tasks';
 import type { FullConfigInternal } from '../common/types';
 import type { Matcher, TestFileFilter } from '../util';
@@ -38,19 +36,13 @@ export type RunOptions = {
 
 export class Runner {
   private _config: FullConfigInternal;
-  private _plugins: TestRunnerPlugin[] = [];
 
   constructor(config: FullConfigInternal) {
     this._config = config;
-    setRunnerToAddPluginsTo(this);
-  }
-
-  addPlugin(plugin: TestRunnerPlugin) {
-    this._plugins.push(plugin);
   }
 
   async listTestFiles(projectNames: string[] | undefined): Promise<any> {
-    const projects = collectProjects(this._config, projectNames);
+    const projects = filterProjects(this._config.projects, projectNames);
     const filesByProject = await collectFilesForProjects(projects, []);
     const report: any = {
       projects: []
@@ -69,17 +61,19 @@ export class Runner {
     const deadline = config.globalTimeout ? monotonicTime() + config.globalTimeout : 0;
 
     // Legacy webServer support.
-    this._plugins.push(...webServerPluginsForConfig(config));
+    config._pluginRegistrations.push(...webServerPluginsForConfig(config));
     // Docker support.
-    this._plugins.push(dockerPlugin);
+    config._pluginRegistrations.push(dockerPlugin);
 
     const reporter = await createReporter(config, options.listOnly);
-    const taskRunner = createTaskRunner(config, reporter, this._plugins, options);
+    const taskRunner = options.listOnly ? createTaskRunnerForList(config, reporter)
+      : createTaskRunner(config, reporter);
 
     const context: TaskRunnerState = {
       config,
       options,
       reporter,
+      plugins: [],
     };
 
     reporter.onConfigure(config);

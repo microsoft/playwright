@@ -16,6 +16,7 @@
 
 import type { Fixtures, TestInfoError, Project } from '../../types/test';
 import type { Location } from '../../types/testReporter';
+import type { TestRunnerPluginRegistration } from '../plugins';
 import type { ConfigCLIOverrides } from './ipc';
 import type { FullConfig as FullConfigPublic, FullProject as FullProjectPublic } from './types';
 export * from '../../types/test';
@@ -57,6 +58,8 @@ export interface FullConfigInternal extends FullConfigPublic {
 
   // Overrides the public field.
   projects: FullProjectInternal[];
+
+  _pluginRegistrations: TestRunnerPluginRegistration[];
 }
 
 /**

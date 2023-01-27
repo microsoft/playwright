@@ -325,13 +325,14 @@ test('globalSetup auth should compile', async ({ runTSC }) => {
 test('teardown order', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
+      const _plugins = [];
       for (let i = 1; i < 4; ++i) {
-        pwt._addRunnerPlugin(() => ({
+        _plugins.push(() => ({
           setup: () => console.log('\\n%%setup ' + i),
           teardown: () => console.log('\\n%%teardown ' + i),
         }));
       }
-      export default {};
+      export default { _plugins };
     `,
     'a.test.js': `
       pwt.test('test', () => {});
@@ -352,8 +353,9 @@ test('teardown order', async ({ runInlineTest }) => {
 test('teardown after error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
+      const _plugins = [];
       for (let i = 1; i < 4; ++i) {
-        pwt._addRunnerPlugin(() => ({
+        _plugins.push(() => ({
           setup: () => console.log('\\n%%setup ' + i),
           teardown: () => {
             console.log('\\n%%teardown ' + i);
@@ -361,7 +363,7 @@ test('teardown after error', async ({ runInlineTest }) => {
           },
         }));
       }
-      export default {};
+      export default { _plugins };
     `,
     'a.test.js': `
       pwt.test('test', () => {});

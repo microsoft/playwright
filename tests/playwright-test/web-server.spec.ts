@@ -536,17 +536,22 @@ test.describe('baseURL with plugins', () => {
     const port = workerIndex * 2 + 10500;
     const result = await runInlineTest({
       'test.spec.ts': `
-          import { webServer } from '@playwright/test/lib/plugins';
-          const { test, _addRunnerPlugin } = pwt;
-          _addRunnerPlugin(webServer({
-            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
-            url: 'http://localhost:${port}/port',
-          }));
-          test('connect to the server', async ({baseURL, page}) => {
-            expect(baseURL).toBeUndefined();
-          });
+        const { test } = pwt;
+        test('connect to the server', async ({baseURL, page}) => {
+          expect(baseURL).toBeUndefined();
+        });
       `,
-      'playwright.config.ts': `module.exports = {};`,
+      'playwright.config.ts': `
+        import { webServer } from '@playwright/test/lib/plugins';
+        module.exports = {
+          _plugins: [
+            webServer({
+              command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+              url: 'http://localhost:${port}/port',
+            })
+          ]
+        };
+      `,
     }, undefined, { DEBUG: 'pw:webserver' });
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(1);
@@ -556,24 +561,26 @@ test.describe('baseURL with plugins', () => {
     const port = workerIndex * 2 + 10500;
     const result = await runInlineTest({
       'test.spec.ts': `
-          import { webServer } from '@playwright/test/lib/plugins';
-          const { test, _addRunnerPlugin } = pwt;
-          _addRunnerPlugin(webServer({
-            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
-            url: 'http://localhost:${port + 1}/port'
-          }));
-          test('connect to the server', async ({baseURL, page}) => {
-            expect(baseURL).toBe('http://localhost:${port}');
-          });
-        `,
+        const { test } = pwt;
+        test('connect to the server', async ({baseURL, page}) => {
+          expect(baseURL).toBe('http://localhost:${port}');
+        });
+      `,
       'playwright.config.ts': `
-          module.exports = {
-            webServer: {
-              command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
-              port: ${port},
-            }
-          };
-          `,
+        import { webServer } from '@playwright/test/lib/plugins';
+        module.exports = {
+          webServer: {
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+            port: ${port},
+          },
+          _plugins: [
+            webServer({
+              command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
+              url: 'http://localhost:${port + 1}/port'
+            })
+          ]
+        };
+      `,
     }, undefined, { DEBUG: 'pw:webserver' });
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(1);
