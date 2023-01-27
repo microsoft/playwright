@@ -21,7 +21,7 @@ import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerI
 import { setCurrentTestInfo } from '../common/globals';
 import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
-import type { Annotation, FullProjectInternal, TestInfoError } from '../common/types';
+import type { Annotation, FullConfigInternal, FullProjectInternal, TestInfoError } from '../common/types';
 import { FixtureRunner } from '../common/fixtures';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from '../common/testInfo';
@@ -36,7 +36,7 @@ const removeFolderAsync = util.promisify(rimraf);
 
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
-  private _configLoader!: ConfigLoader;
+  private _config!: FullConfigInternal;
   private _testLoader!: TestLoader;
   private _project!: FullProjectInternal;
   private _poolBuilder!: PoolBuilder;
@@ -190,12 +190,13 @@ export class WorkerMain extends ProcessRunner {
   }
 
   private async _loadIfNeeded() {
-    if (this._configLoader)
+    if (this._config)
       return;
 
-    this._configLoader = await ConfigLoader.deserialize(this._params.config);
-    this._testLoader = new TestLoader(this._configLoader.fullConfig());
-    this._project = this._configLoader.fullConfig().projects.find(p => p._id === this._params.projectId)!;
+    const configLoader = await ConfigLoader.deserialize(this._params.config);
+    this._config = configLoader.fullConfig();
+    this._testLoader = new TestLoader(this._config);
+    this._project = this._config.projects.find(p => p._id === this._params.projectId)!;
     this._poolBuilder = PoolBuilder.createForWorker(this._project);
   }
 
@@ -251,7 +252,7 @@ export class WorkerMain extends ProcessRunner {
   }
 
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
-    const testInfo = new TestInfoImpl(this._configLoader.fullConfig(), this._project, this._params, test, retry,
+    const testInfo = new TestInfoImpl(this._config, this._project, this._params, test, retry,
         stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload));
 
@@ -485,8 +486,8 @@ export class WorkerMain extends ProcessRunner {
     setCurrentTestInfo(null);
     this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
 
-    const preserveOutput = this._configLoader.fullConfig().preserveOutput === 'always' ||
-      (this._configLoader.fullConfig().preserveOutput === 'failures-only' && testInfo._isFailure());
+    const preserveOutput = this._config.preserveOutput === 'always' ||
+      (this._config.preserveOutput === 'failures-only' && testInfo._isFailure());
     if (!preserveOutput)
       await removeFolderAsync(testInfo.outputDir).catch(e => {});
   }

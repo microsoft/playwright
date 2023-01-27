@@ -16,6 +16,7 @@
 
 import type { Fixtures, TestInfoError, Project } from '../../types/test';
 import type { Location } from '../../types/testReporter';
+import type { ConfigCLIOverrides } from './ipc';
 import type { FullConfig as FullConfigPublic, FullProject as FullProjectPublic } from './types';
 export * from '../../types/test';
 export type { Location } from '../../types/testReporter';
@@ -44,6 +45,7 @@ export interface TestStepInternal {
 export interface FullConfigInternal extends FullConfigPublic {
   _globalOutputDir: string;
   _configDir: string;
+  _configCLIOverrides: ConfigCLIOverrides;
   _storeDir: string;
   _maxConcurrentTestGroups: number;
   _ignoreSnapshots: boolean;

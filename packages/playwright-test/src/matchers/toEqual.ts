@@ -16,10 +16,11 @@
 
 import type { Expect } from '../common/types';
 import { expectTypes } from '../util';
-import { callLogText, currentExpectTimeout } from '../util';
+import { callLogText } from '../util';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils';
 import { captureStackTrace } from 'playwright-core/lib/utils';
 import { matcherHint } from './matcherHint';
+import { currentExpectTimeout } from '../common/globals';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
 const EXPECTED_LABEL = 'Expected';

@@ -18,7 +18,6 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
-import type { ConfigLoader } from '../common/configLoader';
 import { Dispatcher } from './dispatcher';
 import type { TestRunnerPlugin } from '../plugins';
 import type { Multiplexer } from '../reporters/multiplexer';
@@ -28,7 +27,7 @@ import type { Task } from './taskRunner';
 import { TaskRunner } from './taskRunner';
 import type { Suite } from '../common/test';
 import type { FullConfigInternal } from '../common/types';
-import { loadAllTests } from './loadUtils';
+import { loadAllTests, loadGlobalHook } from './loadUtils';
 import type { Matcher, TestFileFilter } from '../util';
 
 const removeFolderAsync = promisify(rimraf);
@@ -46,7 +45,6 @@ export type TaskRunnerState = {
   options: TaskRunnerOptions;
   reporter: Multiplexer;
   config: FullConfigInternal;
-  configLoader: ConfigLoader;
   rootSuite?: Suite;
   testGroups?: TestGroup[];
   dispatcher?: Dispatcher;
@@ -90,10 +88,10 @@ export function createPluginSetupTask(plugin: TestRunnerPlugin): Task<TaskRunner
 }
 
 export function createGlobalSetupTask(): Task<TaskRunnerState> {
-  return async ({ config, configLoader }) => {
-    const setupHook = config.globalSetup ? await configLoader.loadGlobalHook(config.globalSetup) : undefined;
-    const teardownHook = config.globalTeardown ? await configLoader.loadGlobalHook(config.globalTeardown) : undefined;
-    const globalSetupResult = setupHook ? await setupHook(configLoader.fullConfig()) : undefined;
+  return async ({ config }) => {
+    const setupHook = config.globalSetup ? await loadGlobalHook(config, config.globalSetup) : undefined;
+    const teardownHook = config.globalTeardown ? await loadGlobalHook(config, config.globalTeardown) : undefined;
+    const globalSetupResult = setupHook ? await setupHook(config) : undefined;
     return async () => {
       if (typeof globalSetupResult === 'function')
         await globalSetupResult();
@@ -104,7 +102,7 @@ export function createGlobalSetupTask(): Task<TaskRunnerState> {
 
 export function createSetupWorkersTask(): Task<TaskRunnerState> {
   return async params => {
-    const { config, configLoader, testGroups, reporter } = params;
+    const { config, testGroups, reporter } = params;
     if (config._ignoreSnapshots) {
       reporter.onStdOut(colors.dim([
         'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
@@ -114,7 +112,7 @@ export function createSetupWorkersTask(): Task<TaskRunnerState> {
       ].join('\n')));
     }
 
-    const dispatcher = new Dispatcher(configLoader, testGroups!, reporter);
+    const dispatcher = new Dispatcher(config, testGroups!, reporter);
     params.dispatcher = dispatcher;
     return async () => {
       await dispatcher.stop();
@@ -123,8 +121,7 @@ export function createSetupWorkersTask(): Task<TaskRunnerState> {
 }
 
 export function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
-  return async ({ options, configLoader }) => {
-    const config = configLoader.fullConfig();
+  return async ({ config, options }) => {
     const outputDirs = new Set<string>();
     for (const p of config.projects) {
       if (!options.projectFilter || options.projectFilter.includes(p.name))
@@ -147,8 +144,8 @@ export function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
 
 function createLoadTask(): Task<TaskRunnerState> {
   return async (context, errors) => {
-    const { config, reporter, options, configLoader } = context;
-    const rootSuite = await loadAllTests(configLoader, reporter, options, errors);
+    const { config, reporter, options } = context;
+    const rootSuite = await loadAllTests(config, reporter, options, errors);
     const testGroups = options.listOnly ? [] : createTestGroups(rootSuite.suites, config.workers);
 
     context.rootSuite = rootSuite;

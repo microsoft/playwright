@@ -15,8 +15,7 @@
  */
 
 import path from 'path';
-import type { TestError } from '../../types/testReporter';
-import type { ConfigLoader } from '../common/configLoader';
+import type { Reporter, TestError } from '../../types/testReporter';
 import type { LoadError } from '../common/fixtures';
 import { LoaderHost } from './loaderHost';
 import type { Multiplexer } from '../reporters/multiplexer';
@@ -24,9 +23,12 @@ import { createRootSuite, filterOnly, filterSuite } from '../common/suiteUtils';
 import type { Suite, TestCase } from '../common/test';
 import { loadTestFilesInProcess } from '../common/testLoader';
 import type { FullConfigInternal } from '../common/types';
+import { errorWithFile } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
 import { createFileMatcher } from '../util';
 import { collectFilesForProjects, collectProjects } from './projectUtils';
+import { requireOrImport } from '../common/transform';
+import { serializeConfig } from '../common/ipc';
 
 type LoadOptions = {
   listOnly: boolean;
@@ -36,8 +38,7 @@ type LoadOptions = {
   passWithNoTests?: boolean;
 };
 
-export async function loadAllTests(configLoader: ConfigLoader, reporter: Multiplexer, options: LoadOptions, errors: TestError[]): Promise<Suite> {
-  const config = configLoader.fullConfig();
+export async function loadAllTests(config: FullConfigInternal, reporter: Multiplexer, options: LoadOptions, errors: TestError[]): Promise<Suite> {
   const projects = collectProjects(config, options.projectFilter);
   const filesByProject = await collectFilesForProjects(projects, options.testFileFilters);
   const allTestFiles = new Set<string>();
@@ -45,7 +46,7 @@ export async function loadAllTests(configLoader: ConfigLoader, reporter: Multipl
     files.forEach(file => allTestFiles.add(file));
 
   // Load all tests.
-  const preprocessRoot = await loadTests(configLoader, reporter, allTestFiles, errors);
+  const preprocessRoot = await loadTests(config, reporter, allTestFiles, errors);
 
   // Complain about duplicate titles.
   errors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
@@ -67,10 +68,10 @@ export async function loadAllTests(configLoader: ConfigLoader, reporter: Multipl
   return await createRootSuite(preprocessRoot, options.testTitleMatcher, filesByProject);
 }
 
-async function loadTests(configLoader: ConfigLoader, reporter: Multiplexer, testFiles: Set<string>, errors: TestError[]): Promise<Suite> {
+async function loadTests(config: FullConfigInternal, reporter: Multiplexer, testFiles: Set<string>, errors: TestError[]): Promise<Suite> {
   if (process.env.PW_TEST_OOP_LOADER) {
     const loaderHost = new LoaderHost();
-    await loaderHost.start(configLoader.serializedConfig());
+    await loaderHost.start(serializeConfig(config));
     try {
       return await loaderHost.loadTestFiles([...testFiles], reporter);
     } finally {
@@ -79,7 +80,7 @@ async function loadTests(configLoader: ConfigLoader, reporter: Multiplexer, test
   }
   const loadErrors: LoadError[] = [];
   try {
-    return await loadTestFilesInProcess(configLoader.fullConfig(), [...testFiles], loadErrors);
+    return await loadTestFilesInProcess(config, [...testFiles], loadErrors);
   } finally {
     errors.push(...loadErrors);
   }
@@ -139,4 +140,21 @@ function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
   if (!testOrSuite.location)
     return '';
   return `${path.relative(rootDir, testOrSuite.location.file)}:${testOrSuite.location.line}`;
+}
+
+async function requireOrImportDefaultFunction(file: string, expectConstructor: boolean) {
+  let func = await requireOrImport(file);
+  if (func && typeof func === 'object' && ('default' in func))
+    func = func['default'];
+  if (typeof func !== 'function')
+    throw errorWithFile(file, `file must export a single ${expectConstructor ? 'class' : 'function'}.`);
+  return func;
+}
+
+export function loadGlobalHook(config: FullConfigInternal, file: string): Promise<(config: FullConfigInternal) => any> {
+  return requireOrImportDefaultFunction(path.resolve(config.rootDir, file), false);
+}
+
+export function loadReporter(config: FullConfigInternal, file: string): Promise<new (arg?: any) => Reporter> {
+  return requireOrImportDefaultFunction(path.resolve(config.rootDir, file), true);
 }

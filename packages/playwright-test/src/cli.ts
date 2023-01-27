@@ -25,9 +25,8 @@ import { experimentalLoaderOption, fileIsModule } from './util';
 import type { TestFileFilter } from './util';
 import { createTitleMatcher } from './util';
 import { showHTMLReport } from './reporters/html';
-import { baseFullConfig, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
+import { baseFullConfig, builtInReporters, ConfigLoader, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
 import type { TraceMode } from './common/types';
-import { builtInReporters } from './runner/reporters';
 import type { ConfigCLIOverrides } from './common/ipc';
 
 export function addTestCommands(program: Command) {
@@ -151,11 +150,12 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 
-  const runner = new Runner(overrides);
+  const configLoader = new ConfigLoader(overrides);
+  const runner = new Runner(configLoader.fullConfig());
   if (resolvedConfigFile)
-    await runner.loadConfigFromResolvedFile(resolvedConfigFile);
+    await configLoader.loadConfigFile(resolvedConfigFile);
   else
-    await runner.loadEmptyConfig(configFileOrDirectory);
+    await configLoader.loadEmptyConfig(configFileOrDirectory);
 
   const testFileFilters: TestFileFilter[] = args.map(arg => {
     const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
@@ -193,8 +193,9 @@ async function listTestFiles(opts: { [key: string]: any }) {
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 
-  const runner = new Runner();
-  await runner.loadConfigFromResolvedFile(resolvedConfigFile);
+  const configLoader = new ConfigLoader();
+  const runner = new Runner(configLoader.fullConfig());
+  await configLoader.loadConfigFile(resolvedConfigFile);
   const report = await runner.listTestFiles(opts.project);
   write(JSON.stringify(report), () => {
     process.exit(0);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestInfoError, TestStatus } from './types';
+import type { FullConfigInternal, TestInfoError, TestStatus } from './types';
 
 export type ConfigCLIOverrides = {
   forbidOnly?: boolean;
@@ -120,3 +120,12 @@ export type TestOutputPayload = {
 export type TeardownErrorsPayload = {
   fatalErrors: TestInfoError[];
 };
+
+export function serializeConfig(config: FullConfigInternal): SerializedConfig {
+  const result: SerializedConfig = {
+    configFile: config.configFile,
+    configDir: config._configDir,
+    configCLIOverrides: config._configCLIOverrides,
+  };
+  return result;
+}

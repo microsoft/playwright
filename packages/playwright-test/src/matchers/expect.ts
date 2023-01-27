@@ -42,8 +42,8 @@ import {
 } from './matchers';
 import { toMatchSnapshot, toHaveScreenshot } from './toMatchSnapshot';
 import type { Expect } from '../common/types';
-import { currentTestInfo } from '../common/globals';
-import { serializeError, captureStackTrace, currentExpectTimeout } from '../util';
+import { currentTestInfo, currentExpectTimeout } from '../common/globals';
+import { serializeError, captureStackTrace } from '../util';
 import {
   expect as expectLibrary,
   INVERTED_COLOR,

@@ -16,7 +16,6 @@
 
 import path from 'path';
 import type { Reporter, TestError } from '../../types/testReporter';
-import type { ConfigLoader } from '../common/configLoader';
 import { formatError } from '../reporters/base';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
@@ -28,9 +27,11 @@ import LineReporter from '../reporters/line';
 import ListReporter from '../reporters/list';
 import { Multiplexer } from '../reporters/multiplexer';
 import type { Suite } from '../common/test';
-import type { FullConfigInternal, ReporterDescription } from '../common/types';
+import type { FullConfigInternal } from '../common/types';
+import { loadReporter } from './loadUtils';
+import type { BuiltInReporter } from '../common/configLoader';
 
-export async function createReporter(configLoader: ConfigLoader, list: boolean) {
+export async function createReporter(config: FullConfigInternal, list: boolean) {
   const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
     dot: list ? ListModeReporter : DotReporter,
     line: list ? ListModeReporter : LineReporter,
@@ -42,17 +43,17 @@ export async function createReporter(configLoader: ConfigLoader, list: boolean) 
     html: HtmlReporter,
   };
   const reporters: Reporter[] = [];
-  for (const r of configLoader.fullConfig().reporter) {
+  for (const r of config.reporter) {
     const [name, arg] = r;
     if (name in defaultReporters) {
       reporters.push(new defaultReporters[name as keyof typeof defaultReporters](arg));
     } else {
-      const reporterConstructor = await configLoader.loadReporter(name);
+      const reporterConstructor = await loadReporter(config, name);
       reporters.push(new reporterConstructor(arg));
     }
   }
   if (process.env.PW_TEST_REPORTER) {
-    const reporterConstructor = await configLoader.loadReporter(process.env.PW_TEST_REPORTER);
+    const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
     reporters.push(new reporterConstructor());
   }
 
@@ -98,14 +99,3 @@ export class ListModeReporter implements Reporter {
     console.error('\n' + formatError(this.config, error, false).message);
   }
 }
-
-export function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
-  if (!reporters)
-    return;
-  if (typeof reporters === 'string')
-    return [[reporters]];
-  return reporters;
-}
-
-export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html'] as const;
-export type BuiltInReporter = typeof builtInReporters[number];

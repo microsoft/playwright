@@ -15,14 +15,15 @@
  */
 
 import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedConfig } from '../common/ipc';
+import { serializeConfig } from '../common/ipc';
 import type { TestResult, Reporter, TestStep, TestError } from '../../types/testReporter';
 import type { Suite } from '../common/test';
-import type { ConfigLoader } from '../common/configLoader';
 import type { ProcessExitData } from './processHost';
 import type { TestCase } from '../common/test';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import { WorkerHost } from './workerHost';
 import type { TestGroup } from './testGroups';
+import type { FullConfigInternal } from '../common/types';
 
 type TestResultData = {
   result: TestResult;
@@ -42,13 +43,13 @@ export class Dispatcher {
   private _isStopped = false;
 
   private _testById = new Map<string, TestData>();
-  private _configLoader: ConfigLoader;
+  private _config: FullConfigInternal;
   private _reporter: Reporter;
   private _hasWorkerErrors = false;
   private _failureCount = 0;
 
-  constructor(configLoader: ConfigLoader, testGroups: TestGroup[], reporter: Reporter) {
-    this._configLoader = configLoader;
+  constructor(config: FullConfigInternal, testGroups: TestGroup[], reporter: Reporter) {
+    this._config = config;
     this._reporter = reporter;
     this._queue = testGroups;
     for (const group of testGroups) {
@@ -125,7 +126,7 @@ export class Dispatcher {
 
     // 2. Start the worker if it is down.
     if (!worker) {
-      worker = this._createWorker(job, index, this._configLoader.serializedConfig());
+      worker = this._createWorker(job, index, serializeConfig(this._config));
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
       await worker.start();
@@ -169,7 +170,7 @@ export class Dispatcher {
   async run() {
     this._workerSlots = [];
     // 1. Allocate workers.
-    for (let i = 0; i < this._configLoader.fullConfig().workers; i++)
+    for (let i = 0; i < this._config.workers; i++)
       this._workerSlots.push({ busy: false });
     // 2. Schedule enough jobs.
     for (let i = 0; i < this._workerSlots.length; i++)
@@ -488,7 +489,7 @@ export class Dispatcher {
   }
 
   private _hasReachedMaxFailures() {
-    const maxFailures = this._configLoader.fullConfig().maxFailures;
+    const maxFailures = this._config.maxFailures;
     return maxFailures > 0 && this._failureCount >= maxFailures;
   }
 
@@ -496,7 +497,7 @@ export class Dispatcher {
     if (result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
     this._reporter.onTestEnd?.(test, result);
-    const maxFailures = this._configLoader.fullConfig().maxFailures;
+    const maxFailures = this._config.maxFailures;
     if (maxFailures && this._failureCount === maxFailures)
       this.stop().catch(e => {});
   }
