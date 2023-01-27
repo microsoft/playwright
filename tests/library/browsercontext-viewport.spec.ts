@@ -98,6 +98,20 @@ it('should not have touch by default', async ({ page, server }) => {
   expect(await page.evaluate(() => document.body.textContent.trim())).toBe('NO');
 });
 
+it('should throw on tap if hasTouch is not enabled', async ({ page }) => {
+  await page.setContent(`<div>a</div>`);
+  {
+    const error = await page.tap('div').catch(e => e);
+    expect(error).toBeTruthy();
+    expect(error.message).toContain('The page does not support tap');
+  }
+  {
+    const error = await page.locator('div').tap().catch(e => e);
+    expect(error).toBeTruthy();
+    expect(error.message).toContain('The page does not support tap');
+  }
+});
+
 browserTest('should support touch with null viewport', async ({ browser, server }) => {
   const context = await browser.newContext({ viewport: null, hasTouch: true });
   const page = await context.newPage();
