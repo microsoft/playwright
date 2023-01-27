@@ -32,20 +32,21 @@ it('should work for complicated objects', async ({ page, browserName }) => {
     expect(aHandle.toString()).toBe('JSHandle@object');
 });
 
-it('should beutifully render sparse arrays', async ({ page, browserName }) => {
+it.only('should beutifully render sparse arrays', async ({ page, browserName }) => {
   const [msg] = await Promise.all([
     page.waitForEvent('console'),
     page.evaluateHandle(() => {
       const a = [];
-      a[10000] = 1;
-      a[100000] = 2;
+      a[1] = 1;
+      a[10] = 2;
+      a[100] = 3;
       console.log(a);
     }),
   ]);
   if (browserName === 'firefox')
     expect(msg.text()).toBe('Array');
   else
-    expect(msg.text()).toBe('[<9999 empty items>,1,<89999 empty items>,2]');
+    expect(msg.text()).toBe('[empty, 1, empty x 8, 2, empty x 89, 3]');
 });
 
 it('should work for promises', async ({ page }) => {

@@ -142,16 +142,7 @@ function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefine
       tokens.push(`${name}: ${value}`);
     return `{${tokens.join(', ')}}`;
   }
-  if (object.subtype === 'array' && object.preview) {
-    const arrayEntries = [];
-    for (const { name, value } of object.preview.properties!) {
-      const index = +name;
-      if (isNaN(index) || index < 0)
-        continue;
-      arrayEntries.push({ index, value });
-    }
-    arrayEntries.sort((a, b) => a.index - b.index);
-    return js.sparseArrayToString(arrayEntries);
-  }
+  if (object.subtype === 'array' && object.preview)
+    return js.sparseArrayToString(object.preview.properties);
   return object.description;
 }
