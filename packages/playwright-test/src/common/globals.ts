@@ -32,3 +32,13 @@ export function setCurrentlyLoadingFileSuite(suite: Suite | undefined) {
 export function currentlyLoadingFileSuite() {
   return currentFileSuite;
 }
+
+export function currentExpectTimeout(options: { timeout?: number }) {
+  const testInfo = currentTestInfo();
+  if (options.timeout !== undefined)
+    return options.timeout;
+  let defaultExpectTimeout = testInfo?.project._expect?.timeout;
+  if (typeof defaultExpectTimeout === 'undefined')
+    defaultExpectTimeout = 5000;
+  return defaultExpectTimeout;
+}

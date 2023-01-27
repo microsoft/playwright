@@ -19,26 +19,27 @@ import { ConfigLoader } from '../common/configLoader';
 import { ProcessRunner } from '../common/process';
 import { loadTestFilesInProcess } from '../common/testLoader';
 import type { LoadError } from '../common/fixtures';
+import type { FullConfigInternal } from '../common/types';
 
 export class LoaderMain extends ProcessRunner {
-  private _config: SerializedConfig;
-  private _configLoaderPromise: Promise<ConfigLoader> | undefined;
+  private _serializedConfig: SerializedConfig;
+  private _configPromise: Promise<FullConfigInternal> | undefined;
 
-  constructor(config: SerializedConfig) {
+  constructor(serializedConfig: SerializedConfig) {
     super();
-    this._config = config;
+    this._serializedConfig = serializedConfig;
   }
 
-  private _configLoader(): Promise<ConfigLoader> {
-    if (!this._configLoaderPromise)
-      this._configLoaderPromise = ConfigLoader.deserialize(this._config);
-    return this._configLoaderPromise;
+  private _config(): Promise<FullConfigInternal> {
+    if (!this._configPromise)
+      this._configPromise = ConfigLoader.deserialize(this._serializedConfig).then(configLoader => configLoader.fullConfig());
+    return this._configPromise;
   }
 
   async loadTestFiles(params: { files: string[] }) {
     const loadErrors: LoadError[] = [];
-    const configLoader = await this._configLoader();
-    const rootSuite = await loadTestFilesInProcess(configLoader.fullConfig(), params.files, loadErrors);
+    const config = await this._config();
+    const rootSuite = await loadTestFilesInProcess(config, params.files, loadErrors);
     return { rootSuite: rootSuite._deepSerialize(), loadErrors };
   }
 }

@@ -18,9 +18,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { isRegExp } from 'playwright-core/lib/utils';
-import type { Reporter } from '../../types/testReporter';
 import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
-import { builtInReporters, toReporters } from '../runner/reporters';
 import { requireOrImport } from './transform';
 import type { Config, FullConfigInternal, FullProjectInternal, Project, ReporterDescription } from './types';
 import { errorWithFile, getPackageJsonPath, mergeObjects } from '../util';
@@ -28,14 +26,11 @@ import { errorWithFile, getPackageJsonPath, mergeObjects } from '../util';
 export const defaultTimeout = 30000;
 
 export class ConfigLoader {
-  private _configCLIOverrides: ConfigCLIOverrides;
   private _fullConfig: FullConfigInternal;
-  private _configDir: string = '';
-  private _configFile: string | undefined;
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
-    this._configCLIOverrides = configCLIOverrides || {};
     this._fullConfig = { ...baseFullConfig };
+    this._fullConfig._configCLIOverrides = configCLIOverrides || {};
   }
 
   static async deserialize(data: SerializedConfig): Promise<ConfigLoader> {
@@ -48,11 +43,10 @@ export class ConfigLoader {
   }
 
   async loadConfigFile(file: string): Promise<FullConfigInternal> {
-    if (this._configFile)
+    if (this._fullConfig.configFile)
       throw new Error('Cannot load two config files');
-    const config = await this._requireOrImportDefaultObject(file) as Config;
-    this._configFile = file;
-    await this._processConfigObject(config, path.dirname(file));
+    const config = await requireOrImportDefaultObject(file) as Config;
+    await this._processConfigObject(config, path.dirname(file), file);
     return this._fullConfig;
   }
 
@@ -61,35 +55,35 @@ export class ConfigLoader {
     return {};
   }
 
-  private async _processConfigObject(config: Config, configDir: string) {
+  private async _processConfigObject(config: Config, configDir: string, configFile?: string) {
     // 1. Validate data provided in the config file.
-    validateConfig(this._configFile || '<default config>', config);
+    validateConfig(configFile || '<default config>', config);
 
     // 2. Override settings from CLI.
-    config.forbidOnly = takeFirst(this._configCLIOverrides.forbidOnly, config.forbidOnly);
-    config.fullyParallel = takeFirst(this._configCLIOverrides.fullyParallel, config.fullyParallel);
-    config.globalTimeout = takeFirst(this._configCLIOverrides.globalTimeout, config.globalTimeout);
-    config.maxFailures = takeFirst(this._configCLIOverrides.maxFailures, config.maxFailures);
-    config.outputDir = takeFirst(this._configCLIOverrides.outputDir, config.outputDir);
-    config.quiet = takeFirst(this._configCLIOverrides.quiet, config.quiet);
-    config.repeatEach = takeFirst(this._configCLIOverrides.repeatEach, config.repeatEach);
-    config.retries = takeFirst(this._configCLIOverrides.retries, config.retries);
-    if (this._configCLIOverrides.reporter)
-      config.reporter = toReporters(this._configCLIOverrides.reporter as any);
-    config.shard = takeFirst(this._configCLIOverrides.shard, config.shard);
-    config.timeout = takeFirst(this._configCLIOverrides.timeout, config.timeout);
-    config.updateSnapshots = takeFirst(this._configCLIOverrides.updateSnapshots, config.updateSnapshots);
-    config.ignoreSnapshots = takeFirst(this._configCLIOverrides.ignoreSnapshots, config.ignoreSnapshots);
-    if (this._configCLIOverrides.projects && config.projects)
+    const configCLIOverrides = this._fullConfig._configCLIOverrides;
+    config.forbidOnly = takeFirst(configCLIOverrides.forbidOnly, config.forbidOnly);
+    config.fullyParallel = takeFirst(configCLIOverrides.fullyParallel, config.fullyParallel);
+    config.globalTimeout = takeFirst(configCLIOverrides.globalTimeout, config.globalTimeout);
+    config.maxFailures = takeFirst(configCLIOverrides.maxFailures, config.maxFailures);
+    config.outputDir = takeFirst(configCLIOverrides.outputDir, config.outputDir);
+    config.quiet = takeFirst(configCLIOverrides.quiet, config.quiet);
+    config.repeatEach = takeFirst(configCLIOverrides.repeatEach, config.repeatEach);
+    config.retries = takeFirst(configCLIOverrides.retries, config.retries);
+    if (configCLIOverrides.reporter)
+      config.reporter = toReporters(configCLIOverrides.reporter as any);
+    config.shard = takeFirst(configCLIOverrides.shard, config.shard);
+    config.timeout = takeFirst(configCLIOverrides.timeout, config.timeout);
+    config.updateSnapshots = takeFirst(configCLIOverrides.updateSnapshots, config.updateSnapshots);
+    config.ignoreSnapshots = takeFirst(configCLIOverrides.ignoreSnapshots, config.ignoreSnapshots);
+    if (configCLIOverrides.projects && config.projects)
       throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
-    config.projects = takeFirst(this._configCLIOverrides.projects, config.projects as any);
-    config.workers = takeFirst(this._configCLIOverrides.workers, config.workers);
-    config.use = mergeObjects(config.use, this._configCLIOverrides.use);
+    config.projects = takeFirst(configCLIOverrides.projects, config.projects as any);
+    config.workers = takeFirst(configCLIOverrides.workers, config.workers);
+    config.use = mergeObjects(config.use, configCLIOverrides.use);
     for (const project of config.projects || [])
       this._applyCLIOverridesToProject(project);
 
     // 3. Resolve config.
-    this._configDir = configDir;
     const packageJsonPath = getPackageJsonPath(configDir);
     const packageJsonDir = packageJsonPath ? path.dirname(packageJsonPath) : undefined;
     const throwawayArtifactsPath = packageJsonDir || process.cwd();
@@ -109,8 +103,8 @@ export class ConfigLoader {
 
     this._fullConfig._configDir = configDir;
     this._fullConfig._storeDir = path.resolve(configDir, '.playwright-store');
-    this._fullConfig.configFile = this._configFile;
-    this._fullConfig.rootDir = config.testDir || this._configDir;
+    this._fullConfig.configFile = configFile;
+    this._fullConfig.rootDir = config.testDir || configDir;
     this._fullConfig._globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._globalOutputDir);
     this._fullConfig.forbidOnly = takeFirst(config.forbidOnly, baseFullConfig.forbidOnly);
     this._fullConfig.fullyParallel = takeFirst(config.fullyParallel, baseFullConfig.fullyParallel);
@@ -169,46 +163,30 @@ export class ConfigLoader {
     }
   }
 
-  async loadGlobalHook(file: string): Promise<(config: FullConfigInternal) => any> {
-    return this._requireOrImportDefaultFunction(path.resolve(this._fullConfig.rootDir, file), false);
-  }
-
-  async loadReporter(file: string): Promise<new (arg?: any) => Reporter> {
-    return this._requireOrImportDefaultFunction(path.resolve(this._fullConfig.rootDir, file), true);
-  }
-
   fullConfig(): FullConfigInternal {
     return this._fullConfig;
   }
 
-  serializedConfig(): SerializedConfig {
-    const result: SerializedConfig = {
-      configFile: this._configFile,
-      configDir: this._configDir,
-      configCLIOverrides: this._configCLIOverrides,
-    };
-    return result;
-  }
-
   private _applyCLIOverridesToProject(projectConfig: Project) {
-    projectConfig.fullyParallel = takeFirst(this._configCLIOverrides.fullyParallel, projectConfig.fullyParallel);
-    projectConfig.outputDir = takeFirst(this._configCLIOverrides.outputDir, projectConfig.outputDir);
-    projectConfig.repeatEach = takeFirst(this._configCLIOverrides.repeatEach, projectConfig.repeatEach);
-    projectConfig.retries = takeFirst(this._configCLIOverrides.retries, projectConfig.retries);
-    projectConfig.timeout = takeFirst(this._configCLIOverrides.timeout, projectConfig.timeout);
-    projectConfig.use = mergeObjects(projectConfig.use, this._configCLIOverrides.use);
+    const configCLIOverrides = this._fullConfig._configCLIOverrides;
+    projectConfig.fullyParallel = takeFirst(configCLIOverrides.fullyParallel, projectConfig.fullyParallel);
+    projectConfig.outputDir = takeFirst(configCLIOverrides.outputDir, projectConfig.outputDir);
+    projectConfig.repeatEach = takeFirst(configCLIOverrides.repeatEach, projectConfig.repeatEach);
+    projectConfig.retries = takeFirst(configCLIOverrides.retries, projectConfig.retries);
+    projectConfig.timeout = takeFirst(configCLIOverrides.timeout, projectConfig.timeout);
+    projectConfig.use = mergeObjects(projectConfig.use, configCLIOverrides.use);
   }
 
   private _resolveProject(config: Config, fullConfig: FullConfigInternal, projectConfig: Project, throwawayArtifactsPath: string): FullProjectInternal {
     // Resolve all config dirs relative to configDir.
     if (projectConfig.testDir !== undefined)
-      projectConfig.testDir = path.resolve(this._configDir, projectConfig.testDir);
+      projectConfig.testDir = path.resolve(fullConfig._configDir, projectConfig.testDir);
     if (projectConfig.outputDir !== undefined)
-      projectConfig.outputDir = path.resolve(this._configDir, projectConfig.outputDir);
+      projectConfig.outputDir = path.resolve(fullConfig._configDir, projectConfig.outputDir);
     if (projectConfig.snapshotDir !== undefined)
-      projectConfig.snapshotDir = path.resolve(this._configDir, projectConfig.snapshotDir);
+      projectConfig.snapshotDir = path.resolve(fullConfig._configDir, projectConfig.snapshotDir);
 
-    const testDir = takeFirst(projectConfig.testDir, config.testDir, this._configDir);
+    const testDir = takeFirst(projectConfig.testDir, config.testDir, fullConfig._configDir);
     const respectGitIgnore = !projectConfig.testDir && !config.testDir;
 
     const outputDir = takeFirst(projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
@@ -239,22 +217,13 @@ export class ConfigLoader {
       use: mergeObjects(config.use, projectConfig.use),
     };
   }
+}
 
-  private async _requireOrImportDefaultFunction(file: string, expectConstructor: boolean) {
-    let func = await requireOrImport(file);
-    if (func && typeof func === 'object' && ('default' in func))
-      func = func['default'];
-    if (typeof func !== 'function')
-      throw errorWithFile(file, `file must export a single ${expectConstructor ? 'class' : 'function'}.`);
-    return func;
-  }
-
-  private async _requireOrImportDefaultObject(file: string) {
-    let object = await requireOrImport(file);
-    if (object && typeof object === 'object' && ('default' in object))
-      object = object['default'];
-    return object;
-  }
+async function requireOrImportDefaultObject(file: string) {
+  let object = await requireOrImport(file);
+  if (object && typeof object === 'object' && ('default' in object))
+    object = object['default'];
+  return object;
 }
 
 function takeFirst<T>(...args: (T | undefined)[]): T {
@@ -462,6 +431,7 @@ export const baseFullConfig: FullConfigInternal = {
   _webServers: [],
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
+  _configCLIOverrides: {},
   _storeDir: '',
   _maxConcurrentTestGroups: 0,
   _ignoreSnapshots: false,
@@ -512,4 +482,15 @@ export function resolveConfigFile(configFileOrDirectory: string): string | null 
     const configFile = resolveConfig(configFileOrDirectory);
     return configFile!;
   }
+}
+
+export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html'] as const;
+export type BuiltInReporter = typeof builtInReporters[number];
+
+export function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
+  if (!reporters)
+    return;
+  if (typeof reporters === 'string')
+    return [[reporters]];
+  return reporters;
 }

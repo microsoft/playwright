@@ -6,6 +6,3 @@
 
 [transform.ts]
 ../third_party/tsconfig-loader.ts
-
-[configLoader.ts]
-../runner/reporters.ts

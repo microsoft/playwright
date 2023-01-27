@@ -23,7 +23,6 @@ import { colors, debug, minimatch } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoError, Location } from './common/types';
 import { calculateSha1, isRegExp, isString, captureStackTrace as coreCaptureStackTrace } from 'playwright-core/lib/utils';
 import { isInternalFileName } from 'playwright-core/lib/utils';
-import { currentTestInfo } from './common/globals';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils';
 
 export type { ParsedStackTrace };
@@ -31,7 +30,7 @@ export type { ParsedStackTrace };
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core'));
 const EXPECT_PATH = require.resolve('./common/expectBundle');
 const EXPECT_PATH_IMPL = require.resolve('./common/expectBundleImpl');
-const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '../..');
+const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 
 function filterStackTrace(e: Error) {
   if (process.env.PWDEBUGIMPL)
@@ -241,16 +240,6 @@ export function callLogText(log: string[] | undefined): string {
 Call log:
   ${colors.dim('- ' + (log || []).join('\n  - '))}
 `;
-}
-
-export function currentExpectTimeout(options: { timeout?: number }) {
-  const testInfo = currentTestInfo();
-  if (options.timeout !== undefined)
-    return options.timeout;
-  let defaultExpectTimeout = testInfo?.project._expect?.timeout;
-  if (typeof defaultExpectTimeout === 'undefined')
-    defaultExpectTimeout = 5000;
-  return defaultExpectTimeout;
 }
 
 const folderToPackageJsonPath = new Map<string, string>();

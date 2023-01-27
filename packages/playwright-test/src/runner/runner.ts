@@ -17,7 +17,6 @@
 
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../types/testReporter';
-import { ConfigLoader } from '../common/configLoader';
 import type { TestRunnerPlugin } from '../plugins';
 import { setRunnerToAddPluginsTo } from '../plugins';
 import { dockerPlugin } from '../plugins/dockerPlugin';
@@ -26,9 +25,8 @@ import { collectFilesForProjects, collectProjects } from './projectUtils';
 import { createReporter } from './reporters';
 import { createTaskRunner } from './tasks';
 import type { TaskRunnerState } from './tasks';
-import type { Config, FullConfigInternal } from '../common/types';
+import type { FullConfigInternal } from '../common/types';
 import type { Matcher, TestFileFilter } from '../util';
-import type { ConfigCLIOverrides } from '../common/ipc';
 
 export type RunOptions = {
   listOnly: boolean;
@@ -39,11 +37,11 @@ export type RunOptions = {
 };
 
 export class Runner {
-  private _configLoader: ConfigLoader;
+  private _config: FullConfigInternal;
   private _plugins: TestRunnerPlugin[] = [];
 
-  constructor(configCLIOverrides?: ConfigCLIOverrides) {
-    this._configLoader = new ConfigLoader(configCLIOverrides);
+  constructor(config: FullConfigInternal) {
+    this._config = config;
     setRunnerToAddPluginsTo(this);
   }
 
@@ -51,16 +49,8 @@ export class Runner {
     this._plugins.push(plugin);
   }
 
-  async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<FullConfigInternal> {
-    return await this._configLoader.loadConfigFile(resolvedConfigFile);
-  }
-
-  loadEmptyConfig(configFileOrDirectory: string): Promise<Config> {
-    return this._configLoader.loadEmptyConfig(configFileOrDirectory);
-  }
-
   async listTestFiles(projectNames: string[] | undefined): Promise<any> {
-    const projects = collectProjects(this._configLoader.fullConfig(), projectNames);
+    const projects = collectProjects(this._config, projectNames);
     const filesByProject = await collectFilesForProjects(projects, []);
     const report: any = {
       projects: []
@@ -75,7 +65,7 @@ export class Runner {
   }
 
   async runAllTests(options: RunOptions): Promise<FullResult['status']> {
-    const config = this._configLoader.fullConfig();
+    const config = this._config;
     const deadline = config.globalTimeout ? monotonicTime() + config.globalTimeout : 0;
 
     // Legacy webServer support.
@@ -83,12 +73,11 @@ export class Runner {
     // Docker support.
     this._plugins.push(dockerPlugin);
 
-    const reporter = await createReporter(this._configLoader, options.listOnly);
+    const reporter = await createReporter(config, options.listOnly);
     const taskRunner = createTaskRunner(config, reporter, this._plugins, options);
 
     const context: TaskRunnerState = {
       config,
-      configLoader: this._configLoader,
       options,
       reporter,
     };
