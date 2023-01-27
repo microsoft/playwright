@@ -121,6 +121,7 @@ export class ConfigLoader {
     this._fullConfig.shard = takeFirst(config.shard, baseFullConfig.shard);
     this._fullConfig._ignoreSnapshots = takeFirst(config.ignoreSnapshots, baseFullConfig._ignoreSnapshots);
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
+    this._fullConfig._pluginRegistrations = (config as any)._plugins || [];
 
     const workers = takeFirst(config.workers, '50%');
     if (typeof workers === 'string') {
@@ -435,6 +436,7 @@ export const baseFullConfig: FullConfigInternal = {
   _storeDir: '',
   _maxConcurrentTestGroups: 0,
   _ignoreSnapshots: false,
+  _pluginRegistrations: [],
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {

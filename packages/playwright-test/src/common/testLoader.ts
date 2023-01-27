@@ -16,7 +16,6 @@
 
 import path from 'path';
 import type { TestError } from '../../reporter';
-import type { FullConfigInternal } from './types';
 import type { LoadError } from './fixtures';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { PoolBuilder } from './poolBuilder';
@@ -31,16 +30,16 @@ export const defaultTimeout = 30000;
 const cachedFileSuites = new Map<string, Suite>();
 
 export class TestLoader {
-  private _fullConfig: FullConfigInternal;
+  private _rootDir: string;
 
-  constructor(fullConfig: FullConfigInternal) {
-    this._fullConfig = fullConfig;
+  constructor(rootDir: string) {
+    this._rootDir = rootDir;
   }
 
   async loadTestFile(file: string, environment: 'loader' | 'worker', loadErrors: TestError[]): Promise<Suite> {
     if (cachedFileSuites.has(file))
       return cachedFileSuites.get(file)!;
-    const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file), 'file');
+    const suite = new Suite(path.relative(this._rootDir, file) || path.basename(file), 'file');
     suite._requireFile = file;
     suite.location = { file, line: 0, column: 0 };
 
@@ -80,8 +79,8 @@ export class TestLoader {
   }
 }
 
-export async function loadTestFilesInProcess(config: FullConfigInternal, testFiles: string[], loadErrors: LoadError[]): Promise<Suite> {
-  const testLoader = new TestLoader(config);
+export async function loadTestFilesInProcess(rootDir: string, testFiles: string[], loadErrors: LoadError[]): Promise<Suite> {
+  const testLoader = new TestLoader(rootDir);
   const rootSuite = new Suite('', 'root');
   for (const file of testFiles) {
     const fileSuite = await testLoader.loadTestFile(file, 'loader', loadErrors);

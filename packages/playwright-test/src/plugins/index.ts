@@ -15,7 +15,6 @@
  */
 
 import type { Suite, Reporter } from '../../types/testReporter';
-import type { Runner } from '../runner/runner';
 import type { FullConfig } from '../common/types';
 
 export interface TestRunnerPlugin {
@@ -25,22 +24,7 @@ export interface TestRunnerPlugin {
   teardown?(): Promise<void>;
 }
 
+export type TestRunnerPluginRegistration = TestRunnerPlugin | (() => TestRunnerPlugin | Promise<TestRunnerPlugin>);
+
 export { webServer } from './webServerPlugin';
 export { gitCommitInfo } from './gitCommitInfoPlugin';
-
-let runnerInstanceToAddPluginsTo: Runner | undefined;
-const deferredPlugins: TestRunnerPlugin[] = [];
-
-export const setRunnerToAddPluginsTo = (runner: Runner) => {
-  runnerInstanceToAddPluginsTo = runner;
-  for (const plugin of deferredPlugins)
-    runnerInstanceToAddPluginsTo.addPlugin(plugin);
-};
-
-export const addRunnerPlugin = (plugin: TestRunnerPlugin | (() => TestRunnerPlugin)) => {
-  plugin = typeof plugin === 'function' ? plugin() : plugin;
-  if (runnerInstanceToAddPluginsTo)
-    runnerInstanceToAddPluginsTo.addPlugin(plugin);
-  else
-    deferredPlugins.push(plugin);
-};

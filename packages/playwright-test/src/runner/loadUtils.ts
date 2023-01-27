@@ -26,7 +26,7 @@ import type { FullConfigInternal } from '../common/types';
 import { errorWithFile } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
 import { createFileMatcher } from '../util';
-import { collectFilesForProjects, collectProjects } from './projectUtils';
+import { collectFilesForProjects, filterProjects } from './projectUtils';
 import { requireOrImport } from '../common/transform';
 import { serializeConfig } from '../common/ipc';
 
@@ -39,7 +39,7 @@ type LoadOptions = {
 };
 
 export async function loadAllTests(config: FullConfigInternal, reporter: Multiplexer, options: LoadOptions, errors: TestError[]): Promise<Suite> {
-  const projects = collectProjects(config, options.projectFilter);
+  const projects = filterProjects(config.projects, options.projectFilter);
   const filesByProject = await collectFilesForProjects(projects, options.testFileFilters);
   const allTestFiles = new Set<string>();
   for (const files of filesByProject.values())
@@ -80,7 +80,7 @@ async function loadTests(config: FullConfigInternal, reporter: Multiplexer, test
   }
   const loadErrors: LoadError[] = [];
   try {
-    return await loadTestFilesInProcess(config, [...testFiles], loadErrors);
+    return await loadTestFilesInProcess(config.rootDir, [...testFiles], loadErrors);
   } finally {
     errors.push(...loadErrors);
   }

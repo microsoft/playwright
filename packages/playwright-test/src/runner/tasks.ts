@@ -19,7 +19,7 @@ import path from 'path';
 import { promisify } from 'util';
 import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import { Dispatcher } from './dispatcher';
-import type { TestRunnerPlugin } from '../plugins';
+import type { TestRunnerPlugin, TestRunnerPluginRegistration } from '../plugins';
 import type { Multiplexer } from '../reporters/multiplexer';
 import type { TestGroup } from '../runner/testGroups';
 import { createTestGroups, filterForShard } from '../runner/testGroups';
@@ -45,43 +45,56 @@ export type TaskRunnerState = {
   options: TaskRunnerOptions;
   reporter: Multiplexer;
   config: FullConfigInternal;
+  plugins: TestRunnerPlugin[];
   rootSuite?: Suite;
   testGroups?: TestGroup[];
   dispatcher?: Dispatcher;
 };
 
-export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer, plugins: TestRunnerPlugin[], options: TaskRunnerOptions): TaskRunner<TaskRunnerState> {
+export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
 
-  for (const plugin of plugins)
+  for (const plugin of config._pluginRegistrations)
     taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
   if (config.globalSetup || config.globalTeardown)
     taskRunner.addTask('global setup', createGlobalSetupTask());
   taskRunner.addTask('load tests', createLoadTask());
 
-  if (!options.listOnly) {
-    taskRunner.addTask('prepare to run', createRemoveOutputDirsTask());
-    taskRunner.addTask('plugin begin', async ({ rootSuite }) => {
-      for (const plugin of plugins)
-        await plugin.begin?.(rootSuite!);
-    });
-  }
+  taskRunner.addTask('prepare to run', createRemoveOutputDirsTask());
+  taskRunner.addTask('plugin begin', async ({ rootSuite, plugins }) => {
+    for (const plugin of plugins)
+      await plugin.begin?.(rootSuite!);
+  });
 
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
     reporter.onBegin?.(config, rootSuite!);
     return () => reporter.onEnd();
   });
 
-  if (!options.listOnly) {
-    taskRunner.addTask('setup workers', createSetupWorkersTask());
-    taskRunner.addTask('test suite', async ({ dispatcher }) => dispatcher!.run());
-  }
+  taskRunner.addTask('setup workers', createSetupWorkersTask());
+  taskRunner.addTask('test suite', async ({ dispatcher }) => dispatcher!.run());
 
   return taskRunner;
 }
 
-export function createPluginSetupTask(plugin: TestRunnerPlugin): Task<TaskRunnerState> {
-  return async ({ config, reporter }) => {
+export function createTaskRunnerForList(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
+  const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
+  taskRunner.addTask('load tests', createLoadTask());
+  taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
+    reporter.onBegin?.(config, rootSuite!);
+    return () => reporter.onEnd();
+  });
+  return taskRunner;
+}
+
+export function createPluginSetupTask(pluginRegistration: TestRunnerPluginRegistration): Task<TaskRunnerState> {
+  return async ({ config, reporter, plugins }) => {
+    let plugin: TestRunnerPlugin;
+    if (typeof pluginRegistration === 'function')
+      plugin = await pluginRegistration();
+    else
+      plugin = pluginRegistration;
+    plugins.push(plugin);
     await plugin.setup?.(config, config._configDir, reporter);
     return () => plugin.teardown?.();
   };

@@ -363,10 +363,8 @@ test('sigint should stop plugins', async ({ runInlineTest }) => {
 
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
-      };
-
-      require('@playwright/test')._addRunnerPlugin(() => ({
+      const _plugins = [];
+      _plugins.push(() => ({
         setup: async () => {
           console.log('Plugin1 setup');
           console.log('%%SEND-SIGINT%%');
@@ -377,7 +375,7 @@ test('sigint should stop plugins', async ({ runInlineTest }) => {
         }
       }));
 
-      require('@playwright/test')._addRunnerPlugin(() => ({
+      _plugins.push(() => ({
         setup: async () => {
           console.log('Plugin2 setup');
         },
@@ -385,6 +383,9 @@ test('sigint should stop plugins', async ({ runInlineTest }) => {
           console.log('Plugin2 teardown');
         }
       }));
+      module.exports = {
+        _plugins
+      };
     `,
     'a.spec.js': `
       const { test } = pwt;
@@ -405,10 +406,8 @@ test('sigint should stop plugins 2', async ({ runInlineTest }) => {
 
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
-      };
-
-      require('@playwright/test')._addRunnerPlugin(() => ({
+      const _plugins = [];
+      _plugins.push(() => ({
         setup: async () => {
           console.log('Plugin1 setup');
         },
@@ -417,7 +416,7 @@ test('sigint should stop plugins 2', async ({ runInlineTest }) => {
         }
       }));
 
-      require('@playwright/test')._addRunnerPlugin(() => ({
+      _plugins.push(() => ({
         setup: async () => {
           console.log('Plugin2 setup');
           console.log('%%SEND-SIGINT%%');
@@ -427,6 +426,7 @@ test('sigint should stop plugins 2', async ({ runInlineTest }) => {
           console.log('Plugin2 teardown');
         }
       }));
+      module.exports = { _plugins };
     `,
     'a.spec.js': `
       const { test } = pwt;
