@@ -3968,8 +3968,8 @@ export interface Page {
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError].
    * Passing zero timeout disables this.
    *
-   * **NOTE** [page.tap(selector[, options])](https://playwright.dev/docs/api/class-page#page-tap) requires that the
-   * `hasTouch` option of the browser context be set to true.
+   * **NOTE** [page.tap(selector[, options])](https://playwright.dev/docs/api/class-page#page-tap) the method will throw
+   * if `hasTouch` option of the browser context is false.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
@@ -18098,6 +18098,9 @@ export interface Selectors {
 export interface Touchscreen {
   /**
    * Dispatches a `touchstart` and `touchend` event with a single touch at the position (`x`,`y`).
+   *
+   * **NOTE** [page.tap(selector[, options])](https://playwright.dev/docs/api/class-page#page-tap) the method will throw
+   * if `hasTouch` option of the browser context is false.
    * @param x
    * @param y
    */

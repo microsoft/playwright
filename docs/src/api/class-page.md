@@ -3498,7 +3498,7 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 :::note
-[`method: Page.tap`] requires that the [`option: hasTouch`] option of the browser context be set to true.
+[`method: Page.tap`] the method will throw if [`option: hasTouch`] option of the browser context is false.
 :::
 
 ### param: Page.tap.selector = %%-input-selector-%%
