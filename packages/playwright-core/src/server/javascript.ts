@@ -329,7 +329,7 @@ export function isJavaScriptErrorInEvaluate(error: Error) {
   return error instanceof JavaScriptErrorInEvaluate;
 }
 
-export function sparseArrayToString(entries: { key: string, value: any }[]): string {
+export function sparseArrayToString(entries: { name: string, value?: any }[]): string {
   const arrayEntries = [];
   for (const { name, value } of entries) {
     const index = +name;

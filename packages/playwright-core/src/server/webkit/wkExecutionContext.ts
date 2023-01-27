@@ -143,6 +143,6 @@ function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefine
     return `{${tokens.join(', ')}}`;
   }
   if (object.subtype === 'array' && object.preview)
-    return js.sparseArrayToString(object.preview.properties);
+    return js.sparseArrayToString(object.preview.properties!);
   return object.description;
 }
