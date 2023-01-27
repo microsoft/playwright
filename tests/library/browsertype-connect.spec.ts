@@ -57,6 +57,10 @@ const test = playwrightTest.extend<ExtraFixtures>({
   },
 
   ipV6ServerUrl: async ({}, use) => {
+    if (process.env.INSIDE_DOCKER) {
+      await use('<not-supported>');
+      return;
+    }
     const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.end('<html><body>from-ipv6-server</body></html>');
     });
