@@ -82,12 +82,14 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     await installAppIcon(this._page);
     await syncLocalStorageWithSettings(this._page, 'recorder');
 
-    await this._page._setServerRequestInterceptor(async route => {
-      if (route.request().url().startsWith('https://playwright/')) {
-        const uri = route.request().url().substring('https://playwright/'.length);
-        const file = require.resolve('../../webpack/recorder/' + uri);
-        const buffer = await fs.promises.readFile(file);
-        await route.fulfill({
+    await this._page._setServerRequestInterceptor(route => {
+      if (!route.request().url().startsWith('https://playwright/'))
+        return false;
+
+      const uri = route.request().url().substring('https://playwright/'.length);
+      const file = require.resolve('../../webpack/recorder/' + uri);
+      fs.promises.readFile(file).then(buffer => {
+        route.fulfill({
           status: 200,
           headers: [
             { name: 'Content-Type', value: mime.getType(path.extname(file)) || 'application/octet-stream' }
@@ -95,9 +97,8 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
           body: buffer.toString('base64'),
           isBase64: true
         });
-        return;
-      }
-      await route.continue();
+      });
+      return true;
     });
 
     await this._page.exposeBinding('dispatch', false, (_, data: any) => this.emit('event', data));

@@ -1371,7 +1371,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   setExtraHTTPHeaders(params: BrowserContextSetExtraHTTPHeadersParams, metadata?: Metadata): Promise<BrowserContextSetExtraHTTPHeadersResult>;
   setGeolocation(params: BrowserContextSetGeolocationParams, metadata?: Metadata): Promise<BrowserContextSetGeolocationResult>;
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, metadata?: Metadata): Promise<BrowserContextSetHTTPCredentialsResult>;
-  setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams, metadata?: Metadata): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
+  setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, metadata?: Metadata): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
   setOffline(params: BrowserContextSetOfflineParams, metadata?: Metadata): Promise<BrowserContextSetOfflineResult>;
   storageState(params?: BrowserContextStorageStateParams, metadata?: Metadata): Promise<BrowserContextStorageStateResult>;
   pause(params?: BrowserContextPauseParams, metadata?: Metadata): Promise<BrowserContextPauseResult>;
@@ -1523,13 +1523,17 @@ export type BrowserContextSetHTTPCredentialsOptions = {
   },
 };
 export type BrowserContextSetHTTPCredentialsResult = void;
-export type BrowserContextSetNetworkInterceptionEnabledParams = {
-  enabled: boolean,
+export type BrowserContextSetNetworkInterceptionPatternsParams = {
+  patterns: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+  }[],
 };
-export type BrowserContextSetNetworkInterceptionEnabledOptions = {
+export type BrowserContextSetNetworkInterceptionPatternsOptions = {
 
 };
-export type BrowserContextSetNetworkInterceptionEnabledResult = void;
+export type BrowserContextSetNetworkInterceptionPatternsResult = void;
 export type BrowserContextSetOfflineParams = {
   offline: boolean,
 };
@@ -1673,7 +1677,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   expectScreenshot(params: PageExpectScreenshotParams, metadata?: Metadata): Promise<PageExpectScreenshotResult>;
   screenshot(params: PageScreenshotParams, metadata?: Metadata): Promise<PageScreenshotResult>;
   setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, metadata?: Metadata): Promise<PageSetExtraHTTPHeadersResult>;
-  setNetworkInterceptionEnabled(params: PageSetNetworkInterceptionEnabledParams, metadata?: Metadata): Promise<PageSetNetworkInterceptionEnabledResult>;
+  setNetworkInterceptionPatterns(params: PageSetNetworkInterceptionPatternsParams, metadata?: Metadata): Promise<PageSetNetworkInterceptionPatternsResult>;
   setViewportSize(params: PageSetViewportSizeParams, metadata?: Metadata): Promise<PageSetViewportSizeResult>;
   keyboardDown(params: PageKeyboardDownParams, metadata?: Metadata): Promise<PageKeyboardDownResult>;
   keyboardUp(params: PageKeyboardUpParams, metadata?: Metadata): Promise<PageKeyboardUpResult>;
@@ -1918,13 +1922,17 @@ export type PageSetExtraHTTPHeadersOptions = {
 
 };
 export type PageSetExtraHTTPHeadersResult = void;
-export type PageSetNetworkInterceptionEnabledParams = {
-  enabled: boolean,
+export type PageSetNetworkInterceptionPatternsParams = {
+  patterns: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+  }[],
 };
-export type PageSetNetworkInterceptionEnabledOptions = {
+export type PageSetNetworkInterceptionPatternsOptions = {
 
 };
-export type PageSetNetworkInterceptionEnabledResult = void;
+export type PageSetNetworkInterceptionPatternsResult = void;
 export type PageSetViewportSizeParams = {
   viewportSize: {
     width: number,

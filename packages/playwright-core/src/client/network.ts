@@ -22,7 +22,7 @@ import { Worker } from './worker';
 import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
 import { mime } from '../utilsBundle';
-import { assert, isString, headersObjectToArray } from '../utils';
+import { assert, isString, headersObjectToArray, isRegExp } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { Events } from './events';
 import type { Page } from './page';
@@ -641,8 +641,7 @@ export class NetworkRouter {
 
   async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
     this._routes.unshift(new RouteHandler(this._baseURL, url, handler, options.times));
-    if (this._routes.length === 1)
-      await this._owner._channel.setNetworkInterceptionEnabled({ enabled: true });
+    await this._updateInterception();
   }
 
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback' } = {}): Promise<void> {
@@ -653,8 +652,7 @@ export class NetworkRouter {
 
   async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
     this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
-    if (!this._routes.length)
-      await this._disableInterception();
+    await this._updateInterception();
   }
 
   async handleRoute(route: Route) {
@@ -666,15 +664,25 @@ export class NetworkRouter {
         this._routes.splice(this._routes.indexOf(routeHandler), 1);
       const handled = await routeHandler.handle(route);
       if (!this._routes.length)
-        this._owner._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+        this._owner._wrapApiCall(() => this._updateInterception(), true).catch(() => {});
       if (handled)
         return true;
     }
     return false;
   }
 
-  private async _disableInterception() {
-    await this._owner._channel.setNetworkInterceptionEnabled({ enabled: false });
+  private async _updateInterception() {
+    const patterns: channels.BrowserContextSetNetworkInterceptionPatternsParams['patterns'] = [];
+    let all = false;
+    for (const handler of this._routes) {
+      if (isString(handler.url))
+        patterns.push({ glob: handler.url });
+      else if (isRegExp(handler.url))
+        patterns.push({ regexSource: handler.url.source, regexFlags: handler.url.flags });
+      else
+        all = true;
+    }
+    await this._owner._channel.setNetworkInterceptionPatterns(all ? { patterns: [{ glob: '**/*' }] } : { patterns });
   }
 }
 

@@ -821,10 +821,14 @@ scheme.BrowserContextSetHTTPCredentialsParams = tObject({
   })),
 });
 scheme.BrowserContextSetHTTPCredentialsResult = tOptional(tObject({}));
-scheme.BrowserContextSetNetworkInterceptionEnabledParams = tObject({
-  enabled: tBoolean,
+scheme.BrowserContextSetNetworkInterceptionPatternsParams = tObject({
+  patterns: tArray(tObject({
+    glob: tOptional(tString),
+    regexSource: tOptional(tString),
+    regexFlags: tOptional(tString),
+  })),
 });
-scheme.BrowserContextSetNetworkInterceptionEnabledResult = tOptional(tObject({}));
+scheme.BrowserContextSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
 scheme.BrowserContextSetOfflineParams = tObject({
   offline: tBoolean,
 });
@@ -1035,10 +1039,14 @@ scheme.PageSetExtraHTTPHeadersParams = tObject({
   headers: tArray(tType('NameValue')),
 });
 scheme.PageSetExtraHTTPHeadersResult = tOptional(tObject({}));
-scheme.PageSetNetworkInterceptionEnabledParams = tObject({
-  enabled: tBoolean,
+scheme.PageSetNetworkInterceptionPatternsParams = tObject({
+  patterns: tArray(tObject({
+    glob: tOptional(tString),
+    regexSource: tOptional(tString),
+    regexFlags: tOptional(tString),
+  })),
 });
-scheme.PageSetNetworkInterceptionEnabledResult = tOptional(tObject({}));
+scheme.PageSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
 scheme.PageSetViewportSizeParams = tObject({
   viewportSize: tObject({
     width: tNumber,

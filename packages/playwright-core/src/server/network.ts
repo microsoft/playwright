@@ -333,7 +333,7 @@ export class Route extends SdkObject {
   }
 }
 
-export type RouteHandler = (route: Route, request: Request) => void;
+export type RouteHandler = (route: Route, request: Request) => boolean;
 
 type GetResponseBodyCallback = () => Promise<Buffer>;
 

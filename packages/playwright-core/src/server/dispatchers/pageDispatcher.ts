@@ -35,7 +35,7 @@ import type { CallMetadata } from '../instrumentation';
 import type { Artifact } from '../artifact';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import type { Download } from '../download';
-import { createGuid } from '../../utils';
+import { createGuid, urlMatches } from '../../utils';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
@@ -154,13 +154,18 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.addInitScript(params.source);
   }
 
-  async setNetworkInterceptionEnabled(params: channels.PageSetNetworkInterceptionEnabledParams, metadata: CallMetadata): Promise<void> {
-    if (!params.enabled) {
+  async setNetworkInterceptionPatterns(params: channels.PageSetNetworkInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
+    if (!params.patterns.length) {
       await this._page.setClientRequestInterceptor(undefined);
       return;
     }
+    const urlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
     await this._page.setClientRequestInterceptor((route, request) => {
+      const matchesSome = urlMatchers.some(urlMatch => urlMatches(this._page._browserContext._options.baseURL, request.url(), urlMatch));
+      if (!matchesSome)
+        return false;
       this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this.parentScope(), request), route) });
+      return true;
     });
   }
 
