@@ -27,9 +27,11 @@ export type SourceHighlight = {
   type: 'running' | 'paused' | 'error';
 };
 
+export type Language = 'javascript' | 'python' | 'java' | 'csharp';
+
 export interface SourceProps {
   text: string;
-  language: string;
+  language: Language;
   readOnly: boolean;
   // 1-based
   highlight?: SourceHighlight[];
