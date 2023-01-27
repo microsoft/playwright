@@ -26,7 +26,7 @@ import { serverSideCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
 
-export async function showTraceViewer(traceUrls: string[], browserName: string, headless = false, preferredPort?: number): Promise<BrowserContext | undefined> {
+export async function showTraceViewer(traceUrls: string[], browserName: string, { headless = false, host, port }: { headless?: boolean, host?: string, port?: number }): Promise<BrowserContext | undefined> {
   for (const traceUrl of traceUrls) {
     if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceUrl)) {
       // eslint-disable-next-line no-console
@@ -49,7 +49,7 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
     return server.serveFile(request, response, absolutePath);
   });
 
-  const urlPrefix = await server.start({ preferredPort });
+  const urlPrefix = await server.start({ preferredPort: port, host });
 
   const traceViewerPlaywright = createPlaywright('javascript', true);
   const traceViewerBrowser = isUnderTest() ? 'chromium' : browserName;
