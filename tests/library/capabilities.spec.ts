@@ -86,7 +86,7 @@ it('should play video @smoke', async ({ page, asset, browserName, platform, mode
 
 it('should play webm video @smoke', async ({ page, asset, browserName, platform, mode }) => {
   it.skip(mode === 'docker', 'local paths do not work with remote setup');
-  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) == 20, 'Does not work on BigSur');
+  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 20, 'Does not work on BigSur');
   it.fixme(browserName === 'webkit' && platform === 'win32');
 
   const absolutePath = asset('video_webm.html');
