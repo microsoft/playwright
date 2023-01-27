@@ -44,6 +44,7 @@ Adding Playwright Test to an existing React, Vue, Svelte or Solid project is eas
   values={[
     {label: 'npm', value: 'npm'},
     {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'},
   ]
 }>
 <TabItem value="npm">
@@ -61,6 +62,14 @@ yarn create playwright --ct
 ```
 
 </TabItem>
+
+<TabItem value="pnpm">
+
+ ```bash
+ pnpm dlx create-playwright --ct
+ ```
+
+ </TabItem>
   
 </Tabs>
 
