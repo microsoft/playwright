@@ -75,7 +75,9 @@ export class WebKit extends BrowserType {
         if (proxy.bypass)
           webkitArguments.push(...proxy.bypass.split(',').map(t => `--ignore-host=${t}`));
       } else if (process.platform === 'win32') {
-        webkitArguments.push(`--curl-proxy=${proxy.server}`);
+        // Enable socks5 hostname resolution on Windows. Workaround can be removed once fixed upstream.
+        // See https://github.com/microsoft/playwright/issues/20451
+        webkitArguments.push(`--curl-proxy=${proxy.server.replace(/^socks5:\/\//, 'socks5h://')}`);
         if (proxy.bypass)
           webkitArguments.push(`--curl-noproxy=${proxy.bypass}`);
       }
