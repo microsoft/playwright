@@ -385,7 +385,6 @@ export module Protocol {
     export type navigationStartedPayload = {
       frameId: string;
       navigationId: string;
-      url: string;
     }
     export type navigationCommittedPayload = {
       frameId: string;
@@ -550,7 +549,6 @@ export module Protocol {
     };
     export type navigateReturnValue = {
       navigationId: string|null;
-      navigationURL: string|null;
     };
     export type goBackParameters = {
       frameId: string;
