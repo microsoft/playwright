@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { expect } from './expect';
+import { expect } from '../matchers/expect';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
-import { serializeError } from './util';
+import { serializeError } from '../util';
 
 const testTypeSymbol = Symbol('testType');
 

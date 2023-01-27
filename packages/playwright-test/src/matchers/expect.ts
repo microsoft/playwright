@@ -39,17 +39,17 @@ import {
   toHaveValue,
   toHaveValues,
   toPass
-} from './matchers/matchers';
-import { toMatchSnapshot, toHaveScreenshot } from './matchers/toMatchSnapshot';
-import type { Expect } from './types';
-import { currentTestInfo } from './globals';
-import { serializeError, captureStackTrace, currentExpectTimeout } from './util';
+} from './matchers';
+import { toMatchSnapshot, toHaveScreenshot } from './toMatchSnapshot';
+import type { Expect } from '../common/types';
+import { currentTestInfo } from '../common/globals';
+import { serializeError, captureStackTrace, currentExpectTimeout } from '../util';
 import {
   expect as expectLibrary,
   INVERTED_COLOR,
   RECEIVED_COLOR,
   printReceived,
-} from './expectBundle';
+} from '../common/expectBundle';
 
 // from expect/build/types
 export type SyncExpectationResult = {

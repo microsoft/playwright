@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { TestGroup } from './runner/testGroups';
-import type { RunPayload, SerializedConfig, WorkerInitParams } from './ipc';
+import type { TestGroup } from './testGroups';
+import type { RunPayload, SerializedConfig, WorkerInitParams } from '../common/ipc';
 import { ProcessHost } from './processHost';
 
 let lastWorkerIndex = 0;
@@ -29,7 +29,7 @@ export class WorkerHost extends ProcessHost {
 
   constructor(testGroup: TestGroup, parallelIndex: number, config: SerializedConfig) {
     const workerIndex = lastWorkerIndex++;
-    super(require.resolve('./workerMain.js'), `worker-${workerIndex}`);
+    super(require.resolve('../worker/workerMain.js'), `worker-${workerIndex}`);
     this.workerIndex = workerIndex;
     this.parallelIndex = parallelIndex;
     this._hash = testGroup.workerHash;

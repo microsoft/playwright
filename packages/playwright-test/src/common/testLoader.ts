@@ -15,14 +15,14 @@
  */
 
 import path from 'path';
-import type { TestError } from '../reporter';
+import type { TestError } from '../../reporter';
 import type { FullConfigInternal } from './types';
 import type { LoadError } from './fixtures';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { PoolBuilder } from './poolBuilder';
 import { Suite } from './test';
 import { requireOrImport } from './transform';
-import { serializeError } from './util';
+import { serializeError } from '../util';
 
 export const defaultTimeout = 30000;
 

@@ -16,21 +16,21 @@
 
 import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
-import { debugTest, formatLocation, relativeFilePath, serializeError } from './util';
-import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestOutputPayload } from './ipc';
-import { setCurrentTestInfo } from './globals';
-import { ConfigLoader } from './configLoader';
-import type { Suite, TestCase } from './test';
-import type { Annotation, FullProjectInternal, TestInfoError } from './types';
-import { FixtureRunner } from './fixtures';
+import { debugTest, formatLocation, relativeFilePath, serializeError } from '../util';
+import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestOutputPayload } from '../common/ipc';
+import { setCurrentTestInfo } from '../common/globals';
+import { ConfigLoader } from '../common/configLoader';
+import type { Suite, TestCase } from '../common/test';
+import type { Annotation, FullProjectInternal, TestInfoError } from '../common/types';
+import { FixtureRunner } from '../common/fixtures';
 import { ManualPromise } from 'playwright-core/lib/utils';
-import { TestInfoImpl } from './testInfo';
-import type { TimeSlot } from './timeoutManager';
-import { TimeoutManager } from './timeoutManager';
-import { ProcessRunner } from './process';
-import { TestLoader } from './testLoader';
-import { buildFileSuiteForProject, filterTestsRemoveEmptySuites } from './suiteUtils';
-import { PoolBuilder } from './poolBuilder';
+import { TestInfoImpl } from '../common/testInfo';
+import type { TimeSlot } from '../common/timeoutManager';
+import { TimeoutManager } from '../common/timeoutManager';
+import { ProcessRunner } from '../common/process';
+import { TestLoader } from '../common/testLoader';
+import { buildFileSuiteForProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
+import { PoolBuilder } from '../common/poolBuilder';
 
 const removeFolderAsync = util.promisify(rimraf);
 

@@ -17,7 +17,7 @@
 import type { Locator, Page, APIResponse } from 'playwright-core';
 import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
 import { colors } from 'playwright-core/lib/utilsBundle';
-import type { Expect } from '../types';
+import type { Expect } from '../common/types';
 import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';

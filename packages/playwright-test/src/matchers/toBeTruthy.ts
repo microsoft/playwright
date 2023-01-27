@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Expect } from '../types';
+import type { Expect } from '../common/types';
 import type { ParsedStackTrace } from '../util';
 import { expectTypes, callLogText, currentExpectTimeout, captureStackTrace } from '../util';
 import { matcherHint } from './matcherHint';

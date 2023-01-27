@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Expect } from '../types';
+import type { Expect } from '../common/types';
 import { expectTypes } from '../util';
 import { callLogText, currentExpectTimeout } from '../util';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils';

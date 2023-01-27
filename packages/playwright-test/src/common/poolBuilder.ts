@@ -19,7 +19,7 @@ import type { LoadError } from './fixtures';
 import type { Suite, TestCase } from './test';
 import type { TestTypeImpl } from './testType';
 import type { Fixtures, FixturesWithLocation, FullProjectInternal } from './types';
-import { formatLocation } from './util';
+import { formatLocation } from '../util';
 
 export class PoolBuilder {
   private _project: FullProjectInternal | undefined;

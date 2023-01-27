@@ -18,13 +18,12 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { isRegExp } from 'playwright-core/lib/utils';
-import type { Reporter } from '../types/testReporter';
-import type { SerializedConfig } from './ipc';
-import type { ConfigCLIOverrides } from './runner';
-import { builtInReporters, toReporters } from './runner/reporters';
+import type { Reporter } from '../../types/testReporter';
+import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
+import { builtInReporters, toReporters } from '../runner/reporters';
 import { requireOrImport } from './transform';
 import type { Config, FullConfigInternal, FullProjectInternal, Project, ReporterDescription } from './types';
-import { errorWithFile, getPackageJsonPath, mergeObjects } from './util';
+import { errorWithFile, getPackageJsonPath, mergeObjects } from '../util';
 
 export const defaultTimeout = 30000;
 
@@ -457,7 +456,7 @@ export const baseFullConfig: FullConfigInternal = {
   quiet: false,
   shard: null,
   updateSnapshots: 'missing',
-  version: require('../package.json').version,
+  version: require('../../package.json').version,
   workers: 0,
   webServer: null,
   _webServers: [],

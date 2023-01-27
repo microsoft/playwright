@@ -17,13 +17,13 @@
 
 import type { ExpectedTextValue } from '@protocol/channels';
 import { isRegExp, isString } from 'playwright-core/lib/utils';
-import type { Expect } from '../types';
+import type { Expect } from '../common/types';
 import type { ParsedStackTrace } from '../util';
 import { expectTypes, callLogText, currentExpectTimeout, captureStackTrace } from '../util';
 import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
-} from '../expect';
+} from './expect';
 import { matcherHint } from './matcherHint';
 
 export async function toMatchText(

@@ -23,8 +23,8 @@ import { raceAgainstTimeout, launchProcess } from 'playwright-core/lib/utils';
 
 import type { FullConfig, Reporter } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';
-import type { FullConfigInternal } from '../types';
-import { envWithoutExperimentalLoaderOptions } from '../cli';
+import type { FullConfigInternal } from '../common/types';
+import { envWithoutExperimentalLoaderOptions } from '../util';
 
 
 export type WebServerPluginOptions = {

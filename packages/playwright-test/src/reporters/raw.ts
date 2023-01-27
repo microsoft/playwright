@@ -22,8 +22,8 @@ import { sanitizeForFilePath } from '../util';
 import { formatResultFailure } from './base';
 import { toPosixPath, serializePatterns } from './json';
 import { MultiMap } from 'playwright-core/lib/utils';
-import { codeFrameColumns } from '../babelBundle';
-import type { Metadata } from '../types';
+import { codeFrameColumns } from '../common/babelBundle';
+import type { Metadata } from '../common/types';
 
 export type JsonLocation = Location;
 export type JsonError = string;

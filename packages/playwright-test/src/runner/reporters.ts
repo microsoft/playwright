@@ -16,7 +16,7 @@
 
 import path from 'path';
 import type { Reporter, TestError } from '../../types/testReporter';
-import type { ConfigLoader } from '../configLoader';
+import type { ConfigLoader } from '../common/configLoader';
 import { formatError } from '../reporters/base';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
@@ -27,8 +27,8 @@ import JUnitReporter from '../reporters/junit';
 import LineReporter from '../reporters/line';
 import ListReporter from '../reporters/list';
 import { Multiplexer } from '../reporters/multiplexer';
-import type { Suite } from '../test';
-import type { FullConfigInternal, ReporterDescription } from '../types';
+import type { Suite } from '../common/test';
+import type { FullConfigInternal, ReporterDescription } from '../common/types';
 
 export async function createReporter(configLoader: ConfigLoader, list: boolean) {
   const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {

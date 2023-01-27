@@ -17,12 +17,12 @@
 import fs from 'fs';
 import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
-import type { TestInfoError, TestInfo, TestStatus } from '../types/test';
+import type { TestInfoError, TestInfo, TestStatus } from '../../types/test';
 import type { StepBeginPayload, StepEndPayload, WorkerInitParams } from './ipc';
 import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal, TestStepInternal } from './types';
-import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
+import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
 
 export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;

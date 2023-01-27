@@ -17,8 +17,8 @@
 import child_process from 'child_process';
 import { EventEmitter } from 'events';
 import { debug } from 'playwright-core/lib/utilsBundle';
-import type { ProcessInitParams } from './ipc';
-import type { ProtocolResponse } from './process';
+import type { ProcessInitParams } from '../common/ipc';
+import type { ProtocolResponse } from '../common/process';
 
 export type ProcessExitData = {
   unexpectedly: boolean;
@@ -43,7 +43,7 @@ export class ProcessHost extends EventEmitter {
   }
 
   protected async startRunner(runnerParams: any, inheritStdio: boolean, env: NodeJS.ProcessEnv) {
-    this.process = child_process.fork(require.resolve('./process'), {
+    this.process = child_process.fork(require.resolve('../common/process'), {
       detached: false,
       env: { ...process.env, ...env },
       stdio: inheritStdio ? ['ignore', 'inherit', 'inherit', 'ipc'] : ['ignore', 'ignore', process.env.PW_RUNNER_DEBUG ? 'inherit' : 'ignore', 'ipc'],

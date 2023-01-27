@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { formatLocation, debugTest } from './util';
+import { formatLocation, debugTest } from '../util';
 import * as crypto from 'crypto';
 import type { FixturesWithLocation, Location, WorkerInfo } from './types';
 import { ManualPromise } from 'playwright-core/lib/utils';

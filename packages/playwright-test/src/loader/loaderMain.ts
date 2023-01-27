@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type { SerializedConfig } from './ipc';
-import { ConfigLoader } from './configLoader';
-import { ProcessRunner } from './process';
-import { loadTestFilesInProcess } from './testLoader';
-import type { LoadError } from './fixtures';
+import type { SerializedConfig } from '../common/ipc';
+import { ConfigLoader } from '../common/configLoader';
+import { ProcessRunner } from '../common/process';
+import { loadTestFilesInProcess } from '../common/testLoader';
+import type { LoadError } from '../common/fixtures';
 
 export class LoaderMain extends ProcessRunner {
   private _config: SerializedConfig;

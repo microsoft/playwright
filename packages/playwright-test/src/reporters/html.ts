@@ -26,7 +26,7 @@ import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResul
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
 import { getPackageJsonPath, sanitizeForFilePath } from '../util';
-import type { FullConfigInternal, Metadata } from '../types';
+import type { FullConfigInternal, Metadata } from '../common/types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';

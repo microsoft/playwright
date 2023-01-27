@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import type { Reporter, TestError } from '../reporter';
-import type { SerializedConfig } from './ipc';
+import type { Reporter, TestError } from '../../reporter';
+import type { SerializedConfig } from '../common/ipc';
 import { ProcessHost } from './processHost';
-import { Suite } from './test';
+import { Suite } from '../common/test';
 
 export class LoaderHost extends ProcessHost {
   constructor() {
-    super(require.resolve('./loaderMain.js'), 'loader');
+    super(require.resolve('../loaderMain.js'), 'loader');
   }
 
   async start(config: SerializedConfig) {

@@ -20,10 +20,10 @@ import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOp
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, removeFolders, addStackIgnoreFilter } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
-import type { TestInfoImpl } from './testInfo';
-import { rootTestType } from './testType';
-import { type ContextReuseMode } from './types';
-export { expect } from './expect';
+import type { TestInfoImpl } from './common/testInfo';
+import { rootTestType } from './common/testType';
+import { type ContextReuseMode } from './common/types';
+export { expect } from './matchers/expect';
 export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
