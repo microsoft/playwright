@@ -53,7 +53,7 @@ export const ImageDiffView: React.FunctionComponent<{
     tabs.push({
       id: 'diff',
       title: 'Diff',
-      render: () => <img src={diff.diff!.attachment.path} onLoad={() => onImageLoaded()} />
+      render: () => <ImageWithSize src={diff.diff!.attachment.path!} onLoad={() => onImageLoaded()} />
     });
     tabs.push({
       id: 'actual',
@@ -81,13 +81,6 @@ export const ImageDiffView: React.FunctionComponent<{
       id: 'expected',
       title: diff.expected!.title,
       render: () => <ImageWithSize src={diff.expected!.attachment.path!} onLoad={() => onImageLoaded()} />
-    });
-  }
-  if (diff.diff) {
-    tabs.push({
-      id: 'diff',
-      title: 'Diff',
-      render: () => <ImageWithSize src={diff.diff!.attachment.path!} onLoad={() => onImageLoaded()} />
     });
   }
   return <div className='vbox image-diff-view' data-testid='test-result-image-mismatch' ref={diffElement}>
