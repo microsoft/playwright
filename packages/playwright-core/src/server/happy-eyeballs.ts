@@ -33,7 +33,7 @@ class HttpHappyEyeballsAgent extends http.Agent {
     // There is no ambiguity in case of IP address.
     if (net.isIP(clientRequestArgsToHostName(options)))
       return net.createConnection(options as net.NetConnectOpts);
-    createConnectionAsync(options, oncreate).catch(err => oncreate?.(err));
+    createConnectionAsync(options, oncreate, /* useTLS */ false).catch(err => oncreate?.(err));
   }
 }
 
@@ -42,14 +42,14 @@ class HttpsHappyEyeballsAgent extends https.Agent {
     // There is no ambiguity in case of IP address.
     if (net.isIP(clientRequestArgsToHostName(options)))
       return tls.connect(options as tls.ConnectionOptions);
-    createConnectionAsync(options, oncreate).catch(err => oncreate?.(err));
+    createConnectionAsync(options, oncreate, /* useTLS */ true).catch(err => oncreate?.(err));
   }
 }
 
 export const httpsHappyEyeballsAgent = new HttpsHappyEyeballsAgent();
 export const httpHappyEyeballsAgent = new HttpHappyEyeballsAgent();
 
-async function createConnectionAsync(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void) {
+async function createConnectionAsync(options: http.ClientRequestArgs, oncreate: ((err: Error | null, socket?: net.Socket) => void) | undefined, useTLS: boolean) {
   const lookup = (options as SendRequestOptions).__testHookLookup || lookupAddresses;
   const hostname = clientRequestArgsToHostName(options);
   const addresses = await lookup(hostname);
@@ -67,7 +67,7 @@ async function createConnectionAsync(options: http.ClientRequestArgs, oncreate?:
 
   const connected = new ManualPromise();
   for (const { address } of addresses) {
-    const socket = options.protocol === 'https:' ?
+    const socket = useTLS ?
       tls.connect({
         ...(options as tls.ConnectionOptions),
         port: options.port as number,
