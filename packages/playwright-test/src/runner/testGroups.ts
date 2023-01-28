@@ -25,7 +25,7 @@ export type TestGroup = {
   tests: TestCase[];
 };
 
-export function createTestGroups(projectSuites: Suite[], workers: number): TestGroup[] {
+export function createTestGroups(projectSuite: Suite, workers: number): TestGroup[] {
   // This function groups tests that can be run together.
   // Tests cannot be run together when:
   // - They belong to different projects - requires different workers.
@@ -62,49 +62,47 @@ export function createTestGroups(projectSuites: Suite[], workers: number): TestG
     };
   };
 
-  for (const projectSuite of projectSuites) {
-    for (const test of projectSuite.allTests()) {
-      let withWorkerHash = groups.get(test._workerHash);
-      if (!withWorkerHash) {
-        withWorkerHash = new Map();
-        groups.set(test._workerHash, withWorkerHash);
-      }
-      let withRequireFile = withWorkerHash.get(test._requireFile);
-      if (!withRequireFile) {
-        withRequireFile = {
-          general: createGroup(test),
-          parallel: new Map(),
-          parallelWithHooks: createGroup(test),
-        };
-        withWorkerHash.set(test._requireFile, withRequireFile);
-      }
+  for (const test of projectSuite.allTests()) {
+    let withWorkerHash = groups.get(test._workerHash);
+    if (!withWorkerHash) {
+      withWorkerHash = new Map();
+      groups.set(test._workerHash, withWorkerHash);
+    }
+    let withRequireFile = withWorkerHash.get(test._requireFile);
+    if (!withRequireFile) {
+      withRequireFile = {
+        general: createGroup(test),
+        parallel: new Map(),
+        parallelWithHooks: createGroup(test),
+      };
+      withWorkerHash.set(test._requireFile, withRequireFile);
+    }
 
-      // Note that a parallel suite cannot be inside a serial suite. This is enforced in TestType.
-      let insideParallel = false;
-      let outerMostSerialSuite: Suite | undefined;
-      let hasAllHooks = false;
-      for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
-        if (parent._parallelMode === 'serial')
-          outerMostSerialSuite = parent;
-        insideParallel = insideParallel || parent._parallelMode === 'parallel';
-        hasAllHooks = hasAllHooks || parent._hooks.some(hook => hook.type === 'beforeAll' || hook.type === 'afterAll');
-      }
+    // Note that a parallel suite cannot be inside a serial suite. This is enforced in TestType.
+    let insideParallel = false;
+    let outerMostSerialSuite: Suite | undefined;
+    let hasAllHooks = false;
+    for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
+      if (parent._parallelMode === 'serial')
+        outerMostSerialSuite = parent;
+      insideParallel = insideParallel || parent._parallelMode === 'parallel';
+      hasAllHooks = hasAllHooks || parent._hooks.some(hook => hook.type === 'beforeAll' || hook.type === 'afterAll');
+    }
 
-      if (insideParallel) {
-        if (hasAllHooks && !outerMostSerialSuite) {
-          withRequireFile.parallelWithHooks.tests.push(test);
-        } else {
-          const key = outerMostSerialSuite || test;
-          let group = withRequireFile.parallel.get(key);
-          if (!group) {
-            group = createGroup(test);
-            withRequireFile.parallel.set(key, group);
-          }
-          group.tests.push(test);
-        }
+    if (insideParallel) {
+      if (hasAllHooks && !outerMostSerialSuite) {
+        withRequireFile.parallelWithHooks.tests.push(test);
       } else {
-        withRequireFile.general.tests.push(test);
+        const key = outerMostSerialSuite || test;
+        let group = withRequireFile.parallel.get(key);
+        if (!group) {
+          group = createGroup(test);
+          withRequireFile.parallel.set(key, group);
+        }
+        group.tests.push(test);
       }
+    } else {
+      withRequireFile.general.tests.push(test);
     }
   }
 

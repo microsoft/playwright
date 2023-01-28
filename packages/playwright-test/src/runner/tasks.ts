@@ -46,8 +46,8 @@ export type TaskRunnerState = {
   reporter: Multiplexer;
   config: FullConfigInternal;
   plugins: TestRunnerPlugin[];
+  testGroups: TestGroup[];
   rootSuite?: Suite;
-  testGroups?: TestGroup[];
   dispatcher?: Dispatcher;
 };
 
@@ -59,7 +59,7 @@ export function createTaskRunner(config: FullConfigInternal, reporter: Multiplex
   if (config.globalSetup || config.globalTeardown)
     taskRunner.addTask('global setup', createGlobalSetupTask());
   taskRunner.addTask('load tests', createLoadTask());
-
+  taskRunner.addTask('shard tests', createTestGroupsTask());
   taskRunner.addTask('prepare to run', createRemoveOutputDirsTask());
   taskRunner.addTask('plugin begin', async ({ rootSuite, plugins }) => {
     for (const plugin of plugins)
@@ -158,22 +158,22 @@ export function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
 function createLoadTask(): Task<TaskRunnerState> {
   return async (context, errors) => {
     const { config, reporter, options } = context;
-    const rootSuite = await loadAllTests(config, reporter, options, errors);
-    const testGroups = options.listOnly ? [] : createTestGroups(rootSuite.suites, config.workers);
-
-    context.rootSuite = rootSuite;
-    context.testGroups = testGroups;
-    if (errors.length)
-      return;
-
+    context.rootSuite = await loadAllTests(config, reporter, options, errors);
     // Fail when no tests.
-    if (!rootSuite.allTests().length && !context.options.passWithNoTests)
+    if (!context.rootSuite.allTests().length && !context.options.passWithNoTests)
       throw new Error(`No tests found`);
+  };
+}
 
-    if (!context.options.listOnly) {
-      if (context.config.shard)
-        filterForShard(context.config.shard, rootSuite, testGroups);
-      context.config._maxConcurrentTestGroups = testGroups.length;
-    }
+function createTestGroupsTask(): Task<TaskRunnerState> {
+  return async context => {
+    const { config, rootSuite } = context;
+
+    for (const projectSuite of rootSuite!.suites)
+      context.testGroups.push(...createTestGroups(projectSuite, config.workers));
+
+    if (context.config.shard)
+      filterForShard(context.config.shard, rootSuite!, context.testGroups);
+    context.config._maxConcurrentTestGroups = context.testGroups.length;
   };
 }
