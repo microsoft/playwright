@@ -254,6 +254,6 @@ it('frame.press should work', async ({ page, server }) => {
 });
 
 it('has navigator.webdriver set to true', async ({ page, browserName }) => {
-  it.fixme(browserName === 'firefox');
+  it.skip(browserName === 'firefox');
   expect(await page.evaluate(() => navigator.webdriver)).toBe(true);
 });

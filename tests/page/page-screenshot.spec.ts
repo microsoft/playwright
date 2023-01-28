@@ -61,7 +61,8 @@ it.describe('page screenshot', () => {
   });
 
   it('should capture blinking caret if explicitly asked for', async ({ page, server, browserName }) => {
-    it.fixme(browserName === 'firefox', 'browser-level screenshot API in firefox does not capture caret');
+    it.skip(browserName === 'firefox', 'browser-level screenshot API in firefox does not capture caret');
+
     await page.setContent(`
       <!-- Refer to stylesheet from other origin. Accessing this
            stylesheet rules will throw.
@@ -307,7 +308,7 @@ it.describe('page screenshot', () => {
   });
 
   it('should work for webgl', async ({ page, server, browserName }) => {
-    it.fixme(browserName === 'firefox' || browserName === 'webkit');
+    it.fixme(browserName === 'firefox');
 
     await page.setViewportSize({ width: 640, height: 480 });
     await page.goto(server.PREFIX + '/screenshots/webgl.html');

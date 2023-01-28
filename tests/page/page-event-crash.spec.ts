@@ -16,17 +16,14 @@
  */
 
 import { test as it, expect } from './pageTest';
-import * as os from 'os';
 
 function crash({ page, toImpl, browserName, platform, mode }: any) {
-  if (browserName === 'chromium') {
+  if (browserName === 'chromium')
     page.goto('chrome://crash').catch(e => {});
-  } else if (browserName === 'webkit') {
-    it.fixme(platform === 'darwin' && parseInt(os.release(), 10) >= 20, 'Timing out after roll on BigSur');
+  else if (browserName === 'webkit')
     toImpl(page)._delegate._session.send('Page.crash', {}).catch(e => {});
-  } else if (browserName === 'firefox') {
+  else if (browserName === 'firefox')
     toImpl(page)._delegate._session.send('Page.crash', {}).catch(e => {});
-  }
 }
 
 it.describe('', () => {

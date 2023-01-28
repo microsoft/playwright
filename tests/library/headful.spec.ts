@@ -152,9 +152,8 @@ it('should not block third party SameSite=None cookies', async ({ httpsServer, b
 });
 
 it('should not override viewport size when passed null', async function({ browserName, server, browser }) {
-  it.fixme(browserName === 'webkit');
+  it.fixme(browserName === 'webkit', 'Our WebKit embedder does not respect window features');
 
-  // Our WebKit embedder does not respect window features.
   const context = await browser.newContext({ viewport: null });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -190,8 +189,9 @@ it('Page.bringToFront should work', async ({ browser }) => {
   await page2.close();
 });
 
-it.skip('should click in OOPIF', async ({ browserName, launchPersistent, server }) => {
-  it.fixme(browserName === 'chromium');
+it('should click in OOPIF', async ({ browserName, launchPersistent, server }) => {
+  it.fixme(browserName === 'chromium', 'Click is offset by the infobar height');
+
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<iframe src="${server.CROSS_PROCESS_PREFIX}/iframe.html"></iframe>`);
@@ -210,7 +210,9 @@ it.skip('should click in OOPIF', async ({ browserName, launchPersistent, server 
   expect(consoleLog).toContain('ok');
 });
 
-it.skip('should click bottom row w/ infobar in OOPIF', async ({ launchPersistent, server }) => {
+it('should click bottom row w/ infobar in OOPIF', async ({ browserName, launchPersistent, server }) => {
+  it.fixme(browserName === 'chromium', 'Click is offset by the infobar height');
+
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`
@@ -245,7 +247,8 @@ it.skip('should click bottom row w/ infobar in OOPIF', async ({ launchPersistent
 
 it('headless and headful should use same default fonts', async ({ page, browserName, browserType }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11177' });
-  it.fixme(browserName === 'firefox', 'Text is misaligned in headed vs headless');
+  it.skip(browserName === 'firefox', 'Text is misaligned in headed vs headless');
+
   const genericFontFamilies = [
     'standard',
     'serif',

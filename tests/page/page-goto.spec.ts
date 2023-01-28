@@ -16,7 +16,6 @@
  */
 
 import url from 'url';
-import os from 'os';
 import { test as it, expect } from './pageTest';
 import { expectedSSLError } from '../config/utils';
 
@@ -254,7 +253,7 @@ it('should work when page calls history API in beforeunload', async ({ page, ser
 });
 
 it('should fail when navigating to bad url', async ({ mode, page, browserName }) => {
-  it.fixme(mode === 'service', 'baseURL is inherited from webServer in config');
+  it.skip(mode === 'service', 'baseURL is inherited from webServer in config');
   let error = null;
   await page.goto('asdfasdf').catch(e => error = e);
   if (browserName === 'chromium' || browserName === 'webkit')
@@ -594,7 +593,6 @@ it('should not throw unhandled rejections on invalid url', async ({ page, server
 });
 
 it('should not crash when RTCPeerConnection is used', async ({ page, server, browserName, platform }) => {
-  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 18, 'Does not work on MacOS 10.14');
   server.setRoute('/rtc.html', (_, res) => {
     res.end(`
       <!DOCTYPE html>
@@ -619,7 +617,6 @@ it('should not crash when RTCPeerConnection is used', async ({ page, server, bro
 });
 
 it('should properly wait for load', async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'webkit', 'WebKit has a bug where Page.frameStoppedLoading is sent too early.');
   server.setRoute('/slow.js', async (req, res) => {
     await new Promise(x => setTimeout(x, 100));
     res.writeHead(200, { 'Content-Type': 'application/javascript' });
@@ -655,7 +652,6 @@ it('should not resolve goto upon window.stop()', async ({ browserName, page, ser
 });
 
 it('should return from goto if new navigation is started', async ({ page, server, browserName, isAndroid }) => {
-  it.fixme(browserName === 'webkit', 'WebKit has a bug where Page.frameStoppedLoading is sent too early.');
   it.fixme(isAndroid);
   server.setRoute('/slow.js', async (req, res) => void 0);
   let finished = false;

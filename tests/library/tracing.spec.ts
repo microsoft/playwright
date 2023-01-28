@@ -22,9 +22,6 @@ import { parseTrace } from '../config/utils';
 
 test.skip(({ trace }) => trace === 'on');
 
-// https://github.com/microsoft/playwright/issues/14285
-test.fixme(({ browserName, headless }) => browserName === 'firefox' && !headless);
-
 test('should collect trace with resources, but no js', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.PREFIX + '/frames/frame.html');
@@ -119,7 +116,6 @@ test('should not include buffers in the trace', async ({ context, page, server, 
 });
 
 test('should exclude internal pages', async ({ browserName, context, page, server }, testInfo) => {
-  test.fixme(true, 'https://github.com/microsoft/playwright/issues/6743');
   await page.goto(server.EMPTY_PAGE);
 
   await context.tracing.start();
@@ -299,10 +295,11 @@ for (const params of [
   }
 ]) {
   browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform, headless }, testInfo) => {
-    browserTest.fixme(browserName === 'chromium' && video === 'on', 'Same screencast resolution conflicts');
+    browserTest.skip(browserName === 'chromium' && video === 'on', 'Same screencast resolution conflicts');
     browserTest.fixme(browserName === 'chromium' && !headless, 'Chromium screencast on headed has a min width issue');
     browserTest.fixme(params.id === 'fit' && browserName === 'chromium' && platform === 'darwin', 'High DPI maxes image at 600x600');
     browserTest.fixme(params.id === 'fit' && browserName === 'webkit' && platform === 'linux', 'Image size is flaky');
+    browserTest.fixme(browserName === 'firefox' && !headless, 'Image size is different');
 
     const scale = Math.min(800 / params.width, 600 / params.height, 1);
     const previewWidth = params.width * scale;
