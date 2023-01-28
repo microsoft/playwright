@@ -74,6 +74,7 @@ export class Runner {
       options,
       reporter,
       plugins: [],
+      testGroups: [],
     };
 
     reporter.onConfigure(config);
