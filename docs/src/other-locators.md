@@ -13,7 +13,7 @@ In addition to recommended locators like [`method: Page.getByRole`] and [`method
 ## CSS locator
 
 :::note
-We recommend prioritzing [user-visible locators](./locators.md#quick-guide) like text or accessible role instead of using CSS that is tied to the implementation and could break when the page changes.
+We recommend prioritizing [user-visible locators](./locators.md#quick-guide) like text or accessible role instead of using CSS that is tied to the implementation and could break when the page changes.
 :::
 
 Playwright can locate an element by CSS selector.
@@ -42,7 +42,7 @@ Playwright augments standard CSS selectors in two ways:
 
 Playwright include a number of CSS pseudo-classes to match elements by their text content.
 
-- `article:has-text("Playwright")` - the `:has-text()` matches any element containing specified text somewhere inside, possibly in a child or a descendant element. Matching is case-insensitive, trims whitestapce and searches for a substring.
+- `article:has-text("Playwright")` - the `:has-text()` matches any element containing specified text somewhere inside, possibly in a child or a descendant element. Matching is case-insensitive, trims whitespace and searches for a substring.
 
   For example, `article:has-text("Playwright")` matches `<article><div>Playwright</div></article>`.
 
@@ -122,7 +122,7 @@ Input elements of the type `button` and `submit` are matched by their `value` in
 
 ### CSS: matching only visible elements
 
-Playwrigt supports the `:visible` pseudo class in CSS selectors. For example, `css=button` matches all the buttons on the page, while `css=button:visible` only matches visible buttons. This is useful to distinguish elements that are very similar but differ in visibility.
+Playwright supports the `:visible` pseudo class in CSS selectors. For example, `css=button` matches all the buttons on the page, while `css=button:visible` only matches visible buttons. This is useful to distinguish elements that are very similar but differ in visibility.
 
 Consider a page with two buttons, first invisible and second visible.
 
@@ -618,7 +618,7 @@ Vue locator, as well as [Vue DevTools](https://chrome.google.com/webstore/detail
 ## XPath locator
 
 :::warning
-We recommend prioritzing [user-visible locators](./locators.md#quick-guide) like text or accessible role instead of using XPath that is tied to the implementation and easily break when the page changes.
+We recommend prioritizing [user-visible locators](./locators.md#quick-guide) like text or accessible role instead of using XPath that is tied to the implementation and easily break when the page changes.
 :::
 
 XPath locators are equivalent to calling [`Document.evaluate`](https://developer.mozilla.org/en/docs/Web/API/Document/evaluate).

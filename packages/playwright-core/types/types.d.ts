@@ -10496,7 +10496,7 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * Programmaticaly dispatch an event on the matching element.
+   * Programmatically dispatch an event on the matching element.
    *
    * **Usage**
    *
@@ -11405,7 +11405,7 @@ export interface Locator {
   page(): Page;
 
   /**
-   * Focuses the mathing element and presses a combintation of the keys.
+   * Focuses the matching element and presses a combination of the keys.
    *
    * **Usage**
    *

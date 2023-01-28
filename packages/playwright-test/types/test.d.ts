@@ -2757,7 +2757,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   /**
-   * Unconditonally marks a test as "should fail". Playwright Test runs this test and ensures that it is actually
+   * Unconditionally marks a test as "should fail". Playwright Test runs this test and ensures that it is actually
    * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is
    * fixed.
    *

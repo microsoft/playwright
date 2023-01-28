@@ -21,7 +21,7 @@ it('should load svg favicon with prefer-color-scheme', async ({ page, server, br
   it.skip(headless && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
   it.skip(!headless && browserName === 'webkit' && !channel, 'headed webkit does not have a favicon feature');
 
-  // Browsers aggresively cache favicons, so force bust with the
+  // Browsers aggressively cache favicons, so force bust with the
   // `d` parameter to make iterating on this test more predictable and isolated.
   const favicon = `/favicon.svg?d=${Date.now()}`;
   server.setRoute(favicon, (req, res) => {

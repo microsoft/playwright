@@ -43,7 +43,7 @@ test('should not leak fixtures w/o page', async ({}) => {
 
 test('should not leak server-side objects', async ({ page }) => {
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/page').Page)).toBe(1);
-  // 4 is because v8 heap creates obejcts for descendant classes, so WKContext, CRContext, FFContext and our context instance.
+  // 4 is because v8 heap creates objects for descendant classes, so WKContext, CRContext, FFContext and our context instance.
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/browserContext').BrowserContext)).toBe(4);
   expect(await queryObjectCount(require('../../packages/playwright-core/lib/server/browser').Browser)).toBe(4);
 });

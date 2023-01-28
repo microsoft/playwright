@@ -91,7 +91,7 @@ void navigationMenuFlyoutShouldNotHaveAutomaticallyDetectableAccessibilityViolat
 
 ### Example 3: Scanning for WCAG violations
 
-By default, axe checks against a wide variety of accessibility rules. Some of these rules correspond to specific success criteria from the [Web Content Accessibility Guidelines (WCAG)](https://www.w3.org/TR/WCAG21/), and others are "best practice" rules that are not specifically required by any WCAG criteron.
+By default, axe checks against a wide variety of accessibility rules. Some of these rules correspond to specific success criteria from the [Web Content Accessibility Guidelines (WCAG)](https://www.w3.org/TR/WCAG21/), and others are "best practice" rules that are not specifically required by any WCAG criterion.
 
 You can constrain an accessibility scan to only run those rules which are "tagged" as corresponding to specific WCAG success criteria by using [`AxeBuilder.withTags()`](https://github.com/dequelabs/axe-core-maven-html/blob/develop/playwright/README.md#axebuilderwithtagsliststring-rules). For example, [Accessibility Insights for Web's Automated Checks](https://accessibilityinsights.io/docs/web/getstarted/fastpass/?referrer=playwright-accessibility-testing-java) only include axe rules that test for violations of WCAG A and AA success criteria; to match that behavior, you would use the tags `wcag2a`, `wcag2aa`, `wcag21a`, and `wcag21aa`.
 
@@ -165,7 +165,7 @@ shouldOnlyHaveAccessibilityViolationsMatchingKnownFingerprints() throws Exceptio
   AxeResults accessibilityScanResults = new AxeBuilder(page).analyze();
 
   List<ViolationFingerprint> violationFingerprints = fingerprintsFromScanResults(accessibilityScanResults);
-          
+
   assertEquals(Arrays.asList(
     new ViolationFingerprint("aria-roles", "[span[role=\"invalid\"]]"),
     new ViolationFingerprint("color-contrast", "[li:nth-child(2) > span]"),
