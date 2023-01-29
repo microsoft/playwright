@@ -38,6 +38,8 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
   server.routePrefix('/trace', (request, response) => {
     const url = new URL('http://localhost' + request.url!);
     const relativePath = url.pathname.slice('/trace'.length);
+    if (relativePath.endsWith('/stall.js'))
+      return true;
     if (relativePath.startsWith('/file')) {
       try {
         return server.serveFile(request, response, url.searchParams.get('path')!);

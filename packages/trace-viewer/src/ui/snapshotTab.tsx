@@ -34,6 +34,7 @@ export const SnapshotTab: React.FunctionComponent<{
   const snapshots = [actionSnapshot ? { ...actionSnapshot, title: 'action' } : undefined, snapshotMap.get('before'), snapshotMap.get('after')].filter(Boolean) as { title: string, snapshotName: string }[];
 
   let snapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';
+  let popoutUrl: string | undefined;
   let snapshotInfoUrl: string | undefined;
   let pointX: number | undefined;
   let pointY: number | undefined;
@@ -49,6 +50,10 @@ export const SnapshotTab: React.FunctionComponent<{
         pointX = action.metadata.point?.x;
         pointY = action.metadata.point?.y;
       }
+      const popoutParams = new URLSearchParams();
+      popoutParams.set('r', snapshotUrl);
+      popoutParams.set('trace', context(action).traceUrl);
+      popoutUrl = new URL(`popout.html?${popoutParams.toString()}`, window.location.href).toString();
     }
   }
 
@@ -104,6 +109,9 @@ export const SnapshotTab: React.FunctionComponent<{
       })}
     </div>
     <div ref={ref} className='snapshot-wrapper'>
+      <a className={`popout-icon ${popoutUrl ? '' : 'popout-disabled'}`} href={popoutUrl} target='_blank' title='Open snapshot in a new tab'>
+        <span className='codicon codicon-link-external'/>
+      </a>
       { snapshots.length ? <div className='snapshot-container' style={{
         width: snapshotSize.width + 'px',
         height: (snapshotSize.height + windowHeaderHeight) + 'px',

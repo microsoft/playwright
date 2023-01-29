@@ -180,7 +180,7 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
 }
 
 function snapshotScript() {
-  function applyPlaywrightAttributes() {
+  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string) {
     const scrollTops: Element[] = [];
     const scrollLefts: Element[] = [];
 
@@ -210,7 +210,7 @@ function snapshotScript() {
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
         } else {
           // Append query parameters to inherit ?name= or ?time= values from parent.
-          const url = new URL(window.location.href);
+          const url = new URL(unwrapPopoutUrl(window.location.href));
           url.searchParams.delete('pointX');
           url.searchParams.delete('pointY');
           // We can be loading iframe from within iframe, reset base to be absolute.
@@ -278,7 +278,7 @@ function snapshotScript() {
     window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
-  return `\n(${applyPlaywrightAttributes.toString()})()`;
+  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()})`;
 }
 
 
@@ -328,4 +328,12 @@ function rewriteURLsInStyleSheetForCustomProtocol(text: string): string {
       return match;
     return match.replace(protocol + '//', `https://pw-${protocol.slice(0, -1)}--`);
   });
+}
+
+// <base>/popout.html?r=<snapshotUrl> is used for "pop out snapshot" feature.
+export function unwrapPopoutUrl(url: string) {
+  const u = new URL(url);
+  if (u.pathname.endsWith('/popout.html'))
+    return u.searchParams.get('r')!;
+  return url;
 }

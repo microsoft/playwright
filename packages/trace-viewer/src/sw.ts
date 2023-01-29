@@ -15,6 +15,7 @@
  */
 
 import { MultiMap } from './multimap';
+import { unwrapPopoutUrl } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
 
@@ -65,7 +66,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   const client = await self.clients.get(event.clientId);
 
   if (request.url.startsWith(self.registration.scope)) {
-    const url = new URL(request.url);
+    const url = new URL(unwrapPopoutUrl(request.url));
     const relativePath = url.pathname.substring(scopePath.length - 1);
     if (relativePath === '/ping') {
       await gc();
@@ -101,7 +102,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     if (relativePath.startsWith('/snapshot/')) {
       if (!snapshotServer)
         return new Response(null, { status: 404 });
-      return snapshotServer.serveSnapshot(relativePath, url.searchParams, request.url);
+      return snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href);
     }
 
     if (relativePath.startsWith('/sha1/')) {
@@ -118,7 +119,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     return fetch(event.request);
   }
 
-  const snapshotUrl = client!.url;
+  const snapshotUrl = unwrapPopoutUrl(client!.url);
   const traceUrl = new URL(snapshotUrl).searchParams.get('trace')!;
   const { snapshotServer } = loadedTraces.get(traceUrl) || {};
   if (!snapshotServer)

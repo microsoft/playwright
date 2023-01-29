@@ -63,6 +63,7 @@
   flex: auto;
   margin: 1px;
   padding: 10px;
+  position: relative;
 }
 
 .snapshot-container {
@@ -80,6 +81,22 @@ iframe#snapshot {
 .no-snapshot {
   text-align: center;
   padding: 50px;
+}
+
+.popout-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: var(--gray);
+  font-size: 14px;
+}
+
+.popout-icon:not(.popout-disabled):hover {
+  color: var(--blue);
+}
+
+.popout-icon.popout-disabled {
+  opacity: 0.7;
 }
 
 .window-dot {
