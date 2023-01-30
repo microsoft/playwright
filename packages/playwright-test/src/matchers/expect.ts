@@ -43,7 +43,7 @@ import {
 import { toMatchSnapshot, toHaveScreenshot } from './toMatchSnapshot';
 import type { Expect } from '../common/types';
 import { currentTestInfo, currentExpectTimeout } from '../common/globals';
-import { serializeError, captureStackTrace } from '../util';
+import { serializeError, captureStackTrace, trimLongString } from '../util';
 import {
   expect as expectLibrary,
   INVERTED_COLOR,
@@ -196,7 +196,7 @@ class ExpectMetaInfoProxyHandler {
       const stackTrace = captureStackTrace();
       const stackLines = stackTrace.frameTexts;
       const frame = stackTrace.frames[0];
-      const customMessage = this._info.message || '';
+      const customMessage = trimLongString(this._info.message || '', 1024);
       const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}`;
       const step = testInfo._addStep({
         location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
