@@ -192,6 +192,13 @@ world</label><input id=control />`);
   await expect(page.getByPlaceholder('hello my\nworld')).toHaveAttribute('id', 'control');
   await expect(page.getByAltText('hello my\nworld')).toHaveAttribute('id', 'control');
   await expect(page.getByTitle('hello my\nworld')).toHaveAttribute('id', 'control');
+
+  await page.setContent(`<div id=target title="my title">Text here</div>`);
+  await expect.soft(page.getByTitle('my title', { exact: true })).toHaveCount(1, { timeout: 500 });
+  await expect.soft(page.getByTitle('my t\itle', { exact: true })).toHaveCount(1, { timeout: 500 });
+  await expect.soft(page.getByTitle('my t\\itle', { exact: true })).toHaveCount(0, { timeout: 500 });
+  await expect.soft(page.getByTitle('my t\\\itle', { exact: true })).toHaveCount(0, { timeout: 500 });
+  await expect.soft(page.getByTitle('my t\\\\itle', { exact: true })).toHaveCount(0, { timeout: 500 });
 });
 
 it('getByRole escaping', async ({ page }) => {
@@ -224,5 +231,18 @@ it('getByRole escaping', async ({ page }) => {
   ]);
   expect.soft(await page.getByRole('link', { name: '   he \n llo 56 ', exact: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<a href="https://playwright.dev">he llo 56</a>`,
+  ]);
+
+  expect.soft(await page.getByRole('button', { name: 'Click me', exact: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Click me</button>`,
+  ]);
+  expect.soft(await page.getByRole('button', { name: 'Click \me', exact: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Click me</button>`,
+  ]);
+  expect.soft(await page.getByRole('button', { name: 'Click \\me', exact: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+  ]);
+  expect.soft(await page.getByRole('button', { name: 'Click \\\me', exact: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+  ]);
+  expect.soft(await page.getByRole('button', { name: 'Click \\\\me', exact: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
   ]);
 });
