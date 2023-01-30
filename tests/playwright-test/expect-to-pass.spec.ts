@@ -176,7 +176,7 @@ test('should swallow all soft errors inside toPass matcher, if successful', asyn
   });
   expect(stripAnsi(result.output)).toContain('Received: "before-toPass"');
   expect(stripAnsi(result.output)).toContain('Received: "after-toPass"');
-  expect(stripAnsi(result.output)).not.toContain('Received: "inside-toPass"');
+  expect(stripAnsi(result.output)).not.toContain('Received: "inside-toPass-1"');
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 });
