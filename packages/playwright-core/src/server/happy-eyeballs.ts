@@ -31,27 +31,28 @@ const connectionAttemptDelayMs = 300;
 class HttpHappyEyeballsAgent extends http.Agent {
   createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void): net.Socket | undefined {
     // There is no ambiguity in case of IP address.
-    if (net.isIP(options.hostname!))
+    if (net.isIP(clientRequestArgsToHostName(options)))
       return net.createConnection(options as net.NetConnectOpts);
-    createConnectionAsync(options, oncreate).catch(err => oncreate?.(err));
+    createConnectionAsync(options, oncreate, /* useTLS */ false).catch(err => oncreate?.(err));
   }
 }
 
 class HttpsHappyEyeballsAgent extends https.Agent {
   createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void): net.Socket | undefined {
     // There is no ambiguity in case of IP address.
-    if (net.isIP(options.hostname!))
+    if (net.isIP(clientRequestArgsToHostName(options)))
       return tls.connect(options as tls.ConnectionOptions);
-    createConnectionAsync(options, oncreate).catch(err => oncreate?.(err));
+    createConnectionAsync(options, oncreate, /* useTLS */ true).catch(err => oncreate?.(err));
   }
 }
 
 export const httpsHappyEyeballsAgent = new HttpsHappyEyeballsAgent();
 export const httpHappyEyeballsAgent = new HttpHappyEyeballsAgent();
 
-async function createConnectionAsync(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void) {
+async function createConnectionAsync(options: http.ClientRequestArgs, oncreate: ((err: Error | null, socket?: net.Socket) => void) | undefined, useTLS: boolean) {
   const lookup = (options as SendRequestOptions).__testHookLookup || lookupAddresses;
-  const addresses = await lookup(options.hostname!);
+  const hostname = clientRequestArgsToHostName(options);
+  const addresses = await lookup(hostname);
   const sockets = new Set<net.Socket>();
   let firstError;
   let errorCount = 0;
@@ -66,12 +67,12 @@ async function createConnectionAsync(options: http.ClientRequestArgs, oncreate?:
 
   const connected = new ManualPromise();
   for (const { address } of addresses) {
-    const socket = options.protocol === 'https:' ?
+    const socket = useTLS ?
       tls.connect({
         ...(options as tls.ConnectionOptions),
         port: options.port as number,
         host: address,
-        servername: options.hostname || undefined }) :
+        servername: hostname }) :
       net.createConnection({
         ...options,
         port: options.port as number,
@@ -124,5 +125,13 @@ async function lookupAddresses(hostname: string): Promise<dns.LookupAddress[]> {
       result.push(secondFamily[i]);
   }
   return result;
+}
+
+function clientRequestArgsToHostName(options: http.ClientRequestArgs): string {
+  if (options.hostname)
+    return options.hostname;
+  if (options.host)
+    return options.host.split(':')[0];
+  throw new Error('Either options.hostname or options.host must be provided');
 }
 
