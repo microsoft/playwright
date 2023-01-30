@@ -50,29 +50,22 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
   return result;
 }
 
-export async function collectFilesForProjects(projects: FullProjectInternal[], commandLineFileFilters: TestFileFilter[]): Promise<Map<FullProjectInternal, string[]>> {
+export async function collectFilesForProject(project: FullProjectInternal, commandLineFileFilters: TestFileFilter[]): Promise<string[]> {
   const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
   const testFileExtension = (file: string) => extensions.includes(path.extname(file));
-  const filesByProject = new Map<FullProjectInternal, string[]>();
-  const fileToProjectName = new Map<string, string>();
   const commandLineFileMatcher = commandLineFileFilters.length ? createFileMatcherFromFilters(commandLineFileFilters) : () => true;
-  for (const project of projects) {
-    const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
-    const testMatch = createFileMatcher(project.testMatch);
-    const testIgnore = createFileMatcher(project.testIgnore);
-    const testFiles = allFiles.filter(file => {
-      if (!testFileExtension(file))
-        return false;
-      const isTest = !testIgnore(file) && testMatch(file) && commandLineFileMatcher(file);
-      if (!isTest)
-        return false;
-      fileToProjectName.set(file, project.name);
-      return true;
-    });
-    filesByProject.set(project, testFiles);
-  }
-
-  return filesByProject;
+  const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
+  const testMatch = createFileMatcher(project.testMatch);
+  const testIgnore = createFileMatcher(project.testIgnore);
+  const testFiles = allFiles.filter(file => {
+    if (!testFileExtension(file))
+      return false;
+    const isTest = !testIgnore(file) && testMatch(file) && commandLineFileMatcher(file);
+    if (!isTest)
+      return false;
+    return true;
+  });
+  return testFiles;
 }
 
 async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise<string[]> {

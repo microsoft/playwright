@@ -19,12 +19,13 @@ import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../types/testReporter';
 import { dockerPlugin } from '../plugins/dockerPlugin';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
-import { collectFilesForProjects, filterProjects } from './projectUtils';
+import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createReporter } from './reporters';
 import { createTaskRunner, createTaskRunnerForList } from './tasks';
 import type { TaskRunnerState } from './tasks';
 import type { FullConfigInternal } from '../common/types';
 import type { Matcher, TestFileFilter } from '../util';
+import { colors } from 'playwright-core/lib/utilsBundle';
 
 export type RunOptions = {
   listOnly: boolean;
@@ -43,14 +44,13 @@ export class Runner {
 
   async listTestFiles(projectNames: string[] | undefined): Promise<any> {
     const projects = filterProjects(this._config.projects, projectNames);
-    const filesByProject = await collectFilesForProjects(projects, []);
     const report: any = {
       projects: []
     };
-    for (const [project, files] of filesByProject) {
+    for (const project of projects) {
       report.projects.push({
         ...sanitizeConfigForJSON(project, new Set()),
-        files
+        files: await collectFilesForProject(project, [])
       });
     }
     return report;
@@ -78,6 +78,16 @@ export class Runner {
     };
 
     reporter.onConfigure(config);
+
+    if (!options.listOnly && config._ignoreSnapshots) {
+      reporter.onStdOut(colors.dim([
+        'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
+        '- expect().toMatchSnapshot()',
+        '- expect().toHaveScreenshot()',
+        '',
+      ].join('\n')));
+    }
+
     const taskStatus = await taskRunner.run(context, deadline);
     let status: FullResult['status'] = 'passed';
     if (context.dispatcher?.hasWorkerErrors() || context.rootSuite?.allTests().some(test => !test.ok()))

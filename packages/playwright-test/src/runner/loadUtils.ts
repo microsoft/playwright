@@ -22,11 +22,11 @@ import type { Multiplexer } from '../reporters/multiplexer';
 import { createRootSuite, filterOnly, filterSuite } from '../common/suiteUtils';
 import type { Suite, TestCase } from '../common/test';
 import { loadTestFilesInProcess } from '../common/testLoader';
-import type { FullConfigInternal } from '../common/types';
+import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { errorWithFile } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
 import { createFileMatcher } from '../util';
-import { collectFilesForProjects, filterProjects } from './projectUtils';
+import { collectFilesForProject, filterProjects } from './projectUtils';
 import { requireOrImport } from '../common/transform';
 import { serializeConfig } from '../common/ipc';
 
@@ -40,10 +40,13 @@ type LoadOptions = {
 
 export async function loadAllTests(config: FullConfigInternal, reporter: Multiplexer, options: LoadOptions, errors: TestError[]): Promise<Suite> {
   const projects = filterProjects(config.projects, options.projectFilter);
-  const filesByProject = await collectFilesForProjects(projects, options.testFileFilters);
+  const filesByProject = new Map<FullProjectInternal, string[]>();
   const allTestFiles = new Set<string>();
-  for (const files of filesByProject.values())
+  for (const project of projects) {
+    const files = await collectFilesForProject(project, options.testFileFilters);
+    filesByProject.set(project, files);
     files.forEach(file => allTestFiles.add(file));
+  }
 
   // Load all tests.
   const preprocessRoot = await loadTests(config, reporter, allTestFiles, errors);
