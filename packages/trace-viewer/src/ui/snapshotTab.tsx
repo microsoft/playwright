@@ -79,11 +79,14 @@ export const SnapshotTab: React.FunctionComponent<{
   }, [iframeRef, snapshotUrl, snapshotInfoUrl, pointX, pointY]);
 
   const windowHeaderHeight = 40;
-  const snapshotSize = snapshotInfo.viewport;
-  const scale = Math.min(measure.width / snapshotSize.width, measure.height / (snapshotSize.height + windowHeaderHeight), 1);
-  const scaledSize = {
-    width: snapshotSize.width * scale,
-    height: (snapshotSize.height + windowHeaderHeight) * scale,
+  const snapshotContainerSize = {
+    width: snapshotInfo.viewport.width,
+    height: snapshotInfo.viewport.height + windowHeaderHeight,
+  };
+  const scale = Math.min(measure.width / snapshotContainerSize.width, measure.height / snapshotContainerSize.height, 1);
+  const translate = {
+    x: (measure.width - snapshotContainerSize.width) / 2,
+    y: (measure.height - snapshotContainerSize.height) / 2,
   };
   return <div
     className='snapshot-tab'
@@ -105,9 +108,9 @@ export const SnapshotTab: React.FunctionComponent<{
     </div>
     <div ref={ref} className='snapshot-wrapper'>
       { snapshots.length ? <div className='snapshot-container' style={{
-        width: snapshotSize.width + 'px',
-        height: (snapshotSize.height + windowHeaderHeight) + 'px',
-        transform: `translate(${-snapshotSize.width * (1 - scale) / 2 + (measure.width - scaledSize.width) / 2}px, ${-snapshotSize.height * (1 - scale) / 2  + (measure.height - scaledSize.height) / 2}px) scale(${scale})`,
+        width: snapshotContainerSize.width + 'px',
+        height: snapshotContainerSize.height + 'px',
+        transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
       }}>
         <div className='window-header'>
           <div style={{ whiteSpace: 'nowrap' }}>
