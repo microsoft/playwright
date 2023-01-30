@@ -40,7 +40,7 @@ export class Dispatcher {
   private _queue: TestGroup[] = [];
   private _queuedOrRunningHashCount = new Map<string, number>();
   private _finished = new ManualPromise<void>();
-  private _isStopped = false;
+  private _isStopped = true;
 
   private _testById = new Map<string, TestData>();
   private _config: FullConfigInternal;
@@ -48,15 +48,9 @@ export class Dispatcher {
   private _hasWorkerErrors = false;
   private _failureCount = 0;
 
-  constructor(config: FullConfigInternal, testGroups: TestGroup[], reporter: Reporter) {
+  constructor(config: FullConfigInternal, reporter: Reporter) {
     this._config = config;
     this._reporter = reporter;
-    this._queue = testGroups;
-    for (const group of testGroups) {
-      this._queuedOrRunningHashCount.set(group.workerHash, 1 + (this._queuedOrRunningHashCount.get(group.workerHash) || 0));
-      for (const test of group.tests)
-        this._testById.set(test.id, { test, resultByWorkerIndex: new Map() });
-    }
   }
 
   private _processFullySkippedJobs() {
@@ -167,7 +161,14 @@ export class Dispatcher {
     return workersWithSameHash > this._queuedOrRunningHashCount.get(worker.hash())!;
   }
 
-  async run() {
+  async run(testGroups: TestGroup[]) {
+    this._queue = testGroups;
+    for (const group of testGroups) {
+      this._queuedOrRunningHashCount.set(group.workerHash, 1 + (this._queuedOrRunningHashCount.get(group.workerHash) || 0));
+      for (const test of group.tests)
+        this._testById.set(test.id, { test, resultByWorkerIndex: new Map() });
+    }
+    this._isStopped = false;
     this._workerSlots = [];
     // 1. Allocate workers.
     for (let i = 0; i < this._config.workers; i++)

@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
-import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
+import { rimraf } from 'playwright-core/lib/utilsBundle';
 import { Dispatcher } from './dispatcher';
 import type { TestRunnerPlugin, TestRunnerPluginRegistration } from '../plugins';
 import type { Multiplexer } from '../reporters/multiplexer';
@@ -72,7 +72,7 @@ export function createTaskRunner(config: FullConfigInternal, reporter: Multiplex
   });
 
   taskRunner.addTask('setup workers', createSetupWorkersTask());
-  taskRunner.addTask('test suite', async ({ dispatcher }) => dispatcher!.run());
+  taskRunner.addTask('test suite', async ({ dispatcher, testGroups }) => dispatcher!.run(testGroups));
 
   return taskRunner;
 }
@@ -87,7 +87,7 @@ export function createTaskRunnerForList(config: FullConfigInternal, reporter: Mu
   return taskRunner;
 }
 
-export function createPluginSetupTask(pluginRegistration: TestRunnerPluginRegistration): Task<TaskRunnerState> {
+function createPluginSetupTask(pluginRegistration: TestRunnerPluginRegistration): Task<TaskRunnerState> {
   return async ({ config, reporter, plugins }) => {
     let plugin: TestRunnerPlugin;
     if (typeof pluginRegistration === 'function')
@@ -100,7 +100,7 @@ export function createPluginSetupTask(pluginRegistration: TestRunnerPluginRegist
   };
 }
 
-export function createGlobalSetupTask(): Task<TaskRunnerState> {
+function createGlobalSetupTask(): Task<TaskRunnerState> {
   return async ({ config }) => {
     const setupHook = config.globalSetup ? await loadGlobalHook(config, config.globalSetup) : undefined;
     const teardownHook = config.globalTeardown ? await loadGlobalHook(config, config.globalTeardown) : undefined;
@@ -113,19 +113,10 @@ export function createGlobalSetupTask(): Task<TaskRunnerState> {
   };
 }
 
-export function createSetupWorkersTask(): Task<TaskRunnerState> {
+function createSetupWorkersTask(): Task<TaskRunnerState> {
   return async params => {
-    const { config, testGroups, reporter } = params;
-    if (config._ignoreSnapshots) {
-      reporter.onStdOut(colors.dim([
-        'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
-        '- expect().toMatchSnapshot()',
-        '- expect().toHaveScreenshot()',
-        '',
-      ].join('\n')));
-    }
-
-    const dispatcher = new Dispatcher(config, testGroups!, reporter);
+    const { config, reporter } = params;
+    const dispatcher = new Dispatcher(config, reporter);
     params.dispatcher = dispatcher;
     return async () => {
       await dispatcher.stop();
@@ -133,7 +124,7 @@ export function createSetupWorkersTask(): Task<TaskRunnerState> {
   };
 }
 
-export function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
+function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
   return async ({ config, options }) => {
     const outputDirs = new Set<string>();
     for (const p of config.projects) {
