@@ -85,17 +85,17 @@ msg.args[1].json_value() # 42
 ```
 
 ```csharp
-// Listen for all System.out.printlns
+// Listen for all console messages and print them to the standard output.
 page.Console += (_, msg) => Console.WriteLine(msg.Text);
 
-// Listen for all console events and handle errors
+// Listen for all console messages and print errors to the standard output.
 page.Console += (_, msg) =>
 {
     if ("error".Equals(msg.Type))
         Console.WriteLine("Error text: " + msg.Text);
 };
 
-// Get the next System.out.println
+// Get the next console message
 var waitForMessageTask = page.WaitForConsoleMessageAsync();
 await page.EvaluateAsync("console.log('hello', 42, { foo: 'bar' });");
 var message = await waitForMessageTask;
