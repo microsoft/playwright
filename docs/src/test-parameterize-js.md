@@ -200,7 +200,7 @@ test(`example test`, async ({ page }) => {
 });
 ```
 
-You can run this test with your secrect username and password set in the command line.
+You can run this test with your secret username and password set in the command line.
 
 ```bash tab=bash-bash
 USERNAME=me PASSWORD=secret npx playwright test

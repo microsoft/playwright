@@ -6,5 +6,5 @@ Includes:
 - `accname/foo.jpg`
 - `wai-aria/scripts/manual.css`
 
-Modifed:
+Modified:
 - `wai-aria/scripts/ATTAcomm.js` contains our own harness to avoid modifying test files

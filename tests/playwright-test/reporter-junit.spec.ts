@@ -386,7 +386,7 @@ test('should render all annotations to testcase value based properties, if reque
   expect(result.exitCode).toBe(0);
 });
 
-test('should embed attachments to a custom testcase property, if explictly requested', async ({ runInlineTest }) => {
+test('should embed attachments to a custom testcase property, if explicitly requested', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       const xrayOptions = {
@@ -425,7 +425,7 @@ test('should embed attachments to a custom testcase property, if explictly reque
   expect(result.exitCode).toBe(0);
 });
 
-test('should not embed attachments to a custom testcase property, if not explictly requested', async ({ runInlineTest }) => {
+test('should not embed attachments to a custom testcase property, if not explicitly requested', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;

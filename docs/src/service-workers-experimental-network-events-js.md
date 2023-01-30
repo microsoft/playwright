@@ -65,7 +65,7 @@ Worker serviceWorker = page.waitForRequest(() -> {
 
 [`event: BrowserContext.serviceWorker`] is fired ***before*** the Service Worker's main script has been evaluated, so ***before*** calling service[`method: Worker.evaluate`] you should wait on its activation.
 
-There are more iodiomatic methods of waiting for a Service Worker to be activated, but the following is an implementation agnostic method:
+There are more idiomatic methods of waiting for a Service Worker to be activated, but the following is an implementation agnostic method:
 
 ```js tab=js-ts
 await page.evaluate(async () => {
@@ -219,7 +219,7 @@ self.addEventListener("fetch", (event) => {
 
       // 3. Prevent tracker.js from being retrieved, and returns a placeholder response
       if (event.request.url.endsWith("tracker.js"))
-        return new Response('conosole.log("no trackers!")', {
+        return new Response('console.log("no trackers!")', {
           status: 200,
           headers: { "Content-Type": "text/javascript" },
         });

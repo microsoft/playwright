@@ -830,7 +830,7 @@ An object containing fixtures and/or options. Learn more about [fixtures format]
 ## method: Test.fail#1
 * since: v1.10
 
-Unconditonally marks a test as "should fail". Playwright Test runs this test and ensures that it is actually failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+Unconditionally marks a test as "should fail". Playwright Test runs this test and ensures that it is actually failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
 
 **Usage**
 

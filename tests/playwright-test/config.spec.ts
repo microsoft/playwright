@@ -350,7 +350,7 @@ test('should work without config file', async ({ runInlineTest }) => {
   expect(skipped).toBe(0);
 });
 
-test('should inerhit use options in projects', async ({ runInlineTest }) => {
+test('should inherit use options in projects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
