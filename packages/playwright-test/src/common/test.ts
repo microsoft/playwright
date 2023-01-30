@@ -75,6 +75,11 @@ export class Suite extends Base implements reporterTypes.Suite {
     this._entries.push(suite);
   }
 
+  _prependSuite(suite: Suite) {
+    suite.parent = this;
+    this._entries.unshift(suite);
+  }
+
   allTests(): TestCase[] {
     const result: TestCase[] = [];
     const visit = (suite: Suite) => {
