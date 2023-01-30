@@ -210,7 +210,7 @@ export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunne
   const shouldSetBaseUrl = !!config.webServer;
   const webServerPlugins = [];
   for (const webServerConfig of config._webServers) {
-    if (webServerConfig.port !== undefined && webServerConfig.url !== undefined)
+    if ((!webServerConfig.port && !webServerConfig.url) || (webServerConfig.port && webServerConfig.url))
       throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
 
     const url = webServerConfig.url || `http://localhost:${webServerConfig.port}`;
