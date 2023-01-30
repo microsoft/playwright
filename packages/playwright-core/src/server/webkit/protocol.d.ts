@@ -6590,6 +6590,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Delay (in seconds) until the navigation is scheduled to begin. The navigation is not guaranteed to start.
        */
       delay: number;
+      /**
+       * Whether the naviation will happen in the same frame.
+       */
+      targetIsCurrentFrame: boolean;
     }
     /**
      * Fired when frame no longer has a scheduled navigation.
