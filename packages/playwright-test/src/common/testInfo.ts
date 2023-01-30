@@ -246,6 +246,18 @@ export class TestInfoImpl implements TestInfo {
     this.errors.push(error);
   }
 
+  _saveTestInfo() {
+    return {
+      status: this.status,
+      errors: this.errors.slice(),
+    }
+  }
+
+  _restoreTestInfo(state: { status: TestStatus, errors: TestInfoError[] }) {
+    this.status = state.status;
+    this.errors = state.errors.slice();
+  }
+
   async _runAsStep<T>(cb: () => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete'>): Promise<T> {
     const step = this._addStep(stepInfo);
     try {
