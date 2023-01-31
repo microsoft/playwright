@@ -43,7 +43,7 @@ import {
 import { toMatchSnapshot, toHaveScreenshot } from './toMatchSnapshot';
 import type { Expect } from '../common/types';
 import { currentTestInfo, currentExpectTimeout } from '../common/globals';
-import { serializeError, captureStackTrace } from '../util';
+import { serializeError, captureStackTrace, trimLongString } from '../util';
 import {
   expect as expectLibrary,
   INVERTED_COLOR,
@@ -201,7 +201,7 @@ class ExpectMetaInfoProxyHandler {
       const step = testInfo._addStep({
         location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
         category: 'expect',
-        title: customMessage || defaultTitle,
+        title: trimLongString(customMessage || defaultTitle, 1024),
         canHaveChildren: true,
         forceNoParent: false
       });

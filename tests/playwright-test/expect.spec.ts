@@ -545,3 +545,29 @@ test('should print timed out error message', async ({ runInlineTest }) => {
   const output = stripAnsi(result.output);
   expect(output).toContain('Timed out 1ms waiting for expect(received).toBeChecked()');
 });
+
+test('should not leak long expect message strings', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      let logs: string = 'Ab';
+      const consoleLogWatcher = (msg: ConsoleMessage) => {
+        if (logs.length < (1<<28))
+          logs += logs;
+        expect(msg.text(), logs).toMatch(/^\\d+$/);
+      }
+
+      test('main', async ({ page }) => {
+        page.on('console', consoleLogWatcher);
+        await page.evaluate(() => {
+          for (let i = 0; i < 20; i++)
+            console.log(i);
+        });
+      });
+      `,
+  }, { workers: 1 });
+  // expect(result.output).toBe('');
+  expect(result.failed).toBe(0);
+  expect(result.exitCode).toBe(0);
+});
