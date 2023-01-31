@@ -17,7 +17,7 @@ jobs:
     - name: Get Chromium revision
       id: chromium-version
       run: |
-        REVISION=$(node -e "console.log(require('./packages/playwright-core/browsers.json').browsers.find(b => b.name === 'chromium').revision)")
+        REVISION=$(node -e "console.log(require('./packages/playwright-core/browsers.json').browsers.find(b => b.name === 'chromium-with-symbols').revision)")
         echo "REVISION=$REVISION" >> $GITHUB_OUTPUT
     - run: |
         curl -X POST \
