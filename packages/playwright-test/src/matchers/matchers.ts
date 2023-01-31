@@ -20,6 +20,7 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import type { Expect } from '../common/types';
 import { expectTypes, callLogText } from '../util';
 import { currentTestInfo } from '../common/globals';
+import type { TestInfoState } from '../common/testInfo';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
@@ -327,12 +328,14 @@ export async function toPass(
   // Soft expects might mark test as failing.
   // We want to revert this later if the matcher is actually passing.
   // See https://github.com/microsoft/playwright/issues/20437
-  const testStateBeforeToPassMatcher = testInfo._saveTestInfo();
+  let testStateBeforeToPassMatcher: undefined|TestInfoState;
   const result = await pollAgainstTimeout<Error|undefined>(async () => {
     try {
-      const errorCount = testInfo.errors.length;
+      if (testStateBeforeToPassMatcher)
+        testInfo._restoreTestState(testStateBeforeToPassMatcher);
+      testStateBeforeToPassMatcher = testInfo._saveTestState();
       await callback();
-      if (testInfo.errors.length !== errorCount)
+      if (testInfo.errors.length !== testStateBeforeToPassMatcher.errors.length)
         return { continuePolling: !this.isNot, result: testInfo.errors[testInfo.errors.length - 1] };
       return { continuePolling: this.isNot, result: undefined };
     } catch (e) {
@@ -352,7 +355,5 @@ export async function toPass(
     return { message, pass: this.isNot };
   }
   const pass = !this.isNot;
-  if (pass)
-    testInfo._restoreTestInfo(testStateBeforeToPassMatcher);
   return { pass, message: () => '' };
 }

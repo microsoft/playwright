@@ -181,6 +181,26 @@ test('should swallow all soft errors inside toPass matcher, if successful', asyn
   expect(result.failed).toBe(1);
 });
 
+test('should show only soft errors on last toPass pass', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('should respect soft', async () => {
+        let i = 0;
+        await test.expect(() => {
+          ++i;
+          expect.soft('inside-toPass-' + i).toBe('0');
+        }).toPass({ timeout: 1000, intervals: [100, 100, 100000] });
+      });
+    `
+  });
+  expect(stripAnsi(result.output)).not.toContain('Received: "inside-toPass-1"');
+  expect(stripAnsi(result.output)).not.toContain('Received: "inside-toPass-2"');
+  expect(stripAnsi(result.output)).toContain('Received: "inside-toPass-3"');
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+});
+
 test('should work with soft', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
