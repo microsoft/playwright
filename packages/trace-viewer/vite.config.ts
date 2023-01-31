@@ -38,6 +38,10 @@ export default defineConfig({
     // Output dir is shared with vite.sw.config.ts, clearing it here is racy.
     emptyOutDir: false,
     rollupOptions: {
+      input: {
+        index: path.resolve(__dirname, 'index.html'),
+        popout: path.resolve(__dirname, 'popout.html'),
+      },
       output: {
         entryFileNames: () => '[name].[hash].js',
         assetFileNames: () => '[name].[hash][extname]',
