@@ -25,12 +25,14 @@ import type { TaskRunnerState } from './tasks';
 import type { FullConfigInternal } from '../common/types';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { runWatchModeLoop } from './watchMode';
+import { setCurrentConfig } from '../common/globals';
 
 export class Runner {
   private _config: FullConfigInternal;
 
   constructor(config: FullConfigInternal) {
     this._config = config;
+    setCurrentConfig(this._config);
   }
 
   async listTestFiles(projectNames: string[] | undefined): Promise<any> {

@@ -18,7 +18,7 @@ import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import { debugTest, formatLocation, relativeFilePath, serializeError } from '../util';
 import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestOutputPayload } from '../common/ipc';
-import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
+import { setCurrentConfig, setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
 import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
 import type { Annotation, FullConfigInternal, FullProjectInternal, TestInfoError } from '../common/types';
@@ -196,6 +196,7 @@ export class WorkerMain extends ProcessRunner {
 
     const configLoader = await ConfigLoader.deserialize(this._params.config);
     this._config = configLoader.fullConfig();
+    setCurrentConfig(this._config);
     this._project = this._config.projects.find(p => p._internal.id === this._params.projectId)!;
     this._poolBuilder = PoolBuilder.createForWorker(this._project);
   }

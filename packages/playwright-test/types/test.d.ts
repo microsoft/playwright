@@ -1150,6 +1150,24 @@ interface TestConfig {
   snapshotPathTemplate?: string;
 
   /**
+   * Directory where the values accessible via [TestStore] are persisted. Each value is saved in its own file. The key
+   * of the value is its path relative to the `storeDir`. Defaults to `./playwright`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   storeDir: './playwright-store',
+   * });
+   * ```
+   *
+   */
+  storeDir?: string;
+
+  /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
    * **Usage**
@@ -3305,6 +3323,31 @@ type ConnectOptions = {
 };
 
 /**
+ * Playwright Test provides a global `store` object that can be used read/write values to the filesystem. Each value
+ * is stored in its own file with the key used as a path relative to `TestConfig.storeDir` (it is `./playwright` by
+ * default).
+ *
+ */
+export interface TestStore {
+  /**
+   * Get named item from the store. Returns undefined if there is no value with given path.
+   * @param path Item path.
+   */
+  get<T>(path: string): Promise<T | undefined>;
+  /**
+   * Set value to the store.
+   * @param path Item path.
+   * @param value Item value. The value must be serializable to JSON. Passing `undefined` deletes the entry with given path.
+   */
+  set<T>(path: string, value: T | undefined): Promise<void>;
+  /**
+   * Returns absolute path of the corresponding store entry on the file system.
+   * @param path Path of the item in the store.
+   */
+  path(path: string): string;
+}
+
+/**
  * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
  *
  * These options are usually provided in the [configuration file](https://playwright.dev/docs/test-configuration) through
@@ -4254,6 +4297,7 @@ export default test;
 
 export const _baseTest: TestType<{}, {}>;
 export const expect: Expect;
+export const store: TestStore;
 
 /**
  * Defines Playwright config

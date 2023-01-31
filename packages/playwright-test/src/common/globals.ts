@@ -16,6 +16,7 @@
 
 import type { TestInfoImpl } from '../worker/testInfo';
 import type { Suite } from './test';
+import type { FullConfigInternal } from './types';
 
 let currentTestInfoValue: TestInfoImpl | null = null;
 export function setCurrentTestInfo(testInfo: TestInfoImpl | null) {
@@ -51,4 +52,12 @@ export function setIsWorkerProcess() {
 
 export function isWorkerProcess() {
   return _isWorkerProcess;
+}
+
+let currentConfigValue: FullConfigInternal | null = null;
+export function setCurrentConfig(config: FullConfigInternal | null) {
+  currentConfigValue = config;
+}
+export function currentConfig(): FullConfigInternal | null {
+  return currentConfigValue;
 }

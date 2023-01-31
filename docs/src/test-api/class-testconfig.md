@@ -749,6 +749,34 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.storeDir
+* since: v1.32
+- type: ?<[string]>
+
+Directory where the values accessible via [TestStore] are persisted. Each value is saved in its own file. The key of the value is its path relative to the `storeDir`. Defaults to `./playwright`.
+
+**Usage**
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
+  storeDir: './playwright-store',
+});
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  storeDir: './playwright-store',
+});
+```
+
 ## property: TestConfig.testDir
 * since: v1.10
 - type: ?<[string]>
