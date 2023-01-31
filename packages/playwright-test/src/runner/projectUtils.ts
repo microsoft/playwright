@@ -19,8 +19,7 @@ import path from 'path';
 import { minimatch } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import type { FullProjectInternal } from '../common/types';
-import type { TestFileFilter } from '../util';
-import { createFileMatcher, createFileMatcherFromFilters } from '../util';
+import { createFileMatcher } from '../util';
 
 const readFileAsync = promisify(fs.readFile);
 const readDirAsync = promisify(fs.readdir);
@@ -50,17 +49,33 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
   return result;
 }
 
-export async function collectFilesForProject(project: FullProjectInternal, commandLineFileFilters: TestFileFilter[]): Promise<string[]> {
+export function projectsThatAreDependencies(projects: FullProjectInternal[]): FullProjectInternal[] {
+  const result = new Set<FullProjectInternal>();
+  const visit = (depth: number, project: FullProjectInternal) => {
+    if (depth > 100) {
+      const error = new Error('Circular dependency detected between projects.');
+      error.stack = '';
+      throw error;
+    }
+    if (result.has(project))
+      return;
+    project._depProjects.map(visit.bind(undefined, depth + 1));
+    project._depProjects.forEach(dep => result.add(dep));
+  };
+  projects.forEach(visit.bind(undefined, 0));
+  return [...result];
+}
+
+export async function collectFilesForProject(project: FullProjectInternal): Promise<string[]> {
   const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
   const testFileExtension = (file: string) => extensions.includes(path.extname(file));
-  const commandLineFileMatcher = commandLineFileFilters.length ? createFileMatcherFromFilters(commandLineFileFilters) : () => true;
   const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
   const testMatch = createFileMatcher(project.testMatch);
   const testIgnore = createFileMatcher(project.testIgnore);
   const testFiles = allFiles.filter(file => {
     if (!testFileExtension(file))
       return false;
-    const isTest = !testIgnore(file) && testMatch(file) && commandLineFileMatcher(file);
+    const isTest = !testIgnore(file) && testMatch(file);
     if (!isTest)
       return false;
     return true;

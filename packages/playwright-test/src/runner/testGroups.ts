@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { filterSuiteWithOnlySemantics } from '../common/suiteUtils';
 import type { Suite, TestCase } from '../common/test';
+import type { FullProjectInternal } from '../common/types';
 
 export type TestGroup = {
   workerHash: string;
@@ -131,15 +131,10 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
   return result;
 }
 
-export async function filterForShard(shard: { total: number, current: number }, rootSuite: Suite, testGroups: TestGroup[]) {
-  // Each shard includes:
-  // - its portion of the regular tests
-  // - project setup tests for the projects that have regular tests in this shard
+export function filterForShard(shard: { total: number, current: number }, filesByProject: Map<FullProjectInternal, string[]>): Map<FullProjectInternal, string[]> {
   let shardableTotal = 0;
-  for (const group of testGroups)
-    shardableTotal += group.tests.length;
-
-  const shardTests = new Set<TestCase>();
+  for (const files of filesByProject.values())
+    shardableTotal += files.length;
 
   // Each shard gets some tests.
   const shardSize = Math.floor(shardableTotal / shard.total);
@@ -150,27 +145,16 @@ export async function filterForShard(shard: { total: number, current: number }, 
   const from = shardSize * currentShard + Math.min(extraOne, currentShard);
   const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
   let current = 0;
-  const shardProjects = new Set<string>();
-  const shardTestGroups = [];
-  for (const group of testGroups) {
-    // Any test group goes to the shard that contains the first test of this group.
-    // So, this shard gets any group that starts at [from; to)
-    if (current >= from && current < to) {
-      shardProjects.add(group.projectId);
-      shardTestGroups.push(group);
-      for (const test of group.tests)
-        shardTests.add(test);
+  const result = new Map<FullProjectInternal, string[]>();
+  for (const [project, files] of filesByProject) {
+    const shardFiles: string[] = [];
+    for (const file of files) {
+      if (current >= from && current < to)
+        shardFiles.push(file);
+      ++current;
     }
-    current += group.tests.length;
+    if (shardFiles.length)
+      result.set(project, shardFiles);
   }
-  testGroups.length = 0;
-  testGroups.push(...shardTestGroups);
-
-  if (!shardTests.size) {
-    // Filtering with "only semantics" does not work when we have zero tests - it leaves all the tests.
-    // We need an empty suite in this case.
-    rootSuite._entries = [];
-  } else {
-    filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
-  }
+  return result;
 }

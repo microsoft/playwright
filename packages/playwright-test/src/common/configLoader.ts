@@ -146,6 +146,8 @@ export class ConfigLoader {
     }
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
+
+    resolveProjectDependencies(this._fullConfig.projects);
     this._assignUniqueProjectIds(this._fullConfig.projects);
   }
 
@@ -216,6 +218,8 @@ export class ConfigLoader {
       testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/?(*.)@(spec|test).*'),
       timeout: takeFirst(projectConfig.timeout, config.timeout, defaultTimeout),
       use: mergeObjects(config.use, projectConfig.use),
+      _deps: (projectConfig as any)._deps || [],
+      _depProjects: [],
     };
   }
 }
@@ -452,6 +456,19 @@ function resolveScript(id: string, rootDir: string) {
   if (fs.existsSync(localPath))
     return localPath;
   return require.resolve(id, { paths: [rootDir] });
+}
+
+function resolveProjectDependencies(projects: FullProjectInternal[]) {
+  for (const project of projects) {
+    for (const dependencyName of project._deps) {
+      const dependencies = projects.filter(p => p.name === dependencyName);
+      if (!dependencies.length)
+        throw new Error(`Project '${project.name}' depends on unknown project '${dependencyName}'`);
+      if (dependencies.length > 1)
+        throw new Error(`Project dependencies should have unique names, reading ${dependencyName}`);
+      project._depProjects.push(...dependencies);
+    }
+  }
 }
 
 export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.js', 'playwright.config.mjs'];

@@ -50,7 +50,7 @@ export class Runner {
     for (const project of projects) {
       report.projects.push({
         ...sanitizeConfigForJSON(project, new Set()),
-        files: await collectFilesForProject(project, [])
+        files: await collectFilesForProject(project)
       });
     }
     return report;
@@ -74,7 +74,7 @@ export class Runner {
       options,
       reporter,
       plugins: [],
-      testGroups: [],
+      phases: [],
     };
 
     reporter.onConfigure(config);
@@ -90,7 +90,7 @@ export class Runner {
 
     const taskStatus = await taskRunner.run(context, deadline);
     let status: FullResult['status'] = 'passed';
-    if (context.dispatcher?.hasWorkerErrors() || context.rootSuite?.allTests().some(test => !test.ok()))
+    if (context.phases.find(p => p.dispatcher.hasWorkerErrors()) || context.rootSuite?.allTests().some(test => !test.ok()))
       status = 'failed';
     if (status === 'passed' && taskStatus !== 'passed')
       status = taskStatus;
