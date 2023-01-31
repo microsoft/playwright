@@ -3303,6 +3303,36 @@ type ConnectOptions = {
 };
 
 /**
+ * Playwright Test provides a global `store` object for passing values between project test and tests. It is an error
+ * to call store methods outside of test and tests.
+ *
+ * ```js
+ * import { test, store } from '@playwright/test';
+ *
+ * test('sign in', async ({ page, context }) => {
+ *   // Perform sign in steps.
+ *   // Save signed-in state to an entry named 'test-user'.
+ *   const contextState = await context.storageState();
+ *   await store.set('test-user', contextState)
+ * });
+ * ```
+ *
+ */
+export interface TestStore {
+  /**
+   * Get named item from the store. Returns undefined if there is no value with given name.
+   * @param name Item name.
+   */
+  get<T>(name: string): Promise<T | undefined>;
+  /**
+   * Set value to the store.
+   * @param name Item name.
+   * @param value Item value. The value must be serializable to JSON. Passing `undefined` deletes the entry with given name.
+   */
+  set<T>(name: string, value: T | undefined): Promise<void>;
+}
+
+/**
  * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
  *
  * These options are usually provided in the [configuration file](https://playwright.dev/docs/test-configuration) through
@@ -4265,6 +4295,7 @@ export default test;
 
 export const _baseTest: TestType<{}, {}>;
 export const expect: Expect;
+export const store: TestStore;
 
 /**
  * Defines Playwright config

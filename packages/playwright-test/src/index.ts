@@ -22,9 +22,11 @@ import { createGuid, debugMode, removeFolders, addStackIgnoreFilter } from 'play
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './common/testInfo';
 import { rootTestType } from './common/testType';
+import { store as _baseStore } from './store';
 import { type ContextReuseMode } from './common/types';
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
+export const store = _baseStore;
 
 addStackIgnoreFilter((frame: StackFrame) => frame.file.startsWith(path.dirname(require.resolve('../package.json'))));
 

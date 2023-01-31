@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
 import { expect, test } from './playwright-test-fixtures';
-
-test.fixme(true, 'Restore this');
 
 test('should provide store fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -50,14 +50,19 @@ test('should share store state between project setup and tests', async ({ runInl
         projects: [
           {
             name: 'p1',
-            setupMatch: /.*store.setup.ts/
+            testMatch: /.*store.setup.ts/
+          },
+          {
+            name: 'p2',
+            dependencies: ['p1'],
+            testMatch: /.*.test.ts/
           }
         ]
       };
     `,
     'store.setup.ts': `
       const { test, expect, store } = pwt;
-      test.projectSetup('should initialize store', async ({ }) => {
+      test('should initialize store', async ({ }) => {
         expect(await store.get('number')).toBe(undefined);
         await store.set('number', 2022)
         expect(await store.get('number')).toBe(2022);
@@ -127,44 +132,35 @@ test('should isolate store state between projects', async ({ runInlineTest }) =>
         projects: [
           {
             name: 'p1',
-            setupMatch: /.*store.setup.ts/
           },
           {
             name: 'p2',
-            setupMatch: /.*store.setup.ts/
           }
         ]
       };
     `,
-    'store.setup.ts': `
-      const { test, expect, store } = pwt;
-      test.projectSetup('should initialize store', async ({ }) => {
-        expect(await store.get('number')).toBe(undefined);
-        await store.set('number', 2022)
-        expect(await store.get('number')).toBe(2022);
+    'a.spec.ts': `
+      const { test, store } = pwt;
+      const storageKey = name => test.info().project.name + '/' + name;
 
-        expect(await store.get('name')).toBe(undefined);
-        await store.set('name', 'str-' + test.info().project.name)
-        expect(await store.get('name')).toBe('str-' + test.info().project.name);
+      test('should initialize store', async ({ }) => {
+        expect(await store.get(storageKey('number'))).toBe(undefined);
+        await store.set(storageKey('number'), 2022)
+        expect(await store.get(storageKey('number'))).toBe(2022);
+
+        expect(await store.get(storageKey('name'))).toBe(undefined);
+        await store.set(storageKey('name'), 'str-' + test.info().project.name)
+        expect(await store.get(storageKey('name'))).toBe('str-' + test.info().project.name);
       });
-    `,
-    'a.test.ts': `
-      const { test, store } = pwt;
+
       test('should get data from setup', async ({ }) => {
-        expect(await store.get('number')).toBe(2022);
-        expect(await store.get('name')).toBe('str-' + test.info().project.name);
-      });
-    `,
-    'b.test.ts': `
-      const { test, store } = pwt;
-      test('should get data from setup', async ({ }) => {
-        expect(await store.get('number')).toBe(2022);
-        expect(await store.get('name')).toBe('str-' + test.info().project.name);
+        expect(await store.get(storageKey('number'))).toBe(2022);
+        expect(await store.get(storageKey('name'))).toBe('str-' + test.info().project.name);
       });
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(6);
+  expect(result.passed).toBe(4);
 });
 
 test('should load context storageState from store', async ({ runInlineTest, server }) => {
@@ -177,15 +173,20 @@ test('should load context storageState from store', async ({ runInlineTest, serv
       module.exports = {
         projects: [
           {
-            name: 'p1',
-            setupMatch: /.*store.setup.ts/
+            name: 'setup',
+            testMatch: /.*store.setup.ts/
+          },
+          {
+            name: 'p2',
+            dependencies: ['setup'],
+            testMatch: /.*.test.ts/
           }
         ]
       };
     `,
     'store.setup.ts': `
       const { test, expect, store } = pwt;
-      test.projectSetup('should save storageState', async ({ page, context }) => {
+      test('should save storageState', async ({ page, context }) => {
         expect(await store.get('user')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
         const state = await page.context().storageState();
@@ -193,9 +194,9 @@ test('should load context storageState from store', async ({ runInlineTest, serv
       });
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      const { test, store } = pwt;
       test.use({
-        storageStateName: 'user'
+        storageState: async ({}, use) => use(store.get('user'))
       })
       test('should get data from setup', async ({ page }) => {
         await page.goto('${server.EMPTY_PAGE}');
@@ -216,115 +217,22 @@ test('should load context storageState from store', async ({ runInlineTest, serv
   expect(result.passed).toBe(3);
 });
 
-test('should load storageStateName specified in the project config from store', async ({ runInlineTest, server }) => {
-  server.setRoute('/setcookie.html', (req, res) => {
-    res.setHeader('Set-Cookie', ['a=v1']);
-    res.end();
-  });
+test('should load value from filesystem', async ({ runInlineTest }) => {
+  const storeDir = path.join(test.info().outputPath(), '.playwright-store');
+  const file = path.join(storeDir, 'foo/bar.json');
+  await fs.promises.mkdir(path.dirname(file), { recursive: true });
+  await fs.promises.writeFile(file, JSON.stringify({ 'a': 2023 }));
   const result = await runInlineTest({
     'playwright.config.js': `
-      module.exports = {
-        projects: [
-          {
-            name: 'p1',
-            setupMatch: /.*store.setup.ts/,
-            use: {
-              storageStateName: 'stateInStorage',
-            },
-          }
-        ]
-      };
-    `,
-    'store.setup.ts': `
-      const { test, expect, store } = pwt;
-      test.use({
-        storageStateName: ({}, use) => use(undefined),
-      })
-      test.projectSetup('should save storageState', async ({ page, context }) => {
-        expect(await store.get('stateInStorage')).toBe(undefined);
-        await page.goto('${server.PREFIX}/setcookie.html');
-        const state = await page.context().storageState();
-        await store.set('stateInStorage', state);
-      });
+      module.exports = {};
     `,
     'a.test.ts': `
-      const { test } = pwt;
-      test('should get data from setup', async ({ page }) => {
-        await page.goto('${server.EMPTY_PAGE}');
-        const cookies = await page.evaluate(() => document.cookie);
-        expect(cookies).toBe('a=v1');
+      const { test, store } = pwt;
+      test('should store number', async ({ }) => {
+        expect(await store.get('foo/bar')).toEqual({ 'a': 2023 });
       });
     `,
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
-});
-
-test('should load storageStateName specified in the global config from store', async ({ runInlineTest, server }) => {
-  server.setRoute('/setcookie.html', (req, res) => {
-    res.setHeader('Set-Cookie', ['a=v1']);
-    res.end();
-  });
-  const result = await runInlineTest({
-    'playwright.config.js': `
-      module.exports = {
-        use: {
-          storageStateName: 'stateInStorage',
-        },
-        projects: [
-          {
-            name: 'p1',
-            setupMatch: /.*store.setup.ts/,
-          }
-        ]
-      };
-    `,
-    'store.setup.ts': `
-      const { test, expect, store } = pwt;
-      test.use({
-        storageStateName: ({}, use) => use(undefined),
-      })
-      test.projectSetup('should save storageStateName', async ({ page, context }) => {
-        expect(await store.get('stateInStorage')).toBe(undefined);
-        await page.goto('${server.PREFIX}/setcookie.html');
-        const state = await page.context().storageState();
-        await store.set('stateInStorage', state);
-      });
-    `,
-    'a.test.ts': `
-      const { test } = pwt;
-      test('should get data from setup', async ({ page }) => {
-        await page.goto('${server.EMPTY_PAGE}');
-        const cookies = await page.evaluate(() => document.cookie);
-        expect(cookies).toBe('a=v1');
-      });
-    `,
-  }, { workers: 1 });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
-});
-
-test('should throw on unknown storageStateName value', async ({ runInlineTest, server }) => {
-  const result = await runInlineTest({
-    'playwright.config.js': `
-      module.exports = {
-        projects: [
-          {
-            name: 'p1',
-            use: {
-              storageStateName: 'stateInStorage',
-            },
-          }
-        ]
-      };
-    `,
-    'a.test.ts': `
-      const { test } = pwt;
-      test('should fail to initialize page', async ({ page }) => {
-      });
-    `,
-  }, { workers: 1 });
-  expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(0);
-  expect(result.output).toContain('Error: Cannot find value in the store for storageStateName: "stateInStorage"');
+  expect(result.passed).toBe(1);
 });
