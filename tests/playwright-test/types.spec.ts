@@ -166,7 +166,106 @@ test('should check types of fixtures', async ({ runTSC }) => {
       test.afterAll(async ({ a }) => {});
       test.afterAll(async ({ foo, bar }) => {});
       test.afterAll(() => {});
-    `
+    `,
+    'playwright-props.config.ts': `
+      const config0: pwt.PlaywrightTestConfig = {
+        use: {
+          ignoreHTTPSErrors: undefined,
+          isMobile: true,
+          javaScriptEnabled: false,
+        },
+      };
+
+      const config1: pwt.PlaywrightTestConfig = {
+        use: {
+          ignoreHTTPSErrors: undefined,
+          isMobile: true,
+          javaScriptEnabled: false,
+          // @ts-expect-error
+          hasTouch: 'foo',
+        },
+      };
+
+      const config2: pwt.PlaywrightTestConfig = {
+        use: {
+          ignoreHTTPSErrors: undefined,
+          isMobile: true,
+          javaScriptEnabled: false,
+          // @ts-expect-error
+          foo: true,
+        },
+      };
+
+      const config3: pwt.PlaywrightTestConfig<{ foo: boolean }> = {
+        use: {
+          ignoreHTTPSErrors: undefined,
+          isMobile: true,
+          javaScriptEnabled: false,
+          foo: true,
+        },
+      };
+
+      const config4: pwt.PlaywrightTestConfig<{ foo: boolean }> = {
+        use: {
+          ignoreHTTPSErrors: undefined,
+          isMobile: true,
+          javaScriptEnabled: false,
+          foo: true,
+          // @ts-expect-error
+          hasTouch: 'foo',
+        },
+      };
+    `,
+
+    'playwright-define.config.ts': `
+      const config0 = pwt.defineConfig({
+        use: {
+          ignoreHTTPSErrors: undefined,
+          isMobile: true,
+          javaScriptEnabled: false,
+        },
+      });
+
+      const config1 = pwt.defineConfig({
+        use: {
+          ignoreHTTPSErrors: undefined,
+          isMobile: true,
+          javaScriptEnabled: false,
+          // @ts-expect-error
+          hasTouch: 'foo',
+        },
+      });
+
+      const config2 = pwt.defineConfig({
+        use: {
+          ignoreHTTPSErrors: undefined,
+          isMobile: true,
+          javaScriptEnabled: false,
+          // @ts-expect-error
+          foo: true,
+        },
+      });
+
+      const config3 = pwt.defineConfig<{ foo: boolean }>({
+        use: {
+          ignoreHTTPSErrors: undefined,
+          isMobile: true,
+          javaScriptEnabled: false,
+          foo: true,
+        },
+      });
+
+      const config4 = pwt.defineConfig<{ foo: boolean }>({
+        use: {
+          ignoreHTTPSErrors: undefined,
+          isMobile: true,
+          javaScriptEnabled: false,
+          foo: true,
+          // @ts-expect-error
+          hasTouch: 'foo',
+        },
+      });
+    `,
   });
   expect(result.exitCode).toBe(0);
 });
