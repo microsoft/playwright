@@ -196,12 +196,12 @@ class ExpectMetaInfoProxyHandler {
       const stackTrace = captureStackTrace();
       const stackLines = stackTrace.frameTexts;
       const frame = stackTrace.frames[0];
-      const customMessage = trimLongString(this._info.message || '', 1024);
+      const customMessage = this._info.message || '';
       const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}`;
       const step = testInfo._addStep({
         location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
         category: 'expect',
-        title: customMessage || defaultTitle,
+        title: trimLongString(customMessage || defaultTitle, 1024),
         canHaveChildren: true,
         forceNoParent: false
       });
