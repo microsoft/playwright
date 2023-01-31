@@ -269,7 +269,7 @@ it.describe('page screenshot', () => {
   });
 
   it('should work for canvas', async ({ page, server, browserName, channel, browserMajorVersion }) => {
-    it.fixme(browserName === 'firefox' && channel === 'firefox-beta' && browserMajorVersion === 110, 'https://github.com/microsoft/playwright/issues/20522')
+    it.fixme(browserName === 'firefox' && channel === 'firefox-beta' && browserMajorVersion === 110, 'https://github.com/microsoft/playwright/issues/20522');
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
