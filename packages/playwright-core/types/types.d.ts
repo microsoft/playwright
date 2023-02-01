@@ -17925,6 +17925,12 @@ export interface Route {
     headers?: { [key: string]: string; };
 
     /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
+
+    /**
      * If set changes the request method (e.g. GET or POST).
      */
     method?: string;

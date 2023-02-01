@@ -206,6 +206,21 @@ it('should fulfill intercepted response using alias', async ({ page, server, isE
   expect(response.headers()['content-type']).toContain('text/html');
 });
 
+it('should not follow redirects when maxRedirects is set to 0 in route.fetch', async ({ page, server, isAndroid, isElectron }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
+
+  server.setRedirect('/foo', '/empty.html');
+  await page.route('**/*', async route => {
+    const response = await route.fetch({ maxRedirects: 0 });
+    expect(response.headers()['location']).toBe('/empty.html');
+    expect(response.status()).toBe(302);
+    await route.fulfill({ body: 'hello' });
+  });
+  await page.goto(server.PREFIX + '/foo');
+  expect(await page.content()).toContain('hello');
+});
+
 it('should intercept with url override', async ({ page, server, isElectron, isAndroid }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
