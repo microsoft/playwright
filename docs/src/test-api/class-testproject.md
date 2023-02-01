@@ -25,25 +25,16 @@ module.exports = defineConfig({
   // Options specific to each project.
   projects: [
     {
-      name: 'Desktop Chromium',
-      use: {
-        browserName: 'chromium',
-        viewport: { width: 1280, height: 720 },
-      },
+      name: 'chromium',
+      use: devices['Desktop Chrome'],
     },
     {
-      name: 'Desktop Safari',
-      use: {
-        browserName: 'webkit',
-        viewport: { width: 1280, height: 720 },
-      }
+      name: 'firefox',
+      use: devices['Desktop Firefox'],
     },
     {
-      name: 'Desktop Firefox',
-      use: {
-        browserName: 'firefox',
-        viewport: { width: 1280, height: 720 },
-      }
+      name: 'webkit',
+      use: devices['Desktop Safari'],
     },
     {
       name: 'Mobile Chrome',
@@ -71,25 +62,16 @@ export default defineConfig({
   // Options specific to each project.
   projects: [
     {
-      name: 'Desktop Chromium',
-      use: {
-        browserName: 'chromium',
-        viewport: { width: 1280, height: 720 },
-      },
+      name: 'chromium',
+      use: devices['Desktop Chrome'],
     },
     {
-      name: 'Desktop Safari',
-      use: {
-        browserName: 'webkit',
-        viewport: { width: 1280, height: 720 },
-      }
+      name: 'firefox',
+      use: devices['Desktop Firefox'],
     },
     {
-      name: 'Desktop Firefox',
-      use: {
-        browserName: 'firefox',
-        viewport: { width: 1280, height: 720 },
-      }
+      name: 'webkit',
+      use: devices['Desktop Safari'],
     },
     {
       name: 'Mobile Chrome',
@@ -98,6 +80,44 @@ export default defineConfig({
     {
       name: 'Mobile Safari',
       use: devices['iPhone 12'],
+    },
+  ],
+});
+```
+
+## property: TestProject.dependencies
+* since: v1.31
+- type: ?<[Array]<[string]>>
+
+List of projects that need to run before any test in this project runs. Dependencies can
+be useful for configuring the global setup actions in a way that every action is a test.
+For example:
+
+```js
+// playwright.config.ts
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'setup',
+      testMatch: /global.setup\.ts/,
+      dependencies: ['setup'],
+    },
+    {
+      name: 'chromium',
+      use: devices['Desktop Chrome'],
+      dependencies: ['setup'],
+    },
+    {
+      name: 'firefox',
+      use: devices['Desktop Firefox'],
+      dependencies: ['setup'],
+    },
+    {
+      name: 'webkit',
+      use: devices['Desktop Safari'],
+      dependencies: ['setup'],
     },
   ],
 });

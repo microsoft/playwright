@@ -203,6 +203,7 @@ export class ConfigLoader {
       _fullConfig: fullConfig,
       _fullyParallel: takeFirst(projectConfig.fullyParallel, config.fullyParallel, undefined),
       _expect: takeFirst(projectConfig.expect, config.expect, {}),
+      _deps: [],
       grep: takeFirst(projectConfig.grep, config.grep, baseFullConfig.grep),
       grepInvert: takeFirst(projectConfig.grepInvert, config.grepInvert, baseFullConfig.grepInvert),
       outputDir,
@@ -218,8 +219,7 @@ export class ConfigLoader {
       testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/?(*.)@(spec|test).*'),
       timeout: takeFirst(projectConfig.timeout, config.timeout, defaultTimeout),
       use: mergeObjects(config.use, projectConfig.use),
-      _deps: (projectConfig as any)._deps || [],
-      _depProjects: [],
+      dependencies: projectConfig.dependencies || [],
     };
   }
 }
@@ -460,13 +460,13 @@ function resolveScript(id: string, rootDir: string) {
 
 function resolveProjectDependencies(projects: FullProjectInternal[]) {
   for (const project of projects) {
-    for (const dependencyName of project._deps) {
+    for (const dependencyName of project.dependencies) {
       const dependencies = projects.filter(p => p.name === dependencyName);
       if (!dependencies.length)
         throw new Error(`Project '${project.name}' depends on unknown project '${dependencyName}'`);
       if (dependencies.length > 1)
         throw new Error(`Project dependencies should have unique names, reading ${dependencyName}`);
-      project._depProjects.push(...dependencies);
+      project._deps.push(...dependencies);
     }
   }
 }

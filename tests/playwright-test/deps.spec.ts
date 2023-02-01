@@ -22,8 +22,8 @@ test('should run projects with dependencies', async ({ runInlineTest }) => {
       module.exports = {
         projects: [
           { name: 'A' },
-          { name: 'B', _deps: ['A'] },
-          { name: 'C', _deps: ['A'] },
+          { name: 'B', dependencies: ['A'] },
+          { name: 'C', dependencies: ['A'] },
         ],
       };`,
     'test.spec.ts': `
@@ -44,8 +44,8 @@ test('should not run project if dependency failed', async ({ runInlineTest }) =>
       module.exports = {
         projects: [
           { name: 'A' },
-          { name: 'B', _deps: ['A'] },
-          { name: 'C', _deps: ['B'] },
+          { name: 'B', dependencies: ['A'] },
+          { name: 'C', dependencies: ['B'] },
         ],
       };`,
     'test.spec.ts': `
@@ -71,11 +71,11 @@ test('should not run project if dependency failed (2)', async ({ runInlineTest }
       module.exports = {
         projects: [
           { name: 'A1' },
-          { name: 'A2', _deps: ['A1'] },
-          { name: 'A3', _deps: ['A2'] },
+          { name: 'A2', dependencies: ['A1'] },
+          { name: 'A3', dependencies: ['A2'] },
           { name: 'B1' },
-          { name: 'B2', _deps: ['B1'] },
-          { name: 'B3', _deps: ['B2'] },
+          { name: 'B2', dependencies: ['B1'] },
+          { name: 'B3', dependencies: ['B2'] },
         ],
       };`,
     'test.spec.ts': `
@@ -97,7 +97,7 @@ test('should filter by project list, but run deps', async ({ runInlineTest }) =>
       module.exports = { projects: [
         { name: 'A' },
         { name: 'B' },
-        { name: 'C', _deps: ['A'] },
+        { name: 'C', dependencies: ['A'] },
         { name: 'D' },
       ] };
     `,
@@ -120,7 +120,7 @@ test('should not filter dependency by file name', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = { projects: [
         { name: 'A' },
-        { name: 'B', _deps: ['A'] },
+        { name: 'B', dependencies: ['A'] },
       ] };
     `,
     'one.spec.ts': `pwt.test('fails', () => { expect(1).toBe(2); });`,
@@ -136,7 +136,7 @@ test('should not filter dependency by only', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = { projects: [
         { name: 'setup', testMatch: /setup.ts/ },
-        { name: 'browser', _deps: ['setup'] },
+        { name: 'browser', dependencies: ['setup'] },
       ] };
     `,
     'setup.ts': `
@@ -160,7 +160,7 @@ test('should not filter dependency by only 2', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = { projects: [
         { name: 'setup', testMatch: /setup.ts/ },
-        { name: 'browser', _deps: ['setup'] },
+        { name: 'browser', dependencies: ['setup'] },
       ] };
     `,
     'setup.ts': `
@@ -184,7 +184,7 @@ test('should not filter dependency by only 3', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = { projects: [
         { name: 'setup', testMatch: /setup.*.ts/ },
-        { name: 'browser', _deps: ['setup'] },
+        { name: 'browser', dependencies: ['setup'] },
       ] };
     `,
     'setup-1.ts': `
@@ -210,7 +210,7 @@ test('should report skipped dependent tests', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = { projects: [
         { name: 'setup', testMatch: /setup.ts/ },
-        { name: 'browser', _deps: ['setup'] },
+        { name: 'browser', dependencies: ['setup'] },
       ] };
     `,
     'setup.ts': `
@@ -230,8 +230,8 @@ test('should report circular dependencies', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { projects: [
-        { name: 'A', _deps: ['B'] },
-        { name: 'B', _deps: ['A'] },
+        { name: 'A', dependencies: ['B'] },
+        { name: 'B', dependencies: ['A'] },
       ] };
     `,
     'test.spec.ts': `pwt.test('pass', () => {});`,
