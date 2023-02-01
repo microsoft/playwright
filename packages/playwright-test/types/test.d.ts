@@ -187,7 +187,10 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   name: string;
   /**
    * List of projects that need to run before any test in this project runs. Dependencies can be useful for configuring
-   * the global setup actions in a way that every action is a test. For example:
+   * the global setup actions in a way that every action is in a form of a test. That way one can record traces and
+   * other artifacts for the global setup routine, see the setup steps in the test report, etc.
+   *
+   * For example:
    *
    * ```js
    * // playwright.config.ts
@@ -5036,7 +5039,10 @@ export interface TestInfoError {
 interface TestProject {
   /**
    * List of projects that need to run before any test in this project runs. Dependencies can be useful for configuring
-   * the global setup actions in a way that every action is a test. For example:
+   * the global setup actions in a way that every action is in a form of a test. That way one can record traces and
+   * other artifacts for the global setup routine, see the setup steps in the test report, etc.
+   *
+   * For example:
    *
    * ```js
    * // playwright.config.ts

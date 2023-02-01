@@ -28,18 +28,9 @@ import { TaskRunner } from './taskRunner';
 import type { Suite } from '../common/test';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { loadAllTests, loadGlobalHook } from './loadUtils';
-import type { Matcher, TestFileFilter } from '../util';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
-
-type TaskRunnerOptions = {
-  listOnly: boolean;
-  testFileFilters: TestFileFilter[];
-  testTitleMatcher: Matcher;
-  projectFilter?: string[];
-  passWithNoTests?: boolean;
-};
 
 type ProjectWithTestGroups = {
   project: FullProjectInternal;
@@ -48,7 +39,6 @@ type ProjectWithTestGroups = {
 };
 
 export type TaskRunnerState = {
-  options: TaskRunnerOptions;
   reporter: Multiplexer;
   config: FullConfigInternal;
   plugins: TestRunnerPlugin[];
@@ -62,7 +52,7 @@ export type TaskRunnerState = {
 export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
 
-  for (const plugin of config._pluginRegistrations)
+  for (const plugin of config._internal.pluginRegistrations)
     taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
   if (config.globalSetup || config.globalTeardown)
     taskRunner.addTask('global setup', createGlobalSetupTask());
@@ -102,7 +92,7 @@ function createPluginSetupTask(pluginRegistration: TestRunnerPluginRegistration)
     else
       plugin = pluginRegistration;
     plugins.push(plugin);
-    await plugin.setup?.(config, config._configDir, reporter);
+    await plugin.setup?.(config, config._internal.configDir, reporter);
     return () => plugin.teardown?.();
   };
 }
@@ -121,10 +111,10 @@ function createGlobalSetupTask(): Task<TaskRunnerState> {
 }
 
 function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
-  return async ({ config, options }) => {
+  return async ({ config }) => {
     const outputDirs = new Set<string>();
     for (const p of config.projects) {
-      if (!options.projectFilter || options.projectFilter.includes(p.name))
+      if (!config._internal.projectFilter || config._internal.projectFilter.includes(p.name))
         outputDirs.add(p.outputDir);
     }
 
@@ -144,10 +134,10 @@ function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
 
 function createLoadTask(): Task<TaskRunnerState> {
   return async (context, errors) => {
-    const { config, options } = context;
-    context.rootSuite = await loadAllTests(config, options, errors);
+    const { config } = context;
+    context.rootSuite = await loadAllTests(config, errors);
     // Fail when no tests.
-    if (!context.rootSuite.allTests().length && !context.options.passWithNoTests && !config.shard)
+    if (!context.rootSuite.allTests().length && !config._internal.passWithNoTests && !config.shard)
       throw new Error(`No tests found`);
   };
 }
@@ -170,7 +160,7 @@ function createTestGroupsTask(): Task<TaskRunnerState> {
       const testGroupsInPhase = projects.reduce((acc, project) => acc + project.testGroups.length, 0);
       debug('pw:test:task')(`running phase with ${projects.map(p => p.project.name).sort()} projects, ${testGroupsInPhase} testGroups`);
       context.phases.push({ dispatcher: new Dispatcher(config, reporter), projects });
-      context.config._maxConcurrentTestGroups = Math.max(context.config._maxConcurrentTestGroups, testGroupsInPhase);
+      context.config._internal.maxConcurrentTestGroups = Math.max(context.config._internal.maxConcurrentTestGroups, testGroupsInPhase);
     }
 
     return async () => {
@@ -191,7 +181,7 @@ function createRunTestsTask(): Task<TaskRunnerState> {
       // that depend on the projects that failed previously.
       const phaseTestGroups: TestGroup[] = [];
       for (const { project, testGroups } of projects) {
-        const hasFailedDeps = project._deps.some(p => !successfulProjects.has(p));
+        const hasFailedDeps = project._internal.deps.some(p => !successfulProjects.has(p));
         if (!hasFailedDeps) {
           phaseTestGroups.push(...testGroups);
         } else {
@@ -211,7 +201,7 @@ function createRunTestsTask(): Task<TaskRunnerState> {
       // projects failed.
       if (!dispatcher.hasWorkerErrors()) {
         for (const { project, projectSuite } of projects) {
-          const hasFailedDeps = project._deps.some(p => !successfulProjects.has(p));
+          const hasFailedDeps = project._internal.deps.some(p => !successfulProjects.has(p));
           if (!hasFailedDeps && !projectSuite.allTests().some(test => !test.ok()))
             successfulProjects.add(project);
         }
@@ -228,7 +218,7 @@ function buildPhases(projectSuites: Suite[]): Suite[][] {
     for (const projectSuite of projectSuites) {
       if (processed.has(projectSuite._projectConfig!))
         continue;
-      if (projectSuite._projectConfig!._deps.find(p => !processed.has(p)))
+      if (projectSuite._projectConfig!._internal.deps.find(p => !processed.has(p)))
         continue;
       phase.push(projectSuite);
     }

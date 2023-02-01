@@ -49,7 +49,7 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
   return result;
 }
 
-export function projectsThatAreDependencies(projects: FullProjectInternal[]): FullProjectInternal[] {
+export function buildProjectsClosure(projects: FullProjectInternal[]): FullProjectInternal[] {
   const result = new Set<FullProjectInternal>();
   const visit = (depth: number, project: FullProjectInternal) => {
     if (depth > 100) {
@@ -57,19 +57,22 @@ export function projectsThatAreDependencies(projects: FullProjectInternal[]): Fu
       error.stack = '';
       throw error;
     }
-    if (result.has(project))
-      return;
-    project._deps.map(visit.bind(undefined, depth + 1));
-    project._deps.forEach(dep => result.add(dep));
+    if (depth)
+      project._internal.type = 'dependency';
+    result.add(project);
+    project._internal.deps.map(visit.bind(undefined, depth + 1));
   };
-  projects.forEach(visit.bind(undefined, 0));
+  for (const p of projects)
+    p._internal.type = 'top-level';
+  for (const p of projects)
+    visit(0, p);
   return [...result];
 }
 
 export async function collectFilesForProject(project: FullProjectInternal, fsCache = new Map<string, string[]>()): Promise<string[]> {
   const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
   const testFileExtension = (file: string) => extensions.includes(path.extname(file));
-  const allFiles = await cachedCollectFiles(project.testDir, project._respectGitIgnore, fsCache);
+  const allFiles = await cachedCollectFiles(project.testDir, project._internal.respectGitIgnore, fsCache);
   const testMatch = createFileMatcher(project.testMatch);
   const testIgnore = createFileMatcher(project.testIgnore);
   const testFiles = allFiles.filter(file => {

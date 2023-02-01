@@ -117,8 +117,8 @@ export class TestInfoImpl implements TestInfo {
       const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ');
 
       let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
-      if (project._id)
-        testOutputDir += '-' + sanitizeForFilePath(project._id);
+      if (project._internal.id)
+        testOutputDir += '-' + sanitizeForFilePath(project._internal.id);
       if (this.retry)
         testOutputDir += '-retry' + this.retry;
       if (this.repeatEachIndex)
@@ -302,7 +302,7 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?arg\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))
         .replace(/\{(.)?ext\}/g, parsedSubPath.ext ? '$1' + parsedSubPath.ext : '');
 
-    return path.normalize(path.resolve(this.config._configDir, snapshotPath));
+    return path.normalize(path.resolve(this.config._internal.configDir, snapshotPath));
   }
 
   skip(...args: [arg?: any, description?: string]) {

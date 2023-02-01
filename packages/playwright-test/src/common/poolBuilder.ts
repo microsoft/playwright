@@ -103,7 +103,7 @@ export class PoolBuilder {
       if (Object.entries(optionsFromConfig).length) {
         // Add config options immediately after original option definition,
         // so that any test.use() override it.
-        result.push({ fixtures: optionsFromConfig, location: { file: `project#${project._id}`, line: 1, column: 1 }, fromConfig: true });
+        result.push({ fixtures: optionsFromConfig, location: { file: `project#${project._internal.id}`, line: 1, column: 1 }, fromConfig: true });
       }
     }
     return result;
