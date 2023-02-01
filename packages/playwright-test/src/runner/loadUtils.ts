@@ -23,21 +23,13 @@ import type { TestCase } from '../common/test';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { createFileMatcherFromFilters, createTitleMatcher, errorWithFile } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
-import { collectFilesForProject, filterProjects, projectsThatAreDependencies } from './projectUtils';
+import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import { requireOrImport } from '../common/transform';
 import { buildFileSuiteForProject, filterByFocusedLine, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { filterForShard } from './testGroups';
 
-type LoadOptions = {
-  listOnly: boolean;
-  testFileFilters: TestFileFilter[];
-  testTitleMatcher?: Matcher;
-  projectFilter?: string[];
-  passWithNoTests?: boolean;
-};
-
-export async function loadAllTests(config: FullConfigInternal, options: LoadOptions, errors: TestError[]): Promise<Suite> {
-  const projects = filterProjects(config.projects, options.projectFilter);
+export async function loadAllTests(config: FullConfigInternal, errors: TestError[]): Promise<Suite> {
+  const projects = filterProjects(config.projects, config._internal.projectFilter);
 
   let filesToRunByProject = new Map<FullProjectInternal, string[]>();
   let topLevelProjects: FullProjectInternal[];
@@ -54,14 +46,16 @@ export async function loadAllTests(config: FullConfigInternal, options: LoadOpti
     }
 
     // Filter files based on the file filters, eliminate the empty projects.
-    const commandLineFileMatcher = options.testFileFilters.length ? createFileMatcherFromFilters(options.testFileFilters) : null;
+    const commandLineFileMatcher = config._internal.testFileFilters.length ? createFileMatcherFromFilters(config._internal.testFileFilters) : null;
     for (const [project, files] of allFilesForProject) {
       const filteredFiles = commandLineFileMatcher ? files.filter(commandLineFileMatcher) : files;
       if (filteredFiles.length)
         filesToRunByProject.set(project, filteredFiles);
     }
-    // Remove dependency projects, they'll be added back later.
-    for (const project of projectsThatAreDependencies([...filesToRunByProject.keys()]))
+
+    const projectClosure = buildProjectsClosure([...filesToRunByProject.keys()]);
+    // Remove files for dependency projects, they'll be added back later.
+    for (const project of projectClosure.filter(p => p._internal.type === 'dependency'))
       filesToRunByProject.delete(project);
 
     // Shard only the top-level projects.
@@ -69,8 +63,9 @@ export async function loadAllTests(config: FullConfigInternal, options: LoadOpti
       filesToRunByProject = filterForShard(config.shard, filesToRunByProject);
 
     // Re-build the closure, project set might have changed.
-    topLevelProjects = [...filesToRunByProject.keys()];
-    dependencyProjects = projectsThatAreDependencies(topLevelProjects);
+    const filteredProjectClosure = buildProjectsClosure([...filesToRunByProject.keys()]);
+    topLevelProjects = filteredProjectClosure.filter(p => p._internal.type === 'top-level');
+    dependencyProjects = filteredProjectClosure.filter(p => p._internal.type === 'dependency');
 
     // (Re-)add all files for dependent projects, disregard filters.
     for (const project of dependencyProjects) {
@@ -101,7 +96,7 @@ export async function loadAllTests(config: FullConfigInternal, options: LoadOpti
 
   // First iterate leaf projects to focus only, then add all other projects.
   for (const project of topLevelProjects) {
-    const projectSuite = await createProjectSuite(fileSuits, project, options, filesToRunByProject.get(project)!);
+    const projectSuite = await createProjectSuite(fileSuits, project, config._internal, filesToRunByProject.get(project)!);
     if (projectSuite)
       rootSuite._addSuite(projectSuite);
   }
@@ -118,7 +113,7 @@ export async function loadAllTests(config: FullConfigInternal, options: LoadOpti
 
   // Prepend the projects that are dependencies.
   for (const project of dependencyProjects) {
-    const projectSuite = await createProjectSuite(fileSuits, project, { ...options, testFileFilters: [], testTitleMatcher: undefined }, filesToRunByProject.get(project)!);
+    const projectSuite = await createProjectSuite(fileSuits, project, { testFileFilters: [], testTitleMatcher: undefined }, filesToRunByProject.get(project)!);
     if (projectSuite)
       rootSuite._prependSuite(projectSuite);
   }
@@ -126,14 +121,14 @@ export async function loadAllTests(config: FullConfigInternal, options: LoadOpti
   return rootSuite;
 }
 
-async function createProjectSuite(fileSuits: Suite[], project: FullProjectInternal, options: LoadOptions, files: string[]): Promise<Suite | null> {
+async function createProjectSuite(fileSuits: Suite[], project: FullProjectInternal, options: { testFileFilters: TestFileFilter[], testTitleMatcher?: Matcher }, files: string[]): Promise<Suite | null> {
   const fileSuitesMap = new Map<string, Suite>();
   for (const fileSuite of fileSuits)
     fileSuitesMap.set(fileSuite._requireFile, fileSuite);
 
   const projectSuite = new Suite(project.name, 'project');
   projectSuite._projectConfig = project;
-  if (project._fullyParallel)
+  if (project._internal.fullyParallel)
     projectSuite._parallelMode = 'parallel';
   for (const file of files) {
     const fileSuite = fileSuitesMap.get(file);

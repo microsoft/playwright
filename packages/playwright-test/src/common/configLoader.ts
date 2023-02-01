@@ -30,7 +30,7 @@ export class ConfigLoader {
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
     this._fullConfig = { ...baseFullConfig };
-    this._fullConfig._configCLIOverrides = configCLIOverrides || {};
+    this._fullConfig._internal.configCLIOverrides = configCLIOverrides || {};
   }
 
   static async deserialize(data: SerializedConfig): Promise<ConfigLoader> {
@@ -60,7 +60,7 @@ export class ConfigLoader {
     validateConfig(configFile || '<default config>', config);
 
     // 2. Override settings from CLI.
-    const configCLIOverrides = this._fullConfig._configCLIOverrides;
+    const configCLIOverrides = this._fullConfig._internal.configCLIOverrides;
     config.forbidOnly = takeFirst(configCLIOverrides.forbidOnly, config.forbidOnly);
     config.fullyParallel = takeFirst(configCLIOverrides.fullyParallel, config.fullyParallel);
     config.globalTimeout = takeFirst(configCLIOverrides.globalTimeout, config.globalTimeout);
@@ -101,11 +101,11 @@ export class ConfigLoader {
     if (config.snapshotDir !== undefined)
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
 
-    this._fullConfig._configDir = configDir;
-    this._fullConfig._storeDir = path.resolve(configDir, '.playwright-store');
+    this._fullConfig._internal.configDir = configDir;
+    this._fullConfig._internal.storeDir = path.resolve(configDir, '.playwright-store');
     this._fullConfig.configFile = configFile;
     this._fullConfig.rootDir = config.testDir || configDir;
-    this._fullConfig._globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._globalOutputDir);
+    this._fullConfig._internal.globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._internal.globalOutputDir);
     this._fullConfig.forbidOnly = takeFirst(config.forbidOnly, baseFullConfig.forbidOnly);
     this._fullConfig.fullyParallel = takeFirst(config.fullyParallel, baseFullConfig.fullyParallel);
     this._fullConfig.globalSetup = takeFirst(config.globalSetup, baseFullConfig.globalSetup);
@@ -119,9 +119,9 @@ export class ConfigLoader {
     this._fullConfig.reportSlowTests = takeFirst(config.reportSlowTests, baseFullConfig.reportSlowTests);
     this._fullConfig.quiet = takeFirst(config.quiet, baseFullConfig.quiet);
     this._fullConfig.shard = takeFirst(config.shard, baseFullConfig.shard);
-    this._fullConfig._ignoreSnapshots = takeFirst(config.ignoreSnapshots, baseFullConfig._ignoreSnapshots);
+    this._fullConfig._internal.ignoreSnapshots = takeFirst(config.ignoreSnapshots, baseFullConfig._internal.ignoreSnapshots);
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
-    this._fullConfig._pluginRegistrations = (config as any)._plugins || [];
+    this._fullConfig._internal.pluginRegistrations = (config as any)._plugins || [];
 
     const workers = takeFirst(config.workers, '50%');
     if (typeof workers === 'string') {
@@ -139,10 +139,10 @@ export class ConfigLoader {
     if (Array.isArray(webServers)) { // multiple web server mode
       // Due to previous choices, this value shows up to the user in globalSetup as part of FullConfig. Arrays are not supported by the old type.
       this._fullConfig.webServer = null;
-      this._fullConfig._webServers = webServers;
+      this._fullConfig._internal.webServers = webServers;
     } else if (webServers) { // legacy singleton mode
       this._fullConfig.webServer = webServers;
-      this._fullConfig._webServers = [webServers];
+      this._fullConfig._internal.webServers = [webServers];
     }
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
@@ -159,7 +159,7 @@ export class ConfigLoader {
         const candidate = name + (i ? i : '');
         if (usedNames.has(candidate))
           continue;
-        p._id = candidate;
+        p._internal.id = candidate;
         usedNames.add(candidate);
         break;
       }
@@ -171,7 +171,7 @@ export class ConfigLoader {
   }
 
   private _applyCLIOverridesToProject(projectConfig: Project) {
-    const configCLIOverrides = this._fullConfig._configCLIOverrides;
+    const configCLIOverrides = this._fullConfig._internal.configCLIOverrides;
     projectConfig.fullyParallel = takeFirst(configCLIOverrides.fullyParallel, projectConfig.fullyParallel);
     projectConfig.outputDir = takeFirst(configCLIOverrides.outputDir, projectConfig.outputDir);
     projectConfig.repeatEach = takeFirst(configCLIOverrides.repeatEach, projectConfig.repeatEach);
@@ -183,13 +183,13 @@ export class ConfigLoader {
   private _resolveProject(config: Config, fullConfig: FullConfigInternal, projectConfig: Project, throwawayArtifactsPath: string): FullProjectInternal {
     // Resolve all config dirs relative to configDir.
     if (projectConfig.testDir !== undefined)
-      projectConfig.testDir = path.resolve(fullConfig._configDir, projectConfig.testDir);
+      projectConfig.testDir = path.resolve(fullConfig._internal.configDir, projectConfig.testDir);
     if (projectConfig.outputDir !== undefined)
-      projectConfig.outputDir = path.resolve(fullConfig._configDir, projectConfig.outputDir);
+      projectConfig.outputDir = path.resolve(fullConfig._internal.configDir, projectConfig.outputDir);
     if (projectConfig.snapshotDir !== undefined)
-      projectConfig.snapshotDir = path.resolve(fullConfig._configDir, projectConfig.snapshotDir);
+      projectConfig.snapshotDir = path.resolve(fullConfig._internal.configDir, projectConfig.snapshotDir);
 
-    const testDir = takeFirst(projectConfig.testDir, config.testDir, fullConfig._configDir);
+    const testDir = takeFirst(projectConfig.testDir, config.testDir, fullConfig._internal.configDir);
     const respectGitIgnore = !projectConfig.testDir && !config.testDir;
 
     const outputDir = takeFirst(projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
@@ -199,11 +199,15 @@ export class ConfigLoader {
     const defaultSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
     const snapshotPathTemplate = takeFirst(projectConfig.snapshotPathTemplate, config.snapshotPathTemplate, defaultSnapshotPathTemplate);
     return {
-      _id: '',
-      _fullConfig: fullConfig,
-      _fullyParallel: takeFirst(projectConfig.fullyParallel, config.fullyParallel, undefined),
-      _expect: takeFirst(projectConfig.expect, config.expect, {}),
-      _deps: [],
+      _internal: {
+        id: '',
+        type: 'top-level',
+        fullConfig: fullConfig,
+        fullyParallel: takeFirst(projectConfig.fullyParallel, config.fullyParallel, undefined),
+        expect: takeFirst(projectConfig.expect, config.expect, {}),
+        deps: [],
+        respectGitIgnore: respectGitIgnore,
+      },
       grep: takeFirst(projectConfig.grep, config.grep, baseFullConfig.grep),
       grepInvert: takeFirst(projectConfig.grepInvert, config.grepInvert, baseFullConfig.grepInvert),
       outputDir,
@@ -212,7 +216,6 @@ export class ConfigLoader {
       metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
       name,
       testDir,
-      _respectGitIgnore: respectGitIgnore,
       snapshotDir,
       snapshotPathTemplate,
       testIgnore: takeFirst(projectConfig.testIgnore, config.testIgnore, []),
@@ -433,14 +436,19 @@ export const baseFullConfig: FullConfigInternal = {
   version: require('../../package.json').version,
   workers: 0,
   webServer: null,
-  _webServers: [],
-  _globalOutputDir: path.resolve(process.cwd()),
-  _configDir: '',
-  _configCLIOverrides: {},
-  _storeDir: '',
-  _maxConcurrentTestGroups: 0,
-  _ignoreSnapshots: false,
-  _pluginRegistrations: [],
+  _internal: {
+    webServers: [],
+    globalOutputDir: path.resolve(process.cwd()),
+    configDir: '',
+    configCLIOverrides: {},
+    storeDir: '',
+    maxConcurrentTestGroups: 0,
+    ignoreSnapshots: false,
+    pluginRegistrations: [],
+    testTitleMatcher: () => true,
+    testFileFilters: [],
+    listOnly: false,
+  }
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {
@@ -466,7 +474,7 @@ function resolveProjectDependencies(projects: FullProjectInternal[]) {
         throw new Error(`Project '${project.name}' depends on unknown project '${dependencyName}'`);
       if (dependencies.length > 1)
         throw new Error(`Project dependencies should have unique names, reading ${dependencyName}`);
-      project._deps.push(...dependencies);
+      project._internal.deps.push(...dependencies);
     }
   }
 }

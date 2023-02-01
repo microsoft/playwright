@@ -24,16 +24,7 @@ import { createReporter } from './reporters';
 import { createTaskRunner, createTaskRunnerForList } from './tasks';
 import type { TaskRunnerState } from './tasks';
 import type { FullConfigInternal } from '../common/types';
-import type { Matcher, TestFileFilter } from '../util';
 import { colors } from 'playwright-core/lib/utilsBundle';
-
-export type RunOptions = {
-  listOnly: boolean;
-  testFileFilters: TestFileFilter[];
-  testTitleMatcher: Matcher;
-  projectFilter?: string[];
-  passWithNoTests?: boolean;
-};
 
 export class Runner {
   private _config: FullConfigInternal;
@@ -56,22 +47,22 @@ export class Runner {
     return report;
   }
 
-  async runAllTests(options: RunOptions): Promise<FullResult['status']> {
+  async runAllTests(): Promise<FullResult['status']> {
     const config = this._config;
+    const listOnly = config._internal.listOnly;
     const deadline = config.globalTimeout ? monotonicTime() + config.globalTimeout : 0;
 
     // Legacy webServer support.
-    config._pluginRegistrations.push(...webServerPluginsForConfig(config));
+    config._internal.pluginRegistrations.push(...webServerPluginsForConfig(config));
     // Docker support.
-    config._pluginRegistrations.push(dockerPlugin);
+    config._internal.pluginRegistrations.push(dockerPlugin);
 
-    const reporter = await createReporter(config, options.listOnly);
-    const taskRunner = options.listOnly ? createTaskRunnerForList(config, reporter)
+    const reporter = await createReporter(config, listOnly);
+    const taskRunner = listOnly ? createTaskRunnerForList(config, reporter)
       : createTaskRunner(config, reporter);
 
     const context: TaskRunnerState = {
       config,
-      options,
       reporter,
       plugins: [],
       phases: [],
@@ -79,7 +70,7 @@ export class Runner {
 
     reporter.onConfigure(config);
 
-    if (!options.listOnly && config._ignoreSnapshots) {
+    if (!listOnly && config._internal.ignoreSnapshots) {
       reporter.onStdOut(colors.dim([
         'NOTE: running with "ignoreSnapshots" option. All of the following asserts are silently ignored:',
         '- expect().toMatchSnapshot()',

@@ -124,8 +124,8 @@ export type TeardownErrorsPayload = {
 export function serializeConfig(config: FullConfigInternal): SerializedConfig {
   const result: SerializedConfig = {
     configFile: config.configFile,
-    configDir: config._configDir,
-    configCLIOverrides: config._configCLIOverrides,
+    configDir: config._internal.configDir,
+    configCLIOverrides: config._internal.configCLIOverrides,
   };
   return result;
 }

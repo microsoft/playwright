@@ -194,7 +194,7 @@ export class WorkerMain extends ProcessRunner {
 
     const configLoader = await ConfigLoader.deserialize(this._params.config);
     this._config = configLoader.fullConfig();
-    this._project = this._config.projects.find(p => p._id === this._params.projectId)!;
+    this._project = this._config.projects.find(p => p._internal.id === this._params.projectId)!;
     this._poolBuilder = PoolBuilder.createForWorker(this._project);
   }
 

@@ -54,11 +54,11 @@ export function buildFileSuiteForProject(project: FullProjectInternal, suite: Su
     const repeatEachIndexSuffix = repeatEachIndex ? ` (repeat:${repeatEachIndex})` : '';
 
     // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
-    const testIdExpression = `[project=${project._id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
+    const testIdExpression = `[project=${project._internal.id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
     const testId = fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
     test.id = testId;
     test.repeatEachIndex = repeatEachIndex;
-    test._projectId = project._id;
+    test._projectId = project._internal.id;
 
     // Inherit properties from parent suites.
     let inheritedRetries: number | undefined;
@@ -79,7 +79,7 @@ export function buildFileSuiteForProject(project: FullProjectInternal, suite: Su
 
     // We only compute / set digest in the runner.
     if (test._poolDigest)
-      test._workerHash = `${project._id}-${test._poolDigest}-${repeatEachIndex}`;
+      test._workerHash = `${project._internal.id}-${test._poolDigest}-${repeatEachIndex}`;
   });
 
   return result;

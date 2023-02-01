@@ -121,7 +121,7 @@ export class BaseReporter implements Reporter {
   }
 
   protected generateStartingMessage() {
-    const jobs = Math.min(this.config.workers, this.config._maxConcurrentTestGroups);
+    const jobs = Math.min(this.config.workers, this.config._internal.maxConcurrentTestGroups);
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
     return `\nRunning ${this.totalTestCount} test${this.totalTestCount !== 1 ? 's' : ''} using ${jobs} worker${jobs !== 1 ? 's' : ''}${shardDetails}`;
   }
