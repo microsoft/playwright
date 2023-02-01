@@ -59,8 +59,8 @@ export function projectsThatAreDependencies(projects: FullProjectInternal[]): Fu
     }
     if (result.has(project))
       return;
-    project._depProjects.map(visit.bind(undefined, depth + 1));
-    project._depProjects.forEach(dep => result.add(dep));
+    project._deps.map(visit.bind(undefined, depth + 1));
+    project._deps.forEach(dep => result.add(dep));
   };
   projects.forEach(visit.bind(undefined, 0));
   return [...result];

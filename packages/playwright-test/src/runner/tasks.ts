@@ -191,7 +191,7 @@ function createRunTestsTask(): Task<TaskRunnerState> {
       // that depend on the projects that failed previously.
       const phaseTestGroups: TestGroup[] = [];
       for (const { project, testGroups } of projects) {
-        const hasFailedDeps = project._depProjects.some(p => !successfulProjects.has(p));
+        const hasFailedDeps = project._deps.some(p => !successfulProjects.has(p));
         if (!hasFailedDeps) {
           phaseTestGroups.push(...testGroups);
         } else {
@@ -211,7 +211,7 @@ function createRunTestsTask(): Task<TaskRunnerState> {
       // projects failed.
       if (!dispatcher.hasWorkerErrors()) {
         for (const { project, projectSuite } of projects) {
-          const hasFailedDeps = project._depProjects.some(p => !successfulProjects.has(p));
+          const hasFailedDeps = project._deps.some(p => !successfulProjects.has(p));
           if (!hasFailedDeps && !projectSuite.allTests().some(test => !test.ok()))
             successfulProjects.add(project);
         }
@@ -228,7 +228,7 @@ function buildPhases(projectSuites: Suite[]): Suite[][] {
     for (const projectSuite of projectSuites) {
       if (processed.has(projectSuite._projectConfig!))
         continue;
-      if (projectSuite._projectConfig!._depProjects.find(p => !processed.has(p)))
+      if (projectSuite._projectConfig!._deps.find(p => !processed.has(p)))
         continue;
       phase.push(projectSuite);
     }

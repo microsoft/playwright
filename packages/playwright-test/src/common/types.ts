@@ -72,8 +72,7 @@ export interface FullProjectInternal extends FullProjectPublic {
   _fullyParallel: boolean;
   _expect: Project['expect'];
   _respectGitIgnore: boolean;
-  _deps: string[];
-  _depProjects: FullProjectInternal[];
+  _deps: FullProjectInternal[];
   snapshotPathTemplate: string;
 }
 

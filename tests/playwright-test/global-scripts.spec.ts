@@ -76,7 +76,7 @@ test('should work for one project', async ({ runGroups }, testInfo) => {
           {
             name: 'p1',
             testMatch: /.*.test.ts/,
-            _deps: ['setup'],
+            dependencies: ['setup'],
           },
         ]
       };`,
@@ -116,12 +116,12 @@ test('should work for several projects', async ({ runGroups }, testInfo) => {
           {
             name: 'p1',
             testMatch: /.*a.test.ts/,
-            _deps: ['setup'],
+            dependencies: ['setup'],
           },
           {
             name: 'p2',
             testMatch: /.*b.test.ts/,
-            _deps: ['setup'],
+            dependencies: ['setup'],
           },
         ]
       };`,
@@ -159,12 +159,12 @@ test('should skip tests if global setup fails', async ({ runGroups }, testInfo) 
           {
             name: 'p1',
             testMatch: /.*a.test.ts/,
-            _deps: ['setup'],
+            dependencies: ['setup'],
           },
           {
             name: 'p2',
             testMatch: /.*b.test.ts/,
-            _deps: ['setup'],
+            dependencies: ['setup'],
           },
         ]
       };`,
@@ -200,7 +200,7 @@ test('should run setup in each project shard', async ({ runGroups }, testInfo) =
           },
           {
             name: 'p1',
-            _deps: ['setup'],
+            dependencies: ['setup'],
           },
         ]
       };`,
