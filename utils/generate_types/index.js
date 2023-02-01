@@ -521,7 +521,7 @@ class TypesGenerator {
   const coreDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
   const reporterDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
-  const assertionClasses = new Set(['LocatorAssertions', 'PageAssertions', 'APIResponseAssertions', 'SnapshotAssertions', 'PlaywrightAssertions']);
+  const assertionClasses = new Set(['GenericAssertions', 'LocatorAssertions', 'PageAssertions', 'APIResponseAssertions', 'SnapshotAssertions', 'PlaywrightAssertions']);
 
   /**
    * @param {boolean} includeExperimental

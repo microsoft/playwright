@@ -133,12 +133,82 @@ test('should work with default expect prototype functions', async ({ runTSC, run
   }
 });
 
-test('should work with default expect matchers', async ({ runTSC }) => {
+test('should work with generic matchers', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = pwt;
-      test.expect(42).toBe(42);
+      expect(42).toBe(42);
+      expect(0.1 + 0.2).toBeCloseTo(0.3, 5);
+      expect(null).toBeDefined();
+      expect(null).toBeFalsy();
+      expect(42).toBeGreaterThan(1);
+      expect(42).toBeGreaterThanOrEqual(42);
+      expect({}).toBeInstanceOf(Object);
+      expect(42).toBeLessThan(100);
+      expect(42).toBeLessThanOrEqual(42);
+      expect(null).toBeNull();
+      expect(42).toBeTruthy();
+      expect(undefined).toBeUndefined();
+      expect(NaN).toBeNaN();
+      expect('abc').toContain('a');
+      expect(['abc']).toContain('abc');
+      expect(['abc']).toContainEqual('abc');
+      expect({}).toEqual({});
+      expect([1, 2]).toHaveLength(2);
+      expect('abc').toMatch(/a.?c/);
+      expect({ a: 1, b: 2 }).toMatchObject({ a: 1 });
+      expect({}).toStrictEqual({});
+      expect(() => { throw new Error('Something bad'); }).toThrow('something');
+      expect(() => { throw new Error('Something bad'); }).toThrowError('something');
     `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should compile generic matchers', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      expect(42).toBe(42);
+      expect(42).toBeCloseTo(42);
+      expect(42).toBeCloseTo(42, 5);
+      expect(42).toBeDefined();
+      expect(42).toBeFalsy();
+      expect(42).toBeGreaterThan(1);
+      expect(42n).toBeGreaterThan(1n);
+      expect(42).toBeGreaterThanOrEqual(1);
+      expect(42n).toBeGreaterThanOrEqual(1n);
+      expect({}).toBeInstanceOf(Object);
+      expect(42).toBeLessThan(1);
+      expect(42n).toBeLessThan(1n);
+      expect(42).toBeLessThanOrEqual(1);
+      expect(42n).toBeLessThanOrEqual(1n);
+      expect(42).toBeNull();
+      expect(42).toBeTruthy();
+      expect(42).toBeUndefined();
+      expect(42).toBeNaN();
+      expect('abc').toContain('b');
+      expect([1, 2]).toContain(1);
+      expect(new Set([1, 2])).toContain(1);
+      expect([{}, { a: 1 }]).toContainEqual({});
+      expect({}).toEqual({});
+      expect([1, 2]).toHaveLength(2);
+      expect('abc').toMatch(/a.?c/);
+      expect({ a: 1, b: 2 }).toMatchObject({ a: 1 });
+      expect([]).toMatchObject([]);
+      expect({}).toStrictEqual({});
+      expect(() => { throw new Error('Something bad'); }).toThrow('something');
+      expect(() => { throw new Error('Something bad'); }).toThrow();
+      expect(() => { throw new Error('Something bad'); }).toThrowError('something');
+      expect(() => { throw new Error('Something bad'); }).toThrowError();
+
+      // @ts-expect-error
+      expect(42).toBe(123, 456);
+      // @ts-expect-error
+      expect(42).toBeCloseTo(42, '5');
+      // @ts-expect-error
+      expect(42).toBeFalsy(123);
+      // @ts-expect-error
+      expect({}).toBeInstanceOf({});
+    `,
   });
   expect(result.exitCode).toBe(0);
 });
