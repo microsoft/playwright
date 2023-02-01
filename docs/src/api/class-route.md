@@ -488,6 +488,9 @@ await page.RouteAsync("https://dog.ceo/api/breeds/list/all", async route =>
 
 If set changes the request URL. New URL must have same protocol as original one.
 
+### option: Route.fetch.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
+* since: v1.31
+
 ### option: Route.fetch.method
 * since: v1.29
 - `method` <[string]>
