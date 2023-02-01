@@ -636,7 +636,7 @@ it('should be able to download a inline PDF file via response interception', asy
 });
 
 it('should be able to download a inline PDF file via navigation', async ({ browser, server, asset, browserName, headless }) => {
-  it.fixme((!headless && browserName === 'chromium') || browserName === 'webkit');
+  it.fixme((!headless && browserName === 'chromium'));
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
