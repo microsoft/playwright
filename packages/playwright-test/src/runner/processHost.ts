@@ -42,7 +42,7 @@ export class ProcessHost extends EventEmitter {
     this._processName = processName;
   }
 
-  protected async startRunner(runnerParams: any, inheritStdio: boolean, env: NodeJS.ProcessEnv) {
+  async startRunner(runnerParams: any, inheritStdio: boolean, env: NodeJS.ProcessEnv) {
     this.process = child_process.fork(require.resolve('../common/process'), {
       detached: false,
       env: { ...process.env, ...env },
@@ -104,7 +104,7 @@ export class ProcessHost extends EventEmitter {
     });
   }
 
-  protected sendMessage(message: { method: string, params?: any }) {
+  sendMessage(message: { method: string, params?: any }) {
     const id = ++this._lastMessageId;
     this.send({
       method: '__dispatch__',

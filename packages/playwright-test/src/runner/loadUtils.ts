@@ -16,18 +16,15 @@
 
 import path from 'path';
 import type { Reporter, TestError } from '../../types/testReporter';
-import type { LoadError } from '../common/fixtures';
-import { LoaderHost } from './loaderHost';
-import type { Multiplexer } from '../reporters/multiplexer';
+import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
+import type { LoaderHost } from './loaderHost';
 import { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
-import { loadTestFilesInProcess } from '../common/testLoader';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { createFileMatcherFromFilters, createTitleMatcher, errorWithFile } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
 import { collectFilesForProject, filterProjects, projectsThatAreDependencies } from './projectUtils';
 import { requireOrImport } from '../common/transform';
-import { serializeConfig } from '../common/ipc';
 import { buildFileSuiteForProject, filterByFocusedLine, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { filterForShard } from './testGroups';
 
@@ -39,17 +36,20 @@ type LoadOptions = {
   passWithNoTests?: boolean;
 };
 
-export async function loadAllTests(config: FullConfigInternal, reporter: Multiplexer, options: LoadOptions, errors: TestError[]): Promise<Suite> {
+export async function loadAllTests(config: FullConfigInternal, options: LoadOptions, errors: TestError[]): Promise<Suite> {
   const projects = filterProjects(config.projects, options.projectFilter);
 
   let filesToRunByProject = new Map<FullProjectInternal, string[]>();
   let topLevelProjects: FullProjectInternal[];
   let dependencyProjects: FullProjectInternal[];
+  // Collect files, categorize top level and dependency projects.
   {
+    const fsCache = new Map();
+
     // First collect all files for the projects in the command line, don't apply any file filters.
     const allFilesForProject = new Map<FullProjectInternal, string[]>();
     for (const project of projects) {
-      const files = await collectFilesForProject(project);
+      const files = await collectFilesForProject(project, fsCache);
       allFilesForProject.set(project, files);
     }
 
@@ -74,26 +74,34 @@ export async function loadAllTests(config: FullConfigInternal, reporter: Multipl
 
     // (Re-)add all files for dependent projects, disregard filters.
     for (const project of dependencyProjects) {
-      const files = allFilesForProject.get(project) || await collectFilesForProject(project);
+      const files = allFilesForProject.get(project) || await collectFilesForProject(project, fsCache);
       filesToRunByProject.set(project, files);
     }
   }
 
   // Load all test files and create a preprocessed root. Child suites are files there.
-  const allTestFiles = new Set<string>();
-  for (const files of filesToRunByProject.values())
-    files.forEach(file => allTestFiles.add(file));
-  const preprocessRoot = await loadTests(config, reporter, allTestFiles, errors);
+  const fileSuits: Suite[] = [];
+  {
+    const loaderHost: LoaderHost = process.env.PW_TEST_OOP_LOADER ? new OutOfProcessLoaderHost(config) : new InProcessLoaderHost(config);
+    const allTestFiles = new Set<string>();
+    for (const files of filesToRunByProject.values())
+      files.forEach(file => allTestFiles.add(file));
+    for (const file of allTestFiles) {
+      const fileSuite = await loaderHost.loadTestFile(file, errors);
+      fileSuits.push(fileSuite);
+    }
+    await loaderHost.stop();
+  }
 
   // Complain about duplicate titles.
-  errors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
+  errors.push(...createDuplicateTitlesErrors(config, fileSuits));
 
   // Create root suites with clones for the projects.
   const rootSuite = new Suite('', 'root');
 
   // First iterate leaf projects to focus only, then add all other projects.
   for (const project of topLevelProjects) {
-    const projectSuite = await createProjectSuite(preprocessRoot, project, options, filesToRunByProject.get(project)!);
+    const projectSuite = await createProjectSuite(fileSuits, project, options, filesToRunByProject.get(project)!);
     if (projectSuite)
       rootSuite._addSuite(projectSuite);
   }
@@ -110,7 +118,7 @@ export async function loadAllTests(config: FullConfigInternal, reporter: Multipl
 
   // Prepend the projects that are dependencies.
   for (const project of dependencyProjects) {
-    const projectSuite = await createProjectSuite(preprocessRoot, project, { ...options, testFileFilters: [], testTitleMatcher: undefined }, filesToRunByProject.get(project)!);
+    const projectSuite = await createProjectSuite(fileSuits, project, { ...options, testFileFilters: [], testTitleMatcher: undefined }, filesToRunByProject.get(project)!);
     if (projectSuite)
       rootSuite._prependSuite(projectSuite);
   }
@@ -118,17 +126,17 @@ export async function loadAllTests(config: FullConfigInternal, reporter: Multipl
   return rootSuite;
 }
 
-async function createProjectSuite(preprocessRoot: Suite, project: FullProjectInternal, options: LoadOptions, files: string[]): Promise<Suite | null> {
-  const fileSuites = new Map<string, Suite>();
-  for (const fileSuite of preprocessRoot.suites)
-    fileSuites.set(fileSuite._requireFile, fileSuite);
+async function createProjectSuite(fileSuits: Suite[], project: FullProjectInternal, options: LoadOptions, files: string[]): Promise<Suite | null> {
+  const fileSuitesMap = new Map<string, Suite>();
+  for (const fileSuite of fileSuits)
+    fileSuitesMap.set(fileSuite._requireFile, fileSuite);
 
   const projectSuite = new Suite(project.name, 'project');
   projectSuite._projectConfig = project;
   if (project._fullyParallel)
     projectSuite._parallelMode = 'parallel';
   for (const file of files) {
-    const fileSuite = fileSuites.get(file);
+    const fileSuite = fileSuitesMap.get(file);
     if (!fileSuite)
       continue;
     for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
@@ -154,24 +162,6 @@ async function createProjectSuite(preprocessRoot: Suite, project: FullProjectInt
   return null;
 }
 
-async function loadTests(config: FullConfigInternal, reporter: Multiplexer, testFiles: Set<string>, errors: TestError[]): Promise<Suite> {
-  if (process.env.PW_TEST_OOP_LOADER) {
-    const loaderHost = new LoaderHost();
-    await loaderHost.start(serializeConfig(config));
-    try {
-      return await loaderHost.loadTestFiles([...testFiles], reporter);
-    } finally {
-      await loaderHost.stop();
-    }
-  }
-  const loadErrors: LoadError[] = [];
-  try {
-    return await loadTestFilesInProcess(config.rootDir, [...testFiles], loadErrors);
-  } finally {
-    errors.push(...loadErrors);
-  }
-}
-
 function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[]): TestError[] {
   const errors: TestError[] = [];
   for (const testOrSuite of onlyTestsAndSuites) {
@@ -186,12 +176,12 @@ function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[]): TestE
   return errors;
 }
 
-function createDuplicateTitlesErrors(config: FullConfigInternal, rootSuite: Suite): TestError[] {
+function createDuplicateTitlesErrors(config: FullConfigInternal, fileSuites: Suite[]): TestError[] {
   const errors: TestError[] = [];
-  for (const fileSuite of rootSuite.suites) {
+  for (const fileSuite of fileSuites) {
     const testsByFullTitle = new Map<string, TestCase>();
     for (const test of fileSuite.allTests()) {
-      const fullTitle = test.titlePath().slice(2).join(' › ');
+      const fullTitle = test.titlePath().slice(1).join(' › ');
       const existingTest = testsByFullTitle.get(fullTitle);
       if (existingTest) {
         const error: TestError = {

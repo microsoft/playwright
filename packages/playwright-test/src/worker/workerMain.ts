@@ -28,7 +28,7 @@ import { TestInfoImpl } from '../common/testInfo';
 import type { TimeSlot } from '../common/timeoutManager';
 import { TimeoutManager } from '../common/timeoutManager';
 import { ProcessRunner } from '../common/process';
-import { TestLoader } from '../common/testLoader';
+import { loadTestFile } from '../common/testLoader';
 import { buildFileSuiteForProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { PoolBuilder } from '../common/poolBuilder';
 
@@ -37,7 +37,6 @@ const removeFolderAsync = util.promisify(rimraf);
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
   private _config!: FullConfigInternal;
-  private _testLoader!: TestLoader;
   private _project!: FullProjectInternal;
   private _poolBuilder!: PoolBuilder;
   private _fixtureRunner: FixtureRunner;
@@ -195,7 +194,6 @@ export class WorkerMain extends ProcessRunner {
 
     const configLoader = await ConfigLoader.deserialize(this._params.config);
     this._config = configLoader.fullConfig();
-    this._testLoader = new TestLoader(this._config.rootDir);
     this._project = this._config.projects.find(p => p._id === this._params.projectId)!;
     this._poolBuilder = PoolBuilder.createForWorker(this._project);
   }
@@ -206,7 +204,7 @@ export class WorkerMain extends ProcessRunner {
     let fatalUnknownTestIds;
     try {
       await this._loadIfNeeded();
-      const fileSuite = await this._testLoader.loadTestFile(runPayload.file, 'worker', []);
+      const fileSuite = await loadTestFile(runPayload.file, this._config.rootDir);
       const suite = buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex);
       const hasEntries = filterTestsRemoveEmptySuites(suite, test => entries.has(test.id));
       if (hasEntries) {
