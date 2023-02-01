@@ -43,3 +43,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - run: dpkg -l libgtk* | grep -e '^i' | grep -e 'libgtk-*[0-9]'
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm i -g npm@8
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
+    - run: dpkg -l libgtk* | grep -e '^i' | grep -e 'libgtk-*[0-9]'
