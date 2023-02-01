@@ -56,6 +56,8 @@ export type LoadError = {
   location: Location;
 };
 
+export type LoadErrorSink = (error: LoadError) => void;
+
 class Fixture {
   runner: FixtureRunner;
   registration: FixtureRegistration;
@@ -190,9 +192,9 @@ export function isFixtureOption(value: any): value is FixtureTuple {
 export class FixturePool {
   readonly digest: string;
   readonly registrations: Map<string, FixtureRegistration>;
-  private _onLoadError: (error: LoadError) => void;
+  private _onLoadError: LoadErrorSink;
 
-  constructor(fixturesList: FixturesWithLocation[], onLoadError: (error: LoadError) => void, parentPool?: FixturePool, disallowWorkerFixtures?: boolean) {
+  constructor(fixturesList: FixturesWithLocation[], onLoadError: LoadErrorSink, parentPool?: FixturePool, disallowWorkerFixtures?: boolean) {
     this.registrations = new Map(parentPool ? parentPool.registrations : []);
     this._onLoadError = onLoadError;
 
@@ -429,7 +431,7 @@ function serializeAndThrowError(e: LoadError) {
 
 const signatureSymbol = Symbol('signature');
 
-function fixtureParameterNames(fn: Function | any, location: Location, onError: (error: LoadError) => void): string[] {
+function fixtureParameterNames(fn: Function | any, location: Location, onError: LoadErrorSink): string[] {
   if (typeof fn !== 'function')
     return [];
   if (!fn[signatureSymbol])
@@ -437,7 +439,7 @@ function fixtureParameterNames(fn: Function | any, location: Location, onError: 
   return fn[signatureSymbol];
 }
 
-function innerFixtureParameterNames(fn: Function, location: Location, onError: (error: LoadError) => void): string[] {
+function innerFixtureParameterNames(fn: Function, location: Location, onError: LoadErrorSink): string[] {
   const text = fn.toString();
   const match = text.match(/(?:async)?(?:\s+function)?[^(]*\(([^)]*)/);
   if (!match)
@@ -446,8 +448,10 @@ function innerFixtureParameterNames(fn: Function, location: Location, onError: (
   if (!trimmedParams)
     return [];
   const [firstParam] = splitByComma(trimmedParams);
-  if (firstParam[0] !== '{' || firstParam[firstParam.length - 1] !== '}')
+  if (firstParam[0] !== '{' || firstParam[firstParam.length - 1] !== '}') {
     onError({ message: 'First argument must use the object destructuring pattern: '  + firstParam, location });
+    return [];
+  }
   const props = splitByComma(firstParam.substring(1, firstParam.length - 1)).map(prop => {
     const colon = prop.indexOf(':');
     return colon === -1 ? prop : prop.substring(0, colon).trim();

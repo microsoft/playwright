@@ -144,8 +144,8 @@ function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
 
 function createLoadTask(): Task<TaskRunnerState> {
   return async (context, errors) => {
-    const { config, reporter, options } = context;
-    context.rootSuite = await loadAllTests(config, reporter, options, errors);
+    const { config, options } = context;
+    context.rootSuite = await loadAllTests(config, options, errors);
     // Fail when no tests.
     if (!context.rootSuite.allTests().length && !context.options.passWithNoTests && !config.shard)
       throw new Error(`No tests found`);

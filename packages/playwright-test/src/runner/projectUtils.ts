@@ -66,10 +66,10 @@ export function projectsThatAreDependencies(projects: FullProjectInternal[]): Fu
   return [...result];
 }
 
-export async function collectFilesForProject(project: FullProjectInternal): Promise<string[]> {
+export async function collectFilesForProject(project: FullProjectInternal, fsCache = new Map<string, string[]>()): Promise<string[]> {
   const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
   const testFileExtension = (file: string) => extensions.includes(path.extname(file));
-  const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
+  const allFiles = await cachedCollectFiles(project.testDir, project._respectGitIgnore, fsCache);
   const testMatch = createFileMatcher(project.testMatch);
   const testIgnore = createFileMatcher(project.testIgnore);
   const testFiles = allFiles.filter(file => {
@@ -81,6 +81,16 @@ export async function collectFilesForProject(project: FullProjectInternal): Prom
     return true;
   });
   return testFiles;
+}
+
+async function cachedCollectFiles(testDir: string, respectGitIgnore: boolean, fsCache: Map<string, string[]>) {
+  const key = testDir + ':' + respectGitIgnore;
+  let result = fsCache.get(key);
+  if (!result) {
+    result = await collectFiles(testDir, respectGitIgnore);
+    fsCache.set(key, result);
+  }
+  return result;
 }
 
 async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise<string[]> {

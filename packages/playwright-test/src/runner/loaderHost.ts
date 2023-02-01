@@ -14,23 +14,60 @@
  * limitations under the License.
  */
 
-import type { Reporter, TestError } from '../../reporter';
-import type { SerializedConfig } from '../common/ipc';
+import type { TestError } from '../../reporter';
+import { serializeConfig } from '../common/ipc';
 import { ProcessHost } from './processHost';
 import { Suite } from '../common/test';
+import { loadTestFile } from '../common/testLoader';
+import type { LoadError } from '../common/fixtures';
+import type { FullConfigInternal } from '../common/types';
+import { PoolBuilder } from '../common/poolBuilder';
 
-export class LoaderHost extends ProcessHost {
-  constructor() {
-    super(require.resolve('../loaderMain.js'), 'loader');
+export abstract class LoaderHost {
+  protected _config: FullConfigInternal;
+  private _poolBuilder: PoolBuilder;
+
+  constructor(config: FullConfigInternal) {
+    this._config = config;
+    this._poolBuilder = PoolBuilder.createForLoader();
   }
 
-  async start(config: SerializedConfig) {
-    await this.startRunner(config, true, {});
+  async loadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {
+    const result = await this.doLoadTestFile(file, testErrors);
+    this._poolBuilder.buildPools(result, testErrors);
+    return result;
   }
 
-  async loadTestFiles(files: string[], reporter: Reporter): Promise<Suite> {
-    const result = await this.sendMessage({ method: 'loadTestFiles', params: { files } }) as any;
-    result.loadErrors.forEach((e: TestError) => reporter.onError?.(e));
-    return Suite._deepParse(result.rootSuite);
+  protected abstract doLoadTestFile(file: string, testErrors: TestError[]): Promise<Suite>;
+
+  async stop() {}
+}
+
+export class InProcessLoaderHost extends LoaderHost {
+
+  doLoadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {
+    return loadTestFile(file, this._config.rootDir, testErrors);
+  }
+}
+
+export class OutOfProcessLoaderHost extends LoaderHost {
+  private _startPromise: Promise<void>;
+  private _processHost: ProcessHost;
+
+  constructor(config: FullConfigInternal) {
+    super(config);
+    this._processHost = new ProcessHost(require.resolve('../loaderMain.js'), 'loader');
+    this._startPromise = this._processHost.startRunner(serializeConfig(config), true, {});
+  }
+
+  async doLoadTestFile(file: string, loadErrors: LoadError[]): Promise<Suite> {
+    await this._startPromise;
+    const result = await this._processHost.sendMessage({ method: 'loadTestFile', params: { file } }) as any;
+    loadErrors.push(...result.loadErrors);
+    return Suite._deepParse(result.fileSuite);
+  }
+
+  override async stop() {
+    await this._processHost.stop();
   }
 }
