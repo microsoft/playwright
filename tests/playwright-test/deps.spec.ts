@@ -32,10 +32,32 @@ test('should run projects with dependencies', async ({ runInlineTest }) => {
         console.log('\\n%%' + testInfo.project.name);
       });
     `,
-  }, { workers: 1 });
+  }, { workers: 1 }, undefined, { additionalArgs: ['--project=B', '--project=C'] });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
   expect(extractLines(result.output)).toEqual(['A', 'B', 'C']);
+});
+
+test('should not run projects with dependencies when --no-deps is passed', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A' },
+          { name: 'B', dependencies: ['A'] },
+          { name: 'C', dependencies: ['A'] },
+        ],
+      };`,
+    'test.spec.ts': `
+      const { test } = pwt;
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+  }, { workers: 1 }, undefined, { additionalArgs: ['--no-deps', '--project=B', '--project=C'] });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(extractLines(result.output)).toEqual(['B', 'C']);
 });
 
 test('should not run project if dependency failed', async ({ runInlineTest }) => {

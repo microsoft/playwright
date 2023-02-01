@@ -151,6 +151,11 @@ export class ConfigLoader {
     this._assignUniqueProjectIds(this._fullConfig.projects);
   }
 
+  ignoreProjectDependencies() {
+    for (const project of this._fullConfig.projects)
+      project._internal.deps = [];
+  }
+
   private _assignUniqueProjectIds(projects: FullProjectInternal[]) {
     const usedNames = new Set();
     for (const p of projects) {
