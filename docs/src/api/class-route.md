@@ -100,6 +100,10 @@ await page.RouteAsync("**/*", route =>
 });
 ```
 
+**Details**
+
+Note that any overrides such as [`option: url`] or [`option: headers`] only apply to the request being routed. If this request results in a redirect, overrides will not be applied to the new redirected request. If you want to propagate a header through redirects, use the combination of [`method: Route.fetch`] and [`method: Route.fulfill`] instead.
+
 ### option: Route.continue.url
 * since: v1.8
 - `url` <[string]>
@@ -481,6 +485,10 @@ await page.RouteAsync("https://dog.ceo/api/breeds/list/all", async route =>
     await route.FulfillAsync(new() { Response = response, Json = json });
 });
 ```
+
+**Details**
+
+Note that [`option: headers`] option will apply to the fetched request as well as any redirects initiated by it. If you want to only apply [`option: headers`] to the original request, but not to redirects, look into [`method: Route.continue`] instead.
 
 ### option: Route.fetch.url
 * since: v1.29
