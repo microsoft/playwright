@@ -159,6 +159,23 @@ test('should work with generic matchers', async ({ runTSC }) => {
       expect({}).toStrictEqual({});
       expect(() => { throw new Error('Something bad'); }).toThrow('something');
       expect(() => { throw new Error('Something bad'); }).toThrowError('something');
+
+      expect(['Bob', 'Eve']).not.toEqual(expect.arrayContaining(['Alice', 'Bob']));
+      expect({}).toEqual(expect.anything());
+      expect({ sum: 0.1 + 0.2 }).toEqual({ sum: expect.closeTo(0.3, 5) });
+      class Cat {}
+      expect(new Cat()).toEqual(expect.any(Cat));
+      expect({ x: 2, y: 3, foo: 'bar' }).toEqual(expect.objectContaining({
+        x: expect.any(Number),
+        y: expect.any(Number),
+      }));
+      expect('abc').toEqual(expect.stringContaining('bc'));
+      expect(['Alicia', 'Roberto', 'Evelina']).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/^Alic/),
+          expect.stringMatching('Roberto'),
+        ]),
+      );
     `
   });
   expect(result.exitCode).toBe(0);
@@ -199,6 +216,23 @@ test('should compile generic matchers', async ({ runTSC }) => {
       expect(() => { throw new Error('Something bad'); }).toThrow();
       expect(() => { throw new Error('Something bad'); }).toThrowError('something');
       expect(() => { throw new Error('Something bad'); }).toThrowError();
+
+      expect(['Bob', 'Eve']).not.toEqual(expect.arrayContaining(['Alice', 'Bob']));
+      expect({}).toEqual(expect.anything());
+      expect({ sum: 0.1 + 0.2 }).toEqual({ sum: expect.closeTo(0.3, 5) });
+      class Cat {}
+      expect(new Cat()).toEqual(expect.any(Cat));
+      expect({ x: 2, y: 3, foo: 'bar' }).toEqual(expect.objectContaining({
+        x: expect.any(Number),
+        y: expect.any(Number),
+      }));
+      expect('abc').toEqual(expect.stringContaining('bc'));
+      expect(['Alicia', 'Roberto', 'Evelina']).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/^Alic/),
+          expect.stringMatching('Roberto'),
+        ]),
+      );
 
       // @ts-expect-error
       expect(42).toBe(123, 456);

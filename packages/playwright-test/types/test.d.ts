@@ -3755,9 +3755,6 @@ type CustomProperties<T> = ExcludeProps<T, PlaywrightTestOptions & PlaywrightWor
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
 export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
 
-import type * as expectType from './expect-types';
-import type { Suite } from './testReporter';
-
 type AsymmetricMatcher = Record<string, any>;
 
 type AsymmetricMatchers = {
@@ -3769,13 +3766,6 @@ type AsymmetricMatchers = {
   stringContaining(sample: string): AsymmetricMatcher;
   stringMatching(sample: string | RegExp): AsymmetricMatcher;
 }
-
-type Inverse<Matchers> = {
-  /**
-   * Inverse next matcher. If you know how to test something, `.not` lets you test its opposite.
-   */
-  not: Matchers;
-};
 
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
@@ -4222,16 +4212,6 @@ type MakeMatchers<R, T> = BaseMatchers<R, T> & {
     toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
   }>;
 
-type BaseExpect = {
-  // Removed following methods because they rely on a test-runner integration from Jest which we don't support:
-  // assertions(numberOfAssertions: number): void;
-  // extractExpectedAssertionsErrors(): ExpectedAssertionsErrors;
-  // hasAssertions(): void;
-  extend(matchers: any): void;
-  getState(): expectType.MatcherState;
-  setState(state: Partial<expectType.MatcherState>): void;
-}
-
 export type Expect = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T>;
   soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T>;
@@ -4241,9 +4221,15 @@ export type Expect = {
      */
      not: BaseMatchers<Promise<void>, T>;
   };
-} & BaseExpect &
-  AsymmetricMatchers &
-  Inverse<Omit<AsymmetricMatchers, 'any' | 'anything'>>;
+  extend(matchers: any): void;
+  getState(): {
+    expand?: boolean;
+    isNot: boolean;
+    promise: string;
+    utils: any;
+  };
+  not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
+} & AsymmetricMatchers;
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 
