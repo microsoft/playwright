@@ -3362,7 +3362,7 @@ export interface PlaywrightWorkerOptions {
    * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
    * `devtools` option is `true`.
    */
-  headless: boolean | undefined;
+  headless: boolean;
   /**
    * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary",
    * "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
@@ -3468,17 +3468,17 @@ export interface PlaywrightTestOptions {
   /**
    * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
    */
-  acceptDownloads: boolean | undefined;
+  acceptDownloads: boolean;
   /**
    * Toggles bypassing page's Content-Security-Policy.
    */
-  bypassCSP: boolean | undefined;
+  bypassCSP: boolean;
   /**
    * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
    * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
    * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
    */
-  colorScheme: ColorScheme | undefined;
+  colorScheme: ColorScheme;
   /**
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
    */
@@ -3491,7 +3491,7 @@ export interface PlaywrightTestOptions {
   /**
    * Specifies if viewport supports touch events. Defaults to false.
    */
-  hasTouch: boolean | undefined;
+  hasTouch: boolean;
   /**
    * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
    */
@@ -3499,16 +3499,16 @@ export interface PlaywrightTestOptions {
   /**
    * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
    */
-  ignoreHTTPSErrors: boolean | undefined;
+  ignoreHTTPSErrors: boolean;
   /**
    * Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not
    * supported in Firefox.
    */
-  isMobile: boolean | undefined;
+  isMobile: boolean;
   /**
    * Whether or not to enable JavaScript in the context. Defaults to `true`.
    */
-  javaScriptEnabled: boolean | undefined;
+  javaScriptEnabled: boolean;
   /**
    * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
    * `Accept-Language` request header value as well as number and date formatting rules.
@@ -3517,7 +3517,7 @@ export interface PlaywrightTestOptions {
   /**
    * Whether to emulate network being offline. Defaults to `false`.
    */
-  offline: boolean | undefined;
+  offline: boolean;
   /**
    * A list of permissions to grant to all pages in this context. See
    * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
@@ -3552,7 +3552,7 @@ export interface PlaywrightTestOptions {
    * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
    * by the operating system. It makes the execution of the tests non-deterministic.
    */
-  viewport: ViewportSize | null | undefined;
+  viewport: ViewportSize | null;
   /**
    * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
    * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
@@ -3585,7 +3585,7 @@ export interface PlaywrightTestOptions {
    *
    * Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    */
-  actionTimeout: number | undefined;
+  actionTimeout: number;
   /**
    * Timeout for each navigation action in milliseconds. Defaults to 0 (no timeout).
    *
@@ -3594,20 +3594,20 @@ export interface PlaywrightTestOptions {
    *
    * Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    */
-  navigationTimeout: number | undefined;
+  navigationTimeout: number;
   /**
    * Whether to allow sites to register Service workers. Defaults to `'allow'`.
    * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
    *   registered.
    * - `'block'`: Playwright will block all registration of Service Workers.
    */
-  serviceWorkers: ServiceWorkerPolicy | undefined;
+  serviceWorkers: ServiceWorkerPolicy;
   /**
    * Custom attribute to be used in
    * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used
    * by default.
    */
-  testIdAttribute: string | undefined;
+  testIdAttribute: string;
 }
 
 
