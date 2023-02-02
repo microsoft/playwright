@@ -112,7 +112,7 @@ test('sigint should stop workers', async ({ runInlineTest }) => {
         console.log('\\n%%skipped2');
       });
     `,
-  }, { 'workers': 2 }, {}, { sendSIGINTAfter: 2 });
+  }, { 'workers': 2, 'reporter': 'line,json' }, {}, { sendSIGINTAfter: 2 });
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
@@ -122,6 +122,8 @@ test('sigint should stop workers', async ({ runInlineTest }) => {
   expect(result.output).toContain('%%SEND-SIGINT%%2');
   expect(result.output).not.toContain('%%skipped1');
   expect(result.output).not.toContain('%%skipped2');
+  expect(result.output).toContain('Test was interrupted.');
+  expect(result.output).not.toContain('Test timeout of');
 
   const interrupted2 = result.report.suites[1].specs[0];
   expect(interrupted2.title).toBe('interrupted2');

@@ -161,10 +161,12 @@ export class TestInfoImpl implements TestInfo {
 
   async _runWithTimeout(cb: () => Promise<any>): Promise<void> {
     const timeoutError = await this._timeoutManager.runWithTimeout(cb);
-    // Do not overwrite existing failure upon hook/teardown timeout.
-    if (timeoutError && !this._didTimeout) {
+    // When interrupting, we arrive here with a timeoutError, but we should not
+    // consider it a timeout.
+    if (this.status !== 'interrupted' && timeoutError && !this._didTimeout) {
       this._didTimeout = true;
       this.errors.push(timeoutError);
+      // Do not overwrite existing failure upon hook/teardown timeout.
       if (this.status === 'passed' || this.status === 'skipped')
         this.status = 'timedOut';
     }
