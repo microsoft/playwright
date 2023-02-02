@@ -27,9 +27,9 @@
     },
     {
       "name": "firefox-beta",
-      "revision": "1376",
+      "revision": "1377",
       "installByDefault": false,
-      "browserVersion": "108.0b5"
+      "browserVersion": "110.0b7"
     },
     {
       "name": "webkit",

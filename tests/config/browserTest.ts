@@ -61,7 +61,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     if (browserName === 'firefox' && !channel)
       await run(browserMajorVersion >= 103);
     else if (browserName === 'firefox' && channel === 'firefox-beta')
-      await run(browserMajorVersion >= 97 && browserMajorVersion < 103);
+      await run(browserMajorVersion < 103 || browserMajorVersion >= 110);
     else
       await run(false);
   }, { scope: 'worker' }],
@@ -72,7 +72,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     else if (browserName === 'webkit')
       await run('None');
     else if (browserName === 'firefox' && channel === 'firefox-beta')
-      await run(browserMajorVersion === 96 || browserMajorVersion >= 103 ? 'Lax' : 'None');
+      await run(browserMajorVersion >= 103 && browserMajorVersion < 110 ? 'Lax' : 'None');
     else if (browserName === 'firefox' && channel !== 'firefox-beta')
       await run(browserMajorVersion >= 103 ? 'None' : 'Lax');
     else
