@@ -18,9 +18,9 @@ test('event should work', async ({ mount }) => {
   let clicked = false;
 
   // Mount a component. Returns locator pointing to the component.
-  const component = await mount(<Button title="Submit"
-    onClick={() => clicked = true}>
-  </Button>);
+  const component = await mount(
+    <Button title="Submit" onClick={() => { clicked = true }}></Button>
+  );
 
   // As with any Playwright test, assert locator text.
   await expect(component).toContainText('Submit');
@@ -65,9 +65,9 @@ yarn create playwright --ct
 
 <TabItem value="pnpm">
 
- ```bash
- pnpm dlx create-playwright --ct
- ```
+```bash
+pnpm dlx create-playwright --ct
+```
 
  </TabItem>
   
@@ -79,7 +79,7 @@ This step creates several files in your workspace:
 
 This file defines an html file that will be used to render components during testing.
 It must contain element with `id="root"`, that's where components are mounted. It must
-also link the script called `playwright/index.[tj]s`.
+also link the script called `playwright/index.{js,ts,jsx,tsx}`.
 
 ```html
 <html lang="en">
@@ -93,7 +93,7 @@ also link the script called `playwright/index.[tj]s`.
 #### `playwright/index.ts`
 
 You can include stylesheets, apply theme and inject code into the page where
-component is mounted using this script. It can be either a `.js` or `.ts` file.
+component is mounted using this script. It can be either a `.js`, `.ts`, `.jsx` or `.tsx` file.
 
 ```js
 // Apply theme here, add anything your component needs at runtime here.
@@ -105,9 +105,9 @@ component is mounted using this script. It can be either a `.js` or `.ts` file.
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Vue', value: 'vue'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
   ]
 }>
 <TabItem value="react">
@@ -135,7 +135,7 @@ import App from './App.vue';
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
-  const component = await mount(<App />);
+  const component = await mount(App);
   await expect(component).toContainText('Vite + Vue');
 });
 ```
@@ -182,7 +182,6 @@ test('should work', async ({ mount }) => {
 
 </Tabs>
 
-
 ### Step 3. Run the tests
 
 You can run tests using the [VS Code extension](./getting-started-vscode.md) or the command line.
@@ -199,52 +198,162 @@ Refer to [Playwright config](./test-configuration.md) for configuring your proje
 
 You can use `beforeMount` and `afterMount` hooks to configure your app. This lets you setup things like your app router, fake server etc. giving you the flexibility you need. You can also pass custom configuration from the `mount` call from a test, which is accessible from the `hooksConfig` fixture.
 
-#### `playwright/index.ts`
+#### `playwright/index.{js,ts,jsx,tsx}`
 
-This includes any config that needs to be run before/after mounting the component. Here's an example of how to setup `miragejs` mocking library:
+This includes any config that needs to be run before or after mounting the component. An example of configuring a router is provided below:
 
-```js
-import { beforeMount } from '@playwright/experimental-ct-react/hooks';
-import { createServer } from "miragejs"
+<Tabs
+  defaultValue="react"
+  values={[
+    {label: 'React', value: 'react'},
+    {label: 'Solid', value: 'solid'},
+    {label: 'Vue3', value: 'vue3'},
+    {label: 'Vue2', value: 'vue2'},
+  ]
+}>
+  <TabItem value="react">
 
-beforeMount(async ({ hooksConfig }) => {
-  // Setting default values if custom config is not provided
-  const users = hooksConfig.users ?? [
-    { id: "1", name: "Luke" },
-    { id: "2", name: "Leia" },
-    { id: "3", name: "Han" },
-  ];
-  createServer({
-    routes() {
-      this.get("/api/users", () => users)
-    },
+  ```js
+  // playwright/index.tsx
+  import { beforeMount, afterMount } from '@playwright/experimental-ct-react/hooks';
+  import { BrowserRouter } from 'react-router-dom';
+
+  export type HooksConfig = {
+    enableRouting?: boolean;
+  }
+
+  beforeMount<HooksConfig>(async ({ App, hooksConfig }) => {
+    if (hooksConfig?.enableRouting)
+      return <BrowserRouter><App /></BrowserRouter>;
   });
-});
-```
+  ```
 
-#### In your test file:
+  #### In your test file:
 
-```js
-// src/Users.spec.tsx
-import { test, expect } from "@playwright/experimental-ct-react";
-import React from "react";
-import { Users } from "./Users";
+  ```js
+  // src/pages/ProductsPage.spec.tsx
+  import { test, expect } from '@playwright/experimental-ct-react';
+  import type { HooksConfig } from 'playwright';
+  import { ProductsPage } from './pages/ProductsPage';
 
-test("should work", async ({ mount }) => {
-  const component = await mount(<Users />, {
-    hooksConfig: {
-      users: [
-        { id: "4", name: "Anakin" },
-        { id: "5", name: "Padme" },
-      ]
+  test('configure routing through hooks config', async ({ page, mount }) => {
+    const component = await mount<HooksConfig>(<ProductsPage />, {
+      hooksConfig: { enableRouting: true },
+    });
+    await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
+  });
+  ```
+
+  </TabItem>
+
+  <TabItem value="solid">
+
+  ```js
+  // playwright/index.tsx
+  import { beforeMount, afterMount } from '@playwright/experimental-ct-solid/hooks';
+  import { Router } from '@solidjs/router';
+
+  export type HooksConfig = {
+    enableRouting?: boolean;
+  }
+
+  beforeMount<HooksConfig>(async ({ App, hooksConfig }) => {
+    if (hooksConfig?.enableRouting)
+      return <Router><App /></Router>;
+  });
+  ```
+
+  #### In your test file:
+
+  ```js
+  // src/pages/ProductsPage.spec.tsx
+  import { test, expect } from '@playwright/experimental-ct-solid';
+  import type { HooksConfig } from 'playwright';
+  import { ProductsPage } from './pages/ProductsPage';
+
+  test('configure routing through hooks config', async ({ page, mount }) => {
+    const component = await mount<HooksConfig>(<ProductsPage />, {
+      hooksConfig: { enableRouting: true },
+    });
+    await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
+  });
+  ```
+
+  </TabItem>
+
+  <TabItem value="vue3">
+
+  ```js
+  // playwright/index.ts
+  import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
+  import { router } from '../src/router';
+
+  export type HooksConfig = {
+    enableRouting?: boolean;
+  }
+
+  beforeMount<HooksConfig>(async ({ app, hooksConfig }) => {
+    if (hooksConfig?.enableRouting)
+      app.use(router);
+  });
+  ```
+
+  #### In your test file:
+
+  ```js
+  // src/pages/ProductsPage.spec.ts
+  import { test, expect } from '@playwright/experimental-ct-vue';
+  import type { HooksConfig } from 'playwright';
+  import ProductsPage from './pages/ProductsPage.vue';
+
+  test('configure routing through hooks config', async ({ page, mount }) => {
+    const component = await mount<HooksConfig>(ProductsPage, {
+      hooksConfig: { enableRouting: true },
+    });
+    await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
+  });
+  ```
+
+  </TabItem>
+
+  <TabItem value="vue2">
+  
+  ```js
+  // playwright/index.ts
+  import { beforeMount, afterMount } from '@playwright/experimental-ct-vue2/hooks';
+  import Router from 'vue-router';
+  import { router } from '../src/router';
+
+  export type HooksConfig = {
+    enableRouting?: boolean;
+  }
+
+  beforeMount<HooksConfig>(async ({ app, hooksConfig }) => {
+    if (hooksConfig?.enableRouting) {
+      Vue.use(Router);
+      return { router }
     }
   });
-  await expect(component.locator("li")).toContainText([
-    "Anakin",
-    "Padme",
-  ]);
-});
-```
+  ```
+   #### In your test file:
+
+  ```js
+  // src/pages/ProductsPage.spec.ts
+  import { test, expect } from '@playwright/experimental-ct-vue2';
+  import type { HooksConfig } from 'playwright';
+  import ProductsPage from './pages/ProductsPage.vue';
+
+  test('configure routing through hooks config', async ({ page, mount }) => {
+    const component = await mount<HooksConfig>(ProductsPage, {
+      hooksConfig: { enableRouting: true },
+    });
+    await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
+  });
+  ```
+
+  </TabItem>
+
+</Tabs>
 
 ## Under the hood
 
@@ -293,23 +402,23 @@ test('…', async { mount, page, context } => {
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Vue', value: 'vue'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Solid', value: 'solid'},
+    {label: 'Svelte', value: 'svelte'},
+    {label: 'Vue', value: 'vue'},
   ]
 }>
 <TabItem value="react">
 
 ```js
-import { test, expect } from '@playwright/experimental-ct-react'
-import HelloWorld from './HelloWorld'
+import { test, expect } from '@playwright/experimental-ct-react';
+import HelloWorld from './HelloWorld';
 
-test.use({ viewport: { width: 500, height: 500 } })
+test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
   const component = await mount(<HelloWorld msg="greetings" />);
-  await expect(component).toContainText('Greetings')
-})
+  await expect(component).toContainText('Greetings');
+});
 ```
 
 </TabItem>
@@ -317,19 +426,19 @@ test('should work', async ({ mount }) => {
 <TabItem value="vue">
 
 ```js
-import { test, expect } from '@playwright/experimental-ct-vue'
-import HelloWorld from './HelloWorld.vue'
+import { test, expect } from '@playwright/experimental-ct-vue';
+import HelloWorld from './HelloWorld.vue';
 
-test.use({ viewport: { width: 500, height: 500 } })
+test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
   const component = await mount(HelloWorld, {
     props: {
-      msg: 'Greetings'
-    }
+      msg: 'Greetings',
+    },
   });
-  await expect(component).toContainText('Greetings')
-})
+  await expect(component).toContainText('Greetings');
+});
 ```
 
 </TabItem>
@@ -337,19 +446,19 @@ test('should work', async ({ mount }) => {
 <TabItem value="svelte">
 
 ```js
-import { test, expect } from '@playwright/experimental-ct-svelte'
-import HelloWorld from './HelloWorld.svelte'
+import { test, expect } from '@playwright/experimental-ct-svelte';
+import HelloWorld from './HelloWorld.svelte';
 
-test.use({ viewport: { width: 500, height: 500 } })
+test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
   const component = await mount(HelloWorld, {
     props: {
-      msg: 'Greetings'
-    }
+      msg: 'Greetings',
+    },
   });
-  await expect(component).toContainText('Greetings')
-})
+  await expect(component).toContainText('Greetings');
+});
 ```
 
 </TabItem>
@@ -357,15 +466,15 @@ test('should work', async ({ mount }) => {
 <TabItem value="solid">
 
 ```js
-import { test, expect } from '@playwright/experimental-ct-solid'
-import HelloWorld from './HelloWorld'
+import { test, expect } from '@playwright/experimental-ct-solid';
+import HelloWorld from './HelloWorld';
 
-test.use({ viewport: { width: 500, height: 500 } })
+test.use({ viewport: { width: 500, height: 500 } });
 
 test('should work', async ({ mount }) => {
   const component = await mount(<HelloWorld msg="greetings" />);
-  await expect(component).toContainText('Greetings')
-})
+  await expect(component).toContainText('Greetings');
+});
 ```
 
 </TabItem>
@@ -374,7 +483,7 @@ test('should work', async ({ mount }) => {
 
 Additionally, it adds some config options you can use in your `playwright-ct.config.{ts,js}`.
 
-Finally, under the hood, each test re-uses the `context` and `page` fixture as a speed optimization for Component Testing. 
+Finally, under the hood, each test re-uses the `context` and `page` fixture as a speed optimization for Component Testing.
 It resets them in between each test so it should be functionally equivalent to `@playwright/test`'s guarantee that you get a new, isolated `context` and `page` fixture per-test.
 
 ### Q) Can I use `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue,solid}`?
@@ -407,12 +516,12 @@ await mount(<App />);
 You can specify plugins via Vite config for testing settings. Note that once you start specifying plugins, you are responsible for specifying the framework plugin as well, `vue()` in this case:
 
 ```js
-import { defineConfig, devices } from '@playwright/experimental-ct-vue'
+import { defineConfig, devices } from '@playwright/experimental-ct-vue';
 
-import { resolve } from 'path'
-import vue from '@vitejs/plugin-vue'
-import AutoImport from 'unplugin-auto-import/vite'
-import Components from 'unplugin-vue-components/vite'
+import { resolve } from 'path';
+import vue from '@vitejs/plugin-vue';
+import AutoImport from 'unplugin-auto-import/vite';
+import Components from 'unplugin-vue-components/vite';
 
 export default defineConfig({
   testDir: './tests/component',
@@ -447,21 +556,21 @@ export default defineConfig({
         },
       },
     },
-  }
+  },
 });
 ```
 
-don't forget to initialize your plugins, for example if you are using Pinia, add init code into your `playwright/index.js`:
+don't forget to initialize your plugins, for example if you are using Pinia, add init code into your `playwright/index.{js,ts,jsx,tsx}`:
 
 ```js
 import { createTestingPinia } from '@pinia/testing';
 
 createTestingPinia({
   createSpy: (args) => {
-    console.log('spy', args)
+    console.log('spy', args);
     return () => {
-      console.log('spyreturns')
-    }
+      console.log('spyreturns');
+    };
   },
 });
 ```
