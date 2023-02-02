@@ -50,6 +50,7 @@ function addTestCommand(program: Command) {
   command.option('-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`);
   command.option('--list', `Collect all the tests and report them, but do not run`);
   command.option('--max-failures <N>', `Stop after the first N failures`);
+  command.option('--no-deps', 'Do not run project dependencies');
   command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
   command.option('--pass-with-no-tests', `Makes test run succeed even if no tests were found`);
   command.option('--quiet', `Suppress stdio`);
@@ -154,6 +155,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     await configLoader.loadConfigFile(resolvedConfigFile);
   else
     await configLoader.loadEmptyConfig(configFileOrDirectory);
+  if (opts.deps === false)
+    configLoader.ignoreProjectDependencies();
 
   const config = configLoader.fullConfig();
   config._internal.testFileFilters = args.map(arg => {

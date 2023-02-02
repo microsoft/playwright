@@ -91,8 +91,11 @@ export default defineConfig({
 
 List of projects that need to run before any test in this project runs. Dependencies can
 be useful for configuring the global setup actions in a way that every action is
-in a form of a test. That way one can record traces and other artifacts for the
-global setup routine, see the setup steps in the test report, etc.
+in a form of a test. Passing `--no-deps` argument ignores the dependencies and
+behaves as if they were not specified.
+
+Using dependencies allows global setup to produce traces and other artifacts,
+see the setup steps in the test report, etc.
 
 For example:
 
@@ -105,7 +108,6 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: /global.setup\.ts/,
-      dependencies: ['setup'],
     },
     {
       name: 'chromium',
