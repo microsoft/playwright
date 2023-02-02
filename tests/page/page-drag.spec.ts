@@ -391,9 +391,9 @@ async function trackEvents(target: ElementHandle) {
   return eventsHandle;
 }
 
-it('should handle custom dataTransfer', async ({ page, browserName, isLinux, headless }) => {
+it('should handle custom dataTransfer', async ({ page, browserName, isWindows }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18013' });
-  it.skip(browserName === 'webkit' && isLinux && headless);
+  it.fixme(browserName === 'webkit' && isWindows);
   await page.setContent(`<button draggable="true">Draggable</button>`);
 
   const resultPromise = page.evaluate(() =>
