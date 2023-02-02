@@ -339,7 +339,7 @@ Optional request parameters.
 * langs: js, python, csharp
 - `headers` <[Object]<[string], [string]>>
 
-Allows to set HTTP headers.
+Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by it.
 
 ## js-python-csharp-fetch-option-timeout
 * langs: js, python, csharp
