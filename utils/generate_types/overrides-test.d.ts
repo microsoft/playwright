@@ -286,7 +286,35 @@ type Inverse<Matchers> = {
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
 
-type BaseMatchers<R, T> = expectType.Matchers<R> & PlaywrightTest.Matchers<R, T>;
+interface GenericAssertions<R> {
+  not: GenericAssertions<R>;
+  toBe(expected: unknown): R;
+  toBeCloseTo(expected: number, numDigits?: number): R;
+  toBeDefined(): R;
+  toBeFalsy(): R;
+  toBeGreaterThan(expected: number | bigint): R;
+  toBeGreaterThanOrEqual(expected: number | bigint): R;
+  toBeInstanceOf(expected: Function): R;
+  toBeLessThan(expected: number | bigint): R;
+  toBeLessThanOrEqual(expected: number | bigint): R;
+  toBeNaN(): R;
+  toBeNull(): R;
+  toBeTruthy(): R;
+  toBeUndefined(): R;
+  toContain(expected: string): R;
+  toContain(expected: unknown): R;
+  toContainEqual(expected: unknown): R;
+  toEqual(expected: unknown): R;
+  toHaveLength(expected: number): R;
+  toHaveProperty(keyPath: string | Array<string>, value?: unknown): R;
+  toMatch(expected: RegExp): R;
+  toMatchObject(expected: Record<string, unknown> | Array<unknown>): R;
+  toStrictEqual(expected: unknown): R;
+  toThrow(error?: unknown): R;
+  toThrowError(error?: unknown): R;
+}
+
+type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T>;
 
 type MakeMatchers<R, T> = BaseMatchers<R, T> & {
     /**
