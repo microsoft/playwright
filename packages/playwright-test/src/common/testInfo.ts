@@ -24,6 +24,12 @@ import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal, TestStepInternal } from './types';
 import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
 
+export type TestInfoErrorState = {
+  status: TestStatus,
+  errors: TestInfoError[],
+  hasHardError: boolean,
+};
+
 export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
@@ -246,6 +252,20 @@ export class TestInfoImpl implements TestInfo {
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = 'failed';
     this.errors.push(error);
+  }
+
+  _saveErrorState(): TestInfoErrorState {
+    return {
+      hasHardError: this._hasHardError,
+      status: this.status,
+      errors: this.errors.slice(),
+    };
+  }
+
+  _restoreErrorState(state: TestInfoErrorState) {
+    this.status = state.status;
+    this.errors = state.errors.slice();
+    this._hasHardError = state.hasHardError;
   }
 
   async _runAsStep<T>(cb: () => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete'>): Promise<T> {
