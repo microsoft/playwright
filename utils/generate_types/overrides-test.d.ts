@@ -200,7 +200,7 @@ type ConnectOptions = {
 export interface PlaywrightWorkerOptions {
   browserName: BrowserName;
   defaultBrowserType: BrowserName;
-  headless: boolean | undefined;
+  headless: boolean;
   channel: BrowserChannel | undefined;
   launchOptions: LaunchOptions;
   connectOptions: ConnectOptions | undefined;
@@ -214,31 +214,31 @@ export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 
 export interface PlaywrightTestOptions {
-  acceptDownloads: boolean | undefined;
-  bypassCSP: boolean | undefined;
-  colorScheme: ColorScheme | undefined;
+  acceptDownloads: boolean;
+  bypassCSP: boolean;
+  colorScheme: ColorScheme;
   deviceScaleFactor: number | undefined;
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
   geolocation: Geolocation | undefined;
-  hasTouch: boolean | undefined;
+  hasTouch: boolean;
   httpCredentials: HTTPCredentials | undefined;
-  ignoreHTTPSErrors: boolean | undefined;
-  isMobile: boolean | undefined;
-  javaScriptEnabled: boolean | undefined;
+  ignoreHTTPSErrors: boolean;
+  isMobile: boolean;
+  javaScriptEnabled: boolean;
   locale: string | undefined;
-  offline: boolean | undefined;
+  offline: boolean;
   permissions: string[] | undefined;
   proxy: Proxy | undefined;
   storageState: StorageState | undefined;
   timezoneId: string | undefined;
   userAgent: string | undefined;
-  viewport: ViewportSize | null | undefined;
+  viewport: ViewportSize | null;
   baseURL: string | undefined;
   contextOptions: BrowserContextOptions;
-  actionTimeout: number | undefined;
-  navigationTimeout: number | undefined;
-  serviceWorkers: ServiceWorkerPolicy | undefined;
-  testIdAttribute: string | undefined;
+  actionTimeout: number;
+  navigationTimeout: number;
+  serviceWorkers: ServiceWorkerPolicy;
+  testIdAttribute: string;
 }
 
 
