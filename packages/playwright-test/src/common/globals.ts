@@ -42,3 +42,13 @@ export function currentExpectTimeout(options: { timeout?: number }) {
     defaultExpectTimeout = 5000;
   return defaultExpectTimeout;
 }
+
+let _isWorkerProcess = false;
+
+export function setIsWorkerProcess() {
+  _isWorkerProcess = true;
+}
+
+export function isWorkerProcess() {
+  return _isWorkerProcess;
+}

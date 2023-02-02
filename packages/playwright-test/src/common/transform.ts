@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import crypto from 'crypto';
-import os from 'os';
 import path from 'path';
 import fs from 'fs';
 import { sourceMapSupport, pirates } from '../utilsBundle';
@@ -26,10 +24,7 @@ import { tsConfigLoader } from '../third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelTransformFunction } from './babelBundle';
 import { fileIsModule } from '../util';
-
-const version = 13;
-const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
-const sourceMaps: Map<string, string> = new Map();
+import { getFromCompilationCache } from './compilationCache';
 
 type ParsedTsConfigData = {
   absoluteBaseUrl: string;
@@ -37,36 +32,6 @@ type ParsedTsConfigData = {
   allowJs: boolean;
 };
 const cachedTSConfigs = new Map<string, ParsedTsConfigData | undefined>();
-
-Error.stackTraceLimit = 200;
-
-sourceMapSupport.install({
-  environment: 'node',
-  handleUncaughtExceptions: false,
-  retrieveSourceMap(source) {
-    if (!sourceMaps.has(source))
-      return null;
-    const sourceMapPath = sourceMaps.get(source)!;
-    if (!fs.existsSync(sourceMapPath))
-      return null;
-    return {
-      map: JSON.parse(fs.readFileSync(sourceMapPath, 'utf-8')),
-      url: source
-    };
-  }
-});
-
-function calculateCachePath(content: string, filePath: string, isModule: boolean): string {
-  const hash = crypto.createHash('sha1')
-      .update(process.env.PW_TEST_SOURCE_TRANSFORM || '')
-      .update(isModule ? 'esm' : 'no_esm')
-      .update(content)
-      .update(filePath)
-      .update(String(version))
-      .digest('hex');
-  const fileName = path.basename(filePath, path.extname(filePath)).replace(/\W/g, '') + '_' + hash;
-  return path.join(cacheDir, hash[0] + hash[1], fileName);
-}
 
 function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | undefined {
   if (!tsconfig.tsConfigPath || !tsconfig.baseUrl)
@@ -181,33 +146,26 @@ export function js2ts(resolved: string): string | undefined {
 
 export function transformHook(code: string, filename: string, moduleUrl?: string): string {
   // If we are not TypeScript and there is no applicable preprocessor - bail out.
-  const isModule = !!moduleUrl;
+  const { cachedCode, addToCache } = getFromCompilationCache(filename, code, moduleUrl);
+  if (cachedCode)
+    return cachedCode;
+
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
 
-  const cachePath = calculateCachePath(code, filename, isModule);
-  const codePath = cachePath + '.js';
-  const sourceMapPath = cachePath + '.map';
-  sourceMaps.set(moduleUrl || filename, sourceMapPath);
-  if (!process.env.PW_IGNORE_COMPILE_CACHE && fs.existsSync(codePath))
-    return fs.readFileSync(codePath, 'utf8');
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
   try {
     const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
-    const result = babelTransform(filename, isTypeScript, isModule, hasPreprocessor ? scriptPreprocessor : undefined, [require.resolve('./tsxTransform')]);
-    if (result.code) {
-      fs.mkdirSync(path.dirname(cachePath), { recursive: true });
-      if (result.map)
-        fs.writeFileSync(sourceMapPath, JSON.stringify(result.map), 'utf8');
-      fs.writeFileSync(codePath, result.code, 'utf8');
-    }
-    return result.code || '';
+    const { code, map } = babelTransform(filename, isTypeScript, !!moduleUrl, hasPreprocessor ? scriptPreprocessor : undefined, [require.resolve('./tsxTransform')]);
+    if (code)
+      addToCache!(code, map);
+    return code || '';
   } catch (e) {
     // Re-throw error with a playwright-test stack
     // that could be filtered out.
