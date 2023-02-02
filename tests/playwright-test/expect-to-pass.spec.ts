@@ -183,6 +183,24 @@ test('should swallow all soft errors inside toPass matcher, if successful', asyn
   expect(result.failed).toBe(1);
 });
 
+test('should work with no.toPass and failing soft assertion', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20518' });
+
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('should work', async () => {
+        await test.expect(() => {
+          expect.soft(1).toBe(2);
+        }).not.toPass({ timeout: 1000 });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.failed).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should show only soft errors on last toPass pass', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
