@@ -182,9 +182,9 @@ it('should set CloseEvent.wasClean to false when the server terminates a WebSock
   server.onceWebSocketConnection(socket => {
     socket.terminate();
   });
-  const [wasClean] = await page.evaluate(port => new Promise<[boolean]>(resolve => {
+  const wasClean = await page.evaluate(port => new Promise<boolean>(resolve => {
     const ws = new WebSocket('ws://localhost:' + port + '/ws');
-    ws.addEventListener('close', error => resolve([error.wasClean]));
+    ws.addEventListener('close', error => resolve(error.wasClean));
   }), server.PORT);
   expect(wasClean).toBe(false);
 });
