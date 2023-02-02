@@ -160,6 +160,8 @@ test('should use custom message', async ({ runInlineTest }) => {
 });
 
 test('should swallow all soft errors inside toPass matcher, if successful', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20437' });
+
   const result = await runInlineTest({
     'a.spec.ts': `
       const { test } = pwt;

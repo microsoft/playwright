@@ -24,7 +24,7 @@ import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal, TestStepInternal } from './types';
 import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
 
-export type TestInfoState = {
+export type TestInfoErrorState = {
   status: TestStatus,
   errors: TestInfoError[],
   hasHardError: boolean,
@@ -252,7 +252,7 @@ export class TestInfoImpl implements TestInfo {
     this.errors.push(error);
   }
 
-  _saveTestState(): TestInfoState {
+  _saveErrorState(): TestInfoErrorState {
     return {
       hasHardError: this._hasHardError,
       status: this.status,
@@ -260,7 +260,7 @@ export class TestInfoImpl implements TestInfo {
     };
   }
 
-  _restoreTestState(state: TestInfoState) {
+  _restoreErrorState(state: TestInfoErrorState) {
     this.status = state.status;
     this.errors = state.errors.slice();
     this._hasHardError = state.hasHardError;

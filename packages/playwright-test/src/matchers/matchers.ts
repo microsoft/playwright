@@ -20,7 +20,7 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import type { Expect } from '../common/types';
 import { expectTypes, callLogText } from '../util';
 import { currentTestInfo } from '../common/globals';
-import type { TestInfoState } from '../common/testInfo';
+import type { TestInfoErrorState } from '../common/testInfo';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
@@ -320,22 +320,20 @@ export async function toPass(
   } = {},
 ) {
   const testInfo = currentTestInfo();
-  if (!testInfo)
-    throw new Error(`toPass() must be called during the test`);
 
   const timeout = options.timeout !== undefined ? options.timeout : 0;
 
   // Soft expects might mark test as failing.
   // We want to revert this later if the matcher is actually passing.
   // See https://github.com/microsoft/playwright/issues/20437
-  let testStateBeforeToPassMatcher: undefined|TestInfoState;
+  let testStateBeforeToPassMatcher: undefined|TestInfoErrorState;
   const result = await pollAgainstTimeout<Error|undefined>(async () => {
     try {
-      if (testStateBeforeToPassMatcher)
-        testInfo._restoreTestState(testStateBeforeToPassMatcher);
-      testStateBeforeToPassMatcher = testInfo._saveTestState();
+      if (testStateBeforeToPassMatcher && testInfo)
+        testInfo._restoreErrorState(testStateBeforeToPassMatcher);
+      testStateBeforeToPassMatcher = testInfo?._saveErrorState();
       await callback();
-      if (testInfo.errors.length !== testStateBeforeToPassMatcher.errors.length)
+      if (testInfo && testStateBeforeToPassMatcher && testInfo.errors.length > testStateBeforeToPassMatcher.errors.length)
         return { continuePolling: !this.isNot, result: testInfo.errors[testInfo.errors.length - 1] };
       return { continuePolling: this.isNot, result: undefined };
     } catch (e) {
@@ -354,6 +352,5 @@ export async function toPass(
 
     return { message, pass: this.isNot };
   }
-  const pass = !this.isNot;
-  return { pass, message: () => '' };
+  return { pass: !this.isNot, message: () => '' };
 }
