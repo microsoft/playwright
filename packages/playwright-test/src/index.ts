@@ -292,7 +292,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     const onDidCreateBrowserContext = async (context: BrowserContext) => {
       context.setDefaultTimeout(actionTimeout || 0);
-      context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
+      context.setDefaultNavigationTimeout(navigationTimeout || 0);
       await startTraceChunkOnContextCreation(context.tracing);
       const listener = createInstrumentationListener(context);
       (context as any)._instrumentation.addListener(listener);
