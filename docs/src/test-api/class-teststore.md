@@ -2,7 +2,7 @@
 * since: v1.31
 * langs: js
 
-Playwright Test provides a global `store` object for passing values between project test and tests. It is
+Playwright Test provides a global `store` object that can be used in global setup and tests.
 an error to call store methods outside of test and tests.
 
 ```js tab=js-js
