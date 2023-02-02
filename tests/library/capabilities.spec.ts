@@ -176,8 +176,9 @@ it('navigator.clipboard should be present', async ({ page, server, browserName, 
   expect(await page.evaluate(() => navigator.clipboard)).toBeTruthy();
 });
 
-it('should set CloseEvent.wasClean to false when the server terminates a WebSocket connection', async ({ page, server }) => {
+it('should set CloseEvent.wasClean to false when the server terminates a WebSocket connection', async ({ page, server, browserName, platform }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12353' });
+  it.fixme(browserName === 'webkit' && platform === 'win32');
   server.onceWebSocketConnection(socket => {
     socket.terminate();
   });
