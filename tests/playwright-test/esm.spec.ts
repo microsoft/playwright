@@ -303,3 +303,33 @@ test('should resolve .js import to .tsx file in ESM mode for components', async 
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });
+
+test('should load an mts file', async ({ runInlineTest, nodeVersion }) => {
+  test.skip(nodeVersion.major < 16);
+  const { exitCode, passed } = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `
+      //@no-header
+      export default { projects: [{name: 'foo'}] };
+    `,
+    'a.spec.mts': `
+        import { add, subtract } from './math.mjs';
+        const { test } = pwt;
+        test('succeeds', () => {
+          expect(add(1, 1)).toBe(2);
+          expect(subtract(2, 1)).toBe(1);
+        });
+      `,
+    'math.mts': `
+      export function add(a: number, b: number): number {
+        return a + b;
+      }
+      await new Promise(f => setTimeout(f, 0));
+      export function subtract(a: number, b: number): number {
+        return a - b;
+      }
+    `
+  });
+  expect(passed).toBe(1);
+  expect(exitCode).toBe(0);
+});

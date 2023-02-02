@@ -246,7 +246,7 @@ function installTransform(): () => void {
     if (belongsToNodeModules(filename))
       return code;
     return transformHook(code, filename);
-  }, { exts: ['.ts', '.tsx', '.js', '.jsx', '.mjs'] });
+  }, { exts: ['.ts', '.tsx', '.mts', '.js', '.jsx', '.mjs'] });
 
   return () => {
     reverted = true;

@@ -288,7 +288,7 @@ export async function normalizeAndSaveAttachment(outputPath: string, name: strin
 }
 
 export function fileIsModule(file: string): boolean {
-  if (file.endsWith('.mjs'))
+  if (file.endsWith('.mjs') || file.endsWith('.mts'))
     return true;
 
   const folder = path.dirname(file);

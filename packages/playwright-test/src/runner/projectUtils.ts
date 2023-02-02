@@ -70,7 +70,7 @@ export function buildProjectsClosure(projects: FullProjectInternal[]): FullProje
 }
 
 export async function collectFilesForProject(project: FullProjectInternal, fsCache = new Map<string, string[]>()): Promise<string[]> {
-  const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
+  const extensions = ['.js', '.ts', '.mjs', '.mts', '.tsx', '.jsx'];
   const testFileExtension = (file: string) => extensions.includes(path.extname(file));
   const allFiles = await cachedCollectFiles(project.testDir, project._internal.respectGitIgnore, fsCache);
   const testMatch = createFileMatcher(project.testMatch);

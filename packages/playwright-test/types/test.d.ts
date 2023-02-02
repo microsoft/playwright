@@ -347,7 +347,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+   * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mts|mjs)`.
    *
    * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
    * option for all projects.
@@ -1190,7 +1190,7 @@ interface TestConfig {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+   * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mts|mjs)`.
    *
    * **Usage**
    *
@@ -5839,7 +5839,7 @@ interface TestProject {
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the
    * absolute file path. Strings are treated as glob patterns.
    *
-   * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+   * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mts|mjs)`.
    *
    * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
    * option for all projects.

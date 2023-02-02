@@ -813,7 +813,7 @@ export default defineConfig({
 
 Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute file path. Strings are treated as glob patterns.
 
-By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mts|mjs)`.
 
 **Usage**
 

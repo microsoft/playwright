@@ -484,7 +484,7 @@ function resolveProjectDependencies(projects: FullProjectInternal[]) {
   }
 }
 
-export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.js', 'playwright.config.mjs'];
+export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.mts', 'playwright.config.js', 'playwright.config.mjs'];
 
 export function resolveConfigFile(configFileOrDirectory: string): string | null {
   const resolveConfig = (configFile: string) => {
