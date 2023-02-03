@@ -9,7 +9,11 @@ title: "Docker"
 
 ## Usage
 
-This image is published on [Docker Hub].
+This Docker image is published on [Docker Hub].
+
+:::info
+This Docker image is intended to be used for testing and development purposes only. It is not recommended to use this Docker image to visit untrusted websites.
+:::
 
 ### Pull the image
 
