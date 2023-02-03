@@ -48,7 +48,7 @@ type ConfigInternal = {
   maxConcurrentTestGroups: number;
   ignoreSnapshots: boolean;
   webServers: Exclude<FullConfigPublic['webServer'], null>[];
-  pluginRegistrations: TestRunnerPluginRegistration[];
+  plugins: TestRunnerPluginRegistration[];
   listOnly: boolean;
   testFileFilters: TestFileFilter[];
   testTitleMatcher: Matcher;

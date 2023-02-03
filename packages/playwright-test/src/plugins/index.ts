@@ -24,7 +24,10 @@ export interface TestRunnerPlugin {
   teardown?(): Promise<void>;
 }
 
-export type TestRunnerPluginRegistration = TestRunnerPlugin | (() => TestRunnerPlugin | Promise<TestRunnerPlugin>);
+export type TestRunnerPluginRegistration = {
+  factory: TestRunnerPlugin | (() => TestRunnerPlugin | Promise<TestRunnerPlugin>);
+  instance?: TestRunnerPlugin;
+};
 
 export { webServer } from './webServerPlugin';
 export { gitCommitInfo } from './gitCommitInfoPlugin';
