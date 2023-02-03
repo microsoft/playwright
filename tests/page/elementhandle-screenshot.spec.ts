@@ -33,6 +33,18 @@ it.describe('element screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-element-bounding-box.png');
   });
 
+  it('should work when main world busts JSON.stringify', async ({ page, server }) => {
+    await page.setViewportSize({ width: 500, height: 500 });
+    await page.goto(server.PREFIX + '/grid.html');
+    await page.evaluate(() => {
+      window.scrollBy(50, 100);
+      JSON.stringify = () => undefined;
+    });
+    const elementHandle = await page.$('.box:nth-of-type(3)');
+    const screenshot = await elementHandle.screenshot();
+    expect(screenshot).toMatchSnapshot('screenshot-element-bounding-box.png');
+  });
+
   it('should take into account padding and border', async ({ page }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.setContent(`
