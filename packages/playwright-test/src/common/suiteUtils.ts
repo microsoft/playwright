@@ -18,7 +18,7 @@ import path from 'path';
 import { calculateSha1 } from 'playwright-core/lib/utils';
 import type { Suite, TestCase } from './test';
 import type { FullProjectInternal } from './types';
-import type { TestFileFilter } from '../util';
+import type { Matcher, TestFileFilter } from '../util';
 import { createFileMatcher } from '../util';
 
 
@@ -112,6 +112,12 @@ export function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFile
   const suiteFilter = (suite: Suite) => !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
   const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line, test.location.column);
   return filterSuite(suite, suiteFilter, testFilter);
+}
+
+export function filterByTestIds(suite: Suite, testIdMatcher: Matcher | undefined) {
+  if (!testIdMatcher)
+    return;
+  filterTestsRemoveEmptySuites(suite, test => testIdMatcher(test.id));
 }
 
 function createFileMatcherFromFilter(filter: TestFileFilter) {

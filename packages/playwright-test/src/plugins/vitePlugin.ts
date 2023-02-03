@@ -163,7 +163,7 @@ export function createPlugin(
       }
     },
 
-    teardown: async () => {
+    end: async () => {
       await new Promise(f => stoppableServer.stop(f));
     },
   };

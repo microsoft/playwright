@@ -102,7 +102,7 @@ export class Multiplexer implements Reporter {
       await Promise.resolve().then(() => reporter.onEnd?.(result)).catch(e => console.error('Error in reporter', e));
 
     for (const reporter of this._reporters)
-      await Promise.resolve().then(() => (reporter as any).onExit?.()).catch(e => console.error('Error in reporter', e));
+      await Promise.resolve().then(() => (reporter as any)._onExit?.()).catch(e => console.error('Error in reporter', e));
   }
 
   onError(error: TestError) {

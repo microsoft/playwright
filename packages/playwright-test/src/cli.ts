@@ -21,7 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling } from './common/profiler';
-import { experimentalLoaderOption, fileIsModule } from './util';
+import { createFileFilterForArg, experimentalLoaderOption, fileIsModule, forceRegExp } from './util';
 import { createTitleMatcher } from './util';
 import { showHTMLReport } from './reporters/html';
 import { baseFullConfig, builtInReporters, ConfigLoader, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
@@ -61,6 +61,7 @@ function addTestCommand(program: Command) {
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
   command.option('--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})`);
   command.option('--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
+  command.option('--watch', `Run watch mode`);
   command.option('-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`);
   command.option('-x', `Stop after the first failure`);
   command.action(async (args, opts) => {
@@ -159,14 +160,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     configLoader.ignoreProjectDependencies();
 
   const config = configLoader.fullConfig();
-  config._internal.cliFileFilters = args.map(arg => {
-    const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
-    return {
-      re: forceRegExp(match ? match[1] : arg),
-      line: match ? parseInt(match[2], 10) : null,
-      column: match?.[3] ? parseInt(match[3], 10) : null,
-    };
-  });
+  config._internal.cliFileFilters = args.map(arg => createFileFilterForArg(arg));
   const grepMatcher = opts.grep ? createTitleMatcher(forceRegExp(opts.grep)) : () => true;
   const grepInvertMatcher = opts.grepInvert ? createTitleMatcher(forceRegExp(opts.grepInvert)) : () => false;
   config._internal.cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
@@ -175,7 +169,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config._internal.passWithNoTests = !!opts.passWithNoTests;
 
   const runner = new Runner(config);
-  const status = await runner.runAllTests();
+  if (opts.watch)
+    process.stdout.write('\x1Bc');
+  const status = await runner.runAllTests(!!opts.watch);
   await stopProfiling(undefined);
 
   if (status === 'interrupted')
@@ -199,13 +195,6 @@ async function listTestFiles(opts: { [key: string]: any }) {
   write(JSON.stringify(report), () => {
     process.exit(0);
   });
-}
-
-function forceRegExp(pattern: string): RegExp {
-  const match = pattern.match(/^\/(.*)\/([gi]*)$/);
-  if (match)
-    return new RegExp(match[1], match[2]);
-  return new RegExp(pattern, 'gi');
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {

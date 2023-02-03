@@ -53,6 +53,7 @@ type ConfigInternal = {
   cliFileFilters: TestFileFilter[];
   cliTitleMatcher: Matcher;
   cliProjectFilter?: string[];
+  testIdMatcher?: Matcher;
   passWithNoTests?: boolean;
 };
 

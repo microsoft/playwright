@@ -24,6 +24,7 @@ import { createTaskRunner, createTaskRunnerForList } from './tasks';
 import type { TaskRunnerState } from './tasks';
 import type { FullConfigInternal } from '../common/types';
 import { colors } from 'playwright-core/lib/utilsBundle';
+import { runWatchModeLoop } from './watchMode';
 
 export class Runner {
   private _config: FullConfigInternal;
@@ -46,7 +47,7 @@ export class Runner {
     return report;
   }
 
-  async runAllTests(): Promise<FullResult['status']> {
+  async runAllTests(watchMode: boolean): Promise<FullResult['status']> {
     const config = this._config;
     const listOnly = config._internal.listOnly;
     const deadline = config.globalTimeout ? monotonicTime() + config.globalTimeout : 0;
@@ -54,9 +55,9 @@ export class Runner {
     // Legacy webServer support.
     webServerPluginsForConfig(config).forEach(p => config._internal.plugins.push({ factory: p }));
 
-    const reporter = await createReporter(config, listOnly);
+    const reporter = await createReporter(config, listOnly ? 'list' : watchMode ? 'watch' : 'run');
     const taskRunner = listOnly ? createTaskRunnerForList(config, reporter)
-      : createTaskRunner(config, reporter);
+      : createTaskRunner(config, reporter, watchMode);
 
     const context: TaskRunnerState = {
       config,
@@ -77,11 +78,15 @@ export class Runner {
 
     const taskStatus = await taskRunner.run(context, deadline);
     let status: FullResult['status'] = 'passed';
-    if (context.phases.find(p => p.dispatcher.hasWorkerErrors()) || context.rootSuite?.allTests().some(test => !test.ok()))
+    const failedTests = context.rootSuite?.allTests().filter(test => !test.ok()) || [];
+    if (context.phases.find(p => p.dispatcher.hasWorkerErrors()) || failedTests.length)
       status = 'failed';
     if (status === 'passed' && taskStatus !== 'passed')
       status = taskStatus;
     await reporter.onExit({ status });
+
+    if (watchMode)
+      await runWatchModeLoop(config, failedTests);
 
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.

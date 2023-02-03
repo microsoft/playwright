@@ -19,3 +19,4 @@ export const open: typeof import('../bundles/utils/node_modules/open') = require
 export const pirates: typeof import('../bundles/utils/node_modules/pirates') = require('./utilsBundleImpl').pirates;
 export const sourceMapSupport: typeof import('../bundles/utils/node_modules/@types/source-map-support') = require('./utilsBundleImpl').sourceMapSupport;
 export const stoppable: typeof import('../bundles/utils/node_modules/@types/stoppable') = require('./utilsBundleImpl').stoppable;
+export const enquirer: typeof import('../bundles/utils/node_modules/enquirer') = require('./utilsBundleImpl').enquirer;

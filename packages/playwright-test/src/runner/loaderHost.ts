@@ -69,6 +69,7 @@ export class OutOfProcessLoaderHost extends LoaderHost {
   }
 
   override async stop() {
+    await this._startPromise;
     const result = await this._processHost.sendMessage({ method: 'serializeCompilationCache' }) as any;
     addToCompilationCache(result);
     await this._processHost.stop();

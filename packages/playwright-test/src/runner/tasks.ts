@@ -50,29 +50,42 @@ export type TaskRunnerState = {
   }[];
 };
 
-export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
+export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer, doNotTeardown: boolean): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
 
   for (const plugin of config._internal.plugins)
-    taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
-  taskRunner.addTask('load tests', createLoadTask());
+    taskRunner.addTask('plugin setup', createPluginSetupTask(plugin, doNotTeardown));
+  if (config.globalSetup || config.globalTeardown)
+    taskRunner.addTask('global setup', createGlobalSetupTask(doNotTeardown));
+  taskRunner.addTask('load tests', createLoadTask('in-process'));
   taskRunner.addTask('clear output', createRemoveOutputDirsTask());
-  taskRunner.addTask('prepare workers', createTestGroupsTask());
-  for (const plugin of config._internal.plugins)
-    taskRunner.addTask('plugin begin', async ({ rootSuite }) => plugin.instance?.begin?.(rootSuite!));
+  addCommonTasks(taskRunner, config);
+  return taskRunner;
+}
+
+export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: Multiplexer, projectsToIgnore?: Set<FullProjectInternal>, additionalFileMatcher?: Matcher): TaskRunner<TaskRunnerState> {
+  const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
+  taskRunner.addTask('load tests', createLoadTask('out-of-process', projectsToIgnore, additionalFileMatcher));
+  addCommonTasks(taskRunner, config);
+  return taskRunner;
+}
+
+function addCommonTasks(taskRunner: TaskRunner<TaskRunnerState>, config: FullConfigInternal) {
+  taskRunner.addTask('create tasks', createTestGroupsTask());
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
     reporter.onBegin?.(config, rootSuite!);
     return () => reporter.onEnd();
   });
-  if (config.globalSetup || config.globalTeardown)
-    taskRunner.addTask('global setup', createGlobalSetupTask());
+  for (const plugin of config._internal.plugins)
+    taskRunner.addTask('plugin begin', createPluginBeginTask(plugin));
+  taskRunner.addTask('start workers', createWorkersTask());
   taskRunner.addTask('test suite', createRunTestsTask());
   return taskRunner;
 }
 
 export function createTaskRunnerForList(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
-  taskRunner.addTask('load tests', createLoadTask());
+  taskRunner.addTask('load tests', createLoadTask('in-process'));
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
     reporter.onBegin?.(config, rootSuite!);
     return () => reporter.onEnd();
@@ -80,23 +93,30 @@ export function createTaskRunnerForList(config: FullConfigInternal, reporter: Mu
   return taskRunner;
 }
 
-function createPluginSetupTask(plugin: TestRunnerPluginRegistration): Task<TaskRunnerState> {
+function createPluginSetupTask(plugin: TestRunnerPluginRegistration, doNotTeardown: boolean): Task<TaskRunnerState> {
   return async ({ config, reporter }) => {
     if (typeof plugin.factory === 'function')
       plugin.instance = await plugin.factory();
     else
       plugin.instance = plugin.factory;
     await plugin.instance?.setup?.(config, config._internal.configDir, reporter);
-    return () => plugin.instance?.teardown?.();
+    return doNotTeardown ? undefined : () => plugin.instance?.teardown?.();
   };
 }
 
-function createGlobalSetupTask(): Task<TaskRunnerState> {
+function createPluginBeginTask(plugin: TestRunnerPluginRegistration): Task<TaskRunnerState> {
+  return async ({ rootSuite }) => {
+    await plugin.instance?.begin?.(rootSuite!);
+    return () => plugin.instance?.end?.();
+  };
+}
+
+function createGlobalSetupTask(doNotTeardown: boolean): Task<TaskRunnerState> {
   return async ({ config }) => {
     const setupHook = config.globalSetup ? await loadGlobalHook(config, config.globalSetup) : undefined;
     const teardownHook = config.globalTeardown ? await loadGlobalHook(config, config.globalTeardown) : undefined;
     const globalSetupResult = setupHook ? await setupHook(config) : undefined;
-    return async () => {
+    return doNotTeardown ? undefined : async () => {
       if (typeof globalSetupResult === 'function')
         await globalSetupResult();
       await teardownHook?.(config);
@@ -126,12 +146,12 @@ function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
   };
 }
 
-function createLoadTask(projectsToIgnore = new Set<FullProjectInternal>(), additionalFileMatcher?: Matcher): Task<TaskRunnerState> {
+function createLoadTask(mode: 'out-of-process' | 'in-process', projectsToIgnore = new Set<FullProjectInternal>(), additionalFileMatcher?: Matcher): Task<TaskRunnerState> {
   return async (context, errors) => {
     const { config } = context;
     const cliMatcher = config._internal.cliFileFilters.length ? createFileMatcherFromFilters(config._internal.cliFileFilters) : () => true;
     const fileMatcher = (value: string) => cliMatcher(value) && (additionalFileMatcher ? additionalFileMatcher(value) : true);
-    context.rootSuite = await loadAllTests(config, projectsToIgnore, fileMatcher, errors);
+    context.rootSuite = await loadAllTests(mode, config, projectsToIgnore, fileMatcher, errors);
     // Fail when no tests.
     if (!context.rootSuite.allTests().length && !config._internal.passWithNoTests && !config.shard)
       throw new Error(`No tests found`);
@@ -158,9 +178,13 @@ function createTestGroupsTask(): Task<TaskRunnerState> {
       context.phases.push({ dispatcher: new Dispatcher(config, reporter), projects });
       context.config._internal.maxConcurrentTestGroups = Math.max(context.config._internal.maxConcurrentTestGroups, testGroupsInPhase);
     }
+  };
+}
 
+function createWorkersTask(): Task<TaskRunnerState> {
+  return async ({ phases }) => {
     return async () => {
-      for (const { dispatcher } of context.phases.reverse())
+      for (const { dispatcher } of phases.reverse())
         await dispatcher.stop();
     };
   };

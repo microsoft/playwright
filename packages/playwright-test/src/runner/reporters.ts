@@ -31,11 +31,11 @@ import type { FullConfigInternal } from '../common/types';
 import { loadReporter } from './loadUtils';
 import type { BuiltInReporter } from '../common/configLoader';
 
-export async function createReporter(config: FullConfigInternal, list: boolean) {
+export async function createReporter(config: FullConfigInternal, mode: 'list' | 'watch' | 'run') {
   const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
-    dot: list ? ListModeReporter : DotReporter,
-    line: list ? ListModeReporter : LineReporter,
-    list: list ? ListModeReporter : ListReporter,
+    dot: mode === 'list' ? ListModeReporter : DotReporter,
+    line: mode === 'list' ? ListModeReporter : LineReporter,
+    list: mode === 'list' ? ListModeReporter : ListReporter,
     github: GitHubReporter,
     json: JSONReporter,
     junit: JUnitReporter,
@@ -43,18 +43,22 @@ export async function createReporter(config: FullConfigInternal, list: boolean) 
     html: HtmlReporter,
   };
   const reporters: Reporter[] = [];
-  for (const r of config.reporter) {
-    const [name, arg] = r;
-    if (name in defaultReporters) {
-      reporters.push(new defaultReporters[name as keyof typeof defaultReporters](arg));
-    } else {
-      const reporterConstructor = await loadReporter(config, name);
-      reporters.push(new reporterConstructor(arg));
+  if (mode === 'watch') {
+    reporters.push(new WatchModeReporter());
+  } else {
+    for (const r of config.reporter) {
+      const [name, arg] = r;
+      if (name in defaultReporters) {
+        reporters.push(new defaultReporters[name as keyof typeof defaultReporters](arg));
+      } else {
+        const reporterConstructor = await loadReporter(config, name);
+        reporters.push(new reporterConstructor(arg));
+      }
     }
-  }
-  if (process.env.PW_TEST_REPORTER) {
-    const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
-    reporters.push(new reporterConstructor());
+    if (process.env.PW_TEST_REPORTER) {
+      const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
+      reporters.push(new reporterConstructor());
+    }
   }
 
   const someReporterPrintsToStdio = reporters.some(r => {
@@ -64,7 +68,7 @@ export async function createReporter(config: FullConfigInternal, list: boolean) 
   if (reporters.length && !someReporterPrintsToStdio) {
     // Add a line/dot/list-mode reporter for convenience.
     // Important to put it first, jsut in case some other reporter stalls onEnd.
-    if (list)
+    if (mode === 'list')
       reporters.unshift(new ListModeReporter());
     else
       reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
@@ -98,4 +102,7 @@ export class ListModeReporter implements Reporter {
     // eslint-disable-next-line no-console
     console.error('\n' + formatError(this.config, error, false).message);
   }
+}
+
+export class WatchModeReporter extends LineReporter {
 }
