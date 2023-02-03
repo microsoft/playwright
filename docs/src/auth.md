@@ -9,9 +9,9 @@ Tests written with Playwright execute in isolated clean-slate environments calle
 
 Depending on your project constraints and how expensive the authentication process is, you can pick one of the following approaches:
 
-* Perform login steps before each test. This approach provides best isolation between tests. If login steps take considerable time, you may want to run these steps less often, e.g. once in global setup, once per worker etc (see examples below).
+* Log in before each test. This approach provides best isolation between tests. If login steps take considerable time, you may want to run these steps less often, e.g. once in global setup, once per worker etc (see examples below).
 * Log in once during global setup, save the browser state into a file and reuse it in all the tests.
-* If some of the account state cannot be safely accessed simulteneously by several tests running in parallel you can run each parallel test with its own user account. In this case you can perform login steps once per test worker.
+* If an account cannot be safely accessed by several tests running in parallel, you can run each parallel test with its own user account. In this case it would make sense to login once per test worker.
 
 > Note: This guide covers cookie/token-based authentication (logging in via the app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) use [`method: Browser.newContext`].
 
@@ -119,7 +119,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync();
 Redoing login for every test can slow down test execution. To mitigate that, reuse
 existing authentication state instead.
 
-## Reuse signed in state
+## Reusing signed in state
 * langs: java, csharp, python
 
 Playwright provides a way to reuse the signed-in state in the tests. That way you can log
