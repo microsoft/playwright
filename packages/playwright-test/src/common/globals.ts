@@ -37,8 +37,18 @@ export function currentExpectTimeout(options: { timeout?: number }) {
   const testInfo = currentTestInfo();
   if (options.timeout !== undefined)
     return options.timeout;
-  let defaultExpectTimeout = testInfo?.project._expect?.timeout;
+  let defaultExpectTimeout = testInfo?.project._internal.expect?.timeout;
   if (typeof defaultExpectTimeout === 'undefined')
     defaultExpectTimeout = 5000;
   return defaultExpectTimeout;
+}
+
+let _isWorkerProcess = false;
+
+export function setIsWorkerProcess() {
+  _isWorkerProcess = true;
+}
+
+export function isWorkerProcess() {
+  return _isWorkerProcess;
 }

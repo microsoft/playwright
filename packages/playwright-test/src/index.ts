@@ -127,18 +127,18 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   }, { scope: 'worker', timeout: 0 }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
-  bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP), { option: true }],
-  colorScheme: [({ contextOptions }, use) => use(contextOptions.colorScheme), { option: true }],
+  bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP ?? false), { option: true }],
+  colorScheme: [({ contextOptions }, use) => use(contextOptions.colorScheme === undefined ? 'light' : contextOptions.colorScheme), { option: true }],
   deviceScaleFactor: [({ contextOptions }, use) => use(contextOptions.deviceScaleFactor), { option: true }],
   extraHTTPHeaders: [({ contextOptions }, use) => use(contextOptions.extraHTTPHeaders), { option: true }],
   geolocation: [({ contextOptions }, use) => use(contextOptions.geolocation), { option: true }],
-  hasTouch: [({ contextOptions }, use) => use(contextOptions.hasTouch), { option: true }],
+  hasTouch: [({ contextOptions }, use) => use(contextOptions.hasTouch ?? false), { option: true }],
   httpCredentials: [({ contextOptions }, use) => use(contextOptions.httpCredentials), { option: true }],
-  ignoreHTTPSErrors: [({ contextOptions }, use) => use(contextOptions.ignoreHTTPSErrors), { option: true }],
-  isMobile: [({ contextOptions }, use) => use(contextOptions.isMobile), { option: true }],
+  ignoreHTTPSErrors: [({ contextOptions }, use) => use(contextOptions.ignoreHTTPSErrors ?? false), { option: true }],
+  isMobile: [({ contextOptions }, use) => use(contextOptions.isMobile ?? false), { option: true }],
   javaScriptEnabled: [({ contextOptions }, use) => use(contextOptions.javaScriptEnabled ?? true), { option: true }],
   locale: [({ contextOptions }, use) => use(contextOptions.locale ?? 'en-US'), { option: true }],
-  offline: [({ contextOptions }, use) => use(contextOptions.offline), { option: true }],
+  offline: [({ contextOptions }, use) => use(contextOptions.offline ?? false), { option: true }],
   permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true }],
   proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true }],
   storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true }],
@@ -292,7 +292,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     const onDidCreateBrowserContext = async (context: BrowserContext) => {
       context.setDefaultTimeout(actionTimeout || 0);
-      context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
+      context.setDefaultNavigationTimeout(navigationTimeout || 0);
       await startTraceChunkOnContextCreation(context.tracing);
       const listener = createInstrumentationListener(context);
       (context as any)._instrumentation.addListener(listener);

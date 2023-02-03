@@ -16,9 +16,7 @@
 
 import path from 'path';
 import type { TestError } from '../../reporter';
-import type { LoadError } from './fixtures';
 import { setCurrentlyLoadingFileSuite } from './globals';
-import { PoolBuilder } from './poolBuilder';
 import { Suite } from './test';
 import { requireOrImport } from './transform';
 import { serializeError } from '../util';
@@ -29,64 +27,44 @@ export const defaultTimeout = 30000;
 // we make these maps global.
 const cachedFileSuites = new Map<string, Suite>();
 
-export class TestLoader {
-  private _rootDir: string;
+export async function loadTestFile(file: string, rootDir: string, testErrors?: TestError[]): Promise<Suite> {
+  if (cachedFileSuites.has(file))
+    return cachedFileSuites.get(file)!;
+  const suite = new Suite(path.relative(rootDir, file) || path.basename(file), 'file');
+  suite._requireFile = file;
+  suite.location = { file, line: 0, column: 0 };
 
-  constructor(rootDir: string) {
-    this._rootDir = rootDir;
+  setCurrentlyLoadingFileSuite(suite);
+  try {
+    await requireOrImport(file);
+    cachedFileSuites.set(file, suite);
+  } catch (e) {
+    if (!testErrors)
+      throw e;
+    testErrors.push(serializeError(e));
+  } finally {
+    setCurrentlyLoadingFileSuite(undefined);
   }
 
-  async loadTestFile(file: string, environment: 'loader' | 'worker', loadErrors: TestError[]): Promise<Suite> {
-    if (cachedFileSuites.has(file))
-      return cachedFileSuites.get(file)!;
-    const suite = new Suite(path.relative(this._rootDir, file) || path.basename(file), 'file');
-    suite._requireFile = file;
-    suite.location = { file, line: 0, column: 0 };
+  {
+    // Test locations that we discover potentially have different file name.
+    // This could be due to either
+    //   a) use of source maps or due to
+    //   b) require of one file from another.
+    // Try fixing (a) w/o regressing (b).
 
-    setCurrentlyLoadingFileSuite(suite);
-    try {
-      await requireOrImport(file);
-      cachedFileSuites.set(file, suite);
-    } catch (e) {
-      if (environment === 'worker')
-        throw e;
-      loadErrors.push(serializeError(e));
-    } finally {
-      setCurrentlyLoadingFileSuite(undefined);
-    }
-
-    {
-      // Test locations that we discover potentially have different file name.
-      // This could be due to either
-      //   a) use of source maps or due to
-      //   b) require of one file from another.
-      // Try fixing (a) w/o regressing (b).
-
-      const files = new Set<string>();
-      suite.allTests().map(t => files.add(t.location.file));
-      if (files.size === 1) {
-        // All tests point to one file.
-        const mappedFile = files.values().next().value;
-        if (suite.location.file !== mappedFile) {
-          // The file is different, check for a likely source map case.
-          if (path.extname(mappedFile) !== path.extname(suite.location.file))
-            suite.location.file = mappedFile;
-        }
+    const files = new Set<string>();
+    suite.allTests().map(t => files.add(t.location.file));
+    if (files.size === 1) {
+      // All tests point to one file.
+      const mappedFile = files.values().next().value;
+      if (suite.location.file !== mappedFile) {
+        // The file is different, check for a likely source map case.
+        if (path.extname(mappedFile) !== path.extname(suite.location.file))
+          suite.location.file = mappedFile;
       }
     }
-
-    return suite;
   }
-}
 
-export async function loadTestFilesInProcess(rootDir: string, testFiles: string[], loadErrors: LoadError[]): Promise<Suite> {
-  const testLoader = new TestLoader(rootDir);
-  const rootSuite = new Suite('', 'root');
-  for (const file of testFiles) {
-    const fileSuite = await testLoader.loadTestFile(file, 'loader', loadErrors);
-    rootSuite._addSuite(fileSuite);
-  }
-  // Generate hashes.
-  PoolBuilder.buildForLoader(rootSuite, loadErrors);
-  return rootSuite;
+  return suite;
 }

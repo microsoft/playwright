@@ -114,7 +114,7 @@ This project incorporates components from the projects listed below. The origina
 -	jest-regex-util@27.5.1 (https://github.com/facebook/jest)
 -	js-tokens@4.0.0 (https://github.com/lydell/js-tokens)
 -	jsesc@2.5.2 (https://github.com/mathiasbynens/jsesc)
--	json5@2.2.1 (https://github.com/json5/json5)
+-	json5@2.2.3 (https://github.com/json5/json5)
 -	micromatch@4.0.5 (https://github.com/micromatch/micromatch)
 -	ms@2.1.2 (https://github.com/zeit/ms)
 -	node-releases@2.0.6 (https://github.com/chicoxyzzy/node-releases)
@@ -3359,7 +3359,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF jsesc@2.5.2 AND INFORMATION
 
-%% json5@2.2.1 NOTICES AND INFORMATION BEGIN HERE
+%% json5@2.2.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -3385,7 +3385,7 @@ SOFTWARE.
 
 [others]: https://github.com/json5/json5/contributors
 =========================================
-END OF json5@2.2.1 AND INFORMATION
+END OF json5@2.2.3 AND INFORMATION
 
 %% micromatch@4.0.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================

@@ -92,9 +92,9 @@ class HtmlReporter implements Reporter {
   _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption } {
     let { outputFolder } = this._options;
     if (outputFolder)
-      outputFolder = path.resolve(this.config._configDir, outputFolder);
+      outputFolder = path.resolve(this.config._internal.configDir, outputFolder);
     return {
-      outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this.config._configDir),
+      outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this.config._internal.configDir),
       open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
     };
   }

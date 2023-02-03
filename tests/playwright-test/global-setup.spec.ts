@@ -24,10 +24,7 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
         testDir: '..',
         globalSetup: './globalSetup',
         globalTeardown: path.join(__dirname, 'globalTeardown.ts'),
-        projects: [
-          { name: 'p1' },
-          { name: 'p2' },
-        ]
+        projects: [{ name: 'p1' }]
       };
     `,
     'dir/globalSetup.ts': `
@@ -46,7 +43,7 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
         console.log('\\n%%from-test');
       });
     `,
-  }, { 'project': 'p2', 'config': 'dir' });
+  }, { 'config': 'dir' });
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(0);
   expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([

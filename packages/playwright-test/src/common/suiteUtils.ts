@@ -16,49 +16,11 @@
 
 import path from 'path';
 import { calculateSha1 } from 'playwright-core/lib/utils';
-import type { TestCase } from './test';
-import { Suite } from './test';
+import type { Suite, TestCase } from './test';
 import type { FullProjectInternal } from './types';
-import type { Matcher } from '../util';
-import { createTitleMatcher } from '../util';
+import type { TestFileFilter } from '../util';
+import { createFileMatcher } from '../util';
 
-export async function createRootSuite(preprocessRoot: Suite, testTitleMatcher: Matcher, filesByProject: Map<FullProjectInternal, string[]>): Promise<Suite> {
-  // Generate projects.
-  const fileSuites = new Map<string, Suite>();
-  for (const fileSuite of preprocessRoot.suites)
-    fileSuites.set(fileSuite._requireFile, fileSuite);
-
-  const rootSuite = new Suite('', 'root');
-  for (const [project, files] of filesByProject) {
-    const grepMatcher = createTitleMatcher(project.grep);
-    const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
-
-    const titleMatcher = (test: TestCase) => {
-      const grepTitle = test.titlePath().join(' ');
-      if (grepInvertMatcher?.(grepTitle))
-        return false;
-      return grepMatcher(grepTitle) && testTitleMatcher(grepTitle);
-    };
-
-    const projectSuite = new Suite(project.name, 'project');
-    projectSuite._projectConfig = project;
-    if (project._fullyParallel)
-      projectSuite._parallelMode = 'parallel';
-    rootSuite._addSuite(projectSuite);
-    for (const file of files) {
-      const fileSuite = fileSuites.get(file);
-      if (!fileSuite)
-        continue;
-      for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
-        const builtSuite = buildFileSuiteForProject(project, fileSuite, repeatEachIndex);
-        if (!filterTestsRemoveEmptySuites(builtSuite, titleMatcher))
-          continue;
-        projectSuite._addSuite(builtSuite);
-      }
-    }
-  }
-  return rootSuite;
-}
 
 export function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
   for (const child of suite.suites) {
@@ -92,11 +54,11 @@ export function buildFileSuiteForProject(project: FullProjectInternal, suite: Su
     const repeatEachIndexSuffix = repeatEachIndex ? ` (repeat:${repeatEachIndex})` : '';
 
     // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
-    const testIdExpression = `[project=${project._id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
+    const testIdExpression = `[project=${project._internal.id}]${test.titlePath().join('\x1e')}${repeatEachIndexSuffix}`;
     const testId = fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
     test.id = testId;
     test.repeatEachIndex = repeatEachIndex;
-    test._projectId = project._id;
+    test._projectId = project._internal.id;
 
     // Inherit properties from parent suites.
     let inheritedRetries: number | undefined;
@@ -117,7 +79,7 @@ export function buildFileSuiteForProject(project: FullProjectInternal, suite: Su
 
     // We only compute / set digest in the runner.
     if (test._poolDigest)
-      test._workerHash = `${project._id}-${test._poolDigest}-${repeatEachIndex}`;
+      test._workerHash = `${project._internal.id}-${test._poolDigest}-${repeatEachIndex}`;
   });
 
   return result;
@@ -140,4 +102,20 @@ export function filterSuiteWithOnlySemantics(suite: Suite, suiteFilter: (suites:
     return true;
   }
   return false;
+}
+
+export function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[]) {
+  if (!focusedTestFileLines.length)
+    return;
+  const matchers = focusedTestFileLines.map(createFileMatcherFromFilter);
+  const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => matchers.some(m => m(testFileName, testLine, testColumn));
+  const suiteFilter = (suite: Suite) => !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
+  const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line, test.location.column);
+  return filterSuite(suite, suiteFilter, testFilter);
+}
+
+function createFileMatcherFromFilter(filter: TestFileFilter) {
+  const fileMatcher = createFileMatcher(filter.re || filter.exact || '');
+  return (testFileName: string, testLine: number, testColumn: number) =>
+    fileMatcher(testFileName) && (filter.line === testLine || filter.line === null) && (filter.column === testColumn || filter.column === null);
 }

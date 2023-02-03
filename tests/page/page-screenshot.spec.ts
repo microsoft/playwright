@@ -268,7 +268,8 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-clip-odd-size.png');
   });
 
-  it('should work for canvas', async ({ page, server }) => {
+  it('should work for canvas', async ({ page, server, browserName, channel, browserMajorVersion }) => {
+    it.fixme(browserName === 'firefox' && channel === 'firefox-beta' && browserMajorVersion === 110, 'https://github.com/microsoft/playwright/issues/20522');
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();

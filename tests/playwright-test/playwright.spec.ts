@@ -686,3 +686,65 @@ test('should not throw with many fixtures set to undefined', async ({ runInlineT
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should have strict types for options but allow use(undefined)', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test.use({
+        headless: undefined,
+        acceptDownloads: undefined,
+        bypassCSP: undefined,
+        hasTouch: undefined,
+        ignoreHTTPSErrors: undefined,
+        isMobile: undefined,
+        javaScriptEnabled: undefined,
+        offline: undefined,
+        actionTimeout: undefined,
+        navigationTimeout: undefined,
+        testIdAttribute: undefined,
+      });
+      test('my test', async ({
+          headless, acceptDownloads, bypassCSP,
+          hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, offline,
+          actionTimeout, navigationTimeout, testIdAttribute }) => {
+        test.skip(headless, 'boolean');
+        test.skip(acceptDownloads, 'boolean');
+        test.skip(bypassCSP, 'boolean');
+        test.skip(hasTouch, 'boolean');
+        test.skip(ignoreHTTPSErrors, 'boolean');
+        test.skip(isMobile, 'boolean');
+        test.skip(javaScriptEnabled, 'boolean');
+        test.skip(offline, 'boolean');
+        test.skip(actionTimeout > 0, 'number');
+        test.skip(navigationTimeout > 0, 'number');
+        test.skip(testIdAttribute.length > 0, 'string');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should skip on mobile', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+
+      test.describe(() => {
+        test.use({ isMobile: true });
+        test('test 1', async ({ isMobile }) => {
+          test.skip(isMobile, 'desktop only!');
+        });
+      });
+
+      test.describe(() => {
+        test('test 2', async ({ isMobile }) => {
+          test.skip(isMobile, 'desktop only!');
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(result.passed).toBe(1);
+});

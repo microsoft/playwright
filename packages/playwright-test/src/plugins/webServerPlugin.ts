@@ -209,7 +209,7 @@ export const webServer = (options: WebServerPluginOptions): TestRunnerPlugin => 
 export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunnerPlugin[] => {
   const shouldSetBaseUrl = !!config.webServer;
   const webServerPlugins = [];
-  for (const webServerConfig of config._webServers) {
+  for (const webServerConfig of config._internal.webServers) {
     if ((!webServerConfig.port && !webServerConfig.url) || (webServerConfig.port && webServerConfig.url))
       throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
 

@@ -22,7 +22,7 @@ const path = require('path');
 
 /** @typedef {import('../../markdown').MarkdownNode} MarkdownNode */
 
-const IGNORE_CLASSES = ['PlaywrightAssertions', 'LocatorAssertions', 'PageAssertions', 'APIResponseAssertions', 'SnapshotAssertions'];
+const IGNORE_CLASSES = ['PlaywrightAssertions', 'GenericAssertions', 'LocatorAssertions', 'PageAssertions', 'APIResponseAssertions', 'SnapshotAssertions'];
 
 module.exports = function lint(documentation, jsSources, apiFileName) {
   const errors = [];

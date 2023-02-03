@@ -24,6 +24,12 @@ import { TimeoutManager } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal, TestStepInternal } from './types';
 import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
 
+export type TestInfoErrorState = {
+  status: TestStatus,
+  errors: TestInfoError[],
+  hasHardError: boolean,
+};
+
 export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
@@ -117,8 +123,8 @@ export class TestInfoImpl implements TestInfo {
       const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ');
 
       let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
-      if (project._id)
-        testOutputDir += '-' + sanitizeForFilePath(project._id);
+      if (project._internal.id)
+        testOutputDir += '-' + sanitizeForFilePath(project._internal.id);
       if (this.retry)
         testOutputDir += '-retry' + this.retry;
       if (this.repeatEachIndex)
@@ -161,10 +167,12 @@ export class TestInfoImpl implements TestInfo {
 
   async _runWithTimeout(cb: () => Promise<any>): Promise<void> {
     const timeoutError = await this._timeoutManager.runWithTimeout(cb);
-    // Do not overwrite existing failure upon hook/teardown timeout.
-    if (timeoutError && !this._didTimeout) {
+    // When interrupting, we arrive here with a timeoutError, but we should not
+    // consider it a timeout.
+    if (this.status !== 'interrupted' && timeoutError && !this._didTimeout) {
       this._didTimeout = true;
       this.errors.push(timeoutError);
+      // Do not overwrite existing failure upon hook/teardown timeout.
       if (this.status === 'passed' || this.status === 'skipped')
         this.status = 'timedOut';
     }
@@ -246,6 +254,20 @@ export class TestInfoImpl implements TestInfo {
     this.errors.push(error);
   }
 
+  _saveErrorState(): TestInfoErrorState {
+    return {
+      hasHardError: this._hasHardError,
+      status: this.status,
+      errors: this.errors.slice(),
+    };
+  }
+
+  _restoreErrorState(state: TestInfoErrorState) {
+    this.status = state.status;
+    this.errors = state.errors.slice();
+    this._hasHardError = state.hasHardError;
+  }
+
   async _runAsStep<T>(cb: () => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete'>): Promise<T> {
     const step = this._addStep(stepInfo);
     try {
@@ -302,7 +324,7 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?arg\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))
         .replace(/\{(.)?ext\}/g, parsedSubPath.ext ? '$1' + parsedSubPath.ext : '');
 
-    return path.normalize(path.resolve(this.config._configDir, snapshotPath));
+    return path.normalize(path.resolve(this.config._internal.configDir, snapshotPath));
   }
 
   skip(...args: [arg?: any, description?: string]) {

@@ -20,30 +20,29 @@ import type { Suite, TestCase } from './test';
 import type { TestTypeImpl } from './testType';
 import type { Fixtures, FixturesWithLocation, FullProjectInternal } from './types';
 import { formatLocation } from '../util';
+import type { TestError } from '../../reporter';
 
 export class PoolBuilder {
   private _project: FullProjectInternal | undefined;
   private _testTypePools = new Map<TestTypeImpl, FixturePool>();
   private _type: 'loader' | 'worker';
-  private _loadErrors: LoadError[] | undefined;
 
-  static buildForLoader(suite: Suite, loadErrors: LoadError[]) {
-    new PoolBuilder('loader', loadErrors).buildPools(suite);
+  static createForLoader() {
+    return new PoolBuilder('loader');
   }
 
   static createForWorker(project: FullProjectInternal) {
-    return new PoolBuilder('worker', undefined, project);
+    return new PoolBuilder('worker', project);
   }
 
-  private constructor(type: 'loader' | 'worker', loadErrors?: LoadError[], project?: FullProjectInternal) {
+  private constructor(type: 'loader' | 'worker', project?: FullProjectInternal) {
     this._type = type;
-    this._loadErrors = loadErrors;
     this._project = project;
   }
 
-  buildPools(suite: Suite) {
+  buildPools(suite: Suite, testErrors?: TestError[]) {
     suite.forEachTest(test => {
-      const pool = this._buildPoolForTest(test);
+      const pool = this._buildPoolForTest(test, testErrors);
       if (this._type === 'loader')
         test._poolDigest = pool.digest;
       if (this._type === 'worker')
@@ -51,8 +50,8 @@ export class PoolBuilder {
     });
   }
 
-  private _buildPoolForTest(test: TestCase): FixturePool {
-    let pool = this._buildTestTypePool(test._testType);
+  private _buildPoolForTest(test: TestCase, testErrors?: TestError[]): FixturePool {
+    let pool = this._buildTestTypePool(test._testType, testErrors);
 
     const parents: Suite[] = [];
     for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent)
@@ -61,7 +60,7 @@ export class PoolBuilder {
 
     for (const parent of parents) {
       if (parent._use.length)
-        pool = new FixturePool(parent._use, e => this._onLoadError(e), pool, parent._type === 'describe');
+        pool = new FixturePool(parent._use, e => this._handleLoadError(e, testErrors), pool, parent._type === 'describe');
       for (const hook of parent._hooks)
         pool.validateFunction(hook.fn, hook.type + ' hook', hook.location);
       for (const modifier of parent._modifiers)
@@ -72,18 +71,18 @@ export class PoolBuilder {
     return pool;
   }
 
-  private _buildTestTypePool(testType: TestTypeImpl): FixturePool {
+  private _buildTestTypePool(testType: TestTypeImpl, testErrors?: TestError[]): FixturePool {
     if (!this._testTypePools.has(testType)) {
       const fixtures = this._project ? this._applyConfigUseOptions(this._project, testType) : testType.fixtures;
-      const pool = new FixturePool(fixtures, e => this._onLoadError(e));
+      const pool = new FixturePool(fixtures, e => this._handleLoadError(e, testErrors));
       this._testTypePools.set(testType, pool);
     }
     return this._testTypePools.get(testType)!;
   }
 
-  private _onLoadError(e: LoadError): void {
-    if (this._loadErrors)
-      this._loadErrors.push(e);
+  private _handleLoadError(e: LoadError, testErrors?: TestError[]): void {
+    if (testErrors)
+      testErrors.push(e);
     else
       throw new Error(`${formatLocation(e.location)}: ${e.message}`);
   }
@@ -104,7 +103,7 @@ export class PoolBuilder {
       if (Object.entries(optionsFromConfig).length) {
         // Add config options immediately after original option definition,
         // so that any test.use() override it.
-        result.push({ fixtures: optionsFromConfig, location: { file: `project#${project._id}`, line: 1, column: 1 }, fromConfig: true });
+        result.push({ fixtures: optionsFromConfig, location: { file: `project#${project._internal.id}`, line: 1, column: 1 }, fromConfig: true });
       }
     }
     return result;

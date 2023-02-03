@@ -57,25 +57,16 @@ type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K
  *   // Options specific to each project.
  *   projects: [
  *     {
- *       name: 'Desktop Chromium',
- *       use: {
- *         browserName: 'chromium',
- *         viewport: { width: 1280, height: 720 },
- *       },
+ *       name: 'chromium',
+ *       use: devices['Desktop Chrome'],
  *     },
  *     {
- *       name: 'Desktop Safari',
- *       use: {
- *         browserName: 'webkit',
- *         viewport: { width: 1280, height: 720 },
- *       }
+ *       name: 'firefox',
+ *       use: devices['Desktop Firefox'],
  *     },
  *     {
- *       name: 'Desktop Firefox',
- *       use: {
- *         browserName: 'firefox',
- *         viewport: { width: 1280, height: 720 },
- *       }
+ *       name: 'webkit',
+ *       use: devices['Desktop Safari'],
  *     },
  *     {
  *       name: 'Mobile Chrome',
@@ -144,25 +135,16 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
  *   // Options specific to each project.
  *   projects: [
  *     {
- *       name: 'Desktop Chromium',
- *       use: {
- *         browserName: 'chromium',
- *         viewport: { width: 1280, height: 720 },
- *       },
+ *       name: 'chromium',
+ *       use: devices['Desktop Chrome'],
  *     },
  *     {
- *       name: 'Desktop Safari',
- *       use: {
- *         browserName: 'webkit',
- *         viewport: { width: 1280, height: 720 },
- *       }
+ *       name: 'firefox',
+ *       use: devices['Desktop Firefox'],
  *     },
  *     {
- *       name: 'Desktop Firefox',
- *       use: {
- *         browserName: 'firefox',
- *         viewport: { width: 1280, height: 720 },
- *       }
+ *       name: 'webkit',
+ *       use: devices['Desktop Safari'],
  *     },
  *     {
  *       name: 'Mobile Chrome',
@@ -203,6 +185,47 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    * Project name is visible in the report and during test execution.
    */
   name: string;
+  /**
+   * List of projects that need to run before any test in this project runs. Dependencies can be useful for configuring
+   * the global setup actions in a way that every action is in a form of a test. Passing `--no-deps` argument ignores
+   * the dependencies and behaves as if they were not specified.
+   *
+   * Using dependencies allows global setup to produce traces and other artifacts, see the setup steps in the test
+   * report, etc.
+   *
+   * For example:
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'setup',
+   *       testMatch: /global.setup\.ts/,
+   *     },
+   *     {
+   *       name: 'chromium',
+   *       use: devices['Desktop Chrome'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'firefox',
+   *       use: devices['Desktop Firefox'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'webkit',
+   *       use: devices['Desktop Safari'],
+   *       dependencies: ['setup'],
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   */
+  dependencies: string[];
   /**
    * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
    * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
@@ -3339,7 +3362,7 @@ export interface PlaywrightWorkerOptions {
    * [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
    * `devtools` option is `true`.
    */
-  headless: boolean | undefined;
+  headless: boolean;
   /**
    * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary",
    * "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
@@ -3445,17 +3468,17 @@ export interface PlaywrightTestOptions {
   /**
    * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
    */
-  acceptDownloads: boolean | undefined;
+  acceptDownloads: boolean;
   /**
    * Toggles bypassing page's Content-Security-Policy.
    */
-  bypassCSP: boolean | undefined;
+  bypassCSP: boolean;
   /**
    * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
    * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
    * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
    */
-  colorScheme: ColorScheme | undefined;
+  colorScheme: ColorScheme;
   /**
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`.
    */
@@ -3468,7 +3491,7 @@ export interface PlaywrightTestOptions {
   /**
    * Specifies if viewport supports touch events. Defaults to false.
    */
-  hasTouch: boolean | undefined;
+  hasTouch: boolean;
   /**
    * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
    */
@@ -3476,16 +3499,16 @@ export interface PlaywrightTestOptions {
   /**
    * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
    */
-  ignoreHTTPSErrors: boolean | undefined;
+  ignoreHTTPSErrors: boolean;
   /**
    * Whether the `meta viewport` tag is taken into account and touch events are enabled. Defaults to `false`. Not
    * supported in Firefox.
    */
-  isMobile: boolean | undefined;
+  isMobile: boolean;
   /**
    * Whether or not to enable JavaScript in the context. Defaults to `true`.
    */
-  javaScriptEnabled: boolean | undefined;
+  javaScriptEnabled: boolean;
   /**
    * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
    * `Accept-Language` request header value as well as number and date formatting rules.
@@ -3494,7 +3517,7 @@ export interface PlaywrightTestOptions {
   /**
    * Whether to emulate network being offline. Defaults to `false`.
    */
-  offline: boolean | undefined;
+  offline: boolean;
   /**
    * A list of permissions to grant to all pages in this context. See
    * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
@@ -3529,7 +3552,7 @@ export interface PlaywrightTestOptions {
    * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
    * by the operating system. It makes the execution of the tests non-deterministic.
    */
-  viewport: ViewportSize | null | undefined;
+  viewport: ViewportSize | null;
   /**
    * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
    * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
@@ -3562,7 +3585,7 @@ export interface PlaywrightTestOptions {
    *
    * Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    */
-  actionTimeout: number | undefined;
+  actionTimeout: number;
   /**
    * Timeout for each navigation action in milliseconds. Defaults to 0 (no timeout).
    *
@@ -3571,20 +3594,20 @@ export interface PlaywrightTestOptions {
    *
    * Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    */
-  navigationTimeout: number | undefined;
+  navigationTimeout: number;
   /**
    * Whether to allow sites to register Service workers. Defaults to `'allow'`.
    * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
    *   registered.
    * - `'block'`: Playwright will block all registration of Service Workers.
    */
-  serviceWorkers: ServiceWorkerPolicy | undefined;
+  serviceWorkers: ServiceWorkerPolicy;
   /**
    * Custom attribute to be used in
    * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used
    * by default.
    */
-  testIdAttribute: string | undefined;
+  testIdAttribute: string;
 }
 
 
@@ -3724,8 +3747,13 @@ export interface PlaywrightTestArgs {
   request: APIRequestContext;
 }
 
-export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
-export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
+type ExcludeProps<A, B> = {
+  [K in Exclude<keyof A, keyof B>]: A[K];
+};
+type CustomProperties<T> = ExcludeProps<T, PlaywrightTestOptions & PlaywrightWorkerOptions & PlaywrightTestArgs & PlaywrightWorkerArgs>;
+
+export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
+export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
 
 import type * as expectType from './expect-types';
 import type { Suite } from './testReporter';
@@ -3752,7 +3780,421 @@ type Inverse<Matchers> = {
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
 
-type BaseMatchers<R, T> = expectType.Matchers<R> & PlaywrightTest.Matchers<R, T>;
+/**
+ * The [GenericAssertions] class provides assertion methods that can be used to make assertions about any values in
+ * the tests. A new instance of [GenericAssertions] is created by calling
+ * [expect(value)](https://playwright.dev/docs/api/class-playwrightassertions#playwright-assertions-expect-generic):
+ *
+ * ```js
+ * import { test, expect } from '@playwright/test';
+ *
+ * test('assert a value', async ({ page }) => {
+ *   const value = 1;
+ *   await expect(value).toBe(2);
+ * });
+ * ```
+ *
+ */
+interface GenericAssertions<R> {
+  /**
+   * Makes the assertion check for the opposite condition. For example, the following code passes:
+   *
+   * ```js
+   * const value = 1;
+   * await expect(value).not.toBe(2);
+   * ```
+   *
+   */
+  not: GenericAssertions<R>;
+  /**
+   * Compares value with `expected` by calling `Object.is`. This method compares objects by reference instead of their
+   * contents, similarly to the strict equality operator `===`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = { prop: 1 };
+   * expect(value).toBe(value);
+   * expect(value).not.toBe({});
+   * expect(value.prop).toBe(1);
+   * ```
+   *
+   * @param expected Expected value.
+   */
+  toBe(expected: unknown): R;
+  /**
+   * Compares floating point numbers for approximate equality. Use this method instead of
+   * [genericAssertions.toBe(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-be)
+   * when comparing floating point numbers.
+   *
+   * **Usage**
+   *
+   * ```js
+   * expect(0.1 + 0.2).not.toBe(0.3);
+   * expect(0.1 + 0.2).toBeCloseTo(0.3, 5);
+   * ```
+   *
+   * @param expected Expected value.
+   * @param numDigits The number of decimal digits after the decimal point that must be equal.
+   */
+  toBeCloseTo(expected: number, numDigits?: number): R;
+  /**
+   * Ensures that value is not `undefined`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = null;
+   * expect(value).toBeDefined();
+   * ```
+   *
+   */
+  toBeDefined(): R;
+  /**
+   * Ensures that value is false in a boolean context, one of `false`, `0`, `''`, `null`, `undefined` or `NaN`. Use this
+   * method when you don't care about the specific value.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = null;
+   * expect(value).toBeFalsy();
+   * ```
+   *
+   */
+  toBeFalsy(): R;
+  /**
+   * Ensures that `value > expected` for number or big integer values.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = 42;
+   * expect(value).toBeGreaterThan(1);
+   * ```
+   *
+   * @param expected The value to compare to.
+   */
+  toBeGreaterThan(expected: number | bigint): R;
+  /**
+   * Ensures that `value >= expected` for number or big integer values.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = 42;
+   * expect(value).toBeGreaterThanOrEqual(42);
+   * ```
+   *
+   * @param expected The value to compare to.
+   */
+  toBeGreaterThanOrEqual(expected: number | bigint): R;
+  /**
+   * Ensures that value is an instance of a class. Uses `instanceof` operator.
+   *
+   * **Usage**
+   *
+   * ```js
+   * expect(page).toBeInstanceOf(Page);
+   *
+   * class Example {}
+   * expect(new Example()).toBeInstanceOf(Example);
+   * ```
+   *
+   * @param expected The class or constructor function.
+   */
+  toBeInstanceOf(expected: Function): R;
+  /**
+   * Ensures that `value < expected` for number or big integer values.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = 42;
+   * expect(value).toBeLessThan(100);
+   * ```
+   *
+   * @param expected The value to compare to.
+   */
+  toBeLessThan(expected: number | bigint): R;
+  /**
+   * Ensures that `value <= expected` for number or big integer values.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = 42;
+   * expect(value).toBeLessThanOrEqual(42);
+   * ```
+   *
+   * @param expected The value to compare to.
+   */
+  toBeLessThanOrEqual(expected: number | bigint): R;
+  /**
+   * Ensures that value is `NaN`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = NaN;
+   * expect(value).toBeNaN();
+   * ```
+   *
+   */
+  toBeNaN(): R;
+  /**
+   * Ensures that value is `null`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = null;
+   * expect(value).toBeNull();
+   * ```
+   *
+   */
+  toBeNull(): R;
+  /**
+   * Ensures that value is true in a boolean context, **anything but** `false`, `0`, `''`, `null`, `undefined` or `NaN`.
+   * Use this method when you don't care about the specific value.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = { example: 'value' };
+   * expect(value).toBeTruthy();
+   * ```
+   *
+   */
+  toBeTruthy(): R;
+  /**
+   * Ensures that value is `undefined`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = undefined;
+   * expect(value).toBeUndefined();
+   * ```
+   *
+   */
+  toBeUndefined(): R;
+  /**
+   * Ensures that string value contains an expected substring. Comparison is case-sensitive.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = 'Hello, World';
+   * expect(value).toContain('World');
+   * expect(value).toContain(',');
+   * ```
+   *
+   * @param expected Expected substring.
+   */
+  toContain(expected: string): R;
+  /**
+   * Ensures that value is an `Array` or `Set` and contains an expected item.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = [1, 2, 3];
+   * expect(value).toContain(2);
+   * expect(new Set(value)).toContain(2);
+   * ```
+   *
+   * @param expected Expected value in the collection.
+   */
+  toContain(expected: unknown): R;
+  /**
+   * Ensures that value is an `Array` or `Set` and contains an item equal to the expected.
+   *
+   * For objects, this method recursively checks equality of all fields, rather than comparing objects by reference as
+   * performed by
+   * [genericAssertions.toContain(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-contain-2).
+   *
+   * For primitive values, this method is equivalent to
+   * [genericAssertions.toContain(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-contain-2).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = [
+   *   { example: 1 },
+   *   { another: 2 },
+   *   { more: 3 },
+   * ];
+   * expect(value).toContainEqual({ another: 2 });
+   * expect(new Set(value)).toContainEqual({ another: 2 });
+   * ```
+   *
+   * @param expected Expected value in the collection.
+   */
+  toContainEqual(expected: unknown): R;
+  /**
+   * Compares contents of the value with contents of `expected`, performing "deep equality" check.
+   *
+   * For objects, this method recursively checks equality of all fields, rather than comparing objects by reference as
+   * performed by
+   * [genericAssertions.toBe(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-be).
+   *
+   * For primitive values, this method is equivalent to
+   * [genericAssertions.toBe(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-be).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = { prop: 1 };
+   * expect(value).toEqual({ prop: 1 });
+   * ```
+   *
+   * @param expected Expected value.
+   */
+  toEqual(expected: unknown): R;
+  /**
+   * Ensures that value has a `.length` property equal to `expected`. Useful for arrays and strings.
+   *
+   * **Usage**
+   *
+   * ```js
+   * expect('Hello, World').toHaveLength(12);
+   * expect([1, 2, 3]).toHaveLength(3);
+   * ```
+   *
+   * @param expected Expected length.
+   */
+  toHaveLength(expected: number): R;
+  /**
+   * Ensures that property at provided `keyPath` exists on the object and optionally checks that property is equal to
+   * the `expected`. Equality is checked recursively, similarly to
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = {
+   *   a: {
+   *     b: [42],
+   *   },
+   *   c: true,
+   * };
+   * expect(value).toHaveProperty('a.b');
+   * expect(value).toHaveProperty('a.b', [42]);
+   * expect(value).toHaveProperty('a.b[0]', 42);
+   * expect(value).toHaveProperty('c');
+   * expect(value).toHaveProperty('c', true);
+   * ```
+   *
+   * @param keyPath Path to the property. Use dot notation `a.b` to check nested properties and indexed `a[2]` notation to check nested
+   * array items.
+   * @param expected Optional expected value to compare the property to.
+   */
+  toHaveProperty(keyPath: string | Array<string>, value?: unknown): R;
+  /**
+   * Ensures that string value matches a regular expression.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = 'Is 42 enough?';
+   * expect(value).toMatches(/Is \d+ enough/);
+   * ```
+   *
+   * @param expected Regular expression to match against.
+   */
+  toMatch(expected: RegExp): R;
+  /**
+   * Compares contents of the value with contents of `expected`, performing "deep equality" check. Allows extra
+   * properties to be present in the value, unlike
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal),
+   * so you can check just a subset of object properties.
+   *
+   * When comparing arrays, the number of items must match, and each item is checked recursively.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = {
+   *   a: 1,
+   *   b: 2,
+   *   c: true,
+   * };
+   * expect(value).toMatchObject({ a: 1, c: true });
+   * expect(value).toMatchObject({ b: 2, c: true });
+   *
+   * expect([{ a: 1, b: 2 }]).toMatchObject([{ a: 1 }]);
+   * ```
+   *
+   * @param expected The expected object value to match against.
+   */
+  toMatchObject(expected: Record<string, unknown> | Array<unknown>): R;
+  /**
+   * Compares contents of the value with contents of `expected` **and** their types.
+   *
+   * Differences from
+   * [genericAssertions.toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal):
+   * - Keys with undefined properties are checked. For example, `{ a: undefined, b: 2 }` does not match `{ b: 2 }`.
+   * - Array sparseness is checked. For example, `[, 1]` does not match `[undefined, 1]`.
+   * - Object types are checked to be equal. For example, a class instance with fields `a` and `b` will not equal a
+   *   literal object with fields `a` and `b`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = { prop: 1 };
+   * expect(value).toStrictEqual({ prop: 1 });
+   * ```
+   *
+   * @param expected Expected value.
+   */
+  toStrictEqual(expected: unknown): R;
+  /**
+   * Calls the function and ensures it throws an error.
+   *
+   * Optionally compares the error with `expected`. Allowed expected values:
+   * - Regular expression - error message should **match** the pattern.
+   * - String - error message should **include** the substring.
+   * - Error object - error message should be **equal to** the message property of the object.
+   * - Error class - error object should be an **instance of** the class.
+   *
+   * **Usage**
+   *
+   * ```js
+   * expect(() => {
+   *   throw new Error('Something bad');
+   * }).toThrow();
+   *
+   * expect(() => {
+   *   throw new Error('Something bad');
+   * }).toThrow(/something/);
+   *
+   * expect(() => {
+   *   throw new Error('Something bad');
+   * }).toThrow(Error);
+   * ```
+   *
+   * @param expected Expected error message or error object.
+   */
+  toThrow(error?: unknown): R;
+  /**
+   * An alias for
+   * [genericAssertions.toThrow([expected])](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-throw).
+   *
+   * **Usage**
+   *
+   * ```js
+   * expect(() => {
+   *   throw new Error('Something bad');
+   * }).toThrowError();
+   * ```
+   *
+   * @param expected Expected error message or error object.
+   */
+  toThrowError(error?: unknown): R;
+}
+
+type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T>;
 
 type MakeMatchers<R, T> = BaseMatchers<R, T> & {
     /**
@@ -4986,25 +5428,16 @@ export interface TestInfoError {
  *   // Options specific to each project.
  *   projects: [
  *     {
- *       name: 'Desktop Chromium',
- *       use: {
- *         browserName: 'chromium',
- *         viewport: { width: 1280, height: 720 },
- *       },
+ *       name: 'chromium',
+ *       use: devices['Desktop Chrome'],
  *     },
  *     {
- *       name: 'Desktop Safari',
- *       use: {
- *         browserName: 'webkit',
- *         viewport: { width: 1280, height: 720 },
- *       }
+ *       name: 'firefox',
+ *       use: devices['Desktop Firefox'],
  *     },
  *     {
- *       name: 'Desktop Firefox',
- *       use: {
- *         browserName: 'firefox',
- *         viewport: { width: 1280, height: 720 },
- *       }
+ *       name: 'webkit',
+ *       use: devices['Desktop Safari'],
  *     },
  *     {
  *       name: 'Mobile Chrome',
@@ -5020,6 +5453,48 @@ export interface TestInfoError {
  *
  */
 interface TestProject {
+  /**
+   * List of projects that need to run before any test in this project runs. Dependencies can be useful for configuring
+   * the global setup actions in a way that every action is in a form of a test. Passing `--no-deps` argument ignores
+   * the dependencies and behaves as if they were not specified.
+   *
+   * Using dependencies allows global setup to produce traces and other artifacts, see the setup steps in the test
+   * report, etc.
+   *
+   * For example:
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'setup',
+   *       testMatch: /global.setup\.ts/,
+   *     },
+   *     {
+   *       name: 'chromium',
+   *       use: devices['Desktop Chrome'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'firefox',
+   *       use: devices['Desktop Firefox'],
+   *       dependencies: ['setup'],
+   *     },
+   *     {
+   *       name: 'webkit',
+   *       use: devices['Desktop Safari'],
+   *       dependencies: ['setup'],
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   */
+  dependencies?: Array<string>;
+
   /**
    * Configuration for the `expect` assertion library.
    *

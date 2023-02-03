@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { serializeCompilationCache } from './compilationCache';
 import type { FullConfigInternal, TestInfoError, TestStatus } from './types';
 
 export type ConfigCLIOverrides = {
@@ -39,6 +40,7 @@ export type SerializedConfig = {
   configFile: string | undefined;
   configDir: string;
   configCLIOverrides: ConfigCLIOverrides;
+  compilationCache: any;
 };
 
 export type TtyParams = {
@@ -124,8 +126,9 @@ export type TeardownErrorsPayload = {
 export function serializeConfig(config: FullConfigInternal): SerializedConfig {
   const result: SerializedConfig = {
     configFile: config.configFile,
-    configDir: config._configDir,
-    configCLIOverrides: config._configCLIOverrides,
+    configDir: config._internal.configDir,
+    configCLIOverrides: config._internal.configCLIOverrides,
+    compilationCache: serializeCompilationCache(),
   };
   return result;
 }

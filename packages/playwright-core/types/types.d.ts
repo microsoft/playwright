@@ -14526,7 +14526,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -14655,7 +14656,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -14754,7 +14756,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -14833,7 +14836,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -14912,7 +14916,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -15042,7 +15047,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -15121,7 +15127,8 @@ export interface APIRequestContext {
     form?: { [key: string]: string|number|boolean; };
 
     /**
-     * Allows to set HTTP headers.
+     * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+     * it.
      */
     headers?: { [key: string]: string; };
 
@@ -17789,6 +17796,13 @@ export interface Route {
    * });
    * ```
    *
+   * **Details**
+   *
+   * Note that any overrides such as `url` or `headers` only apply to the request being routed. If this request results
+   * in a redirect, overrides will not be applied to the new redirected request. If you want to propagate a header
+   * through redirects, use the combination of
+   * [route.fetch([options])](https://playwright.dev/docs/api/class-route#route-fetch) and
+   * [route.fulfill([options])](https://playwright.dev/docs/api/class-route#route-fulfill) instead.
    * @param options
    */
   continue(options?: {
@@ -17916,6 +17930,11 @@ export interface Route {
    * });
    * ```
    *
+   * **Details**
+   *
+   * Note that `headers` option will apply to the fetched request as well as any redirects initiated by it. If you want
+   * to only apply `headers` to the original request, but not to redirects, look into
+   * [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue) instead.
    * @param options
    */
   fetch(options?: {
@@ -17923,6 +17942,12 @@ export interface Route {
      * If set changes the request HTTP headers. Header values will be converted to a string.
      */
     headers?: { [key: string]: string; };
+
+    /**
+     * Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+     * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+     */
+    maxRedirects?: number;
 
     /**
      * If set changes the request method (e.g. GET or POST).

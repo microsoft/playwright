@@ -21,23 +21,32 @@ const tests = {
     export const headlessTest = pwt.test.extend({ headless: false });
     export const headedTest = pwt.test.extend({ headless: true });
   `,
-  'a.spec.ts': `
+  'a1.spec.ts': `
     import { headlessTest, headedTest } from './helper';
     headlessTest('test1', async () => {
       console.log('test1-done');
     });
+  `,
+  'a2.spec.ts': `
+    import { headlessTest, headedTest } from './helper';
     headedTest('test2', async () => {
       console.log('test2-done');
     });
+  `,
+  'a3.spec.ts': `
+    import { headlessTest, headedTest } from './helper';
     headlessTest('test3', async () => {
       console.log('test3-done');
     });
   `,
-  'b.spec.ts': `
+  'b1.spec.ts': `
     import { headlessTest, headedTest } from './helper';
     headlessTest('test4', async () => {
       console.log('test4-done');
     });
+  `,
+  'b2.spec.ts': `
+    import { headlessTest, headedTest } from './helper';
     headedTest('test5', async () => {
       console.log('test5-done');
     });
@@ -50,8 +59,8 @@ test('should respect shard=1/2', async ({ runInlineTest }) => {
   expect(result.passed).toBe(3);
   expect(result.skipped).toBe(0);
   expect(result.output).toContain('test1-done');
+  expect(result.output).toContain('test2-done');
   expect(result.output).toContain('test3-done');
-  expect(result.output).toContain('test4-done');
 });
 
 test('should respect shard=2/2', async ({ runInlineTest }) => {
@@ -59,7 +68,7 @@ test('should respect shard=2/2', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
   expect(result.skipped).toBe(0);
-  expect(result.output).toContain('test2-done');
+  expect(result.output).toContain('test4-done');
   expect(result.output).toContain('test5-done');
 });
 
@@ -83,6 +92,6 @@ test('should respect shard=1/2 in config', async ({ runInlineTest }) => {
   expect(result.passed).toBe(3);
   expect(result.skipped).toBe(0);
   expect(result.output).toContain('test1-done');
+  expect(result.output).toContain('test2-done');
   expect(result.output).toContain('test3-done');
-  expect(result.output).toContain('test4-done');
 });

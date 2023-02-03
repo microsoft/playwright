@@ -16,8 +16,6 @@
 import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
-test.fixme(true, 'Restore this');
-
 type Timeline = { titlePath: string[], event: 'begin' | 'end' }[];
 
 function formatTimeline(timeline: Timeline) {
@@ -70,11 +68,15 @@ test('should work for one project', async ({ runGroups }, testInfo) => {
   const files = {
     'playwright.config.ts': `
       module.exports = {
-        globalScripts: /.*global.ts/,
         projects: [
+          {
+            name: 'setup',
+            testMatch: /.*global.ts/,
+          },
           {
             name: 'p1',
             testMatch: /.*.test.ts/,
+            dependencies: ['setup'],
           },
         ]
       };`,
@@ -92,10 +94,10 @@ test('should work for one project', async ({ runGroups }, testInfo) => {
   const { exitCode, passed, timeline } = await runGroups(files);
   expect(exitCode).toBe(0);
   expect(passed).toBe(4);
-  expect(formatTimeline(timeline)).toEqual(`Global Scripts > global.ts > setup1 [begin]
-Global Scripts > global.ts > setup1 [end]
-Global Scripts > global.ts > setup2 [begin]
-Global Scripts > global.ts > setup2 [end]
+  expect(formatTimeline(timeline)).toEqual(`setup > global.ts > setup1 [begin]
+setup > global.ts > setup1 [end]
+setup > global.ts > setup2 [begin]
+setup > global.ts > setup2 [end]
 p1 > a.test.ts > test1 [begin]
 p1 > a.test.ts > test1 [end]
 p1 > a.test.ts > test2 [begin]
@@ -106,15 +108,20 @@ test('should work for several projects', async ({ runGroups }, testInfo) => {
   const files = {
     'playwright.config.ts': `
       module.exports = {
-        globalScripts: /.*global.ts/,
         projects: [
+          {
+            name: 'setup',
+            testMatch: /.*global.ts/,
+          },
           {
             name: 'p1',
             testMatch: /.*a.test.ts/,
+            dependencies: ['setup'],
           },
           {
             name: 'p2',
             testMatch: /.*b.test.ts/,
+            dependencies: ['setup'],
           },
         ]
       };`,
@@ -144,15 +151,20 @@ test('should skip tests if global setup fails', async ({ runGroups }, testInfo) 
   const files = {
     'playwright.config.ts': `
       module.exports = {
-        globalScripts: /.*global.ts/,
         projects: [
+          {
+            name: 'setup',
+            testMatch: /.*global.ts/,
+          },
           {
             name: 'p1',
             testMatch: /.*a.test.ts/,
+            dependencies: ['setup'],
           },
           {
             name: 'p2',
             testMatch: /.*b.test.ts/,
+            dependencies: ['setup'],
           },
         ]
       };`,
@@ -181,10 +193,14 @@ test('should run setup in each project shard', async ({ runGroups }, testInfo) =
   const files = {
     'playwright.config.ts': `
       module.exports = {
-        globalScripts: /.*global.ts/,
         projects: [
           {
+            name: 'setup',
+            testMatch: /.*global.ts/,
+          },
+          {
             name: 'p1',
+            dependencies: ['setup'],
           },
         ]
       };`,

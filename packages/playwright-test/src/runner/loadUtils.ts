@@ -16,93 +16,145 @@
 
 import path from 'path';
 import type { Reporter, TestError } from '../../types/testReporter';
-import type { LoadError } from '../common/fixtures';
-import { LoaderHost } from './loaderHost';
-import type { Multiplexer } from '../reporters/multiplexer';
-import { createRootSuite, filterOnly, filterSuite } from '../common/suiteUtils';
-import type { Suite, TestCase } from '../common/test';
-import { loadTestFilesInProcess } from '../common/testLoader';
+import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
+import type { LoaderHost } from './loaderHost';
+import { Suite } from '../common/test';
+import type { TestCase } from '../common/test';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
-import { errorWithFile } from '../util';
+import { createFileMatcherFromFilters, createTitleMatcher, errorWithFile } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
-import { createFileMatcher } from '../util';
-import { collectFilesForProject, filterProjects } from './projectUtils';
+import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import { requireOrImport } from '../common/transform';
-import { serializeConfig } from '../common/ipc';
+import { buildFileSuiteForProject, filterByFocusedLine, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
+import { filterForShard } from './testGroups';
 
-type LoadOptions = {
-  listOnly: boolean;
-  testFileFilters: TestFileFilter[];
-  testTitleMatcher: Matcher;
-  projectFilter?: string[];
-  passWithNoTests?: boolean;
-};
+export async function loadAllTests(config: FullConfigInternal, errors: TestError[]): Promise<Suite> {
+  const projects = filterProjects(config.projects, config._internal.projectFilter);
 
-export async function loadAllTests(config: FullConfigInternal, reporter: Multiplexer, options: LoadOptions, errors: TestError[]): Promise<Suite> {
-  const projects = filterProjects(config.projects, options.projectFilter);
-  const filesByProject = new Map<FullProjectInternal, string[]>();
-  const allTestFiles = new Set<string>();
-  for (const project of projects) {
-    const files = await collectFilesForProject(project, options.testFileFilters);
-    filesByProject.set(project, files);
-    files.forEach(file => allTestFiles.add(file));
+  let filesToRunByProject = new Map<FullProjectInternal, string[]>();
+  let topLevelProjects: FullProjectInternal[];
+  let dependencyProjects: FullProjectInternal[];
+  // Collect files, categorize top level and dependency projects.
+  {
+    const fsCache = new Map();
+
+    // First collect all files for the projects in the command line, don't apply any file filters.
+    const allFilesForProject = new Map<FullProjectInternal, string[]>();
+    for (const project of projects) {
+      const files = await collectFilesForProject(project, fsCache);
+      allFilesForProject.set(project, files);
+    }
+
+    // Filter files based on the file filters, eliminate the empty projects.
+    const commandLineFileMatcher = config._internal.testFileFilters.length ? createFileMatcherFromFilters(config._internal.testFileFilters) : null;
+    for (const [project, files] of allFilesForProject) {
+      const filteredFiles = commandLineFileMatcher ? files.filter(commandLineFileMatcher) : files;
+      if (filteredFiles.length)
+        filesToRunByProject.set(project, filteredFiles);
+    }
+
+    const projectClosure = buildProjectsClosure([...filesToRunByProject.keys()]);
+    // Remove files for dependency projects, they'll be added back later.
+    for (const project of projectClosure.filter(p => p._internal.type === 'dependency'))
+      filesToRunByProject.delete(project);
+
+    // Shard only the top-level projects.
+    if (config.shard)
+      filesToRunByProject = filterForShard(config.shard, filesToRunByProject);
+
+    // Re-build the closure, project set might have changed.
+    const filteredProjectClosure = buildProjectsClosure([...filesToRunByProject.keys()]);
+    topLevelProjects = filteredProjectClosure.filter(p => p._internal.type === 'top-level');
+    dependencyProjects = filteredProjectClosure.filter(p => p._internal.type === 'dependency');
+
+    // (Re-)add all files for dependent projects, disregard filters.
+    for (const project of dependencyProjects) {
+      const files = allFilesForProject.get(project) || await collectFilesForProject(project, fsCache);
+      filesToRunByProject.set(project, files);
+    }
   }
 
-  // Load all tests.
-  const preprocessRoot = await loadTests(config, reporter, allTestFiles, errors);
+  // Load all test files and create a preprocessed root. Child suites are files there.
+  const fileSuits: Suite[] = [];
+  {
+    const loaderHost: LoaderHost = process.env.PW_TEST_OOP_LOADER ? new OutOfProcessLoaderHost(config) : new InProcessLoaderHost(config);
+    const allTestFiles = new Set<string>();
+    for (const files of filesToRunByProject.values())
+      files.forEach(file => allTestFiles.add(file));
+    for (const file of allTestFiles) {
+      const fileSuite = await loaderHost.loadTestFile(file, errors);
+      fileSuits.push(fileSuite);
+    }
+    await loaderHost.stop();
+  }
 
   // Complain about duplicate titles.
-  errors.push(...createDuplicateTitlesErrors(config, preprocessRoot));
+  errors.push(...createDuplicateTitlesErrors(config, fileSuits));
 
-  // Filter tests to respect line/column filter.
-  filterByFocusedLine(preprocessRoot, options.testFileFilters);
+  // Create root suites with clones for the projects.
+  const rootSuite = new Suite('', 'root');
+
+  // First iterate leaf projects to focus only, then add all other projects.
+  for (const project of topLevelProjects) {
+    const projectSuite = await createProjectSuite(fileSuits, project, config._internal, filesToRunByProject.get(project)!);
+    if (projectSuite)
+      rootSuite._addSuite(projectSuite);
+  }
 
   // Complain about only.
   if (config.forbidOnly) {
-    const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
+    const onlyTestsAndSuites = rootSuite._getOnlyItems();
     if (onlyTestsAndSuites.length > 0)
       errors.push(...createForbidOnlyErrors(onlyTestsAndSuites));
   }
 
-  // Filter only.
-  if (!options.listOnly)
-    filterOnly(preprocessRoot);
+  // Filter only for leaf projects.
+  filterOnly(rootSuite);
 
-  return await createRootSuite(preprocessRoot, options.testTitleMatcher, filesByProject);
+  // Prepend the projects that are dependencies.
+  for (const project of dependencyProjects) {
+    const projectSuite = await createProjectSuite(fileSuits, project, { testFileFilters: [], testTitleMatcher: undefined }, filesToRunByProject.get(project)!);
+    if (projectSuite)
+      rootSuite._prependSuite(projectSuite);
+  }
+
+  return rootSuite;
 }
 
-async function loadTests(config: FullConfigInternal, reporter: Multiplexer, testFiles: Set<string>, errors: TestError[]): Promise<Suite> {
-  if (process.env.PW_TEST_OOP_LOADER) {
-    const loaderHost = new LoaderHost();
-    await loaderHost.start(serializeConfig(config));
-    try {
-      return await loaderHost.loadTestFiles([...testFiles], reporter);
-    } finally {
-      await loaderHost.stop();
+async function createProjectSuite(fileSuits: Suite[], project: FullProjectInternal, options: { testFileFilters: TestFileFilter[], testTitleMatcher?: Matcher }, files: string[]): Promise<Suite | null> {
+  const fileSuitesMap = new Map<string, Suite>();
+  for (const fileSuite of fileSuits)
+    fileSuitesMap.set(fileSuite._requireFile, fileSuite);
+
+  const projectSuite = new Suite(project.name, 'project');
+  projectSuite._projectConfig = project;
+  if (project._internal.fullyParallel)
+    projectSuite._parallelMode = 'parallel';
+  for (const file of files) {
+    const fileSuite = fileSuitesMap.get(file);
+    if (!fileSuite)
+      continue;
+    for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
+      const builtSuite = buildFileSuiteForProject(project, fileSuite, repeatEachIndex);
+      projectSuite._addSuite(builtSuite);
     }
   }
-  const loadErrors: LoadError[] = [];
-  try {
-    return await loadTestFilesInProcess(config.rootDir, [...testFiles], loadErrors);
-  } finally {
-    errors.push(...loadErrors);
-  }
-}
+  // Filter tests to respect line/column filter.
+  filterByFocusedLine(projectSuite, options.testFileFilters);
 
-function createFileMatcherFromFilter(filter: TestFileFilter) {
-  const fileMatcher = createFileMatcher(filter.re || filter.exact || '');
-  return (testFileName: string, testLine: number, testColumn: number) =>
-    fileMatcher(testFileName) && (filter.line === testLine || filter.line === null) && (filter.column === testColumn || filter.column === null);
-}
+  const grepMatcher = createTitleMatcher(project.grep);
+  const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
 
-function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[]) {
-  if (!focusedTestFileLines.length)
-    return;
-  const matchers = focusedTestFileLines.map(createFileMatcherFromFilter);
-  const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => matchers.some(m => m(testFileName, testLine, testColumn));
-  const suiteFilter = (suite: Suite) => !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
-  const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line, test.location.column);
-  return filterSuite(suite, suiteFilter, testFilter);
+  const titleMatcher = (test: TestCase) => {
+    const grepTitle = test.titlePath().join(' ');
+    if (grepInvertMatcher?.(grepTitle))
+      return false;
+    return grepMatcher(grepTitle) && (!options.testTitleMatcher || options.testTitleMatcher(grepTitle));
+  };
+
+  if (filterTestsRemoveEmptySuites(projectSuite, titleMatcher))
+    return projectSuite;
+  return null;
 }
 
 function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[]): TestError[] {
@@ -119,12 +171,12 @@ function createForbidOnlyErrors(onlyTestsAndSuites: (TestCase | Suite)[]): TestE
   return errors;
 }
 
-function createDuplicateTitlesErrors(config: FullConfigInternal, rootSuite: Suite): TestError[] {
+function createDuplicateTitlesErrors(config: FullConfigInternal, fileSuites: Suite[]): TestError[] {
   const errors: TestError[] = [];
-  for (const fileSuite of rootSuite.suites) {
+  for (const fileSuite of fileSuites) {
     const testsByFullTitle = new Map<string, TestCase>();
     for (const test of fileSuite.allTests()) {
-      const fullTitle = test.titlePath().slice(2).join(' › ');
+      const fullTitle = test.titlePath().slice(1).join(' › ');
       const existingTest = testsByFullTitle.get(fullTitle);
       if (existingTest) {
         const error: TestError = {

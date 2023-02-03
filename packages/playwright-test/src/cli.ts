@@ -22,7 +22,6 @@ import path from 'path';
 import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling } from './common/profiler';
 import { experimentalLoaderOption, fileIsModule } from './util';
-import type { TestFileFilter } from './util';
 import { createTitleMatcher } from './util';
 import { showHTMLReport } from './reporters/html';
 import { baseFullConfig, builtInReporters, ConfigLoader, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
@@ -51,6 +50,7 @@ function addTestCommand(program: Command) {
   command.option('-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`);
   command.option('--list', `Collect all the tests and report them, but do not run`);
   command.option('--max-failures <N>', `Stop after the first N failures`);
+  command.option('--no-deps', 'Do not run project dependencies');
   command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
   command.option('--pass-with-no-tests', `Makes test run succeed even if no tests were found`);
   command.option('--quiet', `Suppress stdio`);
@@ -155,9 +155,11 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     await configLoader.loadConfigFile(resolvedConfigFile);
   else
     await configLoader.loadEmptyConfig(configFileOrDirectory);
-  const runner = new Runner(configLoader.fullConfig());
+  if (opts.deps === false)
+    configLoader.ignoreProjectDependencies();
 
-  const testFileFilters: TestFileFilter[] = args.map(arg => {
+  const config = configLoader.fullConfig();
+  config._internal.testFileFilters = args.map(arg => {
     const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
     return {
       re: forceRegExp(match ? match[1] : arg),
@@ -165,18 +167,15 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       column: match?.[3] ? parseInt(match[3], 10) : null,
     };
   });
-
   const grepMatcher = opts.grep ? createTitleMatcher(forceRegExp(opts.grep)) : () => true;
   const grepInvertMatcher = opts.grepInvert ? createTitleMatcher(forceRegExp(opts.grepInvert)) : () => false;
-  const testTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+  config._internal.testTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+  config._internal.listOnly = !!opts.list;
+  config._internal.projectFilter = opts.project || undefined;
+  config._internal.passWithNoTests = !!opts.passWithNoTests;
 
-  const status = await runner.runAllTests({
-    listOnly: !!opts.list,
-    testFileFilters,
-    testTitleMatcher,
-    projectFilter: opts.project || undefined,
-    passWithNoTests: opts.passWithNoTests,
-  });
+  const runner = new Runner(config);
+  const status = await runner.runAllTests();
   await stopProfiling(undefined);
 
   if (status === 'interrupted')

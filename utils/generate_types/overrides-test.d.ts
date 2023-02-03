@@ -42,6 +42,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   grepInvert: RegExp | RegExp[] | null;
   metadata: Metadata;
   name: string;
+  dependencies: string[];
   snapshotDir: string;
   outputDir: string;
   repeatEach: number;
@@ -199,7 +200,7 @@ type ConnectOptions = {
 export interface PlaywrightWorkerOptions {
   browserName: BrowserName;
   defaultBrowserType: BrowserName;
-  headless: boolean | undefined;
+  headless: boolean;
   channel: BrowserChannel | undefined;
   launchOptions: LaunchOptions;
   connectOptions: ConnectOptions | undefined;
@@ -213,31 +214,31 @@ export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 
 export interface PlaywrightTestOptions {
-  acceptDownloads: boolean | undefined;
-  bypassCSP: boolean | undefined;
-  colorScheme: ColorScheme | undefined;
+  acceptDownloads: boolean;
+  bypassCSP: boolean;
+  colorScheme: ColorScheme;
   deviceScaleFactor: number | undefined;
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
   geolocation: Geolocation | undefined;
-  hasTouch: boolean | undefined;
+  hasTouch: boolean;
   httpCredentials: HTTPCredentials | undefined;
-  ignoreHTTPSErrors: boolean | undefined;
-  isMobile: boolean | undefined;
-  javaScriptEnabled: boolean | undefined;
+  ignoreHTTPSErrors: boolean;
+  isMobile: boolean;
+  javaScriptEnabled: boolean;
   locale: string | undefined;
-  offline: boolean | undefined;
+  offline: boolean;
   permissions: string[] | undefined;
   proxy: Proxy | undefined;
   storageState: StorageState | undefined;
   timezoneId: string | undefined;
   userAgent: string | undefined;
-  viewport: ViewportSize | null | undefined;
+  viewport: ViewportSize | null;
   baseURL: string | undefined;
   contextOptions: BrowserContextOptions;
-  actionTimeout: number | undefined;
-  navigationTimeout: number | undefined;
-  serviceWorkers: ServiceWorkerPolicy | undefined;
-  testIdAttribute: string | undefined;
+  actionTimeout: number;
+  navigationTimeout: number;
+  serviceWorkers: ServiceWorkerPolicy;
+  testIdAttribute: string;
 }
 
 
@@ -252,8 +253,13 @@ export interface PlaywrightTestArgs {
   request: APIRequestContext;
 }
 
-export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
-export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
+type ExcludeProps<A, B> = {
+  [K in Exclude<keyof A, keyof B>]: A[K];
+};
+type CustomProperties<T> = ExcludeProps<T, PlaywrightTestOptions & PlaywrightWorkerOptions & PlaywrightTestArgs & PlaywrightWorkerArgs>;
+
+export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
+export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
 
 import type * as expectType from './expect-types';
 import type { Suite } from './testReporter';
@@ -280,7 +286,35 @@ type Inverse<Matchers> = {
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
 
-type BaseMatchers<R, T> = expectType.Matchers<R> & PlaywrightTest.Matchers<R, T>;
+interface GenericAssertions<R> {
+  not: GenericAssertions<R>;
+  toBe(expected: unknown): R;
+  toBeCloseTo(expected: number, numDigits?: number): R;
+  toBeDefined(): R;
+  toBeFalsy(): R;
+  toBeGreaterThan(expected: number | bigint): R;
+  toBeGreaterThanOrEqual(expected: number | bigint): R;
+  toBeInstanceOf(expected: Function): R;
+  toBeLessThan(expected: number | bigint): R;
+  toBeLessThanOrEqual(expected: number | bigint): R;
+  toBeNaN(): R;
+  toBeNull(): R;
+  toBeTruthy(): R;
+  toBeUndefined(): R;
+  toContain(expected: string): R;
+  toContain(expected: unknown): R;
+  toContainEqual(expected: unknown): R;
+  toEqual(expected: unknown): R;
+  toHaveLength(expected: number): R;
+  toHaveProperty(keyPath: string | Array<string>, value?: unknown): R;
+  toMatch(expected: RegExp): R;
+  toMatchObject(expected: Record<string, unknown> | Array<unknown>): R;
+  toStrictEqual(expected: unknown): R;
+  toThrow(error?: unknown): R;
+  toThrowError(error?: unknown): R;
+}
+
+type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T>;
 
 type MakeMatchers<R, T> = BaseMatchers<R, T> & {
     /**

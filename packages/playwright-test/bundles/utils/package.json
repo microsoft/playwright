@@ -9,7 +9,7 @@
     "generate-license": "node ../../../../utils/generate_third_party_notice.js"
   },
   "dependencies": {
-    "json5": "2.2.1",
+    "json5": "2.2.3",
     "open": "8.4.0",
     "pirates": "4.0.4",
     "source-map-support": "0.5.21",
