@@ -1474,11 +1474,14 @@ export class Frame extends SdkObject {
     expression = js.normalizeEvaluationExpression(expression, isFunction);
     return controller.run(async progress => {
       return this.retryWithProgressAndTimeouts(progress, [100], async () => {
-        const context = await this._mainContext();
+        const context = world === 'main' ? await this._mainContext() : await this._utilityContext();
         const injectedScript = await context.injectedScript();
         const handle = await injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
           const predicate = (): R => {
-            let result = self.eval(expression);
+            // NOTE: make sure to use `globalThis.eval` instead of `self.eval` due to a bug with sandbox isolation
+            // in firefox.
+            // See https://bugzilla.mozilla.org/show_bug.cgi?id=1814898
+            let result = globalThis.eval(expression);
             if (isFunction === true) {
               result = result(arg);
             } else if (isFunction === false) {
