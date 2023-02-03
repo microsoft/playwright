@@ -9,9 +9,11 @@ Tests written with Playwright execute in isolated clean-slate environments calle
 
 Depending on your project constraints and how expensive the authentication process is, you can pick one of the following approaches:
 
-* Log in before each test. This approach provides best isolation between tests. If login steps take considerable time, you may want to run these steps less often, e.g. once in global setup, once per worker etc (see examples below).
-* Log in once during global setup, save the browser state into a file and reuse it in all the tests.
-* If an account cannot be safely accessed by several tests running in parallel, you can run each parallel test with its own user account. In this case it would make sense to login once per test worker.
+* The fastest approach is to sign in only once during global setup and save the browser state into a file. Then you can reuse that state in all the tests, and they will be instantaneously signed in. Use this preferred method whenever possible.
+* When test account cannot be safely accessed by several tests running in parallel, you have to run each [parallel worker](./test-parallel.md) with its own account. In this case, sign in once per worker, and reuse browser storage for all tests running in that worker.
+* If your authentication provider has browser-specific details, sign in once per project, and then reuse browser state for all tests in the project.
+* The most flexible approach is to sign in before each test. This also provides the best isolation between tests, but comes at a performance cost.
+All of the methods above support multiple signed in roles when you need them.
 
 > Note: This guide covers cookie/token-based authentication (logging in via the app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) use [`method: Browser.newContext`].
 
