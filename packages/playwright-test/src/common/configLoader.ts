@@ -121,7 +121,7 @@ export class ConfigLoader {
     this._fullConfig.shard = takeFirst(config.shard, baseFullConfig.shard);
     this._fullConfig._internal.ignoreSnapshots = takeFirst(config.ignoreSnapshots, baseFullConfig._internal.ignoreSnapshots);
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
-    this._fullConfig._internal.pluginRegistrations = (config as any)._plugins || [];
+    this._fullConfig._internal.plugins = ((config as any)._plugins || []).map((p: any) => ({ factory: p }));
 
     const workers = takeFirst(config.workers, '50%');
     if (typeof workers === 'string') {
@@ -449,7 +449,7 @@ export const baseFullConfig: FullConfigInternal = {
     storeDir: '',
     maxConcurrentTestGroups: 0,
     ignoreSnapshots: false,
-    pluginRegistrations: [],
+    plugins: [],
     testTitleMatcher: () => true,
     testFileFilters: [],
     listOnly: false,

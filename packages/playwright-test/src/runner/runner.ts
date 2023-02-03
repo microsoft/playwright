@@ -53,9 +53,9 @@ export class Runner {
     const deadline = config.globalTimeout ? monotonicTime() + config.globalTimeout : 0;
 
     // Legacy webServer support.
-    config._internal.pluginRegistrations.push(...webServerPluginsForConfig(config));
+    webServerPluginsForConfig(config).forEach(p => config._internal.plugins.push({ factory: p }));
     // Docker support.
-    config._internal.pluginRegistrations.push(dockerPlugin);
+    config._internal.plugins.push({ factory: dockerPlugin });
 
     const reporter = await createReporter(config, listOnly);
     const taskRunner = listOnly ? createTaskRunnerForList(config, reporter)
@@ -64,7 +64,6 @@ export class Runner {
     const context: TaskRunnerState = {
       config,
       reporter,
-      plugins: [],
       phases: [],
     };
 

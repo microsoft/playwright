@@ -19,7 +19,7 @@ import path from 'path';
 import { promisify } from 'util';
 import { debug, rimraf } from 'playwright-core/lib/utilsBundle';
 import { Dispatcher } from './dispatcher';
-import type { TestRunnerPlugin, TestRunnerPluginRegistration } from '../plugins';
+import type { TestRunnerPluginRegistration } from '../plugins';
 import type { Multiplexer } from '../reporters/multiplexer';
 import type { TestGroup } from '../runner/testGroups';
 import { createTestGroups } from '../runner/testGroups';
@@ -41,7 +41,6 @@ type ProjectWithTestGroups = {
 export type TaskRunnerState = {
   reporter: Multiplexer;
   config: FullConfigInternal;
-  plugins: TestRunnerPlugin[];
   rootSuite?: Suite;
   phases: {
     dispatcher: Dispatcher,
@@ -52,25 +51,20 @@ export type TaskRunnerState = {
 export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
 
-  for (const plugin of config._internal.pluginRegistrations)
+  for (const plugin of config._internal.plugins)
     taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
-  if (config.globalSetup || config.globalTeardown)
-    taskRunner.addTask('global setup', createGlobalSetupTask());
   taskRunner.addTask('load tests', createLoadTask());
-  taskRunner.addTask('shard tests', createTestGroupsTask());
-  taskRunner.addTask('prepare to run', createRemoveOutputDirsTask());
-  taskRunner.addTask('plugin begin', async ({ rootSuite, plugins }) => {
-    for (const plugin of plugins)
-      await plugin.begin?.(rootSuite!);
-  });
-
+  taskRunner.addTask('clear output', createRemoveOutputDirsTask());
+  taskRunner.addTask('prepare workers', createTestGroupsTask());
+  for (const plugin of config._internal.plugins)
+    taskRunner.addTask('plugin begin', async ({ rootSuite }) => plugin.instance?.begin?.(rootSuite!));
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
     reporter.onBegin?.(config, rootSuite!);
     return () => reporter.onEnd();
   });
-
+  if (config.globalSetup || config.globalTeardown)
+    taskRunner.addTask('global setup', createGlobalSetupTask());
   taskRunner.addTask('test suite', createRunTestsTask());
-
   return taskRunner;
 }
 
@@ -84,16 +78,14 @@ export function createTaskRunnerForList(config: FullConfigInternal, reporter: Mu
   return taskRunner;
 }
 
-function createPluginSetupTask(pluginRegistration: TestRunnerPluginRegistration): Task<TaskRunnerState> {
-  return async ({ config, reporter, plugins }) => {
-    let plugin: TestRunnerPlugin;
-    if (typeof pluginRegistration === 'function')
-      plugin = await pluginRegistration();
+function createPluginSetupTask(plugin: TestRunnerPluginRegistration): Task<TaskRunnerState> {
+  return async ({ config, reporter }) => {
+    if (typeof plugin.factory === 'function')
+      plugin.instance = await plugin.factory();
     else
-      plugin = pluginRegistration;
-    plugins.push(plugin);
-    await plugin.setup?.(config, config._internal.configDir, reporter);
-    return () => plugin.teardown?.();
+      plugin.instance = plugin.factory;
+    await plugin.instance?.setup?.(config, config._internal.configDir, reporter);
+    return () => plugin.instance?.teardown?.();
   };
 }
 
