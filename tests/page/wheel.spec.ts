@@ -75,7 +75,7 @@ it('should dispatch wheel events after popup was opened @smoke', async ({ page, 
   await listenForWheelEvents(page, 'div');
   await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(() => window.open("")),
+    page.evaluate(() => window.open('')),
   ]);
   await page.mouse.wheel(0, 100);
   await page.waitForFunction('window.scrollY === 100');
