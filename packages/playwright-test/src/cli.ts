@@ -159,7 +159,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     configLoader.ignoreProjectDependencies();
 
   const config = configLoader.fullConfig();
-  config._internal.testFileFilters = args.map(arg => {
+  config._internal.cliFileFilters = args.map(arg => {
     const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
     return {
       re: forceRegExp(match ? match[1] : arg),
@@ -169,9 +169,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   });
   const grepMatcher = opts.grep ? createTitleMatcher(forceRegExp(opts.grep)) : () => true;
   const grepInvertMatcher = opts.grepInvert ? createTitleMatcher(forceRegExp(opts.grepInvert)) : () => false;
-  config._internal.testTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+  config._internal.cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
   config._internal.listOnly = !!opts.list;
-  config._internal.projectFilter = opts.project || undefined;
+  config._internal.cliProjectFilter = opts.project || undefined;
   config._internal.passWithNoTests = !!opts.passWithNoTests;
 
   const runner = new Runner(config);

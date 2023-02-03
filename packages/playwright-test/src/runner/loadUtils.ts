@@ -21,15 +21,15 @@ import type { LoaderHost } from './loaderHost';
 import { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
-import { createFileMatcherFromFilters, createTitleMatcher, errorWithFile } from '../util';
+import { createTitleMatcher, errorWithFile } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import { requireOrImport } from '../common/transform';
 import { buildFileSuiteForProject, filterByFocusedLine, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { filterForShard } from './testGroups';
 
-export async function loadAllTests(config: FullConfigInternal, errors: TestError[]): Promise<Suite> {
-  const projects = filterProjects(config.projects, config._internal.projectFilter);
+export async function loadAllTests(config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, fileMatcher: Matcher, errors: TestError[]): Promise<Suite> {
+  const projects = filterProjects(config.projects, config._internal.cliProjectFilter);
 
   let filesToRunByProject = new Map<FullProjectInternal, string[]>();
   let topLevelProjects: FullProjectInternal[];
@@ -41,14 +41,15 @@ export async function loadAllTests(config: FullConfigInternal, errors: TestError
     // First collect all files for the projects in the command line, don't apply any file filters.
     const allFilesForProject = new Map<FullProjectInternal, string[]>();
     for (const project of projects) {
+      if (projectsToIgnore.has(project))
+        continue;
       const files = await collectFilesForProject(project, fsCache);
       allFilesForProject.set(project, files);
     }
 
     // Filter files based on the file filters, eliminate the empty projects.
-    const commandLineFileMatcher = config._internal.testFileFilters.length ? createFileMatcherFromFilters(config._internal.testFileFilters) : null;
     for (const [project, files] of allFilesForProject) {
-      const filteredFiles = commandLineFileMatcher ? files.filter(commandLineFileMatcher) : files;
+      const filteredFiles = files.filter(fileMatcher);
       if (filteredFiles.length)
         filesToRunByProject.set(project, filteredFiles);
     }
@@ -66,6 +67,9 @@ export async function loadAllTests(config: FullConfigInternal, errors: TestError
     const filteredProjectClosure = buildProjectsClosure([...filesToRunByProject.keys()]);
     topLevelProjects = filteredProjectClosure.filter(p => p._internal.type === 'top-level');
     dependencyProjects = filteredProjectClosure.filter(p => p._internal.type === 'dependency');
+
+    topLevelProjects = topLevelProjects.filter(p => !projectsToIgnore.has(p));
+    dependencyProjects = dependencyProjects.filter(p => !projectsToIgnore.has(p));
 
     // (Re-)add all files for dependent projects, disregard filters.
     for (const project of dependencyProjects) {
@@ -113,7 +117,7 @@ export async function loadAllTests(config: FullConfigInternal, errors: TestError
 
   // Prepend the projects that are dependencies.
   for (const project of dependencyProjects) {
-    const projectSuite = await createProjectSuite(fileSuits, project, { testFileFilters: [], testTitleMatcher: undefined }, filesToRunByProject.get(project)!);
+    const projectSuite = await createProjectSuite(fileSuits, project, { cliFileFilters: [], cliTitleMatcher: undefined }, filesToRunByProject.get(project)!);
     if (projectSuite)
       rootSuite._prependSuite(projectSuite);
   }
@@ -121,7 +125,7 @@ export async function loadAllTests(config: FullConfigInternal, errors: TestError
   return rootSuite;
 }
 
-async function createProjectSuite(fileSuits: Suite[], project: FullProjectInternal, options: { testFileFilters: TestFileFilter[], testTitleMatcher?: Matcher }, files: string[]): Promise<Suite | null> {
+async function createProjectSuite(fileSuits: Suite[], project: FullProjectInternal, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher }, files: string[]): Promise<Suite | null> {
   const fileSuitesMap = new Map<string, Suite>();
   for (const fileSuite of fileSuits)
     fileSuitesMap.set(fileSuite._requireFile, fileSuite);
@@ -140,7 +144,7 @@ async function createProjectSuite(fileSuits: Suite[], project: FullProjectIntern
     }
   }
   // Filter tests to respect line/column filter.
-  filterByFocusedLine(projectSuite, options.testFileFilters);
+  filterByFocusedLine(projectSuite, options.cliFileFilters);
 
   const grepMatcher = createTitleMatcher(project.grep);
   const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
@@ -149,7 +153,7 @@ async function createProjectSuite(fileSuits: Suite[], project: FullProjectIntern
     const grepTitle = test.titlePath().join(' ');
     if (grepInvertMatcher?.(grepTitle))
       return false;
-    return grepMatcher(grepTitle) && (!options.testTitleMatcher || options.testTitleMatcher(grepTitle));
+    return grepMatcher(grepTitle) && (!options.cliTitleMatcher || options.cliTitleMatcher(grepTitle));
   };
 
   if (filterTestsRemoveEmptySuites(projectSuite, titleMatcher))

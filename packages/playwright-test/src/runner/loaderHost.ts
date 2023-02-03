@@ -22,6 +22,7 @@ import { loadTestFile } from '../common/testLoader';
 import type { LoadError } from '../common/fixtures';
 import type { FullConfigInternal } from '../common/types';
 import { PoolBuilder } from '../common/poolBuilder';
+import { addToCompilationCache } from '../common/compilationCache';
 
 export abstract class LoaderHost {
   protected _config: FullConfigInternal;
@@ -56,18 +57,20 @@ export class OutOfProcessLoaderHost extends LoaderHost {
 
   constructor(config: FullConfigInternal) {
     super(config);
-    this._processHost = new ProcessHost(require.resolve('../loaderMain.js'), 'loader');
+    this._processHost = new ProcessHost(require.resolve('../loader/loaderMain.js'), 'loader');
     this._startPromise = this._processHost.startRunner(serializeConfig(config), true, {});
   }
 
   async doLoadTestFile(file: string, loadErrors: LoadError[]): Promise<Suite> {
     await this._startPromise;
     const result = await this._processHost.sendMessage({ method: 'loadTestFile', params: { file } }) as any;
-    loadErrors.push(...result.loadErrors);
+    loadErrors.push(...result.testErrors);
     return Suite._deepParse(result.fileSuite);
   }
 
   override async stop() {
+    const result = await this._processHost.sendMessage({ method: 'serializeCompilationCache' }) as any;
+    addToCompilationCache(result);
     await this._processHost.stop();
   }
 }

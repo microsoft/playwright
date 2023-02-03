@@ -28,6 +28,8 @@ import { TaskRunner } from './taskRunner';
 import type { Suite } from '../common/test';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { loadAllTests, loadGlobalHook } from './loadUtils';
+import { createFileMatcherFromFilters } from '../util';
+import type { Matcher } from '../util';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -106,7 +108,7 @@ function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
   return async ({ config }) => {
     const outputDirs = new Set<string>();
     for (const p of config.projects) {
-      if (!config._internal.projectFilter || config._internal.projectFilter.includes(p.name))
+      if (!config._internal.cliProjectFilter || config._internal.cliProjectFilter.includes(p.name))
         outputDirs.add(p.outputDir);
     }
 
@@ -124,10 +126,12 @@ function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
   };
 }
 
-function createLoadTask(): Task<TaskRunnerState> {
+function createLoadTask(projectsToIgnore = new Set<FullProjectInternal>(), additionalFileMatcher?: Matcher): Task<TaskRunnerState> {
   return async (context, errors) => {
     const { config } = context;
-    context.rootSuite = await loadAllTests(config, errors);
+    const cliMatcher = config._internal.cliFileFilters.length ? createFileMatcherFromFilters(config._internal.cliFileFilters) : () => true;
+    const fileMatcher = (value: string) => cliMatcher(value) && (additionalFileMatcher ? additionalFileMatcher(value) : true);
+    context.rootSuite = await loadAllTests(config, projectsToIgnore, fileMatcher, errors);
     // Fail when no tests.
     if (!context.rootSuite.allTests().length && !config._internal.passWithNoTests && !config.shard)
       throw new Error(`No tests found`);

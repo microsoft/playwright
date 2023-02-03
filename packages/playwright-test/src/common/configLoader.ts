@@ -450,8 +450,8 @@ export const baseFullConfig: FullConfigInternal = {
     maxConcurrentTestGroups: 0,
     ignoreSnapshots: false,
     plugins: [],
-    testTitleMatcher: () => true,
-    testFileFilters: [],
+    cliTitleMatcher: () => true,
+    cliFileFilters: [],
     listOnly: false,
   }
 };
