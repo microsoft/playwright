@@ -130,6 +130,7 @@ test('should include image diff', async ({ runInlineTest, page, showReport }) =>
   const set = new Set();
 
   const imageDiff = page.locator('data-testid=test-result-image-mismatch');
+  await imageDiff.locator('text="Actual"').click();
   const expectedImage = imageDiff.locator('img').first();
   const actualImage = imageDiff.locator('img').last();
   await expect(expectedImage).toHaveAttribute('src', /.*png/);
@@ -255,6 +256,7 @@ test('should include image diff when screenshot failed to generate due to animat
   await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
   await expect(page.locator('.chip-header', { hasText: 'Screenshots' })).toHaveCount(0);
   const imageDiff = page.locator('data-testid=test-result-image-mismatch');
+  await imageDiff.locator('text="Actual"').click();
   const image = imageDiff.locator('img');
   await expect(image.first()).toHaveAttribute('src', /.*png/);
   await expect(image.last()).toHaveAttribute('src', /.*png/);

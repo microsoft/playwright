@@ -38,14 +38,15 @@ const imageDiff: ImageDiff = {
 test('should render links', async ({ mount }) => {
   const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
   await expect(component.locator('a')).toHaveText([
+    'screenshot-diff.png',
     'screenshot-actual.png',
     'screenshot-expected.png',
-    'screenshot-diff.png',
   ]);
 });
 
-test('should show actual by default', async ({ mount }) => {
+test('should switch to actual', async ({ mount }) => {
   const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
+  await component.getByText('Actual', { exact: true }).click();
   const sliderElement = component.locator('data-testid=test-result-image-mismatch-grip');
   await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Actual slider is on the right').toBe('611px');
 
@@ -73,9 +74,8 @@ test('should switch to expected', async ({ mount }) => {
   }
 });
 
-test('should switch to diff', async ({ mount }) => {
+test('should show diff by default', async ({ mount }) => {
   const component = await mount(<ImageDiffView key='image-diff' imageDiff={imageDiff}></ImageDiffView>);
-  await component.getByText('Diff', { exact: true }).click();
 
   const image = component.locator('img');
   const box = await image.boundingBox();

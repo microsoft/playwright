@@ -32,8 +32,8 @@ export type ImageDiff = {
 export const ImageDiffView: React.FunctionComponent<{
  imageDiff: ImageDiff,
 }> = ({ imageDiff: diff }) => {
-  // Pre-select a tab called "actual", if any.
-  const [selectedTab, setSelectedTab] = React.useState<string>('actual');
+  // Pre-select a tab called "diff", if any.
+  const [selectedTab, setSelectedTab] = React.useState<string>('diff');
   const diffElement = React.useRef<HTMLDivElement>(null);
   const imageElement = React.useRef<HTMLImageElement>(null);
   const [sliderPosition, setSliderPosition] = React.useState<number>(0);
@@ -50,6 +50,11 @@ export const ImageDiffView: React.FunctionComponent<{
   };
   const tabs: TabbedPaneTab[] = [];
   if (diff.diff) {
+    tabs.push({
+      id: 'diff',
+      title: 'Diff',
+      render: () => <ImageWithSize src={diff.diff!.attachment.path!} onLoad={() => onImageLoaded()} />
+    });
     tabs.push({
       id: 'actual',
       title: 'Actual',
@@ -78,18 +83,11 @@ export const ImageDiffView: React.FunctionComponent<{
       render: () => <ImageWithSize src={diff.expected!.attachment.path!} onLoad={() => onImageLoaded()} />
     });
   }
-  if (diff.diff) {
-    tabs.push({
-      id: 'diff',
-      title: 'Diff',
-      render: () => <ImageWithSize src={diff.diff!.attachment.path!} onLoad={() => onImageLoaded()} />
-    });
-  }
   return <div className='vbox image-diff-view' data-testid='test-result-image-mismatch' ref={diffElement}>
     <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
+    {diff.diff && <AttachmentLink attachment={diff.diff.attachment}></AttachmentLink>}
     <AttachmentLink attachment={diff.actual!.attachment}></AttachmentLink>
     <AttachmentLink attachment={diff.expected!.attachment}></AttachmentLink>
-    {diff.diff && <AttachmentLink attachment={diff.diff.attachment}></AttachmentLink>}
   </div>;
 };
 
