@@ -352,5 +352,7 @@ export async function toPass(
 
     return { message, pass: this.isNot };
   }
+  if (testStateBeforeToPassMatcher && testInfo)
+    testInfo._restoreErrorState(testStateBeforeToPassMatcher);
   return { pass: !this.isNot, message: () => '' };
 }
