@@ -50,9 +50,9 @@ type ConfigInternal = {
   webServers: Exclude<FullConfigPublic['webServer'], null>[];
   plugins: TestRunnerPluginRegistration[];
   listOnly: boolean;
-  testFileFilters: TestFileFilter[];
-  testTitleMatcher: Matcher;
-  projectFilter?: string[];
+  cliFileFilters: TestFileFilter[];
+  cliTitleMatcher: Matcher;
+  cliProjectFilter?: string[];
   passWithNoTests?: boolean;
 };
 
