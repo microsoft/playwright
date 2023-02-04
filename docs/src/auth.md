@@ -7,13 +7,21 @@ Playwright can be used to automate scenarios that require authentication.
 
 Tests written with Playwright execute in isolated clean-slate environments called [browser contexts](./browser-contexts.md). This isolation model improves reproducibility and prevents cascading test failures. New browser contexts can load existing authentication state. This eliminates the need to login in every context and speeds up test execution.
 
+Depending on your project constraints and how expensive the authentication process is, you can pick one of the following approaches:
+
+* The fastest approach is to sign in only once during global setup and save the browser state into a file. Then you can reuse that state in all the tests, and they will be instantaneously signed in. Use this preferred method whenever possible.
+* When test account cannot be safely accessed by several tests running in parallel, you have to run each parallel worker with its own account. In this case, sign in once per worker, and reuse browser storage for all tests running in that worker.
+* If your authentication provider has browser-specific details, sign in once per project, and then reuse browser state for all tests in the project.
+* The most flexible approach is to sign in before each test. This also provides the best isolation between tests, but comes at a performance cost.
+All of the methods above support multiple signed in roles when you need them.
+
 > Note: This guide covers cookie/token-based authentication (logging in via the app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) use [`method: Browser.newContext`].
 
-## Automate logging in
+## Signing in before each test
 
-The Playwright API can [automate interaction](./input.md) from a login form.
+The Playwright API can [automate interaction](./input.md) with a login form.
 
-The following example automates logging into GitHub. Once these steps are executed,
+The following example logs into GitHub. Once these steps are executed,
 the browser context will be authenticated.
 
 ```js tab=js-ts
@@ -113,7 +121,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync();
 Redoing login for every test can slow down test execution. To mitigate that, reuse
 existing authentication state instead.
 
-## Reuse signed in state
+## Reusing signed in state
 * langs: java, csharp, python
 
 Playwright provides a way to reuse the signed-in state in the tests. That way you can log
@@ -163,7 +171,7 @@ var context = await browser.NewContextAsync(new()
     StorageStatePath = "state.json"
 });
 ```
-## Reuse signed in state
+## Signing in during global setup
 * langs: js
 
 Playwright provides a way to reuse the signed-in state in the tests. That way you can log
@@ -171,7 +179,9 @@ in only once and then skip the log in step for all of the tests.
 
 Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). Playwright provides [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state) method that can be used to retrieve storage state from authenticated contexts and then create new contexts with pre-populated state.
 
-Cookies and local storage state can be used across different browsers. They depend on your application's authentication model: some apps might require both cookies and local storage.
+Cookies and local storage state can be used across different browsers. They depend on your application's authentication model: some apps might require both cookies and local storage. Below we decribe how to authenticate using login page and web API.
+
+### Login page
 
 Create a new global setup script:
 
@@ -262,7 +272,7 @@ If you can log in once and commit the `storageState.json` into the repository, y
 However, periodically, you may need to update the `storageState.json` file if your app requires you to re-authenticate after some amount of time. For example, if your app prompts you to sign in every week even if you're on the same computer/browser, you'll need to update `storageState.json` at least this often.
 :::
 
-### Sign in via API request
+### API request
 * langs: js
 
 If your web application supports signing in via API, you can use [APIRequestContext] to simplify sign in flow. Global setup script from the example above would change like this:
@@ -305,16 +315,18 @@ async function globalSetup() {
 export default globalSetup;
 ```
 
-### Avoiding multiple sessions per account at a time
+## Running parallel tests with separate accounts
 * langs: js
 
-By default, Playwright Test runs tests in parallel. If you reuse a single signed-in state for all your tests, this usually leads to the same account being signed in from multiple tests at the same time. If this behavior is undesirable for your application, you can sign in with a different account in each [worker process](./test-parallel.md#worker-processes) created by Playwright Test.
+By default, Playwright runs tests in parallel. If you reuse a single signed-in state for all your tests, this usually leads to the same account being accessed from multiple tests at the same time. If this behavior is undesirable for your application, you can sign in with a different account in each [worker process](./test-parallel.md#worker-processes) created by Playwright Test.
 
 In this example we [override `storageState` fixture](./test-fixtures.md#overriding-fixtures) and ensure we only sign in once per worker, using [`property: TestInfo.parallelIndex`] to differentiate between workers.
 
 ```js
 // fixtures.ts
-import { test as baseTest } from '@playwright/test';
+import { test as baseTest, Page } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
 export { expect } from '@playwright/test';
 
 const users = [
@@ -323,18 +335,23 @@ const users = [
   // ... put your test users here ...
 ];
 
+// Put your application sign steps in this function.
+async function signIn(page: Page, parallelIndex: number) {
+  await page.goto('https://github.com/login');
+  // Create a unique username for each worker.
+  await page.getByLabel('Username or email address').fill(users[parallelIndex].username);
+  await page.getByLabel('Password').fill(users[parallelIndex].password);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+}
+
 export const test = baseTest.extend({
-  storageState: async ({ browser }, use, testInfo) => {
-    // Override storage state, use parallel index to look up logged-in info and generate it lazily.
-    const fileName = path.join(testInfo.project.outputDir, 'storage-' + testInfo.parallelIndex);
+  storageState: async ({ browser }, use) => {
+    // Use parallel index to look up logged-in state and generate it lazily.
+    const fileName = path.join(test.info().project.outputDir, 'storage-' + test.info().parallelIndex);
     if (!fs.existsSync(fileName)) {
       // Make sure we are not using any other storage state.
       const page = await browser.newPage({ storageState: undefined });
-      await page.goto('https://github.com/login');
-      // Create a unique username for each worker.
-      await page.getByLabel('Username or email address').fill(users[testInfo.parallelIndex].username);
-      await page.getByLabel('Password').fill(users[testInfo.parallelIndex].password);
-      await page.getByRole('button', { name: 'Sign in' }).click();
+      await signIn(page, test.info().parallelIndex);
       await page.context().storageState({ path: fileName });
       await page.close();
     }
@@ -606,7 +623,7 @@ test('admin and user', async ({ adminPage, userPage }) => {
 });
 ```
 
-## Reuse the signed in page in multiple tests
+## Reusing signed in page in serial mode
 * langs: js
 
 Although discouraged, sometimes it is necessary to sacrifice the isolation and run a number of tests
