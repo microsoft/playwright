@@ -560,17 +560,51 @@ export default defineConfig({
 });
 ```
 
-don't forget to initialize your plugins, for example if you are using Pinia, add init code into your `playwright/index.{js,ts,jsx,tsx}`:
+### Q) how can i test components that uses Pinia?
+
+Pinia needs to be initialized in `playwright/index.{js,ts,jsx,tsx}`. If you do this inside a `beforeMount` hook, the `initialState` can be overwritten on a per-test basis:
 
 ```js
-import { createTestingPinia } from '@pinia/testing';
+  // playwright/index.ts
+  import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
+  import { createTestingPinia } from '@pinia/testing';
+  import type { StoreState } from 'pinia';
+  import type { useStore } from '../src/store';
 
-createTestingPinia({
-  createSpy: (args) => {
-    console.log('spy', args);
-    return () => {
-      console.log('spyreturns');
-    };
-  },
-});
+  export type HooksConfig = {
+    store?: StoreState<ReturnType<typeof useStore>>;
+  }
+
+  beforeMount<HooksConfig>(async ({ hooksConfig }) => {
+    createTestingPinia({
+      initialState: hooksConfig?.store,
+      /**
+       * Use http intercepting to mock api calls instead:
+       * https://playwright.dev/docs/mock#mock-api-requests
+       */
+      stubActions: false,
+      createSpy(args) {
+        console.log('spy', args)
+        return () => console.log('spy-returns')
+      },
+    });
+  });
+```
+
+  #### In your test file:
+
+```js
+  // src/pinia.spec.ts
+  import { test, expect } from '@playwright/experimental-ct-vue';
+  import type { HooksConfig } from 'playwright';
+  import Store from './Store.vue';
+
+  test('override initialState ', async ({ mount }) => {
+    const component = await mount<HooksConfig>(Store, {
+      hooksConfig: {
+        store: { name: 'override initialState' } 
+      }
+    });
+    await expect(component).toContainText('override initialState');
+  });
 ```
