@@ -22,7 +22,7 @@ tampering with the global objects, for example altering `Node.prototype` methods
 content scripts. Note that running as a content script is not guaranteed when the engine is used together with other
 custom engines.
 
-Selectors must be registerd before the page that uses it is created, otherwise the
+Selectors must be registered before creating the page.
 
 An example of registering selector engine that queries elements based on a tag name:
 
