@@ -7,7 +7,7 @@ information.
 ## async method: Selectors.register
 * since: v1.8
 
-Selectors must be registerd before the page that uses it is created.
+Selectors must be registered before creating the page.
 
 **Usage**
 
