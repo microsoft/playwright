@@ -54,7 +54,7 @@ test('selector engine test', async ({ page }) => {
   await button.click();
 
   // We can combine it with built-in locators.
-  await page.locator('tag=div').getByText("Click me"').click();
+  await page.locator('tag=div').getByText('Click me').click();
 
   // We can use it in any methods supporting selectors.
   await expect(page.locator('tag=button')).toHaveCount(3);
@@ -82,8 +82,8 @@ playwright.selectors().register("tag", createTagNameEngine);
 Locator button = page.locator("tag=button");
 button.click();
 
-// We can combine it with other selector engines using ">>" combinator.
-page.locator("tag=div >> span >> \"Click me\"").click();
+// We can combine it with built-in locators.
+page.locator("tag=div").getByText("Click me").click();
 
 // We can use it in any methods supporting selectors.
 int buttonCount = (int) page.locator("tag=button").count();
@@ -111,8 +111,8 @@ await playwright.selectors.register("tag", tag_selector)
 button = page.locator("tag=button")
 await button.click()
 
-# we can combine it with other selector engines using `>>` combinator.
-await page.locator("tag=div >> span >> \"click me\"").click()
+# we can combine it with built-in locators.
+await page.locator("tag=div").get_by_text("click me").click()
 
 # we can use it in any methods supporting selectors.
 button_count = await page.locator("tag=button").count()
@@ -140,8 +140,8 @@ playwright.selectors.register("tag", tag_selector)
 button = page.locator("tag=button")
 button.click()
 
-# we can combine it with other selector engines using `>>` combinator.
-page.locator("tag=div >> span >> \"click me\"").click()
+# we can combine it with built-in locators.
+page.locator("tag=div").get_by_text("click me").click()
 
 # we can use it in any methods supporting selectors.
 button_count = page.locator("tag=button").count()
