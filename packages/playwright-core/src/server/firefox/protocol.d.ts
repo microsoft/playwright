@@ -649,7 +649,7 @@ export module Protocol {
     };
     export type dispatchTapEventReturnValue = void;
     export type dispatchMouseEventParameters = {
-      type: string;
+      type: ("mousedown"|"mousemove"|"mouseup");
       button: number;
       x: number;
       y: number;

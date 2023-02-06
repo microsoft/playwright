@@ -21,13 +21,13 @@
     },
     {
       "name": "firefox",
-      "revision": "1375",
+      "revision": "1376",
       "installByDefault": true,
       "browserVersion": "109.0"
     },
     {
       "name": "firefox-beta",
-      "revision": "1377",
+      "revision": "1378",
       "installByDefault": false,
       "browserVersion": "110.0b7"
     },
