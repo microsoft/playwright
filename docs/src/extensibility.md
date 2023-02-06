@@ -53,7 +53,7 @@ test('selector engine test', async ({ page }) => {
   const button = page.locator('tag=button');
   await button.click();
 
-  // We can combine it with other selector engines using `>>` combinator.
+  // We can combine it with built-in locators.
   await page.locator('tag=div >> span >> "Click me"').click();
 
   // We can use it in any methods supporting selectors.
