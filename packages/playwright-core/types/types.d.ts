@@ -18043,6 +18043,8 @@ export interface Route {
  */
 export interface Selectors {
   /**
+   * Selectors must be registerd before the page that uses it is created.
+   *
    * **Usage**
    *
    * An example of registering selector engine that queries elements based on a tag name:
