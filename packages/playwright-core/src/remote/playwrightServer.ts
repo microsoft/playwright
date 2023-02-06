@@ -49,7 +49,6 @@ export class PlaywrightServer {
   private _preLaunchedPlaywright: Playwright | undefined;
   private _wsServer: WebSocketServer | undefined;
   private _options: ServerOptions;
-  private _address: string = '';
 
   constructor(options: ServerOptions) {
     this._options = options;
