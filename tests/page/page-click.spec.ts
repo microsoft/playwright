@@ -54,6 +54,24 @@ it('should click a button that closes popup', async ({ page }) => {
   ]);
 });
 
+it('should issue clicks in parallel in page and popup', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/counter.html');
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(() => window.open('/counter.html')),
+  ]);
+  const clickPromises = [];
+  for (let i = 0; i < 21; ++i) {
+    if (i % 3 === 0)
+      clickPromises.push(popup.locator('button').click());
+    else
+      clickPromises.push(page.locator('button').click());
+  }
+  await Promise.all(clickPromises);
+  expect(await page.evaluate(() => window['count'])).toBe(14);
+  expect(await popup.evaluate(() => window['count'])).toBe(7);
+});
+
 it('should click svg', async ({ page }) => {
   await page.setContent(`
     <svg height="100" width="100">
@@ -1027,7 +1045,6 @@ it('should click in a nested transformed iframe', async ({ page }) => {
 
 it('ensure events are dispatched in the individual tasks', async ({ page, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19685' });
-  it.fixme(browserName === 'firefox');
   await page.setContent(`
     <div id="outer" style="background: #d4d4d4; width: 60px; height: 60px;">
       <div id="inner" style="background: #adadad; width: 46px; height: 46px;"></div>

@@ -18043,6 +18043,8 @@ export interface Route {
  */
 export interface Selectors {
   /**
+   * Selectors must be registered before creating the page.
+   *
    * **Usage**
    *
    * An example of registering selector engine that queries elements based on a tag name:
@@ -18073,8 +18075,8 @@ export interface Selectors {
    *
    *   // Use the selector prefixed with its name.
    *   const button = page.locator('tag=button');
-   *   // Combine it with other selector engines.
-   *   await page.locator('tag=div >> text="Click me"').click();
+   *   // We can combine it with built-in locators.
+   *   await page.locator('tag=div').getByText('Click me').click();
    *   // Can use it in any methods supporting selectors.
    *   const buttonCount = await page.locator('tag=button').count();
    *

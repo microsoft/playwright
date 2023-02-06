@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<button>increment</button>
+<h1>count: 0</h1>
+<script>
+window.count = 0;
+document.querySelector('button').addEventListener('click', () => {
+  ++window.count;
+  document.querySelector('h1').textContent = `count: ${window.count}`;
+});
+</script>
