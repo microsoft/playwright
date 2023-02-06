@@ -22,11 +22,11 @@ import type { HttpServer } from '../../packages/playwright-core/lib/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { spawnAsync } from 'playwright-core/lib/utils';
 
-const test = baseTest.extend<{ showReport: () => Promise<void> }>({
+const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {
     let server: HttpServer | undefined;
-    await use(async () => {
-      const reportFolder = testInfo.outputPath('playwright-report');
+    await use(async (reportFolder?: string) => {
+      reportFolder ??=  testInfo.outputPath('playwright-report');
       server = startHtmlReportServer(reportFolder);
       const location = await server.start();
       await page.goto(location);
@@ -976,3 +976,50 @@ test.describe('report location', () => {
 });
 
 
+test('should shard report', async ({ runInlineTest, showReport, page }, testInfo) => {
+  const totalShards = 3;
+
+  const testFiles = {};
+  for (let i = 0; i < totalShards; i++) {
+    testFiles[`a-${i}.spec.ts`] = `
+      const { test } = pwt;
+      test('passes', async ({}) => { expect(2).toBe(2); });
+      test('fails', async ({}) => { expect(1).toBe(2); });
+      test('skipped', async ({}) => { test.skip('Does not work') });
+      test('flaky', async ({}, testInfo) => { expect(testInfo.retry).toBe(1); });
+    `;
+  }
+
+  const allReports = testInfo.outputPath(`aggregated-report`);
+  await fs.promises.mkdir(allReports, { recursive: true });
+
+  for (let i = 1; i <= totalShards; i++) {
+    const result = await runInlineTest(testFiles,
+        { 'reporter': 'dot,html', 'retries': 1, 'shard': `${i}/${totalShards}` },
+        { PW_TEST_HTML_REPORT_OPEN: 'never' },
+        { usesCustomReporters: true });
+
+
+    expect(result.exitCode).toBe(1);
+    const files = await fs.promises.readdir(testInfo.outputPath(`playwright-report`));
+    expect(new Set(files)).toEqual(new Set([
+      'index.html',
+      `report-${i}-of-${totalShards}.zip`
+    ]));
+    await Promise.all(files.map(name => fs.promises.rename(testInfo.outputPath(`playwright-report/${name}`), `${allReports}/${name}`)));
+  }
+
+  // Show aggregated report
+  await showReport(allReports);
+
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('' + (4 * totalShards));
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('' + totalShards);
+  await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('' + totalShards);
+  await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('' + totalShards);
+  await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('' + totalShards);
+
+  await expect(page.locator('.test-file-test-outcome-unexpected >> text=fails')).toHaveCount(totalShards);
+  await expect(page.locator('.test-file-test-outcome-flaky >> text=flaky')).toHaveCount(totalShards);
+  await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toHaveCount(totalShards);
+  await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toHaveCount(totalShards);
+});

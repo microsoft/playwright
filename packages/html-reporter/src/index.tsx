@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { HTMLReport } from './types';
+import type { HTMLReport, Stats } from './types';
 import type zip from '@zip.js/zip.js';
 // @ts-ignore
 import * as zipImport from '@zip.js/zip.js/lib/zip-no-worker-inflate.js';
@@ -31,8 +31,12 @@ const ReportLoader: React.FC = () => {
   React.useEffect(() => {
     if (report)
       return;
+    const shardTotal = window.playwrightShardTotal;
     const zipReport = new ZipReport();
-    zipReport.load().then(() => setReport(zipReport));
+    const loadPromis = shardTotal ?
+      zipReport.loadFromShards(shardTotal) :
+      zipReport.loadFromBase64(window.playwrightReportBase64!);
+    loadPromis.then(() => setReport(zipReport));
   }, [report]);
   return <ReportView report={report}></ReportView>;
 };
@@ -45,11 +49,25 @@ class ZipReport implements LoadedReport {
   private _entries = new Map<string, zip.Entry>();
   private _json!: HTMLReport;
 
-  async load() {
-    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader((window as any).playwrightReportBase64), { useWebWorkers: false }) as zip.ZipReader;
+  async loadFromBase64(reportBase64: string) {
+    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(reportBase64), { useWebWorkers: false }) as zip.ZipReader;
+    this._json = await this._readReportAndTestEntries(zipReader);
+  }
+
+  async loadFromShards(shardTotal: number) {
+    const readers = [];
+    for (let i = 0; i < shardTotal; i++) {
+      const fileName = `/report-${i + 1}-of-${shardTotal}.zip`;
+      const zipReader = new zipjs.ZipReader(new zipjs.HttpReader(fileName), { useWebWorkers: false }) as zip.ZipReader;
+      readers.push(this._readReportAndTestEntries(zipReader));
+    }
+    this._json = mergeReports(await Promise.all(readers));
+  }
+
+  private async _readReportAndTestEntries(zipReader: zip.ZipReader): Promise<HTMLReport> {
     for (const entry of await zipReader.getEntries())
       this._entries.set(entry.filename, entry);
-    this._json = await this.entry('report.json') as HTMLReport;
+    return await this.entry('report.json') as HTMLReport;
   }
 
   json(): HTMLReport {
@@ -62,4 +80,36 @@ class ZipReport implements LoadedReport {
     await reportEntry!.getData!(writer);
     return JSON.parse(await writer.getData());
   }
+}
+
+function mergeReports(reports: HTMLReport[]): HTMLReport {
+  const [report, ...rest] = reports;
+
+  for (const currentReport of rest) {
+    currentReport.files.forEach(file => {
+      const existingGroup = report.files.find(({ fileId }) => fileId === file.fileId);
+
+      if (existingGroup) {
+        existingGroup.tests.push(...file.tests);
+        mergeStats(existingGroup.stats, file.stats);
+      } else {
+        report.files.push(file);
+      }
+    });
+
+    mergeStats(report.stats, currentReport.stats);
+    report.metadata.duration += currentReport.metadata.duration;
+  }
+
+  return report;
+}
+
+function mergeStats(toStats: Stats, fromStats: Stats) {
+  toStats.total += fromStats.total;
+  toStats.expected += fromStats.expected;
+  toStats.unexpected += fromStats.unexpected;
+  toStats.flaky += fromStats.flaky;
+  toStats.skipped += fromStats.skipped;
+  toStats.duration += fromStats.duration;
+  toStats.ok = toStats.ok && fromStats.ok;
 }

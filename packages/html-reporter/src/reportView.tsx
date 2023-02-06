@@ -31,6 +31,7 @@ import './theme.css';
 
 declare global {
   interface Window {
+    playwrightShardTotal?: number;
     playwrightReportBase64?: string;
   }
 }
