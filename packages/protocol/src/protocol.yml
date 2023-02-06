@@ -2144,6 +2144,7 @@ Frame:
           items: ExpectedTextValue
         expectedNumber: number?
         expectedValue: SerializedArgument?
+        viewportRatio: number?
         useInnerText: boolean?
         isNot: boolean
         timeout: number?

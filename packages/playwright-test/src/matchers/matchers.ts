@@ -119,6 +119,16 @@ export function toBeVisible(
   }, options);
 }
 
+export function toBeInViewport(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  options?: { timeout?: number, ratio?: number },
+) {
+  return toBeTruthy.call(this, 'toBeInViewport', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.be.in.viewport', { isNot, viewportRatio: options?.ratio, timeout });
+  }, options);
+}
+
 export function toContainText(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,

@@ -4481,6 +4481,26 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
+   * Ensures the [Locator] points to an element that intersects viewport, according to the
+   * [intersection observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.locator('button.submit');
+   * await expect(locator).toBeInViewport();
+   * ```
+   *
+   * @param options
+   */
+  toBeInViewport(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Ensures that [Locator] points to an [attached](https://playwright.dev/docs/actionability#attached) and
    * [visible](https://playwright.dev/docs/actionability#visible) DOM node.
    *

@@ -679,6 +679,27 @@ await Expect(locator).ToBeHiddenAsync();
 ### option: LocatorAssertions.toBeHidden.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
+## async method: LocatorAssertions.toBeInViewport
+* since: v1.31
+* langs: js
+
+Ensures the [Locator] points to an element that intersects viewport, according to the [intersection observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
+
+**Usage**
+
+```js
+const locator = page.locator('button.submit');
+await expect(locator).toBeInViewport();
+```
+
+### option: LocatorAssertions.toBeInViewport.ratio
+
+The minimal ratio of the element to be visible in viewport. Defaults to [`Number.MIN_VALUE`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MIN_VALUE).
+
+### option: LocatorAssertions.toBeInViewport.timeout = %%-js-assertions-timeout-%%
+
+* since: v1.31
+
 ## async method: LocatorAssertions.toBeVisible
 * since: v1.20
 * langs:
@@ -1671,3 +1692,4 @@ Expected options currently selected.
 
 ### option: LocatorAssertions.toHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.23
+
