@@ -688,6 +688,63 @@ it('should respect cors overrides', async ({ page, server, browserName, isAndroi
   }
 });
 
+it('should not auto-intercept non-preflight OPTIONS', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20469' });
+
+  await page.goto(server.EMPTY_PAGE);
+
+  let requests = [];
+  server.setRoute('/something', (request, response) => {
+    requests.push(request.method + ':' + request.url);
+    if (request.method === 'OPTIONS') {
+      response.writeHead(200, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
+        'Access-Control-Allow-Headers': '*',
+        'Cache-Control': 'no-cache'
+      });
+      response.end(`Hello`);
+      return;
+    }
+    response.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
+    response.end('World');
+  });
+
+  // Without interception.
+  {
+    requests = [];
+    const [text1, text2] = await page.evaluate(async url => {
+      const response1 = await fetch(url, { method: 'OPTIONS' });
+      const text1 = await response1.text();
+      const response2 = await fetch(url, { method: 'GET' });
+      const text2 = await response2.text();
+      return [text1, text2];
+    }, server.CROSS_PROCESS_PREFIX + '/something');
+    expect.soft(text1).toBe('Hello');
+    expect.soft(text2).toBe('World');
+    // Preflight for OPTIONS, then OPTIONS, then GET without preflight.
+    expect.soft(requests).toEqual(['OPTIONS:/something', 'OPTIONS:/something', 'GET:/something']);
+  }
+
+  // With interception.
+  {
+    await page.route('**/something', route => route.continue());
+
+    requests = [];
+    const [text1, text2] = await page.evaluate(async url => {
+      const response1 = await fetch(url, { method: 'OPTIONS' });
+      const text1 = await response1.text();
+      const response2 = await fetch(url, { method: 'GET' });
+      const text2 = await response2.text();
+      return [text1, text2];
+    }, server.CROSS_PROCESS_PREFIX + '/something');
+    expect.soft(text1).toBe('Hello');
+    expect.soft(text2).toBe('World');
+    // Preflight for OPTIONS is auto-fulfilled, then OPTIONS, then GET without preflight.
+    expect.soft(requests).toEqual(['OPTIONS:/something', 'GET:/something']);
+  }
+});
+
 it('should support cors with POST', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async route => {
