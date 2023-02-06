@@ -33,7 +33,9 @@ it('should work @smoke', async ({ contextFactory, server }) => {
   await context.close();
 });
 
-it('should work for subresource', async ({ contextFactory, server }) => {
+it('should work for subresource', async ({ contextFactory, server, browserName, platform }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20654' });
+  it.fixme(browserName === 'webkit' && platform === 'win32', 'responseStart is wrong due upstream webkit/libcurl bug');
   const context = await contextFactory();
   const page = await context.newPage();
   const requests = [];
@@ -49,7 +51,9 @@ it('should work for subresource', async ({ contextFactory, server }) => {
   await context.close();
 });
 
-it('should work for SSL', async ({ browser, httpsServer }) => {
+it('should work for SSL', async ({ browser, httpsServer, browserName, platform }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20654' });
+  it.fixme(browserName === 'webkit' && platform === 'win32', 'responseStart is wrong due upstream webkit/libcurl bug');
   const page = await browser.newPage({ ignoreHTTPSErrors: true });
   const [request] = await Promise.all([
     page.waitForEvent('requestfinished'),
