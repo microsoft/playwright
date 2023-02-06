@@ -25,10 +25,10 @@ import { createTitleMatcher, errorWithFile } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import { requireOrImport } from '../common/transform';
-import { buildFileSuiteForProject, filterByFocusedLine, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
+import { buildFileSuiteForProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { filterForShard } from './testGroups';
 
-export async function loadAllTests(config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, fileMatcher: Matcher, errors: TestError[]): Promise<Suite> {
+export async function loadAllTests(mode: 'out-of-process' | 'in-process', config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, fileMatcher: Matcher, errors: TestError[]): Promise<Suite> {
   const projects = filterProjects(config.projects, config._internal.cliProjectFilter);
 
   let filesToRunByProject = new Map<FullProjectInternal, string[]>();
@@ -81,7 +81,7 @@ export async function loadAllTests(config: FullConfigInternal, projectsToIgnore:
   // Load all test files and create a preprocessed root. Child suites are files there.
   const fileSuits: Suite[] = [];
   {
-    const loaderHost: LoaderHost = process.env.PW_TEST_OOP_LOADER ? new OutOfProcessLoaderHost(config) : new InProcessLoaderHost(config);
+    const loaderHost: LoaderHost = mode === 'out-of-process' ? new OutOfProcessLoaderHost(config) : new InProcessLoaderHost(config);
     const allTestFiles = new Set<string>();
     for (const files of filesToRunByProject.values())
       files.forEach(file => allTestFiles.add(file));
@@ -125,7 +125,7 @@ export async function loadAllTests(config: FullConfigInternal, projectsToIgnore:
   return rootSuite;
 }
 
-async function createProjectSuite(fileSuits: Suite[], project: FullProjectInternal, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher }, files: string[]): Promise<Suite | null> {
+async function createProjectSuite(fileSuits: Suite[], project: FullProjectInternal, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher }, files: string[]): Promise<Suite | null> {
   const fileSuitesMap = new Map<string, Suite>();
   for (const fileSuite of fileSuits)
     fileSuitesMap.set(fileSuite._requireFile, fileSuite);
@@ -143,8 +143,9 @@ async function createProjectSuite(fileSuits: Suite[], project: FullProjectIntern
       projectSuite._addSuite(builtSuite);
     }
   }
-  // Filter tests to respect line/column filter.
+
   filterByFocusedLine(projectSuite, options.cliFileFilters);
+  filterByTestIds(projectSuite, options.testIdMatcher);
 
   const grepMatcher = createTitleMatcher(project.grep);
   const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;

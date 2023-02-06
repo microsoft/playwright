@@ -28,3 +28,6 @@ export const sourceMapSupport = sourceMapSupportLibrary;
 
 import stoppableLibrary from 'stoppable';
 export const stoppable = stoppableLibrary;
+
+import enquirerLibrary from 'enquirer';
+export const enquirer = enquirerLibrary;
