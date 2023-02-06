@@ -32,6 +32,7 @@ const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwri
 
 const sourceMaps: Map<string, string> = new Map();
 const memoryCache = new Map<string, MemoryCache>();
+const fileDependencies = new Map<string, string[]>();
 
 Error.stackTraceLimit = 200;
 
@@ -91,6 +92,7 @@ export function serializeCompilationCache(): any {
   return {
     sourceMaps: [...sourceMaps.entries()],
     memoryCache: [...memoryCache.entries()],
+    fileDependencies: [...fileDependencies.entries()],
   };
 }
 
@@ -104,6 +106,8 @@ export function addToCompilationCache(payload: any) {
     sourceMaps.set(entry[0], entry[1]);
   for (const entry of payload.memoryCache)
     memoryCache.set(entry[0], entry[1]);
+  for (const entry of payload.fileDependencies)
+    fileDependencies.set(entry[0], entry[1]);
 }
 
 function calculateCachePath(content: string, filePath: string, isModule: boolean): string {
@@ -116,4 +120,45 @@ function calculateCachePath(content: string, filePath: string, isModule: boolean
       .digest('hex');
   const fileName = path.basename(filePath, path.extname(filePath)).replace(/\W/g, '') + '_' + hash;
   return path.join(cacheDir, hash[0] + hash[1], fileName);
+}
+
+// Since ESM and CJS collect dependencies differently,
+// we go via the global state to collect them.
+let depsCollector: Set<string> | undefined;
+
+export function startCollectingFileDeps() {
+  depsCollector = new Set();
+}
+
+export function stopCollectingFileDeps(filename: string) {
+  if (!depsCollector)
+    return;
+  depsCollector.delete(filename);
+  const deps = [...depsCollector!].filter(f => !belongsToNodeModules(f));
+  fileDependencies.set(filename, deps);
+  depsCollector = undefined;
+}
+
+export function currentFileDepsCollector(): Set<string> | undefined {
+  return depsCollector;
+}
+
+export function fileDependenciesForTest() {
+  return fileDependencies;
+}
+
+// These two are only used in the dev mode, they are specifically excluding
+// files from packages/playwright*. In production mode, node_modules covers
+// that.
+const kPlaywrightInternalPrefix = path.resolve(__dirname, '../../../playwright');
+const kPlaywrightCoveragePrefix = path.resolve(__dirname, '../../../../tests/config/coverage.js');
+
+export function belongsToNodeModules(file: string) {
+  if (file.includes(`${path.sep}node_modules${path.sep}`))
+    return true;
+  if (file.startsWith(kPlaywrightInternalPrefix))
+    return true;
+  if (file.startsWith(kPlaywrightCoveragePrefix))
+    return true;
+  return false;
 }

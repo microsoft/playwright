@@ -16,7 +16,8 @@
 
 import fs from 'fs';
 import url from 'url';
-import { transformHook, resolveHook, belongsToNodeModules } from './common/transform';
+import { belongsToNodeModules, currentFileDepsCollector } from './common/compilationCache';
+import { transformHook, resolveHook } from './common/transform';
 
 // Node < 18.6: defaultResolve takes 3 arguments.
 // Node >= 18.6: nextResolve from the chain takes 2 arguments.
@@ -27,7 +28,10 @@ async function resolve(specifier: string, context: { parentURL?: string }, defau
     if (resolved !== undefined)
       specifier = url.pathToFileURL(resolved).toString();
   }
-  return defaultResolve(specifier, context, defaultResolve);
+  const result = await defaultResolve(specifier, context, defaultResolve);
+  if (result?.url)
+    currentFileDepsCollector()?.add(url.fileURLToPath(result.url));
+  return result;
 }
 
 // Node < 18.6: defaultLoad takes 3 arguments.

@@ -24,7 +24,7 @@ import { tsConfigLoader } from '../third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelTransformFunction } from './babelBundle';
 import { fileIsModule } from '../util';
-import { getFromCompilationCache } from './compilationCache';
+import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules } from './compilationCache';
 
 type ParsedTsConfigData = {
   absoluteBaseUrl: string;
@@ -180,7 +180,14 @@ export async function requireOrImport(file: string) {
     const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
     if (isModule)
       return await esmImport();
-    return require(file);
+    const result = require(file);
+    const depsCollector = currentFileDepsCollector();
+    if (depsCollector) {
+      const module = require.cache[file];
+      if (module)
+        collectCJSDependencies(module, depsCollector);
+    }
+    return result;
   } finally {
     revertBabelRequire();
   }
@@ -213,6 +220,17 @@ function installTransform(): () => void {
   };
 }
 
+const collectCJSDependencies = (module: Module, dependencies: Set<string>) => {
+  if (dependencies.has(module.filename))
+    return;
+  module.children.forEach(child => {
+    if (!belongsToNodeModules(child.filename)) {
+      dependencies.add(child.filename);
+      collectCJSDependencies(child, dependencies);
+    }
+  });
+};
+
 export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, ...args: A) => R): (...args: A) => R {
   return (...args) => {
     const oldPrepareStackTrace = Error.prepareStackTrace;
@@ -236,20 +254,6 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
     Error.prepareStackTrace = oldPrepareStackTrace;
     return func(location, ...args);
   };
-}
-
-// This will catch the playwright-test package as well
-const kPlaywrightInternalPrefix = path.resolve(__dirname, '../../../playwright');
-const kPlaywrightCoveragePrefix = path.resolve(__dirname, '../../../../tests/config/coverage.js');
-
-export function belongsToNodeModules(file: string) {
-  if (file.includes(`${path.sep}node_modules${path.sep}`))
-    return true;
-  if (file.startsWith(kPlaywrightInternalPrefix))
-    return true;
-  if (file.startsWith(kPlaywrightCoveragePrefix))
-    return true;
-  return false;
 }
 
 function isRelativeSpecifier(specifier: string) {
