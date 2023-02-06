@@ -32,5 +32,8 @@
   },
   "devDependencies": {
     "svelte": "^3.49.0"
+  },
+  "bin": {
+    "playwright": "./cli.js"
   }
 }

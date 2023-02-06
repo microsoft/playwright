@@ -32,5 +32,8 @@
   },
   "devDependencies": {
     "vue": "^2.7.13"
+  },
+  "bin": {
+    "playwright": "./cli.js"
   }
 }
