@@ -52,8 +52,8 @@ it('should issue clicks in parallel in page and popup', async ({ page, server })
       clickPromises.push(page.locator('button').click());
   }
   await Promise.all(clickPromises);
-  expect(await page.evaluate(() => window.count)).toBe(14);
-  expect(await popup.evaluate(() => window.count)).toBe(7);
+  expect(await page.evaluate(() => window['count'])).toBe(14);
+  expect(await popup.evaluate(() => window['count'])).toBe(7);
 });
 
 it('should click svg', async ({ page }) => {
