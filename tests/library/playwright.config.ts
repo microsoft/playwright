@@ -34,7 +34,11 @@ const getExecutablePath = (browserName: BrowserName) => {
     return process.env.WKPATH;
 };
 
-const mode: TestModeName = (process.env.PWTEST_MODE ?? 'default') as ('default' | 'driver' | 'service' | 'service2');
+let mode: TestModeName = 'default';
+if (process.env.DOCKER_REMOTE)
+  mode = 'docker';
+else
+  mode = (process.env.PWTEST_MODE ?? 'default') as ('default' | 'driver' | 'service' | 'service2');
 const headed = process.argv.includes('--headed');
 const channel = process.env.PWTEST_CHANNEL as any;
 const video = !!process.env.PWTEST_VIDEO;
@@ -135,6 +139,10 @@ for (const browserName of browserNames) {
           executablePath,
           devtools
         },
+        connectOptions: process.env.DOCKER_REMOTE ? {
+          wsEndpoint: 'http://localhost:5400',
+          _exposeNetwork: '*',
+        } as any : undefined,
         trace: trace ? 'on' : undefined,
         coverageName: browserName,
       },
@@ -142,6 +150,7 @@ for (const browserName of browserNames) {
         platform: process.platform,
         docker: !!process.env.INSIDE_DOCKER,
         headful: !!headed,
+        ['DOCKER_REMOTE=1']: !!process.env.DOCKER_REMOTE,
         browserName,
         channel,
         mode,

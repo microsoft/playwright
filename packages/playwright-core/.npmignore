@@ -14,6 +14,8 @@
 lib/**/injected/
 # Include all binaries that we ship with the package.
 !bin/*
+# Include all shell files in the lib/containers/*
+!lib/containers/*.sh
 # Include FFMPEG
 !third_party/ffmpeg/*
 # Include generated types and entrypoint.

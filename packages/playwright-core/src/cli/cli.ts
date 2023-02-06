@@ -38,6 +38,7 @@ import type { GridFactory } from '../grid/gridServer';
 import { GridServer } from '../grid/gridServer';
 import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
+import { addContainerCLI } from '../containers/';
 
 const packageJSON = require('../../package.json');
 
@@ -311,6 +312,8 @@ Examples:
 
   $ show-trace https://example.com/trace.zip`);
 
+addContainerCLI(program);
+
 if (!process.env.PW_LANG_NAME) {
   let playwrightTestPackagePath = null;
   const resolvePwTestPaths = [__dirname, process.cwd()];
@@ -371,6 +374,7 @@ type Options = {
   channel?: string;
   colorScheme?: string;
   device?: string;
+  disableRecorder?: boolean;
   geolocation?: string;
   ignoreHttpsErrors?: boolean;
   lang?: string;
@@ -581,13 +585,15 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 
 async function open(options: Options, url: string | undefined, language: string) {
   const { context, launchOptions, contextOptions } = await launchContext(options, !!process.env.PWTEST_CLI_HEADLESS, process.env.PWTEST_CLI_EXECUTABLE_PATH);
-  await context._enableRecorder({
-    language,
-    launchOptions,
-    contextOptions,
-    device: options.device,
-    saveStorage: options.saveStorage,
-  });
+  if (!options.disableRecorder) {
+    await context._enableRecorder({
+      language,
+      launchOptions,
+      contextOptions,
+      device: options.device,
+      saveStorage: options.saveStorage,
+    });
+  }
   await openPage(context, url);
   if (process.env.PWTEST_CLI_EXIT)
     await Promise.all(context.pages().map(p => p.close()));
@@ -701,6 +707,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--geolocation <coordinates>', 'specify geolocation coordinates, for example "37.819722,-122.478611"')
       .option('--ignore-https-errors', 'ignore https errors')
       .option('--load-storage <filename>', 'load context storage state from the file, previously saved with --save-storage')
+      .option('--disable-recorder', 'do not open Playwright Inspector')
       .option('--lang <language>', 'specify language / locale, for example "en-GB"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
       .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
