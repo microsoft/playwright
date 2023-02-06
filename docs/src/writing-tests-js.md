@@ -115,12 +115,15 @@ learn more about them.
 
 ## Assertions
 
-Playwright Test uses the [expect](https://jestjs.io/docs/expect) library for
-[test assertions](./test-assertions.md) which provides matchers like
-`toEqual`, `toContain`, `toMatch`, `toBe` and many more. It also extends
-this library with the convenience async matchers that will wait until the expected condition is met.
-Using these matchers allows making the tests non-flaky and resilient. For example, this code will wait until
-the page gets the title containing "Playwright":
+Playwright includes [test assertions](./test-assertions.md) in the form of `expect` function. To make an assertion, call `expect(value)` and choose a matcher that reflects the expectation.
+
+There are many generic matchers like `toEqual`, `toContain`, `toBeTruthy` that can be used to assert any conditions.
+
+```js
+expect(success).toBeTruthy();
+```
+
+Playwright also includes async matchers that will wait until the expected condition is met. Using these matchers allows making the tests non-flaky and resilient. For example, this code will wait until the page gets the title containing "Playwright":
 
 ```js
 await expect(page).toHaveTitle(/Playwright/);
