@@ -61,7 +61,7 @@ download = download_info.value
 # Wait for the download process to complete
 print(download.path())
 # Save downloaded file somewhere
-download.save_as("/path/to/save/download/at.txt")
+await download.save_as("/path/to/save/download/at.txt")
 ```
 
 ```csharp
