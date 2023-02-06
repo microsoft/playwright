@@ -16,10 +16,11 @@
 
 import path from 'path';
 import type { TestError } from '../../reporter';
-import { setCurrentlyLoadingFileSuite } from './globals';
+import { isWorkerProcess, setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { requireOrImport } from './transform';
 import { serializeError } from '../util';
+import { startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 
 export const defaultTimeout = 30000;
 
@@ -35,6 +36,8 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
   suite.location = { file, line: 0, column: 0 };
 
   setCurrentlyLoadingFileSuite(suite);
+  if (!isWorkerProcess())
+    startCollectingFileDeps();
   try {
     await requireOrImport(file);
     cachedFileSuites.set(file, suite);
@@ -43,6 +46,7 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
       throw e;
     testErrors.push(serializeError(e));
   } finally {
+    stopCollectingFileDeps(file);
     setCurrentlyLoadingFileSuite(undefined);
   }
 
