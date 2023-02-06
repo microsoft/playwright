@@ -17,7 +17,6 @@
 
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult } from '../../types/testReporter';
-import { dockerPlugin } from '../plugins/dockerPlugin';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createReporter } from './reporters';
@@ -54,8 +53,6 @@ export class Runner {
 
     // Legacy webServer support.
     webServerPluginsForConfig(config).forEach(p => config._internal.plugins.push({ factory: p }));
-    // Docker support.
-    config._internal.plugins.push({ factory: dockerPlugin });
 
     const reporter = await createReporter(config, listOnly);
     const taskRunner = listOnly ? createTaskRunnerForList(config, reporter)
