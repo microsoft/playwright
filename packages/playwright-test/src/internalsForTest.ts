@@ -19,6 +19,6 @@ import { fileDependenciesForTest } from './common/compilationCache';
 
 export function fileDependencies() {
   return Object.fromEntries([...fileDependenciesForTest().entries()].map(entry => (
-    [path.basename(entry[0]),  entry[1].map(f => path.basename(f))]
+    [path.basename(entry[0]), [...entry[1]].map(f => path.basename(f)).sort()]
   )));
 }

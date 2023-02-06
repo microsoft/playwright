@@ -24,13 +24,14 @@ test('should print dependencies in CJS mode', async ({ runInlineTest }) => {
         globalTeardown: './globalTeardown.ts',
       });
     `,
-    'helper.ts': `export function foo() {}`,
+    'helperA.ts': `export function foo() {}`,
+    'helperB.ts': `import './helperA';`,
     'a.test.ts': `
-      import './helper';
+      import './helperA';
       pwt.test('passes', () => {});
     `,
     'b.test.ts': `
-      import './helper';
+      import './helperB';
       pwt.test('passes', () => {});
     `,
     'globalTeardown.ts': `
@@ -46,8 +47,8 @@ test('should print dependencies in CJS mode', async ({ runInlineTest }) => {
   const output = stripAnsi(result.output);
   const deps = JSON.parse(output.match(/###(.*)###/)![1]);
   expect(deps).toEqual({
-    'a.test.ts': ['helper.ts'],
-    'b.test.ts': ['helper.ts'],
+    'a.test.ts': ['helperA.ts'],
+    'b.test.ts': ['helperA.ts', 'helperB.ts'],
   });
 });
 
@@ -61,13 +62,14 @@ test('should print dependencies in ESM mode', async ({ runInlineTest, nodeVersio
         globalTeardown: './globalTeardown.ts',
       });
     `,
-    'helper.ts': `export function foo() {}`,
+    'helperA.ts': `export function foo() {}`,
+    'helperB.ts': `import './helperA.js';`,
     'a.test.ts': `
-      import './helper.js';
+      import './helperA.js';
       pwt.test('passes', () => {});
     `,
     'b.test.ts': `
-      import './helper.js';
+      import './helperB.js';
       pwt.test('passes', () => {});
     `,
     'globalTeardown.ts': `
@@ -83,7 +85,7 @@ test('should print dependencies in ESM mode', async ({ runInlineTest, nodeVersio
   const output = stripAnsi(result.output);
   const deps = JSON.parse(output.match(/###(.*)###/)![1]);
   expect(deps).toEqual({
-    'a.test.ts': ['helper.ts'],
-    'b.test.ts': ['helper.ts'],
+    'a.test.ts': ['helperA.ts'],
+    'b.test.ts': ['helperA.ts', 'helperB.ts'],
   });
 });

@@ -221,10 +221,8 @@ function installTransform(): () => void {
 }
 
 const collectCJSDependencies = (module: Module, dependencies: Set<string>) => {
-  if (dependencies.has(module.filename))
-    return;
   module.children.forEach(child => {
-    if (!belongsToNodeModules(child.filename)) {
+    if (!belongsToNodeModules(child.filename) && !dependencies.has(child.filename)) {
       dependencies.add(child.filename);
       collectCJSDependencies(child, dependencies);
     }
