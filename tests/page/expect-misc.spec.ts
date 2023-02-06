@@ -298,7 +298,7 @@ test.describe('toBeInViewport', () => {
     await expect(page.locator('#small')).toBeInViewport();
   });
 
-  test.only('should respect ratio option', async ({ page }) => {
+  test('should respect ratio option', async ({ page }) => {
     await page.setContent(`
       <style>body, div, html { padding: 0; margin: 0; }</style>
       <div id=big style="height: 400vh;"></div>
