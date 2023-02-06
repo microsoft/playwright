@@ -3,20 +3,20 @@ id: test-assertions
 title: "Assertions"
 ---
 
-Playwright Test uses [expect](https://jestjs.io/docs/expect) library for test assertions. This library provides a lot of matchers like `toEqual`, `toContain`, `toMatch`, `toMatchSnapshot` and many more:
+Playwright includes test assertions in the form of `expect` function. To make an assertion, call `expect(value)` and choose a matcher that reflects the expectation. There are many [generic matchers](./api/class-genericassertions.md) like `toEqual`, `toContain`, `toBeTruthy` that can be used to assert any conditions.
 
 ```js
 expect(success).toBeTruthy();
 ```
 
-Playwright also extends it with convenience async matchers that will wait until
+Playwright also includes web-specific [async matchers](./api/class-locatorassertions.md) that will wait until
 the expected condition is met. Consider the following example:
 
 ```js
 await expect(page.getByTestId('status')).toHaveText('Submitted');
 ```
 
-Playwright Test will be re-testing the element with the test id of `status` until the fetched element has the `"Submitted"` text. It will re-fetch the element and check it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value in the test config.
+Playwright will be re-testing the element with the test id of `status` until the fetched element has the `"Submitted"` text. It will re-fetch the element and check it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`property: TestConfig.expect`] value in the test config.
 
 By default, the timeout for assertions is set to 5 seconds. Learn more about [various timeouts](./test-timeouts.md).
 

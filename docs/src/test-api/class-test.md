@@ -2,7 +2,7 @@
 * since: v1.10
 * langs: js
 
-Playwright Test provides a `test` function to declare tests and [`expect` function](https://jestjs.io/docs/expect) to write assertions.
+Playwright Test provides a `test` function to declare tests and `expect` function to write assertions.
 
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');

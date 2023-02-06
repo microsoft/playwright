@@ -2317,8 +2317,7 @@ interface TestFunction<TestArgs> {
 }
 
 /**
- * Playwright Test provides a `test` function to declare tests and [`expect` function](https://jestjs.io/docs/expect)
- * to write assertions.
+ * Playwright Test provides a `test` function to declare tests and `expect` function to write assertions.
  *
  * ```js
  * import { test, expect } from '@playwright/test';
