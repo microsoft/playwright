@@ -224,7 +224,7 @@ const pathToExtension = path.join(__dirname, 'my-extension');
 const context = await chromium.launchPersistentContext('', {
   headless: false,
   args: [
-    `--headless=chrome`, // the new headless arg
+    `--headless=new`, // the new headless arg for chrome v109+. Use '--headless=chrome' as arg for browsers v94-108.
     `--disable-extensions-except=${pathToExtension}`,
     `--load-extension=${pathToExtension}`,
   ],
@@ -237,9 +237,9 @@ const context = await chromium.launchPersistentContext('', {
 path_to_extension = Path(__file__).parent.joinpath("my-extension")
 context = playwright.chromium.launch_persistent_context(
     "",
-    headless=False, 
+    headless=False,
     args=[
-        "--headless=chrome", # the new headless arg
+        "--headless=new", # the new headless arg for chrome v109+. Use '--headless=chrome' as arg for browsers v94-108.
         f"--disable-extensions-except={path_to_extension}",
         f"--load-extension={path_to_extension}",
     ],
