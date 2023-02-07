@@ -33,9 +33,9 @@ test('render unexpected after retry', async ({ runInlineTest }) => {
   expect(text).toContain('1 failed');
   expect(text).toContain('1) a.test');
   expect(text).not.toContain('2) a.test');
-  expect(text).toContain('Retry #1 ----');
-  expect(text).toContain('Retry #2 ----');
-  expect(text).toContain('Retry #3 ----');
+  expect(text).toContain('Retry #1 ────');
+  expect(text).toContain('Retry #2 ────');
+  expect(text).toContain('Retry #3 ────');
   expect(result.exitCode).toBe(1);
 });
 

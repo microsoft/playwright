@@ -32,9 +32,9 @@ test('render text attachment', async ({ runInlineTest }) => {
     `,
   }, { reporter: 'line' });
   const text = result.output;
-  expect(text).toContain('    attachment #1: attachment (text/plain) ---------------------------------------------------------');
+  expect(text).toContain('    attachment #1: attachment (text/plain) ─────────────────────────────────────────────────────────');
   expect(text).toContain('    Hello world');
-  expect(text).toContain('    ------------------------------------------------------------------------------------------------');
+  expect(text).toContain('    ────────────────────────────────────────────────────────────────────────────────────────────────');
   expect(result.exitCode).toBe(1);
 });
 
@@ -53,9 +53,9 @@ test('render screenshot attachment', async ({ runInlineTest }) => {
     `,
   }, { reporter: 'line' });
   const text = result.output.replace(/\\/g, '/');
-  expect(text).toContain('    attachment #1: screenshot (image/png) ----------------------------------------------------------');
+  expect(text).toContain('    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────');
   expect(text).toContain('    test-results/a-one/some/path.png');
-  expect(text).toContain('    ------------------------------------------------------------------------------------------------');
+  expect(text).toContain('    ────────────────────────────────────────────────────────────────────────────────────────────────');
   expect(result.exitCode).toBe(1);
 });
 
@@ -74,10 +74,10 @@ test('render trace attachment', async ({ runInlineTest }) => {
     `,
   }, { reporter: 'line' });
   const text = result.output.replace(/\\/g, '/');
-  expect(text).toContain('    attachment #1: trace (application/zip) ---------------------------------------------------------');
+  expect(text).toContain('    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────');
   expect(text).toContain('    test-results/a-one/trace.zip');
   expect(text).toContain('npx playwright show-trace test-results/a-one/trace.zip');
-  expect(text).toContain('    ------------------------------------------------------------------------------------------------');
+  expect(text).toContain('    ────────────────────────────────────────────────────────────────────────────────────────────────');
   expect(result.exitCode).toBe(1);
 });
 
@@ -170,7 +170,7 @@ test(`testInfo.attach allow empty string body`, async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
+  expect(result.output).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*──────/gm);
 });
 
 test(`testInfo.attach allow empty buffer body`, async ({ runInlineTest }) => {
@@ -185,7 +185,7 @@ test(`testInfo.attach allow empty buffer body`, async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
+  expect(result.output).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*──────/gm);
 });
 
 test(`testInfo.attach use name as prefix`, async ({ runInlineTest }) => {

@@ -167,8 +167,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config._internal.passWithNoTests = !!opts.passWithNoTests;
 
   const runner = new Runner(config);
-  if (opts.watch)
-    process.stdout.write('\x1Bc');
   const status = await runner.runAllTests(!!opts.watch);
   await stopProfiling(undefined);
 
