@@ -70,9 +70,9 @@ mkdir /root/.fluxbox
 cat <<'EOF' > /root/.fluxbox/menu
   [begin] (fluxbox)
     [submenu] (Browsers) {}
-      [exec] (Chromium) { cd /ms-playwright-agent && npx playwright open --disable-recorder --browser chromium } <>
-      [exec] (Firefox) { cd /ms-playwright-agent && npx playwright open --disable-recorder --browser firefox } <>
-      [exec] (WebKit) { cd /ms-playwright-agent && npx playwright open --disable-recorder --browser webkit } <>
+      [exec] (Chromium) { cd /ms-playwright-agent && PW_DISABLE_RECORDER=1 npx playwright open --browser chromium } <>
+      [exec] (Firefox) { cd /ms-playwright-agent && PW_DISABLE_RECORDER=1 npx playwright open --browser firefox } <>
+      [exec] (WebKit) { cd /ms-playwright-agent && PW_DISABLE_RECORDER=1 npx playwright open --browser webkit } <>
     [end]
     [include] (/etc/X11/fluxbox/fluxbox-menu)
   [end]

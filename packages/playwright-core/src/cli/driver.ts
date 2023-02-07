@@ -76,7 +76,7 @@ export async function launchBrowserServer(browserName: string, configFile?: stri
   console.log(server.wsEndpoint());
 }
 
-export function selfDestruct() {
+function selfDestruct() {
   // Force exit after 30 seconds.
   setTimeout(() => process.exit(0), 30000);
   // Meanwhile, try to gracefully close all browsers.

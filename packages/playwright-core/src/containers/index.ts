@@ -17,16 +17,16 @@
 
 import path from 'path';
 import { spawnAsync } from '../utils/spawnAsync';
+import { gracefullyCloseAll } from '../utils/processLauncher';
 import { createGuid } from '../utils';
 import type { Command } from '../utilsBundle';
 import { debug } from '../utilsBundle';
 import type { AddressInfo } from 'net';
 import http from 'http';
-import { selfDestruct } from '../cli/driver';
 import { PlaywrightServer } from '../remote/playwrightServer';
 
 const { ProxyServer } = require('../third_party/http_proxy.js');
-const debugLog = debug('pw:proxy');
+const debugLog = debug('pw:container');
 
 export function addContainerCLI(program: Command) {
   const ctrCommand = program.command('container', { hidden: true })
@@ -91,6 +91,15 @@ async function launchContainerAgent(port: number, novncEndpoint: string) {
   httpServer.listen(port, '0.0.0.0', () => {
     const { port } = httpServer.address() as AddressInfo;
     console.log(`Playwright Container running on http://localhost:${port}`);
+  });
+}
+
+function selfDestruct() {
+  // Force exit after 30 seconds.
+  setTimeout(() => process.exit(0), 30000);
+  // Meanwhile, try to gracefully close all browsers.
+  gracefullyCloseAll().then(() => {
+    process.exit(0);
   });
 }
 
