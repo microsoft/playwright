@@ -1039,3 +1039,54 @@ test('should pad report numbers with zeros', async ({ runInlineTest, showReport,
     `report-003-of-100.zip`
   ]));
 });
+
+test('should show report with missing shards', async ({ runInlineTest, showReport, page }, testInfo) => {
+  const totalShards = 15;
+
+  const testFiles = {};
+  for (let i = 0; i < totalShards; i++) {
+    testFiles[`a-${String(i).padStart(2, '0')}.spec.ts`] = `
+      const { test } = pwt;
+      test('passes', async ({}) => { expect(2).toBe(2); });
+      test('fails', async ({}) => { expect(1).toBe(2); });
+      test('skipped', async ({}) => { test.skip('Does not work') });
+      test('flaky', async ({}, testInfo) => { expect(testInfo.retry).toBe(1); });
+    `;
+  }
+
+  const allReports = testInfo.outputPath(`aggregated-report`);
+  await fs.promises.mkdir(allReports, { recursive: true });
+
+  // Run tests in 2 out of 15 shards.
+  for (const i of [10, 13]) {
+    const result = await runInlineTest(testFiles,
+        { 'reporter': 'dot,html', 'retries': 1, 'shard': `${i}/${totalShards}` },
+        { PW_TEST_HTML_REPORT_OPEN: 'never' },
+        { usesCustomReporters: true });
+
+
+    expect(result.exitCode).toBe(1);
+    const files = await fs.promises.readdir(testInfo.outputPath(`playwright-report`));
+    expect(new Set(files)).toEqual(new Set([
+      'index.html',
+      `report-${i}-of-${totalShards}.zip`
+    ]));
+    await Promise.all(files.map(name => fs.promises.rename(testInfo.outputPath(`playwright-report/${name}`), `${allReports}/${name}`)));
+  }
+
+  // Show aggregated report
+  await showReport(allReports);
+
+  await expect(page.getByText('Only 2 of 15 report shards loaded')).toBeVisible();
+
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('8');
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('2');
+  await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('2');
+  await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('2');
+  await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('2');
+
+  await expect(page.locator('.test-file-test-outcome-unexpected >> text=fails')).toHaveCount(2);
+  await expect(page.locator('.test-file-test-outcome-flaky >> text=flaky')).toHaveCount(2);
+  await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toHaveCount(2);
+  await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toHaveCount(2);
+});

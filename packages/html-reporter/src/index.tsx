@@ -49,6 +49,7 @@ window.onload = () => {
 class ZipReport implements LoadedReport {
   private _entries = new Map<string, zip.Entry>();
   private _json!: HTMLReport;
+  private _loaderError: string | undefined;
 
   async loadFromBase64(reportBase64: string) {
     const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(reportBase64), { useWebWorkers: false }) as zip.ZipReader;
@@ -62,9 +63,17 @@ class ZipReport implements LoadedReport {
       const paddedNumber = String(i + 1).padStart(paddedLen, '0');
       const fileName = `report-${paddedNumber}-of-${shardTotal}.zip`;
       const zipReader = new zipjs.ZipReader(new zipjs.HttpReader(fileName), { useWebWorkers: false }) as zip.ZipReader;
-      readers.push(this._readReportAndTestEntries(zipReader));
+      readers.push(this._readReportAndTestEntries(zipReader).catch(e => {
+        // eslint-disable-next-line no-console
+        console.warn(e);
+        return undefined;
+      }));
     }
-    this._json = mergeReports(await Promise.all(readers));
+    const reportsOrErrors = await Promise.all(readers);
+    const reports = reportsOrErrors.filter(Boolean) as HTMLReport[];
+    if (reports.length < readers.length)
+      this._loaderError = `Only ${reports.length} of ${shardTotal} report shards loaded`;
+    this._json = mergeReports(reports);
   }
 
   private async _readReportAndTestEntries(zipReader: zip.ZipReader): Promise<HTMLReport> {
@@ -82,6 +91,10 @@ class ZipReport implements LoadedReport {
     const writer = new zipjs.TextWriter() as zip.TextWriter;
     await reportEntry!.getData!(writer);
     return JSON.parse(await writer.getData());
+  }
+
+  loaderError(): string | undefined {
+    return this._loaderError;
   }
 }
 
