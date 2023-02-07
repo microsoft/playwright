@@ -49,9 +49,9 @@ test('print GitHub annotations for failed tests', async ({ runInlineTest }, test
   }, { retries: 3, reporter: 'github' }, { GITHUB_WORKSPACE: process.cwd() });
   const text = result.output;
   const testPath = relativeFilePath(testInfo.outputPath('a.test.js'));
-  expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #1`);
-  expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #2`);
-  expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #3`);
+  expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example ───────────────────────────────────────────────────────────────────────%0A%0A    Retry #1`);
+  expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example ───────────────────────────────────────────────────────────────────────%0A%0A    Retry #2`);
+  expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example ───────────────────────────────────────────────────────────────────────%0A%0A    Retry #3`);
   expect(result.exitCode).toBe(1);
 });
 

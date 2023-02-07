@@ -120,8 +120,7 @@ export class WatchModeReporter extends ListReporter {
     const lines: string[] = [];
     const sep = separator();
     lines.push('\x1Bc' + sep);
-    lines.push(`${tokens.join(' ')}`);
-    lines.push(sep + super.generateStartingMessage());
+    lines.push(`${tokens.join(' ')}` + super.generateStartingMessage());
     return lines.join('\n');
   }
 }

@@ -161,6 +161,7 @@ function createLoadTask(mode: 'out-of-process' | 'in-process', projectsToIgnore 
 function createTestGroupsTask(): Task<TaskRunnerState> {
   return async context => {
     const { config, rootSuite, reporter } = context;
+    context.config._internal.maxConcurrentTestGroups = 0;
     for (const phase of buildPhases(rootSuite!.suites)) {
       // Go over the phases, for each phase create list of task groups.
       const projects: ProjectWithTestGroups[] = [];

@@ -70,6 +70,7 @@ export async function runWatchModeLoop(config: FullConfigInternal, failedTests: 
 
   const originalCliArgs = config._internal.cliArgs;
   const originalCliGrep = config._internal.cliGrep;
+  let lastRun: { type: 'changed' | 'regular' | 'failed', failedTestIds?: Set<string>, dirtyFiles?: Set<string> } = { type: 'regular' };
 
   const fsWatcher = new FSWatcher(projectClosure.map(p => p.testDir));
   while (true) {
@@ -87,17 +88,23 @@ Waiting for file changes. Press ${colors.bold('h')} for help or ${colors.bold('q
       readCommandPromise.resolve('changed');
 
     const command = await readCommandPromise;
+
     if (command === 'changed') {
-      await runChangedTests(config, failedTestIdCollector, projectClosure, fsWatcher.takeDirtyFiles());
+      const dirtyFiles = fsWatcher.takeDirtyFiles();
+      await runChangedTests(config, failedTestIdCollector, projectClosure, dirtyFiles);
+      lastRun = { type: 'changed', dirtyFiles };
       continue;
     }
+
     if (command === 'all') {
       // All means reset filters.
       config._internal.cliArgs = originalCliArgs;
       config._internal.cliGrep = originalCliGrep;
       await runTests(config, failedTestIdCollector);
+      lastRun = { type: 'regular' };
       continue;
     }
+
     if (command === 'file') {
       const { filePattern } = await enquirer.prompt<{ filePattern: string }>({
         type: 'text',
@@ -110,8 +117,10 @@ Waiting for file changes. Press ${colors.bold('h')} for help or ${colors.bold('q
       else
         config._internal.cliArgs = [];
       await runTests(config, failedTestIdCollector);
+      lastRun = { type: 'regular' };
       continue;
     }
+
     if (command === 'grep') {
       const { testPattern } = await enquirer.prompt<{ testPattern: string }>({
         type: 'text',
@@ -124,19 +133,36 @@ Waiting for file changes. Press ${colors.bold('h')} for help or ${colors.bold('q
       else
         config._internal.cliGrep = undefined;
       await runTests(config, failedTestIdCollector);
+      lastRun = { type: 'regular' };
       continue;
     }
+
     if (command === 'failed') {
       config._internal.testIdMatcher = id => failedTestIdCollector.has(id);
-      try {
+      const failedTestIds = new Set(failedTestIdCollector);
+      await runTests(config, failedTestIdCollector);
+      config._internal.testIdMatcher = undefined;
+      lastRun = { type: 'failed', failedTestIds };
+      continue;
+    }
+
+    if (command === 'repeat') {
+      if (lastRun.type === 'regular') {
         await runTests(config, failedTestIdCollector);
-      } finally {
+        continue;
+      } else if (lastRun.type === 'changed') {
+        await runChangedTests(config, failedTestIdCollector, projectClosure, lastRun.dirtyFiles!);
+      } else if (lastRun.type === 'failed') {
+        config._internal.testIdMatcher = id => lastRun.failedTestIds!.has(id);
+        await runTests(config, failedTestIdCollector);
         config._internal.testIdMatcher = undefined;
       }
       continue;
     }
+
     if (command === 'exit')
       return 'passed';
+
     if (command === 'interrupted')
       return 'interrupted';
   }
@@ -254,6 +280,7 @@ ${commands.map(i => '  ' + colors.bold(i[0]) + `: ${i[1]}`).join('\n')}
       case 'p': result.resolve('file'); break;
       case 't': result.resolve('grep'); break;
       case 'f': result.resolve('failed'); break;
+      case 'r': result.resolve('repeat'); break;
     }
   };
 
@@ -267,11 +294,12 @@ ${commands.map(i => '  ' + colors.bold(i[0]) + `: ${i[1]}`).join('\n')}
   return result;
 }
 
-type Command = 'all' | 'failed' | 'changed' | 'file' | 'grep' | 'exit' | 'interrupted';
+type Command = 'all' | 'failed' | 'repeat' | 'changed' | 'file' | 'grep' | 'exit' | 'interrupted';
 
 const commands = [
   ['a', 'rerun all tests'],
   ['f', 'rerun only failed tests'],
+  ['r', 'repeat last run'],
   ['p', 'filter by a filename'],
   ['t', 'filter by a test name regex pattern'],
   ['q', 'quit'],
