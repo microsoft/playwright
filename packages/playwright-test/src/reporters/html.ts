@@ -295,7 +295,8 @@ class HtmlBuilder {
       // For each shard write same index.html and store report data in a separate report-num-of-total.zip
       // so that they can all be copied in one folder.
       fs.appendFileSync(indexFile, `<script>\nwindow.playwrightShardTotal=${shard.total};</script>`);
-      const reportZip = path.join(this._reportFolder, `report-${shard.current}-of-${shard.total}.zip`);
+      const paddedNumber = String(shard.current).padStart(String(shard.total).length, '0');
+      const reportZip = path.join(this._reportFolder, `report-${paddedNumber}-of-${shard.total}.zip`);
       await new Promise(f => {
         this._dataZipFile!.end(undefined, () => {
           this._dataZipFile!.outputStream.pipe(fs.createWriteStream(reportZip)).on('close', f);

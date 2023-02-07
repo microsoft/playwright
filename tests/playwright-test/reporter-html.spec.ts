@@ -1023,3 +1023,19 @@ test('should shard report', async ({ runInlineTest, showReport, page }, testInfo
   await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toHaveCount(totalShards);
   await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toHaveCount(totalShards);
 });
+
+test('should pad report numbers with zeros', async ({ runInlineTest, showReport, page }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('passes', async ({}) => {});
+    `,
+  }, { reporter: 'dot,html', shard: '3/100' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+  expect(result.exitCode).toBe(0);
+  const files = await fs.promises.readdir(testInfo.outputPath(`playwright-report`));
+  expect(new Set(files)).toEqual(new Set([
+    'index.html',
+    `report-003-of-100.zip`
+  ]));
+});

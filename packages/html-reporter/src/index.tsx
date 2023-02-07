@@ -57,8 +57,10 @@ class ZipReport implements LoadedReport {
 
   async loadFromShards(shardTotal: number) {
     const readers = [];
+    const paddedLen = String(shardTotal).length;
     for (let i = 0; i < shardTotal; i++) {
-      const fileName = `report-${i + 1}-of-${shardTotal}.zip`;
+      const paddedNumber = String(i + 1).padStart(paddedLen, '0');
+      const fileName = `report-${paddedNumber}-of-${shardTotal}.zip`;
       const zipReader = new zipjs.ZipReader(new zipjs.HttpReader(fileName), { useWebWorkers: false }) as zip.ZipReader;
       readers.push(this._readReportAndTestEntries(zipReader));
     }
