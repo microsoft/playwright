@@ -33,9 +33,6 @@ import type { BrowserType } from '../client/browserType';
 import type { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { wrapInASCIIBox, isLikelyNpxGlobal, assert } from '../utils';
-import { launchGridAgent } from '../grid/gridAgent';
-import type { GridFactory } from '../grid/gridServer';
-import { GridServer } from '../grid/gridServer';
 import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
 import { addContainerCLI } from '../containers/';
@@ -239,25 +236,6 @@ commandWithOpenOptions('pdf <url> <filename>', 'save page as pdf',
 Examples:
 
   $ pdf https://example.com example.pdf`);
-
-program
-    .command('experimental-grid-server', { hidden: true })
-    .option('--port <port>', 'grid port; defaults to 3333')
-    .option('--address <address>', 'address of the server')
-    .option('--agent-factory <factory>', 'path to grid agent factory or npm package')
-    .option('--auth-token <authToken>', 'optional authentication token')
-    .action(function(options) {
-      launchGridServer(options.agentFactory, options.port || 3333, options.address, options.authToken);
-    });
-
-program
-    .command('experimental-grid-agent', { hidden: true })
-    .requiredOption('--agent-id <agentId>', 'agent ID')
-    .requiredOption('--grid-url <gridURL>', 'grid URL')
-    .option('--run-id <github run_id>', 'Workflow run_id')
-    .action(function(options) {
-      launchGridAgent(options.agentId, options.gridUrl, options.runId);
-    });
 
 program
     .command('run-driver', { hidden: true })
@@ -716,25 +694,6 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds, no timeout by default')
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
-}
-
-async function launchGridServer(factoryPathOrPackageName: string, port: number, address: string | undefined, authToken: string | undefined): Promise<void> {
-  if (!factoryPathOrPackageName)
-    factoryPathOrPackageName = path.join('..', 'grid', 'simpleGridFactory');
-  let factory;
-  try {
-    factory = require(path.resolve(factoryPathOrPackageName));
-  } catch (e) {
-    factory = require(factoryPathOrPackageName);
-  }
-  if (factory && typeof factory === 'object' && ('default' in factory))
-    factory = factory['default'];
-  if (!factory || !factory.launch || typeof factory.launch !== 'function')
-    throw new Error('factory does not export `launch` method');
-  factory.name = factory.name || factoryPathOrPackageName;
-  const gridServer = new GridServer(factory as GridFactory, authToken, address);
-  await gridServer.start(port);
-  console.log('Grid server is running at ' + gridServer.gridURL());
 }
 
 function buildBasePlaywrightCLICommand(cliTargetLang: string | undefined): string {
