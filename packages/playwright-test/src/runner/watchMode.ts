@@ -23,7 +23,7 @@ import type { Matcher } from '../util';
 import { createTaskRunnerForWatch } from './tasks';
 import type { TaskRunnerState } from './tasks';
 import { buildProjectsClosure, filterProjects } from './projectUtils';
-import { clearCompilationCache } from '../common/compilationCache';
+import { clearCompilationCache, collectAffectedTestFiles } from '../common/compilationCache';
 import type { FullResult, TestCase } from 'packages/playwright-test/reporter';
 import chokidar from 'chokidar';
 import { WatchModeReporter } from './reporters';
@@ -149,14 +149,19 @@ ${colors.dim('press')} ${colors.bold('h')} ${colors.dim('to show help, press')} 
   }
 }
 
-async function runChangedTests(config: FullConfigInternal, failedTestIds: Set<string>, projectClosure: FullProjectInternal[], files: Set<string>) {
+async function runChangedTests(config: FullConfigInternal, failedTestIdCollector: Set<string>, projectClosure: FullProjectInternal[], changedFiles: Set<string>) {
   const commandLineFileMatcher = config._internal.cliFileFilters.length ? createFileMatcherFromFilters(config._internal.cliFileFilters) : () => true;
+
+  // Resolve files that depend on the changed files.
+  const testFiles = new Set<string>();
+  for (const file of changedFiles)
+    collectAffectedTestFiles(file, testFiles);
 
   // Collect projects with changes.
   const filesByProject = new Map<FullProjectInternal, string[]>();
   for (const project of projectClosure) {
     const projectFiles: string[] = [];
-    for (const file of files) {
+    for (const file of testFiles) {
       if (!file.startsWith(project.testDir))
         continue;
       if (project._internal.type === 'dependency' || commandLineFileMatcher(file))
@@ -174,11 +179,11 @@ async function runChangedTests(config: FullConfigInternal, failedTestIds: Set<st
 
   // If there are affected dependency projects, do the full run, respect the original CLI.
   // if there are no affected dependency projects, intersect CLI with dirty files
-  const additionalFileMatcher = affectsAnyDependency ? () => true : (file: string) => files.has(file);
-  return await runTests(config, failedTestIds, projectsToIgnore, additionalFileMatcher);
+  const additionalFileMatcher = affectsAnyDependency ? () => true : (file: string) => testFiles.has(file);
+  return await runTests(config, failedTestIdCollector, projectsToIgnore, additionalFileMatcher);
 }
 
-async function runTests(config: FullConfigInternal, failedTestIds: Set<string>, projectsToIgnore?: Set<FullProjectInternal>, additionalFileMatcher?: Matcher) {
+async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<string>, projectsToIgnore?: Set<FullProjectInternal>, additionalFileMatcher?: Matcher) {
   const reporter = new Multiplexer([new WatchModeReporter()]);
   const taskRunner = createTaskRunnerForWatch(config, reporter, projectsToIgnore, additionalFileMatcher);
   const context: TaskRunnerState = {
@@ -194,9 +199,9 @@ async function runTests(config: FullConfigInternal, failedTestIds: Set<string>, 
   let hasFailedTests = false;
   for (const test of context.rootSuite?.allTests() || []) {
     if (test.outcome() === 'expected') {
-      failedTestIds.delete(test.id);
+      failedTestIdCollector.delete(test.id);
     } else {
-      failedTestIds.add(test.id);
+      failedTestIdCollector.add(test.id);
       hasFailedTests = true;
     }
   }

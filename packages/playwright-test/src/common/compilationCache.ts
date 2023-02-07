@@ -32,7 +32,7 @@ const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwri
 
 const sourceMaps: Map<string, string> = new Map();
 const memoryCache = new Map<string, MemoryCache>();
-const fileDependencies = new Map<string, string[]>();
+const fileDependencies = new Map<string, Set<string>>();
 
 Error.stackTraceLimit = 200;
 
@@ -92,7 +92,7 @@ export function serializeCompilationCache(): any {
   return {
     sourceMaps: [...sourceMaps.entries()],
     memoryCache: [...memoryCache.entries()],
-    fileDependencies: [...fileDependencies.entries()],
+    fileDependencies: [...fileDependencies.entries()].map(([filename, deps]) => ([filename, [...deps]])),
   };
 }
 
@@ -107,7 +107,7 @@ export function addToCompilationCache(payload: any) {
   for (const entry of payload.memoryCache)
     memoryCache.set(entry[0], entry[1]);
   for (const entry of payload.fileDependencies)
-    fileDependencies.set(entry[0], entry[1]);
+    fileDependencies.set(entry[0], new Set(entry[1]));
 }
 
 function calculateCachePath(content: string, filePath: string, isModule: boolean): string {
@@ -134,8 +134,11 @@ export function stopCollectingFileDeps(filename: string) {
   if (!depsCollector)
     return;
   depsCollector.delete(filename);
-  const deps = [...depsCollector!].filter(f => !belongsToNodeModules(f));
-  fileDependencies.set(filename, deps);
+  for (const dep of depsCollector) {
+    if (belongsToNodeModules(dep))
+      depsCollector.delete(dep);
+  }
+  fileDependencies.set(filename, depsCollector);
   depsCollector = undefined;
 }
 
@@ -145,6 +148,14 @@ export function currentFileDepsCollector(): Set<string> | undefined {
 
 export function fileDependenciesForTest() {
   return fileDependencies;
+}
+
+export function collectAffectedTestFiles(dependency: string, testFileCollector: Set<string>) {
+  testFileCollector.add(dependency);
+  for (const [testFile, deps] of fileDependencies) {
+    if (deps.has(dependency))
+      testFileCollector.add(testFile);
+  }
 }
 
 // These two are only used in the dev mode, they are specifically excluding
