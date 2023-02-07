@@ -291,31 +291,10 @@ class HtmlBuilder {
     }
 
     const indexFile = path.join(this._reportFolder, 'index.html');
-    if (shard) {
-      // For each shard write same index.html and store report data in a separate report-num-of-total.zip
-      // so that they can all be copied in one folder.
-      fs.appendFileSync(indexFile, `<script>\nwindow.playwrightShardTotal=${shard.total};</script>`);
-      const paddedNumber = String(shard.current).padStart(String(shard.total).length, '0');
-      const reportZip = path.join(this._reportFolder, `report-${paddedNumber}-of-${shard.total}.zip`);
-      await new Promise(f => {
-        this._dataZipFile!.end(undefined, () => {
-          this._dataZipFile!.outputStream.pipe(fs.createWriteStream(reportZip)).on('close', f);
-        });
-      });
-    } else {
-      // Inline report data.
-      fs.appendFileSync(indexFile, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
-
-      await new Promise(f => {
-        this._dataZipFile!.end(undefined, () => {
-          this._dataZipFile!.outputStream
-              .pipe(new Base64Encoder())
-              .pipe(fs.createWriteStream(indexFile, { flags: 'a' })).on('close', f);
-        });
-      });
-
-      fs.appendFileSync(indexFile, '";</script>');
-    }
+    if (shard)
+      await this._writeShardedReport(indexFile, shard);
+    else
+      await this._writeInlineReport(indexFile);
 
     let singleTestId: string | undefined;
     if (htmlReport.stats.total === 1) {
@@ -324,6 +303,32 @@ class HtmlBuilder {
     }
 
     return { ok, singleTestId };
+  }
+
+  private async _writeShardedReport(indexFile: string, shard: { total: number, current: number }) {
+    // For each shard write same index.html and store report data in a separate report-num-of-total.zip
+    // so that they can all be copied in one folder.
+    await fs.promises.appendFile(indexFile, `<script>\nwindow.playwrightShardTotal=${shard.total};</script>`);
+    const paddedNumber = String(shard.current).padStart(String(shard.total).length, '0');
+    const reportZip = path.join(this._reportFolder, `report-${paddedNumber}-of-${shard.total}.zip`);
+    await new Promise(f => {
+      this._dataZipFile!.end(undefined, () => {
+        this._dataZipFile!.outputStream.pipe(fs.createWriteStream(reportZip)).on('close', f);
+      });
+    });
+  }
+
+  private async _writeInlineReport(indexFile: string) {
+    // Inline report data.
+    await fs.promises.appendFile(indexFile, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
+    await new Promise(f => {
+      this._dataZipFile!.end(undefined, () => {
+        this._dataZipFile!.outputStream
+            .pipe(new Base64Encoder())
+            .pipe(fs.createWriteStream(indexFile, { flags: 'a' })).on('close', f);
+      });
+    });
+    await fs.promises.appendFile(indexFile, '";</script>');
   }
 
   private _addDataFile(fileName: string, data: any) {
