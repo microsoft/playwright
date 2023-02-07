@@ -40,7 +40,6 @@ export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOpti
       docker_remote: new DefaultTestMode(),
       service: new DefaultTestMode(),
       driver: new DriverTestMode(),
-      service2: new DefaultTestMode(),
     }[mode];
     require('playwright-core/lib/utils').setUnderTest();
     const playwright = await testMode.setup();
