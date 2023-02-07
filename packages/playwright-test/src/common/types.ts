@@ -17,7 +17,7 @@
 import type { Fixtures, TestInfoError, Project } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import type { TestRunnerPluginRegistration } from '../plugins';
-import type { Matcher, TestFileFilter } from '../util';
+import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
 import type { FullConfig as FullConfigPublic, FullProject as FullProjectPublic } from './types';
 export * from '../../types/test';
@@ -50,8 +50,9 @@ type ConfigInternal = {
   webServers: Exclude<FullConfigPublic['webServer'], null>[];
   plugins: TestRunnerPluginRegistration[];
   listOnly: boolean;
-  cliFileFilters: TestFileFilter[];
-  cliTitleMatcher: Matcher;
+  cliArgs: string[];
+  cliGrep: string | undefined;
+  cliGrepInvert: string | undefined;
   cliProjectFilter?: string[];
   testIdMatcher?: Matcher;
   passWithNoTests?: boolean;

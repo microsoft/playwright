@@ -21,8 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling } from './common/profiler';
-import { createFileFilterForArg, experimentalLoaderOption, fileIsModule, forceRegExp } from './util';
-import { createTitleMatcher } from './util';
+import { experimentalLoaderOption, fileIsModule } from './util';
 import { showHTMLReport } from './reporters/html';
 import { baseFullConfig, builtInReporters, ConfigLoader, defaultTimeout, kDefaultConfigFiles, resolveConfigFile } from './common/configLoader';
 import type { TraceMode } from './common/types';
@@ -160,10 +159,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     configLoader.ignoreProjectDependencies();
 
   const config = configLoader.fullConfig();
-  config._internal.cliFileFilters = args.map(arg => createFileFilterForArg(arg));
-  const grepMatcher = opts.grep ? createTitleMatcher(forceRegExp(opts.grep)) : () => true;
-  const grepInvertMatcher = opts.grepInvert ? createTitleMatcher(forceRegExp(opts.grepInvert)) : () => false;
-  config._internal.cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+  config._internal.cliArgs = args;
+  config._internal.cliGrep = opts.grep as string | undefined;
+  config._internal.cliGrepInvert = opts.grepInvert as string | undefined;
   config._internal.listOnly = !!opts.list;
   config._internal.cliProjectFilter = opts.project || undefined;
   config._internal.passWithNoTests = !!opts.passWithNoTests;

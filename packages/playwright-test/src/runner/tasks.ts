@@ -28,7 +28,7 @@ import { TaskRunner } from './taskRunner';
 import type { Suite } from '../common/test';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { loadAllTests, loadGlobalHook } from './loadUtils';
-import { createFileMatcherFromFilters } from '../util';
+import { createFileMatcherFromArguments } from '../util';
 import type { Matcher } from '../util';
 
 const removeFolderAsync = promisify(rimraf);
@@ -149,7 +149,7 @@ function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
 function createLoadTask(mode: 'out-of-process' | 'in-process', projectsToIgnore = new Set<FullProjectInternal>(), additionalFileMatcher?: Matcher): Task<TaskRunnerState> {
   return async (context, errors) => {
     const { config } = context;
-    const cliMatcher = config._internal.cliFileFilters.length ? createFileMatcherFromFilters(config._internal.cliFileFilters) : () => true;
+    const cliMatcher = config._internal.cliArgs.length ? createFileMatcherFromArguments(config._internal.cliArgs) : () => true;
     const fileMatcher = (value: string) => cliMatcher(value) && (additionalFileMatcher ? additionalFileMatcher(value) : true);
     context.rootSuite = await loadAllTests(mode, config, projectsToIgnore, fileMatcher, errors);
     // Fail when no tests.
