@@ -26,11 +26,11 @@
     }
   },
   "dependencies": {
-    "vite": "^4.0.3",
+    "vite": "^4.1.1",
     "vite-plugin-solid": "^2.5.0",
     "@playwright/test": "1.31.0-next"
   },
   "devDependencies": {
-    "solid-js": "^1.4.7"
+    "solid-js": "^1.6.10"
   }
 }
