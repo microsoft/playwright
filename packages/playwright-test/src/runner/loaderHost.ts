@@ -19,13 +19,12 @@ import { serializeConfig } from '../common/ipc';
 import { ProcessHost } from './processHost';
 import { Suite } from '../common/test';
 import { loadTestFile } from '../common/testLoader';
-import type { LoadError } from '../common/fixtures';
 import type { FullConfigInternal } from '../common/types';
 import { PoolBuilder } from '../common/poolBuilder';
 import { addToCompilationCache } from '../common/compilationCache';
 
-export abstract class LoaderHost {
-  protected _config: FullConfigInternal;
+export class InProcessLoaderHost {
+  private _config: FullConfigInternal;
   private _poolBuilder: PoolBuilder;
 
   constructor(config: FullConfigInternal) {
@@ -34,41 +33,31 @@ export abstract class LoaderHost {
   }
 
   async loadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {
-    const result = await this.doLoadTestFile(file, testErrors);
+    const result = await loadTestFile(file, this._config.rootDir, testErrors);
     this._poolBuilder.buildPools(result, testErrors);
     return result;
   }
 
-  protected abstract doLoadTestFile(file: string, testErrors: TestError[]): Promise<Suite>;
-
   async stop() {}
 }
 
-export class InProcessLoaderHost extends LoaderHost {
-
-  doLoadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {
-    return loadTestFile(file, this._config.rootDir, testErrors);
-  }
-}
-
-export class OutOfProcessLoaderHost extends LoaderHost {
+export class OutOfProcessLoaderHost {
   private _startPromise: Promise<void>;
   private _processHost: ProcessHost;
 
   constructor(config: FullConfigInternal) {
-    super(config);
     this._processHost = new ProcessHost(require.resolve('../loader/loaderMain.js'), 'loader');
     this._startPromise = this._processHost.startRunner(serializeConfig(config), true, {});
   }
 
-  async doLoadTestFile(file: string, loadErrors: LoadError[]): Promise<Suite> {
+  async loadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {
     await this._startPromise;
     const result = await this._processHost.sendMessage({ method: 'loadTestFile', params: { file } }) as any;
-    loadErrors.push(...result.testErrors);
+    testErrors.push(...result.testErrors);
     return Suite._deepParse(result.fileSuite);
   }
 
-  override async stop() {
+  async stop() {
     await this._startPromise;
     const result = await this._processHost.sendMessage({ method: 'serializeCompilationCache' }) as any;
     addToCompilationCache(result);

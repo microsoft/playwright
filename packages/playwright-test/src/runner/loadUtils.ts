@@ -17,7 +17,6 @@
 import path from 'path';
 import type { Reporter, TestError } from '../../types/testReporter';
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
-import type { LoaderHost } from './loaderHost';
 import { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
@@ -81,7 +80,7 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
   // Load all test files and create a preprocessed root. Child suites are files there.
   const fileSuits: Suite[] = [];
   {
-    const loaderHost: LoaderHost = mode === 'out-of-process' ? new OutOfProcessLoaderHost(config) : new InProcessLoaderHost(config);
+    const loaderHost = mode === 'out-of-process' ? new OutOfProcessLoaderHost(config) : new InProcessLoaderHost(config);
     const allTestFiles = new Set<string>();
     for (const files of filesToRunByProject.values())
       files.forEach(file => allTestFiles.add(file));
