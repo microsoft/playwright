@@ -72,7 +72,7 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
   },
   webServer: mode === 'service' ? {
     command: 'npx playwright run-server --port=3333',
-    port: 3333,
+    url: 'http://localhost:3333',
     reuseExistingServer: !process.env.CI,
   } : undefined,
 };
@@ -85,8 +85,6 @@ for (const browserName of browserNames) {
   const devtools = process.env.DEVTOOLS === '1';
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
   for (const folder of ['library', 'page']) {
-    if (mode === 'service' && folder === 'library')
-      continue;
     config.projects.push({
       name: browserName,
       testDir: path.join(testDir, folder),

@@ -94,6 +94,5 @@ it('should scroll into view span element', async ({ page }) => {
     <span id=small>foo</span>
   `);
   await page.locator('#small').scrollIntoViewIfNeeded();
-  console.log(await page.evaluate(() => window.scrollY));
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(9000);
 });

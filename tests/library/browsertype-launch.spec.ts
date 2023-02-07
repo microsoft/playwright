@@ -35,7 +35,9 @@ it('should throw if userDataDir option is passed', async ({ browserType }) => {
   expect(waitError.message).toContain('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
 });
 
-it('should throw if userDataDir is passed as an argument', async ({ browserType }) => {
+it('should throw if userDataDir is passed as an argument', async ({ mode, browserType }) => {
+  it.skip(mode === 'service');
+
   let waitError = null;
   await browserType.launch({ args: ['--user-data-dir=random-path', '--profile=random-path'] } as any).catch(e => waitError = e);
   expect(waitError.message).toContain('Pass userDataDir parameter to `browserType.launchPersistentContext');
@@ -51,7 +53,8 @@ it('should throw if port option is passed for persistent context', async ({ brow
   expect(error.message).toContain('Cannot specify a port without launching as a server.');
 });
 
-it('should throw if page argument is passed', async ({ browserType, browserName }) => {
+it('should throw if page argument is passed', async ({ mode, browserType, browserName }) => {
+  it.skip(mode === 'service');
   it.skip(browserName === 'firefox');
 
   let waitError = null;
@@ -59,13 +62,17 @@ it('should throw if page argument is passed', async ({ browserType, browserName 
   expect(waitError.message).toContain('can not specify page');
 });
 
-it('should reject if launched browser fails immediately', async ({ browserType,  asset }) => {
+it('should reject if launched browser fails immediately', async ({ mode, browserType,  asset }) => {
+  it.skip(mode === 'service');
+
   let waitError = null;
   await browserType.launch({ executablePath: asset('dummy_bad_browser_executable.js') }).catch(e => waitError = e);
   expect(waitError.message).toContain('== logs ==');
 });
 
-it('should reject if executable path is invalid', async ({ browserType }) => {
+it('should reject if executable path is invalid', async ({ browserType, mode }) => {
+  it.skip(mode === 'service');
+
   let waitError = null;
   await browserType.launch({ executablePath: 'random-invalid-path' }).catch(e => waitError = e);
   expect(waitError.message).toContain('Failed to launch');

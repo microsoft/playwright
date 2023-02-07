@@ -68,12 +68,13 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   }
 
   async launch(options: LaunchOptions = {}): Promise<Browser> {
+    assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
+    assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
+
     if (this._defaultConnectOptions)
       return await this._connectInsteadOfLaunching(this._defaultConnectOptions);
 
     const logger = options.logger || this._defaultLaunchOptions?.logger;
-    assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = { ...this._defaultLaunchOptions, ...options };
     const launchOptions: channels.BrowserTypeLaunchParams = {
       ...options,
