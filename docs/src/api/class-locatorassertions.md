@@ -694,7 +694,8 @@ await expect(locator).toBeInViewport();
 
 ### option: LocatorAssertions.toBeInViewport.ratio
 
-The minimal ratio of the element to be visible in viewport. Defaults to [`Number.MIN_VALUE`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MIN_VALUE).
+The minimal ratio of the element to intersect viewport. Element's ratio should be **strictly greater** than
+this number. Defaults to `0`.
 
 ### option: LocatorAssertions.toBeInViewport.timeout = %%-js-assertions-timeout-%%
 
