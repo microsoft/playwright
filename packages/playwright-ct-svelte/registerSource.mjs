@@ -87,7 +87,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
     throw new Error('JSX mount notation is not supported');
 
 
-  for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
+  for (const hook of window.__pw_hooks_before_mount || [])
     await hook({ hooksConfig });
 
   const svelteComponent = /** @type {SvelteComponent} */ (new componentCtor({
@@ -103,7 +103,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   for (const [key, listener] of Object.entries(component.options?.on || {}))
     svelteComponent.$on(key, event => listener(event.detail));
 
-  for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
+  for (const hook of window.__pw_hooks_after_mount || [])
     await hook({ hooksConfig, svelteComponent });
 };
 
