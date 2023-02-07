@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should work', async ({ runInlineTest }) => {
   const { results } = await runInlineTest({
@@ -168,7 +168,7 @@ test('should fail if parameters are not destructured', async ({ runInlineTest })
   });
   expect(result.output).toContain('First argument must use the object destructuring pattern: abc');
   expect(result.output).toContain('a.test.js:11');
-  expect(stripAnsi(result.output)).toContain('function (abc)');
+  expect(result.output).toContain('function (abc)');
   expect(result.results.length).toBe(0);
 });
 
@@ -182,7 +182,7 @@ test('should fail with an unknown fixture', async ({ runInlineTest }) => {
   });
   expect(result.output).toContain('Test has unknown parameter "asdf".');
   expect(result.output).toContain('a.test.js:5');
-  expect(stripAnsi(result.output)).toContain('async ({asdf})');
+  expect(result.output).toContain('async ({asdf})');
   expect(result.results.length).toBe(0);
 });
 
@@ -375,11 +375,11 @@ test('automatic fixture should start before regular fixture and teardown after',
     `
   });
   expect(result.exitCode).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%auto-setup',
-    '%%foo-setup',
-    '%%foo-teardown',
-    '%%auto-teardown',
+  expect(result.outputLines).toEqual([
+    'auto-setup',
+    'foo-setup',
+    'foo-teardown',
+    'auto-teardown',
   ]);
 });
 
@@ -664,12 +664,12 @@ test('should run tests in order', async ({ runInlineTest }) => {
     `,
   }, { workers: 1 });
   expect(result.passed).toBe(3);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test1',
-    '%%beforeEach',
-    '%%test2',
-    '%%afterEach',
-    '%%test3',
+  expect(result.outputLines).toEqual([
+    'test1',
+    'beforeEach',
+    'test2',
+    'afterEach',
+    'test3',
   ]);
 });
 

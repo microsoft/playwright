@@ -126,10 +126,10 @@ test('should be unique for beforeAll hook from different workers', async ({ runI
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output.split('\n').filter(x => x.startsWith('%%'))).toEqual([
-    `%%${testInfo.outputPath('test-results', 'a-fails')}`,
-    `%%${testInfo.outputPath('test-results', 'a-fails-retry1')}`,
-    `%%${testInfo.outputPath('test-results', 'a-passes')}`,
+  expect(result.outputLines).toEqual([
+    `${testInfo.outputPath('test-results', 'a-fails')}`,
+    `${testInfo.outputPath('test-results', 'a-fails-retry1')}`,
+    `${testInfo.outputPath('test-results', 'a-passes')}`,
   ]);
 });
 
@@ -395,7 +395,7 @@ test('should allow nonAscii characters in the output dir', async ({ runInlineTes
       });
     `,
   });
-  const outputDir = result.output.split('\n').filter(x => x.startsWith('%%'))[0].slice('%%'.length);
+  const outputDir = result.outputLines[0];
   expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my-test-こんにちは世界'));
 });
 
@@ -410,7 +410,7 @@ test('should allow shorten long output dirs characters in the output dir', async
       });
     `,
   });
-  const outputDir = result.output.split('\n').filter(x => x.startsWith('%%'))[0].slice('%%'.length);
+  const outputDir = result.outputLines[0];
   expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'very-deep-and-long-file-name-that-i-want-to-be-99202--keeps-going-and-going-and-we-should-shorten-it'));
 });
 
@@ -423,7 +423,7 @@ test('should not mangle double dashes', async ({ runInlineTest }, testInfo) => {
       });
     `,
   });
-  const outputDir = result.output.split('\n').filter(x => x.startsWith('%%'))[0].slice('%%'.length);
+  const outputDir = result.outputLines[0];
   expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my--file-my--test'));
 });
 
@@ -438,6 +438,6 @@ test('should allow include the describe name the output dir', async ({ runInline
       });
     `,
   });
-  const outputDir = result.output.split('\n').filter(x => x.startsWith('%%'))[0].slice('%%'.length);
+  const outputDir = result.outputLines[0];
   expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my-test-hello-world'));
 });

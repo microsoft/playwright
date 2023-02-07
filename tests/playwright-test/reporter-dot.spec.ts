@@ -15,7 +15,7 @@
  */
 
 import colors from 'colors/safe';
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('render expected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -26,7 +26,7 @@ test('render expected', async ({ runInlineTest }) => {
       });
     `,
   });
-  expect(result.output).toContain(colors.green('·'));
+  expect(result.rawOutput).toContain(colors.green('·'));
   expect(result.exitCode).toBe(0);
 });
 
@@ -39,7 +39,7 @@ test('render unexpected', async ({ runInlineTest }) => {
       });
     `,
   });
-  expect(result.output).toContain(colors.red('F'));
+  expect(result.rawOutput).toContain(colors.red('F'));
   expect(result.exitCode).toBe(1);
 });
 
@@ -52,9 +52,9 @@ test('render unexpected after retry', async ({ runInlineTest }) => {
       });
     `,
   }, { retries: 3 });
-  const text = stripAnsi(result.output);
+  const text = result.output;
   expect(text).toContain('×××F');
-  expect(result.output).toContain(colors.red('F'));
+  expect(result.rawOutput).toContain(colors.red('F'));
   expect(result.exitCode).toBe(1);
 });
 
@@ -67,9 +67,9 @@ test('render flaky', async ({ runInlineTest }) => {
       });
     `,
   }, { retries: 3 });
-  const text = stripAnsi(result.output);
+  const text = result.output;
   expect(text).toContain('×××±');
-  expect(result.output).toContain(colors.yellow('±'));
+  expect(result.rawOutput).toContain(colors.yellow('±'));
   expect(text).toContain('1 flaky');
   expect(text).toContain('Retry #1');
   expect(result.exitCode).toBe(0);
@@ -87,7 +87,7 @@ test('should work from config', async ({ runInlineTest }) => {
       });
     `,
   });
-  expect(result.output).toContain(colors.green('·'));
+  expect(result.rawOutput).toContain(colors.green('·'));
   expect(result.exitCode).toBe(0);
 });
 
@@ -101,7 +101,7 @@ test('render 243 tests in rows by 80', async ({ runInlineTest }) => {
     `,
   });
   expect(result.exitCode).toBe(0);
-  expect(result.output).toContain(
+  expect(result.rawOutput).toContain(
       colors.green('·').repeat(80) + '\n' +
       colors.green('·').repeat(80) + '\n' +
       colors.green('·').repeat(80) + '\n' +

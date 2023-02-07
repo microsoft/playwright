@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should load nested as esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -163,7 +163,7 @@ test('should use source maps', async ({ runInlineTest, nodeVersion }) => {
     `
   }, { reporter: 'list' });
 
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(output).toContain('[foo] › a.test.ts:7:7 › check project name');
@@ -195,7 +195,7 @@ test('should show the codeframe in errors', async ({ runInlineTest, nodeVersion 
     FORCE_COLOR: '0',
   });
 
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(2);
   expect(output, 'error carrot—via source maps—is positioned appropriately').toContain(

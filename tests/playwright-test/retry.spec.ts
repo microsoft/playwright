@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should retry failures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -127,7 +127,7 @@ test('should retry timeout', async ({ runInlineTest }) => {
   expect(exitCode).toBe(1);
   expect(passed).toBe(0);
   expect(failed).toBe(1);
-  expect(stripAnsi(output).split('\n')[2]).toBe('××T');
+  expect(output.split('\n')[2]).toBe('××T');
 });
 
 test('should fail on unexpected pass with retries', async ({ runInlineTest }) => {
@@ -158,7 +158,7 @@ test('should retry unexpected pass', async ({ runInlineTest }) => {
   expect(exitCode).toBe(1);
   expect(passed).toBe(0);
   expect(failed).toBe(1);
-  expect(stripAnsi(output).split('\n')[2]).toBe('××F');
+  expect(output.split('\n')[2]).toBe('××F');
 });
 
 test('should not retry expected failure', async ({ runInlineTest }) => {
@@ -178,7 +178,7 @@ test('should not retry expected failure', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
   expect(passed).toBe(2);
   expect(failed).toBe(0);
-  expect(stripAnsi(output).split('\n')[2]).toBe('··');
+  expect(output.split('\n')[2]).toBe('··');
 });
 
 test('should retry unhandled rejection', async ({ runInlineTest }) => {
@@ -196,7 +196,7 @@ test('should retry unhandled rejection', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(stripAnsi(result.output).split('\n')[2]).toBe('××F');
+  expect(result.output.split('\n')[2]).toBe('××F');
   expect(result.output).toContain('Unhandled rejection');
 });
 
@@ -217,7 +217,7 @@ test('should retry beforeAll failure', async ({ runInlineTest }) => {
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
-  expect(stripAnsi(result.output).split('\n')[2]).toBe('×°×°F°');
+  expect(result.output.split('\n')[2]).toBe('×°×°F°');
   expect(result.output).toContain('BeforeAll is bugged!');
 });
 
@@ -239,6 +239,6 @@ test('should retry worker fixture setup failure', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(stripAnsi(result.output).split('\n')[2]).toBe('××F');
+  expect(result.output.split('\n')[2]).toBe('××F');
   expect(result.output).toContain('worker setup is bugged!');
 });

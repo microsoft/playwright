@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 import path from 'path';
 import fs from 'fs';
 
@@ -149,5 +149,5 @@ test('should report errors', async ({ runInlineTest }) => {
     `
   }, { 'list': true });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('> 6 |       oh = 2;');
+  expect(result.output).toContain('> 6 |       oh = 2;');
 });

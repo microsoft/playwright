@@ -48,10 +48,10 @@ test('test.describe.serial should work', async ({ runInlineTest }) => {
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(2);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test1',
-    '%%test2',
-    '%%test3',
+  expect(result.outputLines).toEqual([
+    'test1',
+    'test2',
+    'test3',
   ]);
 });
 
@@ -88,10 +88,10 @@ test('test.describe.serial should work in describe', async ({ runInlineTest }) =
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(2);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test1',
-    '%%test2',
-    '%%test3',
+  expect(result.outputLines).toEqual([
+    'test1',
+    'test2',
+    'test3',
   ]);
 });
 
@@ -129,14 +129,14 @@ test('test.describe.serial should work with retry', async ({ runInlineTest }) =>
   expect(result.flaky).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test1',
-    '%%test2',
-    '%%test3',
-    '%%test1',
-    '%%test2',
-    '%%test3',
-    '%%test4',
+  expect(result.outputLines).toEqual([
+    'test1',
+    'test2',
+    'test3',
+    'test1',
+    'test2',
+    'test3',
+    'test4',
   ]);
 });
 
@@ -166,12 +166,12 @@ test('test.describe.serial should work with retry and beforeAll failure', async 
   expect(result.flaky).toBe(1);
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test1',
-    '%%beforeAll',
-    '%%test1',
-    '%%beforeAll',
-    '%%test2',
+  expect(result.outputLines).toEqual([
+    'test1',
+    'beforeAll',
+    'test1',
+    'beforeAll',
+    'test2',
   ]);
 });
 
@@ -203,12 +203,12 @@ test('test.describe.serial should work with retry and afterAll failure', async (
   expect(result.flaky).toBe(1);
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test1',
-    '%%afterAll',
-    '%%test1',
-    '%%afterAll',
-    '%%test2',
+  expect(result.outputLines).toEqual([
+    'test1',
+    'afterAll',
+    'test1',
+    'afterAll',
+    'test2',
   ]);
 });
 
@@ -236,9 +236,9 @@ test('test.describe.serial.only should work', async ({ runInlineTest }) => {
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test2',
-    '%%test3',
+  expect(result.outputLines).toEqual([
+    'test2',
+    'test3',
   ]);
 });
 
@@ -273,10 +273,10 @@ test('test.describe.serial should work with test.fail', async ({ runInlineTest }
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%zero',
-    '%%one',
-    '%%two',
+  expect(result.outputLines).toEqual([
+    'zero',
+    'one',
+    'two',
   ]);
 });
 
@@ -312,14 +312,14 @@ test('test.describe.serial should work with test.fail and retries', async ({ run
   expect(result.flaky).toBe(1);
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%zero',
-    '%%one',
-    '%%two',
-    '%%zero',
-    '%%one',
-    '%%two',
-    '%%three',
+  expect(result.outputLines).toEqual([
+    'zero',
+    'one',
+    'two',
+    'zero',
+    'one',
+    'two',
+    'three',
   ]);
 });
 
@@ -355,16 +355,16 @@ test('test.describe.serial should work inside test.describe.parallel', async ({ 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(4);
   expect(result.output).toContain('Running 4 tests using 2 workers');
-  const lines = result.output.split('\n').filter(line => line.startsWith('%%'));
+  const lines = result.outputLines;
   // First test in each worker started before the second test in the other.
   // This means they were actually running in parallel.
-  expect(lines.indexOf('%%1-one')).toBeLessThan(lines.indexOf('%%2-two'));
-  expect(lines.indexOf('%%2-one')).toBeLessThan(lines.indexOf('%%1-two'));
+  expect(lines.indexOf('1-one')).toBeLessThan(lines.indexOf('2-two'));
+  expect(lines.indexOf('2-one')).toBeLessThan(lines.indexOf('1-two'));
   expect(lines.sort()).toEqual([
-    '%%1-one',
-    '%%1-two',
-    '%%2-one',
-    '%%2-two',
+    '1-one',
+    '1-two',
+    '2-one',
+    '2-two',
   ]);
 });
 
@@ -389,8 +389,8 @@ test('test.describe.serial should work with fullyParallel', async ({ runInlineTe
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%one',
-    '%%two',
+  expect(result.outputLines).toEqual([
+    'one',
+    'two',
   ]);
 });

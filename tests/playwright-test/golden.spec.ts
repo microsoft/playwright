@@ -17,7 +17,7 @@
 import colors from 'colors/safe';
 import * as fs from 'fs';
 import * as path from 'path';
-import { test, expect, stripAnsi, createWhiteImage, paintBlackPixels } from './playwright-test-fixtures';
+import { test, expect, createWhiteImage, paintBlackPixels } from './playwright-test-fixtures';
 
 const files = {
   'helper.ts': `
@@ -56,7 +56,7 @@ test('should work with non-txt extensions', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`1,2,34`);
+  expect(result.output).toContain(`1,2,34`);
 });
 
 
@@ -130,8 +130,8 @@ Line7`,
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Line1');
-  expect(result.output).toContain('Line2' + colors.green('2'));
-  expect(result.output).toContain('line' + colors.reset(colors.strikethrough(colors.red('1'))) + colors.green('2'));
+  expect(result.rawOutput).toContain('Line2' + colors.green('2'));
+  expect(result.rawOutput).toContain('line' + colors.reset(colors.strikethrough(colors.red('1'))) + colors.green('2'));
   expect(result.output).toContain('Line3');
   expect(result.output).toContain('Line5');
   expect(result.output).toContain('Line7');
@@ -150,7 +150,7 @@ test('should write detailed failure result to an output folder', async ({ runInl
   });
 
   expect(result.exitCode).toBe(1);
-  const outputText = stripAnsi(result.output);
+  const outputText = result.output;
   expect(outputText).toContain('Snapshot comparison failed:');
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.txt');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.txt');
@@ -173,7 +173,7 @@ test("doesn\'t create comparison artifacts in an output folder for passed negate
   });
 
   expect(result.exitCode).toBe(0);
-  const outputText = stripAnsi(result.output);
+  const outputText = result.output;
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.txt');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.txt');
   expect(outputText).not.toContain(`Expected: ${expectedSnapshotArtifactPath}`);
@@ -225,7 +225,7 @@ test('should write missing expectations locally twice and continue', async ({ ru
 
   expect(result.output).toContain('Here we are!');
 
-  const stackLines = stripAnsi(result.output).split('\n').filter(line => line.includes('    at ')).filter(line => !line.includes(testInfo.outputPath()));
+  const stackLines = result.output.split('\n').filter(line => line.includes('    at ')).filter(line => !line.includes(testInfo.outputPath()));
   expect(result.output).toContain('a.spec.js:8');
   expect(stackLines.length).toBe(0);
 });
@@ -450,8 +450,8 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
         });
       `
     });
-    expect(stripAnsi(result.output)).toContain('120 pixels');
-    expect(stripAnsi(result.output)).toContain('ratio 0.30');
+    expect(result.output).toContain('120 pixels');
+    expect(result.output).toContain('ratio 0.30');
     expect(result.exitCode).toBe(1);
   });
 
@@ -561,7 +561,7 @@ test('should compare different PNG images', async ({ runInlineTest }, testInfo) 
     `
   });
 
-  const outputText = stripAnsi(result.output);
+  const outputText = result.output;
   expect(result.exitCode).toBe(1);
   expect(outputText).toContain('Screenshot comparison failed:');
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.png');
@@ -863,7 +863,7 @@ test('should attach expected/actual/diff with snapshot path', async ({ runInline
     `
   });
 
-  const outputText = stripAnsi(result.output);
+  const outputText = result.output;
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments) {
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
@@ -904,7 +904,7 @@ test('should attach expected/actual/diff', async ({ runInlineTest }, testInfo) =
     `
   });
 
-  const outputText = stripAnsi(result.output);
+  const outputText = result.output;
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments)
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
@@ -943,7 +943,7 @@ test('should attach expected/actual/diff for different sizes', async ({ runInlin
     `
   });
 
-  const outputText = stripAnsi(result.output);
+  const outputText = result.output;
   expect(outputText).toContain('Expected an image 2px by 2px, received 1px by 1px.');
   expect(outputText).toContain('4 pixels (ratio 1.00 of all image pixels) are different.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];

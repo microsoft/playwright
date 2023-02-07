@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should run fixture teardown on timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -198,7 +198,7 @@ test('should respect fixture timeout', async ({ runInlineTest }) => {
   expect(result.failed).toBe(2);
   expect(result.output).toContain('Fixture "custom title" timeout of 500ms exceeded.');
   expect(result.output).toContain('Fixture "slowTeardown" timeout of 400ms exceeded.');
-  expect(stripAnsi(result.output)).toContain('> 5 |       const test = pwt.test.extend({');
+  expect(result.output).toContain('> 5 |       const test = pwt.test.extend({');
 });
 
 test('should respect test.setTimeout in the worker fixture', async ({ runInlineTest }) => {
@@ -332,12 +332,12 @@ test('test timeout should still run hooks before fixtures teardown', async ({ ru
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Test timeout of 100ms exceeded.');
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%before-auto',
-    '%%test',
-    '%%afterAll-1',
-    '%%afterAll-2',
-    '%%after-auto',
+  expect(result.outputLines).toEqual([
+    'before-auto',
+    'test',
+    'afterAll-1',
+    'afterAll-2',
+    'after-auto',
   ]);
 });
 

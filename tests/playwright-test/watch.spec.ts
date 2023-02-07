@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should print dependencies in CJS mode', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -44,7 +44,7 @@ test('should print dependencies in CJS mode', async ({ runInlineTest }) => {
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   const deps = JSON.parse(output.match(/###(.*)###/)![1]);
   expect(deps).toEqual({
     'a.test.ts': ['helperA.ts'],
@@ -82,7 +82,7 @@ test('should print dependencies in ESM mode', async ({ runInlineTest, nodeVersio
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   const deps = JSON.parse(output.match(/###(.*)###/)![1]);
   expect(deps).toEqual({
     'a.test.ts': ['helperA.ts'],

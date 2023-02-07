@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 import path from 'path';
 
 test('should return the location of a syntax error', async ({ runInlineTest }) => {
@@ -294,9 +294,9 @@ test('should filter stack trace for simple expect', async ({ runInlineTest }) =>
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-test`);
-  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-core`);
-  expect(stripAnsi(result.output)).not.toContain('internal');
+  expect(result.output).not.toContain(path.sep + `playwright-test`);
+  expect(result.output).not.toContain(path.sep + `playwright-core`);
+  expect(result.output).not.toContain('internal');
 });
 
 test('should filter stack trace for web-first assertions', async ({ runInlineTest }) => {
@@ -309,9 +309,9 @@ test('should filter stack trace for web-first assertions', async ({ runInlineTes
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-test`);
-  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-core`);
-  expect(stripAnsi(result.output)).not.toContain('internal');
+  expect(result.output).not.toContain(path.sep + `playwright-test`);
+  expect(result.output).not.toContain(path.sep + `playwright-core`);
+  expect(result.output).not.toContain('internal');
 });
 
 test('should filter out event emitter from stack traces', async ({ runInlineTest }, testInfo) => {
@@ -327,7 +327,7 @@ test('should filter out event emitter from stack traces', async ({ runInlineTest
     `
   });
   expect(result.exitCode).toBe(1);
-  const outputWithoutGoodStackFrames = stripAnsi(result.output).split('\n').filter(line => !line.includes(testInfo.outputPath())).join('\n');
+  const outputWithoutGoodStackFrames = result.output.split('\n').filter(line => !line.includes(testInfo.outputPath())).join('\n');
   expect(outputWithoutGoodStackFrames).not.toContain('EventEmitter.emit');
 });
 
@@ -342,8 +342,8 @@ test('should filter out syntax error stack traces', async ({ runInlineTest }, te
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).not.toContain('babel');
-  expect(stripAnsi(result.output)).not.toContain('    at ');
+  expect(result.output).not.toContain('babel');
+  expect(result.output).not.toContain('    at ');
 });
 
 test('should filter stack trace for raw errors', async ({ runInlineTest }) => {
@@ -356,10 +356,10 @@ test('should filter stack trace for raw errors', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('foobar!');
-  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-test`);
-  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-core`);
-  expect(stripAnsi(result.output)).not.toContain('internal');
+  expect(result.output).toContain('foobar!');
+  expect(result.output).not.toContain(path.sep + `playwright-test`);
+  expect(result.output).not.toContain(path.sep + `playwright-core`);
+  expect(result.output).not.toContain('internal');
 });
 
 test('should not filter out POM', async ({ runInlineTest }) => {
@@ -378,12 +378,12 @@ test('should not filter out POM', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('foo');
-  expect(stripAnsi(result.output)).toContain('helper.ts');
-  expect(stripAnsi(result.output)).toContain('expect-test.spec.ts');
-  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-test`);
-  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-core`);
-  expect(stripAnsi(result.output)).not.toContain('internal');
+  expect(result.output).toContain('foo');
+  expect(result.output).toContain('helper.ts');
+  expect(result.output).toContain('expect-test.spec.ts');
+  expect(result.output).not.toContain(path.sep + `playwright-test`);
+  expect(result.output).not.toContain(path.sep + `playwright-core`);
+  expect(result.output).not.toContain('internal');
 });
 
 test('should filter stack even without default Error.prepareStackTrace', async ({ runInlineTest }) => {
@@ -397,12 +397,12 @@ test('should filter stack even without default Error.prepareStackTrace', async (
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('foobar');
-  expect(stripAnsi(result.output)).toContain('expect-test.spec.ts');
-  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-test`);
-  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-core`);
-  expect(stripAnsi(result.output)).not.toContain('internal');
-  const stackLines = stripAnsi(result.output).split('\n').filter(line => line.includes('    at '));
+  expect(result.output).toContain('foobar');
+  expect(result.output).toContain('expect-test.spec.ts');
+  expect(result.output).not.toContain(path.sep + `playwright-test`);
+  expect(result.output).not.toContain(path.sep + `playwright-core`);
+  expect(result.output).not.toContain('internal');
+  const stackLines = result.output.split('\n').filter(line => line.includes('    at '));
   expect(stackLines.length).toBe(1);
 });
 
