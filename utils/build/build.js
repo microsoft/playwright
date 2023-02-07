@@ -318,6 +318,13 @@ copyFiles.push({
   ignored: ['**/.eslintrc.js', '**/webpack*.config.js', '**/injected/**/*']
 });
 
+// Copy all shell files if we happen to use any.
+copyFiles.push({
+  files: 'packages/playwright-core/src/**/*.sh',
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
+});
+
 // Sometimes we require JSON files that babel ignores.
 // For example, deviceDescriptorsSource.json
 copyFiles.push({

@@ -51,7 +51,7 @@ it.describe('download event', () => {
   });
 
   it('should report download when navigation turns into download @smoke', async ({ browser, server, browserName, mode }) => {
-    it.skip(mode === 'docker', 'local paths do not work remote connection');
+    it.skip(mode === 'docker_remote', 'local paths do not work remote connection');
     const page = await browser.newPage();
     const [download, responseOrError] = await Promise.all([
       page.waitForEvent('download'),
