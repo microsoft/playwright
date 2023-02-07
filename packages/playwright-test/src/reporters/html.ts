@@ -202,7 +202,6 @@ class HtmlBuilder {
   constructor(outputDir: string) {
     this._reportFolder = outputDir;
     fs.mkdirSync(this._reportFolder, { recursive: true });
-    console.log('rep = ' + this._reportFolder);
     this._dataZipFile = new yazl.ZipFile();
   }
 
