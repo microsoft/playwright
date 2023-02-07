@@ -23,6 +23,7 @@ import * as ReactDOM from 'react-dom';
 import './colors.css';
 import type { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
+import { mergeReports } from './mergeReports';
 // @ts-ignore
 const zipjs = zipImport as typeof zip;
 
@@ -31,8 +32,12 @@ const ReportLoader: React.FC = () => {
   React.useEffect(() => {
     if (report)
       return;
+    const shardTotal = window.playwrightShardTotal;
     const zipReport = new ZipReport();
-    zipReport.load().then(() => setReport(zipReport));
+    const loadPromise = shardTotal ?
+      zipReport.loadFromShards(shardTotal) :
+      zipReport.loadFromBase64(window.playwrightReportBase64!);
+    loadPromise.then(() => setReport(zipReport));
   }, [report]);
   return <ReportView report={report}></ReportView>;
 };
@@ -45,11 +50,27 @@ class ZipReport implements LoadedReport {
   private _entries = new Map<string, zip.Entry>();
   private _json!: HTMLReport;
 
-  async load() {
-    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader((window as any).playwrightReportBase64), { useWebWorkers: false }) as zip.ZipReader;
+  async loadFromBase64(reportBase64: string) {
+    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(reportBase64), { useWebWorkers: false }) as zip.ZipReader;
+    this._json = await this._readReportAndTestEntries(zipReader);
+  }
+
+  async loadFromShards(shardTotal: number) {
+    const readers = [];
+    const paddedLen = String(shardTotal).length;
+    for (let i = 0; i < shardTotal; i++) {
+      const paddedNumber = String(i + 1).padStart(paddedLen, '0');
+      const fileName = `report-${paddedNumber}-of-${shardTotal}.zip`;
+      const zipReader = new zipjs.ZipReader(new zipjs.HttpReader(fileName), { useWebWorkers: false }) as zip.ZipReader;
+      readers.push(this._readReportAndTestEntries(zipReader));
+    }
+    this._json = mergeReports(await Promise.all(readers));
+  }
+
+  private async _readReportAndTestEntries(zipReader: zip.ZipReader): Promise<HTMLReport> {
     for (const entry of await zipReader.getEntries())
       this._entries.set(entry.filename, entry);
-    this._json = await this.entry('report.json') as HTMLReport;
+    return await this.entry('report.json') as HTMLReport;
   }
 
   json(): HTMLReport {
@@ -63,3 +84,4 @@ class ZipReport implements LoadedReport {
     return JSON.parse(await writer.getData());
   }
 }
+
