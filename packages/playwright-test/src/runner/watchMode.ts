@@ -18,7 +18,7 @@ import readline from 'readline';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { Multiplexer } from '../reporters/multiplexer';
-import { createFileFilterForArg, createFileMatcherFromFilters, createTitleMatcher, forceRegExp } from '../util';
+import { createFileMatcherFromArguments } from '../util';
 import type { Matcher } from '../util';
 import { createTaskRunnerForWatch } from './tasks';
 import type { TaskRunnerState } from './tasks';
@@ -29,6 +29,7 @@ import chokidar from 'chokidar';
 import { WatchModeReporter } from './reporters';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { enquirer } from '../utilsBundle';
+import { separator } from '../reporters/base';
 
 class FSWatcher {
   private _dirtyFiles = new Set<string>();
@@ -61,22 +62,21 @@ class FSWatcher {
   }
 }
 
-export async function runWatchModeLoop(config: FullConfigInternal, failedTests: TestCase[]) {
+export async function runWatchModeLoop(config: FullConfigInternal, failedTests: TestCase[]): Promise<FullResult['status']> {
   const projects = filterProjects(config.projects, config._internal.cliProjectFilter);
   const projectClosure = buildProjectsClosure(projects);
   config._internal.passWithNoTests = true;
   const failedTestIdCollector = new Set(failedTests.map(t => t.id));
 
-  const originalTitleMatcher = config._internal.cliTitleMatcher;
-  const originalFileFilters = config._internal.cliFileFilters;
+  const originalCliArgs = config._internal.cliArgs;
+  const originalCliGrep = config._internal.cliGrep;
 
   const fsWatcher = new FSWatcher(projectClosure.map(p => p.testDir));
-  let lastFilePattern: string | undefined;
-  let lastTestPattern: string | undefined;
   while (true) {
+    const sep = separator();
     process.stdout.write(`
-Waiting for file changes...
-${colors.dim('press')} ${colors.bold('h')} ${colors.dim('to show help, press')} ${colors.bold('q')} ${colors.dim('to quit')}
+${sep}
+Waiting for file changes. Press ${colors.bold('h')} for help or ${colors.bold('q')} to quit.
 `);
     const readCommandPromise = readCommand();
     await Promise.race([
@@ -88,17 +88,13 @@ ${colors.dim('press')} ${colors.bold('h')} ${colors.dim('to show help, press')} 
 
     const command = await readCommandPromise;
     if (command === 'changed') {
-      process.stdout.write('\x1Bc');
       await runChangedTests(config, failedTestIdCollector, projectClosure, fsWatcher.takeDirtyFiles());
       continue;
     }
     if (command === 'all') {
-      process.stdout.write('\x1Bc');
       // All means reset filters.
-      config._internal.cliTitleMatcher = originalTitleMatcher;
-      config._internal.cliFileFilters = originalFileFilters;
-      lastFilePattern = undefined;
-      lastTestPattern = undefined;
+      config._internal.cliArgs = originalCliArgs;
+      config._internal.cliGrep = originalCliGrep;
       await runTests(config, failedTestIdCollector);
       continue;
     }
@@ -107,15 +103,12 @@ ${colors.dim('press')} ${colors.bold('h')} ${colors.dim('to show help, press')} 
         type: 'text',
         name: 'filePattern',
         message: 'Input filename pattern (regex)',
-        initial: lastFilePattern,
+        initial: config._internal.cliArgs.join(' '),
       });
-      if (filePattern.trim()) {
-        lastFilePattern = filePattern;
-        config._internal.cliFileFilters = [createFileFilterForArg(filePattern)];
-      } else {
-        lastFilePattern = undefined;
-        config._internal.cliFileFilters = originalFileFilters;
-      }
+      if (filePattern.trim())
+        config._internal.cliArgs = [filePattern];
+      else
+        config._internal.cliArgs = [];
       await runTests(config, failedTestIdCollector);
       continue;
     }
@@ -124,20 +117,16 @@ ${colors.dim('press')} ${colors.bold('h')} ${colors.dim('to show help, press')} 
         type: 'text',
         name: 'testPattern',
         message: 'Input test name pattern (regex)',
-        initial: lastTestPattern,
+        initial: config._internal.cliGrep,
       });
-      if (testPattern.trim()) {
-        lastTestPattern = testPattern;
-        config._internal.cliTitleMatcher = createTitleMatcher(forceRegExp(testPattern));
-      } else {
-        lastTestPattern = undefined;
-        config._internal.cliTitleMatcher = originalTitleMatcher;
-      }
+      if (testPattern.trim())
+        config._internal.cliGrep = testPattern;
+      else
+        config._internal.cliGrep = undefined;
       await runTests(config, failedTestIdCollector);
       continue;
     }
     if (command === 'failed') {
-      process.stdout.write('\x1Bc');
       config._internal.testIdMatcher = id => failedTestIdCollector.has(id);
       try {
         await runTests(config, failedTestIdCollector);
@@ -146,11 +135,15 @@ ${colors.dim('press')} ${colors.bold('h')} ${colors.dim('to show help, press')} 
       }
       continue;
     }
+    if (command === 'exit')
+      return 'passed';
+    if (command === 'interrupted')
+      return 'interrupted';
   }
 }
 
 async function runChangedTests(config: FullConfigInternal, failedTestIdCollector: Set<string>, projectClosure: FullProjectInternal[], changedFiles: Set<string>) {
-  const commandLineFileMatcher = config._internal.cliFileFilters.length ? createFileMatcherFromFilters(config._internal.cliFileFilters) : () => true;
+  const commandLineFileMatcher = config._internal.cliArgs.length ? createFileMatcherFromArguments(config._internal.cliArgs) : () => true;
 
   // Resolve files that depend on the changed files.
   const testFiles = new Set<string>();
@@ -234,19 +227,24 @@ function readCommand(): ManualPromise<Command> {
     process.stdin.setRawMode(true);
 
   const handler = (text: string, key: any) => {
-    if (text === '\x03' || text === '\x1B' || (key && key.name === 'escape') || (key && key.ctrl && key.name === 'c'))
-      return process.exit(130);
+    if (text === '\x03' || text === '\x1B' || (key && key.name === 'escape') || (key && key.ctrl && key.name === 'c')) {
+      result.resolve('interrupted');
+      return;
+    }
     if (process.platform !== 'win32' && key && key.ctrl && key.name === 'z') {
       process.kill(process.ppid, 'SIGTSTP');
       process.kill(process.pid, 'SIGTSTP');
     }
     const name = key?.name;
-    if (name === 'q')
-      process.exit(0);
+    if (name === 'q') {
+      result.resolve('exit');
+      return;
+    }
     if (name === 'h') {
-      process.stdout.write(`
+      process.stdout.write(`${separator()}
 Watch Usage
-${commands.map(i => colors.dim('  press ') + colors.reset(colors.bold(i[0])) + colors.dim(` to ${i[1]}`)).join('\n')}
+${commands.map(i => '  ' + colors.bold(i[0]) + `: ${i[1]}`).join('\n')}
+
 `);
       return;
     }
@@ -269,7 +267,7 @@ ${commands.map(i => colors.dim('  press ') + colors.reset(colors.bold(i[0])) + c
   return result;
 }
 
-type Command = 'all' | 'failed' | 'changed' | 'file' | 'grep';
+type Command = 'all' | 'failed' | 'changed' | 'file' | 'grep' | 'exit' | 'interrupted';
 
 const commands = [
   ['a', 'rerun all tests'],

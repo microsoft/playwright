@@ -231,10 +231,8 @@ export class BaseReporter implements Reporter {
   }
 
   private _printSummary(summary: string) {
-    if (summary.trim()) {
-      console.log('');
+    if (summary.trim())
       console.log(summary);
-    }
   }
 
   willRetry(test: TestCase): boolean {
@@ -486,4 +484,9 @@ function fitToWidth(line: string, width: number, prefix?: string): string {
 
 function belongsToNodeModules(file: string) {
   return file.includes(`${path.sep}node_modules${path.sep}`);
+}
+
+export function separator(): string {
+  const columns = process.stdout?.columns || 30;
+  return colors.dim('⎯'.repeat(Math.min(100, columns)));
 }

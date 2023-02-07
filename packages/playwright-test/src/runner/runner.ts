@@ -86,7 +86,7 @@ export class Runner {
     await reporter.onExit({ status });
 
     if (watchMode)
-      await runWatchModeLoop(config, failedTests);
+      status = await runWatchModeLoop(config, failedTests);
 
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.

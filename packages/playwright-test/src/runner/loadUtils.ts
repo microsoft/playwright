@@ -21,7 +21,7 @@ import type { LoaderHost } from './loaderHost';
 import { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
-import { createTitleMatcher, errorWithFile } from '../util';
+import { createFileFiltersFromArguments, createTitleMatcher, errorWithFile, forceRegExp } from '../util';
 import type { Matcher, TestFileFilter } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import { requireOrImport } from '../common/transform';
@@ -98,9 +98,15 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
   // Create root suites with clones for the projects.
   const rootSuite = new Suite('', 'root');
 
+  // Interpret cli parameters.
+  const cliFileFilters = createFileFiltersFromArguments(config._internal.cliArgs);
+  const grepMatcher = config._internal.cliGrep ? createTitleMatcher(forceRegExp(config._internal.cliGrep)) : () => true;
+  const grepInvertMatcher = config._internal.cliGrepInvert ? createTitleMatcher(forceRegExp(config._internal.cliGrepInvert)) : () => false;
+  const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
+
   // First iterate leaf projects to focus only, then add all other projects.
   for (const project of topLevelProjects) {
-    const projectSuite = await createProjectSuite(fileSuits, project, config._internal, filesToRunByProject.get(project)!);
+    const projectSuite = await createProjectSuite(fileSuits, project, { cliFileFilters, cliTitleMatcher, testIdMatcher: config._internal.testIdMatcher }, filesToRunByProject.get(project)!);
     if (projectSuite)
       rootSuite._addSuite(projectSuite);
   }
