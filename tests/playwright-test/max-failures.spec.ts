@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('max-failures should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -144,5 +144,5 @@ test('max-failures should properly shutdown', async ({ runInlineTest }) => {
   }, { workers: 1 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(stripAnsi(result.output)).toContain('expect(false).toBeTruthy()');
+  expect(result.output).toContain('expect(false).toBeTruthy()');
 });

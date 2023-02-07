@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should respect path resolver', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11656' });
@@ -395,7 +395,7 @@ test('should not respect path resolver for JS files w/o allowJS', async ({ runIn
     `,
   });
 
-  expect(stripAnsi(result.output)).toContain('Cannot find module \'util/b\'');
+  expect(result.output).toContain('Cannot find module \'util/b\'');
   expect(result.exitCode).toBe(1);
 });
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('hooks should work with fixtures', async ({ runInlineTest }) => {
   const { results } = await runInlineTest({
@@ -154,10 +154,10 @@ test('beforeAll should be run once', async ({ runInlineTest }) => {
       });
     `,
   });
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeAll1-1',
-    '%%beforeAll2',
-    '%%test',
+  expect(result.outputLines).toEqual([
+    'beforeAll1-1',
+    'beforeAll2',
+    'test',
   ]);
 });
 
@@ -278,12 +278,12 @@ test('run hooks after failure', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test',
-    '%%afterEach-1',
-    '%%afterEach-2',
-    '%%afterAll-1',
-    '%%afterAll-2',
+  expect(result.outputLines).toEqual([
+    'test',
+    'afterEach-1',
+    'afterEach-2',
+    'afterAll-1',
+    'afterAll-2',
   ]);
 });
 
@@ -302,11 +302,11 @@ test('beforeAll hook should get retry index of the first test', async ({ runInli
   }, { retries: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.flaky).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeall-retry-0',
-    '%%test-retry-0',
-    '%%beforeall-retry-1',
-    '%%test-retry-1',
+  expect(result.outputLines).toEqual([
+    'beforeall-retry-0',
+    'test-retry-0',
+    'beforeall-retry-1',
+    'test-retry-1',
   ]);
 });
 
@@ -350,10 +350,10 @@ test('max-failures should still run afterEach/afterAll', async ({ runInlineTest 
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test',
-    '%%afterEach',
-    '%%afterAll',
+  expect(result.outputLines).toEqual([
+    'test',
+    'afterEach',
+    'afterAll',
   ]);
 });
 
@@ -379,9 +379,9 @@ test('beforeAll failure should prevent the test, but not afterAll', async ({ run
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeAll',
-    '%%afterAll',
+  expect(result.outputLines).toEqual([
+    'beforeAll',
+    'afterAll',
   ]);
 });
 
@@ -405,9 +405,9 @@ test('fixture error should not prevent afterAll', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('bad fixture');
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test',
-    '%%afterAll',
+  expect(result.outputLines).toEqual([
+    'test',
+    'afterAll',
   ]);
 });
 
@@ -430,10 +430,10 @@ test('afterEach failure should not prevent afterAll', async ({ runInlineTest }) 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('bad afterEach');
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test',
-    '%%afterEach',
-    '%%afterAll',
+  expect(result.outputLines).toEqual([
+    'test',
+    'afterEach',
+    'afterAll',
   ]);
 });
 
@@ -478,13 +478,13 @@ test('beforeAll timeout should be reported and prevent more tests', async ({ run
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeAll',
-    '%%afterAll',
+  expect(result.outputLines).toEqual([
+    'beforeAll',
+    'afterAll',
   ]);
   expect(result.output).toContain('"beforeAll" hook timeout of 1000ms exceeded.');
   expect(result.output).toContain(`a.test.js:6:12`);
-  expect(stripAnsi(result.output)).toContain(`> 6 |       test.beforeAll(async () => {`);
+  expect(result.output).toContain(`> 6 |       test.beforeAll(async () => {`);
 });
 
 test('afterAll timeout should be reported, run other afterAll hooks, and continue testing', async ({ runInlineTest }, testInfo) => {
@@ -513,16 +513,16 @@ test('afterAll timeout should be reported, run other afterAll hooks, and continu
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test1',
-    '%%afterAll1',
-    '%%afterAll2',
-    '%%test2',
-    '%%afterAll2',
+  expect(result.outputLines).toEqual([
+    'test1',
+    'afterAll1',
+    'afterAll2',
+    'test2',
+    'afterAll2',
   ]);
   expect(result.output).toContain('"afterAll" hook timeout of 1000ms exceeded.');
   expect(result.output).toContain(`a.test.js:7:14`);
-  expect(stripAnsi(result.output)).toContain(`>  7 |         test.afterAll(async () => {`);
+  expect(result.output).toContain(`>  7 |         test.afterAll(async () => {`);
 });
 
 test('beforeAll and afterAll timeouts at the same time should be reported', async ({ runInlineTest }) => {
@@ -544,9 +544,9 @@ test('beforeAll and afterAll timeouts at the same time should be reported', asyn
   }, { timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeAll',
-    '%%afterAll',
+  expect(result.outputLines).toEqual([
+    'beforeAll',
+    'afterAll',
   ]);
   expect(result.output).toContain('"beforeAll" hook timeout of 1000ms exceeded.');
 });
@@ -570,9 +570,9 @@ test('afterEach should get the test status and duration right away', async ({ ru
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(2);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%failing: failed; XXms',
-    '%%timing out: timedOut; XXms',
+  expect(result.outputLines).toEqual([
+    'failing: failed; XXms',
+    'timing out: timedOut; XXms',
   ]);
 });
 
@@ -598,8 +598,8 @@ test('uncaught error in beforeEach should not be masked by another error', async
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Expected: 2');
-  expect(stripAnsi(result.output)).toContain('Received: 1');
+  expect(result.output).toContain('Expected: 2');
+  expect(result.output).toContain('Received: 1');
 });
 
 test('should report error from fixture teardown when beforeAll times out', async ({ runInlineTest }) => {
@@ -621,8 +621,8 @@ test('should report error from fixture teardown when beforeAll times out', async
   }, { timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(stripAnsi(result.output)).toContain('"beforeAll" hook timeout of 1000ms exceeded.');
-  expect(stripAnsi(result.output)).toContain('Error: Oh my!');
+  expect(result.output).toContain('"beforeAll" hook timeout of 1000ms exceeded.');
+  expect(result.output).toContain('Error: Oh my!');
 });
 
 test('should not hang and report results when worker process suddenly exits during afterAll', async ({ runInlineTest }) => {
@@ -637,7 +637,7 @@ test('should not hang and report results when worker process suddenly exits duri
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Internal error: worker process exited unexpectedly');
-  expect(stripAnsi(result.output)).toContain('[1/1] a.spec.js:6:7 › failing due to afterall');
+  expect(result.output).toContain('[1/1] a.spec.js:6:7 › failing due to afterall');
 });
 
 test('unhandled rejection during beforeAll should be reported and prevent more tests', async ({ runInlineTest }) => {
@@ -665,12 +665,12 @@ test('unhandled rejection during beforeAll should be reported and prevent more t
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeAll',
-    '%%afterAll',
+  expect(result.outputLines).toEqual([
+    'beforeAll',
+    'afterAll',
   ]);
   expect(result.output).toContain('Error: Oh my');
-  expect(stripAnsi(result.output)).toContain(`>  9 |           throw new Error('Oh my');`);
+  expect(result.output).toContain(`>  9 |           throw new Error('Oh my');`);
 });
 
 test('beforeAll and afterAll should have a separate timeout', async ({ runInlineTest }) => {
@@ -701,12 +701,12 @@ test('beforeAll and afterAll should have a separate timeout', async ({ runInline
   }, { timeout: '500' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeAll',
-    '%%beforeAll2',
-    '%%test',
-    '%%afterAll',
-    '%%afterAll2',
+  expect(result.outputLines).toEqual([
+    'beforeAll',
+    'beforeAll2',
+    'test',
+    'afterAll',
+    'afterAll2',
   ]);
 });
 
@@ -726,9 +726,9 @@ test('test.setTimeout should work separately in beforeAll', async ({ runInlineTe
   }, { timeout: 3000 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeAll',
-    '%%test',
+  expect(result.outputLines).toEqual([
+    'beforeAll',
+    'test',
   ]);
 });
 
@@ -748,9 +748,9 @@ test('test.setTimeout should work separately in afterAll', async ({ runInlineTes
   }, { timeout: '1000' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test',
-    '%%afterAll',
+  expect(result.outputLines).toEqual([
+    'test',
+    'afterAll',
   ]);
 });
 
@@ -779,9 +779,9 @@ test('beforeAll failure should only prevent tests that are affected', async ({ r
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
   expect(result.passed).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeAll',
-    '%%test3',
+  expect(result.outputLines).toEqual([
+    'beforeAll',
+    'test3',
   ]);
 });
 
@@ -863,12 +863,12 @@ test('afterAll should be run for test.skip', async ({ runInlineTest }) => {
       });
     `,
   });
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeAll1',
-    '%%test1',
-    '%%afterAll1',
-    '%%beforeAll2',
-    '%%test3',
-    '%%afterAll2',
+  expect(result.outputLines).toEqual([
+    'beforeAll1',
+    'test1',
+    'afterAll1',
+    'beforeAll2',
+    'test3',
+    'afterAll2',
   ]);
 });

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should run projects with dependencies', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -35,7 +35,7 @@ test('should run projects with dependencies', async ({ runInlineTest }) => {
   }, { workers: 1 }, undefined, { additionalArgs: ['--project=B', '--project=C'] });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
-  expect(extractLines(result.output)).toEqual(['A', 'B', 'C']);
+  expect(result.outputLines).toEqual(['A', 'B', 'C']);
 });
 
 test('should not run projects with dependencies when --no-deps is passed', async ({ runInlineTest }) => {
@@ -57,7 +57,7 @@ test('should not run projects with dependencies when --no-deps is passed', async
   }, { workers: 1 }, undefined, { additionalArgs: ['--no-deps', '--project=B', '--project=C'] });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
-  expect(extractLines(result.output)).toEqual(['B', 'C']);
+  expect(result.outputLines).toEqual(['B', 'C']);
 });
 
 test('should not run project if dependency failed', async ({ runInlineTest }) => {
@@ -84,7 +84,7 @@ test('should not run project if dependency failed', async ({ runInlineTest }) =>
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
   expect(result.output).toContain('Failed project B');
-  expect(extractLines(result.output)).toEqual(['A', 'B']);
+  expect(result.outputLines).toEqual(['A', 'B']);
 });
 
 test('should not run project if dependency failed (2)', async ({ runInlineTest }) => {
@@ -110,7 +110,7 @@ test('should not run project if dependency failed (2)', async ({ runInlineTest }
     `,
   }, { workers: 1 });
   expect(result.exitCode).toBe(1);
-  expect(extractLines(result.output).sort()).toEqual(['A1', 'A2', 'A3', 'B1']);
+  expect(result.outputLines.sort()).toEqual(['A1', 'A2', 'A3', 'B1']);
 });
 
 test('should filter by project list, but run deps', async ({ runInlineTest }) => {
@@ -133,7 +133,7 @@ test('should filter by project list, but run deps', async ({ runInlineTest }) =>
   expect(result.passed).toBe(3);
   expect(result.failed).toBe(0);
   expect(result.skipped).toBe(0);
-  expect(extractLines(result.output).sort()).toEqual(['A', 'C', 'D']);
+  expect(result.outputLines.sort()).toEqual(['A', 'C', 'D']);
 });
 
 
@@ -174,7 +174,7 @@ test('should not filter dependency by only', async ({ runInlineTest }) => {
     });`,
   });
   expect(result.exitCode).toBe(0);
-  expect(extractLines(result.output)).toEqual(['setup in setup', 'setup 2 in setup', 'test in browser']);
+  expect(result.outputLines).toEqual(['setup in setup', 'setup 2 in setup', 'test in browser']);
 });
 
 test('should not filter dependency by only 2', async ({ runInlineTest }) => {
@@ -198,7 +198,7 @@ test('should not filter dependency by only 2', async ({ runInlineTest }) => {
     });`,
   }, { project: ['setup'] });
   expect(result.exitCode).toBe(0);
-  expect(extractLines(result.output)).toEqual(['setup 2 in setup']);
+  expect(result.outputLines).toEqual(['setup 2 in setup']);
 });
 
 test('should not filter dependency by only 3', async ({ runInlineTest }) => {
@@ -224,7 +224,7 @@ test('should not filter dependency by only 3', async ({ runInlineTest }) => {
     });`,
   }, undefined, undefined, { additionalArgs: ['setup-2.ts'] });
   expect(result.exitCode).toBe(0);
-  expect(extractLines(result.output)).toEqual(['setup 2 in setup']);
+  expect(result.outputLines).toEqual(['setup 2 in setup']);
 });
 
 test('should report skipped dependent tests', async ({ runInlineTest }) => {
@@ -261,7 +261,3 @@ test('should report circular dependencies', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Circular dependency detected between projects.');
 });
-
-function extractLines(output: string): string[] {
-  return stripAnsi(output).split('\n').filter(line => line.startsWith('%%')).map(line => line.substring(2).trim());
-}

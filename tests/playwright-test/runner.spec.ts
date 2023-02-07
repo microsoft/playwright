@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import path from 'path';
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('it should not allow multiple tests with the same name per suite', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -50,7 +50,7 @@ test('it should not allow multiple tests with the same name in multiple files', 
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Error: duplicate test title');
-  expect(stripAnsi(result.output)).toContain(`test('i-am-a-duplicate'`);
+  expect(result.output).toContain(`test('i-am-a-duplicate'`);
   expect(result.output).toContain(`tests${path.sep}example1.spec.js:6`);
   expect(result.output).toContain(`tests${path.sep}example1.spec.js:7`);
   expect(result.output).toContain(`tests${path.sep}example2.spec.js:6`);
@@ -66,7 +66,7 @@ test('it should not allow a focused test when forbid-only is used', async ({ run
   }, { 'forbid-only': true });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Error: focused item found in the --forbid-only mode');
-  expect(stripAnsi(result.output)).toContain(`test.only('i-am-focused'`);
+  expect(result.output).toContain(`test.only('i-am-focused'`);
   expect(result.output).toContain(`tests${path.sep}focused-test.spec.js:6`);
 });
 
@@ -246,12 +246,12 @@ test('should not stall when workers are available', async ({ runInlineTest }) =>
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
-  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%passes-2-started',
-    '%%fails-1-started',
-    '%%fails-1-done',
-    '%%passes-1',
-    '%%passes-2-done',
+  expect(result.outputLines).toEqual([
+    'passes-2-started',
+    'fails-1-started',
+    'fails-1-done',
+    'passes-1',
+    'passes-2-done',
   ]);
 });
 
@@ -283,13 +283,13 @@ test('should teardown workers that are redundant', async ({ runInlineTest }) => 
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
-  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%worker setup',
-    '%%worker setup',
-    '%%test-done',
-    '%%worker teardown',
-    '%%test-done',
-    '%%worker teardown',
+  expect(result.outputLines).toEqual([
+    'worker setup',
+    'worker setup',
+    'test-done',
+    'worker teardown',
+    'test-done',
+    'worker teardown',
   ]);
 });
 
@@ -355,7 +355,7 @@ test('sigint should stop global setup', async ({ runInlineTest }) => {
   }, { 'workers': 1 }, {}, { sendSIGINTAfter: 1 });
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('Global setup');
   expect(output).not.toContain('Global teardown');
 });
@@ -396,7 +396,7 @@ test('sigint should stop plugins', async ({ runInlineTest }) => {
   }, { 'workers': 1 }, {}, { sendSIGINTAfter: 1 });
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('Plugin1 setup');
   expect(output).not.toContain('Plugin1 teardown');
   expect(output).not.toContain('Plugin2 setup');
@@ -437,7 +437,7 @@ test('sigint should stop plugins 2', async ({ runInlineTest }) => {
   }, { 'workers': 1 }, {}, { sendSIGINTAfter: 1 });
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('Plugin1 setup');
   expect(output).toContain('Plugin2 setup');
   expect(output).toContain('Plugin1 teardown');
@@ -455,9 +455,9 @@ test('should not crash with duplicate titles and .only', async ({ runInlineTest 
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Error: duplicate test title`);
-  expect(stripAnsi(result.output)).toContain(`test('non unique title'`);
-  expect(stripAnsi(result.output)).toContain(`test.skip('non unique title'`);
-  expect(stripAnsi(result.output)).toContain(`test.only('non unique title'`);
+  expect(result.output).toContain(`test('non unique title'`);
+  expect(result.output).toContain(`test.skip('non unique title'`);
+  expect(result.output).toContain(`test.only('non unique title'`);
   expect(result.output).toContain(`example.spec.ts:6`);
   expect(result.output).toContain(`example.spec.ts:7`);
   expect(result.output).toContain(`example.spec.ts:8`);
@@ -474,7 +474,7 @@ test('should not crash with duplicate titles and line filter', async ({ runInlin
   }, {}, {}, { additionalArgs: ['example.spec.ts:8'] });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`Error: duplicate test title`);
-  expect(stripAnsi(result.output)).toContain(`test('non unique title'`);
+  expect(result.output).toContain(`test('non unique title'`);
   expect(result.output).toContain(`example.spec.ts:6`);
   expect(result.output).toContain(`example.spec.ts:7`);
   expect(result.output).toContain(`example.spec.ts:8`);
@@ -495,6 +495,6 @@ test('should not load tests not matching filter', async ({ runInlineTest }) => {
 
   }, {}, {}, { additionalArgs: ['a.spec.ts'] });
   expect(result.exitCode).toBe(0);
-  expect(stripAnsi(result.output)).not.toContain('in example.spec.ts');
-  expect(stripAnsi(result.output)).toContain('in a.spec.ts');
+  expect(result.output).not.toContain('in example.spec.ts');
+  expect(result.output).toContain('in a.spec.ts');
 });

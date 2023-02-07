@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should fail', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -286,17 +286,17 @@ test('should work with test wrapper', async ({ runInlineTest }) => {
   }, { workers: 1, reporter: 'line' });
   expect(result.passed).toBe(4);
   expect(result.exitCode).toBe(0);
-  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%a.spec',
-    '%%helper',
-    '%%b.spec',
-    '%%a.spec',
-    '%%helper',
-    '%%test1',
-    '%%suite1.test1',
-    '%%b.spec',
-    '%%test2',
-    '%%suite2.test2',
+  expect(result.outputLines).toEqual([
+    'a.spec',
+    'helper',
+    'b.spec',
+    'a.spec',
+    'helper',
+    'test1',
+    'suite1.test1',
+    'b.spec',
+    'test2',
+    'suite2.test2',
   ]);
 });
 
@@ -335,19 +335,19 @@ test('should work with test helper', async ({ runInlineTest }) => {
   }, { workers: 1, reporter: 'line' });
   expect(result.passed).toBe(4);
   expect(result.exitCode).toBe(0);
-  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%a.spec',
-    '%%helper-a',
-    '%%b.spec',
-    '%%helper-b',
-    '%%a.spec',
-    '%%helper-a',
-    '%%test1',
-    '%%suite1.test1',
-    '%%b.spec',
-    '%%helper-b',
-    '%%test2',
-    '%%suite2.test2',
+  expect(result.outputLines).toEqual([
+    'a.spec',
+    'helper-a',
+    'b.spec',
+    'helper-b',
+    'a.spec',
+    'helper-a',
+    'test1',
+    'suite1.test1',
+    'b.spec',
+    'helper-b',
+    'test2',
+    'suite2.test2',
   ]);
 });
 
@@ -365,7 +365,7 @@ test('should support describe() without a title', async ({ runInlineTest }) => {
   }, { reporter: 'list' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(stripAnsi(result.output)).toContain('a.spec.js:8:17 › suite1 › suite2 › my test');
+  expect(result.output).toContain('a.spec.js:8:17 › suite1 › suite2 › my test');
 });
 
 test('test.{skip,fixme} should define a skipped test', async ({ runInlineTest }) => {

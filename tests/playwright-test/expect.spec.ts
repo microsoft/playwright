@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -79,7 +79,7 @@ test('should include custom error message', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
-  expect(stripAnsi(result.output)).toContain([
+  expect(result.output).toContain([
     `    Error: one plus one is two!`,
     ``,
     `    Expected: 3`,
@@ -494,7 +494,7 @@ test('should reasonably work in global setup', async ({ runInlineTest }) => {
   });
 
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('> 11 |         expect(1).toBe(2);');
+  expect(result.output).toContain('> 11 |         expect(1).toBe(2);');
 });
 
 test('should support toHaveURL with baseURL from webServer', async ({ runInlineTest }, testInfo) => {
@@ -523,7 +523,7 @@ test('should support toHaveURL with baseURL from webServer', async ({ runInlineT
       };
   `,
   }, { workers: 1 });
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('expect(page).toHaveURL');
   expect(output).toContain(`Expected string: \"http://localhost:${port}/kek\"`);
   expect(result.passed).toBe(1);
@@ -560,7 +560,7 @@ test('should log scale the time', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAnsi(result.output);
+  const output = result.output;
   const tokens = output.split('unexpected value');
   // Log scale: 0, 100, 250, 500, 1000, 1000, should be less than 8.
   expect(tokens.length).toBeGreaterThan(1);
@@ -585,8 +585,8 @@ test('should print expected/received before timeout', async ({ runInlineTest }) 
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Test timeout of 2000ms exceeded.');
-  expect(stripAnsi(result.output)).toContain('Expected string: "Text 2"');
-  expect(stripAnsi(result.output)).toContain('Received string: "Text content"');
+  expect(result.output).toContain('Expected string: "Text 2"');
+  expect(result.output).toContain('Received string: "Text content"');
 });
 
 test('should print pending operations for toHaveText', async ({ runInlineTest }) => {
@@ -602,7 +602,7 @@ test('should print pending operations for toHaveText', async ({ runInlineTest })
   }, { workers: 1, timeout: 2000 });
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('Pending operations:');
   expect(output).toContain('expect(received).toHaveText(expected)');
   expect(output).toContain('Expected string: "Text"');
@@ -629,8 +629,8 @@ test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
   expect(result.interrupted).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Expected string: "Text 2"');
-  expect(stripAnsi(result.output)).toContain('Received string: "Text content"');
+  expect(result.output).toContain('Expected string: "Text 2"');
+  expect(result.output).toContain('Received string: "Text content"');
 });
 
 test('should print timed out error message', async ({ runInlineTest }) => {
@@ -646,7 +646,7 @@ test('should print timed out error message', async ({ runInlineTest }) => {
   }, { workers: 1 });
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('Timed out 1ms waiting for expect(received).toBeChecked()');
 });
 

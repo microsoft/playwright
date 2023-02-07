@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
-import { test as baseTest, expect, createImage, stripAnsi } from './playwright-test-fixtures';
+import { test as baseTest, expect, createImage } from './playwright-test-fixtures';
 import type { HttpServer } from '../../packages/playwright-core/lib/utils';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { spawnAsync } from 'playwright-core/lib/utils';
@@ -905,7 +905,7 @@ test('should report clashing folders', async ({ runInlineTest }) => {
     `,
   },  {}, {}, { usesCustomReporters: true });
   expect(result.exitCode).toBe(0);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('Configuration Error');
   expect(output).toContain('html-report');
 });

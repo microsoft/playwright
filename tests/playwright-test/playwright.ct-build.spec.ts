@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 import fs from 'fs';
 
 test.describe.configure({ mode: 'parallel' });
@@ -38,7 +38,7 @@ test('should work with the empty component list', async ({ runInlineTest }, test
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('transforming...');
   expect(output.replace(/\\+/g, '/')).toContain('playwright/.cache/playwright/index.html');
 
@@ -235,7 +235,7 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
 
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(1);
-    const output = stripAnsi(result.output);
+    const output = result.output;
     expect(output, 'should rebuild bundle').toContain('modules transformed');
   });
 
@@ -245,7 +245,7 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
     }, { workers: 1 });
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(1);
-    const output = stripAnsi(result.output);
+    const output = result.output;
     expect(output, 'should not rebuild bundle').not.toContain('modules transformed');
   });
 
@@ -265,7 +265,7 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
     }, { workers: 1 });
     expect(result.exitCode).toBe(1);
     expect(result.passed).toBe(0);
-    const output = stripAnsi(result.output);
+    const output = result.output;
     expect(output, 'should not rebuild bundle').not.toContain('modules transformed');
   });
 
@@ -278,7 +278,7 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
     }, { workers: 1 });
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(1);
-    const output = stripAnsi(result.output);
+    const output = result.output;
     expect(output, 'should rebuild bundle').toContain('modules transformed');
   });
 });

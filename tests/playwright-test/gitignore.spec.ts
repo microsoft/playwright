@@ -103,10 +103,10 @@ test('should respect negations and comments in .gitignore', async ({ runInlineTe
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%a.spec.js',
-    '%%dir1/foo/a.spec.js',
-    '%%dir3/a.spec.js',
+  expect(result.outputLines).toEqual([
+    'a.spec.js',
+    'dir1/foo/a.spec.js',
+    'dir3/a.spec.js',
   ]);
 });
 

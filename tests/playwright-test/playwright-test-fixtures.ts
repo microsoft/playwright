@@ -38,6 +38,8 @@ export type CliRunResult = {
 export type RunResult = {
   exitCode: number,
   output: string,
+  outputLines: string[],
+  rawOutput: string,
   passed: number,
   failed: number,
   flaky: number,
@@ -173,9 +175,12 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   if (report)
     visitSuites(report.suites);
 
+  const strippedOutput = stripAnsi(output);
   return {
     exitCode,
-    output,
+    output: strippedOutput,
+    outputLines: strippedOutput.split('\n').filter(line => line.startsWith('%%')).map(line => line.substring(2).trim()),
+    rawOutput: output,
     passed,
     failed,
     flaky,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 import * as path from 'path';
 
 test('handle long test names', async ({ runInlineTest }) => {
@@ -27,7 +27,7 @@ test('handle long test names', async ({ runInlineTest }) => {
       });
     `,
   });
-  expect(stripAnsi(result.output)).toContain('expect(1).toBe');
+  expect(result.output).toContain('expect(1).toBe');
   expect(result.exitCode).toBe(1);
 });
 
@@ -104,7 +104,7 @@ test('should filter out node_modules error in a codeframe', async ({ runInlineTe
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('Error: Assertion error');
   expect(output).toContain('a.spec.ts:7:7 › fail');
   expect(output).toContain(`   7 |       test('fail', async ({}) => {`);
@@ -167,15 +167,15 @@ test('should print slow tests', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(8);
-  expect(stripAnsi(result.output)).toContain(`Slow test file: [foo] › dir${path.sep}a.test.js (`);
-  expect(stripAnsi(result.output)).toContain(`Slow test file: [bar] › dir${path.sep}a.test.js (`);
-  expect(stripAnsi(result.output)).toContain(`Slow test file: [baz] › dir${path.sep}a.test.js (`);
-  expect(stripAnsi(result.output)).toContain(`Slow test file: [qux] › dir${path.sep}a.test.js (`);
-  expect(stripAnsi(result.output)).toContain(`Consider splitting slow test files to speed up parallel execution`);
-  expect(stripAnsi(result.output)).not.toContain(`Slow test file: [foo] › dir${path.sep}b.test.js (`);
-  expect(stripAnsi(result.output)).not.toContain(`Slow test file: [bar] › dir${path.sep}b.test.js (`);
-  expect(stripAnsi(result.output)).not.toContain(`Slow test file: [baz] › dir${path.sep}b.test.js (`);
-  expect(stripAnsi(result.output)).not.toContain(`Slow test file: [qux] › dir${path.sep}b.test.js (`);
+  expect(result.output).toContain(`Slow test file: [foo] › dir${path.sep}a.test.js (`);
+  expect(result.output).toContain(`Slow test file: [bar] › dir${path.sep}a.test.js (`);
+  expect(result.output).toContain(`Slow test file: [baz] › dir${path.sep}a.test.js (`);
+  expect(result.output).toContain(`Slow test file: [qux] › dir${path.sep}a.test.js (`);
+  expect(result.output).toContain(`Consider splitting slow test files to speed up parallel execution`);
+  expect(result.output).not.toContain(`Slow test file: [foo] › dir${path.sep}b.test.js (`);
+  expect(result.output).not.toContain(`Slow test file: [bar] › dir${path.sep}b.test.js (`);
+  expect(result.output).not.toContain(`Slow test file: [baz] › dir${path.sep}b.test.js (`);
+  expect(result.output).not.toContain(`Slow test file: [qux] › dir${path.sep}b.test.js (`);
 });
 
 test('should not print slow parallel tests', async ({ runInlineTest }) => {
@@ -199,7 +199,7 @@ test('should not print slow parallel tests', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
-  expect(stripAnsi(result.output)).not.toContain('Slow test file');
+  expect(result.output).not.toContain('Slow test file');
 });
 
 test('should not print slow tests', async ({ runInlineTest }) => {
@@ -225,7 +225,7 @@ test('should not print slow tests', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(4);
-  expect(stripAnsi(result.output)).not.toContain('Slow test');
+  expect(result.output).not.toContain('Slow test');
 });
 
 test('should print flaky failures', async ({ runInlineTest }) => {
@@ -239,7 +239,7 @@ test('should print flaky failures', async ({ runInlineTest }) => {
   }, { retries: '1', reporter: 'list' });
   expect(result.exitCode).toBe(0);
   expect(result.flaky).toBe(1);
-  expect(stripAnsi(result.output)).toContain('expect(testInfo.retry).toBe(1)');
+  expect(result.output).toContain('expect(testInfo.retry).toBe(1)');
 });
 
 test('should print flaky timeouts', async ({ runInlineTest }) => {
@@ -254,7 +254,7 @@ test('should print flaky timeouts', async ({ runInlineTest }) => {
   }, { retries: '1', reporter: 'list', timeout: '1000' });
   expect(result.exitCode).toBe(0);
   expect(result.flaky).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Test timeout of 1000ms exceeded.');
+  expect(result.output).toContain('Test timeout of 1000ms exceeded.');
 });
 
 test('should print stack-less errors', async ({ runInlineTest }) => {
@@ -290,7 +290,7 @@ test('should print errors with inconsistent message/stack', async ({ runInlineTe
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('hi!Error: Hello');
   expect(output).toContain('function myTest');
 });
@@ -315,7 +315,7 @@ test('should not crash on undefined body with manual attachments', async ({ runI
       });
     `,
   });
-  expect(stripAnsi(result.output)).not.toContain('Error in reporter');
+  expect(result.output).not.toContain('Error in reporter');
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
@@ -345,7 +345,7 @@ test('should report fatal errors at the end', async ({ runInlineTest }) => {
   }, { reporter: 'list' });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
-  expect(stripAnsi(result.output)).toContain('2 errors were not a part of any test, see above for details');
+  expect(result.output).toContain('2 errors were not a part of any test, see above for details');
 });
 
 test('should contain at most 1 decimal for humanized timing', async ({ runInlineTest }) => {
@@ -357,5 +357,5 @@ test('should contain at most 1 decimal for humanized timing', async ({ runInline
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(stripAnsi(result.output)).toMatch(/\d+ passed \(\d+(\.\d)?(ms|s)\)/);
+  expect(result.output).toMatch(/\d+ passed \(\d+(\.\d)?(ms|s)\)/);
 });

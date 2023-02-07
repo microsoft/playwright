@@ -16,7 +16,7 @@
 
 import path from 'path';
 import fs from 'fs';
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 async function getSnapshotPaths(runInlineTest, testInfo, playwrightConfig, pathArgs) {
   const SEPARATOR = '==== 8< ---- ';
@@ -39,7 +39,7 @@ async function getSnapshotPaths(runInlineTest, testInfo, playwrightConfig, pathA
     `
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
-  const allSegments = stripAnsi(result.output).split(SEPARATOR);
+  const allSegments = result.output.split(SEPARATOR);
   const projToSnapshot = {};
   for (let i = 1; i < allSegments.length; i += 3)
     projToSnapshot[allSegments[i]] = path.relative(testInfo.outputDir, allSegments[i + 1]);

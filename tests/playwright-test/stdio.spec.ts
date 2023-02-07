@@ -29,13 +29,13 @@ test('should get top level stdio', async ({ runInlineTest }) => {
     `
   });
   // top level logs appear twice, because the file is required twice
-  expect(result.output.split('\n').filter(x => x.startsWith('%%')).sort()).toEqual([
-    '%% stderr in a test',
-    '%% stdout in a test',
-    '%% top level stderr',
-    '%% top level stderr',
-    '%% top level stdout',
-    '%% top level stdout',
+  expect(result.outputLines.sort()).toEqual([
+    'stderr in a test',
+    'stdout in a test',
+    'top level stderr',
+    'top level stderr',
+    'top level stdout',
+    'top level stdout',
   ]);
 });
 
@@ -55,9 +55,9 @@ test('should get stdio from worker fixture teardown', async ({ runInlineTest }) 
       test('is a test', async ({fixture}) => {});
     `
   });
-  expect(result.output.split('\n').filter(x => x.startsWith('%%'))).toEqual([
-    '%% worker setup',
-    '%% worker teardown'
+  expect(result.outputLines).toEqual([
+    'worker setup',
+    'worker teardown'
   ]);
 });
 
@@ -92,8 +92,8 @@ test('should support console colors', async ({ runInlineTest }) => {
   expect(result.output).toContain(`process.stdout.isTTY = true`);
   expect(result.output).toContain(`process.stderr.isTTY = true`);
   // The output should have colors.
-  expect(result.output).toContain(`{ b: \x1b[33mtrue\x1b[39m, n: \x1b[33m123\x1b[39m, s: \x1b[32m'abc'\x1b[39m }`);
-  expect(result.output).toContain(`{ b: \x1b[33mfalse\x1b[39m, n: \x1b[33m123\x1b[39m, s: \x1b[32m'abc'\x1b[39m }`);
+  expect(result.rawOutput).toContain(`{ b: \x1b[33mtrue\x1b[39m, n: \x1b[33m123\x1b[39m, s: \x1b[32m'abc'\x1b[39m }`);
+  expect(result.rawOutput).toContain(`{ b: \x1b[33mfalse\x1b[39m, n: \x1b[33m123\x1b[39m, s: \x1b[32m'abc'\x1b[39m }`);
 });
 
 test('should override hasColors and getColorDepth', async ({ runInlineTest }) => {
