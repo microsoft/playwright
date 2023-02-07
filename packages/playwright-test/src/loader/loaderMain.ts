@@ -21,10 +21,12 @@ import type { FullConfigInternal } from '../common/types';
 import { loadTestFile } from '../common/testLoader';
 import type { TestError } from '../../reporter';
 import { addToCompilationCache, serializeCompilationCache } from '../common/compilationCache';
+import { PoolBuilder } from '../common/poolBuilder';
 
 export class LoaderMain extends ProcessRunner {
   private _serializedConfig: SerializedConfig;
   private _configPromise: Promise<FullConfigInternal> | undefined;
+  private _poolBuilder = PoolBuilder.createForLoader();
 
   constructor(serializedConfig: SerializedConfig) {
     super();
@@ -42,6 +44,7 @@ export class LoaderMain extends ProcessRunner {
     const testErrors: TestError[] = [];
     const config = await this._config();
     const fileSuite = await loadTestFile(params.file, config.rootDir, testErrors);
+    this._poolBuilder.buildPools(fileSuite);
     return { fileSuite: fileSuite._deepSerialize(), testErrors };
   }
 
