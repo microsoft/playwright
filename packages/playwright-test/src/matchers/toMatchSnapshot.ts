@@ -145,7 +145,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       maxDiffPixels: options.maxDiffPixels,
       maxDiffPixelRatio: options.maxDiffPixelRatio,
       threshold: options.threshold,
-      _comparator: options._comparator,
+      comparator: options.comparator,
     };
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
@@ -306,7 +306,7 @@ export async function toHaveScreenshot(
   const helper = new SnapshotHelper(
       testInfo, snapshotPathResolver, 'png',
       {
-        _comparator: config?._comparator,
+        comparator: config?.comparator,
         maxDiffPixels: config?.maxDiffPixels,
         maxDiffPixelRatio: config?.maxDiffPixelRatio,
         threshold: config?.threshold,
@@ -342,10 +342,7 @@ export async function toHaveScreenshot(
       expected: await fs.promises.readFile(helper.snapshotPath),
       isNot: true,
       locator,
-      comparatorOptions: {
-        ...helper.comparatorOptions,
-        comparator: helper.comparatorOptions._comparator,
-      },
+      comparatorOptions: helper.comparatorOptions,
       screenshotOptions,
       timeout: currentExpectTimeout(helper.allOptions),
     })).errorMessage;
@@ -363,7 +360,7 @@ export async function toHaveScreenshot(
       expected: undefined,
       isNot: false,
       locator,
-      comparatorOptions: { ...helper.comparatorOptions, comparator: helper.comparatorOptions._comparator },
+      comparatorOptions: helper.comparatorOptions,
       screenshotOptions,
       timeout,
     });
@@ -385,7 +382,7 @@ export async function toHaveScreenshot(
     expected,
     isNot: false,
     locator,
-    comparatorOptions: { ...helper.comparatorOptions, comparator: helper.comparatorOptions._comparator },
+    comparatorOptions: helper.comparatorOptions,
     screenshotOptions,
     timeout: currentExpectTimeout(helper.allOptions),
   });
