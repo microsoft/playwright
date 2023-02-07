@@ -108,6 +108,14 @@ export class ListModeReporter implements Reporter {
 let seq = 0;
 
 export class WatchModeReporter extends ListReporter {
+  private _options: { isShowBrowser?: () => boolean; } | undefined;
+  constructor(options?: {
+    isShowBrowser?: () => boolean,
+  }) {
+    super();
+    this._options = options;
+  }
+
   override generateStartingMessage(): string {
     const tokens: string[] = [];
     tokens.push('npx playwright test');
@@ -121,6 +129,7 @@ export class WatchModeReporter extends ListReporter {
     const sep = separator();
     lines.push('\x1Bc' + sep);
     lines.push(`${tokens.join(' ')}` + super.generateStartingMessage());
+    lines.push(`${colors.dim('Show & reuse browser:')} ${colors.bold(this._options?.isShowBrowser?.() ? 'on' : 'off')}${colors.dim(', press')} ${colors.bold('s')} ${colors.dim('to toggle.')}`);
     return lines.join('\n');
   }
 }

@@ -174,6 +174,11 @@ export class PlaywrightServer {
     await new Promise(f => server.options.server!.close(f));
     this._wsServer = undefined;
     debugLog('closed server');
+
+    debugLog('closing browsers');
+    if (this._preLaunchedPlaywright)
+      await Promise.all(this._preLaunchedPlaywright.allBrowsers().map(browser => browser.close()));
+    debugLog('closed browsers');
   }
 }
 
