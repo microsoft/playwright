@@ -979,7 +979,11 @@ test.describe('report location', () => {
 test('should shard report', async ({ runInlineTest, showReport, page }, testInfo) => {
   const totalShards = 3;
 
-  const testFiles = {};
+  const testFiles = {
+    'playwright.config.ts': `
+      module.exports = { reporter: [['html', { sharded: true }]] };
+    `,
+  };
   for (let i = 0; i < totalShards; i++) {
     testFiles[`a-${i}.spec.ts`] = `
       const { test } = pwt;
@@ -995,7 +999,7 @@ test('should shard report', async ({ runInlineTest, showReport, page }, testInfo
 
   for (let i = 1; i <= totalShards; i++) {
     const result = await runInlineTest(testFiles,
-        { 'reporter': 'dot,html', 'retries': 1, 'shard': `${i}/${totalShards}` },
+        { 'retries': 1, 'shard': `${i}/${totalShards}` },
         { PW_TEST_HTML_REPORT_OPEN: 'never' },
         { usesCustomReporters: true });
 
@@ -1024,14 +1028,19 @@ test('should shard report', async ({ runInlineTest, showReport, page }, testInfo
   await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toHaveCount(totalShards);
 });
 
-test('should pad report numbers with zeros', async ({ runInlineTest, showReport, page }, testInfo) => {
-  const result = await runInlineTest({
-    'a.test.js': `
-      const { test } = pwt;
-      test('passes', async ({}) => {});
+test('should pad report numbers with zeros', async ({ runInlineTest }, testInfo) => {
+  const testFiles = {
+    'playwright.config.ts': `
+      module.exports = { reporter: [['html', { sharded: true }]] };
     `,
-  }, { reporter: 'dot,html', shard: '3/100' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
-
+  };
+  for (let i = 0; i < 100; i++) {
+    testFiles[`a-${i}.spec.ts`] = `
+      const { test } = pwt;
+      test('passes', async ({}) => { });
+    `;
+  }
+  const result = await runInlineTest(testFiles, { shard: '3/100' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, { usesCustomReporters: true });
   expect(result.exitCode).toBe(0);
   const files = await fs.promises.readdir(testInfo.outputPath(`playwright-report`));
   expect(new Set(files)).toEqual(new Set([
@@ -1043,7 +1052,11 @@ test('should pad report numbers with zeros', async ({ runInlineTest, showReport,
 test('should show report with missing shards', async ({ runInlineTest, showReport, page }, testInfo) => {
   const totalShards = 15;
 
-  const testFiles = {};
+  const testFiles = {
+    'playwright.config.ts': `
+      module.exports = { reporter: [['html', { sharded: true }]] };
+    `,
+  };
   for (let i = 0; i < totalShards; i++) {
     testFiles[`a-${String(i).padStart(2, '0')}.spec.ts`] = `
       const { test } = pwt;
@@ -1060,7 +1073,7 @@ test('should show report with missing shards', async ({ runInlineTest, showRepor
   // Run tests in 2 out of 15 shards.
   for (const i of [10, 13]) {
     const result = await runInlineTest(testFiles,
-        { 'reporter': 'dot,html', 'retries': 1, 'shard': `${i}/${totalShards}` },
+        { 'retries': 1, 'shard': `${i}/${totalShards}` },
         { PW_TEST_HTML_REPORT_OPEN: 'never' },
         { usesCustomReporters: true });
 
@@ -1089,4 +1102,45 @@ test('should show report with missing shards', async ({ runInlineTest, showRepor
   await expect(page.locator('.test-file-test-outcome-flaky >> text=flaky')).toHaveCount(2);
   await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toHaveCount(2);
   await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toHaveCount(2);
+});
+
+
+test('should produce single file report when shard: false', async ({ runInlineTest, showReport, page }, testInfo) => {
+  const totalShards = 5;
+
+  const testFiles = {};
+  for (let i = 0; i < totalShards; i++) {
+    testFiles[`a-${String(i).padStart(2, '0')}.spec.ts`] = `
+      const { test } = pwt;
+      test('passes', async ({}) => { expect(2).toBe(2); });
+      test('fails', async ({}) => { expect(1).toBe(2); });
+      test('skipped', async ({}) => { test.skip('Does not work') });
+      test('flaky', async ({}, testInfo) => { expect(testInfo.retry).toBe(1); });
+    `;
+  }
+
+  // Run single shard.
+  const currentShard = 3;
+  const result = await runInlineTest(testFiles,
+      { 'reporter': 'dot,html', 'retries': 1, 'shard': `${currentShard}/${totalShards}` },
+      { PW_TEST_HTML_REPORT_OPEN: 'never' },
+      { usesCustomReporters: true });
+
+
+  expect(result.exitCode).toBe(1);
+  const files = await fs.promises.readdir(testInfo.outputPath(`playwright-report`));
+  expect(files).toEqual(['index.html']);
+
+  await showReport();
+
+  await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('4');
+  await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+  await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('1');
+  await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
+  await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('1');
+
+  await expect(page.locator('.test-file-test-outcome-unexpected >> text=fails')).toHaveCount(1);
+  await expect(page.locator('.test-file-test-outcome-flaky >> text=flaky')).toHaveCount(1);
+  await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toHaveCount(1);
+  await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toHaveCount(1);
 });
