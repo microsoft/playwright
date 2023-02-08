@@ -50,27 +50,36 @@ export type TaskRunnerState = {
   }[];
 };
 
-export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer, doNotTeardown: boolean): TaskRunner<TaskRunnerState> {
+export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
-
-  for (const plugin of config._internal.plugins)
-    taskRunner.addTask('plugin setup', createPluginSetupTask(plugin, doNotTeardown));
-  if (config.globalSetup || config.globalTeardown)
-    taskRunner.addTask('global setup', createGlobalSetupTask(doNotTeardown));
+  addGlobalSetupTasks(taskRunner, config);
   taskRunner.addTask('load tests', createLoadTask('in-process'));
-  taskRunner.addTask('clear output', createRemoveOutputDirsTask());
-  addCommonTasks(taskRunner, config);
+  addRunTasks(taskRunner, config);
+  return taskRunner;
+}
+
+export function createTaskRunnerForWatchSetup(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
+  const taskRunner = new TaskRunner<TaskRunnerState>(reporter, 0);
+  addGlobalSetupTasks(taskRunner, config);
   return taskRunner;
 }
 
 export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: Multiplexer, projectsToIgnore?: Set<FullProjectInternal>, additionalFileMatcher?: Matcher): TaskRunner<TaskRunnerState> {
-  const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
+  const taskRunner = new TaskRunner<TaskRunnerState>(reporter, 0);
   taskRunner.addTask('load tests', createLoadTask('out-of-process', projectsToIgnore, additionalFileMatcher));
-  addCommonTasks(taskRunner, config);
+  addRunTasks(taskRunner, config);
   return taskRunner;
 }
 
-function addCommonTasks(taskRunner: TaskRunner<TaskRunnerState>, config: FullConfigInternal) {
+function addGlobalSetupTasks(taskRunner: TaskRunner<TaskRunnerState>, config: FullConfigInternal) {
+  for (const plugin of config._internal.plugins)
+    taskRunner.addTask('plugin setup', createPluginSetupTask(plugin));
+  if (config.globalSetup || config.globalTeardown)
+    taskRunner.addTask('global setup', createGlobalSetupTask());
+  taskRunner.addTask('clear output', createRemoveOutputDirsTask());
+}
+
+function addRunTasks(taskRunner: TaskRunner<TaskRunnerState>, config: FullConfigInternal) {
   taskRunner.addTask('create tasks', createTestGroupsTask());
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
     reporter.onBegin?.(config, rootSuite!);
@@ -93,14 +102,14 @@ export function createTaskRunnerForList(config: FullConfigInternal, reporter: Mu
   return taskRunner;
 }
 
-function createPluginSetupTask(plugin: TestRunnerPluginRegistration, doNotTeardown: boolean): Task<TaskRunnerState> {
+function createPluginSetupTask(plugin: TestRunnerPluginRegistration): Task<TaskRunnerState> {
   return async ({ config, reporter }) => {
     if (typeof plugin.factory === 'function')
       plugin.instance = await plugin.factory();
     else
       plugin.instance = plugin.factory;
     await plugin.instance?.setup?.(config, config._internal.configDir, reporter);
-    return doNotTeardown ? undefined : () => plugin.instance?.teardown?.();
+    return () => plugin.instance?.teardown?.();
   };
 }
 
@@ -111,12 +120,12 @@ function createPluginBeginTask(plugin: TestRunnerPluginRegistration): Task<TaskR
   };
 }
 
-function createGlobalSetupTask(doNotTeardown: boolean): Task<TaskRunnerState> {
+function createGlobalSetupTask(): Task<TaskRunnerState> {
   return async ({ config }) => {
     const setupHook = config.globalSetup ? await loadGlobalHook(config, config.globalSetup) : undefined;
     const teardownHook = config.globalTeardown ? await loadGlobalHook(config, config.globalTeardown) : undefined;
     const globalSetupResult = setupHook ? await setupHook(config) : undefined;
-    return doNotTeardown ? undefined : async () => {
+    return async () => {
       if (typeof globalSetupResult === 'function')
         await globalSetupResult();
       await teardownHook?.(config);

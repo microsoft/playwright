@@ -167,9 +167,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config._internal.passWithNoTests = !!opts.passWithNoTests;
 
   const runner = new Runner(config);
-  const status = await runner.runAllTests(!!opts.watch);
+  const status = opts.watch ? await runner.watchAllTests() : await runner.runAllTests();
   await stopProfiling(undefined);
-
   if (status === 'interrupted')
     process.exit(130);
   process.exit(status === 'passed' ? 0 : 1);
