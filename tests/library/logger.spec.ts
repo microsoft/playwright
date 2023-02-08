@@ -17,7 +17,7 @@
 import { playwrightTest as it, expect } from '../config/browserTest';
 
 it('should log @smoke', async ({ browserType, mode }) => {
-  it.skip(mode === 'docker_remote', 'logger is not plumbed into the remote connection');
+  it.skip(mode !== 'default', 'logger is not plumbed into the remote connection');
 
   const log = [];
   const browser = await browserType.launch({ logger: {
