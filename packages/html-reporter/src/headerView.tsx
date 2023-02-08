@@ -60,7 +60,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
     </div>
     {reportLoaderError && <div className='header-view-status-line pt-2' data-testid='loader-error' style={{ color: 'var(--color-danger-emphasis)', textAlign: 'right' }}>{reportLoaderError}</div>}
     <div className='header-view-status-line pt-2'>
-      {projectNames.length === 1 && <span data-testid="project-name" style={{ color: 'var(--color-fg-subtle)', float: 'left' }}>Project: {projectNames[0]}</span>}
+      {projectNames.length === 1 && !!projectNames[0] && <span data-testid="project-name" style={{ color: 'var(--color-fg-subtle)', float: 'left' }}>Project: {projectNames[0]}</span>}
       <span data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)', float: 'right' }}>Total time: {msToString(stats.duration)}</span>
     </div>
   </>);
