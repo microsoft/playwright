@@ -26,11 +26,12 @@ import { buildProjectsClosure, filterProjects } from './projectUtils';
 import { clearCompilationCache, collectAffectedTestFiles } from '../common/compilationCache';
 import type { FullResult } from 'packages/playwright-test/reporter';
 import chokidar from 'chokidar';
-import { createReporter, WatchModeReporter } from './reporters';
+import { createReporter } from './reporters';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { enquirer } from '../utilsBundle';
 import { separator } from '../reporters/base';
 import { PlaywrightServer } from 'playwright-core/lib/remote/playwrightServer';
+import ListReporter from '../reporters/list';
 
 class FSWatcher {
   private _dirtyFiles = new Set<string>();
@@ -64,6 +65,11 @@ class FSWatcher {
 }
 
 export async function runWatchModeLoop(config: FullConfigInternal): Promise<FullResult['status']> {
+  // Reset the settings that don't apply to watch.
+  config._internal.passWithNoTests = true;
+  for (const p of config.projects)
+    p.retries = 0;
+
   // Perform global setup.
   const reporter = await createReporter(config, 'watch');
   const context: TaskRunnerState = {
@@ -77,26 +83,20 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
   if (status !== 'passed')
     return await globalCleanup();
 
+  // Prepare projects that will be watched, set up watcher.
   const projects = filterProjects(config.projects, config._internal.cliProjectFilter);
   const projectClosure = buildProjectsClosure(projects);
-  config._internal.passWithNoTests = true;
   const failedTestIdCollector = new Set<string>();
-
-  const originalCliArgs = config._internal.cliArgs;
-  const originalCliGrep = config._internal.cliGrep;
   const originalWorkers = config.workers;
+  const fsWatcher = new FSWatcher(projectClosure.map(p => p.testDir));
 
   let lastRun: { type: 'changed' | 'regular' | 'failed', failedTestIds?: Set<string>, dirtyFiles?: Set<string> } = { type: 'regular' };
-
   let result: FullResult['status'] = 'passed';
 
-  const fsWatcher = new FSWatcher(projectClosure.map(p => p.testDir));
+  // Enter the watch loop.
+  printConfiguration(config);
   while (true) {
-    const sep = separator();
-    process.stdout.write(`
-${sep}
-Waiting for file changes. Press ${colors.bold('a')} to run all, ${colors.bold('q')} to quit or ${colors.bold('h')} for more options.
-`);
+    printPrompt();
     const readCommandPromise = readCommand();
     await Promise.race([
       fsWatcher.onDirtyFiles(),
@@ -109,17 +109,31 @@ Waiting for file changes. Press ${colors.bold('a')} to run all, ${colors.bold('q
 
     if (command === 'changed') {
       const dirtyFiles = fsWatcher.takeDirtyFiles();
+      printConfiguration(config, 'files changed');
       await runChangedTests(config, failedTestIdCollector, projectClosure, dirtyFiles);
       lastRun = { type: 'changed', dirtyFiles };
       continue;
     }
 
-    if (command === 'all') {
+    if (command === 'run') {
       // All means reset filters.
-      config._internal.cliArgs = originalCliArgs;
-      config._internal.cliGrep = originalCliGrep;
+      printConfiguration(config);
       await runTests(config, failedTestIdCollector);
       lastRun = { type: 'regular' };
+      continue;
+    }
+
+    if (command === 'project') {
+      const { projectNames } = await enquirer.prompt<{ projectNames: string[] }>({
+        type: 'multiselect',
+        name: 'projectNames',
+        message: 'Select projects',
+        choices: config.projects.map(p => ({ name: p.name })),
+      }).catch(() => ({ projectNames: null }));
+      if (!projectNames)
+        continue;
+      config._internal.cliProjectFilter = projectNames;
+      printConfiguration(config);
       continue;
     }
 
@@ -128,13 +142,14 @@ Waiting for file changes. Press ${colors.bold('a')} to run all, ${colors.bold('q
         type: 'text',
         name: 'filePattern',
         message: 'Input filename pattern (regex)',
-      });
+      }).catch(() => ({ filePattern: null }));
+      if (filePattern === null)
+        continue;
       if (filePattern.trim())
-        config._internal.cliArgs = [filePattern];
+        config._internal.cliArgs = filePattern.split(' ');
       else
         config._internal.cliArgs = [];
-      await runTests(config, failedTestIdCollector);
-      lastRun = { type: 'regular' };
+      printConfiguration(config);
       continue;
     }
 
@@ -143,19 +158,21 @@ Waiting for file changes. Press ${colors.bold('a')} to run all, ${colors.bold('q
         type: 'text',
         name: 'testPattern',
         message: 'Input test name pattern (regex)',
-      });
+      }).catch(() => ({ testPattern: null }));
+      if (testPattern === null)
+        continue;
       if (testPattern.trim())
         config._internal.cliGrep = testPattern;
       else
         config._internal.cliGrep = undefined;
-      await runTests(config, failedTestIdCollector);
-      lastRun = { type: 'regular' };
+      printConfiguration(config);
       continue;
     }
 
     if (command === 'failed') {
       config._internal.testIdMatcher = id => failedTestIdCollector.has(id);
       const failedTestIds = new Set(failedTestIdCollector);
+      printConfiguration(config, 'running failed tests');
       await runTests(config, failedTestIdCollector);
       config._internal.testIdMatcher = undefined;
       lastRun = { type: 'failed', failedTestIds };
@@ -163,6 +180,7 @@ Waiting for file changes. Press ${colors.bold('a')} to run all, ${colors.bold('q
     }
 
     if (command === 'repeat') {
+      printConfiguration(config, 're-running tests');
       if (lastRun.type === 'regular') {
         await runTests(config, failedTestIdCollector);
         continue;
@@ -227,8 +245,11 @@ async function runChangedTests(config: FullConfigInternal, failedTestIdCollector
   return await runTests(config, failedTestIdCollector, projectsToIgnore, additionalFileMatcher);
 }
 
+let seq = 0;
+
 async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<string>, projectsToIgnore?: Set<FullProjectInternal>, additionalFileMatcher?: Matcher) {
-  const reporter = new Multiplexer([new WatchModeReporter({ isShowBrowser: () => !!showBrowserServer })]);
+  ++seq;
+  const reporter = new Multiplexer([new ListReporter()]);
   const taskRunner = createTaskRunnerForWatch(config, reporter, projectsToIgnore, additionalFileMatcher);
   const context: TaskRunnerState = {
     config,
@@ -293,19 +314,28 @@ function readCommand(): ManualPromise<Command> {
     }
     if (name === 'h') {
       process.stdout.write(`${separator()}
-Watch Usage
-${commands.map(i => '  ' + colors.bold(i[0]) + `: ${i[1]}`).join('\n')}
+Run tests
+  ${colors.bold('enter')}    ${colors.dim('run tests')}
+  ${colors.bold('f')}        ${colors.dim('run failed tests')}
+  ${colors.bold('r')}        ${colors.dim('repeat last run')}
+  ${colors.bold('q')}        ${colors.dim('quit')}
 
+Change settings
+  ${colors.bold('c')}        ${colors.dim('set project')}
+  ${colors.bold('p')}        ${colors.dim('set file filter')}
+  ${colors.bold('t')}        ${colors.dim('set title filter')}
+  ${colors.bold('s')}        ${colors.dim('toggle show & reuse the browser')}
 `);
       return;
     }
 
     switch (name) {
-      case 'a': result.resolve('all'); break;
+      case 'return': result.resolve('run'); break;
+      case 'r': result.resolve('repeat'); break;
+      case 'c': result.resolve('project'); break;
       case 'p': result.resolve('file'); break;
       case 't': result.resolve('grep'); break;
       case 'f': result.resolve('failed'); break;
-      case 'r': result.resolve('repeat'); break;
       case 's': result.resolve('toggle-show-browser'); break;
     }
   };
@@ -321,6 +351,34 @@ ${commands.map(i => '  ' + colors.bold(i[0]) + `: ${i[1]}`).join('\n')}
 }
 
 let showBrowserServer: PlaywrightServer | undefined;
+
+function printConfiguration(config: FullConfigInternal, title?: string) {
+  const tokens: string[] = [];
+  tokens.push('npx playwright test');
+  tokens.push(...(config._internal.cliProjectFilter || [])?.map(p => colors.blue(`--project ${p}`)));
+  if (config._internal.cliGrep)
+    tokens.push(colors.red(`--grep ${config._internal.cliGrep}`));
+  if (config._internal.cliArgs)
+    tokens.push(...config._internal.cliArgs.map(a => colors.bold(a)));
+  if (title)
+    tokens.push(colors.dim(`(${title})`));
+  if (seq)
+    tokens.push(colors.dim(`#${seq}`));
+  const lines: string[] = [];
+  const sep = separator();
+  lines.push('\x1Bc' + sep);
+  lines.push(`${tokens.join(' ')}`);
+  lines.push(`${colors.dim('Show & reuse browser:')} ${colors.bold(showBrowserServer ? 'on' : 'off')}`);
+  process.stdout.write(lines.join('\n'));
+}
+
+function printPrompt() {
+  const sep = separator();
+  process.stdout.write(`
+${sep}
+${colors.dim('Waiting for file changes. Press')} ${colors.bold('enter')} ${colors.dim('to run tests')}, ${colors.bold('q')} ${colors.dim('to quit or')} ${colors.bold('h')} ${colors.dim('for more options.')}
+`);
+}
 
 async function toggleShowBrowser(config: FullConfigInternal, originalWorkers: number) {
   if (!showBrowserServer) {
@@ -340,14 +398,4 @@ async function toggleShowBrowser(config: FullConfigInternal, originalWorkers: nu
   }
 }
 
-type Command = 'all' | 'failed' | 'repeat' | 'changed' | 'file' | 'grep' | 'exit' | 'interrupted' | 'toggle-show-browser';
-
-const commands = [
-  ['a', 'rerun all tests'],
-  ['f', 'rerun only failed tests'],
-  ['r', 'repeat last run'],
-  ['p', 'filter by a filename'],
-  ['t', 'filter by a test name regex pattern'],
-  ['s', 'toggle show & reuse the browser'],
-  ['q', 'quit'],
-];
+type Command = 'run' | 'failed' | 'repeat' | 'changed' | 'project' | 'file' | 'grep' | 'exit' | 'interrupted' | 'toggle-show-browser';
