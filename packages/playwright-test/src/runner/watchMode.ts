@@ -15,7 +15,7 @@
  */
 
 import readline from 'readline';
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { createGuid, ManualPromise } from 'playwright-core/lib/utils';
 import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { Multiplexer } from '../reporters/multiplexer';
 import { createFileMatcherFromArguments } from '../util';
@@ -30,6 +30,7 @@ import { WatchModeReporter } from './reporters';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { enquirer } from '../utilsBundle';
 import { separator } from '../reporters/base';
+import { PlaywrightServer } from 'playwright-core/lib/remote/playwrightServer';
 
 class FSWatcher {
   private _dirtyFiles = new Set<string>();
@@ -70,6 +71,8 @@ export async function runWatchModeLoop(config: FullConfigInternal, failedTests: 
 
   const originalCliArgs = config._internal.cliArgs;
   const originalCliGrep = config._internal.cliGrep;
+  const originalWorkers = config.workers;
+
   let lastRun: { type: 'changed' | 'regular' | 'failed', failedTestIds?: Set<string>, dirtyFiles?: Set<string> } = { type: 'regular' };
 
   const fsWatcher = new FSWatcher(projectClosure.map(p => p.testDir));
@@ -110,7 +113,6 @@ Waiting for file changes. Press ${colors.bold('h')} for help or ${colors.bold('q
         type: 'text',
         name: 'filePattern',
         message: 'Input filename pattern (regex)',
-        initial: config._internal.cliArgs.join(' '),
       });
       if (filePattern.trim())
         config._internal.cliArgs = [filePattern];
@@ -126,7 +128,6 @@ Waiting for file changes. Press ${colors.bold('h')} for help or ${colors.bold('q
         type: 'text',
         name: 'testPattern',
         message: 'Input test name pattern (regex)',
-        initial: config._internal.cliGrep,
       });
       if (testPattern.trim())
         config._internal.cliGrep = testPattern;
@@ -157,6 +158,11 @@ Waiting for file changes. Press ${colors.bold('h')} for help or ${colors.bold('q
         await runTests(config, failedTestIdCollector);
         config._internal.testIdMatcher = undefined;
       }
+      continue;
+    }
+
+    if (command === 'toggle-show-browser') {
+      await toggleShowBrowser(config, originalWorkers);
       continue;
     }
 
@@ -203,7 +209,7 @@ async function runChangedTests(config: FullConfigInternal, failedTestIdCollector
 }
 
 async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<string>, projectsToIgnore?: Set<FullProjectInternal>, additionalFileMatcher?: Matcher) {
-  const reporter = new Multiplexer([new WatchModeReporter()]);
+  const reporter = new Multiplexer([new WatchModeReporter({ isShowBrowser: () => !!showBrowserServer })]);
   const taskRunner = createTaskRunnerForWatch(config, reporter, projectsToIgnore, additionalFileMatcher);
   const context: TaskRunnerState = {
     config,
@@ -281,6 +287,7 @@ ${commands.map(i => '  ' + colors.bold(i[0]) + `: ${i[1]}`).join('\n')}
       case 't': result.resolve('grep'); break;
       case 'f': result.resolve('failed'); break;
       case 'r': result.resolve('repeat'); break;
+      case 's': result.resolve('toggle-show-browser'); break;
     }
   };
 
@@ -294,7 +301,27 @@ ${commands.map(i => '  ' + colors.bold(i[0]) + `: ${i[1]}`).join('\n')}
   return result;
 }
 
-type Command = 'all' | 'failed' | 'repeat' | 'changed' | 'file' | 'grep' | 'exit' | 'interrupted';
+let showBrowserServer: PlaywrightServer | undefined;
+
+async function toggleShowBrowser(config: FullConfigInternal, originalWorkers: number) {
+  if (!showBrowserServer) {
+    config.workers = 1;
+    showBrowserServer = new PlaywrightServer({ path: '/' + createGuid(), maxConnections: 1 });
+    const wsEndpoint = await showBrowserServer.listen();
+    process.env.PW_TEST_REUSE_CONTEXT = '1';
+    process.env.PW_TEST_CONNECT_WS_ENDPOINT = wsEndpoint;
+    process.stdout.write(`${colors.dim('Show & reuse browser:')} ${colors.bold('on')}\n`);
+  } else {
+    config.workers = originalWorkers;
+    await showBrowserServer?.close();
+    showBrowserServer = undefined;
+    delete process.env.PW_TEST_REUSE_CONTEXT;
+    delete process.env.PW_TEST_CONNECT_WS_ENDPOINT;
+    process.stdout.write(`${colors.dim('Show & reuse browser:')} ${colors.bold('off')}\n`);
+  }
+}
+
+type Command = 'all' | 'failed' | 'repeat' | 'changed' | 'file' | 'grep' | 'exit' | 'interrupted' | 'toggle-show-browser';
 
 const commands = [
   ['a', 'rerun all tests'],
@@ -302,5 +329,6 @@ const commands = [
   ['r', 'repeat last run'],
   ['p', 'filter by a filename'],
   ['t', 'filter by a test name regex pattern'],
+  ['s', 'toggle show & reuse the browser'],
   ['q', 'quit'],
 ];
