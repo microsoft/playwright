@@ -72,7 +72,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
 
     if (this._defaultConnectOptions)
-      return await this._connectInsteadOfLaunching(this._defaultConnectOptions);
+      return await this._connectInsteadOfLaunching(this._defaultConnectOptions, options);
 
     const logger = options.logger || this._defaultLaunchOptions?.logger;
     options = { ...this._defaultLaunchOptions, ...options };
@@ -90,11 +90,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     });
   }
 
-  private async _connectInsteadOfLaunching(connectOptions: ConnectOptions): Promise<Browser> {
+  private async _connectInsteadOfLaunching(connectOptions: ConnectOptions, launchOptions: LaunchOptions): Promise<Browser> {
     return this._connect({
       wsEndpoint: connectOptions.wsEndpoint,
       headers: {
-        'x-playwright-launch-options': JSON.stringify(this._defaultLaunchOptions || {}),
+        'x-playwright-launch-options': JSON.stringify({ ...this._defaultLaunchOptions, ...launchOptions }),
         ...connectOptions.headers,
       },
       _exposeNetwork: connectOptions._exposeNetwork,
