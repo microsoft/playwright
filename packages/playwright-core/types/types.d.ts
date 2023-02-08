@@ -1749,13 +1749,6 @@ export interface Page {
   prependListener(event: 'worker', listener: (worker: Worker) => void): this;
 
   /**
-   * @deprecated This property is discouraged. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to
-   * test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration
-   * with Axe.
-   */
-  accessibility: Accessibility;
-
-  /**
    * Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
    * fires or when the script content was injected into frame.
    * @param options
@@ -1989,13 +1982,6 @@ export interface Page {
    * Get the browser context that the page belongs to.
    */
   context(): BrowserContext;
-
-  /**
-   * **NOTE** Only available for Chromium atm.
-   *
-   * Browser-specific Coverage implementation. See [Coverage] for more details.
-   */
-  coverage: Coverage;
 
   /**
    * **NOTE** Use locator-based [locator.dblclick([options])](https://playwright.dev/docs/api/class-locator#locator-dblclick)
@@ -3194,8 +3180,6 @@ export interface Page {
     timeout?: number;
   }): Promise<boolean>;
 
-  keyboard: Keyboard;
-
   /**
    * The method returns an element locator that can be used to perform actions on this page / frame. Locator is resolved
    * to the element immediately before performing an action, so a series of actions on the same locator can in fact be
@@ -3226,8 +3210,6 @@ export interface Page {
    * The page's main frame. Page is guaranteed to have a main frame which persists during navigations.
    */
   mainFrame(): Frame;
-
-  mouse: Mouse;
 
   /**
    * Returns the opener for popup pages and `null` for others. If the opener has been closed already the returns `null`.
@@ -3495,15 +3477,6 @@ export interface Page {
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
-
-  /**
-   * API testing helper associated with this page. This method returns the same instance as
-   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) on the
-   * page's context. See
-   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) for more
-   * details.
-   */
-  request: APIRequestContext;
 
   /**
    * Routing provides the capability to modify network requests that are made by a page.
@@ -4054,8 +4027,6 @@ export interface Page {
    * Returns the page's title.
    */
   title(): Promise<string>;
-
-  touchscreen: Touchscreen;
 
   /**
    * **NOTE** Use locator-based [locator.type(text[, options])](https://playwright.dev/docs/api/class-locator#locator-type)
@@ -4620,7 +4591,36 @@ export interface Page {
    *
    * **NOTE** This does not contain ServiceWorkers
    */
-  workers(): Array<Worker>;}
+  workers(): Array<Worker>;
+
+  /**
+   * @deprecated This property is discouraged. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to
+   * test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration
+   * with Axe.
+   */
+  accessibility: Accessibility;
+
+  /**
+   * **NOTE** Only available for Chromium atm.
+   *
+   * Browser-specific Coverage implementation. See [Coverage] for more details.
+   */
+  coverage: Coverage;
+
+  keyboard: Keyboard;
+
+  mouse: Mouse;
+
+  /**
+   * API testing helper associated with this page. This method returns the same instance as
+   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) on the
+   * page's context. See
+   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) for more
+   * details.
+   */
+  request: APIRequestContext;
+
+  touchscreen: Touchscreen;}
 
 /**
  * At every point of time, page exposes its current frame tree via the
@@ -7979,11 +7979,6 @@ export interface BrowserContext {
   pages(): Array<Page>;
 
   /**
-   * API testing helper associated with this context. Requests made with this API will use context cookies.
-   */
-  request: APIRequestContext;
-
-  /**
    * Routing provides the capability to modify network requests that are made by any page in the browser context. Once
    * route is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
    *
@@ -8223,8 +8218,6 @@ export interface BrowserContext {
     }>;
   }>;
 
-  tracing: Tracing;
-
   /**
    * Removes a route created with
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
@@ -8323,7 +8316,14 @@ export interface BrowserContext {
    * Emitted when new service worker is created in the context.
    */
   waitForEvent(event: 'serviceworker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean | Promise<boolean>, timeout?: number } | ((worker: Worker) => boolean | Promise<boolean>)): Promise<Worker>;
-}
+
+
+  /**
+   * API testing helper associated with this context. Requests made with this API will use context cookies.
+   */
+  request: APIRequestContext;
+
+  tracing: Tracing;}
 
 /**
  * The Worker class represents a [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API).
@@ -13560,8 +13560,6 @@ export interface AndroidDevice {
    */
   info(selector: AndroidSelector): Promise<AndroidElementInfo>;
 
-  input: AndroidInput;
-
   /**
    * Installs an apk on the device.
    * @param file Either a path to the apk file, or apk file content.
@@ -14153,6 +14151,8 @@ export interface AndroidDevice {
    * Currently open WebViews.
    */
   webViews(): Array<AndroidWebView>;
+
+  input: AndroidInput;
 }
 
 export interface AndroidInput {
