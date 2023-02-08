@@ -47,7 +47,7 @@ export class Runner {
     return report;
   }
 
-  async runAllTests(watchMode: boolean): Promise<FullResult['status']> {
+  async runAllTests(): Promise<FullResult['status']> {
     const config = this._config;
     const listOnly = config._internal.listOnly;
     const deadline = config.globalTimeout ? monotonicTime() + config.globalTimeout : 0;
@@ -55,9 +55,9 @@ export class Runner {
     // Legacy webServer support.
     webServerPluginsForConfig(config).forEach(p => config._internal.plugins.push({ factory: p }));
 
-    const reporter = await createReporter(config, listOnly ? 'list' : watchMode ? 'watch' : 'run');
+    const reporter = await createReporter(config, listOnly ? 'list' : 'run');
     const taskRunner = listOnly ? createTaskRunnerForList(config, reporter)
-      : createTaskRunner(config, reporter, watchMode);
+      : createTaskRunner(config, reporter);
 
     const context: TaskRunnerState = {
       config,
@@ -78,15 +78,11 @@ export class Runner {
 
     const taskStatus = await taskRunner.run(context, deadline);
     let status: FullResult['status'] = 'passed';
-    const failedTests = context.rootSuite?.allTests().filter(test => !test.ok()) || [];
-    if (context.phases.find(p => p.dispatcher.hasWorkerErrors()) || failedTests.length)
+    if (context.phases.find(p => p.dispatcher.hasWorkerErrors()) || context.rootSuite?.allTests().some(test => !test.ok()))
       status = 'failed';
     if (status === 'passed' && taskStatus !== 'passed')
       status = taskStatus;
     await reporter.onExit({ status });
-
-    if (watchMode)
-      status = await runWatchModeLoop(config, failedTests);
 
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.
@@ -94,6 +90,12 @@ export class Runner {
     await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
     await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
     return status;
+  }
+
+  async watchAllTests(): Promise<FullResult['status']> {
+    const config = this._config;
+    webServerPluginsForConfig(config).forEach(p => config._internal.plugins.push({ factory: p }));
+    return await runWatchModeLoop(config);
   }
 }
 

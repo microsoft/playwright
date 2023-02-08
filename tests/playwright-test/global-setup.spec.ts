@@ -366,7 +366,7 @@ test('teardown after error', async ({ runInlineTest }) => {
       pwt.test('test', () => {});
     `,
   });
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   const output = result.output;
   expect(output).toContain('Error: failed teardown 1');

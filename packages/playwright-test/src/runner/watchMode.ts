@@ -20,13 +20,13 @@ import type { FullConfigInternal, FullProjectInternal } from '../common/types';
 import { Multiplexer } from '../reporters/multiplexer';
 import { createFileMatcherFromArguments } from '../util';
 import type { Matcher } from '../util';
-import { createTaskRunnerForWatch } from './tasks';
+import { createTaskRunnerForWatch, createTaskRunnerForWatchSetup } from './tasks';
 import type { TaskRunnerState } from './tasks';
 import { buildProjectsClosure, filterProjects } from './projectUtils';
 import { clearCompilationCache, collectAffectedTestFiles } from '../common/compilationCache';
-import type { FullResult, TestCase } from 'packages/playwright-test/reporter';
+import type { FullResult } from 'packages/playwright-test/reporter';
 import chokidar from 'chokidar';
-import { WatchModeReporter } from './reporters';
+import { createReporter, WatchModeReporter } from './reporters';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { enquirer } from '../utilsBundle';
 import { separator } from '../reporters/base';
@@ -63,11 +63,24 @@ class FSWatcher {
   }
 }
 
-export async function runWatchModeLoop(config: FullConfigInternal, failedTests: TestCase[]): Promise<FullResult['status']> {
+export async function runWatchModeLoop(config: FullConfigInternal): Promise<FullResult['status']> {
+  // Perform global setup.
+  const reporter = await createReporter(config, 'watch');
+  const context: TaskRunnerState = {
+    config,
+    reporter,
+    phases: [],
+  };
+  const taskRunner = createTaskRunnerForWatchSetup(config, reporter);
+  reporter.onConfigure(config);
+  const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(context, 0);
+  if (status !== 'passed')
+    return await globalCleanup();
+
   const projects = filterProjects(config.projects, config._internal.cliProjectFilter);
   const projectClosure = buildProjectsClosure(projects);
   config._internal.passWithNoTests = true;
-  const failedTestIdCollector = new Set(failedTests.map(t => t.id));
+  const failedTestIdCollector = new Set<string>();
 
   const originalCliArgs = config._internal.cliArgs;
   const originalCliGrep = config._internal.cliGrep;
@@ -75,12 +88,14 @@ export async function runWatchModeLoop(config: FullConfigInternal, failedTests: 
 
   let lastRun: { type: 'changed' | 'regular' | 'failed', failedTestIds?: Set<string>, dirtyFiles?: Set<string> } = { type: 'regular' };
 
+  let result: FullResult['status'] = 'passed';
+
   const fsWatcher = new FSWatcher(projectClosure.map(p => p.testDir));
   while (true) {
     const sep = separator();
     process.stdout.write(`
 ${sep}
-Waiting for file changes. Press ${colors.bold('h')} for help or ${colors.bold('q')} to quit.
+Waiting for file changes. Press ${colors.bold('a')} to run all, ${colors.bold('q')} to quit or ${colors.bold('h')} for more options.
 `);
     const readCommandPromise = readCommand();
     await Promise.race([
@@ -167,11 +182,15 @@ Waiting for file changes. Press ${colors.bold('h')} for help or ${colors.bold('q
     }
 
     if (command === 'exit')
-      return 'passed';
+      break;
 
-    if (command === 'interrupted')
-      return 'interrupted';
+    if (command === 'interrupted') {
+      result = 'interrupted';
+      break;
+    }
   }
+
+  return result === 'passed' ? await globalCleanup() : result;
 }
 
 async function runChangedTests(config: FullConfigInternal, failedTestIdCollector: Set<string>, projectClosure: FullProjectInternal[], changedFiles: Set<string>) {
