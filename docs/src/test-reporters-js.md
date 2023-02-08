@@ -312,7 +312,7 @@ npx playwright show-report my-report
 
 #### Sharded report
 
-When running tests on multiple [`--shards`](./test-parallel.md#shard-tests-between-multiple-machines), the `html` reporter can automatically show test results from all shards in one page. To achieve that pass `sharded: true` to the reporter configuration:
+When running tests on [multiple shards](./test-parallel.md#shard-tests-between-multiple-machines), the `html` reporter can automatically show test results from all shards in one page when configured with `sharded: true`.
 
 In configuration file, pass options directly:
 ```js tab=js-js
