@@ -485,3 +485,22 @@ test.describe('report location', () => {
     expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.xml'))).toBe(true);
   });
 });
+
+test.describe('report name', () => {
+  test('with config should create report with custom name', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'playwright.config.ts': `
+        const path = require('path')
+        module.exports = { reporter: [['junit', { classNameTemplate: testinfo => testinfo.location.file.split(path.sep).pop() }]] };
+      `,
+      'a.test.js': `
+        const { test } = pwt;
+        test('one', async ({}) => {
+          expect(1).toBe(1);
+        });
+      `,
+    }, { reporter: '', config: 'playwright.config.ts' });
+    const xml = parseXML(result.output);
+    expect(xml['testsuites']['testsuite'][0]['testcase'][0]['$']['classname']).toEqual('a.test.js');
+  });
+});

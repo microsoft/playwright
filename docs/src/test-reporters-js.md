@@ -424,7 +424,23 @@ export default defineConfig({
 });
 ```
 
-The JUnit reporter provides support for embedding additional information on the `testcase` elements using inner `properties`. This is based on an [evolved JUnit XML format](https://docs.getxray.app/display/XRAYCLOUD/Taking+advantage+of+JUnit+XML+reports) from Xray Test Management, but can also be used by other tools if they support this way of embedding additional information for test results; please check it first.
+One configuration for the ``junit`` reporter is the `classNameTemplate` option. This option allows to customize the `classname` attribute of the `testcase` elements in the JUnit XML report. The default value is `{{ testFile }} > {{ testTitle }}`, which means that the `classname` attribute will be set to the test file name and the test title, separated by a `>` character.
+
+To customize the `classname` add the `classNameTemplate` option to the configuration file. The value of the `classNameTemplate` option is a function that receives a [`TestCase`](./test-reporter-api/class-testcase.md)  object as its only argument. The `TestCase` object contains information about the test, including the test file location. The function should return a string that will be used as the `classname` attribute value.
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+const { defineConfig } = require('@playwright/test');
+
+module.exports = defineConfig({
+  reporter: [['junit', { classNameTemplate: testinfo => testinfo.location.file.split(path.sep).pop() }]],
+});
+```
+The above example would result in the `classname` attribute being set to `{{ testFile }}.{{ fileExtension }}` instead of `{{ testFile }} > {{ testTitle }}`.
+
+The JUnit reporter also provides support for embedding additional information on the `testcase` elements using inner `properties`. This is based on an [evolved JUnit XML format](https://docs.getxray.app/display/XRAYCLOUD/Taking+advantage+of+JUnit+XML+reports) from Xray Test Management, but can also be used by other tools if they support this way of embedding additional information for test results; please check it first.
 
 In configuration file, a set of options can be used to configure this behavior. A full example, in this case for Xray, follows ahead.
 

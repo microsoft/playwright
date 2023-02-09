@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../types/testReporter';
+import type { junitClassNameTemplate } from '../../types/test';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import { formatFailure, formatTestTitle, stripAnsiEscapes } from './base';
 import { assert } from 'playwright-core/lib/utils';
@@ -34,14 +35,16 @@ class JUnitReporter implements Reporter {
   private embedAnnotationsAsProperties = false;
   private textContentAnnotations: string[] | undefined;
   private embedAttachmentsAsProperty: string | undefined;
+  private classNameTemplate: junitClassNameTemplate | null = null;
 
 
-  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, embedAnnotationsAsProperties?: boolean, textContentAnnotations?: string[], embedAttachmentsAsProperty?: string } = {}) {
+  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, embedAnnotationsAsProperties?: boolean, textContentAnnotations?: string[], embedAttachmentsAsProperty?: string, classNameTemplate?: junitClassNameTemplate } = {}) {
     this.outputFile = options.outputFile || reportOutputNameFromEnv();
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
     this.embedAnnotationsAsProperties = options.embedAnnotationsAsProperties || false;
     this.textContentAnnotations = options.textContentAnnotations || [];
     this.embedAttachmentsAsProperty = options.embedAttachmentsAsProperty;
+    this.classNameTemplate = options.classNameTemplate || null;
   }
 
   printsToStdio() {
@@ -136,7 +139,7 @@ class JUnitReporter implements Reporter {
       attributes: {
         // Skip root, project, file
         name: test.titlePath().slice(3).join(' '),
-        classname: formatTestTitle(this.config, test, undefined, true),
+        classname: this.classNameTemplate ? this.classNameTemplate(test) : formatTestTitle(this.config, test, undefined, true),
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
       },
       children: [] as XMLEntry[]

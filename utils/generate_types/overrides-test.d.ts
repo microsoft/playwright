@@ -15,14 +15,18 @@
  */
 
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
+import type { TestCase } from '@playwright/test/reporter';
+
 export * from 'playwright-core';
+
+export type junitClassNameTemplate = (test: TestCase) => string;
 
 export type ReporterDescription =
   ['dot'] |
   ['line'] |
   ['list'] |
   ['github'] |
-  ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean }] |
+  ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean, classNameTemplate?: junitClassNameTemplate }] |
   ['json'] | ['json', { outputFile?: string }] |
   ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', sharded?: boolean }] |
   ['null'] |
