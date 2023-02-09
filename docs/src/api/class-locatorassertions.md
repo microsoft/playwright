@@ -92,9 +92,6 @@ await Expect(locator).Not.ToContainTextAsync("error");
 
 The opposite of [`method: LocatorAssertions.toBeChecked`].
 
-### option: LocatorAssertions.NotToBeChecked.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
-
 ### option: LocatorAssertions.NotToBeChecked.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -103,9 +100,6 @@ The opposite of [`method: LocatorAssertions.toBeChecked`].
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toBeDisabled`].
-
-### option: LocatorAssertions.NotToBeDisabled.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
 
 ### option: LocatorAssertions.NotToBeDisabled.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
@@ -120,9 +114,6 @@ The opposite of [`method: LocatorAssertions.toBeEditable`].
 * since: v1.26
 - `editable` <[boolean]>
 
-### option: LocatorAssertions.NotToBeEditable.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
-
 ### option: LocatorAssertions.NotToBeEditable.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -131,9 +122,6 @@ The opposite of [`method: LocatorAssertions.toBeEditable`].
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toBeEmpty`].
-
-### option: LocatorAssertions.NotToBeEmpty.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
 
 ### option: LocatorAssertions.NotToBeEmpty.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
@@ -148,9 +136,6 @@ The opposite of [`method: LocatorAssertions.toBeEnabled`].
 * since: v1.26
 - `enabled` <[boolean]>
 
-### option: LocatorAssertions.NotToBeEnabled.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
-
 ### option: LocatorAssertions.NotToBeEnabled.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -160,9 +145,6 @@ The opposite of [`method: LocatorAssertions.toBeEnabled`].
 
 The opposite of [`method: LocatorAssertions.toBeFocused`].
 
-### option: LocatorAssertions.NotToBeFocused.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
-
 ### option: LocatorAssertions.NotToBeFocused.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -171,9 +153,6 @@ The opposite of [`method: LocatorAssertions.toBeFocused`].
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toBeHidden`].
-
-### option: LocatorAssertions.NotToBeHidden.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
 
 ### option: LocatorAssertions.NotToBeHidden.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
@@ -187,9 +166,6 @@ The opposite of [`method: LocatorAssertions.toBeVisible`].
 ### option: LocatorAssertions.NotToBeVisible.visible
 * since: v1.26
 - `visible` <[boolean]>
-
-### option: LocatorAssertions.NotToBeVisible.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
 
 ### option: LocatorAssertions.NotToBeVisible.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
@@ -218,9 +194,6 @@ Whether to perform case-insensitive match. [`option: ignoreCase`] option takes p
 
 Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
 
-### option: LocatorAssertions.NotToContainText.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
-
 ### option: LocatorAssertions.NotToContainText.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -242,9 +215,6 @@ Attribute name.
 
 Expected attribute value.
 
-### option: LocatorAssertions.NotToHaveAttribute.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
-
 ### option: LocatorAssertions.NotToHaveAttribute.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -260,9 +230,6 @@ The opposite of [`method: LocatorAssertions.toHaveClass`].
 
 Expected class or RegExp or a list of those.
 
-### option: LocatorAssertions.NotToHaveClass.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
-
 ### option: LocatorAssertions.NotToHaveClass.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -277,9 +244,6 @@ The opposite of [`method: LocatorAssertions.toHaveCount`].
 - `count` <[int]>
 
 Expected count.
-
-### option: LocatorAssertions.NotToHaveCount.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
 
 ### option: LocatorAssertions.NotToHaveCount.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
@@ -302,9 +266,6 @@ CSS property name.
 
 CSS property value.
 
-### option: LocatorAssertions.NotToHaveCSS.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
-
 ### option: LocatorAssertions.NotToHaveCSS.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -319,9 +280,6 @@ The opposite of [`method: LocatorAssertions.toHaveId`].
 - `id` <[string]|[RegExp]>
 
 Element id.
-
-### option: LocatorAssertions.NotToHaveId.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
 
 ### option: LocatorAssertions.NotToHaveId.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
@@ -343,9 +301,6 @@ Property name.
 - `value` <[any]>
 
 Property value.
-
-### option: LocatorAssertions.NotToHaveJSProperty.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
 
 ### option: LocatorAssertions.NotToHaveJSProperty.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
@@ -374,9 +329,6 @@ Whether to perform case-insensitive match. [`option: ignoreCase`] option takes p
 
 Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
 
-### option: LocatorAssertions.NotToHaveText.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
-
 ### option: LocatorAssertions.NotToHaveText.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -392,9 +344,6 @@ The opposite of [`method: LocatorAssertions.toHaveValue`].
 
 Expected value.
 
-### option: LocatorAssertions.NotToHaveValue.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
-
 ### option: LocatorAssertions.NotToHaveValue.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -409,9 +358,6 @@ The opposite of [`method: LocatorAssertions.toHaveValues`].
 - `values` <[Array]<[string]>|[Array]<[RegExp]>|[Array]<[string]|[RegExp]>>
 
 Expected options currently selected.
-
-### option: LocatorAssertions.NotToHaveValues.timeout = %%-js-assertions-timeout-%%
-* since: v1.23
 
 ### option: LocatorAssertions.NotToHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.23
