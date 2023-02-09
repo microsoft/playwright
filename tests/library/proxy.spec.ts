@@ -29,7 +29,6 @@ it('should throw for bad server value', async ({ browserType }) => {
 });
 
 it('should use proxy @smoke', async ({ browserType, server, mode }) => {
-  it.skip(mode !== 'default', 'proxy is not supported for remote connection');
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
