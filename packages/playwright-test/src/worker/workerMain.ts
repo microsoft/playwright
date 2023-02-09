@@ -22,7 +22,7 @@ import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
 import { ConfigLoader } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
 import type { Annotation, FullConfigInternal, FullProjectInternal, TestInfoError } from '../common/types';
-import { FixtureRunner } from '../common/fixtures';
+import { FixtureRunner } from './fixtureRunner';
 import { ManualPromise } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from '../common/testInfo';
 import type { TimeSlot } from '../common/timeoutManager';
