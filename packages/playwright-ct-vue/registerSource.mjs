@@ -232,12 +232,12 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   });
   setDevtoolsHook(createDevTools(), {});
 
-  for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
+  for (const hook of window.__pw_hooks_before_mount || [])
     await hook({ app, hooksConfig });
   const instance = app.mount(rootElement);
   rootElement[appKey] = app;
 
-  for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
+  for (const hook of window.__pw_hooks_after_mount || [])
     await hook({ app, hooksConfig, instance });
 };
 

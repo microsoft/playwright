@@ -24,7 +24,7 @@ export type JsxComponent = {
 export type MountOptions = {
   props?: Record<string, any>,
   slots?: Record<string, any>,
-  on?: { [key: string]: Function },
+  on?: Record<string, Function>,
   hooksConfig?: any,
 };
 
@@ -41,5 +41,7 @@ declare global {
     playwrightMount(component: Component, rootElement: Element, hooksConfig: any): Promise<void>;
     playwrightUnmount(rootElement: Element): Promise<void>;
     playwrightUpdate(rootElement: Element, component: Component): Promise<void>;
+    __pw_hooks_before_mount?: (<HooksConfig>(params: { hooksConfig: HooksConfig; } & any) => Promise<any>)[];
+    __pw_hooks_after_mount?: (<HooksConfig>(params: { hooksConfig: HooksConfig; } & any) => Promise<void>)[];
   }
 }
