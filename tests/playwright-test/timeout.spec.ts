@@ -75,16 +75,16 @@ test('should respect test.setTimeout outside of the test', async ({ runInlineTes
 
       test.setTimeout(1000);
       test('fails', async ({}) => {
-        await new Promise(f => setTimeout(f, 1000));
+        await new Promise(f => setTimeout(f, 1100));
       });
       test('passes', async ({}) => {
         await new Promise(f => setTimeout(f, 100));
       });
 
       test.describe('suite', () => {
-        test.setTimeout(50);
+        test.setTimeout(500);
         test('fails', async ({}) => {
-          await new Promise(f => setTimeout(f, 100));
+          await new Promise(f => setTimeout(f, 600));
         });
         test('passes', async ({}) => {
         });
@@ -95,6 +95,7 @@ test('should respect test.setTimeout outside of the test', async ({ runInlineTes
   expect(result.failed).toBe(2);
   expect(result.passed).toBe(2);
   expect(result.output).toContain('Test timeout of 1000ms exceeded.');
+  expect(result.output).toContain('Test timeout of 500ms exceeded.');
 });
 
 test('should timeout when calling test.setTimeout too late', async ({ runInlineTest }) => {

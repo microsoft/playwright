@@ -517,10 +517,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _contextReuseMode: process.env.PW_TEST_REUSE_CONTEXT === 'when-possible' ? 'when-possible' : (process.env.PW_TEST_REUSE_CONTEXT ? 'force' : 'none'),
 
-  _reuseContext: async ({ video, _contextReuseMode }, use, testInfo) => {
+  _reuseContext: [async ({ video, _contextReuseMode }, use, testInfo) => {
     const reuse = _contextReuseMode === 'force' || (_contextReuseMode === 'when-possible' && !shouldCaptureVideo(normalizeVideoMode(video), testInfo));
     await use(reuse);
-  },
+  }, { scope: 'test',  _title: 'context' } as any],
 
   context: async ({ playwright, browser, _reuseContext, _contextFactory }, use, testInfo) => {
     if (!_reuseContext) {
