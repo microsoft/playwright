@@ -245,14 +245,11 @@ async function runChangedTests(config: FullConfigInternal, failedTestIdCollector
   return await runTests(config, failedTestIdCollector, { projectsToIgnore, additionalFileMatcher, title: title || 'files changed' });
 }
 
-let seq = 0;
-
 async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<string>, options?: {
     projectsToIgnore?: Set<FullProjectInternal>,
     additionalFileMatcher?: Matcher,
     title?: string,
   }) {
-  ++seq;
   printConfiguration(config, options?.title);
   const reporter = new Multiplexer([new ListReporter()]);
   const taskRunner = createTaskRunnerForWatch(config, reporter, options?.projectsToIgnore, options?.additionalFileMatcher);
@@ -356,6 +353,7 @@ Change settings
 }
 
 let showBrowserServer: PlaywrightServer | undefined;
+let seq = 0;
 
 function printConfiguration(config: FullConfigInternal, title?: string) {
   const tokens: string[] = [];
@@ -369,6 +367,7 @@ function printConfiguration(config: FullConfigInternal, title?: string) {
     tokens.push(colors.dim(`(${title})`));
   if (seq)
     tokens.push(colors.dim(`#${seq}`));
+  ++seq;
   const lines: string[] = [];
   const sep = separator();
   lines.push('\x1Bc' + sep);
