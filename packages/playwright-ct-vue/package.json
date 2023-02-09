@@ -29,5 +29,8 @@
     "@vitejs/plugin-vue": "^4.0.0",
     "@playwright/test": "1.31.0-next",
     "vite": "^4.0.3"
+  },
+  "bin": {
+    "playwright": "./cli.js"
   }
 }

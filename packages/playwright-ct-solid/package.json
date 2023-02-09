@@ -32,5 +32,8 @@
   },
   "devDependencies": {
     "solid-js": "^1.4.7"
+  },
+  "bin": {
+    "playwright": "./cli.js"
   }
 }
