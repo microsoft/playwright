@@ -1653,6 +1653,18 @@ await element.SelectOptionAsync(new[] { "red", "green", "blue" });
 ### option: Locator.selectOption.timeout = %%-input-timeout-%%
 * since: v1.14
 
+### param: Locator.selectOption.element = %%-python-select-options-element-%%
+* since: v1.14
+
+### param: Locator.selectOption.index = %%-python-select-options-index-%%
+* since: v1.14
+
+### param: Locator.selectOption.value = %%-python-select-options-value-%%
+* since: v1.14
+
+### param: Locator.selectOption.label = %%-python-select-options-label-%%
+* since: v1.14
+
 ## async method: Locator.selectText
 * since: v1.14
 

@@ -1475,6 +1475,18 @@ await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" })
 ### option: Frame.selectOption.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### param: Frame.selectOption.element = %%-python-select-options-element-%%
+* since: v1.8
+
+### param: Frame.selectOption.index = %%-python-select-options-index-%%
+* since: v1.8
+
+### param: Frame.selectOption.value = %%-python-select-options-value-%%
+* since: v1.8
+
+### param: Frame.selectOption.label = %%-python-select-options-label-%%
+* since: v1.8
+
 ## async method: Frame.setChecked
 * since: v1.15
 * discouraged: Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](../locators.md).
@@ -1965,6 +1977,11 @@ await frame.RunAndWaitForNavigationAsync(async () =>
 Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is considered
 a navigation.
 :::
+
+## async method: Frame.waitForNavigation
+* since: v1.8
+* langs: python
+- returns: <[EventContextManager]<[Response]>>
 
 ### option: Frame.waitForNavigation.url = %%-wait-for-navigation-url-%%
 * since: v1.8

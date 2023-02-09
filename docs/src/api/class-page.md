@@ -631,6 +631,20 @@ Script to be evaluated in all pages in the browser context.
 
 Optional argument to pass to [`param: script`] (only supported when passing a function).
 
+### param: Page.addInitScript.path
+* since: v1.8
+* langs: python
+- `path` ?<[path]>
+
+Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+
+### param: Page.addInitScript.script
+* since: v1.8
+* langs: python
+- `script` ?<[string]>
+
+Script to be evaluated in all pages in the browser context. Optional.
+
 ## async method: Page.addScriptTag
 * since: v1.8
 - returns: <[ElementHandle]>
@@ -2138,6 +2152,20 @@ Frame name or other frame lookup options.
 
 Frame name specified in the `iframe`'s `name` attribute.
 
+### option: Page.frame.name
+* since: v1.8
+* langs: python
+- `name` ?<[string]>
+
+Frame name specified in the `iframe`'s `name` attribute. Optional.
+
+### option: Page.frame.url
+* since: v1.8
+* langs: python
+- `url` ?<[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
+
 ## method: Page.frameByUrl
 * since: v1.9
 * langs: csharp, java
@@ -3284,6 +3312,18 @@ await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 ### option: Page.selectOption.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### param: Page.selectOption.element = %%-python-select-options-element-%%
+* since: v1.8
+
+### param: Page.selectOption.index = %%-python-select-options-index-%%
+* since: v1.8
+
+### param: Page.selectOption.value = %%-python-select-options-value-%%
+* since: v1.8
+
+### param: Page.selectOption.label = %%-python-select-options-label-%%
+* since: v1.8
+
 ## async method: Page.setChecked
 * since: v1.15
 * discouraged: Use locator-based [`method: Locator.setChecked`] instead. Read more about [locators](../locators.md).
@@ -3716,7 +3756,12 @@ Performs action and waits for a [ConsoleMessage] to be logged by in the page. If
 [ConsoleMessage] value into the `predicate` function and waits for `predicate(message)` to return a truthy value.
 Will throw an error if the page is closed before the [`event: Page.console`] event is fired.
 
-### option: Page.waitForConsoleMessage.predicate =
+## async method: Page.waitForConsoleMessage
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[ConsoleMessage]>>
+
+### option: Page.waitForConsoleMessage.predicate
 * since: v1.9
 - `predicate` <[function]\([ConsoleMessage]\):[boolean]>
 
@@ -3736,7 +3781,12 @@ Performs action and waits for a new [Download]. If predicate is provided, it pas
 [Download] value into the `predicate` function and waits for `predicate(download)` to return a truthy value.
 Will throw an error if the page is closed before the download event is fired.
 
-### option: Page.waitForDownload.predicate =
+## async method: Page.waitForDownload
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[Download]>>
+
+### option: Page.waitForDownload.predicate
 * since: v1.9
 - `predicate` <[function]\([Download]\):[boolean]>
 
@@ -3775,6 +3825,11 @@ with page.expect_event("framenavigated") as event_info:
 frame = event_info.value
 ```
 
+## async method: Page.waitForEvent
+* since: v1.8
+* langs: python
+- returns: <[EventContextManager]>
+
 ### param: Page.waitForEvent.event = %%-wait-for-event-event-%%
 * since: v1.8
 
@@ -3788,6 +3843,12 @@ frame = event_info.value
 
 Either a predicate that receives an event or an options object. Optional.
 
+### option: Page.waitForEvent.predicate = %%-wait-for-event-predicate-%%
+* since: v1.8
+
+### option: Page.waitForEvent.timeout = %%-wait-for-event-timeout-%%
+* since: v1.8
+
 ## async method: Page.waitForFileChooser
 * since: v1.9
 * langs: java, python, csharp
@@ -3799,7 +3860,12 @@ Performs action and waits for a new [FileChooser] to be created. If predicate is
 [FileChooser] value into the `predicate` function and waits for `predicate(fileChooser)` to return a truthy value.
 Will throw an error if the page is closed before the file chooser is opened.
 
-### option: Page.waitForFileChooser.predicate =
+## async method: Page.waitForFileChooser
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[FileChooser]>>
+
+### option: Page.waitForFileChooser.predicate
 * since: v1.9
 - `predicate` <[function]\([FileChooser]\):[boolean]>
 
@@ -4091,6 +4157,11 @@ Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/Hist
 a navigation.
 :::
 
+## async method: Page.waitForNavigation
+* since: v1.8
+* langs: python
+- returns: <[EventContextManager]<[Response]>>
+
 ### option: Page.waitForNavigation.url = %%-wait-for-navigation-url-%%
 * since: v1.8
 
@@ -4111,7 +4182,12 @@ Performs action and waits for a popup [Page]. If predicate is provided, it passe
 [Popup] value into the `predicate` function and waits for `predicate(page)` to return a truthy value.
 Will throw an error if the page is closed before the popup event is fired.
 
-### option: Page.waitForPopup.predicate =
+## async method: Page.waitForPopup
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[Page]>>
+
+### option: Page.waitForPopup.predicate
 * since: v1.9
 - `predicate` <[function]\([Page]\):[boolean]>
 
@@ -4193,6 +4269,11 @@ await page.RunAndWaitForRequestAsync(async () =>
 }, request => request.Url == "https://example.com" && request.Method == "GET");
 ```
 
+## async method: Page.waitForRequest
+* since: v1.8
+* langs: python
+- returns: <[EventContextManager]<[Request]>>
+
 ### param: Page.waitForRequest.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
@@ -4229,7 +4310,12 @@ Performs action and waits for a [Request] to finish loading. If predicate is pro
 [Request] value into the `predicate` function and waits for `predicate(request)` to return a truthy value.
 Will throw an error if the page is closed before the [`event: Page.requestFinished`] event is fired.
 
-### option: Page.waitForRequestFinished.predicate =
+## async method: Page.waitForRequestFinished
+* since: v1.12
+* langs: python
+- returns: <[EventContextManager]<[Request]>>
+
+### option: Page.waitForRequestFinished.predicate
 * since: v1.12
 - `predicate` <[function]\([Request]\):[boolean]>
 
@@ -4314,6 +4400,11 @@ await page.RunAndWaitForResponseAsync(async () =>
     await page.GetByText("trigger response").ClickAsync();
 }, response => response.Url == "https://example.com" && response.Status == 200);
 ```
+
+## async method: Page.waitForResponse
+* since: v1.8
+* langs: python
+- returns: <[EventContextManager]<[Response]>>
 
 ### param: Page.waitForResponse.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
@@ -4565,7 +4656,12 @@ Performs action and waits for a new [WebSocket]. If predicate is provided, it pa
 [WebSocket] value into the `predicate` function and waits for `predicate(webSocket)` to return a truthy value.
 Will throw an error if the page is closed before the WebSocket event is fired.
 
-### option: Page.waitForWebSocket.predicate =
+## async method: Page.waitForWebSocket
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[WebSocket]>>
+
+### option: Page.waitForWebSocket.predicate
 * since: v1.9
 - `predicate` <[function]\([WebSocket]\):[boolean]>
 
@@ -4585,7 +4681,12 @@ Performs action and waits for a new [Worker]. If predicate is provided, it passe
 [Worker] value into the `predicate` function and waits for `predicate(worker)` to return a truthy value.
 Will throw an error if the page is closed before the worker event is fired.
 
-### option: Page.waitForWorker.predicate =
+## async method: Page.waitForWorker
+* since: v1.9
+* langs: python
+- returns: <[EventContextManager]<[Worker]>>
+
+### option: Page.waitForWorker.predicate
 * since: v1.9
 - `predicate` <[function]\([Worker]\):[boolean]>
 
