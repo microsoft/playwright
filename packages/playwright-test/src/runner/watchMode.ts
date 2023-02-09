@@ -94,7 +94,8 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
   let result: FullResult['status'] = 'passed';
 
   // Enter the watch loop.
-  printConfiguration(config);
+  await runTests(config, failedTestIdCollector);
+
   while (true) {
     printPrompt();
     const readCommandPromise = readCommand();
@@ -109,7 +110,6 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
 
     if (command === 'changed') {
       const dirtyFiles = fsWatcher.takeDirtyFiles();
-      printConfiguration(config, 'files changed');
       await runChangedTests(config, failedTestIdCollector, projectClosure, dirtyFiles);
       lastRun = { type: 'changed', dirtyFiles };
       continue;
@@ -117,7 +117,6 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
 
     if (command === 'run') {
       // All means reset filters.
-      printConfiguration(config);
       await runTests(config, failedTestIdCollector);
       lastRun = { type: 'regular' };
       continue;
@@ -132,8 +131,9 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
       }).catch(() => ({ projectNames: null }));
       if (!projectNames)
         continue;
-      config._internal.cliProjectFilter = projectNames;
-      printConfiguration(config);
+      config._internal.cliProjectFilter = projectNames.length ? projectNames : undefined;
+      await runTests(config, failedTestIdCollector);
+      lastRun = { type: 'regular' };
       continue;
     }
 
@@ -149,7 +149,8 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
         config._internal.cliArgs = filePattern.split(' ');
       else
         config._internal.cliArgs = [];
-      printConfiguration(config);
+      await runTests(config, failedTestIdCollector);
+      lastRun = { type: 'regular' };
       continue;
     }
 
@@ -165,30 +166,29 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
         config._internal.cliGrep = testPattern;
       else
         config._internal.cliGrep = undefined;
-      printConfiguration(config);
+      await runTests(config, failedTestIdCollector);
+      lastRun = { type: 'regular' };
       continue;
     }
 
     if (command === 'failed') {
       config._internal.testIdMatcher = id => failedTestIdCollector.has(id);
       const failedTestIds = new Set(failedTestIdCollector);
-      printConfiguration(config, 'running failed tests');
-      await runTests(config, failedTestIdCollector);
+      await runTests(config, failedTestIdCollector, { title: 'running failed tests' });
       config._internal.testIdMatcher = undefined;
       lastRun = { type: 'failed', failedTestIds };
       continue;
     }
 
     if (command === 'repeat') {
-      printConfiguration(config, 're-running tests');
       if (lastRun.type === 'regular') {
-        await runTests(config, failedTestIdCollector);
+        await runTests(config, failedTestIdCollector, { title: 're-running tests' });
         continue;
       } else if (lastRun.type === 'changed') {
-        await runChangedTests(config, failedTestIdCollector, projectClosure, lastRun.dirtyFiles!);
+        await runChangedTests(config, failedTestIdCollector, projectClosure, lastRun.dirtyFiles!, 're-running tests');
       } else if (lastRun.type === 'failed') {
         config._internal.testIdMatcher = id => lastRun.failedTestIds!.has(id);
-        await runTests(config, failedTestIdCollector);
+        await runTests(config, failedTestIdCollector, { title: 're-running tests' });
         config._internal.testIdMatcher = undefined;
       }
       continue;
@@ -211,7 +211,7 @@ export async function runWatchModeLoop(config: FullConfigInternal): Promise<Full
   return result === 'passed' ? await globalCleanup() : result;
 }
 
-async function runChangedTests(config: FullConfigInternal, failedTestIdCollector: Set<string>, projectClosure: FullProjectInternal[], changedFiles: Set<string>) {
+async function runChangedTests(config: FullConfigInternal, failedTestIdCollector: Set<string>, projectClosure: FullProjectInternal[], changedFiles: Set<string>, title?: string) {
   const commandLineFileMatcher = config._internal.cliArgs.length ? createFileMatcherFromArguments(config._internal.cliArgs) : () => true;
 
   // Resolve files that depend on the changed files.
@@ -242,15 +242,20 @@ async function runChangedTests(config: FullConfigInternal, failedTestIdCollector
   // If there are affected dependency projects, do the full run, respect the original CLI.
   // if there are no affected dependency projects, intersect CLI with dirty files
   const additionalFileMatcher = affectsAnyDependency ? () => true : (file: string) => testFiles.has(file);
-  return await runTests(config, failedTestIdCollector, projectsToIgnore, additionalFileMatcher);
+  return await runTests(config, failedTestIdCollector, { projectsToIgnore, additionalFileMatcher, title: title || 'files changed' });
 }
 
 let seq = 0;
 
-async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<string>, projectsToIgnore?: Set<FullProjectInternal>, additionalFileMatcher?: Matcher) {
+async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<string>, options?: {
+    projectsToIgnore?: Set<FullProjectInternal>,
+    additionalFileMatcher?: Matcher,
+    title?: string,
+  }) {
   ++seq;
+  printConfiguration(config, options?.title);
   const reporter = new Multiplexer([new ListReporter()]);
-  const taskRunner = createTaskRunnerForWatch(config, reporter, projectsToIgnore, additionalFileMatcher);
+  const taskRunner = createTaskRunnerForWatch(config, reporter, options?.projectsToIgnore, options?.additionalFileMatcher);
   const context: TaskRunnerState = {
     config,
     reporter,
@@ -263,11 +268,11 @@ async function runTests(config: FullConfigInternal, failedTestIdCollector: Set<s
 
   let hasFailedTests = false;
   for (const test of context.rootSuite?.allTests() || []) {
-    if (test.outcome() === 'expected') {
-      failedTestIdCollector.delete(test.id);
-    } else {
+    if (test.outcome() === 'unexpected') {
       failedTestIdCollector.add(test.id);
       hasFailedTests = true;
+    } else {
+      failedTestIdCollector.delete(test.id);
     }
   }
 
