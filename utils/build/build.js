@@ -200,7 +200,7 @@ steps.push({
 for (const bundle of bundles) {
   steps.push({
     command: 'npm',
-    args: ['ci', '--save=false', '--fund=false', '--audit=false'],
+    args: ['ci', '--save=false', '--fund=false', '--audit=false', '--omit=optional'],
     shell: true,
     cwd: bundle,
   });
