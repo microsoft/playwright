@@ -18,6 +18,7 @@ import type { Fixtures } from '@playwright/test';
 import type { ChildProcess } from 'child_process';
 import { execSync, spawn } from 'child_process';
 import net from 'net';
+import { stripAnsi } from './utils';
 
 type TestChildParams = {
   command: string[],
@@ -105,8 +106,16 @@ export class TestChildProcess {
   }
 
   async waitForOutput(substring: string) {
-    while (!this.output.includes(substring))
+    while (!stripAnsi(this.output).includes(substring))
       await new Promise<void>(f => this._outputCallbacks.add(f));
+  }
+
+  clearOutput() {
+    this.output = '';
+  }
+
+  write(chars: string) {
+    this.process.stdin.write(chars);
   }
 }
 

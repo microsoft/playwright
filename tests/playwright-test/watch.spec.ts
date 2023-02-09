@@ -89,3 +89,81 @@ test('should print dependencies in ESM mode', async ({ runInlineTest, nodeVersio
     'b.test.ts': ['helperA.ts', 'helperB.ts'],
   });
 });
+
+test('should perform initial run', async ({ runWatchTest }) => {
+  const testProcess = await runWatchTest({
+    'a.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+  }, {});
+  await testProcess.waitForOutput('a.test.ts:5:11 › passes');
+  await testProcess.waitForOutput('Waiting for file changes.');
+});
+
+test('should quit on Q', async ({ runWatchTest }) => {
+  const testProcess = await runWatchTest({}, {});
+  await testProcess.waitForOutput('Waiting for file changes.');
+  testProcess.write('q');
+  await testProcess!.exited;
+});
+
+test('should print help on H', async ({ runWatchTest }) => {
+  const testProcess = await runWatchTest({}, {});
+  await testProcess.waitForOutput('Waiting for file changes.');
+  testProcess.write('h');
+  await testProcess.waitForOutput('to quit');
+});
+
+test('should run tests on Enter', async ({ runWatchTest }) => {
+  const testProcess = await runWatchTest({
+    'a.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+  }, {});
+  await testProcess.waitForOutput('a.test.ts:5:11 › passes');
+  await testProcess.waitForOutput('Waiting for file changes.');
+  await testProcess.clearOutput();
+  testProcess.write('\r\n');
+  await testProcess.waitForOutput('npx playwright test #1');
+  await testProcess.waitForOutput('a.test.ts:5:11 › passes');
+  await testProcess.waitForOutput('Waiting for file changes.');
+});
+
+test('should run tests on R', async ({ runWatchTest }) => {
+  const testProcess = await runWatchTest({
+    'a.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+  }, {});
+  await testProcess.waitForOutput('a.test.ts:5:11 › passes');
+  await testProcess.waitForOutput('Waiting for file changes.');
+  await testProcess.clearOutput();
+  testProcess.write('r');
+  await testProcess.waitForOutput('npx playwright test (re-running tests) #1');
+  await testProcess.waitForOutput('a.test.ts:5:11 › passes');
+  await testProcess.waitForOutput('Waiting for file changes.');
+});
+
+test('should re-run failed tests on F', async ({ runWatchTest }) => {
+  const testProcess = await runWatchTest({
+    'a.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+    'b.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+    'c.test.ts': `
+      pwt.test('fails', () => { expect(1).toBe(2); });
+    `,
+  }, {});
+  await testProcess.waitForOutput('a.test.ts:5:11 › passes');
+  await testProcess.waitForOutput('b.test.ts:5:11 › passes');
+  await testProcess.waitForOutput('c.test.ts:5:11 › fails');
+  await testProcess.waitForOutput('Error: expect(received).toBe(expected)');
+  await testProcess.waitForOutput('Waiting for file changes.');
+  await testProcess.clearOutput();
+  testProcess.write('f');
+  await testProcess.waitForOutput('npx playwright test (running failed tests) #1');
+  await testProcess.waitForOutput('c.test.ts:5:11 › fails');
+  expect(testProcess.output).not.toContain('a.test.ts:5:11');
+});
