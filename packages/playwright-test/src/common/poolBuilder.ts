@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { FixturePool, isFixtureOption } from './fixtures';
+import { FixturePool } from './fixtures';
 import type { LoadError } from './fixtures';
 import type { Suite, TestCase } from './test';
 import type { TestTypeImpl } from './testType';
-import type { Fixtures, FixturesWithLocation, FullProjectInternal } from './types';
+import type { FullProjectInternal } from './types';
 import { formatLocation } from '../util';
 import type { TestError } from '../../reporter';
 
@@ -73,8 +73,11 @@ export class PoolBuilder {
 
   private _buildTestTypePool(testType: TestTypeImpl, testErrors?: TestError[]): FixturePool {
     if (!this._testTypePools.has(testType)) {
-      const fixtures = this._project ? this._applyConfigUseOptions(this._project, testType) : testType.fixtures;
-      const pool = new FixturePool(fixtures, e => this._handleLoadError(e, testErrors));
+      const optionOverrides = {
+        overrides: this._project?.use ?? {},
+        location: { file: `project#${this._project?._internal.id}`, line: 1, column: 1 }
+      };
+      const pool = new FixturePool(testType.fixtures, e => this._handleLoadError(e, testErrors), undefined, undefined, optionOverrides);
       this._testTypePools.set(testType, pool);
     }
     return this._testTypePools.get(testType)!;
@@ -85,27 +88,5 @@ export class PoolBuilder {
       testErrors.push(e);
     else
       throw new Error(`${formatLocation(e.location)}: ${e.message}`);
-  }
-
-  private _applyConfigUseOptions(project: FullProjectInternal, testType: TestTypeImpl): FixturesWithLocation[] {
-    const projectUse = project.use || {};
-    const configKeys = new Set(Object.keys(projectUse));
-    if (!configKeys.size)
-      return testType.fixtures;
-    const result: FixturesWithLocation[] = [];
-    for (const f of testType.fixtures) {
-      result.push(f);
-      const optionsFromConfig: Fixtures = {};
-      for (const [key, value] of Object.entries(f.fixtures)) {
-        if (isFixtureOption(value) && configKeys.has(key))
-          (optionsFromConfig as any)[key] = [(projectUse as any)[key], value[1]];
-      }
-      if (Object.entries(optionsFromConfig).length) {
-        // Add config options immediately after original option definition,
-        // so that any test.use() override it.
-        result.push({ fixtures: optionsFromConfig, location: { file: `project#${project._internal.id}`, line: 1, column: 1 }, fromConfig: true });
-      }
-    }
-    return result;
   }
 }

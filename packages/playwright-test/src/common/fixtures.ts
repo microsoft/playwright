@@ -16,7 +16,7 @@
 
 import { formatLocation } from '../util';
 import * as crypto from 'crypto';
-import type { FixturesWithLocation, Location } from './types';
+import type { Fixtures, FixturesWithLocation, Location } from './types';
 
 export type FixtureScope = 'test' | 'worker';
 type FixtureAuto = boolean | 'all-hooks-included';
@@ -45,21 +45,24 @@ export type FixtureRegistration = {
   id: string;
   // A fixture override can use the previous version of the fixture.
   super?: FixtureRegistration;
-  // Whether this fixture is an option value set from the config.
-  fromConfig?: boolean;
+  // Whether this fixture is an option override value set from the config.
+  optionOverride?: boolean;
 };
 export type LoadError = {
   message: string;
   location: Location;
 };
-
-export type LoadErrorSink = (error: LoadError) => void;
+type LoadErrorSink = (error: LoadError) => void;
+type OptionOverrides = {
+  overrides: Fixtures,
+  location: Location,
+};
 
 function isFixtureTuple(value: any): value is FixtureTuple {
   return Array.isArray(value) && typeof value[1] === 'object' && ('scope' in value[1] || 'auto' in value[1] || 'option' in value[1] || 'timeout' in value[1]);
 }
 
-export function isFixtureOption(value: any): value is FixtureTuple {
+function isFixtureOption(value: any): value is FixtureTuple {
   return isFixtureTuple(value) && !!value[1].option;
 }
 
@@ -68,69 +71,86 @@ export class FixturePool {
   readonly registrations: Map<string, FixtureRegistration>;
   private _onLoadError: LoadErrorSink;
 
-  constructor(fixturesList: FixturesWithLocation[], onLoadError: LoadErrorSink, parentPool?: FixturePool, disallowWorkerFixtures?: boolean) {
+  constructor(fixturesList: FixturesWithLocation[], onLoadError: LoadErrorSink, parentPool?: FixturePool, disallowWorkerFixtures?: boolean, optionOverrides?: OptionOverrides) {
     this.registrations = new Map(parentPool ? parentPool.registrations : []);
     this._onLoadError = onLoadError;
 
-    for (const { fixtures, location, fromConfig } of fixturesList) {
-      for (const entry of Object.entries(fixtures)) {
-        const name = entry[0];
-        let value = entry[1];
-        let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle: string | undefined } | undefined;
-        if (isFixtureTuple(value)) {
-          options = {
-            auto: value[1].auto ?? false,
-            scope: value[1].scope || 'test',
-            option: !!value[1].option,
-            timeout: value[1].timeout,
-            customTitle: (value[1] as any)._title,
-          };
-          value = value[0];
-        }
-        let fn = value as (Function | any);
+    const allOverrides = optionOverrides?.overrides ?? {};
+    const overrideKeys = new Set(Object.keys(allOverrides));
+    for (const list of fixturesList) {
+      this._appendFixtureList(list, !!disallowWorkerFixtures, false);
 
-        const previous = this.registrations.get(name);
-        if (previous && options) {
-          if (previous.scope !== options.scope) {
-            this._addLoadError(`Fixture "${name}" has already been registered as a { scope: '${previous.scope}' } fixture defined in ${formatLocation(previous.location)}.`, location);
-            continue;
-          }
-          if (previous.auto !== options.auto) {
-            this._addLoadError(`Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture defined in ${formatLocation(previous.location)}.`, location);
-            continue;
-          }
-        } else if (previous) {
-          options = { auto: previous.auto, scope: previous.scope, option: previous.option, timeout: previous.timeout, customTitle: previous.customTitle };
-        } else if (!options) {
-          options = { auto: false, scope: 'test', option: false, timeout: undefined, customTitle: undefined };
-        }
-
-        if (!kScopeOrder.includes(options.scope)) {
-          this._addLoadError(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, location);
-          continue;
-        }
-        if (options.scope === 'worker' && disallowWorkerFixtures) {
-          this._addLoadError(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, location);
-          continue;
-        }
-
-        // Overriding option with "undefined" value means setting it to the default value
-        // from the config or from the original declaration of the option.
-        if (fn === undefined && options.option && previous) {
-          let original = previous;
-          while (!original.fromConfig && original.super)
-            original = original.super;
-          fn = original.fn;
-        }
-
-        const deps = fixtureParameterNames(fn, location, e => this._onLoadError(e));
-        const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, deps, super: previous, fromConfig };
-        registrationId(registration);
-        this.registrations.set(name, registration);
+      // Process option overrides immediately after original option definitions,
+      // so that any test.use() override it.
+      const selectedOverrides: Fixtures = {};
+      for (const [key, value] of Object.entries(list.fixtures)) {
+        if (isFixtureOption(value) && overrideKeys.has(key))
+          (selectedOverrides as any)[key] = [(allOverrides as any)[key], value[1]];
       }
+      if (Object.entries(selectedOverrides).length)
+        this._appendFixtureList({ fixtures: selectedOverrides, location: optionOverrides!.location }, !!disallowWorkerFixtures, true);
     }
 
     this.digest = this.validate();
+  }
+
+  private _appendFixtureList(list: FixturesWithLocation, disallowWorkerFixtures: boolean, isOptionsOverride: boolean) {
+    const { fixtures, location } = list;
+    for (const entry of Object.entries(fixtures)) {
+      const name = entry[0];
+      let value = entry[1];
+      let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle: string | undefined } | undefined;
+      if (isFixtureTuple(value)) {
+        options = {
+          auto: value[1].auto ?? false,
+          scope: value[1].scope || 'test',
+          option: !!value[1].option,
+          timeout: value[1].timeout,
+          customTitle: (value[1] as any)._title,
+        };
+        value = value[0];
+      }
+      let fn = value as (Function | any);
+
+      const previous = this.registrations.get(name);
+      if (previous && options) {
+        if (previous.scope !== options.scope) {
+          this._addLoadError(`Fixture "${name}" has already been registered as a { scope: '${previous.scope}' } fixture defined in ${formatLocation(previous.location)}.`, location);
+          continue;
+        }
+        if (previous.auto !== options.auto) {
+          this._addLoadError(`Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture defined in ${formatLocation(previous.location)}.`, location);
+          continue;
+        }
+      } else if (previous) {
+        options = { auto: previous.auto, scope: previous.scope, option: previous.option, timeout: previous.timeout, customTitle: previous.customTitle };
+      } else if (!options) {
+        options = { auto: false, scope: 'test', option: false, timeout: undefined, customTitle: undefined };
+      }
+
+      if (!kScopeOrder.includes(options.scope)) {
+        this._addLoadError(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, location);
+        continue;
+      }
+      if (options.scope === 'worker' && disallowWorkerFixtures) {
+        this._addLoadError(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, location);
+        continue;
+      }
+
+      // Overriding option with "undefined" value means setting it to the default value
+      // from the config or from the original declaration of the option.
+      if (fn === undefined && options.option && previous) {
+        let original = previous;
+        while (!original.optionOverride && original.super)
+          original = original.super;
+        fn = original.fn;
+      }
+
+      const deps = fixtureParameterNames(fn, location, e => this._onLoadError(e));
+      const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, deps, super: previous, optionOverride: isOptionsOverride };
+      registrationId(registration);
+      this.registrations.set(name, registration);
+    }
   }
 
   private validate() {
