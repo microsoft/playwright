@@ -25,7 +25,7 @@ import type { TaskRunnerState } from './tasks';
 import { buildProjectsClosure, filterProjects } from './projectUtils';
 import { clearCompilationCache, collectAffectedTestFiles } from '../common/compilationCache';
 import type { FullResult } from 'packages/playwright-test/reporter';
-import chokidar from 'chokidar';
+import { chokidar } from '../utilsBundle';
 import { createReporter } from './reporters';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { enquirer } from '../utilsBundle';

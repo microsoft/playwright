@@ -40,6 +40,7 @@ let patchSource = {
 
 esbuild.build({
   entryPoints: [path.join(__dirname, 'src/utilsBundleImpl.ts')],
+  external: ['fsevents'],
   bundle: true,
   outdir: path.join(__dirname, '../../lib'),
   plugins: [patchSource],

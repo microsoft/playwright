@@ -31,3 +31,6 @@ export const stoppable = stoppableLibrary;
 
 import enquirerLibrary from 'enquirer';
 export const enquirer = enquirerLibrary;
+
+import chokidarLibrary from 'chokidar';
+export const chokidar = chokidarLibrary;

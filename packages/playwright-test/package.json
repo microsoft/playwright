@@ -34,7 +34,9 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@types/node": "*",
-    "chokidar": "3.5.3",
     "playwright-core": "1.31.0-next"
+  },
+  "optionalDependencies": {
+    "fsevents": "2.3.2"
   }
 }
