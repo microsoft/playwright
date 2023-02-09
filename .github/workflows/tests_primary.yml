@@ -75,7 +75,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 14
+        node-version: 16
     - run: npm i -g npm@8
     - run: npm ci
       env:
@@ -101,14 +101,12 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [14]
+        node-version: [16]
         include:
           - os: ubuntu-latest
-            node-version: 16
+            node-version: 14
           - os: ubuntu-latest
             node-version: 18
-          - os: windows-latest
-            node-version: 16
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
