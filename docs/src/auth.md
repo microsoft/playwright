@@ -3,77 +3,215 @@ id: auth
 title: "Authentication"
 ---
 
-Playwright can be used to automate scenarios that require authentication.
+Playwright executes tests in isolated environments called [browser contexts](./browser-contexts.md). This isolation model improves reproducibility and prevents cascading test failures. Tests can load existing authenticated state. This eliminates the need to authenticate in every test and speeds up test execution.
 
-Tests written with Playwright execute in isolated clean-slate environments called [browser contexts](./browser-contexts.md). This isolation model improves reproducibility and prevents cascading test failures. New browser contexts can load existing authentication state. This eliminates the need to login in every context and speeds up test execution.
+## Core concepts
 
-Depending on your project constraints and how expensive the authentication process is, you can pick one of the following approaches:
+Regardless of the authentication strategy you choose, you are likely to store authenticated browser state on the file system.
 
-* The fastest approach is to sign in only once during global setup and save the browser state into a file. Then you can reuse that state in all the tests, and they will be instantaneously signed in. Use this preferred method whenever possible.
-* When test account cannot be safely accessed by several tests running in parallel, you have to run each parallel worker with its own account. In this case, sign in once per worker, and reuse browser storage for all tests running in that worker.
-* If your authentication provider has browser-specific details, sign in once per project, and then reuse browser state for all tests in the project.
-* The most flexible approach is to sign in before each test. This also provides the best isolation between tests, but comes at a performance cost.
-All of the methods above support multiple signed in roles when you need them.
+We recommend to create `playwright/.auth` directory and add it to your `.gitignore`. You authentication routine will produce authenticated browser state and save it to a file in this `playwright/.auth` directory. Later on, tests will reuse this state and start already authenticated.
 
-> Note: This guide covers cookie/token-based authentication (logging in via the app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) use [`method: Browser.newContext`].
+```bash tab=bash-bash
+mkdir -p playwright/.auth
+echo "\nplaywright/.auth" >> .gitignore
+```
+
+```batch tab=bash-batch
+md playwright\.auth
+echo. >> .gitignore
+echo "playwright/.auth" >> .gitignore
+```
+
+```powershell tab=bash-powershell
+New-Item -ItemType Directory -Force -Path playwright\.auth
+Add-Content -path .gitignore "`r`nplaywright/.auth"
+```
+
+Usually you would want to reuse authenticated state between multiple test runs, especially when authoring tests. All the examples in this guide authenticate lazily, and reuse auth state when possible. However, your app may require to re-authenticate after some amount of time. In this case, just remove `playwright/.auth` directory, and re-run your tests.
+
+```bash tab=bash-bash
+# Remove auth state
+rm -rf playwright/.auth
+```
+
+```batch tab=bash-batch
+rd /s /q playwright/.auth
+```
+
+```powershell tab=bash-powershell
+Remove-Item -Recurse -Force playwright/.auth
+```
+
+## Basic: shared account in all tests
+* langs: js
+
+This is the **recommended** approach for tests **without server-side state**. Authenticate once in the **setup project**, save the authentication state, and then reuse it to bootstrap each test already authenticated.
+
+**When to use**
+- When you can imagine all your tests running at the same time with the same account, without affecting each other.
+
+**When not to use**
+- Your tests modify server-side state. For example, one test checks the rendering of the settings page, while the other test is changing the setting, and you run tests in parallel. In this case, tests must use different accounts.
+- Your authentication is browser-specific.
+
+**Details**
+
+Create `auth.setup.ts` that will prepare authenticated browser state for all other tests.
+
+```js
+// auth.setup.ts
+import { test as setup } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+
+const authFile = 'playwright/.auth/user.json';
+
+setup('authenticate', async ({ page }) => {
+  // Reuse authenticate from previous runs.
+  if (fs.existsSync(authFile))
+    return;
+
+  // Perform authentication steps. Replace these actions with your own.
+  await page.goto('https://github.com/login');
+  await page.getByLabel('Username or email address').fill('username');
+  await page.getByLabel('Password').fill('password');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  // End of authentication steps.
+
+  await page.context().storageState({ path: authFile });
+});
+```
+
+Create a new `setup` project in the config and declare it as a dependency for all your testing projects. This project will always run and authenticate before all the tests. All testing projects should use the authenticated state as `storageState`.
+
+```js
+// playwright.config.ts
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    // Setup project
+    { name: 'setup', testMatch: /.*\.setup\.ts/ },
+
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Use prepared auth state.
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
+
+    {
+      name: 'firefox',
+      use: {
+        ...devices['Desktop Firefox'],
+        // Use prepared auth state.
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
+  ],
+});
+```
+
+Tests start already authenticated because we specified `storageState` in the config.
+
+```js
+// tests/example.spec.ts
+import { test } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  // page is authenticated
+});
+```
+
+
+## Moderate: one account per parallel worker
+* langs: js
+
+This is the **recommended** approach for tests that **modify server-side state**. In Playwright, worker processes run in parallel. In this approach, each parallel worker is authenticated once. All tests ran by worker are reusing the same authentication state. We will need multiple testing accounts, one per each parallel worker.
+
+**When to use**
+- Your tests modify shared server-side state. For example, one test checks the rendering of the settings page, while the other test is changing the setting.
+
+**When not to use**
+- Your tests do not modify any shared server-side state. In this case, all tests can use a single shared account.
+
+**Details**
+
+We will authenticate once per [worker process](./test-parallel.md#worker-processes), each with a unique account.
+
+Create `playwright/fixtures.ts` file that will [override `storageState` fixture](./test-fixtures.md#overriding-fixtures) to authenticate once per worker. Use [`property: TestInfo.parallelIndex`] to differentiate between workers.
+
+```js
+// playwright/fixtures.ts
+import { test as baseTest } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+
+export * from '@playwright/test';
+export const test = baseTest.extend<{}, { workerStorageState: string }>({
+  // Use the same storage state for all tests in this worker.
+  storageState: ({ workerStorageState }, use) => use(workerStorageState),
+
+  // Authenticate once per worker with a worker-scoped fixture.
+  workerStorageState: [async ({ browser }, use) => {
+    // Use parallelIndex as a unique identifier for each worker.
+    const id = test.info().parallelIndex;
+    const fileName = path.resolve(__dirname, `.auth/${id}.json`);
+
+    if (fs.existsSync(fileName)) {
+      // Reuse existing authentication state if any.
+      await use(fileName);
+      return;
+    }
+
+    // Important: make sure we authenticate in a clean environment by unsetting storage state.
+    const page = await browser.newPage({ storageState: undefined });
+
+    // Acquire a unique account, for example create a new one.
+    // Alternatively, you can have a list of precreated accounts for testing.
+    // Make sure that accounts are unique, so that multiple team members
+    // can run tests at the same time without interference.
+    const account = await acquireAccount(id);
+
+    // Perform authentication steps. Replace these actions with your own.
+    await page.goto('https://github.com/login');
+    await page.getByLabel('Username or email address').fill(account.username);
+    await page.getByLabel('Password').fill(account.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    // End of authentication steps.
+
+    await page.context().storageState({ path: fileName });
+    await page.close();
+    await use(fileName);
+  }, { scope: 'worker' }],
+});
+```
+
+Now, each test file should import `test` from our fixtures file instead of `@playwright/test`. No changes are needed in the config.
+
+```js
+// tests/example.spec.ts
+
+// Important: import our fixtures.
+import { test, expect } from '../playwright/fixtures';
+
+test('test', async ({ page }) => {
+  // page is authenticated
+});
+```
+
 
 ## Signing in before each test
+* langs: java, python, csharp
 
 The Playwright API can [automate interaction](./input.md) with a login form.
 
 The following example logs into GitHub. Once these steps are executed,
 the browser context will be authenticated.
-
-```js tab=js-ts
-import { test } from '@playwright/test';
-
-test.beforeEach(async ({ page }) => {
-  // Runs before each test and signs in each page.
-  await page.goto('https://github.com/login');
-  await page.getByLabel('Username or email address').fill('username');
-  await page.getByLabel('Password').fill('password');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-});
-
-test('first', async ({ page }) => {
-  // page is signed in.
-});
-
-test('second', async ({ page }) => {
-  // page is signed in.
-});
-```
-
-```js tab=js-js
-const { test } = require('@playwright/test');
-
-test.beforeEach(async ({ page }) => {
-  // Runs before each test and signs in each page.
-  await page.goto('https://github.com/login');
-  await page.getByLabel('Username or email address').fill('username');
-  await page.getByLabel('Password').fill('password');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-});
-
-test('first', async ({ page }) => {
-  // page is signed in.
-});
-
-test('second', async ({ page }) => {
-  // page is signed in.
-});
-```
-
-```js tab=js-library
-const page = await context.newPage();
-await page.goto('https://github.com/login');
-
-// Interact with login form
-await page.getByLabel('Username or email address').fill("username");
-await page.getByLabel('Password').fill("password");
-await page.getByRole('button', { name: 'Sign in' }).click();
-// Continue with the test
-```
 
 ```java
 Page page = context.newPage();
@@ -171,277 +309,163 @@ var context = await browser.NewContextAsync(new()
     StorageStatePath = "state.json"
 });
 ```
-## Signing in during global setup
+
+
+## Advanced scenarios
+
+### Authenticate with API request
 * langs: js
 
-Playwright provides a way to reuse the signed-in state in the tests. That way you can log
-in only once and then skip the log in step for all of the tests.
+**When to use**
+- Your web application supports authenticating via API that is easier/faster than interacting witht the app UI.
 
-Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). Playwright provides [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state) method that can be used to retrieve storage state from authenticated contexts and then create new contexts with pre-populated state.
+**Details**
 
-Cookies and local storage state can be used across different browsers. They depend on your application's authentication model: some apps might require both cookies and local storage. Below we decribe how to authenticate using login page and web API.
+We will send the API request with [APIRequestContext] and then save authenticated state as usual.
 
-### Login page
-
-Create a new global setup script:
-
-```js tab=js-js
-// global-setup.js
-const { chromium } = require('@playwright/test');
-
-module.exports = async config => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  await page.goto('https://github.com/login');
-  await page.getByLabel('Username or email address').fill('username');
-  await page.getByLabel('Password').fill('password');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  // Save signed-in state to 'storageState.json'.
-  await page.context().storageState({ path: 'storageState.json' });
-  await browser.close();
-};
-```
-
-```js tab=js-ts
-// global-setup.ts
-import { chromium, FullConfig } from '@playwright/test';
-
-async function globalSetup(config: FullConfig) {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  await page.goto('https://github.com/login');
-  await page.getByLabel('Username or email address').fill('username');
-  await page.getByLabel('Password').fill('password');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  // Save signed-in state to 'storageState.json'.
-  await page.context().storageState({ path: 'storageState.json' });
-  await browser.close();
-}
-
-export default globalSetup;
-```
-
-Register global setup script in the Playwright configuration file:
-
-```js tab=js-ts
-// playwright.config.ts
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  globalSetup: require.resolve('./global-setup'),
-  use: {
-    // Tell all tests to load signed-in state from 'storageState.json'.
-    storageState: 'storageState.json'
-  }
-});
-```
-
-```js tab=js-js
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  globalSetup: require.resolve('./global-setup'),
-  use: {
-    // Tell all tests to load signed-in state from 'storageState.json'.
-    storageState: 'storageState.json'
-  }
-});
-```
-
-Tests start already authenticated because we specify `storageState` that was populated by global setup.
-
-```js tab=js-ts
-import { test } from '@playwright/test';
-
-test('test', async ({ page }) => {
-  // page is signed in.
-});
-```
-
-```js tab=js-js
-const { test } = require('@playwright/test');
-
-test('test', async ({ page }) => {
-  // page is signed in.
-});
-```
-
-:::note
-If you can log in once and commit the `storageState.json` into the repository, you won't need the global setup at all, just specify the `storageState.json` in Playwright Config as above and it'll be picked up.
-
-However, periodically, you may need to update the `storageState.json` file if your app requires you to re-authenticate after some amount of time. For example, if your app prompts you to sign in every week even if you're on the same computer/browser, you'll need to update `storageState.json` at least this often.
-:::
-
-### API request
-* langs: js
-
-If your web application supports signing in via API, you can use [APIRequestContext] to simplify sign in flow. Global setup script from the example above would change like this:
-
-```js tab=js-js
-// global-setup.js
-const { request } = require('@playwright/test');
-
-module.exports = async () => {
-  const requestContext = await request.newContext();
-  await requestContext.post('https://github.com/login', {
-    form: {
-      'user': 'user',
-      'password': 'password'
-    }
-  });
-  // Save signed-in state to 'storageState.json'.
-  await requestContext.storageState({ path: 'storageState.json' });
-  await requestContext.dispose();
-}
-```
-
-```js tab=js-ts
-// global-setup.ts
-import { request } from '@playwright/test';
-
-async function globalSetup() {
-  const requestContext = await request.newContext();
-  await requestContext.post('https://github.com/login', {
-    form: {
-      'user': 'user',
-      'password': 'password'
-    }
-  });
-  // Save signed-in state to 'storageState.json'.
-  await requestContext.storageState({ path: 'storageState.json' });
-  await requestContext.dispose();
-}
-
-export default globalSetup;
-```
-
-## Running parallel tests with separate accounts
-* langs: js
-
-By default, Playwright runs tests in parallel. If you reuse a single signed-in state for all your tests, this usually leads to the same account being accessed from multiple tests at the same time. If this behavior is undesirable for your application, you can sign in with a different account in each [worker process](./test-parallel.md#worker-processes) created by Playwright Test.
-
-In this example we [override `storageState` fixture](./test-fixtures.md#overriding-fixtures) and ensure we only sign in once per worker, using [`property: TestInfo.parallelIndex`] to differentiate between workers.
+In the [setup project](#basic-shared-account-in-all-tests):
 
 ```js
-// fixtures.ts
-import { test as baseTest, Page } from '@playwright/test';
+// auth.setup.ts
+import { test } from '@playwright/test';
+import path from 'path';
+import fs from 'fs';
+
+const authFile = 'playwright/.auth/user.json';
+
+test('authenticate', async ({ request }) => {
+  // Reuse authenticate from previous runs.
+  if (fs.existsSync(authFile))
+    return;
+
+  // Send authentication request. Replace with your own.
+  await request.post('https://github.com/login', {
+    form: {
+      'user': 'user',
+      'password': 'password'
+    }
+  });
+  await request.storageState({ path: authFile });
+});
+```
+
+Alternatively, in a [worker fixture](#moderate-one-account-per-parallel-worker):
+
+```js
+// playwright/fixtures.ts
+import { test as baseTest, request } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
-export { expect } from '@playwright/test';
 
-const users = [
-  { username: 'user-1', password: 'password-1' },
-  { username: 'user-2', password: 'password-2' },
-  // ... put your test users here ...
-];
+export * from '@playwright/test';
+export const test = baseTest.extend<{}, { workerStorageState: string }>({
+  // Use the same storage state for all tests in this worker.
+  storageState: ({ workerStorageState }, use) => use(workerStorageState),
 
-// Put your application sign steps in this function.
-async function signIn(page: Page, parallelIndex: number) {
-  await page.goto('https://github.com/login');
-  // Create a unique username for each worker.
-  await page.getByLabel('Username or email address').fill(users[parallelIndex].username);
-  await page.getByLabel('Password').fill(users[parallelIndex].password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-}
+  // Authenticate once per worker with a worker-scoped fixture.
+  workerStorageState: [async ({}, use) => {
+    // Use parallelIndex as a unique identifier for each worker.
+    const id = test.info().parallelIndex;
+    const fileName = path.resolve(__dirname, `.auth/${id}.json`);
 
-export const test = baseTest.extend({
-  storageState: async ({ browser }, use) => {
-    // Use parallel index to look up logged-in state and generate it lazily.
-    const fileName = path.join(test.info().project.outputDir, 'storage-' + test.info().parallelIndex);
-    if (!fs.existsSync(fileName)) {
-      // Make sure we are not using any other storage state.
-      const page = await browser.newPage({ storageState: undefined });
-      await signIn(page, test.info().parallelIndex);
-      await page.context().storageState({ path: fileName });
-      await page.close();
+    if (fs.existsSync(fileName)) {
+      // Reuse existing authentication state if any.
+      await use(fileName);
+      return;
     }
+
+    // Important: make sure we authenticate in a clean environment by unsetting storage state.
+    const context = await request.newContext({ storageState: undefined });
+
+    // Acquire a unique account, for example create a new one.
+    // Alternatively, you can have a list of precreated accounts for testing.
+    // Make sure that accounts are unique, so that multiple team members
+    // can run tests at the same time without interference.
+    const account = await acquireAccount(id);
+
+    // Send authentication request. Replace with your own.
+    await context.post('https://github.com/login', {
+      form: {
+        'user': 'user',
+        'password': 'password'
+      }
+    });
+
+    await context.storageState({ path: fileName });
+    await context.dispose();
     await use(fileName);
-  },
-});
-
-// example.spec.ts
-import { test, expect } from './fixtures';
-
-test('test', async ({ page }) => {
-  // page is signed in.
+  }, { scope: 'worker' }],
 });
 ```
 
-## Multiple signed in roles
+### Multiple signed in roles
 * langs: js
 
-Sometimes you have more than one signed-in user in your end to end tests. You can achieve that via logging in for these users multiple times in globalSetup and saving that state into different files.
+**When to use**
+- You have more than one role in your end to end tests, but you can reuse accounts across all tests.
 
-```js tab=js-js
-// global-setup.js
-const { chromium } = require('@playwright/test');
+**Details**
 
-module.exports = async config => {
-  const browser = await chromium.launch();
-  const adminPage = await browser.newPage();
-  // ... log in
-  await adminPage.context().storageState({ path: 'adminStorageState.json' });
+We will authenticate multiple times in the setup project.
 
-  const userPage = await browser.newPage();
-  // ... log in
-  await userPage.context().storageState({ path: 'userStorageState.json' });
-  await browser.close();
-};
+```js
+// auth.setup.ts
+import { test } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+
+const adminFile = 'playwright/.auth/admin.json';
+
+test('authenticate as admin', async ({ page }) => {
+  // Reuse authenticate from previous runs.
+  if (fs.existsSync(adminFile))
+    return;
+
+  // Perform authentication steps. Replace these actions with your own.
+  await page.goto('https://github.com/login');
+  await page.getByLabel('Username or email address').fill('admin');
+  await page.getByLabel('Password').fill('password');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  // End of authentication steps.
+
+  await page.context().storageState({ path: adminFile });
+});
+
+const userFile = 'playwright/.auth/user.json';
+
+test('authenticate as user', async ({ page }) => {
+  // Reuse authenticate from previous runs.
+  if (fs.existsSync(userFile))
+    return;
+
+  // Perform authentication steps. Replace these actions with your own.
+  await page.goto('https://github.com/login');
+  await page.getByLabel('Username or email address').fill('user');
+  await page.getByLabel('Password').fill('password');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  // End of authentication steps.
+
+  await page.context().storageState({ path: userFile });
+});
 ```
 
-```js tab=js-ts
-// global-setup.ts
-import { chromium, FullConfig } from '@playwright/test';
+After that, specify `storageState` for each test file or test group, **instead of** setting it in the config.
 
-async function globalSetup(config: FullConfig) {
-  const browser = await chromium.launch();
-  const adminPage = await browser.newPage();
-  // ... log in
-  await adminPage.context().storageState({ path: 'adminStorageState.json' });
-
-  const userPage = await browser.newPage();
-  // ... log in
-  await userPage.context().storageState({ path: 'userStorageState.json' });
-  await browser.close();
-}
-
-export default globalSetup;
-```
-
-After that you can specify the user to use for each test file or each test group:
-
-```js tab=js-ts
+```js
+// tests/example.spec.ts
 import { test } from '@playwright/test';
 
-test.use({ storageState: 'adminStorageState.json' });
+test.use({ storageState: 'playwright/.auth/admin.json' });
 
 test('admin test', async ({ page }) => {
-  // page is signed in as admin.
+  // page is authenticated as admin
 });
 
 test.describe(() => {
-  test.use({ storageState: 'userStorageState.json' });
+  test.use({ storageState: 'playwright/.auth/user.json' });
 
   test('user test', async ({ page }) => {
-    // page is signed in as a user.
-  });
-});
-```
-
-```js tab=js-js
-const { test } = require('@playwright/test');
-
-test.use({ storageState: 'adminStorageState.json' });
-
-test('admin test', async ({ page }) => {
-  // page is signed in as amin.
-});
-
-test.describe(() => {
-  test.use({ storageState: 'userStorageState.json' });
-
-  test('user test', async ({ page }) => {
-    // page is signed in as a user.
+    // page is authenticated as a user
   });
 });
 ```
@@ -449,51 +473,48 @@ test.describe(() => {
 ### Testing multiple roles together
 * langs: js
 
-If you need to test how multiple authenticated roles interact together, use multiple [BrowserContext]s and [Page]s with different storage states in the same test. Any of the methods above to create multiple storage state files would work.
+**When to use**
+- You need to test how multiple authenticated roles interact together, in a single test.
 
-```js tab=js-ts
+**Details**
+
+Use multiple [BrowserContext]s and [Page]s with different storage states in the same test.
+
+```js
+// tests/example.spec.ts
 import { test } from '@playwright/test';
 
 test('admin and user', async ({ browser }) => {
   // adminContext and all pages inside, including adminPage, are signed in as "admin".
-  const adminContext = await browser.newContext({ storageState: 'adminStorageState.json' });
+  const adminContext = await browser.newContext({ storageState: 'playwright/.auth/admin.json' });
   const adminPage = await adminContext.newPage();
 
   // userContext and all pages inside, including userPage, are signed in as "user".
-  const userContext = await browser.newContext({ storageState: 'userStorageState.json' });
+  const userContext = await browser.newContext({ storageState: 'playwright/.auth/user.json' });
   const userPage = await userContext.newPage();
 
   // ... interact with both adminPage and userPage ...
-});
-```
 
-```js tab=js-js
-const { test } = require('@playwright/test');
-
-test('admin and user', async ({ browser }) => {
-  // adminContext and all pages inside, including adminPage, are signed in as "admin".
-  const adminContext = await browser.newContext({ storageState: 'adminStorageState.json' });
-  const adminPage = await adminContext.newPage();
-
-  // userContext and all pages inside, including userPage, are signed in as "user".
-  const userContext = await browser.newContext({ storageState: 'userStorageState.json' });
-  const userPage = await userContext.newPage();
-
-  // ... interact with both adminPage and userPage ...
+  await adminContext.close();
+  await userContext.close();
 });
 ```
 
 ### Testing multiple roles with POM fixtures
 * langs: js
 
-If many of your tests require multiple authenticated roles from within the same test, you can introduce fixtures for each role. Any of the methods above to create multiple storage state files would work.
+**When to use**
+- You need to test how multiple authenticated roles interact together, in a single test.
 
-Below is an example that [creates fixtures](./test-fixtures.md#creating-a-fixture) for two [Page Object Models](./pom.md) - admin POM and user POM. It assumes `adminStorageState.json` and `userStorageState.json` files were created.
+**Details**
 
-```js tab=js-ts
-// fixtures.ts
+You can introduce fixtures that will provide a page authenticated as each role.
+
+Below is an example that [creates fixtures](./test-fixtures.md#creating-a-fixture) for two [Page Object Models](./pom.md) - admin POM and user POM. It assumes `adminStorageState.json` and `userStorageState.json` files were created in the global setup.
+
+```js
+// playwright/fixtures.ts
 import { test as base, Page, Browser, Locator } from '@playwright/test';
-export { expect } from '@playwright/test';
 
 // Page Object Model for the "admin" page.
 // Here you can add locators and helper methods specific to the admin page.
@@ -501,14 +522,12 @@ class AdminPage {
   // Page signed in as "admin".
   page: Page;
 
+  // Example locator pointing to "Welcome, Admin" greeting.
+  greeting: Locator;
+
   constructor(page: Page) {
     this.page = page;
-  }
-
-  static async create(browser: Browser) {
-    const context = await browser.newContext({ storageState: 'adminStorageState.json' });
-    const page = await context.newPage();
-    return new AdminPage(page);
+    this.greeting = page.locator('#greeting');
   }
 }
 
@@ -525,12 +544,6 @@ class UserPage {
     this.page = page;
     this.greeting = page.locator('#greeting');
   }
-
-  static async create(browser: Browser) {
-    const context = await browser.newContext({ storageState: 'userStorageState.json' });
-    const page = await context.newPage();
-    return new UserPage(page);
-  }
 }
 
 // Declare the types of your fixtures.
@@ -539,179 +552,47 @@ type MyFixtures = {
   userPage: UserPage;
 };
 
-// Extend base test by providing "adminPage" and "userPage".
-// This new "test" can be used in multiple test files, and each of them will get the fixtures.
+export * from '@playwright/test';
 export const test = base.extend<MyFixtures>({
   adminPage: async ({ browser }, use) => {
-    await use(await AdminPage.create(browser));
+    const context = await browser.newContext({ storageState: 'playwright/.auth/admin.json' });
+    const adminPage = new AdminPage(await context.newPage());
+    await use(adminPage);
+    await context.close();
   },
   userPage: async ({ browser }, use) => {
-    await use(await UserPage.create(browser));
+    const context = await browser.newContext({ storageState: 'playwright/.auth/user.json' });
+    const userPage = new UserPage(await context.newPage());
+    await use(userPage);
+    await context.close();
   },
 });
 
 
-// example.spec.ts
+// tests/example.spec.ts
 // Import test with our new fixtures.
 import { test, expect } from './fixtures';
 
 // Use adminPage and userPage fixtures in the test.
 test('admin and user', async ({ adminPage, userPage }) => {
   // ... interact with both adminPage and userPage ...
-  await adminPage.page.screenshot();
+  await expect(adminPage.greeting).toHaveText('Welcome, Admin');
   await expect(userPage.greeting).toHaveText('Welcome, User');
 });
 ```
 
-```js tab=js-js
-// fixtures.js
-const { test: base } = require('@playwright/test');
 
-// Page Object Model for the "admin" page.
-// Here you can add locators and helper methods specific to the admin page.
-class AdminPage {
-  constructor(page) {
-    // Page signed in as "admin".
-    this.page = page;
-  }
+### Session storage
 
-  static async create(browser) {
-    const context = await browser.newContext({ storageState: 'adminStorageState.json' });
-    const page = await context.newPage();
-    return new AdminPage(page);
-  }
-}
-
-// Page Object Model for the "user" page.
-// Here you can add locators and helper methods specific to the user page.
-class UserPage {
-  constructor(page) {
-    // Page signed in as "user".
-    this.page = page;
-    // Example locator pointing to "Welcome, User" greeting.
-    this.greeting = page.locator('#greeting');
-  }
-
-  static async create(browser) {
-    const context = await browser.newContext({ storageState: 'userStorageState.json' });
-    const page = await context.newPage();
-    return new UserPage(page);
-  }
-}
-
-// Extend base test by providing "adminPage" and "userPage".
-// This new "test" can be used in multiple test files, and each of them will get the fixtures.
-exports.test = base.extend({
-  adminPage: async ({ browser }, use) => {
-    await use(await AdminPage.create(browser));
-  },
-  userPage: async ({ browser }, use) => {
-    await use(await UserPage.create(browser));
-  },
-});
-exports.expect = base.expect;
-
-// example.spec.ts
-// Import test with our new fixtures.
-const { test, expect } = require('./fixtures');
-
-// Use adminPage and userPage fixtures in the test.
-test('admin and user', async ({ adminPage, userPage }) => {
-  // ... interact with both adminPage and userPage ...
-  await adminPage.page.screenshot();
-  await expect(userPage.greeting).toHaveText('Welcome, User');
-});
-```
-
-## Reusing signed in page in serial mode
-* langs: js
-
-Although discouraged, sometimes it is necessary to sacrifice the isolation and run a number of tests
-in the same page. In that case, you can log into that page once in `beforeAll` and then use that same
-page in all the tests. Note that you need to run these tests serially using `test.describe.serial` in
-order to achieve that:
-
-```js tab=js-js
-// example.spec.js
-// @ts-check
-
-const { test } = require('@playwright/test');
-
-test.describe.configure({ mode: 'serial' });
-
-/** @type {import('@playwright/test').Page} */
-let page;
-
-test.beforeAll(async ({ browser }) => {
-  // Create page yourself and sign in.
-  page = await browser.newPage();
-  await page.goto('https://github.com/login');
-  await page.getByLabel('Username or email address').fill('user');
-  await page.getByLabel('Password').fill('password');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-});
-
-test.afterAll(async () => {
-  await page.close();
-});
-
-test('first test', async () => {
-  // page is signed in.
-});
-
-test('second test', async () => {
-  // page is signed in.
-});
-```
-
-```js tab=js-ts
-// example.spec.ts
-
-import { test, Page } from '@playwright/test';
-
-test.describe.configure({ mode: 'serial' });
-
-let page: Page;
-
-test.beforeAll(async ({ browser }) => {
-  // Create page once and sign in.
-  page = await browser.newPage();
-  await page.goto('https://github.com/login');
-  await page.getByLabel('Username or email address').fill('user');
-  await page.getByLabel('Password').fill('password');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-});
-
-test.afterAll(async () => {
-  await page.close();
-});
-
-test('first test', async () => {
-  // page is signed in.
-});
-
-test('second test', async () => {
-  // page is signed in.
-});
-```
-
-:::note
-You can also use `storageState` property when you are creating the [`method: Browser.newPage`] in order to
-pass it an existing logged in state.
-:::
-
-
-## Session storage
-
-Rarely, [session storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) is used for storing information associated with the logged-in state. Session storage is specific to a particular domain and is not persisted across page loads. Playwright does not provide API to persist session storage, but the following snippet can be used to save/load session storage.
+Reusing authenticated state covers [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage) based authentication. Rarely, [session storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) is used for storing information associated with the signed-in state. Session storage is specific to a particular domain and is not persisted across page loads. Playwright does not provide API to persist session storage, but the following snippet can be used to save/load session storage.
 
 ```js
 // Get session storage and store as env variable
 const sessionStorage = await page.evaluate(() => JSON.stringify(sessionStorage));
-process.env.SESSION_STORAGE = sessionStorage;
+await fs.writeFileSync('playwright/.auth/session.json', JSON.stringify(sessionStorage), 'utf-8');
 
 // Set session storage in a new context
-const sessionStorage = process.env.SESSION_STORAGE;
+const sessionStorage = JSON.parse(await fs.readFileSync('playwright/.auth/session.json', 'utf-8'));
 await context.addInitScript(storage => {
   if (window.location.hostname === 'example.com') {
     const entries = JSON.parse(storage);
@@ -790,100 +671,4 @@ await context.AddInitScriptAsync(@"(storage => {
       }
     }
   })('" + loadedSessionStorage + "')");
-```
-
-## Multi-factor authentication
-
-Accounts with multi-factor authentication (MFA) cannot be fully automated, and need
-manual intervention. Persistent authentication can be used to partially automate
-MFA scenarios.
-
-### Persistent authentication
-
-Note that persistent authentication is not suited for CI environments since it
-relies on a disk location. User data directories are specific to browser types
-and cannot be shared across browser types.
-
-User data directories can be used with the [`method: BrowserType.launchPersistentContext`] API.
-
-```js
-const { chromium } = require('playwright');
-
-const userDataDir = '/path/to/directory';
-const context = await chromium.launchPersistentContext(userDataDir, { headless: false });
-// Execute login steps manually in the browser window
-```
-
-```java
-import com.microsoft.playwright.*;
-
-public class Example {
-  public static void main(String[] args) {
-    try (Playwright playwright = Playwright.create()) {
-      BrowserType chromium = playwright.chromium();
-      Path userDataDir = Paths.get("/path/to/directory");
-      BrowserContext context = chromium.launchPersistentContext(userDataDir,
-        new BrowserType.LaunchPersistentContextOptions().setHeadless(false));
-      // Execute login steps manually in the browser window
-    }
-  }
-}
-```
-
-```python async
-import asyncio
-from playwright.async_api import async_playwright
-
-async def main():
-    async with async_playwright() as p:
-        user_data_dir = '/path/to/directory'
-        browser = await p.chromium.launch_persistent_context(user_data_dir, headless=False)
-        # Execute login steps manually in the browser window
-
-asyncio.run(main())
-```
-
-```python sync
-from playwright.sync_api import sync_playwright
-
-with sync_playwright() as p:
-    user_data_dir = '/path/to/directory'
-    browser = p.chromium.launch_persistent_context(user_data_dir, headless=False)
-    # Execute login steps manually in the browser window
-```
-
-```csharp
-using Microsoft.Playwright;
-
-class Program
-{
-    public static async Task Main()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        var chromium = playwright.Chromium;
-        var context = chromium.LaunchPersistentContextAsync(@"C:\path\to\directory\", new()
-        {
-            Headless = false
-        });
-    }
-}
-```
-
-#### Lifecycle
-
-1. Create a user data directory on disk.
-1. Launch a persistent context with the user data directory and login the MFA account.
-1. Reuse user data directory to run automation scenarios.
-
-## Manually Reuse Signed in State
-* langs: js
-
-The following code snippet retrieves state from an authenticated context and creates a new context with that state.
-
-```js
-// Save storage state into the file.
-await context.storageState({ path: 'state.json' });
-
-// Create a new context with the saved storage state.
-const context = await browser.newContext({ storageState: 'state.json' });
 ```
