@@ -17,8 +17,8 @@
 import { formatLocation, debugTest } from '../util';
 import type { Location, WorkerInfo } from '../common/types';
 import { ManualPromise } from 'playwright-core/lib/utils';
-import type { TestInfoImpl } from '../common/testInfo';
-import type { FixtureDescription, TimeoutManager } from '../common/timeoutManager';
+import type { TestInfoImpl } from './testInfo';
+import type { FixtureDescription, TimeoutManager } from './timeoutManager';
 import { fixtureParameterNames, type FixturePool, type FixtureRegistration, type FixtureScope } from '../common/fixtures';
 
 class Fixture {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Fixtures, TestInfoError, Project } from '../../types/test';
+import type { Fixtures, Project } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { Matcher } from '../util';
@@ -28,16 +28,6 @@ export type FixturesWithLocation = {
   location: Location;
 };
 export type Annotation = { type: string, description?: string };
-
-export interface TestStepInternal {
-  complete(result: { error?: Error | TestInfoError }): void;
-  title: string;
-  category: string;
-  canHaveChildren: boolean;
-  forceNoParent: boolean;
-  location?: Location;
-  refinedTitle?: string;
-}
 
 type ConfigInternal = {
   globalOutputDir: string;
