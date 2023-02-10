@@ -1040,14 +1040,14 @@ test('should respect comparator name', async ({ runInlineTest }) => {
         await page.goto('${actualURL}');
         await expect(page.locator('img')).toHaveScreenshot('snapshot.png', {
           threshold: 0,
-          comparator: 'ssim-cie94',
+          _comparator: 'ssim-cie94',
         });
       });
       pwt.test('should fail', async ({ page }) => {
         await page.goto('${actualURL}');
         await expect(page.locator('img')).toHaveScreenshot('snapshot.png', {
           threshold: 0,
-          comparator: 'pixelmatch',
+          _comparator: 'pixelmatch',
         });
       });
     `
@@ -1070,7 +1070,7 @@ test('should respect comparator in config', async ({ runInlineTest }) => {
           name: 'should-pass',
           expect: {
             toHaveScreenshot: {
-              comparator: 'ssim-cie94',
+              _comparator: 'ssim-cie94',
             }
           },
         },
@@ -1078,7 +1078,7 @@ test('should respect comparator in config', async ({ runInlineTest }) => {
           name: 'should-fail',
           expect: {
             toHaveScreenshot: {
-              comparator: 'pixelmatch',
+              _comparator: 'pixelmatch',
             }
           },
         },
