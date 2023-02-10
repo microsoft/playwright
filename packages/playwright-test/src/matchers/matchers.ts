@@ -20,7 +20,7 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import type { Expect } from '../common/types';
 import { expectTypes, callLogText } from '../util';
 import { currentTestInfo } from '../common/globals';
-import type { TestInfoErrorState } from '../common/testInfo';
+import type { TestInfoErrorState } from '../worker/testInfo';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';

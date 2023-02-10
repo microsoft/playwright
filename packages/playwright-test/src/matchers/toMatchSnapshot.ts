@@ -30,7 +30,7 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
 import { mime } from 'playwright-core/lib/utilsBundle';
-import type { TestInfoImpl } from '../common/testInfo';
+import type { TestInfoImpl } from '../worker/testInfo';
 import type { SyncExpectationResult } from './expect';
 
 type NameOrSegments = string | string[];
