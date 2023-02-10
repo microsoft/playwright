@@ -4488,12 +4488,23 @@ interface LocatorAssertions {
    *
    * ```js
    * const locator = page.locator('button.submit');
+   * // Make sure at least some part of element intersects viewport.
    * await expect(locator).toBeInViewport();
+   * // Make sure element is fully outside of viewport.
+   * await expect(locator).not.toBeInViewport();
+   * // Make sure strictly more than half of the element intersects viewport.
+   * await expect(locator).toBeInViewport({ ratio: 0.5 });
    * ```
    *
    * @param options
    */
   toBeInViewport(options?: {
+    /**
+     * The minimal ratio of the element to intersect viewport. Element's ratio should be strictly greater than this
+     * number. Defaults to `0`.
+     */
+    ratio?: number;
+
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */

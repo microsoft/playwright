@@ -681,6 +681,8 @@ await Expect(locator).ToBeHiddenAsync();
 
 ## async method: LocatorAssertions.toBeInViewport
 * since: v1.31
+* langs:
+  - alias-java: isInViewport
 
 Ensures the [Locator] points to an element that intersects viewport, according to the [intersection observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
 
@@ -742,12 +744,13 @@ expect(locator).to_be_in_viewport(ratio=0.5);
 
 
 ### option: LocatorAssertions.toBeInViewport.ratio
+* since: v1.31
+- `ratio` <[float]>
 
-The minimal ratio of the element to intersect viewport. Element's ratio should be **strictly greater** than
+The minimal ratio of the element to intersect viewport. Element's ratio should be strictly greater than
 this number. Defaults to `0`.
 
 ### option: LocatorAssertions.toBeInViewport.timeout = %%-js-assertions-timeout-%%
-
 * since: v1.31
 
 ## async method: LocatorAssertions.toBeVisible
