@@ -128,6 +128,13 @@ test.describe('toHaveText with text', () => {
     await expect(page.locator('div')).not.toHaveText('some text', { useInnerText: true });
     await expect(page.locator('div')).not.toContainText('text', { useInnerText: true });
   });
+
+  test('fail with impossible timeout', async ({ page }) => {
+    await page.setContent('<div id=node>Text content</div>');
+    const error = await expect(page.locator('#node')).toHaveText('Text', { timeout: 1 }).catch(e => e);
+    expect(stripAnsi(error.message)).toContain('Expected string: "Text"');
+    expect(stripAnsi(error.message)).toContain('Received string: "Text content"');
+  });
 });
 
 test.describe('not.toHaveText', () => {

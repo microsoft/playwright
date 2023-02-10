@@ -640,14 +640,14 @@ test('should print timed out error message', async ({ runInlineTest }) => {
 
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
-        await expect(page.locator('no-such-thing')).toBeChecked({ timeout: 1 });
+        await expect(page.locator('no-such-thing')).toHaveText('hey', { timeout: 1000 });
       });
       `,
   }, { workers: 1 });
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
   const output = result.output;
-  expect(output).toContain('Timed out 1ms waiting for expect(received).toBeChecked()');
+  expect(output).toContain('Timed out 1000ms waiting for expect(received).toHaveText(expected)');
 });
 
 test('should not leak long expect message strings', async ({ runInlineTest }) => {
