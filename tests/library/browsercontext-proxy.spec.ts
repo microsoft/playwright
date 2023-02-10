@@ -210,7 +210,8 @@ it('should use proxy for second page', async ({ contextFactory, server, proxySer
   await context.close();
 });
 
-it('should use proxy for https urls', async ({ contextFactory, server, httpsServer, proxyServer }) => {
+it('should use proxy for https urls', async ({ contextFactory, httpsServer, proxyServer, isWindows, browserName }) => {
+  it.fixme(browserName === 'webkit' && isWindows, 'Fixed upstream, Issue #20822');
   httpsServer.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by https server via proxy</title></html>');
   });
