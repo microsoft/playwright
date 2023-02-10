@@ -29,7 +29,7 @@ import type { CSSComplexSelectorList } from '../isomorphic/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getAriaCheckedStrict, getAriaDisabled, getAriaLabelledByElements, getAriaRole, getElementAccessibleName } from './roleUtils';
+import { getChecked, getAriaDisabled, getAriaLabelledByElements, getAriaRole, getElementAccessibleName } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../isomorphic/locatorGenerators';
 import type { Language } from '../isomorphic/locatorGenerators';
@@ -614,7 +614,7 @@ export class InjectedScript {
 
     if (state === 'checked' || state === 'unchecked') {
       const need = state === 'checked';
-      const checked = getAriaCheckedStrict(element);
+      const checked = getChecked(element, false);
       if (checked === 'error')
         throw this.createStacklessError('Not a checkbox or radio button');
       return need === checked;
