@@ -328,6 +328,16 @@ class Documentation {
     this.membersArray.sort((m1, m2) => {
       return sortKey(m1).localeCompare(sortKey(m2), 'en', { sensitivity: 'base' });
     });
+
+    // Options should be the last argument.
+    this.membersArray.forEach(member => {
+      const optionsIndex = member.argsArray.findIndex(a => a.name === 'options');
+      if (optionsIndex !== -1) {
+        const options = member.argsArray[optionsIndex];
+        member.argsArray.splice(optionsIndex, 1);
+        member.argsArray.push(options);
+      }
+    });
   }
 
   /**

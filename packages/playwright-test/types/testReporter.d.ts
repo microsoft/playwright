@@ -84,7 +84,8 @@ export interface Suite {
    * - Title passed to [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1)
    *   for a group suite.
    */
-  title: string;}
+  title: string;
+}
 
 /**
  * `TestCase` corresponds to every
@@ -195,7 +196,8 @@ export interface TestCase {
    * Test title as passed to the
    * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call) call.
    */
-  title: string;}
+  title: string;
+}
 
 /**
  * A result of a single [TestCase] run.
@@ -288,7 +290,8 @@ export interface TestResult {
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
    */
-  workerIndex: number;}
+  workerIndex: number;
+}
 
 /**
  * Result of the full test run.
@@ -453,7 +456,8 @@ export interface Reporter {
    * Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance
    * user experience. If your reporter does not print to the terminal, it is strongly recommended to return `false`.
    */
-  printsToStdio?(): boolean;}
+  printsToStdio?(): boolean;
+}
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {

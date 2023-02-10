@@ -4620,7 +4620,8 @@ export interface Page {
    */
   request: APIRequestContext;
 
-  touchscreen: Touchscreen;}
+  touchscreen: Touchscreen;
+}
 
 /**
  * At every point of time, page exposes its current frame tree via the
@@ -7235,7 +7236,8 @@ export interface Frame {
      *   loading.
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
-  }): Promise<void>;}
+  }): Promise<void>;
+}
 
 /**
  * - extends: [EventEmitter]
@@ -8323,7 +8325,8 @@ export interface BrowserContext {
    */
   request: APIRequestContext;
 
-  tracing: Tracing;}
+  tracing: Tracing;
+}
 
 /**
  * The Worker class represents a [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API).
@@ -8453,7 +8456,8 @@ export interface Worker {
    */
   prependListener(event: 'close', listener: (worker: Worker) => void): this;
 
-  url(): string;}
+  url(): string;
+}
 
 /**
  * JSHandle represents an in-page JavaScript object. JSHandles can be created with the
@@ -8585,7 +8589,8 @@ export interface JSHandle<T = any> {
    * Fetches a single property from the referenced object.
    * @param propertyName property to get
    */
-  getProperty(propertyName: string): Promise<JSHandle>;}
+  getProperty(propertyName: string): Promise<JSHandle>;
+}
 
 /**
  * - extends: [JSHandle]
@@ -9978,7 +9983,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
      */
     timeout?: number;
-  }): Promise<void>;}
+  }): Promise<void>;
+}
 
 /**
  * Locators are the central piece of Playwright's auto-waiting and retry-ability. In a nutshell, locators represent a
@@ -11997,7 +12003,8 @@ export interface Locator {
      * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
      */
     timeout?: number;
-  }): Promise<void>;}
+  }): Promise<void>;
+}
 
 /**
  * BrowserType provides methods to launch a specific browser instance or connect to an existing one. The following is
@@ -12696,7 +12703,8 @@ export interface BrowserType<Unused = {}> {
   /**
    * Returns browser name. For example: `'chromium'`, `'webkit'` or `'firefox'`.
    */
-  name(): string;}
+  name(): string;
+}
 
 /**
  * - extends: [EventEmitter]
@@ -12741,7 +12749,8 @@ export interface CDPSession {
    * Detaches the CDPSession from the target. Once detached, the CDPSession object won't emit any events and can't be
    * used to send messages.
    */
-  detach(): Promise<void>;}
+  detach(): Promise<void>;
+}
 
 type DeviceDescriptor = {
   viewport: ViewportSize;
@@ -12781,7 +12790,8 @@ export namespace errors {
  * ```
  *
  */
-class TimeoutError extends Error {}
+class TimeoutError extends Error {
+}
 
 }
 
@@ -12843,6 +12853,7 @@ export interface Accessibility {
    * @param options
    */
   snapshot(options?: AccessibilitySnapshotOptions): Promise<null|AccessibilityNode>;
+
 }
 
 type AccessibilityNode = {
@@ -13110,7 +13121,8 @@ export interface ElectronApplication {
   /**
    * Convenience method that returns all the opened windows.
    */
-  windows(): Array<Page>;}
+  windows(): Array<Page>;
+}
 
 export type AndroidElementInfo = {
   clazz: string;
@@ -17323,6 +17335,7 @@ export const selectors: Selectors;
  * This object can be used to launch or connect to WebKit, returning instances of [Browser].
  */
 export const webkit: BrowserType;
+
 /**
  * Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
  * - [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request) emitted when the request is
@@ -18298,21 +18311,21 @@ export interface WebSocket {
    * Fired when the websocket receives a frame.
    */
   on(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Fired when the websocket sends a frame.
    */
   on(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Fired when the websocket has an error.
@@ -18328,21 +18341,21 @@ export interface WebSocket {
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -18358,21 +18371,21 @@ export interface WebSocket {
    * Fired when the websocket receives a frame.
    */
   addListener(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Fired when the websocket sends a frame.
    */
   addListener(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Fired when the websocket has an error.
@@ -18388,21 +18401,21 @@ export interface WebSocket {
    * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -18418,21 +18431,21 @@ export interface WebSocket {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -18448,21 +18461,21 @@ export interface WebSocket {
    * Fired when the websocket receives a frame.
    */
   prependListener(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Fired when the websocket sends a frame.
    */
   prependListener(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => void): this;
 
   /**
    * Fired when the websocket has an error.
@@ -18488,41 +18501,41 @@ export interface WebSocket {
    * Fired when the websocket receives a frame.
    */
   waitForEvent(event: 'framereceived', optionsOrPredicate?: { predicate?: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => boolean | Promise<boolean>, timeout?: number } | ((data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => boolean | Promise<boolean>)): Promise<{
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}>;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => boolean | Promise<boolean>, timeout?: number } | ((data: {
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => boolean | Promise<boolean>)): Promise<{
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }>;
 
   /**
    * Fired when the websocket sends a frame.
    */
   waitForEvent(event: 'framesent', optionsOrPredicate?: { predicate?: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => boolean | Promise<boolean>, timeout?: number } | ((data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => boolean | Promise<boolean>)): Promise<{
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}>;
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => boolean | Promise<boolean>, timeout?: number } | ((data: {
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }) => boolean | Promise<boolean>)): Promise<{
+    /**
+     * frame payload
+     */
+    payload: string|Buffer;
+  }>;
 
   /**
    * Fired when the websocket has an error.

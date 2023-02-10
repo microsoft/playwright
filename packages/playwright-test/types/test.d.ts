@@ -1285,7 +1285,8 @@ interface TestConfig {
    * ```
    *
    */
-  workers?: number|string;}
+  workers?: number|string;
+}
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout`
@@ -1833,7 +1834,8 @@ export interface WorkerInfo {
    * Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
    * with Playwright Test.
    */
-  workerIndex: number;}
+  workerIndex: number;
+}
 
 /**
  * `TestInfo` contains information about currently running test. It is available to any test function,
@@ -2271,7 +2273,8 @@ export interface TestInfo {
    * Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
    * with Playwright Test.
    */
-  workerIndex: number;}
+  workerIndex: number;
+}
 
 interface SuiteFunction {
   /**
@@ -4193,6 +4196,7 @@ interface GenericAssertions<R> {
    * @param expected Expected error message or error object.
    */
   toThrowError(error?: unknown): R;
+
 }
 
 type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T>;

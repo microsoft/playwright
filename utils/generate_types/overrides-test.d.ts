@@ -52,8 +52,8 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   testMatch: string | RegExp | (string | RegExp)[];
   timeout: number;
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
-  // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
+// [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 

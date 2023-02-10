@@ -216,8 +216,7 @@ class TypesGenerator {
     const shouldExport = !this.doNotExportClassNames.has(classDesc.name);
     parts.push(`${shouldExport ? 'export ' : ''}interface ${classDesc.name} ${classDesc.extends ? `extends ${classDesc.extends} ` : ''}{`);
     parts.push(this.classBody(classDesc));
-    parts.push('}\n');
-    return parts.join('\n');
+    return parts.join('\n') + '}\n';
   }
 
   /**
@@ -252,7 +251,7 @@ class TypesGenerator {
     const descriptions = [];
     for (let [eventName, value] of classDesc.events) {
       eventName = eventName.toLowerCase();
-      const type = this.stringifyComplexType(value && value.type, '', classDesc.name, eventName, 'payload');
+      const type = this.stringifyComplexType(value && value.type, '  ', classDesc.name, eventName, 'payload');
       const argName = this.argNameForType(type);
       const params = argName ? `${argName}: ${type}` : '';
       descriptions.push({
@@ -318,7 +317,7 @@ class TypesGenerator {
       }
       return `${jsdoc}${member.alias}${member.required ? '' : '?'}${args}: ${type};`
     }).filter(x => x).join('\n\n'));
-    return parts.join('\n');
+    return parts.join('\n') + '\n';
   }
 
   /**
