@@ -19,7 +19,8 @@ ${ANDROID_HOME}/platform-tools/adb devices
 echo "Emulator started"
 
 echo "Installing Chromium WebView"
-CHROMIUM_ANDROID_REVISION="1030456"
+# See here for the latest revision: https://storage.googleapis.com/chromium-browser-snapshots/Android/LAST_CHANGE
+CHROMIUM_ANDROID_REVISION="1103927"
 WEBVIEW_TMP_DIR="$(mktemp -d)"
 WEBVIEW_TMP_FILE="$WEBVIEW_TMP_DIR/chrome-android-zip"
 curl -s -o "${WEBVIEW_TMP_FILE}" "https://storage.googleapis.com/chromium-browser-snapshots/Android/${CHROMIUM_ANDROID_REVISION}/chrome-android.zip"
