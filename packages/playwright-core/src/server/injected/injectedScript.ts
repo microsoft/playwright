@@ -1191,7 +1191,7 @@ export class InjectedScript {
       // Viewport intersection
       if (expression === 'to.be.in.viewport') {
         const ratio = await this.viewportRatio(element);
-        return { received: `viewport ratio ${ratio}`, matches: ratio >= (options.viewportRatio ?? Number.MIN_VALUE) };
+        return { received: `viewport ratio ${ratio}`, matches: ratio > (options.viewportRatio ?? 0) };
       }
     }
 

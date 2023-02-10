@@ -681,7 +681,6 @@ await Expect(locator).ToBeHiddenAsync();
 
 ## async method: LocatorAssertions.toBeInViewport
 * since: v1.31
-* langs: js
 
 Ensures the [Locator] points to an element that intersects viewport, according to the [intersection observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
 
@@ -689,8 +688,58 @@ Ensures the [Locator] points to an element that intersects viewport, according t
 
 ```js
 const locator = page.locator('button.submit');
+// Make sure at least some part of element intersects viewport.
 await expect(locator).toBeInViewport();
+// Make sure element is fully outside of viewport.
+await expect(locator).not.toBeInViewport();
+// Make sure strictly more than half of the element intersects viewport.
+await expect(locator).toBeInViewport({ ratio: 0.5 });
 ```
+
+```java
+Locator locator = page.locator("button.submit");
+// Make sure at least some part of element intersects viewport.
+assertThat(locator).isInViewport();
+// Make sure element is fully outside of viewport.
+assertThat(locator).not().isInViewport();
+// Make sure strictly more than half of the element intersects viewport.
+assertThat(locator).isInViewport(new LocatorAssertions.IsInViewportOptions().setRatio(0.5));
+```
+
+```csharp
+var locator = Page.Locator("button.submit");
+// Make sure at least some part of element intersects viewport.
+await Expect(locator).ToBeInViewport();
+// Make sure element is fully outside of viewport.
+await Expect(locator).Not.ToBeInViewport();
+// Make sure strictly more than half of the element intersects viewport.
+await Expect(locator).ToBeInViewport(new() { Ratio = 0.5 });
+```
+
+```python async
+from playwright.async_api import expect
+
+locator = page.locator('button.submit')
+# Make sure at least some part of element intersects viewport.
+await expect(locator).to_be_in_viewport()
+# Make sure element is fully outside of viewport.
+await expect(locator).not_to_be_in_viewport()
+# Make sure strictly more than half of the element intersects viewport.
+await expect(locator).to_be_in_viewport(ratio=0.5);
+```
+
+```python sync
+from playwright.sync_api import expect
+
+locator = page.locator('.my-element')
+# Make sure at least some part of element intersects viewport.
+expect(locator).to_be_in_viewport()
+# Make sure element is fully outside of viewport.
+expect(locator).not_to_be_in_viewport()
+# Make sure strictly more than half of the element intersects viewport.
+expect(locator).to_be_in_viewport(ratio=0.5);
+```
+
 
 ### option: LocatorAssertions.toBeInViewport.ratio
 
