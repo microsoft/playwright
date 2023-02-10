@@ -87,6 +87,9 @@ some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infini
 ### param: ElectronApplication.evaluate.expression = %%-evaluate-expression-%%
 * since: v1.9
 
+### param: ElectronApplication.evaluate.expression = %%-js-electron-evaluate-workerfunction-%%
+* since: v1.9
+
 ### param: ElectronApplication.evaluate.arg
 * since: v1.9
 - `arg` ?<[EvaluationArgument]>
@@ -105,6 +108,9 @@ If the function passed to the [`method: ElectronApplication.evaluateHandle`] ret
 [`method: ElectronApplication.evaluateHandle`] would wait for the promise to resolve and return its value.
 
 ### param: ElectronApplication.evaluateHandle.expression = %%-evaluate-expression-%%
+* since: v1.9
+
+### param: ElectronApplication.evaluateHandle.expression = %%-js-electron-evaluate-workerfunction-%%
 * since: v1.9
 
 ### param: ElectronApplication.evaluateHandle.arg

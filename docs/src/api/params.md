@@ -430,13 +430,13 @@ Function to be evaluated in the page context.
 
 ## js-evalonselector-pagefunction
 * langs: js
-- `pageFunction` <[function]\([Element]\)>
+- `pageFunction` <[function]\([Element]\)|[string]>
 
 Function to be evaluated in the page context.
 
 ## js-evalonselectorall-pagefunction
 * langs: js
-- `pageFunction` <[function]\([Array]<[Element]>\)>
+- `pageFunction` <[function]\([Array]<[Element]>\)|[string]>
 
 Function to be evaluated in the page context.
 
