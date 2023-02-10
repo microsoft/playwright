@@ -177,7 +177,11 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
         components: [
           expect.stringContaining('clashingNames1_tsx_ClashingName'),
           expect.stringContaining('clashingNames2_tsx_ClashingName'),
-        ]
+        ],
+        deps: [
+          expect.stringContaining('clashingNames1.tsx'),
+          expect.stringContaining('clashingNames2.tsx'),
+        ],
       });
     }
     if (file.endsWith('default-import.spec.tsx')) {
@@ -185,6 +189,9 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
         timestamp: expect.any(Number),
         components: [
           expect.stringContaining('defaultExport_tsx'),
+        ],
+        deps: [
+          expect.stringContaining('defaultExport.tsx'),
         ]
       });
     }
@@ -194,6 +201,9 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
         components: [
           expect.stringContaining('components_tsx_Component1'),
           expect.stringContaining('components_tsx_Component2'),
+        ],
+        deps: [
+          expect.stringContaining('components.tsx'),
         ]
       });
     }
@@ -202,6 +212,9 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
         timestamp: expect.any(Number),
         components: [
           expect.stringContaining('button_tsx_Button'),
+        ],
+        deps: [
+          expect.stringContaining('button.tsx'),
         ]
       });
     }

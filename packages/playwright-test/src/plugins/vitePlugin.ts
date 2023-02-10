@@ -17,7 +17,7 @@
 import fs from 'fs';
 import type { Suite } from '../../types/testReporter';
 import path from 'path';
-import type { InlineConfig, Plugin } from 'vite';
+import type { InlineConfig, Plugin, ResolveFn, ResolvedConfig } from 'vite';
 import type { TestRunnerPlugin } from '.';
 import { parse, traverse, types as t } from '../common/babelBundle';
 import { stoppable } from '../utilsBundle';
@@ -28,6 +28,8 @@ import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import type { AddressInfo } from 'net';
 import { getPlaywrightVersion } from 'playwright-core/lib/utils';
 import type { PlaywrightTestConfig as BasePlaywrightTestConfig } from '@playwright/test';
+import type { PluginContext } from 'rollup';
+import { setExternalDependencies } from '../common/compilationCache';
 
 let stoppableServer: any;
 const playwrightVersion = getPlaywrightVersion();
@@ -155,6 +157,9 @@ export function createPlugin(
       if (hasNewTests || hasNewComponents || sourcesDirty)
         await fs.promises.writeFile(buildInfoFile, JSON.stringify(buildInfo, undefined, 2));
 
+      for (const [filename, testInfo] of Object.entries(buildInfo.tests))
+        setExternalDependencies(filename, testInfo.deps);
+
       const previewServer = await preview(viteConfig);
       stoppableServer = stoppable(previewServer.httpServer, 0);
       const isAddressInfo = (x: any): x is AddressInfo => x?.address;
@@ -185,6 +190,7 @@ type BuildInfo = {
     [key: string]: {
       timestamp: number;
       components: string[];
+      deps: string[];
     }
   };
 };
@@ -218,7 +224,7 @@ async function checkNewTests(suite: Suite, buildInfo: BuildInfo, componentRegist
       const components = await parseTestFile(testFile);
       for (const component of components)
         componentRegistry.set(component.fullName, component);
-      buildInfo.tests[testFile] = { timestamp, components: components.map(c => c.fullName) };
+      buildInfo.tests[testFile] = { timestamp, components: components.map(c => c.fullName), deps: [] };
       hasNewTests = true;
     }
   }
@@ -272,10 +278,15 @@ async function parseTestFile(testFile: string): Promise<ComponentInfo[]> {
 
 function vitePlugin(registerSource: string, relativeTemplateDir: string, buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Plugin {
   buildInfo.sources = {};
+  let moduleResolver: ResolveFn;
   return {
     name: 'playwright:component-index',
 
-    transform: async (content, id) => {
+    configResolved(config: ResolvedConfig) {
+      moduleResolver = config.createResolver();
+    },
+
+    async transform(this: PluginContext, content, id) {
       const queryIndex = id.indexOf('?');
       const file = queryIndex !== -1 ? id.substring(0, queryIndex) : id;
       if (!buildInfo.sources[file]) {
@@ -318,7 +329,41 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
         map: { mappings: '' }
       };
     },
+
+    async writeBundle(this: PluginContext) {
+      const componentDeps = new Map<string, Set<string>>();
+      for (const component of componentRegistry.values()) {
+        const id = (await moduleResolver(component.importPath));
+        if (!id)
+          continue;
+        const deps = new Set<string>();
+        collectViteModuleDependencies(this, id, deps);
+        componentDeps.set(component.fullName, deps);
+      }
+
+      for (const testInfo of Object.values(buildInfo.tests)) {
+        const deps = new Set<string>();
+        for (const fullName of testInfo.components) {
+          for (const dep of componentDeps.get(fullName) || [])
+            deps.add(dep);
+        }
+        testInfo.deps = [...deps];
+      }
+    },
   };
+}
+
+function collectViteModuleDependencies(context: PluginContext, id: string, deps: Set<string>) {
+  if (!path.isAbsolute(id))
+    return;
+  if (deps.has(id))
+    return;
+  deps.add(id);
+  const module = context.getModuleInfo(id);
+  for (const importedId of module?.importedIds || [])
+    collectViteModuleDependencies(context, importedId, deps);
+  for (const importedId of module?.dynamicallyImportedIds || [])
+    collectViteModuleDependencies(context, importedId, deps);
 }
 
 function hasJSComponents(components: ComponentInfo[]): boolean {
