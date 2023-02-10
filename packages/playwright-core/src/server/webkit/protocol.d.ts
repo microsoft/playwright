@@ -2127,6 +2127,48 @@ export module Protocol {
       marginColor?: RGBAColor;
     }
     /**
+     * Configuration data for grid overlays.
+     */
+    export interface GridOverlayConfig {
+      /**
+       * The primary color to use for the grid overlay.
+       */
+      gridColor: RGBAColor;
+      /**
+       * Show labels for grid line names. If not specified, the default value is false.
+       */
+      showLineNames?: boolean;
+      /**
+       * Show labels for grid line numbers. If not specified, the default value is false.
+       */
+      showLineNumbers?: boolean;
+      /**
+       * Show grid lines that extend beyond the bounds of the grid. If not specified, the default value is false.
+       */
+      showExtendedGridLines?: boolean;
+      /**
+       * Show grid track size information. If not specified, the default value is false.
+       */
+      showTrackSizes?: boolean;
+      /**
+       * Show labels for grid area names. If not specified, the default value is false.
+       */
+      showAreaNames?: boolean;
+    }
+    /**
+     * Configuration data for flex overlays.
+     */
+    export interface FlexOverlayConfig {
+      /**
+       * The primary color to use for the flex overlay.
+       */
+      flexColor: RGBAColor;
+      /**
+       * Show labels for flex order. If not specified, the default value is false.
+       */
+      showOrderNumbers?: boolean;
+    }
+    /**
      * An object referencing a node and a pseudo-element, primarily used to identify an animation effect target.
      */
     export interface Styleable {
@@ -2771,6 +2813,14 @@ export module Protocol {
        */
       highlightConfig?: HighlightConfig;
       /**
+       * If provided, used to configure a grid overlay shown during element selection. This overrides DOM.showGridOverlay.
+       */
+      gridOverlayConfig?: GridOverlayConfig;
+      /**
+       * If provided, used to configure a flex overlay shown during element selection. This overrides DOM.showFlexOverlay.
+       */
+      flexOverlayConfig?: FlexOverlayConfig;
+      /**
        * Whether the rulers should be shown during element selection. This overrides Page.setShowRulers.
        */
       showRulers?: boolean;
@@ -2840,10 +2890,6 @@ export module Protocol {
      */
     export type highlightSelectorParameters = {
       /**
-       * A descriptor for the highlight appearance.
-       */
-      highlightConfig: HighlightConfig;
-      /**
        * A CSS selector for finding matching nodes to highlight.
        */
       selectorString: string;
@@ -2851,6 +2897,18 @@ export module Protocol {
        * Identifier of the frame which will be searched using the selector.  If not provided, the main frame will be used.
        */
       frameId?: string;
+      /**
+       * A descriptor for the highlight appearance.
+       */
+      highlightConfig: HighlightConfig;
+      /**
+       * If provided, used to configure a grid overlay shown during element selection. This overrides DOM.showGridOverlay.
+       */
+      gridOverlayConfig?: GridOverlayConfig;
+      /**
+       * If provided, used to configure a flex overlay shown during element selection. This overrides DOM.showFlexOverlay.
+       */
+      flexOverlayConfig?: FlexOverlayConfig;
     }
     export type highlightSelectorReturnValue = {
     }
@@ -2859,10 +2917,6 @@ export module Protocol {
      */
     export type highlightNodeParameters = {
       /**
-       * A descriptor for the highlight appearance.
-       */
-      highlightConfig: HighlightConfig;
-      /**
        * Identifier of the node to highlight.
        */
       nodeId?: NodeId;
@@ -2870,6 +2924,18 @@ export module Protocol {
        * JavaScript object id of the node to be highlighted.
        */
       objectId?: Runtime.RemoteObjectId;
+      /**
+       * A descriptor for the highlight appearance.
+       */
+      highlightConfig: HighlightConfig;
+      /**
+       * If provided, used to configure a grid overlay shown during element selection. This overrides DOM.showGridOverlay.
+       */
+      gridOverlayConfig?: GridOverlayConfig;
+      /**
+       * If provided, used to configure a flex overlay shown during element selection. This overrides DOM.showFlexOverlay.
+       */
+      flexOverlayConfig?: FlexOverlayConfig;
     }
     export type highlightNodeReturnValue = {
     }
@@ -2879,6 +2945,14 @@ export module Protocol {
     export type highlightNodeListParameters = {
       nodeIds: NodeId[];
       highlightConfig: HighlightConfig;
+      /**
+       * If provided, used to configure a grid overlay shown during element selection. This overrides DOM.showGridOverlay.
+       */
+      gridOverlayConfig?: GridOverlayConfig;
+      /**
+       * If provided, used to configure a flex overlay shown during element selection. This overrides DOM.showFlexOverlay.
+       */
+      flexOverlayConfig?: FlexOverlayConfig;
     }
     export type highlightNodeListReturnValue = {
     }
@@ -2917,29 +2991,9 @@ export module Protocol {
        */
       nodeId: NodeId;
       /**
-       * The primary color to use for the grid overlay.
+       * Configuration options for the grid overlay.
        */
-      gridColor: RGBAColor;
-      /**
-       * Show labels for grid line names. If not specified, the default value is false.
-       */
-      showLineNames?: boolean;
-      /**
-       * Show labels for grid line numbers. If not specified, the default value is false.
-       */
-      showLineNumbers?: boolean;
-      /**
-       * Show grid lines that extend beyond the bounds of the grid. If not specified, the default value is false.
-       */
-      showExtendedGridLines?: boolean;
-      /**
-       * Show grid track size information. If not specified, the default value is false.
-       */
-      showTrackSizes?: boolean;
-      /**
-       * Show labels for grid area names. If not specified, the default value is false.
-       */
-      showAreaNames?: boolean;
+      gridOverlayConfig: GridOverlayConfig;
     }
     export type showGridOverlayReturnValue = {
     }
@@ -2963,13 +3017,9 @@ export module Protocol {
        */
       nodeId: NodeId;
       /**
-       * The primary color to use for the flex overlay.
+       * Configuration options for the flex overlay.
        */
-      flexColor: RGBAColor;
-      /**
-       * Show labels for flex order. If not specified, the default value is false.
-       */
-      showOrderNumbers?: boolean;
+      flexOverlayConfig: FlexOverlayConfig;
     }
     export type showFlexOverlayReturnValue = {
     }
