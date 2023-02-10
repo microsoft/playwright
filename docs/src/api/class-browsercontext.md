@@ -1395,6 +1395,12 @@ Will throw an error if the context closes before new [Page] is created.
 * langs: python
 - returns: <[EventContextManager]<[Page]>>
 
+### param: BrowserContext.waitForPage.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
+
 ### option: BrowserContext.waitForPage.predicate
 * since: v1.9
 * langs: csharp, java, python

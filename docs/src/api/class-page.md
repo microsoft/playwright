@@ -1342,6 +1342,9 @@ var html = await page.EvalOnSelectorAsync(".main-container", "(e, suffix) => e.o
 ### param: Page.evalOnSelector.expression = %%-evaluate-expression-%%
 * since: v1.9
 
+### param: Page.evalOnSelector.expression = %%-js-evalonselector-pagefunction-%%
+* since: v1.9
+
 ### param: Page.evalOnSelector.arg
 * since: v1.9
 - `arg` ?<[EvaluationArgument]>
@@ -1392,6 +1395,9 @@ var divsCount = await page.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => d
 * since: v1.9
 
 ### param: Page.evalOnSelectorAll.expression = %%-evaluate-expression-%%
+* since: v1.9
+
+### param: Page.evalOnSelectorAll.expression = %%-js-evalonselectorall-pagefunction-%%
 * since: v1.9
 
 ### param: Page.evalOnSelectorAll.arg
@@ -1509,6 +1515,9 @@ await bodyHandle.DisposeAsync();
 ### param: Page.evaluate.expression = %%-evaluate-expression-%%
 * since: v1.8
 
+### param: Page.evaluate.expression = %%-js-evaluate-pagefunction-%%
+* since: v1.8
+
 ### param: Page.evaluate.arg
 * since: v1.8
 - `arg` ?<[EvaluationArgument]>
@@ -1613,6 +1622,9 @@ await resultHandle.DisposeAsync();
 ```
 
 ### param: Page.evaluateHandle.expression = %%-evaluate-expression-%%
+* since: v1.8
+
+### param: Page.evaluateHandle.expression = %%-js-evaluate-pagefunction-%%
 * since: v1.8
 
 ### param: Page.evaluateHandle.arg
@@ -2624,6 +2636,50 @@ The page's main frame. Page is guaranteed to have a main frame which persists du
 ## property: Page.mouse
 * since: v1.8
 - type: <[Mouse]>
+
+## method: Page.onceDialog
+* since: v1.10
+* langs: java
+
+Adds one-off [Dialog] handler. The handler will be removed immediately after next [Dialog] is created.
+```java
+page.onceDialog(dialog -> {
+  dialog.accept("foo");
+});
+
+// prints 'foo'
+System.out.println(page.evaluate("prompt('Enter string:')"));
+
+// prints 'null' as the dialog will be auto-dismissed because there are no handlers.
+System.out.println(page.evaluate("prompt('Enter string:')"));
+```
+
+This code above is equivalent to:
+```java
+Consumer<Dialog> handler = new Consumer<Dialog>() {
+  @Override
+  public void accept(Dialog dialog) {
+    dialog.accept("foo");
+    page.offDialog(this);
+  }
+};
+page.onDialog(handler);
+
+// prints 'foo'
+System.out.println(page.evaluate("prompt('Enter string:')"));
+
+// prints 'null' as the dialog will be auto-dismissed because there are no handlers.
+System.out.println(page.evaluate("prompt('Enter string:')"));
+```
+
+### param: Page.onceDialog.handler
+* since: v1.10
+- `handler` <[function]\([Dialog]\)>
+
+Receives the [Dialog] object, it **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise
+the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog,
+and actions like click will never finish.
+
 
 ## async method: Page.opener
 * since: v1.8
@@ -3742,6 +3798,9 @@ Video object associated with this page.
 
 Performs action and waits for the Page to close.
 
+### param: Page.waitForClose.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
+
 ### option: Page.waitForClose.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
 
@@ -3760,6 +3819,12 @@ Will throw an error if the page is closed before the [`event: Page.console`] eve
 * since: v1.9
 * langs: python
 - returns: <[EventContextManager]<[ConsoleMessage]>>
+
+### param: Page.waitForConsoleMessage.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### param: Page.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
 
 ### option: Page.waitForConsoleMessage.predicate
 * since: v1.9
@@ -3785,6 +3850,12 @@ Will throw an error if the page is closed before the download event is fired.
 * since: v1.9
 * langs: python
 - returns: <[EventContextManager]<[Download]>>
+
+### param: Page.waitForDownload.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### param: Page.waitForDownload.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
 
 ### option: Page.waitForDownload.predicate
 * since: v1.9
@@ -3864,6 +3935,12 @@ Will throw an error if the page is closed before the file chooser is opened.
 * since: v1.9
 * langs: python
 - returns: <[EventContextManager]<[FileChooser]>>
+
+### param: Page.waitForFileChooser.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### param: Page.waitForFileChooser.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
 
 ### option: Page.waitForFileChooser.predicate
 * since: v1.9
@@ -3992,6 +4069,9 @@ await page.WaitForFunctionAsync("selector => !!document.querySelector(selector)"
 ```
 
 ### param: Page.waitForFunction.expression = %%-evaluate-expression-%%
+* since: v1.8
+
+### param: Page.waitForFunction.expression = %%-js-evaluate-pagefunction-%%
 * since: v1.8
 
 ### param: Page.waitForFunction.arg
@@ -4162,6 +4242,12 @@ a navigation.
 * langs: python
 - returns: <[EventContextManager]<[Response]>>
 
+### param: Page.waitForNavigation.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### param: Page.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
+
 ### option: Page.waitForNavigation.url = %%-wait-for-navigation-url-%%
 * since: v1.8
 
@@ -4186,6 +4272,12 @@ Will throw an error if the page is closed before the popup event is fired.
 * since: v1.9
 * langs: python
 - returns: <[EventContextManager]<[Page]>>
+
+### param: Page.waitForPopup.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### param: Page.waitForPopup.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
 
 ### option: Page.waitForPopup.predicate
 * since: v1.9
@@ -4277,6 +4369,9 @@ await page.RunAndWaitForRequestAsync(async () =>
 ### param: Page.waitForRequest.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
+### param: Page.waitForRequest.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
+
 ### param: Page.waitForRequest.urlOrPredicate
 * since: v1.8
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]>
@@ -4314,6 +4409,12 @@ Will throw an error if the page is closed before the [`event: Page.requestFinish
 * since: v1.12
 * langs: python
 - returns: <[EventContextManager]<[Request]>>
+
+### param: Page.waitForRequestFinished.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### param: Page.waitForRequestFinished.callback = %%-java-wait-for-event-callback-%%
+* since: v1.12
 
 ### option: Page.waitForRequestFinished.predicate
 * since: v1.12
@@ -4408,6 +4509,9 @@ await page.RunAndWaitForResponseAsync(async () =>
 
 ### param: Page.waitForResponse.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
+
+### param: Page.waitForResponse.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
 
 ### param: Page.waitForResponse.urlOrPredicate
 * since: v1.8
@@ -4661,6 +4765,12 @@ Will throw an error if the page is closed before the WebSocket event is fired.
 * langs: python
 - returns: <[EventContextManager]<[WebSocket]>>
 
+### param: Page.waitForWebSocket.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### param: Page.waitForWebSocket.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
+
 ### option: Page.waitForWebSocket.predicate
 * since: v1.9
 - `predicate` <[function]\([WebSocket]\):[boolean]>
@@ -4685,6 +4795,12 @@ Will throw an error if the page is closed before the worker event is fired.
 * since: v1.9
 * langs: python
 - returns: <[EventContextManager]<[Worker]>>
+
+### param: Page.waitForWorker.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### param: Page.waitForWorker.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
 
 ### option: Page.waitForWorker.predicate
 * since: v1.9

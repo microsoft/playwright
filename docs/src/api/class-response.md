@@ -21,6 +21,11 @@ Returns the buffer with response body.
 
 Waits for this response to finish, returns always `null`.
 
+## async method: Response.finished
+* since: v1.8
+* langs: js
+- returns: <[null]|[Error]>
+
 ## method: Response.frame
 * since: v1.8
 - returns: <[Frame]>

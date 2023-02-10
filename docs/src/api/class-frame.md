@@ -523,6 +523,9 @@ var html = await frame.EvalOnSelectorAsync(".main-container", "(e, suffix) => e.
 ### param: Frame.evalOnSelector.expression = %%-evaluate-expression-%%
 * since: v1.9
 
+### param: Frame.evalOnSelector.expression = %%-js-evalonselector-pagefunction-%%
+* since: v1.9
+
 ### param: Frame.evalOnSelector.arg
 * since: v1.9
 - `arg` ?<[EvaluationArgument]>
@@ -575,6 +578,9 @@ var divsCount = await frame.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => 
 * since: v1.9
 
 ### param: Frame.evalOnSelectorAll.expression = %%-evaluate-expression-%%
+* since: v1.9
+
+### param: Frame.evalOnSelectorAll.expression = %%-js-evalonselectorall-pagefunction-%%
 * since: v1.9
 
 ### param: Frame.evalOnSelectorAll.arg
@@ -688,6 +694,9 @@ await bodyHandle.DisposeAsync();
 ### param: Frame.evaluate.expression = %%-evaluate-expression-%%
 * since: v1.8
 
+### param: Frame.evaluate.expression = %%-js-evaluate-pagefunction-%%
+* since: v1.8
+
 ### param: Frame.evaluate.arg
 * since: v1.8
 - `arg` ?<[EvaluationArgument]>
@@ -793,6 +802,9 @@ await resultHandle.DisposeAsync();
 ```
 
 ### param: Frame.evaluateHandle.expression = %%-evaluate-expression-%%
+* since: v1.8
+
+### param: Frame.evaluateHandle.expression = %%-js-evaluate-pagefunction-%%
 * since: v1.8
 
 ### param: Frame.evaluateHandle.arg
@@ -1864,6 +1876,9 @@ await page.MainFrame.WaitForFunctionAsync("selector => !!document.querySelector(
 ### param: Frame.waitForFunction.expression = %%-evaluate-expression-%%
 * since: v1.8
 
+### param: Frame.waitForFunction.expression = %%-js-evaluate-pagefunction-%%
+* since: v1.8
+
 ### param: Frame.waitForFunction.arg
 * since: v1.8
 - `arg` ?<[EvaluationArgument]>
@@ -1982,6 +1997,12 @@ a navigation.
 * since: v1.8
 * langs: python
 - returns: <[EventContextManager]<[Response]>>
+
+### param: Frame.waitForNavigation.action = %%-csharp-wait-for-event-action-%%
+* since: v1.12
+
+### param: Frame.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
 
 ### option: Frame.waitForNavigation.url = %%-wait-for-navigation-url-%%
 * since: v1.8

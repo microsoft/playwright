@@ -702,6 +702,9 @@ Assert.AreEqual("10 retweets", await tweets.EvaluateAsync("node => node.innerTex
 ### param: Locator.evaluate.expression = %%-evaluate-expression-%%
 * since: v1.14
 
+### param: Locator.evaluate.expression = %%-js-evaluate-pagefunction-%%
+* since: v1.14
+
 ### param: Locator.evaluate.arg
 * since: v1.14
 - `arg` ?<[EvaluationArgument]>
@@ -755,6 +758,9 @@ var moreThanTen = await locator.EvaluateAllAsync<bool>("(divs, min) => divs.leng
 ### param: Locator.evaluateAll.expression = %%-evaluate-expression-%%
 * since: v1.14
 
+### param: Locator.evaluateAll.expression = %%-js-evaluate-pagefunction-%%
+* since: v1.14
+
 ### param: Locator.evaluateAll.arg
 * since: v1.14
 - `arg` ?<[EvaluationArgument]>
@@ -780,6 +786,9 @@ If [`param: expression`] throws or rejects, this method throws.
 See [`method: Page.evaluateHandle`] for more details.
 
 ### param: Locator.evaluateHandle.expression = %%-evaluate-expression-%%
+* since: v1.14
+
+### param: Locator.evaluateHandle.expression = %%-js-evaluate-pagefunction-%%
 * since: v1.14
 
 ### param: Locator.evaluateHandle.arg
