@@ -202,12 +202,26 @@ Script that evaluates to a selector engine instance. The script is evaluated in 
 
 Script that evaluates to a selector engine instance. The script is evaluated in the page context.
 
+### param: Selectors.register.script
+* since: v1.8
+* langs: python
+- `script` <[string]>
+
+Raw script content.
+
 ### option: Selectors.register.script
 * since: v1.8
 * langs: csharp
 - `script` <[string]>
 
 Script that evaluates to a selector engine instance. The script is evaluated in the page context.
+
+### option: Selectors.register.path
+* since: v1.8
+* langs: python
+- `path` <[path]>
+
+Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory.
 
 ### option: Selectors.register.path
 * since: v1.8
