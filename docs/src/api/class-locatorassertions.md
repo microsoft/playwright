@@ -721,7 +721,7 @@ await Expect(locator).ToBeInViewportAsync(new() { Ratio = 0.5 });
 ```python async
 from playwright.async_api import expect
 
-locator = page.locator('button.submit')
+locator = page.locator("button.submit")
 # Make sure at least some part of element intersects viewport.
 await expect(locator).to_be_in_viewport()
 # Make sure element is fully outside of viewport.
@@ -733,7 +733,7 @@ await expect(locator).to_be_in_viewport(ratio=0.5);
 ```python sync
 from playwright.sync_api import expect
 
-locator = page.locator('.my-element')
+locator = page.locator("button.submit")
 # Make sure at least some part of element intersects viewport.
 expect(locator).to_be_in_viewport()
 # Make sure element is fully outside of viewport.
