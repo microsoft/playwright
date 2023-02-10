@@ -20,7 +20,7 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import type { Expect } from '../common/types';
 import { expectTypes, callLogText } from '../util';
 import { currentTestInfo } from '../common/globals';
-import type { TestInfoErrorState } from '../common/testInfo';
+import type { TestInfoErrorState } from '../worker/testInfo';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
@@ -116,6 +116,16 @@ export function toBeVisible(
   return toBeTruthy.call(this, 'toBeVisible', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
     const visible = !options || options.visible === undefined || options.visible === true;
     return await locator._expect(customStackTrace, visible ? 'to.be.visible' : 'to.be.hidden', { isNot, timeout });
+  }, options);
+}
+
+export function toBeInViewport(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  options?: { timeout?: number, ratio?: number },
+) {
+  return toBeTruthy.call(this, 'toBeInViewport', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.be.in.viewport', { isNot, viewportRatio: options?.ratio, timeout });
   }, options);
 }
 

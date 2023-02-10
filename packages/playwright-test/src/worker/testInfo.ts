@@ -18,10 +18,10 @@ import fs from 'fs';
 import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus } from '../../types/test';
-import type { StepBeginPayload, StepEndPayload, WorkerInitParams } from './ipc';
-import type { TestCase } from './test';
+import type { StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
+import type { TestCase } from '../common/test';
 import { TimeoutManager } from './timeoutManager';
-import type { Annotation, FullConfigInternal, FullProjectInternal, TestStepInternal } from './types';
+import type { Annotation, FullConfigInternal, FullProjectInternal, Location } from '../common/types';
 import { getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from '../util';
 
 export type TestInfoErrorState = {
@@ -29,6 +29,16 @@ export type TestInfoErrorState = {
   errors: TestInfoError[],
   hasHardError: boolean,
 };
+
+interface TestStepInternal {
+  complete(result: { error?: Error | TestInfoError }): void;
+  title: string;
+  category: string;
+  canHaveChildren: boolean;
+  forceNoParent: boolean;
+  location?: Location;
+  refinedTitle?: string;
+}
 
 export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;

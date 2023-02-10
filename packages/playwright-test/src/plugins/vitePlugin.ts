@@ -97,6 +97,8 @@ export function createPlugin(
       const hasNewComponents = await checkNewComponents(buildInfo, componentRegistry);
       // 3. Check component sources.
       const sourcesDirty = !buildExists || hasNewComponents || await checkSources(buildInfo);
+      // 4. Update component info.
+      buildInfo.components = [...componentRegistry.values()];
 
       viteConfig.root = rootDir;
       viteConfig.preview = { port, ...viteConfig.preview };
@@ -218,12 +220,6 @@ async function checkNewTests(suite: Suite, buildInfo: BuildInfo, componentRegist
         componentRegistry.set(component.fullName, component);
       buildInfo.tests[testFile] = { timestamp, components: components.map(c => c.fullName) };
       hasNewTests = true;
-    } else {
-      // The test has not changed, populate component registry from the buildInfo.
-      for (const componentName of buildInfo.tests[testFile].components) {
-        const component = buildInfo.components.find(c => c.fullName === componentName)!;
-        componentRegistry.set(component.fullName, component);
-      }
     }
   }
 
@@ -232,7 +228,7 @@ async function checkNewTests(suite: Suite, buildInfo: BuildInfo, componentRegist
 
 async function checkNewComponents(buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Promise<boolean> {
   const newComponents = [...componentRegistry.keys()];
-  const oldComponents = new Set(buildInfo.components.map(c => c.fullName));
+  const oldComponents = new Map(buildInfo.components.map(c => [c.fullName, c]));
 
   let hasNewComponents = false;
   for (const c of newComponents) {
@@ -241,10 +237,10 @@ async function checkNewComponents(buildInfo: BuildInfo, componentRegistry: Compo
       break;
     }
   }
-  if (!hasNewComponents)
-    return false;
-  buildInfo.components = newComponents.map(n => componentRegistry.get(n)!);
-  return true;
+  for (const c of oldComponents.values())
+    componentRegistry.set(c.fullName, c);
+
+  return hasNewComponents;
 }
 
 async function parseTestFile(testFile: string): Promise<ComponentInfo[]> {

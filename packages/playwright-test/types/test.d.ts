@@ -1289,7 +1289,8 @@ interface TestConfig {
    * ```
    *
    */
-  workers?: number|string;}
+  workers?: number|string;
+}
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout`
@@ -1837,7 +1838,8 @@ export interface WorkerInfo {
    * Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
    * with Playwright Test.
    */
-  workerIndex: number;}
+  workerIndex: number;
+}
 
 /**
  * `TestInfo` contains information about currently running test. It is available to any test function,
@@ -2275,7 +2277,8 @@ export interface TestInfo {
    * Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
    * with Playwright Test.
    */
-  workerIndex: number;}
+  workerIndex: number;
+}
 
 interface SuiteFunction {
   /**
@@ -4197,6 +4200,7 @@ interface GenericAssertions<R> {
    * @param expected Expected error message or error object.
    */
   toThrowError(error?: unknown): R;
+
 }
 
 type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T>;
@@ -4474,6 +4478,37 @@ interface LocatorAssertions {
    * @param options
    */
   toBeHidden(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element that intersects viewport, according to the
+   * [intersection observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.locator('button.submit');
+   * // Make sure at least some part of element intersects viewport.
+   * await expect(locator).toBeInViewport();
+   * // Make sure element is fully outside of viewport.
+   * await expect(locator).not.toBeInViewport();
+   * // Make sure strictly more than half of the element intersects viewport.
+   * await expect(locator).toBeInViewport({ ratio: 0.5 });
+   * ```
+   *
+   * @param options
+   */
+  toBeInViewport(options?: {
+    /**
+     * The minimal ratio of the element to intersect viewport. Element's ratio should be strictly greater than this
+     * number. Defaults to `0`.
+     */
+    ratio?: number;
+
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */

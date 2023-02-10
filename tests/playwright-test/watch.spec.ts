@@ -208,8 +208,8 @@ test('should respect project filter C', async ({ runWatchTest }) => {
   testProcess.clearOutput();
   testProcess.write('c');
   await testProcess.waitForOutput('Select projects');
-  await testProcess.waitForOutput('✔ foo');
-  await testProcess.waitForOutput('✔ bar');
+  await testProcess.waitForOutput('foo');
+  await testProcess.waitForOutput('bar');
   testProcess.write(' ');
   testProcess.write('\r\n');
   await testProcess.waitForOutput('npx playwright test --project foo #1');
@@ -395,13 +395,95 @@ test('should not trigger on changes to non-tests', async ({ runWatchTest, writeF
   await testProcess.waitForOutput('a.test.ts:5:11 › passes');
   await testProcess.waitForOutput('b.test.ts:5:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
+
   testProcess.clearOutput();
   writeFiles({
     'helper.ts': `
       console.log('helper');
     `,
   });
+
   await new Promise(f => setTimeout(f, 1000));
-  expect(testProcess.output).not.toContain('a.test.ts');
-  expect(testProcess.output).not.toContain('b.test.ts');
+  expect(testProcess.output).not.toContain('Waiting for file changes.');
+});
+
+test('should only watch selected projects', async ({ runWatchTest, writeFiles }) => {
+  const testProcess = await runWatchTest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({ projects: [{name: 'foo'}, {name: 'bar'}] });
+    `,
+    'a.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+  }, {}, { additionalArgs: ['--project=foo'] });
+  await testProcess.waitForOutput('npx playwright test --project foo');
+  await testProcess.waitForOutput('[foo] › a.test.ts:5:11 › passes');
+  expect(testProcess.output).not.toContain('[bar]');
+  await testProcess.waitForOutput('Waiting for file changes.');
+
+  testProcess.clearOutput();
+  writeFiles({
+    'a.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+  });
+
+  await testProcess.waitForOutput('npx playwright test --project foo');
+  await testProcess.waitForOutput('[foo] › a.test.ts:5:11 › passes');
+  await testProcess.waitForOutput('Waiting for file changes.');
+  expect(testProcess.output).not.toContain('[bar]');
+});
+
+test('should watch filtered files', async ({ runWatchTest, writeFiles }) => {
+  const testProcess = await runWatchTest({
+    'a.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+    'b.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+  }, {}, { additionalArgs: ['a.test.ts'] });
+  await testProcess.waitForOutput('npx playwright test a.test.ts');
+  await testProcess.waitForOutput('a.test.ts:5:11 › passes');
+  expect(testProcess.output).not.toContain('b.test');
+  await testProcess.waitForOutput('Waiting for file changes.');
+
+  testProcess.clearOutput();
+  writeFiles({
+    'b.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+  });
+
+  await new Promise(f => setTimeout(f, 1000));
+  expect(testProcess.output).not.toContain('Waiting for file changes.');
+});
+
+test('should not watch unfiltered files', async ({ runWatchTest, writeFiles }) => {
+  const testProcess = await runWatchTest({
+    'a.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+    'b.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+  }, {}, { additionalArgs: ['a.test.ts'] });
+  await testProcess.waitForOutput('npx playwright test a.test.ts');
+  await testProcess.waitForOutput('a.test.ts:5:11 › passes');
+  expect(testProcess.output).not.toContain('b.test');
+  await testProcess.waitForOutput('Waiting for file changes.');
+
+  testProcess.clearOutput();
+  writeFiles({
+    'a.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+  });
+
+  testProcess.clearOutput();
+  await testProcess.waitForOutput('npx playwright test a.test.ts (files changed)');
+  await testProcess.waitForOutput('a.test.ts:5:11 › passes');
+  expect(testProcess.output).not.toContain('b.test');
+  await testProcess.waitForOutput('Waiting for file changes.');
 });

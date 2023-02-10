@@ -283,6 +283,67 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
   });
 });
 
+test('should grow cache', async ({ runInlineTest }, testInfo) => {
+  test.slow();
+
+  await test.step('original test', async () => {
+    const result = await runInlineTest({
+      'playwright.config.ts': playwrightConfig,
+      'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+      'playwright/index.ts': ``,
+      'src/button1.tsx': `
+        export const Button1 = () => <button>Button 1</button>;
+      `,
+      'src/button2.tsx': `
+        export const Button2 = () => <button>Button 2</button>;
+      `,
+      'src/button1.test.tsx': `
+        //@no-header
+        import { test, expect } from '@playwright/experimental-ct-react';
+        import { Button1 } from './button1.tsx';
+        test('pass', async ({ mount }) => {
+          const component = await mount(<Button1></Button1>);
+          await expect(component).toHaveText('Button 1');
+        });
+      `,
+      'src/button2.test.tsx': `
+        //@no-header
+        import { test, expect } from '@playwright/experimental-ct-react';
+        import { Button2 } from './button2.tsx';
+        test('pass', async ({ mount }) => {
+          const component = await mount(<Button2></Button2>);
+          await expect(component).toHaveText('Button 2');
+        });
+      `,
+    }, { workers: 1 }, undefined, { additionalArgs: ['button1'] });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    const output = result.output;
+    expect(output).toContain('modules transformed');
+  });
+
+  await test.step('run second test', async () => {
+    const result = await runInlineTest({
+      'playwright.config.ts': playwrightConfig,
+    }, { workers: 1 }, undefined, { additionalArgs: ['button2'] });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    const output = result.output;
+    expect(output).toContain('modules transformed');
+  });
+
+  await test.step('run first test again', async () => {
+    const result = await runInlineTest({
+      'playwright.config.ts': playwrightConfig,
+    }, { workers: 1 }, undefined, { additionalArgs: ['button2'] });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    const output = result.output;
+    expect(output).not.toContain('modules transformed');
+  });
+});
+
 test('should not use global config for preview', async ({ runInlineTest }) => {
   const result1 = await runInlineTest({
     'playwright.config.ts': playwrightConfig,
