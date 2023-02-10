@@ -711,11 +711,11 @@ assertThat(locator).isInViewport(new LocatorAssertions.IsInViewportOptions().set
 ```csharp
 var locator = Page.Locator("button.submit");
 // Make sure at least some part of element intersects viewport.
-await Expect(locator).ToBeInViewport();
+await Expect(locator).ToBeInViewportAsync();
 // Make sure element is fully outside of viewport.
-await Expect(locator).Not.ToBeInViewport();
+await Expect(locator).Not.ToBeInViewportAsync();
 // Make sure strictly more than half of the element intersects viewport.
-await Expect(locator).ToBeInViewport(new() { Ratio = 0.5 });
+await Expect(locator).ToBeInViewportAsync(new() { Ratio = 0.5 });
 ```
 
 ```python async
