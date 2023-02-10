@@ -45,66 +45,70 @@ export class TaskRunner<Context> {
   }
 
   async run(context: Context, deadline: number): Promise<FullResult['status']> {
+    const { status, cleanup } = await this.runDeferCleanup(context, deadline);
+    const teardownStatus = await cleanup();
+    return status === 'passed' ? teardownStatus : status;
+  }
+
+  async runDeferCleanup(context: Context, deadline: number): Promise<{ status: FullResult['status'], cleanup: () => Promise<FullResult['status']> }> {
     const sigintWatcher = new SigIntWatcher();
     const timeoutWatcher = new TimeoutWatcher(deadline);
     const teardownRunner = new TaskRunner(this._reporter, this._globalTimeoutForError);
     teardownRunner._isTearDown = true;
-    try {
-      let currentTaskName: string | undefined;
 
-      const taskLoop = async () => {
-        for (const { name, task } of this._tasks) {
-          currentTaskName = name;
-          if (this._interrupted)
-            break;
-          debug('pw:test:task')(`"${name}" started`);
-          const errors: TestError[] = [];
-          try {
-            const teardown = await task(context, errors);
-            if (teardown)
-              teardownRunner._tasks.unshift({ name: `teardown for ${name}`, task: teardown });
-          } catch (e) {
-            debug('pw:test:task')(`error in "${name}": `, e);
-            errors.push(serializeError(e));
-          } finally {
-            for (const error of errors)
-              this._reporter.onError?.(error);
-            if (errors.length) {
-              if (!this._isTearDown)
-                this._interrupted = true;
-              this._hasErrors = true;
-            }
+    let currentTaskName: string | undefined;
+
+    const taskLoop = async () => {
+      for (const { name, task } of this._tasks) {
+        currentTaskName = name;
+        if (this._interrupted)
+          break;
+        debug('pw:test:task')(`"${name}" started`);
+        const errors: TestError[] = [];
+        try {
+          const teardown = await task(context, errors);
+          if (teardown)
+            teardownRunner._tasks.unshift({ name: `teardown for ${name}`, task: teardown });
+        } catch (e) {
+          debug('pw:test:task')(`error in "${name}": `, e);
+          errors.push(serializeError(e));
+        } finally {
+          for (const error of errors)
+            this._reporter.onError?.(error);
+          if (errors.length) {
+            if (!this._isTearDown)
+              this._interrupted = true;
+            this._hasErrors = true;
           }
-          debug('pw:test:task')(`"${name}" finished`);
         }
-      };
-
-      await Promise.race([
-        taskLoop(),
-        sigintWatcher.promise(),
-        timeoutWatcher.promise,
-      ]);
-
-      // Prevent subsequent tasks from running.
-      this._interrupted = true;
-
-      let status: FullResult['status'] = 'passed';
-      if (sigintWatcher.hadSignal()) {
-        status = 'interrupted';
-      } else if (timeoutWatcher.timedOut()) {
-        this._reporter.onError?.({ message: `Timed out waiting ${this._globalTimeoutForError / 1000}s for the ${currentTaskName} to run` });
-        status = 'timedout';
-      } else if (this._hasErrors) {
-        status = 'failed';
+        debug('pw:test:task')(`"${name}" finished`);
       }
+    };
 
-      return status;
-    } finally {
-      sigintWatcher.disarm();
-      timeoutWatcher.disarm();
-      if (!this._isTearDown)
-        await teardownRunner.run(context, deadline);
+    await Promise.race([
+      taskLoop(),
+      sigintWatcher.promise(),
+      timeoutWatcher.promise,
+    ]);
+
+    sigintWatcher.disarm();
+    timeoutWatcher.disarm();
+
+    // Prevent subsequent tasks from running.
+    this._interrupted = true;
+
+    let status: FullResult['status'] = 'passed';
+    if (sigintWatcher.hadSignal()) {
+      status = 'interrupted';
+    } else if (timeoutWatcher.timedOut()) {
+      this._reporter.onError?.({ message: `Timed out waiting ${this._globalTimeoutForError / 1000}s for the ${currentTaskName} to run` });
+      status = 'timedout';
+    } else if (this._hasErrors) {
+      status = 'failed';
     }
+
+    const cleanup = () => teardownRunner.runDeferCleanup(context, deadline).then(r => r.status);
+    return { status, cleanup };
   }
 }
 

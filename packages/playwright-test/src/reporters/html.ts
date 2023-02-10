@@ -43,6 +43,7 @@ type HtmlReportOpenOption = 'always' | 'never' | 'on-failure';
 type HtmlReporterOptions = {
   outputFolder?: string,
   open?: HtmlReportOpenOption,
+  sharded?: boolean,
   host?: string,
   port?: number,
 };
@@ -53,6 +54,7 @@ class HtmlReporter implements Reporter {
   private _montonicStartTime: number = 0;
   private _options: HtmlReporterOptions;
   private _outputFolder!: string;
+  private _sharded!: boolean;
   private _open: string | undefined;
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
 
@@ -67,8 +69,9 @@ class HtmlReporter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {
     this._montonicStartTime = monotonicTime();
     this.config = config as FullConfigInternal;
-    const { outputFolder, open } = this._resolveOptions();
+    const { outputFolder, open, sharded } = this._resolveOptions();
     this._outputFolder = outputFolder;
+    this._sharded = sharded;
     this._open = open;
     const reportedWarnings = new Set<string>();
     for (const project of config.projects) {
@@ -89,19 +92,20 @@ class HtmlReporter implements Reporter {
     this.suite = suite;
   }
 
-  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption } {
+  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, sharded: boolean } {
     let { outputFolder } = this._options;
     if (outputFolder)
       outputFolder = path.resolve(this.config._internal.configDir, outputFolder);
     return {
       outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this.config._internal.configDir),
       open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
+      sharded: !!this._options.sharded
     };
   }
 
   async onEnd() {
     const duration = monotonicTime() - this._montonicStartTime;
-    const shard = this.config.shard;
+    const shard = this._sharded ? this.config.shard : null;
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();

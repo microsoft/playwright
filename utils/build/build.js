@@ -200,7 +200,7 @@ steps.push({
 for (const bundle of bundles) {
   steps.push({
     command: 'npm',
-    args: ['ci', '--save=false', '--fund=false', '--audit=false'],
+    args: ['ci', '--save=false', '--fund=false', '--audit=false', '--omit=optional'],
     shell: true,
     cwd: bundle,
   });
@@ -316,13 +316,6 @@ copyFiles.push({
   from: 'packages/playwright-core/src',
   to: 'packages/playwright-core/lib',
   ignored: ['**/.eslintrc.js', '**/webpack*.config.js', '**/injected/**/*']
-});
-
-// Copy all shell files if we happen to use any.
-copyFiles.push({
-  files: 'packages/playwright-core/src/**/*.sh',
-  from: 'packages/playwright-core/src',
-  to: 'packages/playwright-core/lib',
 });
 
 // Sometimes we require JSON files that babel ignores.

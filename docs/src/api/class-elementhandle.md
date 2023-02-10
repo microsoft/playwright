@@ -799,6 +799,18 @@ await handle.SelectOptionAsync(new[] {
 ### option: ElementHandle.selectOption.timeout = %%-input-timeout-%%
 * since: v1.8
 
+### param: ElementHandle.selectOption.element = %%-python-select-options-element-%%
+* since: v1.8
+
+### param: ElementHandle.selectOption.index = %%-python-select-options-index-%%
+* since: v1.8
+
+### param: ElementHandle.selectOption.value = %%-python-select-options-value-%%
+* since: v1.8
+
+### param: ElementHandle.selectOption.label = %%-python-select-options-label-%%
+* since: v1.8
+
 ## async method: ElementHandle.selectText
 * since: v1.8
 

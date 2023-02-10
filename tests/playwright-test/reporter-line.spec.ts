@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('render unexpected after retry', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -25,7 +25,7 @@ test('render unexpected after retry', async ({ runInlineTest }) => {
       });
     `,
   }, { retries: 3, reporter: 'line' });
-  const text = stripAnsi(result.output);
+  const text = result.output;
   expect(text).toContain('[1/1] a.test.js:6:7 › one');
   expect(text).toContain('[2/1] (retries) a.test.js:6:7 › one (retry #1)');
   expect(text).toContain('[3/1] (retries) a.test.js:6:7 › one (retry #2)');
@@ -33,9 +33,9 @@ test('render unexpected after retry', async ({ runInlineTest }) => {
   expect(text).toContain('1 failed');
   expect(text).toContain('1) a.test');
   expect(text).not.toContain('2) a.test');
-  expect(text).toContain('Retry #1 ----');
-  expect(text).toContain('Retry #2 ----');
-  expect(text).toContain('Retry #3 ----');
+  expect(text).toContain('Retry #1 ────');
+  expect(text).toContain('Retry #2 ────');
+  expect(text).toContain('Retry #3 ────');
   expect(result.exitCode).toBe(1);
 });
 
@@ -48,7 +48,7 @@ test('render flaky', async ({ runInlineTest }) => {
       });
     `,
   }, { retries: 3, reporter: 'line' });
-  const text = stripAnsi(result.output);
+  const text = result.output;
   expect(text).toContain('1 flaky');
   expect(result.exitCode).toBe(0);
 });
@@ -64,7 +64,7 @@ test('should print flaky failures', async ({ runInlineTest }) => {
   }, { retries: '1', reporter: 'line' });
   expect(result.exitCode).toBe(0);
   expect(result.flaky).toBe(1);
-  expect(stripAnsi(result.output)).toContain('expect(testInfo.retry).toBe(1)');
+  expect(result.output).toContain('expect(testInfo.retry).toBe(1)');
 });
 
 test('should work on CI', async ({ runInlineTest }) => {
@@ -76,7 +76,7 @@ test('should work on CI', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line' }, { CI: '1' });
-  const text = stripAnsi(result.output);
+  const text = result.output;
   expect(text).toContain('[1/1] a.test.js:6:7 › one');
   expect(text).toContain('1 failed');
   expect(text).toContain('1) a.test');
@@ -95,7 +95,7 @@ test('should print output', async ({ runInlineTest }) => {
     `
   }, { reporter: 'line' });
   expect(result.exitCode).toBe(0);
-  expect(stripAnsi(result.output)).toContain([
+  expect(result.output).toContain([
     'a.spec.ts:6:7 › foobar',
     'one',
     '',

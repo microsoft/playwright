@@ -78,7 +78,6 @@ it('should work with status code 422', async ({ page, server }) => {
 });
 
 it('should allow mocking binary responses', async ({ page, server, browserName, headless, asset, isAndroid, mode }) => {
-  it.skip(mode === 'service');
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
 
@@ -100,7 +99,6 @@ it('should allow mocking binary responses', async ({ page, server, browserName, 
 });
 
 it('should allow mocking svg with charset', async ({ page, server, browserName, headless, isAndroid, isElectron, mode }) => {
-  it.skip(mode === 'service');
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
   it.skip(isElectron, 'Protocol error (Storage.getCookies): Browser context management is not supported');
@@ -122,7 +120,7 @@ it('should allow mocking svg with charset', async ({ page, server, browserName, 
 });
 
 it('should work with file path', async ({ page, server, asset, mode, isAndroid }) => {
-  it.skip(mode === 'service' || isAndroid);
+  it.skip(isAndroid);
 
   await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: asset('pptr.png') }));
   await page.evaluate(PREFIX => {

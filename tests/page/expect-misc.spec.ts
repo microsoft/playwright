@@ -285,3 +285,56 @@ test.describe('toHaveId', () => {
     await expect(locator).toHaveId('node');
   });
 });
+
+test.describe('toBeInViewport', () => {
+  test('should work', async ({ page }) => {
+    await page.setContent(`
+      <div id=big style="height: 10000px;"></div>
+      <div id=small>foo</div>
+    `);
+    await expect(page.locator('#big')).toBeInViewport();
+    await expect(page.locator('#small')).not.toBeInViewport();
+    await page.locator('#small').scrollIntoViewIfNeeded();
+    await expect(page.locator('#small')).toBeInViewport();
+  });
+
+  test('should respect ratio option', async ({ page }) => {
+    await page.setContent(`
+      <style>body, div, html { padding: 0; margin: 0; }</style>
+      <div id=big style="height: 400vh;"></div>
+    `);
+    await expect(page.locator('div')).toBeInViewport();
+    await expect(page.locator('div')).toBeInViewport({ ratio: 0.1 });
+    await expect(page.locator('div')).toBeInViewport({ ratio: 0.2 });
+
+    // In this test, element's ratio is 0.25. Make sure `ratio` is compared strictly.
+    await expect(page.locator('div')).toBeInViewport({ ratio: 0.24 });
+    await expect(page.locator('div')).not.toBeInViewport({ ratio: 0.25 });
+
+    await expect(page.locator('div')).not.toBeInViewport({ ratio: 0.3 });
+    await expect(page.locator('div')).not.toBeInViewport({ ratio: 0.7 });
+    await expect(page.locator('div')).not.toBeInViewport({ ratio: 0.8 });
+  });
+
+  test('should have good stack', async ({ page }) => {
+    let error;
+    try {
+      await expect(page.locator('body')).not.toBeInViewport({ timeout: 100 });
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeTruthy();
+    expect(/unexpected value "viewport ratio \d+/.test(error.stack)).toBe(true);
+    const stackFrames = error.stack.split('\n').filter(line => line.trim().startsWith('at '));
+    expect(stackFrames.length).toBe(1);
+    expect(stackFrames[0]).toContain(__filename);
+  });
+
+  test('should report intersection even if fully covered by other element', async ({ page }) => {
+    await page.setContent(`
+      <h1>hello</h1>
+      <div style="position: relative; height: 10000px; top: -5000px;></div>
+    `);
+    await expect(page.locator('h1')).toBeInViewport();
+  });
+});

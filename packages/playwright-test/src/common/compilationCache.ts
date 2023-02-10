@@ -32,7 +32,10 @@ const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwri
 
 const sourceMaps: Map<string, string> = new Map();
 const memoryCache = new Map<string, MemoryCache>();
+// Dependencies resolved by the loader.
 const fileDependencies = new Map<string, Set<string>>();
+// Dependencies resolved by the external bundler.
+const externalDependencies = new Map<string, Set<string>>();
 
 Error.stackTraceLimit = 200;
 
@@ -93,6 +96,7 @@ export function serializeCompilationCache(): any {
     sourceMaps: [...sourceMaps.entries()],
     memoryCache: [...memoryCache.entries()],
     fileDependencies: [...fileDependencies.entries()].map(([filename, deps]) => ([filename, [...deps]])),
+    externalDependencies: [...externalDependencies.entries()].map(([filename, deps]) => ([filename, [...deps]])),
   };
 }
 
@@ -108,6 +112,8 @@ export function addToCompilationCache(payload: any) {
     memoryCache.set(entry[0], entry[1]);
   for (const entry of payload.fileDependencies)
     fileDependencies.set(entry[0], new Set(entry[1]));
+  for (const entry of payload.externalDependencies)
+    externalDependencies.set(entry[0], new Set(entry[1]));
 }
 
 function calculateCachePath(content: string, filePath: string, isModule: boolean): string {
@@ -146,6 +152,11 @@ export function currentFileDepsCollector(): Set<string> | undefined {
   return depsCollector;
 }
 
+export function setExternalDependencies(filename: string, deps: string[]) {
+  const depsSet = new Set(deps.filter(dep => !belongsToNodeModules(dep) && dep !== filename));
+  externalDependencies.set(filename, depsSet);
+}
+
 export function fileDependenciesForTest() {
   return fileDependencies;
 }
@@ -153,6 +164,10 @@ export function fileDependenciesForTest() {
 export function collectAffectedTestFiles(dependency: string, testFileCollector: Set<string>) {
   testFileCollector.add(dependency);
   for (const [testFile, deps] of fileDependencies) {
+    if (deps.has(dependency))
+      testFileCollector.add(testFile);
+  }
+  for (const [testFile, deps] of externalDependencies) {
     if (deps.has(dependency))
       testFileCollector.add(testFile);
   }

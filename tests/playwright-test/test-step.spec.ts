@@ -256,19 +256,19 @@ test('should report test.step from fixtures', async ({ runInlineTest }) => {
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    `%% begin Before Hooks`,
-    `%% begin setup foo`,
-    `%% end setup foo`,
-    `%% end Before Hooks`,
-    `%% begin test step`,
-    `%% begin inside foo`,
-    `%% end inside foo`,
-    `%% end test step`,
-    `%% begin After Hooks`,
-    `%% begin teardown foo`,
-    `%% end teardown foo`,
-    `%% end After Hooks`,
+  expect(result.outputLines).toEqual([
+    `begin Before Hooks`,
+    `begin setup foo`,
+    `end setup foo`,
+    `end Before Hooks`,
+    `begin test step`,
+    `begin inside foo`,
+    `end inside foo`,
+    `end test step`,
+    `begin After Hooks`,
+    `begin teardown foo`,
+    `end teardown foo`,
+    `end After Hooks`,
   ]);
 });
 

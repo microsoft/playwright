@@ -50,6 +50,11 @@ export interface Suite {
   allTests(): Array<TestCase>;
 
   /**
+   * Returns a list of titles from the root down to this suite.
+   */
+  titlePath(): Array<string>;
+
+  /**
    * Location in the source where the suite is defined. Missing for root and project suites.
    */
   location?: Location;
@@ -80,11 +85,7 @@ export interface Suite {
    *   for a group suite.
    */
   title: string;
-
-  /**
-   * Returns a list of titles from the root down to this suite.
-   */
-  titlePath(): Array<string>;}
+}
 
 /**
  * `TestCase` corresponds to every
@@ -107,6 +108,24 @@ export interface TestCase {
    * status.
    */
   expectedStatus: TestStatus;
+  /**
+   * Whether the test is considered running fine. Non-ok tests fail the test run with non-zero exit code.
+   */
+  ok(): boolean;
+
+  /**
+   * Testing outcome for this test. Note that outcome is not the same as
+   * [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status):
+   * - Test that is expected to fail and actually fails is `'expected'`.
+   * - Test that passes on a second retry is `'flaky'`.
+   */
+  outcome(): "skipped"|"expected"|"unexpected"|"flaky";
+
+  /**
+   * Returns a list of titles from the root down to this test.
+   */
+  titlePath(): Array<string>;
+
   /**
    * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) groups the test
@@ -139,19 +158,6 @@ export interface TestCase {
    * Location in the source where the test is defined.
    */
   location: Location;
-
-  /**
-   * Whether the test is considered running fine. Non-ok tests fail the test run with non-zero exit code.
-   */
-  ok(): boolean;
-
-  /**
-   * Testing outcome for this test. Note that outcome is not the same as
-   * [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status):
-   * - Test that is expected to fail and actually fails is `'expected'`.
-   * - Test that passes on a second retry is `'flaky'`.
-   */
-  outcome(): "skipped"|"expected"|"unexpected"|"flaky";
 
   /**
    * Suite this test case belongs to.
@@ -191,11 +197,7 @@ export interface TestCase {
    * [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call) call.
    */
   title: string;
-
-  /**
-   * Returns a list of titles from the root down to this test.
-   */
-  titlePath(): Array<string>;}
+}
 
 /**
  * A result of a single [TestCase] run.
@@ -250,6 +252,12 @@ export interface TestResult {
   errors: Array<TestError>;
 
   /**
+   * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have
+   * a different `parallelIndex`.
+   */
+  parallelIndex: number;
+
+  /**
    * When test is retries multiple times, each retry attempt is given a sequential number.
    *
    * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
@@ -283,12 +291,7 @@ export interface TestResult {
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
    */
   workerIndex: number;
-
-  /**
-   * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have
-   * a different `parallelIndex`.
-   */
-  parallelIndex: number;}
+}
 
 /**
  * Result of the full test run.
@@ -453,7 +456,8 @@ export interface Reporter {
    * Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance
    * user experience. If your reporter does not print to the terminal, it is strongly recommended to return `false`.
    */
-  printsToStdio?(): boolean;}
+  printsToStdio?(): boolean;
+}
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
@@ -547,6 +551,11 @@ export {};
  */
 export interface Location {
   /**
+   * Column number in the source file.
+   */
+  column: number;
+
+  /**
    * Path to the source file.
    */
   file: string;
@@ -555,17 +564,17 @@ export interface Location {
    * Line number in the source file.
    */
   line: number;
-
-  /**
-   * Column number in the source file.
-   */
-  column: number;
 }
 
 /**
  * Information about an error thrown during test execution.
  */
 export interface TestError {
+  /**
+   * Error location in the source code.
+   */
+  location?: Location;
+
   /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
@@ -580,17 +589,17 @@ export interface TestError {
    * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
    */
   value?: string;
-
-  /**
-   * Error location in the source code.
-   */
-  location?: Location;
 }
 
 /**
  * Represents a step in the [TestRun].
  */
 export interface TestStep {
+  /**
+   * Returns a list of step titles from the root step down to this step.
+   */
+  titlePath(): Array<string>;
+
   /**
    * Step category to differentiate steps with different origin and verbosity. Built-in categories are:
    * - `hook` for fixtures and hooks initialization and teardown
@@ -606,14 +615,14 @@ export interface TestStep {
   duration: number;
 
   /**
-   * Optional location in the source where the step is defined.
-   */
-  location?: Location;
-
-  /**
    * Error thrown during the step execution, if any.
    */
   error?: TestError;
+
+  /**
+   * Optional location in the source where the step is defined.
+   */
+  location?: Location;
 
   /**
    * Parent step, if any.
@@ -634,11 +643,6 @@ export interface TestStep {
    * User-friendly test step title.
    */
   title: string;
-
-  /**
-   * Returns a list of step titles from the root step down to this step.
-   */
-  titlePath(): Array<string>;
 }
 
 

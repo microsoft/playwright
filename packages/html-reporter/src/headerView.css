@@ -30,3 +30,7 @@
     border-right: none;
   }
 }
+
+.header-view-status-line {
+  padding-right: '10px'
+}

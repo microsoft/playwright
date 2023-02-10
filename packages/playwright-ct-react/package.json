@@ -29,5 +29,8 @@
     "@vitejs/plugin-react": "^3.1.0",
     "@playwright/test": "1.31.0-next",
     "vite": "^4.1.1"
+  },
+  "bin": {
+    "playwright": "./cli.js"
   }
 }

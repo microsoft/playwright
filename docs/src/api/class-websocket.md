@@ -60,6 +60,11 @@ Contains the URL of the WebSocket.
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
 value. Will throw an error if the webSocket is closed before the event is fired. Returns the event data value.
 
+## async method: WebSocket.waitForEvent
+* since: v1.8
+* langs: python
+- returns: <[EventContextManager]>
+
 ### param: WebSocket.waitForEvent.event
 * since: v1.8
 - `event` <[string]>
@@ -74,6 +79,12 @@ Event name, same one would pass into `webSocket.on(event)`.
   - `timeout` ?<[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
+
+### option: WebSocket.waitForEvent.predicate = %%-wait-for-event-predicate-%%
+* since: v1.8
+
+### option: WebSocket.waitForEvent.timeout = %%-wait-for-event-timeout-%%
+* since: v1.8
 
 ## async method: WebSocket.waitForFrameReceived
 * since: v1.10

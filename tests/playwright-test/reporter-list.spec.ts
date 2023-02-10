@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓ ';
@@ -40,7 +40,7 @@ test('render each test with project name', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'list', workers: '1' });
-  const text = stripAnsi(result.output);
+  const text = result.output;
 
   expect(text).toContain(`${NEGATIVE_STATUS_MARK} 1 [foo] › a.test.ts:6:7 › fails`);
   expect(text).toContain(`${POSITIVE_STATUS_MARK} 2 [foo] › a.test.ts:9:7 › passes`);
@@ -67,7 +67,7 @@ test('render steps', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PW_TEST_DEBUG_REPORTERS_PRINT_STEPS: '1', PWTEST_TTY_WIDTH: '80' });
-  const text = stripAnsi(result.output);
+  const text = result.output;
   const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/\d+ms/, 'Xms'));
   lines.pop(); // Remove last item that contains [v] and time in ms.
   expect(lines).toEqual([
@@ -103,7 +103,7 @@ test('render steps inlint', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
-  const text = stripAnsi(result.output);
+  const text = result.output;
   const lines = text.split('\n').filter(l => l.match(/^\d :/)).map(l => l.replace(/\d+ms/, 'Xms'));
   lines.pop(); // Remove last item that contains [v] and time in ms.
   expect(lines).toEqual([
@@ -134,7 +134,7 @@ test('very long console line should not mess terminal', async ({ runInlineTest }
     `,
   }, { reporter: 'list' }, { PWTEST_TTY_WIDTH: TTY_WIDTH + '' });
 
-  const renderedText = simpleAnsiRenderer(result.output, TTY_WIDTH);
+  const renderedText = simpleAnsiRenderer(result.rawOutput, TTY_WIDTH);
   if (process.platform === 'win32')
     expect(renderedText).toContain('  ok 1 a.test.ts:6:7 › passes');
   else
@@ -152,7 +152,7 @@ test('render retries', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'list', retries: '1' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
-  const text = stripAnsi(result.output);
+  const text = result.output;
   const lines = text.split('\n').filter(l => l.startsWith('0 :') || l.startsWith('1 :')).map(l => l.replace(/[\dm]+s/, 'XXms'));
 
   expect(lines).toEqual([
@@ -185,7 +185,7 @@ test('should truncate long test names', async ({ runInlineTest }) => {
   }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: 50 });
   expect(result.exitCode).toBe(1);
 
-  const lines = stripAnsi(result.output).split('\n').slice(3, 11);
+  const lines = result.output.split('\n').slice(3, 11);
   expect(lines.every(line => line.length <= 50)).toBe(true);
 
   expect(lines[0]).toBe(`     1 … a.test.ts:6:7 › failure in very long name`);

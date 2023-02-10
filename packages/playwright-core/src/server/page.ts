@@ -247,7 +247,7 @@ export class Page extends SdkObject {
     this._interceptFileChooser = false;
 
     await Promise.all([
-      this._delegate.updateEmulatedViewportSize(true),
+      this._delegate.updateEmulatedViewportSize(),
       this._delegate.updateEmulateMedia(),
       this._delegate.updateFileChooserInterception(),
     ]);

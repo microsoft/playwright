@@ -282,6 +282,22 @@ test('should filter hidden, unless explicitly asked for', async ({ page }) => {
     <button style="display:none">Never</button>
     <div id=host1></div>
     <div id=host2 style="display:none"></div>
+
+    <input name="one">
+    <details>
+      <summary>Open form</summary>
+      <label>
+         Label
+         <input name="two">
+      </label>
+    </details>
+
+    <select>
+      <option style="visibility:hidden">One</option>
+      <option style="display:none">Two</option>
+      <option>Three</option>
+    </select>
+
     <script>
       function addButton(host, text) {
         const root = host.attachShadow({ mode: 'open' });
@@ -328,6 +344,13 @@ test('should filter hidden, unless explicitly asked for', async ({ page }) => {
     `<button aria-hidden="false">Nay</button>`,
     `<button style="visibility:visible">Still here</button>`,
     `<button>Shadow1</button>`,
+  ]);
+  expect(await page.locator(`role=textbox`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<input name="one">`,
+  ]);
+  expect(await page.locator(`role=option`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<option style="visibility:hidden">One</option>`,
+    `<option>Three</option>`,
   ]);
 });
 

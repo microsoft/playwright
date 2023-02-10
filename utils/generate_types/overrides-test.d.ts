@@ -24,7 +24,7 @@ export type ReporterDescription =
   ['github'] |
   ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean }] |
   ['json'] | ['json', { outputFile?: string }] |
-  ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure' }] |
+  ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure', sharded?: boolean }] |
   ['null'] |
   [string] | [string, any];
 
@@ -52,8 +52,8 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   testMatch: string | RegExp | (string | RegExp)[];
   timeout: number;
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
-  // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
+// [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 

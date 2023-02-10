@@ -100,9 +100,6 @@ The opposite of [`method: PageAssertions.toHaveTitle`].
 
 Expected title or RegExp.
 
-### option: PageAssertions.NotToHaveTitle.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
-
 ### option: PageAssertions.NotToHaveTitle.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -118,9 +115,6 @@ The opposite of [`method: PageAssertions.toHaveURL`].
 - `urlOrRegExp` <[string]|[RegExp]>
 
 Expected URL string or RegExp.
-
-### option: PageAssertions.NotToHaveURL.timeout = %%-js-assertions-timeout-%%
-* since: v1.18
 
 ### option: PageAssertions.NotToHaveURL.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18

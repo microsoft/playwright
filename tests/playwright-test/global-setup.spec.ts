@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -46,10 +46,10 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
   }, { 'config': 'dir' });
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(0);
-  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%from-global-setup',
-    '%%from-test',
-    '%%from-global-teardown',
+  expect(result.outputLines).toEqual([
+    'from-global-setup',
+    'from-test',
+    'from-global-teardown',
   ]);
 });
 
@@ -187,7 +187,7 @@ test('globalSetup error should prevent tests from executing', async ({ runInline
     `,
   }, { reporter: 'line' });
 
-  expect(stripAnsi(output)).not.toContain('this test ran');
+  expect(output).not.toContain('this test ran');
   expect(passed).toBe(0);
 });
 
@@ -337,13 +337,13 @@ test('teardown order', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%setup 1',
-    '%%setup 2',
-    '%%setup 3',
-    '%%teardown 3',
-    '%%teardown 2',
-    '%%teardown 1',
+  expect(result.outputLines).toEqual([
+    'setup 1',
+    'setup 2',
+    'setup 3',
+    'teardown 3',
+    'teardown 2',
+    'teardown 1',
   ]);
 });
 
@@ -366,19 +366,19 @@ test('teardown after error', async ({ runInlineTest }) => {
       pwt.test('test', () => {});
     `,
   });
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
-  const output = stripAnsi(result.output);
+  const output = result.output;
   expect(output).toContain('Error: failed teardown 1');
   expect(output).toContain('Error: failed teardown 2');
   expect(output).toContain('Error: failed teardown 3');
   expect(output).toContain('throw new Error(\'failed teardown');
-  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%setup 1',
-    '%%setup 2',
-    '%%setup 3',
-    '%%teardown 3',
-    '%%teardown 2',
-    '%%teardown 1',
+  expect(result.outputLines).toEqual([
+    'setup 1',
+    'setup 2',
+    'setup 3',
+    'teardown 3',
+    'teardown 2',
+    'teardown 1',
   ]);
 });

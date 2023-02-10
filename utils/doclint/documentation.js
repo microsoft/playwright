@@ -97,7 +97,7 @@ class Documentation {
    */
   copyDocsFromSuperclasses(errors) {
     for (const [name, clazz] of this.classes.entries()) {
-      clazz.validateOrder(errors, clazz);
+      clazz.sortMembers();
 
       if (!clazz.extends || ['EventEmitter', 'Error', 'Exception', 'RuntimeException'].includes(clazz.extends))
         continue;
@@ -317,48 +317,27 @@ class Documentation {
     this.membersArray = membersArray;
   }
 
-  validateOrder(errors, cls) {
-    const members = this.membersArray;
-    // Events should go first.
-    let eventIndex = 0;
-    for (; eventIndex < members.length && members[eventIndex].kind === 'event'; ++eventIndex);
-    for (; eventIndex < members.length && members[eventIndex].kind !== 'event'; ++eventIndex);
-    if (eventIndex < members.length)
-      errors.push(`Events should go first. Event '${members[eventIndex].name}' in class ${cls.name} breaks order`);
-
-    // Constructor should be right after events and before all other members.
-    const constructorIndex = members.findIndex(member => member.kind === 'method' && member.name === 'constructor');
-    if (constructorIndex > 0 && members[constructorIndex - 1].kind !== 'event')
-      errors.push(`Constructor of ${cls.name} should go before other methods`);
-
-    // Events should be sorted alphabetically.
-    for (let i = 0; i < members.length - 1; ++i) {
-      const member1 = this.membersArray[i];
-      const member2 = this.membersArray[i + 1];
-      if (member1.kind !== 'event' || member2.kind !== 'event')
-        continue;
-      if (member1.name.localeCompare(member2.name, 'en', { sensitivity: 'base' }) > 0)
-        errors.push(`Event '${member1.name}' in class ${this.name} breaks alphabetic ordering of events`);
+  sortMembers() {
+    /**
+     * @param {Member} member
+     */
+    function sortKey(member) {
+      return { 'event': 'a', 'method': 'b', 'property': 'c' }[member.kind] + member.alias;
     }
 
-    // All other members should be sorted alphabetically.
-    for (let i = 0; i < members.length - 1; ++i) {
-      const member1 = this.membersArray[i];
-      const member2 = this.membersArray[i + 1];
-      if (member1.kind === 'event' || member2.kind === 'event')
-        continue;
-      if (member1.kind === 'method' && member1.name === 'constructor')
-        continue;
-      if (member1.name.replace(/^\$+/, '$').localeCompare(member2.name.replace(/^\$+/, '$'), 'en', { sensitivity: 'base' }) > 0) {
-        let memberName1 = `${this.name}.${member1.name}`;
-        if (member1.kind === 'method')
-          memberName1 += '()';
-        let memberName2 = `${this.name}.${member2.name}`;
-        if (member2.kind === 'method')
-          memberName2 += '()';
-        errors.push(`Bad alphabetic ordering of ${this.name} members: ${memberName1} should go after ${memberName2}`);
+    this.membersArray.sort((m1, m2) => {
+      return sortKey(m1).localeCompare(sortKey(m2), 'en', { sensitivity: 'base' });
+    });
+
+    // Options should be the last argument.
+    this.membersArray.forEach(member => {
+      const optionsIndex = member.argsArray.findIndex(a => a.name === 'options');
+      if (optionsIndex !== -1) {
+        const options = member.argsArray[optionsIndex];
+        member.argsArray.splice(optionsIndex, 1);
+        member.argsArray.push(options);
       }
-    }
+    });
   }
 
   /**

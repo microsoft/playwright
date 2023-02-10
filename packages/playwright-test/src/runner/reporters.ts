@@ -16,7 +16,7 @@
 
 import path from 'path';
 import type { Reporter, TestError } from '../../types/testReporter';
-import { separator, formatError } from '../reporters/base';
+import { formatError } from '../reporters/base';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
 import GitHubReporter from '../reporters/github';
@@ -30,7 +30,6 @@ import type { Suite } from '../common/test';
 import type { FullConfigInternal } from '../common/types';
 import { loadReporter } from './loadUtils';
 import type { BuiltInReporter } from '../common/configLoader';
-import { colors } from 'playwright-core/lib/utilsBundle';
 
 export async function createReporter(config: FullConfigInternal, mode: 'list' | 'watch' | 'run') {
   const defaultReporters: {[key in BuiltInReporter]: new(arg: any) => Reporter} = {
@@ -45,7 +44,7 @@ export async function createReporter(config: FullConfigInternal, mode: 'list' | 
   };
   const reporters: Reporter[] = [];
   if (mode === 'watch') {
-    reporters.push(new WatchModeReporter());
+    reporters.push(new ListReporter());
   } else {
     for (const r of config.reporter) {
       const [name, arg] = r;
@@ -102,26 +101,5 @@ export class ListModeReporter implements Reporter {
   onError(error: TestError) {
     // eslint-disable-next-line no-console
     console.error('\n' + formatError(this.config, error, false).message);
-  }
-}
-
-let seq = 0;
-
-export class WatchModeReporter extends ListReporter {
-  override generateStartingMessage(): string {
-    const tokens: string[] = [];
-    tokens.push('npx playwright test');
-    tokens.push(...(this.config._internal.cliProjectFilter || [])?.map(p => colors.blue(`--project ${p}`)));
-    if (this.config._internal.cliGrep)
-      tokens.push(colors.red(`--grep ${this.config._internal.cliGrep}`));
-    if (this.config._internal.cliArgs)
-      tokens.push(...this.config._internal.cliArgs.map(a => colors.bold(a)));
-    tokens.push(colors.dim(`#${++seq}`));
-    const lines: string[] = [];
-    const sep = separator();
-    lines.push('\x1Bc' + sep);
-    lines.push(`${tokens.join(' ')}`);
-    lines.push(sep + super.generateStartingMessage());
-    return lines.join('\n');
   }
 }

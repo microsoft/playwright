@@ -53,11 +53,6 @@ if [[ "$RELEASE_CHANNEL" == "stable" ]]; then
   JAMMY_TAGS+=("jammy")
 fi
 
-REMOTE_TAGS=(
-  "next-remote"
-  "v${PW_VERSION}-remote"
-)
-
 tag_and_push() {
   local source="$1"
   local target="$2"
@@ -73,10 +68,8 @@ publish_docker_images_with_arch_suffix() {
     TAGS=("${FOCAL_TAGS[@]}")
   elif [[ "$FLAVOR" == "jammy" ]]; then
     TAGS=("${JAMMY_TAGS[@]}")
-  elif [[ "$FLAVOR" == "remote" ]]; then
-    TAGS=("${REMOTE_TAGS[@]}")
   else
-    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'focal', 'jammy' or 'remote'"
+    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'focal' or 'jammy'"
     exit 1
   fi
   local ARCH="$2"
@@ -101,10 +94,8 @@ publish_docker_manifest () {
     TAGS=("${FOCAL_TAGS[@]}")
   elif [[ "$FLAVOR" == "jammy" ]]; then
     TAGS=("${JAMMY_TAGS[@]}")
-  elif [[ "$FLAVOR" == "remote" ]]; then
-    TAGS=("${REMOTE_TAGS[@]}")
   else
-    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'focal', 'jammy' or 'remote'"
+    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'focal' or 'jammy'"
     exit 1
   fi
 
@@ -131,6 +122,3 @@ publish_docker_images_with_arch_suffix jammy amd64
 publish_docker_images_with_arch_suffix jammy arm64
 publish_docker_manifest jammy amd64 arm64
 
-publish_docker_images_with_arch_suffix remote amd64
-publish_docker_images_with_arch_suffix remote arm64
-publish_docker_manifest remote amd64 arm64

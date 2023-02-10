@@ -253,7 +253,6 @@ it('should work when page calls history API in beforeunload', async ({ page, ser
 });
 
 it('should fail when navigating to bad url', async ({ mode, page, browserName }) => {
-  it.skip(mode === 'service', 'baseURL is inherited from webServer in config');
   let error = null;
   await page.goto('asdfasdf').catch(e => error = e);
   if (browserName === 'chromium' || browserName === 'webkit')

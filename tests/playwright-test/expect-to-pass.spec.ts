@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should retry predicate', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -60,9 +60,9 @@ test('should respect timeout', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Timeout 100ms exceeded while waiting on the predicate');
-  expect(stripAnsi(result.output)).toContain('Received: 1');
-  expect(stripAnsi(result.output)).toContain(`
+  expect(result.output).toContain('Timeout 100ms exceeded while waiting on the predicate');
+  expect(result.output).toContain('Received: 1');
+  expect(result.output).toContain(`
   7 |         await test.expect(() => {
   `.trim());
 });
@@ -154,7 +154,7 @@ test('should use custom message', async ({ runInlineTest }) => {
       });
     `
   });
-  expect(stripAnsi(result.output)).toContain('Error: Custom message');
+  expect(result.output).toContain('Error: Custom message');
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 });
@@ -176,9 +176,9 @@ test('should swallow all soft errors inside toPass matcher, if successful', asyn
       });
     `
   });
-  expect(stripAnsi(result.output)).toContain('Received: "before-toPass"');
-  expect(stripAnsi(result.output)).toContain('Received: "after-toPass"');
-  expect(stripAnsi(result.output)).not.toContain('Received: "inside-toPass-1"');
+  expect(result.output).toContain('Received: "before-toPass"');
+  expect(result.output).toContain('Received: "after-toPass"');
+  expect(result.output).not.toContain('Received: "inside-toPass-1"');
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 });
@@ -214,9 +214,9 @@ test('should show only soft errors on last toPass pass', async ({ runInlineTest 
       });
     `
   });
-  expect(stripAnsi(result.output)).not.toContain('Received: "inside-toPass-1"');
-  expect(stripAnsi(result.output)).not.toContain('Received: "inside-toPass-2"');
-  expect(stripAnsi(result.output)).toContain('Received: "inside-toPass-3"');
+  expect(result.output).not.toContain('Received: "inside-toPass-1"');
+  expect(result.output).not.toContain('Received: "inside-toPass-2"');
+  expect(result.output).toContain('Received: "inside-toPass-3"');
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 });
@@ -233,8 +233,8 @@ test('should work with soft', async ({ runInlineTest }) => {
       });
     `
   });
-  expect(stripAnsi(result.output)).toContain('Received: 1');
-  expect(stripAnsi(result.output)).toContain('Received: 2');
+  expect(result.output).toContain('Received: 1');
+  expect(result.output).toContain('Received: 2');
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 });

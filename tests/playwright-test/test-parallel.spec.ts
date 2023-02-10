@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, countTimes, stripAnsi } from './playwright-test-fixtures';
+import { test, expect, countTimes } from './playwright-test-fixtures';
 
 test('test.describe.parallel should throw inside test.describe.serial', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -197,8 +197,8 @@ test('parallel mode should minimize running beforeAll/afterAll hooks', async ({ 
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(4);
-  expect(countTimes(stripAnsi(result.output), '%%beforeAll')).toBe(1);
-  expect(countTimes(stripAnsi(result.output), '%%afterAll')).toBe(1);
+  expect(countTimes(result.output, '%%beforeAll')).toBe(1);
+  expect(countTimes(result.output, '%%afterAll')).toBe(1);
 });
 
 test('parallel mode should minimize running beforeAll/afterAll hooks 2', async ({ runInlineTest }) => {
@@ -220,6 +220,6 @@ test('parallel mode should minimize running beforeAll/afterAll hooks 2', async (
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(4);
-  expect(countTimes(stripAnsi(result.output), '%%beforeAll')).toBe(2);
-  expect(countTimes(stripAnsi(result.output), '%%afterAll')).toBe(2);
+  expect(countTimes(result.output, '%%beforeAll')).toBe(2);
+  expect(countTimes(result.output, '%%afterAll')).toBe(2);
 });

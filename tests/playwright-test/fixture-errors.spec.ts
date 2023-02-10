@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, countTimes, stripAnsi } from './playwright-test-fixtures';
+import { test, expect, countTimes } from './playwright-test-fixtures';
 
 test('should handle fixture timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -129,7 +129,7 @@ test('should throw when using non-defined super worker fixture', async ({ runInl
   });
   expect(result.output).toContain(`Fixture "foo" references itself, but does not have a base implementation.`);
   expect(result.output).toContain('a.spec.ts:5');
-  expect(stripAnsi(result.output)).toContain('const test = pwt.test.extend');
+  expect(result.output).toContain('const test = pwt.test.extend');
   expect(result.exitCode).toBe(1);
 });
 
@@ -152,7 +152,7 @@ test('should throw when defining test fixture with the same name as a worker fix
   });
   expect(result.output).toContain(`Fixture "foo" has already been registered as a { scope: 'worker' } fixture defined in e.spec.ts:5:30.`);
   expect(result.output).toContain(`e.spec.ts:10`);
-  expect(stripAnsi(result.output)).toContain('const test2 = test1.extend');
+  expect(result.output).toContain('const test2 = test1.extend');
   expect(result.exitCode).toBe(1);
 });
 
@@ -175,7 +175,7 @@ test('should throw when defining worker fixture with the same name as a test fix
   });
   expect(result.output).toContain(`Fixture "foo" has already been registered as a { scope: 'test' } fixture defined in e.spec.ts:5:30.`);
   expect(result.output).toContain(`e.spec.ts:10`);
-  expect(stripAnsi(result.output)).toContain('const test2 = test1.extend');
+  expect(result.output).toContain('const test2 = test1.extend');
   expect(result.exitCode).toBe(1);
 });
 
@@ -258,7 +258,7 @@ test('should not reuse fixtures from one file in another one', async ({ runInlin
   });
   expect(result.output).toContain('Test has unknown parameter "foo".');
   expect(result.output).toContain('b.spec.ts:7');
-  expect(stripAnsi(result.output)).toContain(`test('test2', async ({foo}) => {})`);
+  expect(result.output).toContain(`test('test2', async ({foo}) => {})`);
 });
 
 test('should throw for cycle in two overrides', async ({ runInlineTest }) => {
@@ -315,7 +315,7 @@ test('should throw for unknown fixture parameter', async ({ runInlineTest }) => 
   });
   expect(result.output).toContain('Fixture "foo" has unknown parameter "bar".');
   expect(result.output).toContain('f.spec.ts:5');
-  expect(stripAnsi(result.output)).toContain('const test = pwt.test.extend');
+  expect(result.output).toContain('const test = pwt.test.extend');
   expect(result.exitCode).toBe(1);
 });
 
@@ -407,9 +407,9 @@ test('should give enough time for fixture teardown', async ({ runInlineTest }) =
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Test timeout of 1000ms exceeded while tearing down "fixture".');
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%teardown start',
-    '%%teardown finished',
+  expect(result.outputLines).toEqual([
+    'teardown start',
+    'teardown finished',
   ]);
 });
 
@@ -430,7 +430,7 @@ test('should not teardown when setup times out', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Test timeout of 1000ms exceeded while setting up "fixture".');
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+  expect(result.outputLines).toEqual([
   ]);
 });
 
@@ -450,8 +450,8 @@ test('should not report fixture teardown error twice', async ({ runInlineTest })
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Error: Oh my error');
-  expect(stripAnsi(result.output)).toContain(`throw new Error('Oh my error')`);
-  expect(countTimes(stripAnsi(result.output), 'Oh my error')).toBe(2);
+  expect(result.output).toContain(`throw new Error('Oh my error')`);
+  expect(countTimes(result.output, 'Oh my error')).toBe(2);
 });
 
 test('should not report fixture teardown timeout twice', async ({ runInlineTest }) => {
@@ -470,7 +470,7 @@ test('should not report fixture teardown timeout twice', async ({ runInlineTest 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Test timeout of 1000ms exceeded while tearing down "fixture".');
-  expect(stripAnsi(result.output)).not.toContain('pwt.test.extend'); // Should not point to the location.
+  expect(result.output).not.toContain('pwt.test.extend'); // Should not point to the location.
   // TODO: this should be "not.toContain" actually.
   expect(result.output).toContain('Worker teardown timeout of 1000ms exceeded while tearing down "fixture".');
 });
@@ -514,7 +514,7 @@ test('should report worker fixture teardown with debug info', async ({ runInline
   }, { reporter: 'list', timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(20);
-  expect(stripAnsi(result.output)).toContain([
+  expect(result.output).toContain([
     'Worker teardown timeout of 1000ms exceeded while tearing down "fixture".',
     '',
     'Failed worker ran 20 tests, last 10 tests were:',
@@ -578,8 +578,8 @@ test('should not run user fn when require fixture has failed', async ({ runInlin
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%foo',
+  expect(result.outputLines).toEqual([
+    'foo',
   ]);
 });
 
@@ -616,5 +616,5 @@ test('should provide helpful error message when digests do not match', async ({ 
   }, { workers: 1 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Playwright detected inconsistent test.use() options.');
+  expect(result.output).toContain('Playwright detected inconsistent test.use() options.');
 });

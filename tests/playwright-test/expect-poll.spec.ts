@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should poll predicate', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -78,9 +78,9 @@ test('should respect timeout', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Timeout 100ms exceeded while waiting on the predicate');
-  expect(stripAnsi(result.output)).toContain('Received: false');
-  expect(stripAnsi(result.output)).toContain(`
+  expect(result.output).toContain('Timeout 100ms exceeded while waiting on the predicate');
+  expect(result.output).toContain('Received: false');
+  expect(result.output).toContain(`
   7 |         await test.expect.poll(() => false, { timeout: 100 }).
   `.trim());
 });
@@ -95,7 +95,7 @@ test('should fail when passed in non-function', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Error: `expect.poll()` accepts only function as a first argument');
+  expect(result.output).toContain('Error: `expect.poll()` accepts only function as a first argument');
 });
 
 test('should fail when used with web-first assertion', async ({ runInlineTest }) => {
@@ -108,7 +108,7 @@ test('should fail when used with web-first assertion', async ({ runInlineTest })
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Error: `expect.poll()` does not support "toHaveText" matcher');
+  expect(result.output).toContain('Error: `expect.poll()` does not support "toHaveText" matcher');
 });
 
 test('should time out when running infinite predicate', async ({ runInlineTest }) => {
@@ -121,7 +121,7 @@ test('should time out when running infinite predicate', async ({ runInlineTest }
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Timeout 100ms exceeded');
+  expect(result.output).toContain('Timeout 100ms exceeded');
 });
 
 test('should show error that is thrown from predicate', async ({ runInlineTest }) => {
@@ -134,7 +134,7 @@ test('should show error that is thrown from predicate', async ({ runInlineTest }
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('foo bar baz');
+  expect(result.output).toContain('foo bar baz');
 });
 
 test('should not retry predicate that threw an error', async ({ runInlineTest }) => {
@@ -152,7 +152,7 @@ test('should not retry predicate that threw an error', async ({ runInlineTest })
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('foo bar baz');
+  expect(result.output).toContain('foo bar baz');
 });
 
 test('should support .not predicate', async ({ runInlineTest }) => {

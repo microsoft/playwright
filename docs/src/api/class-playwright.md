@@ -240,3 +240,23 @@ Selectors can be used to install custom selector engines. See
 - type: <[BrowserType]>
 
 This object can be used to launch or connect to WebKit, returning instances of [Browser].
+
+## async method: Playwright.stop
+* since: v1.8
+* langs: python
+
+Terminates this instance of Playwright in case it was created bypassing the Python context manager. This is useful in REPL applications.
+
+```py
+>>> from playwright.sync_api import sync_playwright
+
+>>> playwright = sync_playwright().start()
+
+>>> browser = playwright.chromium.launch()
+>>> page = browser.new_page()
+>>> page.goto("http://whatsmyuseragent.org/")
+>>> page.screenshot(path="example.png")
+>>> browser.close()
+
+>>> playwright.stop()
+```

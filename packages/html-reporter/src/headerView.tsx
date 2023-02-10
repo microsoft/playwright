@@ -29,7 +29,8 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
   filterText: string,
   setFilterText: (filterText: string) => void,
   projectNames: string[],
-}>> = ({ stats, filterText, setFilterText, projectNames }) => {
+  reportLoaderError?: string,
+}>> = ({ stats, filterText, setFilterText, projectNames, reportLoaderError }) => {
   React.useEffect(() => {
     (async () => {
       window.addEventListener('popstate', () => {
@@ -57,9 +58,10 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
         }}></input>
       </form>
     </div>
-    <div className='pt-2'>
-      {projectNames.length === 1 && <span data-testid="project-name" style={{ color: 'var(--color-fg-subtle)', float: 'left' }}>Project: {projectNames[0]}</span>}
-      <span data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)', paddingRight: '10px', float: 'right' }}>Total time: {msToString(stats.duration)}</span>
+    {reportLoaderError && <div className='header-view-status-line pt-2' data-testid='loader-error' style={{ color: 'var(--color-danger-emphasis)', textAlign: 'right' }}>{reportLoaderError}</div>}
+    <div className='header-view-status-line pt-2'>
+      {projectNames.length === 1 && !!projectNames[0] && <span data-testid="project-name" style={{ color: 'var(--color-fg-subtle)', float: 'left' }}>Project: {projectNames[0]}</span>}
+      <span data-testid="overall-duration" style={{ color: 'var(--color-fg-subtle)', float: 'right' }}>Total time: {msToString(stats.duration)}</span>
     </div>
   </>);
 };

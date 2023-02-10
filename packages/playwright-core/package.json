@@ -20,7 +20,6 @@
     },
     "./cli": "./cli.js",
     "./package.json": "./package.json",
-    "./lib/grid/gridServer": "./lib/grid/gridServer.js",
     "./lib/outofprocess": "./lib/outofprocess.js",
     "./lib/image_tools/stats": "./lib/image_tools/stats.js",
     "./lib/image_tools/compare": "./lib/image_tools/compare.js",

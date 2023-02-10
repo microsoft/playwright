@@ -1075,8 +1075,7 @@ it('ensure events are dispatched in the individual tasks', async ({ page, browse
   // Click on the inner div element
   await page.locator('#inner').click();
 
-  // await new Promise(() => {});
-  expect(messages).toEqual([
+  await expect.poll(() => messages).toEqual([
     'click inner',
     'promise inner',
     'click outer',

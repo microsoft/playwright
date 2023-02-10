@@ -15,28 +15,33 @@
  */
 
 import type * as channels from '@protocol/channels';
+import { eventsHelper } from 'playwright-core/lib/utils';
+import type { RegisteredListener } from 'playwright-core/lib/utils/eventsHelper';
 import { DebugController } from '../debugController';
 import type { DispatcherConnection, RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 
 export class DebugControllerDispatcher extends Dispatcher<DebugController, channels.DebugControllerChannel, RootDispatcher> implements channels.DebugControllerChannel {
   _type_DebugController;
+  private _listeners: RegisteredListener[];
 
   constructor(connection: DispatcherConnection, debugController: DebugController) {
     super(connection, debugController, 'DebugController', {});
     this._type_DebugController = true;
-    this._object.on(DebugController.Events.StateChanged, params => {
-      this._dispatchEvent('stateChanged', params);
-    });
-    this._object.on(DebugController.Events.InspectRequested, ({ selector, locator }) => {
-      this._dispatchEvent('inspectRequested', { selector, locator });
-    });
-    this._object.on(DebugController.Events.SourceChanged, ({ text, header, footer, actions }) => {
-      this._dispatchEvent('sourceChanged', ({ text, header, footer, actions }));
-    });
-    this._object.on(DebugController.Events.Paused, ({ paused }) => {
-      this._dispatchEvent('paused', ({ paused }));
-    });
+    this._listeners = [
+      eventsHelper.addEventListener(this._object, DebugController.Events.StateChanged, params => {
+        this._dispatchEvent('stateChanged', params);
+      }),
+      eventsHelper.addEventListener(this._object, DebugController.Events.InspectRequested, ({ selector, locator }) => {
+        this._dispatchEvent('inspectRequested', { selector, locator });
+      }),
+      eventsHelper.addEventListener(this._object, DebugController.Events.SourceChanged, ({ text, header, footer, actions }) => {
+        this._dispatchEvent('sourceChanged', ({ text, header, footer, actions }));
+      }),
+      eventsHelper.addEventListener(this._object, DebugController.Events.Paused, ({ paused }) => {
+        this._dispatchEvent('paused', ({ paused }));
+      })
+    ];
   }
 
   async initialize(params: channels.DebugControllerInitializeParams) {
@@ -80,6 +85,7 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
   }
 
   override _onDispose() {
+    eventsHelper.removeEventListeners(this._listeners);
     this._object.dispose();
   }
 }

@@ -221,7 +221,7 @@ test('should add dot in addition to file json with CI', async ({ runInlineTest }
     `,
   }, { reporter: '' }, { CI: '1' });
   expect(result.exitCode).toBe(0);
-  expect(stripAnsi(result.output)).toContain('·');
+  expect(result.output).toContain('·');
   expect(fs.existsSync(testInfo.outputPath('a.json'))).toBeTruthy();
 });
 
@@ -238,7 +238,7 @@ test('should add line in addition to file json without CI', async ({ runInlineTe
     `,
   }, { reporter: '' }, { PW_TEST_DEBUG_REPORTERS: '1' });
   expect(result.exitCode).toBe(0);
-  expect(stripAnsi(result.output)).toContain('[1/1] a.test.js:6:7 › one');
+  expect(result.output).toContain('[1/1] a.test.js:6:7 › one');
   expect(fs.existsSync(testInfo.outputPath('a.json'))).toBeTruthy();
 });
 test('should have starting time in results', async ({ runInlineTest }, testInfo) => {

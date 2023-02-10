@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
-import { test, expect, stripAnsi, createImage, paintBlackPixels } from './playwright-test-fixtures';
+import { test, expect, createImage, paintBlackPixels } from './playwright-test-fixtures';
 import { comparePNGs } from '../config/comparator';
 
 test.describe.configure({ mode: 'parallel' });
@@ -48,9 +48,9 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded`);
-  expect(stripAnsi(result.output)).toContain(`expect.toHaveScreenshot with timeout 2000ms`);
-  expect(stripAnsi(result.output)).toContain(`generating new stable screenshot expectation`);
+  expect(result.output).toContain(`Timeout 2000ms exceeded`);
+  expect(result.output).toContain(`expect.toHaveScreenshot with timeout 2000ms`);
+  expect(result.output).toContain(`generating new stable screenshot expectation`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-previous.png'))).toBe(true);
@@ -128,7 +128,7 @@ test('should fail with proper error when unsupported argument is given', async (
     `
   }, { 'update-snapshots': true });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Expected options.clip.width not to be 0`);
+  expect(result.output).toContain(`Expected options.clip.width not to be 0`);
 });
 
 test('should have scale:css by default', async ({ runInlineTest }, testInfo) => {
@@ -198,13 +198,13 @@ test('should report toHaveScreenshot step with expectation name in title', async
   }, { 'reporter': '', 'workers': 1, 'update-snapshots': true });
 
   expect(result.exitCode).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    `%% end browserContext.newPage`,
-    `%% end Before Hooks`,
-    `%% end expect.toHaveScreenshot(foo.png)`,
-    `%% end expect.toHaveScreenshot(is-a-test-1.png)`,
-    `%% end browserContext.close`,
-    `%% end After Hooks`,
+  expect(result.outputLines).toEqual([
+    `end browserContext.newPage`,
+    `end Before Hooks`,
+    `end expect.toHaveScreenshot(foo.png)`,
+    `end expect.toHaveScreenshot(is-a-test-1.png)`,
+    `end browserContext.close`,
+    `end After Hooks`,
   ]);
 });
 
@@ -319,8 +319,8 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded`);
-  expect(stripAnsi(result.output)).toContain(`expect.toHaveScreenshot with timeout 2000ms`);
+  expect(result.output).toContain(`Timeout 2000ms exceeded`);
+  expect(result.output).toContain(`expect.toHaveScreenshot with timeout 2000ms`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-previous.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
@@ -347,8 +347,8 @@ test('should fail to screenshot an element that keeps moving', async ({ runInlin
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded`);
-  expect(stripAnsi(result.output)).toContain(`element is not stable - waiting`);
+  expect(result.output).toContain(`Timeout 2000ms exceeded`);
+  expect(result.output).toContain(`element is not stable - waiting`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(false);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-diff.png'))).toBe(false);
@@ -427,8 +427,8 @@ test('should fail when screenshot is different size', async ({ runInlineTest }) 
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`verifying given screenshot expectation`);
-  expect(stripAnsi(result.output)).toContain(`captured a stable screenshot`);
+  expect(result.output).toContain(`verifying given screenshot expectation`);
+  expect(result.output).toContain(`captured a stable screenshot`);
   expect(result.output).toContain('Expected an image 22px by 33px, received 1280px by 720px.');
 });
 
@@ -444,7 +444,7 @@ test('should fail when given non-png snapshot name', async ({ runInlineTest }) =
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Screenshot name "snapshot.jpeg" must have '.png' extension`);
+  expect(result.output).toContain(`Screenshot name "snapshot.jpeg" must have '.png' extension`);
 });
 
 test('should fail when given buffer', async ({ runInlineTest }) => {
@@ -457,7 +457,7 @@ test('should fail when given buffer', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`toHaveScreenshot can be only used with Page or Locator objects`);
+  expect(result.output).toContain(`toHaveScreenshot can be only used with Page or Locator objects`);
 });
 
 test('should fail when screenshot is different pixels', async ({ runInlineTest }) => {
@@ -495,7 +495,7 @@ test('doesn\'t create comparison artifacts in an output folder for passed negate
   });
 
   expect(result.exitCode).toBe(0);
-  const outputText = stripAnsi(result.output);
+  const outputText = result.output;
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.png');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.png');
   expect(outputText).not.toContain(`Expected: ${expectedSnapshotArtifactPath}`);
@@ -565,7 +565,7 @@ test('should write missing expectations locally twice and continue', async ({ ru
 
   expect(result.output).toContain('Here we are!');
 
-  const stackLines = stripAnsi(result.output).split('\n').filter(line => line.includes('    at ')).filter(line => !line.includes(testInfo.outputPath()));
+  const stackLines = result.output.split('\n').filter(line => line.includes('    at ')).filter(line => !line.includes(testInfo.outputPath()));
   expect(result.output).toContain('a.spec.js:5');
   expect(stackLines.length).toBe(0);
 });
@@ -960,7 +960,7 @@ test('should attach expected/actual/diff when sizes are different', async ({ run
   });
 
   expect(result.exitCode).toBe(1);
-  const outputText = stripAnsi(result.output);
+  const outputText = result.output;
   expect(outputText).toContain('Expected an image 2px by 2px, received 1280px by 720px.');
   expect(outputText).toContain('4 pixels (ratio 0.01 of all image pixels) are different.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];

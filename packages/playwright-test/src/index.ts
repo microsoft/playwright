@@ -20,7 +20,7 @@ import type { APIRequestContext, BrowserContext, BrowserContextOptions, LaunchOp
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, removeFolders, addStackIgnoreFilter } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, TraceMode, VideoMode } from '../types/test';
-import type { TestInfoImpl } from './common/testInfo';
+import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import { type ContextReuseMode } from './common/types';
 export { expect } from './matchers/expect';
@@ -517,10 +517,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _contextReuseMode: process.env.PW_TEST_REUSE_CONTEXT === 'when-possible' ? 'when-possible' : (process.env.PW_TEST_REUSE_CONTEXT ? 'force' : 'none'),
 
-  _reuseContext: async ({ video, _contextReuseMode }, use, testInfo) => {
+  _reuseContext: [async ({ video, _contextReuseMode }, use, testInfo) => {
     const reuse = _contextReuseMode === 'force' || (_contextReuseMode === 'when-possible' && !shouldCaptureVideo(normalizeVideoMode(video), testInfo));
     await use(reuse);
-  },
+  }, { scope: 'test',  _title: 'context' } as any],
 
   context: async ({ playwright, browser, _reuseContext, _contextFactory }, use, testInfo) => {
     if (!_reuseContext) {

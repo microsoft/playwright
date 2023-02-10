@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi, expectTestHelper } from './playwright-test-fixtures';
+import { test, expect, expectTestHelper } from './playwright-test-fixtures';
 
 test('test modifiers should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -443,10 +443,10 @@ test('test.skip with worker fixtures only should skip before hooks and tests', a
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([]);
   expect(result.report.suites[0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
   expect(result.report.suites[0].suites![0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeEach',
-    '%%passed',
-    '%%skip',
+  expect(result.outputLines).toEqual([
+    'beforeEach',
+    'passed',
+    'skip',
   ]);
 });
 
@@ -509,7 +509,7 @@ test('modifier timeout should be reported', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('"skip" modifier timeout of 2000ms exceeded.');
-  expect(stripAnsi(result.output)).toContain('6 |       test.skip(async () => new Promise(() => {}));');
+  expect(result.output).toContain('6 |       test.skip(async () => new Promise(() => {}));');
 });
 
 test('should not run hooks if modifier throws', async ({ runInlineTest }) => {
@@ -539,8 +539,8 @@ test('should not run hooks if modifier throws', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%modifier',
+  expect(result.outputLines).toEqual([
+    'modifier',
   ]);
 });
 
@@ -576,21 +576,21 @@ test('should report skipped tests in-order with correct properties', async ({ ru
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%begin-test1',
-    '%%end-test1',
-    '%%expectedStatus-passed',
-    '%%timeout-1234',
-    '%%retries-3',
-    '%%begin-test2',
-    '%%end-test2',
-    '%%expectedStatus-skipped',
-    '%%timeout-1234',
-    '%%retries-3',
-    '%%begin-test3',
-    '%%end-test3',
-    '%%expectedStatus-passed',
-    '%%timeout-1234',
-    '%%retries-3',
+  expect(result.outputLines).toEqual([
+    'begin-test1',
+    'end-test1',
+    'expectedStatus-passed',
+    'timeout-1234',
+    'retries-3',
+    'begin-test2',
+    'end-test2',
+    'expectedStatus-skipped',
+    'timeout-1234',
+    'retries-3',
+    'begin-test3',
+    'end-test3',
+    'expectedStatus-passed',
+    'timeout-1234',
+    'retries-3',
   ]);
 });

@@ -19,4 +19,5 @@ import type { HTMLReport } from './types';
 export interface LoadedReport {
   json(): HTMLReport;
   entry(name: string): Promise<Object | undefined>;
+  loaderError(): string | undefined;
 }
