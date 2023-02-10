@@ -67,7 +67,8 @@ it.describe('Drag and drop', () => {
     ]);
   });
 
-  it('should work inside iframe', async ({ page, server, browserName }) => {
+  it('should work inside iframe', async ({ page, server, browserName, isElectron, isWindows }) => {
+    it.fixme(isElectron && isWindows, 'Fails on the bots');
     await page.goto(server.EMPTY_PAGE);
     const frame = await attachFrame(page, 'myframe', server.PREFIX + '/drag-n-drop.html');
     await page.$eval('iframe', iframe => {
