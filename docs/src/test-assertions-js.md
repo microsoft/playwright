@@ -31,6 +31,7 @@ By default, the timeout for assertions is set to 5 seconds. Learn more about [va
 | [`method: LocatorAssertions.toBeEnabled`] | Element is enabled |
 | [`method: LocatorAssertions.toBeFocused`] | Element is focused |
 | [`method: LocatorAssertions.toBeHidden`] | Element is not visible |
+| [`method: LocatorAssertions.toBeInViewport`] | Element intersects viewport |
 | [`method: LocatorAssertions.toBeVisible`] | Element is visible |
 | [`method: LocatorAssertions.toContainText`] | Element contains text |
 | [`method: LocatorAssertions.toHaveAttribute`] | Element has a DOM attribute |
