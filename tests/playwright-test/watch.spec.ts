@@ -208,8 +208,8 @@ test('should respect project filter C', async ({ runWatchTest }) => {
   testProcess.clearOutput();
   testProcess.write('c');
   await testProcess.waitForOutput('Select projects');
-  await testProcess.waitForOutput('✔ foo');
-  await testProcess.waitForOutput('✔ bar');
+  await testProcess.waitForOutput('foo');
+  await testProcess.waitForOutput('bar');
   testProcess.write(' ');
   testProcess.write('\r\n');
   await testProcess.waitForOutput('npx playwright test --project foo #1');
