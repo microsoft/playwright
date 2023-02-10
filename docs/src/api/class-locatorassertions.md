@@ -753,6 +753,9 @@ this number. Defaults to `0`.
 ### option: LocatorAssertions.toBeInViewport.timeout = %%-js-assertions-timeout-%%
 * since: v1.31
 
+### option: LocatorAssertions.toBeInViewport.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.31
+
 ## async method: LocatorAssertions.toBeVisible
 * since: v1.20
 * langs:
