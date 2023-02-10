@@ -57,7 +57,7 @@ type TSCResult = {
 type Files = { [key: string]: string | Buffer };
 type Params = { [key: string]: string | number | boolean | string[] };
 
-async function writeFiles(testInfo: TestInfo, files: Files) {
+async function writeFiles(testInfo: TestInfo, files: Files, initial: boolean) {
   const baseDir = testInfo.outputPath();
 
   const headerJS = `
@@ -71,7 +71,7 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
   `;
 
   const hasConfig = Object.keys(files).some(name => name.includes('.config.'));
-  if (!hasConfig) {
+  if (initial && !hasConfig) {
     files = {
       ...files,
       'playwright.config.ts': `
@@ -79,7 +79,7 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
       `,
     };
   }
-  if (!Object.keys(files).some(name => name.includes('package.json'))) {
+  if (initial && !Object.keys(files).some(name => name.includes('package.json'))) {
     files = {
       ...files,
       'package.json': `{ "name": "test-project" }`,
@@ -280,13 +280,13 @@ export const test = base
     .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures)
     .extend<Fixtures>({
       writeFiles: async ({}, use, testInfo) => {
-        await use(files => writeFiles(testInfo, files));
+        await use(files => writeFiles(testInfo, files, false));
       },
 
       runInlineTest: async ({ childProcess }, use, testInfo: TestInfo) => {
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         await use(async (files: Files, params: Params = {}, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => {
-          const baseDir = await writeFiles(testInfo, files);
+          const baseDir = await writeFiles(testInfo, files, true);
           if (beforeRunPlaywrightTest)
             await beforeRunPlaywrightTest({ baseDir });
           return await runPlaywrightTest(childProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
@@ -298,7 +298,7 @@ export const test = base
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         let testProcess: TestChildProcess | undefined;
         await use(async (files: Files, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
-          const baseDir = await writeFiles(testInfo, files);
+          const baseDir = await writeFiles(testInfo, files, true);
           testProcess = watchPlaywrightTest(childProcess, baseDir, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
           return testProcess;
         });
@@ -308,14 +308,14 @@ export const test = base
 
       runCommand: async ({ childProcess }, use, testInfo: TestInfo) => {
         await use(async (files: Files, args: string[]) => {
-          const baseDir = await writeFiles(testInfo, files);
+          const baseDir = await writeFiles(testInfo, files, true);
           return await runPlaywrightCommand(childProcess, baseDir, args, { });
         });
       },
 
       runTSC: async ({ childProcess }, use, testInfo) => {
         await use(async files => {
-          const baseDir = await writeFiles(testInfo, { 'tsconfig.json': JSON.stringify(TSCONFIG), ...files });
+          const baseDir = await writeFiles(testInfo, { 'tsconfig.json': JSON.stringify(TSCONFIG), ...files }, true);
           const tsc = childProcess({
             command: ['npx', 'tsc', '-p', baseDir],
             cwd: baseDir,
