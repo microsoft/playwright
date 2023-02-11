@@ -300,6 +300,9 @@ class NetworkRequest {
     }
     if (!credentials)
       return false;
+    const hostname = pageNetwork._target.browserContext().httpCredentials.hostname;
+    if (hostname && aChannel.URI.host.toLowerCase() !== hostname.toLowerCase())
+      return false;
     authInfo.username = credentials.username;
     authInfo.password = credentials.password;
     // This will produce a new request with respective auth header set.

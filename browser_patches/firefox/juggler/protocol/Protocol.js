@@ -188,6 +188,7 @@ networkTypes.HTTPHeader = {
 networkTypes.HTTPCredentials = {
   username: t.String,
   password: t.String,
+  hostname: t.Optional(t.String),
 };
 
 networkTypes.SecurityDetails = {
