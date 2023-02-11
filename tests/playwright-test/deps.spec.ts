@@ -261,3 +261,46 @@ test('should report circular dependencies', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Circular dependency detected between projects.');
 });
+
+test('should run dependency in each shard', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /setup.ts/ },
+          { name: 'chromium', dependencies: ['setup'] },
+        ],
+      };
+    `,
+    'setup.ts': `
+      const { test } = pwt;
+      test('setup', async ({}) => {
+        console.log('\\n%%setup');
+      });
+    `,
+    'test1.spec.ts': `
+      const { test } = pwt;
+      test('test1', async ({}) => {
+        console.log('\\n%%test1');
+      });
+    `,
+    'test2.spec.ts': `
+      const { test } = pwt;
+      test('test2', async ({}) => {
+        console.log('\\n%%test2');
+      });
+    `,
+  };
+  {
+    const result = await runInlineTest(files, { workers: 1, shard: '1/2' });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(2);
+    expect(result.outputLines).toEqual(['setup', 'test1']);
+  }
+  {
+    const result = await runInlineTest(files, { workers: 1, shard: '2/2' });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(2);
+    expect(result.outputLines).toEqual(['setup', 'test2']);
+  }
+});

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { JSONReport, JSONReportSuite, JSONReportTest, JSONReportTestResult } from '@playwright/test/reporter';
+import type { JSONReport, JSONReportSpec, JSONReportSuite, JSONReportTest, JSONReportTestResult } from '@playwright/test/reporter';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -267,12 +267,10 @@ type RunOptions = {
 };
 type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
-  runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => Promise<RunResult>;
+  runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<RunResult>;
   runWatchTest: (files: Files, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<TestChildProcess>;
   runTSC: (files: Files) => Promise<TSCResult>;
   nodeVersion: { major: number, minor: number, patch: number };
-  runGroups: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<{ timeline: { titlePath: string[], event: 'begin' | 'end' }[] } & RunResult>;
-  runCommand: (files: Files, args: string[]) => Promise<CliRunResult>;
 };
 
 export const test = base
@@ -285,10 +283,8 @@ export const test = base
 
       runInlineTest: async ({ childProcess }, use, testInfo: TestInfo) => {
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
-        await use(async (files: Files, params: Params = {}, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => {
+        await use(async (files: Files, params: Params = {}, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
-          if (beforeRunPlaywrightTest)
-            await beforeRunPlaywrightTest({ baseDir });
           return await runPlaywrightTest(childProcess, baseDir, params, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
         });
         await removeFolderAsync(cacheDir);
@@ -304,13 +300,6 @@ export const test = base
         });
         await testProcess!.close();
         await removeFolderAsync(cacheDir);
-      },
-
-      runCommand: async ({ childProcess }, use, testInfo: TestInfo) => {
-        await use(async (files: Files, args: string[]) => {
-          const baseDir = await writeFiles(testInfo, files, true);
-          return await runPlaywrightCommand(childProcess, baseDir, args, { });
-        });
       },
 
       runTSC: async ({ childProcess }, use, testInfo) => {
@@ -329,43 +318,6 @@ export const test = base
       nodeVersion: async ({}, use) => {
         const [major, minor, patch] = process.versions.node.split('.');
         await use({ major: +major, minor: +minor, patch: +patch });
-      },
-
-      runGroups: async ({ runInlineTest }, use, testInfo) => {
-        const timelinePath = testInfo.outputPath('timeline.json');
-        await use(async (files, params, env, options) => {
-          const result = await runInlineTest({
-            ...files,
-            'reporter.ts': `
-              import { Reporter, TestCase } from '@playwright/test/reporter';
-              import fs from 'fs';
-              import path from 'path';
-              class TimelineReporter implements Reporter {
-                private _timeline: {titlePath: string, event: 'begin' | 'end'}[] = [];
-                onTestBegin(test: TestCase) {
-                  this._timeline.push({ titlePath: test.titlePath(), event: 'begin' });
-                }
-                onTestEnd(test: TestCase) {
-                  this._timeline.push({ titlePath: test.titlePath(), event: 'end' });
-                }
-                onEnd() {
-                  fs.writeFileSync(path.join(${JSON.stringify(timelinePath)}), JSON.stringify(this._timeline, null, 2));
-                }
-              }
-              export default TimelineReporter;
-            `
-          }, { ...params, reporter: 'list,json,./reporter.ts', workers: 2 }, env, options);
-
-          let timeline;
-          try {
-            timeline = JSON.parse((await fs.promises.readFile(timelinePath, 'utf8')).toString());
-          } catch (e) {
-          }
-          return {
-            ...result,
-            timeline
-          };
-        });
       },
     });
 
@@ -430,11 +382,11 @@ export function paintBlackPixels(image: Buffer, blackPixelsCount: number): Buffe
   return PNG.sync.write(png);
 }
 
-export function allTests(result: RunResult) {
-  const tests: { title: string; expectedStatus: JSONReportTest['expectedStatus'], actualStatus: JSONReportTest['status'], annotations: string[] }[] = [];
+function filterTests(result: RunResult, filter: (spec: JSONReportSpec) => boolean) {
+  const tests: JSONReportTest[] = [];
   const visit = (suite: JSONReportSuite) => {
     for (const spec of suite.specs)
-      spec.tests.forEach(t => tests.push({ title: spec.title, expectedStatus: t.expectedStatus, actualStatus: t.status, annotations: t.annotations.map(a => a.type)  }));
+      spec.tests.forEach(t => filter(spec) && tests.push(t));
     suite.suites?.forEach(s => visit(s));
   };
   visit(result.report.suites[0]);
@@ -442,12 +394,12 @@ export function allTests(result: RunResult) {
 }
 
 export function expectTestHelper(result: RunResult) {
-  return (title: string, expectedStatus: string, status: string, annotations: any) => {
-    const tests = allTests(result).filter(t => t.title === title);
+  return (title: string, expectedStatus: string, status: string, annotations: string[]) => {
+    const tests = filterTests(result, s => s.title === title);
     for (const test of tests) {
       expect(test.expectedStatus, `title: ${title}`).toBe(expectedStatus);
-      expect(test.actualStatus, `title: ${title}`).toBe(status);
-      expect(test.annotations, `title: ${title}`).toEqual(annotations);
+      expect(test.status, `title: ${title}`).toBe(status);
+      expect(test.annotations.map(a => a.type), `title: ${title}`).toEqual(annotations);
     }
   };
 }
