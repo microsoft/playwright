@@ -153,7 +153,7 @@ test('render retries', async ({ runInlineTest }) => {
     `,
   }, { reporter: 'list', retries: '1' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
   const text = result.output;
-  const lines = text.split('\n').filter(l => l.startsWith('0 :') || l.startsWith('1 :')).map(l => l.replace(/[\dm]+s/, 'XXms'));
+  const lines = text.split('\n').filter(l => l.startsWith('0 :') || l.startsWith('1 :')).map(l => l.replace(/\d+(\.\d+)?m?s/, 'XXms'));
 
   expect(lines).toEqual([
     `0 :      1 a.test.ts:6:7 › flaky`,

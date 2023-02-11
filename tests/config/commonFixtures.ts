@@ -32,6 +32,7 @@ export class TestChildProcess {
   params: TestChildParams;
   process: ChildProcess;
   output = '';
+  fullOutput = '';
   onOutput?: (chunk: string | Buffer) => void;
   exited: Promise<{ exitCode: number, signal: string | null }>;
   exitCode: Promise<number>;
@@ -60,6 +61,8 @@ export class TestChildProcess {
       this.output += String(chunk);
       if (process.env.PWTEST_DEBUG)
         process.stdout.write(String(chunk));
+      else
+        this.fullOutput += String(chunk);
       this.onOutput?.(chunk);
       for (const cb of this._outputCallbacks)
         cb();
@@ -140,7 +143,7 @@ export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
     if (testInfo.status !== 'passed' && testInfo.status !== 'skipped' && !process.env.PWTEST_DEBUG) {
       for (const process of processes) {
         console.log('====== ' + process.params.command.join(' '));
-        console.log(process.output);
+        console.log(stripAnsi(process.fullOutput));
         console.log('=========================================');
       }
     }
