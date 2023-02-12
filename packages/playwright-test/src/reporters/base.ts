@@ -420,7 +420,7 @@ export function separator(text: string = ''): string {
   if (text)
     text += ' ';
   const columns = Math.min(100, process.stdout?.columns || 100);
-  return text + colors.gray('─'.repeat(Math.max(0, columns - text.length)));
+  return text + colors.dim('─'.repeat(Math.max(0, columns - text.length)));
 }
 
 function indent(lines: string, tab: string) {
