@@ -356,9 +356,10 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
 function collectViteModuleDependencies(context: PluginContext, id: string, deps: Set<string>) {
   if (!path.isAbsolute(id))
     return;
-  if (deps.has(id))
+  const normalizedId = path.normalize(id);
+  if (deps.has(normalizedId))
     return;
-  deps.add(id);
+  deps.add(normalizedId);
   const module = context.getModuleInfo(id);
   for (const importedId of module?.importedIds || [])
     collectViteModuleDependencies(context, importedId, deps);
