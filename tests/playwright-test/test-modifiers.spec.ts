@@ -19,7 +19,8 @@ import { test, expect, expectTestHelper } from './playwright-test-fixtures';
 test('test modifiers should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      export const test = base.extend({
         foo: true,
       });
     `,
@@ -134,7 +135,7 @@ test.describe('test modifier annotations', () => {
   test('should work', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
 
         test.describe('suite1', () => {
           test('no marker', () => {});
@@ -163,7 +164,7 @@ test.describe('test modifier annotations', () => {
   test('should work alongside top-level modifier', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
 
         test.fixme();
 
@@ -194,7 +195,7 @@ test.describe('test modifier annotations', () => {
   test('should work alongside top-level modifier wrapper-style', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
 
         test.describe.skip('suite1', () => {
           test('no marker', () => {});
@@ -223,7 +224,7 @@ test.describe('test modifier annotations', () => {
   test('should work with nesting', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
 
         test.fixme();
 
@@ -253,7 +254,7 @@ test.describe('test modifier annotations', () => {
   test('should work with only', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
 
         test.describe.only("suite", () => {
           test.skip('focused skip by suite', () => {});
@@ -277,7 +278,7 @@ test.describe('test modifier annotations', () => {
   test('should not multiple on retry', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('retry', () => {
           test.info().annotations.push({ type: 'example' });
           expect(1).toBe(2);
@@ -294,7 +295,7 @@ test.describe('test modifier annotations', () => {
   test('should not multiply on repeat-each', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('retry', () => {
           test.info().annotations.push({ type: 'example' });
         });
@@ -311,7 +312,8 @@ test.describe('test modifier annotations', () => {
 test('test modifiers should check types', async ({ runTSC }) => {
   const result = await runTSC({
     'helper.ts': `
-      export const test = pwt.test.extend<{ foo: boolean }>({
+      import { test as base, expect } from '@playwright/test';
+      export const test = base.extend<{ foo: boolean }>({
         foo: async ({}, use, testInfo) => {
           testInfo.skip();
           testInfo.fixme(false);
@@ -377,7 +379,8 @@ test('test modifiers should check types', async ({ runTSC }) => {
 test('should skip inside fixture', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         foo: async ({}, run, testInfo) => {
           testInfo.skip(true, 'reason');
           await run();
@@ -396,8 +399,9 @@ test('should skip inside fixture', async ({ runInlineTest }) => {
 test('modifier with a function should throw in the test', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      pwt.test('skipped', async ({}) => {
-        pwt.test.skip(() => true);
+      import { test, expect } from '@playwright/test';
+      test('skipped', async ({}) => {
+        test.skip(() => true);
       });
     `,
   });
@@ -408,7 +412,8 @@ test('modifier with a function should throw in the test', async ({ runInlineTest
 test('test.skip with worker fixtures only should skip before hooks and tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         foo: [ 'foo', { scope: 'worker' }],
       });
       const logs = [];
@@ -453,7 +458,7 @@ test('test.skip with worker fixtures only should skip before hooks and tests', a
 test('test.skip without a callback in describe block should skip hooks', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       const logs = [];
       test.beforeAll(() => {
         console.log('%%beforeAll');
@@ -482,7 +487,7 @@ test('test.skip without a callback in describe block should skip hooks', async (
 test('test.skip should not define a skipped test inside another test', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       const logs = [];
       test('passes', () => {
         test.skip('foo', () => {
@@ -500,7 +505,7 @@ test('test.skip should not define a skipped test inside another test', async ({ 
 test('modifier timeout should be reported', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.skip(async () => new Promise(() => {}));
       test('fails', () => {
       });
@@ -509,13 +514,13 @@ test('modifier timeout should be reported', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('"skip" modifier timeout of 2000ms exceeded.');
-  expect(result.output).toContain('6 |       test.skip(async () => new Promise(() => {}));');
+  expect(result.output).toContain('3 |       test.skip(async () => new Promise(() => {}));');
 });
 
 test('should not run hooks if modifier throws', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.skip(() => {
         console.log('%%modifier');
         throw new Error('Oh my');
@@ -564,7 +569,7 @@ test('should report skipped tests in-order with correct properties', async ({ ru
       module.exports = { reporter: [['./reporter.ts']] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.configure({ timeout: 1234, retries: 3 });
       test('test1', async ({}) => {
       });

@@ -20,7 +20,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('render expected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}) => {
         expect(1).toBe(1);
       });
@@ -33,7 +33,7 @@ test('render expected', async ({ runInlineTest }) => {
 test('render unexpected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}) => {
         expect(1).toBe(0);
       });
@@ -46,7 +46,7 @@ test('render unexpected', async ({ runInlineTest }) => {
 test('render unexpected after retry', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}) => {
         expect(1).toBe(0);
       });
@@ -61,7 +61,7 @@ test('render unexpected after retry', async ({ runInlineTest }) => {
 test('render flaky', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}, testInfo) => {
         expect(testInfo.retry).toBe(3);
       });
@@ -81,7 +81,7 @@ test('should work from config', async ({ runInlineTest }) => {
       module.exports = { reporter: 'dot' };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}) => {
         expect(1).toBe(1);
       });
@@ -94,7 +94,7 @@ test('should work from config', async ({ runInlineTest }) => {
 test('render 243 tests in rows by 80', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       for (let i = 0; i < 243; i++) {
         test('test' + i, () => {});
       }

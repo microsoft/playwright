@@ -143,7 +143,7 @@ export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
     if (testInfo.status !== 'passed' && testInfo.status !== 'skipped' && !process.env.PWTEST_DEBUG) {
       for (const process of processes) {
         console.log('====== ' + process.params.command.join(' '));
-        console.log(stripAnsi(process.fullOutput));
+        console.log(process.fullOutput.replace(/\x1Bc/g, ''));
         console.log('=========================================');
       }
     }

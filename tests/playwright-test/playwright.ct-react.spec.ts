@@ -26,14 +26,11 @@ test('should work with TSX', async ({ runInlineTest }) => {
     'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': `
-      //@no-header
     `,
     'src/button.tsx': `
-      //@no-header
       export const Button = () => <button>Button</button>;
     `,
     'src/button.test.tsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Button } from './button';
 
@@ -53,16 +50,13 @@ test('should work with JSX', async ({ runInlineTest }) => {
     'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `
-      //@no-header
     `,
 
     'src/button.jsx': `
-      //@no-header
       export const Button = () => <button>Button</button>;
     `,
 
     'src/button.test.jsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Button } from './button';
 
@@ -82,16 +76,13 @@ test('should work with JSX in JS', async ({ runInlineTest }) => {
     'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `
-      //@no-header
     `,
 
     'src/button.js': `
-      //@no-header
       export const Button = () => <button>Button</button>;
     `,
 
     'src/button.test.jsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Button } from './button';
 
@@ -111,21 +102,17 @@ test('should work with JSX in JS and in JSX', async ({ runInlineTest }) => {
     'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `
-      //@no-header
     `,
 
     'src/button.js': `
-      //@no-header
       export const Button = () => <button>Button</button>;
     `,
 
     'src/list.jsx': `
-      //@no-header
       export const List = () => <ul><li>List</li></ul>;
     `,
 
     'src/button.test.jsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Button } from './button';
       import { List } from './list';
@@ -152,21 +139,17 @@ test('should work with stray TSX import', async ({ runInlineTest }) => {
     'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': `
-      //@no-header
     `,
 
     'src/button.tsx': `
-      //@no-header
       export const Button = () => <button>Button</button>;
     `,
 
     'src/list.tsx': `
-      //@no-header
       export const List = () => <ul><li>List</li></ul>;
     `,
 
     'src/button.test.tsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Button } from './button';
       import { List } from './list';
@@ -187,21 +170,17 @@ test('should work with stray JSX import', async ({ runInlineTest }) => {
     'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `
-      //@no-header
     `,
 
     'src/button.jsx': `
-      //@no-header
       export const Button = () => <button>Button</button>;
     `,
 
     'src/list.jsx': `
-      //@no-header
       export const List = () => <ul><li>List</li></ul>;
     `,
 
     'src/button.test.jsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Button } from './button';
       import { List } from './list';
@@ -222,21 +201,17 @@ test.fixme('should work with stray JS import', async ({ runInlineTest }) => {
     'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `
-      //@no-header
     `,
 
     'src/button.js': `
-      //@no-header
       export const Button = () => <button>Button</button>;
     `,
 
     'src/list.js': `
-      //@no-header
       export const List = () => <ul><li>List</li></ul>;
     `,
 
     'src/button.test.jsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Button } from './button';
       import { List } from './list';
@@ -257,16 +232,13 @@ test('should work with JSX in variable', async ({ runInlineTest }) => {
     'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
     'playwright/index.js': `
-      //@no-header
     `,
 
     'src/button.jsx': `
-      //@no-header
       export const Button = () => <button>Button</button>;
     `,
 
     'src/button.test.jsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Button } from './button';
 
@@ -287,15 +259,13 @@ test('should return root locator for fragments', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
-    'playwright/index.js': `//@no-header`,
+    'playwright/index.js': ``,
 
     'src/button.jsx': `
-      //@no-header
       export const Button = () => <><h1>Header</h1><button>Button</button></>;
     `,
 
     'src/button.test.jsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Button } from './button';
 
@@ -315,13 +285,12 @@ test('should respect default property values', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
-    'playwright/index.ts': `//@no-header`,
-    'src/label.tsx': `//@no-header
+    'playwright/index.ts': ``,
+    'src/label.tsx': `
       export const Label = ({ checked }) => <div>type:{typeof checked} value:{String(checked)}</div>;
     `,
 
     'src/label.test.tsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Label } from './label';
 
@@ -341,19 +310,15 @@ test('should bundle public folder', async ({ runInlineTest }) => {
     'playwright.config.ts': playwrightConfig,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': `
-      //@no-header
     `,
     'public/logo.svg': `
-      //@no-header
       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <circle cx="50" cy="50" r="50"/>
       </svg>`,
     'src/image.tsx': `
-      //@no-header
       export const Image = () => <img src='/logo.svg' className="App-logo" alt="logo" />;
     `,
     'src/image.test.tsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Image } from './image';
 

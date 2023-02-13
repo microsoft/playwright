@@ -20,7 +20,8 @@ import { test, expect } from './playwright-test-fixtures';
 test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      pwt.expect.extend({
+      import { test as base, expect } from '@playwright/test';
+      expect.extend({
         toBeWithinRange(received, floor, ceiling) {
           const pass = received >= floor && received <= ceiling;
           if (pass) {
@@ -37,7 +38,7 @@ test('should be able to call expect.extend in config', async ({ runInlineTest })
           }
         },
       });
-      export const test = pwt.test;
+      export const test = base;
     `,
     'expect-test.spec.ts': `
       import { test } from './helper';
@@ -54,7 +55,7 @@ test('should be able to call expect.extend in config', async ({ runInlineTest })
 test('should not expand huge arrays', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('numeric ranges', () => {
         const a1 = Array(100000).fill(1);
         const a2 = Array(100000).fill(1);
@@ -71,7 +72,7 @@ test('should not expand huge arrays', async ({ runInlineTest }) => {
 test('should include custom error message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('custom expect message', () => {
         test.expect(1+1, 'one plus one is two!').toEqual(3);
       });
@@ -90,7 +91,7 @@ test('should include custom error message', async ({ runInlineTest }) => {
 test('should include custom error message with web-first assertions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('custom expect message', async ({page}) => {
         await expect(page.locator('x-foo'), { message: 'x-foo must be visible' }).toBeVisible({timeout: 1});
       });
@@ -107,7 +108,7 @@ test('should include custom error message with web-first assertions', async ({ r
 
 test('should work with default expect prototype functions', async ({ runTSC, runInlineTest }) => {
   const spec = `
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
     test('pass', async () => {
       const expected = [1, 2, 3, 4, 5, 6];
       test.expect([4, 1, 6, 7, 3, 5, 2, 5, 4, 6]).toEqual(
@@ -136,6 +137,7 @@ test('should work with default expect prototype functions', async ({ runTSC, run
 test('should work with generic matchers', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
+      import { expect } from '@playwright/test';
       expect(42).toBe(42);
       expect(0.1 + 0.2).toBeCloseTo(0.3, 5);
       expect(null).toBeDefined();
@@ -184,6 +186,7 @@ test('should work with generic matchers', async ({ runTSC }) => {
 test('should compile generic matchers', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
+      import { expect } from '@playwright/test';
       expect(42).toBe(42);
       expect(42).toBeCloseTo(42);
       expect(42).toBeCloseTo(42, 5);
@@ -250,7 +253,7 @@ test('should compile generic matchers', async ({ runTSC }) => {
 test('should work with expect message', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.expect(42, 'this is expect message').toBe(42);
     `
   });
@@ -260,7 +263,7 @@ test('should work with expect message', async ({ runTSC }) => {
 test('should work with default expect matchers and esModuleInterop=false', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.expect(42).toBe(42);
     `,
     'tsconfig.json': JSON.stringify({
@@ -295,7 +298,7 @@ test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
       }
     `,
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.expect.extend({
         toBeWithinRange() { },
       });
@@ -315,7 +318,7 @@ test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
 test('should propose only the relevant matchers when custom expect matcher classes were passed', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
     test('custom matchers', async ({ page }) => {
       await test.expect(page).toHaveURL('https://example.com');
       await test.expect(page).not.toHaveURL('https://example.com');
@@ -364,10 +367,11 @@ test('should propose only the relevant matchers when custom expect matcher class
 test('should return void/Promise when appropriate', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
       type AssertType<T, S> = S extends T ? AssertNotAny<S> : false;
       type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
 
-      pwt.test('example', async ({ page }) => {
+      test('example', async ({ page }) => {
         {
           const value = expect(1).toBe(2);
           const assertion: AssertType<void, typeof value> = true;
@@ -407,7 +411,7 @@ test.describe('helpful expect errors', () => {
   test('top-level', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('explodes', () => {
           expect(1).nope();
         });
@@ -420,7 +424,7 @@ test.describe('helpful expect errors', () => {
   test('soft', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('explodes', () => {
           expect.soft(1).nope();
         });
@@ -433,7 +437,7 @@ test.describe('helpful expect errors', () => {
   test('poll', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('explodes', () => {
           expect.poll(() => {}).nope();
         });
@@ -446,7 +450,7 @@ test.describe('helpful expect errors', () => {
   test('not', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('explodes', () => {
           expect(1).not.nope();
         });
@@ -459,7 +463,7 @@ test.describe('helpful expect errors', () => {
   test('bare', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('explodes', () => {
           expect('');
         });
@@ -477,7 +481,7 @@ test('should reasonably work in global setup', async ({ runInlineTest }) => {
       export default { globalSetup: './global-setup' };
     `,
     'global-setup.ts': `
-      const { expect } = pwt;
+      import { test, expect } from '@playwright/test';
       export default async () => {
         expect(1).toBe(1);
         await expect.poll(async () => {
@@ -488,20 +492,20 @@ test('should reasonably work in global setup', async ({ runInlineTest }) => {
       };
     `,
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('skipped', () => {});
     `,
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('> 11 |         expect(1).toBe(2);');
+  expect(result.output).toContain('>  9 |         expect(1).toBe(2);');
 });
 
 test('should support toHaveURL with baseURL from webServer', async ({ runInlineTest }, testInfo) => {
   const port = testInfo.workerIndex + 10500;
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('pass', async ({ page }) => {
         await page.goto('/foobar');
@@ -535,7 +539,7 @@ test('should respect expect.timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `module.exports = { expect: { timeout: 1000 } }`,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('timeout', async ({ page }) => {
         await page.goto('data:text/html,<div>A</div>');
@@ -552,7 +556,7 @@ test('should respect expect.timeout', async ({ runInlineTest }) => {
 test('should log scale the time', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('pass', async ({ page }) => {
         await page.setContent('<div id=div>Wrong</div>');
@@ -573,7 +577,7 @@ test('should log scale the time', async ({ runInlineTest }) => {
 test('should print expected/received before timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('times out waiting for text', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
@@ -592,7 +596,7 @@ test('should print expected/received before timeout', async ({ runInlineTest }) 
 test('should print pending operations for toHaveText', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
@@ -615,7 +619,7 @@ test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
 
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('times out waiting for text', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
@@ -636,7 +640,7 @@ test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
 test('should print timed out error message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
@@ -653,7 +657,7 @@ test('should print timed out error message', async ({ runInlineTest }) => {
 test('should not leak long expect message strings', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       let logs: string = 'Ab';
       const consoleLogWatcher = (msg: ConsoleMessage) => {

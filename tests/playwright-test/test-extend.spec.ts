@@ -19,6 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('test.extend should work', async ({ runInlineTest }) => {
   const { output, passed } = await runInlineTest({
     'helper.ts': `
+      import { test, expect } from '@playwright/test';
       global.logs = [];
 
       function createDerivedFixtures(suffix) {
@@ -39,7 +40,7 @@ test('test.extend should work', async ({ runInlineTest }) => {
         };
       }
 
-      export const base = pwt.test.extend({
+      export const base = test.extend({
         suffix: ['', { scope: 'worker', option: true } ],
         baseWorker: [async ({ suffix }, run) => {
           global.logs.push('beforeAll-' + suffix);
@@ -128,8 +129,9 @@ test('config should override options but not fixtures', async ({ runInlineTest }
         use: { param: 'config' },
       };
     `,
-    'a.test.js': `
-      const test1 = pwt.test.extend({ param: [ 'default', { option: true } ] });
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test1 = base.extend({ param: [ 'default', { option: true } ] });
       test1('default', async ({ param }) => {
         console.log('default-' + param);
       });
@@ -165,8 +167,9 @@ test('test.extend should be able to merge', async ({ runInlineTest }) => {
         use: { param: 'from-config' },
       };
     `,
-    'a.test.js': `
-      const base = pwt.test.extend({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      const base = test.extend({
         myFixture: 'abc',
       });
 
@@ -201,9 +204,10 @@ test('test.extend should be able to merge', async ({ runInlineTest }) => {
 
 test('test.extend should print nice message when used as _extendTest', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'a.test.js': `
-      const test1 = pwt.test.extend({});
-      const test2 = pwt.test.extend({});
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test1 = base.extend({});
+      const test2 = base.extend({});
       const test3 = test1.extend(test2);
 
       test3('test', () => {});
@@ -216,8 +220,9 @@ test('test.extend should print nice message when used as _extendTest', async ({ 
 
 test('test._extendTest should print nice message when used as extend', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'a.test.js': `
-      const test3 = pwt.test._extendTest({});
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test3 = base._extendTest({});
       test3('test', () => {});
     `,
   });
@@ -233,8 +238,9 @@ test('test.use() with undefined should not be ignored', async ({ runInlineTest }
         use: { option1: 'config' },
       };
     `,
-    'a.test.js': `
-      const test = pwt.test.extend({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         option1: [ 'default', { option: true } ],
         option2: [ 'default', { option: true } ],
       });
@@ -284,8 +290,9 @@ test('undefined values in config and test.use should be reverted to default', as
         use: { option1: undefined, option2: undefined },
       };
     `,
-    'a.test.js': `
-      const test = pwt.test.extend({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         option1: [ 'default1', { option: true } ],
         option2: [ 'default2', { option: true } ],
         option3: [ 'default3', { option: true } ],

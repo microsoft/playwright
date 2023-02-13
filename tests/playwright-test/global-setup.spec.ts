@@ -38,7 +38,7 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}, testInfo) => {
         console.log('\\n%%from-test');
       });
@@ -67,7 +67,7 @@ test('standalone globalTeardown should work', async ({ runInlineTest }) => {
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}, testInfo) => {
       });
     `,
@@ -98,7 +98,7 @@ test('globalTeardown runs after failures', async ({ runInlineTest }) => {
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}, testInfo) => {
         expect(process.env.FOO).toBe('43');
       });
@@ -129,7 +129,7 @@ test('globalTeardown does not run when globalSetup times out', async ({ runInlin
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should not run', async ({}, testInfo) => {
       });
     `,
@@ -152,7 +152,7 @@ test('globalSetup should work with sync function', async ({ runInlineTest }) => 
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}) => {
         const value = JSON.parse(process.env.FOO);
         expect(value).toEqual({ foo: 'bar' });
@@ -176,7 +176,7 @@ test('globalSetup error should prevent tests from executing', async ({ runInline
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('a', async ({}) => {
         console.log('this test ran');
       });
@@ -203,7 +203,7 @@ test('globalSetup should throw when passed non-function', async ({ runInlineTest
       module.exports = 42;
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}) => {
       });
     `,
@@ -231,7 +231,7 @@ test('globalSetup should work with default export and run the returned fn', asyn
       export default setup;
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}) => {
       });
     `,
@@ -258,7 +258,7 @@ test('globalSetup should allow requiring a package from node_modules', async ({ 
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}, testInfo) => {
         expect(process.env.FOO).toBe('42');
       });
@@ -269,7 +269,8 @@ test('globalSetup should allow requiring a package from node_modules', async ({ 
 
 const authFiles = {
   'playwright.config.ts': `
-    const config: pwt.PlaywrightTestConfig = {
+    import { PlaywrightTestConfig } from '@playwright/test';
+    const config: PlaywrightTestConfig = {
       globalSetup: require.resolve('./auth'),
       use: {
         baseURL: 'https://www.example.com',
@@ -279,9 +280,10 @@ const authFiles = {
     export default config;
   `,
   'auth.ts': `
-    async function globalSetup(config: pwt.FullConfig) {
+    import { chromium, FullConfig } from '@playwright/test';
+    async function globalSetup(config: FullConfig) {
       const { baseURL, storageState } = config.projects[0].use;
-      const browser = await pwt.chromium.launch();
+      const browser = await chromium.launch();
       const page = await browser.newPage();
       await page.route('**/*', route => {
         route.fulfill({ body: '<html></html>' }).catch(() => {});
@@ -296,7 +298,7 @@ const authFiles = {
     export default globalSetup;
   `,
   'a.test.ts': `
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
     test('should have storage state', async ({ page }) => {
       await page.route('**/*', route => {
         route.fulfill({ body: '<html></html>' }).catch(() => {});
@@ -331,8 +333,9 @@ test('teardown order', async ({ runInlineTest }) => {
       }
       export default { _plugins };
     `,
-    'a.test.js': `
-      pwt.test('test', () => {});
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', () => {});
     `,
   });
   expect(result.exitCode).toBe(0);
@@ -362,8 +365,9 @@ test('teardown after error', async ({ runInlineTest }) => {
       }
       export default { _plugins };
     `,
-    'a.test.js': `
-      pwt.test('test', () => {});
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', () => {});
     `,
   });
   expect(result.exitCode).toBe(1);

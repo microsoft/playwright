@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('test.describe.serial should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.serial('serial suite', () => {
         test('test1', async ({}) => {
           console.log('\\n%%test1');
@@ -58,7 +58,7 @@ test('test.describe.serial should work', async ({ runInlineTest }) => {
 test('test.describe.serial should work in describe', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('serial suite', () => {
         test.describe.configure({ mode: 'serial' });
         test('test1', async ({}) => {
@@ -98,7 +98,7 @@ test('test.describe.serial should work in describe', async ({ runInlineTest }) =
 test('test.describe.serial should work with retry', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.serial('serial suite', () => {
         test('test1', async ({}) => {
           console.log('\\n%%test1');
@@ -143,7 +143,7 @@ test('test.describe.serial should work with retry', async ({ runInlineTest }) =>
 test('test.describe.serial should work with retry and beforeAll failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.serial('serial suite', () => {
         test('test1', async ({}) => {
           console.log('\\n%%test1');
@@ -178,7 +178,7 @@ test('test.describe.serial should work with retry and beforeAll failure', async 
 test('test.describe.serial should work with retry and afterAll failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.serial('serial suite', () => {
         test.describe('inner suite', () => {
           let firstRun = false;
@@ -215,7 +215,7 @@ test('test.describe.serial should work with retry and afterAll failure', async (
 test('test.describe.serial.only should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test1', async ({}) => {
         console.log('\\n%%test1');
       });
@@ -245,7 +245,7 @@ test('test.describe.serial.only should work', async ({ runInlineTest }) => {
 test('test.describe.serial should work with test.fail', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.serial('suite', () => {
         test('zero', () => {
           console.log('\\n%%zero');
@@ -283,7 +283,7 @@ test('test.describe.serial should work with test.fail', async ({ runInlineTest }
 test('test.describe.serial should work with test.fail and retries', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.serial('suite', () => {
         test('zero', () => {
           console.log('\\n%%zero');
@@ -326,7 +326,7 @@ test('test.describe.serial should work with test.fail and retries', async ({ run
 test('test.describe.serial should work inside test.describe.parallel', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.parallel('parallel suite', () => {
         test.describe.serial('serial suite', () => {
           test('one', async ({}) => {
@@ -374,7 +374,7 @@ test('test.describe.serial should work with fullyParallel', async ({ runInlineTe
       module.exports = { fullyParallel: true };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.serial('serial suite', () => {
         test('one', async ({}) => {
           await new Promise(f => setTimeout(f, 1000));

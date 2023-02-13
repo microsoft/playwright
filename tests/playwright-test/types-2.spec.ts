@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('basics should work', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('suite', () => {
         test.beforeEach(async () => {});
         test.afterEach(async () => {});
@@ -54,7 +54,8 @@ test('basics should work', async ({ runTSC }) => {
 test('can pass sync functions everywhere', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const test = pwt.test.extend<{ foo: string }>({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend<{ foo: string }>({
         foo: ({}, use) => use('bar'),
       });
       test.beforeEach(({ foo }) => {});
@@ -70,7 +71,7 @@ test('can pass sync functions everywhere', async ({ runTSC }) => {
 test('can return anything from hooks', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeEach(() => '123');
       test.afterEach(() => 123);
       test.beforeAll(() => [123]);
@@ -83,8 +84,9 @@ test('can return anything from hooks', async ({ runTSC }) => {
 test('test.extend options should check types', async ({ runTSC }) => {
   const result = await runTSC({
     'helper.ts': `
+      import { test as base, expect } from '@playwright/test';
       export type Params = { foo: string };
-      export const test = pwt.test;
+      export const test = base;
       export const test1 = test.extend<Params>({ foo: [ 'foo', { option: true } ] });
       export const test1b = test.extend<{ bar: string }>({ bar: [ 'bar', { option: true } ] });
       export const testerror = test.extend<{ foo: string }>({
@@ -104,7 +106,8 @@ test('test.extend options should check types', async ({ runTSC }) => {
     `,
     'playwright.config.ts': `
       import { Params } from './helper';
-      const configs: pwt.Config<Params>[] = [];
+      import { Config } from '@playwright/test';
+      const configs: Config<Params>[] = [];
 
       configs.push({});
 
@@ -143,7 +146,7 @@ test('test.extend options should check types', async ({ runTSC }) => {
 test('step should inherit return type from its callback ', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('my test', async ({ }) => {
         // @ts-expect-error
         const bad1: string = await test.step('my step', () => {

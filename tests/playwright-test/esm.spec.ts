@@ -19,13 +19,12 @@ import { test, expect } from './playwright-test-fixtures';
 test('should load nested as esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
-      //@no-header
       import * as fs from 'fs';
       export default { projects: [{name: 'foo'}] };
     `,
     'package.json': JSON.stringify({ type: 'module' }),
     'nested/folder/a.esm.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('check project name', ({}, testInfo) => {
         expect(testInfo.project.name).toBe('foo');
       });
@@ -46,7 +45,7 @@ test('should support import assertions', async ({ runInlineTest, nodeVersion }) 
     `,
     'package.json': JSON.stringify({ type: 'module' }),
     'a.esm.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('check project name', ({}, testInfo) => {
         expect(1).toBe(1);
@@ -71,7 +70,7 @@ test('should import esm from ts when package.json has type module in experimenta
       import { foo } from './b.ts';
       import { bar } from './c.js';
       import { qux } from './d.js';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('check project name', ({}, testInfo) => {
         expect(testInfo.project.name).toBe('foo');
         expect(bar).toBe('bar');
@@ -85,7 +84,6 @@ test('should import esm from ts when package.json has type module in experimenta
       export const bar: string = 'bar';
     `,
     'd.js': `
-      //@no-header
       export const qux = 'qux';
     `,
   }, {});
@@ -99,7 +97,7 @@ test('should propagate subprocess exit code in experimental mode', async ({ runI
   const result = await runInlineTest({
     'package.json': JSON.stringify({ type: 'module' }),
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('failing test', ({}, testInfo) => {
         expect(1).toBe(2);
       });
@@ -132,7 +130,7 @@ test('should respect path resolver in experimental mode', async ({ runInlineTest
     }`,
     'a.test.ts': `
       import { foo } from 'util/b.js';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('check project name', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
@@ -155,7 +153,7 @@ test('should use source maps', async ({ runInlineTest, nodeVersion }) => {
       export default { projects: [{name: 'foo'}] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('check project name', ({}, testInfo) => {
         expect(testInfo.project.name).toBe('foo');
@@ -166,7 +164,7 @@ test('should use source maps', async ({ runInlineTest, nodeVersion }) => {
   const output = result.output;
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(output).toContain('[foo] › a.test.ts:7:7 › check project name');
+  expect(output).toContain('[foo] › a.test.ts:4:7 › check project name');
 });
 
 test('should show the codeframe in errors', async ({ runInlineTest, nodeVersion }) => {
@@ -178,7 +176,7 @@ test('should show the codeframe in errors', async ({ runInlineTest, nodeVersion 
       export default { projects: [{name: 'foo'}] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test('check project name', ({}, testInfo) => {
         expect(1).toBe(2);
@@ -200,15 +198,15 @@ test('should show the codeframe in errors', async ({ runInlineTest, nodeVersion 
   expect(result.failed).toBe(2);
   expect(output, 'error carrot—via source maps—is positioned appropriately').toContain(
       [
-        `    >  8 |         expect(1).toBe(2);`,
-        `         |                   ^`
+        `    > 5 |         expect(1).toBe(2);`,
+        `        |                   ^`
       ].join('\n'));
   expect(result.output).toContain('FooBarError: my-message');
   expect(result.output).not.toContain('at a.test.ts');
-  expect(result.output).toContain(`  12 |       test('foobar', async ({}) => {`);
-  expect(result.output).toContain(`> 13 |         const error = new Error('my-message');`);
+  expect(result.output).toContain(`   9 |       test('foobar', async ({}) => {`);
+  expect(result.output).toContain(`> 10 |         const error = new Error('my-message');`);
   expect(result.output).toContain('     |                       ^');
-  expect(result.output).toContain('  14 |         error.name = \'FooBarError\';');
+  expect(result.output).toContain('  11 |         error.name = \'FooBarError\';');
 });
 
 test('should filter by line', async ({ runInlineTest, nodeVersion }) => {
@@ -221,12 +219,16 @@ test('should filter by line', async ({ runInlineTest, nodeVersion }) => {
       export default { projects: [{name: 'foo'}] };
     `,
     'foo/x.spec.ts': `
-      pwt.test('one', () => { expect(1).toBe(2); });
-      pwt.test('two', () => { expect(1).toBe(2); });
-      pwt.test('three', () => { expect(1).toBe(2); });
-      `,
-    'foo/y.spec.ts': `pwt.test('fails', () => { expect(1).toBe(2); });`,
-  }, undefined, undefined, { additionalArgs: ['x.spec.ts:6'] });
+      import { test, expect } from '@playwright/test';
+      test('one', () => { expect(1).toBe(2); });
+      test('two', () => { expect(1).toBe(2); });
+      test('three', () => { expect(1).toBe(2); });
+    `,
+    'foo/y.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', () => { expect(1).toBe(2); });
+    `,
+  }, undefined, undefined, { additionalArgs: ['x.spec.ts:4'] });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toMatch(/x\.spec\.ts.*two/);
@@ -238,7 +240,7 @@ test('should resolve .js import to .ts file in ESM mode', async ({ runInlineTest
     'package.json': `{ "type": "module" }`,
     'playwright.config.ts': `export default { projects: [{name: 'foo'}] };`,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       import { gimmeAOne } from './playwright-utils.js';
       test('pass', ({}) => {
         expect(gimmeAOne()).toBe(1);
@@ -260,7 +262,7 @@ test('should resolve .js import to .tsx file in ESM mode', async ({ runInlineTes
     'package.json': `{ "type": "module" }`,
     'playwright.config.ts': `export default { projects: [{name: 'foo'}] };`,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       import { gimmeAOne } from './playwright-utils.js';
       test('pass', ({}) => {
         expect(gimmeAOne()).toBe(1);
@@ -292,7 +294,6 @@ test('should resolve .js import to .tsx file in ESM mode for components', async 
     `,
 
     'src/test.spec.tsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Button } from './button.js';
       test('pass', async ({ mount }) => {

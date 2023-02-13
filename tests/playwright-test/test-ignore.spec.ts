@@ -19,15 +19,15 @@ import * as path from 'path';
 
 const tests = {
   'a.test.ts': `
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
     test('pass', ({}) => {});
   `,
   'b.test.ts': `
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
     test('pass', ({}) => {});
   `,
   'c.test.ts': `
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
     test('pass', ({}) => {});
   `
 };
@@ -55,19 +55,19 @@ test('should ignore a folder', async ({ runInlineTest }) => {
       module.exports = { testIgnore: 'folder/**' };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'folder/a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'folder/b.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'folder/c.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `
   });
@@ -78,19 +78,19 @@ test('should ignore a folder', async ({ runInlineTest }) => {
 test('should ignore a node_modules', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'node_modules/a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'node_modules/b.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'folder/c.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `
   });
@@ -126,15 +126,15 @@ test('should use an array for testMatch', async ({ runInlineTest }) => {
       module.exports = { testMatch: ['b.test.ts', /\\${path.sep}a.[tes]{4}.TS$/i] };
     `,
     'dir/a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'b.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'c.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `
   });
@@ -150,15 +150,15 @@ test('should match absolute path', async ({ runInlineTest }) => {
       module.exports = { testDir: path.join(__dirname, 'dir'), testMatch: /dir\\${path.sep}a/ };
     `,
     'dir/a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'dir/b.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `
   });
@@ -174,15 +174,15 @@ test('should match cli string argument', async ({ runInlineTest }) => {
       module.exports = { testDir: path.join(__dirname, 'dir') };
     `,
     'dir/a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'dir/b.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `
   }, {}, {}, { additionalArgs: [`dir\\${path.sep}a`] });
@@ -194,15 +194,15 @@ test('should match cli string argument', async ({ runInlineTest }) => {
 test('should match regex string argument', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'dir/filea.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'dir/fileb.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'filea.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `
   }, {}, {}, { additionalArgs: ['/filea.*ts/'] });
@@ -215,11 +215,11 @@ test('should match regex string with a colon argument', async ({ runInlineTest }
   test.skip(process.platform === 'win32', 'Windows does not support colons in the file name');
   const result = await runInlineTest({
     'fileb.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'weird:file.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `
   }, {}, {}, { additionalArgs: ['/weird:file\.test\.ts/'] });
@@ -231,15 +231,15 @@ test('should match regex string with a colon argument', async ({ runInlineTest }
 test('should match case insensitive', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'capital/A.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'lowercase/a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'b.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `
   }, {}, {}, { additionalArgs: ['a.test.ts'] });
@@ -251,19 +251,19 @@ test('should match case insensitive', async ({ runInlineTest }) => {
 test('should match by directory', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'dir-a/file.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'dir-b/file1.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'dir-b/file2.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'file.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `
   }, {}, {}, { additionalArgs: ['dir-b'] });
@@ -278,19 +278,19 @@ test('should ignore node_modules even with custom testIgnore', async ({ runInlin
       module.exports = { testIgnore: 'a.test.ts' };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'node_modules/a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'node_modules/b.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'folder/c.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `
   });
@@ -304,11 +304,11 @@ test('should only match files with JS/TS file extensions', async ({ runInlineTes
       module.exports = { testMatch: /foobar/ };
     `,
     'foobar.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'foobar.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'foobar.test.ts-snapshots/compares-page-screenshot-chromium-linux-test-chromium.png': `
@@ -322,7 +322,7 @@ test('should only match files with JS/TS file extensions', async ({ runInlineTes
 test('should match dot-files', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     '.a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
   });
@@ -334,11 +334,11 @@ test('should match dot-files', async ({ runInlineTest }) => {
 test('should match in dot-directories', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     '.dir/a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     '.dir/b.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
   });
@@ -355,15 +355,15 @@ test('should always work with unix separators', async ({ runInlineTest }) => {
       module.exports = { testDir: path.join(__dirname, 'dir') };
     `,
     'dir/a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'dir/b.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `
   }, {}, {}, { additionalArgs: [`dir/a`] });

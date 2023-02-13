@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should succeed', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'one-success.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       class Foo {
         #logger = 2;
@@ -58,7 +58,7 @@ test('should treat enums equally', async ({ runInlineTest }) => {
       }
     `,
     'example.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       import * as components from './component';
       import * as regular from './regular';

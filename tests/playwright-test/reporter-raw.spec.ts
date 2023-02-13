@@ -23,7 +23,7 @@ const kRawReporterPath = path.join(__dirname, '..', '..', 'packages', 'playwrigh
 test('should generate raw report', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({ page }, testInfo) => {});
     `,
   }, { reporter: 'dot,' + kRawReporterPath }, {}, { usesCustomOutputDir: true });
@@ -44,7 +44,7 @@ test('should use project name', async ({ runInlineTest }, testInfo) => {
       }
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({ page }, testInfo) => {});
     `,
   }, { reporter: 'dot,' + kRawReporterPath }, {}, { usesCustomOutputDir: true });
@@ -56,7 +56,7 @@ test('should use project name', async ({ runInlineTest }, testInfo) => {
 test('should save stdio', async ({ runInlineTest }, testInfo) => {
   await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({ page }, testInfo) => {
         console.log('STDOUT');
         process.stdout.write(Buffer.from([1, 2, 3]));
@@ -86,7 +86,7 @@ test('should save stdio', async ({ runInlineTest }, testInfo) => {
 test('should save attachments', async ({ runInlineTest }, testInfo) => {
   await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({ page }, testInfo) => {
         testInfo.attachments.push({
           name: 'binary',
@@ -115,7 +115,7 @@ test(`testInfo.attach should save attachments via path`, async ({ runInlineTest 
     'a.test.js': `
       const path = require('path');
       const fs = require('fs');
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('infer contentType from path', async ({}, testInfo) => {
         const tmpPath = testInfo.outputPath('example.json');
         await fs.promises.writeFile(tmpPath, 'We <3 Playwright!');
@@ -193,7 +193,7 @@ test(`testInfo.attach should save attachments via inline attachment`, async ({ r
     'a.test.js': `
       const path = require('path');
       const fs = require('fs');
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('default contentType - string', async ({}, testInfo) => {
         await testInfo.attach('example.json', { body: 'We <3 Playwright!' });
       });
@@ -250,7 +250,7 @@ test('dupe project names', async ({ runInlineTest }, testInfo) => {
       }
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', async ({ page }, testInfo) => {});
     `,
   }, { reporter: 'dot,' + kRawReporterPath }, {}, { usesCustomOutputDir: true });

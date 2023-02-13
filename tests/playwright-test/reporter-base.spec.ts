@@ -21,7 +21,7 @@ test('handle long test names', async ({ runInlineTest }) => {
   const title = 'title'.repeat(30);
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('${title}', async ({}) => {
         expect(1).toBe(0);
       });
@@ -34,7 +34,7 @@ test('handle long test names', async ({ runInlineTest }) => {
 test('print the error name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
     test('foobar', async ({}) => {
       const error = new Error('my-message');
       error.name = 'FooBarError';
@@ -50,7 +50,7 @@ test('print the error name', async ({ runInlineTest }) => {
 test('print should print the error name without a message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
     test('foobar', async ({}) => {
       const error = new Error();
       error.name = 'FooBarError';
@@ -66,7 +66,7 @@ test('print should print the error name without a message', async ({ runInlineTe
 test('should print an error in a codeframe', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('foobar', async ({}) => {
         const error = new Error('my-message');
         error.name = 'FooBarError';
@@ -79,10 +79,10 @@ test('should print an error in a codeframe', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('FooBarError: my-message');
-  expect(result.output).not.toContain('at a.spec.ts:7');
-  expect(result.output).toContain(`   5 |       const { test } = pwt;`);
-  expect(result.output).toContain(`   6 |       test('foobar', async ({}) => {`);
-  expect(result.output).toContain(`>  7 |         const error = new Error('my-message');`);
+  expect(result.output).not.toContain('at a.spec.ts:5');
+  expect(result.output).toContain(`  2 |       import { test, expect } from '@playwright/test';`);
+  expect(result.output).toContain(`  3 |       test('foobar', async ({}) => {`);
+  expect(result.output).toContain(`> 4 |         const error = new Error('my-message');`);
 });
 
 test('should filter out node_modules error in a codeframe', async ({ runInlineTest }) => {
@@ -95,7 +95,7 @@ test('should filter out node_modules error in a codeframe', async ({ runInlineTe
       module.exports = { assert };
     `,
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       const { assert } = require('utils/utils.js');
       test('fail', async ({}) => {
         assert(false);
@@ -106,12 +106,12 @@ test('should filter out node_modules error in a codeframe', async ({ runInlineTe
   expect(result.failed).toBe(1);
   const output = result.output;
   expect(output).toContain('Error: Assertion error');
-  expect(output).toContain('a.spec.ts:7:7 › fail');
-  expect(output).toContain(`   7 |       test('fail', async ({}) => {`);
-  expect(output).toContain(`>  8 |         assert(false);`);
-  expect(output).toContain(`     |         ^`);
-  expect(output).toContain(`utils.js:6`);
-  expect(output).toContain(`a.spec.ts:8:9`);
+  expect(output).toContain('a.spec.ts:4:11 › fail');
+  expect(output).toContain(`  4 |       test('fail', async ({}) => {`);
+  expect(output).toContain(`> 5 |         assert(false);`);
+  expect(output).toContain(`    |         ^`);
+  expect(output).toContain(`utils.js:4`);
+  expect(output).toContain(`a.spec.ts:5:9`);
 });
 
 test('should print codeframe from a helper', async ({ runInlineTest }) => {
@@ -123,7 +123,7 @@ test('should print codeframe from a helper', async ({ runInlineTest }) => {
     `,
     'a.spec.ts': `
       import { ohMy } from './helper';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('foobar', async ({}) => {
         ohMy();
       });
@@ -134,8 +134,8 @@ test('should print codeframe from a helper', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Error: oh my');
-  expect(result.output).toContain(`   4 |       export function ohMy() {`);
-  expect(result.output).toContain(` > 5 |         throw new Error('oh my');`);
+  expect(result.output).toContain(`   2 |       export function ohMy() {`);
+  expect(result.output).toContain(` > 3 |         throw new Error('oh my');`);
   expect(result.output).toContain(`     |               ^`);
 });
 
@@ -153,13 +153,13 @@ test('should print slow tests', async ({ runInlineTest }) => {
       };
     `,
     'dir/a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('slow test', async ({}) => {
         await new Promise(f => setTimeout(f, 1000));
       });
     `,
     'dir/b.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fast test', async ({}) => {
         await new Promise(f => setTimeout(f, 100));
       });
@@ -186,7 +186,7 @@ test('should not print slow parallel tests', async ({ runInlineTest }) => {
       };
     `,
     'dir/a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe.parallel('suite', () => {
         test('inner slow test', async ({}) => {
           await new Promise(f => setTimeout(f, 1000));
@@ -214,7 +214,7 @@ test('should not print slow tests', async ({ runInlineTest }) => {
       };
     `,
     'dir/a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('slow test', async ({}) => {
         await new Promise(f => setTimeout(f, 1000));
       });
@@ -231,7 +231,7 @@ test('should not print slow tests', async ({ runInlineTest }) => {
 test('should print flaky failures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('foobar', async ({}, testInfo) => {
         expect(testInfo.retry).toBe(1);
       });
@@ -245,7 +245,7 @@ test('should print flaky failures', async ({ runInlineTest }) => {
 test('should print flaky timeouts', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('foobar', async ({}, testInfo) => {
         if (!testInfo.retry)
           await new Promise(f => setTimeout(f, 2000));
@@ -260,7 +260,7 @@ test('should print flaky timeouts', async ({ runInlineTest }) => {
 test('should print stack-less errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('foobar', async ({}) => {
         const e = new Error('Hello');
         delete e.stack;
@@ -276,7 +276,7 @@ test('should print stack-less errors', async ({ runInlineTest }) => {
 test('should print errors with inconsistent message/stack', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('foobar', async function myTest({}) {
         const e = new Error('Hello');
         // Force stack to contain "Hello".
@@ -304,7 +304,7 @@ test('should print "no tests found" error', async ({ runInlineTest }) => {
 test('should not crash on undefined body with manual attachments', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}, testInfo) => {
         testInfo.attachments.push({
           name: 'foo.txt',
@@ -323,7 +323,8 @@ test('should not crash on undefined body with manual attachments', async ({ runI
 test('should report fatal errors at the end', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         fixture: [async ({ }, use) => {
           await use();
           throw new Error('oh my!');
@@ -333,7 +334,8 @@ test('should report fatal errors at the end', async ({ runInlineTest }) => {
       });
     `,
     'b.spec.ts': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         fixture: [async ({ }, use) => {
           await use();
           throw new Error('oh my!');
@@ -351,7 +353,7 @@ test('should report fatal errors at the end', async ({ runInlineTest }) => {
 test('should contain at most 1 decimal for humanized timing', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', () => {});
     `
   });

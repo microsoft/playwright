@@ -60,16 +60,6 @@ type Params = { [key: string]: string | number | boolean | string[] };
 async function writeFiles(testInfo: TestInfo, files: Files, initial: boolean) {
   const baseDir = testInfo.outputPath();
 
-  const headerJS = `
-    const pwt = require('@playwright/test');
-  `;
-  const headerTS = `
-    import * as pwt from '@playwright/test';
-  `;
-  const headerESM = `
-    import * as pwt from '@playwright/test';
-  `;
-
   const hasConfig = Object.keys(files).some(name => name.includes('.config.'));
   if (initial && !hasConfig) {
     files = {
@@ -89,19 +79,7 @@ async function writeFiles(testInfo: TestInfo, files: Files, initial: boolean) {
   await Promise.all(Object.keys(files).map(async name => {
     const fullName = path.join(baseDir, name);
     await fs.promises.mkdir(path.dirname(fullName), { recursive: true });
-    const isTypeScriptSourceFile = name.endsWith('.ts') && !name.endsWith('.d.ts');
-    const isJSModule = name.endsWith('.mjs') || name.includes('esm');
-    const header = isTypeScriptSourceFile ? headerTS : (isJSModule ? headerESM : headerJS);
-    if (typeof files[name] === 'string' && files[name].includes('//@no-header')) {
-      await fs.promises.writeFile(fullName, files[name]);
-    } else if (/(spec|test)\.(js|ts|jsx|tsx|mjs)$/.test(name)) {
-      const fileHeader = header + 'const { expect } = pwt;\n';
-      await fs.promises.writeFile(fullName, fileHeader + files[name]);
-    } else if (/\.(js|ts)$/.test(name) && !name.endsWith('d.ts')) {
-      await fs.promises.writeFile(fullName, header + files[name]);
-    } else {
-      await fs.promises.writeFile(fullName, files[name]);
-    }
+    await fs.promises.writeFile(fullName, files[name]);
   }));
 
   return baseDir;
@@ -213,7 +191,6 @@ function watchPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseD
 async function runPlaywrightCommand(childProcess: CommonFixtures['childProcess'], cwd: string, commandWithArguments: string[], env: NodeJS.ProcessEnv, sendSIGINTAfter?: number): Promise<CliRunResult> {
   const command = ['node', cliEntrypoint];
   command.push(...commandWithArguments);
-  const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
   const testProcess = childProcess({
     command,
     env: cleanEnv(env),
@@ -227,7 +204,6 @@ async function runPlaywrightCommand(childProcess: CommonFixtures['childProcess']
     }
   };
   const { exitCode } = await testProcess.exited;
-  await removeFolderAsync(cacheDir);
   return { exitCode, output: testProcess.output.toString() };
 }
 

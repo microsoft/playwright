@@ -29,7 +29,7 @@ test('should fall back to launchOptions', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ headless, channel }) => {
         expect.soft(headless).toBe(false);
         expect.soft(channel).toBe('chrome');
@@ -56,7 +56,7 @@ test('should override launchOptions', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ headless, channel }) => {
         expect.soft(headless).toBe(false);
         expect.soft(channel).toBe('chrome');
@@ -94,7 +94,7 @@ test('should respect contextOptions', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, timezoneId, userAgent, viewport }) => {
         expect.soft(acceptDownloads).toBe(false);
         expect.soft(bypassCSP).toBe(true);
@@ -160,7 +160,7 @@ test('should override contextOptions', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, timezoneId, userAgent, viewport }) => {
         expect.soft(acceptDownloads).toBe(false);
         expect.soft(bypassCSP).toBe(true);
@@ -195,7 +195,7 @@ test('should respect testIdAttribute', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
         await page.setContent('<div data-pw="myid">Hi</div>');
         await expect(page.getByTestId('myid')).toHaveCount(1);

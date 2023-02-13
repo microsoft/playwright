@@ -22,13 +22,13 @@ import fs from 'fs';
 test('should render expected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}) => {
         expect(1).toBe(1);
       });
     `,
     'b.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('two', async ({}) => {
         expect(1).toBe(1);
       });
@@ -49,7 +49,7 @@ test('should render expected', async ({ runInlineTest }) => {
 test('should render unexpected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}) => {
         expect(1).toBe(0);
       });
@@ -69,7 +69,7 @@ test('should render unexpected', async ({ runInlineTest }) => {
 test('should render unexpected after retry', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}) => {
         expect(1).toBe(0);
       });
@@ -87,7 +87,7 @@ test('should render unexpected after retry', async ({ runInlineTest }) => {
 test('should render flaky', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}, testInfo) => {
         expect(testInfo.retry).toBe(3);
       });
@@ -101,7 +101,7 @@ test('should render stdout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import colors from 'colors/safe';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}) => {
         console.log(colors.yellow('Hello world'));
         console.log('Hello again');
@@ -118,7 +118,7 @@ test('should render stdout', async ({ runInlineTest }) => {
   expect(testcase['system-out'][0]).not.toContain('u00');
   expect(testcase['system-err'][0]).toContain('My error');
   expect(testcase['system-err'][0]).not.toContain('\u0000'); // null control character
-  expect(testcase['failure'][0]['_']).toContain(`> 12 |         test.expect("abc").toBe('abcd');`);
+  expect(testcase['failure'][0]['_']).toContain(`>  9 |         test.expect("abc").toBe('abcd');`);
   expect(result.exitCode).toBe(1);
 });
 
@@ -131,7 +131,7 @@ test('should render stdout without ansi escapes', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       import colors from 'colors/safe';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}) => {
         console.log(colors.yellow('Hello world'));
       });
@@ -152,7 +152,7 @@ test('should render, by default, character data as CDATA sections', async ({ run
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}) => {
         process.stdout.write('Hello world &"\\'<>]]>');
       });
@@ -169,7 +169,7 @@ test('should render, by default, character data as CDATA sections', async ({ run
 test('should render skipped', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async () => {
         console.log('Hello world');
       });
@@ -189,7 +189,7 @@ test('should render skipped', async ({ runInlineTest }) => {
 test('should report skipped due to sharding', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async () => {
       });
       test('two', async () => {
@@ -197,7 +197,7 @@ test('should report skipped due to sharding', async ({ runInlineTest }) => {
       });
     `,
     'b.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('three', async () => {
       });
       test('four', async () => {
@@ -221,7 +221,7 @@ test('should not render projects if they dont exist', async ({ runInlineTest }) 
       module.exports = { };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}) => {
         expect(1).toBe(1);
       });
@@ -247,7 +247,7 @@ test('should render projects', async ({ runInlineTest }) => {
       module.exports = { projects: [ { name: 'project1' }, { name: 'project2' } ] };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}) => {
         expect(1).toBe(1);
       });
@@ -277,7 +277,7 @@ test('should render projects', async ({ runInlineTest }) => {
 test('should render existing attachments, but not missing ones', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.use({ screenshot: 'on' });
       test('one', async ({ page }, testInfo) => {
         await page.setContent('hello');
@@ -309,7 +309,7 @@ function parseXML(xml: string): any {
 test('should not render annotations to custom testcase properties by default', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}, testInfo) => {
         testInfo.annotations.push({ type: 'unknown_annotation', description: 'unknown' });
       });2
@@ -333,7 +333,7 @@ test('should render text content based annotations to custom testcase properties
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}, testInfo) => {
         testInfo.annotations.push({ type: 'test_description', description: 'sample description' });
         testInfo.annotations.push({ type: 'unknown_annotation', description: 'unknown' });
@@ -362,7 +362,7 @@ test('should render all annotations to testcase value based properties, if reque
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}, testInfo) => {
         testInfo.annotations.push({ type: 'test_id', description: '1234' });
         testInfo.annotations.push({ type: 'test_key', description: 'CALC-2' });
@@ -397,7 +397,7 @@ test('should embed attachments to a custom testcase property, if explicitly requ
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}, testInfo) => {
         const file = testInfo.outputPath('evidence1.txt');
         require('fs').writeFileSync(file, 'hello', 'utf8');
@@ -428,7 +428,7 @@ test('should embed attachments to a custom testcase property, if explicitly requ
 test('should not embed attachments to a custom testcase property, if not explicitly requested', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}, testInfo) => {
         const file = testInfo.outputPath('evidence1.txt');
         require('fs').writeFileSync(file, 'hello', 'utf8');
@@ -453,7 +453,7 @@ test.describe('report location', () => {
         module.exports = { reporter: [['junit', { outputFile: '../my-report/a.xml' }]] };
       `,
       'nested/project/a.test.js': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('one', async ({}) => {
           expect(1).toBe(1);
         });
@@ -471,7 +471,7 @@ test.describe('report location', () => {
         module.exports = { projects: [ {} ] };
       `,
       'foo/bar/baz/tests/a.spec.js': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         const fs = require('fs');
         test('pass', ({}, testInfo) => {
         });
