@@ -4480,7 +4480,7 @@ interface LocatorAssertions {
    * await expect(locator).toBeInViewport();
    * // Make sure element is fully outside of viewport.
    * await expect(locator).not.toBeInViewport();
-   * // Make sure strictly more than half of the element intersects viewport.
+   * // Make sure that at least half of the element intersects viewport.
    * await expect(locator).toBeInViewport({ ratio: 0.5 });
    * ```
    *
@@ -4488,8 +4488,8 @@ interface LocatorAssertions {
    */
   toBeInViewport(options?: {
     /**
-     * The minimal ratio of the element to intersect viewport. Element's ratio should be strictly greater than this
-     * number. Defaults to `0`.
+     * The minimal ratio of the element to intersect viewport. If equals to `0`, then element should intersect viewport at
+     * any positive ratio. Defaults to `0`.
      */
     ratio?: number;
 

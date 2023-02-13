@@ -296,6 +296,7 @@ test.describe('toBeInViewport', () => {
     await expect(page.locator('#small')).not.toBeInViewport();
     await page.locator('#small').scrollIntoViewIfNeeded();
     await expect(page.locator('#small')).toBeInViewport();
+    await expect(page.locator('#small')).toBeInViewport({ ratio: 1 });
   });
 
   test('should respect ratio option', async ({ page }) => {
@@ -307,9 +308,10 @@ test.describe('toBeInViewport', () => {
     await expect(page.locator('div')).toBeInViewport({ ratio: 0.1 });
     await expect(page.locator('div')).toBeInViewport({ ratio: 0.2 });
 
-    // In this test, element's ratio is 0.25. Make sure `ratio` is compared strictly.
     await expect(page.locator('div')).toBeInViewport({ ratio: 0.24 });
-    await expect(page.locator('div')).not.toBeInViewport({ ratio: 0.25 });
+    // In this test, element's ratio is 0.25.
+    await expect(page.locator('div')).toBeInViewport({ ratio: 0.25 });
+    await expect(page.locator('div')).not.toBeInViewport({ ratio: 0.26 });
 
     await expect(page.locator('div')).not.toBeInViewport({ ratio: 0.3 });
     await expect(page.locator('div')).not.toBeInViewport({ ratio: 0.7 });
