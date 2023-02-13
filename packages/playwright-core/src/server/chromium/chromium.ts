@@ -292,8 +292,10 @@ export class Chromium extends BrowserType {
       // See https://github.com/microsoft/playwright/issues/7362
       chromeArguments.push('--enable-use-zoom-for-dsf=false');
       // See https://bugs.chromium.org/p/chromium/issues/detail?id=1407025.
-      if (options.headless)
-        chromeArguments.push('--use-angle');
+      if (options.headless) {
+        // chromeArguments.push('--use-gl=angle');
+        // chromeArguments.push('--use-angle');
+      }
     }
 
     if (options.devtools)

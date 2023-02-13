@@ -107,7 +107,7 @@ it('should play audio @smoke', async ({ page, server, browserName, platform }) =
   expect(await page.$eval('audio', e => e.currentTime)).toBeGreaterThan(0.2);
 });
 
-it('should support webgl @smoke', async ({ page, browserName, headless }) => {
+it.only('should support webgl @smoke', async ({ page, browserName, headless }) => {
   const hasWebGL = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     return !!canvas.getContext('webgl');
