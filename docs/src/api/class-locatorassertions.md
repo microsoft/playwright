@@ -694,7 +694,7 @@ const locator = page.locator('button.submit');
 await expect(locator).toBeInViewport();
 // Make sure element is fully outside of viewport.
 await expect(locator).not.toBeInViewport();
-// Make sure strictly more than half of the element intersects viewport.
+// Make sure that at least half of the element intersects viewport.
 await expect(locator).toBeInViewport({ ratio: 0.5 });
 ```
 
@@ -704,7 +704,7 @@ Locator locator = page.locator("button.submit");
 assertThat(locator).isInViewport();
 // Make sure element is fully outside of viewport.
 assertThat(locator).not().isInViewport();
-// Make sure strictly more than half of the element intersects viewport.
+// Make sure that at least half of the element intersects viewport.
 assertThat(locator).isInViewport(new LocatorAssertions.IsInViewportOptions().setRatio(0.5));
 ```
 
@@ -714,7 +714,7 @@ var locator = Page.Locator("button.submit");
 await Expect(locator).ToBeInViewportAsync();
 // Make sure element is fully outside of viewport.
 await Expect(locator).Not.ToBeInViewportAsync();
-// Make sure strictly more than half of the element intersects viewport.
+// Make sure that at least half of the element intersects viewport.
 await Expect(locator).ToBeInViewportAsync(new() { Ratio = 0.5 });
 ```
 
@@ -726,7 +726,7 @@ locator = page.locator("button.submit")
 await expect(locator).to_be_in_viewport()
 # Make sure element is fully outside of viewport.
 await expect(locator).not_to_be_in_viewport()
-# Make sure strictly more than half of the element intersects viewport.
+# Make sure that at least half of the element intersects viewport.
 await expect(locator).to_be_in_viewport(ratio=0.5);
 ```
 
@@ -738,7 +738,7 @@ locator = page.locator("button.submit")
 expect(locator).to_be_in_viewport()
 # Make sure element is fully outside of viewport.
 expect(locator).not_to_be_in_viewport()
-# Make sure strictly more than half of the element intersects viewport.
+# Make sure that at least half of the element intersects viewport.
 expect(locator).to_be_in_viewport(ratio=0.5);
 ```
 
@@ -747,8 +747,8 @@ expect(locator).to_be_in_viewport(ratio=0.5);
 * since: v1.31
 - `ratio` <[float]>
 
-The minimal ratio of the element to intersect viewport. Element's ratio should be strictly greater than
-this number. Defaults to `0`.
+The minimal ratio of the element to intersect viewport. If equals to `0`, then
+element should intersect viewport at any minimal ratio. Defaults to `0`.
 
 ### option: LocatorAssertions.toBeInViewport.timeout = %%-js-assertions-timeout-%%
 * since: v1.31
