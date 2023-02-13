@@ -28,10 +28,10 @@
   "dependencies": {
     "@playwright/test": "1.31.0-next",
     "@sveltejs/vite-plugin-svelte": "^2.0.2",
-    "vite": "^4.0.3"
+    "vite": "^4.1.1"
   },
   "devDependencies": {
-    "svelte": "^3.49.0"
+    "svelte": "^3.55.1"
   },
   "bin": {
     "playwright": "./cli.js"
