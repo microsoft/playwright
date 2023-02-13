@@ -53,7 +53,7 @@ export type TaskRunnerState = {
 export function createTaskRunner(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
   addGlobalSetupTasks(taskRunner, config);
-  taskRunner.addTask('load tests', createLoadTask('in-process'));
+  taskRunner.addTask('load tests', createLoadTask('in-process', true));
   addRunTasks(taskRunner, config);
   return taskRunner;
 }
@@ -66,7 +66,7 @@ export function createTaskRunnerForWatchSetup(config: FullConfigInternal, report
 
 export function createTaskRunnerForWatch(config: FullConfigInternal, reporter: Multiplexer, projectsToIgnore?: Set<FullProjectInternal>, additionalFileMatcher?: Matcher): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, 0);
-  taskRunner.addTask('load tests', createLoadTask('out-of-process', projectsToIgnore, additionalFileMatcher));
+  taskRunner.addTask('load tests', createLoadTask('out-of-process', true, projectsToIgnore, additionalFileMatcher));
   addRunTasks(taskRunner, config);
   return taskRunner;
 }
@@ -94,7 +94,7 @@ function addRunTasks(taskRunner: TaskRunner<TaskRunnerState>, config: FullConfig
 
 export function createTaskRunnerForList(config: FullConfigInternal, reporter: Multiplexer): TaskRunner<TaskRunnerState> {
   const taskRunner = new TaskRunner<TaskRunnerState>(reporter, config.globalTimeout);
-  taskRunner.addTask('load tests', createLoadTask('in-process'));
+  taskRunner.addTask('load tests', createLoadTask('in-process', false));
   taskRunner.addTask('report begin', async ({ reporter, rootSuite }) => {
     reporter.onBegin?.(config, rootSuite!);
     return () => reporter.onEnd();
@@ -155,12 +155,12 @@ function createRemoveOutputDirsTask(): Task<TaskRunnerState> {
   };
 }
 
-function createLoadTask(mode: 'out-of-process' | 'in-process', projectsToIgnore = new Set<FullProjectInternal>(), additionalFileMatcher?: Matcher): Task<TaskRunnerState> {
+function createLoadTask(mode: 'out-of-process' | 'in-process', shouldFilterOnly: boolean, projectsToIgnore = new Set<FullProjectInternal>(), additionalFileMatcher?: Matcher): Task<TaskRunnerState> {
   return async (context, errors) => {
     const { config } = context;
     const cliMatcher = config._internal.cliArgs.length ? createFileMatcherFromArguments(config._internal.cliArgs) : () => true;
     const fileMatcher = (value: string) => cliMatcher(value) && (additionalFileMatcher ? additionalFileMatcher(value) : true);
-    context.rootSuite = await loadAllTests(mode, config, projectsToIgnore, fileMatcher, errors);
+    context.rootSuite = await loadAllTests(mode, config, projectsToIgnore, fileMatcher, errors, shouldFilterOnly);
     // Fail when no tests.
     if (!context.rootSuite.allTests().length && !config._internal.passWithNoTests && !config.shard)
       throw new Error(`No tests found`);

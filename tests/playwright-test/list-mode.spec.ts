@@ -151,3 +151,24 @@ test('should report errors', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('> 6 |       oh = 2;');
 });
+
+test('should ignore .only', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('example1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test.only('example2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  }, { 'list': true });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain([
+    `Listing tests:`,
+    `  a.test.js:6:7 › example1`,
+    `  a.test.js:9:12 › example2`,
+    `Total: 2 tests in 1 file`
+  ].join('\n'));
+});
