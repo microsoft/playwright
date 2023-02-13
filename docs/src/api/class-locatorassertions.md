@@ -748,7 +748,7 @@ expect(locator).to_be_in_viewport(ratio=0.5);
 - `ratio` <[float]>
 
 The minimal ratio of the element to intersect viewport. If equals to `0`, then
-element should intersect viewport at any minimal ratio. Defaults to `0`.
+element should intersect viewport at any positive ratio. Defaults to `0`.
 
 ### option: LocatorAssertions.toBeInViewport.timeout = %%-js-assertions-timeout-%%
 * since: v1.31

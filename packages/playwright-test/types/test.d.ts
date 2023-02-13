@@ -4489,7 +4489,7 @@ interface LocatorAssertions {
   toBeInViewport(options?: {
     /**
      * The minimal ratio of the element to intersect viewport. If equals to `0`, then element should intersect viewport at
-     * any minimal ratio. Defaults to `0`.
+     * any positive ratio. Defaults to `0`.
      */
     ratio?: number;
 
