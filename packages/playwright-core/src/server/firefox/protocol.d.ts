@@ -563,7 +563,6 @@ export module Protocol {
       success: boolean;
     };
     export type reloadParameters = {
-      frameId: string;
     };
     export type reloadReturnValue = void;
     export type adoptNodeParameters = {
