@@ -278,3 +278,26 @@ test(`testInfo.attach throw if name is not string`, async ({ runInlineTest }) =>
 
   expect(result.output).toContain('"name" should be string.');
 });
+
+test('render text attachment with multiple lines', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}, testInfo) => {
+        testInfo.attachments.push({
+          name: 'attachment',
+          body: Buffer.from('First line\\nSecond line\\nThird line'),
+          contentType: 'text/plain'
+        });
+        expect(1).toBe(0);
+      });
+    `,
+  }, { reporter: 'line' });
+  const text = result.output;
+  expect(text).toContain('    attachment #1: attachment (text/plain) ─────────────────────────────────────────────────────────');
+  expect(text).toContain('    First line');
+  expect(text).toContain('    Second line');
+  expect(text).toContain('    Third line');
+  expect(text).toContain('    ────────────────────────────────────────────────────────────────────────────────────────────────');
+  expect(result.exitCode).toBe(1);
+});

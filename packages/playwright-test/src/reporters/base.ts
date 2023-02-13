@@ -285,7 +285,8 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
             let text = attachment.body.toString();
             if (text.length > 300)
               text = text.slice(0, 300) + '...';
-            resultLines.push(colors.cyan(`    ${text}`));
+            for (const line of text.split('\n'))
+              resultLines.push(colors.cyan(`    ${line}`));
           }
         }
         resultLines.push(colors.cyan(separator('   ')));
