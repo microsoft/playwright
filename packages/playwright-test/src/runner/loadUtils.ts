@@ -27,7 +27,7 @@ import { requireOrImport } from '../common/transform';
 import { buildFileSuiteForProject, filterByFocusedLine, filterByTestIds, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { filterForShard } from './testGroups';
 
-export async function loadAllTests(mode: 'out-of-process' | 'in-process', config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, fileMatcher: Matcher, errors: TestError[]): Promise<Suite> {
+export async function loadAllTests(mode: 'out-of-process' | 'in-process', config: FullConfigInternal, projectsToIgnore: Set<FullProjectInternal>, fileMatcher: Matcher, errors: TestError[], shouldFilterOnly: boolean): Promise<Suite> {
   const projects = filterProjects(config.projects, config._internal.cliProjectFilter);
 
   let filesToRunByProject = new Map<FullProjectInternal, string[]>();
@@ -118,7 +118,8 @@ export async function loadAllTests(mode: 'out-of-process' | 'in-process', config
   }
 
   // Filter only for leaf projects.
-  filterOnly(rootSuite);
+  if (shouldFilterOnly)
+    filterOnly(rootSuite);
 
   // Prepend the projects that are dependencies.
   for (const project of dependencyProjects) {
