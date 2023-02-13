@@ -21,7 +21,6 @@ import fs from 'fs';
 import { TMP_WORKSPACES } from './npmTest';
 
 const PACKAGE_BUILDER_SCRIPT = path.join(__dirname, '..', '..', 'utils', 'pack_package.js');
-const DOCKER_BUILDER_SCRIPT = path.join(__dirname, '..', '..', 'utils', 'docker', 'build.sh');
 
 async function globalSetup() {
   await promisify(rimraf)(TMP_WORKSPACES);
