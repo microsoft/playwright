@@ -181,6 +181,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return await this._page.expectScreenshot(metadata, {
       ...params,
       locator,
+      comparatorOptions: {
+        ...params.comparatorOptions,
+        _comparator: params.comparatorOptions?.comparator,
+      },
       screenshotOptions: {
         ...params.screenshotOptions,
         mask,
