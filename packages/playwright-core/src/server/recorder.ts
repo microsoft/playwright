@@ -695,5 +695,5 @@ class ThrottledFile {
 }
 
 function isScreenshotCommand(metadata: CallMetadata) {
-  return metadata.method.includes('screenshot');
+  return metadata.method.toLowerCase().includes('screenshot');
 }
