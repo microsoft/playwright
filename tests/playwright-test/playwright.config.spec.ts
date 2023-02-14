@@ -206,3 +206,52 @@ test('should respect testIdAttribute', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should resolve storageState relative to config dir', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'cfg/playwright.config.ts': `
+      module.exports = {
+        testDir: '..',
+        use: {
+          storageState: '../state.json',
+        }
+      };
+    `,
+    'state.json': `
+      {
+        "cookies": [], "origins": [{
+          "origin": "http://example.com",
+          "localStorage": [{ "name": "foo", "value": "state.json" }]
+        }]
+      }
+    `,
+    'dir/a.test.ts': `
+      const { test } = pwt;
+      test('test1', async ({ page }) => {
+        await page.route('**/*', route => route.fulfill({ body: 'hello' }));
+        await page.goto('http://example.com');
+        expect(await page.evaluate('localStorage.foo')).toBe('state.json');
+      });
+
+      test.describe(() => {
+        test.use({ storageState: '../dir/state.json' });
+        test('test2', async ({ page }) => {
+          await page.route('**/*', route => route.fulfill({ body: 'hello' }));
+          await page.goto('http://example.com');
+          expect(await page.evaluate('localStorage.foo')).toBe('dir/state.json');
+        });
+      });
+    `,
+    'dir/state.json': `
+      {
+        "cookies": [], "origins": [{
+          "origin": "http://example.com",
+          "localStorage": [{ "name": "foo", "value": "dir/state.json" }]
+        }]
+      }
+    `,
+  }, { workers: 1, config: 'cfg' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});

@@ -177,7 +177,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     baseURL,
     contextOptions,
     serviceWorkers,
-  }, use) => {
+  }, use, testInfo) => {
     const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
       options.acceptDownloads = acceptDownloads;
@@ -209,8 +209,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.permissions = permissions;
     if (proxy !== undefined)
       options.proxy = proxy;
-    if (storageState !== undefined)
+    if (storageState !== undefined) {
+      if (typeof storageState === 'string')
+        storageState = path.resolve((testInfo as TestInfoImpl).config._internal.configDir, storageState);
       options.storageState = storageState;
+    }
     if (timezoneId !== undefined)
       options.timezoneId = timezoneId;
     if (userAgent !== undefined)
