@@ -4,6 +4,8 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+import LiteYouTube from '@site/src/components/LiteYouTube';
+
 ## Version 1.30
 
 ### Browser Versions
@@ -19,6 +21,11 @@ This version was also tested against the following stable channels:
 
 
 ## Version 1.29
+
+<LiteYouTube
+  id="VbVlz61VtNo"
+  title="Playwright 1.29"
+/>
 
 ### New APIs
 
@@ -105,9 +112,10 @@ This version was also tested against the following stable channels:
 
 ## Version 1.28
 
-<div className="embed-youtube">
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/tVSq-0n-TY4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="tVSq-0n-TY4"
+  title="Playwright 1.28"
+/>
 
 ### Playwright Tools
 
@@ -168,9 +176,11 @@ This version was also tested against the following stable channels:
 
 ## Version 1.27
 
-<div className="embed-youtube">
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/b84eqab3kwc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="b84eqab3kwc"
+  title="Playwright 1.27"
+/>
+
 
 ### Locators
 
@@ -235,9 +245,10 @@ This version was also tested against the following stable channels:
 
 ## Version 1.26
 
-<div className="embed-youtube">
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/b84eqab3kwc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="b84eqab3kwc"
+  title="Playwright 1.26"
+/>
 
 ### Assertions
 
@@ -282,9 +293,10 @@ This version was also tested against the following stable channels:
 
 ## Version 1.25
 
-<div className="embed-youtube">
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/NFLHA57a-so" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="NFLHA57a-so"
+  title="Playwright 1.25"
+/>
 
 ### VSCode Extension
 
@@ -333,9 +345,10 @@ This version was also tested against the following stable channels:
 
 ## Version 1.24
 
-<div className="embed-youtube">
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/9F05o1shxcY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="9F05o1shxcY"
+  title="Playwright 1.24"
+/>
 
 ### 🌍 Multiple Web Servers in `playwright.config.ts`
 
@@ -460,9 +473,10 @@ beforeMount(async ({ hooksConfig }) => {
 
 ## Version 1.23
 
-<div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/NRGOV46P3kU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="NRGOV46P3kU"
+  title="Playwright 1.23"
+/>
 
 ### Network Replay
 
@@ -576,9 +590,10 @@ WebServer is now considered "ready" if request to the specified port has any of 
 
 ## Version 1.22
 
-<div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/keV2CIgtBlg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="keV2CIgtBlg"
+  title="Playwright 1.22"
+/>
 
 ### Highlights
 
@@ -650,9 +665,10 @@ WebServer is now considered "ready" if request to the specified port has any of 
 
 ## Version 1.21
 
-<div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/45HZdbmgEw8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="45HZdbmgEw8"
+  title="Playwright 1.21"
+/>
 
 ### Highlights
 
@@ -702,9 +718,10 @@ This version was also tested against the following stable channels:
 
 ## Version 1.20
 
-<div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/6vV-XXKsrbA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="6vV-XXKsrbA"
+  title="Playwright 1.20"
+/>
 
 ### Highlights
 
@@ -772,9 +789,10 @@ This version was also tested against the following stable channels:
 
 ## Version 1.19
 
-<div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/z0EOFvlf14U" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="z0EOFvlf14U"
+  title="Playwright 1.19"
+/>
 
 ### Playwright Test Update
 
@@ -860,9 +878,10 @@ This version was also tested against the following stable channels:
 
 ## Version 1.18
 
-<div className="embed-youtube">
- <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/ABLYpw2BN_g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="ABLYpw2BN_g"
+  title="Playwright 1.18"
+/>
 
 ### Locator Improvements
 
@@ -965,9 +984,10 @@ This version was also tested against the following stable channels:
 
 ## Version 1.17
 
-<div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/7iyIdeoAP04" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="7iyIdeoAP04"
+  title="Playwright 1.17"
+/>
 
 ### Frame Locators
 
@@ -1027,9 +1047,10 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 
 ## Version 1.16
 
-<div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/OQKwFDmY64g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="OQKwFDmY64g"
+  title="Playwright 1.16"
+/>
 
 ### 🎭 Playwright Test
 
@@ -1161,9 +1182,10 @@ This version of Playwright was also tested against the following stable channels
 
 ## Version 1.15
 
-<div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/6RwzsDeEj7Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="6RwzsDeEj7Y"
+  title="Playwright 1.15"
+/>
 
 ### 🎭 Playwright Library
 
@@ -1222,9 +1244,10 @@ By using `npx playwright test --debug` it will enable the [Playwright Inspector]
 
 ## Version 1.14
 
-<div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/LczBDR0gOhk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
+<LiteYouTube
+  id="LczBDR0gOhk"
+  title="Playwright 1.14"
+/>
 
 ### 🎭 Playwright Library
 
