@@ -195,7 +195,6 @@ function watchPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseD
   const outputDir = path.join(baseDir, 'test-results');
   const args = ['test'];
   args.push('--output=' + outputDir);
-  args.push('--watch');
   args.push('--workers=2', ...paramList);
   if (options.additionalArgs)
     args.push(...options.additionalArgs);
@@ -205,7 +204,7 @@ function watchPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseD
   command.push(...args);
   const testProcess = childProcess({
     command,
-    env: cleanEnv(env),
+    env: cleanEnv({ PWTEST_WATCH: '1', ...env }),
     cwd,
   });
   return testProcess;
