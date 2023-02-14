@@ -12942,7 +12942,7 @@ export interface ElectronApplication {
    * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate)
    * returns `undefined`. Playwright also supports transferring some additional values that are not serializable by
    * `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
-   * @param pageFunction Function to be evaluated in the worker context.
+   * @param pageFunction Function to be evaluated in the main Electron process.
    * @param arg Optional argument to pass to `pageFunction`.
    */
   evaluate<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<R>;
@@ -12961,7 +12961,7 @@ export interface ElectronApplication {
    * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate)
    * returns `undefined`. Playwright also supports transferring some additional values that are not serializable by
    * `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
-   * @param pageFunction Function to be evaluated in the worker context.
+   * @param pageFunction Function to be evaluated in the main Electron process.
    * @param arg Optional argument to pass to `pageFunction`.
    */
   evaluate<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<R>;
@@ -12982,7 +12982,7 @@ export interface ElectronApplication {
    * returns a [Promise], then
    * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * would wait for the promise to resolve and return its value.
-   * @param pageFunction Function to be evaluated in the worker context.
+   * @param pageFunction Function to be evaluated in the main Electron process.
    * @param arg Optional argument to pass to `pageFunction`.
    */
   evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
@@ -13002,7 +13002,7 @@ export interface ElectronApplication {
    * returns a [Promise], then
    * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * would wait for the promise to resolve and return its value.
-   * @param pageFunction Function to be evaluated in the worker context.
+   * @param pageFunction Function to be evaluated in the main Electron process.
    * @param arg Optional argument to pass to `pageFunction`.
    */
   evaluateHandle<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<SmartHandle<R>>;
