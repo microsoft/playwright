@@ -297,7 +297,7 @@ export const test = base
           testProcess = watchPlaywrightTest(childProcess, baseDir, { ...env, PWTEST_CACHE_DIR: cacheDir }, options);
           return testProcess;
         });
-        await testProcess!.close();
+        await testProcess?.close();
         await removeFolderAsync(cacheDir);
       },
 

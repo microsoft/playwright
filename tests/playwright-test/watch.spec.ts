@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
 test.describe.configure({ mode: 'parallel' });
@@ -348,6 +349,38 @@ test('should run on changed deps', async ({ runWatchTest, writeFiles }) => {
   await testProcess.waitForOutput('Waiting for file changes.');
 });
 
+test('should run on changed deps in ESM', async ({ runWatchTest, writeFiles, nodeVersion }) => {
+  test.skip(nodeVersion.major < 16);
+  const testProcess = await runWatchTest({
+    'playwright.config.ts': `export default {};`,
+    'package.json': `{ "type": "module" }`,
+    'a.test.ts': `
+      pwt.test('passes', () => {});
+    `,
+    'b.test.ts': `
+      import './helper.js';
+      pwt.test('passes', () => {});
+    `,
+    'helper.ts': `
+      console.log('old helper');
+    `,
+  }, {});
+  await testProcess.waitForOutput('a.test.ts:5:11 › passes');
+  await testProcess.waitForOutput('b.test.ts:6:11 › passes');
+  await testProcess.waitForOutput('old helper');
+  await testProcess.waitForOutput('Waiting for file changes.');
+  testProcess.clearOutput();
+  await writeFiles({
+    'helper.ts': `
+      console.log('new helper');
+    `,
+  });
+  await testProcess.waitForOutput('b.test.ts:6:11 › passes');
+  expect(testProcess.output).not.toContain('a.test.ts:5:11 › passes');
+  await testProcess.waitForOutput('new helper');
+  await testProcess.waitForOutput('Waiting for file changes.');
+});
+
 test('should re-run changed files on R', async ({ runWatchTest, writeFiles }) => {
   const testProcess = await runWatchTest({
     'a.test.ts': `
@@ -527,8 +560,8 @@ test('should run CT on changed deps', async ({ runWatchTest, writeFiles }) => {
     `,
   });
 
-  await testProcess.waitForOutput('src/button.spec.tsx:5:11 › pass');
-  expect(testProcess.output).not.toContain('src/link.spec.tsx');
+  await testProcess.waitForOutput(`src${path.sep}button.spec.tsx:5:11 › pass`);
+  expect(testProcess.output).not.toContain(`src${path.sep}link.spec.tsx`);
   await testProcess.waitForOutput('Error: expect(received).toHaveText(expected)');
   await testProcess.waitForOutput('Waiting for file changes.');
 });
@@ -576,7 +609,57 @@ test('should run CT on indirect deps change', async ({ runWatchTest, writeFiles 
     `,
   });
 
-  await testProcess.waitForOutput('src/button.spec.tsx:5:11 › pass');
-  expect(testProcess.output).not.toContain('src/link.spec.tsx');
+  await testProcess.waitForOutput(`src${path.sep}button.spec.tsx:5:11 › pass`);
+  expect(testProcess.output).not.toContain(`src${path.sep}link.spec.tsx`);
+  await testProcess.waitForOutput('Waiting for file changes.');
+});
+
+test('should run CT on indirect deps change ESM mode', async ({ runWatchTest, writeFiles, nodeVersion }) => {
+  test.skip(nodeVersion.major < 16);
+  const testProcess = await runWatchTest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/experimental-ct-react';
+      export default defineConfig({ projects: [{name: 'default'}] });
+    `,
+    'package.json': `{ "type": "module" }`,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/button.css': `
+      button { color: red; }
+    `,
+    'src/button.tsx': `
+      import './button.css';
+      export const Button = () => <button>Button</button>;
+    `,
+    'src/button.spec.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button.jsx';
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button', { timeout: 1000 });
+      });
+    `,
+    'src/link.spec.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      test('pass', async ({ mount }) => {
+        const component = await mount(<a>hello</a>);
+        await expect(component).toHaveText('hello');
+      });
+    `,
+  }, {});
+  await testProcess.waitForOutput('button.spec.tsx:5:7 › pass');
+  await testProcess.waitForOutput('link.spec.tsx:4:7 › pass');
+  await testProcess.waitForOutput('Waiting for file changes.');
+  testProcess.clearOutput();
+  await writeFiles({
+    'src/button.css': `
+      button { color: blue; }
+    `,
+  });
+
+  await testProcess.waitForOutput(`src${path.sep}button.spec.tsx:5:7 › pass`);
+  expect(testProcess.output).not.toContain(`src${path.sep}link.spec.tsx`);
   await testProcess.waitForOutput('Waiting for file changes.');
 });
