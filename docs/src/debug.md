@@ -16,21 +16,6 @@ Playwright Inspector is a GUI tool that helps authoring and debugging Playwright
 
 There are several ways of opening Playwright Inspector:
 
-#### --debug
-* langs: js
-
-* Debugging all Tests
-
-  ```bash
-  npx playwright test --debug
-  ```
-
-* Debugging one test
-
-  ```bash
-  npx playwright test example --debug
-  ```
-
 #### PWDEBUG
 
 Set the `PWDEBUG` environment variable to run your scripts in debug mode. This
@@ -150,6 +135,24 @@ pytest -s
 $env:PWDEBUG="console"
 pytest -s
 ```
+
+#### --debug
+* langs: js
+
+The `--debug` flag is equal to the `PWDEBUG=1` environment variable setting.
+
+* Debugging all Tests
+
+  ```bash
+  npx playwright test --debug
+  ```
+
+* Debugging one test
+
+  ```bash
+  npx playwright test example --debug
+  ```
+
 
 #### page.pause
 
