@@ -42,7 +42,7 @@ You can also reuse the signed-in state in the tests with [global setup](/auth.md
 
 ### Write fewer tests but longer tests
 
-When it comes to end to end testing having long tests is not a bad thing. It's ok to have multiple actions and assertions in your test so you can test complete App flows. You should avoid separating your assertions into individual test blocks as it doesn't really bring much value and just slows down the running of your tests. 
+When it comes to end to end testing having long tests is not a bad thing. It's ok to have multiple actions and assertions in your test so you can test complete App flows. You should avoid separating your assertions into individual test blocks as it doesn't really bring much value and just slows down the running of your tests.
 
 If your test does fail, Playwright will give you an error message showing what part of the test failed which you can see either in VS Code, the terminal, the HTML report, or the trace viewer. You can also use [soft assertions](/test-assertions.md#soft-assertions) which do not terminate test execution but mark the test as failed.
 
@@ -92,7 +92,7 @@ await page
 
 #### Prefer user-facing attributes to XPath or CSS selectors
 
-Your DOM can easily change so having your tests depend on your DOM structure can lead to failing tests. For example consider selecting this button by its CSS classes. Should the designer change something then the class might change breaking your test. 
+Your DOM can easily change so having your tests depend on your DOM structure can lead to failing tests. For example consider selecting this button by its CSS classes. Should the designer change something then the class might change breaking your test.
 
 
 ```js
@@ -116,7 +116,7 @@ To pick a locator run the `codegen` command followed by the URL that you would l
 npx playwright codegen playwright.dev
 ```
 
-This will open a new browser window as well as the Playwright inspector. To pick a locator first click on the 'Record' button to stop the recording. By default when you run the `codegen` command it will start a new recording. Once you stop the recording the 'Pick Locator' button will be available to click. 
+This will open a new browser window as well as the Playwright inspector. To pick a locator first click on the 'Record' button to stop the recording. By default when you run the `codegen` command it will start a new recording. Once you stop the recording the 'Pick Locator' button will be available to click.
 
 You can then hover over any element on your page in the browser window and see the locator highlighted below your cursor. Clicking on an element will add the locator into the Playwright inspector. You can either copy the locator and paste into your test file or continue to explore the locator by editing it in the Playwright Inspector, for example by modifying the text, and seeing the results in the browser window.
 
@@ -140,7 +140,7 @@ Assertions are a way to verify that the expected result and the actual result ma
 
 #### Don't use manual assertions
 
-Don't use manual assertions that are not awaiting the expect. In the code below the await is inside the expect rather than before it. When using assertions such as `isVisible()` the test wont wait a single second, it will just check the locator is there and return immediately. Use web first assertions such as `toBeVisible()` instead.
+Don't use manual assertions that are not awaiting the expect. In the code below the await is inside the expect rather than before it. When using assertions such as `isVisible()` the test wont wait a single second, it will just check the locator is there and return immediately.
 
 ```js
 👎 expect(await page.getByText('welcome').isVisible()).toBe(true);
@@ -156,7 +156,7 @@ Use web first assertions such as `toBeVisible()` instead.
 
 #### Local debugging
 
-For local debugging we recommend you [debug your tests live in VSCode.](/getting-started-vscode.md#live-debugging) by installing the [VS Code extension](./getting-started-vscode.md). You can run tests in debug mode by right clicking on the line next to the test you want to run which will open a browser window and pause at where the breakpoint is set. 
+For local debugging we recommend you [debug your tests live in VSCode.](/getting-started-vscode.md#live-debugging) by installing the [VS Code extension](./getting-started-vscode.md). You can run tests in debug mode by right clicking on the line next to the test you want to run which will open a browser window and pause at where the breakpoint is set.
 
 <img width="1338" alt="debugging tests in vscode" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212274675-5c6e1647-2aab-40fd-9804-8680c1ac2d16.png" />
 
@@ -164,7 +164,7 @@ You can live debug your test by clicking or editing the locators in your test in
 
 <img width="1394" alt="live debugging locators in vscode" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212273189-da271dc4-0f59-4138-92a8-10e719066cbe.png" />
 
-You can also debug your tests with the Playwright inspector by running your tests with the `--debug` flag. 
+You can also debug your tests with the Playwright inspector by running your tests with the `--debug` flag.
 
 ```js
 npx playwright test --debug
@@ -192,7 +192,7 @@ Traces are configured in the Playwright config file and are set to run on CI on 
 ```js
 npx playwright test --trace on
 ```
-Once you run this command your traces will be recorded for each test and can be viewed directly from the HTML report. 
+Once you run this command your traces will be recorded for each test and can be viewed directly from the HTML report.
 
 ```js
 npx playwright show-report
@@ -206,8 +206,8 @@ Traces can be opened by clicking on the icon next to the test or by opening each
 
 ### Use Playwright's Tooling
 
-Playwright comes with a range of tooling to help you write tests. 
-- The [VS Code extension](./getting-started-vscode.md) gives you a great developer experience when writing, running, and debugging tests. 
+Playwright comes with a range of tooling to help you write tests.
+- The [VS Code extension](./getting-started-vscode.md) gives you a great developer experience when writing, running, and debugging tests.
 - The [test generator](./codegen.md) can generate tests and pick locators for you.
 - The [trace viewer](./trace-viewer.md) gives you a full trace of your tests as a local PWA that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action, view network requests and more.
 - [Typescript](./test-typescript) in Playwright works out of the box and gives you better IDE integrations. Your IDE will show you everything you can do and highlight when you do something wrong. No TypeScript experience is needed and it is not necessary for your code to be in TypeScript, all you need to do is create your tests with a `.ts` extension.
@@ -267,7 +267,7 @@ export default config;
 
 ### Keep your Playwright dependency up to date
 
-By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public. 
+By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public.
 
 ```js
 npm install -D @playwright/test@latest
@@ -282,7 +282,7 @@ npx playwright --version
 
 ### Run tests on CI
 
-Setup CI/CD and run your tests frequently. The more often you run your tests the better. Ideally you should run your tests on each commit and pull request. Playwright comes with a [GitHub actions workflow](/ci-intro.md) so that tests will run on CI for you with no setup required. Playwright can also be setup on the [CI environment](/ci.md) of your choice. 
+Setup CI/CD and run your tests frequently. The more often you run your tests the better. Ideally you should run your tests on each commit and pull request. Playwright comes with a [GitHub actions workflow](/ci-intro.md) so that tests will run on CI for you with no setup required. Playwright can also be setup on the [CI environment](/ci.md) of your choice.
 
 Use Linux when running your tests on CI as it is cheaper. Developers can use whatever environment when running locally but use linux on CI.
 
