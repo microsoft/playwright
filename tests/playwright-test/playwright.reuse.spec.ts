@@ -495,3 +495,23 @@ test('should reset tracing', async ({ runInlineTest }, testInfo) => {
   ]);
   expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBe(true);
 });
+
+test('should not delete others contexts', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'src/reuse.test.ts': `
+      const test = pwt.test.extend<{ loggedInPage: Page }>({
+        loggedInPage: async ({ browser }, use) => {
+          const page = await browser.newPage();
+          await use(page);
+          await page.close();
+        },
+      });
+      test("passes", async ({ loggedInPage, page }) => {
+        await loggedInPage.goto('data:text/plain,Hello world');
+      });
+    `,
+  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
