@@ -8,8 +8,7 @@ Playwright Trace Viewer is a GUI tool that helps you explore recorded Playwright
 
 
 <video width="100%" height="100%" controls muted>
-  <source src="https://user-images.githubusercontent.com/13063165/194582806-a26efd72-746e-40cc-8955-fa65aa3274c3.mp4
-" type="video/mp4" />
+  <source src="https://user-images.githubusercontent.com/13063165/219132713-17b9d75b-71e3-42c4-a43f-3f9e2e15f834.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
 
