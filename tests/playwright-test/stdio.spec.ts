@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should get top level stdio', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       console.log('\\n%% top level stdout');
       console.error('\\n%% top level stderr');
       test('is a test', () => {
@@ -42,7 +42,8 @@ test('should get top level stdio', async ({ runInlineTest }) => {
 test('should get stdio from worker fixture teardown', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      export const test = base.extend({
         fixture: [ async ({}, run) => {
           console.log('\\n%% worker setup');
           await run();
@@ -67,7 +68,7 @@ test('should ignore stdio when quiet', async ({ runInlineTest }) => {
       module.exports = { quiet: true };
     `,
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('is a test', () => {
         console.log('\\n%% stdout in a test');
         console.error('\\n%% stderr in a test');
@@ -80,7 +81,7 @@ test('should ignore stdio when quiet', async ({ runInlineTest }) => {
 test('should support console colors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('console log', () => {
         console.log('process.stdout.isTTY = ' + process.stdout.isTTY);
         console.log('process.stderr.isTTY = ' + process.stderr.isTTY);
@@ -99,7 +100,7 @@ test('should support console colors', async ({ runInlineTest }) => {
 test('should override hasColors and getColorDepth', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('console log', () => {
         console.log('process.stdout.hasColors(1) = ' + process.stdout.hasColors(1));
         console.log('process.stderr.hasColors(1) = ' + process.stderr.hasColors(1));
@@ -117,7 +118,7 @@ test('should override hasColors and getColorDepth', async ({ runInlineTest }) =>
 test('should not throw type error when using assert', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       const assert = require('assert');
       test('assert no type error', () => {
         assert.strictEqual(1, 2);

@@ -40,21 +40,21 @@ test('should respect path resolver', async ({ runInlineTest }) => {
     }`,
     'a.test.ts': `
       import { foo } from 'util/b';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
     `,
     'b.test.ts': `
       import { foo } from 'util2/b';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
     `,
     'c.test.ts': `
       import { foo } from 'util3';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
@@ -81,7 +81,7 @@ test('should respect path resolver', async ({ runInlineTest }) => {
       import { foo } from 'parent-util/b';
       // This import should pick up <root>/tsconfig through the helper
       import { foo as foo2 } from '../helper';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
         expect(testInfo.project.name).toBe(foo2);
@@ -115,14 +115,14 @@ test('should respect baseurl', async ({ runInlineTest }) => {
     }`,
     'a.test.ts': `
       import { foo } from 'util/b';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
     `,
     'b.test.ts': `
       import { foo } from 'util2';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
@@ -152,7 +152,7 @@ test('should respect baseurl w/o paths', async ({ runInlineTest }) => {
     'dir2/inner.spec.ts': `
       // This import should pick up ../foo/bar/util/b due to baseUrl.
       import { foo } from 'foo/bar/util/b';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(foo).toBe(42);
       });
@@ -191,7 +191,7 @@ test('should respect complex path resolver', async ({ runInlineTest }) => {
     }`,
     'a.spec.ts': `
       import { foo } from 'prefix-matchedstar';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
@@ -201,7 +201,7 @@ test('should respect complex path resolver', async ({ runInlineTest }) => {
     `,
     'b.spec.ts': `
       import { foo } from 'prefix-matchedstar-suffix';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
@@ -211,7 +211,7 @@ test('should respect complex path resolver', async ({ runInlineTest }) => {
     `,
     'c.spec.ts': `
       import { foo } from 'matchedstar-suffix';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
@@ -221,7 +221,7 @@ test('should respect complex path resolver', async ({ runInlineTest }) => {
     `,
     'd.spec.ts': `
       import { foo } from 'no-star';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
@@ -231,7 +231,7 @@ test('should respect complex path resolver', async ({ runInlineTest }) => {
     `,
     'e.spec.ts': `
       import { foo } from 'longest-prefix';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
@@ -246,7 +246,7 @@ test('should respect complex path resolver', async ({ runInlineTest }) => {
     `,
     'f.spec.ts': `
       import { foo } from 'barfoobar';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
@@ -256,7 +256,7 @@ test('should respect complex path resolver', async ({ runInlineTest }) => {
     `,
     'g.spec.ts': `
       import { foo } from 'foo/[bar]';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
@@ -285,7 +285,7 @@ test('should not use baseurl for relative imports', async ({ runInlineTest }) =>
     'frontend/playwright/tests/forms_cms_standard.spec.ts': `
       // This relative import should not use baseUrl
       import { foo } from '../utils';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(foo).toBe(42);
       });
@@ -329,7 +329,7 @@ test('should not use baseurl for relative imports when dir with same name exists
       // This absolute import should use baseUrl
       import { bar } from '.bar';
 
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(foo).toBe(42);
         expect(index).toBe(42);
@@ -358,7 +358,7 @@ test('should respect path resolver for JS files when allowJs', async ({ runInlin
     }`,
     'a.test.js': `
       const { foo } = require('util/b');
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
@@ -385,7 +385,7 @@ test('should not respect path resolver for JS files w/o allowJS', async ({ runIn
     }`,
     'a.test.js': `
       const { foo } = require('util/b');
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
@@ -412,14 +412,14 @@ test('should respect path resolver for JS and TS files from jsconfig.json', asyn
     }`,
     'a.test.js': `
       const { foo } = require('util/b');
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });
     `,
     'b.test.ts': `
       import { foo } from 'util/b';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         expect(testInfo.project.name).toBe(foo);
       });

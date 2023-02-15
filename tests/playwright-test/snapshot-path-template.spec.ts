@@ -24,9 +24,10 @@ async function getSnapshotPaths(runInlineTest, testInfo, playwrightConfig, pathA
     'playwright.config.js': `
       module.exports = ${JSON.stringify(playwrightConfig, null, 2)}
     `,
-    'a/b/c/d.spec.js': `
-      pwt.test.describe('suite', () => {
-        pwt.test('test should work', async ({ page }, testInfo) => {
+    'a/b/c/d.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test.describe('suite', () => {
+        test('test should work', async ({ page }, testInfo) => {
           console.log([
             ${JSON.stringify(SEPARATOR)},
             testInfo.project.name,
@@ -98,8 +99,8 @@ test('tokens should expand property', async ({ runInlineTest }, testInfo) => {
   expect.soft(snapshotPath['extension']).toBe('mysnapshot.png');
   expect.soft(snapshotPath['arg']).toBe(path.join('bar', 'foo'));
   expect.soft(snapshotPath['testFileDir']).toBe(path.join('a', 'b', 'c'));
-  expect.soft(snapshotPath['testFilePath']).toBe(path.join('a', 'b', 'c', 'd.spec.js'));
-  expect.soft(snapshotPath['testFileName']).toBe('d.spec.js');
+  expect.soft(snapshotPath['testFilePath']).toBe(path.join('a', 'b', 'c', 'd.spec.ts'));
+  expect.soft(snapshotPath['testFileName']).toBe('d.spec.ts');
   expect.soft(snapshotPath['snapshotDir']).toBe('a-snapshot-dir.png');
   expect.soft(snapshotPath['snapshotSuffix']).toBe('-' + process.platform);
   expect.soft(snapshotPath['testName']).toBe('suite-test-should-work');
@@ -122,8 +123,9 @@ test('arg should receive default arg', async ({ runInlineTest }, testInfo) => {
         snapshotPathTemplate: '__screenshots__/{arg}{ext}',
       }
     `,
-    'a.spec.js': `
-      pwt.test('is a test', async ({ page }) => {
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('is a test', async ({ page }) => {
         await expect(page).toHaveScreenshot();
       });
     `

@@ -18,8 +18,9 @@ import { test, expect } from './playwright-test-fixtures';
 
 const tests = {
   'helper.ts': `
-    export const headlessTest = pwt.test.extend({ headless: false });
-    export const headedTest = pwt.test.extend({ headless: true });
+    import { test as base, expect } from '@playwright/test';
+    export const headlessTest = base.extend({ headless: false });
+    export const headedTest = base.extend({ headless: true });
   `,
   'a1.spec.ts': `
     import { headlessTest, headedTest } from './helper';

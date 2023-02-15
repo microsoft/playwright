@@ -24,7 +24,7 @@ test('should be able to define config', async ({ runInlineTest }) => {
       module.exports = { timeout: 12345 };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
         expect(testInfo.timeout).toBe(12345);
       });
@@ -41,7 +41,7 @@ test('should prioritize project timeout', async ({ runInlineTest }) => {
       module.exports = { timeout: 500, projects: [{ timeout: 10000}, {}] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
         await new Promise(f => setTimeout(f, 1500));
       });
@@ -60,7 +60,7 @@ test('should prioritize command line timeout over project timeout', async ({ run
       module.exports = { projects: [{ timeout: 10000}] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
         await new Promise(f => setTimeout(f, 1500));
       });
@@ -81,12 +81,12 @@ test('should read config from --config, resolve relative testDir', async ({ runI
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('ignored', async ({}) => {
       });
     `,
     'dir/b.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('run', async ({}) => {
       });
     `,
@@ -104,12 +104,12 @@ test('should default testDir to the config file', async ({ runInlineTest }) => {
       module.exports = {};
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('ignored', async ({}) => {
       });
     `,
     'dir/b.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('run', async ({}) => {
       });
     `,
@@ -133,7 +133,7 @@ test('should be able to set reporters', async ({ runInlineTest }, testInfo) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async () => {
       });
     `
@@ -154,12 +154,12 @@ test('should support different testDirs', async ({ runInlineTest }) => {
       ] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('runs once', async ({}) => {
       });
     `,
     'dir/b.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('runs twice', async ({}) => {
       });
     `,
@@ -186,13 +186,13 @@ test('should allow root testDir and use it for relative paths', async ({ runInli
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', async ({}, testInfo) => {
         expect(1 + 1).toBe(3);
       });
     `,
     'dir/a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', async ({}, testInfo) => {
         expect(1 + 1).toBe(3);
       });
@@ -203,17 +203,18 @@ test('should allow root testDir and use it for relative paths', async ({ runInli
   expect(result.passed).toBe(0);
   expect(result.skipped).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain(`1) ${path.join('dir', 'a.test.ts')}:6:7 › fails`);
+  expect(result.output).toContain(`1) ${path.join('dir', 'a.test.ts')}:3:11 › fails`);
 });
 
 test('should throw when test() is called in config file', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      pwt.test('hey', () => {});
+      import { test, expect } from '@playwright/test';
+      test('hey', () => {});
       module.exports = {};
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', async ({}) => {
       });
     `,
@@ -230,7 +231,7 @@ test('should filter by project, case-insensitive', async ({ runInlineTest }) => 
       ] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
         console.log(testInfo.project.name);
       });
@@ -252,7 +253,7 @@ test('should print nice error when project is unknown', async ({ runInlineTest }
       ] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
         console.log(testInfo.project.name);
       });
@@ -273,7 +274,7 @@ test('should filter by project list, case-insensitive', async ({ runInlineTest }
       ] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
         console.log(testInfo.project.name);
       });
@@ -299,7 +300,7 @@ test('should filter when duplicate project names exist', async ({ runInlineTest 
       ] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
         console.log(testInfo.project.name);
       });
@@ -322,7 +323,7 @@ test('should print nice error when some of the projects are unknown', async ({ r
       ] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
         console.log(testInfo.project.name);
       });
@@ -338,7 +339,7 @@ test('should work without config file', async ({ runInlineTest }) => {
       throw new Error('This file should not be required');
     `,
     'dir/a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}) => {
         test.expect(1 + 1).toBe(2);
       });
@@ -361,7 +362,8 @@ test('should inherit use options in projects', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const test = pwt.test.extend({ foo: ['', {option:true}], bar: ['', {option: true}] });
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({ foo: ['', {option:true}], bar: ['', {option: true}] });
       test('pass', async ({ foo, bar  }, testInfo) => {
         test.expect(foo).toBe('config');
         test.expect(bar).toBe('project');
@@ -381,7 +383,7 @@ test('should support ignoreSnapshots config option', async ({ runInlineTest }) =
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
         expect('foo').toMatchSnapshot();
         expect('foo').not.toMatchSnapshot();
@@ -401,7 +403,7 @@ test('should validate workers option set to percent', async ({ runInlineTest }, 
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async () => {
       });
     `
@@ -418,7 +420,7 @@ test('should throw when workers option is invalid', async ({ runInlineTest }) =>
         };
       `,
     'a.test.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('pass', async () => {
         });
       `
@@ -436,7 +438,7 @@ test('should work with undefined values and base', async ({ runInlineTest }) => 
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
         expect(testInfo.config.updateSnapshots).toBe('missing');
       });

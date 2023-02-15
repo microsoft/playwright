@@ -24,7 +24,7 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server via the baseURL', async ({baseURL, page}) => {
         await page.goto('/hello');
         await page.waitForURL('/hello');
@@ -43,7 +43,7 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
       };
     `,
     'globalSetup.ts': `
-      const { expect } = pwt;
+      import { expect } from '@playwright/test';
       module.exports = async (config) => {
         expect(config.webServer.port, "For backwards compatibility reasons, we ensure this shows up.").toBe(${port});
         const http = require("http");
@@ -90,7 +90,7 @@ test('should create a server with environment variables', async ({ runInlineTest
   const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server', async ({baseURL, page}) => {
         expect(baseURL).toBe('http://localhost:${port}');
         await page.goto(baseURL + '/env-FOO');
@@ -122,7 +122,7 @@ test('should default cwd to config directory', async ({ runInlineTest }, testInf
   const relativeSimpleServerPath = path.relative(configDir, SIMPLE_SERVER_PATH);
   const result = await runInlineTest({
     'foo/test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server', async ({ baseURL }) => {
         expect(baseURL).toBe('http://localhost:${port}');
       });
@@ -150,7 +150,7 @@ test('should resolve cwd wrt config directory', async ({ runInlineTest }, testIn
   const relativeSimpleServerPath = path.relative(testdir, SIMPLE_SERVER_PATH);
   const result = await runInlineTest({
     'foo/test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server', async ({ baseURL }) => {
         expect(baseURL).toBe('http://localhost:${port}');
       });
@@ -178,7 +178,7 @@ test('should create a server with url', async ({ runInlineTest }, { workerIndex 
   const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server', async ({baseURL, page}) => {
         expect(baseURL).toBe(undefined);
         await page.goto('http://localhost:${port}/ready');
@@ -203,7 +203,7 @@ test('should time out waiting for a server', async ({ runInlineTest }, { workerI
   const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server', async ({baseURL, page}) => {
         expect(baseURL).toBe('http://localhost:${port}');
         await page.goto(baseURL + '/hello');
@@ -228,7 +228,7 @@ test('should time out waiting for a server with url', async ({ runInlineTest }, 
   const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server', async ({baseURL, page}) => {
         expect(baseURL).toBe('http://localhost:${port}/ready');
         await page.goto(baseURL);
@@ -257,7 +257,7 @@ test('should be able to specify the baseURL without the server', async ({ runInl
   await new Promise<void>(resolve => server.listen(port, resolve));
   const result = await runInlineTest({
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server', async ({baseURL, page}) => {
         expect(baseURL).toBe('http://localhost:${port}');
         await page.goto(baseURL + '/hello');
@@ -287,7 +287,7 @@ test('should be able to specify a custom baseURL with the server', async ({ runI
   await new Promise<void>(resolve => server.listen(customWebServerPort, resolve));
   const result = await runInlineTest({
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server', async ({baseURL, page}) => {
         expect(baseURL).toBe('http://localhost:${customWebServerPort}');
         await page.goto(baseURL + '/hello');
@@ -320,7 +320,7 @@ test('should be able to use an existing server when reuseExistingServer:true', a
   await new Promise<void>(resolve => server.listen(port, resolve));
   const result = await runInlineTest({
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server via the baseURL', async ({baseURL, page}) => {
         await page.goto('/hello');
         await page.waitForURL('/hello');
@@ -353,7 +353,7 @@ test('should throw when a server is already running on the given port and strict
   await new Promise<void>(resolve => server.listen(port, resolve));
   const result = await runInlineTest({
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server via the baseURL', async ({baseURL, page}) => {
         await page.goto('/hello');
         await page.waitForURL('/hello');
@@ -386,7 +386,7 @@ for (const host of ['localhost', '127.0.0.1', '0.0.0.0']) {
     try {
       const result = await runInlineTest({
         'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server via the baseURL', async ({baseURL, page}) => {
         await page.goto('/hello');
         expect(await page.textContent('body')).toBe('hello');
@@ -413,7 +413,7 @@ for (const host of ['localhost', '127.0.0.1', '0.0.0.0']) {
 test(`should support self signed certificate`, async ({ runInlineTest, httpsServer }) => {
   const result = await runInlineTest({
     'test.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}) => { });
     `,
     'playwright.config.js': `
@@ -437,7 +437,7 @@ test('should send Accept header', async ({ runInlineTest, server }) => {
   });
   const result = await runInlineTest({
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('connect to the server', async ({baseURL, page}) => {
         await page.goto('http://localhost:${server.PORT}/hello');
         expect(await page.textContent('body')).toBe('hello');
@@ -461,7 +461,7 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
   const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
 
         test('connect to the server', async ({page}) => {
           await page.goto('http://localhost:${port}/port');
@@ -488,7 +488,7 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
         };
         `,
     'globalSetup.ts': `
-        const { expect } = pwt;
+        import { expect } from '@playwright/test';
         module.exports = async (config) => {
           expect(config.webServer, "The public API defines this type as singleton or null, so if using array style we fallback to null to avoid having the type lie to the user.").toBe(null);
           const http = require("http");
@@ -536,7 +536,7 @@ test.describe('baseURL with plugins', () => {
     const port = workerIndex * 2 + 10500;
     const result = await runInlineTest({
       'test.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('connect to the server', async ({baseURL, page}) => {
           expect(baseURL).toBeUndefined();
         });
@@ -561,7 +561,7 @@ test.describe('baseURL with plugins', () => {
     const port = workerIndex * 2 + 10500;
     const result = await runInlineTest({
       'test.spec.ts': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('connect to the server', async ({baseURL, page}) => {
           expect(baseURL).toBe('http://localhost:${port}');
         });
@@ -591,7 +591,7 @@ test('should treat 3XX as available server', async ({ runInlineTest }, { workerI
   const port = workerIndex * 2 + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}) => {});
     `,
     'playwright.config.ts': `

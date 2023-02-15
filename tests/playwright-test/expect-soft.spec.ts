@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('soft expects should compile', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', () => {
         test.expect.soft(1+1).toBe(3);
         test.expect.soft(1+1, 'custom error message').toBe(3);
@@ -33,7 +33,7 @@ test('soft expects should compile', async ({ runTSC }) => {
 test('soft expects should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', () => {
         test.expect.soft(1+1).toBe(3);
         console.log('woof-woof');
@@ -47,7 +47,7 @@ test('soft expects should work', async ({ runInlineTest }) => {
 test('should report a mixture of soft and non-soft errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', ({}) => {
         test.expect.soft(1+1, 'one plus one').toBe(3);
         test.expect.soft(2*2, 'two times two').toBe(5);
@@ -66,7 +66,7 @@ test('should report a mixture of soft and non-soft errors', async ({ runInlineTe
 test('testInfo should contain all soft expect errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', ({}, testInfo) => {
         test.expect.soft(1+1, 'one plus one').toBe(3);
         test.expect.soft(2*2, 'two times two').toBe(5);

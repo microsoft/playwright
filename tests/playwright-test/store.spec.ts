@@ -24,7 +24,7 @@ test('should provide store fixture', async ({ runInlineTest }) => {
       module.exports = {};
     `,
     'a.test.ts': `
-      const { test, store } = pwt;
+      import { test, store, expect } from '@playwright/test';
       test('should store number', async ({ }) => {
         expect(store).toBeTruthy();
         expect(await store.get('number')).toBe(undefined);
@@ -56,7 +56,7 @@ test('should share store state between project setup and tests', async ({ runInl
       };
     `,
     'store.setup.ts': `
-      const { test, expect, store } = pwt;
+      import { test, store, expect } from '@playwright/test';
       test.projectSetup('should initialize store', async ({ }) => {
         expect(await store.get('number')).toBe(undefined);
         await store.set('number', 2022)
@@ -68,14 +68,14 @@ test('should share store state between project setup and tests', async ({ runInl
       });
     `,
     'a.test.ts': `
-      const { test, store } = pwt;
+      import { test, store, expect } from '@playwright/test';
       test('should get data from setup', async ({ }) => {
         expect(await store.get('number')).toBe(2022);
         expect(await store.get('object')).toEqual({ 'a': 2022 });
       });
     `,
     'b.test.ts': `
-      const { test, store } = pwt;
+      import { test, store, expect } from '@playwright/test';
       test('should get data from setup', async ({ }) => {
         expect(await store.get('number')).toBe(2022);
         expect(await store.get('object')).toEqual({ 'a': 2022 });
@@ -92,7 +92,7 @@ test('should persist store state between project runs', async ({ runInlineTest }
       module.exports = { };
     `,
     'a.test.ts': `
-      const { test, store } = pwt;
+      import { test, store, expect } from '@playwright/test';
       test('should have no data on first run', async ({ }) => {
         expect(await store.get('number')).toBe(undefined);
         await store.set('number', 2022)
@@ -101,7 +101,7 @@ test('should persist store state between project runs', async ({ runInlineTest }
       });
     `,
     'b.test.ts': `
-      const { test, store } = pwt;
+      import { test, store, expect } from '@playwright/test';
       test('should get data from previous run', async ({ }) => {
         expect(await store.get('number')).toBe(2022);
         expect(await store.get('object')).toEqual({ 'a': 2022 });
@@ -137,7 +137,7 @@ test('should isolate store state between projects', async ({ runInlineTest }) =>
       };
     `,
     'store.setup.ts': `
-      const { test, expect, store } = pwt;
+      import { test, store, expect } from '@playwright/test';
       test.projectSetup('should initialize store', async ({ }) => {
         expect(await store.get('number')).toBe(undefined);
         await store.set('number', 2022)
@@ -149,14 +149,14 @@ test('should isolate store state between projects', async ({ runInlineTest }) =>
       });
     `,
     'a.test.ts': `
-      const { test, store } = pwt;
+      import { test, store, expect } from '@playwright/test';
       test('should get data from setup', async ({ }) => {
         expect(await store.get('number')).toBe(2022);
         expect(await store.get('name')).toBe('str-' + test.info().project.name);
       });
     `,
     'b.test.ts': `
-      const { test, store } = pwt;
+      import { test, store, expect } from '@playwright/test';
       test('should get data from setup', async ({ }) => {
         expect(await store.get('number')).toBe(2022);
         expect(await store.get('name')).toBe('str-' + test.info().project.name);
@@ -184,7 +184,7 @@ test('should load context storageState from store', async ({ runInlineTest, serv
       };
     `,
     'store.setup.ts': `
-      const { test, expect, store } = pwt;
+      import { test, store, expect } from '@playwright/test';
       test.projectSetup('should save storageState', async ({ page, context }) => {
         expect(await store.get('user')).toBe(undefined);
         await page.goto('${server.PREFIX}/setcookie.html');
@@ -193,7 +193,7 @@ test('should load context storageState from store', async ({ runInlineTest, serv
       });
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.use({
         storageStateName: 'user'
       })
@@ -204,7 +204,7 @@ test('should load context storageState from store', async ({ runInlineTest, serv
       });
     `,
     'b.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should not get data from setup if not configured', async ({ page }) => {
         await page.goto('${server.EMPTY_PAGE}');
         const cookies = await page.evaluate(() => document.cookie);
@@ -236,7 +236,7 @@ test('should load storageStateName specified in the project config from store', 
       };
     `,
     'store.setup.ts': `
-      const { test, expect, store } = pwt;
+      import { test, store, expect } from '@playwright/test';
       test.use({
         storageStateName: ({}, use) => use(undefined),
       })
@@ -248,7 +248,7 @@ test('should load storageStateName specified in the project config from store', 
       });
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should get data from setup', async ({ page }) => {
         await page.goto('${server.EMPTY_PAGE}');
         const cookies = await page.evaluate(() => document.cookie);
@@ -280,7 +280,7 @@ test('should load storageStateName specified in the global config from store', a
       };
     `,
     'store.setup.ts': `
-      const { test, expect, store } = pwt;
+      import { test, store, expect } from '@playwright/test';
       test.use({
         storageStateName: ({}, use) => use(undefined),
       })
@@ -292,7 +292,7 @@ test('should load storageStateName specified in the global config from store', a
       });
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should get data from setup', async ({ page }) => {
         await page.goto('${server.EMPTY_PAGE}');
         const cookies = await page.evaluate(() => document.cookie);
@@ -319,7 +319,7 @@ test('should throw on unknown storageStateName value', async ({ runInlineTest, s
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should fail to initialize page', async ({ page }) => {
       });
     `,

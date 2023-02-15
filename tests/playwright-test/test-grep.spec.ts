@@ -22,7 +22,7 @@ test('config.grep should work', async ({ runInlineTest }) => {
       module.exports = { grep: /test1/ };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test1', async () => { console.log('\\n%% test1'); });
       test('test2', async () => { console.log('\\n%% test2'); });
     `,
@@ -38,7 +38,7 @@ test('config.grepInvert should work', async ({ runInlineTest }) => {
       module.exports = { grepInvert: /test1/ };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test1', async () => { console.log('\\n%% test1'); });
       test('test2', async () => { console.log('\\n%% test2'); });
     `,
@@ -54,7 +54,7 @@ test('project.grep should work', async ({ runInlineTest }) => {
       module.exports = { projects: [ { grep: /test1/ } ] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test1', async () => { console.log('\\n%% test1'); });
       test('test2', async () => { console.log('\\n%% test2'); });
     `,
@@ -70,7 +70,7 @@ test('project.grepInvert should work', async ({ runInlineTest }) => {
       module.exports = { projects: [ { grepInvert: /test1/ } ] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test1', async () => { console.log('\\n%% test1'); });
       test('test2', async () => { console.log('\\n%% test2'); });
     `,
@@ -86,7 +86,7 @@ test('config.grep should intercect with --grep and --grepInvert', async ({ runIn
       module.exports = { grep: /test./, grepInvert: /test4/ };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test1', async () => { console.log('\\n%% test1'); });
       test('test2', async () => { console.log('\\n%% test2'); });
       test('test3', async () => { console.log('\\n%% test3'); });

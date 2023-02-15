@@ -24,7 +24,7 @@ function monotonicTime(): number {
 test('should collect stdio', async ({ runInlineTest }) => {
   const { exitCode, report } = await runInlineTest({
     'stdio.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('stdio', () => {
         process.stdout.write('stdout text');
         process.stdout.write(Buffer.from('stdout buffer'));
@@ -61,7 +61,7 @@ test('should work with typescript', async ({ runInlineTest }) => {
     'typescript.spec.ts': `
       import './global-foo';
 
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should find global foo', () => {
         expect(global['foo']).toBe(true);
       });
@@ -78,7 +78,7 @@ test('should work with typescript', async ({ runInlineTest }) => {
 test('should repeat each', async ({ runInlineTest }) => {
   const { exitCode, report, passed } = await runInlineTest({
     'one-success.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds', () => {
         expect(1 + 1).toBe(2);
       });
@@ -94,7 +94,7 @@ test('should repeat each', async ({ runInlineTest }) => {
 test('should allow flaky', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('flake', async ({}, testInfo) => {
         expect(testInfo.retry).toBe(1);
       });
@@ -107,7 +107,7 @@ test('should allow flaky', async ({ runInlineTest }) => {
 test('should fail on unexpected pass', async ({ runInlineTest }) => {
   const { exitCode, failed, output } = await runInlineTest({
     'unexpected-pass.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds', () => {
         test.fail();
         expect(1 + 1).toBe(2);
@@ -123,7 +123,7 @@ test('should respect global timeout', async ({ runInlineTest }) => {
   const now = monotonicTime();
   const { exitCode, output } = await runInlineTest({
     'one-timeout.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('timeout', async () => {
         await new Promise(f => setTimeout(f, 10000));
       });

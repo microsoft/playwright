@@ -28,7 +28,7 @@ test('should work and remove non-failures', async ({ runInlineTest }, testInfo) 
       };
     `,
     'dir/my-test.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test 1', async ({}, testInfo) => {
         if (testInfo.retry) {
           expect(testInfo.outputDir).toContain('my-test-test-1-chromium-retry' + testInfo.retry);
@@ -70,7 +70,7 @@ test('should work and remove non-failures', async ({ runInlineTest }, testInfo) 
 test('should include repeat token', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', ({}, testInfo) => {
         if (testInfo.repeatEachIndex)
           expect(testInfo.outputPath('')).toContain('repeat' + testInfo.repeatEachIndex);
@@ -90,7 +90,7 @@ test('should default to package.json directory', async ({ runInlineTest }, testI
       module.exports = { projects: [ {} ] };
     `,
     'foo/bar/baz/tests/a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       const fs = require('fs');
       test('pass', ({}, testInfo) => {
         expect(process.cwd()).toBe(__dirname);
@@ -112,7 +112,7 @@ test('should default to package.json directory', async ({ runInlineTest }, testI
 test('should be unique for beforeAll hook from different workers', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(({}, testInfo) => {
         console.log('\\n%%' + testInfo.outputDir);
       });
@@ -136,13 +136,14 @@ test('should be unique for beforeAll hook from different workers', async ({ runI
 test('should include the project name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      export const test = base.extend({
         auto: [ async ({}, run, testInfo) => {
           testInfo.snapshotSuffix = '';
           await run();
         }, { auto: true } ]
       });
-      export const test2 = pwt.test.extend({
+      export const test2 = base.extend({
         auto: [ async ({}, run, testInfo) => {
           testInfo.snapshotSuffix = 'suffix';
           await run();
@@ -219,7 +220,8 @@ test('should include the project name', async ({ runInlineTest }) => {
 test('should include path option in snapshot', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      export const test = base.extend({
         auto: [ async ({}, run, testInfo) => {
           testInfo.snapshotSuffix = 'suffix';
           await run();
@@ -227,9 +229,9 @@ test('should include path option in snapshot', async ({ runInlineTest }) => {
       });
     `,
     'playwright.config.ts': `
-    module.exports = { projects: [
-      { name: 'foo' },
-    ] };
+      module.exports = { projects: [
+        { name: 'foo' },
+      ] };
     `,
     'my-test.spec.js': `
       const { test } = require('./helper');
@@ -247,7 +249,8 @@ test('should include path option in snapshot', async ({ runInlineTest }) => {
 test('should error if outputPath is resolved to outside of parent', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      export const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      export const test = base.extend({
         auto: [ async ({}, run, testInfo) => {
           testInfo.snapshotSuffix = 'suffix';
           await run();
@@ -295,7 +298,7 @@ test('should remove output dirs for projects run', async ({ runInlineTest }, tes
       ] };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('my test', ({}, testInfo) => {});
     `
   }, { output: '' });
@@ -313,7 +316,7 @@ test('should remove folders with preserveOutput=never', async ({ runInlineTest }
       export default { preserveOutput: 'never' };
     `,
     'dir/my-test.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test 1', async ({}, testInfo) => {
         require('fs').writeFileSync(testInfo.outputPath('file.txt'), 'content', 'utf-8');
         if (testInfo.retry < 2)
@@ -332,7 +335,7 @@ test('should remove folders with preserveOutput=never', async ({ runInlineTest }
 test('should preserve failed results', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'dir/my-test.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test 1', async ({}, testInfo) => {
         require('fs').writeFileSync(testInfo.outputPath('file.txt'), 'content', 'utf-8');
         if (testInfo.retry < 2)
@@ -351,7 +354,7 @@ test('should preserve failed results', async ({ runInlineTest }, testInfo) => {
 test('should accept a relative path for outputDir', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'my-test.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', async ({}, testInfo) => {
         expect(testInfo.outputDir).toBe(${JSON.stringify(path.join(testInfo.outputDir, './my-output-dir', 'my-test-test'))});
       });
@@ -374,7 +377,7 @@ test('should have output dir based on rootDir (cwd)', async ({ runInlineTest }, 
         outputDir: 'test-results/',
       };`,
     'e2e/example.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       const fs = require('fs');
       test('hello world', async ({ }, testInfo) => {
         fs.writeFileSync(testInfo.outputPath('foo.txt'), 'hello');
@@ -389,7 +392,7 @@ test('should have output dir based on rootDir (cwd)', async ({ runInlineTest }, 
 test('should allow nonAscii characters in the output dir', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'my-test.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('こんにちは世界', async ({}, testInfo) => {
         console.log('\\n%%' + testInfo.outputDir);
       });
@@ -402,7 +405,7 @@ test('should allow nonAscii characters in the output dir', async ({ runInlineTes
 test('should allow shorten long output dirs characters in the output dir', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'very/deep/and/long/file/name/that/i/want/to/be/trimmed/my-test.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('this is a really long description that would be too long for a file path', () => {
         test('and this is an even longer test name that just keeps going and going and we should shorten it', async ({}, testInfo) => {
           console.log('\\n%%' + testInfo.outputDir);
@@ -417,7 +420,7 @@ test('should allow shorten long output dirs characters in the output dir', async
 test('should not mangle double dashes', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'my--file.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('my--test', async ({}, testInfo) => {
         console.log('\\n%%' + testInfo.outputDir);
       });
@@ -430,7 +433,7 @@ test('should not mangle double dashes', async ({ runInlineTest }, testInfo) => {
 test('should allow include the describe name the output dir', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'my-test.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('hello', () => {
         test('world', async ({}, testInfo) => {
           console.log('\\n%%' + testInfo.outputDir);

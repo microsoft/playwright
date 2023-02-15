@@ -66,7 +66,7 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
         await test.step('outer step 1', async () => {
           await test.step('inner step 1.1', async () => {});
@@ -173,7 +173,7 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('timeout', async ({ page }) => {
         await test.step('my step', async () => {
           await new Promise(() => {});
@@ -238,9 +238,10 @@ test('should report test.step from fixtures', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         foo: async ({}, use) => {
-          await pwt.test.step('setup foo', () => {});
+          await base.step('setup foo', () => {});
           await use(async () => {
             await test.step('inside foo', () => {});
           });
@@ -281,7 +282,7 @@ test('should report expect step locations', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
         expect(true).toBeTruthy();
       });
@@ -351,7 +352,7 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
         },
       });
 
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}) => {
         expect(15).toBeWithinRange(10, 20);
       });
@@ -384,7 +385,7 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
 test('should return value from step', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('steps with return values', async ({ page }) => {
         const v1 = await test.step('my step', () => {
           return 10;
@@ -412,7 +413,7 @@ test('should mark step as failed when soft expect fails', async ({ runInlineTest
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}) => {
         await test.step('outer', async () => {
           await test.step('inner', async () => {

@@ -36,7 +36,7 @@ const testFiles = {
     import path from 'path';
     import rimraf from 'rimraf';
 
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
 
     test.describe('shared', () => {
       let page;
@@ -192,7 +192,7 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
 test('should work with screenshot: only-on-failure & fullPage', async ({ runInlineTest, server }, testInfo) => {
   const result = await runInlineTest({
     'artifacts.spec.ts': `
-    const { test } = pwt;
+    import { test, expect } from '@playwright/test';
 
     test('should fail and take fullPage screenshots', async ({ page }) => {
       await page.setViewportSize({ width: 500, height: 500 });
@@ -316,7 +316,7 @@ test('should take screenshot when page is closed in afterEach', async ({ runInli
       module.exports = { use: { screenshot: 'on' } };
     `,
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test.afterEach(async ({ page }) => {
         await page.close();

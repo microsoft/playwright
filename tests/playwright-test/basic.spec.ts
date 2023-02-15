@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should fail', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'one-failure.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', () => {
         expect(1 + 1).toBe(7);
       });
@@ -28,13 +28,13 @@ test('should fail', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('1) one-failure.spec.ts:6');
+  expect(result.output).toContain('1) one-failure.spec.ts:3');
 });
 
 test('should timeout', async ({ runInlineTest }) => {
   const { exitCode, passed, failed, output } = await runInlineTest({
-    'one-timeout.spec.js': `
-      const { test } = pwt;
+    'one-timeout.spec.ts': `
+      import { test, expect } from '@playwright/test';
       test('timeout', async () => {
         await new Promise(f => setTimeout(f, 10000));
       });
@@ -48,8 +48,8 @@ test('should timeout', async ({ runInlineTest }) => {
 
 test('should succeed', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'one-success.spec.js': `
-      const { test } = pwt;
+    'one-success.spec.ts': `
+      import { test, expect } from '@playwright/test';
       test('succeeds', () => {
         expect(1 + 1).toBe(2);
       });
@@ -62,11 +62,11 @@ test('should succeed', async ({ runInlineTest }) => {
 
 test('should report suite errors', async ({ runInlineTest }) => {
   const { exitCode, failed, output } = await runInlineTest({
-    'suite-error.spec.js': `
+    'suite-error.spec.ts': `
       if (new Error().stack.includes('workerMain'))
         throw new Error('Suite error');
 
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes',() => {
         expect(1 + 1).toBe(2);
       });
@@ -79,8 +79,8 @@ test('should report suite errors', async ({ runInlineTest }) => {
 
 test('should respect nested skip', async ({ runInlineTest }) => {
   const { exitCode, passed, failed, skipped } = await runInlineTest({
-    'nested-skip.spec.js': `
-      const { test } = pwt;
+    'nested-skip.spec.ts': `
+      import { test, expect } from '@playwright/test';
       test.describe('skipped', () => {
         test.skip();
         test('succeeds',() => {
@@ -98,7 +98,7 @@ test('should respect nested skip', async ({ runInlineTest }) => {
 test('should respect excluded tests', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
     'excluded.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('included test', () => {
         expect(1 + 1).toBe(2);
       });
@@ -134,7 +134,7 @@ test('should respect excluded tests', async ({ runInlineTest }) => {
 test('should respect focused tests', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
     'focused.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('included test', () => {
         expect(1 + 1).toBe(3);
       });
@@ -182,7 +182,7 @@ test('should respect focused tests', async ({ runInlineTest }) => {
 test('skip should take priority over fail', async ({ runInlineTest }) => {
   const { passed, skipped, failed } = await runInlineTest({
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('failing suite', () => {
         test.fail();
 
@@ -219,13 +219,13 @@ test('should focus test from one project', async ({ runInlineTest }) => {
       ] };
     `,
     'a/afile.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('just a test', () => {
         expect(1 + 1).toBe(3);
       });
     `,
     'b/bfile.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.only('focused test', () => {
         expect(1 + 1).toBe(2);
       });
@@ -254,30 +254,33 @@ test('should work with default export', async ({ runInlineTest }) => {
 test('should work with test wrapper', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.js': `
+      const { test, expect } = require('@playwright/test');
       console.log('%%helper');
       exports.wrap = (title, fn) => {
-        pwt.test(title, fn);
+        test(title, fn);
       };
     `,
-    'a.spec.js': `
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
       console.log('%%a.spec');
       const { wrap } = require('./helper');
       wrap('test1', () => {
         console.log('%%test1');
       });
-      pwt.test.describe('suite1', () => {
+      test.describe('suite1', () => {
         wrap('suite1.test1', () => {
           console.log('%%suite1.test1');
         });
       });
     `,
-    'b.spec.js': `
+    'b.spec.ts': `
+      import { test, expect } from '@playwright/test';
       console.log('%%b.spec');
       const { wrap } = require('./helper');
       wrap('test2', () => {
         console.log('%%test2');
       });
-      pwt.test.describe('suite2', () => {
+      test.describe('suite2', () => {
         wrap('suite2.test2', () => {
           console.log('%%suite2.test2');
         });
@@ -302,33 +305,35 @@ test('should work with test wrapper', async ({ runInlineTest }) => {
 
 test('should work with test helper', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'helper-a.js': `
+    'helper-a.ts': `
+      import { test, expect } from '@playwright/test';
       console.log('%%helper-a');
-      pwt.test('test1', () => {
+      test('test1', () => {
         console.log('%%test1');
       });
-      pwt.test.describe('suite1', () => {
-        pwt.test('suite1.test1', () => {
+      test.describe('suite1', () => {
+        test('suite1.test1', () => {
           console.log('%%suite1.test1');
         });
       });
     `,
-    'a.spec.js': `
+    'a.spec.ts': `
       console.log('%%a.spec');
       require('./helper-a');
     `,
-    'helper-b.js': `
+    'helper-b.ts': `
+      import { test, expect } from '@playwright/test';
       console.log('%%helper-b');
-      pwt.test('test1', () => {
+      test('test1', () => {
         console.log('%%test2');
       });
-      pwt.test.describe('suite2', () => {
-        pwt.test('suite2.test2', () => {
+      test.describe('suite2', () => {
+        test('suite2.test2', () => {
           console.log('%%suite2.test2');
         });
       });
     `,
-    'b.spec.js': `
+    'b.spec.ts': `
       console.log('%%b.spec');
       require('./helper-b');
     `,
@@ -353,11 +358,12 @@ test('should work with test helper', async ({ runInlineTest }) => {
 
 test('should support describe() without a title', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'a.spec.js': `
-      pwt.test.describe('suite1', () => {
-        pwt.test.describe(() => {
-          pwt.test.describe('suite2', () => {
-            pwt.test('my test', () => {});
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test.describe('suite1', () => {
+        test.describe(() => {
+          test.describe('suite2', () => {
+            test('my test', () => {});
           });
         });
       });
@@ -365,13 +371,13 @@ test('should support describe() without a title', async ({ runInlineTest }) => {
   }, { reporter: 'list' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(result.output).toContain('a.spec.js:8:17 › suite1 › suite2 › my test');
+  expect(result.output).toContain('a.spec.ts:6:17 › suite1 › suite2 › my test');
 });
 
 test('test.{skip,fixme} should define a skipped test', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       const logs = [];
       test.skip('foo', () => {
         console.log('%%dontseethis');
@@ -391,7 +397,7 @@ test('test.{skip,fixme} should define a skipped test', async ({ runInlineTest })
 test('should report unhandled rejection during worker shutdown', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('unhandled rejection', async () => {
         new Promise((f, r) => r(new Error('Unhandled')));
       });
@@ -400,13 +406,14 @@ test('should report unhandled rejection during worker shutdown', async ({ runInl
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('Error: Unhandled');
-  expect(result.output).toContain('a.test.ts:7:33');
+  expect(result.output).toContain('a.test.ts:4:33');
 });
 
 test('should not reuse worker after unhandled rejection in test.fail', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         needsCleanup: async ({}, use) => {
           await use();
           await new Promise(f => setTimeout(f, 3000));
@@ -432,7 +439,7 @@ test('should not reuse worker after unhandled rejection in test.fail', async ({ 
 test('should allow unhandled expects in test.fail', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('failing1', async ({}) => {
         test.fail();
         Promise.resolve().then(() => expect(1).toBe(2));
@@ -447,8 +454,8 @@ test('should allow unhandled expects in test.fail', async ({ runInlineTest }) =>
 
 test('should support describe.skip', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'nested-skip.spec.js': `
-      const { test } = pwt;
+    'nested-skip.spec.ts': `
+      import { test, expect } from '@playwright/test';
       test.describe.skip('skipped', () => {
         test.describe('nested', () => {
           test('test1', () => {});
@@ -473,8 +480,8 @@ test('should support describe.skip', async ({ runInlineTest }) => {
 
 test('should support describe.fixme', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'nested-skip.spec.js': `
-      const { test } = pwt;
+    'nested-skip.spec.ts': `
+      import { test, expect } from '@playwright/test';
       test.describe.fixme('skipped', () => {
         test.describe('nested', () => {
           test('test1', () => {});

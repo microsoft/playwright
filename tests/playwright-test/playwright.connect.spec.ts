@@ -29,14 +29,15 @@ test('should work with connectOptions', async ({ runInlineTest }) => {
       };
     `,
     'global-setup.ts': `
+      import { chromium } from '@playwright/test';
       module.exports = async () => {
-        const server = await pwt.chromium.launchServer();
+        const server = await chromium.launchServer();
         process.env.CONNECT_WS_ENDPOINT = server.wsEndpoint();
         return () => server.close();
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.use({ locale: 'fr-CH' });
       test('pass', async ({ page }) => {
         await page.setContent('<div>PASS</div>');
@@ -61,7 +62,7 @@ test('should throw with bad connectOptions', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
         await page.setContent('<div>PASS</div>');
         await expect(page.locator('div')).toHaveText('PASS');
@@ -87,7 +88,7 @@ test('should respect connectOptions.timeout', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
       });
     `,

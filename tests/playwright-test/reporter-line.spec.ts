@@ -19,17 +19,17 @@ import { test, expect } from './playwright-test-fixtures';
 test('render unexpected after retry', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      const { test, expect } = require('@playwright/test');
       test('one', async ({}) => {
         expect(1).toBe(0);
       });
     `,
   }, { retries: 3, reporter: 'line' });
   const text = result.output;
-  expect(text).toContain('[1/1] a.test.js:6:7 › one');
-  expect(text).toContain('[2/1] (retries) a.test.js:6:7 › one (retry #1)');
-  expect(text).toContain('[3/1] (retries) a.test.js:6:7 › one (retry #2)');
-  expect(text).toContain('[4/1] (retries) a.test.js:6:7 › one (retry #3)');
+  expect(text).toContain('[1/1] a.test.js:3:7 › one');
+  expect(text).toContain('[2/1] (retries) a.test.js:3:7 › one (retry #1)');
+  expect(text).toContain('[3/1] (retries) a.test.js:3:7 › one (retry #2)');
+  expect(text).toContain('[4/1] (retries) a.test.js:3:7 › one (retry #3)');
   expect(text).toContain('1 failed');
   expect(text).toContain('1) a.test');
   expect(text).not.toContain('2) a.test');
@@ -42,7 +42,7 @@ test('render unexpected after retry', async ({ runInlineTest }) => {
 test('render flaky', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('one', async ({}, testInfo) => {
         expect(testInfo.retry).toBe(3);
       });
@@ -56,7 +56,7 @@ test('render flaky', async ({ runInlineTest }) => {
 test('should print flaky failures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('foobar', async ({}, testInfo) => {
         expect(testInfo.retry).toBe(1);
       });
@@ -70,14 +70,14 @@ test('should print flaky failures', async ({ runInlineTest }) => {
 test('should work on CI', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      const { test, expect } = require('@playwright/test');
       test('one', async ({}) => {
         expect(1).toBe(0);
       });
     `,
   }, { reporter: 'line' }, { CI: '1' });
   const text = result.output;
-  expect(text).toContain('[1/1] a.test.js:6:7 › one');
+  expect(text).toContain('[1/1] a.test.js:3:7 › one');
   expect(text).toContain('1 failed');
   expect(text).toContain('1) a.test');
   expect(result.exitCode).toBe(1);
@@ -86,7 +86,7 @@ test('should work on CI', async ({ runInlineTest }) => {
 test('should print output', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('foobar', async ({}, testInfo) => {
         process.stdout.write('one');
         process.stdout.write('two');
@@ -96,7 +96,7 @@ test('should print output', async ({ runInlineTest }) => {
   }, { reporter: 'line' });
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain([
-    'a.spec.ts:6:7 › foobar',
+    'a.spec.ts:3:11 › foobar',
     'one',
     '',
     'two',

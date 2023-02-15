@@ -22,7 +22,7 @@ test('should consider dynamically set value', async ({ runInlineTest }) => {
       module.exports = { timeout: 2000 };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}, testInfo) => {
         expect(testInfo.timeout).toBe(2000);
       })
@@ -41,7 +41,7 @@ test('should allow different timeouts', async ({ runInlineTest }) => {
       ] };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}, testInfo) => {
         console.log('timeout:' + testInfo.timeout);
       });
@@ -59,7 +59,7 @@ test('should prioritize value set via command line', async ({ runInlineTest }) =
       module.exports = { timeout: 2000 };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}, testInfo) => {
         expect(testInfo.timeout).toBe(1000);
       })

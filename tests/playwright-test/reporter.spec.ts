@@ -122,7 +122,7 @@ test('should work with custom reporter', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('not run', async ({}) => {
         console.log('log');
         console.error('error');
@@ -163,7 +163,7 @@ test('should work without a file extension', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}) => {
       });
     `
@@ -191,7 +191,7 @@ test('should report onEnd after global teardown', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}) => {
       });
     `
@@ -214,7 +214,7 @@ test('should load reporter from node_modules', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}) => {
       });
     `
@@ -236,7 +236,7 @@ test('should report expect steps', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fail', async ({}) => {
         expect(true).toBeTruthy();
         expect(false).toBeTruthy();
@@ -288,7 +288,7 @@ test('should report api steps', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ page, request }) => {
         await Promise.all([
           page.waitForNavigation(),
@@ -377,7 +377,7 @@ test('should report api step failure', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fail', async ({ page }) => {
         await page.setContent('<button></button>');
         await page.click('input', { timeout: 1 });
@@ -405,7 +405,8 @@ test('should report api step failure', async ({ runInlineTest }) => {
 test('should not have internal error when steps are finished after timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         page: async ({ page }, use) => {
           await use(page);
           // Timeout in fixture teardown that will resolve on browser.close.
@@ -433,7 +434,7 @@ test('should show nice stacks for locators', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
         await page.setContent('<button></button>');
         const locator = page.locator('button');
@@ -470,7 +471,8 @@ test('should report forbid-only error to reporter', async ({ runInlineTest }) =>
       };
     `,
     'a.test.ts': `
-      pwt.test.only('pass', () => {});
+      import { test, expect } from '@playwright/test';
+      test.only('pass', () => {});
     `
   }, { 'reporter': '', 'forbid-only': true });
 
@@ -524,7 +526,8 @@ test('should report global setup error to reporter', async ({ runInlineTest }) =
       };
     `,
     'a.spec.js': `
-      pwt.test('test', () => {});
+      const { test, expect } = require('@playwright/test');
+      test('test', () => {});
     `,
   }, { 'reporter': '' });
 
@@ -535,7 +538,7 @@ test('should report global setup error to reporter', async ({ runInlineTest }) =
 test('should report correct tests/suites when using grep', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
 
       test.describe('@foo', () => {
         test('test1', async ({ }) => {
@@ -579,7 +582,7 @@ test('should use sourceMap-based file suite names', async ({ runInlineTest }) =>
       };
     `,
     'a.spec.js':
-`var __create = Object.create;//@no-header
+`var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -622,7 +625,8 @@ test('parallelIndex is presented in onTestEnd', async ({ runInlineTest }) => {
       };
     `,
     'a.spec.js': `
-      pwt.test('test', () => {});
+      const { test, expect } = require('@playwright/test');
+      test('test', () => {});
     `,
   }, { 'reporter': '', 'workers': 1 });
 

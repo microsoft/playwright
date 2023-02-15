@@ -19,9 +19,11 @@ import { test, expect } from './playwright-test-fixtures';
 test('hooks should work with fixtures', async ({ runInlineTest }) => {
   const { results } = await runInlineTest({
     'helper.ts': `
+      import { test as base } from '@playwright/test';
+      export { expect } from '@playwright/test';
       global.logs = [];
       let counter = 0;
-      export const test = pwt.test.extend({
+      export const test = base.extend({
         w: [ async ({}, run) => {
           global.logs.push('+w');
           await run(17);
@@ -37,7 +39,7 @@ test('hooks should work with fixtures', async ({ runInlineTest }) => {
       });
     `,
     'a.test.js': `
-      const { test } = require('./helper');
+      const { test, expect } = require('./helper');
       test.describe('suite', () => {
         test.beforeAll(async ({ w, t }) => {
           global.logs.push('beforeAll-' + w + '-' + t);
@@ -79,8 +81,10 @@ test('hooks should work with fixtures', async ({ runInlineTest }) => {
 test('afterEach failure should not prevent other hooks and fixtures teardown', async ({ runInlineTest }) => {
   const report = await runInlineTest({
     'helper.ts': `
+      import { test as base } from '@playwright/test';
+      export { expect } from '@playwright/test';
       global.logs = [];
-      export const test = pwt.test.extend({
+      export const test = base.extend({
         foo: async ({}, run) => {
           console.log('+t');
           await run();
@@ -89,7 +93,7 @@ test('afterEach failure should not prevent other hooks and fixtures teardown', a
       });
     `,
     'a.test.js': `
-      const { test } = require('./helper');
+      const { test, expect } = require('./helper');
       test.describe('suite', () => {
         test.afterEach(async () => {
           console.log('afterEach2');
@@ -112,7 +116,7 @@ test('afterEach failure should not prevent other hooks and fixtures teardown', a
 test('beforeEach failure should prevent the test, but not other hooks', async ({ runInlineTest }) => {
   const report = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('suite', () => {
         test.beforeEach(async ({}) => {
           console.log('beforeEach1');
@@ -137,7 +141,7 @@ test('beforeEach failure should prevent the test, but not other hooks', async ({
 test('beforeAll should be run once', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('suite1', () => {
         let counter = 0;
         test.beforeAll(async () => {
@@ -164,7 +168,7 @@ test('beforeAll should be run once', async ({ runInlineTest }) => {
 test('beforeEach should be able to skip a test', async ({ runInlineTest }) => {
   const { passed, skipped, exitCode } = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeEach(async ({}, testInfo) => {
         testInfo.skip(testInfo.title === 'test2');
       });
@@ -180,7 +184,8 @@ test('beforeEach should be able to skip a test', async ({ runInlineTest }) => {
 test('beforeAll from a helper file should throw', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'my-test.ts': `
-      export const test = pwt.test;
+      import { test as base, expect } from '@playwright/test';
+      export const test = base;
       test.beforeAll(() => {});
     `,
     'playwright.config.ts': `
@@ -200,7 +205,7 @@ test('beforeAll from a helper file should throw', async ({ runInlineTest }) => {
 test('beforeAll hooks are skipped when no tests in the suite are run', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('suite1', () => {
         test.beforeAll(() => {
           console.log('\\n%%beforeAll1');
@@ -224,7 +229,7 @@ test('beforeAll hooks are skipped when no tests in the suite are run', async ({ 
 test('beforeAll/afterAll hooks are skipped when no tests in the suite are run 2', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(() => {
         console.log('\\n%%beforeAll1');
       });
@@ -253,7 +258,7 @@ test('beforeAll/afterAll hooks are skipped when no tests in the suite are run 2'
 test('run hooks after failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('suite', () => {
         test('faled', ({}) => {
           console.log('\\n%%test');
@@ -290,7 +295,7 @@ test('run hooks after failure', async ({ runInlineTest }) => {
 test('beforeAll hook should get retry index of the first test', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(({}, testInfo) => {
         console.log('\\n%%beforeall-retry-' + testInfo.retry);
       });
@@ -313,7 +318,7 @@ test('beforeAll hook should get retry index of the first test', async ({ runInli
 test('afterAll exception should fail the test', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.afterAll(() => {
         throw new Error('From the afterAll');
       });
@@ -330,7 +335,7 @@ test('afterAll exception should fail the test', async ({ runInlineTest }) => {
 test('max-failures should still run afterEach/afterAll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.afterAll(() => {
         console.log('\\n%%afterAll');
       });
@@ -360,7 +365,7 @@ test('max-failures should still run afterEach/afterAll', async ({ runInlineTest 
 test('beforeAll failure should prevent the test, but not afterAll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(() => {
         console.log('\\n%%beforeAll');
         throw new Error('From a beforeAll');
@@ -388,7 +393,8 @@ test('beforeAll failure should prevent the test, but not afterAll', async ({ run
 test('fixture error should not prevent afterAll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         foo: async ({}, use) => {
           await use('foo');
           throw new Error('bad fixture');
@@ -414,7 +420,7 @@ test('fixture error should not prevent afterAll', async ({ runInlineTest }) => {
 test('afterEach failure should not prevent afterAll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('good test', ({ }) => {
         console.log('\\n%%test');
       });
@@ -440,7 +446,7 @@ test('afterEach failure should not prevent afterAll', async ({ runInlineTest }) 
 test('afterAll error should not mask beforeAll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(() => {
         throw new Error('from beforeAll');
       });
@@ -459,7 +465,7 @@ test('afterAll error should not mask beforeAll', async ({ runInlineTest }) => {
 test('beforeAll timeout should be reported and prevent more tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(async () => {
         console.log('\\n%%beforeAll');
         await new Promise(f => setTimeout(f, 5000));
@@ -483,14 +489,14 @@ test('beforeAll timeout should be reported and prevent more tests', async ({ run
     'afterAll',
   ]);
   expect(result.output).toContain('"beforeAll" hook timeout of 1000ms exceeded.');
-  expect(result.output).toContain(`a.test.js:6:12`);
-  expect(result.output).toContain(`> 6 |       test.beforeAll(async () => {`);
+  expect(result.output).toContain(`a.test.js:3:12`);
+  expect(result.output).toContain(`> 3 |       test.beforeAll(async () => {`);
 });
 
 test('afterAll timeout should be reported, run other afterAll hooks, and continue testing', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('suite', () => {
         test.afterAll(async () => {
           console.log('\\n%%afterAll1');
@@ -521,14 +527,14 @@ test('afterAll timeout should be reported, run other afterAll hooks, and continu
     'afterAll2',
   ]);
   expect(result.output).toContain('"afterAll" hook timeout of 1000ms exceeded.');
-  expect(result.output).toContain(`a.test.js:7:14`);
-  expect(result.output).toContain(`>  7 |         test.afterAll(async () => {`);
+  expect(result.output).toContain(`a.test.js:4:14`);
+  expect(result.output).toContain(`> 4 |         test.afterAll(async () => {`);
 });
 
 test('beforeAll and afterAll timeouts at the same time should be reported', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(async () => {
         console.log('\\n%%beforeAll');
         await new Promise(f => setTimeout(f, 5000));
@@ -554,7 +560,7 @@ test('beforeAll and afterAll timeouts at the same time should be reported', asyn
 test('afterEach should get the test status and duration right away', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.afterEach(({}, testInfo) => {
         const duration = testInfo.duration ? 'XXms' : 'none';
         console.log('\\n%%' + testInfo.title + ': ' + testInfo.status + '; ' + duration);
@@ -579,7 +585,8 @@ test('afterEach should get the test status and duration right away', async ({ ru
 test('uncaught error in beforeEach should not be masked by another error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         foo: async ({}, use) => {
           let cb;
           await use(new Promise((f, r) => cb = r));
@@ -605,7 +612,8 @@ test('uncaught error in beforeEach should not be masked by another error', async
 test('should report error from fixture teardown when beforeAll times out', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const test = pwt.test.extend({
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         foo: async ({}, use) => {
           let cb;
           await use(new Promise((f, r) => cb = r));
@@ -628,7 +636,7 @@ test('should report error from fixture teardown when beforeAll times out', async
 test('should not hang and report results when worker process suddenly exits during afterAll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('failing due to afterall', () => {});
       test.afterAll(() => { process.exit(0); });
     `
@@ -637,13 +645,13 @@ test('should not hang and report results when worker process suddenly exits duri
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Internal error: worker process exited unexpectedly');
-  expect(result.output).toContain('[1/1] a.spec.js:6:7 › failing due to afterall');
+  expect(result.output).toContain('[1/1] a.spec.js:3:11 › failing due to afterall');
 });
 
 test('unhandled rejection during beforeAll should be reported and prevent more tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(async () => {
         console.log('\\n%%beforeAll');
         Promise.resolve().then(() => {
@@ -670,13 +678,13 @@ test('unhandled rejection during beforeAll should be reported and prevent more t
     'afterAll',
   ]);
   expect(result.output).toContain('Error: Oh my');
-  expect(result.output).toContain(`>  9 |           throw new Error('Oh my');`);
+  expect(result.output).toContain(`> 6 |           throw new Error('Oh my');`);
 });
 
 test('beforeAll and afterAll should have a separate timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(async () => {
         console.log('\\n%%beforeAll');
         await new Promise(f => setTimeout(f, 300));
@@ -713,7 +721,7 @@ test('beforeAll and afterAll should have a separate timeout', async ({ runInline
 test('test.setTimeout should work separately in beforeAll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.beforeAll(async () => {
         console.log('\\n%%beforeAll');
         test.setTimeout(1000);
@@ -735,7 +743,7 @@ test('test.setTimeout should work separately in beforeAll', async ({ runInlineTe
 test('test.setTimeout should work separately in afterAll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passed', async () => {
         console.log('\\n%%test');
       });
@@ -757,7 +765,7 @@ test('test.setTimeout should work separately in afterAll', async ({ runInlineTes
 test('beforeAll failure should only prevent tests that are affected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('suite', () => {
         test.beforeAll(async () => {
           console.log('\\n%%beforeAll');
@@ -788,7 +796,7 @@ test('beforeAll failure should only prevent tests that are affected', async ({ r
 test('afterAll should run if last test was skipped', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.afterAll(() => console.log('after-all'));
       test('test1', () => {});
       test.skip('test2', () => {});
@@ -803,7 +811,7 @@ test('afterAll should run if last test was skipped', async ({ runInlineTest }) =
 test('afterAll should run if last test was skipped 2', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.afterAll(() => console.log('after-all'));
       test('test1', () => {});
       test('test2', () => { test.skip(); });
@@ -818,7 +826,7 @@ test('afterAll should run if last test was skipped 2', async ({ runInlineTest })
 test('afterEach timeout after skipped test should be reported', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.afterEach(async () => {
         await new Promise(() => {});
       });
@@ -833,7 +841,7 @@ test('afterEach timeout after skipped test should be reported', async ({ runInli
 test('afterEach exception after skipped test should be reported', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.afterEach(async () => {
         throw new Error('oh my!');
       });
@@ -848,7 +856,7 @@ test('afterEach exception after skipped test should be reported', async ({ runIn
 test('afterAll should be run for test.skip', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test.describe('suite1', () => {
         test.beforeAll(() => console.log('\\n%%beforeAll1'));
         test.afterAll(() => console.log('\\n%%afterAll1'));

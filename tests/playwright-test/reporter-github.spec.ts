@@ -26,7 +26,7 @@ function relativeFilePath(file: string): string {
 test('print GitHub annotations for success', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('example1', async ({}) => {
         expect(1 + 1).toBe(2);
       });
@@ -41,7 +41,7 @@ test('print GitHub annotations for success', async ({ runInlineTest }) => {
 test('print GitHub annotations for failed tests', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.js': `
-      const { test } = pwt;
+      const { test, expect } = require('@playwright/test');
       test('example', async ({}) => {
         expect(1 + 1).toBe(3);
       });
@@ -49,9 +49,9 @@ test('print GitHub annotations for failed tests', async ({ runInlineTest }, test
   }, { retries: 3, reporter: 'github' }, { GITHUB_WORKSPACE: process.cwd() });
   const text = result.output;
   const testPath = relativeFilePath(testInfo.outputPath('a.test.js'));
-  expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example ───────────────────────────────────────────────────────────────────────%0A%0A    Retry #1`);
-  expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example ───────────────────────────────────────────────────────────────────────%0A%0A    Retry #2`);
-  expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example ───────────────────────────────────────────────────────────────────────%0A%0A    Retry #3`);
+  expect(text).toContain(`::error file=${testPath},title=a.test.js:3:7 › example,line=4,col=23::  1) a.test.js:3:7 › example ───────────────────────────────────────────────────────────────────────%0A%0A    Retry #1`);
+  expect(text).toContain(`::error file=${testPath},title=a.test.js:3:7 › example,line=4,col=23::  1) a.test.js:3:7 › example ───────────────────────────────────────────────────────────────────────%0A%0A    Retry #2`);
+  expect(text).toContain(`::error file=${testPath},title=a.test.js:3:7 › example,line=4,col=23::  1) a.test.js:3:7 › example ───────────────────────────────────────────────────────────────────────%0A%0A    Retry #3`);
   expect(result.exitCode).toBe(1);
 });
 
@@ -63,7 +63,7 @@ test('print GitHub annotations for slow tests', async ({ runInlineTest }) => {
       };
     `,
     'a.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('slow test', async ({}) => {
         await new Promise(f => setTimeout(f, 200));
       });
@@ -77,8 +77,9 @@ test('print GitHub annotations for slow tests', async ({ runInlineTest }) => {
 
 test('print GitHub annotations for global error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'a.test.js': `
-      const test = pwt.test.extend({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
         w: [async ({}, use) => {
           await use();
           throw new Error('Oh my!');

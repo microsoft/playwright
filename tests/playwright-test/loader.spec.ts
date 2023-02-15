@@ -29,7 +29,7 @@ test('should return the location of a syntax error', async ({ runInlineTest }) =
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
   expect(result.output).toContain('error.spec.js');
-  expect(result.output).toContain('(6:18)');
+  expect(result.output).toContain('(3:18)');
 });
 
 test('should return the location of a syntax error with deep stack', async ({ runInlineTest }) => {
@@ -61,11 +61,11 @@ test('should return the location of a syntax error with deep stack', async ({ ru
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('qux.ts:4:7');
-  expect(result.output).toContain('baz.ts:4:7');
-  expect(result.output).toContain('bar.ts:4:7');
-  expect(result.output).toContain('foo.ts:4:7');
-  expect(result.output).toContain('test.spec.ts:5:7');
+  expect(result.output).toContain('qux.ts:2:7');
+  expect(result.output).toContain('baz.ts:2:7');
+  expect(result.output).toContain('bar.ts:2:7');
+  expect(result.output).toContain('foo.ts:2:7');
+  expect(result.output).toContain('test.spec.ts:2:7');
 });
 
 test('should print an improper error', async ({ runInlineTest }) => {
@@ -115,7 +115,7 @@ test('should allow export default form the config file', async ({ runInlineTest 
       export default { timeout: 1000 };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fails', async ({}, testInfo) => {
         await new Promise(f => setTimeout(f, 2000));
       });
@@ -133,7 +133,7 @@ test('should validate configuration object', async ({ runInlineTest }) => {
       export default { timeout: '1000' };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('works', () => {});
     `
   });
@@ -146,39 +146,39 @@ test('should validate configuration object', async ({ runInlineTest }) => {
 test('should match tests well', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('works', () => {});
     `,
     'hello.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('works', () => {});
     `,
     'test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('works', () => {});
     `,
     'spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('works', () => {});
     `,
     'strange.....spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('works', () => {});
     `,
     'badspec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('bad', () => { throw new Error('badspec.ts')});
     `,
     'specspec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('bad', () => { throw new Error('specspec.ts')});
     `,
     'a.testtest.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('bad', () => { throw new Error('a.testtest.ts')});
     `,
     'b.testspec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('bad', () => { throw new Error('b.testspec.ts')});
     `
   });
@@ -190,7 +190,7 @@ test('should match tests well', async ({ runInlineTest }) => {
 test('should load an mjs file', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
     'a.spec.mjs': `
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('succeeds', () => {
           expect(1 + 1).toBe(2);
         });
@@ -204,7 +204,7 @@ test('should allow using import', async ({ runInlineTest }) => {
   const { exitCode } = await runInlineTest({
     'a.spec.js': `
         import fs from 'fs';
-        const { test } = pwt;
+        import { test, expect } from '@playwright/test';
         test('succeeds', () => {
           expect(1 + 1).toBe(2);
         });
@@ -216,13 +216,12 @@ test('should allow using import', async ({ runInlineTest }) => {
 test('should load esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
-      //@no-header
       import * as fs from 'fs';
       export default { projects: [{name: 'foo'}] };
     `,
     'package.json': JSON.stringify({ type: 'module' }),
     'a.esm.test.js': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('check project name', ({}, testInfo) => {
         expect(testInfo.project.name).toBe('foo');
       });
@@ -236,12 +235,11 @@ test('should load esm when package.json has type module', async ({ runInlineTest
 test('should load esm config files', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.mjs': `
-      //@no-header
       import * as fs from 'fs';
       export default { projects: [{name: 'foo'}] };
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('check project name', ({}, testInfo) => {
         expect(testInfo.project.name).toBe('foo');
       });
@@ -257,13 +255,11 @@ test('should load ts from esm when package.json has type module', async ({ runIn
   test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
     'playwright.config.js': `
-      //@no-header
       import * as fs from 'fs';
       export default { projects: [{name: 'foo'}] };
     `,
     'package.json': JSON.stringify({ type: 'module' }),
     'a.test.js': `
-      //@no-header
       import { test, expect } from '@playwright/test';
       import { bar } from './bar.js';
       test('check project name', ({}, testInfo) => {
@@ -287,7 +283,7 @@ test('should load ts from esm when package.json has type module', async ({ runIn
 test('should filter stack trace for simple expect', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', () => {
         test.expect(1+1).toEqual(3);
       });
@@ -302,7 +298,7 @@ test('should filter stack trace for simple expect', async ({ runInlineTest }) =>
 test('should filter stack trace for web-first assertions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({page}) => {
         await expect(page.locator('x-foo'), 'x-foo must be visible').toBeVisible({timeout: 1});
       });
@@ -317,7 +313,7 @@ test('should filter stack trace for web-first assertions', async ({ runInlineTes
 test('should filter out event emitter from stack traces', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       const EventEmitter = require('events');
       test('should work', async ({}) => {
         const emitter = new EventEmitter();
@@ -334,7 +330,7 @@ test('should filter out event emitter from stack traces', async ({ runInlineTest
 test('should filter out syntax error stack traces', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', ({}) => {
         // syntax error: cannot have await in non-async function
         await Proimse.resolve();
@@ -349,7 +345,7 @@ test('should filter out syntax error stack traces', async ({ runInlineTest }, te
 test('should filter stack trace for raw errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', async ({}) => {
         throw new Error('foobar!');
       });
@@ -370,7 +366,7 @@ test('should not filter out POM', async ({ runInlineTest }) => {
       }
     `,
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       const { foo } = require('./helper');
       test('should work', ({}) => {
         foo();
@@ -389,7 +385,7 @@ test('should not filter out POM', async ({ runInlineTest }) => {
 test('should filter stack even without default Error.prepareStackTrace', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('should work', ({}) => {
         Error.prepareStackTrace = undefined;
         throw new Error('foobar');
@@ -409,7 +405,7 @@ test('should filter stack even without default Error.prepareStackTrace', async (
 test('should work with cross-imports - 1', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'test1.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test 1', async ({}) => {
         await new Promise(x => setTimeout(x, 500));
         console.log('running TEST-1');
@@ -417,7 +413,7 @@ test('should work with cross-imports - 1', async ({ runInlineTest }) => {
     `,
     'test2.spec.ts': `
       import * as _ from './test1.spec';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test 2', async ({}) => {
         await new Promise(x => setTimeout(x, 500));
         console.log('running TEST-2');
@@ -434,7 +430,7 @@ test('should work with cross-imports - 1', async ({ runInlineTest }) => {
 test('should work with cross-imports - 2', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'test1.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       import * as _ from './test2.spec';
       test('test 1', async ({}) => {
         await new Promise(x => setTimeout(x, 500));
@@ -442,7 +438,7 @@ test('should work with cross-imports - 2', async ({ runInlineTest }) => {
       });
     `,
     'test2.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test 2', async ({}) => {
         await new Promise(x => setTimeout(x, 500));
         console.log('running TEST-2');
@@ -456,12 +452,11 @@ test('should work with cross-imports - 2', async ({ runInlineTest }) => {
   expect(result.output).toContain('TEST-2');
 });
 
-test('should load web server w/o esm loader in ems module', async ({ runInlineTest, nodeVersion }) => {
+test('should load web server w/o esm loader in esm module', async ({ runInlineTest, nodeVersion }) => {
   // We only support experimental esm mode on Node 16+
   test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
     'playwright.config.ts': `
-      //@no-header
       export default {
         webServer: {
           command: 'node ws.js',
@@ -472,15 +467,14 @@ test('should load web server w/o esm loader in ems module', async ({ runInlineTe
       }`,
     'package.json': `{ "type": "module" }`,
     'ws.js': `
-      //@no-header
       console.log('NODE_OPTIONS ' + process.env.NODE_OPTIONS);
       setTimeout(() => {}, 100000);
     `,
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `
-  }, {}, { ...process.env, DEBUG: 'pw:webserver' });
+  }, {}, { DEBUG: 'pw:webserver' });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
@@ -490,14 +484,14 @@ test('should load web server w/o esm loader in ems module', async ({ runInlineTe
 test('should load a jsx/tsx files', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
     'a.spec.tsx': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       const component = () => <div></div>;
       test('succeeds', () => {
         expect(1 + 1).toBe(2);
       });
     `,
     'b.spec.jsx': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       const component = () => <div></div>;
       test('succeeds', () => {
         expect(1 + 1).toBe(2);
@@ -525,14 +519,14 @@ test('should load a jsx/tsx files with fragments', async ({ runInlineTest }) => 
     `,
     'a.spec.ts': `
       import { add } from './helper';
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds', () => {
         expect(add(1, 1)).toBe(2);
       });
     `,
     'b.spec.js': `
       const { add } = require('./helper2');
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('succeeds', () => {
         expect(add(1, 1)).toBe(2);
       });
@@ -548,7 +542,7 @@ test('should remove type imports from ts', async ({ runInlineTest }) => {
       import { Point } from 'helper';
       const p: Point = {};
 
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', ({}) => {});
     `,
     'node_modules/helper/index.d.ts': `
@@ -562,7 +556,7 @@ test('should remove type imports from ts', async ({ runInlineTest }) => {
 test('should resolve .js import to .ts file in non-ESM mode', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       import { gimmeAOne } from './playwright-utils.js';
       test('pass', ({}) => {
         expect(gimmeAOne()).toBe(1);
@@ -581,7 +575,7 @@ test('should resolve .js import to .ts file in non-ESM mode', async ({ runInline
 test('should resolve .js import to .tsx file in non-ESM mode', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       import { gimmeAOne } from './playwright-utils.js';
       test('pass', ({}) => {
         expect(gimmeAOne()).toBe(1);
@@ -611,7 +605,6 @@ test('should resolve .js import to .tsx file in non-ESM mode for components', as
     `,
 
     'src/test.spec.tsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Button } from './button.js';
       test('pass', async ({ mount }) => {
@@ -626,7 +619,7 @@ test('should resolve .js import to .tsx file in non-ESM mode for components', as
 test('should import export assignment from ts', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       import number from './utils.js';
       test('pass', () => {
         expect(number).toBe(1);

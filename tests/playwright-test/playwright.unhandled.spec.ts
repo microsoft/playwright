@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should lead in uncaughtException when page.route raises', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fail', async ({ page }) => {
         test.fail();
         await page.route('**/empty.html', route => {
@@ -36,7 +36,7 @@ test('should lead in uncaughtException when page.route raises', async ({ runInli
 test('should lead in unhandledRejection when page.route raises', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fail', async ({ page }) => {
         test.fail();
         await page.route('**/empty.html', async route => {
@@ -53,7 +53,7 @@ test('should lead in unhandledRejection when page.route raises', async ({ runInl
 test('should lead in uncaughtException when context.route raises', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fail', async ({ context, page }) => {
         test.fail();
         await context.route('**/empty.html', route => {
@@ -70,7 +70,7 @@ test('should lead in uncaughtException when context.route raises', async ({ runI
 test('should lead in unhandledRejection when context.route raises', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'a.test.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('fail', async ({ context, page }) => {
         test.fail();
         await context.route('**/empty.html', async route => {

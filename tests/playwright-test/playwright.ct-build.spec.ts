@@ -31,7 +31,6 @@ test('should work with the empty component list', async ({ runInlineTest }, test
     'playwright/index.js': ``,
 
     'a.test.ts': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       test('pass', async ({ mount }) => {});
     `,
@@ -77,7 +76,6 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
     `,
 
     'src/one-import.spec.tsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Button } from './button';
       test('pass', async ({ mount }) => {
@@ -87,7 +85,6 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
     `,
 
     'src/named-imports.spec.tsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import { Component1, Component2 } from './components';
 
@@ -103,7 +100,6 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
     `,
 
     'src/default-import.spec.tsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       import DefaultComponent from './defaultExport';
 
@@ -114,7 +110,6 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
     `,
 
     'src/clashing-imports.spec.tsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
 
       import DefaultComponent from './defaultExport.tsx';
@@ -235,8 +230,7 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
       `,
 
       'src/button.test.tsx': `
-        //@no-header
-        import { test, expect } from '@playwright/experimental-ct-react';
+          import { test, expect } from '@playwright/experimental-ct-react';
         import { Button } from './button.tsx';
 
         test('pass', async ({ mount }) => {
@@ -266,8 +260,7 @@ test('should cache build', async ({ runInlineTest }, testInfo) => {
     const result = await runInlineTest({
       'playwright.config.ts': playwrightConfig,
       'src/button.test.tsx': `
-        //@no-header
-        import { test, expect } from '@playwright/experimental-ct-react';
+          import { test, expect } from '@playwright/experimental-ct-react';
         import { Button } from './button.tsx';
 
         test('pass updated', async ({ mount }) => {
@@ -311,8 +304,7 @@ test('should grow cache', async ({ runInlineTest }, testInfo) => {
         export const Button2 = () => <button>Button 2</button>;
       `,
       'src/button1.test.tsx': `
-        //@no-header
-        import { test, expect } from '@playwright/experimental-ct-react';
+          import { test, expect } from '@playwright/experimental-ct-react';
         import { Button1 } from './button1.tsx';
         test('pass', async ({ mount }) => {
           const component = await mount(<Button1></Button1>);
@@ -320,8 +312,7 @@ test('should grow cache', async ({ runInlineTest }, testInfo) => {
         });
       `,
       'src/button2.test.tsx': `
-        //@no-header
-        import { test, expect } from '@playwright/experimental-ct-react';
+          import { test, expect } from '@playwright/experimental-ct-react';
         import { Button2 } from './button2.tsx';
         test('pass', async ({ mount }) => {
           const component = await mount(<Button2></Button2>);
@@ -372,7 +363,6 @@ test('should not use global config for preview', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
       test('pass', async ({ mount }) => {});
     `,
@@ -390,9 +380,8 @@ test('should not use global config for preview', async ({ runInlineTest }) => {
 test('should work with https enabled', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright/index.html': `<script type="module" src="./index.js"></script>`,
-    'playwright/index.js': `//@no-header`,
+    'playwright/index.js': ``,
     'playwright.config.js': `
-      //@no-header
       import { defineConfig } from '@playwright/experimental-ct-react';
       import basicSsl from '@vitejs/plugin-basic-ssl';
       export default defineConfig({
@@ -408,7 +397,6 @@ test('should work with https enabled', async ({ runInlineTest }) => {
       });
     `,
     'http.test.tsx': `
-      //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
 
       test('pass', async ({ page }) => {

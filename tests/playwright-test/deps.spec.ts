@@ -27,7 +27,7 @@ test('should run projects with dependencies', async ({ runInlineTest }) => {
         ],
       };`,
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', async ({}, testInfo) => {
         console.log('\\n%%' + testInfo.project.name);
       });
@@ -49,7 +49,7 @@ test('should not run projects with dependencies when --no-deps is passed', async
         ],
       };`,
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', async ({}, testInfo) => {
         console.log('\\n%%' + testInfo.project.name);
       });
@@ -71,7 +71,7 @@ test('should not run project if dependency failed', async ({ runInlineTest }) =>
         ],
       };`,
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', async ({}, testInfo) => {
         console.log('\\n%%' + testInfo.project.name);
         if (testInfo.project.name === 'B')
@@ -101,7 +101,7 @@ test('should not run project if dependency failed (2)', async ({ runInlineTest }
         ],
       };`,
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test', async ({}, testInfo) => {
         console.log('\\n%%' + testInfo.project.name);
         if (testInfo.project.name === 'B1')
@@ -124,7 +124,7 @@ test('should filter by project list, but run deps', async ({ runInlineTest }) =>
       ] };
     `,
     'test.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
         console.log('\\n%%' + testInfo.project.name);
       });
@@ -145,12 +145,18 @@ test('should not filter dependency by file name', async ({ runInlineTest }) => {
         { name: 'B', dependencies: ['A'] },
       ] };
     `,
-    'one.spec.ts': `pwt.test('fails', () => { expect(1).toBe(2); });`,
-    'two.spec.ts': `pwt.test('pass', () => { });`,
+    'one.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', () => { expect(1).toBe(2); });
+    `,
+    'two.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => { });
+    `,
   }, undefined, undefined, { additionalArgs: ['two.spec.ts'] });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('1) [A] › one.spec.ts:4:5 › fails');
+  expect(result.output).toContain('1) [A] › one.spec.ts:3:11 › fails');
 });
 
 test('should not filter dependency by only', async ({ runInlineTest }) => {
@@ -162,16 +168,20 @@ test('should not filter dependency by only', async ({ runInlineTest }) => {
       ] };
     `,
     'setup.ts': `
-      pwt.test('passes', () => {
-        console.log('\\n%% setup in ' + pwt.test.info().project.name);
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {
+        console.log('\\n%% setup in ' + test.info().project.name);
       });
-      pwt.test.only('passes 2', () => {
-        console.log('\\n%% setup 2 in ' + pwt.test.info().project.name);
+      test.only('passes 2', () => {
+        console.log('\\n%% setup 2 in ' + test.info().project.name);
       });
     `,
-    'test.spec.ts': `pwt.test('pass', () => {
-      console.log('\\n%% test in ' + pwt.test.info().project.name);
-    });`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {
+        console.log('\\n%% test in ' + test.info().project.name);
+      });
+    `,
   });
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual(['setup in setup', 'setup 2 in setup', 'test in browser']);
@@ -186,16 +196,20 @@ test('should not filter dependency by only 2', async ({ runInlineTest }) => {
       ] };
     `,
     'setup.ts': `
-      pwt.test('passes', () => {
-        console.log('\\n%% setup in ' + pwt.test.info().project.name);
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {
+        console.log('\\n%% setup in ' + test.info().project.name);
       });
-      pwt.test.only('passes 2', () => {
-        console.log('\\n%% setup 2 in ' + pwt.test.info().project.name);
+      test.only('passes 2', () => {
+        console.log('\\n%% setup 2 in ' + test.info().project.name);
       });
     `,
-    'test.spec.ts': `pwt.test('pass', () => {
-      console.log('\\n%% test in ' + pwt.test.info().project.name);
-    });`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {
+        console.log('\\n%% test in ' + test.info().project.name);
+      });
+    `,
   }, { project: ['setup'] });
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual(['setup 2 in setup']);
@@ -210,18 +224,23 @@ test('should not filter dependency by only 3', async ({ runInlineTest }) => {
       ] };
     `,
     'setup-1.ts': `
-      pwt.test('setup 1', () => {
-        console.log('\\n%% setup in ' + pwt.test.info().project.name);
+      import { test, expect } from '@playwright/test';
+      test('setup 1', () => {
+        console.log('\\n%% setup in ' + test.info().project.name);
       });
     `,
     'setup-2.ts': `
-      pwt.test('setup 2', () => {
-        console.log('\\n%% setup 2 in ' + pwt.test.info().project.name);
+      import { test, expect } from '@playwright/test';
+      test('setup 2', () => {
+        console.log('\\n%% setup 2 in ' + test.info().project.name);
       });
     `,
-    'test.spec.ts': `pwt.test('pass', () => {
-      console.log('\\n%% test in ' + pwt.test.info().project.name);
-    });`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {
+        console.log('\\n%% test in ' + test.info().project.name);
+      });
+    `,
   }, undefined, undefined, { additionalArgs: ['setup-2.ts'] });
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual(['setup 2 in setup']);
@@ -236,11 +255,15 @@ test('should report skipped dependent tests', async ({ runInlineTest }) => {
       ] };
     `,
     'setup.ts': `
-      pwt.test('setup', () => {
+      import { test, expect } from '@playwright/test';
+      test('setup', () => {
         expect(1).toBe(2);
       });
     `,
-    'test.spec.ts': `pwt.test('pass', () => {});`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {});
+    `,
   });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
@@ -256,7 +279,10 @@ test('should report circular dependencies', async ({ runInlineTest }) => {
         { name: 'B', dependencies: ['A'] },
       ] };
     `,
-    'test.spec.ts': `pwt.test('pass', () => {});`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {});
+    `,
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Circular dependency detected between projects.');
@@ -273,19 +299,19 @@ test('should run dependency in each shard', async ({ runInlineTest }) => {
       };
     `,
     'setup.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('setup', async ({}) => {
         console.log('\\n%%setup');
       });
     `,
     'test1.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test1', async ({}) => {
         console.log('\\n%%test1');
       });
     `,
     'test2.spec.ts': `
-      const { test } = pwt;
+      import { test, expect } from '@playwright/test';
       test('test2', async ({}) => {
         console.log('\\n%%test2');
       });
