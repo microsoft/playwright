@@ -100,7 +100,7 @@ If stock Google Chrome or Microsoft Edge is not available on your machine, you c
 them using Playwright command line tool:
 
 ```bash lang=js
-npx playwright install msedge
+npx playwright install chrome
 ```
 
 ```powershell lang=js
@@ -108,7 +108,7 @@ npx playwright install msedge
 ```
 
 ```bash lang=python
-playwright install msedge
+playwright install chrome
 ```
 
 ```powershell lang=python
@@ -116,7 +116,7 @@ playwright install msedge
 ```
 
 ```bash lang=csharp
-pwsh bin/Debug/netX/playwright.ps1 install msedge
+pwsh bin/Debug/netX/playwright.ps1 install chrome
 ```
 
 ```powershell lang=csharp
@@ -124,7 +124,7 @@ pwsh bin/Debug/netX/playwright.ps1 install msedge
 ```
 
 ```batch lang=java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install msedge"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install chrome"
 ```
 
 ```powershell lang=java
