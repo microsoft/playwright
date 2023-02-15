@@ -43,7 +43,6 @@ type HtmlReportOpenOption = 'always' | 'never' | 'on-failure';
 type HtmlReporterOptions = {
   outputFolder?: string,
   open?: HtmlReportOpenOption,
-  sharded?: boolean,
   host?: string,
   port?: number,
 };
@@ -54,7 +53,6 @@ class HtmlReporter implements Reporter {
   private _montonicStartTime: number = 0;
   private _options: HtmlReporterOptions;
   private _outputFolder!: string;
-  private _sharded!: boolean;
   private _open: string | undefined;
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
 
@@ -69,9 +67,8 @@ class HtmlReporter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {
     this._montonicStartTime = monotonicTime();
     this.config = config as FullConfigInternal;
-    const { outputFolder, open, sharded } = this._resolveOptions();
+    const { outputFolder, open } = this._resolveOptions();
     this._outputFolder = outputFolder;
-    this._sharded = sharded;
     this._open = open;
     const reportedWarnings = new Set<string>();
     for (const project of config.projects) {
@@ -92,20 +89,18 @@ class HtmlReporter implements Reporter {
     this.suite = suite;
   }
 
-  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, sharded: boolean } {
+  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption } {
     let { outputFolder } = this._options;
     if (outputFolder)
       outputFolder = path.resolve(this.config._internal.configDir, outputFolder);
     return {
       outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this.config._internal.configDir),
       open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
-      sharded: !!this._options.sharded
     };
   }
 
   async onEnd() {
     const duration = monotonicTime() - this._montonicStartTime;
-    const shard = this._sharded ? this.config.shard : null;
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();
@@ -114,7 +109,7 @@ class HtmlReporter implements Reporter {
     });
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this._outputFolder);
-    this._buildResult = await builder.build({ ...this.config.metadata, duration }, reports, shard);
+    this._buildResult = await builder.build({ ...this.config.metadata, duration }, reports);
   }
 
   async _onExit() {
@@ -209,7 +204,7 @@ class HtmlBuilder {
     this._dataZipFile = new yazl.ZipFile();
   }
 
-  async build(metadata: Metadata & { duration: number }, rawReports: JsonReport[], shard: FullConfigInternal['shard']): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: Metadata & { duration: number }, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {
@@ -294,11 +289,17 @@ class HtmlBuilder {
       }
     }
 
+    // Inline report data.
     const indexFile = path.join(this._reportFolder, 'index.html');
-    if (shard)
-      await this._writeShardedReport(indexFile, shard);
-    else
-      await this._writeInlineReport(indexFile);
+    fs.appendFileSync(indexFile, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
+    await new Promise(f => {
+      this._dataZipFile!.end(undefined, () => {
+        this._dataZipFile!.outputStream
+            .pipe(new Base64Encoder())
+            .pipe(fs.createWriteStream(indexFile, { flags: 'a' })).on('close', f);
+      });
+    });
+    fs.appendFileSync(indexFile, '";</script>');
 
     let singleTestId: string | undefined;
     if (htmlReport.stats.total === 1) {
@@ -307,32 +308,6 @@ class HtmlBuilder {
     }
 
     return { ok, singleTestId };
-  }
-
-  private async _writeShardedReport(indexFile: string, shard: { total: number, current: number }) {
-    // For each shard write same index.html and store report data in a separate report-num-of-total.zip
-    // so that they can all be copied in one folder.
-    await fs.promises.appendFile(indexFile, `<script>\nwindow.playwrightShardTotal=${shard.total};</script>`);
-    const paddedNumber = String(shard.current).padStart(String(shard.total).length, '0');
-    const reportZip = path.join(this._reportFolder, `report-${paddedNumber}-of-${shard.total}.zip`);
-    await new Promise(f => {
-      this._dataZipFile!.end(undefined, () => {
-        this._dataZipFile!.outputStream.pipe(fs.createWriteStream(reportZip)).on('close', f);
-      });
-    });
-  }
-
-  private async _writeInlineReport(indexFile: string) {
-    // Inline report data.
-    await fs.promises.appendFile(indexFile, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
-    await new Promise(f => {
-      this._dataZipFile!.end(undefined, () => {
-        this._dataZipFile!.outputStream
-            .pipe(new Base64Encoder())
-            .pipe(fs.createWriteStream(indexFile, { flags: 'a' })).on('close', f);
-      });
-    });
-    await fs.promises.appendFile(indexFile, '";</script>');
   }
 
   private _addDataFile(fileName: string, data: any) {

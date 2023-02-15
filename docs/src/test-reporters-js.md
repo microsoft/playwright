@@ -310,37 +310,8 @@ Or if there is a custom folder name:
 npx playwright show-report my-report
 ```
 
-#### Sharded report
+> The `html` reporter currently does not support merging reports generated across multiple [`--shards`](./test-parallel.md#shard-tests-between-multiple-machines) into a single report. See [this](https://github.com/microsoft/playwright/issues/10437) issue for available third party solutions.
 
-When running tests on [multiple shards](./test-parallel.md#shard-tests-between-multiple-machines), the `html` reporter can automatically show test results from all shards in one page when configured with `sharded: true`.
-
-```js tab=js-js
-// playwright.config.js
-// @ts-check
-
-const { defineConfig } = require('@playwright/test');
-
-module.exports = defineConfig({
-  reporter: [['html', { sharded: true }]],
-});
-```
-
-```js tab=js-ts
-// playwright.config.ts
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  reporter: [['html', { sharded: true }]],
-});
-```
-
-You can use sharded html report combined with a file hosting that allows serving html files.
-
-In your CI recipe, after running tests in each shard, upload all files from `playwright-report` directory to the **same location**. After that you can open `index.html` from the uploaded location directly in the browser.
-
-:::note
-The `html` report for each shard consists of `index.html` and a data file named like `report-003-of-100.zip`. It's ok to overwrite  `index.html` with one another when copying sharded reports to a single directory.
-:::
 
 ### JSON reporter
 
