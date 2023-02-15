@@ -58,7 +58,8 @@ export const hostPlatform = ((): HostPlatform => {
     const distroInfo = getLinuxDistributionInfoSync();
 
     // Pop!_OS is ubuntu-based and has the same versions.
-    if (distroInfo?.id === 'ubuntu' || distroInfo?.id === 'pop') {
+    // KDE Neon is ubuntu-based and has the same versions.
+    if (distroInfo?.id === 'ubuntu' || distroInfo?.id === 'pop' || distroInfo?.id === 'neon') {
       if (parseInt(distroInfo.version, 10) <= 19)
         return ('ubuntu18.04' + archSuffix) as HostPlatform;
       if (parseInt(distroInfo.version, 10) <= 21)
