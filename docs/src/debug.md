@@ -32,7 +32,7 @@ Pick a [locator](./locators.md) and copy it into your test file by clicking the 
 
 <img width="1394" alt="Pick locators" src="https://user-images.githubusercontent.com/13063165/212741666-6479a702-2517-44a3-9eca-e719e13b379c.png" />
 
-Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md). If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
+Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md). If Playwright finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
 
 ### Run in Debug Mode
 
@@ -235,6 +235,8 @@ While debugging you might need to choose a more resilient locator. You can do th
 
 <img width="1392" alt="Picking locators" src="https://user-images.githubusercontent.com/13063165/212968640-ce82a027-9277-4bdf-b0a9-6282fb2becb7.png" />
 
+Playwright will look at your page and figure out the best locator, prioritizing [role, text and test id locators](./locators.md). If Playwright finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
+
 ### Actionability logs
 
 By the time Playwright has paused on a click action, it has already performed [actionability checks](./actionability.md) that can be found in the log. This can help you understand what happened during your test and what Playwright did or tried to do. The log tells you if the element was visible, enabled and stable, if the locator resolved to an element, scrolled into view, and so much more. If actionability can't be reached, it will show the action as pending.
@@ -243,17 +245,226 @@ By the time Playwright has paused on a click action, it has already performed [a
 
 ## Browser Developer Tools
 
-You can use browser developer tools in Chromium, Firefox and WebKit while running
-a Playwright script in headed mode. Developer tools help to:
+When running in Debug Mode with `PWDEBUG=console`, a `playwright` object is available in the Developer tools console. Developer tools can help you to:
 
 - Inspect the DOM tree and **find element selectors**
 - **See console logs** during execution (or learn how to [read logs via API](./api/class-page.md#page-event-console))
 - Check **network activity** and other developer tools features
 
-<a href="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png"><img src="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png" width="500" alt="Chromium Developer Tools"></img></a>
+<img src="https://user-images.githubusercontent.com/284612/92536317-37dd9380-f1ee-11ea-875d-daf1b206dd56.png"></img>
 
-Using a [`method: Page.pause`] method is an easy way to pause the Playwright script execution
-and inspect the page in Developer tools. It will also open Playwright Inspector to help with debugging.
+To debug your tests using the browser developer tools start by setting a breakpoint in your test to pause the execution using the [`method: Page.pause`] method.
+
+```js
+await page.pause();
+```
+
+```java
+page.pause();
+```
+
+```python async
+await page.pause()
+```
+
+```python sync
+page.pause()
+```
+
+```csharp
+await page.PauseAsync();
+```
+
+Once you have set a breakpoint in your test you can then run your test with `PWDEBUG=console`.
+
+```bash tab=bash-bash lang=js
+PWDEBUG=console npx playwright test
+```
+
+```batch tab=bash-batch lang=js
+set PWDEBUG=console
+npx playwright test
+```
+
+```powershell tab=bash-powershell lang=js
+$env:PWDEBUG="console"
+npx playwright test
+```
+
+```bash tab=bash-bash lang=java
+# Source directories in the list are separated by : on macos and linux and by ; on win.
+PWDEBUG=console PLAYWRIGHT_JAVA_SRC=<java source dirs> mvn test
+```
+
+```batch tab=bash-batch lang=java
+# Source directories in the list are separated by : on macos and linux and by ; on win.
+set PLAYWRIGHT_JAVA_SRC=<java source dirs>
+set PWDEBUG=console
+mvn test
+```
+
+```powershell tab=bash-powershell lang=java
+# Source directories in the list are separated by : on macos and linux and by ; on win.
+$env:PLAYWRIGHT_JAVA_SRC="<java source dirs>"
+$env:PWDEBUG=console
+mvn test
+```
+
+```bash tab=bash-bash lang=python
+PWDEBUG=console pytest -s
+```
+
+```batch tab=bash-batch lang=python
+set PWDEBUG=console
+pytest -s
+```
+
+```powershell tab=bash-powershell lang=python
+$env:PWDEBUG=console
+pytest -s
+```
+
+```bash tab=bash-bash lang=csharp
+PWDEBUG=console dotnet test
+```
+
+```batch tab=bash-batch lang=csharp
+set PWDEBUG=console
+dotnet test
+```
+
+```powershell tab=bash-powershell lang=csharp
+$env:PWDEBUG=console
+dotnet test
+```
+
+Once Playwright launches the browser window you can then open the console panel in the browser developer tools and debug your tests using the `playwright` object.
+
+#### playwright.$(selector)
+
+Query the Playwright selector, using the actual Playwright query engine, for example:
+
+```bash
+playwright.$('.auth-form >> text=Log in');
+
+<button>Log in</button>
+```
+
+#### playwright.$$(selector)
+
+Same as `playwright.$`, but returns all matching elements.
+
+```bash
+playwright.$$('li >> text=John')
+
+[<li>, <li>, <li>, <li>]
+```
+
+#### playwright.inspect(selector)
+
+Reveal element in the Elements panel (if DevTools of the respective browser supports it).
+
+```bash
+playwright.inspect('text=Log in')
+```
+
+#### playwright.locator(selector)
+
+Query Playwright element using the actual Playwright query engine, for example:
+
+```bash
+playwright.locator('.auth-form', { hasText: 'Log in' });
+
+Locator ()
+  - element: button
+  - elements: [button]
+```
+
+#### playwright.highlight(selector)
+
+Highlight the first occurrence of the locator:
+
+```bash
+playwright.highlight('.auth-form');
+```
+
+#### playwright.clear()
+
+```bash
+playwright.clear()
+```
+
+Clear existing highlights.
+
+#### playwright.selector(element)
+
+Generates selector for the given element.
+
+```bash
+playwright.selector($0)
+
+"div[id="glow-ingress-block"] >> text=/.*Hello.*/"
+```
+
+## Verbose API logs
+
+Playwright supports verbose logging with the `DEBUG` environment variable.
+
+```bash tab=bash-bash lang=js
+DEBUG=pw:api npx playwright test
+```
+
+```batch tab=bash-batch lang=js
+set DEBUG=pw:api
+npx playwright test
+```
+
+```powershell tab=bash-powershell lang=js
+$env:DEBUG="pw:api"
+npx playwright test
+```
+
+```bash tab=bash-bash lang=java
+DEBUG=pw:api mvn test
+```
+
+```batch tab=bash-batch lang=java
+set DEBUG=pw:api
+mvn test
+```
+
+```powershell tab=bash-powershell lang=java
+$env:DEBUG="pw:api"
+mvn test
+```
+
+```bash tab=bash-bash lang=python
+DEBUG=pw:api pytest -s
+```
+
+```batch tab=bash-batch lang=python
+set DEBUG=pw:api
+pytest -s
+```
+
+```powershell tab=bash-powershell lang=python
+$env:DEBUG="pw:api"
+pytest -s
+```
+
+```bash tab=bash-bash lang=csharp
+DEBUG=pw:api dotnet run
+```
+
+```batch tab=bash-batch lang=csharp
+set DEBUG=pw:api
+dotnet run
+```
+
+```powershell tab=bash-powershell lang=csharp
+$env:DEBUG="pw:api"
+dotnet run
+```
 
 :::note
 **For WebKit**: launching WebKit Inspector during the execution will
@@ -263,25 +474,31 @@ prevent the Playwright script from executing any further.
 ## Headed mode
 
 Playwright runs browsers in headless mode by default. To change this behavior,
-use `headless: false` as a launch option. You can also use the [`option: slowMo`] option
+use `headless: false` as a launch option.
+
+You can also use the [`option: slowMo`] option
 to slow down execution (by N milliseconds per operation) and follow along while debugging.
 
 ```js
-await chromium.launch({ headless: false, slowMo: 100 }); // or firefox, webkit
+// Chromium, Firefox, or Webkit
+await chromium.launch({ headless: false, slowMo: 100 }); 
 ```
 
 ```java
-chromium.launch(new BrowserType.LaunchOptions() // or firefox, webkit
+// Chromium, Firefox, or Webkit
+chromium.launch(new BrowserType.LaunchOptions() 
   .setHeadless(false)
   .setSlowMo(100));
 ```
 
 ```python async
-await chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
+# Chromium, Firefox, or Webkit
+await chromium.launch(headless=False, slow_mo=100)
 ```
 
 ```python sync
-chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
+# Chromium, Firefox, or Webkit
+chromium.launch(headless=False, slow_mo=100)
 ```
 
 ```csharp
@@ -292,5 +509,3 @@ await using var browser = await playwright.Chromium.LaunchAsync(new()
     SlowMo = 100
 });
 ```
-
-
