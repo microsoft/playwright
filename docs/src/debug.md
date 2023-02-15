@@ -263,7 +263,7 @@ When running in Debug Mode with `PWDEBUG=console`, a `playwright` object is avai
 - Check **network activity** and other developer tools features
 
 
-<img width="1399" alt="Screenshot 2023-02-15 at 20 06 25" src="https://user-images.githubusercontent.com/13063165/219128002-898f604d-9697-4b7f-95b5-a6a8260b7282.png" />
+<img width="1399" alt="Browser Developer Tools with Playwright object" src="https://user-images.githubusercontent.com/13063165/219128002-898f604d-9697-4b7f-95b5-a6a8260b7282.png" />
 
 To debug your tests using the browser developer tools start by setting a breakpoint in your test to pause the execution using the [`method: Page.pause`] method.
 
