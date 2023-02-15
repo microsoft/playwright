@@ -243,6 +243,17 @@ By the time Playwright has paused on a click action, it has already performed [a
 
 <img width="883" alt="Actionability Logs" src="https://user-images.githubusercontent.com/13063165/212968907-5dede739-e0e3-482a-91cd-726a0f5b0b6d.png" />
 
+## Trace Viewer
+
+Playwright [Trace Viewer](/trace-viewer.md) is a GUI tool that lets you explore recorded Playwright traces of your tests meaning you can go back and forward through each action of your test and visually see what was happening during each action. You can scroll through the timeline at the top or view the DOM snapshots in the middle of the screen. One one side of the DOM snapshot you can see the actions and metadata for your test and on the other side you can see the call for that action showing the time, parameters, return value and log, the console, the network and the source code for your test.
+
+<video width="100%" height="100%" controls muted>
+  <source src="https://user-images.githubusercontent.com/13063165/219132713-17b9d75b-71e3-42c4-a43f-3f9e2e15f834.mp4" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
+
+To learn more about how to record traces and use the Trace Viewer, check out the [Trace Viewer](/trace-viewer.md) guide.
+
 ## Browser Developer Tools
 
 When running in Debug Mode with `PWDEBUG=console`, a `playwright` object is available in the Developer tools console. Developer tools can help you to:
@@ -251,7 +262,8 @@ When running in Debug Mode with `PWDEBUG=console`, a `playwright` object is avai
 - **See console logs** during execution (or learn how to [read logs via API](./api/class-page.md#page-event-console))
 - Check **network activity** and other developer tools features
 
-<img src="https://user-images.githubusercontent.com/284612/92536317-37dd9380-f1ee-11ea-875d-daf1b206dd56.png"></img>
+
+<img width="1399" alt="Screenshot 2023-02-15 at 20 06 25" src="https://user-images.githubusercontent.com/13063165/219128002-898f604d-9697-4b7f-95b5-a6a8260b7282.png" />
 
 To debug your tests using the browser developer tools start by setting a breakpoint in your test to pause the execution using the [`method: Page.pause`] method.
 
