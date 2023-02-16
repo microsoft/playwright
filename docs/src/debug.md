@@ -225,7 +225,7 @@ Once `page.pause()` is set, you can then run your tests in debug mode and the Pl
 
 ### Live editing locators
 
-While running in debug mode you can live edit the locators. Next to the 'Pick Locator' button there is a field showing the [locator](./locators.md) that the test is paused on. You can edit this locator directly in the **Pick Locator** field. As you edit the locator you will see in the browser window the element the locator refers to and highlighted below it you can see the code needed to locate this element. If more than one element is found for that locator it will show you how many have been found. This allows you to easily tweak and improve your locators.
+While running in debug mode you can live edit the locators. Next to the 'Pick Locator' button there is a field showing the [locator](./locators.md) that the test is paused on. You can edit this locator directly in the **Pick Locator** field, and matching elements will be highlighted in the browser window.
 
 <img width="1348" alt="live editing locators" src="https://user-images.githubusercontent.com/13063165/212980815-1cf6ef7b-e69a-496c-898a-ec603a3bc562.png" />
 
