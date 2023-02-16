@@ -87,39 +87,7 @@ npx playwright test example.spec.ts:10 --debug
 ```
 #### Debug on a specific browser
 
-In Playwright you can configure projects in your [`playwright.config`](/test-configuration.md#multiple-browsers) for major browser engines such as Chromium and Firefox, branded browsers such as Google Chrome and Microsoft Edge, and mobile viewports such as Safari on an iPhone 12 or Chrome for Android on a Pixel 5. For a full list of devices check out the [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json).
-
-```ts
-const config: PlaywrightTestConfig = {
-/* Configure projects for major browsers */
-  projects: [
-    {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
-    },
-
-    /* Test against mobile viewports. */
-    {
-      name: 'Mobile Safari',
-      use: {
-        ...devices['iPhone 12'],
-      },
-    },
-
-    /* Test against branded browsers. */
-    {
-      name: 'Microsoft Edge',
-      use: {
-        channel: 'msedge',
-      },
-    },
-  ],
-};
-```
-
-Once configured you can then debug your tests on a specific browser or mobile viewport using the `--project` flag followed by the name of the project configured in your `playwright.config`.
+In Playwright you can configure projects in your [`playwright.config`](/test-configuration.md#multiple-browsers. Once configured you can then debug your tests on a specific browser or mobile viewport using the `--project` flag followed by the name of the project configured in your `playwright.config`.
 
 ```bash
 npx playwright test --project=chromium --debug
@@ -223,6 +191,8 @@ await page.PauseAsync();
 
 Once `page.pause()` is set, you can then run your tests in debug mode and the Playwright inspector will open as well as the browser and your test will run and pause on the line where you called `page.pause()`.
 
+Once you add a `page.pause()` call, run your tests in debug mode. Clicking the "Resume" button in the Inspector will run the test and only stop on the `page.pause()`.
+
 ### Live editing locators
 
 While running in debug mode you can live edit the locators. Next to the 'Pick Locator' button there is a field showing the [locator](./locators.md) that the test is paused on. You can edit this locator directly in the **Pick Locator** field, and matching elements will be highlighted in the browser window.
@@ -290,17 +260,16 @@ await page.PauseAsync();
 Once you have set a breakpoint in your test you can then run your test with `PWDEBUG=console`.
 
 ```bash tab=bash-bash lang=js
-PWDEBUG=console npx playwright test --headed --timeout=0
+PWDEBUG=console npx playwright test
 ```
 
 ```batch tab=bash-batch lang=js
 set PWDEBUG=console
-npx playwright test --headed --timeout=0
-```
+npx playwright test
 
 ```powershell tab=bash-powershell lang=js
 $env:PWDEBUG="console"
-npx playwright test --headed --timeout=0
+npx playwright test
 ```
 
 ```bash tab=bash-bash lang=java
