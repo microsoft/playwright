@@ -87,7 +87,7 @@ npx playwright test example.spec.ts:10 --debug
 ```
 #### Debug on a specific browser
 
-In Playwright you can configure projects in your [`playwright.config`](/test-configuration.md#multiple-browsers) for major browsers such as Chromium, Firefox and Safari, branded browsers such as Google Chrome and Edge and mobile viewports such as Mobile Safari on an iPhone 12 or Mobile Chrome on a Pixel 5. For a full list of devices check out the [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json).
+In Playwright you can configure projects in your [`playwright.config`](/test-configuration.md#multiple-browsers) for major browser engines such as Chromium and Firefox, branded browsers such as Google Chrome and Microsoft Edge, and mobile viewports such as Safari on an iPhone 12 or Chrome for Android on a Pixel 5. For a full list of devices check out the [registry of device parameters](https://github.com/microsoft/playwright/blob/main/packages/playwright-core/src/server/deviceDescriptorsSource.json).
 
 ```ts
 const config: PlaywrightTestConfig = {
