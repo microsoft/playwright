@@ -1150,8 +1150,8 @@ interface TestConfig {
   snapshotPathTemplate?: string;
 
   /**
-   * Directory where the values accessible via [TestStore] are persisted. Each value is saved in its own file. The key
-   * of the value is its path relative to the `storeDir`. Defaults to `./playwright`.
+   * Directory where the values accessible via [TestStore] are persisted. All pahts in [TestStore] are relative to
+   * `storeDir`. Defaults to `./playwright`.
    *
    * **Usage**
    *
@@ -3323,9 +3323,9 @@ type ConnectOptions = {
 };
 
 /**
- * Playwright Test provides a global `store` object that can be used read/write values to the filesystem. Each value
- * is stored in its own file with the key used as a path relative to `TestConfig.storeDir` (it is `./playwright` by
- * default).
+ * Playwright Test provides a global `store` object that can be used to read/write values on the filesystem. Each
+ * value is stored in its own file inside './playwright' directory, configurable with
+ * [testConfig.storeDir](https://playwright.dev/docs/api/class-testconfig#test-config-store-dir).
  *
  */
 export interface TestStore {
