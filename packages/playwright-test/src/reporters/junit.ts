@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../types/testReporter';
 import { monotonicTime } from 'playwright-core/lib/utils';
-import { formatFailure, formatTestTitle, stripAnsiEscapes } from './base';
+import { formatFailure, stripAnsiEscapes } from './base';
 import { assert } from 'playwright-core/lib/utils';
 
 class JUnitReporter implements Reporter {
@@ -60,7 +60,7 @@ class JUnitReporter implements Reporter {
     const children: XMLEntry[] = [];
     for (const projectSuite of this.suite.suites) {
       for (const fileSuite of projectSuite.suites)
-        children.push(this._buildTestSuite(fileSuite));
+        children.push(this._buildTestSuite(projectSuite.title, fileSuite));
     }
     const tokens: string[] = [];
 
@@ -91,7 +91,7 @@ class JUnitReporter implements Reporter {
     }
   }
 
-  private _buildTestSuite(suite: Suite): XMLEntry {
+  private _buildTestSuite(projectName: string, suite: Suite): XMLEntry {
     let tests = 0;
     let skipped = 0;
     let failures = 0;
@@ -106,7 +106,7 @@ class JUnitReporter implements Reporter {
         ++failures;
       for (const result of test.results)
         duration += result.duration;
-      this._addTestCase(test, children);
+      this._addTestCase(suite.title, test, children);
     });
     this.totalTests += tests;
     this.totalSkipped += skipped;
@@ -115,9 +115,9 @@ class JUnitReporter implements Reporter {
     const entry: XMLEntry = {
       name: 'testsuite',
       attributes: {
-        name: suite.location ? path.relative(this.config.rootDir, suite.location.file) : '',
+        name: suite.title,
         timestamp: this.timestamp,
-        hostname: '',
+        hostname: projectName,
         tests,
         failures,
         skipped,
@@ -130,14 +130,16 @@ class JUnitReporter implements Reporter {
     return entry;
   }
 
-  private _addTestCase(test: TestCase, entries: XMLEntry[]) {
+  private _addTestCase(suiteName: string, test: TestCase, entries: XMLEntry[]) {
     const entry = {
       name: 'testcase',
       attributes: {
         // Skip root, project, file
-        name: test.titlePath().slice(3).join(' '),
-        classname: formatTestTitle(this.config, test, undefined, true),
+        name: test.titlePath().slice(3).join(' › '),
+        // filename
+        classname: suiteName,
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
+
       },
       children: [] as XMLEntry[]
     };
