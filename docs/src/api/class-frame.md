@@ -2001,9 +2001,6 @@ a navigation.
 ### param: Frame.waitForNavigation.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### param: Frame.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### option: Frame.waitForNavigation.url = %%-wait-for-navigation-url-%%
 * since: v1.8
 
@@ -2012,6 +2009,9 @@ a navigation.
 
 ### option: Frame.waitForNavigation.timeout = %%-navigation-timeout-%%
 * since: v1.8
+
+### param: Frame.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
 
 ## async method: Frame.waitForSelector
 * since: v1.8
