@@ -350,7 +350,8 @@ $env:PWDEBUG=console
 dotnet test
 ```
 
-Once Playwright launches the browser window you can then open the console panel in the browser developer tools and debug your tests using the `playwright` object.
+Once Playwright launches the browser window you can open developer tools.
+The `playwright` object will be available in the console panel.
 
 #### playwright.$(selector)
 
