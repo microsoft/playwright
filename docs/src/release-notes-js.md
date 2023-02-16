@@ -6,6 +6,80 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.31
+
+### New APIs
+
+- New property [`property: TestProject.dependencies`] to configure dependencies between projects.
+
+  Using dependencies allows global setup to produce traces and other artifacts,
+  see the setup steps in the test report and more.
+
+  ```js
+  // playwright.config.ts
+  import { defineConfig } from '@playwright/test';
+
+  export default defineConfig({
+    projects: [
+      {
+        name: 'setup',
+        testMatch: /global.setup\.ts/,
+      },
+      {
+        name: 'chromium',
+        use: devices['Desktop Chrome'],
+        dependencies: ['setup'],
+      },
+      {
+        name: 'firefox',
+        use: devices['Desktop Firefox'],
+        dependencies: ['setup'],
+      },
+      {
+        name: 'webkit',
+        use: devices['Desktop Safari'],
+        dependencies: ['setup'],
+      },
+    ],
+  });
+  ```
+
+- New assertion [`method: LocatorAssertions.toBeInViewport`] ensures that locator points to an element that intersects viewport, according to the [intersection observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
+
+  ```js
+  const button = page.getByRole('button');
+
+  // Make sure at least some part of element intersects viewport.
+  await expect(button).toBeInViewport();
+
+  // Make sure element is fully outside of viewport.
+  await expect(button).not.toBeInViewport();
+
+  // Make sure that at least half of the element intersects viewport.
+  await expect(button).toBeInViewport({ ratio: 0.5 });
+  ```
+
+
+### Miscellaneous
+
+- DOM snapshots in trace viewer can be now opened in a separate window.
+- New method `defineConfig` to be used in `playwright.config`.
+- New option [`option: Route.fetch.maxRedirects`] for method [`method: Route.fetch`].
+- Playwright now supports Debian 11 arm64.
+- Official [docker images](./docker.md) now include Node 18 instead of Node 16.
+
+### Browser Versions
+
+* Chromium 111.0.5563.19
+* Mozilla Firefox 109.0
+* WebKit 16.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 110
+* Microsoft Edge 110
+
+
 ## Version 1.30
 
 ### Browser Versions
