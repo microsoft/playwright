@@ -180,7 +180,7 @@ test('should load context storageState from store', async ({ runInlineTest, serv
 });
 
 test('should load value from filesystem', async ({ runInlineTest }) => {
-  const storeDir = path.join(test.info().outputPath(), 'playwright');
+  const storeDir = test.info().outputPath('playwright');
   const file = path.join(storeDir, 'foo/bar.json');
   await fs.promises.mkdir(path.dirname(file), { recursive: true });
   await fs.promises.writeFile(file, JSON.stringify({ 'a': 2023 }));
@@ -192,6 +192,23 @@ test('should load value from filesystem', async ({ runInlineTest }) => {
       import { test, store, expect } from '@playwright/test';
       test('should store number', async ({ }) => {
         expect(await store.get('foo/bar.json')).toEqual({ 'a': 2023 });
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should return root path', async ({ runInlineTest }) => {
+  const storeDir = test.info().outputPath('playwright');
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {};
+    `,
+    'a.test.ts': `
+      import { test, store, expect } from '@playwright/test';
+      test('should store number', async ({ }) => {
+        expect(store.root()).toBe('${storeDir}');
       });
     `,
   }, { workers: 1 });
@@ -256,4 +273,20 @@ test('store root can be changed with TestConfig.storeDir', async ({ runInlineTes
   expect(result.passed).toBe(2);
   const file = path.join(test.info().outputPath(), 'my/store/dir/foo/bar.json');
   expect(JSON.parse(await fs.promises.readFile(file, 'utf-8'))).toEqual({ 'a': 2023 });
+});
+
+test('should delete value', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, store, expect } from '@playwright/test';
+      test('should store value', async ({ }) => {
+        await store.set('foo/bar.json', {'a': 2023});
+        expect(await store.get('foo/bar.json')).toEqual({ 'a': 2023 });
+        await store.delete('foo/bar.json');
+        expect(await store.get('foo/bar.json')).toBe(undefined);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });

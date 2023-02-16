@@ -17,6 +17,17 @@ test('get user name', async ({ page, context }) => {
 });
 ```
 
+## async method: TestStore.delete
+* since: v1.32
+
+Delete named item from the store. Does nothing if the path is not in the store.
+
+### param: TestStore.delete.path
+* since: v1.32
+- `path` <[string]>
+
+Item path.
+
 ## async method: TestStore.get
 * since: v1.32
 - returns: <[any]>
@@ -40,6 +51,12 @@ Returns absolute path of the corresponding store entry on the file system.
 - `path` <[string]>
 
 Path of the item in the store.
+
+## method: TestStore.root
+* since: v1.32
+- returns: <[string]>
+
+Returns absolute path of the store root directory.
 
 ## async method: TestStore.set
 * since: v1.32

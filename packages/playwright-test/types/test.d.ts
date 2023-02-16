@@ -3341,10 +3341,21 @@ export interface TestStore {
    */
   set<T>(path: string, value: T | undefined): Promise<void>;
   /**
+   * Delete named item from the store. Does nothing if the path is not in the store.
+   * @param path Item path.
+   */
+  delete(path: string): Promise<void>;
+
+  /**
    * Returns absolute path of the corresponding store entry on the file system.
    * @param path Path of the item in the store.
    */
   path(path: string): string;
+
+  /**
+   * Returns absolute path of the store root directory.
+   */
+  root(): string;
 }
 
 /**

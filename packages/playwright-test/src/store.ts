@@ -20,6 +20,11 @@ import type { TestStore } from '../types/test';
 import { currentConfig } from './common/globals';
 
 class JsonStore implements TestStore {
+  async delete(name: string) {
+    const file = this.path(name);
+    await fs.promises.rm(file, { force: true });
+  }
+
   async get<T>(name: string) {
     const file = this.path(name);
     try {
@@ -31,10 +36,14 @@ class JsonStore implements TestStore {
   }
 
   path(name: string): string {
+    return path.join(this.root(), name);
+  }
+
+  root(): string {
     const config = currentConfig();
     if (!config)
       throw new Error('Cannot access store before config is loaded');
-    return path.join(config._internal.storeDir, name);
+    return config._internal.storeDir;
   }
 
   async set<T>(name: string, value: T | undefined) {
