@@ -290,7 +290,7 @@ await page.PauseAsync();
 Once you have set a breakpoint in your test you can then run your test with `PWDEBUG=console`.
 
 ```bash tab=bash-bash lang=js
-PWDEBUG=console npx playwright test
+PWDEBUG=console npx playwright test --headed --timeout=0
 ```
 
 ```batch tab=bash-batch lang=js
