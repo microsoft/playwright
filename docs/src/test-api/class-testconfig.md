@@ -753,7 +753,7 @@ export default defineConfig({
 * since: v1.32
 - type: ?<[string]>
 
-Directory where the values accessible via [TestStore] are persisted. Each value is saved in its own file. The key of the value is its path relative to the `storeDir`. Defaults to `./playwright`.
+Directory where the values accessible via [TestStore] are persisted. All pahts in [TestStore] are relative to `storeDir`. Defaults to `./playwright`.
 
 **Usage**
 
