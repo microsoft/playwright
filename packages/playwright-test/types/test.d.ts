@@ -4473,7 +4473,7 @@ interface LocatorAssertions {
    * **Usage**
    *
    * ```js
-   * const locator = page.locator('button.submit');
+   * const locator = page.getByRole('button');
    * // Make sure at least some part of element intersects viewport.
    * await expect(locator).toBeInViewport();
    * // Make sure element is fully outside of viewport.
