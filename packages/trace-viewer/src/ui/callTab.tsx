@@ -46,8 +46,8 @@ export const CallTab: React.FunctionComponent<{
     <div className='call-line'>{action.metadata.apiName}</div>
     {<>
       <div className='call-section'>Time</div>
-      {action.metadata.wallTime && <div className='call-line'>wall time: <span className='call-value datetime' title={wallTime}>{wallTime}</span></div>}
-      <div className='call-line'>duration: <span className='call-value datetime' title={duration}>{duration}</span></div>
+      {action.metadata.wallTime && <div className='call-line'>wall time:<span className='call-value datetime' title={wallTime}>{wallTime}</span></div>}
+      <div className='call-line'>duration:<span className='call-value datetime' title={duration}>{duration}</span></div>
     </>}
     { !!paramKeys.length && <div className='call-section'>Parameters</div> }
     {
@@ -82,7 +82,7 @@ function renderProperty(property: Property, key: string) {
     text = `"${text}"`;
   return (
     <div key={key} className='call-line'>
-      {property.name}: <span className={`call-value ${property.type}`} title={property.text}>{text}</span>
+      {property.name}:<span className={`call-value ${property.type}`} title={property.text}>{text}</span>
       { ['string', 'number', 'object', 'locator'].includes(property.type) &&
         <CopyToClipboard value={property.text} />
       }

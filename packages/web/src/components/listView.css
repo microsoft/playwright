@@ -1,0 +1,65 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.list-view {
+  border-top: 1px solid var(--vscode-panel-border);
+}
+
+.list-view-content {
+  display: flex;
+  flex-direction: column;
+  flex: auto;
+  position: relative;
+  user-select: none;
+  overflow: auto;
+  outline: none;
+}
+
+.list-view-entry {
+  display: flex;
+  flex: none;
+  cursor: pointer;
+  align-items: center;
+  white-space: nowrap;
+  line-height: 28px;
+  padding-left: 5px;
+}
+
+.list-view-entry.highlighted,
+.list-view-entry.selected {
+  background-color: var(--vscode-list-inactiveSelectionBackground);
+}
+
+.list-view-entry.highlighted {
+  background-color: var(--vscode-list-inactiveSelectionBackground);
+}
+
+.list-view-content:focus .list-view-entry.selected {
+  background-color: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+  outline: 1px solid var(--vscode-focusBorder);
+}
+
+.list-view-content:focus .list-view-entry.selected * {
+  color: var(--vscode-list-activeSelectionForeground);
+}
+
+.list-view-empty {
+  flex: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

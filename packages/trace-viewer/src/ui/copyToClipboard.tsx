@@ -15,7 +15,6 @@
  */
 
 import * as React from 'react';
-import './copyToClipboard.css';
 
 export const CopyToClipboard: React.FunctionComponent<{
   value: string,

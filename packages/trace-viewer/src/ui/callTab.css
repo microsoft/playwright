@@ -41,10 +41,8 @@
   font-weight: bold;
   text-transform: uppercase;
   font-size: 10px;
-  border-bottom: 1px solid var(--vscode-panel-border);
-  background-color: var(--vscode-sideBar-background);
   color: var(--vscode-sideBarTitle-foreground);
-  line-height: 18px;
+  line-height: 24px;
 }
 
 .call-line {
@@ -68,6 +66,7 @@
 }
 
 .call-value {
+  margin-left: 2px;
   text-overflow: ellipsis;
   overflow: hidden;
   flex: 1;
@@ -77,18 +76,18 @@
   content: '\00a0';
 }
 
-.call-line .datetime,
-.call-line .string,
-.call-line .locator {
+.call-value.datetime,
+.call-value.string,
+.call-value.locator {
   color: var(--orange);
 }
 
-.call-line .number,
-.call-line .bigint,
-.call-line .boolean,
-.call-line .symbol,
-.call-line .undefined,
-.call-line .function,
-.call-line .object {
+.call-value.number,
+.call-value.bigint,
+.call-value.boolean,
+.call-value.symbol,
+.call-value.undefined,
+.call-value.function,
+.call-value.object {
   color: var(--blue);
 }
