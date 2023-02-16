@@ -2,7 +2,7 @@
 * since: v1.32
 * langs: js
 
-Playwright Test provides a global `store` object that can be used read/write values to the filesystem. Each value is stored in its own file with the key used as a path relative to `TestConfig.storeDir` (it is `./playwright` by default).
+Playwright Test provides a global `store` object that can be used to read/write values on the filesystem. Each value is stored in its own file inside './playwright' directory, configurable with [`property: TestConfig.storeDir`].
 
 ```ts
 import { test, store } from '@playwright/test';
