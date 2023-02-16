@@ -125,7 +125,7 @@ export function toBeInViewport(
   options?: { timeout?: number, ratio?: number },
 ) {
   return toBeTruthy.call(this, 'toBeInViewport', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-    return await locator._expect(customStackTrace, 'to.be.in.viewport', { isNot, viewportRatio: options?.ratio, timeout });
+    return await locator._expect(customStackTrace, 'to.be.in.viewport', { isNot, expectedNumber: options?.ratio, timeout });
   }, options);
 }
 
