@@ -73,7 +73,7 @@ Run your tests with the `--debug` flag to open the inspector. This configures Pl
 
 #### Debug all tests on all browsers
 
-To debug all tests run the test command with the `--debug` flag. This will open the inspector and a browser window for each test and each browser. After stepping through the first test the inspector and browser window will close and the next test will run opening the inspector and a new browser window. Once all tests have finished running on the first browser configured in your [`playwright.config`](/test-configuration.md#multiple-browsers), the inspector and browser window will close and the next browser will open.
+To debug all tests run the test command with the `--debug` flag. This will run tests one by one, and open the inspector and a browser window for each test.
 
 ```bash
 npx playwright test --debug
