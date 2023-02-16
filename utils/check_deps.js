@@ -27,6 +27,7 @@ const packagesDir = path.normalize(path.join(__dirname, '..', 'packages'));
 const packages = new Map();
 for (const package of fs.readdirSync(packagesDir))
   packages.set(package, packagesDir + '/' + package + '/src/');
+packages.set('injected', packagesDir + '/playwright-core/src/server/injected/');
 packages.set('isomorphic', packagesDir + '/playwright-core/src/server/isomorphic/');
 
 const peerDependencies = ['electron', 'react', 'react-dom', '@zip.js/zip.js'];

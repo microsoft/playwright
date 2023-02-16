@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-import fs, { existsSync } from 'fs';
-import path from 'path';
-
 /**
  * @returns {import('vite').Plugin}
  */

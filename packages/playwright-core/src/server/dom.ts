@@ -103,6 +103,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
         const module = {};
         ${injectedScriptSource.source}
         return new module.exports(
+          globalThis,
           ${isUnderTest()},
           "${sdkLanguage}",
           ${JSON.stringify(this.frame._page.selectors.testIdAttributeName())},

@@ -15,17 +15,31 @@
  */
 
 import './snapshotTab.css';
-import './tabbedPane.css';
 import * as React from 'react';
 import { useMeasure } from './helpers';
 import type { ActionTraceEvent } from '@trace/trace';
 import { context } from './modelUtil';
+import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
+import { Toolbar } from '@web/components/toolbar';
+import { ToolbarButton } from '@web/components/toolbarButton';
+import { copy } from '@web/uiUtils';
+import { InjectedScript } from '@injected/injectedScript';
+import { Recorder  } from '@injected/recorder';
+import { asLocator } from '@isomorphic/locatorGenerators';
+import type { Language } from '@isomorphic/locatorGenerators';
+import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
+import { TabbedPaneTab } from '@web/components/tabbedPane';
 
 export const SnapshotTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
-}> = ({ action }) => {
+  sdkLanguage: Language,
+  testIdAttributeName: string,
+}> = ({ action, sdkLanguage, testIdAttributeName }) => {
+  const [mode, setMode] = React.useState<'none' | 'inspecting'>('none');
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
+  const [locator, setLocator] = React.useState<string>('');
+  const [pickerVisible, setPickerVisible] = React.useState(false);
 
   const snapshotMap = new Map<string, { title: string, snapshotName: string }>();
   for (const snapshot of action?.metadata.snapshots || [])
@@ -93,6 +107,16 @@ export const SnapshotTab: React.FunctionComponent<{
     x: (measure.width - snapshotContainerSize.width) / 2,
     y: (measure.height - snapshotContainerSize.height) / 2,
   };
+
+  const recorderGetter = () => {
+    if (!iframeRef.current)
+      return;
+    return getOrCreateRecorder(iframeRef.current.contentWindow!, true, sdkLanguage, testIdAttributeName, locator => {
+      setLocator(locator);
+      setMode('none');
+    });
+  };
+
   return <div
     className='snapshot-tab'
     tabIndex={0}
@@ -102,19 +126,45 @@ export const SnapshotTab: React.FunctionComponent<{
       if (event.key === 'ArrowLeft')
         setSnapshotIndex(Math.max(snapshotIndex - 1, 0));
     }}
-  ><div className='tab-strip'>
+  >
+    <Toolbar>
+      <ToolbarButton title='Pick locator' disabled={!popoutUrl} toggled={pickerVisible} onClick={() => {
+        setPickerVisible(!pickerVisible);
+        setMode(mode === 'inspecting' ? 'none' : 'inspecting');
+        const recorder = recorderGetter();
+        recorder?.setUIState({ mode: pickerVisible ? 'none' : 'inspecting', language: sdkLanguage, testIdAttributeName });
+      }}>Pick locator</ToolbarButton>
+      <div style={{ width: 5 }}></div>
       {snapshots.map((snapshot, index) => {
-        return <div className={'tab-element ' + (snapshotIndex === index ? ' selected' : '')}
-          onClick={() => setSnapshotIndex(index)}
-          key={snapshot.title}>
-          <div className='tab-label'>{renderTitle(snapshot.title)}</div>
-        </div>;
+        return <TabbedPaneTab
+          id={snapshot.title}
+          title={renderTitle(snapshot.title)}
+          selected={snapshotIndex === index}
+          onSelect={() => setSnapshotIndex(index)}
+        ></TabbedPaneTab>;
       })}
-    </div>
+      <div style={{ flex: 'auto' }}></div>
+      <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!popoutUrl} onClick={() => {
+        window.open(popoutUrl || '', '_blank');
+      }}></ToolbarButton>
+    </Toolbar>
+    {pickerVisible && <Toolbar>
+      <ToolbarButton icon='microscope' title='Pick locator' disabled={!popoutUrl} toggled={mode === 'inspecting'} onClick={() => {
+        setMode(mode === 'inspecting' ? 'none' : 'inspecting');
+        const recorder = recorderGetter();
+        recorder?.setUIState({ mode: mode === 'inspecting' ? 'none' : 'inspecting', language: sdkLanguage, testIdAttributeName });
+      }}></ToolbarButton>
+      <CodeMirrorWrapper text={locator} language={sdkLanguage} readOnly={!popoutUrl} focusOnChange={true} wrapLines={true} onChange={text => {
+        const recorder = recorderGetter();
+        const actionSelector = locatorOrSelectorAsSelector(sdkLanguage, text, testIdAttributeName);
+        recorder?.setUIState({ mode: 'none', language: sdkLanguage, testIdAttributeName, actionSelector });
+        setLocator(text);
+      }}></CodeMirrorWrapper>
+      <ToolbarButton icon='files' title='Copy locator' disabled={!popoutUrl} onClick={() => {
+        copy(locator);
+      }}></ToolbarButton>
+    </Toolbar>}
     <div ref={ref} className='snapshot-wrapper'>
-      <a className={`popout-icon ${popoutUrl ? '' : 'popout-disabled'}`} href={popoutUrl} target='_blank' title='Open snapshot in a new tab'>
-        <span className='codicon codicon-link-external'/>
-      </a>
       { snapshots.length ? <div className='snapshot-container' style={{
         width: snapshotContainerSize.width + 'px',
         height: snapshotContainerSize.height + 'px',
@@ -126,7 +176,7 @@ export const SnapshotTab: React.FunctionComponent<{
             <span className='window-dot' style={{ backgroundColor: 'rgb(251, 190, 60)' }}></span>
             <span className='window-dot' style={{ backgroundColor: 'rgb(88, 203, 66)' }}></span>
           </div>
-          <div className='window-address-bar' title={snapshotInfo.url}>{snapshotInfo.url}</div>
+          <div className='window-address-bar' title={snapshotInfo.url || 'about:blank'}>{snapshotInfo.url || 'about:blank'}</div>
           <div style={{ marginLeft: 'auto' }}>
             <div>
               <span className='window-menu-bar'></span>
@@ -141,6 +191,25 @@ export const SnapshotTab: React.FunctionComponent<{
     </div>
   </div>;
 };
+
+function getOrCreateRecorder(contentWindow: Window, enabled: boolean, sdkLanguage: Language, testIdAttributeName: string, setLocator: (locator: string) => void): Recorder | undefined {
+  const win = contentWindow as any;
+  if (!enabled && !win._recorder)
+    return;
+  let recorder: Recorder | undefined = win._recorder;
+
+  if (!recorder) {
+    const injectedScript = new InjectedScript(contentWindow as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
+    recorder = new Recorder(injectedScript, {
+      async setSelector(selector: string) {
+        recorder!.setUIState({ mode: 'none', language: sdkLanguage, testIdAttributeName });
+        setLocator(asLocator('javascript', selector, false));
+      }
+    });
+    win._recorder = recorder;
+  }
+  return recorder;
+}
 
 function renderTitle(snapshotTitle: string): string {
   if (snapshotTitle === 'before')

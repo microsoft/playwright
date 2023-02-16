@@ -38,8 +38,8 @@ class Locator {
       selector += ` >> internal:has=` + JSON.stringify((options.has as any)[selectorSymbol]);
     if (selector) {
       const parsed = injectedScript.parseSelector(selector);
-      this.element = injectedScript.querySelector(parsed, document, false);
-      this.elements = injectedScript.querySelectorAll(parsed, document);
+      this.element = injectedScript.querySelector(parsed, injectedScript.document, false);
+      this.elements = injectedScript.querySelectorAll(parsed, injectedScript.document);
     }
     const selectorBase = selector;
     const self = this as any;
@@ -73,9 +73,9 @@ class ConsoleAPI {
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
-    if (window.playwright)
+    if (this._injectedScript.window.playwright)
       return;
-    window.playwright = {
+    this._injectedScript.window.playwright = {
       $: (selector: string, strict?: boolean) => this._querySelector(selector, !!strict),
       $$: (selector: string) => this._querySelectorAll(selector),
       inspect: (selector: string) => this._inspect(selector),
@@ -84,30 +84,30 @@ class ConsoleAPI {
       resume: () => this._resume(),
       ...new Locator(injectedScript, ''),
     };
-    delete window.playwright.filter;
-    delete window.playwright.first;
-    delete window.playwright.last;
-    delete window.playwright.nth;
+    delete this._injectedScript.window.playwright.filter;
+    delete this._injectedScript.window.playwright.first;
+    delete this._injectedScript.window.playwright.last;
+    delete this._injectedScript.window.playwright.nth;
   }
 
   private _querySelector(selector: string, strict: boolean): (Element | undefined) {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.query('Playwright >> selector').`);
     const parsed = this._injectedScript.parseSelector(selector);
-    return this._injectedScript.querySelector(parsed, document, strict);
+    return this._injectedScript.querySelector(parsed, this._injectedScript.document, strict);
   }
 
   private _querySelectorAll(selector: string): Element[] {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.$$('Playwright >> selector').`);
     const parsed = this._injectedScript.parseSelector(selector);
-    return this._injectedScript.querySelectorAll(parsed, document);
+    return this._injectedScript.querySelectorAll(parsed, this._injectedScript.document);
   }
 
   private _inspect(selector: string) {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.inspect('Playwright >> selector').`);
-    window.inspect(this._querySelector(selector, false));
+    this._injectedScript.window.inspect(this._querySelector(selector, false));
   }
 
   private _selector(element: Element) {
@@ -124,7 +124,7 @@ class ConsoleAPI {
   }
 
   private _resume() {
-    window.__pw_resume().catch(() => {});
+    this._injectedScript.window.__pw_resume().catch(() => {});
   }
 }
 

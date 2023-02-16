@@ -683,7 +683,7 @@ test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, b
 
   // Render snapshot, check expectations.
   await traceViewer.selectAction('route.fulfill');
-  await traceViewer.page.locator('.tab-label', { hasText: 'Call' }).click();
+  await traceViewer.page.locator('.tabbed-pane-tab-label', { hasText: 'Call' }).click();
   const callLine = traceViewer.page.locator('.call-line');
   await expect(callLine.getByText('status')).toContainText('200');
   await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
@@ -699,7 +699,7 @@ test('should include requestUrl in route.continue', async ({ page, runAndTrace, 
 
   // Render snapshot, check expectations.
   await traceViewer.selectAction('route.continue');
-  await traceViewer.page.locator('.tab-label', { hasText: 'Call' }).click();
+  await traceViewer.page.locator('.tabbed-pane-tab-label', { hasText: 'Call' }).click();
   const callLine = traceViewer.page.locator('.call-line');
   await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
   await expect(callLine.getByText(/^url:.*/)).toContainText(server.EMPTY_PAGE);
@@ -715,7 +715,7 @@ test('should include requestUrl in route.abort', async ({ page, runAndTrace, ser
 
   // Render snapshot, check expectations.
   await traceViewer.selectAction('route.abort');
-  await traceViewer.page.locator('.tab-label', { hasText: 'Call' }).click();
+  await traceViewer.page.locator('.tabbed-pane-tab-label', { hasText: 'Call' }).click();
   const callLine = traceViewer.page.locator('.call-line');
   await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
 });
@@ -764,4 +764,27 @@ test('should display language-specific locators', async ({ runAndTrace, server, 
     /page.setContent/,
     /locator.clickget_by_role\("button", name="Submit"\)/,
   ]);
+});
+
+test('should pick locator', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<button>Submit</button>');
+  });
+  const snapshot = await traceViewer.snapshotFrame('page.setContent');
+  await traceViewer.page.getByTitle('Pick locator').click();
+  await snapshot.click('button');
+  await expect(traceViewer.page.locator('.cm-wrapper')).toContainText(`getByRole('button', { name: 'Submit' })`);
+});
+
+test('should update highlight when typing', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<button>Submit</button>');
+  });
+  const snapshot = await traceViewer.snapshotFrame('page.setContent');
+  await traceViewer.page.getByTitle('Pick locator').click();
+  await traceViewer.page.locator('.CodeMirror').click();
+  await traceViewer.page.keyboard.type('button');
+  await expect(snapshot.locator('x-pw-glass')).toBeVisible();
 });

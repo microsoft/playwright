@@ -51,6 +51,7 @@ export function matchesAttributePart(value: any, attr: AttributeSelectorPart) {
 }
 
 export function shouldSkipForTextMatching(element: Element | ShadowRoot) {
+  const document = element.ownerDocument;
   return element.nodeName === 'SCRIPT' || element.nodeName === 'NOSCRIPT' || element.nodeName === 'STYLE' || document.head && document.head.contains(element);
 }
 

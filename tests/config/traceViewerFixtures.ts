@@ -69,7 +69,7 @@ class TraceViewerPage {
   }
 
   async selectSnapshot(name: string) {
-    await this.page.click(`.snapshot-tab .tab-label:has-text("${name}")`);
+    await this.page.click(`.snapshot-tab .tabbed-pane-tab-label:has-text("${name}")`);
   }
 
   async showConsoleTab() {

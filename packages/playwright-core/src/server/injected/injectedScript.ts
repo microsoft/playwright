@@ -79,8 +79,14 @@ export class InjectedScript {
   private _sdkLanguage: Language;
   private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
   private _markedTargetElements = new Set<Element>();
+  // eslint-disable-next-line no-restricted-globals
+  readonly window: Window & typeof globalThis;
+  readonly document: Document;
 
-  constructor(isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
+  // eslint-disable-next-line no-restricted-globals
+  constructor(window: Window & typeof globalThis, isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
+    this.window = window;
+    this.document = window.document;
     this.isUnderTest = isUnderTest;
     this._sdkLanguage = sdkLanguage;
     this._testIdAttributeNameForStrictErrorAndConsoleCodegen = testIdAttributeNameForStrictErrorAndConsoleCodegen;
@@ -124,11 +130,11 @@ export class InjectedScript {
     this._setupHitTargetInterceptors();
 
     if (isUnderTest)
-      (window as any).__injectedScript = this;
+      (this.window as any).__injectedScript = this;
   }
 
   eval(expression: string): any {
-    return globalThis.eval(expression);
+    return this.window.eval(expression);
   }
 
   testIdAttributeNameForStrictErrorAndConsoleCodegen(): string {
@@ -370,7 +376,7 @@ export class InjectedScript {
   }
 
   extend(source: string, params: any): any {
-    const constrFunction = globalThis.eval(`
+    const constrFunction = this.window.eval(`
     (() => {
       const module = {};
       ${source}
@@ -827,7 +833,7 @@ export class InjectedScript {
       const elements: Element[] = root.elementsFromPoint(hitPoint.x, hitPoint.y);
       const singleElement = root.elementFromPoint(hitPoint.x, hitPoint.y);
       if (singleElement && elements[0] && parentElementOrShadowHost(singleElement) === elements[0]) {
-        const style = document.defaultView?.getComputedStyle(singleElement);
+        const style = this.window.getComputedStyle(singleElement);
         if (style?.display === 'contents') {
           // Workaround a case where elementsFromPoint misses the inner-most element with display:contents.
           // https://bugs.chromium.org/p/chromium/issues/detail?id=1342092
@@ -851,7 +857,7 @@ export class InjectedScript {
     if (hitElement === targetElement)
       return 'done';
 
-    const hitTargetDescription = this.previewNode(hitParents[0] || document.documentElement);
+    const hitTargetDescription = this.previewNode(hitParents[0] || this.document.documentElement);
     // Root is the topmost element in the hitTarget's chain that is not in the
     // element's chain. For example, it might be a dialog element that overlays
     // the target.
@@ -939,7 +945,7 @@ export class InjectedScript {
         return;
 
       // Determine the event point. Note that Firefox does not always have window.TouchEvent.
-      const point = (!!window.TouchEvent && (event instanceof window.TouchEvent)) ? event.touches[0] : (event as MouseEvent | PointerEvent);
+      const point = (!!this.window.TouchEvent && (event instanceof this.window.TouchEvent)) ? event.touches[0] : (event as MouseEvent | PointerEvent);
 
       // Check that we hit the right element at the first event, and assume all
       // subsequent events will be fine.
@@ -1053,7 +1059,7 @@ export class InjectedScript {
     this._highlight.install();
     const elements = [];
     for (const selector of selectors)
-      elements.push(this.querySelectorAll(selector, document.documentElement));
+      elements.push(this.querySelectorAll(selector, this.document.documentElement));
     this._highlight.maskElements(elements.flat());
   }
 
@@ -1089,31 +1095,31 @@ export class InjectedScript {
 
     let seenEvent = false;
     const handleCustomEvent = () => seenEvent = true;
-    window.addEventListener(customEventName, handleCustomEvent);
+    this.window.addEventListener(customEventName, handleCustomEvent);
 
     new MutationObserver(entries => {
-      const newDocumentElement = entries.some(entry => Array.from(entry.addedNodes).includes(document.documentElement));
+      const newDocumentElement = entries.some(entry => Array.from(entry.addedNodes).includes(this.document.documentElement));
       if (!newDocumentElement)
         return;
 
       // New documentElement - let's check whether listeners are still here.
       seenEvent = false;
-      window.dispatchEvent(new CustomEvent(customEventName));
+      this.window.dispatchEvent(new CustomEvent(customEventName));
       if (seenEvent)
         return;
 
       // Listener did not fire. Reattach the listener and notify.
-      window.addEventListener(customEventName, handleCustomEvent);
+      this.window.addEventListener(customEventName, handleCustomEvent);
       for (const callback of this.onGlobalListenersRemoved)
         callback();
-    }).observe(document, { childList: true });
+    }).observe(this.document, { childList: true });
   }
 
   private _setupHitTargetInterceptors() {
     const listener = (event: PointerEvent | MouseEvent | TouchEvent) => this._hitTargetInterceptor?.(event);
     const addHitTargetInterceptorListeners = () => {
       for (const event of kAllHitTargetInterceptorEvents)
-        window.addEventListener(event as any, listener, { capture: true, passive: false });
+        this.window.addEventListener(event as any, listener, { capture: true, passive: false });
     };
     addHitTargetInterceptorListeners();
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
@@ -1220,15 +1226,15 @@ export class InjectedScript {
       } else if (expression === 'to.have.class') {
         received = element.classList.toString();
       } else if (expression === 'to.have.css') {
-        received = window.getComputedStyle(element).getPropertyValue(options.expressionArg);
+        received = this.window.getComputedStyle(element).getPropertyValue(options.expressionArg);
       } else if (expression === 'to.have.id') {
         received = element.id;
       } else if (expression === 'to.have.text') {
         received = options.useInnerText ? (element as HTMLElement).innerText : elementText(new Map(), element).full;
       } else if (expression === 'to.have.title') {
-        received = document.title;
+        received = this.document.title;
       } else if (expression === 'to.have.url') {
-        received = document.location.href;
+        received = this.document.location.href;
       } else if (expression === 'to.have.value') {
         element = this.retarget(element, 'follow-label')!;
         if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')

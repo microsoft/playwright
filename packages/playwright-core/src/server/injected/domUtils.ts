@@ -105,7 +105,7 @@ export function isElementVisible(element: Element): boolean {
 
 function isVisibleTextNode(node: Text) {
   // https://stackoverflow.com/questions/1461059/is-there-an-equivalent-to-getboundingclientrect-for-text-nodes
-  const range = document.createRange();
+  const range = node.ownerDocument.createRange();
   range.selectNode(node);
   const rect = range.getBoundingClientRect();
   return rect.width > 0 && rect.height > 0;

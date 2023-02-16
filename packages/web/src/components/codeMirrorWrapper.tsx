@@ -67,7 +67,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
     if (language === 'csharp')
       mode = 'text/x-csharp';
 
-    if (codemirror && codemirror.getOption('mode') === mode)
+    if (codemirror && codemirror.getOption('mode') === mode && codemirror.isReadOnly() === readOnly)
       return;
 
     if (!codemirrorElement.current)

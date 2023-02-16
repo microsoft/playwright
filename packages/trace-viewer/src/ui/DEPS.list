@@ -1,4 +1,5 @@
 [*]
+@injected/**
 @isomorphic/**
 @web/**
 ../entries.ts
