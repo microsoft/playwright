@@ -383,7 +383,7 @@ playwright.inspect('text=Log in')
 
 #### playwright.locator(selector)
 
-Query Playwright element using the actual Playwright query engine, for example:
+Create a locator and query matching elements, for example:
 
 ```bash
 playwright.locator('.auth-form', { hasText: 'Log in' });
