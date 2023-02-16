@@ -1586,7 +1586,6 @@ scheme.FrameExpectParams = tObject({
   expectedText: tOptional(tArray(tType('ExpectedTextValue'))),
   expectedNumber: tOptional(tNumber),
   expectedValue: tOptional(tType('SerializedArgument')),
-  viewportRatio: tOptional(tNumber),
   useInnerText: tOptional(tBoolean),
   isNot: tBoolean,
   timeout: tOptional(tNumber),

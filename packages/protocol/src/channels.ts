@@ -2844,7 +2844,6 @@ export type FrameExpectParams = {
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
-  viewportRatio?: number,
   useInnerText?: boolean,
   isNot: boolean,
   timeout?: number,
@@ -2854,7 +2853,6 @@ export type FrameExpectOptions = {
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
-  viewportRatio?: number,
   useInnerText?: boolean,
   timeout?: number,
 };
