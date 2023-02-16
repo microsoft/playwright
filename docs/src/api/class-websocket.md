@@ -95,9 +95,6 @@ Performs action and waits for a frame to be sent. If predicate is provided, it p
 [WebSocketFrame] value into the `predicate` function and waits for `predicate(webSocketFrame)` to return a truthy value.
 Will throw an error if the WebSocket or Page is closed before the frame is received.
 
-### param: WebSocket.waitForFrameReceived.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### option: WebSocket.waitForFrameReceived.predicate
 * since: v1.9
 - `predicate` <[function]\([WebSocketFrame]\):[boolean]>
@@ -105,6 +102,9 @@ Will throw an error if the WebSocket or Page is closed before the frame is recei
 Receives the [WebSocketFrame] object and resolves to truthy value when the waiting should resolve.
 
 ### option: WebSocket.waitForFrameReceived.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: WebSocket.waitForFrameReceived.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: WebSocket.waitForFrameSent
@@ -116,9 +116,6 @@ Performs action and waits for a frame to be sent. If predicate is provided, it p
 [WebSocketFrame] value into the `predicate` function and waits for `predicate(webSocketFrame)` to return a truthy value.
 Will throw an error if the WebSocket or Page is closed before the frame is sent.
 
-### param: WebSocket.waitForFrameSent.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### option: WebSocket.waitForFrameSent.predicate
 * since: v1.9
 - `predicate` <[function]\([WebSocketFrame]\):[boolean]>
@@ -126,6 +123,9 @@ Will throw an error if the WebSocket or Page is closed before the frame is sent.
 Receives the [WebSocketFrame] object and resolves to truthy value when the waiting should resolve.
 
 ### option: WebSocket.waitForFrameSent.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: WebSocket.waitForFrameSent.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: WebSocket.waitForEvent2

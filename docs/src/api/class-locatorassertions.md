@@ -1,7 +1,7 @@
 # class: LocatorAssertions
 * since: v1.17
 
-The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.expectLocator`]:
+The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state in the tests.
 
 ```js
 import { test, expect } from '@playwright/test';
@@ -156,6 +156,21 @@ The opposite of [`method: LocatorAssertions.toBeHidden`].
 
 ### option: LocatorAssertions.NotToBeHidden.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
+
+## async method: LocatorAssertions.NotToBeInViewport
+* since: v1.31
+* langs: python
+
+The opposite of [`method: LocatorAssertions.toBeInViewport`].
+
+### option: LocatorAssertions.NotToBeInViewport.ratio
+* since: v1.31
+* langs: python
+- `ratio` <[float]>
+
+### option: LocatorAssertions.NotToBeInViewport.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.31
+* langs: python
 
 ## async method: LocatorAssertions.NotToBeVisible
 * since: v1.20

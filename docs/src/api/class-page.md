@@ -3798,10 +3798,10 @@ Video object associated with this page.
 
 Performs action and waits for the Page to close.
 
-### param: Page.waitForClose.callback = %%-java-wait-for-event-callback-%%
+### option: Page.waitForClose.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
 
-### option: Page.waitForClose.timeout = %%-wait-for-event-timeout-%%
+### param: Page.waitForClose.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: Page.waitForConsoleMessage
@@ -3823,9 +3823,6 @@ Will throw an error if the page is closed before the [`event: Page.console`] eve
 ### param: Page.waitForConsoleMessage.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### param: Page.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### option: Page.waitForConsoleMessage.predicate
 * since: v1.9
 - `predicate` <[function]\([ConsoleMessage]\):[boolean]>
@@ -3833,6 +3830,9 @@ Will throw an error if the page is closed before the [`event: Page.console`] eve
 Receives the [ConsoleMessage] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForConsoleMessage.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Page.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: Page.waitForDownload
@@ -3854,9 +3854,6 @@ Will throw an error if the page is closed before the download event is fired.
 ### param: Page.waitForDownload.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### param: Page.waitForDownload.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### option: Page.waitForDownload.predicate
 * since: v1.9
 - `predicate` <[function]\([Download]\):[boolean]>
@@ -3864,6 +3861,9 @@ Will throw an error if the page is closed before the download event is fired.
 Receives the [Download] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForDownload.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Page.waitForDownload.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: Page.waitForEvent
@@ -3939,9 +3939,6 @@ Will throw an error if the page is closed before the file chooser is opened.
 ### param: Page.waitForFileChooser.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### param: Page.waitForFileChooser.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### option: Page.waitForFileChooser.predicate
 * since: v1.9
 - `predicate` <[function]\([FileChooser]\):[boolean]>
@@ -3949,6 +3946,9 @@ Will throw an error if the page is closed before the file chooser is opened.
 Receives the [FileChooser] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForFileChooser.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Page.waitForFileChooser.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: Page.waitForFunction
@@ -4245,9 +4245,6 @@ a navigation.
 ### param: Page.waitForNavigation.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### param: Page.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### option: Page.waitForNavigation.url = %%-wait-for-navigation-url-%%
 * since: v1.8
 
@@ -4256,6 +4253,9 @@ a navigation.
 
 ### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
 * since: v1.8
+
+### param: Page.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
 
 ## async method: Page.waitForPopup
 * since: v1.9
@@ -4276,9 +4276,6 @@ Will throw an error if the page is closed before the popup event is fired.
 ### param: Page.waitForPopup.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### param: Page.waitForPopup.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### option: Page.waitForPopup.predicate
 * since: v1.9
 - `predicate` <[function]\([Page]\):[boolean]>
@@ -4286,6 +4283,9 @@ Will throw an error if the page is closed before the popup event is fired.
 Receives the [Page] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForPopup.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Page.waitForPopup.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: Page.waitForRequest
@@ -4369,9 +4369,6 @@ await page.RunAndWaitForRequestAsync(async () =>
 ### param: Page.waitForRequest.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### param: Page.waitForRequest.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### param: Page.waitForRequest.urlOrPredicate
 * since: v1.8
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]>
@@ -4394,6 +4391,9 @@ Request URL string, regex or predicate receiving [Request] object.
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: Page.setDefaultTimeout`] method.
 
+### param: Page.waitForRequest.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
+
 ## async method: Page.waitForRequestFinished
 * since: v1.12
 * langs: java, python, csharp
@@ -4413,9 +4413,6 @@ Will throw an error if the page is closed before the [`event: Page.requestFinish
 ### param: Page.waitForRequestFinished.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### param: Page.waitForRequestFinished.callback = %%-java-wait-for-event-callback-%%
-* since: v1.12
-
 ### option: Page.waitForRequestFinished.predicate
 * since: v1.12
 - `predicate` <[function]\([Request]\):[boolean]>
@@ -4423,6 +4420,9 @@ Will throw an error if the page is closed before the [`event: Page.requestFinish
 Receives the [Request] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForRequestFinished.timeout = %%-wait-for-event-timeout-%%
+* since: v1.12
+
+### param: Page.waitForRequestFinished.callback = %%-java-wait-for-event-callback-%%
 * since: v1.12
 
 ## async method: Page.waitForResponse
@@ -4510,9 +4510,6 @@ await page.RunAndWaitForResponseAsync(async () =>
 ### param: Page.waitForResponse.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### param: Page.waitForResponse.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### param: Page.waitForResponse.urlOrPredicate
 * since: v1.8
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]>
@@ -4536,6 +4533,9 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
+
+### param: Page.waitForResponse.callback = %%-java-wait-for-event-callback-%%
+* since: v1.9
 
 ## async method: Page.waitForSelector
 * since: v1.8
@@ -4768,9 +4768,6 @@ Will throw an error if the page is closed before the WebSocket event is fired.
 ### param: Page.waitForWebSocket.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### param: Page.waitForWebSocket.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### option: Page.waitForWebSocket.predicate
 * since: v1.9
 - `predicate` <[function]\([WebSocket]\):[boolean]>
@@ -4778,6 +4775,9 @@ Will throw an error if the page is closed before the WebSocket event is fired.
 Receives the [WebSocket] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForWebSocket.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Page.waitForWebSocket.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: Page.waitForWorker
@@ -4799,9 +4799,6 @@ Will throw an error if the page is closed before the worker event is fired.
 ### param: Page.waitForWorker.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### param: Page.waitForWorker.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### option: Page.waitForWorker.predicate
 * since: v1.9
 - `predicate` <[function]\([Worker]\):[boolean]>
@@ -4809,6 +4806,9 @@ Will throw an error if the page is closed before the worker event is fired.
 Receives the [Worker] object and resolves to truthy value when the waiting should resolve.
 
 ### option: Page.waitForWorker.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: Page.waitForWorker.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## method: Page.workers
