@@ -295,12 +295,12 @@ PWDEBUG=console npx playwright test --headed --timeout=0
 
 ```batch tab=bash-batch lang=js
 set PWDEBUG=console
-npx playwright test
+npx playwright test --headed --timeout=0
 ```
 
 ```powershell tab=bash-powershell lang=js
 $env:PWDEBUG="console"
-npx playwright test
+npx playwright test --headed --timeout=0
 ```
 
 ```bash tab=bash-bash lang=java
