@@ -4268,8 +4268,7 @@ export {};
 
 /**
  * The [APIResponseAssertions] class provides assertion methods that can be used to make assertions about the
- * [APIResponse] in the tests. A new instance of [APIResponseAssertions] is created by calling
- * [expect(response)](https://playwright.dev/docs/api/class-playwrightassertions#playwright-assertions-expect-api-response):
+ * [APIResponse] in the tests.
  *
  * ```js
  * import { test, expect } from '@playwright/test';
@@ -4309,8 +4308,7 @@ interface APIResponseAssertions {
 
 /**
  * The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator]
- * state in the tests. A new instance of [LocatorAssertions] is created by calling
- * [expect(locator)](https://playwright.dev/docs/api/class-playwrightassertions#playwright-assertions-expect-locator):
+ * state in the tests.
  *
  * ```js
  * import { test, expect } from '@playwright/test';
@@ -5009,8 +5007,7 @@ interface LocatorAssertions {
 
 /**
  * The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in
- * the tests. A new instance of [PageAssertions] is created by calling
- * [expect(page)](https://playwright.dev/docs/api/class-playwrightassertions#playwright-assertions-expect-page):
+ * the tests.
  *
  * ```js
  * import { test, expect } from '@playwright/test';

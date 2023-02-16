@@ -329,15 +329,10 @@ class Documentation {
       return sortKey(m1).localeCompare(sortKey(m2), 'en', { sensitivity: 'base' });
     });
 
-    // Options should be the last argument.
-    this.membersArray.forEach(member => {
-      const optionsIndex = member.argsArray.findIndex(a => a.name === 'options');
-      if (optionsIndex !== -1) {
-        const options = member.argsArray[optionsIndex];
-        member.argsArray.splice(optionsIndex, 1);
-        member.argsArray.push(options);
-      }
-    });
+    // Ideally, we would automatically make options the last argument.
+    // However, that breaks Java, since options are not always last in Java, for example
+    // in page.waitForFileChooser(options, callback).
+    // So, the order must be carefully setup in the md file!
   }
 
   /**

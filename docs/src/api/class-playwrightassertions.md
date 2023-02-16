@@ -1,4 +1,5 @@
 # class: PlaywrightAssertions
+* langs: js, java, csharp
 * since: v1.17
 
 Playwright gives you Web-First Assertions with convenience methods for creating assertions that will wait and retry until the expected condition is met.
@@ -98,7 +99,7 @@ PlaywrightAssertions.assertThat(response).isOK();
 
 ## method: PlaywrightAssertions.expectGeneric
 * since: v1.9
-* langs:
+* langs: js
   - alias-js: expect
 - returns: <[GenericAssertions]>
 
@@ -106,6 +107,7 @@ Creates a [GenericAssertions] object for the given value.
 
 ### param: PlaywrightAssertions.expectGeneric.value
 * since: v1.9
+* langs: js
 - `value` <[any]>
 
 Value that will be asserted.
