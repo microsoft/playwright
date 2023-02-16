@@ -60,15 +60,6 @@ type Params = { [key: string]: string | number | boolean | string[] };
 async function writeFiles(testInfo: TestInfo, files: Files, initial: boolean) {
   const baseDir = testInfo.outputPath();
 
-  const hasConfig = Object.keys(files).some(name => name.includes('.config.'));
-  if (initial && !hasConfig) {
-    files = {
-      ...files,
-      'playwright.config.ts': `
-        module.exports = { projects: [ {} ] };
-      `,
-    };
-  }
   if (initial && !Object.keys(files).some(name => name.includes('package.json'))) {
     files = {
       ...files,
