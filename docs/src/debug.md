@@ -193,7 +193,7 @@ dotnet test
 
 ### Stepping through your tests
 
-You can play, pause or step through each line of your test using the toolbar at the top of the Inspector. Underneath the toolbar the code of your test is shown and as you step through each line, the line of code that is being run is highlighted in the Inspector as well as in the browser window.
+You can play, pause or step through each action of your test using the toolbar at the top of the Inspector. You can see the current action highlighted in the test code, and matching elements highlighted in the browser window.
 
 <img width="1340" alt="Playwright Inspector and browser" src="https://user-images.githubusercontent.com/13063165/212936618-84b87acc-bc2e-46ed-994b-32b2ef742e60.png" />
 
