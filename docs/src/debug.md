@@ -189,8 +189,6 @@ page.pause()
 await page.PauseAsync();
 ```
 
-Once `page.pause()` is set, you can then run your tests in debug mode and the Playwright inspector will open as well as the browser and your test will run and pause on the line where you called `page.pause()`.
-
 Once you add a `page.pause()` call, run your tests in debug mode. Clicking the "Resume" button in the Inspector will run the test and only stop on the `page.pause()`.
 
 ### Live editing locators
@@ -266,6 +264,7 @@ PWDEBUG=console npx playwright test
 ```batch tab=bash-batch lang=js
 set PWDEBUG=console
 npx playwright test
+```
 
 ```powershell tab=bash-powershell lang=js
 $env:PWDEBUG="console"
@@ -319,7 +318,7 @@ $env:PWDEBUG=console
 dotnet test
 ```
 
-Once Playwright launches the browser window you can open developer tools.
+Once Playwright launches the browser window you can open the developer tools.
 The `playwright` object will be available in the console panel.
 
 #### playwright.$(selector)
