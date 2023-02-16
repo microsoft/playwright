@@ -87,7 +87,7 @@ npx playwright test example.spec.ts:10 --debug
 ```
 #### Debug on a specific browser
 
-In Playwright you can configure projects in your [`playwright.config`](/test-configuration.md#multiple-browsers. Once configured you can then debug your tests on a specific browser or mobile viewport using the `--project` flag followed by the name of the project configured in your `playwright.config`.
+In Playwright you can configure projects in your [`playwright.config`](/test-configuration.md#multiple-browsers). Once configured you can then debug your tests on a specific browser or mobile viewport using the `--project` flag followed by the name of the project configured in your `playwright.config`.
 
 ```bash
 npx playwright test --project=chromium --debug
