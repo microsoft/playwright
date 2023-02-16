@@ -411,7 +411,7 @@ Clear existing highlights.
 
 #### playwright.selector(element)
 
-Generates selector for the given element.
+Generates selector for the given element. For example, select an element in the Elements panel and pass `$0`:
 
 ```bash
 playwright.selector($0)
