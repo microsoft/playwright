@@ -205,7 +205,7 @@ Script that evaluates to a selector engine instance. The script is evaluated in 
 ### param: Selectors.register.script
 * since: v1.8
 * langs: python
-- `script` <[string]>
+- `script` ?<[string]>
 
 Raw script content.
 

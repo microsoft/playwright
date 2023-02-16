@@ -1398,9 +1398,6 @@ Will throw an error if the context closes before new [Page] is created.
 ### param: BrowserContext.waitForPage.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
-* since: v1.9
-
 ### option: BrowserContext.waitForPage.predicate
 * since: v1.9
 * langs: csharp, java, python
@@ -1409,6 +1406,9 @@ Will throw an error if the context closes before new [Page] is created.
 Receives the [Page] object and resolves to truthy value when the waiting should resolve.
 
 ### option: BrowserContext.waitForPage.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
+
+### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
 ## async method: BrowserContext.waitForEvent2
