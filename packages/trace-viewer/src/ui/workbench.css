@@ -75,7 +75,7 @@
   contain: size;
 }
 
-.workbench .header {
+.header {
   display: flex;
   background-color: #000;
   flex: none;

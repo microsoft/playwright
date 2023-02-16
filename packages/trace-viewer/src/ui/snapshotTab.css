@@ -21,6 +21,7 @@
   align-items: stretch;
   outline: none;
   --window-header-height: 40px;
+  overflow: hidden;
 }
 
 .snapshot-controls {
@@ -85,18 +86,25 @@ iframe#snapshot {
 
 .popout-icon {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  color: var(--gray);
+  top: 0;
+  right: 0;
+  color: var(--vscode-sideBarTitle-foreground);
   font-size: 14px;
+  z-index: 100;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
 .popout-icon:not(.popout-disabled):hover {
-  color: var(--blue);
+  color: var(--vscode-foreground);
 }
 
 .popout-icon.popout-disabled {
-  opacity: 0.7;
+  opacity: var(--vscode-disabledForeground);
 }
 
 .window-dot {
@@ -109,21 +117,16 @@ iframe#snapshot {
 }
 
 .window-address-bar {
-  background-color: white;
+  background-color: var(--vscode-input-background);
   border-radius: 12.5px;
-  color: #1c1e21;
+  color: var(--vscode-input-foreground);
   flex: 1 0;
-  font: 400 13px Arial,sans-serif;
+  font: 400 16px Arial,sans-serif;
   margin: 0 16px 0 8px;
   padding: 5px 15px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-body.dark-mode .window-address-bar {
-  background-color: #1b1b1d;
-  color: #e3e3e3;
 }
 
 .window-menu-bar {
