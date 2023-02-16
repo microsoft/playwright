@@ -375,7 +375,7 @@ playwright.$$('li >> text=John')
 
 #### playwright.inspect(selector)
 
-Reveal element in the Elements panel (if DevTools of the respective browser supports it).
+Reveal element in the Elements panel.
 
 ```bash
 playwright.inspect('text=Log in')
