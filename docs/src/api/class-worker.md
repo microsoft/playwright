@@ -118,8 +118,8 @@ Optional argument to pass to [`param: expression`].
 
 Performs action and waits for the Worker to close.
 
-### param: Worker.waitForClose.callback = %%-java-wait-for-event-callback-%%
+### option: Worker.waitForClose.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
 
-### option: Worker.waitForClose.timeout = %%-wait-for-event-timeout-%%
+### param: Worker.waitForClose.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
