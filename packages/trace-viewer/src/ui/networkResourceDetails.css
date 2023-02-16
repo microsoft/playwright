@@ -15,11 +15,10 @@
 */
 
 .network-request {
-  white-space: nowrap;
   display: flex;
+  white-space: nowrap;
   align-items: center;
   padding: 0 3px;
-  width: 100%;
   flex: none;
   outline: none;
 }
@@ -58,6 +57,7 @@
 .network-request-details {
   width: 100%;
   user-select: text;
+  line-height: 24px;
 }
 
 .network-request-details-url {
@@ -84,6 +84,7 @@
   background-color: var(--vscode-sideBar-background);
   border: black 1px solid;
   max-height: 500px;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 .network-request-details-header {

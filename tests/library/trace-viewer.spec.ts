@@ -143,29 +143,29 @@ test('should open console errors on click', async ({ showTraceViewer, browserNam
   expect(await traceViewer.page.waitForSelector('.console-tab')).toBeTruthy();
 });
 
-test('should show params and return value', async ({ showTraceViewer, browserName }) => {
+test('should show params and return value', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('page.evaluate');
   await expect(traceViewer.callLines).toHaveText([
     /page.evaluate/,
-    /wall time: [0-9/:,APM ]+/,
-    /duration: [\d]+ms/,
-    /expression: "\({↵    a↵  }\) => {↵    console\.log\(\'Info\'\);↵    console\.warn\(\'Warning\'\);↵    console/,
-    'isFunction: true',
-    'arg: {"a":"paramA","b":4}',
-    'value: "return paramA"'
+    /wall time:[0-9/:,APM ]+/,
+    /duration:[\d]+ms/,
+    /expression:"\({↵    a↵  }\) => {↵    console\.log\(\'Info\'\);↵    console\.warn\(\'Warning\'\);↵    console/,
+    'isFunction:true',
+    'arg:{"a":"paramA","b":4}',
+    'value:"return paramA"'
   ]);
 
   await traceViewer.selectAction(`locator('button')`);
   await expect(traceViewer.callLines).toContainText([
     /expect.toHaveText/,
-    /wall time: [0-9/:,APM ]+/,
-    /duration: [\d]+ms/,
-    /locator: locator\('button'\)/,
-    /expression: "to.have.text"/,
-    /timeout: 10000/,
-    /matches: true/,
-    /received: "Click"/,
+    /wall time:[0-9/:,APM ]+/,
+    /duration:[\d]+ms/,
+    /locator:locator\('button'\)/,
+    /expression:"to.have.text"/,
+    /timeout:10000/,
+    /matches:true/,
+    /received:"Click"/,
   ]);
 });
 
@@ -174,12 +174,12 @@ test('should show null as a param', async ({ showTraceViewer, browserName }) => 
   await traceViewer.selectAction('page.evaluate', 1);
   await expect(traceViewer.callLines).toHaveText([
     /page.evaluate/,
-    /wall time: [0-9/:,APM ]+/,
-    /duration: [\d]+ms/,
-    'expression: "() => 1 + 1"',
-    'isFunction: true',
-    'arg: null',
-    'value: 2'
+    /wall time:[0-9/:,APM ]+/,
+    /duration:[\d]+ms/,
+    'expression:"() => 1 + 1"',
+    'isFunction:true',
+    'arg:null',
+    'value:2'
   ]);
 });
 
@@ -604,15 +604,15 @@ test('should include metainfo', async ({ showTraceViewer, browserName }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.page.locator('text=Metadata').click();
   const callLine = traceViewer.page.locator('.call-line');
-  await expect(callLine.getByText('start time')).toHaveText(/start time: [\d/,: ]+/);
-  await expect(callLine.getByText('duration')).toHaveText(/duration: [\dms]+/);
-  await expect(callLine.getByText('engine')).toHaveText(/engine: [\w]+/);
-  await expect(callLine.getByText('platform')).toHaveText(/platform: [\w]+/);
-  await expect(callLine.getByText('width')).toHaveText(/width: [\d]+/);
-  await expect(callLine.getByText('height')).toHaveText(/height: [\d]+/);
-  await expect(callLine.getByText('pages')).toHaveText(/pages: 1/);
-  await expect(callLine.getByText('actions')).toHaveText(/actions: [\d]+/);
-  await expect(callLine.getByText('events')).toHaveText(/events: [\d]+/);
+  await expect(callLine.getByText('start time')).toHaveText(/start time:[\d/,: ]+/);
+  await expect(callLine.getByText('duration')).toHaveText(/duration:[\dms]+/);
+  await expect(callLine.getByText('engine')).toHaveText(/engine:[\w]+/);
+  await expect(callLine.getByText('platform')).toHaveText(/platform:[\w]+/);
+  await expect(callLine.getByText('width')).toHaveText(/width:[\d]+/);
+  await expect(callLine.getByText('height')).toHaveText(/height:[\d]+/);
+  await expect(callLine.getByText('pages')).toHaveText(/pages:1/);
+  await expect(callLine.getByText('actions')).toHaveText(/actions:[\d]+/);
+  await expect(callLine.getByText('events')).toHaveText(/events:[\d]+/);
 });
 
 test('should open two trace files', async ({ context, page, request, server, showTraceViewer }, testInfo) => {
@@ -655,16 +655,16 @@ test('should open two trace files', async ({ context, page, request, server, sho
   await traceViewer.page.locator('text=Metadata').click();
   const callLine = traceViewer.page.locator('.call-line');
   // Should get metadata from the context trace
-  await expect(callLine.getByText('start time')).toHaveText(/start time: [\d/,: ]+/);
+  await expect(callLine.getByText('start time')).toHaveText(/start time:[\d/,: ]+/);
   // duration in the metatadata section
-  await expect(callLine.getByText('duration').first()).toHaveText(/duration: [\dms]+/);
-  await expect(callLine.getByText('engine')).toHaveText(/engine: [\w]+/);
-  await expect(callLine.getByText('platform')).toHaveText(/platform: [\w]+/);
-  await expect(callLine.getByText('width')).toHaveText(/width: [\d]+/);
-  await expect(callLine.getByText('height')).toHaveText(/height: [\d]+/);
-  await expect(callLine.getByText('pages')).toHaveText(/pages: 1/);
-  await expect(callLine.getByText('actions')).toHaveText(/actions: 6/);
-  await expect(callLine.getByText('events')).toHaveText(/events: [\d]+/);
+  await expect(callLine.getByText('duration').first()).toHaveText(/duration:[\dms]+/);
+  await expect(callLine.getByText('engine')).toHaveText(/engine:[\w]+/);
+  await expect(callLine.getByText('platform')).toHaveText(/platform:[\w]+/);
+  await expect(callLine.getByText('width')).toHaveText(/width:[\d]+/);
+  await expect(callLine.getByText('height')).toHaveText(/height:[\d]+/);
+  await expect(callLine.getByText('pages')).toHaveText(/pages:1/);
+  await expect(callLine.getByText('actions')).toHaveText(/actions:6/);
+  await expect(callLine.getByText('events')).toHaveText(/events:[\d]+/);
 });
 
 test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, browserName }) => {
@@ -702,7 +702,7 @@ test('should include requestUrl in route.continue', async ({ page, runAndTrace, 
   await traceViewer.page.locator('.tab-label', { hasText: 'Call' }).click();
   const callLine = traceViewer.page.locator('.call-line');
   await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
-  await expect(callLine.getByText(/^url: .*/)).toContainText(server.EMPTY_PAGE);
+  await expect(callLine.getByText(/^url:.*/)).toContainText(server.EMPTY_PAGE);
 });
 
 test('should include requestUrl in route.abort', async ({ page, runAndTrace, server }) => {
