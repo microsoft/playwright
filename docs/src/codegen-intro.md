@@ -69,7 +69,7 @@ To learn more about generating tests check out or detailed guide on [Codegen](./
 
 You can generate [locators](/locators.md) with the test generator. 
 
-* Press the `'Record'` button to stop the recording and the `'Pick Locator'` button will appear. 
+* Press the `'Record'` button to stop the recording and the `'Pick Locator'` button will appear.
 * Click on the `'Pick Locator'` button and then hover over elements in the browser window to see the locator highlighted underneath each element. 
 * To choose a locator click on the element you would like to locate and the code for that locator will appear in the field next to the Pick Locator button.
 * You can then edit the locator in this field to fine tune it or use the copy button to copy it and paste it into your code.
