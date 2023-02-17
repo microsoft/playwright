@@ -137,7 +137,7 @@ Running 124 tests using 6 workers
 10    should respect enclosing .gitignore:
 ```
 
-You can opt into the step rendering via passing the following config option:
+You can opt out of the step rendering via passing the following config option:
 
 ```js tab=js-js
 // playwright.config.js
@@ -146,7 +146,7 @@ You can opt into the step rendering via passing the following config option:
 const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
-  reporter: [['list', { printSteps: true }]],
+  reporter: [['list', { printSteps: false }]],
 });
 ```
 
@@ -155,7 +155,7 @@ module.exports = defineConfig({
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  reporter: [['list', { printSteps: true }]],
+  reporter: [['list', { printSteps: false }]],
 });
 ```
 

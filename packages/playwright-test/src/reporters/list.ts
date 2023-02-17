@@ -37,7 +37,8 @@ class ListReporter extends BaseReporter {
 
   constructor(options: { omitFailures?: boolean, printSteps?: boolean } = {}) {
     super(options);
-    this._printSteps = options.printSteps || !!process.env.PW_TEST_DEBUG_REPORTERS_PRINT_STEPS;
+    const { printSteps = true } = options;
+    this._printSteps = printSteps;
     this._liveTerminal = process.stdout.isTTY || !!process.env.PWTEST_TTY_WIDTH;
   }
 
