@@ -15,6 +15,7 @@
  */
 
 import { devices, defineConfig } from '@playwright/experimental-ct-react';
+import { resolve } from 'path';
 
 export default defineConfig({
   testDir: 'src',
@@ -26,9 +27,16 @@ export default defineConfig({
   use: {
     ctPort: 3101,
     trace: 'on-first-retry',
+    ctViteConfig: {
+      resolve: {
+        alias: {
+          '@web': resolve(__dirname, '../web/src'),
+        }
+      }
+    }
   },
   projects: [{
     name: 'chromium',
     use: { ...devices['Desktop Chrome'] },
-  }],
+  }]
 });
