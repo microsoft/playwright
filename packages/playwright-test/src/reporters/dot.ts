@@ -28,6 +28,12 @@ class DotReporter extends BaseReporter {
   override onBegin(config: FullConfig, suite: Suite) {
     super.onBegin(config, suite);
     console.log(this.generateStartingMessage());
+    console.log('\n' + colors.green('·') + ' - passed\n');
+    console.log('\n' + colors.yellow('°') + ' - skipped\n');
+    console.log('\n' + colors.gray('×') + ' - will retry\n');
+    console.log('\n' + colors.yellow('±') + ' - flaky\n');
+    console.log('\n' + colors.red('T') + ' - timed out\n');
+    console.log('\n' + colors.red('F') + ' - failed\n');
   }
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
