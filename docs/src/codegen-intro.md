@@ -36,7 +36,7 @@ pwsh bin/Debug/netX/playwright.ps1 codegen demo.playwright.dev/todomvc
 
 ### Recording a test
 
-Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `Codegen` will look at your page and figure out the best locator, prioritizing role, text and test id locators. If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
+Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `Codegen` will look at the rendered page and figure out the recommended locator, prioritizing role, text and test id locators. If the generator identifies multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, therefore eliminating and reducing test/s failing and flaking due to locators
 
 ######
 * langs: js
