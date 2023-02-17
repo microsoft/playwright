@@ -178,7 +178,7 @@ test('should override use:browserName with --browser', async ({ runInlineTest })
   ]);
 });
 
-test('should respect context options in various contexts', async ({ runInlineTest }, testInfo) => {
+test('should respect context options in various contexts', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { use: { viewport: { width: 500, height: 500 } } };
@@ -294,7 +294,7 @@ test('should respect headless in modifiers that run before tests', async ({ runI
   expect(result.passed).toBe(1);
 });
 
-test('should call logger from launchOptions config', async ({ runInlineTest }, testInfo) => {
+test('should call logger from launchOptions config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -322,7 +322,7 @@ test('should call logger from launchOptions config', async ({ runInlineTest }, t
   expect(result.passed).toBe(1);
 });
 
-test('should report error and pending operations on timeout', async ({ runInlineTest }, testInfo) => {
+test('should report error and pending operations on timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -346,7 +346,7 @@ test('should report error and pending operations on timeout', async ({ runInline
   expect(result.output).toContain(`7 |           page.getByText('More missing').textContent(),`);
 });
 
-test('should report error on timeout with shared page', async ({ runInlineTest }, testInfo) => {
+test('should report error on timeout with shared page', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -370,7 +370,7 @@ test('should report error on timeout with shared page', async ({ runInlineTest }
   expect(result.output).toContain(`11 |         await page.getByText('Missing').click();`);
 });
 
-test('should report error from beforeAll timeout', async ({ runInlineTest }, testInfo) => {
+test('should report error from beforeAll timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -394,7 +394,7 @@ test('should report error from beforeAll timeout', async ({ runInlineTest }, tes
   expect(result.output).toContain(`8 |           page.getByText('More missing').textContent(),`);
 });
 
-test('should not report waitForEventInfo as pending', async ({ runInlineTest }, testInfo) => {
+test('should not report waitForEventInfo as pending', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -414,7 +414,7 @@ test('should not report waitForEventInfo as pending', async ({ runInlineTest }, 
   expect(result.output).not.toContain('- page.waitForLoadState');
 });
 
-test('should throw when using page in beforeAll', async ({ runInlineTest }, testInfo) => {
+test('should throw when using page in beforeAll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -454,7 +454,7 @@ test('should report click error on sigint', async ({ runInlineTest }) => {
   expect(result.output).toContain(`5 |         const promise = page.click('text=Missing');`);
 });
 
-test('should work with video: retain-on-failure', async ({ runInlineTest }, testInfo) => {
+test('should work with video: retain-on-failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { use: { video: 'retain-on-failure' }, name: 'chromium' };
@@ -478,15 +478,15 @@ test('should work with video: retain-on-failure', async ({ runInlineTest }, test
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
 
-  const dirPass = testInfo.outputPath('test-results', 'a-pass-chromium');
+  const dirPass = test.info().outputPath('test-results', 'a-pass-chromium');
   const videoPass = fs.existsSync(dirPass) ? fs.readdirSync(dirPass).find(file => file.endsWith('webm')) : undefined;
   expect(videoPass).toBeFalsy();
 
-  const videoFail = fs.readdirSync(testInfo.outputPath('test-results', 'a-fail-chromium')).find(file => file.endsWith('webm'));
+  const videoFail = fs.readdirSync(test.info().outputPath('test-results', 'a-fail-chromium')).find(file => file.endsWith('webm'));
   expect(videoFail).toBeTruthy();
 });
 
-test('should work with video: on-first-retry', async ({ runInlineTest }, testInfo) => {
+test('should work with video: on-first-retry', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { use: { video: 'on-first-retry' }, retries: 1, name: 'chromium' };
@@ -510,13 +510,13 @@ test('should work with video: on-first-retry', async ({ runInlineTest }, testInf
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
 
-  const dirPass = testInfo.outputPath('test-results', 'a-pass-chromium');
+  const dirPass = test.info().outputPath('test-results', 'a-pass-chromium');
   expect(fs.existsSync(dirPass)).toBeFalsy();
 
-  const dirFail = testInfo.outputPath('test-results', 'a-fail-chromium');
+  const dirFail = test.info().outputPath('test-results', 'a-fail-chromium');
   expect(fs.existsSync(dirFail)).toBeFalsy();
 
-  const dirRetry = testInfo.outputPath('test-results', 'a-fail-chromium-retry1');
+  const dirRetry = test.info().outputPath('test-results', 'a-fail-chromium-retry1');
   const videoFailRetry = fs.readdirSync(dirRetry).find(file => file.endsWith('webm'));
   expect(videoFailRetry).toBeTruthy();
 
@@ -528,7 +528,7 @@ test('should work with video: on-first-retry', async ({ runInlineTest }, testInf
   }]);
 });
 
-test('should work with video size', async ({ runInlineTest }, testInfo) => {
+test('should work with video size', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = {
@@ -548,7 +548,7 @@ test('should work with video size', async ({ runInlineTest }, testInfo) => {
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  const folder = testInfo.outputPath(`test-results/a-pass-chromium/`);
+  const folder = test.info().outputPath(`test-results/a-pass-chromium/`);
   const [file] = fs.readdirSync(folder);
   const videoPlayer = new VideoPlayer(path.join(folder, file));
   expect(videoPlayer.videoWidth).toBe(220);
@@ -601,7 +601,7 @@ test('should pass fixture defaults to tests', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('should not throw with many fixtures set to undefined', async ({ runInlineTest }, testInfo) => {
+test('should not throw with many fixtures set to undefined', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { use: {
@@ -746,5 +746,24 @@ test('should skip on mobile', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
   expect(result.skipped).toBe(1);
+  expect(result.passed).toBe(1);
+});
+
+test('fulfill with return path of the entry', async ({ runInlineTest }) => {
+  const storeDir = path.join(test.info().outputPath(), 'playwright');
+  const file = path.join(storeDir, 'foo/body.json');
+  await fs.promises.mkdir(path.dirname(file), { recursive: true });
+  await fs.promises.writeFile(file, JSON.stringify({ 'a': 2023 }));
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, store, expect } from '@playwright/test';
+      test('should read value from path', async ({ page }) => {
+        await page.route('**/*', route => route.fulfill({ path: store.path('foo/body.json')}))
+        await page.goto('http://example.com');
+        expect(await page.textContent('body')).toBe(JSON.stringify({ 'a': 2023 }))
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });

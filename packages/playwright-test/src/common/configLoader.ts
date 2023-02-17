@@ -22,6 +22,7 @@ import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
 import { requireOrImport } from './transform';
 import type { Config, FullConfigInternal, FullProjectInternal, Project, ReporterDescription } from './types';
 import { errorWithFile, getPackageJsonPath, mergeObjects } from '../util';
+import { setCurrentConfig } from './globals';
 
 export const defaultTimeout = 30000;
 
@@ -47,11 +48,13 @@ export class ConfigLoader {
       throw new Error('Cannot load two config files');
     const config = await requireOrImportDefaultObject(file) as Config;
     await this._processConfigObject(config, path.dirname(file), file);
+    setCurrentConfig(this._fullConfig);
     return this._fullConfig;
   }
 
   async loadEmptyConfig(configDir: string): Promise<Config> {
     await this._processConfigObject({}, configDir);
+    setCurrentConfig(this._fullConfig);
     return {};
   }
 
@@ -102,7 +105,7 @@ export class ConfigLoader {
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
 
     this._fullConfig._internal.configDir = configDir;
-    this._fullConfig._internal.storeDir = path.resolve(configDir, '.playwright-store');
+    this._fullConfig._internal.storeDir = path.resolve(configDir, config.storeDir || 'playwright');
     this._fullConfig.configFile = configFile;
     this._fullConfig.rootDir = config.testDir || configDir;
     this._fullConfig._internal.globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._internal.globalOutputDir);
