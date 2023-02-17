@@ -68,6 +68,34 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 - Playwright now supports Debian 11 arm64.
 - Official [docker images](./docker.md) now include Node 18 instead of Node 16.
 
+
+## ⚠️ Breaking change in component tests
+
+Note: **component tests only**, does not affect end-to-end tests.
+
+`playwright-ct.config` configuration file for [component testing](./test-components.md) now requires calling `defineConfig`.
+
+```js
+// Before
+
+import { type PlaywrightTestConfig, devices } from '@playwright/experimental-ct-react';
+const config: PlaywrightTestConfig = {
+  // ... config goes here ...
+};
+export default config;
+```
+
+Replace `config` variable definition with `defineConfig` call:
+
+```js
+// After
+
+import { defineConfig, devices } from '@playwright/experimental-ct-react';
+export default defineConfig({
+  // ... config goes here ...
+});
+```
+
 ### Browser Versions
 
 * Chromium 111.0.5563.19
