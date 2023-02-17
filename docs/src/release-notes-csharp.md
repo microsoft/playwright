@@ -24,6 +24,8 @@ toc_max_heading_level: 2
   await Expect(locator).ToBeInViewportAsync(new() { Ratio = 0.5 });
   ```
 
+- New methods [`method: BrowserContext.newCDPSession`] and [`method: Browser.newBrowserCDPSession`] create a [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/) session for the page and browser respectively.
+
 
 ### Miscellaneous
 
