@@ -496,8 +496,12 @@ Note that [`option: headers`] option will apply to the fetched request as well a
 
 If set changes the request URL. New URL must have same protocol as original one.
 
-### option: Route.fetch.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
+### option: Route.fetch.maxRedirects
 * since: v1.31
+- `maxRedirects` <[int]>
+
+Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is exceeded.
+Defaults to `20`. Pass `0` to not follow redirects.
 
 ### option: Route.fetch.method
 * since: v1.29
