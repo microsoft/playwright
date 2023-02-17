@@ -742,7 +742,7 @@ await expect(locator).to_be_in_viewport()
 # Make sure element is fully outside of viewport.
 await expect(locator).not_to_be_in_viewport()
 # Make sure that at least half of the element intersects viewport.
-await expect(locator).to_be_in_viewport(ratio=0.5);
+await expect(locator).to_be_in_viewport(ratio=0.5)
 ```
 
 ```python sync
@@ -754,7 +754,7 @@ expect(locator).to_be_in_viewport()
 # Make sure element is fully outside of viewport.
 expect(locator).not_to_be_in_viewport()
 # Make sure that at least half of the element intersects viewport.
-expect(locator).to_be_in_viewport(ratio=0.5);
+expect(locator).to_be_in_viewport(ratio=0.5)
 ```
 
 
