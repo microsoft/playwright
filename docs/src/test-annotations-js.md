@@ -211,7 +211,11 @@ test('user profile', async ({ page }) => {
 
 ## Custom annotations
 
-It's also possible to add custom metadata in the form of annotations to your tests. Annotations are key/value pairs accessible via [`test.info().annotations`](./api/class-testinfo#test-info-annotations). Many reporters show annotations, for example `'html'`.
+It's also possible to add custom metadata in the form of annotations to your tests. Annotations are key/value pairs accessible via [`test.info().annotations`](./api/class-testinfo#test-info-annotations). 
+Many reporters show annotations, for example `'html'`. 
+
+Annotations can also be used to search for tests in the `html reporter` as `type:description`.
+
 
 ```js tab=js-js
 // example.spec.js

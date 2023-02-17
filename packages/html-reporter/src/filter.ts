@@ -17,35 +17,38 @@
 import type { TestCaseSummary } from './types';
 
 export class Filter {
-  project: string[] = [];
-  status: string[] = [];
-  text: string[] = [];
+  filters: Record<string, string[]> = {};
 
   empty(): boolean {
-    return this.project.length + this.status.length + this.text.length === 0;
+    return Object.values(this.filters).every(
+        filterValues => filterValues.length === 0
+    );
+  }
+
+  private static addFilter(filter: Filter, { key, value, unique }: {key: string, value: string, unique: boolean }) {
+    if (filter.filters[key]) {
+      if (unique)
+        filter.filters[key] = [...new Set([...filter.filters[key], value])];
+      else
+        filter.filters[key].push(value);
+    } else {filter.filters[key] = [value];}
   }
 
   static parse(expression: string): Filter {
     const tokens = Filter.tokenize(expression);
-    const project = new Set<string>();
-    const status = new Set<string>();
-    const text: string[] = [];
+    const filter = new Filter();
+
+    const filters: Record<string, Array<string>> = {};
     for (const token of tokens) {
-      if (token.startsWith('p:')) {
-        project.add(token.slice(2));
-        continue;
+      if (token.includes(':')) {
+        const [key, value] = token.split(':');
+        Filter.addFilter(filter, { key, value, unique: true });
+      } else {
+        Filter.addFilter(filter, { key: 'text', value: token.toLowerCase(), unique: false });
       }
-      if (token.startsWith('s:')) {
-        status.add(token.slice(2));
-        continue;
-      }
-      text.push(token.toLowerCase());
     }
 
-    const filter = new Filter();
-    filter.text = text;
-    filter.project = [...project];
-    filter.status = [...status];
+    filter.filters = filters;
     return filter;
   }
 
@@ -93,45 +96,39 @@ export class Filter {
   matches(test: TestCaseSummary): boolean {
     if (!(test as any).searchValues) {
       let status = 'passed';
-      if (test.outcome === 'unexpected')
-        status = 'failed';
-      if (test.outcome === 'flaky')
-        status = 'flaky';
-      if (test.outcome === 'skipped')
-        status = 'skipped';
-      const searchValues: SearchValues = {
-        text: (status + ' ' + test.projectName + ' ' + test.path.join(' ') + test.title).toLowerCase(),
-        project: test.projectName.toLowerCase(),
-        status: status as any
+      if (test.outcome === 'unexpected') status = 'failed';
+
+      if (test.outcome === 'flaky') status = 'flaky';
+
+      if (test.outcome === 'skipped') status = 'skipped';
+
+      const searchValues = {
+        ...Object.fromEntries(
+            test.annotations.map(({ type, description }) => [type, description])
+        ),
+        text: (
+          status +
+          ' ' +
+          test.projectName +
+          ' ' +
+          test.path.join(' ') +
+          test.title
+        ).toLowerCase(),
+        p: test.projectName.toLowerCase(),
+        s: status as any,
       };
       (test as any).searchValues = searchValues;
     }
 
-    const searchValues = (test as any).searchValues as SearchValues;
-    if (this.project.length) {
-      const matches = !!this.project.find(p => searchValues.project.includes(p));
-      if (!matches)
-        return false;
-    }
-    if (this.status.length) {
-      const matches = !!this.status.find(s => searchValues.status.includes(s));
-      if (!matches)
-        return false;
-    }
+    const searchValues = (test as any).searchValues;
 
-    if (this.text.length) {
-      const matches = this.text.filter(t => searchValues.text.includes(t)).length === this.text.length;
-      if (!matches)
-        return false;
-    }
-
-    return true;
+    return Object.entries(this.filters).every(([filterKey, filterValues]) => {
+      if (
+        this.filters[filterKey].some(filterValue =>
+          searchValues[filterKey]?.includes(filterValue)
+        )
+      )
+        return true;
+    });
   }
 }
-
-type SearchValues = {
-  text: string;
-  project: string;
-  status: 'passed' | 'failed' | 'flaky' | 'skipped';
-};
-
