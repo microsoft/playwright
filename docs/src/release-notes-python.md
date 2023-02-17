@@ -11,7 +11,7 @@ toc_max_heading_level: 2
 - New assertion [`method: LocatorAssertions.toBeInViewport`] ensures that locator points to an element that intersects viewport, according to the [intersection observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API).
 
 
-  ```python sync
+  ```python
   from playwright.sync_api import expect
 
   locator = page.get_by_role("button")
