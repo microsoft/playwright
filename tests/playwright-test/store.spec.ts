@@ -208,7 +208,7 @@ test('should return root path', async ({ runInlineTest }) => {
     'a.test.ts': `
       import { test, store, expect } from '@playwright/test';
       test('should store number', async ({ }) => {
-        expect(store.root()).toBe('${storeDir}');
+        expect(store.root()).toBe('${storeDir.replace(/\\/g, '\\\\')}');
       });
     `,
   }, { workers: 1 });
