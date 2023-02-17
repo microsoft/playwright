@@ -20,29 +20,13 @@
   overflow: hidden;
 }
 
-.tab-content {
+.tabbed-pane .tab-content {
   display: flex;
   flex: auto;
   overflow: hidden;
 }
 
-.tab-strip {
-  display: flex;
-  background-color: var(--vscode-sideBar-background);
-  color: var(--vscode-sideBarTitle-foreground);
-  height: 32px;
-  align-items: center;
-  padding-right: 10px;
-  flex: none;
-  width: 100%;
-  z-index: 2;
-}
-
-.tab-strip:focus {
-  outline: none;
-}
-
-.tab-element {
+.tabbed-pane-tab {
   padding: 2px 10px 0 10px;
   margin-right: 4px;
   cursor: pointer;
@@ -56,7 +40,7 @@
   height: 100%;
 }
 
-.tab-label {
+.tabbed-pane-tab-label {
   max-width: 250px;
   white-space: pre;
   overflow: hidden;
@@ -64,13 +48,13 @@
   display: inline-block;
 }
 
-.tab-count {
+.tabbed-pane-tab-count {
   font-size: 10px;
   display: flex;
   align-self: flex-start;
   width: 0px;
 }
 
-.tab-element.selected {
+.tabbed-pane-tab.selected {
   background-color: var(--vscode-tab-activeBackground);
 }

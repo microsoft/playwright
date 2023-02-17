@@ -16,6 +16,7 @@
 
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+// @ts-ignore
 import { bundle } from './bundle';
 import * as path from 'path';
 

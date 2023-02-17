@@ -19,9 +19,8 @@
   box-shadow: var(--box-shadow);
   background-color: var(--vscode-sideBar-background);
   color: var(--vscode-sideBarTitle-foreground);
-  min-height: 40px;
+  min-height: 32px;
   align-items: center;
-  padding-right: 10px;
   flex: none;
   z-index: 2;
 }

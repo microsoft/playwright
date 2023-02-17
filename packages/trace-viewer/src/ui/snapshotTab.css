@@ -150,3 +150,7 @@ iframe#snapshot {
 body.dark-mode .window-header {
   background: #444950;
 }
+
+.snapshot-tab .cm-wrapper {
+  line-height: 23px;
+}

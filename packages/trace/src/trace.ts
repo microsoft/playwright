@@ -39,6 +39,7 @@ export type ContextCreatedTraceEvent = {
   title?: string,
   options: BrowserContextEventOptions,
   sdkLanguage?: Language,
+  testIdAttributeName?: string,
 };
 
 export type ScreencastFrameTraceEvent = {

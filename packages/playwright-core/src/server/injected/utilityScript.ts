@@ -27,6 +27,7 @@ export class UtilityScript {
     if (exposeUtilityScript)
       parameters.unshift(this);
 
+    // eslint-disable-next-line no-restricted-globals
     let result = globalThis.eval(expression);
     if (isFunction === true) {
       result = result(...parameters);

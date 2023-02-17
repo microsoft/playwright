@@ -15,9 +15,10 @@
  */
 
 import './tabbedPane.css';
+import { Toolbar } from './toolbar';
 import * as React from 'react';
 
-export interface TabbedPaneTab {
+export interface TabbedPaneTabModel {
   id: string;
   title: string | JSX.Element;
   count?: number;
@@ -25,24 +26,23 @@ export interface TabbedPaneTab {
 }
 
 export const TabbedPane: React.FunctionComponent<{
-  tabs: TabbedPaneTab[],
+  tabs: TabbedPaneTabModel[],
   selectedTab: string,
   setSelectedTab: (tab: string) => void
 }> = ({ tabs, selectedTab, setSelectedTab }) => {
   return <div className='tabbed-pane'>
     <div className='vbox'>
-      <div className='hbox' style={{ flex: 'none' }}>
-        <div className='tab-strip'>{
-          tabs.map(tab => (
-            <div className={'tab-element ' + (selectedTab === tab.id ? 'selected' : '')}
-              onClick={() => setSelectedTab(tab.id)}
-              key={tab.id}>
-              <div className='tab-label'>{tab.title}</div>
-              <div className='tab-count'>{tab.count || ''}</div>
-            </div>
-          ))
-        }</div>
-      </div>
+      <Toolbar>{
+        tabs.map(tab => (
+          <TabbedPaneTab
+            id={tab.id}
+            title={tab.title}
+            count={tab.count}
+            selected={selectedTab === tab.id}
+            onSelect={setSelectedTab}
+          ></TabbedPaneTab>
+        ))
+      }</Toolbar>
       {
         tabs.map(tab => {
           if (selectedTab === tab.id)
@@ -50,5 +50,20 @@ export const TabbedPane: React.FunctionComponent<{
         })
       }
     </div>
+  </div>;
+};
+
+export const TabbedPaneTab: React.FunctionComponent<{
+  id: string,
+  title: string | JSX.Element,
+  count?: number,
+  selected?: boolean,
+  onSelect: (id: string) => void
+}> = ({ id, title, count, selected, onSelect }) => {
+  return <div className={'tabbed-pane-tab ' + (selected ? 'selected' : '')}
+    onClick={() => onSelect(id)}
+    key={id}>
+    <div className='tabbed-pane-tab-label'>{title}</div>
+    <div className='tabbed-pane-tab-count'>{count || ''}</div>
   </div>;
 };

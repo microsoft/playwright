@@ -90,17 +90,6 @@
   padding: 8px 4px;
 }
 
-.workbench tab-content {
-  padding: 25px;
-  contain: size;
-}
-
-.workbench tab-strip {
-  margin-left: calc(-1*var(--sidebar-width));
-  padding-left: var(--sidebar-width);
-	box-shadow: var(--box-shadow);
-}
-
 .workbench .logo {
   font-size: 20px;
   margin-left: 16px;

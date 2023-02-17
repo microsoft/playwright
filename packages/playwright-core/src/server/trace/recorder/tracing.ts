@@ -93,6 +93,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       waitForContentOnStop: false,
       skipScripts: true,
     });
+    const testIdAttributeName = ('selectors' in context) ? context.selectors().testIdAttributeName() : undefined;
     this._contextCreatedEvent = {
       version,
       type: 'context-options',
@@ -101,6 +102,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       platform: process.platform,
       wallTime: 0,
       sdkLanguage: (context as BrowserContext)?._browser?.options?.sdkLanguage,
+      testIdAttributeName
     };
     if (context instanceof BrowserContext) {
       this._snapshotter = new Snapshotter(context, this);

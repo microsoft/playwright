@@ -21,16 +21,13 @@ import type { Point } from '../../common/types';
 import type { UIState } from '@recorder/recorderTypes';
 import { Highlight } from '../injected/highlight';
 
-
-declare module globalThis {
-  let __pw_recorderPerformAction: (action: actions.Action) => Promise<void>;
-  let __pw_recorderRecordAction: (action: actions.Action) => Promise<void>;
-  let __pw_recorderState: () => Promise<UIState>;
-  let __pw_recorderSetSelector: (selector: string) => Promise<void>;
-  let __pw_refreshOverlay: () => void;
+interface RecorderDelegate {
+  performAction?(action: actions.Action): Promise<void>;
+  recordAction?(action: actions.Action): Promise<void>;
+  setSelector?(selector: string): Promise<void>;
 }
 
-class Recorder {
+export class Recorder {
   private _injectedScript: InjectedScript;
   private _performingAction = false;
   private _listeners: (() => void)[] = [];
@@ -38,45 +35,43 @@ class Recorder {
   private _hoveredElement: HTMLElement | null = null;
   private _activeModel: HighlightModel | null = null;
   private _expectProgrammaticKeyUp = false;
-  private _pollRecorderModeTimer: NodeJS.Timeout | undefined;
   private _mode: 'none' | 'inspecting' | 'recording' = 'none';
   private _actionPoint: Point | undefined;
   private _actionSelector: string | undefined;
   private _highlight: Highlight;
   private _testIdAttributeName: string = 'data-testid';
+  readonly document: Document;
+  private _delegate: RecorderDelegate;
 
-  constructor(injectedScript: InjectedScript) {
+  constructor(injectedScript: InjectedScript, delegate: RecorderDelegate) {
+    this.document = injectedScript.document;
     this._injectedScript = injectedScript;
+    this._delegate = delegate;
     this._highlight = new Highlight(injectedScript);
 
-    this._refreshListenersIfNeeded();
-    injectedScript.onGlobalListenersRemoved.add(() => this._refreshListenersIfNeeded());
+    this.refreshListenersIfNeeded();
 
-    globalThis.__pw_refreshOverlay = () => {
-      this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
-    };
-    globalThis.__pw_refreshOverlay();
     if (injectedScript.isUnderTest)
       console.error('Recorder script ready for test'); // eslint-disable-line no-console
   }
 
-  private _refreshListenersIfNeeded() {
+  refreshListenersIfNeeded() {
     // Ensure we are attached to the current document, and we are on top (last element);
     if (this._highlight.isInstalled())
       return;
     removeEventListeners(this._listeners);
     this._listeners = [
-      addEventListener(document, 'click', event => this._onClick(event as MouseEvent), true),
-      addEventListener(document, 'auxclick', event => this._onClick(event as MouseEvent), true),
-      addEventListener(document, 'input', event => this._onInput(event), true),
-      addEventListener(document, 'keydown', event => this._onKeyDown(event as KeyboardEvent), true),
-      addEventListener(document, 'keyup', event => this._onKeyUp(event as KeyboardEvent), true),
-      addEventListener(document, 'mousedown', event => this._onMouseDown(event as MouseEvent), true),
-      addEventListener(document, 'mouseup', event => this._onMouseUp(event as MouseEvent), true),
-      addEventListener(document, 'mousemove', event => this._onMouseMove(event as MouseEvent), true),
-      addEventListener(document, 'mouseleave', event => this._onMouseLeave(event as MouseEvent), true),
-      addEventListener(document, 'focus', event => event.isTrusted && this._onFocus(true), true),
-      addEventListener(document, 'scroll', event => {
+      addEventListener(this.document, 'click', event => this._onClick(event as MouseEvent), true),
+      addEventListener(this.document, 'auxclick', event => this._onClick(event as MouseEvent), true),
+      addEventListener(this.document, 'input', event => this._onInput(event), true),
+      addEventListener(this.document, 'keydown', event => this._onKeyDown(event as KeyboardEvent), true),
+      addEventListener(this.document, 'keyup', event => this._onKeyUp(event as KeyboardEvent), true),
+      addEventListener(this.document, 'mousedown', event => this._onMouseDown(event as MouseEvent), true),
+      addEventListener(this.document, 'mouseup', event => this._onMouseUp(event as MouseEvent), true),
+      addEventListener(this.document, 'mousemove', event => this._onMouseMove(event as MouseEvent), true),
+      addEventListener(this.document, 'mouseleave', event => this._onMouseLeave(event as MouseEvent), true),
+      addEventListener(this.document, 'focus', event => event.isTrusted && this._onFocus(true), true),
+      addEventListener(this.document, 'scroll', event => {
         if (!event.isTrusted)
           return;
         this._hoveredModel = null;
@@ -87,16 +82,7 @@ class Recorder {
     this._highlight.install();
   }
 
-  private async _pollRecorderMode() {
-    const pollPeriod = 1000;
-    if (this._pollRecorderModeTimer)
-      clearTimeout(this._pollRecorderModeTimer);
-    const state = await globalThis.__pw_recorderState().catch(e => null);
-    if (!state) {
-      this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
-      return;
-    }
-
+  setUIState(state: UIState) {
     const { mode, actionPoint, actionSelector, language, testIdAttributeName } = state;
     this._testIdAttributeName = testIdAttributeName;
     this._highlight.setLanguage(language);
@@ -121,11 +107,10 @@ class Recorder {
       this._actionSelector = undefined;
 
     if (actionSelector !== this._actionSelector) {
-      this._hoveredModel = actionSelector ? querySelector(this._injectedScript, actionSelector, document) : null;
+      this._hoveredModel = actionSelector ? querySelector(this._injectedScript, actionSelector, this.document) : null;
       this._updateHighlight();
       this._actionSelector = actionSelector;
     }
-    this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
   }
 
   private _clearHighlight() {
@@ -161,7 +146,7 @@ class Recorder {
     if (!event.isTrusted)
       return;
     if (this._mode === 'inspecting')
-      globalThis.__pw_recorderSetSelector(this._hoveredModel ? this._hoveredModel.selector : '');
+      this._delegate.setSelector?.(this._hoveredModel ? this._hoveredModel.selector : '');
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))
@@ -242,7 +227,7 @@ class Recorder {
     if (!event.isTrusted)
       return;
     // Leaving iframe.
-    if (window.top !== window && this._deepEventTarget(event).nodeType === Node.DOCUMENT_NODE) {
+    if (this._injectedScript.window.top !== this._injectedScript.window && this._deepEventTarget(event).nodeType === Node.DOCUMENT_NODE) {
       this._hoveredElement = null;
       this._updateModelForHoveredElement();
     }
@@ -251,10 +236,10 @@ class Recorder {
   private _onFocus(userGesture: boolean) {
     if (this._mode === 'none')
       return;
-    const activeElement = this._deepActiveElement(document);
+    const activeElement = this._deepActiveElement(this.document);
     // Firefox dispatches "focus" event to body when clicking on a backgrounded headed browser window.
     // We'd like to ignore this stray event.
-    if (activeElement === document.body)
+    if (activeElement === this.document.body)
       return;
     const result = activeElement ? generateSelector(this._injectedScript, activeElement, this._testIdAttributeName) : null;
     this._activeModel = result && result.selector ? result : null;
@@ -289,7 +274,7 @@ class Recorder {
     const target = this._deepEventTarget(event);
 
     if (target.nodeName === 'INPUT' && (target as HTMLInputElement).type.toLowerCase() === 'file') {
-      globalThis.__pw_recorderRecordAction({
+      this._delegate.recordAction?.({
         name: 'setInputFiles',
         selector: this._activeModel!.selector,
         signals: [],
@@ -307,7 +292,7 @@ class Recorder {
       // Non-navigating actions are simply recorded by Playwright.
       if (this._consumedDueWrongTarget(event))
         return;
-      globalThis.__pw_recorderRecordAction({
+      this._delegate.recordAction?.({
         name: 'fill',
         selector: this._activeModel!.selector,
         signals: [],
@@ -411,7 +396,7 @@ class Recorder {
   private async _performAction(action: actions.Action) {
     this._clearHighlight();
     this._performingAction = true;
-    await globalThis.__pw_recorderPerformAction(action).catch(() => {});
+    await this._delegate.performAction?.(action).catch(() => {});
     this._performingAction = false;
 
     // If that was a keyboard action, it similarly requires new selectors for active model.
@@ -494,4 +479,60 @@ function removeEventListeners(listeners: (() => void)[]) {
   listeners.splice(0, listeners.length);
 }
 
-module.exports = Recorder;
+interface Embedder {
+  __pw_recorderPerformAction(action: actions.Action): Promise<void>;
+  __pw_recorderRecordAction(action: actions.Action): Promise<void>;
+  __pw_recorderState(): Promise<UIState>;
+  __pw_recorderSetSelector(selector: string): Promise<void>;
+  __pw_refreshOverlay(): void;
+}
+
+class PollingRecorder implements RecorderDelegate {
+  private _recorder: Recorder;
+  private _embedder: Embedder;
+  private _pollRecorderModeTimer: NodeJS.Timeout | undefined;
+
+  constructor(injectedScript: InjectedScript) {
+    this._recorder = new Recorder(injectedScript, this);
+    this._embedder = injectedScript.window as any;
+
+    injectedScript.onGlobalListenersRemoved.add(() => this._recorder.refreshListenersIfNeeded());
+
+    const refreshOverlay = () => {
+      this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
+    };
+    this._embedder.__pw_refreshOverlay = refreshOverlay;
+    refreshOverlay();
+  }
+
+  private async _pollRecorderMode() {
+    const pollPeriod = 1000;
+    if (this._pollRecorderModeTimer)
+      clearTimeout(this._pollRecorderModeTimer);
+    const state = await this._embedder.__pw_recorderState().catch(() => {});
+    if (!state) {
+      this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
+      return;
+    }
+    this._recorder.setUIState(state);
+    this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
+  }
+
+  async performAction(action: actions.Action) {
+    await this._embedder.__pw_recorderPerformAction(action);
+  }
+
+  async recordAction(action: actions.Action): Promise<void> {
+    await this._embedder.__pw_recorderRecordAction(action);
+  }
+
+  async __pw_recorderState(): Promise<UIState> {
+    return await this._embedder.__pw_recorderState();
+  }
+
+  async setSelector(selector: string): Promise<void> {
+    await this._embedder.__pw_recorderSetSelector(selector);
+  }
+}
+
+module.exports = PollingRecorder;

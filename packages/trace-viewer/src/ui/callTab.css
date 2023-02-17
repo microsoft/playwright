@@ -37,12 +37,15 @@
 
 .call-section {
   padding-left: 6px;
-  border-top: 1px solid var(--vscode-panel-border);
   font-weight: bold;
   text-transform: uppercase;
   font-size: 10px;
   color: var(--vscode-sideBarTitle-foreground);
   line-height: 24px;
+}
+
+.call-section:not(:first-child) {
+  border-top: 1px solid var(--vscode-panel-border);
 }
 
 .call-line {

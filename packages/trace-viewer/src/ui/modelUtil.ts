@@ -38,12 +38,14 @@ export class MultiTraceModel {
   readonly events: trace.ActionTraceEvent[];
   readonly hasSource: boolean;
   readonly sdkLanguage: Language | undefined;
+  readonly testIdAttributeName: string | undefined;
 
   constructor(contexts: ContextEntry[]) {
     contexts.forEach(contextEntry => indexModel(contextEntry));
 
     this.browserName = contexts[0]?.browserName || '';
     this.sdkLanguage = contexts[0]?.sdkLanguage;
+    this.testIdAttributeName = contexts[0]?.testIdAttributeName;
     this.platform = contexts[0]?.platform || '';
     this.title = contexts[0]?.title || '';
     this.options = contexts[0]?.options || {};

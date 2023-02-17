@@ -11,10 +11,13 @@
          - foo/lib means require dependency
       */
       "@html-reporter/*": ["./packages/html-reporter/src/*"],
+      "@injected/*": ["./packages/playwright-core/src/server/injected/*"],
+      "@isomorphic/*": ["./packages/playwright-core/src/server/isomorphic/*"],
       "@protocol/*": ["./packages/protocol/src/*"],
       "@recorder/*": ["./packages/recorder/src/*"],
       "@trace/*": ["./packages/trace/src/*"],
-      "playwright-core/lib/*": ["./packages/playwright-core/src/*"]
+      "@web/*": ["./packages/web/src/*"],
+      "playwright-core/lib/*": ["./packages/playwright-core/src/*"],
     },
     "esModuleInterop": true,
     "strict": true,
@@ -35,8 +38,6 @@
     "packages/playwright-ct-svelte",
     "packages/playwright-ct-vue",
     "packages/playwright-ct-vue2",
-    "packages/recorder",
-    "packages/trace-viewer",
     "packages/web",
   ],
 }

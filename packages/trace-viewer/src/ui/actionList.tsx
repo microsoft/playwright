@@ -20,7 +20,6 @@ import { ListView } from '@web/components/listView';
 import * as React from 'react';
 import './actionList.css';
 import * as modelUtil from './modelUtil';
-import './tabbedPane.css';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 

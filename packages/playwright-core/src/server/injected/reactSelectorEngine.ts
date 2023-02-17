@@ -142,6 +142,7 @@ function filterComponentsTree(treeNode: ComponentNode, searchFn: (node: Componen
 }
 
 function findReactRoots(root: Document | ShadowRoot, roots: ReactVNode[] = []): ReactVNode[] {
+  const document = root.ownerDocument || root;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
   do {
     const node = walker.currentNode;
@@ -179,7 +180,7 @@ export const ReactEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
     const { name, attributes } = parseAttributeSelector(selector, false);
 
-    const reactRoots = findReactRoots(document);
+    const reactRoots = findReactRoots(scope.ownerDocument || scope);
     const trees = reactRoots.map(reactRoot => buildComponentsTree(reactRoot));
     const treeNodes = trees.map(tree => filterComponentsTree(tree, treeNode => {
       const props = treeNode.props ?? {};

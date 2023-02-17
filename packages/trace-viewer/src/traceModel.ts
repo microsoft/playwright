@@ -132,6 +132,7 @@ export class TraceModel {
         this.contextEntry.wallTime = event.wallTime;
         this.contextEntry.sdkLanguage = event.sdkLanguage;
         this.contextEntry.options = event.options;
+        this.contextEntry.testIdAttributeName = event.testIdAttributeName;
         break;
       }
       case 'screencast-frame': {

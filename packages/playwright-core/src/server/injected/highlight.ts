@@ -42,6 +42,7 @@ export class Highlight {
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
+    const document = injectedScript.document;
     this._isUnderTest = injectedScript.isUnderTest;
     this._glassPaneElement = document.createElement('x-pw-glass');
     this._glassPaneElement.style.position = 'fixed';
@@ -100,7 +101,7 @@ export class Highlight {
   }
 
   install() {
-    document.documentElement.appendChild(this._glassPaneElement);
+    this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
   }
 
   setLanguage(language: Language) {
@@ -110,7 +111,7 @@ export class Highlight {
   runHighlightOnRaf(selector: ParsedSelector) {
     if (this._rafRequest)
       cancelAnimationFrame(this._rafRequest);
-    this.updateHighlight(this._injectedScript.querySelectorAll(selector, document.documentElement), stringifySelector(selector), false);
+    this.updateHighlight(this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement), stringifySelector(selector), false);
     this._rafRequest = requestAnimationFrame(() => this.runHighlightOnRaf(selector));
   }
 
@@ -121,7 +122,7 @@ export class Highlight {
   }
 
   isInstalled(): boolean {
-    return this._glassPaneElement.parentElement === document.documentElement && !this._glassPaneElement.nextElementSibling;
+    return this._glassPaneElement.parentElement === this._injectedScript.document.documentElement && !this._glassPaneElement.nextElementSibling;
   }
 
   showActionPoint(x: number, y: number) {
@@ -173,7 +174,7 @@ export class Highlight {
 
       let tooltipElement;
       if (options.tooltipText) {
-        tooltipElement = document.createElement('x-pw-tooltip');
+        tooltipElement = this._injectedScript.document.createElement('x-pw-tooltip');
         this._glassPaneShadow.appendChild(tooltipElement);
         const suffix = elements.length > 1 ? ` [${i + 1} of ${elements.length}]` : '';
         tooltipElement.textContent = options.tooltipText + suffix;
@@ -252,7 +253,7 @@ export class Highlight {
   }
 
   private _createHighlightElement(): HTMLElement {
-    const highlightElement = document.createElement('x-pw-highlight');
+    const highlightElement = this._injectedScript.document.createElement('x-pw-highlight');
     highlightElement.style.position = 'absolute';
     highlightElement.style.top = '0';
     highlightElement.style.left = '0';

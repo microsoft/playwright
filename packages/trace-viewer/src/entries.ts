@@ -26,6 +26,7 @@ export type ContextEntry = {
   platform?: string;
   wallTime?: number;
   sdkLanguage?: Language;
+  testIdAttributeName?: string;
   title?: string;
   options: trace.BrowserContextEventOptions;
   pages: PageEntry[];

@@ -14,10 +14,6 @@
   limitations under the License.
 */
 
-.list-view {
-  border-top: 1px solid var(--vscode-panel-border);
-}
-
 .list-view-content {
   display: flex;
   flex-direction: column;

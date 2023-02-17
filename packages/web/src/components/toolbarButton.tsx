@@ -20,7 +20,7 @@ import * as React from 'react';
 
 export interface ToolbarButtonProps {
   title: string,
-  icon: string,
+  icon?: string,
   disabled?: boolean,
   toggled?: boolean,
   onClick: () => void,
@@ -29,7 +29,7 @@ export interface ToolbarButtonProps {
 export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>> = ({
   children,
   title = '',
-  icon = '',
+  icon,
   disabled = false,
   toggled = false,
   onClick = () => {},
@@ -38,7 +38,7 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
   if (toggled)
     className += ' toggled';
   return <button className={className} onClick={onClick} title={title} disabled={!!disabled}>
-    <span className={`codicon codicon-${icon}`} style={children ? { marginRight: 5 } : {}}></span>
+    {icon && <span className={`codicon codicon-${icon}`} style={children ? { marginRight: 5 } : {}}></span>}
     {children}
   </button>;
 };

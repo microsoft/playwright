@@ -26,7 +26,7 @@ body {
   --vscode-widget-shadow: rgba(0, 0, 0, 0.16);
   --vscode-input-background: #ffffff;
   --vscode-input-foreground: #616161;
-  --vscode-inputOption-activeBorder: rgba(0, 122, 204, 0);
+  --vscode-inputOption-activeBorder: #007acc;
   --vscode-inputOption-hoverBackground: rgba(184, 184, 184, 0.31);
   --vscode-inputOption-activeBackground: rgba(0, 144, 241, 0.2);
   --vscode-inputOption-activeForeground: #000000;
@@ -567,7 +567,7 @@ body.dark-mode {
   --vscode-widget-shadow: rgba(0, 0, 0, 0.36);
   --vscode-input-background: #3c3c3c;
   --vscode-input-foreground: #cccccc;
-  --vscode-inputOption-activeBorder: rgba(0, 122, 204, 0);
+  --vscode-inputOption-activeBorder: #007acc;
   --vscode-inputOption-hoverBackground: rgba(90, 93, 94, 0.5);
   --vscode-inputOption-activeBackground: rgba(0, 127, 212, 0.4);
   --vscode-inputOption-activeForeground: #ffffff;

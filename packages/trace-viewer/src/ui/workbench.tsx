@@ -28,7 +28,7 @@ import { MultiTraceModel } from './modelUtil';
 import { NetworkTab } from './networkTab';
 import { SnapshotTab } from './snapshotTab';
 import { SourceTab } from './sourceTab';
-import { TabbedPane } from './tabbedPane';
+import { TabbedPane } from '@web/components/tabbedPane';
 import { Timeline } from './timeline';
 import './workbench.css';
 import { toggleTheme } from '@web/theme';
@@ -208,7 +208,7 @@ export const Workbench: React.FunctionComponent<{
     </div>
     <SplitView sidebarSize={300} orientation='horizontal' sidebarIsFirst={true}>
       <SplitView sidebarSize={300} orientation={view === 'embedded' ? 'vertical' : 'horizontal'}>
-        <SnapshotTab action={activeAction} />
+        <SnapshotTab action={activeAction} sdkLanguage={model.sdkLanguage || 'javascript'} testIdAttributeName={model.testIdAttributeName || 'data-testid'} />
         <TabbedPane tabs={tabs} selectedTab={selectedPropertiesTab} setSelectedTab={setSelectedPropertiesTab}/>
       </SplitView>
       <TabbedPane tabs={
