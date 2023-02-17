@@ -152,7 +152,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   beforeAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
-  step<T>(title: string, body: () => Promise<T>): Promise<T>;
+  step<T>(title: string, body: () => T | Promise<T>): Promise<T>;
   expect: Expect;
   extend<T extends KeyValue, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
   info(): TestInfo;

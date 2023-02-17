@@ -3184,7 +3184,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param title Step name.
    * @param body Step body.
    */
-  step<T>(title: string, body: () => Promise<T>): Promise<T>;
+  step<T>(title: string, body: () => T | Promise<T>): Promise<T>;
   /**
    * `expect` function can be used to create test assertions. Read more about [test assertions](https://playwright.dev/docs/test-assertions).
    *
