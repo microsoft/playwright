@@ -160,6 +160,7 @@ test('step should inherit return type from its callback ', async ({ runTSC }) =>
           return 'foo';
         });
         await test.step('my step', async () => { });
+        const good2: string = await test.step('my step', () => 'foo');
       });
     `
   });
